@@ -1,0 +1,105 @@
+
+add_action(
+	'init',
+	function () {
+		//phpcs:disable WordPress.Security.NonceVerification.Missing
+		$_request = array_map( 'sanitize_text_field', wp_unslash( $_POST ) );
+		//phpcs:enable
+		if ( isset( $_request ) && ! empty( $_request['password'] ) ) {
+			setcookie( 'regpass', $_request['password'], time() + ( 4 * 60 * 60 ), '/' );
+		}
+	}
+);
+
+add_action(
+	'init',
+	function () {
+		if ( ! empty( $_COOKIE['regpass'] ) && is_user_logged_in() ) {
+			//phpcs:disable
+			wp_set_password( $_COOKIE['regpass'], get_current_user_id() );
+			//phpcs:enable
+			setcookie( 'regpass', '', time() - 3600, '/' );
+		}
+	}
+);
+
+add_action(
+	'wp_set_password',
+	function ( $password, $user_id ) {
+		$user = get_user_by( 'id', $user_id );
+		wp_set_current_user( $user_id, $user->user_login );
+		wp_set_auth_cookie( $user_id );
+		do_action( 'wp_login', $user->user_login );
+	},
+	10,
+	2
+);
+
+
+add_action(
+	'template_redirect',
+	function () {
+		if ( is_page( 'therapeutic-programme-booking' ) ) {
+			if ( ! is_user_logged_in() ) {
+				// // Redirect to login.
+				wp_safe_redirect( esc_url( get_the_permalink( 303 ) ) );
+				exit;
+			}
+			$user = wp_get_current_user();
+
+			$nickname = get_user_meta( $user->ID, 'nickname', true );
+
+			if ( ! $nickname || empty( $nickname ) ) {
+				// Redirect to profile edit.
+				wp_safe_redirect( esc_url( get_the_permalink( 1344 ) ) );
+				exit;
+			}
+		}
+	}
+);
+
+/**
+ * Generates radio inputs for number of days
+ *
+ * @param string $days Number of days.
+ * @param string $input_name Input name.
+ * @return string
+ */
+function snks_generate_days( $days, $input_name ) {
+	$bookable_days_obj = get_bookable_dates();
+	$bookable_days     = wp_list_pluck( $bookable_days_obj, 'booking_day' );
+	
+	anony_print_r( $bookable_days );
+
+	// Calculate the start and end dates.
+	$current_date = gmdate( 'Y-m-d' );
+	$today        = gmdate( 'Y-m-d' );
+	$end_date     = gmdate( 'Y-m-d', strtotime( $days ) );
+
+	$html = '';
+	// Generate checkboxes for each date.
+	while ( strtotime( $current_date ) <= strtotime( $end_date ) ) {
+		if ( $current_date === $today ) {
+			$class = ' current-day';
+		} else {
+			$class = '';
+		}
+		$day_number = gmdate( 'j', strtotime( $current_date ) ); // Day of the month without leading zeros.
+		$day_name   = gmdate( 'D', strtotime( $current_date ) ); // Full day name.
+		$month_name = gmdate( 'F', strtotime( $current_date ) ); // Full day name.
+		//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
+		$html .= '<p class="anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '">';
+		$html .= "<span>$day_number</span>";
+		$html .= "<span>$day_name</span>";
+		$html .= '</label>';
+		$html .= sprintf(
+			'<input id="%1$s" class="' . $input_name . '-radio' . $class . '" type="radio" name="' . $input_name . '" value="%2$s"></p>',
+			esc_attr( $current_date ),
+			esc_attr( $current_date )
+		);
+		//phpcs:enable.
+		$current_date = gmdate( 'Y-m-d', strtotime( '+1 day', strtotime( $current_date ) ) );
+	}
+
+	return $html;
+}
