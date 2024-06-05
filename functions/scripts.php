@@ -46,40 +46,12 @@ add_action(
 					childList: true,
 					subtree: true
 			    });
-				function noPricingNotice() {
-					if ( $( '.active-pricing' ).length == 0 ) {
-						if ( $( '.no-pricing-notice' ).length == 0 ) {
-							$('.jet-tabs__content-wrapper', $('#jet-popup-2036')).prepend('<p class="no-pricing-notice">فضلاً قم بتحديد مدد الجلسات أولاً</p>');
-						}
-					} else {
-						$('.no-pricing-notice').remove();	
-					}
-				}
-				noPricingNotice();
-				$('.jet-form-builder__field[type="checkbox"]').each( function() {
-					const checkedFieldId = $(this).attr('id');
-					var contentID = $('#' + checkedFieldId + '-new-tab').attr('aria-controls');
-					if ($(this).is(':checked')) {
-						$('#' + checkedFieldId + '-new-tab').show();
-						$('#' + checkedFieldId + '-new-tab').addClass('active-pricing');
-						$( '#' + contentID ).show();						
-					} else {
-						$('#' + checkedFieldId + '-new-tab').hide();
-						$('#' + checkedFieldId + '-new-tab').removeClass('active-pricing');
-						$( '#' + contentID ).hide();
-					}
-				});
 				
 				$('.jet-form-builder__field[type="checkbox"]').on('change', function() {
 					const checkedFieldId = $(this).attr('id');
 					if ($(this).is(':checked')) {
 						const elementToClickId = checkedFieldId + '-settings-trigger';
 						$('#' + elementToClickId).click();
-						$('#' + checkedFieldId + '-new-tab').show();
-						$('#' + checkedFieldId + '-new-tab').click();
-						$('#' + checkedFieldId + '-new-tab').addClass('active-pricing');
-						var contentID = $('#' + checkedFieldId + '-new-tab').attr('aria-controls');						
-						$( '#' + contentID ).show();
 						$('.jet-form-builder-repeater__actions').each(
 							function() {
 								var $items = $(this).prev();
@@ -101,19 +73,6 @@ add_action(
 							$( '#' + $('#' + checkedFieldId + '-new-tab').closest('.jet-tabs__control-wrapper ').find('.active-pricing:first-child').attr('aria-controls') ).show();
 						}
 					}
-					noPricingNotice();
-				});
-				$('.pricing-trigger').on('click', function() {
-					var popupID = $(this).closest('.jet-popup-attach-event-inited').data('popup-instance');
-					var popup   = $('#jet-popup-' + popupID);
-					popup.find( '.jet-form-builder-repeater__actions' ).each(
-						function() {
-							var $items = $(this).prev();
-							if ( $items.html() === '' ) {
-								$(this).find('.jet-form-builder-repeater__new').click();
-							}
-						}
-					);
 				});
 				$('.snks-count-down').each(
 					function () {
