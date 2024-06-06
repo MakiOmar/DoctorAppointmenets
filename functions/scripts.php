@@ -47,6 +47,14 @@ add_action(
 					subtree: true
 			    });
 				
+				$( '.jet-form-builder-repeater__actions', $('div[name=change_fees_list]') ).each(
+					function() {
+						var $items = $(this).prev();
+						if ( $('#appointment_change_fee').is(':checked') && $items.html() === '' ) {
+							$items.html($('.jet-form-builder-repeater__initial', $('div[name=change_fees_list]') ).html().replace(/__i__/g, '0'));
+						}
+					}
+				);
 				$('.jet-form-builder__field[type="checkbox"]').on('change', function() {
 					const checkedFieldId = $(this).attr('id');
 					if ($(this).is(':checked')) {
@@ -60,18 +68,6 @@ add_action(
 								}
 							}
 						);
-					} else {
-						$('#' + checkedFieldId + '-new-tab').hide();
-						$('#' + checkedFieldId + '-new-tab').removeClass('active-pricing');
-						var contentID = $('#' + checkedFieldId + '-new-tab').attr('aria-controls');
-						$( '#' + contentID ).hide();
-						if ( $('#' + checkedFieldId + '-new-tab').next('.active-pricing').length > 0 ) {
-							$('#' + checkedFieldId + '-new-tab').next('.active-pricing').click();
-							$( '#' + $('#' + checkedFieldId + '-new-tab').next('.active-pricing').attr('aria-controls') ).show();
-						} else {
-							$('#' + checkedFieldId + '-new-tab').closest('.jet-tabs__control-wrapper ').find('.active-pricing:first-child').click();
-							$( '#' + $('#' + checkedFieldId + '-new-tab').closest('.jet-tabs__control-wrapper ').find('.active-pricing:first-child').attr('aria-controls') ).show();
-						}
 					}
 				});
 				$('.snks-count-down').each(
