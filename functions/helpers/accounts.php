@@ -67,21 +67,25 @@ function snks_is_patient() {
 function snks_doctor_settings() {
 	$settings = array();
 	if ( snks_is_doctor() || current_user_can( 'manage_options' ) ) {
-		$user_id                              = get_current_user_id();
-		$settings['60_minutes']               = get_user_meta( $user_id, '60-minutes', true );
-		$settings['45_minutes']               = get_user_meta( $user_id, '45-minutes', true );
-		$settings['30_minutes']               = get_user_meta( $user_id, '35-minutes', true );
-		$settings['discount_percent']         = get_user_meta( $user_id, 'discount_percent', true );
-		$settings['to_be_old_number']         = get_user_meta( $user_id, 'to_be_old_number', true );
-		$settings['to_be_old_unit']           = get_user_meta( $user_id, 'to_be_old_unit', true );
-		$settings['allow_appointment_change'] = get_user_meta( $user_id, 'allow_appointment_change', true );
-		$settings['free_change_before']       = get_user_meta( $user_id, 'free_change_before', true );
-		$settings['before_change_number']     = get_user_meta( $user_id, 'before_change_number', true );
-		$settings['before_change_unit']       = get_user_meta( $user_id, 'before_change_unit', true );
-		$settings['block_if_before_number']   = get_user_meta( $user_id, 'block_if_before_number', true );
-		$settings['block_if_before_unit']     = get_user_meta( $user_id, 'block_if_before_unit', true );
+		$user_id                               = get_current_user_id();
+		$settings['60_minutes']                = get_user_meta( $user_id, '60-minutes', true );
+		$settings['45_minutes']                = get_user_meta( $user_id, '45-minutes', true );
+		$settings['30_minutes']                = get_user_meta( $user_id, '30-minutes', true );
+		$settings['enable_discount']           = get_user_meta( $user_id, 'enable_discount', true );
+		$settings['discount_percent']          = get_user_meta( $user_id, 'discount_percent', true );
+		$settings['to_be_old_number']          = get_user_meta( $user_id, 'to_be_old_number', true );
+		$settings['to_be_old_unit']            = get_user_meta( $user_id, 'to_be_old_unit', true );
+		$settings['allow_appointment_change']  = get_user_meta( $user_id, 'allow_appointment_change', true );
+		$settings['free_change_before_number'] = get_user_meta( $user_id, 'free_change_before_number', true );
+		$settings['free_change_before_unit']   = get_user_meta( $user_id, 'free_change_before_unit', true );
+		$settings['block_if_before_number']    = get_user_meta( $user_id, 'block_if_before_number', true );
+		$settings['block_if_before_unit']      = get_user_meta( $user_id, 'block_if_before_unit', true );
+		$settings['online']                    = get_user_meta( $user_id, 'online', true );
+		$settings['offline']                   = get_user_meta( $user_id, 'offline', true );
+		$settings['both']                      = get_user_meta( $user_id, 'both', true );
+		$settings['clinics_list']              = get_user_meta( $user_id, 'clinics_list', true );
 	}
-	snks_print_r( $settings );
+
 	return $settings;
 }
 
@@ -99,12 +103,34 @@ function snks_get_available_periods() {
 	if ( 'on' === $settings['45_minutes'] ) {
 		$is_available[] = 45;
 	}
+	if ( 'on' === $settings['30_minutes'] ) {
+		$is_available[] = 30;
+	}
+	return $is_available;
+}
+/**
+ * Get doctor's available methods
+ *
+ * @return array
+ */
+function snks_get_available_usage_methods() {
+	$settings     = snks_doctor_settings();
+	$is_available = array();
+	if ( 'on' === $settings['online'] ) {
+		$is_available[] = 'online';
+	}
+	if ( 'on' === $settings['offline'] ) {
+		$is_available[] = 'offline';
+	}
+	if ( 'on' === $settings['both'] ) {
+		$is_available[] = 'both';
+	}
 	return $is_available;
 }
 
 add_action(
 	'wp_footer',
-	'snks_doctor_settings'
+	'snks_get_available_usage_methods'
 );
 /**
  * Check if programme enrolled
