@@ -60,6 +60,53 @@ function snks_is_patient() {
 }
 
 /**
+ * Return doctor settings
+ *
+ * @return array An array of settings if is a doctor.
+ */
+function snks_doctor_settings() {
+	$settings = array();
+	if ( snks_is_doctor() || current_user_can( 'manage_options' ) ) {
+		$user_id                              = get_current_user_id();
+		$settings['60_minutes']               = get_user_meta( $user_id, '60-minutes', true );
+		$settings['45_minutes']               = get_user_meta( $user_id, '45-minutes', true );
+		$settings['30_minutes']               = get_user_meta( $user_id, '35-minutes', true );
+		$settings['discount_percent']         = get_user_meta( $user_id, 'discount_percent', true );
+		$settings['to_be_old_number']         = get_user_meta( $user_id, 'to_be_old_number', true );
+		$settings['to_be_old_unit']           = get_user_meta( $user_id, 'to_be_old_unit', true );
+		$settings['allow_appointment_change'] = get_user_meta( $user_id, 'allow_appointment_change', true );
+		$settings['free_change_before']       = get_user_meta( $user_id, 'free_change_before', true );
+		$settings['before_change_number']     = get_user_meta( $user_id, 'before_change_number', true );
+		$settings['before_change_unit']       = get_user_meta( $user_id, 'before_change_unit', true );
+		$settings['block_if_before_number']   = get_user_meta( $user_id, 'block_if_before_number', true );
+		$settings['block_if_before_unit']     = get_user_meta( $user_id, 'block_if_before_unit', true );
+	}
+	snks_print_r( $settings );
+	return $settings;
+}
+
+/**
+ * Get doctor's available periods
+ *
+ * @return array
+ */
+function snks_get_available_periods() {
+	$settings     = snks_doctor_settings();
+	$is_available = array();
+	if ( 'on' === $settings['60_minutes'] ) {
+		$is_available[] = 60;
+	}
+	if ( 'on' === $settings['45_minutes'] ) {
+		$is_available[] = 45;
+	}
+	return $is_available;
+}
+
+add_action(
+	'wp_footer',
+	'snks_doctor_settings'
+);
+/**
  * Check if programme enrolled
  *
  * @return bool
@@ -234,12 +281,13 @@ function verify_email() {
     //phpcs:enable
 	if ( isset( $_request['verification_code'] ) ) {
 		$verification_code = sanitize_text_field( wp_unslash( $_request['verification_code'] ) );
-
+		//phpcs:disable
 		// Query for the user based on the meta key and value.
 		$args = array(
 			'meta_key'   => 'verification_code',
 			'meta_value' => $verification_code,
 		);
+		//phpcs:enable
 
 		// Get the user(s) matching the criteria.
 		$users = get_users( $args );
@@ -318,6 +366,7 @@ add_action(
  * @return bool
  */
 function snks_nickname_exists( $nickname ) {
+	//phpcs:disable
 	$args = array(
 		'meta_query' => array(
 			array(
@@ -327,6 +376,7 @@ function snks_nickname_exists( $nickname ) {
 			),
 		),
 	);
+	//phpcs:enable
 
 	$user_query = new WP_User_Query( $args );
 	if ( ! empty( $user_query->get_results() ) ) {
