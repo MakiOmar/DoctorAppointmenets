@@ -9,6 +9,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+function snks_render_period_checkboxes() {
+	$is_available = snks_get_available_periods();
+	if ( ! empty( $is_available ) ) {
+		foreach ( $is_available as $period ) {
+			?>
+			<?php
+		}
+	}
+}
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
