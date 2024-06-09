@@ -27,13 +27,5 @@ add_action(
 				'read' => true,
 			)
 		);
-
-		add_role(
-			'family',
-			'Family',
-			array(
-				'read' => true,
-			)
-		);
 	}
 );
