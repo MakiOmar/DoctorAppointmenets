@@ -23,9 +23,41 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				function checkRequiredSettings() {
+					var pass = true;
+					if ( ! $('#online').is(':checked') && ! $('#offline').is(':checked') && ! $('#both').is(':checked') ) {
+						$('.shrinks-usage-method').addClass('shrinks-error');
+						pass = false;
+					}
+					if ( ! $('#60-minutes').is(':checked') && ! $('#45-minutes').is(':checked') && ! $('#30-minutes').is(':checked') ) {
+						$('.session-periods-container').addClass('shrinks-error');
+						pass = false;
+					}
+					return pass;
+				}//shrinks-usage-method
+				function showErrorpopup() {
+					if ( $('.shrinks-error').length > 0 ) {
+						$('#error-container').text('يرجى استكمال الإعدادات');
+						$('html').animate(
+							{
+							scrollTop: $('.shrinks-error').offset().top - 150,
+							},
+							800 //speed
+						);
+						$('.trigger-error').trigger('click');
+					}
+				}
+
 				function applySelect2() {
 					$('select').not('.select2-hidden-accessible').select2();
 				}
+
+				$('.appointment-settings-submit').on( 'click', function(e){
+					if ( ! checkRequiredSettings() ) {
+						e.preventDefault();
+					}
+					showErrorpopup();
+				} );
 
 				// Apply Select2 to existing selects
 				applySelect2();
@@ -55,9 +87,24 @@ add_action(
 						}
 					}
 				);
+				<?php
+				//phpcs:disable
+				if ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'appointments-settings' ) ) {
+				//phpcs:enable
+					?>
 				$('.jet-form-builder__field[type="checkbox"]').on('change', function() {
+
 					const checkedFieldId = $(this).attr('id');
 					if ($(this).is(':checked')) {
+						var shrinksUsageMethod = $(this).closest(".shrinks-usage-method");
+						if ( shrinksUsageMethod.length > 0 ){
+							$('.shrinks-usage-method').removeClass('shrinks-error');
+						}
+			 
+						var sessionPeriodsContainer = $(this).closest(".session-periods-container");
+						if ( sessionPeriodsContainer.length > 0 ){
+							$('.session-periods-container').removeClass('shrinks-error');
+						}
 						const elementToClickId = checkedFieldId + '-settings-trigger';
 						$('#' + elementToClickId).click();
 						$('.jet-form-builder-repeater__actions').each(
@@ -70,6 +117,7 @@ add_action(
 						);
 					}
 				});
+				<?php } ?>
 				$('.snks-count-down').each(
 					function () {
 						var countdownElement = $(this);
