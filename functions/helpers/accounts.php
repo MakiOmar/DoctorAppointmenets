@@ -108,12 +108,41 @@ function snks_get_available_periods() {
 	}
 	return $is_available;
 }
+
+/**
+ * Get doctor's available periods
+ *
+ * @return array
+ */
+function snks_get_available_periods_options() {
+	$settings     = snks_doctor_settings();
+	$is_available = array();
+	if ( 'on' === $settings['60_minutes'] ) {
+		$is_available[] = array(
+			'value' => '60',
+			'label' => '60 دقيقة',
+		);
+	}
+	if ( 'on' === $settings['45_minutes'] ) {
+		$is_available[] = array(
+			'value' => '45',
+			'label' => '45 دقيقة',
+		);
+	}
+	if ( 'on' === $settings['30_minutes'] ) {
+		$is_available[] = array(
+			'value' => '30',
+			'label' => '30 دقيقة',
+		);
+	}
+	return $is_available;
+}
 /**
  * Get doctor's available methods
  *
  * @return array
  */
-function snks_get_available_usage_methods() {
+function snks_get_available_attendance_types() {
 	$settings     = snks_doctor_settings();
 	$is_available = array();
 	if ( 'on' === $settings['online'] ) {
@@ -128,9 +157,38 @@ function snks_get_available_usage_methods() {
 	return $is_available;
 }
 
+/**
+ * Get doctor's available methods
+ *
+ * @return array
+ */
+function snks_get_available_attendance_types_options() {
+	$settings     = snks_doctor_settings();
+	$is_available = array();
+	if ( 'on' === $settings['online'] ) {
+		$is_available[] = array(
+			'value' => 'online',
+			'label' => 'أونلاين',
+		);
+	}
+	if ( 'on' === $settings['offline'] ) {
+		$is_available[] = array(
+			'value' => 'offline',
+			'label' => 'عيادة',
+		);
+	}
+	if ( 'on' === $settings['both'] ) {
+		$is_available[] = array(
+			'value' => 'both',
+			'label' => 'أونلاين وعيادة',
+		);
+	}
+	return $is_available;
+}
+
 add_action(
 	'wp_footer',
-	'snks_get_available_usage_methods'
+	'snks_get_available_attendance_types'
 );
 /**
  * Check if programme enrolled
