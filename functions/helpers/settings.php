@@ -9,7 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-
 /**
  * Return doctor settings
  *
@@ -137,7 +136,59 @@ function snks_get_available_attendance_types_options() {
 	return $is_available;
 }
 
+/**
+ * Generate appointments dates
+ *
+ * @param array $week_days An array of week days abbreviations array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' ).
+ * @return array
+ */
+function snks_generate_appointments_dates( $week_days ) {
+	$days_labels     = json_decode( DAYS_ABBREVIATIONS, true );
+	$next_seven_days = array();
+	$today           = gmdate( 'D' ); // Get current day abbreviation.
+	$current_index   = array_search( $today, $week_days, true ); // Get index of current day.
+	$count           = count( $week_days ) > 7 ? 7 : count( $week_days );
+	for ( $i = 0; $i < $count; $i++ ) {
+		$next_day_index    = ( $current_index + $i ) % 7;
+		$next_day          = gmdate( 'Y-m-d', strtotime( 'next ' . $week_days[ $next_day_index ] ) );
+		$next_seven_days[] = array(
+			'day'   => $week_days[ $next_day_index ],
+			'label' => $days_labels[ $week_days[ $next_day_index ] ],
+			'date'  => $next_day,
+		);
+	}
+	// Sort the array by date in ascending order.
+	usort(
+		$next_seven_days,
+		function ( $a, $b ) {
+			return strtotime( $a['date'] ) - strtotime( $b['date'] );
+		}
+	);
+	return $next_seven_days;
+}
+/**
+ * Get doctors appointments settings
+ *
+ * @return array
+ */
+function snks_get_appointments_settings() {
+	$week_days = array_keys( json_decode( DAYS_ABBREVIATIONS, true ) );
+	$user_id   = get_current_user_id();
+	$settings  = array();
+	foreach ( $week_days as $abb ) {
+		$abb_settings = get_user_meta( $user_id, lcfirst( $abb ) . '_timetable', true );
+		if ( $abb_settings && ! empty( $abb_settings ) ) {
+			$settings[ $abb ] = $abb_settings;
+		}
+	}
+	return $settings;
+}
 add_action(
 	'wp_footer',
-	'snks_get_available_attendance_types'
+	function () {
+		$settings = snks_get_appointments_settings();
+		if ( ! empty( $settings ) ) {
+			snks_print_r( snks_generate_appointments_dates( array_keys( $settings ) ) );
+		}
+	}
 );

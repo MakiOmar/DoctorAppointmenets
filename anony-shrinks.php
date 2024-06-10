@@ -21,6 +21,22 @@ define( 'SNKS_DIR', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
 // Plugin URI.
 define( 'SNKS_URI', plugin_dir_url( __FILE__ ) );
 
+define(
+	'DAYS_ABBREVIATIONS',
+	wp_json_encode(
+		array(
+			'Mon' => 'الإثنين',
+			'Tue' => 'الثلاثاء',
+			'Wed' => 'الأربعاء',
+			'Thu' => 'الخميس',
+			'Fri' => 'الجمعة',
+			'Sat' => 'السبت',
+			'Sun' => 'الأحد',
+		)
+	)
+);
+
+
 require_once SNKS_DIR . 'functions/helpers.php';
 
 add_action(
