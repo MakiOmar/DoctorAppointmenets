@@ -28,6 +28,7 @@ add_action(
 	function () {
 		snks_require_all_files( SNKS_DIR . 'includes' );
 		snks_require_all_files( SNKS_DIR . 'functions' );
+		snks_require_all_files( SNKS_DIR . 'classes' );
 	},
 	20
 );
