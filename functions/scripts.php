@@ -49,7 +49,7 @@ add_action(
 				}
 
 				function applySelect2() {
-					$('select').not('.select2-hidden-accessible').select2();
+					$('select').not('.select2-hidden-accessible').select2({width: '100%'});
 				}
 
 				$('.appointment-settings-submit').on( 'click', function(e){
@@ -78,7 +78,23 @@ add_action(
 					childList: true,
 					subtree: true
 			    });
-				
+				$('body').on(
+					'click',
+					'.accordion-heading',
+					function () {
+						$(this).toggleClass('active-accordion');
+						$(this).parent('.field-type-heading-field').next('.field-type-repeater-field').find('.accordion-content').toggleClass('accordion-content-active');
+						$('.accordion-content').each(
+							function () {
+								if ( $( this ).hasClass('accordion-content-active') ) {
+									$( this ).slideDown();
+								} else {
+									$( this ).slideUp();
+								}
+							}
+						);
+					}
+				);
 				$( '.jet-form-builder-repeater__actions', $('div[name=change_fees_list]') ).each(
 					function() {
 						var $items = $(this).prev();
