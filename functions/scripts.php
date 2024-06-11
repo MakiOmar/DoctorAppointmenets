@@ -14,6 +14,10 @@ add_action(
 	function () {
 		wp_enqueue_style( 'select2-css', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css', false, '4.1.0' );
 		wp_enqueue_script( 'select2-js', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js', array( 'jquery' ), '4.1.0', true );
+
+		wp_enqueue_style( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', false, '4.6.13' );
+		wp_enqueue_script( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr', array( 'jquery' ), '4.6.13', true );
+		wp_enqueue_script( 'flatpickr-ar', 'https://npmcdn.com/flatpickr@4.6.13/dist/l10n/ar.js', array( 'flatpickr' ), '4.6.13', true );
 	}
 );
 
@@ -51,7 +55,26 @@ add_action(
 				function applySelect2() {
 					$('select').not('.select2-hidden-accessible').select2({width: '100%'});
 				}
+				flatpickr.localize(flatpickr.l10ns.ar);
+				$('#dateField').flatpickr(
+					{
+						"disable": [
+							function(date) {
+								var currentDate = new Date();
+								currentDate.setHours(0, 0, 0, 0);
+								date.setHours(0, 0, 0, 0);
 
+								// return true to disable
+								return ( date.getDay() === 0 || currentDate > date );
+							}
+						],
+						"locale": {
+							"firstDayOfWeek": 6, // start week on Monday
+							
+						}
+					}
+				);
+				
 				$('.appointment-settings-submit').on( 'click', function(e){
 					if ( ! checkRequiredSettings() ) {
 						e.preventDefault();
