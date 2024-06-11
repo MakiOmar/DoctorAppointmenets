@@ -9,15 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-function snks_render_period_checkboxes() {
-	$is_available = snks_get_available_periods();
-	if ( ! empty( $is_available ) ) {
-		foreach ( $is_available as $period ) {
-			?>
-			<?php
-		}
-	}
-}
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
@@ -410,71 +401,6 @@ function template_str_replace( $record, $edit, $_class, $room ) {
 		$template
 	);
 }
-/**
- * Render patient bookings
- *
- * @param string $tense Past|Future.
- * @return string
- */
-function snks_render_bookings_listing( $tense = 'all' ) {
-	if ( snks_is_patient() ) {
-		$bookings = snks_get_patient_bookings();
-	} else {
-		$bookings = snks_get_doctor_bookings( $tense );
-	}
-
-	$output = '';
-	if ( $bookings && is_array( $bookings ) ) {
-		foreach ( $bookings as $index => $booking ) {
-			$edit = '';
-			if ( snks_is_past_date( $booking->date_time ) ) {
-				$class = 'start';
-				$room  = add_query_arg( 'room_id', $booking->ID, site_url( '/zego' ) );
-			} else {
-				$order_id      = $booking->order_id;
-				$edited_before = get_post_meta( $order_id, 'booking-edited', true );
-				$class         = 'remaining';
-				$room          = '#';
-				// Create a DateTime object for the input date and time.
-				$booking_dt_obj = new DateTime( $booking->date_time );
-
-				// Create a DateTime object for the current date and time.
-				$now = new DateTime();
-
-				// Calculate the time interval between the input and current date and time.
-				$interval     = $now->diff( $booking_dt_obj );
-				$diff_seconds = $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
-				// Compare the input date and time with the modified current date and time.
-				if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > 86400 ) {
-					$edit = snks_edit_button( $booking->ID );
-				}
-			}
-			$output .= template_str_replace( $booking, $edit, $class, $room );
-			if ( snks_is_doctor() && 'cancelled' !== $booking->session_status ) {
-				$output = str_replace( '{doctor_actions}', snks_doctor_actions( $booking ), $output );
-			} else {
-				$output = str_replace( '{doctor_actions}', '', $output );
-			}
-			if ( ! snks_is_doctor() && isset( $diff_seconds ) && $diff_seconds > 86400 ) {
-				$output = str_replace( '{edit_trigger}', '<a href="' . add_query_arg( 'edit-booking', $booking->ID, site_url( '/consulting-form' ) ) . '" title="تغيير الموعد"><strong id="snks-trigger-edit" style="color:blue">لتغيير الموعد إضغط هنا</strong></a>', $output );
-			} else {
-				$output = str_replace( '{edit_trigger}', '', $output );
-			}
-		}
-		$output .= do_shortcode( '[elementor-template id="1734"]' );
-		if ( ! snks_is_doctor() && isset( $diff_seconds ) && $diff_seconds > 86400 ) {
-			$output = str_replace( '{edit_trigger}', '<a href="' . add_query_arg( 'edit-booking', $booking->ID, site_url( '/consulting-form' ) ) . '" title="تغيير الموعد"><strong id="snks-trigger-edit" style="color:blue">لتغيير الموعد إضغط هنا</strong></a>', $output );
-		} else {
-			$output = str_replace( '{edit_trigger}', '', $output );
-		}
-	} else {
-		$output  = '<p style="text-align:center">';
-		$output .= 'عذراًّ ليس لديك مواعيد حالياَ.';
-		$output .= '</p>';
-		$output .= '<a class="snks-button start" href="' . esc_url( get_the_permalink( 1158 ) ) . '">حجز موعد استشارة</a>';
-	}
-	return $output;
-}
 
 /**
  * Doctor actions
@@ -536,8 +462,6 @@ function snks_doctor_actions( $session ) {
 function snks_render_sessions_listing( $tense, $_for = 'patient' ) {
 	if ( 'patient' === $_for ) {
 		$sessions = snks_get_patient_sessions( $tense );
-	} elseif ( 'family' === $_for ) {
-		$sessions = snks_get_family_sessions( $tense );
 	} else {
 		$sessions = snks_get_doctor_sessions( $tense );
 	}

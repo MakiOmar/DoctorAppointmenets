@@ -161,15 +161,13 @@ function snks_get_open_timetable_by( $column, $value ) {
 /**
  * Insert timetable
  *
- * @param int    $user_id User ID.
+ * @param int    $provider_id User ID.
  * @param string $booking_day Booking day date.
  * @param string $start_time Start time.
- * @param string $purpose Purpose.
  * @param int    $client_id Client ID.
- * @param string $session_title Session title.
  */
-function snks_insert_timetable( $user_id, $booking_day, $start_time, $purpose, $client_id, $session_title = '' ) {
-	$timetable_exists = snks_get_timetable( $user_id, $booking_day, $start_time );
+function snks_insert_timetable( $provider_id, $booking_day, $start_time, $client_id ) {
+	$timetable_exists = snks_get_timetable( $provider_id, $booking_day, $start_time );
 	if ( $timetable_exists ) {
 		return false;
 	}
@@ -177,24 +175,14 @@ function snks_insert_timetable( $user_id, $booking_day, $start_time, $purpose, $
 	$date_time = $date_time->format( 'Y-m-d H:i:s' );
 	global $wpdb;
 	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
-	//phpcs:disable Universal.Operators.StrictComparisons.LooseEqual
-	if ( '0' == $client_id ) {
-		$booking_availability = true;
-	} else {
-		$booking_availability = false;
-	}
+
 	// Prepare the data for insertion.
 	$data = array(
-		'user_id'              => absint( $user_id ),
+		'user_id'              => absint( $provider_id ),
 		'client_id'            => sanitize_text_field( $client_id ),
-		'session_status'       => 'session' === $purpose ? 'open' : 'waiting',
-		'booking_day'          => sanitize_text_field( $booking_day ),
-		'start_time'           => sanitize_text_field( $start_time ),
+		'session_status'       => 'scheduled',
 		'date_time'            => $date_time,
-		'purpose'              => sanitize_text_field( $purpose ),
-		'session_title'        => sanitize_text_field( $session_title ),
 		'time_spent'           => 0,
-		'booking_availability' => $booking_availability,
 		'order_id'             => 0,
 	);
 
@@ -327,37 +315,6 @@ function get_bookable_date_available_times( $date ) {
 	return $results;
 }
 
-
-/**
- * Get family sessions
- *
- * @param string $tense past|future|all records.
- * @return mixed
- */
-function snks_get_family_sessions( $tense ) {
-	global $wpdb;
-	$user_id = get_current_user_id();
-	$cache_key = 'family-' . $tense . '-sessions-' . $user_id;
-	$results   = wp_cache_get( $cache_key );
-	$operator  = 'past' === $tense ? '<' : '>';
-	if ( ! $results ) {
-		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE FIND_IN_SET(%d, client_id) > 0 AND purpose = %s";
-		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
-		}
-		$query .= " ORDER BY date_time ASC";
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				$query,
-				$user_id,
-				'session'
-			)
-		);
-		wp_cache_set( $cache_key, $results );
-	}
-	return $results;
-}
 /**
  * Get doctor sessions
  *
