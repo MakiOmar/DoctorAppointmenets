@@ -43,7 +43,7 @@ class Snks_Available_Periods extends Base {
 	 */
 	public function generate( $args ) {
 
-		$result = snks_get_available_periods_options();
+		$result = snks_get_periods_possibilities_options();
 
 		return $result;
 	}
