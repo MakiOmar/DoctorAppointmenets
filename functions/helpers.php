@@ -65,26 +65,19 @@ function has_two_occurrences( $arr, $element ) {
  * @return array
  */
 function snks_expected_hours( $mins, $start_hour ) {
-
-	$is_30          = false;
 	$expected_hours = array();
 	foreach ( $mins as $min ) {
+
 		// Convert start time to minutes.
 		$start_minutes = strtotime( $start_hour ) / 60;
-
 		// Add the duration to the start time.
 		$end_hour = $start_minutes + $min;
 
-		// Convert the end time back to a formatted string.
-		if ( $is_30 && 30 === $min && has_two_occurrences( $mins, 30 ) ) {
-			$end_hour         = gmdate( 'h:i a', ( ( strtotime( $end_hour ) / 60 ) + $min ) * 60 );
-			$expected_hours[] = $end_hour;
-		} else {
-			$end_hour         = gmdate( 'h:i a', $end_hour * 60 );
-			$expected_hours[] = $end_hour;
-		}
-		if ( 30 === $min ) {
-			$is_30 = true;
+		$end_hour         = gmdate( 'h:i a', $end_hour * 60 );
+		$expected_hours[] = array( 'from' => $start_hour, 'to' => $end_hour );
+
+		if ( 30 === $min && has_two_occurrences( $mins, 30 ) ) {
+			$start_hour = $end_hour;
 		}
 	}
 	return $expected_hours;
