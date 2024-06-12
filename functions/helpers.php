@@ -57,8 +57,41 @@ function has_two_occurrences( $arr, $element ) {
 	$keys = array_keys( $arr, $element, true );
 	return count( $keys ) === 2;
 }
+/**
+ * Get expected hours
+ *
+ * @param array  $mins Available periods.
+ * @param string $start_hour Start hour.
+ * @return array
+ */
+function snks_expected_hours( $mins, $start_hour ) {
+
+	$is_30          = false;
+	$expected_hours = array();
+	foreach ( $mins as $min ) {
+		// Convert start time to minutes.
+		$start_minutes = strtotime( $start_hour ) / 60;
+
+		// Add the duration to the start time.
+		$end_hour = $start_minutes + $min;
+
+		// Convert the end time back to a formatted string.
+		if ( $is_30 && 30 === $min && has_two_occurrences( $mins, 30 ) ) {
+			$end_hour         = gmdate( 'h:i a', ( ( strtotime( $end_hour ) / 60 ) + $min ) * 60 );
+			$expected_hours[] = $end_hour;
+		} else {
+			$end_hour         = gmdate( 'h:i a', $end_hour * 60 );
+			$expected_hours[] = $end_hour;
+		}
+		if ( 30 === $min ) {
+			$is_30 = true;
+		}
+	}
+	return $expected_hours;
+}
 add_action(
 	'wp_footer',
 	function () {
+		snks_print_r( snks_expected_hours( array( 60, 45, 30, 30 ), '12 pm' ) );
 	}
 );
