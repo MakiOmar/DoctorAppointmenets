@@ -172,6 +172,15 @@ function snks_get_periods_possibilities_options() {
 			);
 		}
 	}
+	if ( ! empty( $options ) ) {
+		array_unshift(
+			$options,
+			array(
+				'value' => '',
+				'label' => 'حدد مدد الحجز',
+			)
+		);
+	}
 	return $options;
 }
 /**
