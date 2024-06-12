@@ -101,6 +101,7 @@ add_action(
 					childList: true,
 					subtree: true
 			    });
+
 				$('body').on(
 					'click',
 					'.accordion-heading',
@@ -116,6 +117,50 @@ add_action(
 								}
 							}
 						);
+					}
+				);
+				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
+						if ( '' === selectedPeriods || '' === selectedHour ) {
+							console.log('No expected hours');
+							return;
+						}
+						// Perform nonce check.
+						var nonce = '<?php echo esc_html( wp_create_nonce( 'expected_hours_output_nonce' ) ); ?>';
+						// Send AJAX request.
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								selectedPeriods: selectedPeriods,
+								selectedHour: selectedHour,
+								action    : 'expected_hours_output',
+							},
+							success: function(response) {
+								//console.log(response);
+								parentWrapper.find('.expected-hourse').html( response.resp );
+
+							},
+							error: function(xhr, status, error) {
+
+							}
+						});
+				}
+				$('select[data-field-name=appointment_choosen_period]').on(
+					'change',
+					function () {
+						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
+						var selectedPeriods = $(this).val();
+						var selectedHour    = $('select[data-field-name=appointment_hour]').val();
+						expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper)
+					}
+				);
+				$('select[data-field-name=appointment_hour]').on(
+					'change',
+					function () {
+						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
+						setTimeout(function(){
+							$('select[data-field-name=appointment_choosen_period]', parentWrapper).trigger('change');
+						},200)
 					}
 				);
 				$( '.jet-form-builder-repeater__actions', $('div[name=change_fees_list]') ).each(
