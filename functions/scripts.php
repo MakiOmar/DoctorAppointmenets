@@ -14,7 +14,7 @@ add_action(
 	function () {
 		wp_enqueue_style( 'select2-css', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css', false, '4.1.0' );
 		wp_enqueue_script( 'select2-js', 'https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js', array( 'jquery' ), '4.1.0', true );
-
+		// https://flatpickr.js.org/examples/.
 		wp_enqueue_style( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', false, '4.6.13' );
 		wp_enqueue_script( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr', array( 'jquery' ), '4.6.13', true );
 		wp_enqueue_script( 'flatpickr-ar', 'https://npmcdn.com/flatpickr@4.6.13/dist/l10n/ar.js', array( 'flatpickr' ), '4.6.13', true );
@@ -29,7 +29,7 @@ add_action(
 			jQuery( document ).ready( function( $ ) {
 				function checkRequiredSettings() {
 					var pass = true;
-					if ( ! $('#online').is(':checked') && ! $('#offline').is(':checked') && ! $('#both').is(':checked') ) {
+					if ( ! $('input[name=attendance_type]').is(':checked') ) {
 						$('.shrinks-usage-method').addClass('shrinks-error');
 						pass = false;
 					}
@@ -131,14 +131,18 @@ add_action(
 				if ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'appointments-settings' ) ) {
 				//phpcs:enable
 					?>
+				$('input[name=attendance_type]').on(
+					'change',
+					function(){
+						if ( $(this).is(':checked') ) {
+							$('.shrinks-usage-method').removeClass('shrinks-error');
+						}
+					}
+				);
 				$('.jet-form-builder__field[type="checkbox"]').on('change', function() {
 
 					const checkedFieldId = $(this).attr('id');
 					if ($(this).is(':checked')) {
-						var shrinksUsageMethod = $(this).closest(".shrinks-usage-method");
-						if ( shrinksUsageMethod.length > 0 ){
-							$('.shrinks-usage-method').removeClass('shrinks-error');
-						}
 			 
 						var sessionPeriodsContainer = $(this).closest(".session-periods-container");
 						if ( sessionPeriodsContainer.length > 0 ){

@@ -103,3 +103,12 @@ function snks_generate_days( $days, $input_name ) {
 
 	return $html;
 }
+add_action(
+	'wp_footer',
+	function () {
+		$settings = snks_get_appointments_settings();
+		if ( ! empty( $settings ) ) {
+			//snks_print_r( snks_generate_appointments_dates( array_keys( $settings ) ) );
+		}
+	}
+);
