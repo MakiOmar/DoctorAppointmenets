@@ -46,3 +46,19 @@ function snks_go_back() {
 	<?php
 	return ob_get_clean();
 }
+/**
+ * Check if array has two occurrences
+ *
+ * @param array $arr Array.
+ * @param int   $element search element.
+ * @return boolean
+ */
+function has_two_occurrences( $arr, $element ) {
+	$keys = array_keys( $arr, $element, true );
+	return count( $keys ) === 2;
+}
+add_action(
+	'wp_footer',
+	function () {
+	}
+);

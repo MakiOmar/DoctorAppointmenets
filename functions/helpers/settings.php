@@ -30,9 +30,7 @@ function snks_doctor_settings() {
 		$settings['free_change_before_unit']   = get_user_meta( $user_id, 'free_change_before_unit', true );
 		$settings['block_if_before_number']    = get_user_meta( $user_id, 'block_if_before_number', true );
 		$settings['block_if_before_unit']      = get_user_meta( $user_id, 'block_if_before_unit', true );
-		$settings['online']                    = get_user_meta( $user_id, 'online', true );
-		$settings['offline']                   = get_user_meta( $user_id, 'offline', true );
-		$settings['both']                      = get_user_meta( $user_id, 'both', true );
+		$settings['attendance_type']           = get_user_meta( $user_id, 'attendance_type', true );
 		$settings['clinics_list']              = get_user_meta( $user_id, 'clinics_list', true );
 	}
 
@@ -47,13 +45,13 @@ function snks_doctor_settings() {
 function snks_get_available_periods() {
 	$settings     = snks_doctor_settings();
 	$is_available = array();
-	if ( 'on' === $settings['60_minutes'] ) {
+	if ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) {
 		$is_available[] = 60;
 	}
-	if ( 'on' === $settings['45_minutes'] ) {
+	if ( 'on' === $settings['45_minutes'] || 'true' === $settings['45_minutes'] ) {
 		$is_available[] = 45;
 	}
-	if ( 'on' === $settings['30_minutes'] ) {
+	if ( 'on' === $settings['30_minutes'] || 'true' === $settings['30_minutes'] ) {
 		$is_available[] = 30;
 	}
 	return $is_available;
@@ -67,19 +65,19 @@ function snks_get_available_periods() {
 function snks_get_available_periods_options() {
 	$settings     = snks_doctor_settings();
 	$is_available = array();
-	if ( 'on' === $settings['60_minutes'] ) {
+	if ( 'true' === $settings['60_minutes'] || 'on' === $settings['60_minutes'] ) {
 		$is_available[] = array(
 			'value' => '60',
 			'label' => '60 دقيقة',
 		);
 	}
-	if ( 'on' === $settings['45_minutes'] ) {
+	if ( 'true' === $settings['45_minutes'] || 'on' === $settings['45_minutes'] ) {
 		$is_available[] = array(
 			'value' => '45',
 			'label' => '45 دقيقة',
 		);
 	}
-	if ( 'on' === $settings['30_minutes'] ) {
+	if ( 'true' === $settings['30_minutes'] || 'on' === $settings['30_minutes'] ) {
 		$is_available[] = array(
 			'value' => '30',
 			'label' => '30 دقيقة',
@@ -87,26 +85,95 @@ function snks_get_available_periods_options() {
 	}
 	return $is_available;
 }
+
 /**
- * Get doctor's available methods
+ * Get periods possibilities.
  *
  * @return array
  */
-function snks_get_available_attendance_types() {
-	$settings     = snks_doctor_settings();
-	$is_available = array();
-	if ( 'on' === $settings['online'] ) {
-		$is_available[] = 'online';
+function snks_get_periods_possibilities() {
+	$array        = snks_get_available_periods();
+	$combinations = array();
+	$array_count  = count( $array );
+		// Generate all possible combinations.
+	for ( $i = 0; $i < ( 1 << $array_count ); $i++ ) {
+		$combination = array();
+		for ( $j = 0; $j < $array_count; $j++ ) {
+			if ( $i & ( 1 << $j ) ) {
+				$combination[] = $array[ $j ];
+			}
+		}
+		$combinations[] = $combination;
+
+		// Create a duplicate of the combination and add 30, but only if the combination doesn't contain only 30.
+		if ( count( $combination ) > 1 && in_array( 30, $combination, true ) && array( 45, 30 ) !== $array && array( 30, 45 ) !== $array ) {
+			$duplicate      = $combination;
+			$duplicate[]    = 30;
+			$combinations[] = $duplicate;
+		}
 	}
-	if ( 'on' === $settings['offline'] ) {
-		$is_available[] = 'offline';
+		// Sort the combinations in descending order.
+		usort(
+			$combinations,
+			function ( $a, $b ) {
+				return count( $b ) - count( $a );
+			}
+		);
+		$possibilities = array();
+		// Print the results.
+	foreach ( $combinations as $combination ) {
+		if ( count( $combination ) > 0 ) {
+			// Sort the combinations in descending order.
+			usort(
+				$combination,
+				function ( $a, $b ) {
+					return $b - $a;
+				}
+			);
+			$possibilities[] = $combination;
+		}
 	}
-	if ( 'on' === $settings['both'] ) {
-		$is_available[] = 'both';
-	}
-	return $is_available;
+		return $possibilities;
 }
 
+/**
+ * Get periods possibilities options.
+ *
+ * @return array
+ */
+function snks_get_periods_possibilities_options() {
+	$possibilities = snks_get_periods_possibilities();
+	$options       = array();
+	foreach ( $possibilities as $possibility ) {
+		if ( count( $possibility ) === 1 ) {
+			$options[] = array(
+				'value' => $possibility[0],
+				'label' => $possibility[0] . ' دقيقة فقط ',
+			);
+		} elseif ( has_two_occurrences( $possibility, 30 ) ) {
+				$occurrences = array();
+				$remaining   = array();
+
+			foreach ( $possibility as $number ) {
+				if ( 30 === $number ) {
+					$occurrences[] = $number;
+				} else {
+					$remaining[] = $number;
+				}
+			}
+			$options[] = array(
+				'value' => implode( '-', $possibility ),
+				'label' => implode( ' دقيقة أو ', $remaining ) . ' دقيقة او ' . implode( ' دقيقة + ', $occurrences ) . ' دقيقة',
+			);
+		} else {
+			$options[] = array(
+				'value' => implode( '-', $possibility ),
+				'label' => implode( ' دقيقة أو ', $possibility ) . ' دقيقة',
+			);
+		}
+	}
+	return $options;
+}
 /**
  * Get doctor's available attendance types options
  *
@@ -115,23 +182,21 @@ function snks_get_available_attendance_types() {
 function snks_get_available_attendance_types_options() {
 	$settings     = snks_doctor_settings();
 	$is_available = array();
-	if ( 'on' === $settings['online'] ) {
-		$is_available[] = array(
-			'value' => 'online',
-			'label' => 'أونلاين',
-		);
-	}
-	if ( 'on' === $settings['offline'] ) {
-		$is_available[] = array(
-			'value' => 'offline',
-			'label' => 'عيادة',
-		);
-	}
-	if ( 'on' === $settings['both'] ) {
-		$is_available[] = array(
-			'value' => 'both',
-			'label' => 'أونلاين وعيادة',
-		);
+	$online       = array(
+		'value' => 'online',
+		'label' => 'أونلاين',
+	);
+	$offline      = array(
+		'value' => 'offline',
+		'label' => 'عيادة',
+	);
+	if ( 'online' === $settings['attendance_type'] ) {
+		$is_available[] = $online;
+	} elseif ( 'offline' === $settings['attendance_type'] ) {
+		$is_available[] = $offline;
+	} elseif ( 'both' === $settings['attendance_type'] ) {
+		$is_available[] = $online;
+		$is_available[] = $offline;
 	}
 	return $is_available;
 }
@@ -183,12 +248,3 @@ function snks_get_appointments_settings() {
 	}
 	return $settings;
 }
-add_action(
-	'wp_footer',
-	function () {
-		$settings = snks_get_appointments_settings();
-		if ( ! empty( $settings ) ) {
-			snks_print_r( snks_generate_appointments_dates( array_keys( $settings ) ) );
-		}
-	}
-);

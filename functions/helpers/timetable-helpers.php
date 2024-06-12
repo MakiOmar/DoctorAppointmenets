@@ -178,12 +178,12 @@ function snks_insert_timetable( $provider_id, $booking_day, $start_time, $client
 
 	// Prepare the data for insertion.
 	$data = array(
-		'user_id'              => absint( $provider_id ),
-		'client_id'            => sanitize_text_field( $client_id ),
-		'session_status'       => 'scheduled',
-		'date_time'            => $date_time,
-		'time_spent'           => 0,
-		'order_id'             => 0,
+		'user_id'        => absint( $provider_id ),
+		'client_id'      => sanitize_text_field( $client_id ),
+		'session_status' => 'scheduled',
+		'date_time'      => $date_time,
+		'time_spent'     => 0,
+		'order_id'       => 0,
 	);
 
 	// Insert the data into the table.
