@@ -74,7 +74,10 @@ function snks_expected_hours( $mins, $start_hour ) {
 		$end_hour = $start_minutes + $min;
 
 		$end_hour         = gmdate( 'h:i a', $end_hour * 60 );
-		$expected_hours[] = array( 'from' => $start_hour, 'to' => $end_hour );
+		$expected_hours[] = array(
+			'from' => $start_hour,
+			'to'   => $end_hour,
+		);
 
 		if ( 30 === $min && has_two_occurrences( $mins, 30 ) ) {
 			$start_hour = $end_hour;
