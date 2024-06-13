@@ -53,7 +53,7 @@ add_action(
 				}
 
 				function applySelect2() {
-					$('select').not('.select2-hidden-accessible').select2({width: '100%'});
+					$('select[data-field-name=country_code]').not('.select2-hidden-accessible').select2({width: '100%'});
 				}
 				flatpickr.localize(flatpickr.l10ns.ar);
 				$('#dateField').flatpickr(
