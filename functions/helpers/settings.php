@@ -257,3 +257,107 @@ function snks_get_appointments_settings() {
 	}
 	return $settings;
 }
+
+
+/**
+ * Check if array has two occurrences
+ *
+ * @param array $arr Array.
+ * @param int   $element search element.
+ * @return boolean
+ */
+function has_two_occurrences( $arr, $element ) {
+	$keys = array_keys( $arr, $element, true );
+	return count( $keys ) === 2;
+}
+/**
+ * Get expected hours
+ *
+ * @param array  $mins Available periods.
+ * @param string $start_hour Start hour.
+ * @return array
+ */
+function snks_expected_hours( $mins, $start_hour ) {
+	$expected_hours = array();
+	foreach ( $mins as $min ) {
+
+		// Convert start time to minutes.
+		$start_minutes = strtotime( $start_hour ) / 60;
+		// Add the duration to the start time.
+		$end_hour = $start_minutes + $min;
+
+		$end_hour         = gmdate( 'h:i a', $end_hour * 60 );
+		$expected_hours[] = array(
+			'from' => $start_hour,
+			'to'   => $end_hour,
+			'min'  => $min,
+		);
+
+		if ( 30 === $min && has_two_occurrences( $mins, 30 ) ) {
+			$start_hour = $end_hour;
+		}
+	}
+	return $expected_hours;
+}
+
+/**
+ * Generate datetime
+ *
+ * @param array  $app_settings Appointments settings.
+ * @param string $day Day abbreviation.
+ * @param string $appointment_hour Appointment hour.
+ * @return mixed
+ */
+function snks_generate_date_time( $app_settings, $day, $appointment_hour ) {
+	$week_days          = array_keys( $app_settings );
+	$appointments_dates = snks_generate_appointments_dates( $week_days );
+	$date_time          = false;
+	foreach ( $appointments_dates as $appointments_date ) {
+		if ( $day === $appointments_date['day'] ) {
+			$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $appointments_date['date'] . ' ' . $appointment_hour );
+			if ( $date_time ) {
+				$date_time = $date_time->format( 'Y-m-d h:i a' );
+			}
+		}
+	}
+	return $date_time;
+}
+/**
+ * Generate time table
+ *
+ * @return array
+ */
+function snks_generate_timetable() {
+	$app_settings = snks_get_appointments_settings();
+	$data         = array();
+	$user_id      = get_current_user_id();
+	if ( ! empty( $app_settings ) ) {
+		foreach ( $app_settings as $day => $app_setting ) {
+			foreach ( $app_setting as $details ) {
+				if ( empty( $details['appointment_hour'] ) ) {
+					continue;
+				}
+				$periods          = array_map( 'absint', explode( '-', $details['appointment_choosen_period'] ) );
+				$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
+				$expected_hours   = snks_expected_hours( $periods, $appointment_hour );
+				foreach ( $expected_hours as $expected_hour ) {
+					$date_time = snks_generate_date_time( $app_settings, $day, $appointment_hour );
+					if ( ! $date_time ) {
+						continue;
+					}
+					$data[] = array(
+						'user_id'        => $user_id,
+						'session_status' => 'waiting',
+						'day'            => $day,
+						'base_hour'      => $details['appointment_hour'],
+						'period'         => $expected_hour['min'],
+						'date_time'      => $date_time,
+						'starts'         => $expected_hour['from'],
+						'ends'           => $expected_hour['to'],
+					);
+				}
+			}
+		}
+	}
+	return( $data );
+}
