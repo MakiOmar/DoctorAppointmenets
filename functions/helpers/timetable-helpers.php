@@ -164,9 +164,8 @@ function snks_get_open_timetable_by( $column, $value ) {
  * @param int    $provider_id User ID.
  * @param string $booking_day Booking day date.
  * @param string $start_time Start time.
- * @param int    $client_id Client ID.
  */
-function snks_insert_timetable( $provider_id, $booking_day, $start_time, $client_id ) {
+function snks_insert_timetable( $provider_id, $booking_day, $start_time ) {
 	$timetable_exists = snks_get_timetable( $provider_id, $booking_day, $start_time );
 	if ( $timetable_exists ) {
 		return false;
@@ -179,11 +178,13 @@ function snks_insert_timetable( $provider_id, $booking_day, $start_time, $client
 	// Prepare the data for insertion.
 	$data = array(
 		'user_id'        => absint( $provider_id ),
-		'client_id'      => sanitize_text_field( $client_id ),
-		'session_status' => 'scheduled',
+		'session_status' => 'waiting',
+		'day'            => '',
+		'base_hour'      => '',
+		'period'         => '',
 		'date_time'      => $date_time,
-		'time_spent'     => 0,
-		'order_id'       => 0,
+		'starts'         => $start_time,
+		'ends'           => '',
 	);
 
 	// Insert the data into the table.

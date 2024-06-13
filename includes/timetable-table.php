@@ -27,10 +27,12 @@ function snks_create_timetable_table() {
         user_id INT(11) NOT NULL,
         client_id VARCHAR(255) NOT NULL,
         session_status VARCHAR(20) NOT NULL,
-        purpose VARCHAR(20) NOT NULL,
-        session_title VARCHAR(255) NOT NULL,
+        day VARCHAR(20) NOT NULL,
+        base_hour TIME NOT NULL,
+        period INT(2) NOT NULL,
         date_time DATETIME NOT NULL,
-		booking_availability TINYINT(1) NOT NULL,
+        starts TIME NOT NULL,
+        ends TIME NOT NULL,
 		order_id INT(11) NOT NULL,
         PRIMARY KEY (ID)
     ) $collate";
