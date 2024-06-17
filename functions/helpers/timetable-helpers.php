@@ -100,9 +100,10 @@ function snks_get_user_timetables( $user_id ) {
  *
  * @param int   $column Column to query.
  * @param mixed $value Value to query.
+ * @param mixed $placeholder Prepare placeholder.
  * @return mixed
  */
-function snks_get_timetable_by( $column, $value ) {
+function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 	global $wpdb;
 	// Generate a unique cache key.
 	$cache_key = 'snks_timetable_by_' . $column;
@@ -110,19 +111,51 @@ function snks_get_timetable_by( $column, $value ) {
 	$results = wp_cache_get( $cache_key );
 
 	if ( false === $results ) {
-		//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		//phpcs:disable
 		// Execute the query.
 		$results = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT *
             FROM {$wpdb->prefix}snks_provider_timetable
-            WHERE {$column} = %d",
+            WHERE {$column} = {$placeholder}",
 				$value
 			)
 		);
+		//phpcs:enable
 		wp_cache_set( $cache_key, $results, '', 3600 );
 	}
 
+	return $results;
+}
+
+/**
+ * If Timetable exists
+ *
+ * @param int   $user_id User ID.
+ * @param int   $day Day abbreviation.
+ * @param mixed $starts Stat time.
+ * @param mixed $ends end time.
+ * @return mixed
+ */
+function snks_timetable_exists( $user_id, $day, $starts, $ends ) {
+	global $wpdb;
+
+	//phpcs:disable
+	// Execute the query.
+	$results = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT *
+		FROM {$wpdb->prefix}snks_provider_timetable
+		WHERE user_id = %d
+		AND day = %s
+		AND starts = %s
+		AND ends = %s",
+			$user_id,
+			$day,
+			$starts,
+			$ends
+		)
+	);
 	return $results;
 }
 /**
@@ -161,32 +194,12 @@ function snks_get_open_timetable_by( $column, $value ) {
 /**
  * Insert timetable
  *
- * @param int    $provider_id User ID.
- * @param string $booking_day Booking day date.
- * @param string $start_time Start time.
+ * @param array $data data to insert.
+ * @return mixed
  */
-function snks_insert_timetable( $provider_id, $booking_day, $start_time ) {
-	$timetable_exists = snks_get_timetable( $provider_id, $booking_day, $start_time );
-	if ( $timetable_exists ) {
-		return false;
-	}
-	$date_time = DateTime::createFromFormat( 'Y-m-d H:i:s', $booking_day . ' ' . $start_time );
-	$date_time = $date_time->format( 'Y-m-d H:i:s' );
+function snks_insert_timetable( $data ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
-
-	// Prepare the data for insertion.
-	$data = array(
-		'user_id'        => absint( $provider_id ),
-		'session_status' => 'waiting',
-		'day'            => '',
-		'base_hour'      => '',
-		'period'         => '',
-		'date_time'      => $date_time,
-		'starts'         => $start_time,
-		'ends'           => '',
-	);
-
 	// Insert the data into the table.
 	$wpdb->insert( $table_name, $data );
 
@@ -411,37 +424,6 @@ function snks_get_patient_sessions( $tense ) {
 	}
 	return $results;
 }
-/**
- * Get doctor bookings
- *
- * @param string $tense Past|Future.
- * @return mixed
- */
-function snks_get_doctor_bookings( $tense = 'all' ) {
-	global $wpdb;
-	$user_id   = get_current_user_id();
-	$cache_key = 'doctor-' . $tense . '-bookings-' . $user_id;
-	$results   = wp_cache_get( $cache_key );
-	$operator  = 'past' === $tense ? '<' : '>';
-	if ( ! $results ) {
-		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d AND purpose = %s";
-		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
-		}
-		$query .= " ORDER BY date_time ASC";
-		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				$query,
-				$user_id,
-				'consulting'
-			)
-		);
-
-		wp_cache_set( $cache_key, $results );
-	}
-	return $results;
-}
 
 /**
  * Get formated date/time difference e.g. 2 days and 3 hours and 40 minutes and 25 seconds.
@@ -486,42 +468,10 @@ function snks_get_time_difference( $datetime, $time_zone ) {
 function snks_is_past_date( $datetime ) {
 
 	$date    = new DateTime( $datetime );
-	$current = new DateTime( date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) ) );
+	$current = new DateTime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
 	if ( $date > $current ) {
 		return false; // date hasn't been passed.
 	}
 
 	return true; // date has been passed.
-}
-
-/**
- * Get open consulting sessions.
- *
- * @return mixed
- */
-function snks_active_consulting_booking () {
-	global $wpdb;
-	$user_id   = get_current_user_id();
-	$cache_key = 'patient-active-bookings-' . $user_id;
-	$results   = wp_cache_get( $cache_key );
-	if ( ! $results ) {
-		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE client_id = %d
-				AND purpose = %s
-				AND session_status = %s
-				ORDER BY ID DESC
-				Limit 1",
-				$user_id,
-				'consulting',
-				'open'
-			)
-		);
-
-		wp_cache_set( $cache_key, $results );
-	}
-	return $results;
 }
