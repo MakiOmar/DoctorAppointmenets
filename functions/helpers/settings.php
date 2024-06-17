@@ -348,12 +348,13 @@ function snks_generate_timetable() {
 					$data[] = array(
 						'user_id'        => $user_id,
 						'session_status' => 'waiting',
-						'day'            => $day,
-						'base_hour'      => $details['appointment_hour'],
-						'period'         => $expected_hour['min'],
+						'day'            => sanitize_text_field( $day ),
+						'base_hour'      => sanitize_text_field( $details['appointment_hour'] ),
+						'period'         => sanitize_text_field( $expected_hour['min'] ),
 						'date_time'      => $date_time,
-						'starts'         => $expected_hour['from'],
-						'ends'           => $expected_hour['to'],
+						'starts'         => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+						'ends'           => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+						'clinic'         => sanitize_text_field( $details['appointment_clinic'] ),
 					);
 				}
 			}
