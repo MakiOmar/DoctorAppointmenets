@@ -129,48 +129,8 @@ function update_timetable_markup_callback() {
 	if ( isset( $_request['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_request['nonce'] ), 'update_timetable_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
-	$user_id       = absint( $_request['userID'] );
-	$date          = sanitize_text_field( $_request['date'] );
-	$time          = sanitize_text_field( $_request['time'] );
-	$purpose       = sanitize_text_field( $_request['purpose'] );
-	$patient_id    = sanitize_text_field( $_request['patientID'] );
-	$session_title = sanitize_text_field( $_request['sessionTitle'] );
-	$profile_link  = esc_html__( 'Waiting', 'anony-shrinks' );
-	$booked        = 'NO';
-	if ( '0' != $patient_id ) {
-		$booked       = 'Yes';
-		$profile_link = '';
-		$profiles     = explode( ',', $patient_id );
-		foreach ( $profiles as $profile ) {
-			$profile_link .= '<a href="' . esc_url( add_query_arg( 'user_id', $profile, admin_url( '/user-edit.php' ) ) ) . '">' . esc_html__( 'Profile', 'anony-shrinks' ) . '</a>&nbsp;';
-		}
-	}
-
-	$insert = snks_insert_timetable( $user_id, $date, $time, $purpose, $patient_id, $session_title );
-	$html   = '';
-	if ( $insert ) {
-		if ( '0' != $patient_id ) {
-			foreach ( $profiles as $profile ) {
-				snks_insert_session_actions( $insert, absint( $profile ), 'no' );
-			}
-		}
-		$html .= '<tr>';
-		$html .= '<td>#' . $insert . '</td>';
-		$html .= '<td>' . $date . '</td>';
-		$html .= '<td>' . $time . '</td>';
-		$html .= '<td>' . $purpose . '</td>';
-		$html .= '<td>' . $session_title . '</td>';
-		$html .= '<td>' . $profile_link . '</td>';
-		$html .= '<td>0</td>';
-		$html .= '<td>' . $booked . '</td>';
-		$html .= '<td><a href="#" class="timetable-action" data-action="delete_timetable" data-id="' . $insert . '">Delete</a></td>';
-		$html .= '</tr>';
-	}
 	wp_send_json(
-		array(
-			'resp' => $insert,
-			'html' => $html,
-		)
+		array()
 	);
 	die;
 }
