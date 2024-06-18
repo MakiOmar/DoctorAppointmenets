@@ -46,4 +46,13 @@ function snks_go_back() {
 	<?php
 	return ob_get_clean();
 }
+/**
+ * Localize time
+ *
+ * @param string $time Time.
+ * @return string
+ */
+function snks_localize_time( $time ) {
+	return str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), $time );
+}
 
