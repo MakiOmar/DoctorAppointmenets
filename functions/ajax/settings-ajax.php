@@ -62,3 +62,32 @@ add_action(
 		die();
 	}
 );
+
+add_action(
+	'wp_ajax_insert_timetable',
+	function () {
+		if ( ! snks_is_doctor() && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Doctor only.' );
+		}
+		$_req = isset( $_POST ) ? wp_unslash( $_POST ) : array();
+		// Verify the nonce.
+		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'insert_timetable_nonce' ) ) {
+			wp_send_json_error( 'Invalid nonce.' );
+		}
+		$preview_timetable = snks_get_preview_timetable();
+		if ( $preview_timetable && ! empty( $preview_timetable ) ) {
+			foreach ( $preview_timetable as $data ) {
+				if ( ! snks_timetable_exists( get_current_user_id(), $data['day'], $data['starts'], $data['ends'] ) ) {
+					snks_insert_timetable( $data );
+				}
+			}
+		}
+		wp_send_json(
+			array(
+				'resp' => true,
+			),
+		);
+
+		die();
+	}
+);

@@ -470,7 +470,11 @@ function snks_generate_preview() {
 		}
 	}
 	// Finally generate html.
-	return $table->html();
+	$output  = $table->html();
+	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
+	$output .= '<center><button id="insert-timetable">نشر</button></center>';
+	$output .= '<center id="insert-timetable-msg"></center>';
+	return $output;
 }
 
 add_action(

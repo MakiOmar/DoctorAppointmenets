@@ -262,6 +262,32 @@ add_action(
 						});
 					}
 				);
+				$('#insert-timetable').on(
+					'click',
+					function( e ) {
+						e.preventDefault();
+						$("#insert-timetable-msg").text('');
+						if ( confirm("هل أنت متأكد") !== true ) {
+							return;
+						}
+						// Perform nonce check.
+						var nonce     = '<?php echo esc_html( wp_create_nonce( 'insert_timetable_nonce' ) ); ?>';
+						// Send AJAX request.
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								nonce    : nonce,
+								action   : 'insert_timetable',
+							},
+							success: function(response) {
+								if ( response.resp ) {
+									$("#insert-timetable-msg").text('تم الحفظ بنجاح');
+								}
+							}
+						});
+					}
+				);
 				$('select[data-field-name=appointment_choosen_period]').on(
 					'change',
 					function () {
