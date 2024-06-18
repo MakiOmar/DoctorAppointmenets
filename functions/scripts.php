@@ -225,18 +225,43 @@ add_action(
 							data: {
 								selectedPeriods: selectedPeriods,
 								selectedHour: selectedHour,
+								nonce:nonce,
 								action    : 'expected_hours_output',
 							},
 							success: function(response) {
 								//console.log(response);
 								parentWrapper.find('.expected-hourse').html( response.resp );
 
-							},
-							error: function(xhr, status, error) {
-
 							}
 						});
 				}
+				$('.delete-slot').on(
+					'click',
+					function( e ) {
+						e.preventDefault();
+						if ( confirm("هل أنت متأكد") !== true ) {
+							return;
+						}
+						// Perform nonce check.
+						var nonce     = '<?php echo esc_html( wp_create_nonce( 'delete_slot_nonce' ) ); ?>';
+						var slotIndex = $(this).data('index');
+						// Send AJAX request.
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								slotIndex: slotIndex,
+								nonce    : nonce,
+								action   : 'delete_slot',
+							},
+							success: function(response) {
+								if ( response.resp ) {
+									$( '#timetable-' + slotIndex ).remove();
+								}
+							}
+						});
+					}
+				);
 				$('select[data-field-name=appointment_choosen_period]').on(
 					'change',
 					function () {

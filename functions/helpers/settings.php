@@ -419,7 +419,7 @@ function snks_get_preview_timetable() {
  */
 function snks_preview_actions( $index ) {
 	$html  = '';
-	$html .= '<a href="#" class="button" data-index="' . $index . '">Delete</a>';
+	$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '">Delete</a>';
 	return $html;
 }
 /**

@@ -38,3 +38,27 @@ add_action(
 		die();
 	}
 );
+
+add_action(
+	'wp_ajax_delete_slot',
+	function () {
+		if ( ! snks_is_doctor() && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Doctor only.' );
+		}
+		$_req = isset( $_POST ) ? wp_unslash( $_POST ) : array();
+		// Verify the nonce.
+		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'delete_slot_nonce' ) ) {
+			wp_send_json_error( 'Invalid nonce.' );
+		}
+		$preview_timetable = snks_get_preview_timetable();
+		unset( $preview_timetable[ $_req['slotIndex'] ] );
+		$update = update_user_meta( get_current_user_id(), 'preview_timetable', $preview_timetable );
+		wp_send_json(
+			array(
+				'resp' => $update,
+			),
+		);
+
+		die();
+	}
+);
