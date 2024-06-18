@@ -214,6 +214,32 @@ function snks_get_available_attendance_types_options() {
 	}
 	return $is_available;
 }
+/**
+ * Get clinics
+ *
+ * @return array
+ */
+function snks_get_clinics() {
+	$settings = snks_doctor_settings();
+	if ( ! empty( $settings['clinics_list'] ) ) {
+		return $settings['clinics_list'];
+	}
+	return false;
+}
+
+/**
+ * Get clinic
+ *
+ * @param string $key Clinic array key.
+ * @return array
+ */
+function snks_get_clinic( $key ) {
+	$clinics = snks_get_clinics();
+	if ( $clinics && ! empty( $clinics[ $key ] ) ) {
+		return $clinics[ $key ];
+	}
+	return false;
+}
 
 /**
  * Generate appointments dates
@@ -393,7 +419,7 @@ function snks_get_preview_timetable() {
  */
 function snks_preview_actions( $index ) {
 	$html  = '';
-	$html .= '<a href="#" data-index="' . $index . '">Delete</a>';
+	$html .= '<a href="#" class="button" data-index="' . $index . '">Delete</a>';
 	return $html;
 }
 /**
@@ -413,21 +439,26 @@ function snks_generate_preview() {
 		)
 	);
 	// Create table columns with a column key and column object.
-	$table->addColumn( 'status', new TableColumn( 'Status' ) );
-	$table->addColumn( 'period', new TableColumn( 'Period' ) );
-	$table->addColumn( 'datetime', new TableColumn( 'Datetime' ) );
-	$table->addColumn( 'clinic', new TableColumn( 'Clinic' ) );
-	$table->addColumn( 'actions', new TableColumn( 'Actions' ) );
-
+	$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
+	$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
+	$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
+	$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
+	$table->addColumn( 'period', new TableColumn( 'المدة' ) );
+	$table->addColumn( 'clinic', new TableColumn( 'العيادة' ) );
+	$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
+	$clinics     = snks_get_clinics();
+	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
 	if ( is_array( $timetables ) ) {
 		foreach ( $timetables as $index => $data ) {
 			// Associate cells with columns.
 			$cells = array(
-				'status'   => new TableCell( $data['session_status'] ),
-				'period'   => new TableCell( $data['period'] ),
-				'datetime' => new TableCell( $data['date_time'] ),
-				'clinic'   => new TableCell( $data['clinic'] ),
-				'actions'  => new TableCell( snks_preview_actions( $index ) ),
+				'day'      => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
+				'datetime' => new TableCell( gmdate( 'Y-m-d', strtotime( $data['date_time'] ) ), array( 'data-label' => 'التاريخ والوقت' ) ),
+				'starts'   => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+				'ends'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
+				'period'   => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
+				'clinic'   => new TableCell( $clinics[ $data['clinic'] ]['clinic_title'], array( 'data-label' => 'العيادة' ) ),
+				'actions'  => new TableCell( snks_preview_actions( $index ), array( 'data-label' => 'الخيارت' ) ),
 			);
 
 			// define row attributes.
