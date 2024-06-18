@@ -19,9 +19,9 @@ add_shortcode(
 );
 
 add_shortcode(
-	'snks_consulting_form',
+	'snks_timetable_preview',
 	function () {
-		return snks_generate_consulting_form();
+		return snks_generate_preview();
 	}
 );
 

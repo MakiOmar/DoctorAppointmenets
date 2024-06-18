@@ -47,9 +47,3 @@ function snks_go_back() {
 	return ob_get_clean();
 }
 
-add_action(
-	'wp_footer',
-	function () {
-		snks_print_r( snks_generate_timetable() );
-	}
-);

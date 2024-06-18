@@ -5,6 +5,11 @@
  * @package Shrinks
  */
 
+use erguncaner\Table\Table;
+use erguncaner\Table\TableColumn;
+use erguncaner\Table\TableRow;
+use erguncaner\Table\TableCell;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -362,3 +367,87 @@ function snks_generate_timetable() {
 	}
 	return( $data );
 }
+/**
+ * Set preview timetable
+ *
+ * @param array $data data to set.
+ * @return mixed
+ */
+function snks_set_preview_timetable( $data ) {
+	update_user_meta( get_current_user_id(), 'preview_timetable', $data );
+}
+/**
+ * Get preview timetable
+ *
+ * @return mixed
+ */
+function snks_get_preview_timetable() {
+	return get_user_meta( get_current_user_id(), 'preview_timetable', true );
+}
+
+/**
+ * Preview actions
+ *
+ * @param int $index Preview pimetable index.
+ * @return string
+ */
+function snks_preview_actions( $index ) {
+	$html  = '';
+	$html .= '<a href="#" data-index="' . $index . '">Delete</a>';
+	return $html;
+}
+/**
+ * Generate preview
+ *
+ * @return string
+ */
+function snks_generate_preview() {
+	$timetables = snks_get_preview_timetable();
+	if ( empty( $timetables ) ) {
+		return '<p>لم تقم بإضافة مواعيد</p>';
+	}
+	// First create a table.
+	$table = new Table(
+		array(
+			'id' => 'preview-timetable',
+		)
+	);
+	// Create table columns with a column key and column object.
+	$table->addColumn( 'status', new TableColumn( 'Status' ) );
+	$table->addColumn( 'period', new TableColumn( 'Period' ) );
+	$table->addColumn( 'datetime', new TableColumn( 'Datetime' ) );
+	$table->addColumn( 'clinic', new TableColumn( 'Clinic' ) );
+	$table->addColumn( 'actions', new TableColumn( 'Actions' ) );
+
+	if ( is_array( $timetables ) ) {
+		foreach ( $timetables as $index => $data ) {
+			// Associate cells with columns.
+			$cells = array(
+				'status'   => new TableCell( $data['session_status'] ),
+				'period'   => new TableCell( $data['period'] ),
+				'datetime' => new TableCell( $data['date_time'] ),
+				'clinic'   => new TableCell( $data['clinic'] ),
+				'actions'  => new TableCell( snks_preview_actions( $index ) ),
+			);
+
+			// define row attributes.
+			$attrs = array(
+				'id' => 'timetable-' . $index,
+			);
+
+			$table->addRow( new TableRow( $cells, $attrs ) );
+		}
+	}
+	// Finally generate html.
+	return $table->html();
+}
+
+add_action(
+	'jet-form-builder/custom-action/after_session_settings',
+	function () {
+		$timetables = snks_generate_timetable();
+		if ( is_array( $timetables ) ) {
+			snks_set_preview_timetable( $timetables );
+		}
+	}
+);

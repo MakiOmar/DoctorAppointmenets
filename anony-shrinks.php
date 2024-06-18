@@ -38,6 +38,7 @@ define(
 
 
 require_once SNKS_DIR . 'functions/helpers.php';
+require_once SNKS_DIR . '/vendor/autoload.php';
 
 add_action(
 	'plugins_loaded',

@@ -210,6 +210,7 @@ function snks_insert_timetable( $data ) {
 		return $wpdb->insert_id; // Return the inserted record ID.
 	}
 }
+
 /**
  * Update timetable data by ID.
  *
