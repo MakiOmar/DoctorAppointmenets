@@ -22,17 +22,29 @@ add_action(
 		$hour           = gmdate( 'h:i a', strtotime( $_req['selectedHour'] . ':00' ) );
 		$expected_hours = snks_expected_hours( $periods, $hour );
 		$html           = '';
+		$hours          = array();
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
-				$html .= sprintf( '<p class="expected-hour-text">من %1$s إلى %2$s</p>', esc_html( $expected_hour['from'] ), esc_html( $expected_hour['to'] ) );
+				$hours[] = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
+				$hours[] = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
+				$html   .= sprintf( '<p class="expected-hour-text">من %1$s إلى %2$s</p>', esc_html( $expected_hour['from'] ), esc_html( $expected_hour['to'] ) );
 			}
 		}
+		$hours = array_values( array_unique( $hours ) );
+		// Sort hours acsending.
+		usort(
+			$hours,
+			function ( $a, $b ) {
+				return strtotime( $a ) - strtotime( $b );
+			}
+		);
 		wp_send_json(
 			array(
-				'resp' => $html,
-			),
-			200,
-			JSON_UNESCAPED_UNICODE
+				'resp'        => $html,
+				'hours'       => $hours,
+				'largestHour' => end( $hours ),
+				'lowesttHour' => $hours[0],
+			)
 		);
 
 		die();

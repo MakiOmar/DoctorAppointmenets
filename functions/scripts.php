@@ -229,12 +229,25 @@ add_action(
 								action    : 'expected_hours_output',
 							},
 							success: function(response) {
-								//console.log(response);
+								//
 								parentWrapper.find('.expected-hourse').html( response.resp );
-
+								var arr = response.hours;
+								/*arr.forEach(function(element) {
+									$('option[value="' + element + '"]', parentWrapper.closest('.accordion-content')).each( function() {
+										if ( ! $(this).is(':selected')  ) {
+											$(this).prop('disabled', true)
+										}
+									} );
+								});*/
+								$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
+									if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
+										$(this).prop('disabled', true)
+									}
+								} );
 							}
 						});
 				}
+
 				$('.delete-slot').on(
 					'click',
 					function( e ) {
@@ -260,6 +273,27 @@ add_action(
 								}
 							}
 						});
+					}
+				);
+
+				$('select[data-field-name=appointment_hour]').change(function() {
+					var selectedValue = $(this).val();
+					var container     = $(this).closest('.accordion-content');
+					$('select[data-field-name=appointment_hour] option', container).prop('disabled', false);		
+					$('select[data-field-name=appointment_hour] option[value="' + selectedValue + '"]', container).not(this).prop('disabled', true);
+					$(this).find('option[value="' + selectedValue + '"]').prop('disabled', false);
+				});
+				$('.accordion-content').on(
+					'click',
+					'.jet-form-builder-repeater__new',
+					function(){
+						var container = $(this).closest('.accordion-content');
+						setTimeout(
+							function() {
+								$('select[data-field-name=appointment_choosen_period]', container).trigger('change');
+							},
+							200
+						)
 					}
 				);
 				$('#insert-timetable').on(
@@ -288,13 +322,28 @@ add_action(
 						});
 					}
 				);
-				$('select[data-field-name=appointment_choosen_period]').on(
+				$('body').on(
 					'change',
+					'select[data-field-name=appointment_choosen_period]',
 					function () {
 						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
 						var selectedPeriods = $(this).val();
-						var selectedHour    = $('select[data-field-name=appointment_hour]').val();
+						var selectedHour    = $('select[data-field-name=appointment_hour]', parentWrapper).val();
 						expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper)
+					}
+				);
+
+				$('.jet-form-builder-repeater__remove').on(
+					'click',
+					function () {
+						var container = $(this).closest('.accordion-content');
+						$('select[data-field-name=appointment_hour] option', container).prop('disabled', false);
+						setTimeout(
+							function() {
+								$('select[data-field-name=appointment_choosen_period]', container).trigger('change');
+							},
+							200
+						)
 					}
 				);
 				$('select[data-field-name=appointment_hour]').on(
