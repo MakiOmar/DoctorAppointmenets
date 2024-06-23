@@ -25,9 +25,11 @@ add_action(
 		$hours          = array();
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
-				$hours[] = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
-				$hours[] = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
-				$html   .= sprintf( '<p class="expected-hour-text">من %1$s إلى %2$s</p>', esc_html( $expected_hour['from'] ), esc_html( $expected_hour['to'] ) );
+				$expected_hour_from = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
+				$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
+				$hours[]            = $expected_hour_from;
+				$hours[]            = $expected_hour_to;
+				$html              .= sprintf( '<p class="expected-hour-text">من <span class="%1$s">%2$s</span> إلى <span class="%3$s">%4$s</span></p>', str_replace( array( ' ', ':' ), '-', $expected_hour_from ), esc_html( $expected_hour['from'] ), str_replace( array( ' ', ':' ), '-', $expected_hour_to ), esc_html( $expected_hour['to'] ) );
 			}
 		}
 		$hours = array_values( array_unique( $hours ) );
@@ -44,6 +46,7 @@ add_action(
 				'hours'       => $hours,
 				'largestHour' => end( $hours ),
 				'lowesttHour' => $hours[0],
+				'limits'      => array( $hours[0], end( $hours ) ),
 			)
 		);
 

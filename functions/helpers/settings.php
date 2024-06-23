@@ -109,9 +109,8 @@ function snks_get_periods_possibilities() {
 			}
 		}
 		$combinations[] = $combination;
-
 		// Create a duplicate of the combination and add 30, but only if the combination doesn't contain only 30.
-		if ( count( $combination ) > 1 && in_array( 30, $combination, true ) && array( 45, 30 ) !== $array && array( 30, 45 ) !== $array ) {
+		if ( in_array( 30, $combination, true ) && in_array( 60, $combination, true ) ) {
 			$duplicate      = $combination;
 			$duplicate[]    = 30;
 			$combinations[] = $duplicate;
@@ -121,7 +120,7 @@ function snks_get_periods_possibilities() {
 		usort(
 			$combinations,
 			function ( $a, $b ) {
-				return count( $b ) - count( $a );
+				return count( $a ) - count( $b );
 			}
 		);
 		$possibilities = array();

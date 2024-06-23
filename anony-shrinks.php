@@ -46,6 +46,7 @@ add_action(
 		snks_require_all_files( SNKS_DIR . 'includes' );
 		snks_require_all_files( SNKS_DIR . 'functions' );
 		snks_require_all_files( SNKS_DIR . 'classes' );
+		snks_require_all_files( SNKS_DIR . 'scripts' );
 	},
 	20
 );
