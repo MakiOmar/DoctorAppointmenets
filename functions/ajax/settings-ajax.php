@@ -66,7 +66,7 @@ add_action(
 			wp_send_json_error( 'Invalid nonce.' );
 		}
 		$preview_timetable = snks_get_preview_timetable();
-		unset( $preview_timetable[ $_req['slotIndex'] ] );
+		unset( $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ] );
 		$update = update_user_meta( get_current_user_id(), 'preview_timetable', $preview_timetable );
 		wp_send_json(
 			array(

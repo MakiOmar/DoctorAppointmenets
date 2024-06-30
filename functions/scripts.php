@@ -15,6 +15,9 @@ add_action(
 	function () {
 		?>
 		<style>
+			.preview-timetable{
+				margin-bottom: 30px;
+			}
 			/*Flat picker*/
 			.flatpickr-day.disabled{
 				position:relative;
