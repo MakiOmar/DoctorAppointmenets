@@ -10,15 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 add_shortcode(
-	'snks_to_do_form',
-	function () {
-		$html  = snks_render_to_do_days( snks_get_to_do_days() );
-		$html .= snks_generate_hourly_form( gmdate( 'Y-m-d' ) );
-		return $html;
-	}
-);
-
-add_shortcode(
 	'snks_timetable_preview',
 	function () {
 		return snks_generate_preview();
