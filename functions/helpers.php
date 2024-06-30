@@ -12,6 +12,48 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
+ * Function that groups an array of associative arrays by some key.
+ *
+ * @param string $key Property to sort by.
+ * @param array  $data Array that stores multiple associative arrays.
+ */
+function snks_group_by( $key, $data ) {
+	$result = array();
+
+	foreach ( $data as $val ) {
+		if ( array_key_exists( $key, $val ) ) {
+			$result[ $val[ $key ] ][] = $val;
+		} else {
+			$result[''][] = $val;
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * Sort $array_b items according to their position in $array_a
+ *
+ * @param array $array_a Array A.
+ * @param array $array_b Array B.
+ * @return array
+ */
+function snks_sort_days( $array_a, $array_b ) {
+	// Custom comparison function to sort according to the position in array A.
+	usort(
+		$array_b,
+		function ( $a, $b ) use ( $array_a ) {
+			// Find the positions of $a and $b in array A.
+			$pos_a = array_search( $a, $array_a, true );
+			$pos_b = array_search( $b, $array_a, true );
+
+			// Compare positions.
+			return $pos_a - $pos_b;
+		}
+	);
+	return $array_b;
+}
+/**
  * Helper that require all files in a folder/subfolders once.
  *
  * @param string $dir Directory path.
