@@ -112,3 +112,37 @@ add_action(
 		}
 	}
 );
+
+// Loop for each day settings.
+		foreach ( $app_settings as $day => $app_setting ) {
+			// Loop for each day's settings.
+			foreach ( $app_setting as $details ) {
+				if ( empty( $details['appointment_hour'] ) ) {
+					continue;
+				}
+				// Get choosen periods.
+				$periods = array_map( 'absint', explode( '-', $details['appointment_choosen_period'] ) );
+				// String to time appointment hour.
+				$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
+				// Get a list of expected hours at this day according to periods and appointment hour.
+				$expected_hours = snks_expected_hours( $periods, $appointment_hour );
+				foreach ( $expected_hours as $expected_hour ) {
+					$date_time = snks_generate_date_time( $app_settings, $day, $appointment_hour );
+					if ( ! $date_time ) {
+						continue;
+					}
+					$data[ sanitize_text_field( $day ) ][] = array(
+						'user_id'         => $user_id,
+						'session_status'  => 'waiting',
+						'day'             => sanitize_text_field( $day ),
+						'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
+						'period'          => sanitize_text_field( $expected_hour['min'] ),
+						'date_time'       => $date_time,
+						'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+						'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+						'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
+						'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
+					);
+				}
+			}
+		}

@@ -247,28 +247,41 @@ function snks_get_clinic( $key ) {
  * @return array
  */
 function snks_generate_appointments_dates( $week_days ) {
-	$days_labels     = json_decode( DAYS_ABBREVIATIONS, true );
-	$next_seven_days = array();
-	$today           = gmdate( 'D' ); // Get current day abbreviation.
-	$current_index   = array_search( $today, $week_days, true ); // Get index of current day.
-	$count           = count( $week_days ) > 7 ? 7 : count( $week_days );
-	for ( $i = 0; $i < $count; $i++ ) {
-		$next_day_index    = ( $current_index + $i ) % 7;
-		$next_day          = gmdate( 'Y-m-d', strtotime( 'next ' . $week_days[ $next_day_index ] ) );
-		$next_seven_days[] = array(
-			'day'   => $week_days[ $next_day_index ],
-			'label' => $days_labels[ $week_days[ $next_day_index ] ],
-			'date'  => $next_day,
-		);
+	// Mapping of day abbreviations to full names.
+	$day_names = json_decode( DAYS_ABBREVIATIONS, true );
+
+	// Initialize the result array.
+	$result = array();
+
+	// Get today's date.
+	$start_date = new DateTime();
+
+	for ( $i = 0; $i < 30; $i++ ) {
+		// Get the current date.
+		$current_date = clone $start_date;
+		$current_date->modify( "+$i days" );
+
+		// Get the abbreviation of the current day.
+		$day_abbr = $current_date->format( 'D' );
+
+		// Check if the abbreviation is in the provided days array.
+		if ( in_array( $day_abbr, $week_days, true ) ) {
+			// Add the formatted entry to the result array.
+			$result[] = array(
+				'day'   => $day_abbr,
+				'label' => $day_names[ $day_abbr ],
+				'date'  => $current_date->format( 'Y-m-d' ),
+			);
+		}
 	}
 	// Sort the array by date in ascending order.
 	usort(
-		$next_seven_days,
+		$result,
 		function ( $a, $b ) {
 			return strtotime( $a['date'] ) - strtotime( $b['date'] );
 		}
 	);
-	return $next_seven_days;
+	return $result;
 }
 /**
  * Get doctors appointments settings
@@ -358,34 +371,49 @@ function snks_generate_date_time( $app_settings, $day, $appointment_hour ) {
  * @return array
  */
 function snks_generate_timetable() {
+	// Get appointments settings.
 	$app_settings = snks_get_appointments_settings();
-	$data         = array();
-	$user_id      = get_current_user_id();
+	// Array to store appointments details.
+	$data    = array();
+	$user_id = get_current_user_id();
 	if ( ! empty( $app_settings ) ) {
-		foreach ( $app_settings as $day => $app_setting ) {
-			foreach ( $app_setting as $details ) {
-				if ( empty( $details['appointment_hour'] ) ) {
-					continue;
-				}
-				$periods          = array_map( 'absint', explode( '-', $details['appointment_choosen_period'] ) );
-				$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
-				$expected_hours   = snks_expected_hours( $periods, $appointment_hour );
-				foreach ( $expected_hours as $expected_hour ) {
-					$date_time = snks_generate_date_time( $app_settings, $day, $appointment_hour );
-					if ( ! $date_time ) {
+		$week_days          = array_keys( $app_settings );
+		$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days ) );
+
+		foreach ( $appointments_dates as $day => $dates_details ) {
+			// Day settings ( e.g. SAT ).
+			$day_settings = $app_settings[ $day ];
+			// Loop through generated dates.
+			foreach ( $dates_details as $date_details ) {
+				$date = $date_details['date'];
+				foreach ( $day_settings as $details ) {
+					if ( empty( $details['appointment_hour'] ) ) {
 						continue;
 					}
-					$data[] = array(
-						'user_id'        => $user_id,
-						'session_status' => 'waiting',
-						'day'            => sanitize_text_field( $day ),
-						'base_hour'      => sanitize_text_field( $details['appointment_hour'] ),
-						'period'         => sanitize_text_field( $expected_hour['min'] ),
-						'date_time'      => $date_time,
-						'starts'         => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
-						'ends'           => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
-						'clinic'         => sanitize_text_field( $details['appointment_clinic'] ),
-					);
+					// Get choosen periods.
+					$periods = array_map( 'absint', explode( '-', $details['appointment_choosen_period'] ) );
+					// String to time appointment hour.
+					$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
+					// Get a list of expected hours at this day according to periods and appointment hour.
+					$expected_hours = snks_expected_hours( $periods, $appointment_hour );
+					foreach ( $expected_hours as $expected_hour ) {
+						$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $date . ' ' . $appointment_hour );
+						if ( $date_time ) {
+							$date_time = $date_time->format( 'Y-m-d h:i a' );
+						}
+						$data[ sanitize_text_field( $day ) ][] = array(
+							'user_id'         => $user_id,
+							'session_status'  => 'waiting',
+							'day'             => sanitize_text_field( $day ),
+							'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
+							'period'          => sanitize_text_field( $expected_hour['min'] ),
+							'date_time'       => $date_time,
+							'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+							'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+							'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
+							'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
+						);
+					}
 				}
 			}
 		}
@@ -413,67 +441,14 @@ function snks_get_preview_timetable() {
 /**
  * Preview actions
  *
- * @param int $index Preview pimetable index.
+ * @param string $day Preview timetable day.
+ * @param int    $index Preview timetable index.
  * @return string
  */
-function snks_preview_actions( $index ) {
+function snks_preview_actions( $day, $index ) {
 	$html  = '';
-	$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '">Delete</a>';
+	$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '" data-day="' . $day . '">Delete</a>';
 	return $html;
-}
-/**
- * Generate preview
- *
- * @return string
- */
-function snks_generate_preview() {
-	$timetables = snks_get_preview_timetable();
-	if ( empty( $timetables ) ) {
-		return '<p>لم تقم بإضافة مواعيد</p>';
-	}
-	// First create a table.
-	$table = new Table(
-		array(
-			'id' => 'preview-timetable',
-		)
-	);
-	// Create table columns with a column key and column object.
-	$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
-	$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
-	$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
-	$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
-	$table->addColumn( 'period', new TableColumn( 'المدة' ) );
-	$table->addColumn( 'clinic', new TableColumn( 'العيادة' ) );
-	$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
-	$clinics     = snks_get_clinics();
-	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
-	if ( is_array( $timetables ) ) {
-		foreach ( $timetables as $index => $data ) {
-			// Associate cells with columns.
-			$cells = array(
-				'day'      => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
-				'datetime' => new TableCell( gmdate( 'Y-m-d', strtotime( $data['date_time'] ) ), array( 'data-label' => 'التاريخ والوقت' ) ),
-				'starts'   => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
-				'ends'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
-				'period'   => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
-				'clinic'   => new TableCell( $clinics[ $data['clinic'] ]['clinic_title'], array( 'data-label' => 'العيادة' ) ),
-				'actions'  => new TableCell( snks_preview_actions( $index ), array( 'data-label' => 'الخيارت' ) ),
-			);
-
-			// define row attributes.
-			$attrs = array(
-				'id' => 'timetable-' . $index,
-			);
-
-			$table->addRow( new TableRow( $cells, $attrs ) );
-		}
-	}
-	// Finally generate html.
-	$output  = $table->html();
-	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
-	$output .= '<center><button id="insert-timetable">نشر</button></center>';
-	$output .= '<center id="insert-timetable-msg"></center>';
-	return $output;
 }
 
 add_action(
@@ -485,3 +460,62 @@ add_action(
 		}
 	}
 );
+
+/**
+ * Generate preview
+ *
+ * @return string
+ */
+function snks_generate_preview() {
+	$timetables = snks_get_preview_timetable();
+	if ( empty( $timetables ) ) {
+		return '<p>لم تقم بإضافة مواعيد</p>';
+	}
+	$clinics     = snks_get_clinics();
+	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
+	$output      = '';
+	if ( is_array( $timetables ) ) {
+		foreach ( $timetables as $day => $timetable ) {
+			// First create a table.
+			$table = new Table(
+				array(
+					'id'    => $day . '-preview-timetable',
+					'class' => 'preview-timetable',
+				)
+			);
+			// Create table columns with a column key and column object.
+			$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
+			$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
+			$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
+			$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
+			$table->addColumn( 'period', new TableColumn( 'المدة' ) );
+			$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
+			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
+			foreach ( $timetable as $index => $data ) {
+				// Associate cells with columns.
+				$cells = array(
+					'day'        => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
+					'datetime'   => new TableCell( gmdate( 'Y-m-d', strtotime( $data['date_time'] ) ), array( 'data-label' => 'التاريخ والوقت' ) ),
+					'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+					'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
+					'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
+					'attendance' => new TableCell( $data['attendance_type'], array( 'data-label' => 'الحضور' ) ),
+					'actions'    => new TableCell( snks_preview_actions( $data['day'], $index ), array( 'data-label' => 'الخيارت' ) ),
+				);
+
+				// define row attributes.
+				$attrs = array(
+					'id' => 'timetable-' . $data['day'] . '-' . $index,
+				);
+
+				$table->addRow( new TableRow( $cells, $attrs ) );
+			}
+			// Finally generate html.
+			$output .= $table->html();
+		}
+	}
+	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
+	$output .= '<center><button id="insert-timetable">نشر</button></center>';
+	$output .= '<center id="insert-timetable-msg"></center>';
+	return $output;
+}
