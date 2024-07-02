@@ -12,6 +12,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
+ * Count date
+ *
+ * @param string $date Date.
+ * @param array  $timetables Timetables.
+ * @return int
+ */
+function snks_count_date( $date, $timetables ) {
+	// Initialize the counter.
+	$count = 0;
+
+	// Loop through the array.
+	foreach ( $timetables as $item ) {
+		// Check if the date key exists and matches the date to check.
+		if ( isset( $item['date'] ) && $item['date'] === $date ) {
+			++$count;
+		}
+	}
+	return $count;
+}
+/**
  * Function that groups an array of associative arrays by some key.
  *
  * @param string $key Property to sort by.
@@ -30,7 +50,22 @@ function snks_group_by( $key, $data ) {
 
 	return $result;
 }
+/**
+ * Days indexes
+ *
+ * @return array
+ */
+function snks_days_indexes() {
+	$weekday_numbers  = array( 5, 0, 1, 2, 3, 4, 6 );
+	$abbreviated_days = array();
 
+	foreach ( $weekday_numbers as $number ) {
+		$date = new DateTime();
+		$date->setISODate( 2022, 1, $number + 1 ); // Set the ISO Week Date.
+		$abbreviated_days[ $date->format( 'D' ) ] = $number;
+	}
+	return( $abbreviated_days );
+}
 /**
  * Sort $array_b items according to their position in $array_a
  *

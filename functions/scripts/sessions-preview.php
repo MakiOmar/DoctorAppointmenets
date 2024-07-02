@@ -10,11 +10,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 add_action(
+	'wp_enqueue_scripts',
+	function () {
+		wp_enqueue_script( 'jquery-ui-datepicker' );
+	}
+);
+
+add_action(
 	'wp_footer',
 	function () {
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				$('.timetable-preview-tab').on(
+					'click',
+					function() {
+						var target = $( this ).data('target');
+						console.log(target);
+						if ( $('.' + target).hasClass('timetable-show') ) {
+							$('.' + target).slideUp();
+							$('.' + target).removeClass('timetable-show');
+						} else {
+							$('.' + target).slideDown();
+							$('.' + target).addClass('timetable-show');
+						}
+					}
+				);
+				$('input[name=date]').datepicker({
+					dateFormat: 'yy-mm-dd',
+					beforeShowDay: function(date) {
+						var enabledDay = parseInt($(this).data('day'));
+						var day = date.getDay();
+						return [(day === enabledDay)];
+					}
+				});
 				$('.delete-slot').on(
 					'click',
 					function( e ) {

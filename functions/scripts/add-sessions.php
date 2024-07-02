@@ -129,24 +129,29 @@ add_action(
 						});
 				}
 				flatpickr.localize(flatpickr.l10ns.ar);
-				$('#dateField').flatpickr(
-					{
-						"disable": [
-							function(date) {
-								var currentDate = new Date();
-								currentDate.setHours(0, 0, 0, 0);
-								date.setHours(0, 0, 0, 0);
+				function flatPickrInput() {
+					$('input[data-field-name=off_days]').flatpickr(
+						{
+							"disable": [
+								function(date) {
+									var currentDate = new Date();
+									currentDate.setHours(0, 0, 0, 0);
+									date.setHours(0, 0, 0, 0);
 
-								// return true to disable
-								return ( date.getDay() === 0 || currentDate > date );
-							}
-						],
-						"locale": {
-							"firstDayOfWeek": 6, // start week on Monday
-							
+									// return true to disable. To disable sunday date.getDay() === 0
+									return ( currentDate > date );
+								}
+							],
+							"locale": {
+								"firstDayOfWeek": 6, // start week on Monday
+								
+							},
+							"mode" : 'multiple'
 						}
-					}
-				);
+					);
+				}
+				flatPickrInput();
+
 				
 				$('.appointment-settings-submit').on( 'click', function(e){
 					if ( ! checkRequiredSettings() ) {

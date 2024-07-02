@@ -15,6 +15,17 @@ add_action(
 	function () {
 		?>
 		<style>
+			.timetable-preview-item{
+				display: none;
+			}
+			.timetable-preview-tab{
+				cursor: pointer;
+			}
+			.ui-datepicker{
+				width:350px;
+				right: 0;
+				margin: auto;
+			}
 			.preview-timetable{
 				margin-bottom: 30px;
 			}
@@ -104,7 +115,13 @@ add_action(
 			.jet-form-builder-repeater__row {
 				padding: 5px 0;
 			}
-			table {
+			table.ui-datepicker-calendar, .ui-datepicker{
+				background-color: #3a4091;
+			}
+			td:not(.ui-datepicker-unselectable) a{
+				color:#fff
+			}
+			table:not(.ui-datepicker-calendar) {
 				border: 1px solid #ccc;
 				border-collapse: collapse;
 				margin: 0;
@@ -113,12 +130,12 @@ add_action(
 				table-layout: fixed;
 			}
 
-			table caption {
+			table:not(.ui-datepicker-calendar) caption {
 				font-size: 1.5em;
 				margin: .5em 0 .75em;
 			}
 
-			table tr {
+			table:not(.ui-datepicker-calendar) tr {
 				background-color: #3a4091;
 				border: 1px solid #3a4091;
 				padding: .35em;
@@ -126,27 +143,27 @@ add_action(
 				color: #fff;
 			}
 
-			table th,
+			table:not(.ui-datepicker-calendar) th,
 			table td {
 				padding: .625em;
 				text-align: center;
 			}
 
-			table th {
+			table:not(.ui-datepicker-calendar) th {
 				font-size: .85em;
 				text-transform: uppercase;
 			}
 
 			@media screen and (max-width: 600px) {
-			table {
+				table:not(.ui-datepicker-calendar) {
 				border: 0;
 			}
 
-			table caption {
+			table:not(.ui-datepicker-calendar) caption {
 				font-size: 1.3em;
 			}
 			
-			table thead {
+			table:not(.ui-datepicker-calendar) thead {
 				border: none;
 				clip: rect(0 0 0 0);
 				height: 1px;
@@ -157,20 +174,20 @@ add_action(
 				width: 1px;
 			}
 			
-			table tr {
+			table:not(.ui-datepicker-calendar) tr {
 				border-bottom: 3px solid #ddd;
 				display: block;
 				margin-bottom: .625em;
 			}
 			
-			table td {
+			table:not(.ui-datepicker-calendar) td {
 				border-bottom: 1px solid #ddd;
 				display: block;
 				font-size: .8em;
 				text-align: <?php echo is_rtl() ? 'left' : 'right'; ?>;
 			}
 			
-			table td::before {
+			table:not(.ui-datepicker-calendar) td::before {
 				/*
 				* aria-label has no advantage, it won't be read inside a table
 				content: attr(aria-label);
@@ -181,7 +198,7 @@ add_action(
 				text-transform: uppercase;
 			}
 			
-			table td:last-child {
+			table:not(.ui-datepicker-calendar) td:last-child {
 				border-bottom: 0;
 			}
 			}

@@ -408,6 +408,7 @@ function snks_generate_timetable() {
 							'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
 							'period'          => sanitize_text_field( $expected_hour['min'] ),
 							'date_time'       => $date_time,
+							'date'            => $date,
 							'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
 							'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
 							'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
@@ -460,6 +461,36 @@ add_action(
 		}
 	}
 );
+add_action(
+	'jet-form-builder/custom-action/Insert_appointment',
+	function ( $_req ) {
+		$timetables     = snks_generate_timetable();
+		$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
+		if ( $day_timetables ) {
+			foreach ( $day_timetables as $timetable ) {
+				$_date   = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
+				$hour    = gmdate( 'h:i:s', strtotime( $_req['app_hour'] ) );
+				$periods = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) );
+
+				$expected_hours = snks_expected_hours( $periods, $hour );
+				$hours          = array();
+				if ( ! empty( $expected_hours ) ) {
+					foreach ( $expected_hours as $expected_hour ) {
+						$expected_hour_from = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
+						$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
+						$hours[]            = $expected_hour_from;
+						$hours[]            = $expected_hour_to;
+					}
+				}
+				$hours = array_values( array_unique( $hours ) );
+				if ( $_date === $_req['date'] && ( $timetable['starts'] === $hour || in_array( gmdate( 'H:i', strtotime( $hour ) ), $hours, true ) ) ) {
+					wp_safe_redirect( add_query_arg( 'error', 'conflict', site_url( '/my-account/sessions-preview/' ) ) );
+					exit;
+				}
+			}
+		}
+	}
+);
 
 /**
  * Generate preview
@@ -471,11 +502,24 @@ function snks_generate_preview() {
 	if ( empty( $timetables ) ) {
 		return '<p>لم تقم بإضافة مواعيد</p>';
 	}
-	$clinics     = snks_get_clinics();
+	$days_indexes = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
+	$days_sorted  = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
+
+	uksort(
+		$timetables,
+		function ( $a, $b ) use ( $days_sorted ) {
+			$pos_a = array_search( $a, $days_sorted, true );
+			$pos_b = array_search( $b, $days_sorted, true );
+			return $pos_a - $pos_b;
+		}
+	);
+
 	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
 	$output      = '';
 	if ( is_array( $timetables ) ) {
 		foreach ( $timetables as $day => $timetable ) {
+			$date_groups = snks_group_by( 'date', $timetable );
+			// https://github.com/erguncaner/table.
 			// First create a table.
 			$table = new Table(
 				array(
@@ -491,27 +535,46 @@ function snks_generate_preview() {
 			$table->addColumn( 'period', new TableColumn( 'المدة' ) );
 			$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
 			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
-			foreach ( $timetable as $index => $data ) {
-				// Associate cells with columns.
-				$cells = array(
-					'day'        => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
-					'datetime'   => new TableCell( gmdate( 'Y-m-d', strtotime( $data['date_time'] ) ), array( 'data-label' => 'التاريخ والوقت' ) ),
-					'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
-					'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
-					'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
-					'attendance' => new TableCell( $data['attendance_type'], array( 'data-label' => 'الحضور' ) ),
-					'actions'    => new TableCell( snks_preview_actions( $data['day'], $index ), array( 'data-label' => 'الخيارت' ) ),
-				);
-
-				// define row attributes.
-				$attrs = array(
-					'id' => 'timetable-' . $data['day'] . '-' . $index,
-				);
-
-				$table->addRow( new TableRow( $cells, $attrs ) );
+			$position = 0;
+			foreach ( $date_groups as $date => $details ) {
+				if ( count( $details ) > 1 ) {
+					// Associate cells with columns.
+					$cells = array(
+						'day' => new TableCell( $days_labels[ $day ] . ' ' . $date, array( 'colspan' => '7' ) ),
+					);
+					// define row attributes.
+					$attrs = array(
+						'id'          => 'timetable-tab-' . $day . '-' . $position,
+						'class'       => 'timetable-preview-tab',
+						'data-target' => 'timetable-' . $date,
+					);
+					$table->addRow( new TableRow( $cells, $attrs ) );
+					++$position;
+				}
+				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
+				foreach ( $details as $data ) {
+					$index = array_search( $data, $timetable, true );
+					// Associate cells with columns.
+					$cells = array(
+						'day'        => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
+						'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
+						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
+						'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
+						'attendance' => new TableCell( $data['attendance_type'], array( 'data-label' => 'الحضور' ) ),
+						'actions'    => new TableCell( snks_preview_actions( $data['day'], $index ), array( 'data-label' => 'الخيارت' ) ),
+					);
+					// define row attributes.
+					$attrs = array(
+						'id'    => 'timetable-' . $data['day'] . '-' . $index,
+						'class' => 'timetable-' . $date . $class,
+					);
+					$table->addRow( new TableRow( $cells, $attrs ) );
+				}
 			}
 			// Finally generate html.
 			$output .= $table->html();
+			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], $days_labels[ $data['day'] ], 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
 		}
 	}
 	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
