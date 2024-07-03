@@ -15,6 +15,7 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				var weekDays = ['sun','mon','tue','wed','thu','fri','sat'];
 				function checkRequiredSettings() {
 					var pass = true;
 					if ( ! $('input[name=attendance_type]').is(':checked') ) {
@@ -129,7 +130,7 @@ add_action(
 						});
 				}
 				flatpickr.localize(flatpickr.l10ns.ar);
-				function flatPickrInput() {
+				function flatPickrInput( disabledDays = false ) {
 					$('input[data-field-name=off_days]').flatpickr(
 						{
 							"disable": [
@@ -137,9 +138,13 @@ add_action(
 									var currentDate = new Date();
 									currentDate.setHours(0, 0, 0, 0);
 									date.setHours(0, 0, 0, 0);
-
-									// return true to disable. To disable sunday date.getDay() === 0
-									return ( currentDate > date );
+									// To disable sunday date.getDay() === 0
+									if ( disabledDays ) {
+										return ( disabledDays.includes( date.getDay() ) || currentDate > date );
+									} else {
+										// return true to disable.
+										return ( currentDate > date );
+									}
 								}
 							],
 							"locale": {
@@ -150,9 +155,22 @@ add_action(
 						}
 					);
 				}
-				flatPickrInput();
-
-				
+				function disableEmptyDays() {
+					var disabledDays = [];
+					$( '.jet-form-builder-repeater__items' ).each(
+						function(){
+							if ( '' === $(this).html() ) {
+								var closestRepeater = $( this ).closest( '.jet-form-builder-repeater' );
+								var repeaterName    = closestRepeater.attr('name');
+								var weekDay         = repeaterName.replace('_timetable','');
+								var dayIndex        = weekDays.indexOf( weekDay );
+								disabledDays.push(dayIndex);
+							}
+						}
+					);
+					flatPickrInput( disabledDays );
+				}
+				disableEmptyDays();
 				$('.appointment-settings-submit').on( 'click', function(e){
 					if ( ! checkRequiredSettings() ) {
 						e.preventDefault();
@@ -209,6 +227,7 @@ add_action(
 					'click',
 					'.jet-form-builder-repeater__new',
 					function(){
+						disableEmptyDays();
 						var container = $(this).closest('.accordion-content');
 						setTimeout(
 							function() {
@@ -255,14 +274,16 @@ add_action(
 					}
 				);
 
-				$('.jet-form-builder-repeater__remove').on(
+				$(document).on(
 					'click',
+					'.jet-form-builder-repeater__remove',
 					function () {
 						var container = $(this).closest('.accordion-content');
 						$('select[data-field-name=appointment_hour] option', container).prop('disabled', false);
 						setTimeout(
 							function() {
 								$('select[data-field-name=appointment_choosen_period]', container).trigger('change');
+								disableEmptyDays();
 							},
 							200
 						)
