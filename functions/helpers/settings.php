@@ -294,6 +294,9 @@ function snks_get_appointments_settings() {
 	$settings  = array();
 	foreach ( $week_days as $abb ) {
 		$abb_settings = get_user_meta( $user_id, lcfirst( $abb ) . '_timetable', true );
+		if ( ! $abb_settings || empty( $abb_settings ) ) {
+			continue;
+		}
 		if ( $abb_settings && ! empty( $abb_settings ) ) {
 			$settings[ $abb ] = $abb_settings;
 		}
@@ -379,6 +382,7 @@ function snks_generate_timetable() {
 	if ( ! empty( $app_settings ) ) {
 		$week_days          = array_keys( $app_settings );
 		$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days ) );
+		$off_days           = snks_get_off_days();
 
 		foreach ( $appointments_dates as $day => $dates_details ) {
 			// Day settings ( e.g. SAT ).
@@ -403,7 +407,7 @@ function snks_generate_timetable() {
 						}
 						$data[ sanitize_text_field( $day ) ][] = array(
 							'user_id'         => $user_id,
-							'session_status'  => 'waiting',
+							'session_status'  => in_array( $date, $off_days, true ) ? 'closed' : 'waiting',
 							'day'             => sanitize_text_field( $day ),
 							'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
 							'period'          => sanitize_text_field( $expected_hour['min'] ),
@@ -491,6 +495,30 @@ add_action(
 		}
 	}
 );
+/**
+ * Get off days
+ *
+ * @param mixed $user_id User ID.
+ * @return mixed
+ */
+function snks_get_off_days( $user_id = false ) {
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
+	$off_days = get_user_meta( get_current_user_id(), 'off_days', true );
+	if ( ! $off_days || empty( $off_days ) ) {
+		return array();
+	}
+	$off_days = str_replace( ' ', '', $off_days );
+	return explode( ',', $off_days );
+}
+
+/**
+ * Get available appointments slots
+ */
+function snks_available_appointments_slots() {
+	return;
+}
 
 /**
  * Generate preview
@@ -502,6 +530,7 @@ function snks_generate_preview() {
 	if ( empty( $timetables ) ) {
 		return '<p>لم تقم بإضافة مواعيد</p>';
 	}
+	$off_days     = snks_get_off_days();
 	$days_indexes = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
 	$days_sorted  = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
 
@@ -537,6 +566,11 @@ function snks_generate_preview() {
 			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
 			$position = 0;
 			foreach ( $date_groups as $date => $details ) {
+				if ( in_array( $date, $off_days, true ) ) {
+					$is_off = ' snks-is-off';
+				} else {
+					$is_off = '';
+				}
 				if ( count( $details ) > 1 ) {
 					// Associate cells with columns.
 					$cells = array(
@@ -545,7 +579,7 @@ function snks_generate_preview() {
 					// define row attributes.
 					$attrs = array(
 						'id'          => 'timetable-tab-' . $day . '-' . $position,
-						'class'       => 'timetable-preview-tab',
+						'class'       => 'timetable-preview-tab' . $is_off,
 						'data-target' => 'timetable-' . $date,
 					);
 					$table->addRow( new TableRow( $cells, $attrs ) );
@@ -554,6 +588,11 @@ function snks_generate_preview() {
 				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
 				foreach ( $details as $data ) {
 					$index = array_search( $data, $timetable, true );
+					if ( in_array( $date, $off_days, true ) ) {
+						$actions = 'أجازة';
+					} else {
+						$actions = snks_preview_actions( $data['day'], $index );
+					}
 					// Associate cells with columns.
 					$cells = array(
 						'day'        => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
@@ -562,12 +601,12 @@ function snks_generate_preview() {
 						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
 						'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
 						'attendance' => new TableCell( $data['attendance_type'], array( 'data-label' => 'الحضور' ) ),
-						'actions'    => new TableCell( snks_preview_actions( $data['day'], $index ), array( 'data-label' => 'الخيارت' ) ),
+						'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
 					);
 					// define row attributes.
 					$attrs = array(
 						'id'    => 'timetable-' . $data['day'] . '-' . $index,
-						'class' => 'timetable-' . $date . $class,
+						'class' => 'timetable-' . $date . $class . $is_off,
 					);
 					$table->addRow( new TableRow( $cells, $attrs ) );
 				}

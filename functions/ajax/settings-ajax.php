@@ -89,17 +89,36 @@ add_action(
 		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'insert_timetable_nonce' ) ) {
 			wp_send_json_error( 'Invalid nonce.' );
 		}
-		$preview_timetable = snks_get_preview_timetable();
-		if ( $preview_timetable && ! empty( $preview_timetable ) ) {
-			foreach ( $preview_timetable as $data ) {
-				if ( ! snks_timetable_exists( get_current_user_id(), $data['day'], $data['starts'], $data['ends'] ) ) {
-					snks_insert_timetable( $data );
+		$preview_timetables = snks_get_preview_timetable();
+		$errors             = array();
+		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
+			foreach ( $preview_timetables as $preview_timetable ) {
+				foreach ( $preview_timetable as $data ) {
+					$exists = snks_timetable_exists( get_current_user_id(), $data['date_time'], $data['day'], $data['starts'], $data['ends'] );
+					if ( empty( $exists ) ) {
+						$inserting ['user_id']         = $data['user_id'];
+						$inserting ['session_status']  = $data['session_status'];
+						$inserting ['day']             = $data['day'];
+						$inserting ['base_hour']       = $data['base_hour'];
+						$inserting ['period']          = $data['period'];
+						$inserting ['date_time']       = $data['date_time'];
+						$inserting ['starts']          = $data['starts'];
+						$inserting ['ends']            = $data['ends'];
+						$inserting ['clinic']          = $data['clinic'];
+						$inserting ['attendance_type'] = $data['attendance_type'];
+
+						$inserted = snks_insert_timetable( $inserting );
+						if ( ! $inserted ) {
+							$errors[] = $data;
+						}
+					}
 				}
 			}
 		}
 		wp_send_json(
 			array(
-				'resp' => true,
+				'resp'   => true,
+				'errors' => $errors,
 			),
 		);
 

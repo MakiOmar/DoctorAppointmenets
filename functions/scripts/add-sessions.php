@@ -131,28 +131,37 @@ add_action(
 				}
 				flatpickr.localize(flatpickr.l10ns.ar);
 				function flatPickrInput( disabledDays = false ) {
-					$('input[data-field-name=off_days]').flatpickr(
-						{
-							"disable": [
-								function(date) {
-									var currentDate = new Date();
-									currentDate.setHours(0, 0, 0, 0);
-									date.setHours(0, 0, 0, 0);
-									// To disable sunday date.getDay() === 0
-									if ( disabledDays ) {
-										return ( disabledDays.includes( date.getDay() ) || currentDate > date );
-									} else {
-										// return true to disable.
-										return ( currentDate > date );
-									}
+					$('input[data-field-name=off_days]').each(
+						function() {
+							var existingValue = $(this).val();
+							var datesArray = existingValue.split(',');
+							flatpickr(
+								this,
+								{
+									"defaultDate": datesArray,
+									"disable"    : [
+										function(date) {
+											var currentDate = new Date();
+											currentDate.setHours(0, 0, 0, 0);
+											date.setHours(0, 0, 0, 0);
+											// To disable sunday date.getDay() === 0
+											if ( disabledDays ) {
+												return ( disabledDays.includes( date.getDay() ) || currentDate > date );
+											} else {
+												// return true to disable.
+												return ( currentDate > date );
+											}
+										}
+									],
+									"locale"     : {
+										"firstDayOfWeek": 6, // start week on Monday
+										
+									},
+									"mode"       : 'multiple'
 								}
-							],
-							"locale": {
-								"firstDayOfWeek": 6, // start week on Monday
-								
-							},
-							"mode" : 'multiple'
+							);
 						}
+						
 					);
 				}
 				function disableEmptyDays() {
@@ -259,6 +268,7 @@ add_action(
 								if ( response.resp ) {
 									$("#insert-timetable-msg").text('تم الحفظ بنجاح');
 								}
+								console.log( response.errors );
 							}
 						});
 					}

@@ -131,26 +131,29 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 /**
  * If Timetable exists
  *
- * @param int   $user_id User ID.
- * @param int   $day Day abbreviation.
- * @param mixed $starts Stat time.
- * @param mixed $ends end time.
+ * @param int    $user_id User ID.
+ * @param string $date_time Date time.
+ * @param string $day Day Abbreviation.
+ * @param mixed  $starts Stat time.
+ * @param mixed  $ends end time.
  * @return mixed
  */
-function snks_timetable_exists( $user_id, $day, $starts, $ends ) {
+function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends ) {
 	global $wpdb;
 
 	//phpcs:disable
 	// Execute the query.
-	$results = $wpdb->get_row(
+	$results = $wpdb->get_results(
 		$wpdb->prepare(
 			"SELECT *
 		FROM {$wpdb->prefix}snks_provider_timetable
 		WHERE user_id = %d
+		AND date_time = %s
 		AND day = %s
 		AND starts = %s
 		AND ends = %s",
 			$user_id,
+			$date_time,
 			$day,
 			$starts,
 			$ends

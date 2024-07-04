@@ -34,6 +34,7 @@ function snks_create_timetable_table() {
         starts TIME NOT NULL,
         ends TIME NOT NULL,
         clinic VARCHAR(255) NOT NULL,
+        attendance_type VARCHAR(255) NOT NULL,
 		order_id INT(11) NOT NULL,
         PRIMARY KEY (ID)
     ) $collate";
