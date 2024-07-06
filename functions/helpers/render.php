@@ -58,9 +58,10 @@ function snks_generate_days( $days, $input_name ) {
  * @param int    $user_id User's ID.
  * @param mixed  $bookable_days_obj Bookable dates object.
  * @param string $input_name Input name.
+ * @param string $period Input Period.
  * @return string
  */
-function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_name ) {
+function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_name, $period ) {
 	$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
 	$bookable_days        = array_unique(
 		array_map(
@@ -90,10 +91,11 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 		$html .= "<span>$day_name</span>";
 		$html .= '</label>';
 		$html .= sprintf(
-			'<input id="%1$s" class="' . $input_name . '-radio' . $class . '" type="radio" name="' . $input_name . '" value="%2$s" data-user="%3$s">',
+			'<input id="%1$s" class="' . $input_name . '-radio' . $class . '" type="radio" name="' . $input_name . '" value="%2$s" data-user="%3$s" data-period="%4$s">',
 			esc_attr( $current_date ),
 			esc_attr( $current_date ),
-			$user_id
+			$user_id,
+			$period
 		);
 		$html .= '</p>';
 
@@ -105,10 +107,12 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
  * Generate hourly form
  *
  * @param int $user_id User's ID.
+ * @param int $period Session period.
  * @return string
  */
-function snks_generate_consulting_form( $user_id ) {
-	$bookable_days_obj = get_bookable_dates( $user_id );
+function snks_generate_consulting_form( $user_id, $period ) {
+	$bookable_days_obj = get_bookable_dates( $user_id, $period );
+	snks_print_r( $bookable_days_obj );
 	if ( empty( $bookable_days_obj ) ) {
 		return '<p>عفواً! لا تتوفر مواعيد للحجز</p>';
 	}
@@ -126,7 +130,20 @@ function snks_generate_consulting_form( $user_id ) {
 			$booking_id  = $booking->ID;
 			$submit_text = 'تعديل الموعد';
 		}
-		$user                 = wp_get_current_user();
+		$user = wp_get_current_user();
+		if ( '60' === $period ) {
+			$minutes_pricing        = '60_minutes_pricing';
+			$minutes_pricing_others = '60_minutes_pricing_others';
+		} elseif ( '45' === $period ) {
+			$minutes_pricing        = '45_minutes_pricing';
+			$minutes_pricing_others = '45_minutes_pricing_others';
+		} elseif ( '30' === $period ) {
+			$minutes_pricing        = '30_minutes_pricing';
+			$minutes_pricing_others = '30_minutes_pricing_others';
+		}
+		$minutes_countries_pricing        = get_user_meta( $user->ID, $minutes_pricing, true );
+		$minutes_countries_pricing_others = get_user_meta( $user->ID, $minutes_pricing_others, true );
+
 		$consulting_price     = 0; // Set price.
 		$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
 		$bookable_days        = array_unique(
@@ -170,7 +187,7 @@ function snks_generate_consulting_form( $user_id ) {
 			$html .= '</h5>';
 			$html .= '<div class="atrn-form-days anony-content-slider-container">';
 			$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
-			$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day' );
+			$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period );
 			$html .= '</div>';
 			$html .= '</div>';
 			if ( $slider ) {

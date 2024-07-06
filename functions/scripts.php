@@ -118,6 +118,7 @@ add_action(
 						}
 						var slectedDay = $(this).val();
 						var userID     = $(this).data('user');
+						var period     = $(this).data('period');
 						// Perform nonce check.
 						var nonce = '<?php echo esc_html( wp_create_nonce( 'fetch_start_times_nonce' ) ); ?>';
 						// Send AJAX request.
@@ -127,6 +128,7 @@ add_action(
 							data: {
 								slectedDay: slectedDay,
 								userID    : userID,
+								period    : period,
 								action    : 'fetch_start_times',
 							},
 							success: function(response) {

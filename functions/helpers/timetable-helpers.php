@@ -267,16 +267,17 @@ function snks_delete_timetable( $id ) {
  * Get bookable dates
  *
  * @param int    $user_id User's ID.
+ * @param int    $period Session period.
  * @param string $_for Period to get dates for.
  * @return mixed
  */
-function get_bookable_dates( $user_id, $_for = '+1 month' ) {
+function get_bookable_dates( $user_id, $period, $_for = '+1 month' ) {
 	global $wpdb;
 	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
 	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) );
-	$end_date  = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_date ) ) );
-	$cache_key = 'bookable-dates-' . $current_date;
-	$results   = wp_cache_get( $cache_key );//phpcs:disable
+	$end_date     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_date ) ) );
+	$cache_key    = 'bookable-dates-' . $current_date;
+	$results      = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 	if ( ! $results ) {
 		$results = $wpdb->get_results(
@@ -284,11 +285,13 @@ function get_bookable_dates( $user_id, $_for = '+1 month' ) {
 				"SELECT *
 				FROM {$wpdb->prefix}snks_provider_timetable
 				WHERE user_id = %d
+				AND period = %d
 				AND date_time
 				BETWEEN %s AND %s
 				AND session_status = %s
 				ORDER BY date_time {$_order}",
 				$user_id,
+				$period,
 				$current_date,
 				$end_date,
 				'waiting',
@@ -305,23 +308,38 @@ function get_bookable_dates( $user_id, $_for = '+1 month' ) {
  *
  * @param int    $user_id User's ID.
  * @param string $date Date.
+ * @param int    $period Period.
  * @return mixed
  */
-function snks_user_appointments_by_date( $user_id, $date ) {
+function snks_user_appointments_by_date_period( $user_id, $date, $period ) {
 	global $wpdb;
 	//$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) + ( 2 * 3600 )  );
-	$cache_key = 'dates-appoointments-' . $user_id . '-' . $date;
+	$cache_key = 'dates-appoointments-' . $user_id . '-' . $date . '-' . $period;
 	$results   = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+	snks_error_log( $wpdb->prepare(
+		"SELECT *
+		FROM {$wpdb->prefix}snks_provider_timetable
+		WHERE user_id = %d
+		AND period = %d
+		AND DATE(date_time) = %s
+		ORDER BY date_time {$_order}",
+		$user_id,
+		absint( $period ),
+		$date
+		//$current_date
+	));
 	if ( ! $results ) {
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT *
 				FROM {$wpdb->prefix}snks_provider_timetable
 				WHERE user_id = %d
+				AND period = %d
 				AND DATE(date_time) = %s
 				ORDER BY date_time {$_order}",
 				$user_id,
+				absint( $period ),
 				$date
 				//$current_date
 			)

@@ -64,7 +64,16 @@ add_shortcode(
 
 add_shortcode(
 	'snks_appointment_form',
-	function () {
+	function ( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'period' => '',
+			),
+			$atts
+		);
+		if ( ! in_array( $atts['period'], array( '60', '45', '30' ), true ) ) {
+			return;
+		}
 		//phpcs:disable
 		preg_match( '/\d+/', urldecode( $_SERVER[ 'REQUEST_URI' ] ), $match );
 		if ( ! $match ) {
@@ -72,6 +81,6 @@ add_shortcode(
 		}
 		//phpcs:enable
 		$user_id = array_shift( $match );
-		return snks_generate_consulting_form( 36 );
+		return '<p>Please pay attention that you are using explict user ID of 36, you need to change this later in the code.</p><br>' . snks_generate_consulting_form( 36, absint( $atts['period'] ) );
 	}
 );
