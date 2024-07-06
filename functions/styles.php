@@ -146,8 +146,8 @@ add_action(
 				border-color: #000;
 			}
 
-			table:not(.ui-datepicker-calendar) th,
-			table td {
+			table:not(.ui-datepicker-calendar):not( .shop_table ) th,
+			table:not( .shop_table ) td {
 				padding: .625em;
 				text-align: center;
 			}
@@ -258,7 +258,7 @@ add_action(
 				background-color: rgb(255,255,255,0.20)!important;
 			}
 			.snks-form-days {
-				background-color: #78a8b614;
+				background-color: #12114F14;
 				width: 100%;
 				border-radius: 10px;
 			}
@@ -284,7 +284,7 @@ add_action(
 				display: none;
 			}
 			.anony-day-radio label.active-day, input[type=submit]{
-				background-color: #78A8B6;
+				background-color: #12114F;
 				color:#fff;
 				border:none
 			}
@@ -319,12 +319,14 @@ add_action(
 				flex-direction: column;
 				justify-content: center;
 				align-items: center;
+				width: 100%;
+				height: 100%;
 			}
 			#snks-available-hours li.available-time input{
 				display:none
 			}
 			#snks-available-hours li.available-time.active-hour{
-				background-color: #78A8B6;
+				background-color: #12114F;
 				color: #fff;
 			}
 			.snks-form .row{
@@ -378,7 +380,7 @@ add_action(
 				position: relative;
 			}
 			.snks-radio.snks-checked{
-				background-color: #78a8b65c;
+				background-color: #12114F5c;
 			}
 			.snks-radio label{
 				position: absolute;
@@ -462,7 +464,7 @@ add_action(
 				height: 25px;
 				width: 25px;
 				margin: 0 3px;
-				background-color: #78a8b6;
+				background-color: #12114F;
 				color: #fff;
 				outline: none;
 				border-radius: 50%;

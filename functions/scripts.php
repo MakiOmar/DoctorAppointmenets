@@ -117,6 +117,7 @@ add_action(
 							$( this ).prev('label').addClass( 'active-day' );
 						}
 						var slectedDay = $(this).val();
+						var userID     = $(this).data('user');
 						// Perform nonce check.
 						var nonce = '<?php echo esc_html( wp_create_nonce( 'fetch_start_times_nonce' ) ); ?>';
 						// Send AJAX request.
@@ -125,10 +126,11 @@ add_action(
 							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
 							data: {
 								slectedDay: slectedDay,
+								userID    : userID,
 								action    : 'fetch_start_times',
 							},
 							success: function(response) {
-
+								console.log(response);
 								$( '#snks-available-hours' ).html( response.resp );
 							},
 							error: function(xhr, status, error) {

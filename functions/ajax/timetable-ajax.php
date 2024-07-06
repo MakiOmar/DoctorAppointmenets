@@ -174,9 +174,9 @@ function fetch_start_times_callback() {
 	if ( isset( $_request['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_request['nonce'] ), 'fetch_start_times_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
-	$day = sanitize_text_field( $_request['slectedDay'] );
-
-	$availables = get_bookable_date_available_times( $day );
+	$date       = sanitize_text_field( $_request['slectedDay'] );
+	$user_id    = sanitize_text_field( $_request['userID'] );
+	$availables = snks_user_appointments_by_date( $user_id, $date );
 	$html       = snks_render_consulting_hours( $availables );
 	wp_send_json(
 		array(

@@ -94,7 +94,7 @@ add_shortcode(
 				height: 40px;
 				border-radius: 5px;
 				background-color: #F7F5F9;
-				border: 1px solid #78A8B6;
+				border: 1px solid #12114F;
 				text-align: center;
 				margin-right: 5px;
 				padding: 3px;
@@ -105,8 +105,8 @@ add_shortcode(
 			#verification_code_form_submit {
 				width: 100%;
 				border-radius: 5px;
-				background-color: #78A8B6;
-				border: 1px solid #78A8B6;
+				background-color: #12114F;
+				border: 1px solid #12114F;
 				color: #fff;
 				margin-top: 15px;
 			}

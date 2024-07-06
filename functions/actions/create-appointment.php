@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || die();
 
 
-add_action( 'woocommerce_new_order', 'snks_woocommerce_payment_complete_action' );
+add_action( 'woocommerce_order_status_completed', 'snks_woocommerce_payment_complete_action' );
 
 /**
  * Function for `woocommerce_payment_complete` action-hook.
@@ -22,16 +22,16 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 	$customer_id  = $order->get_customer_id();
 	$booking_day  = get_post_meta( $order_id, 'booking_day', true );
 	$booking_hour = get_post_meta( $order_id, 'booking_hour', true );
-	if ( ! empty( $booking_day ) && ! empty( $booking_hour ) ) {
-		$timetable = snks_get_timetable( false, $booking_day, $booking_hour );
-		if ( $timetable->booking_availability ) {
+	$booking_id   = get_post_meta( $order_id, 'booking_id', true );
+	if ( ! empty( $booking_id ) ) {
+		$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
+		if ( 'waiting' === $timetable->session_status ) {
 			$updated = snks_update_timetable(
 				$timetable->ID,
 				array(
-					'booking_availability' => false,
-					'client_id'            => $customer_id,
-					'session_status'       => 'open',
-					'order_id'             => $order_id,
+					'client_id'      => $customer_id,
+					'session_status' => 'open',
+					'order_id'       => $order_id,
 				)
 			);
 			if ( $updated ) {
@@ -86,4 +86,3 @@ add_action(
 		echo wp_kses_post( $html );
 	}
 );
-// SELECT * FROM {prefix}wpds_snks_provider_timetable WHERE client_id = current_user_id AND purpose = 'session' AND booking_availability = '0';.
