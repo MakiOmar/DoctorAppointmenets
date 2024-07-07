@@ -276,7 +276,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month' ) {
 	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
 	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) );
 	$end_date     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_date ) ) );
-	$cache_key    = 'bookable-dates-' . $current_date;
+	$cache_key    = 'bookable-dates-' . $current_date . '-' . $period;
 	$results      = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 	if ( ! $results ) {

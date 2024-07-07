@@ -288,12 +288,12 @@ add_action(
 				color:#fff;
 				border:none
 			}
-			#snks-available-hours{
+			.snks-available-hours{
 				list-style-type: none;
 				margin: 0;
 				padding: 0;
 			}
-			#snks-available-hours li{
+			.snks-available-hours li{
 				display: inline-flex;
 				justify-content: center;
 				align-items: center;
@@ -301,7 +301,7 @@ add_action(
 				border-radius: 5px;
 				margin-left: 10px;
 			}
-			#snks-available-hours li.available-time{
+			.snks-available-hours li.available-time{
 				background-color: #E0EBEF;
 				color: #000;
 				border-radius: 50px;
@@ -314,7 +314,7 @@ add_action(
 				margin-bottom: 10px;
 
 			}
-			#snks-available-hours li.available-time label{
+			.snks-available-hours li.available-time label{
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
@@ -322,10 +322,10 @@ add_action(
 				width: 100%;
 				height: 100%;
 			}
-			#snks-available-hours li.available-time input{
+			.snks-available-hours li.available-time input{
 				display:none
 			}
-			#snks-available-hours li.available-time.active-hour{
+			.snks-available-hours li.available-time.active-hour{
 				background-color: #12114F;
 				color: #fff;
 			}

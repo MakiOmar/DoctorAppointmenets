@@ -27,11 +27,6 @@ function snks_generate_days( $days, $input_name ) {
 	$html = '';
 	// Generate checkboxes for each date.
 	while ( strtotime( $current_date ) <= strtotime( $end_date ) ) {
-		if ( $current_date === $today ) {
-			$class = ' current-day';
-		} else {
-			$class = '';
-		}
 		$day_number = gmdate( 'j', strtotime( $current_date ) ); // Day of the month without leading zeros.
 		$day_name   = gmdate( 'D', strtotime( $current_date ) ); // Full day name.
 		$month_name = gmdate( 'F', strtotime( $current_date ) ); // Full day name.
@@ -41,7 +36,7 @@ function snks_generate_days( $days, $input_name ) {
 		$html .= "<span>$day_name</span>";
 		$html .= '</label>';
 		$html .= sprintf(
-			'<input id="%1$s" class="' . $input_name . '-radio' . $class . '" type="radio" name="' . $input_name . '" value="%2$s"></p>',
+			'<input id="%1$s" class="' . $input_name . '-radio" type="radio" name="' . $input_name . '" value="%2$s"></p>',
 			esc_attr( $current_date ),
 			esc_attr( $current_date )
 		);
@@ -77,21 +72,16 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 	$n_bookable_days = array_slice( $bookable_days, 0, 30 );
 	foreach ( $n_bookable_days as $index => $current_date ) {
 		//phpcs:disable Universal.Operators.StrictComparisons.LooseEqual
-		if ( 0 == $index ) {
-			$class = ' current-day';
-		} else {
-			$class = '';
-		}
 		$day_number = gmdate( 'j', strtotime( $current_date ) ); // Day of the month without leading zeros.
 		$day_name   = gmdate( 'D', strtotime( $current_date ) ); // Full day name.
 		$month_name = gmdate( 'F', strtotime( $current_date ) ); // Full day name.
 		//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		$html .= '<p class="anony-content-slide anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '">';
+		$html .= '<p class="anony-content-slide anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
 		$html .= "<span>$day_number</span>";
 		$html .= "<span>$day_name</span>";
 		$html .= '</label>';
 		$html .= sprintf(
-			'<input id="%1$s" class="' . $input_name . '-radio' . $class . '" type="radio" name="' . $input_name . '" value="%2$s" data-user="%3$s" data-period="%4$s">',
+			'<input id="%1$s-%4$s" class="' . $input_name . '-radio" type="radio" name="' . $input_name . '" value="%2$s" data-user="%3$s" data-period="%4$s">',
 			esc_attr( $current_date ),
 			esc_attr( $current_date ),
 			$user_id,
@@ -112,7 +102,6 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
  */
 function snks_generate_consulting_form( $user_id, $period ) {
 	$bookable_days_obj = get_bookable_dates( $user_id, $period );
-	snks_print_r( $bookable_days_obj );
 	if ( empty( $bookable_days_obj ) ) {
 		return '<p>عفواً! لا تتوفر مواعيد للحجز</p>';
 	}
@@ -169,7 +158,7 @@ function snks_generate_consulting_form( $user_id, $period ) {
 			$direction = is_rtl() ? 'true' : 'false';
 
 			$html  = '';
-			$html .= '<form id="consulting-form" action="/?direct_add_to_cart" method="post">';
+			$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="/?direct_add_to_cart" method="post">';
 			$html .= '<h5>';
 			$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<path d="M8 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
@@ -213,7 +202,7 @@ function snks_generate_consulting_form( $user_id, $period ) {
 			</svg>';
 			$html .= '&nbsp;تحديد وقت الحجز';
 			$html .= '</h5>';
-			$html .= '<ul id="snks-available-hours"></ul>';
+			$html .= '<ul class="snks-available-hours"></ul>';
 			$html .= '<hr>';
 			$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $consulting_price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
 			$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';

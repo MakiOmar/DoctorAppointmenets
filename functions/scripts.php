@@ -49,70 +49,13 @@ add_action(
 					}
 				);
 				$('body').height( $(window).height() );
-				$( '.anony-day-radio' ).on(
-					'change',
-					function(){
-						$( '.anony-day-radio label' ).removeClass( 'active-day' );
-						$( this ).closest( '.anony-day-radio' ).find('label').addClass( 'active-day' );
-					}
-				);
+
 				$( 'body' ).on(
 					'change',
-					'.active-todo-page input[name=current-week-day]',
+					'.current-month-day-radio',
 					function () {
-						var slectedDay = $(this).val();
-						var hour;
-						$( '.to-do-input' ).each(
-							function () {
-								hour = $(this).data( 'hour' );
-								$(this).attr( 'name', slectedDay + '[' + hour + ']' );
-								$( this ).val( '' );
-							}
-						);
-						// Perform nonce check.
-						var nonce = '<?php echo esc_html( wp_create_nonce( 'fetch_to_do_nonce' ) ); ?>';
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: {
-								slectedDay: slectedDay,
-								action    : 'fetch_to_do',
-							},
-							success: function(response) {
-								if (  response.toDo ) {
-									var toDos = JSON.parse( response.toDo );
-									var keysArray = Object.keys(toDos);
-									var length = keysArray.length;
-									for (let i = 0; i < length; i++) {
-										var attributeValue = slectedDay + '[' + i + ']';
-										var escapedAttributeValue = attributeValue.replace(/([!"#$%&'()*+,./:;<=>?@[\]^`{|}~])/g, "\\$1");
-										$( 'input[name=' + escapedAttributeValue + ']' ).val( toDos[i] );
-									}
-								}
-
-							},
-							error: function(xhr, status, error) {
-								console.error('Error:', error);
-							}
-						});
-
-					}
-				);
-				$( 'body' ).on(
-					'change',
-					'.hour-radio',
-					function () {
-						$( '.available-time' ).removeClass( 'active-hour' );
-						if ($(this).is(':checked')) {
-							$( this ).closest('.available-time').addClass( 'active-hour' );
-						}
-					}
-				);
-				$( '.current-month-day-radio' ).on(
-					'change',
-					function () {
-						$( '.anony-day-radio' ).find('label').removeClass( 'active-day' );
+						var parentForm = $( this ).closest('.consulting-form');
+						$( '.anony-day-radio', parentForm ).find('label').removeClass( 'active-day' );
 						if ($(this).is(':checked')) {
 							$( this ).prev('label').addClass( 'active-day' );
 						}
@@ -132,8 +75,7 @@ add_action(
 								action    : 'fetch_start_times',
 							},
 							success: function(response) {
-								console.log(response);
-								$( '#snks-available-hours' ).html( response.resp );
+								$( '.snks-available-hours', $( '.consulting-form-' + period ) ).html( response.resp );
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);
@@ -142,62 +84,33 @@ add_action(
 
 					}
 				);
-				$('#todo-pages-container .anony-content-slider-control').on('click','.anony-content-slider-next', function(e) {
-					e.preventDefault();
-					var activePage = $( '.active-todo-page' );
-					if ( activePage.prev( '.todo-page' ).length > 0 ) {
-						$( '.todo-page' ).removeClass( 'active-todo-page' );
-						activePage.prev( '.todo-page' ).addClass( 'active-todo-page' );
-						$('.active-todo-page .current-week-day:first-child').find( '.current-week-day-radio' ).click();
-					}
-					
-					
-				});
-
-				$('#todo-pages-container .anony-content-slider-control').on('click','.anony-content-slider-prev', function(e) {
-					e.preventDefault();
-					var activePage = $( '.active-todo-page' );
-					if ( activePage.next( '.todo-page' ).length > 0 ) {
-						$( '.todo-page' ).removeClass( 'active-todo-page' );
-						activePage.next( '.todo-page' ).addClass( 'active-todo-page' );
-						$('.active-todo-page .current-week-day:first-child').find( '.current-week-day-radio' ).click();
-					}
-					
-				});
-				
-				//$( '.current-month-day-radio' ).val();
-				$('.current-day').click();
-				function toDoSave( formData ) {
-					// Perform nonce check.
-					var nonce = '<?php echo esc_html( wp_create_nonce( 'update_to_do_nonce' ) ); ?>';
-					// Send AJAX request.
-					$.ajax({
-						type: 'POST',
-						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-						data: formData,
-						success: function(response) {
-							// Handle the response data as needed.
-						},
-						error: function(xhr, status, error) {
-							console.error('Error:', error);
-						}
-					});
-				}
-				$('body').on(
-					'focusout',
-					'.to-do-input',
+				$( 'body' ).on(
+					'change',
+					'.hour-radio',
 					function () {
-						$('#to-do-form').submit();
+						$( '.available-time' ).removeClass( 'active-hour' );
+						if ($(this).is(':checked')) {
+							$( this ).closest('.available-time').addClass( 'active-hour' );
+						}
 					}
 				);
-				$('#to-do-form').on(
-					'submit',
-					function ( e ) {
-						e.preventDefault();
-						const formData = $(this).serialize();
-						toDoSave( formData );
+				$('.consulting-form').each(
+					function() {
+						var thisForm = $( this );
+						if ( $('.active-day').length < 1 ) {
+							setInterval(
+								function() {
+									var label = thisForm.find( '.anony-day-radio:first' ).find('label');
+									if ( ! label.hasClass( 'active-day' ) ) {
+										label.click();
+									}
+								},
+								800
+							)
+						}
 					}
 				);
+
 				$('.doctor_actions').on(
 					'submit',
 					function (e) {
@@ -259,7 +172,7 @@ add_action(
 				);
 				$( 'body' ).on(
 					'focusout',
-					'#patient-nickname, #family-nickname',
+					'#patient-nickname',
 					function (e) {
 						if ( '' !== $(this).next('input').val() ) {
 							return;
@@ -424,10 +337,10 @@ add_action(
 				return isInsideContainer
 			};
 			jQuery(document).ready(function($) {
-				$("#consulting-form").on(
+				$(".consulting-form").on(
 					'submit',
 					function(event){
-						if ( $('input[name="selected-hour"]:checked').length === 0 || $('input[name="current-month-day"]:checked').length === 0  ) {
+						if ( $( this ).find('input[name="selected-hour"]:checked').length === 0 || $( this ).find('input[name="current-month-day"]:checked').length === 0  ) {
 							event.preventDefault();
 							alert('فضلاً تأكد من أنك قمت بتحديد اليوم والساعة');
 						}
@@ -469,7 +382,7 @@ add_action(
 					var initialPosition = slideWidth;
 				<?php } ?>
 				// Slide to the next slide.
-				$('#consulting-form .anony-content-slider-control').on('click','.anony-content-slider-next', function(e) {
+				$('.consulting-form .anony-content-slider-control').on('click','.anony-content-slider-next', function(e) {
 					e.preventDefault();
 					if ( offScreenSlides >= 0 ) {
 						offScreenSlides = offScreenSlides - 1;
@@ -478,7 +391,7 @@ add_action(
 						offScreenSlides = 0;
 						return;
 					}
-					var $currentSlide = $('.anony-content-slide:first-child');
+					var $currentSlide = $('.anony-content-slide:first');
 					var width = $currentSlide.outerWidth();
 
 					slider.animate(
@@ -488,7 +401,7 @@ add_action(
 				});
 
 				// Slide to the previous slide.
-				$('#consulting-form .anony-content-slider-control').on('click','.anony-content-slider-prev', function(e) {
+				$('.consulting-form .anony-content-slider-control').on('click','.anony-content-slider-prev', function(e) {
 					e.preventDefault();
 					
 					
@@ -501,7 +414,7 @@ add_action(
 						return;
 					}
 					
-					var $currentSlide = $('.anony-content-slide:first-child');
+					var $currentSlide = $('.anony-content-slide:first');
 					var width = $currentSlide.outerWidth();
 					slider.animate(
 					{ 'margin-<?php echo ! is_rtl() ? 'left' : 'right'; ?>': '+=' + width },
