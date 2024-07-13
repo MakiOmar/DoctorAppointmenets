@@ -96,11 +96,15 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 /**
  * Generate hourly form
  *
- * @param int $user_id User's ID.
- * @param int $period Session period.
+ * @param int    $user_id User's ID.
+ * @param int    $period Session period.
+ * @param string $price Price.
  * @return string
  */
-function snks_generate_consulting_form( $user_id, $period ) {
+function snks_generate_consulting_form( $user_id, $period, $price ) {
+	if ( ! $user_id ) {
+		return 'Form error!';
+	}
 	$bookable_days_obj = get_bookable_dates( $user_id, $period );
 	if ( empty( $bookable_days_obj ) ) {
 		return '<p>عفواً! لا تتوفر مواعيد للحجز</p>';
@@ -119,21 +123,7 @@ function snks_generate_consulting_form( $user_id, $period ) {
 			$booking_id  = $booking->ID;
 			$submit_text = 'تعديل الموعد';
 		}
-		$user = wp_get_current_user();
-		if ( '60' === $period ) {
-			$minutes_pricing        = '60_minutes_pricing';
-			$minutes_pricing_others = '60_minutes_pricing_others';
-		} elseif ( '45' === $period ) {
-			$minutes_pricing        = '45_minutes_pricing';
-			$minutes_pricing_others = '45_minutes_pricing_others';
-		} elseif ( '30' === $period ) {
-			$minutes_pricing        = '30_minutes_pricing';
-			$minutes_pricing_others = '30_minutes_pricing_others';
-		}
-		$minutes_countries_pricing        = get_user_meta( $user->ID, $minutes_pricing, true );
-		$minutes_countries_pricing_others = get_user_meta( $user->ID, $minutes_pricing_others, true );
 
-		$consulting_price     = 0; // Set price.
 		$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
 		$bookable_days        = array_unique(
 			array_map(
@@ -152,7 +142,7 @@ function snks_generate_consulting_form( $user_id, $period ) {
 			$slider_class = '';
 			$slider       = false;
 		}
-		if ( ! current_user_can( 'manage_options' ) && ! in_array( 'customer', $user->roles, true ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! snks_is_patient() ) {
 			$html = '<p>عفواً غير مسموح</p>';
 		} else {
 			$direction = is_rtl() ? 'true' : 'false';
@@ -204,9 +194,11 @@ function snks_generate_consulting_form( $user_id, $period ) {
 			$html .= '</h5>';
 			$html .= '<ul class="snks-available-hours"></ul>';
 			$html .= '<hr>';
-			$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $consulting_price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
+			$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
 			$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
 			$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
+			$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
+			$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
 			$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
 			$html .= '<input type="submit" value="' . $submit_text . '">';
 			$html .= '</form>';

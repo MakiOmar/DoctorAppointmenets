@@ -32,6 +32,16 @@ add_action(
 		if ( ! $timetable || empty( $timetable ) ) {
 			return;
 		}
+
+		$user_id = $timetable->user_id;
+
+		if ( absint( $user_id ) !== absint( $_req['user-id'] ) ) {
+			WC()->cart->empty_cart();
+			// Redirects to the checkout page.
+			wp_safe_redirect( site_url( $_req['_wp_http_referer'] ) );
+			// Safely closes the function.
+			exit();
+		}
 		$form_data = array(
 			'booking_day'  => sanitize_text_field( $_req['current-month-day'] ),
 			'booking_hour' => snks_localize_time(
@@ -42,6 +52,8 @@ add_action(
 				)
 			),
 			'booking_id'   => sanitize_text_field( $_req['selected-hour'] ),
+			'user_id'      => sanitize_text_field( $_req['user-id'] ),
+			'period'       => sanitize_text_field( $_req['period'] ),
 		);
 		//phpcs:enable.
 		WC()->session->set( 'consulting_form_data', $form_data );
@@ -118,9 +130,14 @@ add_action(
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return;
 		}
+		$country  = 'EG';
+		$user_id  = $session['user_id'];
+		$period   = $session['period'];
+		$pricings = snks_doctor_pricings( $user_id );
+		$price    = get_price_by_period_and_country( $period, $country, $pricings );
 		//phpcs:enable
 		foreach ( $cart_object->cart_contents as $cart_item_key => $value ) {
-			$custom_price = 0; // Set price.
+			$custom_price = $price; // Set price.
 			$value['data']->set_price( $custom_price );
 		}
 		return $cart_object;

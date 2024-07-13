@@ -64,23 +64,31 @@ add_shortcode(
 
 add_shortcode(
 	'snks_appointment_form',
-	function ( $atts ) {
-		$atts = shortcode_atts(
-			array(
-				'period' => '',
-			),
-			$atts
-		);
-		if ( ! in_array( $atts['period'], array( '60', '45', '30' ), true ) ) {
-			return;
+	function () {
+		global $wp;
+		$html  = '';
+		$forms = '';
+		if ( isset( $wp->query_vars ) && 'doctor' === $wp->query_vars['pagename'] ) {
+			$user_id = snks_url_get_doctors_id();
+			if ( $user_id ) {
+				$avialable_periods = snks_get_available_periods( $user_id );
+				$country           = 'EG';
+				$pricings          = snks_doctor_pricings( $user_id );
+				if ( is_array( $avialable_periods ) ) {
+					$tabs = '<ul id="consulting-forms-tabs">';
+					foreach ( $avialable_periods as $period ) {
+						$price  = get_price_by_period_and_country( $period, $country, $pricings );
+						$tabs  .= '<li class="consulting-forms-tab" data-target="consulting-form-' . esc_attr( $period ) . '">' . sprintf( '%1$s %2$s ( %3$s %4$s )', esc_html( $period ), 'دقيقة', esc_html( $price ), 'جنيه' ) . '</li>';
+						$forms .= snks_generate_consulting_form( $user_id, absint( $period ), $price );
+					}
+					$tabs .= '</ul>';
+				}
+			}
 		}
-		//phpcs:disable
-		preg_match( '/\d+/', urldecode( $_SERVER[ 'REQUEST_URI' ] ), $match );
-		if ( ! $match ) {
-			return;
+		if ( ! empty( $forms ) ) {
+			$html = $tabs . '<div id="consulting-forms-container">' . $forms . '</div>';
 		}
-		//phpcs:enable
-		$user_id = array_shift( $match );
-		return '<p>Please pay attention that you are using explict user ID of 36, you need to change this later in the code.</p><br>' . snks_generate_consulting_form( 36, absint( $atts['period'] ) );
+		$html .= '<p>Please note that we have used EG as default country temporarily</p>';
+		return $html;
 	}
 );

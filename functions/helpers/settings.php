@@ -17,27 +17,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Return doctor settings
  *
+ * @param mixed $user_id User's ID or false for current user.
  * @return array An array of settings if is a doctor.
  */
-function snks_doctor_settings() {
+function snks_doctor_settings( $user_id = false ) {
 	$settings = array();
-	if ( snks_is_doctor() || current_user_can( 'manage_options' ) ) {
-		$user_id                               = get_current_user_id();
-		$settings['60_minutes']                = get_user_meta( $user_id, '60-minutes', true );
-		$settings['45_minutes']                = get_user_meta( $user_id, '45-minutes', true );
-		$settings['30_minutes']                = get_user_meta( $user_id, '30-minutes', true );
-		$settings['enable_discount']           = get_user_meta( $user_id, 'enable_discount', true );
-		$settings['discount_percent']          = get_user_meta( $user_id, 'discount_percent', true );
-		$settings['to_be_old_number']          = get_user_meta( $user_id, 'to_be_old_number', true );
-		$settings['to_be_old_unit']            = get_user_meta( $user_id, 'to_be_old_unit', true );
-		$settings['allow_appointment_change']  = get_user_meta( $user_id, 'allow_appointment_change', true );
-		$settings['free_change_before_number'] = get_user_meta( $user_id, 'free_change_before_number', true );
-		$settings['free_change_before_unit']   = get_user_meta( $user_id, 'free_change_before_unit', true );
-		$settings['block_if_before_number']    = get_user_meta( $user_id, 'block_if_before_number', true );
-		$settings['block_if_before_unit']      = get_user_meta( $user_id, 'block_if_before_unit', true );
-		$settings['attendance_type']           = get_user_meta( $user_id, 'attendance_type', true );
-		$settings['clinics_list']              = get_user_meta( $user_id, 'clinics_list', true );
+	if ( ! $user_id ) {
+		if ( snks_is_doctor() || current_user_can( 'manage_options' ) ) {
+			$user_id = get_current_user_id();
+		}
 	}
+	$settings['60_minutes']                = get_user_meta( $user_id, '60-minutes', true );
+	$settings['45_minutes']                = get_user_meta( $user_id, '45-minutes', true );
+	$settings['30_minutes']                = get_user_meta( $user_id, '30-minutes', true );
+	$settings['enable_discount']           = get_user_meta( $user_id, 'enable_discount', true );
+	$settings['discount_percent']          = get_user_meta( $user_id, 'discount_percent', true );
+	$settings['to_be_old_number']          = get_user_meta( $user_id, 'to_be_old_number', true );
+	$settings['to_be_old_unit']            = get_user_meta( $user_id, 'to_be_old_unit', true );
+	$settings['allow_appointment_change']  = get_user_meta( $user_id, 'allow_appointment_change', true );
+	$settings['free_change_before_number'] = get_user_meta( $user_id, 'free_change_before_number', true );
+	$settings['free_change_before_unit']   = get_user_meta( $user_id, 'free_change_before_unit', true );
+	$settings['block_if_before_number']    = get_user_meta( $user_id, 'block_if_before_number', true );
+	$settings['block_if_before_unit']      = get_user_meta( $user_id, 'block_if_before_unit', true );
+	$settings['attendance_type']           = get_user_meta( $user_id, 'attendance_type', true );
+	$settings['clinics_list']              = get_user_meta( $user_id, 'clinics_list', true );
 
 	return $settings;
 }
@@ -45,10 +48,11 @@ function snks_doctor_settings() {
 /**
  * Get doctor's available periods
  *
+ * @param mixed $user_id User's ID or false for current user.
  * @return array
  */
-function snks_get_available_periods() {
-	$settings     = snks_doctor_settings();
+function snks_get_available_periods( $user_id = false ) {
+	$settings     = snks_doctor_settings( $user_id );
 	$is_available = array();
 	if ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) {
 		$is_available[] = 60;
@@ -62,6 +66,41 @@ function snks_get_available_periods() {
 	return $is_available;
 }
 
+/**
+ * Get country price by period
+ *
+ * @param string $period Period.
+ * @param string $country_code Country code.
+ * @param array  $data_array Data array.
+ * @return mixed
+ */
+function get_price_by_period_and_country( $period, $country_code, $data_array ) {
+	if ( isset( $data_array[ $period ]['countries'] ) ) {
+		foreach ( $data_array[ $period ]['countries'] as $item ) {
+			if ( $item['country_code'] === $country_code ) {
+				return $item['price'];
+			}
+		}
+	}
+	return false;
+}
+/**
+ * Get doctor pricings.
+ *
+ * @param int $user_id User's ID.
+ * @return array
+ */
+function snks_doctor_pricings( $user_id ) {
+	$available_periods = snks_get_available_periods( $user_id );
+	$pricings          = array();
+	foreach ( $available_periods as $period ) {
+		$pricings[ $period ] = array(
+			'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
+			'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
+		);
+	}
+	return $pricings;
+}
 /**
  * Get doctor's available periods
  *

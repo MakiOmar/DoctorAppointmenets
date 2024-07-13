@@ -133,3 +133,19 @@ function snks_localize_time( $time ) {
 	return str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), $time );
 }
 
+/**
+ * Get current doctors id form doctors page URL
+ *
+ * @return mixed
+ */
+function snks_url_get_doctors_id() {
+	//phpcs:disable
+	preg_match( '/\d+/', urldecode( $_SERVER[ 'REQUEST_URI' ] ), $match );
+	if ( ! $match ) {
+		return false;
+	}
+	//phpcs:enable
+	$user_id = array_shift( $match );
+	return $user_id;
+}
+

@@ -36,14 +36,19 @@ add_action(
 						}
 					}
 				);
-				$('input[name=date]').datepicker({
+
+				$('input[name=date], input[data-field-name=date]').datepicker({
 					dateFormat: 'yy-mm-dd',
 					beforeShowDay: function(date) {
 						var enabledDay = parseInt($(this).data('day'));
 						var day = date.getDay();
-						return [(day === enabledDay)];
+						var currentDate = new Date();
+						currentDate.setHours(0, 0, 0, 0);
+						date.setHours(0, 0, 0, 0);
+						return [(day === enabledDay) && currentDate < date ];
 					}
 				});
+
 				$('.delete-slot').on(
 					'click',
 					function( e ) {

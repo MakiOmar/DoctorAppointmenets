@@ -14,6 +14,34 @@ add_action(
 	function () {
 		?>
 		<style>
+			/* Reset default list styles */
+			ul#consulting-forms-tabs {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+			}
+
+			/* Style the list items as horizontal tabs */
+			ul#consulting-forms-tabs li {
+				display: inline-block;
+				margin-right: 10px;
+				padding: 5px 10px;
+				background-color: #eaeaea;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			/* Apply active tab styles */
+			ul#consulting-forms-tabs li.active {
+				background-color: #007bff;
+				color: #fff;
+			}
+			.consulting-form{
+				display: none;
+			}
+			form.consulting-form:first-child{
+				display: block;
+			}
 			.timetable-preview-item{
 				display: none;
 			}

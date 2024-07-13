@@ -46,25 +46,31 @@ add_action(
 				}
 				function checkHoursOverlap(A, B) {
 					const hoursOverlaps = [];
-					const timeLastItemOfB   = new Date(`1970-01-01T${B[B.length - 1]}`);
+					const timeLastItemOfB   = new Date(`1970-01-01T${B[B.length - 1]}`); // DateTime for the last item of B.
+					// Loop A
 					for (let i = 0; i < A.length; i++) {
-						const hourA = A[i];
+						const hourA = A[i]; // First hour of A.
 						var overlapped = false;
+						// loop through B.
 						for (let j = 0; j < B.length; j += 2) {
-							const startB = B[j];
-							const endB = B[j + 1];
-							const timeA = new Date(`1970-01-01T${hourA}`);
-							const timeStartB = new Date(`1970-01-01T${startB}`);
-							const timeEndB = new Date(`1970-01-01T${endB}`);
-
-							if ( timeA < timeLastItemOfB && ( hourA === startB || hourA === endB )  ) {
-								overlapped = true;
+							const startB = B[j]; // Compare start hour of B.
+							const endB = B[j + 1]; // Compare end hour of B.
+							const timeA = new Date(`1970-01-01T${hourA}`); // DateTime for the first item of A.
+							const timeStartB = new Date(`1970-01-01T${startB}`); // DateTime for the compare start item of B.
+							const timeEndB = new Date(`1970-01-01T${endB}`); // DateTime for the compare end item of B.
+							// If the diff equals 30 monutes then no overlap.
+							//if ( timeEndB - timeA !== 1800000 ) {
+								/**
+								 * If DateTime for the first item of A less than the DateTime for the last item of B. ( Because if greater not conflict happens ).
+								 * And First hour of A equals Compare start hour of B or First hour of A equals Compare end hour of B
+								 * Or DateTime for the first item of A greater of DateTime for the compare start item of B and less than DateTime for the compare end item of B
+								 */
+								//console.log( timeEndB - timeA, [endB, hourA] );
+								if ( ( timeA < timeLastItemOfB && ( hourA === startB || hourA === endB ) ) || ( timeA > timeStartB && timeA < timeEndB )  ) {
+									overlapped = true;
+								}
 							}
-
-							if (timeA > timeStartB && timeA < timeEndB) {
-								overlapped = true;
-							}
-						}
+					//	}
 						if ( overlapped ) {
 							hoursOverlaps.push( hourA );
 						}
@@ -72,7 +78,6 @@ add_action(
 					if ( hoursOverlaps.length > 0 ) {
 						return hoursOverlaps;
 					}
-
 					return false;
 				}
 				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
@@ -101,12 +106,12 @@ add_action(
 									const jsonString = $(this).val();
 									if ( '' !== $(this).val() ) {
 										const parsedValue = JSON.parse(jsonString);
-
-										if ( JSON.stringify( response.limits ) !== jsonString && checkHoursOverlap(response.hours, parsedValue) ) {
-											totalOverlaps.push( checkHoursOverlap(response.hours, parsedValue) );
-											var array = checkHoursOverlap(response.hours, parsedValue);
+										var hoursOverlaps = checkHoursOverlap(response.hours, parsedValue);
+										console.log(hoursOverlaps, response.hours, parsedValue);
+										if ( JSON.stringify( response.limits ) !== jsonString && hoursOverlaps ) {
+											totalOverlaps.push( hoursOverlaps );
 											var className;
-											array.forEach(function(item, index) {
+											hoursOverlaps.forEach(function(item, index) {
 												className = item.replace(":", "-");
 												$( '.' + className, parentWrapper.closest('.accordion-content') ).addClass('shrinks-error');
 											});
@@ -114,7 +119,7 @@ add_action(
 												showErrorpopup('هناك تداخل في المواعيد!');
 												$('#jet-popup-2219').removeClass('jet-popup--hide-state').addClass('jet-popup--show-state');
 											}, 200);
-										} else if ( ! checkHoursOverlap(response.hours, parsedValue)  ) {
+										} else if ( ! hoursOverlaps  ) {
 											$('.shrinks-error').removeClass('shrinks-error');
 										}
 									}

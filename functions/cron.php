@@ -98,12 +98,7 @@ function snks_cron_action( $result, $diff, $type ) {
 function snks_cron_action_if_diff( $result, $diff, $type, $state = 'add' ) {
 	$date_interval = 'PT' . $diff . $type;
 	$current_time  = date_i18n( 'Y-m-d H:i:s' );
-	anony_error_log(
-		array(
-			'Current datetime' => $diff . ':' . $current_time,
-		)
-	);
-	$date_time = $result->date_time;
+	$date_time     = $result->date_time;
 	// Convert date_time to DateTime objects.
 	$date_time_obj    = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $date_time );
 	$current_time_obj = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $current_time );
