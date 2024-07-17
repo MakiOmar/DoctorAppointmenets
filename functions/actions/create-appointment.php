@@ -36,7 +36,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 			);
 			if ( $updated ) {
 				snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
-				add_post_meta( $order_id, 'booking_id', $timetable->ID );
+				update_post_meta( $order_id, 'booking_id', $timetable->ID );
 			}
 		}
 	}

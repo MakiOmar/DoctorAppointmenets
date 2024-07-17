@@ -50,51 +50,6 @@ add_action(
 				);
 				$('body').height( $(window).height() );
 
-				$( 'body' ).on(
-					'change',
-					'.current-month-day-radio',
-					function () {
-						var parentForm = $( this ).closest('.consulting-form');
-						$( '.anony-day-radio', parentForm ).find('label').removeClass( 'active-day' );
-						if ($(this).is(':checked')) {
-							$( this ).prev('label').addClass( 'active-day' );
-						}
-						var slectedDay = $(this).val();
-						var userID     = $(this).data('user');
-						var period     = $(this).data('period');
-						// Perform nonce check.
-						var nonce = '<?php echo esc_html( wp_create_nonce( 'fetch_start_times_nonce' ) ); ?>';
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: {
-								slectedDay: slectedDay,
-								userID    : userID,
-								period    : period,
-								action    : 'fetch_start_times',
-							},
-							success: function(response) {
-								$( '.snks-available-hours', $( '.consulting-form-' + period ) ).html( response.resp );
-							},
-							error: function(xhr, status, error) {
-								console.error('Error:', error);
-							}
-						});
-
-					}
-				);
-				$( 'body' ).on(
-					'change',
-					'.hour-radio',
-					function () {
-						$( '.available-time' ).removeClass( 'active-hour' );
-						if ($(this).is(':checked')) {
-							$( this ).closest('.available-time').addClass( 'active-hour' );
-						}
-					}
-				);
-
 				$('.doctor_actions').on(
 					'submit',
 					function (e) {

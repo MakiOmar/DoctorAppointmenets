@@ -41,6 +41,7 @@ function snks_doctor_settings( $user_id = false ) {
 	$settings['block_if_before_unit']      = get_user_meta( $user_id, 'block_if_before_unit', true );
 	$settings['attendance_type']           = get_user_meta( $user_id, 'attendance_type', true );
 	$settings['clinics_list']              = get_user_meta( $user_id, 'clinics_list', true );
+	$settings['form_days_count']           = get_user_meta( $user_id, 'form_days_count', true );
 
 	return $settings;
 }
@@ -233,7 +234,12 @@ function snks_get_periods_possibilities_options() {
  */
 function snks_get_available_attendance_types_options() {
 	$settings     = snks_doctor_settings();
-	$is_available = array();
+	$is_available = array(
+		array(
+			'value' => '',
+			'label' => 'حدد خياراً',
+		),
+	);
 	$online       = array(
 		'value' => 'online',
 		'label' => 'أونلاين',
@@ -255,10 +261,11 @@ function snks_get_available_attendance_types_options() {
 /**
  * Get clinics
  *
- * @return array
+ * @param mixed $user_id User's id.
+ * @return mixed
  */
-function snks_get_clinics() {
-	$settings = snks_doctor_settings();
+function snks_get_clinics( $user_id = false ) {
+	$settings = snks_doctor_settings( $user_id );
 	if ( ! empty( $settings['clinics_list'] ) ) {
 		return $settings['clinics_list'];
 	}
@@ -269,10 +276,11 @@ function snks_get_clinics() {
  * Get clinic
  *
  * @param string $key Clinic array key.
+ * @param mixed  $user_id User's id.
  * @return array
  */
-function snks_get_clinic( $key ) {
-	$clinics = snks_get_clinics();
+function snks_get_clinic( $key, $user_id = false ) {
+	$clinics = snks_get_clinics( $user_id );
 	if ( $clinics && ! empty( $clinics[ $key ] ) ) {
 		return $clinics[ $key ];
 	}
@@ -508,28 +516,60 @@ add_action(
 	'jet-form-builder/custom-action/Insert_appointment',
 	function ( $_req ) {
 		$timetables     = snks_generate_timetable();
+		$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) );
+		$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) );
+		$expected_hours = snks_expected_hours( $periods, $hour );
+
+		$hours = array();
+		if ( ! empty( $expected_hours ) ) {
+			foreach ( $expected_hours as $expected_hour ) {
+				$expected_hour_from = gmdate( 'H:i a', strtotime( $expected_hour['from'] ) );
+				$expected_hour_to   = gmdate( 'H:i a', strtotime( $expected_hour['to'] ) );
+				$hours[]            = $expected_hour_from;
+				$hours[]            = $expected_hour_to;
+			}
+		}
+		$hours = array_values( array_unique( $hours ) );
+
 		$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
 		if ( $day_timetables ) {
+			$date_timetables = array();
 			foreach ( $day_timetables as $timetable ) {
-				$_date   = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
-				$hour    = gmdate( 'h:i:s', strtotime( $_req['app_hour'] ) );
-				$periods = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) );
+				$_date = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
+				if ( $_date === $_req['date'] ) {
+					$date_timetables[] = $timetable;
+				}
+			}
 
-				$expected_hours = snks_expected_hours( $periods, $hour );
-				$hours          = array();
-				if ( ! empty( $expected_hours ) ) {
-					foreach ( $expected_hours as $expected_hour ) {
-						$expected_hour_from = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
-						$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
-						$hours[]            = $expected_hour_from;
-						$hours[]            = $expected_hour_to;
-					}
-				}
-				$hours = array_values( array_unique( $hours ) );
-				if ( $_date === $_req['date'] && ( $timetable['starts'] === $hour || in_array( gmdate( 'H:i', strtotime( $hour ) ), $hours, true ) ) ) {
-					wp_safe_redirect( add_query_arg( 'error', 'conflict', site_url( '/my-account/sessions-preview/' ) ) );
-					exit;
-				}
+			$starts      = array_column( $date_timetables, 'starts' );
+			$ends        = array_column( $date_timetables, 'ends' );
+			$starts_ends = array_unique( array_merge( $starts, $ends ) );
+			$starts_ends = array_map(
+				function ( $item ) {
+					return gmdate( 'H:i a', strtotime( $item ) );
+				},
+				$starts_ends
+			);
+
+			$intersections = array_intersect( $hours, $starts_ends );
+			$intersections = array_map(
+				function ( $item ) {
+					return gmdate( 'H:i', strtotime( $item ) );
+				},
+				$intersections
+			);
+			if ( ! empty( $intersections ) ) {
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'error'     => 'conflict',
+							'conflicts' => rawurlencode( implode( '-', $intersections ) ),
+							'day'       => $_req['day'],
+						),
+						site_url( '/my-account/sessions-preview/' )
+					)
+				);
+				exit;
 			}
 		}
 	}
@@ -550,13 +590,6 @@ function snks_get_off_days( $user_id = false ) {
 	}
 	$off_days = str_replace( ' ', '', $off_days );
 	return explode( ',', $off_days );
-}
-
-/**
- * Get available appointments slots
- */
-function snks_available_appointments_slots() {
-	return;
 }
 
 /**
@@ -652,11 +685,44 @@ function snks_generate_preview() {
 			}
 			// Finally generate html.
 			$output .= $table->html();
+			$output .= snks_render_conflicts( $data['day'] );
 			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], $days_labels[ $data['day'] ], 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
 		}
 	}
+	$output .= '<input type="hidden" id="doctor-off-days" value="' . implode( ',', snks_get_off_days() ) . '"/>';
 	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
 	$output .= '<center><button id="insert-timetable">نشر</button></center>';
 	$output .= '<center id="insert-timetable-msg"></center>';
 	return $output;
+}
+
+/**
+ * Render conflicts
+ *
+ * @return string
+ */
+function snks_render_conflicts( $day ) {
+	$html = '';
+	//phpcs:disable
+	if ( $day !== $_GET['day'] ) {
+		return $html;
+	}
+	if ( ! empty( $_GET['conflicts'] ) ) {
+		$html .= '<p class="conflict-error" style="color:red">';
+		$conflicts = urldecode( $_GET['conflicts'] );
+		$conflicts = explode( '-', $conflicts );
+		$conflicts = array_map(
+			function ( $item ) {
+				return str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), gmdate( 'h:i a', strtotime( $item ) ) );
+			},
+			$conflicts
+		);
+		//phpcs:enable
+		$html .= sprintf(
+			'لديك تداخل في هذه المواعيد ( %s )',
+			implode( ' , ', $conflicts )
+		);
+		$html .= '</p>';
+	}
+	return $html;
 }

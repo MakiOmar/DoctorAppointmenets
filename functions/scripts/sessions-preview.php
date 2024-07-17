@@ -22,6 +22,14 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				if ( $('.conflict-error').length > 0 ) {
+					$([document.documentElement, document.body]).animate(
+						{
+							scrollTop: $(".conflict-error").offset().top - 100
+						},
+						2000
+					);
+				}
 				$('.timetable-preview-tab').on(
 					'click',
 					function() {
@@ -45,7 +53,16 @@ add_action(
 						var currentDate = new Date();
 						currentDate.setHours(0, 0, 0, 0);
 						date.setHours(0, 0, 0, 0);
-						return [(day === enabledDay) && currentDate < date ];
+						var offDays = $('#doctor-off-days').val();
+
+						// Disable specific dates from offDays variable
+						var disabledDates = offDays.split(',');
+						var disabled = false;
+						var formattedDate = $.datepicker.formatDate('yy-mm-dd', date);
+						if (disabledDates.indexOf(formattedDate) !== -1) {
+							disabled = true;
+						}
+						return [(day === enabledDay) && currentDate <= date && ! disabled ];
 					}
 				});
 

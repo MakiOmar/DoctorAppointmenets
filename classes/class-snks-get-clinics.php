@@ -43,7 +43,12 @@ class Snks_Get_Clinics extends Base {
 	 */
 	public function generate( $args ) {
 		$clinics_meta = get_user_meta( get_current_user_id(), 'clinics_list', true );
-		$result       = array();
+		$result       = array(
+			array(
+				'value' => '',
+				'label' => 'حدد خياراً',
+			),
+		);
 		if ( ! empty( $clinics_meta ) ) {
 			foreach ( $clinics_meta as $index => $clinic ) {
 				$result[] = array(

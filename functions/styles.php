@@ -14,6 +14,16 @@ add_action(
 	function () {
 		?>
 		<style>
+			#consulting-forms-container{
+				background-color: #fff;
+				padding: 10px;
+				border-radius: 10px;
+				margin: 10px;
+			}
+			ul#consulting-forms-tabs li.active-tab{
+				background-color: #12114F;
+				color: #fff;
+			}
 			/* Reset default list styles */
 			ul#consulting-forms-tabs {
 				list-style: none;
@@ -26,16 +36,13 @@ add_action(
 				display: inline-block;
 				margin-right: 10px;
 				padding: 5px 10px;
-				background-color: #eaeaea;
+				background-color: #fff;
 				border-radius: 4px;
+				border: 1px solid #12114F;
 				cursor: pointer;
 			}
 
 			/* Apply active tab styles */
-			ul#consulting-forms-tabs li.active {
-				background-color: #007bff;
-				color: #fff;
-			}
 			.consulting-form{
 				display: none;
 			}
@@ -330,7 +337,7 @@ add_action(
 				margin-left: 10px;
 			}
 			.snks-available-hours li.available-time{
-				background-color: #E0EBEF;
+				background-color: #B3B3DC;
 				color: #000;
 				border-radius: 50px;
 				padding: 5px 15px;

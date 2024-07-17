@@ -17,27 +17,17 @@ add_action(
 				$( '.consulting-forms-tab' ).on(
 					'click',
 					function () {
+						$( '.consulting-forms-tab' ).removeClass('active-tab');
+						$( this ).addClass('active-tab');
 						$('form.consulting-form').hide();
 						$('#' + $(this).data('target')).show();
+						var label = $( '.anony-day-radio:first-child', $('#' + $(this).data('target')) ).find('label');
+						setTimeout( function() {
+							label.click();
+						}, 500 );
 					}
 				);
-
-				$('.consulting-form').each(
-					function() {
-						var thisForm = $( this );
-						if ( $('.active-day').length < 1 ) {
-							setInterval(
-								function() {
-									var label = thisForm.find( '.anony-day-radio:first' ).find('label');
-									if ( ! label.hasClass( 'active-day' ) ) {
-										label.click();
-									}
-								},
-								800
-							)
-						}
-					}
-				);
+				$( '.consulting-forms-tab:first-child' ).trigger('click');
 
 				$(".consulting-form").on(
 					'submit',
@@ -45,6 +35,52 @@ add_action(
 						if ( $( this ).find('input[name="selected-hour"]:checked').length === 0 || $( this ).find('input[name="current-month-day"]:checked').length === 0  ) {
 							event.preventDefault();
 							alert('فضلاً تأكد من أنك قمت بتحديد اليوم والساعة');
+						}
+					}
+				);
+				$( 'body' ).on(
+					'change',
+					'.current-month-day-radio',
+					function () {
+						var parentForm = $( this ).closest('.consulting-form');
+						$( '.anony-day-radio', parentForm ).find('label').removeClass( 'active-day' );
+						if ($(this).is(':checked')) {
+							if ( ! $( this ).prev('label').hasClass( 'active-day' ) ) {
+								$( this ).prev('label').addClass( 'active-day' );
+							}
+						}
+						var slectedDay = $(this).val();
+						var userID     = $(this).data('user');
+						var period     = $(this).data('period');
+						// Perform nonce check.
+						var nonce = '<?php echo esc_html( wp_create_nonce( 'fetch_start_times_nonce' ) ); ?>';
+						// Send AJAX request.
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								slectedDay: slectedDay,
+								userID    : userID,
+								period    : period,
+								action    : 'fetch_start_times',
+							},
+							success: function(response) {
+								$( '.snks-available-hours', $( '.consulting-form-' + period ) ).html( response.resp );
+							},
+							error: function(xhr, status, error) {
+								console.error('Error:', error);
+							}
+						});
+
+					}
+				);
+				$( 'body' ).on(
+					'change',
+					'.hour-radio',
+					function () {
+						$( '.available-time' ).removeClass( 'active-hour' );
+						if ($(this).is(':checked')) {
+							$( this ).closest('.available-time').addClass( 'active-hour' );
 						}
 					}
 				);

@@ -317,18 +317,6 @@ function snks_user_appointments_by_date_period( $user_id, $date, $period ) {
 	$cache_key = 'dates-appoointments-' . $user_id . '-' . $date . '-' . $period;
 	$results   = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-	snks_error_log( $wpdb->prepare(
-		"SELECT *
-		FROM {$wpdb->prefix}snks_provider_timetable
-		WHERE user_id = %d
-		AND period = %d
-		AND DATE(date_time) = %s
-		ORDER BY date_time {$_order}",
-		$user_id,
-		absint( $period ),
-		$date
-		//$current_date
-	));
 	if ( ! $results ) {
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
@@ -337,6 +325,7 @@ function snks_user_appointments_by_date_period( $user_id, $date, $period ) {
 				WHERE user_id = %d
 				AND period = %d
 				AND DATE(date_time) = %s
+				AND order_id = 0
 				ORDER BY date_time {$_order}",
 				$user_id,
 				absint( $period ),

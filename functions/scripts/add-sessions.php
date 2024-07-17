@@ -58,8 +58,8 @@ add_action(
 							const timeA = new Date(`1970-01-01T${hourA}`); // DateTime for the first item of A.
 							const timeStartB = new Date(`1970-01-01T${startB}`); // DateTime for the compare start item of B.
 							const timeEndB = new Date(`1970-01-01T${endB}`); // DateTime for the compare end item of B.
-							// If the diff equals 30 monutes then no overlap.
-							//if ( timeEndB - timeA !== 1800000 ) {
+							// If the diff equals 30 minutes then no overlap.
+							if ( timeEndB - timeA !== 1800000 ) {
 								/**
 								 * If DateTime for the first item of A less than the DateTime for the last item of B. ( Because if greater not conflict happens ).
 								 * And First hour of A equals Compare start hour of B or First hour of A equals Compare end hour of B
@@ -70,7 +70,7 @@ add_action(
 									overlapped = true;
 								}
 							}
-					//	}
+						}
 						if ( overlapped ) {
 							hoursOverlaps.push( hourA );
 						}
@@ -78,6 +78,7 @@ add_action(
 					if ( hoursOverlaps.length > 0 ) {
 						return hoursOverlaps;
 					}
+					console.log(hoursOverlaps);
 					return false;
 				}
 				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
@@ -107,8 +108,7 @@ add_action(
 									if ( '' !== $(this).val() ) {
 										const parsedValue = JSON.parse(jsonString);
 										var hoursOverlaps = checkHoursOverlap(response.hours, parsedValue);
-										console.log(hoursOverlaps, response.hours, parsedValue);
-										if ( JSON.stringify( response.limits ) !== jsonString && hoursOverlaps ) {
+										if ( JSON.stringify( response.limits ) !== jsonString && hoursOverlaps && hoursOverlaps.length > 0 ) {
 											totalOverlaps.push( hoursOverlaps );
 											var className;
 											hoursOverlaps.forEach(function(item, index) {

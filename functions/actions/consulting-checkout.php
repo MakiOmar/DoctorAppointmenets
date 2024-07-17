@@ -258,10 +258,15 @@ add_filter(
 	2
 );
 
-
 add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
 		$booking_day = get_post_meta( $order_id, 'booking_id', true );
+		snks_update_timetable(
+			absint( $booking_day ),
+			array(
+				'order_id' => $order_id,
+			)
+		);
 	}
 );

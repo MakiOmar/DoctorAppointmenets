@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_footer',
 	function () {
+		return;
 		// If not dashboard , not consulting list.
 		if ( ! is_page( 682 ) && ! is_page( 1194 ) && ! is_front_page() && ! snks_is_patient() ) {
 			return;

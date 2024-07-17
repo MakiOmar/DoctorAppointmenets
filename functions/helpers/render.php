@@ -54,9 +54,10 @@ function snks_generate_days( $days, $input_name ) {
  * @param mixed  $bookable_days_obj Bookable dates object.
  * @param string $input_name Input name.
  * @param string $period Input Period.
+ * @param int    $days_count Number of days available in the form.
  * @return string
  */
-function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_name, $period ) {
+function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_name, $period, $days_count = 30 ) {
 	$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
 	$bookable_days        = array_unique(
 		array_map(
@@ -67,16 +68,15 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 		)
 	);
 
-	$html = '';
-	// Get only 30 days.
-	$n_bookable_days = array_slice( $bookable_days, 0, 30 );
+	$html            = '';
+	$n_bookable_days = array_slice( $bookable_days, 0, $days_count );
 	foreach ( $n_bookable_days as $index => $current_date ) {
 		//phpcs:disable Universal.Operators.StrictComparisons.LooseEqual
 		$day_number = gmdate( 'j', strtotime( $current_date ) ); // Day of the month without leading zeros.
 		$day_name   = gmdate( 'D', strtotime( $current_date ) ); // Full day name.
 		$month_name = gmdate( 'F', strtotime( $current_date ) ); // Full day name.
 		//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		$html .= '<p class="anony-content-slide anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
+		$html .= '<div class="anony-content-slide anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
 		$html .= "<span>$day_number</span>";
 		$html .= "<span>$day_name</span>";
 		$html .= '</label>';
@@ -87,7 +87,7 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 			$user_id,
 			$period
 		);
-		$html .= '</p>';
+		$html .= '</div>';
 
 	}
 
@@ -112,6 +112,18 @@ function snks_generate_consulting_form( $user_id, $period, $price ) {
 	if ( ! is_user_logged_in() ) {
 		$html = '<p>سجل دخولك أولاً من فضلك</p>';
 	} else {
+		$clinics = array_unique(
+			array_map(
+				function ( $obj ) {
+					return $obj->clinic;
+				},
+				$bookable_days_obj
+			)
+		);
+
+		$settings   = snks_doctor_settings( $user_id );
+		$days_count = ! empty( $settings['form_days_count'] ) ? absint( $settings['form_days_count'] ) : 30;
+
 		$booking_id  = '';
 		$submit_text = 'حجز موعد';
 		//phpcs:disable WordPress.Security.NonceVerification.Recommended
@@ -149,6 +161,14 @@ function snks_generate_consulting_form( $user_id, $period, $price ) {
 
 			$html  = '';
 			$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="/?direct_add_to_cart" method="post">';
+			$html .= '<select name="appointment-clinic">';
+			$html .= '<option value="">حدد العيادة</option>';
+			foreach ( $clinics as $clinic_key ) {
+				$clinic = snks_get_clinic( $clinic_key, $user_id );
+				$html  .= '<option value="' . esc_attr( $clinic_key ) . '">' . esc_html( $clinic['clinic_title'] ) . '</option>';
+				snks_print_r( $clinic );
+			}
+			$html .= '</select>';
 			$html .= '<h5>';
 			$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<path d="M8 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
@@ -166,7 +186,7 @@ function snks_generate_consulting_form( $user_id, $period, $price ) {
 			$html .= '</h5>';
 			$html .= '<div class="atrn-form-days anony-content-slider-container">';
 			$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
-			$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period );
+			$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
 			$html .= '</div>';
 			$html .= '</div>';
 			if ( $slider ) {
