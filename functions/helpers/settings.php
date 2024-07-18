@@ -523,8 +523,8 @@ add_action(
 		$hours = array();
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
-				$expected_hour_from = gmdate( 'H:i a', strtotime( $expected_hour['from'] ) );
-				$expected_hour_to   = gmdate( 'H:i a', strtotime( $expected_hour['to'] ) );
+				$expected_hour_from = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
+				$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
 				$hours[]            = $expected_hour_from;
 				$hours[]            = $expected_hour_to;
 			}
@@ -546,7 +546,7 @@ add_action(
 			$starts_ends = array_unique( array_merge( $starts, $ends ) );
 			$starts_ends = array_map(
 				function ( $item ) {
-					return gmdate( 'H:i a', strtotime( $item ) );
+					return gmdate( 'H:i', strtotime( $item ) );
 				},
 				$starts_ends
 			);
@@ -558,12 +558,23 @@ add_action(
 				},
 				$intersections
 			);
+
+			$hours_in_range = snks_get_hours_in_range( $hours, $starts_ends );
+			$conflicts_list = array();
 			if ( ! empty( $intersections ) ) {
+				$conflicts_list = array_merge( $conflicts_list, $intersections );
+			}
+
+			if ( ! empty( $hours_in_range ) ) {
+				$conflicts_list = array_merge( $conflicts_list, $hours_in_range );
+			}
+
+			if ( ! empty( $conflicts_list ) ) {
 				wp_safe_redirect(
 					add_query_arg(
 						array(
 							'error'     => 'conflict',
-							'conflicts' => rawurlencode( implode( '-', $intersections ) ),
+							'conflicts' => rawurlencode( implode( '-', $conflicts_list ) ),
 							'day'       => $_req['day'],
 						),
 						site_url( '/my-account/sessions-preview/' )
@@ -571,6 +582,46 @@ add_action(
 				);
 				exit;
 			}
+			$data = array();
+			foreach ( $expected_hours as $expected_hour ) {
+				$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $_req['app_hour'] ) ) );
+				if ( $date_time ) {
+					$date_time = $date_time->format( 'Y-m-d h:i a' );
+				}
+				$data[ sanitize_text_field( $_req['day'] ) ][] = array(
+					'user_id'         => get_current_user_id(),
+					'session_status'  => 'waiting',
+					'day'             => sanitize_text_field( $_req['day'] ),
+					'base_hour'       => sanitize_text_field( $_req['app_hour'] ),
+					'period'          => sanitize_text_field( $expected_hour['min'] ),
+					'date_time'       => $date_time,
+					'date'            => $_req['date'],
+					'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+					'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+					'clinic'          => sanitize_text_field( $_req['app_clinic'] ),
+					'attendance_type' => sanitize_text_field( $_req['app_attendance_type'] ),
+				);
+			}
+			$preview_timetables     = snks_get_preview_timetable();
+			$day_preview_timetables = $preview_timetables [ $_req['day'] ];
+			foreach ( $day_preview_timetables as $index => $day_preview_timetable ) {
+				foreach ( $data[ $_req['day'] ] as $data_preview_timetable ) {
+					if ( $day_preview_timetable === $data_preview_timetable ) {
+						wp_safe_redirect(
+							add_query_arg(
+								array(
+									'error' => 'already-exists',
+									'day'   => $_req['day'],
+								),
+								site_url( '/my-account/sessions-preview/' )
+							)
+						);
+						exit;
+					}
+				}
+			}
+			$preview_timetables [ $_req['day'] ] = array_merge( $preview_timetables [ $_req['day'] ], $data [ $_req['day'] ] );
+			snks_set_preview_timetable( $preview_timetables );
 		}
 	}
 );
@@ -699,12 +750,13 @@ function snks_generate_preview() {
 /**
  * Render conflicts
  *
+ * @param string $day Day name (e.g. Sat).
  * @return string
  */
 function snks_render_conflicts( $day ) {
 	$html = '';
 	//phpcs:disable
-	if ( $day !== $_GET['day'] ) {
+	if ( isset( $_GET['day'] ) && $day !== $_GET['day'] ) {
 		return $html;
 	}
 	if ( ! empty( $_GET['conflicts'] ) ) {
@@ -725,4 +777,36 @@ function snks_render_conflicts( $day ) {
 		$html .= '</p>';
 	}
 	return $html;
+}
+
+/**
+ * Get hours in range
+ *
+ * @param array $target_hours Hours to check.
+ * @param array $check_hours Hours to check against.
+ * @return array
+ */
+function snks_get_hours_in_range( $target_hours, $check_hours ) {
+	$hours_in_range = array();
+	$target_hours   = array_values( $target_hours );
+	$check_hours    = array_values( $check_hours );
+	if ( empty( $check_hours ) || empty( $target_hours ) ) {
+		return $hours_in_range;
+	}
+	$count = count( $check_hours );
+	foreach ( $target_hours as $target_hour ) {
+		$target_timestamp = strtotime( $target_hour );
+		for ( $i = 0; $i < $count - 1; $i++ ) {
+			$start_time      = $check_hours[ $i ];
+			$end_time        = $check_hours[ $i + 1 ];
+			$start_timestamp = strtotime( $start_time );
+			$end_timestamp   = strtotime( $end_time );
+			if ( $target_timestamp >= $start_timestamp && $target_timestamp < $end_timestamp ) {
+				$hours_in_range[] = $target_hour;
+				break;
+			}
+		}
+	}
+
+	return $hours_in_range;
 }
