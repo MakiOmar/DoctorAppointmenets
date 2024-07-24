@@ -337,7 +337,7 @@ add_action(
 				margin-left: 10px;
 			}
 			.snks-available-hours li.available-time{
-				background-color: #B3B3DC;
+				background-color: #12114f;
 				color: #000;
 				border-radius: 50px;
 				padding: 5px 15px;

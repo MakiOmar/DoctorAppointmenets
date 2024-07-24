@@ -269,9 +269,10 @@ function snks_delete_timetable( $id ) {
  * @param int    $user_id User's ID.
  * @param int    $period Session period.
  * @param string $_for Period to get dates for.
+ * @param string $attendance_type Attendance type.
  * @return mixed
  */
-function get_bookable_dates( $user_id, $period, $_for = '+1 month' ) {
+function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_type = 'both' ) {
 	global $wpdb;
 	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
 	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) );
@@ -280,8 +281,8 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month' ) {
 	$results      = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 	if ( ! $results ) {
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
+		if ( 'both' === $attendance_type ) {
+			$_query = $wpdb->prepare(
 				"SELECT *
 				FROM {$wpdb->prefix}snks_provider_timetable
 				WHERE user_id = %d
@@ -295,8 +296,28 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month' ) {
 				$current_date,
 				$end_date,
 				'waiting',
-			)
-		);
+			);
+		} else {
+			$_query = $wpdb->prepare(
+				"SELECT *
+				FROM {$wpdb->prefix}snks_provider_timetable
+				WHERE user_id = %d
+				AND period = %d
+				AND date_time
+				BETWEEN %s AND %s
+				AND attendance_type = %s
+				AND session_status = %s
+				ORDER BY date_time {$_order}",
+				$user_id,
+				$period,
+				$current_date,
+				$end_date,
+				$attendance_type,
+				'waiting',
+			);
+		}
+
+		$results = $wpdb->get_results( $_query );
 
 		wp_cache_set( $cache_key, $results );
 	}

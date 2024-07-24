@@ -65,6 +65,9 @@ add_shortcode(
 add_shortcode(
 	'snks_appointment_form',
 	function () {
+		if ( ! is_user_logged_in() ) {
+			return '<p>سجل دخولك أولاً من فضلك</p>';
+		}
 		global $wp;
 		$html  = '';
 		$forms = '';
@@ -74,10 +77,15 @@ add_shortcode(
 				$avialable_periods = snks_get_available_periods( $user_id );
 				$country           = 'EG';
 				$pricings          = snks_doctor_pricings( $user_id );
+				$discount_percent  = get_user_meta( $user_id, 'discount_percent', true );
+				$has_discount      = snks_discount_eligible( $user_id );
 				if ( is_array( $avialable_periods ) ) {
 					$tabs = '<ul id="consulting-forms-tabs">';
 					foreach ( $avialable_periods as $period ) {
-						$price  = get_price_by_period_and_country( $period, $country, $pricings );
+						$price = get_price_by_period_and_country( $period, $country, $pricings );
+						if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
+							$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
+						}
 						$tabs  .= '<li class="consulting-forms-tab" data-target="consulting-form-' . esc_attr( $period ) . '">' . sprintf( '%1$s %2$s ( %3$s %4$s )', esc_html( $period ), 'دقيقة', esc_html( $price ), 'جنيه' ) . '</li>';
 						$forms .= snks_generate_consulting_form( $user_id, absint( $period ), $price );
 					}

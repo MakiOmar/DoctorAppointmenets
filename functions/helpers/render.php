@@ -105,124 +105,127 @@ function snks_generate_consulting_form( $user_id, $period, $price ) {
 	if ( ! $user_id ) {
 		return 'Form error!';
 	}
-	$bookable_days_obj = get_bookable_dates( $user_id, $period );
+	$html            = '';
+	$settings        = snks_doctor_settings( $user_id );
+	$_attendance_type = $settings['attendance_type'];
+
+	$days_count = ! empty( $settings['form_days_count'] ) ? absint( $settings['form_days_count'] ) : 30;
+	if ( $days_count > 30 ) {
+		$days_count = 30;
+	}
+	$__for             = '+' . $days_count . ' day';
+	$bookable_days_obj = get_bookable_dates( $user_id, $period, $__for, $_attendance_type );
+
 	if ( empty( $bookable_days_obj ) ) {
 		return '<p>عفواً! لا تتوفر مواعيد للحجز</p>';
 	}
-	if ( ! is_user_logged_in() ) {
-		$html = '<p>سجل دخولك أولاً من فضلك</p>';
+
+	$clinics = array_unique(
+		array_map(
+			function ( $obj ) {
+				return $obj->clinic;
+			},
+			$bookable_days_obj
+		)
+	);
+
+	$booking_id  = '';
+	$submit_text = 'حجز موعد';
+	//phpcs:disable WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_GET['edit-booking'] ) && ! empty( $_GET['edit-booking'] && is_numeric( $_GET['edit-booking'] ) ) ) {
+		$booking = snks_get_timetable_by( 'ID', absint( $_GET['edit-booking'] ) );
+		if ( ! $booking || get_current_user_id() !== absint( $booking->client_id ) ) {
+			return '<p>عفواً! الموعد غير متاح أو ليس لديك صلاحية تحرير الموعد</p>';
+		}
+		$booking_id  = $booking->ID;
+		$submit_text = 'تعديل الموعد';
+	}
+
+	$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
+	$bookable_days        = array_unique(
+		array_map(
+			function ( $value ) {
+				return gmdate( 'Y-m-d', strtotime( $value ) );
+			},
+			$bookable_dates_times,
+		)
+	);
+
+	$n_bookable_days = array_unique( $bookable_days );
+	if ( count( $n_bookable_days ) > 7 ) {
+		$slider_class = ' anony-content-slider';
+		$slider       = true;
 	} else {
-		$clinics = array_unique(
-			array_map(
-				function ( $obj ) {
-					return $obj->clinic;
-				},
-				$bookable_days_obj
-			)
-		);
+		$slider_class = '';
+		$slider       = false;
+	}
+	if ( ! current_user_can( 'manage_options' ) && ! snks_is_patient() ) {
+		$html = '<p>عفواً غير مسموح</p>';
+	} else {
+		$direction = is_rtl() ? 'true' : 'false';
 
-		$settings   = snks_doctor_settings( $user_id );
-		$days_count = ! empty( $settings['form_days_count'] ) ? absint( $settings['form_days_count'] ) : 30;
-
-		$booking_id  = '';
-		$submit_text = 'حجز موعد';
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['edit-booking'] ) && ! empty( $_GET['edit-booking'] && is_numeric( $_GET['edit-booking'] ) ) ) {
-			$booking = snks_get_timetable_by( 'ID', absint( $_GET['edit-booking'] ) );
-			if ( ! $booking || get_current_user_id() !== absint( $booking->client_id ) ) {
-				return '<p>عفواً! الموعد غير متاح أو ليس لديك صلاحية تحرير الموعد</p>';
-			}
-			$booking_id  = $booking->ID;
-			$submit_text = 'تعديل الموعد';
+		$html  = '';
+		$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="/?direct_add_to_cart" method="post">';
+		/*$html .= '<select name="appointment-clinic">';
+		$html .= '<option value="">حدد العيادة</option>';
+		foreach ( $clinics as $clinic_key ) {
+			$clinic = snks_get_clinic( $clinic_key, $user_id );
+			$html  .= '<option value="' . esc_attr( $clinic_key ) . '">' . esc_html( $clinic['clinic_title'] ) . '</option>';
+		}
+		$html .= '</select>';*/
+		$html .= '<h5>';
+		$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<path d="M8 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M16 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M3.5 9.08984H20.5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M22 19C22 19.75 21.79 20.46 21.42 21.06C20.73 22.22 19.46 23 18 23C16.99 23 16.07 22.63 15.37 22C15.06 21.74 14.79 21.42 14.58 21.06C14.21 20.46 14 19.75 14 19C14 16.79 15.79 15 18 15C19.2 15 20.27 15.53 21 16.36C21.62 17.07 22 17.99 22 19Z" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M16.44 19L17.43 19.99L19.56 18.02" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M21 8.5V16.36C20.27 15.53 19.2 15 18 15C15.79 15 14 16.79 14 19C14 19.75 14.21 20.46 14.58 21.06C14.79 21.42 15.06 21.74 15.37 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M11.9955 13.7002H12.0045" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M8.29431 13.7002H8.30329" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M8.29431 16.7002H8.30329" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		</svg>
+		';
+		$html .= '&nbsp;تحديد تاريخ الحجز';
+		$html .= '</h5>';
+		$html .= '<div class="atrn-form-days anony-content-slider-container">';
+		$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
+		$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
+		$html .= '</div>';
+		$html .= '</div>';
+		if ( $slider ) {
+			$html .= '<div class="anony-content-slider-control">
+				<a class="anony-content-slider-prev button">
+					<span class="anony-greater-than anony-content-slider-nav">
+						<span class="top"></span><span class="bottom"></span>
+					</span>
+				</a>
+				<a class="anony-content-slider-next button">
+					<span class="anony-smaller-than anony-content-slider-nav">
+						<span class="top"></span><span class="bottom"></span>
+					</span>
+				</a>
+			</div>';
 		}
 
-		$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
-		$bookable_days        = array_unique(
-			array_map(
-				function ( $value ) {
-					return gmdate( 'Y-m-d', strtotime( $value ) );
-				},
-				$bookable_dates_times,
-			)
-		);
-
-		$n_bookable_days = array_slice( array_unique( $bookable_days ), 0, 30 );
-		if ( count( $n_bookable_days ) > 7 ) {
-			$slider_class = ' anony-content-slider';
-			$slider       = true;
-		} else {
-			$slider_class = '';
-			$slider       = false;
-		}
-		if ( ! current_user_can( 'manage_options' ) && ! snks_is_patient() ) {
-			$html = '<p>عفواً غير مسموح</p>';
-		} else {
-			$direction = is_rtl() ? 'true' : 'false';
-
-			$html  = '';
-			$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="/?direct_add_to_cart" method="post">';
-			$html .= '<select name="appointment-clinic">';
-			$html .= '<option value="">حدد العيادة</option>';
-			foreach ( $clinics as $clinic_key ) {
-				$clinic = snks_get_clinic( $clinic_key, $user_id );
-				$html  .= '<option value="' . esc_attr( $clinic_key ) . '">' . esc_html( $clinic['clinic_title'] ) . '</option>';
-				snks_print_r( $clinic );
-			}
-			$html .= '</select>';
-			$html .= '<h5>';
-			$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<path d="M8 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M16 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M3.5 9.08984H20.5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M22 19C22 19.75 21.79 20.46 21.42 21.06C20.73 22.22 19.46 23 18 23C16.99 23 16.07 22.63 15.37 22C15.06 21.74 14.79 21.42 14.58 21.06C14.21 20.46 14 19.75 14 19C14 16.79 15.79 15 18 15C19.2 15 20.27 15.53 21 16.36C21.62 17.07 22 17.99 22 19Z" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M16.44 19L17.43 19.99L19.56 18.02" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M21 8.5V16.36C20.27 15.53 19.2 15 18 15C15.79 15 14 16.79 14 19C14 19.75 14.21 20.46 14.58 21.06C14.79 21.42 15.06 21.74 15.37 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M11.9955 13.7002H12.0045" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M8.29431 13.7002H8.30329" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M8.29431 16.7002H8.30329" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-			</svg>
-			';
-			$html .= '&nbsp;تحديد تاريخ الحجز';
-			$html .= '</h5>';
-			$html .= '<div class="atrn-form-days anony-content-slider-container">';
-			$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
-			$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
-			$html .= '</div>';
-			$html .= '</div>';
-			if ( $slider ) {
-				$html .= '<div class="anony-content-slider-control">
-					<a class="anony-content-slider-prev button">
-						<span class="anony-greater-than anony-content-slider-nav">
-							<span class="top"></span><span class="bottom"></span>
-						</span>
-					</a>
-					<a class="anony-content-slider-next button">
-						<span class="anony-smaller-than anony-content-slider-nav">
-							<span class="top"></span><span class="bottom"></span>
-						</span>
-					</a>
-				</div>';
-			}
-
-			$html .= '<h5>';
-			$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<path d="M20.75 13.25C20.75 18.08 16.83 22 12 22C7.17 22 3.25 18.08 3.25 13.25C3.25 8.42 7.17 4.5 12 4.5C16.83 4.5 20.75 8.42 20.75 13.25Z" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M12 8V13" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-			<path d="M9 2H15" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-			</svg>';
-			$html .= '&nbsp;تحديد وقت الحجز';
-			$html .= '</h5>';
-			$html .= '<ul class="snks-available-hours"></ul>';
-			$html .= '<hr>';
-			$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
-			$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
-			$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
-			$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
-			$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
-			$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
-			$html .= '<input type="submit" value="' . $submit_text . '">';
-			$html .= '</form>';
-		}
+		$html .= '<h5>';
+		$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<path d="M20.75 13.25C20.75 18.08 16.83 22 12 22C7.17 22 3.25 18.08 3.25 13.25C3.25 8.42 7.17 4.5 12 4.5C16.83 4.5 20.75 8.42 20.75 13.25Z" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M12 8V13" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M9 2H15" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+		</svg>';
+		$html .= '&nbsp;تحديد وقت الحجز';
+		$html .= '</h5>';
+		$html .= '<ul class="snks-available-hours"></ul>';
+		$html .= '<hr>';
+		$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
+		$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
+		$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
+		$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
+		$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
+		$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
+		$html .= '<input type="submit" value="' . $submit_text . '">';
+		$html .= '</form>';
 	}
 
 	return $html;

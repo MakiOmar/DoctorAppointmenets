@@ -14,6 +14,14 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				console.log('fgdfg');
+				$(document).on(
+					'change',
+					'input[name=attendance_type]',
+					function() {
+						console.log($(this).val());
+					}
+				);
 				$( '.consulting-forms-tab' ).on(
 					'click',
 					function () {

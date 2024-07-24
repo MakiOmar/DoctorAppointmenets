@@ -66,42 +66,6 @@ function snks_get_available_periods( $user_id = false ) {
 	}
 	return $is_available;
 }
-
-/**
- * Get country price by period
- *
- * @param string $period Period.
- * @param string $country_code Country code.
- * @param array  $data_array Data array.
- * @return mixed
- */
-function get_price_by_period_and_country( $period, $country_code, $data_array ) {
-	if ( isset( $data_array[ $period ]['countries'] ) ) {
-		foreach ( $data_array[ $period ]['countries'] as $item ) {
-			if ( $item['country_code'] === $country_code ) {
-				return $item['price'];
-			}
-		}
-	}
-	return false;
-}
-/**
- * Get doctor pricings.
- *
- * @param int $user_id User's ID.
- * @return array
- */
-function snks_doctor_pricings( $user_id ) {
-	$available_periods = snks_get_available_periods( $user_id );
-	$pricings          = array();
-	foreach ( $available_periods as $period ) {
-		$pricings[ $period ] = array(
-			'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
-			'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
-		);
-	}
-	return $pricings;
-}
 /**
  * Get doctor's available periods
  *
