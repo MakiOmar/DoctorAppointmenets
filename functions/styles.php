@@ -43,12 +43,6 @@ add_action(
 			}
 
 			/* Apply active tab styles */
-			.consulting-form{
-				display: none;
-			}
-			form.consulting-form:first-child{
-				display: block;
-			}
 			.timetable-preview-item{
 				display: none;
 			}

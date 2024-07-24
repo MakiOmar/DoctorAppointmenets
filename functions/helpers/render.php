@@ -94,6 +94,55 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 	return $html;
 }
 /**
+ * Render form filter
+ *
+ * @param int $user_id User's ID.
+ * @return string
+ */
+function snks_form_filter( $user_id ) {
+	$html              = '';
+	$avialable_periods = snks_get_available_periods( $user_id );
+	$country           = 'EG';
+	$pricings          = snks_doctor_pricings( $user_id );
+	$discount_percent  = get_user_meta( $user_id, 'discount_percent', true );
+	$has_discount      = snks_discount_eligible( $user_id );
+	ob_start();
+	?>
+	<div class="attendance_types_wrapper">
+		<span class="attendance_type_wrapper">
+			<label for="online_attendance_type">أونلاين</label>
+			<input id="online_attendance_type" type="radio" name="attendance_type" value="online"/>
+		</span>
+		<span class="attendance_type_wrapper">
+			<label for="offline_attendance_type">أوفلاين</label>
+			<input id="offline_attendance_type" type="radio" name="attendance_type" value="offline"/>
+		</span>
+	</div>
+	<div class="periods_wrapper">
+		<?php
+		if ( is_array( $avialable_periods ) ) {
+			foreach ( $avialable_periods as $period ) {
+				$price = get_price_by_period_and_country( $period, $country, $pricings );
+				$price = get_price_by_period_and_country( $period, $country, $pricings );
+				if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
+					$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
+				}
+				?>
+				<span class="period_wrapper">
+					<label for="period_<?php echo esc_attr( $period ); ?>"><?php printf( '%1$s %2$s ( %3$s %4$s )', esc_html( $period ), 'دقيقة', esc_html( $price ), 'جنيه' ); ?></label>
+					<input id="period_<?php echo esc_attr( $period ); ?>" type="radio" name="period" value="<?php echo esc_attr( $period ); ?>" data-price="<?php echo esc_attr( $price ); ?>"/>
+				</span>
+				<?php
+			}
+		}
+		?>
+	</div>
+	<input type="hidden" name="filter_user_id" value="<?php echo esc_attr( $user_id ); ?>"/> 
+	<?php
+	$html .= ob_get_clean();
+	return $html;
+}
+/**
  * Generate hourly form
  *
  * @param int    $user_id User's ID.
@@ -105,11 +154,10 @@ function snks_generate_consulting_form( $user_id, $period, $price ) {
 	if ( ! $user_id ) {
 		return 'Form error!';
 	}
-	$html            = '';
-	$settings        = snks_doctor_settings( $user_id );
+	$html             = '';
+	$settings         = snks_doctor_settings( $user_id );
 	$_attendance_type = $settings['attendance_type'];
-
-	$days_count = ! empty( $settings['form_days_count'] ) ? absint( $settings['form_days_count'] ) : 30;
+	$days_count       = ! empty( $settings['form_days_count'] ) ? absint( $settings['form_days_count'] ) : 30;
 	if ( $days_count > 30 ) {
 		$days_count = 30;
 	}
@@ -166,13 +214,7 @@ function snks_generate_consulting_form( $user_id, $period, $price ) {
 
 		$html  = '';
 		$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="/?direct_add_to_cart" method="post">';
-		/*$html .= '<select name="appointment-clinic">';
-		$html .= '<option value="">حدد العيادة</option>';
-		foreach ( $clinics as $clinic_key ) {
-			$clinic = snks_get_clinic( $clinic_key, $user_id );
-			$html  .= '<option value="' . esc_attr( $clinic_key ) . '">' . esc_html( $clinic['clinic_title'] ) . '</option>';
-		}
-		$html .= '</select>';*/
+
 		$html .= '<h5>';
 		$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 		<path d="M8 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>

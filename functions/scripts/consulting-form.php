@@ -14,12 +14,37 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
-				console.log('fgdfg');
+				function getBookingForm(){
+					var attendanceType = $('input[name=attendance_type]:checked').val();
+					var period         = $('input[name=period]:checked').val();
+					var doctor_id      = $('input[name=filter_user_id]').val();
+					var nonce          = '<?php echo esc_html( wp_create_nonce( 'get_booking_form_nonce' ) ); ?>';
+					if ( typeof attendanceType !== 'undefined' && typeof period !== 'undefined' ) {
+						var price = $('input[name=period]:checked').data('price');
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								attendanceType: attendanceType,
+								period        : period,
+								doctor_id     : doctor_id,
+								price         : price,
+								action        : 'get_booking_form',
+							},
+							success: function(response) {
+								$( '#consulting-forms-container' ).html( response );
+							},
+							error: function(xhr, status, error) {
+								console.error('Error:', error);
+							}
+						});
+					}
+				}
 				$(document).on(
 					'change',
-					'input[name=attendance_type]',
+					'input[name=attendance_type],input[name=period]',
 					function() {
-						console.log($(this).val());
+						getBookingForm();
 					}
 				);
 				$( '.consulting-forms-tab' ).on(

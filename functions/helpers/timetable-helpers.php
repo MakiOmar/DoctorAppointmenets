@@ -280,6 +280,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 	$cache_key    = 'bookable-dates-' . $current_date . '-' . $period;
 	$results      = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+
 	if ( ! $results ) {
 		if ( 'both' === $attendance_type ) {
 			$_query = $wpdb->prepare(
