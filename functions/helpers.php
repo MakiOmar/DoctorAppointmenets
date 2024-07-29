@@ -32,6 +32,24 @@ function snks_count_date( $date, $timetables ) {
 	return $count;
 }
 /**
+ * Function to group objects by a member name
+ *
+ * @param array  $objects An array of objects.
+ * @param string $member_name Object's member name.
+ * @return array
+ */
+function snks_group_objects_by( $objects, $member_name ) {
+	$grouped = array();
+	foreach ( $objects as $object ) {
+		$key = $object->$member_name;
+		if ( ! isset( $grouped[ $key ] ) ) {
+			$grouped[ $key ] = array();
+		}
+		$grouped[ $key ][] = $object;
+	}
+	return $grouped;
+}
+/**
  * Function that groups an array of associative arrays by some key.
  *
  * @param string $key Property to sort by.

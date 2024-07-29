@@ -44,7 +44,7 @@ add_action(
 				function applySelect2() {
 					$('select[data-field-name=country_code]').not('.select2-hidden-accessible').select2({width: '100%'});
 				}
-				function checkHoursOverlap(A, B) {
+				function checkHoursOverlap(A, B, selectedHour, parentWrapper) {
 					const hoursOverlaps = [];
 					const timeLastItemOfB   = new Date(`1970-01-01T${B[B.length - 1]}`); // DateTime for the last item of B.
 					// Loop A
@@ -58,14 +58,26 @@ add_action(
 							const timeA = new Date(`1970-01-01T${hourA}`); // DateTime for the first item of A.
 							const timeStartB = new Date(`1970-01-01T${startB}`); // DateTime for the compare start item of B.
 							const timeEndB = new Date(`1970-01-01T${endB}`); // DateTime for the compare end item of B.
+							const timeSelectedHour = new Date(`1970-01-01T${selectedHour}`); // DateTime for selectedHour.
+
+							let startingHours = [];
+							$('select[data-field-name="appointment_hour"]', parentWrapper.closest('.accordion-content')).each(
+								function() {
+									if ( '' !== $(this).val() ){
+										startingHours.push( $(this).val() );
+									}
+								}
+							);
+							/*if ( startingHours.includes(hourA) && timeA < timeSelectedHour && ( timeSelectedHour - timeA ) >=  ) {
+								console.log(hourA);
+							}*/
 							// If the diff equals 30 minutes then no overlap.
-							if ( timeEndB - timeA !== 1800000 ) {
+							if ( (timeEndB - timeA) !== 1800000 ) {
 								/**
 								 * If DateTime for the first item of A less than the DateTime for the last item of B. ( Because if greater not conflict happens ).
 								 * And First hour of A equals Compare start hour of B or First hour of A equals Compare end hour of B
 								 * Or DateTime for the first item of A greater of DateTime for the compare start item of B and less than DateTime for the compare end item of B
 								 */
-								//console.log( timeEndB - timeA, [endB, hourA] );
 								if ( ( timeA < timeLastItemOfB && ( hourA === startB || hourA === endB ) ) || ( timeA > timeStartB && timeA < timeEndB )  ) {
 									overlapped = true;
 								}
@@ -78,7 +90,6 @@ add_action(
 					if ( hoursOverlaps.length > 0 ) {
 						return hoursOverlaps;
 					}
-					console.log(hoursOverlaps);
 					return false;
 				}
 				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
@@ -100,6 +111,7 @@ add_action(
 								action    : 'expected_hours_output',
 							},
 							success: function(response) {
+								console.log(response);
 								parentWrapper.find('.expected-hourse').html( response.resp );
 								parentWrapper.find('.expected-hours-json').val( JSON.stringify( response.limits ) );
 								var totalOverlaps = [];
@@ -107,7 +119,7 @@ add_action(
 									const jsonString = $(this).val();
 									if ( '' !== $(this).val() ) {
 										const parsedValue = JSON.parse(jsonString);
-										var hoursOverlaps = checkHoursOverlap(response.hours, parsedValue);
+										const hoursOverlaps = checkHoursOverlap(response.hours, parsedValue, selectedHour, parentWrapper);
 										if ( JSON.stringify( response.limits ) !== jsonString && hoursOverlaps && hoursOverlaps.length > 0 ) {
 											totalOverlaps.push( hoursOverlaps );
 											var className;

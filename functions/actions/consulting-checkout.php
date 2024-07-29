@@ -27,14 +27,14 @@ add_action(
 		if ( isset( $_POST ) && isset( $_POST['create_appointment_nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['create_appointment_nonce'] ) ), 'create_appointment' ) && isset( $_POST['create-appointment'] ) ) {
 			return;
 		}
-		/*var_dump('asss');
+		/*
+		var_dump('asss');
 		die;*/
 		$_req      = wp_unslash( $_POST );
 		$timetable = snks_get_timetable_by( 'ID', absint( sanitize_text_field( $_req['selected-hour'] ) ) );
 		if ( ! $timetable || empty( $timetable ) ) {
 			return;
 		}
-		
 
 		$user_id = $timetable->user_id;
 

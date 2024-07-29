@@ -280,7 +280,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 	$cache_key    = 'bookable-dates-' . $current_date . '-' . $period;
 	$results      = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-
+	
 	if ( ! $results ) {
 		if ( 'both' === $attendance_type ) {
 			$_query = $wpdb->prepare(
@@ -291,12 +291,14 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 				AND date_time
 				BETWEEN %s AND %s
 				AND session_status = %s
+				AND order_id = %d
 				ORDER BY date_time {$_order}",
 				$user_id,
 				$period,
 				$current_date,
 				$end_date,
 				'waiting',
+				0
 			);
 		} else {
 			$_query = $wpdb->prepare(
@@ -308,6 +310,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 				BETWEEN %s AND %s
 				AND attendance_type = %s
 				AND session_status = %s
+				AND order_id = %d
 				ORDER BY date_time {$_order}",
 				$user_id,
 				$period,
@@ -315,11 +318,10 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 				$end_date,
 				$attendance_type,
 				'waiting',
+				0
 			);
 		}
-
 		$results = $wpdb->get_results( $_query );
-
 		wp_cache_set( $cache_key, $results );
 	}
 	return $results;

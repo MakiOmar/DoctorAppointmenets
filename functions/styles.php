@@ -14,11 +14,19 @@ add_action(
 	function () {
 		?>
 		<style>
-			#consulting-forms-container{
-				background-color: #fff;
+			.offline-clinic-details{
+				display: inline-flex;
+				list-style: none;
 				padding: 10px;
+				margin: 5px;
+				width : calc(33.33% - 10px);
 				border-radius: 10px;
-				margin: 10px;
+				flex-direction: column;
+				justify-content: flex-start;
+				align-items: flex-start;
+				-webkit-box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+				-moz-box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+				box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
 			}
 			ul#consulting-forms-tabs li.active-tab{
 				background-color: #12114F;
@@ -317,6 +325,9 @@ add_action(
 				color:#fff;
 				border:none
 			}
+			#snks-available-hours-wrapper{
+				display:none
+			}
 			.snks-available-hours{
 				list-style-type: none;
 				margin: 0;
@@ -332,7 +343,7 @@ add_action(
 			}
 			.snks-available-hours li.available-time{
 				background-color: #12114f;
-				color: #000;
+				color: #fff;
 				border-radius: 50px;
 				padding: 5px 15px;
 				width: 30%;
@@ -341,6 +352,7 @@ add_action(
 				justify-content: center;
 				align-items: center;
 				margin-bottom: 10px;
+				border:1px solid #fff;
 
 			}
 			.snks-available-hours li.available-time label{
@@ -355,8 +367,9 @@ add_action(
 				display:none
 			}
 			.snks-available-hours li.available-time.active-hour{
-				background-color: #12114F;
-				color: #fff;
+				background-color: #fff;
+				color: #12114F;
+				border:1px solid #12114F;
 			}
 			.snks-form .row{
 				margin-bottom: 15px;
@@ -515,6 +528,11 @@ add_action(
 				align-items: center;
 			}
 
+			@media screen and (min-width:481px) {
+				.offline-clinic-details{
+					width:25%
+				}
+			}
 			@media screen and (max-width:480px) {
 				.anony-content-slider div{
 					max-width: calc(100vw - 40px);

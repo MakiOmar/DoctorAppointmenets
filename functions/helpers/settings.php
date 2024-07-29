@@ -230,7 +230,7 @@ function snks_get_available_attendance_types_options() {
  */
 function snks_get_clinics( $user_id = false ) {
 	$settings = snks_doctor_settings( $user_id );
-	if ( ! empty( $settings['clinics_list'] ) ) {
+	if ( is_array( $settings['clinics_list'] ) && ! empty( $settings['clinics_list'] ) ) {
 		return $settings['clinics_list'];
 	}
 	return false;
@@ -245,7 +245,7 @@ function snks_get_clinics( $user_id = false ) {
  */
 function snks_get_clinic( $key, $user_id = false ) {
 	$clinics = snks_get_clinics( $user_id );
-	if ( $clinics && ! empty( $clinics[ $key ] ) ) {
+	if ( $clinics ) {
 		return $clinics[ $key ];
 	}
 	return false;

@@ -161,28 +161,3 @@ function delete_timetable_callback() {
 	die;
 }
 
-add_action( 'wp_ajax_fetch_start_times', 'fetch_start_times_callback' );
-/**
- * Update attendance
- *
- * @return void
- */
-function fetch_start_times_callback() {
-
-	$_request = isset( $_POST ) ? wp_unslash( $_POST ) : array();
-	// Verify the nonce.
-	if ( isset( $_request['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_request['nonce'] ), 'fetch_start_times_nonce' ) ) {
-		wp_send_json_error( 'Invalid nonce.' );
-	}
-	$date       = sanitize_text_field( $_request['slectedDay'] );
-	$user_id    = sanitize_text_field( $_request['userID'] );
-	$period     = sanitize_text_field( $_request['period'] );
-	$availables = snks_user_appointments_by_date_period( $user_id, $date, $period );
-	$html       = snks_render_consulting_hours( $availables );
-	wp_send_json(
-		array(
-			'resp' => $html,
-		)
-	);
-	die;
-}

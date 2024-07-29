@@ -42,6 +42,32 @@ add_action(
 				}
 				$(document).on(
 					'change',
+					'input[name=attendance_type]',
+					function() {
+						$('#consulting-forms-container').html('');
+						var attendanceType = $(this).val();
+						var doctor_id       = $('input[name=filter_user_id]').val();
+						var nonce           = '<?php echo esc_html( wp_create_nonce( 'get_periods_nonce' ) ); ?>';
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								attendanceType: attendanceType,
+								doctor_id     : doctor_id,
+								action        : 'get_periods',
+							},
+							success: function(response) {
+								$('.periods_wrapper').html( response );
+								//console.log(response);
+							},
+							error: function(xhr, status, error) {
+								console.error('Error:', error);
+							}
+						});
+					}
+				);
+				$(document).on(
+					'change',
 					'input[name=attendance_type],input[name=period]',
 					function() {
 						getBookingForm();
@@ -82,6 +108,7 @@ add_action(
 								$( this ).prev('label').addClass( 'active-day' );
 							}
 						}
+						var attendanceType = $('input[name=attendance_type]:checked').val();
 						var slectedDay = $(this).val();
 						var userID     = $(this).data('user');
 						var period     = $(this).data('period');
@@ -95,10 +122,12 @@ add_action(
 								slectedDay: slectedDay,
 								userID    : userID,
 								period    : period,
+								attendanceType    : attendanceType,
 								action    : 'fetch_start_times',
 							},
 							success: function(response) {
 								$( '.snks-available-hours', $( '.consulting-form-' + period ) ).html( response.resp );
+								$('#snks-available-hours-wrapper').show();
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);
