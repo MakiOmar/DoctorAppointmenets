@@ -92,7 +92,24 @@ add_action(
 							success: function(response) {
 								const hoursOverlaps = checkHoursOverlap(response.tos, selectedHour, parentWrapper);
 								if ( hoursOverlaps.length > 0 ) {
-									
+									var className;
+									hoursOverlaps.forEach(function(item, index) {
+										className = item.replace(":", "-");
+										if ( ! $( '.' + className, parentWrapper.closest('.accordion-content') ).hasClass('shrinks-error') ) {
+											$( '.' + className, parentWrapper.closest('.accordion-content') ).addClass('shrinks-error');
+										}
+									});
+									setTimeout(() => {
+										showErrorpopup('هناك تداخل في المواعيد!');
+										$('#jet-popup-2219').removeClass('jet-popup--hide-state').addClass('jet-popup--show-state');
+									}, 200);
+								} else {
+									$('.shrinks-error').removeClass('shrinks-error');
+									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
+										if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
+											$(this).prop('disabled', true)
+										}
+									} );
 								}
 							}
 						});
