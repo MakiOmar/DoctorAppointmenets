@@ -44,53 +44,32 @@ add_action(
 				function applySelect2() {
 					$('select[data-field-name=country_code]').not('.select2-hidden-accessible').select2({width: '100%'});
 				}
-				function checkHoursOverlap(A, B, selectedHour, parentWrapper) {
-					const hoursOverlaps = [];
-					const timeLastItemOfB   = new Date(`1970-01-01T${B[B.length - 1]}`); // DateTime for the last item of B.
-					// Loop A
-					for (let i = 0; i < A.length; i++) {
-						const hourA = A[i]; // First hour of A.
-						var overlapped = false;
-						// loop through B.
-						for (let j = 0; j < B.length; j += 2) {
-							const startB = B[j]; // Compare start hour of B.
-							const endB = B[j + 1]; // Compare end hour of B.
-							const timeA = new Date(`1970-01-01T${hourA}`); // DateTime for the first item of A.
-							const timeStartB = new Date(`1970-01-01T${startB}`); // DateTime for the compare start item of B.
-							const timeEndB = new Date(`1970-01-01T${endB}`); // DateTime for the compare end item of B.
-							const timeSelectedHour = new Date(`1970-01-01T${selectedHour}`); // DateTime for selectedHour.
-
-							let startingHours = [];
-							$('select[data-field-name="appointment_hour"]', parentWrapper.closest('.accordion-content')).each(
-								function() {
-									if ( '' !== $(this).val() ){
-										startingHours.push( $(this).val() );
-									}
-								}
-							);
-							/*if ( startingHours.includes(hourA) && timeA < timeSelectedHour && ( timeSelectedHour - timeA ) >=  ) {
-								console.log(hourA);
-							}*/
-							// If the diff equals 30 minutes then no overlap.
-							if ( (timeEndB - timeA) !== 1800000 ) {
-								/**
-								 * If DateTime for the first item of A less than the DateTime for the last item of B. ( Because if greater not conflict happens ).
-								 * And First hour of A equals Compare start hour of B or First hour of A equals Compare end hour of B
-								 * Or DateTime for the first item of A greater of DateTime for the compare start item of B and less than DateTime for the compare end item of B
-								 */
-								if ( ( timeA < timeLastItemOfB && ( hourA === startB || hourA === endB ) ) || ( timeA > timeStartB && timeA < timeEndB )  ) {
-									overlapped = true;
-								}
+				function checkHoursOverlap(tos, selectedHour, parentWrapper) {
+					const timeSelectedHour = new Date(`1970-01-01T${selectedHour}`); // DateTime for selectedHour.
+					let overlappedHours = [];
+					let startingHours   = [];
+					$('select[data-field-name="appointment_hour"]', parentWrapper.closest('.accordion-content')).each(
+						function() {
+							if ( '' !== $(this).val() ){
+								startingHours.push( $(this).val() );
 							}
 						}
-						if ( overlapped ) {
-							hoursOverlaps.push( hourA );
+					);
+					startingHours.forEach( function( startingHour ) {
+						var timeStartingHour =  new Date(`1970-01-01T${startingHour}`);
+
+						if ( timeSelectedHour < timeStartingHour ) {
+							console.log(timeStartingHour);
+							tos.forEach( function( to ) {
+								timeTo = new Date(`1970-01-01T${to}`);
+								if ( timeTo > timeStartingHour ) {
+									overlappedHours.push( to );
+								}
+							} );
 						}
-					}
-					if ( hoursOverlaps.length > 0 ) {
-						return hoursOverlaps;
-					}
-					return false;
+					} );
+
+					return overlappedHours;
 				}
 				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
 						if ( '' === selectedPeriods || '' === selectedHour ) {
@@ -111,37 +90,9 @@ add_action(
 								action    : 'expected_hours_output',
 							},
 							success: function(response) {
-								console.log(response);
-								parentWrapper.find('.expected-hourse').html( response.resp );
-								parentWrapper.find('.expected-hours-json').val( JSON.stringify( response.limits ) );
-								var totalOverlaps = [];
-								$('.expected-hours-json', parentWrapper.closest('.accordion-content')).each(function() {
-									const jsonString = $(this).val();
-									if ( '' !== $(this).val() ) {
-										const parsedValue = JSON.parse(jsonString);
-										const hoursOverlaps = checkHoursOverlap(response.hours, parsedValue, selectedHour, parentWrapper);
-										if ( JSON.stringify( response.limits ) !== jsonString && hoursOverlaps && hoursOverlaps.length > 0 ) {
-											totalOverlaps.push( hoursOverlaps );
-											var className;
-											hoursOverlaps.forEach(function(item, index) {
-												className = item.replace(":", "-");
-												$( '.' + className, parentWrapper.closest('.accordion-content') ).addClass('shrinks-error');
-											});
-											setTimeout(() => {
-												showErrorpopup('هناك تداخل في المواعيد!');
-												$('#jet-popup-2219').removeClass('jet-popup--hide-state').addClass('jet-popup--show-state');
-											}, 200);
-										} else if ( ! hoursOverlaps  ) {
-											$('.shrinks-error').removeClass('shrinks-error');
-										}
-									}
-								});
-								if ( totalOverlaps.length < 1 ) {
-									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
-										if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
-											$(this).prop('disabled', true)
-										}
-									} );
+								const hoursOverlaps = checkHoursOverlap(response.tos, selectedHour, parentWrapper);
+								if ( hoursOverlaps.length > 0 ) {
+									
 								}
 							}
 						});

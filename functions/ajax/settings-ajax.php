@@ -50,6 +50,7 @@ add_action(
 				'lowesttHour' => $hours[0],
 				'limits'      => array( $hours[0], end( $hours ) ),
 				'tos'         => $to_hours,
+				'periods'     => $periods,
 			)
 		);
 
