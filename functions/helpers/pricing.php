@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return mixed
  */
 function get_price_by_period_and_country( $period, $country_code, $data_array ) {
-	if ( isset( $data_array[ $period ]['countries'] ) ) {
+	if ( is_array( $data_array ) && isset( $data_array[ $period ]['countries'] ) ) {
 		foreach ( $data_array[ $period ]['countries'] as $item ) {
 			if ( $item['country_code'] === $country_code ) {
 				return $item['price'];

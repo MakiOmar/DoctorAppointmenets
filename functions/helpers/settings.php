@@ -459,11 +459,14 @@ function snks_get_preview_timetable() {
  *
  * @param string $day Preview timetable day.
  * @param int    $index Preview timetable index.
+ * @param string $target Action target.
  * @return string
  */
-function snks_preview_actions( $day, $index ) {
-	$html  = '';
-	$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '" data-day="' . $day . '">Delete</a>';
+function snks_preview_actions( $day, $index, $target = 'meta' ) {
+	$html = '';
+	if ( 'meta' === $target ) {
+		$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '" data-day="' . $day . '">Delete</a>';
+	}
 	return $html;
 }
 
@@ -476,13 +479,15 @@ add_action(
 		}
 	}
 );
+
 add_action(
 	'jet-form-builder/custom-action/Insert_appointment',
 	function ( $_req ) {
+		// Get 30 days timetable.
 		$timetables     = snks_generate_timetable();
-		$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) );
-		$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) );
-		$expected_hours = snks_expected_hours( $periods, $hour );
+		$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) ); // Slected hour.
+		$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) ); // Chosen periods.
+		$expected_hours = snks_expected_hours( $periods, $hour ); // Expected hours.
 
 		$hours = array();
 		if ( ! empty( $expected_hours ) ) {
@@ -495,7 +500,9 @@ add_action(
 		}
 		$hours = array_values( array_unique( $hours ) );
 
+		// Selected day timetables.
 		$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
+
 		if ( $day_timetables ) {
 			$date_timetables = array();
 			foreach ( $day_timetables as $timetable ) {
@@ -708,6 +715,102 @@ function snks_generate_preview() {
 	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
 	$output .= '<center><button id="insert-timetable">نشر</button></center>';
 	$output .= '<center id="insert-timetable-msg"></center>';
+	return $output;
+}
+
+/**
+ * Generate preview
+ *
+ * @return string
+ */
+function snks_generate_bookings() {
+	$timetables = snks_get_doctor_sessions( 'future', 'open', true );
+	if ( empty( $timetables ) ) {
+		return '<p>ليس لديك حجوزات حتى الآن!</p>';
+	}
+	$days_sorted = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
+
+	uksort(
+		$timetables,
+		function ( $a, $b ) use ( $days_sorted ) {
+			$pos_a = array_search( $a, $days_sorted, true );
+			$pos_b = array_search( $b, $days_sorted, true );
+			return $pos_a - $pos_b;
+		}
+	);
+
+	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
+	$output      = '';
+
+	if ( is_array( $timetables ) ) {
+		$day_groups = snks_group_objects_by( $timetables, 'day' );
+
+		foreach ( $day_groups as $day => $timetable ) {
+			$date_groups = snks_group_objects_by( $timetable, 'date' );
+
+			// https://github.com/erguncaner/table.
+			// First create a table.
+			$table = new Table(
+				array(
+					'id'    => $day . '-preview-timetable',
+					'class' => 'preview-timetable',
+				)
+			);
+			// Create table columns with a column key and column object.
+			$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
+			$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
+			$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
+			$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
+			$table->addColumn( 'period', new TableColumn( 'المدة' ) );
+			$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
+			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
+			$position = 0;
+			foreach ( $date_groups as $date => $details ) {
+				if ( count( $details ) > 1 ) {
+					// Associate cells with columns.
+					$cells = array(
+						'day' => new TableCell( $days_labels[ $day ] . ' ' . $date, array( 'colspan' => '7' ) ),
+					);
+					// define row attributes.
+					$attrs = array(
+						'id'          => 'timetable-tab-' . $day . '-' . $position,
+						'class'       => 'timetable-preview-tab',
+						'data-target' => 'timetable-' . $date,
+					);
+					$table->addRow( new TableRow( $cells, $attrs ) );
+					++$position;
+				}
+				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
+				/**
+				 * Timetable queried object.
+				 *
+				 * @var object $data
+				 */
+				foreach ( $details as $data ) {
+					$index   = array_search( $data, $timetable, true );
+					$actions = snks_preview_actions( $data->day, $index );
+					// Associate cells with columns.
+					$cells = array(
+						'day'        => new TableCell( $days_labels[ $data->day ], array( 'data-label' => 'اليوم' ) ),
+						'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
+						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data->starts ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data->ends ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
+						'period'     => new TableCell( $data->period, array( 'data-label' => 'المدة' ) ),
+						'attendance' => new TableCell( $data->attendance_type, array( 'data-label' => 'الحضور' ) ),
+						'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
+					);
+					// define row attributes.
+					$attrs = array(
+						'id'    => 'timetable-' . $data->day . '-' . $index,
+						'class' => 'timetable-' . $date . $class,
+					);
+					$table->addRow( new TableRow( $cells, $attrs ) );
+				}
+			}
+			// Finally generate html.
+			$output .= $table->html();
+		}
+	}
 	return $output;
 }
 

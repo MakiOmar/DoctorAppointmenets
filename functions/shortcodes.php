@@ -8,11 +8,17 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
-
 add_shortcode(
 	'snks_timetable_preview',
 	function () {
 		return snks_generate_preview();
+	}
+);
+
+add_shortcode(
+	'snks_bookings',
+	function () {
+		return snks_generate_bookings();
 	}
 );
 
@@ -61,7 +67,6 @@ add_shortcode(
 		return snks_go_back();
 	}
 );
-
 add_shortcode(
 	'snks_appointment_form',
 	function () {

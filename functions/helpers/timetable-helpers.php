@@ -129,6 +129,26 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 }
 
 /**
+ * Will close other timetables if one of the same datetime is booked
+ *
+ * @param object $booked_timetable Booked timetable.
+ * @return void
+ */
+function snks_close_others( $booked_timetable ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	// phpcs:disable.
+	$wpdb->query(
+		$wpdb->prepare(
+			"UPDATE $table_name
+			SET session_status = 'closed'
+			WHERE date_time = %s
+			AND order_id = 0",
+			$booked_timetable->date_time		)
+	);
+	// phpcs:enable.
+}
+/**
  * If Timetable exists
  *
  * @param int    $user_id User ID.
@@ -399,30 +419,43 @@ function get_bookable_date_available_times( $date ) {
 /**
  * Get doctor sessions
  *
- * @param string $tense past|future|all records.
+ * @param string $tense past|future|all.
+ * @param string $status waiting|open|closed|cancelled.
+ * @param bool   $ordered True for ordered.
  * @return mixed
  */
-function snks_get_doctor_sessions( $tense ) {
+function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false ) {
 	global $wpdb;
 	$user_id = get_current_user_id();
 	$cache_key = 'doctor-' . $tense . '-sessions-' . $user_id;
 	$results   = wp_cache_get( $cache_key );
 	$operator  = 'past' === $tense ? '<' : '>';
 	if ( ! $results ) {
-		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d AND purpose = %s";
+		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( 'all' !== $tense ) {
 			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
+		}
+		if ( $ordered ) {
+			$query .= " AND order_id != 0";
 		}
 		$query .= " ORDER BY date_time ASC";
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				$query,
 				$user_id,
-				'session'
+				$status
 			)
 		);
 		wp_cache_set( $cache_key, $results );
+	}
+	$temp = [];
+	if ( $results && is_array( $results ) ) {
+		foreach( $results as $result ){
+			$result->date = gmdate( 'Y-m-d', strtotime( $result->date_time ) );
+			$temp[] = $result;
+		}
+		$results = $temp;
 	}
 	return $results;
 }
@@ -444,13 +477,11 @@ function snks_get_patient_bookings( $user_id = false ) {
 			$wpdb->prepare(
 				"SELECT *
 				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE FIND_IN_SET(%d, client_id) > 0
-				AND purpose = %s
+				WHERE client_id = %d
 				AND session_status = %s
 				ORDER BY ID DESC
 				Limit 1",
 				$user_id,
-				'consulting',
 				'open'
 			)
 		);

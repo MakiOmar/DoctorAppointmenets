@@ -15,6 +15,7 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				var disabledOptions = [];
 				var weekDays = ['sun','mon','tue','wed','thu','fri','sat'];
 				function checkRequiredSettings() {
 					var pass = true;
@@ -59,7 +60,6 @@ add_action(
 						var timeStartingHour =  new Date(`1970-01-01T${startingHour}`);
 
 						if ( timeSelectedHour < timeStartingHour ) {
-							console.log(timeStartingHour);
 							tos.forEach( function( to ) {
 								timeTo = new Date(`1970-01-01T${to}`);
 								if ( timeTo > timeStartingHour ) {
@@ -90,6 +90,12 @@ add_action(
 								action    : 'expected_hours_output',
 							},
 							success: function(response) {
+								$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
+									if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour && ! disabledOptions.includes( $(this).val() ) ) {
+										$(this).prop('disabled', false)
+									}
+								} );
+								parentWrapper.find('.expected-hourse').html( response.resp );
 								const hoursOverlaps = checkHoursOverlap(response.tos, selectedHour, parentWrapper);
 								if ( hoursOverlaps.length > 0 ) {
 									var className;
@@ -107,7 +113,10 @@ add_action(
 									$('.shrinks-error').removeClass('shrinks-error');
 									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
 										if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
-											$(this).prop('disabled', true)
+											$(this).prop('disabled', true);
+											if ( ! disabledOptions.includes( $(this).val() ) ) {
+												disabledOptions.push( $(this).val() );
+											}
 										}
 									} );
 								}
