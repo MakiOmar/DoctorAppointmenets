@@ -489,20 +489,16 @@ add_action(
 		$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) ); // Chosen periods.
 		$expected_hours = snks_expected_hours( $periods, $hour ); // Expected hours.
 
-		$hours = array();
+		$tos = array();
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
-				$expected_hour_from = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
 				$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
-				$hours[]            = $expected_hour_from;
-				$hours[]            = $expected_hour_to;
+				$tos[]            = $expected_hour_to;
 			}
 		}
-		$hours = array_values( array_unique( $hours ) );
-
+		$tos = array_values( array_unique( $tos ) );
 		// Selected day timetables.
 		$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
-
 		if ( $day_timetables ) {
 			$date_timetables = array();
 			foreach ( $day_timetables as $timetable ) {
@@ -511,36 +507,37 @@ add_action(
 					$date_timetables[] = $timetable;
 				}
 			}
-
-			$starts      = array_column( $date_timetables, 'starts' );
-			$ends        = array_column( $date_timetables, 'ends' );
-			$starts_ends = array_unique( array_merge( $starts, $ends ) );
-			$starts_ends = array_map(
+			$starts = array_column( $date_timetables, 'starts' );
+			$starts = array_unique( $starts );
+			$starts = array_map(
 				function ( $item ) {
 					return gmdate( 'H:i', strtotime( $item ) );
 				},
-				$starts_ends
+				$starts
 			);
 
-			$intersections = array_intersect( $hours, $starts_ends );
-			$intersections = array_map(
-				function ( $item ) {
-					return gmdate( 'H:i', strtotime( $item ) );
-				},
-				$intersections
-			);
+			$conflicts_list     = array();
+			$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
 
-			$hours_in_range = snks_get_hours_in_range( $hours, $starts_ends );
-			$conflicts_list = array();
-			if ( ! empty( $intersections ) ) {
-				$conflicts_list = array_merge( $conflicts_list, $intersections );
-			}
-
-			if ( ! empty( $hours_in_range ) ) {
-				$conflicts_list = array_merge( $conflicts_list, $hours_in_range );
+			foreach ( $starts as $start ) {
+				$start_time = strtotime( '1970-01-01 ' . $start );
+				if ( $selected_hour_time < $start_time ) {
+					foreach ( $tos as $to ) {
+						$to_time = strtotime( '1970-01-01 ' . $to );
+						if ( $to_time > $selected_hour_time ) {
+							$conflicts_list[] = $to;
+						}
+					}
+				}
 			}
 
 			if ( ! empty( $conflicts_list ) ) {
+				$conflicts_list = array_map(
+					function ( $item ) {
+						return gmdate( 'h:i a', strtotime( $item ) );
+					},
+					$conflicts_list
+				);
 				wp_safe_redirect(
 					add_query_arg(
 						array(
