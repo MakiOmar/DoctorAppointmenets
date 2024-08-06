@@ -524,7 +524,7 @@ add_action(
 				if ( $selected_hour_time < $start_time ) {
 					foreach ( $tos as $to ) {
 						$to_time = strtotime( '1970-01-01 ' . $to );
-						if ( $to_time > $selected_hour_time ) {
+						if ( $to_time > $start_time ) {
 							$conflicts_list[] = $to;
 						}
 					}
