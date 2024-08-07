@@ -52,8 +52,8 @@ add_action(
 				)
 			),
 			'booking_id'   => sanitize_text_field( $_req['selected-hour'] ),
-			'user_id'      => sanitize_text_field( $_req['user-id'] ),
-			'period'       => sanitize_text_field( $_req['period'] ),
+			'_user_id'     => sanitize_text_field( $_req['user-id'] ),
+			'_period'      => sanitize_text_field( $_req['period'] ),
 		);
 		//phpcs:enable.
 		WC()->session->set( 'consulting_form_data', $form_data );
@@ -131,8 +131,8 @@ add_action(
 			return;
 		}
 		$country          = 'EG';
-		$user_id          = $session['user_id'];
-		$period           = $session['period'];
+		$user_id          = $session['_user_id'];
+		$period           = $session['_period'];
 		$has_discount     = snks_discount_eligible( $user_id );
 		$pricings         = snks_doctor_pricings( $user_id );
 		$price            = get_price_by_period_and_country( $period, $country, $pricings );
