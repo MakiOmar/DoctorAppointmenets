@@ -434,13 +434,23 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
 }
 
 /**
+ * Get doctors booking form url
+ *
+ * @param int $doctor_id Doctor's ID.
+ * @return string
+ */
+function snks_doctors_booking_form_url( $doctor_id ) {
+	return site_url();
+}
+/**
  * Render edit button
  *
  * @param int $booking_id Booking ID.
+ * @param int $doctor_id Doctor's ID.
  * @return string
  */
-function snks_edit_button( $booking_id ) {
-	return '<a href="' . add_query_arg( 'edit-booking', $booking_id, site_url( '/consulting-form' ) ) . '" title="تحرير" class="edit-booking"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+function snks_edit_button( $booking_id, $doctor_id ) {
+	return '<a href="' . add_query_arg( 'edit-booking', $booking_id, snks_doctors_booking_form_url( $doctor_id ) ) . '" title="تحرير" class="edit-booking"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 	<path d="M14.19 0H5.81C2.17 0 0 2.17 0 5.81V14.18C0 17.83 2.17 20 5.81 20H14.18C17.82 20 19.99 17.83 19.99 14.19V5.81C20 2.17 17.83 0 14.19 0ZM8.95 15.51C8.66 15.8 8.11 16.08 7.71 16.14L5.25 16.49C5.16 16.5 5.07 16.51 4.98 16.51C4.57 16.51 4.19 16.37 3.92 16.1C3.59 15.77 3.45 15.29 3.53 14.76L3.88 12.3C3.94 11.89 4.21 11.35 4.51 11.06L8.97 6.6C9.05 6.81 9.13 7.02 9.24 7.26C9.34 7.47 9.45 7.69 9.57 7.89C9.67 8.06 9.78 8.22 9.87 8.34C9.98 8.51 10.11 8.67 10.19 8.76C10.24 8.83 10.28 8.88 10.3 8.9C10.55 9.2 10.84 9.48 11.09 9.69C11.16 9.76 11.2 9.8 11.22 9.81C11.37 9.93 11.52 10.05 11.65 10.14C11.81 10.26 11.97 10.37 12.14 10.46C12.34 10.58 12.56 10.69 12.78 10.8C13.01 10.9 13.22 10.99 13.43 11.06L8.95 15.51ZM15.37 9.09L14.45 10.02C14.39 10.08 14.31 10.11 14.23 10.11C14.2 10.11 14.16 10.11 14.14 10.1C12.11 9.52 10.49 7.9 9.91 5.87C9.88 5.76 9.91 5.64 9.99 5.57L10.92 4.64C12.44 3.12 13.89 3.15 15.38 4.64C16.14 5.4 16.51 6.13 16.51 6.89C16.5 7.61 16.13 8.33 15.37 9.09Z" fill="#12114F"/>
 	</svg>
 	</a>';
@@ -478,28 +488,17 @@ function template_str_replace( $record, $edit, $_class, $room ) {
 	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
 
 	if ( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 ) {
-		$button_text     = 'عفواً! تجاوزت الموعد.';
-		$_class          = 'remaining';
-		$session_actions = snks_get_session_actions( $record->ID, $client_id );
-		if ( $session_actions ) {
-			if ( 'yes' === $session_actions->attendance ) {
-				$button_text = 'حضر';
-				$_class     .= ' success';
-			} elseif ( 'no' === $session_actions->attendance ) {
-				$button_text = 'لم يحضر';
-				$_class     .= ' error';
-			}
-		}
-		$room = '#';
+		$button_text = 'عفواً! تجاوزت الموعد.';
+		$_class      = 'remaining';
 	}
 	if ( 'cancelled' === $record->session_status ) {
 		$button_text = 'ملغي';
 		$room        = '#';
 	}
-	$template = do_shortcode( '[elementor-template id="1239"]' );
-	$title    = '';
-	if ( ! empty( $record->session_title ) ) {
-		$title = '<div class="session-title"><p>' . $record->session_title . '</p><span></span></div>';
+	$template      = do_shortcode( '[elementor-template id="1239"]' );
+	$profile_image = get_user_meta( $record->user_id, 'profile-image', true );
+	if ( empty( $profile_image ) ) {
+		$profile_image = '/wp-content/uploads/2024/08/th.jpeg';
 	}
 	return str_replace(
 		array(
@@ -512,7 +511,6 @@ function template_str_replace( $record, $edit, $_class, $room ) {
 			'{button_url}',
 			'{button_text}',
 			'{button_class}',
-			'{session_title}',
 			'{room_url}',
 			'{doctor_profile_image}',
 		),
@@ -520,15 +518,14 @@ function template_str_replace( $record, $edit, $_class, $room ) {
 			$record->ID,
 			snks_get_doctor_name( $record->user_id ),
 			esc_html( get_user_meta( $record->user_id, 'specialty', true ) ),
-			$record->booking_day,
+			gmdate( 'Y-m-d', strtotime( $record->date_time ) ),
 			str_replace( array( ' am', ' pm' ), array( ' ص', ' م' ), gmdate( 'g:i a', strtotime( $record->date_time ) ) ),
 			$edit,
 			esc_url( $room ),
 			$button_text,
 			$_class,
-			$title,
-			esc_url( site_url( '/zego?room_id=' . $record->ID ) ),
-			esc_url( get_user_meta( $record->user_id, 'profile-image', true ) ),
+			esc_url( site_url( '/' ) ),
+			esc_url( $profile_image ),
 		),
 		$template
 	);
@@ -588,39 +585,49 @@ function snks_doctor_actions( $session ) {
  * Render patient sessions
  *
  * @param string $tense Past/Future records.
- * @param string $_for  For patient|family|doctor.
  * @return string
  */
-function snks_render_sessions_listing( $tense, $_for = 'patient' ) {
-	if ( 'patient' === $_for ) {
-		$sessions = snks_get_patient_sessions( $tense );
-	} else {
-		$sessions = snks_get_doctor_sessions( $tense );
-	}
-	$edit   = '<a href="#">' . esc_html__( 'Edit', 'anony_shrinks' ) . '</a>';
-	$output = '';
+function snks_render_sessions_listing( $tense ) {
+
+	$sessions = snks_get_patient_sessions( $tense );
+	$edit     = '';
+	$output   = '';
 	if ( $sessions && is_array( $sessions ) ) {
 		$template = do_shortcode( '[elementor-template id="1239"]' );
-		$edit     = '';
 		foreach ( $sessions as $session ) {
+			$doctor_settings = snks_doctor_settings( $session->user_id );
 			if ( snks_is_past_date( $session->date_time ) ) {
 				$class = 'start';
-				$room  = add_query_arg( 'room_id', $session->ID, site_url( '/zego' ) );
+				$room  = '#';
 			} else {
 				$class = 'remaining';
 				$room  = '#';
+				if ( 'on' === $doctor_settings['allow_appointment_change'] ) {
+					$order_id      = $session->order_id;
+					$edited_before = get_post_meta( $order_id, 'booking-edited', true );
+					$class         = 'remaining';
+					$room          = '#';
+					// Create a DateTime object for the input date and time.
+					$booking_dt_obj = new DateTime( $session->date_time );
+
+					// Create a DateTime object for the current date and time.
+					$now = new DateTime();
+
+					// Calculate the time interval between the input and current date and time.
+					$interval     = $now->diff( $booking_dt_obj );
+					$diff_seconds = $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
+					// Compare the input date and time with the modified current date and time.
+					if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
+						$edit = snks_edit_button( $session->ID, $session->user_id );
+					}
+				}
 			}
 			$output .= template_str_replace( $session, $edit, $class, $room );
 
-			if ( 'doctor' === $_for ) {
-				$doctor_actions = snks_doctor_actions( $session );
-				$output         = str_replace( '{doctor_actions}', $doctor_actions, $output );
-			} else {
-				$output = str_replace( '{doctor_actions}', '', $output );
-			}
+			$output = str_replace( '{doctor_actions}', '', $output );
 		}
 	} else {
-		$output = esc_html__( 'No sessions found.', 'anony_shrinks' );
+		$output = 'عفواَ ليس لديك حجوزات حاليا!';
 	}
 	return $output;
 }

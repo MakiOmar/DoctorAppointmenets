@@ -157,13 +157,88 @@ function snks_localize_time( $time ) {
  * @return mixed
  */
 function snks_url_get_doctors_id() {
-	//phpcs:disable
-	preg_match( '/\d+/', urldecode( $_SERVER[ 'REQUEST_URI' ] ), $match );
-	if ( ! $match ) {
-		return false;
+	global $wp;
+	$user_id = false;
+	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
+		$key               = 'sks#^1';
+		$encrypted_user_id = $wp->query_vars['doctor_id'];
+		$user_id           = openssl_decrypt( $encrypted_user_id, 'aes-256-cbc', $key );
 	}
-	//phpcs:enable
-	$user_id = array_shift( $match );
 	return $user_id;
 }
 
+// Shortcode to display a button that copies the encrypted user ID.
+
+add_shortcode(
+	'snks_booking_url_button',
+	function () {
+		// Get the user ID.
+		$user_id = get_current_user_id();
+
+		// Encrypt the user ID.
+		$url = '';
+
+		ob_start();
+		?>
+		<input type="hidden" id="booking-url" value="<?php echo esc_url( $url ); ?>"/>
+		<button onclick="copyToClipboard()">انسخ رابط الحجز الخاص بك</button>
+		<script>
+		function copyToClipboard() {
+			const bookingUrl = document.getElementById('booking-url');
+			const el = document.createElement('textarea');
+			el.value = bookingUrl.value;
+			document.body.appendChild(el);
+			el.select();
+			document.execCommand('copy');
+			document.body.removeChild(el);
+			alert('تم النسخ');
+		}
+		</script>
+		<?php
+		return ob_get_clean();
+	}
+);
+
+/**
+ * Booking url copy
+ *
+ * @param object $user User's object.
+ * @return string
+ */
+function snks_doctor_booking_url( $user ) {
+	if ( ! in_array( 'doctor', $user->roles ) ) {
+		return;
+	}
+	$key = 'sks#^1';
+	// Encrypt the user ID.
+	$encrypted_user_id = openssl_encrypt( $user->ID, 'aes-256-cbc', $key );
+
+	ob_start();
+	?>
+	<div>
+		<h2>Doctor's page url</h2>
+		<p>
+		<input type="hidden" id="booking-url" value="<?php echo esc_url( site_url( '/your-clinic/' . $encrypted_user_id ) ); ?>"/>
+		<a href="#" class="button button-primary" onclick="copyToClipboard(event)">انسخ رابط الحجز الخاص بك</a>
+		</p>
+	</div>
+	<script>
+	function copyToClipboard(e) {
+		e.preventDefault();
+		const bookingUrl = document.getElementById('booking-url');
+		const el = document.createElement('textarea');
+		el.value = bookingUrl.value;
+		document.body.appendChild(el);
+		el.select();
+		document.execCommand('copy');
+		document.body.removeChild(el);
+		alert('تم النسخ');
+	}
+	</script>
+	<?php
+	//phpcs:disable
+	echo ob_get_clean();
+	//phpcs:enable
+}
+add_action( 'show_user_profile', 'snks_doctor_booking_url' );
+add_action( 'edit_user_profile', 'snks_doctor_booking_url' );

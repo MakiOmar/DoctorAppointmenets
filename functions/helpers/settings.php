@@ -469,7 +469,18 @@ function snks_preview_actions( $day, $index, $target = 'meta' ) {
 	}
 	return $html;
 }
-
+/**
+ * Get period before edit booking will be not possible.
+ *
+ * @param array $doctor_settings Doctor's settings.
+ * @return int
+ */
+function snks_get_edit_before_seconds( $doctor_settings ) {
+	$number = $doctor_settings['free_change_before_number'];
+	$unit   = $doctor_settings['free_change_before_unit'];
+	$base   = 'day' === $unit ? 24 : 1;
+	return $number * $base * 60;
+}
 add_action(
 	'jet-form-builder/custom-action/after_session_settings',
 	function () {
@@ -492,7 +503,7 @@ add_action(
 		$tos = array();
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
-				$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
+				$expected_hour_to = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
 				$tos[]            = $expected_hour_to;
 			}
 		}

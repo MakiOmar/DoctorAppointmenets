@@ -160,4 +160,3 @@ function delete_timetable_callback() {
 	);
 	die;
 }
-

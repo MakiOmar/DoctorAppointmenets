@@ -505,7 +505,7 @@ function snks_get_patient_sessions( $tense ) {
 	$results   = wp_cache_get( $cache_key );
 	$operator  = 'past' === $tense ? '<' : '>';
 	if ( ! $results ) {
-		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE FIND_IN_SET(%d, client_id) > 0 AND purpose = %s";
+		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( 'all' !== $tense ) {
 			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
@@ -514,8 +514,7 @@ function snks_get_patient_sessions( $tense ) {
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				$query,
-				$user_id,
-				'session'
+				$user_id
 			)
 		);
 		wp_cache_set( $cache_key, $results );

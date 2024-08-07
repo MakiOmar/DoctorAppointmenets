@@ -75,7 +75,7 @@ add_action( 'wp_ajax_get_periods', 'get_periods_callback' );
 function get_periods_callback() {
 	$_req = isset( $_POST ) ? wp_unslash( $_POST ) : array();
 	// Verify the nonce.
-	if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'get_periods_nonce' ) ) {
+	if ( isset( $_req['nonce'] ) && isset( $_req['doctor_id'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'get_periods_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
 	$settings               = snks_doctor_settings( absint( $_req['doctor_id'] ) );
