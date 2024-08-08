@@ -14,11 +14,18 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				// Function to get the value of a query parameter from the URL.
+				function getQueryParamValue(param) {
+					const urlParams = new URLSearchParams(window.location.search);
+					return urlParams.get(param);
+				}
 				function getBookingForm(){
-					var attendanceType = $('input[name=attendance_type]:checked').val();
-					var period         = $('input[name=period]:checked').val();
-					var doctor_id      = $('input[name=filter_user_id]').val();
-					var nonce          = '<?php echo esc_html( wp_create_nonce( 'get_booking_form_nonce' ) ); ?>';
+					// Check if the 'edit-booking' query parameter exists
+					const editBookingId = getQueryParamValue('edit-booking') ?  getQueryParamValue('edit-booking') : '' ;
+					var attendanceType  = $('input[name=attendance_type]:checked').val();
+					var period          = $('input[name=period]:checked').val();
+					var doctor_id       = $('input[name=filter_user_id]').val();
+					var nonce           = '<?php echo esc_html( wp_create_nonce( 'get_booking_form_nonce' ) ); ?>';
 					if ( typeof attendanceType !== 'undefined' && typeof period !== 'undefined' ) {
 						var price = $('input[name=period]:checked').data('price');
 						$.ajax({
@@ -29,6 +36,7 @@ add_action(
 								period        : period,
 								doctor_id     : doctor_id,
 								price         : price,
+								editBookingId : editBookingId,
 								action        : 'get_booking_form',
 							},
 							success: function(response) {

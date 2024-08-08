@@ -152,6 +152,34 @@ function snks_localize_time( $time ) {
 }
 
 /**
+ * Human readable datetime diff
+ *
+ * @param string $date_time DateTime.
+ * @param string $text If past date text.
+ * @return string
+ */
+function snks_human_readable_datetime_diff( $date_time, $text = 'Start' ) {
+	if ( snks_is_past_date( $date_time ) ) {
+		$output = $text;
+	} else {
+		$output = snks_get_time_difference( $date_time, wp_timezone_string() );
+	}
+	return $output;
+}
+
+/**
+ * Get doctor's url
+ *
+ * @param int $doctor_id Doctor's ID.
+ * @return string
+ */
+function snks_encrypted_doctor_url( $doctor_id ) {
+	$key = 'sks#^1';
+	// Encrypt the user ID.
+	$encrypted_user_id = openssl_encrypt( $doctor_id, 'aes-256-cbc', $key );
+	return site_url( '/your-clinic/' . $encrypted_user_id );
+}
+/**
  * Get current doctors id form doctors page URL
  *
  * @return mixed
@@ -206,19 +234,15 @@ add_shortcode(
  * @return string
  */
 function snks_doctor_booking_url( $user ) {
-	if ( ! in_array( 'doctor', $user->roles ) ) {
+	if ( ! in_array( 'doctor', $user->roles, true ) ) {
 		return;
 	}
-	$key = 'sks#^1';
-	// Encrypt the user ID.
-	$encrypted_user_id = openssl_encrypt( $user->ID, 'aes-256-cbc', $key );
-
 	ob_start();
 	?>
 	<div>
 		<h2>Doctor's page url</h2>
 		<p>
-		<input type="hidden" id="booking-url" value="<?php echo esc_url( site_url( '/your-clinic/' . $encrypted_user_id ) ); ?>"/>
+		<input type="hidden" id="booking-url" value="<?php echo esc_url( snks_encrypted_doctor_url( $user->ID ) ); ?>"/>
 		<a href="#" class="button button-primary" onclick="copyToClipboard(event)">انسخ رابط الحجز الخاص بك</a>
 		</p>
 	</div>

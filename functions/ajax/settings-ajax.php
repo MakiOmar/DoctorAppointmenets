@@ -70,8 +70,16 @@ add_action(
 			wp_send_json_error( 'Invalid nonce.' );
 		}
 		$preview_timetable = snks_get_preview_timetable();
+
+		$solt   = $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ];
+		$exists = snks_timetable_exists( get_current_user_id(), gmdate( 'Y-m-d H:i:s', strtotime( $solt['date_time'] ) ), $solt['day'], $solt['starts'], $solt['ends'] );
 		unset( $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ] );
 		$update = update_user_meta( get_current_user_id(), 'preview_timetable', $preview_timetable );
+		if ( ! empty( $exists ) ) {
+			foreach ( $exists as $record ) {
+				snks_delete_timetable( $record->ID );
+			}
+		}
 		wp_send_json(
 			array(
 				'resp' => $update,
@@ -98,14 +106,15 @@ add_action(
 		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
 			foreach ( $preview_timetables as $preview_timetable ) {
 				foreach ( $preview_timetable as $data ) {
-					$exists = snks_timetable_exists( get_current_user_id(), $data['date_time'], $data['day'], $data['starts'], $data['ends'] );
+					$dtime  = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+					$exists = snks_timetable_exists( get_current_user_id(), $dtime, $data['day'], $data['starts'], $data['ends'] );
 					if ( empty( $exists ) ) {
 						$inserting ['user_id']         = $data['user_id'];
 						$inserting ['session_status']  = $data['session_status'];
 						$inserting ['day']             = $data['day'];
 						$inserting ['base_hour']       = $data['base_hour'];
 						$inserting ['period']          = $data['period'];
-						$inserting ['date_time']       = $data['date_time'];
+						$inserting ['date_time']       = $dtime;
 						$inserting ['starts']          = $data['starts'];
 						$inserting ['ends']            = $data['ends'];
 						$inserting ['clinic']          = $data['clinic'];

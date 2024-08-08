@@ -60,7 +60,7 @@ function get_booking_form_callback() {
 		die;
 	}
 	//phpcs:disable
-	echo snks_generate_consulting_form( $_req['doctor_id'], $_req['period'], $_req['price'], $_req['attendanceType'] );
+	echo snks_generate_consulting_form( $_req['doctor_id'], $_req['period'], $_req['price'], $_req['attendanceType'], $_req['editBookingId'] );
 	//phpcs:enable
 	die();
 }

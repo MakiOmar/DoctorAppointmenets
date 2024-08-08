@@ -106,7 +106,7 @@ function snks_get_user_timetables( $user_id ) {
 function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 	global $wpdb;
 	// Generate a unique cache key.
-	$cache_key = 'snks_timetable_by_' . $column;
+	$cache_key = 'snks_timetable_by_' . $column . '_' . $value;
 
 	$results = wp_cache_get( $cache_key );
 
@@ -265,21 +265,15 @@ function snks_update_timetable( $id, $data ) {
 function snks_delete_timetable( $id ) {
 	global $wpdb;
 
-	if ( current_user_can( 'manage_options' ) ) {
-
-		$table_name = $wpdb->prefix . 'snks_provider_timetable';
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$wpdb->delete( $table_name, array( 'ID' => $id ), array( '%d' ) );
-		// phpcs:enable.
-		if ( $wpdb->rows_affected > 0 ) {
-			$result = true;
-		} else {
-			$result = false;
-		}
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+	$wpdb->delete( $table_name, array( 'ID' => $id ), array( '%d' ) );
+	// phpcs:enable.
+	if ( $wpdb->rows_affected > 0 ) {
+		$result = true;
 	} else {
 		$result = false;
 	}
-
 	return $result;
 }
 
