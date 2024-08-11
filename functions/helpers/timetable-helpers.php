@@ -288,11 +288,19 @@ function snks_delete_timetable( $id ) {
  */
 function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_type = 'both' ) {
 	global $wpdb;
+	$doctor_settings      = snks_doctor_settings( $user_id );
+	$seconds_before_block = 0;
+	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+		$number               = $doctor_settings['block_if_before_number'];
+		$unit                 = $doctor_settings['block_if_before_unit'];
+		$base                 = 'day' === $unit ? 24 : 1;
+		$seconds_before_block = $number * $base * 3600;
+	}
 	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
-	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) );
-	$end_date     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_date ) ) );
-	$cache_key    = 'bookable-dates-' . $current_date . '-' . $period;
-	$results      = wp_cache_get( $cache_key );//phpcs:disable
+	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
+	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
+	$cache_key        = 'bookable-dates-' . $current_datetime . '-' . $period;
+	$results          = wp_cache_get( $cache_key );//phpcs:disable
 	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 	
 	if ( ! $results ) {
@@ -309,8 +317,8 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 				ORDER BY date_time {$_order}",
 				$user_id,
 				$period,
-				$current_date,
-				$end_date,
+				$current_datetime,
+				$end_datetime,
 				'waiting',
 				0
 			);
@@ -328,8 +336,8 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 				ORDER BY date_time {$_order}",
 				$user_id,
 				$period,
-				$current_date,
-				$end_date,
+				$current_datetime,
+				$end_datetime,
 				$attendance_type,
 				'waiting',
 				0
