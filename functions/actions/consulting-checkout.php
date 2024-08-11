@@ -130,16 +130,11 @@ add_action(
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return;
 		}
-		$country          = 'EG';
-		$user_id          = $session['_user_id'];
-		$period           = $session['_period'];
-		$has_discount     = snks_discount_eligible( $user_id );
-		$pricings         = snks_doctor_pricings( $user_id );
-		$price            = get_price_by_period_and_country( $period, $country, $pricings );
-		$discount_percent = get_user_meta( $user_id, 'discount_percent', true );
-		if ( $has_discount ) {
-			$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
-		}
+		$country = 'EG';
+		$user_id = $session['_user_id'];
+		$period  = $session['_period'];
+		$price   = snks_calculated_price( $user_id, $country, $period );
+
 		//phpcs:enable
 		foreach ( $cart_object->cart_contents as $cart_item_key => $value ) {
 			$custom_price = $price; // Set price.

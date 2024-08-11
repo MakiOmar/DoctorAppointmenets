@@ -108,7 +108,6 @@ function snks_periods_filter( $user_id ) {
 	if ( is_array( $avialable_periods ) ) {
 		foreach ( $avialable_periods as $period ) {
 			$price = get_price_by_period_and_country( $period, $country, $pricings );
-			$price = get_price_by_period_and_country( $period, $country, $pricings );
 			if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
 				$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
 			}
@@ -197,9 +196,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	);
 
 	$submit_action = snks_encrypted_doctor_url( snks_url_get_doctors_id() );
-	if ( empty( $booking_id ) ) {
-		$submit_action = add_query_arg( 'direct_add_to_cart', '1', $submit_action );
-	}
+	$submit_action = add_query_arg( 'direct_add_to_cart', '1', $submit_action );
 
 	$n_bookable_days = array_unique( $bookable_days );
 	if ( count( $n_bookable_days ) > 7 ) {
@@ -586,15 +583,7 @@ function snks_render_sessions_listing( $tense ) {
 					$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 					$class         = 'remaining';
 					$room          = '#';
-					// Create a DateTime object for the input date and time.
-					$booking_dt_obj = new DateTime( $session->date_time );
-
-					// Create a DateTime object for the current date and time.
-					$now = new DateTime();
-
-					// Calculate the time interval between the input and current date and time.
-					$interval     = $now->diff( $booking_dt_obj );
-					$diff_seconds = $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
+					$diff_seconds  = snks_diff_seconds( $session );
 					// Compare the input date and time with the modified current date and time.
 					if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
 						$edit = snks_edit_button( $session->ID, $session->user_id );

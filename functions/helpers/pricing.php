@@ -10,6 +10,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Calculate price.
+ *
+ * @param int    $user_id Doctor's ID.
+ * @param string $country Country code.
+ * @param int    $period Period.
+ * @return int
+ */
+function snks_calculated_price( $user_id, $country, $period ) {
+	$has_discount     = snks_discount_eligible( $user_id );
+	$pricings         = snks_doctor_pricings( $user_id );
+	$price            = get_price_by_period_and_country( $period, $country, $pricings );
+	$discount_percent = get_user_meta( $user_id, 'discount_percent', true );
+	if ( $has_discount ) {
+		$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
+	}
+	return $price;
+}
+/**
  * Get country price by period
  *
  * @param string $period Period.
@@ -53,6 +71,9 @@ function snks_doctor_pricings( $user_id ) {
  * @return bool
  */
 function snks_discount_eligible( $doctor_id, $customer_id = false ) {
+	if ( ! $customer_id ) {
+		$customer_id = get_current_user_id();
+	}
 	$has_discount = false;
 	if ( snks_pricing_discount_enabled( $doctor_id ) ) {
 		$latest_completed_order_date = snks_latest_completed_order_date( $doctor_id, $customer_id );
@@ -67,13 +88,14 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 		$to_be_old_period = $to_be_old_number * $multiply_base;
 
 		// Get the current datetime.
-		$current_datetime = new DateTime();
+		$current_datetime = current_datetime();
 
 		// Subtract the specified number of hours from the current datetime.
 		$current_datetime->sub( new DateInterval( 'PT' . $to_be_old_period . 'H' ) );
 
 		// Create a DateTime object for the given datetime.
-		$compare_datetime = DateTime::createFromFormat( 'Y-m-d H:i:s', $latest_completed_order_date );
+		$compare_datetime = DateTime::createFromFormat( 'Y-m-d H:i:s', $latest_completed_order_date, wp_timezone() );
+
 		// Compare the given datetime with the current datetime.
 		if ( $compare_datetime < $current_datetime ) {
 			$has_discount = true;

@@ -520,8 +520,7 @@ function snks_get_patient_sessions( $tense ) {
  * Get formated date/time difference e.g. 2 days and 3 hours and 40 minutes and 25 seconds.
  *
  * @param  string $datetime       DateTime.
- * @param  string $time_zone      timezone you want to use for conversion.
- * @var    object $set_time_zone  an object of DateTimeZone.
+ * @var    object $time_zone  an object of DateTimeZone.
  * @var    string $converted_date Store formated timestamp.
  * @var    object $date           object of formated date/time according to timezone.
  * @var    object $current_date   object of current date/time.
@@ -529,11 +528,10 @@ function snks_get_patient_sessions( $tense ) {
  * @return string
  */
 function snks_get_time_difference( $datetime, $time_zone ) {
-	$set_time_zone = new DateTimeZone( $time_zone );
 
-	$date = DateTime::createFromFormat( 'Y-m-d H:i:s', $datetime, $set_time_zone );
+	$date = DateTime::createFromFormat( 'Y-m-d H:i:s', $datetime, $time_zone );
 
-	$current_date = new DateTime();
+	$current_date = current_datetime();
 
 	$diff = $date->diff( $current_date );
 
@@ -558,8 +556,8 @@ function snks_get_time_difference( $datetime, $time_zone ) {
  */
 function snks_is_past_date( $datetime ) {
 
-	$date    = new DateTime( $datetime );
-	$current = new DateTime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+	$date    = new DateTime( $datetime, wp_timezone() );
+	$current = current_datetime();
 	if ( $date > $current ) {
 		return false; // date hasn't been passed.
 	}

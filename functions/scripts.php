@@ -28,6 +28,13 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				$(document).on(
+					'click',
+					'.jet-form-builder-message--error',
+					function(){
+						$(this).hide();
+					}
+				);
 				$('.snks-count-down').each(
 					function () {
 						var countdownElement = $(this);

@@ -36,6 +36,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 			);
 			if ( $updated ) {
 				snks_close_others( $timetable );
+				snks_wallet_credit( $timetable->user_id, $order->get_total(), 'الدخل مقابل حجز موعد' );
 				snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
 				update_post_meta( $order_id, 'booking_id', $timetable->ID );
 				update_post_meta( $order_id, 'doctor_id', $timetable->user_id );
@@ -84,6 +85,20 @@ add_action(
 			ob_start();
 			$html .= '<p><strong>Booking ID:</strong> ' . esc_html( $booking_id ) . '</p>';
 			ob_end_clean();
+		}
+
+		$meta_data = $order->get_meta_data();
+
+		if ( $meta_data ) {
+			foreach ( $meta_data as $meta ) {
+				if ( 'order_type' === $meta->key && 'edit-fees' === $meta->value ) {
+					$html .= 'Connected Order: <a href="/wp-admin/post.php?post=' . $order->get_meta( 'connected_order' ) . '&action=edit">' . $order->get_meta( 'connected_order' ) . '</a><br>';
+					$html .= 'Doctor ID: <a href="/wp-admin/user-edit.php?user_id=' . $order->get_meta( '_user_id' ) . '">' . $order->get_meta( '_user_id' ) . '</a><br>';
+					$html .= 'Old Booking ID: ' . $order->get_meta( 'old_booking_id' ) . '<br>';
+					$html .= 'New Booking ID: ' . $order->get_meta( 'new_booking_id' ) . '<br>';
+					$html .= 'Order Type: ' . $order->get_meta( 'order_type' ) . '<br>';
+				}
+			}
 		}
 		echo wp_kses_post( $html );
 	}

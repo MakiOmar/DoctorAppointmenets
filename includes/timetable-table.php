@@ -23,9 +23,9 @@ function snks_create_timetable_table() {
 
 	// SQL statement to create the table.
 	$sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        ID INT(11) NOT NULL AUTO_INCREMENT,
-        user_id INT(11) NOT NULL,
-        client_id INT(11) NOT NULL,
+        ID BIGINT(20) NOT NULL AUTO_INCREMENT,
+        user_id BIGINT(20) DEFAULT 0,
+        client_id BIGINT(20) DEFAULT 0,
         session_status VARCHAR(20) NOT NULL,
         day VARCHAR(20) NOT NULL,
         base_hour TIME NOT NULL,
@@ -35,7 +35,8 @@ function snks_create_timetable_table() {
         ends TIME NOT NULL,
         clinic VARCHAR(255) NOT NULL,
         attendance_type VARCHAR(255) NOT NULL,
-		order_id INT(11) NOT NULL,
+		order_id BIGINT(20) DEFAULT 0,
+		edit_order_id BIGINT(20) DEFAULT 0,
         PRIMARY KEY (ID)
     ) $collate";
 	// Execute the SQL statement.

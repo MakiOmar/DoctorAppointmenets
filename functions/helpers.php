@@ -78,7 +78,7 @@ function snks_days_indexes() {
 	$abbreviated_days = array();
 
 	foreach ( $weekday_numbers as $number ) {
-		$date = new DateTime();
+		$date = current_datetime();
 		$date->setISODate( 2022, 1, $number + 1 ); // Set the ISO Week Date.
 		$abbreviated_days[ $date->format( 'D' ) ] = $number;
 	}
@@ -162,7 +162,7 @@ function snks_human_readable_datetime_diff( $date_time, $text = 'Start' ) {
 	if ( snks_is_past_date( $date_time ) ) {
 		$output = $text;
 	} else {
-		$output = snks_get_time_difference( $date_time, wp_timezone_string() );
+		$output = snks_get_time_difference( $date_time, wp_timezone() );
 	}
 	return $output;
 }
@@ -195,6 +195,21 @@ function snks_url_get_doctors_id() {
 	return $user_id;
 }
 
+/**
+ * Get the time difference between current time and sessions time.
+ *
+ * @param object $session Session object.
+ * @return integer
+ */
+function snks_diff_seconds( $session ) {
+	// Create a DateTime object for the input date and time.
+	$booking_dt_obj = new DateTime( $session->date_time, wp_timezone() );
+	// Create a DateTime object for the current date and time.
+	$now = current_datetime();
+	// Calculate the time interval between the input and current date and time.
+	$interval = $now->diff( $booking_dt_obj );
+	return $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
+}
 // Shortcode to display a button that copies the encrypted user ID.
 
 add_shortcode(

@@ -55,8 +55,8 @@ function snks_auto_cancel_wc_orders() {
 
 	$orders = wc_get_orders( $query );
 	foreach ( $orders as $order ) {
-		$date     = new DateTime( $order->get_date_created() );
-		$now      = new DateTime();
+		$date     = new DateTime( $order->get_date_created(), wp_timezone() );
+		$now      = current_datetime();
 		$interval = $date->diff( $now );
 
 		$minutes_diff = $interval->format( '%i' );

@@ -37,6 +37,9 @@ function snks_doctor_settings( $user_id = false ) {
 	$settings['allow_appointment_change']  = get_user_meta( $user_id, 'allow_appointment_change', true );
 	$settings['free_change_before_number'] = get_user_meta( $user_id, 'free_change_before_number', true );
 	$settings['free_change_before_unit']   = get_user_meta( $user_id, 'free_change_before_unit', true );
+	$settings['appointment_change_fee']    = get_user_meta( $user_id, 'appointment_change_fee', true );
+	$settings['before_change_number']      = get_user_meta( $user_id, 'before_change_number', true );
+	$settings['before_change_unit']        = get_user_meta( $user_id, 'before_change_unit', true );
 	$settings['block_if_before_number']    = get_user_meta( $user_id, 'block_if_before_number', true );
 	$settings['block_if_before_unit']      = get_user_meta( $user_id, 'block_if_before_unit', true );
 	$settings['attendance_type']           = get_user_meta( $user_id, 'attendance_type', true );
@@ -470,17 +473,40 @@ function snks_preview_actions( $day, $index, $target = 'meta' ) {
 	return $html;
 }
 /**
+ * Get period before free edit booking will be not possible.
+ *
+ * @param array $doctor_settings Doctor's settings.
+ * @return int
+ */
+function snks_get_free_edit_before_seconds( $doctor_settings ) {
+	$number = $doctor_settings['free_change_before_number'];
+	$unit   = $doctor_settings['free_change_before_unit'];
+	$base   = 'day' === $unit ? 24 : 1;
+	return $number * $base * 3600;
+}
+
+/**
  * Get period before edit booking will be not possible.
  *
  * @param array $doctor_settings Doctor's settings.
  * @return int
  */
 function snks_get_edit_before_seconds( $doctor_settings ) {
-	$number = $doctor_settings['free_change_before_number'];
-	$unit   = $doctor_settings['free_change_before_unit'];
-	$base   = 'day' === $unit ? 24 : 1;
-	return $number * $base * 60;
+	$number = $doctor_settings['before_change_number'];
+	$unit   = $doctor_settings['before_change_unit'];
+	switch ( $unit ) {
+		case 'week':
+			$base = 7 * 24;
+			break;
+		case 'month':
+			$base = 30 * 24;
+			break;
+		default:
+			$base = 24;
+	}
+	return $number * $base * 3600;
 }
+
 add_action(
 	'jet-form-builder/custom-action/after_session_settings',
 	function () {
@@ -885,3 +911,15 @@ function snks_get_hours_in_range( $target_hours, $check_hours ) {
 
 	return $hours_in_range;
 }
+
+add_action(
+	'jet-form-builder/custom-action/settings_validate',
+	function ( $request ) {
+		$edit_before      = snks_get_edit_before_seconds( $request );
+		$free_edit_before = snks_get_free_edit_before_seconds( $request );
+		if ( $edit_before > $free_edit_before ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لابد أن تكون فترة التغيير المجاني أكبر من الفترة التي تحددها لآخر موعد لتعديل الحجز' );
+		}
+	},
+	0
+);
