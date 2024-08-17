@@ -94,6 +94,20 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 	return $html;
 }
 /**
+ * Get discount percent
+ *
+ * @param int        $user_id Doctor's ID.
+ * @param string|int $period Session period.
+ * @return int
+ */
+function snks_get_period_discount( $user_id, $period ) {
+	$discount_percent = get_user_meta( $user_id, 'discount_percent' . $period, true );
+	if ( ! $discount_percent || empty( $discount_percent ) ) {
+		return 0;
+	}
+	return absint( $discount_percent );
+}
+/**
  * Render periods filter
  *
  * @param int $user_id User's ID.

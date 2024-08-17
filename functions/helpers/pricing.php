@@ -21,7 +21,7 @@ function snks_calculated_price( $user_id, $country, $period ) {
 	$has_discount     = snks_discount_eligible( $user_id );
 	$pricings         = snks_doctor_pricings( $user_id );
 	$price            = get_price_by_period_and_country( $period, $country, $pricings );
-	$discount_percent = get_user_meta( $user_id, 'discount_percent', true );
+	$discount_percent = snks_get_period_discount( $user_id, $period );
 	if ( $has_discount ) {
 		$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
 	}

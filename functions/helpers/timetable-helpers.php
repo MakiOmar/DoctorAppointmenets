@@ -96,6 +96,24 @@ function snks_get_user_timetables( $user_id ) {
 }
 
 /**
+ * Check if a user is eligible to the timetable
+ *
+ * @param int $timetable_id Timetable ID.
+ * @return bool
+ */
+function snks_is_timetable_eligible( $timetable_id ) {
+	$current_user = get_current_user_id();
+	if ( is_numeric( $timetable_id ) ) {
+		$timetable = snks_get_timetable_by( 'ID', $timetable_id );
+	} else {
+		$timetable = $timetable_id;
+	}
+	if ( ! $timetable || ! in_array( $current_user, array( absint( $timetable->user_id ), absint( $timetable->client_id ) ), true ) ) {
+		return false;
+	}
+	return true;
+}
+/**
  * Get timetable by ID
  *
  * @param int   $column Column to query.

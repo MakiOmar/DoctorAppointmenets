@@ -31,7 +31,9 @@ function snks_doctor_settings( $user_id = false ) {
 	$settings['45_minutes']                = get_user_meta( $user_id, '45-minutes', true );
 	$settings['30_minutes']                = get_user_meta( $user_id, '30-minutes', true );
 	$settings['enable_discount']           = get_user_meta( $user_id, 'enable_discount', true );
-	$settings['discount_percent']          = get_user_meta( $user_id, 'discount_percent', true );
+	$settings['discount_percent_30']       = get_user_meta( $user_id, 'discount_percent_30', true );
+	$settings['discount_percent_45']       = get_user_meta( $user_id, 'discount_percent_45', true );
+	$settings['discount_percent_60']       = get_user_meta( $user_id, 'discount_percent_60', true );
 	$settings['to_be_old_number']          = get_user_meta( $user_id, 'to_be_old_number', true );
 	$settings['to_be_old_unit']            = get_user_meta( $user_id, 'to_be_old_unit', true );
 	$settings['allow_appointment_change']  = get_user_meta( $user_id, 'allow_appointment_change', true );
@@ -469,6 +471,12 @@ function snks_preview_actions( $day, $index, $target = 'meta' ) {
 	$html = '';
 	if ( 'meta' === $target ) {
 		$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '" data-day="' . $day . '">Delete</a>';
+	} else {
+		// This will allow patient to book another free appointment. A messsage should be sent to the user to inform him about this.
+		$html .= '<a href="#" class="button postpon-booking" data-index="' . $index . '" data-day="' . $day . '">تأجيل</a>';
+		// This will allow send a message to the patient that his booking has been delayed for x minutes.
+		$html .= '<a href="#" class="button delay-booking" data-index="' . $index . '" data-day="' . $day . '">تأخير</a>';
+		$html .= '<a href="' . add_query_arg( 'room_id', $index, site_url( '/meeting-room' ) ) . '" class="button start-meeting">ابدأ الجلسة</a>';
 	}
 	return $html;
 }
@@ -753,12 +761,12 @@ function snks_generate_preview() {
 }
 
 /**
- * Generate preview
+ * Generate bookings
  *
  * @return string
  */
 function snks_generate_bookings() {
-	$timetables = snks_get_doctor_sessions( 'future', 'open', true );
+	$timetables = snks_get_doctor_sessions( 'all', 'open', true );
 	if ( empty( $timetables ) ) {
 		return '<p>ليس لديك حجوزات حتى الآن!</p>';
 	}
@@ -777,7 +785,7 @@ function snks_generate_bookings() {
 	$output      = '';
 
 	if ( is_array( $timetables ) ) {
-		$day_groups = snks_group_objects_by( $timetables, 'day' );
+			$day_groups = snks_group_objects_by( $timetables, 'day' );
 
 		foreach ( $day_groups as $day => $timetable ) {
 			$date_groups = snks_group_objects_by( $timetable, 'date' );
@@ -816,13 +824,13 @@ function snks_generate_bookings() {
 				}
 				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
 				/**
-				 * Timetable queried object.
-				 *
-				 * @var object $data
-				 */
+				* Timetable queried object.
+				*
+				* @var object $data
+				*/
 				foreach ( $details as $data ) {
 					$index   = array_search( $data, $timetable, true );
-					$actions = snks_preview_actions( $data->day, $index );
+					$actions = snks_preview_actions( $data->day, $data->ID, 'timetables' );
 					// Associate cells with columns.
 					$cells = array(
 						'day'        => new TableCell( $days_labels[ $data->day ], array( 'data-label' => 'اليوم' ) ),
