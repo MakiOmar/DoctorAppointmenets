@@ -1,0 +1,295 @@
+@charset "UTF-8";
+*{
+	margin: 0;
+	padding:0;
+	box-sizing: border-box;
+}
+html, body {
+	box-sizing: border-box;
+	min-height: 100vh;
+
+	}
+body{
+	font-style: italic;
+	font-size: 16px;
+	color: #444444;
+	box-sizing: border-box;
+	background-color: #ecf0f0;
+	line-height: 2em
+}
+
+a{
+	 text-decoration: none;
+	 cursor: pointer;
+}
+
+ul.list-style-none{
+	list-style-type: none;
+}
+
+i{
+	padding: 3px;
+	vertical-align: middle;
+	font-style: normal;
+}
+
+[class*='anony-grid-col-']{
+	position: relative;
+	display: inline-block;
+	vertical-align: top;
+}
+div{
+	margin:0;
+	padding:0;
+}
+.anony-default-padding{
+	padding: 10px;
+}
+input[type=search],input[type=tel],input[type=text],input[type=email],input[type=password],input[type=url], input[type=number],textarea, select{
+	outline: none;
+	padding: 10px;
+	margin: 5px;
+	border: none;
+	color:#222222;
+	border-radius: 6px;
+	border: 1px solid #d7d7d7;
+	min-height: 37px;
+}
+input[type='submit']{
+	background-color: #fc2a2a;
+	color: #ffffff;
+	padding: 5px;
+	text-align: center;
+	border-radius: 5px;
+	border: 1px;
+	min-width: 100px;
+	cursor: pointer;
+}
+button{
+	cursor: pointer;
+}
+input:focus{
+	color: #222222;
+	font-weight: bold;
+}
+h3{font-size: 16px;}
+h4{font-size: 15px;}
+h5{font-size: 13px;}
+h6{font-size: 11.5px;}
+img {
+    margin: auto;
+    display: inline-block;
+    max-width: 100%;
+	max-height: 100%;
+	width: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  padding: 8px;
+  box-sizing: border-box;
+}
+th{
+	font-size: 20px;
+}
+li,.menu li a{
+	position: relative;
+}
+nav ul li a{
+	display: block;
+	height: 100%;
+	width: 100%;
+}
+select{
+	padding: 10px;
+    border-color: #e1e1e1;
+    border-radius: 6px;
+	background-color: #fff;
+  	border: 1px solid #cecece;
+}
+.anony-spacer{
+	height: 50px;
+	display: block;
+}
+.anony-section-title-wrapper{
+	display: flex;
+    justify-content: center;
+    align-items: center;
+    clear: both;
+    width: 100%;
+	position: relative;
+	margin-bottom: 20px;
+}
+
+.anony-section-title-wrapper .anony-section-title{
+	position: absolute;
+}
+.anony-grid-row:after {
+	clear: both;
+}
+.anony-flex{
+    display: flex!important;
+}
+
+.anony-inline-flex{
+    display: inline-flex!important;
+}
+.anony-space-between{
+	justify-content: space-between;
+}
+.anony-flex-end{
+	justify-content: flex-end;
+}
+.anony-flex-start{
+	justify-content: flex-start;
+}
+.anony-space-around{
+	justify-content: space-around;
+}
+.anony-flex-align-center{
+	align-items: center;
+}
+
+.anony-align-flex-start{
+	align-items: flex-start;
+}
+.anony-align-flex-end{
+	align-items: flex-end;
+}
+
+.anony-align-stretch{
+	align-items: stretch;
+}
+.anony-flex-grow{
+	flex-grow: 1;
+	width: 100%;
+}
+.anony-flex-grow-initial{
+	flex-grow: initial!important;
+}
+.anony-grid-row{
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	flex-grow: 1;
+}
+
+.flex-h-center{
+	justify-content: center;
+}
+
+.anony-flex-column{
+	flex-direction: column;
+	flex-wrap: nowrap;
+}
+
+.flex-v-center{
+	align-items: center;
+}
+
+.anony-flex-column.flex-v-center{
+	justify-content: center;
+}
+.anony-grid-row-vertical{
+	flex-direction: column;
+	justify-content: initial;
+}
+.anony-custom-bullets ul{
+	list-style: none;
+	padding: 10px 20px;
+}
+
+.anony-post-title-image a{
+	display: flex;
+}
+.anony-custom-bullets ul li::before {
+	content: "\2022";  /* Add content: \2022 is the CSS Code/unicode for a bullet */
+	color: #000; /* Change the color */
+	font-weight: bold; /* If you want it to be bold */
+	font-size: 20px;
+	display: inline-block; /* Needed to add space between the bullet and the text */
+	width: 1em; /* Also needed for space (tweak if needed) */
+	margin-left: -1em; /* Also needed for space (tweak if needed) */
+}
+
+p{
+	padding-bottom: 5px;
+}
+a{
+	display: inline-block;
+}
+.anony-reverse-row{
+	flex-direction: row-reverse;
+}
+.anony-reverse-column{
+	flex-direction: row-reverse;
+}
+.anony-active, .anony-active-tab{
+	background-color: #fc2a2a;
+	font-weight: bold;
+	border: none;
+}
+.anony-full-height{
+	height: 100%!important;
+}
+
+.anony-full-width{
+	width: 100%!important;
+}
+
+.anony-rotate-180{
+	transform: rotate(180deg);
+}
+.anony-circle-image img{
+	border-radius: 50%;
+}
+
+.anony-box-shadow{
+	box-shadow: 0px 0px 14px 0px rgba(160,160,160,0.75);
+	-webkit-box-shadow: 0px 0px 14px 0px rgba(160,160,160,0.75);
+	-moz-box-shadow: 0px 0px 14px 0px rgba(160,160,160,0.75);
+}
+.anony-padding-5{
+	padding:5px
+}
+.anony-padding-10{
+	padding:10px
+}
+.anony-padding-15{
+	padding:15px
+}
+.anony-padding-20{
+	padding:20px
+}
+.anony-curved-5{
+	border-radius: 5px;
+}
+.anony-curved-10{
+	border-radius: 10px;
+}
+.anony-curved-15{
+	border-radius: 15px;
+}
+.anony-curved-20{
+	border-radius: 20px;
+}
+main.anony-content{
+	padding: 0 20px;
+}
+.anony-center-text{
+	text-align:center
+}
+.anony-horizontal-menu li{
+	display: inline-flex;
+}
+main.anony-grid-row{
+	padding: 0 10px;
+}
+main .anony-content{
+	flex-grow: 1;
+	max-width: 1200px;
+}
