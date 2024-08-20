@@ -117,10 +117,10 @@ function snks_periods_filter( $user_id ) {
 	$avialable_periods = snks_get_available_periods( $user_id );
 	$country           = 'EG';
 	$pricings          = snks_doctor_pricings( $user_id );
-	$discount_percent  = get_user_meta( $user_id, 'discount_percent', true );
 	$has_discount      = snks_discount_eligible( $user_id );
 	if ( is_array( $avialable_periods ) ) {
 		foreach ( $avialable_periods as $period ) {
+			$discount_percent = snks_get_period_discount( $user_id, $period );
 			$price = get_price_by_period_and_country( $period, $country, $pricings );
 			if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
 				$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );

@@ -14,6 +14,52 @@ add_action(
 	function () {
 		?>
 		<style>
+			.field-type-switcher input.jet-form-builder__field:checked {
+				background: #12114f;
+			}
+			.margin-top{
+				margin-top: 10px;
+			}
+			.section-bg{
+				background-color: #fff;
+				padding: 10px;
+				align-items: flex-start;
+			}
+			.jet-form-builder-repeater__row-remove {
+				align-self: center;
+				position: absolute;
+				top: -10px;
+				left: 10px;
+			}
+			.jet-form-builder-repeater__row-fields .clinc-row{
+				gap:10px
+			}
+			.jet-form-builder-repeater__row-fields .clinc-row input{
+				border: none;
+			}
+			.jet-form-builder-repeater__row{
+				background-color: #e6e4e5;
+				padding: 5px!important;
+				margin-top: 20px!important;
+				border-radius: 8px;
+				position: relative;
+			}
+			.session-periods{
+				align-items: flex-start;
+			}
+			.field-type-switcher {
+				display: flex;
+				flex-wrap: nowrap;
+				margin: 0;
+				padding: 5px 0;
+				flex-direction: row-reverse;
+			}
+			.rounded{
+				border-radius: 8px;
+			}
+			.jet-form-builder__heading-desc{
+				color: #b5b5b5
+			}
 			.offline-clinic-details{
 				display: inline-flex;
 				list-style: none;
@@ -118,13 +164,80 @@ add_action(
 			}
 			.jet-form-builder__conditional.clinics-list .jet-form-builder-repeater__actions button.jet-form-builder-repeater__new{
 				color:#fff;
-				background-color:#20C319;
+				background-color:#12114f;
 				font-size:14px;
 				font-weight:bold;
 				border-radius:50px
 			}
+			.jet-form-builder__conditional.clinics-list .jet-form-builder-repeater__actions button.jet-form-builder-repeater__new:before{
+				content: "+";
+				font-size: 20px;
+				color: #fff;
+				line-height: 0;
+				position: relative;
+				top: 3px;
+				font-weight: bold;
+				margin-left: 5px;
+			}
 			.change-fees .jet-form-builder-row.field-type-switcher {
 				border:none
+			}
+			.jet-form-builder-row.field-type-switcher {
+				display: flex;
+				flex-direction: row-reverse;
+				justify-content: start;
+				align-items: center;
+				/*padding: 10px;*/
+				background-color: #fff;
+				border-radius: 50px;
+				border: none!important
+			}
+			input[type=number]{
+				background-color: #e4e4e4;
+				border: 1px solid #e4e4e4 !important;
+				top: 2px;
+				position: relative;
+			}
+			.inline-description-wrapper .field-type-number-field{
+				flex-direction: row;
+				align-items: center;
+			}
+			.inline-description-wrapper .field-type-number-field .inline-description{
+				margin-left: 10px;
+				max-width: 50px;
+			}
+			.inline-description-wrapper .field-type-number-field .inline-description,.inline-description-wrapper .field-type-number-field .jet-form-builder__field-wrap,.inline-description-wrapper .field-type-number-field .jet-form-builder__desc{
+				flex: initial;
+				display: inline-block;
+				width: auto;
+			}
+			.inline-description-wrapper .field-type-number-field .jet-form-builder__desc{
+				font-size: 18px;
+				font-weight: bold;
+				color:#12114F!important;
+			}
+			.inline-description-wrapper .field-type-number-field .jet-form-builder__label{
+				width: auto!important;
+				flex: initial;
+			}
+			.jet-form-builder__desc{
+				text-align: right!important;
+			}
+			select {
+				color: #fff;
+				background-color: #12114f;
+			}
+			
+			.field-type-switcher span {
+				position: absolute;
+				left: 10px;
+			}
+			.field-type-switcher input {
+				margin-left: 10px!important;
+			}
+			.jet-form-builder-row.field-type-switcher .jet-form-builder__label {
+				width: auto;
+				flex: initial;
 			}
 			.default-border{
 				border: 1px solid #000;
@@ -534,6 +647,10 @@ add_action(
 				}
 			}
 			@media screen and (max-width:480px) {
+				.clinc-row{
+				flex-direction: column;
+				gap: 10px;
+			}
 				.anony-content-slider div{
 					max-width: calc(100vw - 40px);
 				}

@@ -8,7 +8,7 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
-
+return;
 add_action(
 	'edit_user_profile',
 	/**

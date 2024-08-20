@@ -16,6 +16,80 @@ add_shortcode(
 );
 
 add_shortcode(
+	'snks_object_title',
+	function ( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'font-size' => '20px',
+			),
+			$atts
+		);
+		$permalink = '';
+		$title     = '';
+
+		if ( is_singular() ) {
+			global $post;
+			$permalink = get_permalink( $post->ID );
+			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
+		} elseif ( is_post_type_archive() ) {
+			$post_type        = get_post_type();
+			$permalink        = get_post_type_archive_link( $post_type );
+			$post_type_object = get_post_type_object( $post_type );
+			if ( $post_type_object ) {
+				$post_type_label = $post_type_object->labels->name; // or use 'singular_name' for the singular label.
+				$title           = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
+			}
+		} elseif ( is_tax() || is_category() || is_tag() ) {
+			$term      = get_queried_object();
+			$permalink = get_term_link( $term );
+			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
+		} elseif ( is_archive() ) {
+			$permalink      = get_post_type_archive_link( get_post_type() );
+			$queried_object = get_queried_object();
+			if ( $queried_object && isset( $queried_object->label ) ) {
+				$archive_label = $queried_object->label;
+				$title         = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
+			}
+		}
+
+		return $title;
+	}
+);
+
+// Shortcode to display a button that copies the encrypted user ID.
+add_shortcode(
+	'snks_booking_url_button',
+	function () {
+		// Get the user ID.
+		$user_id = get_current_user_id();
+
+		// Encrypt the user ID.
+		$url = '';
+
+		ob_start();
+		?>
+		<div class="anony-flex flex-v-center flex-h-center" style="margin-top: 20px;">
+		<input type="hidden" id="booking-url" value="<?php echo esc_url( $url ); ?>"/>
+		<button onclick="copyToClipboard()">انسخ رابط الحجز الخاص بك</button>
+		</div>
+		<script>
+		function copyToClipboard() {
+			const bookingUrl = document.getElementById('booking-url');
+			const el = document.createElement('textarea');
+			el.value = bookingUrl.value;
+			document.body.appendChild(el);
+			el.select();
+			document.execCommand('copy');
+			document.body.removeChild(el);
+			alert('تم النسخ');
+		}
+		</script>
+		<?php
+		return ob_get_clean();
+	}
+);
+
+add_shortcode(
 	'snks_bookings',
 	function () {
 		return snks_generate_bookings();

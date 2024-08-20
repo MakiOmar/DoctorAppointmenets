@@ -210,37 +210,6 @@ function snks_diff_seconds( $session ) {
 	$interval = $now->diff( $booking_dt_obj );
 	return $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
 }
-// Shortcode to display a button that copies the encrypted user ID.
-
-add_shortcode(
-	'snks_booking_url_button',
-	function () {
-		// Get the user ID.
-		$user_id = get_current_user_id();
-
-		// Encrypt the user ID.
-		$url = '';
-
-		ob_start();
-		?>
-		<input type="hidden" id="booking-url" value="<?php echo esc_url( $url ); ?>"/>
-		<button onclick="copyToClipboard()">انسخ رابط الحجز الخاص بك</button>
-		<script>
-		function copyToClipboard() {
-			const bookingUrl = document.getElementById('booking-url');
-			const el = document.createElement('textarea');
-			el.value = bookingUrl.value;
-			document.body.appendChild(el);
-			el.select();
-			document.execCommand('copy');
-			document.body.removeChild(el);
-			alert('تم النسخ');
-		}
-		</script>
-		<?php
-		return ob_get_clean();
-	}
-);
 
 /**
  * Booking url copy

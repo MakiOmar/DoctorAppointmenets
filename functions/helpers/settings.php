@@ -703,6 +703,7 @@ function snks_generate_preview() {
 			$position = 0;
 			foreach ( $date_groups as $date => $details ) {
 				if ( in_array( $date, $off_days, true ) ) {
+					continue;
 					$is_off = ' snks-is-off';
 				} else {
 					$is_off = '';
