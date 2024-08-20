@@ -14,6 +14,9 @@ add_action(
 	function () {
 		?>
 		<style>
+			#snks-booking-form input[type=radio] {
+				display: none;
+			}
 			.field-type-switcher input.jet-form-builder__field:checked {
 				background: #12114f;
 			}

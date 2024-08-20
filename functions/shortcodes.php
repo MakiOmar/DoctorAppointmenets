@@ -18,6 +18,7 @@ add_shortcode(
 add_shortcode(
 	'snks_object_title',
 	function ( $atts ) {
+		global $wp;
 		$atts = shortcode_atts(
 			array(
 				'font-size' => '20px',
@@ -26,8 +27,10 @@ add_shortcode(
 		);
 		$permalink = '';
 		$title     = '';
-
-		if ( is_singular() ) {
+		if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
+			$permalink = '#';
+			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">حجز موعد</a>';
+		} elseif ( is_singular() ) {
 			global $post;
 			$permalink = get_permalink( $post->ID );
 			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';

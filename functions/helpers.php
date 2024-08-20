@@ -170,14 +170,11 @@ function snks_human_readable_datetime_diff( $date_time, $text = 'Start' ) {
 /**
  * Get doctor's url
  *
- * @param int $doctor_id Doctor's ID.
+ * @param object $user User.
  * @return string
  */
-function snks_encrypted_doctor_url( $doctor_id ) {
-	$key = 'sks#^1';
-	// Encrypt the user ID.
-	$encrypted_user_id = openssl_encrypt( $doctor_id, 'aes-256-cbc', $key );
-	return site_url( '/your-clinic/' . $encrypted_user_id );
+function snks_encrypted_doctor_url( $user ) {
+	return site_url( '/your-clinic/' . $user->user_nicename );
 }
 /**
  * Get current doctors id form doctors page URL
@@ -188,9 +185,10 @@ function snks_url_get_doctors_id() {
 	global $wp;
 	$user_id = false;
 	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
-		$key               = 'sks#^1';
-		$encrypted_user_id = $wp->query_vars['doctor_id'];
-		$user_id           = openssl_decrypt( $encrypted_user_id, 'aes-256-cbc', $key );
+		$user = get_user_by( 'slug', $wp->query_vars['doctor_id'] );
+		if ( $user ) {
+			$user_id = $user->ID;
+		}
 	}
 	return $user_id;
 }
@@ -210,43 +208,3 @@ function snks_diff_seconds( $session ) {
 	$interval = $now->diff( $booking_dt_obj );
 	return $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
 }
-
-/**
- * Booking url copy
- *
- * @param object $user User's object.
- * @return string
- */
-function snks_doctor_booking_url( $user ) {
-	if ( ! in_array( 'doctor', $user->roles, true ) ) {
-		return;
-	}
-	ob_start();
-	?>
-	<div>
-		<h2>Doctor's page url</h2>
-		<p>
-		<input type="hidden" id="booking-url" value="<?php echo esc_url( snks_encrypted_doctor_url( $user->ID ) ); ?>"/>
-		<a href="#" class="button button-primary" onclick="copyToClipboard(event)">انسخ رابط الحجز الخاص بك</a>
-		</p>
-	</div>
-	<script>
-	function copyToClipboard(e) {
-		e.preventDefault();
-		const bookingUrl = document.getElementById('booking-url');
-		const el = document.createElement('textarea');
-		el.value = bookingUrl.value;
-		document.body.appendChild(el);
-		el.select();
-		document.execCommand('copy');
-		document.body.removeChild(el);
-		alert('تم النسخ');
-	}
-	</script>
-	<?php
-	//phpcs:disable
-	echo ob_get_clean();
-	//phpcs:enable
-}
-add_action( 'show_user_profile', 'snks_doctor_booking_url' );
-add_action( 'edit_user_profile', 'snks_doctor_booking_url' );
