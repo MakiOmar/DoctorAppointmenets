@@ -121,7 +121,7 @@ function snks_periods_filter( $user_id ) {
 	if ( is_array( $avialable_periods ) ) {
 		foreach ( $avialable_periods as $period ) {
 			$discount_percent = snks_get_period_discount( $user_id, $period );
-			$price = get_price_by_period_and_country( $period, $country, $pricings );
+			$price            = get_price_by_period_and_country( $period, $country, $pricings );
 			if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
 				$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
 			}
@@ -455,11 +455,177 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
  */
 function snks_edit_button( $booking_id, $doctor_id ) {
 	return '<a href="' . add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) ) . '" title="تحرير" class="edit-booking"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-	<path d="M14.19 0H5.81C2.17 0 0 2.17 0 5.81V14.18C0 17.83 2.17 20 5.81 20H14.18C17.82 20 19.99 17.83 19.99 14.19V5.81C20 2.17 17.83 0 14.19 0ZM8.95 15.51C8.66 15.8 8.11 16.08 7.71 16.14L5.25 16.49C5.16 16.5 5.07 16.51 4.98 16.51C4.57 16.51 4.19 16.37 3.92 16.1C3.59 15.77 3.45 15.29 3.53 14.76L3.88 12.3C3.94 11.89 4.21 11.35 4.51 11.06L8.97 6.6C9.05 6.81 9.13 7.02 9.24 7.26C9.34 7.47 9.45 7.69 9.57 7.89C9.67 8.06 9.78 8.22 9.87 8.34C9.98 8.51 10.11 8.67 10.19 8.76C10.24 8.83 10.28 8.88 10.3 8.9C10.55 9.2 10.84 9.48 11.09 9.69C11.16 9.76 11.2 9.8 11.22 9.81C11.37 9.93 11.52 10.05 11.65 10.14C11.81 10.26 11.97 10.37 12.14 10.46C12.34 10.58 12.56 10.69 12.78 10.8C13.01 10.9 13.22 10.99 13.43 11.06L8.95 15.51ZM15.37 9.09L14.45 10.02C14.39 10.08 14.31 10.11 14.23 10.11C14.2 10.11 14.16 10.11 14.14 10.1C12.11 9.52 10.49 7.9 9.91 5.87C9.88 5.76 9.91 5.64 9.99 5.57L10.92 4.64C12.44 3.12 13.89 3.15 15.38 4.64C16.14 5.4 16.51 6.13 16.51 6.89C16.5 7.61 16.13 8.33 15.37 9.09Z" fill="#12114F"/>
+	<path d="M14.19 0H5.81C2.17 0 0 2.17 0 5.81V14.18C0 17.83 2.17 20 5.81 20H14.18C17.82 20 19.99 17.83 19.99 14.19V5.81C20 2.17 17.83 0 14.19 0ZM8.95 15.51C8.66 15.8 8.11 16.08 7.71 16.14L5.25 16.49C5.16 16.5 5.07 16.51 4.98 16.51C4.57 16.51 4.19 16.37 3.92 16.1C3.59 15.77 3.45 15.29 3.53 14.76L3.88 12.3C3.94 11.89 4.21 11.35 4.51 11.06L8.97 6.6C9.05 6.81 9.13 7.02 9.24 7.26C9.34 7.47 9.45 7.69 9.57 7.89C9.67 8.06 9.78 8.22 9.87 8.34C9.98 8.51 10.11 8.67 10.19 8.76C10.24 8.83 10.28 8.88 10.3 8.9C10.55 9.2 10.84 9.48 11.09 9.69C11.16 9.76 11.2 9.8 11.22 9.81C11.37 9.93 11.52 10.05 11.65 10.14C11.81 10.26 11.97 10.37 12.14 10.46C12.34 10.58 12.56 10.69 12.78 10.8C13.01 10.9 13.22 10.99 13.43 11.06L8.95 15.51ZM15.37 9.09L14.45 10.02C14.39 10.08 14.31 10.11 14.23 10.11C14.2 10.11 14.16 10.11 14.14 10.1C12.11 9.52 10.49 7.9 9.91 5.87C9.88 5.76 9.91 5.64 9.99 5.57L10.92 4.64C12.44 3.12 13.89 3.15 15.38 4.64C16.14 5.4 16.51 6.13 16.51 6.89C16.5 7.61 16.13 8.33 15.37 9.09Z" fill="#024059"/>
 	</svg>
 	</a>';
 }
+/**
+ * Booking item template
+ *
+ * @param object $record Timetable object.
+ * @param array  $patient_details Patient's details.
+ * @return string
+ */
+function snks_booking_item_template( $record, $patient_details ) {
+	ob_start();
+	$details = array(
+		'name'     => array(
+			'icon' => '/wp-content/uploads/2024/08/card.png',
+			'link' => '#',
+		),
+		'phone'    => array(
+			'icon' => '/wp-content/uploads/2024/08/phone.png',
+			'link' => 'tel:{phone}',
+		),
+		'whatsapp' => array(
+			'icon' => '/wp-content/uploads/2024/08/whatsapp.png',
+			'link' => 'https://wa.me/{whatsapp}',
+		),
 
+	);
+	//phpcs:disable
+	?>
+	<div class="anony-grid-row snks-booking-item">
+		<div class="anony-grid-col anony-grid-col-2 snks-bg">
+			<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);display: flex;align-items: center;">
+				<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
+				<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
+			</div>
+		</div>
+		<div class="anony-grid-col anony-grid-col-<?php echo 'online' === $record->attendance_type ? '8' : '10'; ?>">
+			<div class="anony-grid-row snks-booking-item-row">
+				<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
+					<img class="anony-padding-5" src="/wp-content/uploads/2024/08/clock.png"/>
+					
+				</div>
+				<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center">
+					<div class="anony-grid-row anony-full-height">
+						<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-left:2px;font-size:18px">
+							<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{starts}</div>
+						</div>
+						
+						<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-right:2px;font-size:18px">
+							<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{period}</div>
+						</div>
+					</div>
+		
+				</div>
+				
+			</div>
+			<?php foreach ( $details as $placeholder => $detail ) {
+				?>
+				<div class="anony-grid-row snks-booking-item-row">
+					<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
+						<img class="anony-padding-5" src="<?php echo $detail['icon']; ?>"/>
+					</div>
+					<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
+						<a style="color:#024059;font-size:18px;font-weight:bold" href="<?php echo $detail['link']; ?>">{<?php echo $placeholder; ?>}</a>
+					</div>
+					
+				</div>
+			<?php } ?>
+		</div>
+		<?php if ( 'online' === $record->attendance_type ) { ?>
+		<div class="anony-grid-col anony-grid-col-2 snks-bg" style="border-top-left-radius:20px;border-bottom-left-radius:20px">
+			<a class="snks-count-down rotate-90 anony-flex atrn-button {button_class} snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
+		</div>
+		<?php } ?>
+	</div>
+	<?php
+	//phpcs:enable
+	return ob_get_clean();
+}
+/**
+ * Template string replace
+ *
+ * @param object $record The Record.
+ * @return string
+ */
+function template_str_replace( $record ) {
+	$patient_details = snks_patient_details( $record->client_id );
+	$button_text     = snks_human_readable_datetime_diff( $record->date_time, 'إبدأ الإستشارة' );
+
+	$template              = snks_booking_item_template( $record, $patient_details );
+	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
+	$attandance_type_text  = 'أونلاين';
+	if ( 'offline' === $record->attendance_type ) {
+		$attandance_type_image = '/wp-content/uploads/2024/08/offline2.png';
+		$attandance_type_text  = 'أوفلاين';
+	}
+	return str_replace(
+		array(
+			'{session_id}',
+			'{starts}',
+			'{period}',
+			'{attandance_type_image}',
+			'{attandance_type}',
+			'{name}',
+			'{phone}',
+			'{whatsapp}',
+			'{button_url}',
+			'{button_text}',
+		),
+		array(
+			$record->ID,
+			str_replace( array( ' am', ' pm' ), array( ' ص', ' م' ), gmdate( 'g:i a', strtotime( $record->starts ) ) ),
+			esc_html( $record->period ),
+			$attandance_type_image,
+			$attandance_type_text,
+			esc_html( $patient_details['billing_first_name'] . ' ' . $patient_details['billing_last_name'] ),
+			esc_html( $patient_details['billing_phone'] ),
+			esc_html( $patient_details['whatsap'] ),
+			esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ),
+			$button_text,
+		),
+		$template
+	);
+}
+
+/**
+ * Generate bookings
+ *
+ * @return string
+ */
+function snks_generate_bookings() {
+	$timetables = snks_get_doctor_sessions( 'all', 'open', true );
+	if ( empty( $timetables ) ) {
+		return '<p>ليس لديك حجوزات حتى الآن!</p>';
+	}
+	$days_sorted = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
+
+	uksort(
+		$timetables,
+		function ( $a, $b ) use ( $days_sorted ) {
+			$pos_a = array_search( $a, $days_sorted, true );
+			$pos_b = array_search( $b, $days_sorted, true );
+			return $pos_a - $pos_b;
+		}
+	);
+
+	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
+	$output      = '';
+
+	if ( is_array( $timetables ) ) {
+		$day_groups = snks_group_objects_by( $timetables, 'date' );
+
+		foreach ( $day_groups as $date => $timetables ) {
+			$day     = gmdate( 'l', strtotime( $date ) );
+			$output .= '<div class="snks-timetable-accordion" data-id="' . $date . '">' . $day . $date . '</div>';
+			$output .= '<div class="snks-timetable-accordion-content" id="' . $date . '">';
+			/**
+			* Timetable queried object.
+			*
+			* @var object $data
+			*/
+			foreach ( $timetables as $data ) {
+				$output .= template_str_replace( $data );
+			}
+			// Finally generate html.
+			$output .= '</div>';
+		}
+	}
+	return $output;
+}
 /**
  * Template string replace
  *
@@ -469,7 +635,7 @@ function snks_edit_button( $booking_id, $doctor_id ) {
  * @param string $room Room url.
  * @return string
  */
-function template_str_replace( $record, $edit, $_class, $room ) {
+function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	if ( snks_is_patient() ) {
 		$client_id = get_current_user_id();
 	}
@@ -485,7 +651,7 @@ function template_str_replace( $record, $edit, $_class, $room ) {
 		$button_text = 'ملغي';
 		$room        = '#';
 	}
-	$template      = do_shortcode( '[elementor-template id="1239"]' );
+	$template      = do_shortcode( '[elementor-template id="2708"]' );
 	$profile_image = get_user_meta( $record->user_id, 'profile-image', true );
 	if ( empty( $profile_image ) ) {
 		$profile_image = '/wp-content/uploads/2024/08/th.jpeg';

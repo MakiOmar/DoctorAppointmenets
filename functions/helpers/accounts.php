@@ -10,6 +10,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Get patient details
+ *
+ * @param int $current_user_id User ID.
+ * @return array
+ */
+function snks_patient_details( $current_user_id ) {
+	global $wpdb;
+
+	$sql = $wpdb->prepare(
+		"
+		SELECT meta_key, meta_value
+		FROM {$wpdb->prefix}usermeta
+		WHERE user_id = %d
+		AND meta_key IN ('billing_first_name', 'billing_last_name', 'billing_phone', 'whatsapp')
+	",
+		$current_user_id
+	);
+	//phpcs:disable
+	$results = $wpdb->get_results( $sql );
+	//phpcs:enable
+
+	$meta_values = array();
+
+	foreach ( $results as $row ) {
+		$meta_values[ $row->meta_key ] = $row->meta_value;
+	}
+
+	return( $meta_values );
+}
+/**
  * Check if is doctor user
  *
  * @return bool
@@ -94,7 +124,7 @@ add_shortcode(
 				height: 40px;
 				border-radius: 5px;
 				background-color: #F7F5F9;
-				border: 1px solid #12114F;
+				border: 1px solid #024059;
 				text-align: center;
 				margin-right: 5px;
 				padding: 3px;
@@ -105,8 +135,8 @@ add_shortcode(
 			#verification_code_form_submit {
 				width: 100%;
 				border-radius: 5px;
-				background-color: #12114F;
-				border: 1px solid #12114F;
+				background-color: #024059;
+				border: 1px solid #024059;
 				color: #fff;
 				margin-top: 15px;
 			}
