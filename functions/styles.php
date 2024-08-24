@@ -63,6 +63,11 @@ add_action(
 			#allow_appointment_change{
 				margin-right: 20px;
 			}
+			.bulk-action-checkbox{
+				height: 20px;
+				width: 20px;
+				display: none;
+			}
 			.bulk-action-toggle{
 				position: absolute;
 				top: calc(50% - 10px);

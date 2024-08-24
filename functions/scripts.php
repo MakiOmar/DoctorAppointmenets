@@ -35,6 +35,7 @@ add_action(
 					function() {
 						let parent = $(this).closest('.snks-timetable-accordion-wrapper');
 						$('.snks-timetable-accordion-actions', parent).toggleClass('snks-timetable-active-accordion');
+						$('.bulk-action-checkbox', parent).toggle();
 					}
 				);
 				$(document).on(
