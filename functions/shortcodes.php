@@ -29,29 +29,29 @@ add_shortcode(
 		$title     = '';
 		if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
 			$permalink = '#';
-			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">حجز موعد</a>';
+			$title     = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">حجز موعد</a>';
 		} elseif ( is_singular() ) {
 			global $post;
 			$permalink = get_permalink( $post->ID );
-			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
+			$title     = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
 		} elseif ( is_post_type_archive() ) {
 			$post_type        = get_post_type();
 			$permalink        = get_post_type_archive_link( $post_type );
 			$post_type_object = get_post_type_object( $post_type );
 			if ( $post_type_object ) {
 				$post_type_label = $post_type_object->labels->name; // or use 'singular_name' for the singular label.
-				$title           = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
+				$title           = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
 			}
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term      = get_queried_object();
 			$permalink = get_term_link( $term );
-			$title     = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
+			$title     = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
 		} elseif ( is_archive() ) {
 			$permalink      = get_post_type_archive_link( get_post_type() );
 			$queried_object = get_queried_object();
 			if ( $queried_object && isset( $queried_object->label ) ) {
 				$archive_label = $queried_object->label;
-				$title         = '<a href="' . $permalink . '" style="font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
+				$title         = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
 			}
 		}
 

@@ -91,7 +91,7 @@ add_shortcode(
 						},
 						interfaceConfigOverwrite: {
 								APP_NAME: 'Jalsah',
-								DEFAULT_BACKGROUND: "#12114F;",
+								DEFAULT_BACKGROUND: "#024059;",
 								SHOW_JITSI_WATERMARK: false,
 								HIDE_DEEP_LINKING_LOGO: true,
 								SHOW_BRAND_WATERMARK: false,
@@ -156,7 +156,7 @@ add_shortcode(
   66.67% {background-position:right 1px bottom 50%,0 0,0 0,100% 100%}
   83.33% {background-position:left 1px bottom 50%,0 0,0 0,100% 100%}
   100%   {background-position:left 1px top 1px,0 0,0 0,100% 100%}
-}.room-loader-wrapper{width:95vw;height:450px;max-width:450px;background-color:#12114F;margin:auto;}</style>';
+}.room-loader-wrapper{width:95vw;height:450px;max-width:450px;background-color:#024059;margin:auto;}</style>';
 		$html .= '<div id="meeting">';
 		if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
 			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">يرجى انتظار الطبيب، شكراً لك</h5></div>';

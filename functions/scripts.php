@@ -29,6 +29,10 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
+				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');
+				$('<span class="snks-switcher-text switcher-no">لا</span>').insertBefore('#allow_appointment_change');
+				$('<span class="snks-switcher-text switcher-yes">نعم</span>').insertAfter('#allow_appointment_change');
 				$(document).on(
 					'click',
 					'.jet-form-builder-message--error',

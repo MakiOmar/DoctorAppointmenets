@@ -14,11 +14,100 @@ add_action(
 	function () {
 		?>
 		<style>
+			.snks-offline-border-radius{
+				border-top-left-radius:20px;border-bottom-left-radius:20px;
+				overflow: hidden;
+			}
+			.snks-booking-item-row{
+				height: 45px;
+			}
+			.snks-item-icons-bg img{
+				width: 35px;
+			}
+			.snks-booking-item{
+				background-color: #fff;
+			}
+			.snks-booking-item .anony-grid-col{
+				padding: 0;
+			}
+			.rotate-90{
+				transform: rotate(-90deg);
+				white-space: nowrap;
+			}
+			.rotate-90 *{
+				white-space: nowrap!important;
+			}
+			.snks-bg{
+				background-color: #024059;
+				color:#fff
+			}
+			.snks-secondary-bg{
+				background-color: #dcf5ff;
+				color:#024059
+			}
+			.snks-item-icons-bg{
+				background-color: #f1fbff;
+			}
+			.attendance_type_wrapper label{
+				padding: 15px 40px;
+				background-color: #024059;
+				border-radius: 50px;
+				color:#fff
+			}
+			.field-type-switcher, .field-type-select-field{
+				position: relative;
+			}
+			.jet-form-builder__field.text-field{
+				color: #024059;
+			}
+			#allow_appointment_change{
+				margin-right: 20px;
+			}
+			.snks-switcher-text{
+				position: absolute;
+				font-weight: bold;
+				color: #024059;
+			}
+			.field-type-select-field select{
+				-webkit-appearance: none;
+				-moz-appearance: none;
+				appearance: none;
+				background-image:none!important
+			}
+			
+			.field-type-select-field:after, .snks-timetable-accordion:after {
+				content: '\25BC'; /* Unicode character for down arrow */
+				position: absolute;
+				top: 51%;
+				left: 10px;
+				transform: translateY(-50%);
+				pointer-events: none;
+				color: #fff;
+				font-size: 12px;
+			}
+			.switcher-no{
+				right: 2px;
+			}
+			.switcher-yes{
+				right: 75px;
+			}
+
+			.field-type-radio-field .jet-form-builder__field-label.for-radio :checked + span::before {
+				border-color: #024059!important;
+				background-color: #024059!important;
+			}
+			.field-type-radio-field .jet-form-builder__field-label.for-radio > span::before {
+				border: 1px solid #024059!important;
+				background-color: #024059!important;
+			}
 			#snks-booking-form input[type=radio] {
 				display: none;
 			}
+			.periods-prices{
+				position: relative;
+			}
 			.field-type-switcher input.jet-form-builder__field:checked {
-				background: #12114f;
+				background: #024059;
 			}
 			.margin-top{
 				margin-top: 10px;
@@ -58,7 +147,7 @@ add_action(
 				flex-direction: row-reverse;
 			}
 			.rounded{
-				border-radius: 8px;
+				border-radius: 20px;
 			}
 			.jet-form-builder__heading-desc{
 				color: #b5b5b5
@@ -78,7 +167,7 @@ add_action(
 				box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
 			}
 			ul#consulting-forms-tabs li.active-tab{
-				background-color: #12114F;
+				background-color: #024059;
 				color: #fff;
 			}
 			/* Reset default list styles */
@@ -95,7 +184,7 @@ add_action(
 				padding: 5px 10px;
 				background-color: #fff;
 				border-radius: 4px;
-				border: 1px solid #12114F;
+				border: 1px solid #024059;
 				cursor: pointer;
 			}
 
@@ -158,7 +247,7 @@ add_action(
 				cursor:pointer;
 			}
 			.accordion-heading.active-accordion{
-				background-color:#12114F;
+				background-color:#024059;
 				color:#fff!important
 			}
 			.shrinks-error{
@@ -167,7 +256,7 @@ add_action(
 			}
 			.jet-form-builder__conditional.clinics-list .jet-form-builder-repeater__actions button.jet-form-builder-repeater__new{
 				color:#fff;
-				background-color:#12114f;
+				background-color:#024059;
 				font-size:14px;
 				font-weight:bold;
 				border-radius:50px
@@ -217,7 +306,7 @@ add_action(
 			.inline-description-wrapper .field-type-number-field .jet-form-builder__desc{
 				font-size: 18px;
 				font-weight: bold;
-				color:#12114F!important;
+				color:#024059!important;
 			}
 			.inline-description-wrapper .field-type-number-field .jet-form-builder__label{
 				width: auto!important;
@@ -228,12 +317,14 @@ add_action(
 			}
 			select {
 				color: #fff;
-				background-color: #12114f;
+				background-color: #024059;
 			}
 			
 			.field-type-switcher span {
 				position: absolute;
 				left: 10px;
+				display: inline-flex;
+				align-items: baseline;
 			}
 			.field-type-switcher input {
 				margin-left: 10px!important;
@@ -411,7 +502,7 @@ add_action(
 				background-color: rgb(255,255,255,0.20)!important;
 			}
 			.snks-form-days {
-				background-color: #12114F14;
+				background-color: #02405914;
 				width: 100%;
 				border-radius: 10px;
 			}
@@ -437,7 +528,7 @@ add_action(
 				display: none;
 			}
 			.anony-day-radio label.active-day, input[type=submit]{
-				background-color: #12114F;
+				background-color: #024059;
 				color:#fff;
 				border:none
 			}
@@ -458,7 +549,7 @@ add_action(
 				margin-left: 10px;
 			}
 			.snks-available-hours li.available-time{
-				background-color: #12114f;
+				background-color: #024059;
 				color: #fff;
 				border-radius: 50px;
 				padding: 5px 15px;
@@ -484,8 +575,8 @@ add_action(
 			}
 			.snks-available-hours li.available-time.active-hour{
 				background-color: #fff;
-				color: #12114F;
-				border:1px solid #12114F;
+				color: #024059;
+				border:1px solid #024059;
 			}
 			.snks-form .row{
 				margin-bottom: 15px;
@@ -538,7 +629,7 @@ add_action(
 				position: relative;
 			}
 			.snks-radio.snks-checked{
-				background-color: #12114F5c;
+				background-color: #0240595c;
 			}
 			.snks-radio label{
 				position: absolute;
@@ -622,7 +713,7 @@ add_action(
 				height: 25px;
 				width: 25px;
 				margin: 0 3px;
-				background-color: #12114F;
+				background-color: #024059;
 				color: #fff;
 				outline: none;
 				border-radius: 50%;
@@ -651,14 +742,22 @@ add_action(
 			}
 			@media screen and (max-width:480px) {
 				.clinc-row{
-				flex-direction: column;
-				gap: 10px;
-			}
+					flex-direction: column;
+					gap: 10px;
+				}
 				.anony-content-slider div{
 					max-width: calc(100vw - 40px);
 				}
 				.anony-content-slide .wp-block-columns{
 					flex-direction: column;
+				}
+				.vertical-divider{
+					width: 2px;
+					height: 120px;
+					background-color:#024059;
+					position: absolute;
+					top: 80px;
+					left: 40%
 				}
 			}
 		</style>

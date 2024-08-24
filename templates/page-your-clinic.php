@@ -24,12 +24,17 @@ $user_id = snks_url_get_doctors_id();
 	.snks-tear-shap{
 		width: 100%;
 		height: 100%;
-		background-color: #00eaff;
 		border-radius: 50%;
 		border-top-right-radius: 0;
 		transform: rotate(-45deg);
-		border: 5px solid #fff;
 		overflow: hidden;
+		background-color: #fff;
+	}
+	.snks-tear-shap.sub{
+		position: absolute;
+		right: 0px;
+		top: 13px;
+		z-index: -1;
 	}
 	.snks-tear-shap img{
 		height: 203px;
@@ -47,13 +52,14 @@ $user_id = snks_url_get_doctors_id();
 	} else {
 		$profile_image = get_user_meta( $record->user_id, 'profile-image', true );
 		if ( empty( $profile_image ) ) {
-			$profile_image = '/wp-content/uploads/2024/08/th.jpeg';
+			$profile_image = '/wp-content/uploads/2024/08/portrait-3d-male-doctor_23-2151107083.avif';
 		}
 		?>
 	<div class="snks-tear-shap-wrapper">
 		<div class="snks-tear-shap">
-			<img src="<?php echo esc_url( $profile_image ) ?>"/>
+			<img src="<?php echo esc_url( $profile_image ); ?>"/>
 		</div>
+		<div class="snks-tear-shap sub anony-box-shadow"></div>
 	</div>
 	<div id="snks-booking-form" class="anony-grid-row" style="max-width: 960px;margin:auto;margin-top:30px">
 		<div class="anony-grid-col">
