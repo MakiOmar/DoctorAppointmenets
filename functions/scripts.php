@@ -29,6 +29,22 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				$(document).on(
+					'click',
+					'.bulk-action-toggle svg',
+					function() {
+						let parent = $(this).closest('.snks-timetable-accordion-wrapper');
+						$('.snks-timetable-accordion-actions', parent).toggleClass('snks-timetable-active-accordion');
+					}
+				);
+				$(document).on(
+					'click',
+					'.bulk-action-toggle-tip-close',
+					function() {
+						let parent = $(this).closest('.snks-timetable-accordion-wrapper');
+						$('.bulk-action-toggle-tip', parent).hide();
+					}
+				);
 				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
 				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');
 				$('<span class="snks-switcher-text switcher-no">لا</span>').insertBefore('#allow_appointment_change');

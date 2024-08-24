@@ -63,6 +63,43 @@ add_action(
 			#allow_appointment_change{
 				margin-right: 20px;
 			}
+			.bulk-action-toggle{
+				position: absolute;
+				top: calc(50% - 10px);
+				left: 30px;
+				cursor: pointer;
+			}
+			.bulk-action-toggle-tip{
+				background-color: #fff;
+				color: #024059;
+				padding: 5px 10px;
+				top: -40px;
+				position: absolute;
+				width: 100px;
+				text-align: center;
+				left: -15px;
+				border-radius: 20px;
+			}
+			.bulk-action-toggle-tip-close{
+				height: 20px;
+				width: 20px;
+				background-color: #024059;
+				color:#fff;
+				border-radius: 50%;
+				position: absolute;
+				top: -10px;
+				right: 10px;
+			}
+			.snks-timetable-accordion-actions{
+				max-height: 0;
+				overflow: hidden;
+				padding: 0;
+				t/*ransition: all 0.8s ease-in-out;*/
+			}
+			.snks-timetable-accordion-actions.snks-timetable-active-accordion{
+				max-height: 150px;
+				padding: 5px;
+			}
 			.snks-switcher-text{
 				position: absolute;
 				font-weight: bold;
