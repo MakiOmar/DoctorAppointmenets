@@ -17,6 +17,11 @@ define( 'SNKS_DOMAIN', 'anony-turn' );
 
 // Plugin path.
 define( 'SNKS_DIR', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
+define( 'SNKS_LOGO', site_url( '/wp-content/uploads/2024/08/logo.jpg' ) );
+define( 'SNKS_EMAIL', 'contact@jalsah.app' );
+define( 'SNKS_APP_NAME', 'جَلسَة' );
+define( 'SNKS_EMAIL_IMG', site_url( '/wp-content/uploads/2024/08/7-Types-Of-Psychology.webp' ) );
+define( 'SNKS_EMAIL_ICON', site_url( '/wp-content/uploads/2024/08/41781618489806584.png' ) );
 
 // Plugin URI.
 define( 'SNKS_URI', plugin_dir_url( __FILE__ ) );

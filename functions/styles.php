@@ -14,6 +14,9 @@ add_action(
 	function () {
 		?>
 		<style>
+			.snks-timetable-accordion-wrapper{
+				max-width: 360px;
+			}
 			.snks-offline-border-radius{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 				overflow: hidden;
@@ -82,7 +85,7 @@ add_action(
 				position: absolute;
 				width: 100px;
 				text-align: center;
-				left: -15px;
+				left: -5px;
 				border-radius: 20px;
 			}
 			.bulk-action-toggle-tip-close{
@@ -92,7 +95,7 @@ add_action(
 				color:#fff;
 				border-radius: 50%;
 				position: absolute;
-				top: -10px;
+				top: -15px;
 				right: 10px;
 			}
 			.snks-timetable-accordion-actions{
@@ -117,7 +120,7 @@ add_action(
 				background-image:none!important
 			}
 			
-			.field-type-select-field:after, .snks-timetable-accordion:after {
+			.field-type-select-field:after, .snks-timetable-accordion:after, .bulk-action-toggle-tip:after {
 				content: '\25BC'; /* Unicode character for down arrow */
 				position: absolute;
 				top: 51%;
@@ -126,6 +129,9 @@ add_action(
 				pointer-events: none;
 				color: #fff;
 				font-size: 12px;
+			}
+			.bulk-action-toggle-tip:after{
+				top: 39px;
 			}
 			.switcher-no{
 				right: 2px;

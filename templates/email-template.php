@@ -417,7 +417,7 @@ a {text-decoration: none;}
 													<td class="es-m-p0r" valign="top" align="center" style="padding:0;Margin:0;width:560px">
 														<table style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-radius:1px" width="100%" cellspacing="0" cellpadding="0" role="presentation">
 															<tr>
-																<td style="padding:0;Margin:0;font-size:0px" align="center"><a target="_blank" href="https://viewstripo.email" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#3D7781;font-size:14px"><img src="{logo}" alt="Logo" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" title="Logo" width="120" height="82"></a></td>
+																<td style="padding:0;Margin:0;font-size:0px" align="center"><a target="_blank" href="https://viewstripo.email" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#3D7781;font-size:14px"><img src="{logo}" alt="Logo" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" title="Logo" width="auto" height="82"></a></td>
 															</tr>
 														</table>
 													</td>
@@ -445,7 +445,7 @@ a {text-decoration: none;}
 																</td>
 															</tr>
 															<tr>
-																<td style="padding:0;Margin:0;padding-right:15px;font-size:0px" align="center"><a target="_blank" href="https://viewstripo.email" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#3D7781;font-size:14px"><img class="adapt-img" src="{content_placeholder}" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="370" height="370"></a></td>
+																<td style="padding:0;Margin:0;padding-right:15px;font-size:0px" align="center"><a target="_blank" href="https://viewstripo.email" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;text-decoration:underline;color:#3D7781;font-size:14px"><img class="adapt-img" src="{content_placeholder}" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="auto" height="250"></a></td>
 															</tr>
 														</table>
 													</td>
@@ -493,7 +493,7 @@ a {text-decoration: none;}
 																	<center style='color:#ffffff; font-family:arial, "helvetica neue", helvetica, sans-serif; font-size:18px; font-weight:400; line-height:18px; mso-text-raise:1px'>{button_text}</center>
 																	</v:roundrect></a>
 																	<![endif]-->
-																	<!--[if !mso]><!-- --><span class="es-button-border-4 msohide es-button-border" style="border-style:solid;border-color:#2CB543;background:#024059;border-width:0px;display:inline-block;border-radius:30px;width:auto;mso-hide:all"><a href="{button_url}" class="es-button es-button-3" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;border-style:solid;border-color:#024059;border-width:10px 25px 10px 15px;display:inline-block;background:#024059;border-radius:30px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center"><img src="https://znmyib.stripocdn.email/content/guids/CABINET_2e7b5e7c419fb67c255cca2bf344a8df/images/41781618489806584.png" alt="icon" style="display:inline-block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;vertical-align:middle;margin-right:10px" width="26" align="absmiddle" height="32">{button_text}</a></span>
+																	<!--[if !mso]><!-- --><span class="es-button-border-4 msohide es-button-border" style="border-style:solid;border-color:#2CB543;background:#024059;border-width:0px;display:inline-block;border-radius:30px;width:auto;mso-hide:all"><a href="{button_url}" class="es-button es-button-3" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;border-style:solid;border-color:#024059;border-width:10px 25px 10px 15px;display:inline-block;background:#024059;border-radius:30px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center"><img src="<?php echo esc_url( SNKS_EMAIL_ICON ); ?>" alt="icon" style="display:inline-block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;vertical-align:middle;margin-right:10px" width="26" align="absmiddle" height="32">{button_text}</a></span>
 																	<!--<![endif]-->
 																</td>
 															</tr>
