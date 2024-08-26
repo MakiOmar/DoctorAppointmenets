@@ -21,6 +21,7 @@ add_action(
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 				overflow: hidden;
 			}
+
 			.snks-booking-item-row{
 				height: 45px;
 			}
@@ -132,6 +133,7 @@ add_action(
 				color: #fff;
 				font-size: 12px;
 			}
+
 			.bulk-action-toggle-tip:after{
 				top: 39px;
 			}

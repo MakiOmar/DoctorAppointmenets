@@ -488,12 +488,15 @@ function snks_booking_item_template( $record, $patient_details ) {
 	<div class="anony-grid-row snks-booking-item">
 		<div class="anony-grid-col anony-grid-col-2 snks-bg">
 			<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo $record->date_time; ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
+
 			<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);display: flex;align-items: center;">
 				<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
 				<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 			</div>
 		</div>
+
 		<div class="anony-grid-col anony-grid-col-<?php echo 'online' === $record->attendance_type ? '8' : '10 snks-offline-border-radius'; ?>">
+
 			<div class="anony-grid-row snks-booking-item-row">
 				<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
 					<img class="anony-padding-5" src="/wp-content/uploads/2024/08/clock.png"/>
@@ -506,7 +509,9 @@ function snks_booking_item_template( $record, $patient_details ) {
 						</div>
 						
 						<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-right:2px;font-size:18px">
+
 							<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{period} دقيقة</div>
+
 						</div>
 					</div>
 		
@@ -656,7 +661,9 @@ function snks_generate_bookings() {
 			}
 			// Finally generate html.
 			$output .= '</div>';
+
 			$output .= '</div>';
+
 
 		}
 	}
