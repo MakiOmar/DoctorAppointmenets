@@ -641,6 +641,11 @@ function snks_generate_bookings() {
 
 			$output .= '</div>';
 			$output .= '<div class="snks-timetable-accordion-content" style="background-color:#fff;padding:10px 0 10px 10px" id="' . $date . '">';
+
+		foreach ( $day_groups as $date => $timetables ) {
+			$day     = gmdate( 'l', strtotime( $date ) );
+			$output .= '<div class="snks-timetable-accordion" data-id="' . $date . '">' . $day . $date . '</div>';
+			$output .= '<div class="snks-timetable-accordion-content" id="' . $date . '">';
 			/**
 			* Timetable queried object.
 			*
@@ -652,6 +657,7 @@ function snks_generate_bookings() {
 			// Finally generate html.
 			$output .= '</div>';
 			$output .= '</div>';
+
 		}
 	}
 	return $output;

@@ -66,6 +66,7 @@ add_action(
 			#allow_appointment_change{
 				margin-right: 20px;
 			}
+
 			.bulk-action-checkbox{
 				height: 20px;
 				width: 20px;
@@ -108,6 +109,7 @@ add_action(
 				max-height: 150px;
 				padding: 5px;
 			}
+
 			.snks-switcher-text{
 				position: absolute;
 				font-weight: bold;
@@ -133,6 +135,7 @@ add_action(
 			.bulk-action-toggle-tip:after{
 				top: 39px;
 			}
+
 			.switcher-no{
 				right: 2px;
 			}
