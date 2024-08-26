@@ -19,7 +19,7 @@ add_shortcode(
 	'snks_object_title',
 	function ( $atts ) {
 		global $wp;
-		$atts = shortcode_atts(
+		$atts      = shortcode_atts(
 			array(
 				'font-size' => '20px',
 			),

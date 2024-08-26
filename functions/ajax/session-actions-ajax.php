@@ -23,8 +23,8 @@ function appointment_action_callback() {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
 	if ( '.snks-postpon' === $_req['ele'] ) {
-		foreach ( $_req['IDs'] as $id ) {
-			snks_postpon_appointment( $id );
+		foreach ( $_req['IDs'] as $data ) {
+			snks_postpon_appointment( $data['ID'], $data['patientID'], $data['doctorID'], $data['date'] );
 		}
 	}
 
