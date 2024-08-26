@@ -30,7 +30,7 @@ function appointment_action_callback() {
 
 	if ( '.snks-delay' === $_req['ele'] ) {
 		foreach ( $_req['IDs'] as $data ) {
-			snks_delay_appointment( $data['patientID'], $data['delay_period'], $data['date'] );
+			snks_delay_appointment( $data['patientID'], $data['doctorID'], $data['delay_period'], $data['date'] );
 		}
 	}
 	wp_send_json(

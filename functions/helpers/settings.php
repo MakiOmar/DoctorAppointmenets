@@ -779,7 +779,7 @@ function snks_render_conflicts( $day ) {
 		$conflicts = explode( '-', $conflicts );
 		$conflicts = array_map(
 			function ( $item ) {
-				return str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), gmdate( 'h:i a', strtotime( $item ) ) );
+				return snks_localize_time( gmdate( 'h:i a', strtotime( $item ) ) );
 			},
 			$conflicts
 		);

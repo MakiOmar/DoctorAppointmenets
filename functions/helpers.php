@@ -166,7 +166,61 @@ function snks_human_readable_datetime_diff( $date_time, $text = 'Start' ) {
 	}
 	return $output;
 }
+/**
+ * Undocumented function
+ *
+ * @param string $to To Email.
+ * @param string $title Email text.
+ * @param string $sub_title Email text.
+ * @param string $text_1 Email text.
+ * @param string $text_2 Email text.
+ * @param string $text_3 Email text.
+ * @param string $button_text Email text.
+ * @param string $button_url Email text.
+ * @param string $after_button Email text.
+ * @return mixed
+ */
+function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url, $after_button = '' ) {
+	ob_start();
+	include SNKS_DIR . 'templates/email-template.php';
+	$template = ob_get_clean();
 
+	$message = str_replace(
+		array(
+			'{logo}',
+			'{title}',
+			'{sub_title}',
+			'{content_placeholder}',
+			'{text_1}',
+			'{text_2}',
+			'{text_3}',
+			'{button_text}',
+			'{button_url}',
+			'{after_button}',
+		),
+		array(
+			SNKS_LOGO,
+			$title,
+			$sub_title,
+			SNKS_EMAIL_IMG,
+			$text_1,
+			$text_2,
+			$text_3,
+			$button_text,
+			$button_url,
+			$after_button,
+		),
+		$template
+	);
+
+	$to      = $to;
+	$subject = $title . ' - ' . SNKS_APP_NAME;
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
+	);
+	return wp_mail( $to, $subject, $message, $headers );
+}
 /**
  * Get doctor's url
  *

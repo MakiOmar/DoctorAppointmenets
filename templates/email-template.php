@@ -441,7 +441,7 @@ a {text-decoration: none;}
 														<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
 															<tr>
 																<td class="es-m-txt-c" align="center" style="padding:0;Margin:0;padding-bottom:20px;padding-top:30px">
-																	<h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, 'times new roman', serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047"><strong>{title}</strong><br>{sub_title}<br></h1>
+																	<h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, 'times new roman', serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047"><b>{title}</b><br>{sub_title}<br></h1>
 																</td>
 															</tr>
 															<tr>
@@ -495,6 +495,11 @@ a {text-decoration: none;}
 																	<![endif]-->
 																	<!--[if !mso]><!-- --><span class="es-button-border-4 msohide es-button-border" style="border-style:solid;border-color:#2CB543;background:#024059;border-width:0px;display:inline-block;border-radius:30px;width:auto;mso-hide:all"><a href="{button_url}" class="es-button es-button-3" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;color:#FFFFFF;font-size:18px;border-style:solid;border-color:#024059;border-width:10px 25px 10px 15px;display:inline-block;background:#024059;border-radius:30px;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center"><img src="<?php echo esc_url( SNKS_EMAIL_ICON ); ?>" alt="icon" style="display:inline-block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;vertical-align:middle;margin-right:10px" width="26" align="absmiddle" height="32">{button_text}</a></span>
 																	<!--<![endif]-->
+																</td>
+															</tr>
+															<tr>
+																<td class="es-m-txt-c" align="center" style="padding:0;Margin:0">
+																	{after_button}
 																</td>
 															</tr>
 														</table>
