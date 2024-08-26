@@ -9,49 +9,79 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-/**
- * Pospon appointment
- *
- * @param int $id  Timtable ID.
- * @return void
- */
-function snks_postpon_appointment( $id ) {
-	// this.
-}
+add_action(
+	'wp_footer',
+	function () {
+		?>
+	<script>
+		jQuery(document).ready(function($){
+			function getCheckedValues(parent, name) {
+				// Find all checked checkboxes within the parent element
+				var checkedCheckboxes = parent.find('input[name="' + name +'"]:checked');
+				// Extract the values of the checked checkboxes
+				var values = checkedCheckboxes.map(function() {
+					return { 'ID': $(this).val(), 'doctorID' : $(this).data('doctor'), 'patientID' : $(this).data('patient'), 'date' : $(this).data('date') };
+				}).get();
 
-/**
- * Delay appointment
- *
- * @param int    $patient_id  patient's ID.
- * @param int    $doctor_id  Doctor's ID.
- * @param string $delay_period  Delay period.
- * @param string $date  Appointment date.
- * @return void
- */
-function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date ) {
-	$user   = get_user_by( 'id', $patient_id );
-	$doctor = get_user_by( 'id', $doctor_id );
-	if ( ! $user || ! $doctor ) {
-		return;
+				return values;
+			}
+			function snks_bookings_bulk_action( ele, actionName ) {
+
+				$(document).on(
+					'click',
+					ele,
+					function() {
+						let parent = $(this).closest('.snks-timetable-accordion-wrapper');
+						let values = getCheckedValues(parent, 'bulk-action[]');
+						if ( values.length == 0 ) {
+							$.fn.justShowErrorpopup('فضلاً قم بتحديد جلسة!');
+							return;
+						}
+
+						var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_action_nonce' ) ); ?>';
+					
+						// Send AJAX request.
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+							data: {
+								action    : actionName,
+								ele       : ele,
+								IDs       : values,
+								nonce     : nonce,
+							},
+							success: function(response) {
+								console.log(response);
+							}
+						});
+
+					}
+				);
+
+			}
+			snks_bookings_bulk_action( '.snks-postpon', 'appointment_action' );
+			snks_bookings_bulk_action( '.snks-delay', 'appointment_action' );
+			
+			$(document).on(
+				'click',
+				'.bulk-action-toggle svg',
+				function() {
+					let parent = $(this).closest('.snks-timetable-accordion-wrapper');
+					$('.snks-timetable-accordion-actions', parent).toggleClass('snks-timetable-active-accordion');
+					$('.bulk-action-checkbox', parent).toggle();
+				}
+			);
+			$(document).on(
+				'click',
+				'.bulk-action-toggle-tip-close',
+				function() {
+					let parent = $(this).closest('.snks-timetable-accordion-wrapper');
+					$('.bulk-action-toggle-tip', parent).hide();
+				}
+			);
+		});
+			
+	</script>
+		<?php
 	}
-	$after_button  = '<p style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, times new roman, serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047">';
-	$after_button  = '<b style="display:block;margin-top:20px;font-size:20px">';
-	$after_button  = 'مع الطبيب';
-	$after_button .= '<br>';
-	$after_button .= get_user_meta( $doctor_id, 'billing_first_name', true ) . ' ' . get_user_meta( $doctor_id, 'billing_last_name', true );
-	$after_button .= '</b>';
-	$after_button .= '</p>';
-	ob_start();
-	include SNKS_DIR . 'templates/email-template.php';
-	$template = ob_get_clean();
-	list($title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url) = array(
-		'تم تأخير موعدك',
-		'في جلسة',
-		'نعتذر لك! الطبيب يبلغك بتأخير الموعد قليلاَ',
-		'تم تأخير الموعد الخاص بك لمدة',
-		$delay_period . ' دقيقة',
-		'للموعد ' . snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( $date ) ) ),
-		'#',
-	);
-	snks_send_email( $user->user_email, $title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url, $after_button );
-}
+);
