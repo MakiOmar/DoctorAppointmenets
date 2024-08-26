@@ -25,7 +25,7 @@ add_action(
 
 				return values;
 			}
-			function snks_bookings_bulk_action( ele, actionName ) {
+			function snks_bookings_bulk_action_popup( ele ) {
 
 				$(document).on(
 					'click',
@@ -37,30 +37,68 @@ add_action(
 							$.fn.justShowErrorpopup('فضلاً قم بتحديد جلسة!');
 							return;
 						}
+						// Output the dates in a <ul>
+						var ulElement = $('<ul class="snks-checked-datetimes"></ul>'); // Create a new <ul> element
 
-						var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_action_nonce' ) ); ?>';
-					
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: {
-								action    : actionName,
-								ele       : ele,
-								IDs       : values,
-								nonce     : nonce,
-							},
-							success: function(response) {
-								console.log(response);
-							}
+						// Loop through the checked values and create <li> elements for each date
+						values.forEach(function(item) {
+							var liElement = $('<li></li>').text(item.date); // Create a new <li> element with the date text
+							ulElement.append(liElement); // Append the <li> element to the <ul>
 						});
-
+						$("#iam-sure").attr('data-action', ele);
+						$("#iam-sure").attr('data-parent', parent.attr('data-id'));
+						$.fn.justShowSurepopup(ulElement, $(this).data('title') + ' هذه المواعيد');
+						
+						if ( ele === '.snks-delay' ){
+							console.log(ele);
+							$("#sure-container").append($('<input type="number" id="delay-by" name="delay-by" placeholder="أدخل مدة التأخير بالدقيقة"/>'));
+						} else {
+							$("#delay-by").remove();
+						}
 					}
 				);
 
 			}
-			snks_bookings_bulk_action( '.snks-postpon', 'appointment_action' );
-			snks_bookings_bulk_action( '.snks-delay', 'appointment_action' );
+
+			snks_bookings_bulk_action_popup( '.snks-postpon');
+			snks_bookings_bulk_action_popup( '.snks-delay' );
+			
+			$(document).on(
+				'click',
+				'#iam-sure',
+				function() {
+					let parent = $("#" + $(this).data('parent'));
+					let values = getCheckedValues(parent, 'bulk-action[]');
+					if ( values.length == 0 ) {
+						$.fn.justShowErrorpopup('فضلاً قم بتحديد جلسة!');
+						return;
+					}
+					var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_action_nonce' ) ); ?>';
+
+					var delayBy = false;
+					if ( $("#delay-by").length > 0 ) {
+						delayBy = $("#delay-by").val();
+					}
+				
+					// Send AJAX request.
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+						data: {
+							action    : 'appointment_action',
+							ele       : $(this).data('action'),
+							IDs       : values,
+							delayBy   : delayBy,
+							nonce     : nonce,
+						},
+						success: function(response) {
+							console.log(response);
+						}
+					});
+
+				}
+			);
+
 			
 			$(document).on(
 				'click',

@@ -487,7 +487,7 @@ function snks_booking_item_template( $record, $patient_details ) {
 	?>
 	<div class="anony-grid-row snks-booking-item">
 		<div class="anony-grid-col anony-grid-col-2 snks-bg">
-			<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo $record->date_time; ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
+			<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
 
 			<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);display: flex;align-items: center;">
 				<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
@@ -637,11 +637,11 @@ function snks_generate_bookings() {
 			$output     .= '</div>';
 			$output     .= '<div style="background-color:#dcdcdc;" class="anony-grid-row snks-timetable-accordion-actions anony-padding-10 anony-flex flex-h-center flex-v-center">';
 			$output     .= '<div class="anony-grid-col anony-grid-col-6">';
-			$output     .= '<button class="snks-postpon anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأجيل الجلسات</button>';
+			$output     .= '<button data-title="تأجيل" class="snks-postpon anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأجيل الجلسات</button>';
 			$output     .= '</div>';
 
 			$output .= '<div class="anony-grid-col anony-grid-col-6">';
-			$output .= '<button class="snks-delay anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأخير الجلسات</button>';
+			$output .= '<button data-title="تأخير" class="snks-delay anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأخير الجلسات</button>';
 			$output .= '</div>';
 
 			$output .= '</div>';

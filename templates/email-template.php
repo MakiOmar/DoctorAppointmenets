@@ -396,14 +396,14 @@ a {text-decoration: none;}
 	</style>
 </head>
 
-<body style="width:100%;font-family:arial, 'helvetica neue', helvetica, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
+<body style="direction:ltr;width:100%;font-family:arial, 'helvetica neue', helvetica, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
 	<div class="es-wrapper-color" style="background-color:#F7F7F7">
 		<!--[if gte mso 9]>
 		<v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
 		<v:fill type="tile" color="#f7f7f7"></v:fill>
 		</v:background>
 		<![endif]-->
-		<table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#F7F7F7">
+		<table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0" style="direction:ltr;mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#F7F7F7">
 			<tr>
 				<td valign="top" style="padding:0;Margin:0">
 					<table class="es-header" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%;background-color:transparent;background-repeat:repeat;background-position:center top">
@@ -455,12 +455,12 @@ a {text-decoration: none;}
 														<table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
 															<tr>
 																<td class="es-m-txt-c" align="center" style="padding:0;Margin:0;padding-bottom:5px;padding-top:30px">
-																	<h1 style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, 'times new roman', serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047">{text_1}!</h1>
+																	<h1 style="direction:rtl;Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, 'times new roman', serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047">{text_1}!</h1>
 																</td>
 															</tr>
 															<tr>
 																<td align="center" style="Margin:0;padding-top:10px;padding-bottom:20px;padding-left:40px;padding-right:40px">
-																	<p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#666666;font-size:14px">{text_2}<br>{text_3}<br></p>
+																	<p style="direction:rtl;Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#666666;font-size:20px">{text_2}<br>{text_3}<br></p>
 																</td>
 															</tr>
 															<tr>
@@ -499,7 +499,7 @@ a {text-decoration: none;}
 																</td>
 															</tr>
 															<tr>
-																<td class="es-m-txt-c" align="center" style="padding:0;Margin:0">
+																<td class="es-m-txt-c" align="center" style="padding:0;Margin:0;font-size:20px">
 																	{after_button}
 																</td>
 															</tr>

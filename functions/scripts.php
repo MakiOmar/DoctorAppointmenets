@@ -31,8 +31,17 @@ add_action(
 			jQuery( document ).ready( function( $ ) {
 				$.fn.justShowErrorpopup = function ( msg ) {
 				
-					$('#error-container').text(msg);
+					$('#error-container').append(msg);
 					$('.trigger-error').trigger('click');
+				}
+				
+				$.fn.justShowSurepopup = function ( msg, content ) {
+					$('#sure-container').empty();
+					$('#sure-of').empty();
+
+					$('#sure-container').append(msg);
+					$('#sure-of').append(content);
+					$('.trigger-sure').trigger('click');
 				}
 			});
 		</script>

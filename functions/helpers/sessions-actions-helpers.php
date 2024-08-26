@@ -37,6 +37,7 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date )
 	if ( ! $user || ! $doctor ) {
 		return;
 	}
+	$days_labels   = json_decode( DAYS_ABBREVIATIONS, true );
 	$after_button  = '<p style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, times new roman, serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047">';
 	$after_button  = '<b style="display:block;margin-top:20px;font-size:20px">';
 	$after_button  = 'مع الطبيب';
@@ -53,7 +54,7 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date )
 		'نعتذر لك! الطبيب يبلغك بتأخير الموعد قليلاَ',
 		'تم تأخير الموعد الخاص بك لمدة',
 		$delay_period . ' دقيقة',
-		'للموعد ' . snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( $date ) ) ),
+		'للموعد <img src="https://jalsah.app/wp-content/uploads/2024/08/left-arrow.png"/> ' . $days_labels[ gmdate( 'D', strtotime( $date ) ) ] . ' ' . $date,
 		'#',
 	);
 	snks_send_email( $user->user_email, $title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url, $after_button );
