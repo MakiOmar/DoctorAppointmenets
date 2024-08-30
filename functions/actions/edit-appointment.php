@@ -35,6 +35,7 @@ add_action(
 		$main_order     = wc_get_order( $booking->order_id );
 		$new_booking_id = $_req['change-to-this-date'];
 		snks_apply_booking_edit( $booking, $main_order, $new_booking_id );
+		do_action( 'snks_doctor_edit_booking' );
 	}
 );
 /**
@@ -222,6 +223,7 @@ add_action(
 			}
 			if ( ! $needs_payment ) {
 				snks_apply_booking_edit( $booking, $main_order, $_request['selected-hour'], true );
+				do_action( 'snks_patient_edit_booking' );
 			}
 		}
 	}
@@ -246,6 +248,7 @@ add_action(
 		$main_order     = wc_get_order( absint( $connected_order ) );
 		snks_wallet_credit( $booking->user_id, $order->get_total(), 'الدخل مقابل تعديل موعد' );
 		snks_apply_booking_edit( $booking, $main_order, $new_booking_id, false );
+		do_action( 'snks_patient_edit_booking' );
 	},
 	10,
 	2
