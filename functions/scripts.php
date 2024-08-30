@@ -70,7 +70,6 @@ add_action(
 				$('.snks-count-down').each(
 					function () {
 						var countdownElement = $(this);
-						console.log(countdownElement.text());
 						if ( isNaN( parseInt(countdownElement.text()) ) ) {
 							return;
 						}
