@@ -104,7 +104,7 @@ add_shortcode(
 	function ( $atts ) {
 		$atts = shortcode_atts(
 			array(
-				'tense' => 'future',
+				'tense' => 'all',
 			),
 			$atts
 		);

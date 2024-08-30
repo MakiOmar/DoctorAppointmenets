@@ -8,6 +8,35 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
+
+add_action(
+	'init',
+	function () {
+		$_req = wp_unslash( $_POST );
+		if ( ! isset( $_req['change_appointment_nonce'] ) || ! wp_verify_nonce( $_req['change_appointment_nonce'], 'change_appointment' ) ) {
+			return;
+		}
+
+		if ( empty( $_req['old-appointment'] ) || empty( $_req['change-to-this-date'] ) ) {
+			return;
+		}
+
+		if ( ! snks_is_doctor() ) {
+			wp_safe_redirect( add_query_arg( 'error', 'unknown', site_url( $_req['_wp_http_referer'] ) ) );
+			exit;
+		}
+
+		$booking = snks_get_timetable_by( 'ID', absint( $_req['old-appointment'] ) );
+
+		if ( ! $booking || get_current_user_id() !== absint( $booking->user_id ) ) {
+			wp_safe_redirect( add_query_arg( 'error', 'not-allowed', site_url( $_req['_wp_http_referer'] ) ) );
+			exit;
+		}
+		$main_order     = wc_get_order( $booking->order_id );
+		$new_booking_id = $_req['change-to-this-date'];
+		snks_apply_booking_edit( $booking, $main_order, $new_booking_id );
+	}
+);
 /**
  * Apply edit booking
  *
@@ -26,6 +55,13 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 			'client_id' => 0,
 			'order_id'  => 0,
 		)
+	);
+	$error_url   = add_query_arg(
+		array(
+			'edit-booking' => $booking->ID,
+			'error'        => 'unknown',
+		),
+		$_doctor_url
 	);
 	// If previous appointment is reset.
 	if ( $updated ) {
@@ -63,21 +99,24 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
 			}
 			if ( $free ) {
-				wp_safe_redirect( site_url( '/my-account/my-appointments/' ) );
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'edit' => 'success',
+						),
+						site_url( '/my-bookings/' )
+					)
+				);
 				exit;
 			}
+		} elseif ( snks_is_patient() ) {
+				wp_safe_redirect( $error_url );
+				exit;
 		}
 	}
-	if ( $free ) {
-		wp_safe_redirect(
-			add_query_arg(
-				array(
-					'edit-booking' => $booking->ID,
-					'error'        => 'unknown',
-				),
-				$_doctor_url
-			)
-		);
+
+	if ( snks_is_patient() ) {
+		wp_safe_redirect( $error_url );
 		exit;
 	}
 }

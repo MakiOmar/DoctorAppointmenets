@@ -49,7 +49,7 @@ $user_id = snks_url_get_doctors_id();
 		<div class="anony-flex flex-h-center"><p>هناك شيء خاطيء!</p></div>
 		<?php
 
-	} else {
+	} elseif ( isset( $record ) ) {
 		$profile_image = get_user_meta( $record->user_id, 'profile-image', true );
 		if ( empty( $profile_image ) ) {
 			$profile_image = '/wp-content/uploads/2024/08/portrait-3d-male-doctor_23-2151107083.avif';

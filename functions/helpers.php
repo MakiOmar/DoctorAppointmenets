@@ -150,6 +150,17 @@ function snks_go_back() {
 function snks_localize_time( $time ) {
 	return str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), $time );
 }
+/**
+ * Localized time
+ *
+ * @param string $time Time.
+ * @return string
+ */
+function snks_localized_time( $time ) {
+	return snks_localize_time( gmdate( 'h:i a', strtotime( $time ) ) );
+}
+
+
 
 /**
  * Human readable datetime diff
@@ -165,6 +176,23 @@ function snks_human_readable_datetime_diff( $date_time, $text = 'Start' ) {
 		$output = snks_get_time_difference( $date_time, wp_timezone() );
 	}
 	return $output;
+}
+/**
+ * Get an array of dates only from a list of timetables objects.
+ *
+ * @param array $bookable_days_obj Array of objects.
+ * @return array
+ */
+function snks_timetables_unique_dates( $bookable_days_obj ) {
+	$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
+	return array_unique(
+		array_map(
+			function ( $value ) {
+				return gmdate( 'Y-m-d', strtotime( $value ) );
+			},
+			$bookable_dates_times,
+		)
+	);
 }
 /**
  * Undocumented function
@@ -228,7 +256,10 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * @return string
  */
 function snks_encrypted_doctor_url( $user ) {
-	return site_url( '/your-clinic/' . $user->user_nicename );
+	if ( $user ) {
+		return site_url( '/your-clinic/' . $user->user_nicename );
+	}
+	return '#';
 }
 /**
  * Get current doctors id form doctors page URL

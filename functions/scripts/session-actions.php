@@ -99,6 +99,47 @@ add_action(
 				}
 			);
 
+			$(document).on(
+				'change',
+				'#change-to-date',
+				function() {
+					var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_change_date_nonce' ) ); ?>';
+
+					var date = $(this).val();
+					var mainDate = $(this).data('date');
+				
+					// Send AJAX request.
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+						data: {
+							action    : 'appointment_change_date',
+							date      : date,
+							nonce     : nonce,
+						},
+						success: function(response) {
+
+							console.log("#" + mainDate + "-change-to-list");
+							$("#" + mainDate + "-change-to-list").html(response);
+						}
+					});
+
+				}
+			);
+			$(document).on(
+				'click',
+				'.snks-change',
+				function() {
+					var oldAppointment = $(this).data('id');
+					var date = $(this).data('date');
+					$("#old-appointment").val(oldAppointment);
+					$("#change-to-date").attr('data-date', date);
+					var list = $("#change-to-list");
+					list.removeAttr('id');
+					list.attr('id', date + '-change-to-list');
+				}
+			);
+
 			
 			$(document).on(
 				'click',

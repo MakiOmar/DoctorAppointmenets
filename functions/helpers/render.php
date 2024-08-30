@@ -58,15 +58,7 @@ function snks_generate_days( $days, $input_name ) {
  * @return string
  */
 function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_name, $period, $days_count = 30 ) {
-	$bookable_dates_times = wp_list_pluck( $bookable_days_obj, 'date_time' );
-	$bookable_days        = array_unique(
-		array_map(
-			function ( $value ) {
-				return gmdate( 'Y-m-d', strtotime( $value ) );
-			},
-			$bookable_dates_times,
-		)
-	);
+	$bookable_days = snks_timetables_unique_dates( $bookable_days_obj );
 
 	$html            = '';
 	$n_bookable_days = array_slice( $bookable_days, 0, $days_count );
@@ -463,10 +455,9 @@ function snks_edit_button( $booking_id, $doctor_id ) {
  * Booking item template
  *
  * @param object $record Timetable object.
- * @param array  $patient_details Patient's details.
  * @return string
  */
-function snks_booking_item_template( $record, $patient_details ) {
+function snks_booking_item_template( $record ) {
 	ob_start();
 	$details = array(
 		'name'     => array(
@@ -485,57 +476,65 @@ function snks_booking_item_template( $record, $patient_details ) {
 	);
 	//phpcs:disable
 	?>
-	<div class="anony-grid-row snks-booking-item">
-		<div class="anony-grid-col anony-grid-col-2 snks-bg">
-			<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" class="snks-booking-item">
+		<div class="anony-grid-row">
+			<div class="anony-grid-col anony-grid-col-2 snks-bg">
+				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
 
-			<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);display: flex;align-items: center;">
-				<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
-				<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
-			</div>
-		</div>
-
-		<div class="anony-grid-col anony-grid-col-<?php echo 'online' === $record->attendance_type ? '8' : '10 snks-offline-border-radius'; ?>">
-
-			<div class="anony-grid-row snks-booking-item-row">
-				<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
-					<img class="anony-padding-5" src="/wp-content/uploads/2024/08/clock.png"/>
-					
+				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);display: flex;align-items: center;">
+					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
+					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
-				<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center">
-					<div class="anony-grid-row anony-full-height">
-						<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-left:2px;font-size:18px">
-							<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{starts}</div>
-						</div>
-						
-						<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-right:2px;font-size:18px">
-
-							<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{period} دقيقة</div>
-
-						</div>
-					</div>
-		
-				</div>
-				
 			</div>
-			<?php foreach ( $details as $placeholder => $detail ) {
-				?>
+
+			<div class="anony-grid-col anony-grid-col-<?php echo 'online' === $record->attendance_type ? '8' : '10 snks-offline-border-radius'; ?>">
+
 				<div class="anony-grid-row snks-booking-item-row">
 					<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
-						<img class="anony-padding-5" src="<?php echo $detail['icon']; ?>"/>
+						<img class="anony-padding-5" src="/wp-content/uploads/2024/08/clock.png"/>
+						
 					</div>
-					<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
-						<a style="color:#024059;font-size:18px;font-weight:bold" href="<?php echo $detail['link']; ?>">{<?php echo $placeholder; ?>}</a>
+					<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center">
+						<div class="anony-grid-row anony-full-height">
+							<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-left:2px;font-size:18px">
+								<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{starts}</div>
+							</div>
+							
+							<div class="anony-grid-col anony-grid-col-6 anony-full-height" style="padding-right:2px;font-size:18px">
+
+								<div class="snks-secondary-bg anony-full-width anony-center-text anony-full-height anony-flex flex-h-center flex-v-center">{period} دقيقة</div>
+
+							</div>
+						</div>
+			
 					</div>
 					
 				</div>
+				<?php foreach ( $details as $placeholder => $detail ) {
+					?>
+					<!--<?php echo $placeholder; ?>-->
+					<div id="<?php echo $placeholder; ?>" class="anony-grid-row snks-booking-item-row">
+						<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
+							<img class="anony-padding-5" src="<?php echo $detail['icon']; ?>"/>
+						</div>
+						<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
+							<a style="color:#024059;font-size:18px;font-weight:bold" href="<?php echo $detail['link']; ?>">{<?php echo $placeholder; ?>}</a>
+						</div>
+						
+					</div>
+					<!--/<?php echo $placeholder; ?>-->
+				<?php } ?>
+			</div>
+			<?php if ( 'online' === $record->attendance_type ) { ?>
+			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="border-top-left-radius:20px;border-bottom-left-radius:20px">
+				<a class="snks-count-down rotate-90 anony-flex atrn-button {button_class} snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
+			</div>
 			<?php } ?>
 		</div>
-		<?php if ( 'online' === $record->attendance_type ) { ?>
-		<div class="anony-grid-col anony-grid-col-2 snks-bg" style="border-top-left-radius:20px;border-bottom-left-radius:20px">
-			<a class="snks-count-down rotate-90 anony-flex atrn-button {button_class} snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
+		<div class="anony-flex flex-h-center">
+			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
+			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
 		</div>
-		<?php } ?>
 	</div>
 	<?php
 	//phpcs:enable
@@ -551,13 +550,23 @@ function template_str_replace( $record ) {
 	$patient_details = snks_patient_details( $record->client_id );
 	$button_text     = snks_human_readable_datetime_diff( $record->date_time, 'إبدأ الإستشارة' );
 
-	$template              = snks_booking_item_template( $record, $patient_details );
+	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
 	$attandance_type_text  = 'أونلاين';
 	if ( 'offline' === $record->attendance_type ) {
 		$attandance_type_image = '/wp-content/uploads/2024/08/offline2.png';
 		$attandance_type_text  = 'أوفلاين';
 	}
+	$first_name = ! empty( $patient_details['billing_first_name'] ) ? $patient_details['billing_first_name'] : '';
+	$last_name  = ! empty( $patient_details['billing_last_name'] ) ? $patient_details['billing_last_name'] : '';
+	$phone      = ! empty( $patient_details['billing_phone'] ) ? $patient_details['billing_phone'] : '';
+	$whatsapp   = '';
+	if ( ! empty( $patient_details['whatsapp'] ) ) {
+		$whatsapp = $patient_details['whatsapp'];
+	} else {
+		$template = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
+	}
+
 	return str_replace(
 		array(
 			'{session_id}',
@@ -577,16 +586,41 @@ function template_str_replace( $record ) {
 			esc_html( $record->period ),
 			$attandance_type_image,
 			$attandance_type_text,
-			esc_html( $patient_details['billing_first_name'] . ' ' . $patient_details['billing_last_name'] ),
-			esc_html( $patient_details['billing_phone'] ),
-			esc_html( $patient_details['whatsap'] ),
+			esc_html( $first_name . ' ' . $last_name ),
+			esc_html( $phone ),
+			esc_html( $whatsapp ),
 			esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ),
 			$button_text,
 		),
 		$template
 	);
 }
-
+add_shortcode(
+	'snks_doctor_change_appointment',
+	function () {
+		$output = '';
+		if ( snks_is_doctor() && is_page( 'my-bookings' ) ) {
+			$bookable_days_obj = get_all_bookable_dates( get_current_user_id() );
+			$bookable_days     = snks_timetables_unique_dates( $bookable_days_obj );
+			$output           .= '<form method="post" action="">';
+			$output           .= '<select data-date="" id="change-to-date" name="change-to-date">';
+			ob_start();
+			echo '<option value="0">حدد التاريخ</option>';
+			foreach ( $bookable_days as $date ) {
+				?>
+				<option value="<?php echo esc_html( $date ); ?>"><?php echo esc_html( $date ); ?></option>
+				<?php
+			}
+			$output .= ob_get_clean();
+			$output .= '</select>';
+			$output .= '<div id="change-to-list"></div>';
+			$output .= wp_nonce_field( 'change_appointment', 'change_appointment_nonce' );
+			$output .= '<input type="text" style="display:none" id="old-appointment" name="old-appointment" value=""/>';
+			$output .= '<input type="submit" class="snks=bg anony-padding-10 anony-full-width" name="submit" value="حفظ"/>';
+		}
+		return $output;
+	}
+);
 /**
  * Generate bookings
  *
@@ -615,6 +649,7 @@ function snks_generate_bookings() {
 		$day_groups = snks_group_objects_by( $timetables, 'date' );
 		$j          = true;
 		foreach ( $day_groups as $date => $timetables ) {
+			$main_date   = $date;
 			$day         = gmdate( 'D', strtotime( $date ) );
 			$output     .= '<div class="snks-timetable-accordion-wrapper" data-id="' . $date . '">';
 			$output     .= '<div class="anony-grid-row snks-bg snks-timetable-accordion" data-id="' . $date . '">';
@@ -648,7 +683,6 @@ function snks_generate_bookings() {
 			$output .= '<div class="snks-timetable-accordion-content" style="background-color:#fff;padding:10px 0 10px 10px" id="' . $date . '">';
 
 			foreach ( $day_groups as $date => $timetables ) {
-				$output .= '<div class="snks-timetable-accordion-content" id="' . $date . '">';
 				/**
 				* Timetable queried object.
 				*
@@ -657,12 +691,8 @@ function snks_generate_bookings() {
 				foreach ( $timetables as $data ) {
 					$output .= template_str_replace( $data );
 				}
-				// Finally generate html.
-				$output .= '</div>';
-
-				$output .= '</div>';
-
 			}
+			$output .= '</div>';
 		}
 	}
 	return $output;
@@ -820,3 +850,10 @@ function snks_render_sessions_listing( $tense ) {
 	}
 	return $output;
 }
+
+add_action(
+	'wp_footer',
+	function () {
+		return;
+	}
+);

@@ -77,7 +77,7 @@ add_shortcode(
 						const roomID = <?php echo $room_id;//phpcs:disable ?>;
 						const options = {
 						parentNode: document.querySelector('#meeting'),
-						roomName: 'JitsiMeetAPIExample',
+						roomName: 'عيادة الدكتور',
 						width: 700,
 						height: 700,
 						configOverwrite: {
@@ -90,22 +90,25 @@ add_shortcode(
 							}
 						},
 						interfaceConfigOverwrite: {
+								prejoinPageEnabled: false,
 								APP_NAME: 'Jalsah',
 								DEFAULT_BACKGROUND: "#024059;",
 								SHOW_JITSI_WATERMARK: false,
 								HIDE_DEEP_LINKING_LOGO: true,
-								SHOW_BRAND_WATERMARK: false,
-								SHOW_WATERMARK_FOR_GUESTS: false,
+								SHOW_BRAND_WATERMARK: true,
+								SHOW_WATERMARK_FOR_GUESTS: true,
 								SHOW_POWERED_BY: false,
-								DISPLAY_WELCOME_FOOTER: true,
+								DISPLAY_WELCOME_FOOTER: false,
 								JITSI_WATERMARK_LINK: 'https://jalsah.app',
 								PROVIDER_NAME: 'Jalsah',
-								DEFAULT_LOGO_URL: 'https://foreo.makiomar.com/wp-content/uploads/2024/03/Group_2304.svg',
-								DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://foreo.makiomar.com/wp-content/uploads/2024/03/Group_2304.svg',
-								TOOLBAR_BUTTONS: ['microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'],
+								DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+								DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+								//TOOLBAR_BUTTONS: ['microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'],
 							}
 					}
 					meetAPI = new JitsiMeetExternalAPI("meet.jalsah.app", options);
+
+					
 					meetAPI.executeCommand('displayName', 'YourDisplayNameHere');
 					<?php if ( ! snks_is_patient() && ! empty( $room_id ) ) { ?>
 					//videoConferenceJoined

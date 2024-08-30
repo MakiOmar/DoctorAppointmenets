@@ -145,6 +145,34 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 
 	return $results;
 }
+/**
+ * Get timetable by date
+ *
+ * @param string $date Date to query.
+ * @return mixed
+ */
+function snks_get_timetable_by_date( $date ) {
+	global $wpdb;
+	// Generate a unique cache key.
+	$cache_key = 'snks_timetable_by_date_' . $date;
+
+	$results = wp_cache_get( $cache_key );
+
+	if ( false === $results ) {
+		//phpcs:disable
+		// Execute the query.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE DATE(date_time) = %s",
+				$date
+			)
+		);
+		//phpcs:enable
+		wp_cache_set( $cache_key, $results, '', 3600 );
+	}
+
+	return $results;
+}
 
 /**
  * Will close other timetables if one of the same datetime is booked
@@ -354,6 +382,72 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 				ORDER BY date_time {$_order}",
 				$user_id,
 				$period,
+				$current_datetime,
+				$end_datetime,
+				$attendance_type,
+				'waiting',
+				0
+			);
+		}
+		$results = $wpdb->get_results( $_query );
+		wp_cache_set( $cache_key, $results );
+	}
+	return $results;
+}
+/**
+ * Get all bookable dates
+ *
+ * @param int    $user_id User's ID.
+ * @param string $_for Period to get dates for.
+ * @param string $attendance_type Attendance type.
+ * @return mixed
+ */
+function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type = 'both' ) {
+	global $wpdb;
+	$doctor_settings      = snks_doctor_settings( $user_id );
+	$seconds_before_block = 0;
+	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+		$number               = $doctor_settings['block_if_before_number'];
+		$unit                 = $doctor_settings['block_if_before_unit'];
+		$base                 = 'day' === $unit ? 24 : 1;
+		$seconds_before_block = $number * $base * 3600;
+	}
+	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
+	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
+	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
+	$cache_key        = 'bookable-dates-' . $current_datetime;
+	$results          = wp_cache_get( $cache_key );//phpcs:disable
+	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+
+	if ( ! $results ) {
+		if ( 'both' === $attendance_type ) {
+			$_query = $wpdb->prepare(
+				"SELECT *
+				FROM {$wpdb->prefix}snks_provider_timetable
+				WHERE user_id = %d
+				AND date_time
+				BETWEEN %s AND %s
+				AND session_status = %s
+				AND order_id = %d
+				ORDER BY date_time {$_order}",
+				$user_id,
+				$current_datetime,
+				$end_datetime,
+				'waiting',
+				0
+			);
+		} else {
+			$_query = $wpdb->prepare(
+				"SELECT *
+				FROM {$wpdb->prefix}snks_provider_timetable
+				WHERE user_id = %d
+				AND date_time
+				BETWEEN %s AND %s
+				AND attendance_type = %s
+				AND session_status = %s
+				AND order_id = %d
+				ORDER BY date_time {$_order}",
+				$user_id,
 				$current_datetime,
 				$end_datetime,
 				$attendance_type,

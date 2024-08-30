@@ -55,22 +55,6 @@ function snks_is_doctor() {
 
 	return true;
 }
-/**
- * Check if is family user
- *
- * @return bool
- */
-function snks_is_family() {
-	if ( ! is_user_logged_in() ) {
-		return false;
-	}
-	$user = wp_get_current_user();
-	if ( ! in_array( 'family', $user->roles, true ) ) {
-		return false;
-	}
-
-	return true;
-}
 
 /**
  * Check if is patient user
