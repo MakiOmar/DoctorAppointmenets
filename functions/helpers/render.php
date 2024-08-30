@@ -476,7 +476,7 @@ function snks_booking_item_template( $record ) {
 	);
 	//phpcs:disable
 	?>
-	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" class="snks-booking-item">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item">
 		<div class="anony-grid-row">
 			<div class="anony-grid-col anony-grid-col-2 snks-bg">
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
@@ -527,7 +527,7 @@ function snks_booking_item_template( $record ) {
 			</div>
 			<?php if ( 'online' === $record->attendance_type ) { ?>
 			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="border-top-left-radius:20px;border-bottom-left-radius:20px">
-				<a class="snks-count-down rotate-90 anony-flex atrn-button {button_class} snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
+				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
 			</div>
 			<?php } ?>
 		</div>
@@ -548,7 +548,7 @@ function snks_booking_item_template( $record ) {
  */
 function template_str_replace( $record ) {
 	$patient_details = snks_patient_details( $record->client_id );
-	$button_text     = snks_human_readable_datetime_diff( $record->date_time, 'إبدأ الإستشارة' );
+	$button_text     = 'ابدأ الجلسة';
 
 	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
@@ -710,7 +710,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	if ( snks_is_patient() ) {
 		$client_id = get_current_user_id();
 	}
-	$button_text         = snks_human_readable_datetime_diff( $record->date_time, 'إبدأ الإستشارة' );
+	$button_text         = '<span class="snks-apointment-timer"></span>';
 	$scheduled_timestamp = strtotime( $record->date_time );
 	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
 
