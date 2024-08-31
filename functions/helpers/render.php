@@ -524,6 +524,13 @@ function snks_booking_item_template( $record ) {
 					</div>
 					<!--/<?php echo $placeholder; ?>-->
 				<?php } ?>
+				<!--timer-->
+				<div class="anony-grid-row snks-booking-item-row">
+					<div class="anony-grid-col anony-grid-col anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
+						<span style="color:#024059;font-size:18px;font-weight:bold">{snks_timer}</span>
+					</div>
+				</div>
+				<!--/timer-->
 			</div>
 			<?php if ( 'online' === $record->attendance_type ) { ?>
 			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="border-top-left-radius:20px;border-bottom-left-radius:20px">
@@ -531,10 +538,12 @@ function snks_booking_item_template( $record ) {
 			</div>
 			<?php } ?>
 		</div>
+		<!--doctoraction-->
 		<div class="anony-flex flex-h-center">
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
 			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
 		</div>
+		<!--/doctoraction-->
 	</div>
 	<?php
 	//phpcs:enable
@@ -547,8 +556,8 @@ function snks_booking_item_template( $record ) {
  * @return string
  */
 function template_str_replace( $record ) {
-	$patient_details = snks_patient_details( $record->client_id );
-	$button_text     = 'ابدأ الجلسة';
+	$user_details = snks_user_details( $record->client_id );
+	$button_text  = 'ابدأ الجلسة';
 
 	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
@@ -557,15 +566,16 @@ function template_str_replace( $record ) {
 		$attandance_type_image = '/wp-content/uploads/2024/08/offline2.png';
 		$attandance_type_text  = 'أوفلاين';
 	}
-	$first_name = ! empty( $patient_details['billing_first_name'] ) ? $patient_details['billing_first_name'] : '';
-	$last_name  = ! empty( $patient_details['billing_last_name'] ) ? $patient_details['billing_last_name'] : '';
-	$phone      = ! empty( $patient_details['billing_phone'] ) ? $patient_details['billing_phone'] : '';
+	$first_name = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
+	$last_name  = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
+	$phone      = ! empty( $user_details['billing_phone'] ) ? $user_details['billing_phone'] : '';
 	$whatsapp   = '';
-	if ( ! empty( $patient_details['whatsapp'] ) ) {
-		$whatsapp = $patient_details['whatsapp'];
+	if ( ! empty( $user_details['whatsapp'] ) ) {
+		$whatsapp = $user_details['whatsapp'];
 	} else {
 		$template = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
 	}
+	$template = preg_replace( '/<!--timer-->.*?<!--\/timer-->/s', '', $template );
 
 	return str_replace(
 		array(
@@ -591,6 +601,84 @@ function template_str_replace( $record ) {
 			esc_html( $whatsapp ),
 			esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ),
 			$button_text,
+		),
+		$template
+	);
+}
+
+/**
+ * Template string replace
+ *
+ * @param object $record The Record.
+ * @param string $edit The edit string.
+ * @param string $_class Button class.
+ * @param string $room Room url.
+ * @return string
+ */
+function patient_template_str_replace( $record, $edit, $_class, $room ) {
+	if ( snks_is_patient() ) {
+		$client_id = $record->client_id;
+	}
+	$user_details        = snks_user_details( $record->user_id );
+	$button_text         = 'ابدأ الجلسة';
+	$scheduled_timestamp = strtotime( $record->date_time );
+	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
+
+	if ( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 ) {
+		$button_text = 'عفواً! تجاوزت الموعد.';
+		$_class      = 'time-passed';
+		$room        = '#';
+	}
+	if ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp ) {
+		$button_text = 'لم يحن موعد الجلسة';
+		$_class      = 'remaining';
+		$room        = '#';
+	}
+	if ( 'cancelled' === $record->session_status ) {
+		$button_text = 'ملغي';
+		$room        = '#';
+	}
+	$template              = snks_booking_item_template( $record );
+	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
+	$attandance_type_text  = 'أونلاين';
+	if ( 'offline' === $record->attendance_type ) {
+		$attandance_type_image = '/wp-content/uploads/2024/08/offline2.png';
+		$attandance_type_text  = 'أوفلاين';
+	}
+
+	$first_name = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
+	$last_name  = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
+	$phone      = ! empty( $user_details['billing_phone'] ) ? $user_details['billing_phone'] : '';
+	$whatsapp   = '';
+	$template   = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
+	$template   = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $template );
+	return str_replace(
+		array(
+			'{session_id}',
+			'{starts}',
+			'{period}',
+			'{attandance_type_image}',
+			'{attandance_type}',
+			'{name}',
+			'{phone}',
+			'{whatsapp}',
+			'{button_url}',
+			'{button_text}',
+			'{snks_timer}',
+		),
+		array(
+			$record->ID,
+			str_replace( array( ' am', ' pm' ), array( ' ص', ' م' ), gmdate( 'g:i a', strtotime( $record->starts ) ) ),
+			esc_html( $record->period ),
+			$attandance_type_image,
+			$attandance_type_text,
+			esc_html( $first_name . ' ' . $last_name ),
+			esc_html( $phone ),
+			esc_html( $whatsapp ),
+			esc_url( $room ),
+			$button_text,
+			'<span class="snks-apointment-timer"></span>',
 		),
 		$template
 	);
@@ -697,66 +785,6 @@ function snks_generate_bookings() {
 	}
 	return $output;
 }
-/**
- * Template string replace
- *
- * @param object $record The Record.
- * @param string $edit The edit string.
- * @param string $_class Button class.
- * @param string $room Room url.
- * @return string
- */
-function patient_template_str_replace( $record, $edit, $_class, $room ) {
-	if ( snks_is_patient() ) {
-		$client_id = get_current_user_id();
-	}
-	$button_text         = '<span class="snks-apointment-timer"></span>';
-	$scheduled_timestamp = strtotime( $record->date_time );
-	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
-
-	if ( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 ) {
-		$button_text = 'عفواً! تجاوزت الموعد.';
-		$_class      = 'remaining';
-	}
-	if ( 'cancelled' === $record->session_status ) {
-		$button_text = 'ملغي';
-		$room        = '#';
-	}
-	$template      = do_shortcode( '[elementor-template id="2708"]' );
-	$profile_image = get_user_meta( $record->user_id, 'profile-image', true );
-	if ( empty( $profile_image ) ) {
-		$profile_image = '/wp-content/uploads/2024/08/th.jpeg';
-	}
-	return str_replace(
-		array(
-			'{session_id}',
-			'{doctor_name}',
-			'{doctor_specialty}',
-			'{listing_date}',
-			'{listing_hour}',
-			'{edit_listing}',
-			'{button_url}',
-			'{button_text}',
-			'{button_class}',
-			'{room_url}',
-			'{doctor_profile_image}',
-		),
-		array(
-			$record->ID,
-			snks_get_doctor_name( $record->user_id ),
-			esc_html( get_user_meta( $record->user_id, 'specialty', true ) ),
-			gmdate( 'Y-m-d', strtotime( $record->date_time ) ),
-			str_replace( array( ' am', ' pm' ), array( ' ص', ' م' ), gmdate( 'g:i a', strtotime( $record->date_time ) ) ),
-			$edit,
-			esc_url( $room ),
-			$button_text,
-			$_class,
-			esc_url( site_url( '/' ) ),
-			esc_url( $profile_image ),
-		),
-		$template
-	);
-}
 
 /**
  * Doctor actions
@@ -820,7 +848,6 @@ function snks_render_sessions_listing( $tense ) {
 	$edit     = '';
 	$output   = '';
 	if ( $sessions && is_array( $sessions ) ) {
-		$template = do_shortcode( '[elementor-template id="1239"]' );
 		foreach ( $sessions as $session ) {
 			$doctor_settings = snks_doctor_settings( $session->user_id );
 			if ( snks_is_past_date( $session->date_time ) ) {
@@ -841,7 +868,7 @@ function snks_render_sessions_listing( $tense ) {
 					}
 				}
 			}
-			$output .= template_str_replace( $session, $edit, $class, $room );
+			$output .= patient_template_str_replace( $session, $edit, $class, $room );
 
 			$output = str_replace( '{doctor_actions}', '', $output );
 		}
