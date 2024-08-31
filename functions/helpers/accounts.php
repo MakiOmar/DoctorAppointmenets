@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param int $current_user_id User ID.
  * @return array
  */
-function snks_patient_details( $current_user_id ) {
+function snks_user_details( $current_user_id ) {
 	global $wpdb;
 
 	$sql = $wpdb->prepare(
