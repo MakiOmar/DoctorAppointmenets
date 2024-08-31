@@ -23,7 +23,7 @@ add_action(
 						'click',
 						'.snks-disabled .snks-start-meeting',
 						function(event) {
-							//event.preventDefault();
+							event.preventDefault();
 						}
 					);
 					$('.snks-count-down').each(
