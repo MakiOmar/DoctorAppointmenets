@@ -39,14 +39,31 @@ add_action(
 									var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
 									var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
+									// Update the HTML content.
+									$(".snks-apointment-timer", parent).html("<span>"+ days + " يوم </span>"
+										+ "<span>"+ hours + " ساعة </span>"
+										+ "<span>"+ minutes + " دقيقة </span>"
+										+ "<span>"+ seconds + " ثانية </span>");
 
-									$(".snks-apointment-timer", parent).html("<span>"+days + " يوم </span>" +"<span>"+ hours + " ساعة </span>"
-									+"<span>"+ minutes + " دقيقة </span>" + "<span>"+seconds + " ثانية </span>");
+									// Check if days is 0 and add a class to its container span.
+									if (days <= 0) {
+										$(".snks-apointment-timer span:contains('0 يوم')", parent).hide();
+									}
+
+									// Check if hours is 0 and add a class to its container span.
+									if ( hours <= 0 && days <= 0 ) {
+										$(".snks-apointment-timer span:contains('0 ساعة')", parent).hide();
+									}
+									
+									// Check if hours is 0 and add a class to its container span.
+									if (minutes <= 0 && hours <= 0 && days <= 0 ) {
+										$(".snks-apointment-timer span:contains('0 دقيقة')", parent).hide();
+									}
 
 									// If the count down is finished, write some text.
 									if (distance < 0) {
 										clearInterval(x);
-										$(".snks-apointment-timer", parent).html('<span>إبدأ الجلسة</span>');
+										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
 									}
 								},
 								1000
