@@ -533,7 +533,7 @@ function snks_booking_item_template( $record ) {
 				<!--/timer-->
 			</div>
 			<?php if ( 'online' === $record->attendance_type ) { ?>
-			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="border-top-left-radius:20px;border-bottom-left-radius:20px">
+			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
 				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
 			</div>
 			<?php } ?>
@@ -626,17 +626,12 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$scheduled_timestamp = strtotime( $record->date_time );
 	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
 	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
-
-	if ( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 ) {
-		$_class = 'snks-time-passed';
-		$room   = '#';
-	}
-	if ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp ) {
-		$_class = 'snks-remaining';
-		$room   = '#';
-	}
-	if ( 'cancelled' === $record->session_status ) {
-		$_class = 'snks-cancelled';
+	if (
+		( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 )
+		|| ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp )
+		|| ( 'cancelled' === $record->session_status )
+	) {
+		$_class = 'snks-disabled';
 		$room   = '#';
 	}
 	$template              = snks_booking_item_template( $record );
@@ -664,6 +659,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'{phone}',
 			'{whatsapp}',
 			'{button_url}',
+			'{room_url}',
 			'{button_text}',
 			'{snks_timer}',
 			'{status_class}',
@@ -677,6 +673,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			esc_html( $first_name . ' ' . $last_name ),
 			esc_html( $phone ),
 			esc_html( $whatsapp ),
+			esc_url( $room ),
 			esc_url( $room ),
 			$button_text,
 			'<span class="snks-apointment-timer"></span>',

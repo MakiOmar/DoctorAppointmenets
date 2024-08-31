@@ -14,6 +14,12 @@ add_action(
 	function () {
 		?>
 		<style>
+			.snks-appointment-button{
+				border-top-left-radius:20px;border-bottom-left-radius:20px;
+			}
+			.snks-disabled .snks-appointment-button {
+				background-color: #7a898f;
+			}
 			.snks-timetable-accordion-wrapper{
 				max-width: 360px;
 			}
@@ -104,7 +110,7 @@ add_action(
 				max-height: 0;
 				overflow: hidden;
 				padding: 0;
-				t/*ransition: all 0.8s ease-in-out;*/
+				/*transition: all 0.8s ease-in-out;*/
 			}
 			.snks-timetable-accordion-actions.snks-timetable-active-accordion{
 				max-height: 150px;
