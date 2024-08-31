@@ -776,7 +776,25 @@ function snks_generate_bookings() {
 				* @var object $data
 				*/
 				foreach ( $timetables as $data ) {
-					$output .= template_str_replace( $data );
+					$output       .= template_str_replace( $data );
+					$output       .= '<div class="anony-padding-10">';
+					$session_notes = get_posts(
+						array(
+							'post_type'    => 'session_notes',
+							'meta_key'     => 'session_id',
+							'meta_value'   => $data->ID,
+							'meta_compare' => '=',
+						)
+					);
+					if ( ! $session_notes || empty( $session_notes ) ) {
+						$output .= str_replace(
+							'{session_id}',
+							$data->ID,
+							do_shortcode( '[user_insert_session_notes]' )
+						);
+					}
+
+					$output .= '</div>';
 				}
 			}
 			$output .= '</div>';
