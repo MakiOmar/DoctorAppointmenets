@@ -12,6 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_footer',
 	function () {
+		if ( ! snks_is_patient() ) {
+			return;
+		}
 		?>
 		<script>
 			jQuery(document).ready(
