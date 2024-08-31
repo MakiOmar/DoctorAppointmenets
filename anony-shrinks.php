@@ -23,6 +23,8 @@ define( 'SNKS_APP_NAME', 'جَلسَة' );
 define( 'SNKS_EMAIL_IMG', site_url( '/wp-content/uploads/2024/08/medical-health.png' ) );
 define( 'SNKS_EMAIL_ICON', site_url( '/wp-content/uploads/2024/08/41781618489806584.png' ) );
 define( 'SNKS_ARROW', site_url( '/wp-content/uploads/2024/08/left-arrow.png' ) );
+define( 'SNKS_CAMERA', site_url( '/wp-content/uploads/2024/08/camera.png' ) );
+define( 'SNKS_OFFLINE', site_url( '/wp-content/uploads/2024/08/offline2.png' ) );
 
 // Plugin URI.
 define( 'SNKS_URI', plugin_dir_url( __FILE__ ) );

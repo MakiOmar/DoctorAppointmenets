@@ -476,7 +476,7 @@ function snks_booking_item_template( $record ) {
 	);
 	//phpcs:disable
 	?>
-	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item {status_class}">
 		<div class="anony-grid-row">
 			<div class="anony-grid-col anony-grid-col-2 snks-bg">
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
@@ -560,10 +560,10 @@ function template_str_replace( $record ) {
 	$button_text  = 'ابدأ الجلسة';
 
 	$template              = snks_booking_item_template( $record );
-	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
+	$attandance_type_image = SNKS_CAMERA;
 	$attandance_type_text  = 'أونلاين';
 	if ( 'offline' === $record->attendance_type ) {
-		$attandance_type_image = '/wp-content/uploads/2024/08/offline2.png';
+		$attandance_type_image = SNKS_OFFLINE;
 		$attandance_type_text  = 'أوفلاين';
 	}
 	$first_name = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
@@ -589,6 +589,7 @@ function template_str_replace( $record ) {
 			'{whatsapp}',
 			'{button_url}',
 			'{button_text}',
+			'{status_class}',
 		),
 		array(
 			$record->ID,
@@ -601,6 +602,7 @@ function template_str_replace( $record ) {
 			esc_html( $whatsapp ),
 			esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ),
 			$button_text,
+			'',
 		),
 		$template
 	);
@@ -626,24 +628,22 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
 
 	if ( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 ) {
-		$button_text = 'عفواً! تجاوزت الموعد.';
-		$_class      = 'time-passed';
-		$room        = '#';
+		$_class = 'snks-time-passed';
+		$room   = '#';
 	}
 	if ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp ) {
-		$button_text = 'لم يحن موعد الجلسة';
-		$_class      = 'remaining';
-		$room        = '#';
+		$_class = 'snks-remaining';
+		$room   = '#';
 	}
 	if ( 'cancelled' === $record->session_status ) {
-		$button_text = 'ملغي';
-		$room        = '#';
+		$_class = 'snks-cancelled';
+		$room   = '#';
 	}
 	$template              = snks_booking_item_template( $record );
-	$attandance_type_image = '/wp-content/uploads/2024/08/camera.png';
+	$attandance_type_image = SNKS_CAMERA;
 	$attandance_type_text  = 'أونلاين';
 	if ( 'offline' === $record->attendance_type ) {
-		$attandance_type_image = '/wp-content/uploads/2024/08/offline2.png';
+		$attandance_type_image = SNKS_OFFLINE;
 		$attandance_type_text  = 'أوفلاين';
 	}
 
@@ -666,6 +666,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'{button_url}',
 			'{button_text}',
 			'{snks_timer}',
+			'{status_class}',
 		),
 		array(
 			$record->ID,
@@ -679,6 +680,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			esc_url( $room ),
 			$button_text,
 			'<span class="snks-apointment-timer"></span>',
+			$_class,
 		),
 		$template
 	);
