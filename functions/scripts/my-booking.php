@@ -16,14 +16,22 @@ add_action(
 		<script>
 			jQuery(document).ready(
 				function($){
+					$(document).on(
+						'click',
+						'.snks-disabled .snks-start-meeting',
+						function(event) {
+							//event.preventDefault();
+						}
+					);
 					$('.snks-count-down').each(
 						function(){
 							var parent = $(this).closest('.snks-booking-item');
+							var parentID = parent.attr('id');
+							var itemID = parentID.match(/\d+/)[0];
 							var dateTime = parent.data('datetime');
 							// Set the date we're counting down to.
 							var countDownDate = new Date(dateTime).getTime();
-							console.log(countDownDate , new Date().getTime() );
-
+							
 							// Update the count down every 1 second.
 							var x = setInterval(
 								function() {
@@ -65,12 +73,18 @@ add_action(
 										if (distance < 0) {
 											clearInterval(x);
 											$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
+											$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
 										}
 									} else {
-										if ( now - countDownDate > 3600 ) {
+										if ( now - countDownDate > 3600000 ) {
 											$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
-										} else if( now - countDownDate < 3600 && now - countDownDate > 0 ) {
+											parent.addClass('snks-disabled');
+											$(".snks-start-meeting", parent).attr('href', '#');
+											clearInterval(x);
+										} else if( now - countDownDate < 3600000 && now - countDownDate > 0 ) {
+											parent.removeClass('snks-disabled');
 											$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
+											$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
 										}
 									}
 								},
