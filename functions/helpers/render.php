@@ -792,6 +792,15 @@ function snks_generate_bookings() {
 							$data->ID,
 							do_shortcode( '[user_insert_session_notes]' )
 						);
+					} else {
+						$session_note = $session_notes[0];
+						$edit_notes   = snks_edit_session_form_args( $session_note->ID );
+						$edit         = new ANONY_Create_Form( $edit_notes );
+						$output      .= str_replace(
+							'{session_id}',
+							$data->ID,
+							$edit->render( false ),
+						);
 					}
 
 					$output .= '</div>';
