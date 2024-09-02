@@ -214,55 +214,6 @@ add_action(
 );
 
 add_action(
-	'wp_footer',
-	function () {
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$url_params = wp_unslash( $_GET );
-		if ( ( ! snks_is_patient() ) || empty( $url_params['room_id'] ) ) {
-			return;
-		}
-		$dashboard  = get_the_permalink( 682 );
-		$session_id = $url_params['room_id'];
-		?>
-		<script>
-			jQuery( document ).ready(
-				function ( $ ) {
-					const sessionID = <?php echo absint( $session_id ); ?>;
-					// Perform nonce check.
-					var nonce     = '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>';
-					const dashboard = '<?php echo esc_url( $dashboard ); ?>';
-					const data = {
-							action    : 'session_attendance',
-							SessioID  : sessionID,
-							nonce     : nonce
-					}
-					setInterval(
-						function() {
-							// Send AJAX request.
-							$.ajax({
-								type: 'POST',
-								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-								data: data,
-								success: function(response) {
-									if( response.resp ) {
-										window.location.href = dashboard;
-									}
-								},
-								error: function(xhr, status, error) {
-									alert('Error:', error);
-								}
-							});
-						},
-						10000
-					)
-				}
-			);
-		</script>
-		<?php
-	}
-);
-
-add_action(
 	'admin_footer',
 	function () {
 		$screen = get_current_screen();

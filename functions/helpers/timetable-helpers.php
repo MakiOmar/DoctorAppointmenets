@@ -98,7 +98,7 @@ function snks_get_user_timetables( $user_id ) {
 /**
  * Check if a user is eligible to the timetable
  *
- * @param int $timetable_id Timetable ID.
+ * @param mixed $timetable_id Timetable's ID or An object of timetable can be supplied.
  * @return bool
  */
 function snks_is_timetable_eligible( $timetable_id ) {
