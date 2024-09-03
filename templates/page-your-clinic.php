@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || die;
 
 get_header();
-$user_id = snks_url_get_doctors_id();
+$user_id      = snks_url_get_doctors_id();
 $user_details = snks_user_details( $user_id );
 ?>
 <style>
@@ -73,6 +73,80 @@ $user_details = snks_user_details( $user_id );
 		margin: 5px 0;
 		color:#024059
 	}
+	@keyframes move_wave {
+		0% {
+			transform: translateX(0) translateZ(0) scaleY(1)
+		}
+		50% {
+			transform: translateX(-25%) translateZ(0) scaleY(0.55)
+		}
+		100% {
+			transform: translateX(-50%) translateZ(0) scaleY(1)
+		}
+	}
+	.waveWrapper {
+		overflow: hidden;
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		top: 0;
+		margin: auto;
+	}
+	.waveWrapperInner {
+		position: absolute;
+		width: 100%;
+		overflow: hidden;
+		height: 100%;
+		bottom: -1px;
+		background: #024059;
+	}
+	.bgTop {
+		z-index: 15;
+		opacity: 0.5;
+	}
+	.bgMiddle {
+		z-index: 10;
+		opacity: 0.75;
+	}
+	.bgBottom {
+		z-index: 5;
+	}
+	.wave {
+		position: absolute;
+		left: 0;
+		width: 800%;
+		height: 100%;
+		background-repeat: repeat no-repeat;
+		background-position: 0 bottom;
+		transform-origin: center bottom;
+	}
+	.waveTop {
+		background-size: 50% 100px;
+	}
+	.waveAnimation .waveTop {
+		animation: move-wave 3s;
+		-webkit-animation: move-wave 3s;
+		-webkit-animation-delay: 1s;
+		animation-delay: 1s;
+	}
+	.waveMiddle {
+		background-size: 50% 120px;
+	}
+	.waveAnimation .waveMiddle {
+		animation: move_wave 10s linear infinite;
+	}
+	.waveBottom {
+		background-size: 50% 100px;
+	}
+	.waveAnimation .waveBottom {
+		animation: move_wave 15s linear infinite;
+	}
+	.waveWrapper-containr{
+		position: relative;
+		height: 100px;
+		transform: rotate(180deg);
+	}
 </style>
 <div id="snks-booking-page">
 	<?php
@@ -101,11 +175,39 @@ $user_details = snks_user_details( $user_id );
 	<div class="profile-details">
 		<h1 style="font-size:16px;"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
 		<h2 style="font-size:20px;font-weight:bold"><?php echo esc_html( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
-	</div>
-	<div id="snks-booking-form" class="anony-grid-row" style="max-width: 960px;margin:auto;margin-top:30px">
-		<div class="anony-grid-col">
-			<?php echo do_shortcode( '[snks_appointment_form]' ); ?>
+		<div class="snks-profile-accordion">
+			<?php
+			//phpcs:disable
+			echo anony_accordion(
+				array(
+					array(
+						'title'   => 'الشهادات والخبرات',
+						'content' => snks_get_doctor_experiences( $user_id ),
+					),
+				)
+			);
+			//phpcs:enable
+			?>
 		</div>
+	</div>
+	<div style="background-color:#fff;display: flex;justify-content: center;padding-top: 10px;">
+		<h3 style="margin:0;">إحجز جلسة</h3>
+	</div>
+	<div class="waveWrapper-containr">
+		<div class="waveWrapper waveAnimation">
+			<div class="waveWrapperInner bgTop"  style="display:none;">
+			<div class="wave waveTop" style="background-image: url('https://jalsah.app/wp-content/uploads/2024/09/wave-top.png')"></div>
+			</div>
+			<div class="waveWrapperInner bgMiddle"  style="display:none;">
+			<div class="wave waveMiddle" style="background-image: url('https://jalsah.app/wp-content/uploads/2024/09/wave-mid.png')"></div>
+			</div>
+			<div class="waveWrapperInner bgBottom">
+			<div class="wave waveBottom" style="background-image: url('https://jalsah.app/wp-content/uploads/2024/09/wave-bot.png')"></div>
+			</div>
+		</div>
+	</div>
+	<div id="snks-booking-form" class="anony-grid-row" style="max-width: 960px;margin:auto;position: relative;top: -1px;">
+			<?php echo do_shortcode( '[snks_appointment_form]' ); ?>
 	</div>
 	<?php } ?>
 	

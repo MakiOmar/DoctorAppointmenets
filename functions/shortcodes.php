@@ -121,9 +121,6 @@ add_shortcode(
 add_shortcode(
 	'snks_appointment_form',
 	function () {
-		if ( ! is_user_logged_in() ) {
-			return '<p>سجل دخولك أولاً من فضلك</p>';
-		}
 		$html    = '';
 		$user_id = snks_url_get_doctors_id();
 		if ( ! $user_id ) {

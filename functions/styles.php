@@ -58,11 +58,42 @@ add_action(
 			.snks-item-icons-bg{
 				background-color: #f1fbff;
 			}
-			.attendance_type_wrapper label{
-				padding: 15px 40px;
+			.attendance_types_wrapper{
+				display: flex;
+				width: 100%;
+				justify-content: space-around;
 				background-color: #024059;
-				border-radius: 50px;
-				color:#fff
+				padding: 0px 5px 10px 5px;
+			}
+			.attendance_type_wrapper{
+				width: 50%;
+				padding: 3px;
+			}
+			.attendance_type_wrapper label{
+				padding: 5px 10px;
+				background-color: #012d3e;
+				border-radius: 10px;
+				height: 50px;
+				box-sizing: border-box;
+				color:#fff;
+				width: 100%;
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.attendance_type_wrapper label img{
+				margin: 0;
+				height: 35px;
+			}
+			.snks-dark-icon{
+				display: none;
+			}
+			.attendance_type_wrapper.active label .snks-dark-icon{
+				display: inline-flex;
+			}
+			.attendance_type_wrapper.active label .snks-light-icon{
+				display: none;
 			}
 			.field-type-switcher, .field-type-select-field{
 				position: relative;

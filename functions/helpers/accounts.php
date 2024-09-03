@@ -23,7 +23,7 @@ function snks_user_details( $current_user_id ) {
 		SELECT meta_key, meta_value
 		FROM {$wpdb->prefix}usermeta
 		WHERE user_id = %d
-		AND meta_key IN ('billing_first_name', 'billing_last_name', 'billing_phone', 'whatsapp')
+		AND meta_key IN ('billing_first_name', 'billing_last_name', 'billing_phone', 'whatsapp', 'about-me', 'certificates')
 	",
 		$current_user_id
 	);

@@ -138,11 +138,18 @@ function snks_form_filter( $user_id ) {
 	?>
 	<div class="attendance_types_wrapper">
 		<span class="attendance_type_wrapper">
-			<label for="online_attendance_type">أونلاين</label>
+			<label for="online_attendance_type">
+				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/camera-dark.png"/>
+				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/camera-light.png"/>
+				جلسة أونلاين
+			</label>
 			<input id="online_attendance_type" type="radio" name="attendance_type" value="online"/>
 		</span>
 		<span class="attendance_type_wrapper">
-			<label for="offline_attendance_type">أوفلاين</label>
+			<label for="offline_attendance_type">
+				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/camera-dark.png"/>
+				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/camera-light.png"/>
+				جلسة أوفلاين</label>
 			<input id="offline_attendance_type" type="radio" name="attendance_type" value="offline"/>
 		</span>
 	</div>
@@ -901,6 +908,180 @@ function snks_render_sessions_listing( $tense ) {
 	} else {
 		$output = 'عفواَ ليس لديك حجوزات حاليا!';
 	}
+	return $output;
+}
+/**
+ * Get doctor experience
+ *
+ * @param int $user_id User's ID.
+ * @return string
+ */
+function snks_get_doctor_experiences( $user_id ) {
+	$user_details = snks_user_details( $user_id );
+	$output       = '';
+	if ( ! empty( $user_details['about-me'] ) ) {
+		$output .= '<p class="snks-about-me">' . $user_details['about-me'] . '</p>';
+	}
+	if ( ! empty( $user_details['certificates'] ) ) {
+		$certs_ids = explode( ',', $user_details['certificates'] );
+		$output   .= '<div class="anony-grid-row">';
+		foreach ( $certs_ids as $image_id ) {
+			$image_src = wp_get_attachment_image_src( $image_id, 'full' );
+
+			$thumbnail_src = wp_get_attachment_image_src( $image_id, 'thumbnail' );
+			if ( $image_src && $thumbnail_src ) {
+				$output .= '<div class="anony-grid-col anony-grid-col-6">';
+				$output .= '<a style="display:inline-flex" href="' . esc_url( $image_src[0] ) . '">';
+				$output .= '<img style="height:150px" src="' . esc_url( $thumbnail_src[0] ) . '" alt="">';
+				$output .= '</a>';
+				$output .= '</div>';
+			}
+		}
+		$output .= '</div>';
+	}
+	return $output;
+}
+/**
+ * Renders accordion
+ *
+ * @param  array $data Accordion data.
+ * @return string
+ */
+function anony_accordion( $data ) {
+	$output = '';
+	if ( ! empty( $data ) ) {
+		ob_start();
+		?>
+		<style>
+			.anony-arrow-down {
+				width: 0;
+				height: 0;
+				border-left: 5px solid transparent;
+				border-right: 5px solid transparent;
+				border-top: 7px solid white; /* Adjust color and size as needed */
+			}
+			.anony-accordion-container {
+				max-width: 450px;
+				max-width: 600px;
+			}
+
+			.anony-accordion-item {
+				background-color: #024059; /* White background for items */
+				border: 1px solid #E0E0E0; /* Light border */
+				border-radius: 8px;
+				margin-bottom: 10px;
+				box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Softer shadow */
+			}
+
+			.anony-accordion-header {
+				color: #000; /* White text */
+				padding: 15px;
+				font-size: 18px;
+				border: none;
+				width: 100%;
+				text-align: inherit;
+				cursor: pointer;
+				outline: none;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				border-radius: 0;
+				transition: background-color 0.3s ease;
+				margin-top: 30px;
+			}
+
+			.anony-accordion-header:hover {
+				background-color: #024059;
+				color: #fff
+			}
+
+			.anony-accordion-content {
+				background-color: #2a5465;
+				color:#fff;
+				overflow: hidden;
+				padding: 0 15px;
+				max-height: 0;
+				transition: all 0.3s ease;
+			}
+
+			.anony-accordion-content p {
+				margin: 15px 0;
+				line-height: 1.5;
+			}
+
+			.anony-accordion-icon {
+				transition: transform 0.3s ease;
+				display: flex;
+			}
+
+			.active .anony-accordion-icon {
+				transform: rotate(180deg);
+			}
+			.anony-accordion-container{
+				padding: 0;
+			}
+			.snks-profile-accordion{
+				width: 100%;
+			}
+			.profile-details .anony-accordion-item {
+				border: 0;
+				border-radius: 0px;
+				margin-bottom: 10px;
+				box-shadow: none;
+				margin: 0;
+			}
+		</style>
+		<div id="anony-accordion-wrapper">
+			<div class="anony-grid-row flex-h-center">
+				<div class="anony-accordion-container anony-grid-col">
+					<?php
+					foreach ( $data as $item ) {
+						?>
+						<div class="anony-accordion-item">
+							<button class="anony-accordion-header">
+								<?php echo esc_html( $item['title'] ); ?> <span class="anony-accordion-icon"><span class="anony-arrow-down"></span></span>
+							</button>
+							<div class="anony-accordion-content">
+								<?php echo wp_kses_post( $item['content'] ); ?>
+							</div>
+						</div>
+						<?php
+					}
+					?>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+			document.querySelectorAll('.anony-accordion-header').forEach(button => {
+				button.addEventListener('click', () => {
+					const accordionContent = button.nextElementSibling;
+
+					button.classList.toggle('active');
+
+					if (button.classList.contains('active')) {
+						accordionContent.style.maxHeight = accordionContent.scrollHeight + 30 + 'px';
+						accordionContent.style.padding = '15px';
+					} else {
+						accordionContent.style.maxHeight = 0;
+						accordionContent.style.padding = '0px';
+					}
+
+					// Close other open accordion items
+					document.querySelectorAll('.anony-accordion-header').forEach(otherButton => {
+						if (otherButton !== button) {
+							otherButton.classList.remove('active');
+							otherButton.nextElementSibling.style.maxHeight = 0;
+						}
+					});
+				});
+			});
+			const elements = document.querySelectorAll('.anony-accordion-header');
+		</script>
+		<?php
+		$output .= ob_get_clean();
+	}
+
 	return $output;
 }
 

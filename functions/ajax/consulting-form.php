@@ -89,6 +89,8 @@ function get_periods_callback() {
 		echo wp_kses_post( snks_render_doctor_clinics( $_req['doctor_id'] ) );
 		die;
 	}
+	echo 'test';
+	die;
 	//phpcs:disable
 	echo snks_periods_filter( $_req['doctor_id'] );
 	//phpcs:enable
