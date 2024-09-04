@@ -62,15 +62,18 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 
 	$html            = '';
 	$n_bookable_days = array_slice( $bookable_days, 0, $days_count );
+	$days_labels     = json_decode( DAYS_ABBREVIATIONS, true );
+	$months_labels   = json_decode( MONTHS_FULL_NAMES, true );
 	foreach ( $n_bookable_days as $index => $current_date ) {
 		//phpcs:disable Universal.Operators.StrictComparisons.LooseEqual
 		$day_number = gmdate( 'j', strtotime( $current_date ) ); // Day of the month without leading zeros.
 		$day_name   = gmdate( 'D', strtotime( $current_date ) ); // Full day name.
 		$month_name = gmdate( 'F', strtotime( $current_date ) ); // Full day name.
 		//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		$html .= '<div class="anony-content-slide anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
-		$html .= "<span>$day_number</span>";
-		$html .= "<span>$day_name</span>";
+		$html .= '<div class="anony-content-slide snks-bg anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
+		$html .= "<span class='hacen_liner_print-outregular'>$months_labels[$month_name]</span>";
+		$html .= "<span class='hacen_liner_print-outregular anony-day-number'>$day_number</span>";
+		$html .= "<span class='hacen_liner_print-outregular'>$days_labels[$day_name]</span>";
 		$html .= '</label>';
 		$html .= sprintf(
 			'<input id="%1$s-%4$s" class="' . $input_name . '-radio" type="radio" name="' . $input_name . '" value="%2$s" data-user="%3$s" data-period="%4$s">',
@@ -109,8 +112,9 @@ function snks_periods_filter( $user_id ) {
 	$avialable_periods = snks_get_available_periods( $user_id );
 	$country           = 'EG';
 	$pricings          = snks_doctor_pricings( $user_id );
-	$has_discount      = snks_discount_eligible( $user_id );
+	$has_discount      = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
 	if ( is_array( $avialable_periods ) ) {
+		echo '<div class="anony-padding-10 anony-flex anony-space-between anony-full-width anony-grid-row">';
 		foreach ( $avialable_periods as $period ) {
 			$discount_percent = snks_get_period_discount( $user_id, $period );
 			$price            = get_price_by_period_and_country( $period, $country, $pricings );
@@ -118,12 +122,15 @@ function snks_periods_filter( $user_id ) {
 				$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
 			}
 			?>
-			<span class="period_wrapper">
-				<label for="period_<?php echo esc_attr( $period ); ?>"><?php printf( '%1$s %2$s ( %3$s %4$s )', esc_html( $period ), 'دقيقة', esc_html( $price ), 'جنيه' ); ?></label>
+			<span class="period_wrapper anony-grid-col anony-grid-col-4">
+				<label class="anony-inline-flex anony-flex-column flex-h-center flex-v-center anony-full-width" for="period_<?php echo esc_attr( $period ); ?>">
+					<?php printf( '<span class="hacen_liner_print-outregular anony-flex anony-flex-start flex-v-center snks-period-label snks-bg-secondary anony-padding-5 anony-margin-3" id="snks-period-label-%1$s">%2$s %3$s %4$s</span><span class="hacen_liner_print-outregular anony-flex flex-h-center flex-v-center snks-period-price snks-bg-secondary anony-padding-5 anony-margin-3">%5$s %6$s</span>', esc_attr( $period ), 'جلسة', esc_html( $period ), 'دقيقة', esc_html( $price ), 'جنيه مصري' ); ?>
+				</label>
 				<input id="period_<?php echo esc_attr( $period ); ?>" type="radio" name="period" value="<?php echo esc_attr( $period ); ?>" data-price="<?php echo esc_attr( $price ); ?>"/>
 			</span>
 			<?php
 		}
+		echo '</div>';
 	}
 }
 /**
@@ -147,13 +154,13 @@ function snks_form_filter( $user_id ) {
 		</span>
 		<span class="attendance_type_wrapper">
 			<label for="offline_attendance_type">
-				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/camera-dark.png"/>
-				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/camera-light.png"/>
+				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/hand-light.png"/>
+				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/hand-dark.png"/>
 				جلسة أوفلاين</label>
 			<input id="offline_attendance_type" type="radio" name="attendance_type" value="offline"/>
 		</span>
 	</div>
-	<div class="periods_wrapper"></div>
+	<div class="periods_wrapper snks-bg snks-separator anony-full-width"></div>
 	<input type="hidden" name="filter_user_id" value="<?php echo esc_attr( $user_id ); ?>"/> 
 	<?php
 	$html .= ob_get_clean();
@@ -219,69 +226,54 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 		$slider_class = '';
 		$slider       = false;
 	}
-	if ( ! current_user_can( 'manage_options' ) && ! snks_is_patient() ) {
-		$html = '<p>عفواً غير مسموح</p>';
-	} else {
-		$direction = is_rtl() ? 'true' : 'false';
 
-		$html  = '';
-		$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="' . $submit_action . '" method="post">';
+	$direction = is_rtl() ? 'true' : 'false';
 
-		$html .= '<h5>';
-		$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-		<path d="M8 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M16 2V5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M3.5 9.08984H20.5" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M22 19C22 19.75 21.79 20.46 21.42 21.06C20.73 22.22 19.46 23 18 23C16.99 23 16.07 22.63 15.37 22C15.06 21.74 14.79 21.42 14.58 21.06C14.21 20.46 14 19.75 14 19C14 16.79 15.79 15 18 15C19.2 15 20.27 15.53 21 16.36C21.62 17.07 22 17.99 22 19Z" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M16.44 19L17.43 19.99L19.56 18.02" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M21 8.5V16.36C20.27 15.53 19.2 15 18 15C15.79 15 14 16.79 14 19C14 19.75 14.21 20.46 14.58 21.06C14.79 21.42 15.06 21.74 15.37 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M11.9955 13.7002H12.0045" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M8.29431 13.7002H8.30329" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M8.29431 16.7002H8.30329" stroke="#707070" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-		</svg>
-		';
-		$html .= '&nbsp;تحديد تاريخ الحجز';
-		$html .= '</h5>';
-		$html .= '<div class="atrn-form-days anony-content-slider-container">';
-		$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
-		$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
-		$html .= '</div>';
-		$html .= '</div>';
-		if ( $slider ) {
-			$html .= '<div class="anony-content-slider-control">
-				<a class="anony-content-slider-prev button">
-					<span class="anony-greater-than anony-content-slider-nav">
-						<span class="top"></span><span class="bottom"></span>
-					</span>
-				</a>
-				<a class="anony-content-slider-next button">
-					<span class="anony-smaller-than anony-content-slider-nav">
-						<span class="top"></span><span class="bottom"></span>
-					</span>
-				</a>
-			</div>';
-		}
-		$html .= '<div id="snks-available-hours-wrapper">';
-		$html .= '<h5>';
-		$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-		<path d="M20.75 13.25C20.75 18.08 16.83 22 12 22C7.17 22 3.25 18.08 3.25 13.25C3.25 8.42 7.17 4.5 12 4.5C16.83 4.5 20.75 8.42 20.75 13.25Z" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M12 8V13" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-		<path d="M9 2H15" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-		</svg>';
-		$html .= '&nbsp;تحديد وقت الحجز';
-		$html .= '</h5>';
-		$html .= '<div class="snks-available-hours"></div>';
-		$html .= '</div>';
-		$html .= '<hr>';
-		$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
-		$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
-		$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
-		$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
-		$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
-		$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
-		$html .= '<input type="submit" value="' . $submit_text . '">';
-		$html .= '</form>';
+	$html  = '';
+	$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="' . $submit_action . '" method="post">';
+
+	$html .= '<h5 class="snks-bg anony-padding-5 anony-center-text" style="border-top-left-radius:10px;border-top-right-radius:10px">';
+	$html .= 'تحديد تاريخ الحجز';
+	$html .= '</h5>';
+	$html .= '<div class="atrn-form-days anony-content-slider-container">';
+	$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
+	$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
+	$html .= '</div>';
+	if ( $slider ) {
+		$html .= '<div class="anony-content-slider-control">
+			<a class="anony-content-slider-prev button">
+				<span class="anony-greater-than anony-content-slider-nav">
+					<span class="top"></span><span class="bottom"></span>
+				</span>
+			</a>
+			<a class="anony-content-slider-next button">
+				<span class="anony-smaller-than anony-content-slider-nav">
+					<span class="top"></span><span class="bottom"></span>
+				</span>
+			</a>
+		</div>';
 	}
+	$html .= '</div>';
+	$html .= '<div id="snks-available-hours-wrapper">';
+	$html .= '<h5>';
+	$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<path d="M20.75 13.25C20.75 18.08 16.83 22 12 22C7.17 22 3.25 18.08 3.25 13.25C3.25 8.42 7.17 4.5 12 4.5C16.83 4.5 20.75 8.42 20.75 13.25Z" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M12 8V13" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M9 2H15" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+	</svg>';
+	$html .= '&nbsp;تحديد وقت الحجز';
+	$html .= '</h5>';
+	$html .= '<div class="snks-available-hours"></div>';
+	$html .= '</div>';
+	$html .= '<hr>';
+	$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
+	$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
+	$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
+	$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
+	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
+	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
+	$html .= '<input type="submit" value="' . $submit_text . '">';
+	$html .= '</form>';
 
 	return $html;
 }
@@ -925,24 +917,7 @@ function snks_get_doctor_experiences( $user_id ) {
 	$user_details = snks_user_details( $user_id );
 	$output       = '';
 	if ( ! empty( $user_details['about-me'] ) ) {
-		$output .= '<p class="snks-about-me">' . $user_details['about-me'] . '</p>';
-	}
-	if ( ! empty( $user_details['certificates'] ) ) {
-		$certs_ids = explode( ',', $user_details['certificates'] );
-		$output   .= '<div class="anony-grid-row">';
-		foreach ( $certs_ids as $image_id ) {
-			$image_src = wp_get_attachment_image_src( $image_id, 'full' );
-
-			$thumbnail_src = wp_get_attachment_image_src( $image_id, 'thumbnail' );
-			if ( $image_src && $thumbnail_src ) {
-				$output .= '<div class="anony-grid-col anony-grid-col-6">';
-				$output .= '<a style="display:inline-flex" href="' . esc_url( $image_src[0] ) . '">';
-				$output .= '<img style="height:150px" src="' . esc_url( $thumbnail_src[0] ) . '" alt="">';
-				$output .= '</a>';
-				$output .= '</div>';
-			}
-		}
-		$output .= '</div>';
+		$output .= '<div class="snks-about-me hacen_liner_print-outregular">' . $user_details['about-me'] . '</div>';
 	}
 	return $output;
 }
@@ -957,92 +932,13 @@ function anony_accordion( $data ) {
 	if ( ! empty( $data ) ) {
 		ob_start();
 		?>
-		<style>
-			.anony-arrow-down {
-				width: 0;
-				height: 0;
-				border-left: 5px solid transparent;
-				border-right: 5px solid transparent;
-				border-top: 7px solid white; /* Adjust color and size as needed */
-			}
-			.anony-accordion-container {
-				max-width: 450px;
-				max-width: 600px;
-			}
-
-			.anony-accordion-item {
-				background-color: #024059; /* White background for items */
-				border: 1px solid #E0E0E0; /* Light border */
-				border-radius: 8px;
-				margin-bottom: 10px;
-				box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Softer shadow */
-			}
-
-			.anony-accordion-header {
-				color: #000; /* White text */
-				padding: 15px;
-				font-size: 18px;
-				border: none;
-				width: 100%;
-				text-align: inherit;
-				cursor: pointer;
-				outline: none;
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				border-radius: 0;
-				transition: background-color 0.3s ease;
-				margin-top: 30px;
-			}
-
-			.anony-accordion-header:hover {
-				background-color: #024059;
-				color: #fff
-			}
-
-			.anony-accordion-content {
-				background-color: #2a5465;
-				color:#fff;
-				overflow: hidden;
-				padding: 0 15px;
-				max-height: 0;
-				transition: all 0.3s ease;
-			}
-
-			.anony-accordion-content p {
-				margin: 15px 0;
-				line-height: 1.5;
-			}
-
-			.anony-accordion-icon {
-				transition: transform 0.3s ease;
-				display: flex;
-			}
-
-			.active .anony-accordion-icon {
-				transform: rotate(180deg);
-			}
-			.anony-accordion-container{
-				padding: 0;
-			}
-			.snks-profile-accordion{
-				width: 100%;
-			}
-			.profile-details .anony-accordion-item {
-				border: 0;
-				border-radius: 0px;
-				margin-bottom: 10px;
-				box-shadow: none;
-				margin: 0;
-			}
-		</style>
 		<div id="anony-accordion-wrapper">
 			<div class="anony-grid-row flex-h-center">
 				<div class="anony-accordion-container anony-grid-col">
 					<?php
 					foreach ( $data as $item ) {
 						?>
-						<div class="anony-accordion-item">
+						<div class="anony-accordion-item anony-center-text">
 							<button class="anony-accordion-header">
 								<?php echo esc_html( $item['title'] ); ?> <span class="anony-accordion-icon"><span class="anony-arrow-down"></span></span>
 							</button>

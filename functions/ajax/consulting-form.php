@@ -36,6 +36,7 @@ function fetch_start_times_callback() {
 }
 
 add_action( 'wp_ajax_get_booking_form', 'get_booking_form_callback' );
+add_action( 'wp_ajax_nopriv_get_booking_form', 'get_booking_form_callback' );
 
 /**
  * Get booking form
@@ -66,6 +67,7 @@ function get_booking_form_callback() {
 }
 
 add_action( 'wp_ajax_get_periods', 'get_periods_callback' );
+add_action( 'wp_ajax_nopriv_get_periods', 'get_periods_callback' );
 
 /**
  * Get booking form
