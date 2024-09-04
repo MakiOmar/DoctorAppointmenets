@@ -252,12 +252,16 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
 /**
  * Get doctor's url
  *
- * @param object $user User.
+ * @param mixed $user User object or User ID.
  * @return string
  */
 function snks_encrypted_doctor_url( $user ) {
-	if ( $user ) {
+	if ( is_a( $user, 'WP_User' ) && $user ) {
 		return site_url( '/your-clinic/' . $user->user_nicename );
+	}
+	$user_obj = get_user_by( 'id', absint( $user ) );
+	if ( $user_obj ) {
+		return site_url( '/your-clinic/' . $user_obj->user_nicename );
 	}
 	return '#';
 }
