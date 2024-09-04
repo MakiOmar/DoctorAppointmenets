@@ -12,8 +12,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_head',
 	function () {
+		global $wp;
 		?>
 		<style>
+			<?php
+			if ( isset( $wp->query_vars['doctor_id'] ) ) {
+				?>
+				header {
+					display: none;
+				}
+				<?php
+			}
+			?>
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
@@ -51,6 +61,40 @@ add_action(
 				background-color: #024059!important;
 				color:#fff!important
 			}
+			.snks-bg-secondary{
+				background-color: #012d3e!important;
+				color:#fff!important
+			}
+			#consulting-forms-container{
+				margin: auto;
+			}
+			.snks-period-label:before{
+				content: '';
+				display: inline-block;
+				width: 15px;
+				height: 15px;
+				margin-left: 3px;
+				flex-shrink: 0;
+				flex-grow: 0;
+				border: 1px solid #fff;
+				background-repeat: no-repeat;
+				background-position: center center;
+				background-size: 70% 70%;
+				border-radius: 50%;
+				border-color: #fff;
+				background-color: #fff;
+				background-image: url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%27-4 -4 8 8%27%3e%3ccircle r=%273%27 fill=%27%23fff%27/%3e%3c/svg%3e");
+			}
+			.snks-period-label.snks-light-bg::before{
+				background-color: #024059 !important;
+				border: 1px solid #024059!important;
+			}
+			.snks-period-label, .snks-period-price {
+				width: 100%;
+				text-align: center;
+				border-radius: 20px;
+				font-size: 13px;
+			}
 			a.snks-button{
 				background-color: #024059!important;
 				color:#fff!important;
@@ -69,11 +113,17 @@ add_action(
 				width: 100%;
 				justify-content: space-around;
 				background-color: #024059;
-				padding: 0px 5px 10px 5px;
+				padding: 20px 5px;
 			}
 			.attendance_type_wrapper{
 				width: 50%;
 				padding: 3px;
+			}
+			.periods_wrapper{
+				opacity: 0;
+			}
+			.snks-separator{
+				border-top: 1px solid #fff;
 			}
 			.attendance_type_wrapper label{
 				padding: 5px 10px;
@@ -87,10 +137,12 @@ add_action(
 				display: flex;
 				align-items: center;
 				justify-content: center;
+				font-weight: bold;
 			}
 			.attendance_type_wrapper label img{
 				margin: 0;
-				height: 35px;
+				height: 30px;
+				margin-left: 5px;
 			}
 			.snks-dark-icon{
 				display: none;
@@ -100,6 +152,10 @@ add_action(
 			}
 			.attendance_type_wrapper.active label .snks-light-icon{
 				display: none;
+			}
+			.attendance_type_wrapper.active label{
+				background-color: #fff;
+				color: #024059;
 			}
 			.field-type-switcher, .field-type-select-field{
 				position: relative;
@@ -157,6 +213,10 @@ add_action(
 			.snks-switcher-text{
 				position: absolute;
 				font-weight: bold;
+				color: #024059;
+			}
+			.snks-light-bg{
+				background-color: #fff;
 				color: #024059;
 			}
 			.field-type-select-field select{
@@ -604,7 +664,6 @@ add_action(
 			}
 			.anony-day-radio{
 				display: inline-flex;
-				padding: 5px;
 				border-radius: 5px;
 				cursor: pointer;
 				box-sizing: border-box;
@@ -616,9 +675,9 @@ add_action(
 				align-items: center;
 				padding: 5px;
 				border-radius: 5px;
-				height: 60px;
 				justify-content: space-between;
 				flex-direction: column;
+				font-size: 13px;
 			}
 			.anony-day-radio input{
 				display: none;
@@ -774,7 +833,10 @@ add_action(
 				display: inline-block;
 				vertical-align: top;
 				margin: 0;
-				width: 45.71px;
+			}
+			.anony-day-number{
+				font-size: 27px;
+				margin: 8px;
 			}
 
 			
@@ -855,6 +917,156 @@ add_action(
 					top: 80px;
 					left: 40%
 				}
+			}
+			#snks-booking-page{
+				overflow: hidden;
+			}
+			.snks-tear-shap-wrapper{
+				width: 200px;
+				height: 200px;
+				margin: auto;
+				margin-top: 50px;
+				transform: rotate(45deg);
+			}
+			.snks-tear-shap{
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				border-top-right-radius: 0;
+				transform: rotate(-45deg);
+				overflow: hidden;
+				background-color: #fff;
+			}
+			.snks-tear-shap.sub{
+				position: absolute;
+				right: 0px;
+				top: 13px;
+				z-index: -1;
+			}
+			.snks-tear-shap img{
+				height: 203px;
+				width: 203px;
+			}
+			.snks-profile-image-wrapper{
+				position: relative;
+				max-width: 350px;
+				margin: auto;
+			}
+			#head1{
+				top: -40px;
+			left: 90px;
+			}
+			#head2{
+				bottom: -20px;
+				left: 40px;
+			}
+			#head3{
+				bottom: 50px;
+			right: 20px;
+			}
+			.shap-head{
+				position: absolute;
+				height: 45px;
+			}
+			.profile-details{
+				margin-top: 20px;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+			}
+			.profile-details h1,.profile-details h2{
+				margin: 5px 0;
+				color:#024059
+			}
+			.snks-about-me{
+				padding: 20px 30px;
+			}
+			.snks-about-me ul li {
+				margin-bottom: 15px;
+				font-size: 20px;
+				text-align: justify;
+			}
+			.anony-arrow-down {
+				width: 0;
+				height: 0;
+				border-left: 5px solid transparent;
+				border-right: 5px solid transparent;
+				border-top: 7px solid white; /* Adjust color and size as needed */
+			}
+			.anony-accordion-container {
+				max-width: 450px;
+				max-width: 600px;
+			}
+
+			.anony-accordion-item {
+				background-color: #024059; /* White background for items */
+				border: 1px solid #E0E0E0; /* Light border */
+				border-radius: 8px;
+				margin-bottom: 10px;
+				box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Softer shadow */
+			}
+
+			.anony-accordion-header {
+				color: #000; /* White text */
+				padding: 15px;
+				font-size: 18px;
+				border: none;
+				width: 100%;
+				text-align: inherit;
+				cursor: pointer;
+				outline: none;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				border-radius: 0;
+				transition: background-color 0.3s ease;
+				margin-top: 30px;
+				position: relative;
+			}
+
+			.anony-accordion-header:hover {
+				background-color: #024059;
+				color: #fff
+			}
+
+			.anony-accordion-content {
+				background-color: #e9e9e9;
+				color:#024059;
+				overflow: hidden;
+				padding: 0 15px;
+				max-height: 0;
+				transition: all 0.3s ease;
+			}
+
+			.anony-accordion-content p {
+				margin: 15px 0;
+				line-height: 1.5;
+			}
+
+			.anony-accordion-icon {
+				position: absolute;
+				left: 10px;
+				top:45%;
+				transition: transform 0.3s ease;
+				display: flex;
+			}
+
+			.active .anony-accordion-icon {
+				transform: rotate(180deg);
+			}
+			.anony-accordion-container{
+				padding: 0;
+			}
+			.snks-profile-accordion{
+				width: 100%;
+			}
+			.profile-details .anony-accordion-item {
+				border: 0;
+				border-radius: 0px;
+				margin-bottom: 10px;
+				box-shadow: none;
+				margin: 0;
 			}
 		</style>
 		<?php
