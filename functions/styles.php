@@ -48,8 +48,14 @@ add_action(
 				white-space: nowrap!important;
 			}
 			.snks-bg{
-				background-color: #024059;
-				color:#fff
+				background-color: #024059!important;
+				color:#fff!important
+			}
+			a.snks-button{
+				background-color: #024059!important;
+				color:#fff!important;
+				border-radius: 3px;
+				justify-content: center;
 			}
 			.snks-secondary-bg{
 				background-color: #dcf5ff;
