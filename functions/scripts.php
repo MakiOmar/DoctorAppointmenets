@@ -20,6 +20,8 @@ add_action(
 		wp_enqueue_script( 'flatpickr-ar', SNKS_URI . 'assets/js/flatepickr-ar.js', array( 'flatpickr' ), '4.6.13', true );
 		wp_enqueue_style( 'shrinks-responsive', SNKS_URI . 'assets/css/responsive.min.css', array(), time() );
 		wp_enqueue_style( 'shrinks-general', SNKS_URI . 'assets/css/general.css', array(), time() );
+		wp_enqueue_style( 'slick', SNKS_URI . 'slick/slick.css', array(), time() );
+		wp_enqueue_script( 'slick', SNKS_URI . 'slick/slick.min.js', array( 'jquery' ), '4.6.13', true );
 	}
 );
 
