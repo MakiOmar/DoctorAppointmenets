@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return void
  */
 function snks_rewrite_rule() {
-	add_rewrite_rule( '^your-clinic/(\w+)/?', 'index.php?doctor_id=$matches[1]', 'top' );
+	add_rewrite_rule( '^7jz/(\w+)/?', 'index.php?doctor_id=$matches[1]', 'top' );
 }
 add_action( 'init', 'snks_rewrite_rule' );
 
