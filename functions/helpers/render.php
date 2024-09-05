@@ -239,40 +239,20 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
 	$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
 	$html .= '</div>';
-	if ( $slider ) {
-		$html .= '<div class="anony-content-slider-control">
-			<a class="anony-content-slider-prev button">
-				<span class="anony-greater-than anony-content-slider-nav">
-					<span class="top"></span><span class="bottom"></span>
-				</span>
-			</a>
-			<a class="anony-content-slider-next button">
-				<span class="anony-smaller-than anony-content-slider-nav">
-					<span class="top"></span><span class="bottom"></span>
-				</span>
-			</a>
-		</div>';
-	}
 	$html .= '</div>';
+	$html .= '<hr style="margin:20px 0">';
 	$html .= '<div id="snks-available-hours-wrapper">';
-	$html .= '<h5>';
-	$html .= '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-	<path d="M20.75 13.25C20.75 18.08 16.83 22 12 22C7.17 22 3.25 18.08 3.25 13.25C3.25 8.42 7.17 4.5 12 4.5C16.83 4.5 20.75 8.42 20.75 13.25Z" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-	<path d="M12 8V13" stroke="#707070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-	<path d="M9 2H15" stroke="#707070" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-	</svg>';
-	$html .= '&nbsp;تحديد وقت الحجز';
-	$html .= '</h5>';
 	$html .= '<div class="snks-available-hours"></div>';
 	$html .= '</div>';
-	$html .= '<hr>';
-	$html .= '<div id="consulting-form-price"><span>سعر الإستشارة</span><span>' . $price . ' ' . get_woocommerce_currency_symbol() . '</span></div>';
 	$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
 	$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
 	$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
 	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
+	$html .= '<div id="consulting-form-submit">';
+	$html .= '<div class="hacen_liner_print-outregular"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes"> أوافق على الشروط والأحكام وسياسة الاستخدام.</div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
-	$html .= '<input type="submit" value="' . $submit_text . '">';
+	$html .= '<input style="margin-top:15px" type="submit" value="' . $submit_text . '">';
+	$html .= '</div>';
 	$html .= '</form>';
 
 	return $html;
@@ -315,11 +295,12 @@ function snks_render_consulting_hours_items( $availables ) {
 
 	foreach ( $availables as $available ) {
 		$id    = $available->ID;
-		$html .= '<li class="available-time">';
-		$html .= '<label for="' . esc_attr( $id ) . '">';
-		$html .= sprintf( 'من %s إلى %s', esc_html( gmdate( 'h:i a', strtotime( $available->starts ) ) ), esc_html( gmdate( 'h:i a', strtotime( $available->ends ) ) ) );
+		$html .= '<li class="available-time anony-grid-col anony-grid-col-5 anony-padding-3">';
+		$html .= '<label class="hacen_liner_print-outregular" for="' . esc_attr( $id ) . '">';
+
+		$html .= sprintf( '%1$s %2$s %3$s', esc_html( gmdate( 'h:i a', strtotime( $available->starts ) ) ), 'إلى', esc_html( gmdate( 'h:i a', strtotime( $available->ends ) ) ) );
 		$html .= '<input id="' . esc_attr( $id ) . '" type="radio" class="hour-radio" name="selected-hour" value="' . esc_attr( $id ) . '"/>';
-		$html .= '</lable>';
+		$html .= '</label>';
 		$html .= '</li>';
 	}
 	$html = str_replace( array( ' am', ' pm' ), array( ' ص', ' م' ), $html );
@@ -419,10 +400,9 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
 	usort( $availables, 'snks_compare_times' );
 	$html = '';
 	if ( ! empty( $availables ) ) {
-
 		if ( 'online' === $_attendance_type ) {
-			$html .= '<ul>';
-			$html .= snks_render_online_consulting_hours( $availables );
+			$html .= '<ul class="anony-grid-row">';
+			$html .= snks_render_consulting_hours_items( $availables );
 			$html .= '</ul>';
 		}
 
@@ -432,8 +412,9 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
 			$html .= '</ul>';
 		}
 	} else {
-		$html = '<ul><li>' . esc_html__( 'Sorry! No available hour.' ) . '</li></ul>';
+		$html .= '<ul><li>' . esc_html__( 'Sorry! No available hour.' ) . '</li></ul>';
 	}
+	$html .= '<hr style="margin:20px 0">';
 	return $html;
 }
 

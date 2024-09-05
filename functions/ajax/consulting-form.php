@@ -8,6 +8,7 @@
 defined( 'ABSPATH' ) || die();
 
 add_action( 'wp_ajax_fetch_start_times', 'fetch_start_times_callback' );
+add_action( 'wp_ajax_nopriv_fetch_start_times', 'fetch_start_times_callback' );
 /**
  * Update attendance
  *

@@ -215,15 +215,19 @@ add_action(
 									scrollTop: $('.consulting-form').offset().top
 								}, 1000);
 								$('.anony-content-slider').slick({
-									slidesToShow: 7,
-									slidesToScroll: 1,
+									slidesToShow: 3,
+									slidesToScroll: 3,
 									autoplay: false,
 									arrows: true,
+									rtl: true,
+									swipeToSlide: false,
+									draggable:false,
+									infinite:false,
 									responsive: [
 										{
 											breakpoint: 768,
 											settings: {
-												slidesToShow: 5
+												slidesToShow: 3
 											}
 										}
 									]
@@ -273,28 +277,20 @@ add_action(
 						getBookingForm();
 					}
 				);
-				$( '.consulting-forms-tab' ).on(
-					'click',
-					function () {
-						$( '.consulting-forms-tab' ).removeClass('active-tab');
-						$( this ).addClass('active-tab');
-						$('form.consulting-form').hide();
-						$('#' + $(this).data('target')).show();
-						var label = $( '.anony-day-radio:first-child', $('#' + $(this).data('target')) ).find('label');
-						setTimeout( function() {
-							label.click();
-						}, 500 );
-					}
-				);
-				$( '.consulting-forms-tab:first-child' ).trigger('click');
 
-				$(".consulting-form").on(
+				$(document).on(
 					'submit',
+					".consulting-form",
 					function(event){
 						if ( $( this ).find('input[name="selected-hour"]:checked').length === 0 || $( this ).find('input[name="current-month-day"]:checked').length === 0  ) {
 							event.preventDefault();
 							alert('فضلاً تأكد من أنك قمت بتحديد اليوم والساعة');
 						}
+
+						/*if (!$('#terms-conditions').is(':checked')) {
+							event.preventDefault();
+							$.fn.justShowErrorpopup( 'يرجى الموافقة على الشروط والأحكام حتى تستطيع المتابعة!' );
+						}*/
 					}
 				);
 				$( 'body' ).on(
@@ -328,6 +324,9 @@ add_action(
 							success: function(response) {
 								$( '.snks-available-hours', $( '.consulting-form-' + period ) ).html( response.resp );
 								$('#snks-available-hours-wrapper').show();
+								$('html, body').animate({
+									scrollTop: $('#snks-available-hours-wrapper').offset().top
+								}, 1000);
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);
@@ -343,6 +342,10 @@ add_action(
 						$( '.available-time' ).removeClass( 'active-hour' );
 						if ($(this).is(':checked')) {
 							$( this ).closest('.available-time').addClass( 'active-hour' );
+							$('#consulting-form-submit').show();
+							$('html, body').animate({
+								scrollTop: $('#consulting-form-submit').offset().top
+							}, 2000);
 						}
 					}
 				);

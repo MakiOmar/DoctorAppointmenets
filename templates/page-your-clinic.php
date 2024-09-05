@@ -60,6 +60,7 @@ $user_details = snks_user_details( $user_id );
 	<div id="snks-booking-form" class="anony-grid-row" style="max-width: 960px;margin:auto;position: relative;">
 			<?php echo do_shortcode( '[snks_appointment_form]' ); ?>
 	</div>
+		<?php echo do_shortcode( '[elementor-template id="2988"]' ); ?>
 	<?php } ?>
 	
 </div>
