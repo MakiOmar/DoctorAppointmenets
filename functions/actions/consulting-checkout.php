@@ -27,7 +27,13 @@ add_action(
 		if ( isset( $_POST ) && isset( $_POST['create_appointment_nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['create_appointment_nonce'] ) ), 'create_appointment' ) && isset( $_POST['create-appointment'] ) ) {
 			return;
 		}
-		$_req      = wp_unslash( $_POST );
+		$_req       = wp_unslash( $_POST );
+		$doctor_url = snks_encrypted_doctor_url( $_req['user-id'] );
+		if ( empty( $_req['terms-conditions'] ) || 'yes' === $_req['terms-conditions'] ) {
+			wp_safe_redirect( add_query_arg( 'error', 'accept-terms', $doctor_url ) );
+			// Safely closes the function.
+			exit();
+		}
 		$timetable = snks_get_timetable_by( 'ID', absint( sanitize_text_field( $_req['selected-hour'] ) ) );
 		if ( ! $timetable || empty( $timetable ) ) {
 			return;
@@ -37,8 +43,7 @@ add_action(
 
 		if ( absint( $user_id ) !== absint( $_req['user-id'] ) ) {
 			WC()->cart->empty_cart();
-			// Redirects to the checkout page.
-			wp_safe_redirect( site_url( $_req['_wp_http_referer'] ) );
+			wp_safe_redirect( site_url( $doctor_url ) );
 			// Safely closes the function.
 			exit();
 		}
