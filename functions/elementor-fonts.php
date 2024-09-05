@@ -34,6 +34,7 @@ if ( ! function_exists( 'anony_elementor_custom_fonts' ) ) {
 
 		$fonts['pt_bold_headingregular'] = 'jalsah';
 		$fonts['hacen_liner_print']      = 'jalsah';
+		$fonts['castle_tbook']      = 'jalsah';
 		return $fonts;
 	}
 }
