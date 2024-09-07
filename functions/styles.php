@@ -18,8 +18,11 @@ add_action(
 			<?php
 			if ( isset( $wp->query_vars['doctor_id'] ) ) {
 				?>
-				header {
+				header, footer {
 					display: none;
+				}
+				.snks-booking-page-container {
+					background-color: #fff;
 				}
 				<?php
 			}
@@ -28,7 +31,7 @@ add_action(
 			#teeth-area {
 				overflow: hidden;
 				position: absolute;
-				top: -28px;
+				top: -30px;
 				width: 100%;
 				height: 30px;
 			}
@@ -144,6 +147,7 @@ add_action(
 			}
 			.snks-period-label, .snks-period-price {
 				width: 100%;
+				max-width: 126px;
 				text-align: center;
 				border-radius: 20px;
 				font-size: 17px;
@@ -749,6 +753,10 @@ add_action(
 				display: flex;
 				flex-wrap: wrap;
 				max-width: 90vw;
+				justify-content: center;
+			}
+			.offline-clinic-hours{
+				flex-direction: column;
 			}
 			.snks-available-hours li.available-time input{
 				display:none

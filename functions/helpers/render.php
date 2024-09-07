@@ -220,7 +220,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$submit_action = add_query_arg( 'direct_add_to_cart', '1', $submit_action );
 
 	$n_bookable_days = array_unique( $bookable_days );
-	if ( count( $n_bookable_days ) > 7 ) {
+	if ( count( $n_bookable_days ) > 3 ) {
 		$slider_class = ' anony-content-slider';
 		$slider       = true;
 	} else {
@@ -382,10 +382,12 @@ function snks_render_offline_consulting_hours( $availables, $user_id = false ) {
 	foreach ( $grouped as $clinic => $group ) {
 		$clinic_details = snks_get_clinic( $clinic, $user_id );
 
-		$html .= '<div>';
-		$html .= '<h3>' . $clinic_details['clinic_title'] . '</h3>';
+		$html .= '<li class="offline-clinic-hours">';
+		$html .= '<h3 style="color:#024059;text-align:center">' . $clinic_details['clinic_title'] . '</h3>';
+		$html .= '<ul class="anony-grid-row">';
 		$html .= snks_render_consulting_hours_items( $group );
-		$html .= '<div>';
+		$html .= '</ul>';
+		$html .= '</li>';
 	}
 	return $html;
 }

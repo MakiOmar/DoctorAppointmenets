@@ -54,7 +54,7 @@ $user_details = snks_user_details( $user_id );
 				?>
 			</div>
 		</div>
-		<div class="snks-light-bg" style="display: flex;justify-content: center;padding: 10px;position:relative;z-index:-2">
+		<div class="snks-light-bg" style="display: flex;justify-content: center;padding: 10px;position:relative;">
 			<h3 style="font-size:25px">إحجز جلسة</h3>
 		</div>
 
