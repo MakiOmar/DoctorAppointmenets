@@ -216,16 +216,14 @@ add_action(
 								}, 1000);
 								$('.anony-content-slider').slick({
 									slidesToShow: 3,
-									slidesToScroll: 3,
+									slidesToScroll: 1,
 									autoplay: false,
 									arrows: true,
 									rtl: true,
-									swipeToSlide: false,
-									draggable:false,
 									infinite:false,
 									responsive: [
 										{
-											breakpoint: 768,
+											breakpoint: 480,
 											settings: {
 												slidesToShow: 3
 											}
@@ -244,6 +242,7 @@ add_action(
 					'input[name=attendance_type]',
 					function() {
 						$('#consulting-forms-container').html('');
+						$('.periods_wrapper').html('');
 						var attendanceType = $(this).val();
 						var doctor_id       = $('input[name=filter_user_id]').val();
 						var nonce           = '<?php echo esc_html( wp_create_nonce( 'get_periods_nonce' ) ); ?>';
@@ -287,10 +286,10 @@ add_action(
 							alert('فضلاً تأكد من أنك قمت بتحديد اليوم والساعة');
 						}
 
-						/*if (!$('#terms-conditions').is(':checked')) {
+						if (!$('#terms-conditions').is(':checked')) {
 							event.preventDefault();
 							$.fn.justShowErrorpopup( 'يرجى الموافقة على الشروط والأحكام حتى تستطيع المتابعة!' );
-						}*/
+						}
 					}
 				);
 				$( 'body' ).on(
