@@ -54,22 +54,69 @@ function snks_doctor_settings( $user_id = false ) {
 /**
  * Get doctor's available periods
  *
- * @param mixed $user_id User's ID or false for current user.
+ * @param int    $user_id User's ID.
+ * @param string $attendance_type Attendance type.
  * @return array
  */
-function snks_get_available_periods( $user_id = false ) {
+function snks_get_available_periods( $user_id = false, $attendance_type = 'both' ) {
 	$settings     = snks_doctor_settings( $user_id );
 	$is_available = array();
-	if ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) {
+	snks_error_log( snks_has_sessions_of_type( $user_id, $attendance_type, 30 ) );
+	if ( snks_has_sessions_of_type( $user_id, $attendance_type, 60 ) && ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) ) {
 		$is_available[] = 60;
 	}
-	if ( 'on' === $settings['45_minutes'] || 'true' === $settings['45_minutes'] ) {
+	if ( snks_has_sessions_of_type( $user_id, $attendance_type, 45 ) && ( 'on' === $settings['45_minutes'] || 'true' === $settings['45_minutes'] ) ) {
 		$is_available[] = 45;
 	}
-	if ( 'on' === $settings['30_minutes'] || 'true' === $settings['30_minutes'] ) {
+	if ( snks_has_sessions_of_type( $user_id, $attendance_type, 30 ) && ( 'on' === $settings['30_minutes'] || 'true' === $settings['30_minutes'] ) ) {
 		$is_available[] = 30;
 	}
 	return $is_available;
+}
+/**
+ * Check if a doctor has sessions of type.
+ *
+ * @param int    $user_id User's ID.
+ * @param string $attendance_type Attendance type.
+ * @param string $period period.
+ * @return bool
+ */
+function snks_has_sessions_of_type( $user_id, $attendance_type, $period ) {
+	global $wpdb;
+	// Generate a unique cache key.
+	$cache_key = 'snks_has_sessions_of_type_' . $attendance_type;
+	//phpcs:disable
+	// Execute the query.
+	if ( 'both' === $attendance_type ) {
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT *
+			FROM {$wpdb->prefix}snks_provider_timetable
+			WHERE user_id = %d
+			AND period = %s
+			AND session_status = %s",
+				$user_id,
+				$period,
+				'waiting'
+			)
+		);
+	} else {
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT *
+			FROM {$wpdb->prefix}snks_provider_timetable
+			WHERE attendance_type = %s
+			AND user_id = %d
+			AND period = %s
+			AND session_status = %s",
+				$user_id,
+				$period,
+				'waiting'
+			)
+		);
+	}
+
+	return $results;
 }
 /**
  * Get doctor's available periods

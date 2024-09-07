@@ -105,11 +105,12 @@ function snks_get_period_discount( $user_id, $period ) {
 /**
  * Render periods filter
  *
- * @param int $user_id User's ID.
+ * @param int    $user_id User's ID.
+ * @param string $attendance_type Attendance type.
  * @return void
  */
-function snks_periods_filter( $user_id ) {
-	$avialable_periods = snks_get_available_periods( $user_id );
+function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
+	$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
 	$country           = 'EG';
 	$pricings          = snks_doctor_pricings( $user_id );
 	$has_discount      = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
@@ -145,7 +146,7 @@ function snks_form_filter( $user_id ) {
 	?>
 	<div class="attendance_types_wrapper">
 		<span class="attendance_type_wrapper">
-			<label for="online_attendance_type">
+			<label for="online_attendance_type" class="hacen_liner_print-outregular">
 				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/camera-dark.png"/>
 				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/camera-light.png"/>
 				جلسة أونلاين
@@ -153,7 +154,7 @@ function snks_form_filter( $user_id ) {
 			<input id="online_attendance_type" type="radio" name="attendance_type" value="online"/>
 		</span>
 		<span class="attendance_type_wrapper">
-			<label for="offline_attendance_type">
+			<label for="offline_attendance_type"  class="hacen_liner_print-outregular">
 				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/hand-light.png"/>
 				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/hand-dark.png"/>
 				جلسة أوفلاين</label>
@@ -194,7 +195,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	}
 
 	$booking_id  = $edit_id;
-	$submit_text = 'حجز موعد';
+	$submit_text = 'حجز الموعد';
 	//phpcs:disable
 	if ( ! empty( $booking_id && is_numeric( $booking_id ) ) ) {
 		$booking = snks_get_timetable_by( 'ID', absint( $booking_id ) );
@@ -232,8 +233,8 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html  = '';
 	$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="' . $submit_action . '" method="post">';
 
-	$html .= '<h5 class="snks-bg anony-padding-5 anony-center-text" style="border-top-left-radius:10px;border-top-right-radius:10px">';
-	$html .= 'تحديد تاريخ الحجز';
+	$html .= '<h5 class="snks-bg anony-padding-5 anony-center-text" style="border-top-left-radius:10px;border-top-right-radius:10px;padding: 10px 0;">';
+	$html .= ' إختر موعد الحجز';
 	$html .= '</h5>';
 	$html .= '<div class="atrn-form-days anony-content-slider-container">';
 	$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
@@ -251,7 +252,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<div id="consulting-form-submit">';
 	$html .= '<div class="hacen_liner_print-outregular"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes"> أوافق على الشروط والأحكام وسياسة الاستخدام.</div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
-	$html .= '<input style="margin-top:15px" type="submit" value="' . $submit_text . '">';
+	$html .= '<input style="margin-top:18px" type="submit" value="' . $submit_text . '">';
 	$html .= '</div>';
 	$html .= '</form>';
 
@@ -921,7 +922,7 @@ function anony_accordion( $data ) {
 						?>
 						<div class="anony-accordion-item anony-center-text">
 							<button class="anony-accordion-header">
-								<?php echo esc_html( $item['title'] ); ?> <span class="anony-accordion-icon"><span class="anony-arrow-down"></span></span>
+							<span style="position: relative;top: -2px;font-size:23px"><?php echo esc_html( $item['title'] ); ?></span> <span class="anony-accordion-icon"><span class="anony-arrow-down"></span></span>
 							</button>
 							<div class="anony-accordion-content">
 								<?php echo wp_kses_post( $item['content'] ); ?>

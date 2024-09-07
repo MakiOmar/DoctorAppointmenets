@@ -93,7 +93,7 @@ function get_periods_callback() {
 		die;
 	}
 	//phpcs:disable
-	echo snks_periods_filter( $_req['doctor_id'] );
+	echo snks_periods_filter( $_req['doctor_id'] , $_req['attendanceType']);
 	//phpcs:enable
 	die();
 }
