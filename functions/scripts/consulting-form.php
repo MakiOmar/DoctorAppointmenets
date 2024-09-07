@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_footer',
 	function () {
+		global $wp;
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
@@ -237,6 +238,9 @@ add_action(
 						});
 					}
 				}
+				<?php
+				if ( isset( $wp->query_vars['doctor_id'] ) ) {
+					?>
 				$(document).on(
 					'change',
 					'input[name=attendance_type]',
@@ -257,10 +261,18 @@ add_action(
 								action        : 'get_periods',
 							},
 							success: function(response) {
-								$('.periods_wrapper').html( response );
-								$('.periods_wrapper').css('opacity', '1');
+								var periods_wrapper = $('.periods_wrapper');
+								if ( response.includes('clinic_template') ) {
+									periods_wrapper.removeClass('snks-bg');
+									periods_wrapper.css({
+										'background-color': '#d9f4ff',
+											'padding': '0 30px'
+									});
+								}
+								periods_wrapper.html( response );
+								periods_wrapper.css('opacity', '1');
 								$('html, body').animate({
-									scrollTop: $('.periods_wrapper').offset().top
+									scrollTop: periods_wrapper.offset().top
 								}, 1000);
 							},
 							error: function(xhr, status, error) {
@@ -269,6 +281,7 @@ add_action(
 						});
 					}
 				);
+				<?php } ?>
 				$(document).on(
 					'change',
 					'input[name=attendance_type],input[name=period]',

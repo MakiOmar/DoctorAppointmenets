@@ -315,14 +315,41 @@ function snks_render_consulting_hours_items( $availables ) {
  * @return string
  */
 function snks_render_clinic( $clinic ) {
-	$html  = '';
-	$html .= '<ul class="offline-clinic-details">';
-	$html .= sprintf( '<li><strong>%1$s : <strong>%2$s</li>', 'إسم العيادة', $clinic['clinic_title'] );
-	$html .= sprintf( '<li><strong>%1$s : <strong>%2$s</li>', 'رقم السكرتارية', $clinic['clinic_phone'] );
-	$html .= sprintf( '<li><strong>%1$s : <strong>%2$s</li>', 'العنوان', $clinic['clinic_address'] );
-	$html .= sprintf( '<li><strong>%1$s : <strong><a href="%2$s">%2$s</a></li>', 'اللوكيشن', $clinic['google_map'] );
-	$html .= '<ul>';
-	return $html;
+	$html = do_shortcode( '[elementor-template id="3023"]' );
+
+	if ( empty( $clinic['google_map'] ) || '#' === $clinic['google_map'] ) {
+		// Load the HTML content into a DOMDocument.
+		$dom = new DOMDocument();
+		$dom->loadHTML( $html );
+
+		// Get elements with the class "clinic_google_map" and remove them.
+		$xpath    = new DOMXPath( $dom );
+		$elements = $xpath->query( '//div[contains(@class, "clinic_google_map")]' );
+		foreach ( $elements as $element ) {
+			//phpcs:disable
+			$element->parentNode->removeChild( $element );
+			//phpcs:enable
+		}
+
+		// Output the modified HTML.
+		$html = $dom->saveHTML();
+	}
+
+	return str_replace(
+		array(
+			'{clinic_title}',
+			'{clinic_phone}',
+			'{clinic_address}',
+			'{google_map}',
+		),
+		array(
+			esc_html( $clinic['clinic_title'] ),
+			esc_html( $clinic['clinic_phone'] ),
+			esc_html( $clinic['clinic_address'] ),
+			esc_html( $clinic['google_map'] ),
+		),
+		$html
+	);
 }
 /**
  * Render offline clinics details

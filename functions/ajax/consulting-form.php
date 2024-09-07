@@ -88,8 +88,10 @@ function get_periods_callback() {
 		die;
 	}
 
-	if ( 'offline' === $_req['attendanceType'] && ! in_array( $doctor_attendance_type, array( 'offline', 'both' ), true ) ) {
-		echo wp_kses_post( snks_render_doctor_clinics( $_req['doctor_id'] ) );
+	if ( 'offline' === $_req['attendanceType'] && in_array( $doctor_attendance_type, array( 'offline', 'both' ), true ) ) {
+		//phpcs:disable
+		echo snks_render_doctor_clinics( $_req['doctor_id'] );
+		//phpcs:enable
 		die;
 	}
 	//phpcs:disable

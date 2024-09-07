@@ -376,7 +376,6 @@ add_action(
 				list-style: none;
 				padding: 10px;
 				margin: 5px;
-				width : calc(33.33% - 10px);
 				border-radius: 10px;
 				flex-direction: column;
 				justify-content: flex-start;
@@ -566,13 +565,14 @@ add_action(
 			}
 			.jet-form-builder-repeater__remove{
 				height: 25px!important;
-			width: 25px!important;
-			display: inline-flex!important;
-			justify-content: center!important;
-			align-items: center!important;
-			line-height: 0;
-			padding: 3px!important;
-				background-color:red
+				width: 25px!important;
+				display: inline-flex!important;
+				justify-content: center!important;
+				align-items: center!important;
+				line-height: 0;
+				padding: 3px!important;
+				background-color:red;
+				font-family: "Arial"!important;
 			}
 			.jet-form-builder-repeater__row {
 				padding: 5px 0;
@@ -903,9 +903,6 @@ add_action(
 				max-width: 60px!important;
 			}
 			@media screen and (min-width:481px) {
-				.offline-clinic-details{
-					width:25%
-				}
 				.snks-booking-page-container{
 					background-color:#024059
 				}
