@@ -49,6 +49,7 @@ add_action(
 			}
 			.consulting-form{
 				max-width: 360px;
+				margin-top: 30px;
 			}
 
 			@media (min-width: 361px) and ( max-width: 480px ) {
@@ -57,12 +58,16 @@ add_action(
 				}
 				.snks-period-label, .snks-period-price {
 					font-size: 17px!important;
+					width:126px!important;
 				}
 				
 			}
 			@media (max-width: 360px) {
 				.consulting-form{
 					max-width: 280px;
+				}
+				.snks-period-label, .snks-period-price{
+					width:104px!important
 				}
 				
 			}
@@ -141,10 +146,9 @@ add_action(
 				width: 100%;
 				text-align: center;
 				border-radius: 20px;
-				font-size: 13px;
+				font-size: 17px;
 			}
 			.snks-period-price {
-				font-size: 14px;
 				border-top-left-radius: 0;
 				border-top-right-radius: 0;
 				border-bottom-right-radius: 10px;
@@ -191,7 +195,7 @@ add_action(
 				width: 100%;
 				text-align: center;
 				display: flex;
-				font-size: 20px;
+				font-size: 26px;
 				align-items: center;
 			}
 			.attendance_type_wrapper label img{
@@ -894,6 +898,9 @@ add_action(
 				.offline-clinic-details{
 					width:25%
 				}
+				.snks-booking-page-container{
+					background-color:#024059
+				}
 			}
 			@media screen and (max-width:480px) {
 				.clinc-row{
@@ -914,6 +921,10 @@ add_action(
 			}
 			#snks-booking-page{
 				overflow: hidden;
+				max-width: 428px;
+				margin: auto;
+				background-color: #d9f4ff;
+				padding-top: 50px;
 			}
 			.snks-tear-shap-wrapper{
 				width: 200px;
@@ -948,19 +959,55 @@ add_action(
 			}
 			#head1{
 				top: -40px;
-			left: 90px;
+					left: 40px;
+				animation: moveUpDown1 2s infinite alternate; /* Animation properties */
 			}
 			#head2{
 				bottom: -20px;
-				left: 40px;
+				left: 0px;
+				animation: moveUpDown2 2s infinite alternate; /* Animation properties */
 			}
 			#head3{
 				bottom: 50px;
-			right: 20px;
+			right: 0px;
+			animation: moveUpDown3 2s infinite alternate; /* Animation properties */
 			}
 			.shap-head{
 				position: absolute;
-				height: 45px;
+				height: 77px;
+				transition: transform 1.5s ease-in-out;
+			}
+			@keyframes moveUpDown1 {
+				0% {
+					transform: translate3d(0px, -20px, 0px);
+					animation-timing-function: ease-in;
+				}
+				100% {
+					transform: translate3d(0px, -40px, 0px);
+					animation-timing-function: ease-out;
+				}
+			}
+			
+			@keyframes moveUpDown2 {
+				0% {
+					transform: translate3d(0px, 0px, 0px);
+					animation-timing-function: ease-in;
+				}
+				100% {
+					transform: translate3d(0px, -20px, 0px);
+					animation-timing-function: ease-out;
+				}
+			}
+
+			@keyframes moveUpDown3 {
+				0% {
+					transform: translate3d(0px, 50px, 0px);
+					animation-timing-function: ease-in;
+				}
+				100% {
+					transform: translate3d(0px, 30px, 0px);
+					animation-timing-function: ease-out;
+				}
 			}
 			.profile-details{
 				margin-top: 20px;

@@ -61,7 +61,6 @@ function snks_doctor_settings( $user_id = false ) {
 function snks_get_available_periods( $user_id = false, $attendance_type = 'both' ) {
 	$settings     = snks_doctor_settings( $user_id );
 	$is_available = array();
-	snks_error_log( snks_has_sessions_of_type( $user_id, $attendance_type, 30 ) );
 	if ( snks_has_sessions_of_type( $user_id, $attendance_type, 60 ) && ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) ) {
 		$is_available[] = 60;
 	}
@@ -71,6 +70,7 @@ function snks_get_available_periods( $user_id = false, $attendance_type = 'both'
 	if ( snks_has_sessions_of_type( $user_id, $attendance_type, 30 ) && ( 'on' === $settings['30_minutes'] || 'true' === $settings['30_minutes'] ) ) {
 		$is_available[] = 30;
 	}
+	sort( $is_available );
 	return $is_available;
 }
 /**
@@ -109,6 +109,7 @@ function snks_has_sessions_of_type( $user_id, $attendance_type, $period ) {
 			AND user_id = %d
 			AND period = %s
 			AND session_status = %s",
+				$attendance_type,
 				$user_id,
 				$period,
 				'waiting'
