@@ -36,8 +36,8 @@ $user_details = snks_user_details( $user_id );
 		</div>
 	</div>
 	<div class="profile-details">
-		<h1 style="font-size:16px;"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
-		<h2 style="font-size:20px;font-weight:bold"><?php echo esc_html( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
+		<h1 class="kacstqurnkacstqurn" style="font-size:28px;"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
+		<h2 style="font-size:25px;margin:0;margin-bottom:20px"><?php echo esc_html( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
 		<div class="snks-profile-accordion">
 			<?php
 			//phpcs:disable
@@ -53,12 +53,13 @@ $user_details = snks_user_details( $user_id );
 			?>
 		</div>
 	</div>
-	<div style="background-image:url('/wp-content/uploads/2024/09/teeth.png');background-repeat:no-repeat; background-position:center;background-size:cover; display: flex;justify-content: center;padding: 10px;">
-		<h3 class="snks-light-bg">إحجز جلسة</h3>
+	<div class="snks-light-bg" style="display: flex;justify-content: center;padding: 10px;position:relative;z-index:-2">
+		<h3 style="font-size:25px">إحجز جلسة</h3>
 	</div>
 
 	<div id="snks-booking-form" class="anony-grid-row" style="max-width: 960px;margin:auto;position: relative;">
-			<?php echo do_shortcode( '[snks_appointment_form]' ); ?>
+		<div id="teeth-area"></div>
+		<?php echo do_shortcode( '[snks_appointment_form]' ); ?>
 	</div>
 		<?php echo do_shortcode( '[elementor-template id="2988"]' ); ?>
 	<?php } ?>

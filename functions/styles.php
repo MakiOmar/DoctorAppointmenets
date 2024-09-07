@@ -24,6 +24,54 @@ add_action(
 				<?php
 			}
 			?>
+
+			#teeth-area {
+				overflow: hidden;
+				position: absolute;
+				top: -28px;
+				width: 100%;
+				height: 30px;
+			}
+			#teeth-area::before {
+				content: "";
+				font-family: "shape divider from ShapeDividers.com";
+				position: absolute;
+				z-index: 3;
+				pointer-events: none;
+				background-repeat: no-repeat;
+				bottom: -0.1vw;
+				left: -0.1vw;
+				right: -0.1vw;
+				top: -0.1vw;
+				background-size: 200% 15px;
+				background-position: 50% 100%;
+				background-image: url('data:image/svg+xml;charset=utf8, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 98 11" preserveAspectRatio="none"><path d="M98 10L97 0l-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10L9 0 8 10 7 0 6 10 5 0 4 10 3 0 2 10 1 0 0 10v1h98z" fill="%23024059"/></svg>');
+			}
+			.consulting-form{
+				max-width: 360px;
+			}
+
+			@media (min-width: 361px) and ( max-width: 480px ) {
+				.attendance_type_wrapper label{
+					font-size: 27px!important;
+				}
+				.snks-period-label, .snks-period-price {
+					font-size: 17px!important;
+				}
+				
+			}
+			@media (max-width: 360px) {
+				.consulting-form{
+					max-width: 280px;
+				}
+				
+			}
+
+			@media (min-width: 2100px) {
+				#teeth-area::before {
+					background-size: 100% calc(2vw + 15px);
+				}
+			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
@@ -95,6 +143,14 @@ add_action(
 				border-radius: 20px;
 				font-size: 13px;
 			}
+			.snks-period-price {
+				font-size: 14px;
+				border-top-left-radius: 0;
+				border-top-right-radius: 0;
+				border-bottom-right-radius: 10px;
+				border-bottom-left-radius: 10px;
+				padding: 3px 0 5px 0;
+			}
 			a.snks-button{
 				background-color: #024059!important;
 				color:#fff!important;
@@ -135,9 +191,8 @@ add_action(
 				width: 100%;
 				text-align: center;
 				display: flex;
+				font-size: 20px;
 				align-items: center;
-				justify-content: center;
-				font-weight: bold;
 			}
 			.attendance_type_wrapper label img{
 				margin: 0;
@@ -643,11 +698,11 @@ add_action(
 				flex-direction: column;
 				justify-content: center;
 				align-items: center;
-				padding: 5px;
+				padding: 10px 5px;
 				border-radius: 5px;
 				justify-content: space-between;
 				flex-direction: column;
-				font-size: 13px;
+				font-size: 16px;
 			}
 			.anony-day-radio input{
 				display: none;
@@ -948,7 +1003,7 @@ add_action(
 
 			.anony-accordion-header {
 				color: #000; /* White text */
-				padding: 15px;
+				padding: 6px;
 				font-size: 18px;
 				border: none;
 				width: 100%;
