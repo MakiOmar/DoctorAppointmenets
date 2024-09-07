@@ -129,7 +129,7 @@ add_shortcode(
 		$html .= snks_form_filter( $user_id );
 		$html .= '<div id="consulting-forms-container"></div>';
 		if ( current_user_can( 'manage_options' ) ) {
-			$html .= '<p>Please note that we have used EG as default country temporarily</p>';
+			//$html .= '<p>Please note that we have used EG as default country temporarily</p>';
 		}
 		return $html;
 	}
