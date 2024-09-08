@@ -560,7 +560,7 @@ function snks_get_edit_before_seconds( $doctor_settings ) {
 		default:
 			$base = 24;
 	}
-	return $number * $base * 3600;
+	return absint( $number ) * $base * 3600;
 }
 
 add_action(

@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_rewrite_rule() {
 	add_rewrite_rule( '^7jz/(\w+)/?', 'index.php?doctor_id=$matches[1]', 'top' );
-	add_rewrite_rule( '^org/(\w+)/(\d+)/?', 'index.php?term_id=$matches[2]', 'top' );
+	add_rewrite_rule( '^org/(\w+)/(\d+)/?', 'index.php?org=$matches[1]&term_id=$matches[2]', 'top' );
 }
 add_action( 'init', 'snks_rewrite_rule' );
 
@@ -25,6 +25,7 @@ add_filter(
 	function ( $query_vars ) {
 		$query_vars[] = 'doctor_id';
 		$query_vars[] = 'term_id';
+		$query_vars[] = 'org';
 		return $query_vars;
 	}
 );
@@ -50,7 +51,7 @@ add_action(
 	function () {
 		global $wp;
 		//phpcs:disable
-		if ( strpos( $_SERVER['REQUEST_URI'], '7jz' ) !== false && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
+		if ( false !== strpos( $_SERVER['REQUEST_URI'], '7jz' ) && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
 			//wp_redirect( site_url() );
 			//exit;
 		}

@@ -134,6 +134,31 @@ function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
 		echo '</div>';
 	}
 }
+
+/**
+ * Render periods filter
+ *
+ * @param int    $user_id User's ID.
+ * @param string $attendance_type Attendance type.
+ * @return void
+ */
+function snks_listing_periods( $user_id, $attendance_type = 'both' ) {
+	$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
+	$country           = 'EG';
+	$pricings          = snks_doctor_pricings( $user_id );
+	if ( is_array( $avialable_periods ) ) {
+		echo '<div class="anony-padding-10 anony-flex flex-h-center  flex-v-center anony-full-width">';
+		foreach ( $avialable_periods as $period ) {
+			$price = get_price_by_period_and_country( $period, $country, $pricings );
+			?>
+			<span class="anony-grid-col hacen_liner_print-outregular anony-flex flex-h-center flex-v-center anony-padding-5 anony-margin-5" style="background-color:#fff;border-radius:25px;width: 120px;font-size: 18px;">
+				<?php printf( '%1$s %2$s | %3$s %4$s', esc_html( $period ), 'د', esc_html( $price ), 'ج.م' ); ?>
+			</span>
+			<?php
+		}
+		echo '</div>';
+	}
+}
 /**
  * Render form filter
  *

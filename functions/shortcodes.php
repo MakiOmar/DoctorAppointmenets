@@ -134,3 +134,41 @@ add_shortcode(
 		return $html;
 	}
 );
+
+/**
+ * Renders divider
+ *
+ * @param  string $atts the shortcode attributes.
+ * @return string
+ */
+function anony_divider_shcode( $atts ) {
+	$atts = shortcode_atts(
+		array(
+			'style'        => 'default',
+			'thickness'    => '1px',
+			'width'        => '100%',
+			'color'        => '#000000',
+			'border-style' => 'solid',
+			'height'       => '20px',
+			'align'        => 'center',
+			'justify'      => 'flex-start',
+		),
+		$atts,
+		'anony_divider'
+	);
+
+	return sprintf(
+		'<div style="height:%2$s;display:flex;align-items:%6$s;justify-content:%7$s">
+		<span style="display:block; border-bottom:%3$s %4$s %5$s;width:%1$s;"></span>
+		</div>',
+		$atts['width'],
+		$atts['height'],
+		$atts['thickness'],
+		$atts['border-style'],
+		$atts['color'],
+		$atts['align'],
+		$atts['justify']
+	);
+}
+
+add_shortcode( 'anony_divider', 'anony_divider_shcode' );

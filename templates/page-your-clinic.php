@@ -23,11 +23,14 @@ $user_details = snks_user_details( $user_id );
 			$profile_image = get_user_meta( $user_id, 'profile-image', true );
 			if ( empty( $profile_image ) ) {
 				$profile_image = '/wp-content/uploads/2024/08/portrait-3d-male-doctor_23-2151107083.avif';
+			} elseif ( is_numeric( $profile_image ) ) {
+				$profile_image_src = wp_get_attachment_image_src( absint( $profile_image ), 'full' );
+				$profile_image     = $profile_image_src[0];
 			}
 			?>
 		<div class="snks-profile-image-wrapper">
 			<img src="/wp-content/uploads/2024/09/head1.png" id="head1" class="shap-head">
-			<img src="/wp-content/uploads/2024/09/head1.png" id="head2" class="shap-head">
+			<img src="/wp-content/uploads/2024/09/head3.png" id="head2" class="shap-head">
 			<img src="/wp-content/uploads/2024/09/head-2.png" id="head3" class="shap-head">
 			<div class="snks-tear-shap-wrapper">
 				<div class="snks-tear-shap">

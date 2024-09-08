@@ -9,6 +9,9 @@ namespace Jet_Form_Builder\Generators;
 
 defined( 'ABSPATH' ) || die();
 
+if ( ! class_exists( 'Jet_Form_Builder\Generators\Base' ) ) {
+	return;
+}
 /**
  * Get clinics
  *

@@ -26,6 +26,13 @@ add_action(
 				}
 				<?php
 			}
+			if ( ! is_page( 'switch-user' ) ) {
+				?>
+				.wpcsa-bar{
+					display: none;
+				}
+				<?php
+			}
 			?>
 
 			#teeth-area {
@@ -938,6 +945,14 @@ add_action(
 				margin-top: 50px;
 				transform: rotate(45deg);
 			}
+			.snks-org-doctors-container .snks-tear-shap-wrapper{
+				width: 150px;
+					height: 150px;
+			}
+			.snks-org-doctors-container .snks-tear-shap.sub {
+				top: 5px;
+				box-shadow: none;
+			}
 			.snks-tear-shap{
 				width: 100%;
 				height: 100%;
@@ -957,10 +972,27 @@ add_action(
 				height: 203px;
 				width: 203px;
 			}
+			.snks-listing-periods{
+				border-bottom: 1px solid #fff;
+			}
+			.snks-doctor-listing{
+				overflow: hidden;
+				padding-bottom: 50px;
+			}
+			.snks-doctor-listing .snks-listing-periods > div {
+				display: flex;
+				flex-direction: column;
+			}
+			.snks-doctor-listing .snks-listing-periods > div .period_wrapper, .snks-doctor-listing .snks-listing-periods > div .period_wrapper label{
+				display: flex;
+				flex-direction: row;
+				width: 100%!important;
+			}
 			.snks-profile-image-wrapper{
 				position: relative;
 				max-width: 350px;
 				margin: auto;
+				text-align: center;
 			}
 			#head1{
 				top: -40px;

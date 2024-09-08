@@ -76,3 +76,19 @@ function anony_query_related_children( $object_id, $rel_id, $separate_table = fa
 
 	return anony_get_related_objects( $cache_key, 'child_object_id', 'parent_object_id', $object_id, $rel_id, $separate_table );
 }
+
+/**
+ * Query related parent
+ *
+ * @param int     $object_id Object ID.
+ * @param int     $rel_id relation ID.
+ * @param boolean $separate_table if data is stored in separate table.
+ * @return array
+ */
+function anony_query_related_parent( $object_id, $rel_id, $separate_table = false ) {
+	global $wpdb;
+
+	$cache_key = 'anony_get_related_parent_' . $object_id;
+
+	return anony_get_related_objects( $cache_key, 'parent_object_id', 'child_object_id', $object_id, $rel_id, $separate_table );
+}
