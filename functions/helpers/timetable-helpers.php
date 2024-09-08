@@ -208,6 +208,38 @@ function snks_get_closest_timetable( $user_id ) {
 }
 
 /**
+ * Check if a doctor has timetable
+ *
+ * @param string $user_id User's ID.
+ * @return bool
+ */
+function snks_has_timetable( $user_id ) {
+	global $wpdb;
+	// Generate a unique cache key.
+	$cache_key = 'snks_has_timetable_' . $user_id;
+
+	$results = wp_cache_get( $cache_key );
+
+	if ( false === $results ) {
+		//phpcs:disable
+		// Execute the query.
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+				WHERE user_id = %s
+				AND date_time > NOW()
+				LIMIT 1",
+				$user_id
+			)
+		);
+		//phpcs:enable
+		wp_cache_set( $cache_key, $results, '', 3600 );
+	}
+
+	return $results;
+}
+
+/**
  * Will close other timetables if one of the same datetime is booked
  *
  * @param object $booked_timetable Booked timetable.
