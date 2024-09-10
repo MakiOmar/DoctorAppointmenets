@@ -74,6 +74,27 @@ function snks_get_available_periods( $user_id = false, $attendance_type = 'both'
 	return $is_available;
 }
 /**
+ * Get doctor's periods
+ *
+ * @param int    $user_id User's ID.
+ * @return array
+ */
+function snks_get_periods( $user_id = false ) {
+	$settings     = snks_doctor_settings( $user_id );
+	$is_available = array();
+	if ( ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) ) {
+		$is_available[] = 60;
+	}
+	if ( ( 'on' === $settings['45_minutes'] || 'true' === $settings['45_minutes'] ) ) {
+		$is_available[] = 45;
+	}
+	if ( ( 'on' === $settings['30_minutes'] || 'true' === $settings['30_minutes'] ) ) {
+		$is_available[] = 30;
+	}
+	sort( $is_available );
+	return $is_available;
+}
+/**
  * Check if a doctor has sessions of type.
  *
  * @param int    $user_id User's ID.
@@ -154,7 +175,7 @@ function snks_get_available_periods_options() {
  * @return array
  */
 function snks_get_periods_possibilities() {
-	$array        = snks_get_available_periods();
+	$array        = snks_get_periods();
 	$combinations = array();
 	$array_count  = count( $array );
 		// Generate all possible combinations.

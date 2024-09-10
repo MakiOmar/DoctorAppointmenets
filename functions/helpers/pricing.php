@@ -52,7 +52,7 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
  * @return array
  */
 function snks_doctor_pricings( $user_id ) {
-	$available_periods = snks_get_available_periods( $user_id );
+	$available_periods = snks_get_periods( $user_id );
 	$pricings          = array();
 	foreach ( $available_periods as $period ) {
 		$pricings[ $period ] = array(
