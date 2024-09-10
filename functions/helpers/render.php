@@ -143,10 +143,10 @@ function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
  * @return void
  */
 function snks_listing_periods( $user_id, $attendance_type = 'both' ) {
-	$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
+	$avialable_periods = snks_get_periods( $user_id );
 	$country           = 'EG';
 	$pricings          = snks_doctor_pricings( $user_id );
-	if ( is_array( $avialable_periods ) ) {
+	if ( ! empty( $pricings ) && is_array( $avialable_periods ) ) {
 		echo '<div class="anony-padding-10 anony-flex flex-h-center  flex-v-center anony-full-width">';
 		foreach ( $avialable_periods as $period ) {
 			$price = get_price_by_period_and_country( $period, $country, $pricings );
