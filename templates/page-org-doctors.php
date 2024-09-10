@@ -76,32 +76,38 @@ if ( $org ) {
 							<div class="snks-listing-periods anony-full-width">
 								<?php snks_listing_periods( $user_id ); ?>
 							</div>
-							<?php if ( is_array( $closest_appointment ) && ! empty( $closest_appointment ) ) { ?>
 							<div class="snks-listing-closest-date anony-full-width anony-center-text">
 								<h5 class="hacen_liner_print-outregular snks-white-text anony-padding-10">أول موعد متاح للحجز</h5>
-								<span class="anony-grid-col hacen_liner_print-outregular anony-flex anony-flex-column flex-h-center flex-v-center anony-padding-10 anony-margin-5" style="background-color:#fff;border-radius:25px;font-size: 17px;width: 160px;margin: auto;">
+								<span class="anony-grid-col hacen_liner_print-outregular anony-flex anony-flex-column flex-h-center flex-v-center anony-padding-10 anony-margin-5" style="background-color:#fff;border-radius:25px;font-size: 17px;width: 160px;margin: auto;height: 85px;">
+									<?php if ( is_array( $closest_appointment ) && ! empty( $closest_appointment ) ) { ?>
 									<span>
-									<?php
-									printf(
-										'%1$s | %2$s',
-										esc_html( $days_labels[ $closest_appointment[0]->day ] ),
-										esc_html( gmdate( 'Y-m-d', strtotime( $closest_appointment[0]->date_time ) ) )
-									);
-									?>
+										<?php
+
+										printf(
+											'%1$s | %2$s',
+											esc_html( $days_labels[ $closest_appointment[0]->day ] ),
+											esc_html( gmdate( 'Y-m-d', strtotime( $closest_appointment[0]->date_time ) ) )
+										);
+										?>
 									</span>
+
 									<div class="main_color_bg anony-margin-5" style="width:100%;height:2px;"></div>
+
 									<span>
-									<?php
-									printf(
-										'%1$s %2$s',
-										'الساعة',
-										esc_html( snks_localized_time( $closest_appointment[0]->starts ) ),
-									);
-									?>
+										<?php
+											printf(
+												'%1$s %2$s',
+												'الساعة',
+												esc_html( snks_localized_time( $closest_appointment[0]->starts ) ),
+											);
+										?>
 									</span>
+										<?php
+									} else {
+										echo 'غير متاح'; }
+									?>
 								</span>
 							</div>
-							<?php } ?>
 							<div style="background-color:#fff;width:100%;height:2px;margin:20px 0"></div>
 							<a href="<?php echo esc_url( $doctor_url ); ?>" class="main_color_text anony-flex anony-full-width anony-padding-3 flex-h-center" style="background-color:#fff;border-radius:25px;font-size: 18px;">إحجز موعد</a>
 						</div>
