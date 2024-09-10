@@ -129,7 +129,6 @@ add_action(
 						}, 1000); // Update the countdown every second (1000 milliseconds)
 					}
 				);
-				$('body').height( $(window).height() );
 
 				$('.doctor_actions').on(
 					'submit',
