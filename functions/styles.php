@@ -538,7 +538,10 @@ add_action(
 				flex: initial;
 			}
 			.jet-form-builder__desc{
-				text-align: right!important;
+				text-align: right;
+			}
+			.jet-form-builder-row{
+				position:relative
 			}
 			select {
 				color: #fff;
