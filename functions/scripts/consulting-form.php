@@ -247,6 +247,7 @@ add_action(
 					function() {
 						$('#consulting-forms-container').html('');
 						$('.periods_wrapper').html('');
+						var attendanceTypeClicked = $(this);
 						var attendanceType = $(this).val();
 						var doctor_id       = $('input[name=filter_user_id]').val();
 						var nonce           = '<?php echo esc_html( wp_create_nonce( 'get_periods_nonce' ) ); ?>';
@@ -259,6 +260,10 @@ add_action(
 								attendanceType: attendanceType,
 								doctor_id     : doctor_id,
 								action        : 'get_periods',
+							},
+							beforeSend: function() {
+								$('label').removeClass('snks-loading');
+								attendanceTypeClicked.prev('label').addClass('snks-loading');
 							},
 							success: function(response) {
 								var periods_wrapper = $('.periods_wrapper');
@@ -274,6 +279,9 @@ add_action(
 								$('html, body').animate({
 									scrollTop: periods_wrapper.offset().top
 								}, 1000);
+							},
+							complete: function() {
+								attendanceTypeClicked.prev('label').removeClass('snks-loading');
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);

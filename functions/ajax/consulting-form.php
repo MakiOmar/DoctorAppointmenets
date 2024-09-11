@@ -76,6 +76,7 @@ add_action( 'wp_ajax_nopriv_get_periods', 'get_periods_callback' );
  * @return void
  */
 function get_periods_callback() {
+
 	$_req = isset( $_POST ) ? wp_unslash( $_POST ) : array();
 	// Verify the nonce.
 	if ( isset( $_req['nonce'] ) && isset( $_req['doctor_id'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'get_periods_nonce' ) ) {
@@ -84,7 +85,7 @@ function get_periods_callback() {
 	$settings               = snks_doctor_settings( absint( $_req['doctor_id'] ) );
 	$doctor_attendance_type = $settings['attendance_type'];
 	if ( 'online' === $_req['attendanceType'] && ! in_array( $doctor_attendance_type, array( 'online', 'both' ), true ) ) {
-		echo '<p>عفواَ! الحجز أونلاين غير متاح حالياً</p>';
+		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 		die;
 	}
 
@@ -94,8 +95,9 @@ function get_periods_callback() {
 		//phpcs:enable
 		die;
 	}
+
 	//phpcs:disable
-	echo snks_periods_filter( $_req['doctor_id'] , $_req['attendanceType']);
+	snks_periods_filter( $_req['doctor_id'] , $_req['attendanceType']);
 	//phpcs:enable
 	die();
 }
