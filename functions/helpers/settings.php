@@ -76,7 +76,7 @@ function snks_get_available_periods( $user_id = false, $attendance_type = 'both'
 /**
  * Get doctor's periods
  *
- * @param int    $user_id User's ID.
+ * @param int $user_id User's ID.
  * @return array
  */
 function snks_get_periods( $user_id = false ) {
