@@ -114,7 +114,7 @@ function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
 	$country           = 'EG';
 	$pricings          = snks_doctor_pricings( $user_id );
 	$has_discount      = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
-	if ( is_array( $avialable_periods ) ) {
+	if ( is_array( $avialable_periods ) && ! empty( $avialable_periods ) ) {
 		echo '<div class="anony-padding-10 anony-flex anony-space-between anony-full-width anony-grid-row">';
 		foreach ( $avialable_periods as $period ) {
 			$discount_percent = snks_get_period_discount( $user_id, $period );
@@ -132,6 +132,8 @@ function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
 			<?php
 		}
 		echo '</div>';
+	} else {
+		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 	}
 }
 
@@ -407,7 +409,7 @@ function snks_render_doctor_clinics( $user_id = false ) {
 			$html .= snks_render_clinic( $clinic );
 		}
 	} else {
-		echo '<p>عفواً! لا توجد معلومات عن العيادات حالياَ.</p>';
+		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 	}
 	return $html;
 }
