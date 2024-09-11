@@ -11,12 +11,39 @@ get_header();
 global $wp;
 $org_slug = sanitize_text_field( $wp->query_vars['org'] );
 $org      = get_page_by_path( $org, OBJECT, 'organization' );
+$term     = get_term( $term_id );
+if ( is_wp_error( $term ) ) {
+	return;
+}
+
 if ( $org ) {
 	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
 	?>
 	<style>
 		header, footer{
 			display: none;
+		}
+		.snks-org-doctors-container{
+			border-right: 2px solid #fff;
+			border-left: 2px solid #fff;
+			overflow: hidden;
+		}
+		.snks-doctor-listing{
+			padding: 0!important;
+			position: relative;
+				top: -21px;
+		}
+		.snks-doctor-listing > div:nth-child(odd) {
+			border-left: 1px dashed #fff;
+		}
+		.snks-doctor-listing > div{
+			border-bottom: 1px dashed #fff;
+			padding-bottom: 50px;
+			flex-grow: 0;
+		}
+		.snks-doctor-listing,.snks-org-doctors-container{
+			max-width: 428px;
+			margin: auto;
 		}
 		.secondary_color_bg{
 			background-color: <?php echo esc_html( get_post_meta( $org->ID, 'secondary_color', true ) ); ?>!important
@@ -27,7 +54,7 @@ if ( $org ) {
 		.main_color_bg{
 			background-color: <?php echo esc_html( get_post_meta( $org->ID, 'main_color', true ) ); ?>!important
 		}
-		.main_color_text{
+		.main_color_text,.terms-condstions-text, .terms-condstions-text h2{
 			color: <?php echo esc_html( get_post_meta( $org->ID, 'main_color', true ) ); ?>!important
 		}
 		.snks-white-text{
@@ -37,12 +64,32 @@ if ( $org ) {
 	<?php echo do_shortcode( '[elementor-template id="3090"]' ); ?>
 	<div class="snks-org-doctors-container">
 			<div class="anony-flex flex-v center flex-h-center anony-padding-20 secondary_color_bg">
-				<?php echo get_the_post_thumbnail( $org->ID, 'thumbnail' ); ?>
+				<a href="/org/<?php echo esc_html( $org_slug ); ?>" style="display:block;height:150px">
+					<?php echo get_the_post_thumbnail( $org->ID, 'full' ); ?>
+				</a>
 			</div>
+			<h1 class="main_color_text" style="background-color: #fff;text-align:center;font-size:25px;position: relative;top: -8px;padding: 10px 0 12px 0;"><?php printf( 'حجز جلسات إشراف %s', esc_html( $term->name ) ); ?></h1>
 			<?php
 			$children_objects = anony_query_related_children( absint( $wp->query_vars['term_id'] ), 24 );
 			if ( ! empty( $children_objects ) ) {
-				$users = array_column( $children_objects, 'child_object_id' );
+				$users  = array_column( $children_objects, 'child_object_id' );
+				$orders = array();
+				foreach ( $users as $user_id ) {
+					$_order             = get_user_meta( $user_id, 'order_position', true );
+					$_order             = ! empty( $_order ) ? $_order : 0;
+					$orders[ $user_id ] = $_order;
+				}
+
+				// Sort the first array based on the values of the second array.
+				array_multisort(
+					array_map(
+						function ( $id ) use ( $orders ) {
+							return $orders[ $id ];
+						},
+						$users
+					),
+					$users
+				);
 				?>
 				<div class="snks-doctor-listing anony-grid-row main_color_bg anony-padding-10">
 					<?php
@@ -58,12 +105,12 @@ if ( $org ) {
 							$profile_image     = $profile_image_src[0];
 						}
 						?>
-						<div class="anony-grid-col anony-grid-col-4 anony-grid-col-av-6 anony-grid-col-lg-12 anony-padding-10">
+						<div class="anony-grid-col anony-grid-col-6 anony-padding-10">
 							<div class="snks-profile-image-wrapper">
-								<a href="<?php echo esc_url( $doctor_url ); ?>">
+								<a href="<?php echo esc_url( $doctor_url ); ?>" target="_blank">
 									<div class="snks-tear-shap-wrapper">
-										<div class="snks-tear-shap">
-											<img src="<?php echo esc_url( $profile_image ); ?>"/>
+										<div class="snks-tear-shap" style="background-image: url('<?php echo esc_url( $profile_image ); ?>');background-position: center;background-repeat: repeat;background-size: cover;">
+											<!--<img src="<?php echo esc_url( $profile_image ); ?>"/>-->
 										</div>
 										<div class="snks-tear-shap sub anony-box-shadow"></div>
 									</div>
@@ -71,7 +118,7 @@ if ( $org ) {
 							</div>
 		
 							<div class="profile-details">
-								<h1 class="kacstqurnkacstqurn snks-white-text" style="font-size:28px;"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
+								<h1 class="kacstqurnkacstqurn snks-white-text" style="font-size:18px;text-align:center"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
 							</div>
 							<div class="snks-listing-periods anony-full-width">
 								<?php snks_listing_periods( $user_id ); ?>
@@ -109,7 +156,7 @@ if ( $org ) {
 								</span>
 							</div>
 							<div style="background-color:#fff;width:100%;height:2px;margin:20px 0"></div>
-							<a href="<?php echo esc_url( $doctor_url ); ?>" class="main_color_text anony-flex anony-full-width anony-padding-3 flex-h-center" style="background-color:#fff;border-radius:25px;font-size: 18px;">إحجز موعد</a>
+							<a href="<?php echo esc_url( $doctor_url ); ?>" target="_blank" class="main_color_text anony-flex anony-full-width anony-padding-3 flex-h-center" style="background-color:#fff;border-radius:25px;font-size: 18px;">إحجز موعد</a>
 						</div>
 						<?php
 					}

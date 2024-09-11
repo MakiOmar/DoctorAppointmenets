@@ -29,7 +29,7 @@ $user_details = snks_user_details( $user_id );
 			}
 			?>
 		<div class="snks-profile-image-wrapper">
-			<img src="/wp-content/uploads/2024/09/head1.png" id="head1" class="shap-head">
+			<img src="/wp-content/uploads/2024/09/head1-1.png" id="head1" class="shap-head">
 			<img src="/wp-content/uploads/2024/09/head3.png" id="head2" class="shap-head">
 			<img src="/wp-content/uploads/2024/09/head-2.png" id="head3" class="shap-head">
 			<div class="snks-tear-shap-wrapper">
@@ -41,7 +41,7 @@ $user_details = snks_user_details( $user_id );
 		</div>
 		<div class="profile-details">
 			<h1 class="kacstqurnkacstqurn" style="font-size:28px;"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
-			<h2 style="font-size:25px;margin:0;margin-bottom:20px"><?php echo esc_html( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
+			<h2 style="font-size:25px;margin:0;margin-bottom:20px;text-align: center;"><?php echo wp_kses_post( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
 			<div class="snks-profile-accordion">
 				<?php
 				//phpcs:disable
@@ -58,7 +58,7 @@ $user_details = snks_user_details( $user_id );
 			</div>
 		</div>
 		<div class="snks-light-bg" style="display: flex;justify-content: center;padding: 10px;position:relative;">
-			<h3 style="font-size:25px">إحجز جلسة</h3>
+			<h3 style="font-size: 28px;padding-bottom: 3px;">إحجز جلسة</h3>
 		</div>
 
 		<div id="snks-booking-form" class="anony-grid-row" style="max-width: 960px;margin:auto;position: relative;">

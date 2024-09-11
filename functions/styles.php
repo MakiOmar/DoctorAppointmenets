@@ -33,6 +33,22 @@ add_action(
 				}
 				<?php
 			}
+
+			if ( strpos( $_SERVER['REQUEST_URI'], '/org/' ) !== false ) {
+				?>
+				body{
+					background-color: #481316!important;
+				}
+				<?php
+			}
+			
+			if ( strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false ) {
+				?>
+				body{
+					background-color: #024059!important;
+				}
+				<?php
+			}
 			?>
 
 			#teeth-area {
@@ -82,11 +98,6 @@ add_action(
 				
 			}
 
-			@media (min-width: 2100px) {
-				#teeth-area::before {
-					background-size: 100% calc(2vw + 15px);
-				}
-			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
@@ -940,6 +951,8 @@ add_action(
 				margin: auto;
 				background-color: #d9f4ff;
 				padding-top: 50px;
+				border-right: 2px solid #fff;
+					border-left: 2px solid #fff;
 			}
 			.snks-tear-shap-wrapper{
 				width: 200px;
@@ -1004,18 +1017,64 @@ add_action(
 			}
 			#head2{
 				bottom: -20px;
-				left: 0px;
+				left: -10px;
 				animation: moveUpDown2 2s infinite alternate; /* Animation properties */
 			}
 			#head3{
 				bottom: 50px;
-			right: 0px;
+			right: -10px;
 			animation: moveUpDown3 2s infinite alternate; /* Animation properties */
+			}
+			.snks-loading{
+				position: relative;
+				overflow: hidden;
+			}
+			.snks-loading::before{
+				content: '';
+				display: block;
+				position: absolute;
+				background-color: rgb(255,255,255,0.80);
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+			}
+			.snks-loading::after{
+				content: '';
+				display: block;
+				position: absolute;
+				background-color: rgb(255,255,255,0.80);
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+				margin: auto;
+				width: 40px;
+				height: 40px;
+				border: 2px solid #024059;
+				border-top: 0;
+				border-right: 0;
+				border-radius: 50%;
+				-webkit-animation:spin 1s linear infinite;
+				-moz-animation:spin 1s linear infinite;
+				animation:spin 1s linear infinite;
 			}
 			.shap-head{
 				position: absolute;
 				height: 77px;
 				transition: transform 1.5s ease-in-out;
+			}
+			@-moz-keyframes spin { 
+				100% { -moz-transform: rotate(360deg); } 
+			}
+			@-webkit-keyframes spin { 
+				100% { -webkit-transform: rotate(360deg); } 
+			}
+			@keyframes spin { 
+				100% { 
+					-webkit-transform: rotate(360deg); 
+					transform:rotate(360deg); 
+				} 
 			}
 			@keyframes moveUpDown1 {
 				0% {
