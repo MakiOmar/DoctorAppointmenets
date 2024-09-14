@@ -135,7 +135,7 @@ add_action(
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return;
 		}
-		$country = 'EG';
+		$country = snsk_ip_api_country();
 		$user_id = $session['_user_id'];
 		$period  = $session['_period'];
 		$price   = snks_calculated_price( $user_id, $country, $period );

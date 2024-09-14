@@ -97,6 +97,27 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				const phoneInput = $('input[name=phone]');
+				const countryCodeInput = $('input[name=country_code]');
+				const billingPhoneInput = $('input[name=billing-phone]');
+				function updateBillingPhone() {
+					var phone = phoneInput.val().trim();
+					var countryCode = countryCodeInput.val().trim();
+					console.log(phone,countryCode);
+					billingPhoneInput.val( countryCode + phone ).change();
+				}
+				// Set initial value on document ready
+				updateBillingPhone();
+				
+				$('input[name=phone]').on(
+					'input',
+					updateBillingPhone
+				);
+				$('input[name=country_code]').on(
+					'input',
+					updateBillingPhone
+				);
+
 				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
 				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');
 				$('<span class="snks-switcher-text switcher-no">لا</span>').insertBefore('#allow_appointment_change');
@@ -344,6 +365,35 @@ add_action(
 				);
 
 			} );
+		</script>
+		<?php
+	}
+);
+
+add_action(
+	'admin_footer',
+	function () {
+		?>
+		<script>
+			jQuery(document).ready(function($) {
+				$('.preview-holder').each(function() {
+					var url = $(this).attr('data-url-attr');
+					var id = $(this).attr('data-id-attr');
+					if (url !== '') {
+						$(this).wrap('<a href=\"' + url + '\" target=\"_blank\"></a>');
+						$('.centered', $(this)).html('<img src=\"' + url + '\">');
+					} else if (id !== '') {
+						$(this).wrap('<a href=\"' + id + '\" target=\"_blank\"></a>');
+						$('.centered', $(this)).html('<img src=\"' + id + '\">');
+					}
+					$(document).on(
+						'.cx-remove-image',
+						function(){
+							$(this).closest('.cx-image-wrap').html('');
+						}
+					);
+				});
+			});
 		</script>
 		<?php
 	}

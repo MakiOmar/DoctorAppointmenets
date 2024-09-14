@@ -18,6 +18,9 @@ add_shortcode(
 				'id'          => '',
 				'is-gallery'  => 'no',
 				'with-styles' => 'yes',
+				'width'       => '70px',
+				'height'      => '70px',
+				'style'       => 'default',
 			),
 			$atts
 		);
@@ -26,6 +29,24 @@ add_shortcode(
 		}
 		$id = $atts['id'];
 		ob_start();  ?>
+		<style>
+			#<?php echo esc_attr( $atts['id'] ); ?>-preview.anony-nice-uploader, .snks-tear-shap-wrapper{
+				width:<?php echo esc_attr( $atts['width'] ); ?>;
+				height:<?php echo esc_attr( $atts['height'] ); ?>;
+			}
+			<?php if ( 'one' === $atts['style'] ) { ?>
+				.anony-nice-uploader {
+					border: none!important;
+				}
+				.snks-profile-image-wrapper .has-preview.anony-nice-uploader::after {
+					bottom: auto;
+					left: auto;
+					margin: initial;
+					top: 5px;
+					right: 5px;
+				}
+			<?php } ?>
+		</style>
 		<?php if ( 'yes' === $atts['with-styles'] ) { ?>
 			<style>
 				.jet-gallery-remove {
@@ -56,8 +77,8 @@ add_shortcode(
 					
 				}
 				.anony-nice-uploader{
-					width:120px!important;
-					height:120px!important;
+					width:120px;
+					height:120px;
 					border:2px dashed #16b720;
 					background-color:#fff;
 					border-radius:10px;
@@ -85,8 +106,22 @@ add_shortcode(
 					left: 0;
 					margin: auto;
 				}
-				.has-preview.anony-nice-uploader::after, .jet-form-builder-file-upload{
+				.jet-form-builder-file-upload{
 					display:none!important;
+				}
+				.has-preview.anony-nice-uploader::after{
+					content:'';
+					background-image: url(https://jalsah.app/wp-content/uploads/2024/09/edit.png);
+					background-size: contain;
+					background-repeat: no-repeat;
+					background-position: center;
+					width: 35px;
+					height: 35px;
+					bottom: 3px;
+					left: 3px;
+					margin: initial;
+					top: auto;
+					right: auto;
 				}
 				.has-preview{
 					position: relative;
@@ -102,11 +137,31 @@ add_shortcode(
 			</style>
 		<?php } ?>
 		<?php
-		$current_avatar_url = '';
+		$current_avatar_url = apply_filters( str_replace( '-', '_', $atts['id'] ) . '_current_upload_url', '' );
+		if ( ! empty( $current_avatar_url ) ) {
+			$style = ' style="background-image:url(\'' . $current_avatar_url . '\')"';
+			$class = ' has-preview';
+		} else {
+			$style = '';
+			$class = '';
+		}
 		if ( 'no' === $atts['is-gallery'] ) {
+			//phpcs:disable
 			?>
-			<div id="<?php echo esc_attr( $atts['id'] ); ?>-preview" class="anony-nice-uploader anony-nice-uploader-trigger" data-target="<?php echo esc_attr( $atts['id'] ); ?>" data-current-avatar="<?php echo esc_url( $current_avatar_url ); ?>"></div>
+			<div class="snks-profile-image-wrapper <?php echo $atts['style']; ?>">
+				<?php if ( 'default' === $atts['style'] ) { ?>
+					<div id="<?php echo esc_attr( $atts['id'] ); ?>-preview" class="anony-nice-uploader anony-nice-uploader-trigger<?php echo $class; ?>"<?php echo $style; ?> data-target="<?php echo esc_attr( $atts['id'] ); ?>" data-current-avatar="<?php echo esc_url( $current_avatar_url ); ?>"></div>
+				<?php } elseif ( 'one' === $atts['style'] ) { ?>
+					<div class="snks-tear-shap-wrapper">
+						<div class="snks-tear-shap">
+							<div id="<?php echo esc_attr( $atts['id'] ); ?>-preview" class="anony-nice-uploader anony-nice-uploader-trigger<?php echo $class; ?>"<?php echo $style; ?> data-target="<?php echo esc_attr( $atts['id'] ); ?>" data-current-avatar="<?php echo esc_url( $current_avatar_url ); ?>"></div>
+						</div>
+						<div class="snks-tear-shap sub anony-box-shadow"></div>
+					</div>
+				<?php } ?>
+			</div>
 			<?php
+			//phpcs:enable
 			add_action(
 				'wp_footer',
 				function () use ( $id ) {

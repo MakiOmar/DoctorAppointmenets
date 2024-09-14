@@ -111,7 +111,7 @@ function snks_get_period_discount( $user_id, $period ) {
  */
 function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
 	$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
-	$country           = 'EG';
+	$country           = snsk_ip_api_country();
 	$pricings          = snks_doctor_pricings( $user_id );
 	$has_discount      = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
 	if ( is_array( $avialable_periods ) && ! empty( $avialable_periods ) ) {
@@ -146,7 +146,7 @@ function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
  */
 function snks_listing_periods( $user_id, $attendance_type = 'both' ) {
 	$avialable_periods = snks_get_periods( $user_id );
-	$country           = 'EG';
+	$country           = snsk_ip_api_country();
 	$pricings          = snks_doctor_pricings( $user_id );
 	if ( ! empty( $pricings ) && is_array( $avialable_periods ) ) {
 		echo '<div class="anony-padding-10 anony-flex flex-h-center  flex-v-center anony-full-width">';

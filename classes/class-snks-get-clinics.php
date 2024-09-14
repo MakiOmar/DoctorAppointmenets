@@ -59,6 +59,13 @@ class Snks_Get_Clinics extends Base {
 					'label' => $clinic['clinic_title'],
 				);
 			}
+		} else {
+			$result = array(
+				array(
+					'value' => '',
+					'label' => 'فضلاً قم بإضافة عيادات',
+				),
+			);
 		}
 
 		return $result;

@@ -140,6 +140,19 @@ add_filter(
 	10,
 	2
 );
+add_filter(
+	'profile_image_current_upload_url',
+	function () {
+		return get_user_meta( get_current_user_id(), 'profile-image', true );
+	}
+);
+add_filter(
+	'phone_value',
+	function () {
+		return get_user_meta( get_current_user_id(), 'billing_phone', true );
+	}
+);
+
 add_action(
 	'wp_footer',
 	function () {

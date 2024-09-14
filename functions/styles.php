@@ -41,7 +41,7 @@ add_action(
 				}
 				<?php
 			}
-			
+
 			if ( strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false ) {
 				?>
 				body{
@@ -49,8 +49,50 @@ add_action(
 				}
 				<?php
 			}
+			if ( strpos( $_SERVER['REQUEST_URI'], '/register' ) !== false ) {
+				?>
+				body{
+					background-color: #024059!important;
+				}
+				:where(.wp-block-columns.is-layout-flex) {
+					gap: 0px!important;
+				}
+				p {
+					margin-block-end:0 !important;
+				}
+				<?php
+			}
 			?>
-
+			.width-280{
+				width: 280px;
+				margin:auto;
+			}
+			.positioned-mark .jet-form-builder__required{
+				left: 60px!important;
+			}
+			.jet-fancy-upload .jet-form-builder__label-text{
+				font-size: 18px;
+			}
+			.jet-fancy-upload .jet-form-builder__label-text .jet-form-builder__required{
+				font-size: 26px;
+			}
+			.jet-fancy-upload .jet-form-builder__heading .jet-form-builder__label-text{
+				font-size: 22px;
+				color: #fff;
+				text-align: center;
+			}
+			.jet-fancy-upload .field-type-media-field{
+				padding: 0!important;
+			}
+			.jet-fancy-upload .jet-form-builder-row{
+				position: static;
+			}
+			.jet-fancy-upload.jet-form-builder-row{
+				position: relative;
+			}
+			.relative-column{
+				position: relative;
+			}
 			#teeth-area {
 				overflow: hidden;
 				position: absolute;
@@ -88,7 +130,10 @@ add_action(
 				}
 				
 			}
-			@media (max-width: 360px) {
+			@media (max-width: 400px) {
+				.attendance_type_wrapper label{
+					font-size: 19px!important;
+				}
 				.consulting-form{
 					max-width: 280px;
 				}
@@ -945,6 +990,10 @@ add_action(
 					left: 40%
 				}
 			}
+			#billing-phone{
+				direction: ltr;
+					text-align: left;
+			}
 			#snks-booking-page{
 				overflow: hidden;
 				max-width: 428px;
@@ -977,6 +1026,7 @@ add_action(
 				transform: rotate(-45deg);
 				overflow: hidden;
 				background-color: #fff;
+				display: flex;
 			}
 			.snks-tear-shap.sub{
 				position: absolute;

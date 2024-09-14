@@ -249,6 +249,57 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
 	);
 	return wp_mail( $to, $subject, $message, $headers );
 }
+
+/**
+ * Get country code
+ *
+ * @return string
+ */
+function snsk_ip_api_country() {
+	// Check if the country code is already stored in a cookie.
+	if ( isset( $_COOKIE['country_code'] ) ) {
+		return sanitize_text_field( wp_unslash( $_COOKIE['country_code'] ) ); // Return the cached country code.
+	}
+	// Return a default value or handle errors as needed.
+	return 'Unknown';
+}
+
+add_action(
+	'template_redirect',
+	function () {
+		// Check if the country code is already stored in a cookie.
+		if ( ! isset( $_COOKIE['country_code'] ) ) {
+			//phpcs:disable.
+			// Get the user's IP address.
+			$ip = $_SERVER['REMOTE_ADDR'];
+			//phpcs:enable.
+
+			// API key and URL for IP lookup.
+			$api_key = 'yBZHxURnxnHhONq';
+			$api_url = "https://pro.ip-api.com/php/$ip?key=$api_key&fields=countryCode";
+
+			// Send request to the IP API using wp_remote_get.
+			$response = wp_remote_get( $api_url );
+			// Check for errors and validate the response.
+			if ( ! is_wp_error( $response ) ) {
+				// Retrieve the response body.
+				$body = wp_remote_retrieve_body( $response );
+				// Check if the body is not empty and contains serialized data.
+				if ( ! empty( $body ) ) {
+					$data = @unserialize( $body );
+
+					// Check if the country code is present.
+					if ( $data && isset( $data['countryCode'] ) ) {
+						$country_code = $data['countryCode'];
+						// Store the country code in a cookie for 24 hours.
+						setcookie( 'country_code', $country_code, time() + 86400, '/' ); // 86400 seconds = 1 day.
+					}
+				}
+			}
+		}
+	}
+);
+
 /**
  * Get doctor's url
  *

@@ -193,7 +193,7 @@ add_action(
 			$diff_seconds    = snks_diff_seconds( $booking );
 			$order_id        = $booking->order_id;
 			$main_order      = wc_get_order( $order_id );
-			$country         = 'EG';
+			$country         = snsk_ip_api_country();
 			$price           = snks_calculated_price( $new_booking->user_id, $country, $new_booking->period );
 			$change_fees     = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
 			$will_pay        = $price - ( ( $change_fees / 100 ) * $price );
