@@ -106,9 +106,10 @@ add_action(
 					console.log(phone,countryCode);
 					billingPhoneInput.val( countryCode + phone ).change();
 				}
-				// Set initial value on document ready
-				updateBillingPhone();
-				
+				if ( $('input[name=billing-phone]').val() === '' ) {
+					// Set initial value on document ready
+					updateBillingPhone();
+				}
 				$('input[name=phone]').on(
 					'input',
 					updateBillingPhone

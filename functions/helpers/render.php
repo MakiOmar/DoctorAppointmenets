@@ -954,8 +954,13 @@ function snks_render_sessions_listing( $tense ) {
 function snks_get_doctor_experiences( $user_id ) {
 	$user_details = snks_user_details( $user_id );
 	$output       = '';
-	if ( ! empty( $user_details['about-me'] ) ) {
-		$output .= '<div class="snks-about-me hacen_liner_print-outregular">' . $user_details['about-me'] . '</div>';
+	if ( ! empty( maybe_unserialize( $user_details['about-me'] ) ) ) {
+		$arr     = array_column( maybe_unserialize( $user_details['about-me'] ), 'experience' );
+		$output .= '<ul class="snks-about-me hacen_liner_print-outregular">';
+		foreach ( $arr as $exp ) {
+			$output .= '<li>' . wp_kses_post( $exp ) . '</li>';
+		}
+		$output .= '</ul>';
 	}
 	return $output;
 }
@@ -976,8 +981,8 @@ function anony_accordion( $data ) {
 					<?php
 					foreach ( $data as $item ) {
 						?>
-						<div class="anony-accordion-item anony-center-text">
-							<button class="anony-accordion-header">
+						<div class="anony-accordion-item">
+							<button class="anony-accordion-header anony-center-text">
 							<span style="position: relative;top: -2px;font-size:23px"><?php echo esc_html( $item['title'] ); ?></span> <span class="anony-accordion-icon"><span class="anony-arrow-down"></span></span>
 							</button>
 							<div class="anony-accordion-content">

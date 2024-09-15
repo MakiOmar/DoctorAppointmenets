@@ -49,6 +49,12 @@ add_shortcode(
 		</style>
 		<?php if ( 'yes' === $atts['with-styles'] ) { ?>
 			<style>
+				.snks-profile-image-wrapper.one .snks-profile-placeholder {
+					background-image: url('https://jalsah.app/wp-content/uploads/2024/09/profileplaceholder.png');
+					background-size: contain;
+					background-repeat: no-repeat;
+					background-position: center;
+				}
 				.jet-gallery-remove {
 					position: absolute;
 					left: 0;
@@ -109,7 +115,7 @@ add_shortcode(
 				.jet-form-builder-file-upload{
 					display:none!important;
 				}
-				.has-preview.anony-nice-uploader::after{
+				.has-preview.anony-nice-uploader::after, .snks-profile-image-wrapper.one .snks-profile-placeholder:after{
 					content:'';
 					background-image: url(https://jalsah.app/wp-content/uploads/2024/09/edit.png);
 					background-size: contain;
@@ -122,6 +128,18 @@ add_shortcode(
 					margin: initial;
 					top: auto;
 					right: auto;
+				}
+				.snks-profile-image-wrapper.one .snks-profile-placeholder:after{
+					background-image: url(https://jalsah.app/wp-content/uploads/2024/09/edit2.png);
+					bottom: auto;
+					left: auto;
+					margin: initial;
+					top: auto;
+					right: auto;
+					border: none;
+					border-radius: 0;
+					background-size: 70%;
+					background-color: transparent;
 				}
 				.has-preview{
 					position: relative;
@@ -154,7 +172,7 @@ add_shortcode(
 				<?php } elseif ( 'one' === $atts['style'] ) { ?>
 					<div class="snks-tear-shap-wrapper">
 						<div class="snks-tear-shap">
-							<div id="<?php echo esc_attr( $atts['id'] ); ?>-preview" class="anony-nice-uploader anony-nice-uploader-trigger<?php echo $class; ?>"<?php echo $style; ?> data-target="<?php echo esc_attr( $atts['id'] ); ?>" data-current-avatar="<?php echo esc_url( $current_avatar_url ); ?>"></div>
+							<div id="<?php echo esc_attr( $atts['id'] ); ?>-preview" class="anony-nice-uploader anony-nice-uploader-trigger<?php echo $class; ?><?php echo empty( $current_avatar_url ) ? ' snks-profile-placeholder' : '' ?>"<?php echo $style; ?> data-target="<?php echo esc_attr( $atts['id'] ); ?>" data-current-avatar="<?php echo esc_url( $current_avatar_url ); ?>"></div>
 						</div>
 						<div class="snks-tear-shap sub anony-box-shadow"></div>
 					</div>

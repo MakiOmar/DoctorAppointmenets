@@ -990,6 +990,9 @@ add_action(
 					left: 40%
 				}
 			}
+			.elementor-3363 #email{
+				text-align: left;
+			}
 			#billing-phone{
 				direction: ltr;
 					text-align: left;
@@ -1170,11 +1173,11 @@ add_action(
 				color:#024059
 			}
 			.snks-about-me{
-				padding: 20px 30px;
+				padding: 20px 50px;
 			}
-			.snks-about-me ul li {
+			.snks-about-me li {
 				margin-bottom: 15px;
-				font-size: 20px;
+				font-size: 22px;
 				text-align: justify;
 			}
 			.anony-arrow-down {
@@ -1228,7 +1231,35 @@ add_action(
 				max-height: 0;
 				transition: all 0.3s ease;
 			}
-
+			.certificates-repeater .jet-form-builder-repeater__row-remove {
+				position: relative;
+				top: auto;
+				left: auto;
+			}
+			.certificates-repeater .jet-form-builder-repeater__row {
+				background-color: #fff;
+			}
+			.certificates-repeater .text-field {
+				background-color: #c0c0c0;
+				border: 0;
+			}
+			.certificates-repeater .field-type-text-field{
+				width: 325px;
+				margin-right: 28px;
+			}
+			.certificates-repeater .field-type-text-field .jet-form-builder__field-wrap::before{
+				content:'';
+				position: absolute;
+				display: block;
+				width:20px;
+				height: 100%;
+				background-color: #024059;
+				border-radius: 2px;
+				right: -28px;
+			}
+			.certificates-repeater .jet-form-builder-repeater__row {
+				margin-top: 0px !important;
+			}
 			.anony-accordion-content p {
 				margin: 15px 0;
 				line-height: 1.5;

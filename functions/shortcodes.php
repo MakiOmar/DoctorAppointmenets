@@ -200,11 +200,19 @@ function phone_input_cb( $atts ) {
 			box-sizing: border-box;
 			margin-bottom: 5px;
 		}
+		button.anony_dial_codes_selected_choice{
+			min-width:100px;
+			height:47px;
+			padding:0 10px;
+			color: #000;
+			background-color: #ddd;
+		}
 	</style>
 	<?php } ?>
+	<label style="text-align: right;font-family: 'hacen_liner_print-outregular', Sans-serif;font-size: 20px;">رقم الموبايل</label>
 	<div class="anony-dial-codes">
 		<div class="anony-flex flex-v-center anony-full-width">
-			<button style="min-width:100px;height:47px;padding:0 10px" class="anony_dial_codes_selected_choice"></button>
+			<button class="anony_dial_codes_selected_choice"></button>
 			<input type="tel" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', apply_filters( str_replace( '-', '_', $atts['name'] . '_value' ), '' ) ) ); ?>"/>
 		</div>
 		<!-- Filter Input Box -->
@@ -215,6 +223,9 @@ function phone_input_cb( $atts ) {
 			$full_label = $country['flag'] . ' (<span style="direction="ltr"">' . $country['dial_code'] . '</span>) ' . $country['name_ar'];
 			$label      = $country['flag'] . ' (' . $country['dial_code'] . ')';
 			if ( $user_country_code === $country['country_code'] ) {
+				$first_choice   = $label;
+				$user_dial_code = $country['dial_code'];
+			} elseif ( $index < 1 ) {
 				$first_choice   = $label;
 				$user_dial_code = $country['dial_code'];
 			}
