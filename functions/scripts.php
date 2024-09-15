@@ -97,6 +97,11 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				setTimeout(function() {
+					if ( $('.jet-form-builder-repeater__items').html() == '' ) {
+						$('.jet-form-builder-repeater__new').trigger('click');
+					}
+				}, 100); // Adjust the delay as needed
 				const phoneInput = $('input[name=phone]');
 				const countryCodeInput = $('input[name=country_code]');
 				const billingPhoneInput = $('input[name=billing-phone]');
