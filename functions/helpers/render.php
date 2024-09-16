@@ -954,8 +954,9 @@ function snks_render_sessions_listing( $tense ) {
 function snks_get_doctor_experiences( $user_id ) {
 	$user_details = snks_user_details( $user_id );
 	$output       = '';
-	if ( ! empty( maybe_unserialize( $user_details['about-me'] ) ) ) {
-		$arr     = array_column( maybe_unserialize( $user_details['about-me'] ), 'experience' );
+	$about_me     = maybe_unserialize( $user_details['about-me'] );
+	if ( ! empty( $about_me ) && is_array( $about_me ) ) {
+		$arr     = array_column( $about_me, 'experience' );
 		$output .= '<ul class="snks-about-me hacen_liner_print-outregular">';
 		foreach ( $arr as $exp ) {
 			$output .= '<li>' . wp_kses_post( $exp ) . '</li>';

@@ -905,3 +905,142 @@ add_action(
 	},
 	0
 );
+/**
+ * Colors form
+ *
+ * @return void
+ */
+function snks_clinic_colors_form() {
+	$images         = range( 1, 20 );
+	$clinic_color   = get_user_meta( get_current_user_id(), 'clinic_colors', true );
+	$image_base_url = '/wp-content/uploads/2024/09';
+	$nonce          = wp_create_nonce( 'clinic_colors_nonce' ); // Generate a nonce for validation.
+
+	// HTML form with inline script for AJAX.
+	//phpcs:disable
+	?>
+	<form id="clinic-colors-form">
+		<div class="clinic-colors-grid">
+			<?php foreach ( $images as $image ) : ?>
+				<div class="clinic-color-item">
+					<input type="radio" name="clinic_color" id="color-<?php echo $image; ?>" value="<?php echo $image; ?>" hidden>
+					<label for="color-<?php echo $image; ?>">
+						<img src="<?php echo esc_url( $image_base_url . "/$image.png" ); ?>" alt="Color <?php echo $image; ?>" class="clinic-color-image<?php echo $image == absint( $clinic_color ) ? ' selected' : '' ?>">
+					</label>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		<button class="anony-full-width" type="submit" name="submit_clinic_color">حفظ</button>
+		<div id="clinic-colors-response"></div> <!-- Response message container -->
+	</form>
+
+	<style>
+		#clinic-colors-form button{
+			margin-top: 20px;
+			border-radius: 5px;
+		}
+		.clinic-colors-grid {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 10px;
+		}
+		.clinic-color-item {
+			text-align: center;
+		}
+		.clinic-color-image {
+			cursor: pointer;
+			max-width: 100px;
+			max-height: 100px;
+			border: 2px solid transparent;
+			transition: border-color 0.3s;
+		}
+		input[type="radio"]:checked + label .clinic-color-image {
+			border-color: #0073aa; /* Highlight border color when selected */
+		}
+		.clinic-color-label input:checked + .clinic-color-image,
+        .clinic-color-image.selected {
+			border: 5px solid #716c6c!important;
+			border-radius: 50%;
+        }
+		.clinic-color-response {
+			text-align: center;
+			padding: 10px;
+			margin-top: 10px;
+			border-radius: 5px;
+		}
+		.clinic-color-response.success{
+			color:green;
+			border: 1px solid green;
+		}
+		.clinic-color-response.error{
+			color:red;
+			border: 1px solid red;
+		}
+	</style>
+
+	<script type="text/javascript">
+		jQuery(document).ready(function ($) {
+			$('#clinic-colors-form').on('submit', function (e) {
+				e.preventDefault();
+
+				const selectedColor = $('input[name="clinic_color"]:checked').val();
+				const nonce = '<?php echo $nonce; ?>'; // Nonce passed to the script
+
+				$.ajax({
+					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+					type: 'POST',
+					data: {
+						action: 'clinic_colors_submit',
+						clinic_color: selectedColor,
+						nonce: nonce
+					},
+					success: function (response) {
+						if (response.success) {
+							$('#clinic-colors-response').html('<p class="clinic-color-response success">' + response.data.message + '</p>');
+						} else {
+							$('#clinic-colors-response').html('<p class="clinic-color-response error">' + response.data.message + '</p>');
+						}
+					},
+					error: function () {
+						$('#clinic-colors-response').html('<p style="color: red;">حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.</p>');
+					}
+				});
+			});
+			$('input[name="clinic_color"]').on(
+				'change',
+				function(){
+					$('.clinic-color-image').removeClass('selected'); // Remove selected class from all images
+					$('input[name="clinic_color"]:checked').closest('.clinic-color-item').find('img').addClass('selected');
+				}
+			);
+		});
+	</script>
+	<?php
+}
+//phpcs:enable
+add_shortcode( 'clinic_colors_form', 'snks_clinic_colors_form' ); // Use [clinic_colors_form] shortcode to display the form.
+
+/**
+ * AJAX handler for saving the selected color
+ *
+ * @return void
+ */
+function handle_clinic_colors_ajax_submission() {
+	check_ajax_referer( 'clinic_colors_nonce', 'nonce' ); // Validate the nonce.
+
+	if ( ! isset( $_POST['clinic_color'] ) ) {
+		wp_send_json_error( array( 'message' => 'الرجاء اختيار اللون.' ) );
+	}
+
+	$selected_color = sanitize_text_field( wp_unslash( $_POST['clinic_color'] ) );
+	$user_id        = get_current_user_id();
+
+	if ( $user_id ) {
+		update_user_meta( $user_id, 'clinic_colors', $selected_color );
+		wp_send_json_success( array( 'message' => 'تم اختيار اللون وحفظه بنجاح!' ) );
+	} else {
+		wp_send_json_error( array( 'message' => 'خطأ: لم يقوم المستخدم بتسجيل الدخول.' ) );
+	}
+}
+add_action( 'wp_ajax_clinic_colors_submit', 'handle_clinic_colors_ajax_submission' );
+add_action( 'wp_ajax_nopriv_clinic_colors_submit', 'handle_clinic_colors_ajax_submission' );

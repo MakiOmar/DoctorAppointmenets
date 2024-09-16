@@ -169,3 +169,30 @@ add_action(
 	}
 );
 
+define(
+	'CLINICS_COLORS',
+	wp_json_encode(
+		array(
+			'color_1'  => array( '#dcf5ff', '#024059', '#012d3e' ),
+			'color_2'  => array( '#d9e7ff', '#022259', '#01183e' ),
+			'color_3'  => array( '#e2e9f5', '#182843', '#101b2e' ),
+			'color_4'  => array( '#eae2f5', '#2b1843', '#1d102e' ),
+			'color_5'  => array( '#e9d9fe', '#290259', '#1c013e' ),
+			'color_6'  => array( '#d9fdff', '#025459', '#013b3e' ),
+			'color_7'  => array( '#e4f3f4', '#1a3e40', '#122b2c' ),
+			'color_8'  => array( '#d9fff5', '#025942', '#013e2d' ),
+			'color_9'  => array( '#e2f5f0', '#184338', '#102e26' ),
+			'color_10' => array( '#f7ffd9', '#475902', '#475902' ),
+			'color_11' => array( '#f0f3e4', '#383f1c', '#272c13' ),
+			'color_12' => array( '#ffe4d9', '#591b02', '#3e1201' ),
+			'color_13' => array( '#f5e7e2', '#432418', '#2e1810' ),
+			'color_14' => array( '#fff7d9', '#594602', '#3e3001' ),
+			'color_15' => array( '#ffd9ec', '#59012e', '#3e0121' ),
+			'color_16' => array( '#f5e2e9', '#f5e2e9', '#f5e2e9' ),
+			'color_17' => array( '#ffd9f4', '#590240', '#3e012d' ),
+			'color_18' => array( '#f5e2ef', '#431837', '#2e1026' ),
+			'color_19' => array( '#f7d9ff', '#460259', '#30013e' ),
+			'color_20' => array( '#ececec', '#2d2d2d', '#1f1f1f' ),
+		)
+	)
+);

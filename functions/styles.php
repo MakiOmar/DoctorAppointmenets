@@ -17,6 +17,17 @@ add_action(
 		<style>
 			<?php
 			if ( isset( $wp->query_vars['doctor_id'] ) ) {
+				$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
+				$clinics_colors = json_decode( CLINICS_COLORS );
+				$light_color    = '#dcf5ff';
+				$dark_color     = '#024059';
+				$darker_color   = '#012d3e';
+				if ( ! empty( $clinic_color ) ) {
+					$clinic_colors = 'color_' . $clinic_color;
+					$light_color    = $clinics_colors->$clinic_colors[0];
+					$dark_color     = $clinics_colors->$clinic_colors[1];
+					$darker_color   = $clinics_colors->$clinic_colors[2];
+				}
 				?>
 				header, footer {
 					display: none;
@@ -97,7 +108,7 @@ add_action(
 			#teeth-area {
 				overflow: hidden;
 				position: absolute;
-				top: -30px;
+				top: -20px;
 				width: 100%;
 				height: 30px;
 			}
@@ -111,10 +122,11 @@ add_action(
 				bottom: -0.1vw;
 				left: -0.1vw;
 				right: -0.1vw;
-				top: -0.1vw;
-				background-size: 200% 15px;
-				background-position: 50% 100%;
-				background-image: url('data:image/svg+xml;charset=utf8, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 98 11" preserveAspectRatio="none"><path d="M98 10L97 0l-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10-1-10-1 10L9 0 8 10 7 0 6 10 5 0 4 10 3 0 2 10 1 0 0 10v1h98z" fill="%23024059"/></svg>');
+				top: 0;
+				background-size: cover;
+				background-position: bottom;
+				background-image: url('/wp-content/uploads/2024/09/teeth-2.png');
+				z-index: 9999;
 			}
 			.consulting-form{
 				max-width: 360px;
@@ -1002,10 +1014,44 @@ add_action(
 				overflow: hidden;
 				max-width: 428px;
 				margin: auto;
-				background-color: #d9f4ff;
+				background-color: <?php echo esc_html( $light_color ); ?>;
 				padding-top: 50px;
 				border-right: 2px solid #fff;
 					border-left: 2px solid #fff;
+			}
+			#snks-booking-page .periods_wrapper.snks-separator{
+				background-color: <?php echo esc_html( $light_color ); ?>!important;
+			}
+			#snks-booking-page .period_wrapper label span{
+
+			}
+			#snks-booking-page .anony-accordion-header, #snks-booking-page .periods_wrapper.snks-bg,#snks-booking-page .attendance_types_wrapper,
+			#snks-booking-page .snks-period-label.snks-light-bg::before,
+			#snks-booking-page #teeth-area,
+			#snks-booking-page .snks-bg,
+			#snks-booking-page .snks-available-hours li.available-time label,
+			#consulting-form-submit input[type=submit],
+			.elementor-2988 .elementor-element.elementor-element-48a78d3:not(.elementor-motion-effects-element-type-background), .elementor-2988 .elementor-element.elementor-element-48a78d3 > .elementor-motion-effects-container > .elementor-motion-effects-layer, .elementor-3023 .elementor-element.elementor-element-45f1e78:not(.elementor-motion-effects-element-type-background), .elementor-3023 .elementor-element.elementor-element-45f1e78 > .elementor-motion-effects-container > .elementor-motion-effects-layer,
+			.elementor-3023 .elementor-element.elementor-element-0f8e6b8:not(.elementor-motion-effects-element-type-background), .elementor-3023 .elementor-element.elementor-element-0f8e6b8 > .elementor-motion-effects-container > .elementor-motion-effects-layer{
+				background-color: <?php echo esc_html( $dark_color ); ?>!important;
+			}
+			#snks-booking-page .attendance_type_wrapper label, #snks-booking-page .period_wrapper label span{
+				background-color: <?php echo esc_html( $darker_color ); ?>!important;
+			}
+			#snks-booking-page .attendance_type_wrapper.active label, #snks-booking-page .period_wrapper label span{
+				color: <?php echo esc_html( $light_color ); ?>!important;
+			}
+			#snks-booking-page .snks-period-label.snks-light-bg::before,
+			.anony-day-radio label.active-day, input[type="submit"],
+			.profile-details h1, .profile-details h2, #snks-booking-page .snks-light-bg, #snks-booking-page .slick-prev::before, #snks-booking-page .slick-next::before{
+				color: <?php echo esc_html( $dark_color ); ?>!important;
+			}
+			#consulting-form-submit input[type=submit]{
+				color:#fff!important
+			}
+			#consulting-forms-container .snks-available-hours li.available-time.active-hour label{
+				background-color: #fff!important;
+				color: <?php echo esc_html( $dark_color ); ?>!important;
 			}
 			.snks-tear-shap-wrapper{
 				width: 200px;
@@ -1219,7 +1265,11 @@ add_action(
 				margin-bottom: 10px;
 				box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Softer shadow */
 			}
-
+			/*[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover {
+				color: #fff;
+				background-color: #182843!important;
+				text-decoration: none;
+			}*/
 			.anony-accordion-header {
 				color: #000; /* White text */
 				padding: 6px;
