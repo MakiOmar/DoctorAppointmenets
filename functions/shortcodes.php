@@ -143,6 +143,7 @@ function phone_input_cb( $atts ) {
 		array(
 			'name'        => 'phone',
 			'with-styles' => 'yes',
+			'target'      => '',
 		),
 		$atts,
 		'phone_input'
@@ -151,10 +152,19 @@ function phone_input_cb( $atts ) {
 	$countries  = json_decode( $countries, true );
 	$key_values = array_column( $countries, 'name_ar' );
 	array_multisort( $key_values, SORT_ASC, $countries );
-	$user_country_code = snsk_ip_api_country();
 
+	$user_country_code = snsk_ip_api_country();
+	$unique_id         = wp_unique_id( 'anony_' );
+	$current_phone     = apply_filters( 'anony_phone_input_' . str_replace( '-', '_', $atts['name'] . '_value' ), '' );
 	ob_start();
 	?>
+	<?php if ( '' !== $atts['target'] ) { ?>
+		<style>
+			input[name=<?php echo esc_attr( $atts['target'] ); ?>]{
+				display: none;
+			}
+		</style>
+	<?php } ?>
 	<?php if ( 'yes' === $atts['with-styles'] ) { ?>
 	<style>
 		.anony-dial-codes img.emoji {
@@ -169,6 +179,7 @@ function phone_input_cb( $atts ) {
 			display: flex;
 			direction: ltr;
 			text-align: left;
+			flex-grow: 1;
 		}
 		.anony-dial-codes-content {
 			display: none;
@@ -207,17 +218,21 @@ function phone_input_cb( $atts ) {
 			color: #000;
 			background-color: #ddd;
 		}
+		.anony-dial-codes-phone-label{
+			text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;;
+			font-size: 18px;
+		}
 	</style>
 	<?php } ?>
-	<label style="text-align: right;font-family: 'hacen_liner_print-outregular', Sans-serif;font-size: 20px;">رقم الموبايل</label>
-	<div class="anony-dial-codes">
+	<label class="anony-dial-codes-phone-label">رقم الموبايل</label>
+	<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
 		<div class="anony-flex flex-v-center anony-full-width">
 			<button class="anony_dial_codes_selected_choice"></button>
-			<input type="tel" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', apply_filters( str_replace( '-', '_', $atts['name'] . '_value' ), '' ) ) ); ?>"/>
+			<input type="tel" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
 		</div>
 		<!-- Filter Input Box -->
 		<div class="anony-dial-codes-content">
-		<input type="text" class="anony-filter-input hacen_liner_print-outregular" placeholder="إبحث عن الدولة..." onkeyup="filterDiallingCodes()">
+		<input type="text" class="anony-filter-input" placeholder="إبحث عن الدولة...">
 		<?php
 		foreach ( $countries as $index => $country ) {
 			$full_label = $country['flag'] . ' (<span style="direction="ltr"">' . $country['dial_code'] . '</span>) ' . $country['name_ar'];
@@ -239,27 +254,75 @@ function phone_input_cb( $atts ) {
 		<input type="text" style="display:none" name="country_code" class="anony_dial_code" id="<?php echo esc_attr( $atts['name'] ); ?>_country_code" value="<?php echo isset( $user_dial_code ) ? esc_attr( $user_dial_code ) : ''; ?>"/>
 		<div style="display:none" class="anony_dial_codes_first_choice"><?php echo isset( $first_choice ) ? wp_kses_post( $first_choice ) : ''; ?></div>
 	</div>
-	<script>
-		function filterDiallingCodes() {
-			const input = document.querySelector('.anony-filter-input');
-			const filter = input.value.toLowerCase();
-			const links = document.querySelectorAll('.anony-dialling-code');
-
-			links.forEach(link => {
-				if (link.textContent.toLowerCase().includes(filter)) {
-					link.parentElement.style.display = '';
-				} else {
-					link.parentElement.style.display = 'none';
-				}
-			});
-
-			// Show all links when the filter is empty
-			if (!filter) {
-				links.forEach(link => link.parentElement.style.display = '');
-			}
-		}
-	</script>
 	<?php
+	add_action(
+		'wp_footer',
+		function () use( $atts, $unique_id ) {
+			?>
+			<?php if ( ! empty( $atts['target'] ) ) { ?>
+				<script>
+					jQuery( document ).ready( function( $ ) {
+						$('input[name=<?php echo esc_attr( $atts['target'] ); ?>]').closest('.jet-form-builder-row').hide();
+						var parent = $( '#<?php echo esc_attr( $unique_id ); ?>' );
+						var phoneInput = $('input[name=<?php echo esc_attr( $atts['name'] ); ?>]', parent);
+						var countryCodeInput = $('input[name=country_code]', parent);
+			
+						var target = '<?php echo esc_html( $atts['target'] ); ?>';
+			
+						function updateBillingPhone( billingPhoneInput ) {
+							var phone = phoneInput.val().trim();
+							var countryCode = countryCodeInput.val().trim();
+							billingPhoneInput.val( countryCode + phone ).change();
+						}
+						if ( $('input[name=' + target + ']').val() === '' ) {
+							// Set initial value on document ready
+							updateBillingPhone( $('input[name=' + target + ']') );
+						}
+						phoneInput.on(
+							'input',
+							function(){
+								updateBillingPhone( $('input[name=' + target + ']') );
+							}
+						);
+						countryCodeInput.on(
+							'input',
+							function(){
+								updateBillingPhone( $('input[name=' + target + ']') );
+							}
+						);
+					} );
+				</script>
+			<?php } ?>
+			<script>
+				jQuery( document ).ready( function( $ ) {
+					var parent = $( '#<?php echo esc_attr( $unique_id ); ?>' );
+					$('.anony-filter-input', parent).on(
+						'keyup',
+						function () {
+							const filter = $(this).val().toLowerCase();
+							const links = $('.anony-dialling-code', parent);
+
+							links.each(function () {
+								const link = $(this);
+								if (link.text().toLowerCase().includes(filter)) {
+									link.parent().show();
+								} else {
+									link.parent().hide();
+								}
+							});
+
+							// Show all links when the filter is empty
+							if (!filter) {
+								links.parent().show();
+							}
+						}
+					);
+				} );
+				
+			</script>
+			<?php
+		}
+	);
 	return ob_get_clean();
 }
 

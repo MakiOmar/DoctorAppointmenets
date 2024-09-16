@@ -102,27 +102,6 @@ add_action(
 						$('.jet-form-builder-repeater__new').trigger('click');
 					}
 				}, 100); // Adjust the delay as needed
-				const phoneInput = $('input[name=phone]');
-				const countryCodeInput = $('input[name=country_code]');
-				const billingPhoneInput = $('input[name=billing-phone]');
-				function updateBillingPhone() {
-					var phone = phoneInput.val().trim();
-					var countryCode = countryCodeInput.val().trim();
-					console.log(phone,countryCode);
-					billingPhoneInput.val( countryCode + phone ).change();
-				}
-				if ( $('input[name=billing-phone]').val() === '' ) {
-					// Set initial value on document ready
-					updateBillingPhone();
-				}
-				$('input[name=phone]').on(
-					'input',
-					updateBillingPhone
-				);
-				$('input[name=country_code]').on(
-					'input',
-					updateBillingPhone
-				);
 
 				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
 				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');

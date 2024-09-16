@@ -33,8 +33,8 @@ add_action(
 				}
 				<?php
 			}
-
-			if ( strpos( $_SERVER['REQUEST_URI'], '/org/' ) !== false ) {
+			//phpcs:disable
+			if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/org/' ) !== false ) {
 				?>
 				body{
 					background-color: #481316!important;
@@ -42,14 +42,14 @@ add_action(
 				<?php
 			}
 
-			if ( strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false ) {
+			if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false ) {
 				?>
 				body{
 					background-color: #024059!important;
 				}
 				<?php
 			}
-			if ( strpos( $_SERVER['REQUEST_URI'], '/register' ) !== false ) {
+			if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/register' ) !== false ) {
 				?>
 				body{
 					background-color: #024059!important;
@@ -61,6 +61,7 @@ add_action(
 					margin-block-end:0 !important;
 				}
 				<?php
+				//phpcs:enable
 			}
 			?>
 			.width-280{
@@ -1191,7 +1192,26 @@ add_action(
 				max-width: 450px;
 				max-width: 600px;
 			}
-
+			#account-manager-phone{
+				display: flex;
+				justify-content: space-between;
+			}
+			#account-manager-phone > p, #account-manager-phone > label{
+				-webkit-box-flex: 0;
+				-ms-flex: 0 0 30%;
+				flex: 0 0 30%;
+				max-width: 30%;
+			}
+			#account-manager-phone .anony-dial-codes div:first-child input{
+				background-color: #b4b4b4;
+				margin-right: 5px;
+				margin-right: 5px;
+				border: 0;
+				width: 168px;
+			}
+			.anony-dial-codes-phone-label, .anony-filter-input{
+				font-family: "hacen_liner_print-outregular"!important
+			}
 			.anony-accordion-item {
 				background-color: #024059; /* White background for items */
 				border: 1px solid #E0E0E0; /* Light border */

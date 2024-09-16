@@ -147,9 +147,9 @@ add_filter(
 	}
 );
 add_filter(
-	'phone_value',
+	'anony_phone_input_temp_phone_value',
 	function () {
-		return get_user_meta( get_current_user_id(), 'billing_phone', true );
+		return get_user_meta( get_current_user_id(), 'clinic_manager_temp_phone', true );
 	}
 );
 
@@ -160,6 +160,12 @@ add_action(
 		<a class="trigger-error" href="#"></a>
 		<a class="trigger-sure" href="#"></a>
 		<?php
+		if ( is_page( 'profile' ) && snks_is_patient() ) {
+			?>
+			<input type="hidden" id="clinic_manager_temp_phone" value="<?php echo esc_attr( get_user_meta( get_current_user_id(), 'clinic_manager_temp_phone', true ) ); ?>">
+			<input type="hidden" id="clinic_manager_country_code" value="<?php echo esc_attr( get_user_meta( get_current_user_id(), 'clinic_manager_country_code', true ) ); ?>">
+			<?php
+		}
 	}
 );
 

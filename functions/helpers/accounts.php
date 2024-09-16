@@ -372,3 +372,135 @@ add_action(
 		die;
 	}
 );
+/**
+ * Delete user.
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param int $id       User ID.
+ * @return bool True when finished.
+ */
+function snks_wp_delete_user( $id ) {
+	global $wpdb;
+
+	if ( ! is_numeric( $id ) ) {
+		return false;
+	}
+
+	$id   = (int) $id;
+	$user = new WP_User( $id );
+
+	if ( ! $user->exists() ) {
+		return false;
+	}
+
+	$meta = $wpdb->get_col( $wpdb->prepare( "SELECT umeta_id FROM $wpdb->usermeta WHERE user_id = %d", $id ) );
+	foreach ( $meta as $mid ) {
+		delete_metadata_by_mid( 'user', $mid );
+	}
+
+	$wpdb->delete( $wpdb->users, array( 'ID' => $id ) );
+
+	clean_user_cache( $user );
+
+	return true;
+}
+add_action(
+	'jet-form-builder/custom-action/add_clinic_manager',
+	function ( $request ) {
+		$current_user_id = get_current_user_id();
+		// Sanitize input data.
+		$email                   = sanitize_email( $request['email'] );
+		$username                = sanitize_text_field( $request['phone'] ); // Use phone as username.
+		$password                = sanitize_text_field( $request['password'] );
+		$clinic_manager_email    = get_user_meta( $current_user_id, 'clinic_manager_email', true );
+		$clinic_manager_password = get_user_meta( $current_user_id, 'clinic_manager_password', true );
+		$clinic_manager_phone    = get_user_meta( $current_user_id, 'clinic_manager_phone', true );
+		if ( empty( $password ) && ! empty( $clinic_manager_password ) ) {
+			$password = sanitize_text_field( $clinic_manager_password );
+		}
+		if ( empty( $email ) && ! empty( $clinic_manager_email ) && is_email( $clinic_manager_email ) ) {
+			$clinic_manager = get_user_by( 'email', $email );
+			if ( $clinic_manager ) {
+				snks_wp_delete_user( $clinic_manager->ID );
+				delete_user_meta( $current_user_id, 'clinic_manager_email' );
+				delete_user_meta( $current_user_id, 'clinic_manager_phone' );
+				delete_user_meta( $current_user_id, 'clinic_manager_temp_phone' ); //phpcs:disable
+				delete_user_meta( $current_user_id, 'clinic_manager_country_code' );
+				delete_user_meta( $current_user_id, 'clinic_manager_password' );
+				delete_user_meta( $current_user_id, 'clinic_manager_id' );//phpcs:enable
+			}
+		}
+		// Validate email.
+		if ( ! is_email( $email ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'البريد الإلكتروني غير صحيح' );
+		}
+
+		// Check if username is unique.
+		if ( $clinic_manager_phone !== $username && username_exists( $username ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون موجود بالفعل' );
+		}
+
+		// Check if email is unique.
+		if ( $clinic_manager_email !== $email && email_exists( $email ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'البريد الإلكتروني موجود بالفعل' );
+		}
+
+		if ( empty( $clinic_manager_email ) ) {
+			// Create a new user if the email is unique.
+			$user_id = wp_create_user( $username, $password, $email );
+
+			// Check for errors in user creation.
+			if ( is_wp_error( $user_id ) ) {
+				throw new \Jet_Form_Builder\Exceptions\Action_Exception( wp_kses_post( $user_id->get_error_message() ) );
+			}
+			// Set the user role to 'clinic_manager'.
+			$clinic_manager = new WP_User( $user_id );
+			$clinic_manager->set_role( 'clinic_manager' );
+		} else {
+			$clinic_manager = get_user_by( 'email', $clinic_manager_email );
+			if ( $clinic_manager ) {
+				snks_wp_delete_user( $clinic_manager->ID );
+				// Create a new user if the email is unique.
+				$user_id = wp_create_user( $username, $password, $email );
+
+				// Check for errors in user creation.
+				if ( is_wp_error( $user_id ) ) {
+					throw new \Jet_Form_Builder\Exceptions\Action_Exception( wp_kses_post( $user_id->get_error_message() ) );
+				}
+				// Set the user role to 'clinic_manager'.
+				$clinic_manager = new WP_User( $user_id );
+				$clinic_manager->set_role( 'clinic_manager' );
+			}
+		}
+		if ( $clinic_manager ) {
+			// Set additional user meta.
+			update_user_meta( $user_id, 'billing_phone', $username ); // Save phone number as meta.
+
+			// Associate the new clinic manager with the current doctor.
+			update_user_meta( $current_user_id, 'clinic_manager_email', $email );
+			update_user_meta( $current_user_id, 'clinic_manager_phone', $username );
+			update_user_meta( $current_user_id, 'clinic_manager_temp_phone', $_POST['temp-phone'] ); //phpcs:disable
+			update_user_meta( $current_user_id, 'clinic_manager_country_code', $_POST['country_code'] );
+			update_user_meta( $current_user_id, 'clinic_manager_password', $password );
+			update_user_meta( $current_user_id, 'clinic_manager_id', $user_id );//phpcs:enable
+			update_user_meta( $user_id, 'clinic_doctor_id', $current_user_id );
+		}
+	}
+);
+
+/**
+ * Allow '+' character in WordPress usernames
+ */
+add_filter(
+	'sanitize_user',
+	function ( $username, $raw_username ) {
+		// Allow '+' character by defining allowed characters.
+		$username = preg_replace( '/[^a-zA-Z0-9._\-+]/', '', $raw_username );
+
+		return $username;
+	},
+	999,
+	2
+);
+
