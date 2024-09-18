@@ -145,6 +145,8 @@ function phone_input_cb( $atts ) {
 			'with-styles' => 'yes',
 			'target'      => '',
 			'hide_target' => 'yes',
+			'height'      => '37px',
+			'label_color' => '#000',
 		),
 		$atts,
 		'phone_input'
@@ -159,101 +161,111 @@ function phone_input_cb( $atts ) {
 	$current_phone     = apply_filters( 'anony_phone_input_' . str_replace( '-', '_', $atts['name'] . '_value' ), '' );
 	ob_start();
 	?>
-	<?php if ( '' !== $atts['target'] && 'yes' === $atts['hide_target'] ) { ?>
-		<style>
-			input[name=<?php echo esc_attr( 'yes' === $atts['hide_target'] ); ?>]{
+	<div id="phone_input_main_wrapper_<?php echo esc_attr( $atts['name'] ); ?>" class="phone_input_main_wrapper">
+	<style>
+		<?php if ( '' !== $atts['target'] && 'yes' === $atts['hide_target'] ) { ?>
+			input[name=<?php echo esc_attr( $atts['target'] ); ?>]{
 				display: none;
 			}
+		<?php } ?>
+		input[name="<?php echo esc_attr( $atts['name'] ); ?>"]{
+			height: <?php echo esc_html( $atts['height'] ); ?>!important;
+		}
+		#phone_input_main_wrapper_<?php echo esc_attr( $atts['name'] ); ?> .anony-dial-codes-phone-label{
+			color: <?php echo esc_attr( $atts['label_color'] ); ?>;
+		}
 		</style>
-	<?php } ?>
-	<?php if ( 'yes' === $atts['with-styles'] ) { ?>
-	<style>
-		.anony-dial-codes img.emoji {
-			position: relative;
-			top: 3px;
-		}
-		input.anony_dial_phone{
-			margin-<?php echo is_rtl() ? 'right' : 'left'; ?>: 0;
-		}
-		.anony-dial-codes {
-			position: relative;
-			display: flex;
-			direction: ltr;
-			text-align: left;
-			flex-grow: 1;
-		}
-		.anony-dial-codes-content {
-			display: none;
-			position: absolute;
-			background-color: #f1f1f1;
-			min-width: 160px;
-			max-height: 200px;
-			overflow-y: auto;
-			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-			z-index: 1;
-			max-width: 250px;
-				top: 55px;
-		}
-		.anony-dial-codes-content a {
-			color: black;
-			padding: 12px 16px;
-			text-decoration: none;
-			display: block;
-		}
-		.anony-dial-codes-content a:hover {
-			background-color: #ddd;
-		}
-		.anony-filter-input {
-			width: 100%;
-			max-width: 220px;
-			text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;
-			direction: <?php echo is_rtl() ? 'rtl' : 'ltr'; ?>;
-			padding: 10px;
-			box-sizing: border-box;
-			margin-bottom: 5px;
-		}
-		button.anony_dial_codes_selected_choice{
-			min-width:100px;
-			height:47px;
-			padding:0 10px;
-			color: #000;
-			background-color: #ddd;
-		}
-		.anony-dial-codes-phone-label{
-			text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;;
-			font-size: 18px;
-		}
-	</style>
-	<?php } ?>
-	<label class="anony-dial-codes-phone-label">رقم الموبايل</label>
-	<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
-		<div class="anony-flex flex-v-center anony-full-width">
-			<button class="anony_dial_codes_selected_choice"></button>
-			<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
-		</div>
-		<!-- Filter Input Box -->
-		<div class="anony-dial-codes-content">
-		<input type="text" class="anony-filter-input" placeholder="إبحث عن الدولة...">
-		<?php
-		foreach ( $countries as $index => $country ) {
-			$full_label = $country['flag'] . ' (<span style="direction="ltr"">' . $country['dial_code'] . '</span>) ' . $country['name_ar'];
-			$label      = $country['flag'] . ' (' . $country['dial_code'] . ')';
-			if ( $user_country_code === $country['country_code'] ) {
-				$first_choice   = $label;
-				$user_dial_code = $country['dial_code'];
-			} elseif ( $index < 1 ) {
-				$first_choice   = $label;
-				$user_dial_code = $country['dial_code'];
+		<?php if ( 'yes' === $atts['with-styles'] ) { ?>
+			<style>
+				.anony-dial-codes img.emoji {
+					position: relative;
+					top: 3px;
+				}
+				input.anony_dial_phone{
+					margin-<?php echo is_rtl() ? 'right' : 'left'; ?>: 0;
+				}
+				.anony-dial-codes {
+					position: relative;
+					display: flex;
+					direction: ltr;
+					text-align: left;
+					flex-grow: 1;
+				}
+				.anony-dial-codes-content {
+					display: none;
+					position: absolute;
+					background-color: #f1f1f1;
+					min-width: 160px;
+					max-height: 200px;
+					overflow-y: auto;
+					box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+					z-index: 1;
+					max-width: 250px;
+						top: 55px;
+				}
+				.anony-dial-codes-content a {
+					color: black;
+					padding: 12px 16px;
+					text-decoration: none;
+					display: block;
+				}
+				.anony-dial-codes-content a:hover {
+					background-color: #ddd;
+				}
+				.anony-filter-input {
+					width: 100%;
+					max-width: 220px;
+					text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;
+					direction: <?php echo is_rtl() ? 'rtl' : 'ltr'; ?>;
+					padding: 10px;
+					box-sizing: border-box;
+					margin-bottom: 5px;
+				}
+				button.anony_dial_codes_selected_choice{
+					min-width:100px;
+					height:47px;
+					padding:0 10px;
+					color: #000;
+					background-color: #ddd;
+				}
+				.anony-dial-codes-phone-label{
+					text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;;
+					font-size: 20px;
+					margin-bottom: 10px;
+					font-weight: bold;
+				}
+			</style>
+		<?php } ?>
+		<label class="anony-dial-codes-phone-label">رقم الموبايل *</label>
+		<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
+			<div class="anony-flex flex-v-center anony-full-width">
+				<button class="anony_dial_codes_selected_choice"></button>
+				<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
+			</div>
+			<!-- Filter Input Box -->
+			<div class="anony-dial-codes-content">
+			<input type="text" class="anony-filter-input" placeholder="إبحث عن الدولة...">
+			<?php
+			foreach ( $countries as $index => $country ) {
+				$full_label = $country['flag'] . ' (<span style="direction="ltr"">' . $country['dial_code'] . '</span>) ' . $country['name_ar'];
+				$label      = $country['flag'] . ' (' . $country['dial_code'] . ')';
+				if ( $user_country_code === $country['country_code'] ) {
+					$first_choice   = $label;
+					$user_dial_code = $country['dial_code'];
+				} elseif ( $index < 1 ) {
+					$first_choice   = $label;
+					$user_dial_code = $country['dial_code'];
+				}
+				echo '<span>';
+				echo '<a class="anony-dialling-code" href="#" data-dial-code="' . esc_attr( $country['dial_code'] ) . '">' . wp_kses_post( $full_label ) . '</a>';
+				echo '<a style="display:none" class="anony_selected_dial_code">' . wp_kses_post( $label ) . '</a>';
+				echo '</span>';
 			}
-			echo '<span>';
-			echo '<a class="anony-dialling-code" href="#" data-dial-code="' . esc_attr( $country['dial_code'] ) . '">' . wp_kses_post( $full_label ) . '</a>';
-			echo '<a style="display:none" class="anony_selected_dial_code">' . wp_kses_post( $label ) . '</a>';
-			echo '</span>';
-		}
-		?>
+			?>
+			</div>
+			<input type="text" style="display:none" name="country_code" class="anony_dial_code" id="<?php echo esc_attr( $atts['name'] ); ?>_country_code" value="<?php echo isset( $user_dial_code ) ? esc_attr( $user_dial_code ) : ''; ?>"/>
+			<div style="display:none" class="anony_dial_codes_first_choice"><?php echo isset( $first_choice ) ? wp_kses_post( $first_choice ) : ''; ?></div>
 		</div>
-		<input type="text" style="display:none" name="country_code" class="anony_dial_code" id="<?php echo esc_attr( $atts['name'] ); ?>_country_code" value="<?php echo isset( $user_dial_code ) ? esc_attr( $user_dial_code ) : ''; ?>"/>
-		<div style="display:none" class="anony_dial_codes_first_choice"><?php echo isset( $first_choice ) ? wp_kses_post( $first_choice ) : ''; ?></div>
 	</div>
 	<?php
 	add_action(
