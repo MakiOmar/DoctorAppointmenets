@@ -144,6 +144,7 @@ function phone_input_cb( $atts ) {
 			'name'        => 'phone',
 			'with-styles' => 'yes',
 			'target'      => '',
+			'hide_target' => 'yes',
 		),
 		$atts,
 		'phone_input'
@@ -158,9 +159,9 @@ function phone_input_cb( $atts ) {
 	$current_phone     = apply_filters( 'anony_phone_input_' . str_replace( '-', '_', $atts['name'] . '_value' ), '' );
 	ob_start();
 	?>
-	<?php if ( '' !== $atts['target'] ) { ?>
+	<?php if ( '' !== $atts['target'] && 'yes' === $atts['hide_target'] ) { ?>
 		<style>
-			input[name=<?php echo esc_attr( $atts['target'] ); ?>]{
+			input[name=<?php echo esc_attr( 'yes' === $atts['hide_target'] ); ?>]{
 				display: none;
 			}
 		</style>
@@ -262,7 +263,8 @@ function phone_input_cb( $atts ) {
 			<?php if ( ! empty( $atts['target'] ) ) { ?>
 				<script>
 					jQuery( document ).ready( function( $ ) {
-						$('input[name=<?php echo esc_attr( $atts['target'] ); ?>]').closest('.jet-form-builder-row').hide();
+						<?php do_action( 'phone_input_' . $atts['name'] . '_scripts', $atts ); ?>
+						<?php do_action( 'phone_input_scripts', $atts ); ?>
 						var parent = $( '#<?php echo esc_attr( $unique_id ); ?>' );
 						var phoneInput = $('input[name=<?php echo esc_attr( $atts['name'] ); ?>]', parent);
 						var countryCodeInput = $('input[name=country_code]', parent);
