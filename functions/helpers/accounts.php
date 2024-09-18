@@ -543,6 +543,68 @@ function custom_log_patient_in( $_request ) {
 }
 add_action( 'jet-form-builder/custom-action/log_patient_in', 'custom_log_patient_in', 10, 2 );
 
+
+use Jet_Form_Builder\Exceptions\Action_Exception;
+
+add_action( 'jet-form-builder/custom-action/proccess_form_data', 'custom_process_user_registration', 10, 3 );
+
+/**
+ * Processes the custom user registration form.
+ *
+ * @param array $request  The form data.
+ * @throws \Jet_Form_Builder\Exceptions\Action_Exception Exception.
+ */
+function custom_process_user_registration( $request ) {
+
+	// Sanitize form data.
+	$first_name       = sanitize_text_field( wp_unslash( $request['billing_first_name'] ) );
+	$last_name        = sanitize_text_field( wp_unslash( $request['billing_last_name'] ) );
+	$email            = sanitize_email( wp_unslash( $request['email'] ) );
+	$password         = sanitize_text_field( wp_unslash( $request['password'] ) );
+	$confirm_password = sanitize_text_field( wp_unslash( $request['confirm_password'] ) );
+	$phone            = sanitize_text_field( wp_unslash( $request['uname'] ) );
+
+	// Check if passwords match.
+	if ( $password !== $confirm_password ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'كلمات المرور غير متطابقة.' );
+	}
+
+	// Check if the email already exists.
+	if ( email_exists( $email ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عنوان البريد الإلكتروني هذا مستخدم بالفعل.' );
+	}
+
+	// Check if the username (phone number) already exists.
+	if ( username_exists( $phone ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم الهاتف هذا مأخوذ بالفعل.' );
+	}
+
+	// Register the user.
+	$user_id = wp_create_user( $phone, $password, $email );
+
+	if ( is_wp_error( $user_id ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( esc_html( $user_id->get_error_message() ) );
+	}
+
+	// Update user meta fields.
+	update_user_meta( $user_id, 'billing_first_name', $first_name );
+	update_user_meta( $user_id, 'billing_last_name', $last_name );
+	update_user_meta( $user_id, 'billing_phone', $phone );
+	update_user_meta( $user_id, 'billing_email', $email );
+
+	// Assign the user role (e.g., 'patient').
+	$user = new WP_User( $user_id );
+	$user->set_role( 'patient' );
+
+	// Log in the user after registration.
+	wp_set_current_user( $user_id );
+	wp_set_auth_cookie( $user_id );
+	do_action( 'wp_login', $phone, $user );
+
+	return true;
+}
+
+
 /**
  * Allow '+' character in WordPress usernames
  */
