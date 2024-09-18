@@ -14,26 +14,32 @@ if ( ! function_exists( 'WC' ) ) {
 }
 
 /**
- * Save form data to session
+ * Save form data to session or redirect non-logged-in users to login.
  *
  * @return void
  */
 add_action(
 	'template_redirect',
 	function () {
+		// Check for the necessary request parameters.
 		if ( ! isset( $_REQUEST['direct_add_to_cart'] ) || ! empty( $_POST['edit-booking-id'] ) ) {
 			return;
 		}
+
+		// Verify nonce and handle form submission.
 		if ( isset( $_POST ) && isset( $_POST['create_appointment_nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['create_appointment_nonce'] ) ), 'create_appointment' ) && isset( $_POST['create-appointment'] ) ) {
 			return;
 		}
-		$_req       = wp_unslash( $_POST );
-		$doctor_url = snks_encrypted_doctor_url( $_req['user-id'] );
-		if ( empty( $_req['terms-conditions'] ) || 'yes' === $_req['terms-conditions'] ) {
+
+		$_req       = wp_unslash( $_POST ); // Unslashing input data.
+		$doctor_url = snks_encrypted_doctor_url( sanitize_text_field( $_req['user-id'] ) );
+
+		// Check terms and conditions.
+		if ( empty( $_req['terms-conditions'] ) || 'yes' !== $_req['terms-conditions'] ) {
 			wp_safe_redirect( add_query_arg( 'error', 'accept-terms', $doctor_url ) );
-			// Safely closes the function.
-			exit();
+			exit; // Safely exit to prevent further execution.
 		}
+
 		$timetable = snks_get_timetable_by( 'ID', absint( sanitize_text_field( $_req['selected-hour'] ) ) );
 		if ( ! $timetable || empty( $timetable ) ) {
 			return;
@@ -41,41 +47,97 @@ add_action(
 
 		$user_id = $timetable->user_id;
 
+		// Validate user ID against timetable data.
 		if ( absint( $user_id ) !== absint( $_req['user-id'] ) ) {
 			WC()->cart->empty_cart();
 			wp_safe_redirect( site_url( $doctor_url ) );
-			// Safely closes the function.
-			exit();
+			exit;
 		}
+
+		// Prepare form data to store in session.
 		$form_data = array(
 			'booking_day'  => sanitize_text_field( $_req['current-month-day'] ),
 			'booking_hour' => snks_localize_time(
 				sprintf(
-					'من %s إلى %s',
+					/* translators: 1: start time, 2: end time */
+					esc_html__( 'من %1$s إلى %2$s', 'text-domain' ),
 					esc_html( gmdate( 'h:i a', strtotime( $timetable->starts ) ) ),
-					esc_html( gmdate( 'h:i a', strtotime( $timetable->ends ) ) ),
+					esc_html( gmdate( 'h:i a', strtotime( $timetable->ends ) ) )
 				)
 			),
 			'booking_id'   => sanitize_text_field( $_req['selected-hour'] ),
 			'_user_id'     => sanitize_text_field( $_req['user-id'] ),
 			'_period'      => sanitize_text_field( $_req['period'] ),
 		);
-		//phpcs:enable.
-		WC()->session->set( 'consulting_form_data', $form_data );
-		WC()->cart->empty_cart();
-		$product_id = 335;
+		// Start PHP session if not already started.
+		if ( ! session_id() ) {
+			session_start();
+		}
+		// Store form data in PHP session.
+		$_SESSION['consulting_form_data_temp'] = $form_data;
 
-		// This adds the product with the ID; we can also add a second variable which will be the variation ID.
-		WC()->cart->add_to_cart( $product_id );
-
-		// Redirects to the checkout page.
-		wp_safe_redirect( wc_get_checkout_url() );
-
-		// Safely closes the function.
-		exit();
+		// Check if the user is logged in; otherwise, redirect to login.
+		if ( is_user_logged_in() ) {
+			// Process form data for logged-in users.
+			process_form_data( $form_data );
+		} else {
+			// Redirect to login page with a redirect back to the checkout page.
+			wp_safe_redirect( site_url( 'booking-details' ) );
+			exit;
+		}
 	},
 	1
 );
+
+/**
+ * Process the form data to add to cart and redirect to checkout.
+ *
+ * @param array $form_data The form data array.
+ */
+function process_form_data( $form_data ) {
+	// Store form data in session.
+	WC()->session->set( 'consulting_form_data', $form_data );
+
+	// Empty the cart before adding new items.
+	WC()->cart->empty_cart();
+	$product_id = 335;
+
+	// Add the product to the cart.
+	WC()->cart->add_to_cart( $product_id );
+
+	// Redirect to the checkout page.
+	wp_safe_redirect( wc_get_checkout_url() );
+	exit;
+}
+
+/**
+ * Handle post-login redirection to checkout and process stored form data.
+ *
+ * @param string   $user_login The username.
+ * @param WP_User  $user       The WP_User object.
+ */
+add_action(
+	'wp_login',
+	function () {
+		// Start PHP session if not already started.
+		if ( ! session_id() ) {
+			session_start();
+		}
+
+		//phpcs:disable
+		// Check if the user was redirected for checkout.
+		if ( isset( $_SESSION['consulting_form_data_temp'] ) && isset( $_POST['tocheckout'] ) && 'yes' === $_POST['tocheckout'] ) {
+			$form_data = $_SESSION['consulting_form_data_temp'];
+			unset( $_SESSION['consulting_form_data_temp'] );
+			if ( $form_data && ! empty( $form_data ) ) {
+				// Process the stored form data after login.
+				process_form_data( $form_data );
+			}
+		}
+		//phpcs:enable
+	}
+);
+
 /**
  * Add data to cart item
  *
@@ -274,4 +336,51 @@ add_action(
 			)
 		);
 	}
+);
+/**
+ * Preset the default country to Egypt (EG) in WooCommerce checkout.
+ *
+ * @param array $fields Checkout fields.
+ * @return array Modified checkout fields with default country set to Egypt.
+ */
+function set_woocommerce_default_country( $fields ) {
+	// Set the default billing country to Egypt.
+	if ( isset( $fields['billing']['billing_country'] ) ) {
+		$fields['billing']['billing_country']['default'] = snsk_ip_api_country();
+	}
+
+	// Set the default shipping country to Egypt, if shipping fields are enabled.
+	if ( isset( $fields['shipping']['shipping_country'] ) ) {
+		$fields['shipping']['shipping_country']['default'] = snsk_ip_api_country();
+	}
+
+	return $fields;
+}
+add_filter( 'woocommerce_checkout_fields', 'set_woocommerce_default_country', 99 );
+
+/**
+ * Pre-populate WooCommerce checkout fields with current user data.
+ *
+ * @param mixed  $input The field value.
+ * @param string $key   The field key.
+ * @return mixed The pre-populated field value.
+ */
+add_filter(
+	'woocommerce_checkout_get_value',
+	function ( $input, $key ) {
+		// Get the current user data.
+		$current_user = wp_get_current_user();
+
+		// Check which field is being populated and set the value accordingly.
+		switch ( $key ) {
+
+			case 'billing_country':
+				return snsk_ip_api_country(); // Set the country to Saudi Arabia (SA).
+
+			default:
+				return $input;
+		}
+	},
+	10,
+	2
 );
