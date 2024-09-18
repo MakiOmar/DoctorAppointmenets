@@ -383,3 +383,12 @@ add_action(
 		<?php
 	}
 );
+
+add_action(
+	'phone_input_scripts',
+	function ( $atts ) {
+		if ( 'yes' === $atts['hide_target'] ) {
+			echo "$('input[name=" . esc_attr( $atts['target'] ) . "]').closest('.jet-form-builder-row').hide();";
+		}
+	}
+);
