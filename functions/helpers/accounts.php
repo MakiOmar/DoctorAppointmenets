@@ -407,12 +407,12 @@ function snks_wp_delete_user( $id ) {
 }
 add_action(
 	'jet-form-builder/custom-action/add_clinic_manager',
-	function ( $request ) {
+	function ( $_request ) {
 		$current_user_id = get_current_user_id();
 		// Sanitize input data.
-		$email                   = sanitize_email( $request['email'] );
-		$username                = sanitize_text_field( $request['phone'] ); // Use phone as username.
-		$password                = sanitize_text_field( $request['password'] );
+		$email                   = sanitize_email( $_request['email'] );
+		$username                = sanitize_text_field( $_request['phone'] ); // Use phone as username.
+		$password                = sanitize_text_field( $_request['password'] );
 		$clinic_manager_email    = get_user_meta( $current_user_id, 'clinic_manager_email', true );
 		$clinic_manager_password = get_user_meta( $current_user_id, 'clinic_manager_password', true );
 		$clinic_manager_phone    = get_user_meta( $current_user_id, 'clinic_manager_phone', true );
@@ -492,13 +492,14 @@ add_action(
 /**
  * Custom log in action for JetFormBuilder.
  *
- * @param array $request   The submitted form data.
+ * @param array $_request   The submitted form data.
  * @return void
+ * @throws \Jet_Form_Builder\Exceptions\Action_Exception If missing or not correct user credintials.
  */
-function custom_log_patient_in( $request ) {
+function custom_log_patient_in( $_request ) {
 	// Sanitize and retrieve username and password from the request.
-	$username = isset( $request['username'] ) ? sanitize_text_field( $request['username'] ) : '';
-	$password = isset( $request['password'] ) ? sanitize_text_field( $request['password'] ) : '';
+	$username = isset( $_request['username'] ) ? sanitize_text_field( $_request['username'] ) : '';
+	$password = isset( $_request['password'] ) ? sanitize_text_field( $_request['password'] ) : '';
 
 	// Check if the username and password are provided.
 	if ( empty( $username ) || empty( $password ) ) {
