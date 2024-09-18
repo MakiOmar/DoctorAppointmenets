@@ -490,6 +490,59 @@ add_action(
 );
 
 /**
+ * Custom log in action for JetFormBuilder.
+ *
+ * @param array $request   The submitted form data.
+ * @return void
+ */
+function custom_log_patient_in( $request ) {
+	// Sanitize and retrieve username and password from the request.
+	$username = isset( $request['username'] ) ? sanitize_text_field( $request['username'] ) : '';
+	$password = isset( $request['password'] ) ? sanitize_text_field( $request['password'] ) : '';
+
+	// Check if the username and password are provided.
+	if ( empty( $username ) || empty( $password ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى تعبئة البيانات كاملة' );
+	}
+
+	// Determine if the username is an email.
+	if ( is_email( $username ) ) {
+		// Get the user by email.
+		$user = get_user_by( 'email', $username );
+	} else {
+		// Get the user by username.
+		$user = get_user_by( 'login', $username );
+	}
+
+	// Check if the user exists.
+	if ( ! $user ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! بيانات الدخول غير صحيحة' );
+	}
+
+	// Validate the password.
+	if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! كلمة المرور غير صحيحة' );
+	}
+
+	// Log the user in.
+	wp_set_current_user( $user->ID );
+	wp_set_auth_cookie( $user->ID, true ); // The second parameter is true to remember the user.
+	/**
+	 * Fires after the user has successfully logged in.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param string  $user_login Username.
+	 * @param WP_User $user       WP_User object of the logged-in user.
+	 */
+	do_action( 'wp_login', $user->user_login, $user );
+
+	wp_safe_redirect( wc_get_checkout_url() );
+	exit;
+}
+add_action( 'jet-form-builder/custom-action/log_patient_in', 'custom_log_patient_in', 10, 2 );
+
+/**
  * Allow '+' character in WordPress usernames
  */
 add_filter(
