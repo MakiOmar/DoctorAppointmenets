@@ -229,7 +229,7 @@ function phone_input_cb( $atts ) {
 	<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
 		<div class="anony-flex flex-v-center anony-full-width">
 			<button class="anony_dial_codes_selected_choice"></button>
-			<input type="tel" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
+			<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
 		</div>
 		<!-- Filter Input Box -->
 		<div class="anony-dial-codes-content">
