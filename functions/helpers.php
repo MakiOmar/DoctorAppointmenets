@@ -269,7 +269,7 @@ function snks_get_country_code() {
 
 	// API key and URL for IP lookup.
 	$api_key = 'yBZHxURnxnHhONq'; // Replace with your actual API key.
-	$api_url = sprintf( 'https://pro.ip-api.com/php/%s?key=%s&fields=countryCode', esc_url_raw( $ip ), esc_attr( $api_key ) );
+	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
 
 	// Send request to the IP API using wp_remote_get.
 	$response = wp_remote_get( $api_url );
@@ -281,15 +281,13 @@ function snks_get_country_code() {
 
 	// Retrieve the response body.
 	$body = wp_remote_retrieve_body( $response );
-
 	// Check if the body is not empty and contains serialized data.
 	if ( ! empty( $body ) ) {
-		$data = @unserialize( $body ); // Using @ to suppress potential warnings.
-
+		$data = json_decode( $body ); // Using @ to suppress potential warnings.
 		// Check if the country code is present.
-		if ( $data && isset( $data['countryCode'] ) ) {
-			$country_code = sanitize_text_field( $data['countryCode'] );
-
+		if ( $data && isset( $data->countryCode ) ) { //phpcs:disable
+			$country_code = sanitize_text_field( $data->countryCode );
+			//phpcs:enable
 			// Store the country code in a cookie for 24 hours.
 			setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 
@@ -309,12 +307,13 @@ function snsk_ip_api_country() {
 	if ( isset( $_COOKIE['country_code'] ) ) {
 		return sanitize_text_field( wp_unslash( $_COOKIE['country_code'] ) ); // Return the cached country code.
 	}
+
 	// Return a default value or handle errors as needed.
 	return snks_get_country_code();
 }
 
 add_action(
-	'template_redirect',
+	'wp',
 	function () {
 		// Check if the country code is already stored in a cookie.
 		if ( ! isset( $_COOKIE['country_code'] ) ) {
