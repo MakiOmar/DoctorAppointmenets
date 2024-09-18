@@ -27,6 +27,7 @@ function snks_calculated_price( $user_id, $country, $period ) {
 	}
 	return $price;
 }
+
 /**
  * Get country price by period
  *
@@ -42,8 +43,10 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
 				return $item['price'];
 			}
 		}
+	} elseif ( is_numeric( $data_array[ $period ]['others'] ) ) {
+		return $data_array[ $period ]['others'];
 	}
-	return $data_array[ $period ]['others'];
+	return 0;
 }
 /**
  * Get doctor pricings.
