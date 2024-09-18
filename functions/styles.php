@@ -16,17 +16,17 @@ add_action(
 		?>
 		<style>
 			<?php
+			$light_color  = '#dcf5ff';
+			$dark_color   = '#024059';
+			$darker_color = '#012d3e';
 			if ( isset( $wp->query_vars['doctor_id'] ) ) {
 				$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
 				$clinics_colors = json_decode( CLINICS_COLORS );
-				$light_color    = '#dcf5ff';
-				$dark_color     = '#024059';
-				$darker_color   = '#012d3e';
 				if ( ! empty( $clinic_color ) ) {
 					$clinic_colors = 'color_' . $clinic_color;
-					$light_color    = $clinics_colors->$clinic_colors[0];
-					$dark_color     = $clinics_colors->$clinic_colors[1];
-					$darker_color   = $clinics_colors->$clinic_colors[2];
+					$light_color   = $clinics_colors->$clinic_colors[0];
+					$dark_color    = $clinics_colors->$clinic_colors[1];
+					$darker_color  = $clinics_colors->$clinic_colors[2];
 				}
 				?>
 				header, footer {
