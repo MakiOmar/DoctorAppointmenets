@@ -109,34 +109,30 @@ function process_form_data( $form_data ) {
 	wp_safe_redirect( wc_get_checkout_url() );
 	exit;
 }
-
 /**
  * Handle post-login redirection to checkout and process stored form data.
- *
- * @param string   $user_login The username.
- * @param WP_User  $user       The WP_User object.
  */
-add_action(
-	'wp_login',
-	function () {
-		// Start PHP session if not already started.
-		if ( ! session_id() ) {
-			session_start();
-		}
+function snks_logged_in_proccess_form_data() {
 
-		//phpcs:disable
-		// Check if the user was redirected for checkout.
-		if ( isset( $_SESSION['consulting_form_data_temp'] ) && isset( $_POST['tocheckout'] ) && 'yes' === $_POST['tocheckout'] ) {
-			$form_data = $_SESSION['consulting_form_data_temp'];
-			unset( $_SESSION['consulting_form_data_temp'] );
-			if ( $form_data && ! empty( $form_data ) ) {
-				// Process the stored form data after login.
-				process_form_data( $form_data );
-			}
-		}
-		//phpcs:enable
+	// Start PHP session if not already started.
+	if ( ! session_id() ) {
+		session_start();
 	}
-);
+
+	//phpcs:disable
+	// Check if the user was redirected for checkout.
+	if ( isset( $_SESSION['consulting_form_data_temp'] ) && isset( $_POST['tocheckout'] ) && 'yes' === $_POST['tocheckout'] ) {
+		$form_data = $_SESSION['consulting_form_data_temp'];
+		unset( $_SESSION['consulting_form_data_temp'] );
+		if ( $form_data && ! empty( $form_data ) ) {
+			// Process the stored form data after login.
+			process_form_data( $form_data );
+		}
+	}
+	//phpcs:enable
+}
+
+add_action( 'wp_login', 'snks_logged_in_proccess_form_data' );
 
 /**
  * Add data to cart item

@@ -16,9 +16,9 @@ add_action(
 		?>
 		<style>
 			<?php
-			$light_color  = '#dcf5ff';
-			$dark_color   = '#024059';
-			$darker_color = '#012d3e';
+			$light_color  = ! empty( $_COOKIE['light_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['light_color'] ) ) : '#dcf5ff';
+			$dark_color   = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
+			$darker_color = ! empty( $_COOKIE['darker_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['darker_color'] ) ) : '#012d3e';
 			if ( isset( $wp->query_vars['doctor_id'] ) ) {
 				$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
 				$clinics_colors = json_decode( CLINICS_COLORS );
@@ -53,10 +53,17 @@ add_action(
 				<?php
 			}
 
-			if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false ) {
+			if ( isset( $_SERVER['REQUEST_URI'] ) && ( strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false || is_page('booking-details') ) ) {
 				?>
-				body{
-					background-color: #024059!important;
+				body, .snks-booking-page-container,
+				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__content-wrapper,
+				.elementor-3578 .elementor-element.elementor-element-c5e7b50 > .elementor-widget-container,
+				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control:not(.active-tab),
+				.elementor-3546 .elementor-element.elementor-element-a809552:not(.elementor-motion-effects-element-type-background), .elementor-3546 .elementor-element.elementor-element-a809552 > .elementor-motion-effects-container > .elementor-motion-effects-layer,
+				div.elementor .elementor-3546 .elementor-element.elementor-element-a809552:not(.elementor-motion-effects-element-type-background),
+				.elementor-3546 .elementor-element.elementor-element-6fecfe97 > .elementor-widget-container
+				{
+					background-color: <?php echo esc_attr( $dark_color ) ?>!important;
 				}
 				<?php
 			}
@@ -388,12 +395,12 @@ add_action(
 			}
 
 			.field-type-radio-field .jet-form-builder__field-label.for-radio :checked + span::before {
-				border-color: #024059!important;
-				background-color: #024059!important;
+				border-color: #024059;
+				background-color: #024059;
 			}
 			.field-type-radio-field .jet-form-builder__field-label.for-radio > span::before {
-				border: 1px solid #024059!important;
-				background-color: #024059!important;
+				border: 1px solid #024059;
+				background-color: #024059;
 			}
 			#snks-booking-form input[type=radio] {
 				display: none;
@@ -987,6 +994,15 @@ add_action(
 				}
 			}
 			@media screen and (max-width:480px) {
+				.elementor-3537 .elementor-element.elementor-element-ba64801:not(.elementor-motion-effects-element-type-background){
+					position: fixed;
+					bottom: 0;
+					width: 100%;
+					left: 0;
+				}
+				.elementor-3578 .elementor-element.elementor-element-72fcb67 {
+					padding-bottom: 200px;
+				}
 				.clinc-row{
 					flex-direction: column;
 					gap: 10px;
@@ -1022,8 +1038,8 @@ add_action(
 			#snks-booking-page .periods_wrapper.snks-separator{
 				background-color: <?php echo esc_html( $light_color ); ?>!important;
 			}
-			#snks-booking-page .period_wrapper label span{
-
+			.woocommerce-checkout #customer_details .col-1{
+				display: none;
 			}
 			#snks-booking-page .anony-accordion-header, #snks-booking-page .periods_wrapper.snks-bg,#snks-booking-page .attendance_types_wrapper,
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
