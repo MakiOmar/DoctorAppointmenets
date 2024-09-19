@@ -139,7 +139,7 @@ add_shortcode(
  * @return string
  */
 function phone_input_cb( $atts ) {
-	$atts       = shortcode_atts(
+	$atts     = shortcode_atts(
 		array(
 			'name'        => 'phone',
 			'with-styles' => 'yes',
@@ -151,8 +151,21 @@ function phone_input_cb( $atts ) {
 		$atts,
 		'phone_input'
 	);
-	$countries  = file_get_contents( 'https://jalsah.app/wp-content/uploads/2024/09/countires-codes-and-flags.json' );
-	$countries  = json_decode( $countries, true );
+	$response = wp_remote_get( 'https://jalsah.app/wp-content/uploads/2024/09/countires-codes-and-flags.json' );
+
+	if ( is_wp_error( $response ) ) {
+		// Handle the error appropriately.
+		return;
+	}
+
+	$countries = wp_remote_retrieve_body( $response );
+	$countries = json_decode( $countries, true );
+
+	if ( ! is_array( $countries ) ) {
+		// Handle the error if the JSON decoding fails.
+		return;
+	}
+
 	$key_values = array_column( $countries, 'name_ar' );
 	array_multisort( $key_values, SORT_ASC, $countries );
 
