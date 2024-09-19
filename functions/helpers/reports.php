@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-if ( true ) {
+if ( ! isset( $dv ) ) {
 	return;
 }
 

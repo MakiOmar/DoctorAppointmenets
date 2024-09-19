@@ -14,9 +14,7 @@ add_action(
 	function () {
 		?>
 		<script>
-			jQuery( document ).ready( function( $ ) {
-				
-			});
+			jQuery( document ).ready( function( $ ) {});
 		</script>
 		<?php
 	}

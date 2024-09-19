@@ -28,11 +28,11 @@ function snks_latest_completed_order_date( $doctors_id, $customer_id = false ) {
 			'limit'        => 1,
 			'orderby'      => 'date',
 			'order'        => 'DESC',
-			'meta_key'     => 'doctor_id',
+			'meta_key'     => 'doctor_id',//phpcs:disable
 			'meta_value'   => $doctors_id,
 			'meta_compare' => '=',
 		)
-	);
+	);//phpcs:ensable
 
 	// Check if completed orders exist for the customer.
 	if ( ! empty( $orders ) ) {

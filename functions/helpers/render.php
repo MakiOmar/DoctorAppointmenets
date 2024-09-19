@@ -140,11 +140,10 @@ function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
 /**
  * Render periods filter
  *
- * @param int    $user_id User's ID.
- * @param string $attendance_type Attendance type.
+ * @param int $user_id User's ID.
  * @return void
  */
-function snks_listing_periods( $user_id, $attendance_type = 'both' ) {
+function snks_listing_periods( $user_id ) {
 	$avialable_periods = snks_get_periods( $user_id );
 	$country           = snsk_ip_api_country();
 	$pricings          = snks_doctor_pricings( $user_id );
@@ -823,11 +822,11 @@ function snks_generate_bookings() {
 					$session_notes = get_posts(
 						array(
 							'post_type'    => 'session_notes',
-							'meta_key'     => 'session_id',
+							'meta_key'     => 'session_id',//phpcs:disable
 							'meta_value'   => $data->ID,
 							'meta_compare' => '=',
 						)
-					);
+					);//phpcs:enable
 					if ( ! $session_notes || empty( $session_notes ) ) {
 						$output .= str_replace(
 							'{session_id}',
