@@ -313,7 +313,7 @@ function snsk_ip_api_country() {
 }
 
 add_action(
-	'wp',
+	'template_redirect',
 	function () {
 		// Check if the country code is already stored in a cookie.
 		if ( ! isset( $_COOKIE['country_code'] ) ) {
