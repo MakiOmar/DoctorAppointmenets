@@ -196,3 +196,28 @@ define(
 		)
 	)
 );
+
+/**
+ * Sets a cookie if the 'doctor_id' query variable is present.
+ *
+ * This function checks for the 'doctor_id' in query variables and, if present,
+ * sets a cookie with a value of '2' for one day.
+ *
+ * @global WP $wp The global instance of the WP class, containing query variables.
+ */
+function set_doctor_id_cookie() {
+	global $wp;
+
+	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
+		$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
+		$clinics_colors = json_decode( CLINICS_COLORS );
+		$expire_time    = time() + DAY_IN_SECONDS; // 1 day expiration time.
+		if ( ! empty( $clinic_color ) ) {
+			$clinic_colors = 'color_' . $clinic_color;
+			setcookie( 'light_color', esc_attr( $clinics_colors->$clinic_colors[0] ), $expire_time, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+			setcookie( 'dark_color', esc_attr( $clinics_colors->$clinic_colors[1] ), $expire_time, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+			setcookie( 'darker_color', esc_attr( $clinics_colors->$clinic_colors[2] ), $expire_time, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		}
+	}
+}
+add_action( 'wp', 'set_doctor_id_cookie' );
