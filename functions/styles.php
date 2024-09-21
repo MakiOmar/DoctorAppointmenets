@@ -1388,6 +1388,91 @@ add_action(
 				margin: 0;
 			}
 		</style>
-		<?php
+		<?php if ( snks_is_doctor() ) { ?>
+		<style>
+			#withdrawal-settings-form{
+				background-color: #ffffff;
+			}
+			#withdrawal-settings-form *{
+				font-family: "hacen_liner_print-outregular";
+			}
+			.withdrawal-radio label {
+				color: #024059;
+				display: flex;
+				align-items: center;
+				font-size: 25px;
+				font-weight: bolder;
+				cursor: pointer;
+			}
+			span.anony-custom-radio{
+				width: 18px;
+				height: 18px;
+				border: 4px solid #024059;
+				border-radius: 50%;
+				margin-right: 10px;
+				display: inline-block;
+				margin-left: 5px;
+				background-color: #fff;
+			}
+			.withdrawal-radio{
+				margin-bottom: 15px;
+			}
+			.withdrawal-radio p{
+				margin-top: 8px;
+				color: #656565;
+				margin-right: 15px;
+				font-size: 21px;
+				text-align: justify;
+			}
+			.withdrawal-radio input[type=radio]{
+				display: none;
+			}
+			.gray-bg{
+				background-color: #dddddd;
+			}
+			.white-bg{
+				background-color: #fff;
+			}
+			.withdrawal-radio .checked {
+				background-color: #024059;
+			}
+			.withdrawal-section-title{
+				border-radius: 30px;
+				margin:auto;
+				width:150px;
+				font-size:28px;
+				font-weight: bold;
+				text-align:center;
+				color:#024059;
+				width: 200px;
+				margin-bottom: 20px;
+			}
+			.withdrawal-section{
+				margin-bottom: 20px;
+			}
+			.withdrawal-button{
+				display: block;
+				background-color: #024059;
+				color: #fff;
+				border-radius: 25px;
+				border: none;
+				width:200px;
+				margin: 20px auto;
+			}
+			.withdrawal-accounts-fields{
+				margin-top: 20px;
+				padding: 20px;
+			}
+			.withdrawal-accounts-fields input{
+				border:none;
+				background-color: #e6e4e4;
+			}
+			#withdrawal-settings-form{
+				max-width:428px;
+				margin:auto
+			}
+		</style>
+			<?php
+		}
 	}
 );
