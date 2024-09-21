@@ -207,9 +207,9 @@ function snks_register_user( $_request ) {
 			array(
 				site_url( 'wp-content/uploads/2023/12/w2.png' ),
 				'تأكيد البريد الإلكتروني',
-				'لحسابك في شرينكس',
+				'لحسابك في جلسة',
 				site_url( '/wp-content/uploads/2024/04/sky-2667455_1280.jpg' ),
-				'شكراً لتسجيلك في شرينكس',
+				'شكراً لتسجيلك في جلسة',
 				'رمز التحقق الخاص بك هو',
 				$verification_code,
 				'تأكيد البريد الإلكتروني',
@@ -221,10 +221,10 @@ function snks_register_user( $_request ) {
 		update_user_meta( $user_id, 'verification_code', $verification_code );
 
 		$to      = $user_email;
-		$subject = 'تأكيد البريد الإلكتروني لحسابك في شرينكس';
+		$subject = 'تأكيد البريد الإلكتروني لحسابك في جلسة';
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
-			'From: شرينكس <customer@shrinks.clinic>',
+			'From: جلسة <customer@shrinks.clinic>',
 		);
 		$emailed = wp_mail( $to, $subject, $message, $headers );
 		if ( ! isset( $_request['account-type'] ) ) {
@@ -537,11 +537,16 @@ function custom_log_patient_in( $_request ) {
 	 * @param WP_User $user       WP_User object of the logged-in user.
 	 */
 	do_action( 'wp_login', $user->user_login, $user );
-
-	wp_safe_redirect( wc_get_checkout_url() );
-	exit;
+	if ( isset( $_request['tocheckout'] ) ) {
+		wp_safe_redirect( wc_get_checkout_url() );
+		exit;
+	} else {
+		wp_safe_redirect( site_url( '/my-bookings' ) );
+		exit;
+	}
 }
 add_action( 'jet-form-builder/custom-action/log_patient_in', 'custom_log_patient_in', 10, 2 );
+add_action( 'jet-form-builder/custom-action/loguserin', 'custom_log_patient_in', 10, 2 );
 
 
 use Jet_Form_Builder\Exceptions\Action_Exception;
