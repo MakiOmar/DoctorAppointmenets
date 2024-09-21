@@ -1041,6 +1041,18 @@ add_action(
 			.woocommerce-checkout #customer_details .col-1{
 				display: none;
 			}
+			.financials-gray-section{
+				background-color:#dddddd;
+			}
+			
+			.financials-white-section{
+				background-color:#fff;
+				border-radius: 10px;
+				padding: 10px;
+			}
+			[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover {
+				background-color: <?php echo esc_html( $darker_color ); ?>!important;
+			}
 			#snks-booking-page .anony-accordion-header, #snks-booking-page .periods_wrapper.snks-bg,#snks-booking-page .attendance_types_wrapper,
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
 			#snks-booking-page #teeth-area,

@@ -397,3 +397,374 @@ add_action(
 		<?php
 	}
 );
+
+/**
+ * Withdrawal settings
+ *
+ * @return string
+ */
+function custom_withdrawal_form_shortcode() {
+	// Get the current user's ID.
+	$user_id = get_current_user_id();
+
+	// Retrieve saved withdrawal settings from user meta.
+	$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
+
+	// Set default values for withdrawal settings.
+	$withdrawal_option = isset( $withdrawal_settings['withdrawal_option'] ) ? $withdrawal_settings['withdrawal_option'] : '';
+	$withdrawal_method = isset( $withdrawal_settings['withdrawal_method'] ) ? $withdrawal_settings['withdrawal_method'] : '';
+	?>
+	<style>
+		#withdrawal-settings-form{
+			background-color: #ffffff;
+		}
+		#withdrawal-settings-form *{
+			font-family: "hacen_liner_print-outregular";
+		}
+		.withdrawal-radio label {
+			color: #024059;
+			display: flex;
+			align-items: center;
+			font-size: 25px;
+			font-weight: bolder;
+			cursor: pointer;
+		}
+		span.anony-custom-radio{
+			width: 18px;
+			height: 18px;
+			border: 4px solid #024059;
+			border-radius: 50%;
+			margin-right: 10px;
+			display: inline-block;
+			margin-left: 5px;
+			background-color: #fff;
+		}
+		.withdrawal-radio{
+			margin-bottom: 15px;
+		}
+		.withdrawal-radio p{
+			margin-top: 8px;
+			color: #656565;
+			margin-right: 15px;
+			font-size: 21px;
+			text-align: justify;
+		}
+		.withdrawal-radio input[type=radio]{
+			display: none;
+		}
+		.gray-bg{
+			background-color: #dddddd;
+		}
+		.white-bg{
+			background-color: #fff;
+		}
+		.withdrawal-radio .checked {
+			background-color: #024059;
+		}
+		.withdrawal-section-title{
+			border-radius: 30px;
+			margin:auto;
+			width:150px;
+			font-size:28px;
+			font-weight: bold;
+			text-align:center;
+			color:#024059;
+			width: 200px;
+			margin-bottom: 20px;
+		}
+		.withdrawal-section{
+			margin-bottom: 20px;
+		}
+		.withdrawal-button{
+			display: block;
+			background-color: #024059;
+			color: #fff;
+			border-radius: 25px;
+			border: none;
+			width:200px;
+			margin: 20px auto;
+		}
+		.withdrawal-accounts-fields{
+			margin-top: 20px;
+			padding: 20px;
+		}
+		.withdrawal-accounts-fields input{
+			border:none;
+			background-color: #e6e4e4;
+		}
+		#withdrawal-settings-form{
+			max-width:428px;
+			margin:auto
+		}
+	</style>
+	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
+		<?php wp_nonce_field( 'save_withdrawal_settings', 'withdrawal_settings_nonce' ); ?>
+		<!-- First Section -->
+		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
+			<h1 class="white-bg anony-padding-20 withdrawal-section-title">نظام السحب</h1>
+			<?php
+			// Define the withdrawal options in an array.
+			$withdrawal_options = array(
+				array(
+					'id'          => 'monthly_withdrawal',
+					'value'       => 'monthly_withdrawal',
+					'label'       => 'النظام الشهري',
+					'description' => 'سيتم سحب رصيدك تلقائيا في أول يوم عمل من كل شهر.',
+				),
+				array(
+					'id'          => 'weekly_withdrawal',
+					'value'       => 'weekly_withdrawal',
+					'label'       => 'النظام الأسبوعي',
+					'description' => 'سيتم سحب رصيدك تلقائيا كل يوم أربعاء من كل أسبوع.',
+				),
+				array(
+					'id'          => 'daily_withdrawal',
+					'value'       => 'daily_withdrawal',
+					'label'       => 'النظام اليومي',
+					'description' => 'سيتم سحب رصيدك تلقائيا بشكل يومي.',
+				),
+				array(
+					'id'          => 'manual_withdrawal',
+					'value'       => 'manual_withdrawal',
+					'label'       => 'النظام اليدوي',
+					'description' => 'سيتم سحب رصيدك فقط عند الطلب.',
+				),
+			);
+			?>
+			<?php foreach ( $withdrawal_options as $option ) : ?>
+				<div class="withdrawal-radio">
+					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_option" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_option, $option['value'] ); ?>>
+					<label for="<?php echo esc_attr( $option['id'] ); ?>">
+						<span class="anony-custom-radio<?php echo $withdrawal_option === $option['value'] ? ' checked' : ''; ?>"></span>
+						<?php echo esc_html( $option['label'] ); ?>
+					</label>
+					<p><?php echo esc_html( $option['description'] ); ?></p>
+				</div>
+			<?php endforeach; ?>
+
+			<!-- Submit Button -->
+			<button class="anony-default-padding withdrawal-button">إضغط هنا لطلب السحب</button>
+			<div class="financials-white-section anony-default-padding white-bg">
+				<p style="color: #939393; text-align: justify;font-size: 23px;">
+					في حالة كان يوم السحب يوم عطلة رسمي، يتم السحب في أول يوم عمل تالي.
+				</p>
+				<hr style="border: none; height: 2px; background-color: #939393;" />
+				<p style="color: #939393; text-align: justify;font-size: 23px;margin-top:15px">
+					تكلفة كل عملية سحب هي 5 جنيه تخصم من رصيدك عند السحب ( تكلفة ثابتة أيا كان المبلغ المسحوب ).
+				</p>
+			</div>
+		</div>
+
+		<!-- Second Section -->
+		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
+			<h1 class="white-bg anony-padding-20 withdrawal-section-title">طريقة السحب</h1>
+			<?php
+			// Define the withdrawal options with associated text fields.
+			$withdrawal_details = array(
+				array(
+					'id'     => 'bank_account',
+					'value'  => 'bank_account',
+					'label'  => 'حساب بنكي',
+					'fields' => array(
+						array(
+							'label' => 'اسم صاحب الحساب',
+							'name'  => 'account_holder_name',
+							'value' => isset( $withdrawal_settings['account_holder_name'] ) ? $withdrawal_settings['account_holder_name'] : '',
+						),
+						array(
+							'label' => 'البنك',
+							'name'  => 'bank_name',
+							'value' => isset( $withdrawal_settings['bank_name'] ) ? $withdrawal_settings['bank_name'] : '',
+						),
+						array(
+							'label' => 'الفرع',
+							'name'  => 'branch',
+							'value' => isset( $withdrawal_settings['branch'] ) ? $withdrawal_settings['branch'] : '',
+						),
+						array(
+							'label' => 'رقم الحساب',
+							'name'  => 'account_number',
+							'value' => isset( $withdrawal_settings['account_number'] ) ? $withdrawal_settings['account_number'] : '',
+						),
+						array(
+							'label' => 'رقم IBAN',
+							'name'  => 'iban_number',
+							'value' => isset( $withdrawal_settings['iban_number'] ) ? $withdrawal_settings['iban_number'] : '',
+						),
+					),
+				),
+				array(
+					'id'     => 'meza_card',
+					'value'  => 'meza_card',
+					'label'  => 'بطاقة ميزة',
+					'fields' => array(
+						array(
+							'label' => 'اسم صاحب البطاقة',
+							'name'  => 'card_holder_name',
+							'value' => isset( $withdrawal_settings['card_holder_name'] ) ? $withdrawal_settings['card_holder_name'] : '',
+						),
+						array(
+							'label' => 'البنك الصادر منه البطاقة',
+							'name'  => 'meza_bank_name',
+							'value' => isset( $withdrawal_settings['meza_bank_name'] ) ? $withdrawal_settings['meza_bank_name'] : '',
+						),
+						array(
+							'label' => 'رقم البطاقة',
+							'name'  => 'meza_card_number',
+							'value' => isset( $withdrawal_settings['meza_card_number'] ) ? $withdrawal_settings['meza_card_number'] : '',
+						),
+					),
+				),
+				array(
+					'id'     => 'wallet',
+					'value'  => 'wallet',
+					'label'  => 'محفظة إلكترونية',
+					'fields' => array(
+						array(
+							'label' => 'اسم صاحب المحفظة',
+							'name'  => 'wallet_holder_name',
+							'value' => isset( $withdrawal_settings['wallet_holder_name'] ) ? $withdrawal_settings['wallet_holder_name'] : '',
+						),
+						array(
+							'label' => 'رقم المحفظة',
+							'name'  => 'wallet_number',
+							'value' => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
+						),
+					),
+				),
+			);
+			?>
+			<?php foreach ( $withdrawal_details as $option ) : ?>
+				<div class="withdrawal-radio">
+					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_method, $option['value'] ); ?>>
+					<label for="<?php echo esc_attr( $option['id'] ); ?>">
+						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?>"></span>
+						<?php echo esc_html( $option['label'] ); ?>
+					</label>
+					<!-- Hidden Fields Section -->
+					<div class="withdrawal-accounts-fields white-bg anony-padding-10" style="display: none;border-radius:10px">
+						<?php foreach ( $option['fields'] as $field ) : ?>
+							<div class="field-group">
+								<label for="<?php echo esc_attr( $field['name'] ); ?>">
+									<?php echo esc_html( $field['label'] ); ?>
+								</label>
+								<input type="text" id="<?php echo esc_attr( $field['name'] ); ?>" name="<?php echo esc_attr( $field['name'] ); ?>" value="<?php echo esc_attr( $field['value'] ); ?>">
+							</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
+			<?php endforeach; ?>
+			<div class="financials-white-section anony-default-padding white-bg">
+				<p style="color: #939393; text-align: justify;font-size: 23px;">
+				يرجى العلم أنه لا يمكنك تغيير بيانات السحب الخاصة بك في الفترة من الساعة 12 منتصف الليل وحتي الساعة 9 صباحا، وبحلول منتصف الليل يتم تلقائيا تسجيل بيانات حسابك ( نظام السحب, الرصيد وطريقة السحب ) الموجودة بحسابك لاستخدامها في عملية السحب التالية الخاصة بك.
+				</p>
+			</div>
+		</div>
+
+		<!-- OTP Section -->
+		<div id="otp-section" style="display:none;">
+			<p>تم إرسال كود التحقق إلى البريد الإلكتروني/الموبايل الخاص بك. يرجى إدخال الكود هنا:</p>
+			<input type="text" id="otp_input" name="otp_input" placeholder="ادخل الكود هنا" required>
+		</div>
+
+		<!-- Button to send OTP -->
+		<button type="button" id="send-otp" class="anony-default-padding withdrawal-button">إرسال كود التحقق</button>
+		<!-- Submit Button (Initially disabled) -->
+		<button type="button" id="submit-withdrawal-form" class="anony-default-padding withdrawal-button" style="display:none;">حفظ</button>
+	</form>
+
+	<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			// Pre-fill radio options and show relevant fields on page load
+			var selectedMethod = $('input[name="withdrawal_method"]:checked').val();
+			if (selectedMethod) {
+				$('input[value="' + selectedMethod + '"]').closest('.withdrawal-radio').find('.withdrawal-accounts-fields').show();
+			}
+
+			// Hide all the fields initially, then show the selected one
+			$('.withdrawal-accounts-fields').hide();
+			$('input[name="withdrawal_method"]:checked').closest('.withdrawal-radio').find('.withdrawal-accounts-fields').show();
+
+			// Select all radio buttons within the withdrawal-options container
+			$('.withdrawal-options input[type="radio"]').on('change', function() {
+				var parent = $(this).closest('.withdrawal-options');
+				
+				// Remove 'checked' class from all .anony-custom-radio spans
+				$('.anony-custom-radio', parent).removeClass('checked');
+				
+				// Add 'checked' class to the corresponding span of the selected radio
+				$(this).next('label').find('.anony-custom-radio').addClass('checked');
+				
+				// Hide all field containers first
+				$('.withdrawal-accounts-fields').slideUp();
+				
+				// Show the field container related to the selected radio
+				$(this).closest('.withdrawal-radio').find('.withdrawal-accounts-fields').slideDown();
+			});
+
+
+			// Handle sending OTP
+			$('#send-otp').on('click', function(e) {
+				e.preventDefault();
+
+				// Disable the OTP button and display a message
+				$(this).text('جارٍ إرسال كود التحقق...');
+				$(this).attr('disabled', true);
+
+				// Send AJAX request to generate and send OTP
+				$.ajax({
+					type: 'POST',
+					url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+					data: {
+						action: 'send_email_otp', // Action for backend to handle OTP generation
+					},
+					success: function(response) {
+						if(response.success) {
+							alert('تم إرسال كود التحقق بنجاح إلى بريدك الإلكتروني/موبايلك.');
+							// Show the OTP section and enable submit button
+							$('#otp-section').slideDown();
+							$('#submit-withdrawal-form').show();
+							$('#send-otp').text('إرسال كود التحقق'); // Reset button text
+							$('#send-otp').attr('disabled', false);
+						} else {
+							alert(response.data.message); // Show error message
+							$('#send-otp').text('إرسال كود التحقق');
+							$('#send-otp').attr('disabled', false);
+						}
+					},
+					error: function() {
+						alert('حدث خطأ في إرسال كود التحقق.');
+						$('#send-otp').text('إرسال كود التحقق');
+						$('#send-otp').attr('disabled', false);
+					}
+				});
+			});
+			// Handle form submission with OTP verification
+			$('#submit-withdrawal-form').on('click', function(e) {
+				e.preventDefault();
+
+				var formData = $('#withdrawal-settings-form').serialize(); // Serialize the form data including OTP
+
+				$.ajax({
+					type: 'POST',
+					url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+					data: formData + '&action=verify_otp_and_save_withdrawal', // Pass the action for OTP verification and withdrawal submission
+					success: function(response) {
+						if(response.success) {
+							alert(response.data.message); // Success message
+						} else {
+							alert(response.data.message); // OTP or form submission error
+						}
+					},
+					error: function() {
+						alert('حدث خطأ أثناء تقديم النموذج.');
+					}
+				});
+			});
+		});
+	</script>
+
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'custom_withdrawal_form', 'custom_withdrawal_form_shortcode' );
