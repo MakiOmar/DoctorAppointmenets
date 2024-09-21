@@ -37,7 +37,7 @@ add_action(
 				$_req['notif_user'] = 0;
 			}
 			if ( empty( $_req['title'] ) ) {
-				$_req['title'] = 'شرينكس';
+				$_req['title'] = 'جلسة';
 			}
 			$link = ! empty( $_req['link'] ) ? $_req['link'] : '';
 			snks_insert_notification( wp_strip_all_tags( $_req['notif_content'] ), $link, $_req['notif_user'] );
@@ -72,9 +72,9 @@ add_action(
 				array(
 					site_url( 'wp-content/uploads/2023/12/w2.png' ),
 					'الدفع للإنضمام للبرنامج العلاجي',
-					'في شرينكس',
+					'في جلسة',
 					site_url( '/wp-content/uploads/2024/04/sky-2667455_1280.jpg' ),
-					'شكراً لثقتك في شرينكس',
+					'شكراً لثقتك في جلسة',
 					'يرجى استكمال الدفع',
 					'أنقر على الزر التالي',
 					'إدفع الآن',
@@ -83,10 +83,10 @@ add_action(
 				$template
 			);
 			$to      = $_req['email'];
-			$subject = 'الإشتراك في البرنامج العلاجي من شرينكس';
+			$subject = 'الإشتراك في البرنامج العلاجي من جلسة';
 			$headers = array(
 				'Content-Type: text/html; charset=UTF-8',
-				'From: شرينكس <customer@shrinks.clinic>',
+				'From: جلسة <customer@shrinks.clinic>',
 			);
 			wp_mail( $to, $subject, $message, $headers );
 		}
