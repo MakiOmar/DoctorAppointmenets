@@ -10,6 +10,9 @@ defined( 'ABSPATH' ) || die();
 add_action(
 	'wp_footer',
 	function () {
+		if ( ! snks_is_doctor() ) {
+			return;
+		}
 		?>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
