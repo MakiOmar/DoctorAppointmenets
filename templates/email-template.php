@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || die();
 	<meta name="x-apple-disable-message-reformatting">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta content="telephone=no" name="format-detection">
-	<title>شرينكس</title>
+	<title>جلسة</title>
 	<!--[if (mso 16)]>
 <style type="text/css">
 a {text-decoration: none;}
