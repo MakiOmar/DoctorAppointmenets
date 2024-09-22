@@ -18,6 +18,7 @@ function snks_edit_session_form_args( $object_id = false ) {
 		'id'              => 'user_edit_session_notes',
 		'fields_layout'   => 'columns',
 		'context'         => 'form',
+		'submit_label'    => 'حفظ',
 		'used_in'         => array( 2623 ),
 		'form_attributes' => array(
 			'action'  => '',
