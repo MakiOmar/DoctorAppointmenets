@@ -15,6 +15,13 @@ add_action(
 		?>
 	<script>
 		jQuery(document).ready(function($){
+			$(document).on(
+				'click',
+				'.snks-notes',
+				function(){
+					$(this).closest('.snks-booking-item-wrapper').find('.snks-notes-form').toggleClass('show-notes-form');
+				}
+			);
 			function getCheckedValues(parent, name) {
 				// Find all checked checkboxes within the parent element
 				var checkedCheckboxes = parent.find('input[name="' + name +'"]:checked');

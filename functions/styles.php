@@ -82,6 +82,25 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			.anony-form .button-primary {
+				background: #024059;
+				border-color: #024059;
+				box-shadow: none;
+				color: #fff;
+				text-decoration: none;
+				text-shadow: none;
+			}
+			#submit-user_edit_session_notes{
+				width: 100%;
+			}
+			.snks-notes-form{
+				max-height:0;
+				overflow:hidden;
+				transition: all 1s ease-in-out;
+			}
+			.show-notes-form.snks-notes-form{
+				max-height: 500px;
+			}
 			.width-280{
 				width: 280px;
 				margin:auto;

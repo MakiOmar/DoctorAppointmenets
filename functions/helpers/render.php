@@ -817,8 +817,9 @@ function snks_generate_bookings() {
 				* @var object $data
 				*/
 				foreach ( $timetables as $data ) {
+					$output       .= '<div class="snks-booking-item-wrapper">';
 					$output       .= template_str_replace( $data );
-					$output       .= '<div class="anony-padding-10">';
+					$output       .= '<div class="snks-notes-form anony-padding-10">';
 					$session_notes = get_posts(
 						array(
 							'post_type'    => 'session_notes',
@@ -844,6 +845,7 @@ function snks_generate_bookings() {
 						);
 					}
 
+					$output .= '</div>';
 					$output .= '</div>';
 				}
 			}
