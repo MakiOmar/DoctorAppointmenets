@@ -517,6 +517,8 @@ function custom_withdrawal_form_shortcode() {
 	);
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
+		<?php echo wp_kses_post( str_replace( '{available_amount}', snks_get_avaialable_credit(), do_shortcode( '[elementor-template id="3725"]' ) ) ); ?>
+		<?php echo wp_kses_post( str_replace( '{withdrawal_amount}', snks_get_withdrawal_credit(), do_shortcode( '[elementor-template id="3733"]' ) ) ); ?>
 		<?php wp_nonce_field( 'save_withdrawal_settings', 'withdrawal_settings_nonce' ); ?>
 		<!-- First Section -->
 		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
@@ -533,7 +535,9 @@ function custom_withdrawal_form_shortcode() {
 			<?php endforeach; ?>
 
 			<!-- Submit Button -->
+			<div class="manual-withdrawal-button" style="display:<?php echo 'manual_withdrawal' === $withdrawal_option ? 'block' : 'none'; ?>">
 			<button class="anony-default-padding withdrawal-button">إضغط هنا لطلب السحب</button>
+			</div>
 			<div class="financials-white-section anony-default-padding white-bg">
 				<p style="color: #939393; text-align: justify;font-size: 23px;">
 					في حالة كان يوم السحب يوم عطلة رسمي، يتم السحب في أول يوم عمل تالي.
@@ -569,7 +573,7 @@ function custom_withdrawal_form_shortcode() {
 				</div>
 			<?php endforeach; ?>
 			<div class="financials-white-section anony-default-padding white-bg">
-				<p style="color: #939393; text-align: justify;font-size: 23px;">
+				<p style="color: #939393; text-align: justify;font-size: 20px;">
 				يرجى العلم أنه لا يمكنك تغيير بيانات السحب الخاصة بك في الفترة من الساعة 12 منتصف الليل وحتي الساعة 9 صباحا، وبحلول منتصف الليل يتم تلقائيا تسجيل بيانات حسابك ( نظام السحب, الرصيد وطريقة السحب ) الموجودة بحسابك لاستخدامها في عملية السحب التالية الخاصة بك.
 				</p>
 			</div>
@@ -586,7 +590,7 @@ function custom_withdrawal_form_shortcode() {
 		<!-- Submit Button (Initially disabled) -->
 		<button type="button" id="submit-withdrawal-form" class="anony-default-padding withdrawal-button" style="display:none;">حفظ</button>
 	</form>
-
+	<?php echo wp_kses_post( do_shortcode( '[elementor-template id="3737"]' ) ); ?>
 	<?php
 	return ob_get_clean();
 }
