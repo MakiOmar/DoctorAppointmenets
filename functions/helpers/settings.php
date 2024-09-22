@@ -893,6 +893,23 @@ function snks_get_hours_in_range( $target_hours, $check_hours ) {
 
 	return $hours_in_range;
 }
+/**
+ * Get available credit
+ *
+ * @return mixed
+ */
+function snks_get_avaialable_credit() {
+	return 0;
+}
+
+/**
+ * Get Withdrawal amount
+ *
+ * @return mixed
+ */
+function snks_get_withdrawal_credit() {
+	return 0;
+}
 
 add_action(
 	'jet-form-builder/custom-action/settings_validate',
