@@ -28,6 +28,11 @@ add_action(
 
 				// Select all radio buttons within the withdrawal-options container
 				$('.withdrawal-options input[type="radio"]').on('change', function() {
+					if ( $(this).val() === 'manual_withdrawal' ) {
+						$('.manual-withdrawal-button').slideDown();
+					} else {
+						$('.manual-withdrawal-button').slideUp();
+					}
 					var parent = $(this).closest('.withdrawal-options');
 					
 					// Remove 'checked' class from all .anony-custom-radio spans
@@ -35,7 +40,9 @@ add_action(
 					
 					// Add 'checked' class to the corresponding span of the selected radio
 					$(this).next('label').find('.anony-custom-radio').addClass('checked');
-					
+				});
+				// Select all radio buttons within the withdrawal-options container
+				$('input[name="withdrawal_method"]').on('change', function() {
 					// Hide all field containers first
 					$('.withdrawal-accounts-fields').slideUp();
 					
