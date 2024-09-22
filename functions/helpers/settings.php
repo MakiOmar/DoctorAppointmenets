@@ -899,7 +899,8 @@ function snks_get_hours_in_range( $target_hours, $check_hours ) {
  * @return mixed
  */
 function snks_get_avaialable_credit() {
-	return 0;
+	// Return credit without currency.
+	return preg_replace( '/[^\d]/', '', snks_get_wallet_balance( get_current_user_id() ) );
 }
 
 /**
