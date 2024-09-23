@@ -36,7 +36,21 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 			);
 			if ( $updated ) {
 				snks_close_others( $timetable );
-				snks_wallet_credit( $timetable->user_id, $order->get_total(), 'الدخل مقابل حجز موعد' );
+				// Get the current time based on WordPress timezone.
+				$current_hour = current_time( 'H' ); // 'H' returns the current hour in 24-hour format (00-23).
+
+				// Check if the current time is between 12 AM and 9 AM0.
+				if ( $current_hour >= 0 && $current_hour < 9 ) {
+					// Get the current amount in temp_wallet.
+					$current_temp_wallet = (float) get_user_meta( $timetable->user_id, 'temp_wallet', true );
+
+					// Add the order total to the temp_wallet.
+					$new_temp_wallet_balance = $current_temp_wallet + $order->get_total();
+					update_user_meta( $timetable->user_id, 'temp_wallet', $new_temp_wallet_balance );
+				} else {
+					// Directly credit the amount to the user's wallet outside the restricted time.
+					snks_wallet_credit( $timetable->user_id, $order->get_total(), 'الدخل مقابل حجز موعد' );
+				}
 				snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
 				update_post_meta( $order_id, 'booking_id', $timetable->ID );
 				update_post_meta( $order_id, 'doctor_id', $timetable->user_id );
