@@ -16,6 +16,7 @@ if ( ! function_exists( 'WP_Filesystem' ) ) {
 
 WP_Filesystem();
 
+define( 'SNKS_DEV_MODE', true );
 /**
  * On order complete the system adds the doctor share to his wallet, if the order is created at an hour greater than 9 am and less than 12 am
  * Else it will add it to a temporary wallet. Then the following cron job should run and check if the current hour greater than 9 am and less than 12 am and the this day reports are generated,
@@ -58,7 +59,7 @@ function snks_process_temp_wallet() {
 	$current_hour = current_time( 'H' ); // 'H' gives the hour in 24-hour format (00-23).
 	$reports      = false; // Check if reports are generated.
 	// Only proceed if the time is between 9 AM and 12 AM (midnight).
-	if ( $current_hour < 9 || $current_hour >= 24 || ! $reports ) {
+	if ( ! SNKS_DEV_MODE && ( $current_hour < 9 || $current_hour >= 24 || ! $reports ) ) {
 		return; // Exit early if current time is not between 9 AM and 12 AM.
 	}
 
@@ -140,12 +141,8 @@ function snks_create_withdrawal_directory() {
 	// Check if the folder already exists, if not, create it.
 	if ( ! file_exists( $withdrawals_dir ) ) {
 		wp_mkdir_p( $withdrawals_dir ); // Create the directory with nested folders.
-
-		// Secure the folder by adding an .htaccess file to prevent public access.
-		$htaccess_content = "Order Allow,Deny\nDeny from all\n";
-
 		// Use WP_Filesystem to write the .htaccess file.
-		if ( ! $wp_filesystem->put_contents( $withdrawals_dir . '/.htaccess', $htaccess_content, FS_CHMOD_FILE ) ) {
+		if ( ! $wp_filesystem->put_contents( $withdrawals_dir . '/index.html', '', FS_CHMOD_FILE ) ) {
 			//phpcs:disable
 			error_log( 'Failed to create .htaccess file in withdrawals directory.' );
 			//phpcs:enable
@@ -166,7 +163,7 @@ function snks_process_withdrawal() {
 	$current_hour = current_time( 'H' ); // 'H' gives the hour in 24-hour format (00-23).
 
 	// Only proceed if the time is between 12 AM and 9 AM.
-	if ( $current_hour < 0 || $current_hour > 9 ) {
+	if ( ! SNKS_DEV_MODE && ( $current_hour < 0 || $current_hour > 9 ) ) {
 		return; // Exit if current time is not between 12 AM and 9 AM.
 	}
 
@@ -205,43 +202,43 @@ function snks_process_withdrawal() {
 
 		// Get the user's wallet balance.
 		$wallet_balance = snks_get_wallet_balance( $user_id );
-
 		// Skip this user if their wallet balance is 0.
 		if ( $wallet_balance <= 0 ) {
 			continue;
 		}
-
-		// Get the user's withdrawal option.
-		$withdrawal_option = get_user_meta( $user_id, 'withdrawal_option', true );
-
+		$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
+		if ( empty( $withdrawal_settings ) ) {
+			continue;
+		}
+		$withdrawal_option = $withdrawal_settings['withdrawal_option'];
 		// Check the withdrawal conditions based on the user's withdrawal option.
 		if ( 'daily_withdrawal' === $withdrawal_option ||
 			( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || // 3 = Wednesday.
 			( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) )
 		) {
 			// Get the withdrawal method and its corresponding fields.
-			$withdrawal_method = get_user_meta( $user_id, 'withdrawal_method', true );
+			$withdrawal_method = $withdrawal_settings['withdrawal_method'];
 			$fields            = array();
 
 			// Fetch corresponding fields for the method (depending on the method type).
 			if ( 'bank_account' === $withdrawal_method ) {
 				$fields = array(
-					'account_holder_name' => get_user_meta( $user_id, 'account_holder_name', true ),
-					'bank_name'           => get_user_meta( $user_id, 'bank_name', true ),
-					'branch'              => get_user_meta( $user_id, 'branch', true ),
-					'account_number'      => get_user_meta( $user_id, 'account_number', true ),
-					'iban_number'         => get_user_meta( $user_id, 'iban_number', true ),
+					'account_holder_name' => $withdrawal_settings['account_holder_name'],
+					'bank_name'           => $withdrawal_settings['bank_name'],
+					'branch'              => $withdrawal_settings['branch'],
+					'account_number'      => $withdrawal_settings['account_number'],
+					'iban_number'         => $withdrawal_settings['iban_number'],
 				);
 			} elseif ( 'meza_card' === $withdrawal_method ) {
 				$fields = array(
-					'card_holder_name' => get_user_meta( $user_id, 'card_holder_name', true ),
-					'meza_bank_name'   => get_user_meta( $user_id, 'meza_bank_name', true ),
-					'meza_card_number' => get_user_meta( $user_id, 'meza_card_number', true ),
+					'card_holder_name' => $withdrawal_settings['card_holder_name'],
+					'meza_bank_name'   => $withdrawal_settings['meza_bank_name'],
+					'meza_card_number' => $withdrawal_settings['meza_card_number'],
 				);
 			} elseif ( 'wallet' === $withdrawal_method ) {
 				$fields = array(
-					'wallet_holder_name' => get_user_meta( $user_id, 'wallet_holder_name', true ),
-					'wallet_number'      => get_user_meta( $user_id, 'wallet_number', true ),
+					'wallet_holder_name' => $withdrawal_settings['wallet_holder_name'],
+					'wallet_number'      => $withdrawal_settings['wallet_number'],
 				);
 			}
 
@@ -250,6 +247,7 @@ function snks_process_withdrawal() {
 				'user_id'           => $user_id,
 				'withdrawal_option' => $withdrawal_option,
 				'withdrawal_method' => $withdrawal_method,
+				'wallet_balance'    => $wallet_balance,
 				'fields'            => $fields,
 			);
 		}
@@ -264,6 +262,7 @@ function snks_process_withdrawal() {
 	}
 }
 add_action( 'snks_process_withdrawal_event', 'snks_process_withdrawal' );
+add_action( 'template_redirect', 'snks_process_withdrawal' );
 
 /**
  * Generate or append to an xlsx file with the output data.
@@ -276,7 +275,7 @@ function snks_generate_xlsx( $data ) {
 	$withdrawals_dir = snks_create_withdrawal_directory();
 
 	// Define the filename for the xlsx file.
-	$filename = 'withdrawal_data_' . gmdate( 'Y-m-d_H-i-s' ) . '.xlsx';
+	$filename = 'withdrawal_data_' . current_time( 'Y-m-d_H-i-s' ) . '.xlsx';
 
 	// Full path to the xlsx file.
 	$filepath = $withdrawals_dir . '/' . $filename;
@@ -295,18 +294,40 @@ function snks_generate_xlsx( $data ) {
 		$sheet       = $spreadsheet->getActiveSheet();
 
 		// Set the header row if creating a new file.
-		$headers = array( 'User ID', 'Withdrawal Option', 'Withdrawal Method', 'Wallet Balance', 'Field 1', 'Field 2', 'Field 3', 'Field 4', 'Field 5' );
+		$headers = array( 'User ID', 'Withdrawal Option', 'Withdrawal Method', 'Wallet Balance', 'Fields' );
 		$sheet->fromArray( $headers, null, 'A1' );
-		$last_row = 1; // Start after the header row for a new file.
+		$last_row = 1; // Start after the header row for new file.
 	}
 
-	// Append new data starting from the next row after the last row.
-	$sheet->fromArray( $data, null, 'A' . ( $last_row + 1 ) );
+	// Process and clean the data before writing to the spreadsheet.
+	$cleaned_data = array();
+
+	foreach ( $data as $entry ) {
+		// If 'withdrawal_method' contains an array, convert it to a string.
+		if ( is_array( $entry['withdrawal_method'] ) ) {
+			$entry['withdrawal_method'] = implode( ', ', $entry['withdrawal_method'] );
+		}
+
+		// Handle the fields (which can also be an array).
+		if ( isset( $entry['fields'] ) && is_array( $entry['fields'] ) ) {
+			$entry['fields'] = implode( ', ', $entry['fields'] );
+		}
+
+		// Add the cleaned entry to the cleaned data array.
+		$cleaned_data[] = array(
+			$entry['user_id'],
+			$entry['withdrawal_option'],
+			$entry['withdrawal_method'], // Now a string.
+			$entry['wallet_balance'],
+			isset( $entry['fields'] ) ? $entry['fields'] : '',
+		);
+	}
+	// Append new cleaned data starting from the next row after the last row.
+	$sheet->fromArray( $cleaned_data, null, 'A' . ( $last_row + 1 ) );
 
 	// Create a new Xlsx writer and save the updated file.
 	$writer = new Xlsx( $spreadsheet );
 	$writer->save( $filepath );
-
 	// Output the file path for further use (if needed).
 	return $filepath;
 }
