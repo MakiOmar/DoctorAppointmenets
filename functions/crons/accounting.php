@@ -275,7 +275,7 @@ function snks_generate_xlsx( $data ) {
 	$withdrawals_dir = snks_create_withdrawal_directory();
 
 	// Define the filename for the xlsx file.
-	$filename = 'withdrawal_data_' . current_time( 'Y-m-d_H-i-s' ) . '.xlsx';
+	$filename = 'withdrawal_data_' . gmdate( 'Y-m-d' ) . '.xlsx';
 
 	// Full path to the xlsx file.
 	$filepath = $withdrawals_dir . '/' . $filename;
