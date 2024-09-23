@@ -119,3 +119,30 @@ function snks_pricing_discount_enabled( $user_id = false ) {
 	$enable_discount = get_user_meta( $user_id, 'enable_discount', true );
 	return 'on' === $enable_discount;
 }
+
+/**
+ * Subtract the JetEngine option percentage from a given amount.
+ *
+ * @param float $amount The original amount.
+ * @return float The amount after the percentage is subtracted.
+ */
+function subtract_jalsa_commission( $amount ) {
+	if ( ! function_exists( 'jet_engine' ) ) {
+		return $amount;
+	}
+	// Get the commission percentage from JetEngine options.
+	$commission_percent = jet_engine()->listings->data->get_option( 'jalsa:jalsa-commission' );
+
+	// Ensure the commission percent is a valid number.
+	if ( ! is_numeric( $commission_percent ) || $commission_percent < 0 ) {
+		return $amount; // Return the original amount if the value is invalid.
+	}
+
+	// Convert the percentage to a decimal (e.g., 10% becomes 0.10).
+	$commission_decimal = $commission_percent / 100;
+
+	// Calculate the final amount after subtracting the commission.
+	$final_amount = $amount - ( $amount * $commission_decimal );
+
+	return $final_amount;
+}
