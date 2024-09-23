@@ -22,6 +22,11 @@ add_action(
 					$(this).closest('.snks-booking-item-wrapper').find('.snks-notes-form').toggleClass('show-notes-form');
 				}
 			);
+			// When the element with class .bulk-action-toggle-tip-close is clicked
+			$('.bulk-action-toggle-tip-close').on('click', function() {
+				// Set a cookie named 'hide-delay-tip' with a value '1' and no expiration date (never expires)
+				Cookies.set('hide-delay-tip', '1', { expires: 365 * 100 }); // Cookie set for 100 years
+			});
 			function getCheckedValues(parent, name) {
 				// Find all checked checkboxes within the parent element
 				var checkedCheckboxes = parent.find('input[name="' + name +'"]:checked');
