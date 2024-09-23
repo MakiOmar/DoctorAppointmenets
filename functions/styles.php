@@ -61,9 +61,9 @@ add_action(
 				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control:not(.active-tab),
 				.elementor-3546 .elementor-element.elementor-element-a809552:not(.elementor-motion-effects-element-type-background), .elementor-3546 .elementor-element.elementor-element-a809552 > .elementor-motion-effects-container > .elementor-motion-effects-layer,
 				div.elementor .elementor-3546 .elementor-element.elementor-element-a809552:not(.elementor-motion-effects-element-type-background),
-				.elementor-3546 .elementor-element.elementor-element-6fecfe97 > .elementor-widget-container
+				.elementor-3546 .elementor-element.elementor-element-6fecfe97 > .elementor-widget-container, body.woocommerce-order-received
 				{
-					background-color: <?php echo esc_attr( $dark_color ) ?>!important;
+					background-color: <?php echo esc_attr( $dark_color ); ?>!important;
 				}
 				<?php
 			}
@@ -82,6 +82,19 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			body.woocommerce-order-received,
+			.elementor-3761 .elementor-element.elementor-element-2dc5242b:not(.elementor-motion-effects-element-type-background), 
+			.elementor-3761 .elementor-element.elementor-element-2dc5242b > .elementor-motion-effects-container > .elementor-motion-effects-layer
+			{
+				background-color: <?php echo esc_attr( $dark_color ); ?>!important;
+			}
+			.elementor-3761 .elementor-element.elementor-element-54e84fd .elementor-button
+			{
+				background-color: <?php echo esc_attr( $darker_color ); ?>!important;
+			}
+			.e-con>.e-con-inner {
+				padding: 0;
+			}
 			.anony-form .button-primary {
 				background: #024059;
 				border-color: #024059;
@@ -156,6 +169,7 @@ add_action(
 			}
 			.consulting-form{
 				max-width: 360px;
+				margin: auto;
 				margin-top: 30px;
 			}
 
@@ -172,9 +186,6 @@ add_action(
 			@media (max-width: 400px) {
 				.attendance_type_wrapper label{
 					font-size: 19px!important;
-				}
-				.consulting-form{
-					max-width: 280px;
 				}
 				.snks-period-label, .snks-period-price{
 					width:104px!important
@@ -225,6 +236,7 @@ add_action(
 			}
 			#consulting-forms-container{
 				margin: auto;
+				min-width: 95%;
 			}
 			.snks-period-label:before{
 				content: '';
@@ -1006,6 +1018,7 @@ add_action(
 			
 			.anony-content-slide{
 				max-width: 60px!important;
+				margin: 2px;
 			}
 			@media screen and (min-width:481px) {
 				.snks-booking-page-container{

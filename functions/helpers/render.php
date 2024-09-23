@@ -259,7 +259,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html  = '';
 	$html .= '<form id="consulting-form-' . esc_attr( $period ) . '" class="consulting-form consulting-form-' . esc_attr( $period ) . '" action="' . $submit_action . '" method="post">';
 
-	$html .= '<h5 class="snks-bg anony-padding-5 anony-center-text" style="border-top-left-radius:10px;border-top-right-radius:10px;padding: 10px 0;">';
+	$html .= '<h5 class="snks-bg anony-padding-5 anony-center-text" style="min-width:75%;border-top-left-radius:10px;border-top-right-radius:10px;padding: 10px 0;">';
 	$html .= ' إختر موعد الحجز';
 	$html .= '</h5>';
 	$html .= '<div class="atrn-form-days anony-content-slider-container">';
