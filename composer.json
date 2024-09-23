@@ -1,5 +1,6 @@
 {
     "require": {
-        "erguncaner/table": "dev-master"
+        "erguncaner/table": "dev-master",
+        "phpoffice/phpspreadsheet": "^2.2"
     }
 }

@@ -15,6 +15,13 @@
 // plugin textdomain.
 define( 'SNKS_DOMAIN', 'anony-turn' );
 
+// Ensure the vendor autoload file is required.
+if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+	require_once __DIR__ . '/vendor/autoload.php';
+} else {
+	error_log( 'PHPSpreadsheet library not found. Make sure to run "composer install".' );
+}
+
 // Plugin path.
 define( 'SNKS_DIR', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
 define( 'SNKS_LOGO', site_url( '/wp-content/uploads/2024/08/logo.jpg' ) );
