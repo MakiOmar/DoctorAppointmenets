@@ -53,11 +53,13 @@ add_action(
 			wp_safe_redirect( site_url( $doctor_url ) );
 			exit;
 		}
-
+		$country     = snsk_ip_api_country();
+		$price       = snks_calculated_price( $user_id, $country, sanitize_text_field( $_req['period'] ) );
+		$total_price = snks_jalsa_commission_proccess( $price, 'add' );
 		// Prepare form data to store in session.
 		$form_data = array(
-			'booking_day'  => sanitize_text_field( $_req['current-month-day'] ),
-			'booking_hour' => snks_localize_time(
+			'booking_day'        => sanitize_text_field( $_req['current-month-day'] ),
+			'booking_hour'       => snks_localize_time(
 				sprintf(
 					/* translators: 1: start time, 2: end time */
 					esc_html__( 'من %1$s إلى %2$s', 'text-domain' ),
@@ -65,9 +67,12 @@ add_action(
 					esc_html( gmdate( 'h:i a', strtotime( $timetable->ends ) ) )
 				)
 			),
-			'booking_id'   => sanitize_text_field( $_req['selected-hour'] ),
-			'_user_id'     => sanitize_text_field( $_req['user-id'] ),
-			'_period'      => sanitize_text_field( $_req['period'] ),
+			'booking_id'         => sanitize_text_field( $_req['selected-hour'] ),
+			'_user_id'           => sanitize_text_field( $_req['user-id'] ),
+			'_period'            => sanitize_text_field( $_req['period'] ),
+			'_main_price'        => $price,
+			'_total_price'       => $total_price,
+			'_jalsah_commistion' => $total_price - $price,
 		);
 		// Start PHP session if not already started.
 		if ( ! session_id() ) {
@@ -190,18 +195,14 @@ add_action(
 		}
 		//phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$session = $woocommerce->session->get( 'consulting_form_data' );
+
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return;
 		}
-		$country = snsk_ip_api_country();
-		$user_id = $session['_user_id'];
-		$period  = $session['_period'];
-		$price   = snks_calculated_price( $user_id, $country, $period );
 
 		//phpcs:enable
 		foreach ( $cart_object->cart_contents as $cart_item_key => $value ) {
-			$custom_price = $price; // Set price.
-			$value['data']->set_price( $custom_price );
+			$value['data']->set_price( $session['_total_price'] );
 		}
 		return $cart_object;
 	},

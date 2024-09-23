@@ -123,15 +123,18 @@ function snks_pricing_discount_enabled( $user_id = false ) {
 /**
  * Subtract the JetEngine option percentage from a given amount.
  *
- * @param float $amount The original amount.
+ * @param float  $amount The original amount.
+ * @param string $operation Operation add/subtract.
  * @return float The amount after the percentage is subtracted.
  */
-function subtract_jalsa_commission( $amount ) {
+function snks_jalsa_commission_proccess( $amount, $operation = 'subtract' ) {
 	if ( ! function_exists( 'jet_engine' ) ) {
 		return $amount;
 	}
+	$page = jet_engine()->options_pages->registered_pages['jalsa'];
+
 	// Get the commission percentage from JetEngine options.
-	$commission_percent = jet_engine()->listings->data->get_option( 'jalsa:jalsa-commission' );
+	$commission_percent = $page->get( 'jalsa-commission' );
 
 	// Ensure the commission percent is a valid number.
 	if ( ! is_numeric( $commission_percent ) || $commission_percent < 0 ) {
@@ -142,7 +145,11 @@ function subtract_jalsa_commission( $amount ) {
 	$commission_decimal = $commission_percent / 100;
 
 	// Calculate the final amount after subtracting the commission.
-	$final_amount = $amount - ( $amount * $commission_decimal );
+	if ( 'subtract' === $operation ) {
+		$final_amount = $amount - ( $amount * $commission_decimal );
+	} else {
+		$final_amount = $amount + ( $amount * $commission_decimal );
+	}
 
 	return $final_amount;
 }
