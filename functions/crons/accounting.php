@@ -146,7 +146,9 @@ function snks_create_withdrawal_directory() {
 
 		// Use WP_Filesystem to write the .htaccess file.
 		if ( ! $wp_filesystem->put_contents( $withdrawals_dir . '/.htaccess', $htaccess_content, FS_CHMOD_FILE ) ) {
+			//phpcs:disable
 			error_log( 'Failed to create .htaccess file in withdrawals directory.' );
+			//phpcs:enable
 		}
 	}
 
@@ -169,7 +171,7 @@ function snks_process_withdrawal() {
 	}
 
 	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
-	$current_day_of_week  = current_time( 'w' ); // 0 (for Sunday) through 6 (for Saturday).
+	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
 	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
 
 	global $wpdb;
@@ -214,8 +216,8 @@ function snks_process_withdrawal() {
 
 		// Check the withdrawal conditions based on the user's withdrawal option.
 		if ( 'daily_withdrawal' === $withdrawal_option ||
-			( 'weekly_withdrawal' === $withdrawal_option && 3 == $current_day_of_week ) || // 3 = Wednesday.
-			( 'monthly_withdrawal' === $withdrawal_option && 1 == $current_day_of_month )
+			( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || // 3 = Wednesday.
+			( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) )
 		) {
 			// Get the withdrawal method and its corresponding fields.
 			$withdrawal_method = get_user_meta( $user_id, 'withdrawal_method', true );

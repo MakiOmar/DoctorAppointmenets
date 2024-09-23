@@ -19,7 +19,9 @@ define( 'SNKS_DOMAIN', 'anony-turn' );
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 } else {
+	//phpcs:disable
 	error_log( 'PHPSpreadsheet library not found. Make sure to run "composer install".' );
+	//phpcs:enable
 }
 
 // Plugin path.
