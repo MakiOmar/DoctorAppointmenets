@@ -210,7 +210,18 @@ function snks_process_withdrawal() {
 		if ( empty( $withdrawal_settings ) ) {
 			continue;
 		}
-		$withdrawal_option = $withdrawal_settings['withdrawal_option'];
+		$withdrawal_options = array(
+			'daily_withdrawal'   => 'يومي',
+			'weekly_withdrawal'  => 'أسبوعي',
+			'monthly_withdrawal' => 'شهري',
+			'manual_withdrawal'  => 'يدوي',
+		);
+		$withdrawal_methods = array(
+			'bank_account' => 'حساب بنكي',
+			'meza_card'    => 'بطاقة ميزة',
+			'wallet'       => 'محفظة إلكترونية',
+		);
+		$withdrawal_option  = $withdrawal_settings['withdrawal_option'];
 		// Check the withdrawal conditions based on the user's withdrawal option.
 		if ( 'daily_withdrawal' === $withdrawal_option ||
 			( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || // 3 = Wednesday.
@@ -221,32 +232,33 @@ function snks_process_withdrawal() {
 			$fields            = array();
 
 			// Fetch corresponding fields for the method (depending on the method type).
+			// Concatenate the fields with line breaks.
 			if ( 'bank_account' === $withdrawal_method ) {
 				$fields = array(
-					'account_holder_name' => $withdrawal_settings['account_holder_name'],
-					'bank_name'           => $withdrawal_settings['bank_name'],
-					'branch'              => $withdrawal_settings['branch'],
-					'account_number'      => $withdrawal_settings['account_number'],
-					'iban_number'         => $withdrawal_settings['iban_number'],
+					'اسم صاحب الحساب: ' . $withdrawal_settings['account_holder_name'],
+					'اسم البنك: ' . $withdrawal_settings['bank_name'],
+					'الفرع: ' . $withdrawal_settings['branch'],
+					'رقم الحساب: ' . $withdrawal_settings['account_number'],
+					'رقم IBAN: ' . $withdrawal_settings['iban_number'],
 				);
 			} elseif ( 'meza_card' === $withdrawal_method ) {
 				$fields = array(
-					'card_holder_name' => $withdrawal_settings['card_holder_name'],
-					'meza_bank_name'   => $withdrawal_settings['meza_bank_name'],
-					'meza_card_number' => $withdrawal_settings['meza_card_number'],
+					'اسم صاحب البطاقة: ' . $withdrawal_settings['card_holder_name'],
+					'البنك المصدر للبطاقة: ' . $withdrawal_settings['meza_bank_name'],
+					'رقم البطاقة: ' . $withdrawal_settings['meza_card_number'],
 				);
 			} elseif ( 'wallet' === $withdrawal_method ) {
 				$fields = array(
-					'wallet_holder_name' => $withdrawal_settings['wallet_holder_name'],
-					'wallet_number'      => $withdrawal_settings['wallet_number'],
+					'اسم صاحب المحفظة: ' . $withdrawal_settings['wallet_holder_name'],
+					'رقم المحفظة: ' . $withdrawal_settings['wallet_number'],
 				);
 			}
 
 			// Add the user's data to the output array.
 			$output[] = array(
 				'user_id'           => $user_id,
-				'withdrawal_option' => $withdrawal_option,
-				'withdrawal_method' => $withdrawal_method,
+				'withdrawal_option' => $withdrawal_options[ $withdrawal_option ],
+				'withdrawal_method' => $withdrawal_methods[ $withdrawal_method ],
 				'wallet_balance'    => $wallet_balance,
 				'fields'            => $fields,
 			);
@@ -268,7 +280,7 @@ add_action( 'template_redirect', 'snks_process_withdrawal' );
  * Generate or append to an xlsx file with the output data.
  *
  * @param array $data Array of data to be written to the xlsx file.
- * @return string
+ * @return void
  */
 function snks_generate_xlsx( $data ) {
 	// Create the withdrawals directory for the current year and month.
@@ -280,24 +292,14 @@ function snks_generate_xlsx( $data ) {
 	// Full path to the xlsx file.
 	$filepath = $withdrawals_dir . '/' . $filename;
 
-	// Check if the file exists, and load it if it does, otherwise create a new one.
-	if ( file_exists( $filepath ) ) {
-		// Load the existing spreadsheet.
-		$spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load( $filepath );
-		$sheet       = $spreadsheet->getActiveSheet();
-
-		// Find the last row to append new data.
-		$last_row = $sheet->getHighestRow(); // Get the last row number.
-	} else {
-		// Create a new Spreadsheet object if the file doesn't exist.
-		$spreadsheet = new Spreadsheet();
-		$sheet       = $spreadsheet->getActiveSheet();
-
-		// Set the header row if creating a new file.
-		$headers = array( 'User ID', 'Withdrawal Option', 'Withdrawal Method', 'Wallet Balance', 'Fields' );
-		$sheet->fromArray( $headers, null, 'A1' );
-		$last_row = 1; // Start after the header row for new file.
-	}
+	// Set the header row if creating a new file.
+	$headers = array(
+		'رقم الطبيب',
+		'نظام السحب',
+		'طريقة السحب',
+		'مبلغ السحب',
+		'بيانات السحب',
+	);
 
 	// Process and clean the data before writing to the spreadsheet.
 	$cleaned_data = array();
@@ -322,12 +324,7 @@ function snks_generate_xlsx( $data ) {
 			isset( $entry['fields'] ) ? $entry['fields'] : '',
 		);
 	}
-	// Append new cleaned data starting from the next row after the last row.
-	$sheet->fromArray( $cleaned_data, null, 'A' . ( $last_row + 1 ) );
-
-	// Create a new Xlsx writer and save the updated file.
-	$writer = new Xlsx( $spreadsheet );
-	$writer->save( $filepath );
-	// Output the file path for further use (if needed).
-	return $filepath;
+	if ( class_exists( 'ANONY_PHPOFFICE_HELP' ) ) {
+		ANONY_PHPOFFICE_HELP::array_to_spreadsheet_append( $cleaned_data, $headers, 'قائمة السحب', $filepath );
+	}
 }
