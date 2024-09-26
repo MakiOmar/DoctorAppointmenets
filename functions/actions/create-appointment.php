@@ -51,6 +51,8 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					// Directly credit the amount to the user's wallet outside the restricted time.
 					snks_wallet_credit( $timetable->user_id, $doctor_earning, 'الدخل مقابل حجز موعد' );
 				}
+				snks_add_transaction( $timetable->user_id, $timetable->ID, 'add', $doctor_earning );
+				snks_log_transaction( $timetable->user_id, $doctor_earning, 'add' );
 				snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
 				update_post_meta( $order_id, 'booking_id', $timetable->ID );
 				update_post_meta( $order_id, 'doctor_id', $timetable->user_id );

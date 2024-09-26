@@ -15,6 +15,9 @@
 // plugin textdomain.
 define( 'SNKS_DOMAIN', 'anony-turn' );
 
+define( 'TIMETABLE_TABLE_NAME', 'snks_provider_timetable' );
+define( 'TRNS_TABLE_NAME', 'snks_booking_transactions' );
+
 // Ensure the vendor autoload file is required.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
@@ -96,6 +99,7 @@ add_action(
 
 require_once SNKS_DIR . 'includes/timetable-table.php';
 require_once SNKS_DIR . 'includes/sessions-actions-table.php';
+require_once SNKS_DIR . 'includes/transaction-table.php';
 /**
  * Plugin activation hook
  *
@@ -104,6 +108,7 @@ require_once SNKS_DIR . 'includes/sessions-actions-table.php';
 function plugin_activation_hook() {
 	snks_create_timetable_table();
 	snks_create_snks_sessions_actions_table();
+	snks_create_transactions_table();
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 

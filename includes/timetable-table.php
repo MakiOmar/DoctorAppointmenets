@@ -9,8 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-define( 'TIMETABLE_TABLE_NAME', 'snks_provider_timetable' );
-
 /**
  * Create the custom table.
  *

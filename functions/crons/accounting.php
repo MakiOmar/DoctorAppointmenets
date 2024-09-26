@@ -40,6 +40,7 @@ function snks_add_cron_schedule( $schedules ) {
 }
 add_filter( 'cron_schedules', 'snks_add_cron_schedule' );
 
+return;
 /**
  * Schedule the custom cron job if it's not already scheduled.
  */
