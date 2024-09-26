@@ -119,37 +119,74 @@ function snks_pricing_discount_enabled( $user_id = false ) {
 	$enable_discount = get_user_meta( $user_id, 'enable_discount', true );
 	return 'on' === $enable_discount;
 }
-
 /**
- * Subtract the JetEngine option percentage from a given amount.
+ * Session price formula
  *
- * @param float  $amount The original amount.
- * @param string $operation Operation add/subtract.
- * @return float The amount after the percentage is subtracted.
+ * @param mixed  $session_price  Session original price.
+ * @param string $attendance_type Whether it is online or offline.
+ * @param string $context Calculation context weather if is first time book or edit. Accepts book|any.
+ * @return mixed
  */
-function snks_jalsa_commission_proccess( $amount, $operation = 'subtract' ) {
-	if ( ! function_exists( 'jet_engine' ) ) {
-		return $amount;
-	}
-	$page = jet_engine()->options_pages->registered_pages['jalsa'];
+function snks_session_total_price( $session_price, $attendance_type, $context = 'book' ) {
 
-	// Get the commission percentage from JetEngine options.
-	$commission_percent = $page->get( 'jalsa-commission' );
-
-	// Ensure the commission percent is a valid number.
-	if ( ! is_numeric( $commission_percent ) || $commission_percent < 0 ) {
-		return $amount; // Return the original amount if the value is invalid.
-	}
-
-	// Convert the percentage to a decimal (e.g., 10% becomes 0.10).
-	$commission_decimal = $commission_percent / 100;
-
-	// Calculate the final amount after subtracting the commission.
-	if ( 'subtract' === $operation ) {
-		$final_amount = $amount - ( $amount * $commission_decimal );
+	if ( 'book' !== $context ) {
+		$a = 0;
 	} else {
-		$final_amount = $amount + ( $amount * $commission_decimal );
+		// Define A based on the attendance type.
+		$a = 'online' === $attendance_type ? 2.28 : 1.14; // sms fees.
+	}
+	// Calculate B and C (both are the same for online and offline).
+	$b = ( $session_price * 0.025 + 2 ) * 1.14; // Payment gateway.
+	$c = ( $session_price * 0.005 ) * 1.14; // Payout.
+	if ( 'book' === $context ) {
+		// Determine D based on the session price and attendance type.
+		if ( 'online' === $attendance_type ) {
+			if ( $session_price < 50 ) {
+				$d = 2.85; // Is jalash earnings.
+			} elseif ( $session_price >= 50 && $session_price < 100 ) {
+				$d = 5.7;
+			} elseif ( $session_price >= 100 && $session_price < 200 ) {
+				$d = 11.4;
+			} elseif ( $session_price >= 200 && $session_price < 300 ) {
+				$d = 13.68;
+			} elseif ( $session_price >= 300 && $session_price < 400 ) {
+				$d = 14.82;
+			} elseif ( $session_price >= 400 && $session_price < 500 ) {
+				$d = 15.96;
+			} else {
+				$d = 17.1;
+			}
+		} else {
+			// Offline case.
+			$d = $session_price < 50 ? 2.85 : 5.7;
+		}
+	} else {
+		$d = 0;
 	}
 
-	return $final_amount;
+	// Calculate E based on A, B, C, D.
+	$e = ( $a + $b + $c + $d ) * 0.025 * 1.03 * 1.14;
+
+	// Calculate F (the final total).
+	$f = $a + $b + $c + $d + $e;
+
+	$service_fees = round( ( $f / 1.14 ), 2 );
+	$vat          = round( ( $f - $service_fees ), 2 );
+	$total        = $session_price + $service_fees + $vat;
+	// Return the final session price including service fees and VAT.
+	if ( $total < 5 ) {
+		return array(
+			'session_price' => 0,
+			'service_fees'  => 4.38,
+			'vat'           => 0.62,
+			'total_price'   => 5,
+		);
+	} else {
+		return array(
+			'session_price' => $session_price,
+			'service_fees'  => $service_fees,
+			'vat'           => $vat,
+			'total_price'   => $session_price + $service_fees + $vat,
+		);
+	}
 }

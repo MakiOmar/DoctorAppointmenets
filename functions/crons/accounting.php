@@ -312,7 +312,7 @@ function snks_generate_xlsx( $data ) {
 
 		// Handle the fields (which can also be an array).
 		if ( isset( $entry['fields'] ) && is_array( $entry['fields'] ) ) {
-			$entry['fields'] = implode( ', ', $entry['fields'] );
+			$entry['fields'] = implode( "\n", $entry['fields'] );
 		}
 
 		// Add the cleaned entry to the cleaned data array.

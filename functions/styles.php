@@ -1084,6 +1084,7 @@ add_action(
 			}
 			[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover {
 				background-color: <?php echo esc_html( $darker_color ); ?>!important;
+				color:#fff!important
 			}
 			#snks-booking-page .anony-accordion-header, #snks-booking-page .periods_wrapper.snks-bg,#snks-booking-page .attendance_types_wrapper,
 			#snks-booking-page .snks-period-label.snks-light-bg::before,

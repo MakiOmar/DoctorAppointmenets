@@ -53,9 +53,10 @@ add_action(
 			wp_safe_redirect( site_url( $doctor_url ) );
 			exit;
 		}
-		$country     = snsk_ip_api_country();
-		$price       = snks_calculated_price( $user_id, $country, sanitize_text_field( $_req['period'] ) );
-		$total_price = snks_jalsa_commission_proccess( $price, 'add' );
+		$country      = snsk_ip_api_country();
+		$price        = snks_calculated_price( $user_id, $country, sanitize_text_field( $_req['period'] ) );
+		$pricing_data = snks_session_total_price( $price, $timetable->attendance_type );
+		$total_price  = $pricing_data['total_price'];
 		// Prepare form data to store in session.
 		$form_data = array(
 			'booking_day'        => sanitize_text_field( $_req['current-month-day'] ),
@@ -72,7 +73,8 @@ add_action(
 			'_period'            => sanitize_text_field( $_req['period'] ),
 			'_main_price'        => $price,
 			'_total_price'       => $total_price,
-			'_jalsah_commistion' => $total_price - $price,
+			'_jalsah_commistion' => $pricing_data['service_fees'],
+			'_vat'               => $pricing_data['vat'],
 		);
 		// Start PHP session if not already started.
 		if ( ! session_id() ) {

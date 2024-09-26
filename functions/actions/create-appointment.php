@@ -38,7 +38,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 				snks_close_others( $timetable );
 				// Get the current time based on WordPress timezone.
 				$current_hour   = current_time( 'H' ); // 'H' returns the current hour in 24-hour format (00-23).
-				$doctor_earning = snks_jalsa_commission_proccess( $order->get_total() );
+				$doctor_earning = get_post_meta( $order->get_id(), '_main_price', true );
 				// Check if the current time is between 12 AM and 9 AM0.
 				if ( $current_hour >= 0 && $current_hour < 9 ) {
 					// Get the current amount in temp_wallet.
