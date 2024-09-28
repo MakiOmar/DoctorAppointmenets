@@ -177,6 +177,35 @@ function process_withdrawals_batch() {
 add_action( 'snks_process_withdrawals_event', 'process_withdrawals_batch' );
 add_action( 'wp_footer', 'process_withdrawals_batch' );
 
+
+/**
+ * Rotate the log file if it exceeds the maximum size using WP_Filesystem.
+ *
+ * @param string $log_file The log file path.
+ * @param int    $max_size Maximum file size in bytes (default is 1 MB).
+ */
+function rotate_log_file( $log_file, $max_size = 1048576 ) {
+	// Access the global filesystem object.
+	global $wp_filesystem;
+
+	// Ensure the WP_Filesystem is initialized.
+	if ( ! function_exists( 'WP_Filesystem' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
+	// Initialize WP_Filesystem.
+	WP_Filesystem();
+
+	// Check if the log file exists and its size exceeds the maximum limit.
+	if ( $wp_filesystem->exists( $log_file ) && $wp_filesystem->size( $log_file ) > $max_size ) {
+		$archive_file = WP_CONTENT_DIR . '/uploads/transaction_logs_' . time() . '.txt';
+
+		// Move the current log file to an archive file.
+		$wp_filesystem->move( $log_file, $archive_file );
+	}
+}
+
+
 /**
  * Log the withdrawal transactions to a custom log file.
  *
@@ -185,7 +214,8 @@ add_action( 'wp_footer', 'process_withdrawals_batch' );
  * @param float $type     The transaction type.
  */
 function snks_log_transaction( $user_id, $amount, $type ) {
-	$log_file         = WP_CONTENT_DIR . '/uploads/transaction_logs.txt'; // Path to log file.
+	$log_file = WP_CONTENT_DIR . '/uploads/transaction_logs.txt'; // Path to log file.
+	rotate_log_file( $log_file ); // Rotate the log if necessary.
 	$transaction_time = current_time( 'Y-m-d H:i:s' ); // Get the current transaction time.
 	$log_entry        = sprintf(
 		"Transaction Type: %s | User ID: %d | Amount: %.2f | Transaction Time: %s\n",
@@ -199,6 +229,45 @@ function snks_log_transaction( $user_id, $amount, $type ) {
 	error_log( $log_entry, 3, $log_file );
 }
 
+/**
+ * Helper function to retrieve withdrawal transactions.
+ *
+ * @param string $date The date in 'Y-m-d' format to filter transactions (on the date).
+ * @param int    $limit The number of results to return per page (for pagination).
+ * @param int    $offset The offset for pagination (how many records to skip).
+ *
+ * @return array The result set of filtered transactions.
+ */
+function get_withdraw_transactions( $date, $limit = 0, $offset = 0 ) {
+	global $wpdb;
+	//phpcs:disable
+	// Ensure the date is in 'Y-m-d' format.
+	$formatted_date = gmdate( 'Y-m-d', strtotime( $date ) ) . ' 00:00:00';
+
+	// Table name.
+	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
+
+	// Base SQL query for filtering withdrawals on or after the provided date.
+	$sql = $wpdb->prepare(
+		"
+        SELECT * 
+        FROM $table_name
+        WHERE transaction_type = 'withdraw' 
+        AND DATE(transaction_time) = %s
+        ",
+		$formatted_date
+	);
+
+	// Add pagination if needed.
+	if ( $limit > 0 ) {
+		$sql .= $wpdb->prepare( ' LIMIT %d OFFSET %d', $limit, $offset );
+	}
+
+	// Execute the query and return the results.
+	$results = $wpdb->get_results( $sql, ARRAY_A );
+	//phpcs:enable
+	return $results;
+}
 
 /**
  * Reset the withdrawal offset at midnight.
