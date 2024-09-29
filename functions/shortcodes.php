@@ -454,6 +454,11 @@ function custom_withdrawal_form_shortcode() {
 					'value' => isset( $withdrawal_settings['account_holder_name'] ) ? $withdrawal_settings['account_holder_name'] : '',
 				),
 				array(
+					'label' => 'كود البنك',
+					'name'  => 'bank_code',
+					'value' => isset( $withdrawal_settings['bank_code'] ) ? $withdrawal_settings['bank_code'] : '',
+				),
+				array(
 					'label' => 'البنك',
 					'name'  => 'bank_name',
 					'value' => isset( $withdrawal_settings['bank_name'] ) ? $withdrawal_settings['bank_name'] : '',
@@ -486,8 +491,8 @@ function custom_withdrawal_form_shortcode() {
 					'value' => isset( $withdrawal_settings['card_holder_name'] ) ? $withdrawal_settings['card_holder_name'] : '',
 				),
 				array(
-					'label' => 'البنك الصادر منه البطاقة',
-					'name'  => 'meza_bank_name',
+					'label' => 'كود البنك الصادر منه البطاقة',
+					'name'  => 'meza_bank_code',
 					'value' => isset( $withdrawal_settings['meza_bank_name'] ) ? $withdrawal_settings['meza_bank_name'] : '',
 				),
 				array(
@@ -515,10 +520,11 @@ function custom_withdrawal_form_shortcode() {
 			),
 		),
 	);
+	$user_id = get_current_user_id();
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
-		<?php echo wp_kses_post( str_replace( '{available_amount}', snks_get_avaialable_credit(), do_shortcode( '[elementor-template id="3725"]' ) ) ); ?>
-		<?php echo wp_kses_post( str_replace( '{withdrawal_amount}', snks_get_withdrawal_credit(), do_shortcode( '[elementor-template id="3733"]' ) ) ); ?>
+		<?php echo wp_kses_post( str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ) ); ?>
+		<?php echo wp_kses_post( str_replace( '{withdrawal_amount}', snks_get_latest_transaction_amount( $user_id ), do_shortcode( '[elementor-template id="3733"]' ) ) ); ?>
 		<?php wp_nonce_field( 'save_withdrawal_settings', 'withdrawal_settings_nonce' ); ?>
 		<!-- First Section -->
 		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">

@@ -100,6 +100,7 @@ function verify_otp_and_save_withdrawal() {
 	if ( 'bank_account' === $withdrawal_method ) {
 		$withdrawal_data['account_holder_name'] = sanitize_text_field( $_POST['account_holder_name'] );
 		$withdrawal_data['bank_name']           = sanitize_text_field( $_POST['bank_name'] );
+		$withdrawal_data['bank_code']           = sanitize_text_field( $_POST['bank_code'] );
 		$withdrawal_data['branch']              = sanitize_text_field( $_POST['branch'] );
 		$withdrawal_data['account_number']      = sanitize_text_field( $_POST['account_number'] );
 		$withdrawal_data['iban_number']         = sanitize_text_field( $_POST['iban_number'] );
