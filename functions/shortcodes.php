@@ -486,9 +486,14 @@ function custom_withdrawal_form_shortcode() {
 			'label'  => 'بطاقة ميزة',
 			'fields' => array(
 				array(
-					'label' => 'اسم صاحب البطاقة',
-					'name'  => 'card_holder_name',
-					'value' => isset( $withdrawal_settings['card_holder_name'] ) ? $withdrawal_settings['card_holder_name'] : '',
+					'label' => 'الإسم الأول لصاحب البطاقة',
+					'name'  => 'card_holder_first_name',
+					'value' => isset( $withdrawal_settings['card_holder_first_name'] ) ? $withdrawal_settings['card_holder_first_name'] : '',
+				),
+				array(
+					'label' => 'الإسم الأخير لصاحب البطاقة',
+					'name'  => 'card_holder_last_name',
+					'value' => isset( $withdrawal_settings['card_holder_last_name'] ) ? $withdrawal_settings['card_holder_last_name'] : '',
 				),
 				array(
 					'label' => 'كود البنك الصادر منه البطاقة',

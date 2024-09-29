@@ -59,7 +59,6 @@ add_action(
 					$(this).text('جارٍ إرسال كود التحقق...');
 					$(this).attr('disabled', true);
 					var formData = $('#withdrawal-settings-form').serialize(); // Serialize form data including the method and specific fields
-
 					// Send AJAX request to generate and send OTP
 					$.ajax({
 						type: 'POST',

@@ -37,7 +37,7 @@ function send_email_otp() {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لحساب البنك.' ) );
 		}
 	} elseif ( 'meza_card' === $withdrawal_method ) {
-		if ( empty( $_POST['card_holder_name'] ) || empty( $_POST['meza_bank_code'] ) || empty( $_POST['meza_card_number'] ) ) {
+		if ( empty( $_POST['card_holder_first_name'] ) || empty( $_POST['card_holder_last_name'] ) || empty( $_POST['meza_bank_code'] ) || empty( $_POST['meza_card_number'] ) ) {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لبطاقة ميزة.' ) );
 		}
 	} elseif ( 'wallet' === $withdrawal_method ) {
@@ -118,7 +118,7 @@ function verify_otp_and_save_withdrawal() {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لحساب البنك.' ) );
 		}
 	} elseif ( 'meza_card' === $withdrawal_method ) {
-		if ( empty( $_POST['card_holder_name'] ) || empty( $_POST['meza_bank_code'] ) || empty( $_POST['meza_card_number'] ) ) {
+		if ( empty( $_POST['card_holder_first_name'] ) || empty( $_POST['card_holder_last_name'] ) || empty( $_POST['meza_bank_code'] ) || empty( $_POST['meza_card_number'] ) ) {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لبطاقة ميزة.' ) );
 		}
 	} elseif ( 'wallet' === $withdrawal_method ) {
@@ -132,17 +132,18 @@ function verify_otp_and_save_withdrawal() {
 		'withdrawal_method' => $withdrawal_method,
 	);
 	// Save additional fields based on the withdrawal method selected.
-	$withdrawal_data['account_holder_name'] = sanitize_text_field( $_POST['account_holder_name'] );
-	$withdrawal_data['bank_name']           = sanitize_text_field( $_POST['bank_name'] );
-	$withdrawal_data['bank_code']           = sanitize_text_field( $_POST['bank_code'] );
-	$withdrawal_data['branch']              = sanitize_text_field( $_POST['branch'] );
-	$withdrawal_data['account_number']      = sanitize_text_field( $_POST['account_number'] );
-	$withdrawal_data['iban_number']         = sanitize_text_field( $_POST['iban_number'] );
-	$withdrawal_data['card_holder_name']    = sanitize_text_field( $_POST['card_holder_name'] );
-	$withdrawal_data['meza_bank_code']      = sanitize_text_field( $_POST['meza_bank_code'] );
-	$withdrawal_data['meza_card_number']    = sanitize_text_field( $_POST['meza_card_number'] );
-	$withdrawal_data['wallet_holder_name']  = sanitize_text_field( $_POST['wallet_holder_name'] );
-	$withdrawal_data['wallet_number']       = sanitize_text_field( $_POST['wallet_number'] );
+	$withdrawal_data['account_holder_name']    = sanitize_text_field( $_POST['account_holder_name'] );
+	$withdrawal_data['bank_name']              = sanitize_text_field( $_POST['bank_name'] );
+	$withdrawal_data['bank_code']              = sanitize_text_field( $_POST['bank_code'] );
+	$withdrawal_data['branch']                 = sanitize_text_field( $_POST['branch'] );
+	$withdrawal_data['account_number']         = sanitize_text_field( $_POST['account_number'] );
+	$withdrawal_data['iban_number']            = sanitize_text_field( $_POST['iban_number'] );
+	$withdrawal_data['card_holder_first_name'] = sanitize_text_field( $_POST['card_holder_first_name'] );
+	$withdrawal_data['card_holder_last_name']  = sanitize_text_field( $_POST['card_holder_last_name'] );
+	$withdrawal_data['meza_bank_code']         = sanitize_text_field( $_POST['meza_bank_code'] );
+	$withdrawal_data['meza_card_number']       = sanitize_text_field( $_POST['meza_card_number'] );
+	$withdrawal_data['wallet_holder_name']     = sanitize_text_field( $_POST['wallet_holder_name'] );
+	$withdrawal_data['wallet_number']          = sanitize_text_field( $_POST['wallet_number'] );
 
 	update_user_meta( $user_id, 'withdrawal_settings', $withdrawal_data );
 
