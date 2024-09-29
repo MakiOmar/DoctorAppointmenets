@@ -58,16 +58,15 @@ add_action(
 					// Disable the OTP button and display a message
 					$(this).text('جارٍ إرسال كود التحقق...');
 					$(this).attr('disabled', true);
+					var formData = $('#withdrawal-settings-form').serialize(); // Serialize form data including the method and specific fields
 
 					// Send AJAX request to generate and send OTP
 					$.ajax({
 						type: 'POST',
 						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-						data: {
-							action: 'send_email_otp', // Action for backend to handle OTP generation
-						},
+						data: formData + '&action=send_email_otp', // Action for backend to handle OTP generation
 						success: function(response) {
-							if(response.success) {
+							if (response.success) {
 								alert('تم إرسال كود التحقق بنجاح إلى بريدك الإلكتروني/موبايلك.');
 								// Show the OTP section and enable submit button
 								$('#otp-section').slideDown();
@@ -87,12 +86,12 @@ add_action(
 						}
 					});
 				});
+
 				// Handle form submission with OTP verification
 				$('#submit-withdrawal-form').on('click', function(e) {
 					e.preventDefault();
 
 					var formData = $('#withdrawal-settings-form').serialize(); // Serialize the form data including OTP
-
 					$.ajax({
 						type: 'POST',
 						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',

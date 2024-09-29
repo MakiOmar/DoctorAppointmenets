@@ -493,7 +493,7 @@ function custom_withdrawal_form_shortcode() {
 				array(
 					'label' => 'كود البنك الصادر منه البطاقة',
 					'name'  => 'meza_bank_code',
-					'value' => isset( $withdrawal_settings['meza_bank_name'] ) ? $withdrawal_settings['meza_bank_name'] : '',
+					'value' => isset( $withdrawal_settings['meza_bank_code'] ) ? $withdrawal_settings['meza_bank_code'] : '',
 				),
 				array(
 					'label' => 'رقم البطاقة',
@@ -520,7 +520,7 @@ function custom_withdrawal_form_shortcode() {
 			),
 		),
 	);
-	$user_id = get_current_user_id();
+	$user_id            = get_current_user_id();
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
 		<?php echo wp_kses_post( str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ) ); ?>
