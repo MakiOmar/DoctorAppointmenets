@@ -158,9 +158,10 @@ function process_withdrawals_batch() {
 
 		// Get the eligible balance for withdrawal.
 		$available_balance = get_available_balance( $user_id );
+		$withdraw_amount   = $available_balance - 5;
+		if ( $available_balance > 0 && $withdraw_amount > 5 ) {
 
-		if ( $available_balance > 0 ) {
-			snks_add_transaction( $user_id, 0, 'withdraw', $available_balance );
+			snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
 			//phpcs:disable
 			// Mark the eligible "add" transactions as processed.
 			$wpdb->query(
@@ -178,7 +179,7 @@ function process_withdrawals_batch() {
 				)
 			);
 			//phpcs:enable
-			snks_log_transaction( $user_id, $available_balance, 'withdraw' );
+			snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
 		}
 	}
 
