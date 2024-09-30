@@ -126,6 +126,9 @@ function process_withdrawals_batch() {
 	if ( ! SNKS_DEV_MODE && ( $current_time < '00:00:00' || $current_time > '09:00:00' ) ) {
 		return;
 	}
+	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
+	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
+	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
 
 	// Get the transient offset for batch processing (50 users at a time).
 	$offset = get_transient( 'withdrawal_offset' );
@@ -154,17 +157,23 @@ function process_withdrawals_batch() {
 
 	//phpcs:enable
 	foreach ( $users as $user ) {
-		$user_id = $user->user_id;
+		$user_id             = $user->user_id;
+		$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
+		if ( empty( $withdrawal_settings ) ) {
+			continue;
+		}
+		$withdrawal_option = $withdrawal_settings['withdrawal_option'];
+		// 3 = Wednesday.
+		if ( 'daily_withdrawal' === $withdrawal_option || ( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || ( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) ) {
+			// Get the eligible balance for withdrawal.
+			$available_balance = get_available_balance( $user_id );
+			$withdraw_amount   = $available_balance - 5;
+			if ( $available_balance > 0 && $withdraw_amount > 5 ) {
 
-		// Get the eligible balance for withdrawal.
-		$available_balance = get_available_balance( $user_id );
-		$withdraw_amount   = $available_balance - 5;
-		if ( $available_balance > 0 && $withdraw_amount > 5 ) {
-
-			snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
-			//phpcs:disable
-			// Mark the eligible "add" transactions as processed.
-			$wpdb->query(
+				snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
+				//phpcs:disable
+				// Mark the eligible "add" transactions as processed.
+				$wpdb->query(
 				$wpdb->prepare(
 					"
                     UPDATE $table_name
@@ -177,9 +186,10 @@ function process_withdrawals_batch() {
 					$user_id,
 					$current_date
 				)
-			);
-			//phpcs:enable
-			snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
+				);
+				//phpcs:enable
+				snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
+			}
 		}
 	}
 
@@ -544,8 +554,6 @@ function snks_process_withdrawal_xlsx() {
 	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
 	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
 	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
-
-	global $wpdb;
 
 	// Number of users to process per run.
 	$limit = 50;
