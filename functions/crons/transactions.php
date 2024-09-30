@@ -95,7 +95,7 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 	global $wpdb;
 	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
 	//phpcs:disable
-	$wpdb->insert(
+	$insert_result = $wpdb->insert(
 		$table_name,
 		array(
 			'user_id'          => $user_id,
@@ -113,6 +113,12 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 		)
 	);
 	//phpcs:enable
+	if ( false === $insert_result ) {
+		return false;
+	} else {
+		// Insertion successful, $insert_result is the number of rows inserted.
+		return $wpdb->insert_id; // This is the ID of the inserted row.
+	}
 }
 
 /**
@@ -154,7 +160,7 @@ function process_withdrawals_batch() {
 			$offset
 		)
 	);
-
+	
 	//phpcs:enable
 	foreach ( $users as $user ) {
 		$user_id             = $user->user_id;
@@ -163,36 +169,65 @@ function process_withdrawals_batch() {
 			continue;
 		}
 		$withdrawal_option = $withdrawal_settings['withdrawal_option'];
+		$withdrawal_method = $withdrawal_settings['withdrawal_method'];
 		// 3 = Wednesday.
 		if ( 'daily_withdrawal' === $withdrawal_option || ( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || ( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) ) {
 			// Get the eligible balance for withdrawal.
 			$available_balance = get_available_balance( $user_id );
 			$withdraw_amount   = $available_balance - 5;
-			if ( $available_balance > 0 && $withdraw_amount > 5 ) {
 
-				snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
+			if ( $withdraw_amount > 5 ) {
+
+				$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
+				if ( ! $withdrawal_id ) {
+					continue;
+				}
+				if ( 'bank_account' === $withdrawal_method ) {
+					$output_bank = array( snks_bank_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
+					if ( ! empty( $output_bank ) ) {
+						$generated = snks_generate_xlsx( $output_bank, 'bank' );
+						if ( $generated ) {
+							snks_update_processed_withdrawals( $withdrawal_id );
+						}
+					}
+				} elseif ( 'meza_card' === $withdrawal_method ) {
+					$output_meza = array( snks_meza_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
+					if ( ! empty( $output_meza ) ) {
+						$generated = snks_generate_xlsx( $output_meza, 'meza' );
+						if ( $generated ) {
+							snks_update_processed_withdrawals( $withdrawal_id );
+						}
+					}
+				} elseif ( 'wallet' === $withdrawal_method ) {
+					$output_wallet = array( snks_wallet_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
+					if ( ! empty( $output_wallet ) ) {
+						$generated = snks_generate_xlsx( $output_wallet, 'wallet' );
+						if ( $generated ) {
+							snks_update_processed_withdrawals( $withdrawal_id );
+						}
+					}
+				}
 				//phpcs:disable
 				// Mark the eligible "add" transactions as processed.
 				$wpdb->query(
-				$wpdb->prepare(
-					"
-                    UPDATE $table_name
-                    SET processed_for_withdrawal = 1
-                    WHERE user_id = %d 
-                    AND transaction_type = 'add' 
-                    AND transaction_time < %s
-                    AND processed_for_withdrawal = 0
-                    ",
-					$user_id,
-					$current_date
-				)
+					$wpdb->prepare(
+						"
+						UPDATE $table_name
+						SET processed_for_withdrawal = 1
+						WHERE user_id = %d 
+						AND transaction_type = 'add' 
+						AND transaction_time < %s
+						AND processed_for_withdrawal = 0
+						",
+						$user_id,
+						$current_date
+					)
 				);
 				//phpcs:enable
 				snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
 			}
 		}
 	}
-
 	// Update the offset for the next batch of users.
 	if ( count( $users ) > 0 ) {
 		$offset += 50;
@@ -202,7 +237,7 @@ function process_withdrawals_batch() {
 	}
 }
 add_action( 'snks_process_withdrawals_event', 'process_withdrawals_batch' );
-add_action( 'wp_footer', 'process_withdrawals_batch' );
+add_action( 'wp', 'process_withdrawals_batch' );
 
 
 /**
@@ -403,7 +438,7 @@ function snks_wallet_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'user_id'           => $user_id,
 		'Wallet-Owner-Name' => $withdrawal_settings['wallet_holder_name'],
 		'Wallet-Number'     => $withdrawal_settings['wallet_number'],
-		'Amount'            => $balance,
+		'Amount'            => (string) $balance,
 	);
 }
 
@@ -442,30 +477,11 @@ function snks_generate_xlsx( $data, $withdrawal_method ) {
  * This function updates the processed_for_withdrawal column to 1
  * for all matching withdrawal IDs in the snks_booking_transactions table.
  *
- * @param array $withdrawals Array of withdrawal records with keys such as 'id'.
+ * @param int $withdrawal_id Withdrawal ID.
  * @return bool True if the rows were updated successfully, false on failure.
  */
-function snks_update_processed_withdrawals( $withdrawals ) {
+function snks_update_processed_withdrawals( $withdrawal_id ) {
 	global $wpdb;
-
-	// Check if withdrawals is a valid array and contains data.
-	if ( ! is_array( $withdrawals ) || empty( $withdrawals ) ) {
-		return false;
-	}
-
-	// Extract 'id' values from the withdrawals array.
-	$ids = array_column( $withdrawals, 'id' );
-
-	// Ensure all IDs are integers to prevent SQL injection.
-	$ids = array_map( 'intval', $ids );
-
-	// Bail early if no valid IDs are found.
-	if ( empty( $ids ) ) {
-		return false;
-	}
-
-	// Convert the array of IDs into a comma-separated string.
-	$ids_list = implode( ',', $ids );
 
 	// Prepare the table name with proper prefix.
 	$table_name = $wpdb->prefix . TRNS_TABLE_NAME; // Assuming table is prefixed.
@@ -473,7 +489,7 @@ function snks_update_processed_withdrawals( $withdrawals ) {
 	// Construct the SQL query to update processed_for_withdrawal for the specified IDs.
 	$sql = "UPDATE {$table_name}
             SET processed_for_withdrawal = 1
-            WHERE id IN ({$ids_list})";
+            WHERE id = {$withdrawal_id}";
 	//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
 	// Execute the query using $wpdb.
 	$updated = $wpdb->query( $sql );
@@ -532,96 +548,3 @@ function snks_get_latest_transaction_amount( $user_id ) {
 	}
 	return 0;
 }
-
-/**
- * Process withdrawals for doctors based on their withdrawal settings.
- * This job will only run between 12 AM and 9 AM, querying 50 users at a time.
- */
-function snks_process_withdrawal_xlsx() {
-	$withdrawal_offset = get_transient( 'withdrawal_offset' );
-	// Don't generate xlsx if withdrawal process is going on.
-	if ( $withdrawal_offset ) {
-		return;
-	}
-	// Get the current time based on WordPress timezone.
-	$current_hour = current_time( 'H' ); // 'H' gives the hour in 24-hour format (00-23).
-
-	// Only proceed if the time is between 12 AM and 9 AM.
-	if ( ! SNKS_DEV_MODE && ( $current_hour < 0 || $current_hour > 9 ) ) {
-		return; // Exit if current time is not between 12 AM and 9 AM.
-	}
-
-	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
-	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
-	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
-
-	// Number of users to process per run.
-	$limit = 50;
-
-	// Get the cached offset, or default to 0.
-	$offset = (int) get_transient( 'snks_xlsx_withdrawal_offset' );
-
-	// Query users with the 'doctor' role.
-	$withdrawals = get_withdraw_transactions( '', $limit, $offset );
-
-	// If no users are found, reset the offset and exit.
-	if ( empty( $withdrawals ) ) {
-		delete_transient( 'snks_xlsx_withdrawal_offset' ); // Reset offset if no users are found.
-		return;
-	}
-
-	$output_bank   = array();
-	$output_meza   = array();
-	$output_wallet = array();
-
-	foreach ( $withdrawals as $withdrawal ) {
-		$user_id             = $withdrawal['user_id'];
-		$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
-		if ( empty( $withdrawal_settings ) ) {
-			continue;
-		}
-		// Get the user's wallet balance.
-		$balance = $withdrawal['amount'];
-
-		$withdrawal_option = $withdrawal_settings['withdrawal_option'];
-		// Check the withdrawal conditions based on the user's withdrawal option.
-		if ( 'daily_withdrawal' === $withdrawal_option ||
-			( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || // 3 = Wednesday.
-			( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) )
-		) {
-			// Get the withdrawal method and its corresponding fields.
-			$withdrawal_method = $withdrawal_settings['withdrawal_method'];
-			$fields            = array();
-
-			// Fetch corresponding fields for the method (depending on the method type).
-			// Concatenate the fields with line breaks.
-			if ( 'bank_account' === $withdrawal_method ) {
-				$output_bank[] = snks_bank_method_xlsx( $user_id, $balance, $withdrawal_settings );
-			} elseif ( 'meza_card' === $withdrawal_method ) {
-				$output_meza[] = snks_meza_method_xlsx( $user_id, $balance, $withdrawal_settings );
-			} elseif ( 'wallet' === $withdrawal_method ) {
-				$output_wallet[] = snks_wallet_method_xlsx( $user_id, $balance, $withdrawal_settings );
-			}
-		}
-	}
-
-	// Update the offset for the next run.
-	$new_offset = $offset + $limit;
-	set_transient( 'snks_xlsx_withdrawal_offset', $new_offset, 15 * MINUTE_IN_SECONDS );
-	// Create the xlsx file and write the data to it.
-	if ( ! empty( $output_bank ) ) {
-		$generated = snks_generate_xlsx( $output_bank, 'bank' );
-	}
-	if ( ! empty( $output_meza ) ) {
-		$generated = snks_generate_xlsx( $output_meza, 'meza' );
-	}
-	if ( ! empty( $output_wallet ) ) {
-		$generated = snks_generate_xlsx( $output_wallet, 'wallet' );
-	}
-	// Change withdrawal entries processed_for_withdrawal to 1.
-	if ( isset( $generated ) && $generated ) {
-		snks_update_processed_withdrawals( $withdrawals );
-	}
-}
-add_action( 'wp', 'snks_process_withdrawal_xlsx' );
-add_action( 'snks_process_withdrawal_xlsx_event', 'snks_process_withdrawal_xlsx' );
