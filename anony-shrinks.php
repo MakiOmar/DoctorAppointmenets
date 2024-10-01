@@ -235,3 +235,9 @@ function set_doctor_id_cookie() {
 	}
 }
 add_action( 'wp', 'set_doctor_id_cookie' );
+
+// Stop logging deprecated notices.
+add_filter( 'deprecated_file_trigger_error', '__return_false' );
+add_filter( 'deprecated_function_trigger_error', '__return_false' );
+add_filter( 'deprecated_argument_trigger_error', '__return_false' );
+add_filter( 'deprecated_hook_trigger_error', '__return_false' );
