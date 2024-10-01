@@ -392,3 +392,39 @@ add_action(
 		}
 	}
 );
+
+add_action(
+	'wp_footer',
+	function () {
+		?>
+	<script type="text/javascript">
+		// Function to convert Arabic numbers to English numbers.
+		function toEnglishNumbers(input) {
+			const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+			const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+			arabicNumbers.forEach((num, index) => {
+				input = input.replace(new RegExp(num, 'g'), englishNumbers[index]);
+			});
+
+			return input;
+		}
+
+		// Apply the function on keyup using jQuery, excluding password fields.
+		jQuery(document).ready(function($) {
+			$('input:not([type="password"])').on('keyup', function() {
+				const currentValue = $(this).val();
+				const englishValue = toEnglishNumbers(currentValue);
+				$(this).val(englishValue);
+			});
+
+			$('#iban_number').on('keyup', function() {
+				// Replace any non-numeric characters with an empty string.
+				this.value = this.value.replace(/[^0-9]/g, '');
+			});
+		});
+	</script>
+		<?php
+	},
+	100
+);
