@@ -404,7 +404,7 @@ function snks_bank_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Account-Owner-Name' => $withdrawal_settings['account_holder_name'],
 		'Account-Number'     => $withdrawal_settings['account_number'],
 		'Account-Iban'       => $withdrawal_settings['iban_number'],
-		'Amount'             => $balance,
+		'Amount'             => (string) $balance,
 	);
 }
 /**
@@ -422,7 +422,7 @@ function snks_meza_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Card-Holder-First-Name' => $withdrawal_settings['card_holder_first_name'],
 		'Card-Holder-Last-Name'  => $withdrawal_settings['card_holder_last_name'],
 		'Card-Number'            => $withdrawal_settings['meza_card_number'],
-		'Amount'                 => $balance,
+		'Amount'                 => (string) $balance,
 	);
 }
 /**

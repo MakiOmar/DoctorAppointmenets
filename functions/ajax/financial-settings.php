@@ -33,7 +33,7 @@ function send_email_otp() {
 
 	// Validate required fields based on withdrawal method.
 	if ( 'bank_account' === $withdrawal_method ) {
-		if ( empty( $_POST['account_holder_name'] ) || empty( $_POST['bank_name'] ) || empty( $_POST['bank_code'] ) || empty( $_POST['branch'] ) || empty( $_POST['account_number'] ) || empty( $_POST['iban_number'] ) ) {
+		if ( empty( $_POST['account_holder_name'] ) || empty( $_POST['bank_name'] ) || empty( $_POST['branch'] ) || empty( $_POST['account_number'] ) || empty( $_POST['iban_number'] ) ) {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لحساب البنك.' ) );
 		}
 	} elseif ( 'meza_card' === $withdrawal_method ) {
@@ -114,7 +114,7 @@ function verify_otp_and_save_withdrawal() {
 	$withdrawal_method = isset( $_POST['withdrawal_method'] ) ? sanitize_text_field( $_POST['withdrawal_method'] ) : '';
 	// Validate required fields based on withdrawal method.
 	if ( 'bank_account' === $withdrawal_method ) {
-		if ( empty( $_POST['account_holder_name'] ) || empty( $_POST['bank_name'] ) || empty( $_POST['bank_code'] ) || empty( $_POST['branch'] ) || empty( $_POST['account_number'] ) || empty( $_POST['iban_number'] ) ) {
+		if ( empty( $_POST['account_holder_name'] ) || empty( $_POST['bank_name'] ) || empty( $_POST['branch'] ) || empty( $_POST['account_number'] ) || empty( $_POST['iban_number'] ) ) {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لحساب البنك.' ) );
 		}
 	} elseif ( 'meza_card' === $withdrawal_method ) {
@@ -134,7 +134,7 @@ function verify_otp_and_save_withdrawal() {
 	// Save additional fields based on the withdrawal method selected.
 	$withdrawal_data['account_holder_name']    = sanitize_text_field( $_POST['account_holder_name'] );
 	$withdrawal_data['bank_name']              = sanitize_text_field( $_POST['bank_name'] );
-	$withdrawal_data['bank_code']              = sanitize_text_field( $_POST['bank_code'] );
+	$withdrawal_data['bank_code']              = substr( sanitize_text_field( $_POST['iban_number'] ), 2, 4 );
 	$withdrawal_data['branch']                 = sanitize_text_field( $_POST['branch'] );
 	$withdrawal_data['account_number']         = sanitize_text_field( $_POST['account_number'] );
 	$withdrawal_data['iban_number']            = sanitize_text_field( $_POST['iban_number'] );

@@ -454,11 +454,6 @@ function custom_withdrawal_form_shortcode() {
 					'value' => isset( $withdrawal_settings['account_holder_name'] ) ? $withdrawal_settings['account_holder_name'] : '',
 				),
 				array(
-					'label' => 'كود البنك',
-					'name'  => 'bank_code',
-					'value' => isset( $withdrawal_settings['bank_code'] ) ? $withdrawal_settings['bank_code'] : '',
-				),
-				array(
 					'label' => 'البنك',
 					'name'  => 'bank_name',
 					'value' => isset( $withdrawal_settings['bank_name'] ) ? $withdrawal_settings['bank_name'] : '',
@@ -577,7 +572,18 @@ function custom_withdrawal_form_shortcode() {
 								<label for="<?php echo esc_attr( $field['name'] ); ?>">
 									<?php echo esc_html( $field['label'] ); ?>
 								</label>
-								<input type="text" id="<?php echo esc_attr( $field['name'] ); ?>" name="<?php echo esc_attr( $field['name'] ); ?>" value="<?php echo esc_attr( $field['value'] ); ?>">
+								<?php if ( 'iban_number' === $field['name'] ) { ?>
+								<span id="iban-container">
+									<input <?php echo 'iban_number' === $field['name'] ? 'pattern="\d{27}" maxlength="27"' : ''; ?> type="text" id="<?php echo esc_attr( $field['name'] ); ?>" name="<?php echo esc_attr( $field['name'] ); ?>" placeholder="<?php echo 'iban_number' === $field['name'] ? 'أدخل 27 رقم فقط بدون رمز الدولة' : ''; ?>" value="<?php echo esc_attr( $field['value'] ); ?>">
+									<span id="iban-country-code">EG</span>
+								</span>
+								<p style="text-align: right;font-size: 14px;font-weight:bold">مثلا ان كان الرقم هو
+								EG123452457895795632145780009
+								أدخل
+								123452457895795632145780009</p>
+								<?php } else { ?>
+									<input type="text" id="<?php echo esc_attr( $field['name'] ); ?>" name="<?php echo esc_attr( $field['name'] ); ?>" value="<?php echo esc_attr( $field['value'] ); ?>">
+								<?php } ?>
 							</div>
 						<?php endforeach; ?>
 					</div>

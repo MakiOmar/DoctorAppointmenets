@@ -82,6 +82,26 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			#iban-container{
+				position: relative;
+				display: block;
+			}
+			#iban-container input{
+				margin: 0;
+				padding-left: 50px;
+				direction: ltr;
+				text-align: left;
+			}
+			#iban-country-code{
+				position: absolute;
+				top:0;
+				left: 0;
+				padding: 7px 10px;
+				background-color: #012d3e;
+				color:#fff;
+				box-sizing: border-box;
+				height: 40px;
+			}
 			body.woocommerce-order-received,
 			.elementor-3761 .elementor-element.elementor-element-2dc5242b:not(.elementor-motion-effects-element-type-background), 
 			.elementor-3761 .elementor-element.elementor-element-2dc5242b > .elementor-motion-effects-container > .elementor-motion-effects-layer
