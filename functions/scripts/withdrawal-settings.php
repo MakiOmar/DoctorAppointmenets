@@ -112,3 +112,44 @@ add_action(
 		<?php
 	}
 );
+
+
+add_action( 'wp_footer', 'disable_withdrawal_form_based_on_time' );
+
+/**
+ * Disable withdrwal form between 12 am and 9 am
+ *
+ * @return void
+ */
+function disable_withdrawal_form_based_on_time() {
+	?>
+	<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			// Function to check the current time and disable/enable the form
+			function checkTimeAndDisableForm() {
+				var currentDate = new Date();
+				var currentHour = currentDate.getHours();
+
+				// Disable the form and add overlay between 12 AM (0) and 9 AM (9)
+				if (currentHour >= 0 && currentHour < 9) {
+					$('#withdrawal-settings-form').css('pointer-events', 'none'); // Disable form
+					$('#withdrawal-settings-form').css('opacity', '0.5'); // Reduce opacity for a disabled effect
+					
+					// Add an overlay layer
+					if (!$('#withdrawal-form-overlay').length) {
+						$('#withdrawal-settings-form').prepend('<div id="withdrawal-form-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;"></div>');
+					}
+				} else {
+					// Enable the form and remove the overlay after 9 AM
+					$('#withdrawal-settings-form').css('pointer-events', 'auto');
+					$('#withdrawal-settings-form').css('opacity', '1');
+					$('#withdrawal-form-overlay').remove(); // Remove overlay if exists
+				}
+			}
+
+			// Run the check when the page loads
+			checkTimeAndDisableForm();
+		});
+	</script>
+	<?php
+}
