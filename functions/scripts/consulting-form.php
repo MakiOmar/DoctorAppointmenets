@@ -247,6 +247,7 @@ add_action(
 					function() {
 						$('#consulting-forms-container').html('');
 						$('.periods_wrapper').html('');
+						const editBookingId = getQueryParamValue('edit-booking') ?  getQueryParamValue('edit-booking') : '' ;
 						var attendanceTypeClicked = $(this);
 						var attendanceType = $(this).val();
 						var doctor_id       = $('input[name=filter_user_id]').val();
@@ -259,6 +260,7 @@ add_action(
 							data: {
 								attendanceType: attendanceType,
 								doctor_id     : doctor_id,
+								editBookingId : editBookingId,
 								action        : 'get_periods',
 							},
 							beforeSend: function() {

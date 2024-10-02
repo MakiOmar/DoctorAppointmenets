@@ -107,13 +107,23 @@ function snks_get_period_discount( $user_id, $period ) {
  *
  * @param int    $user_id User's ID.
  * @param string $attendance_type Attendance type.
+ * @param mixed  $edit_booking Edit booking ID.
  * @return void
  */
-function snks_periods_filter( $user_id, $attendance_type = 'both' ) {
-	$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
-	$country           = snsk_ip_api_country();
-	$pricings          = snks_doctor_pricings( $user_id );
-	$has_discount      = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
+function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking = false ) {
+	// Make sure to choose an appointment with the same period.
+	if ( $edit_booking ) {
+		$get_edit_booking = snks_get_timetable_by( 'ID', absint( $edit_booking ) );
+		if ( $get_edit_booking ) {
+			$avialable_periods = array( $get_edit_booking->period );
+		}
+	}
+	if ( ! isset( $avialable_periods ) ) {
+		$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
+	}
+	$country      = snsk_ip_api_country();
+	$pricings     = snks_doctor_pricings( $user_id );
+	$has_discount = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
 	if ( is_array( $avialable_periods ) && ! empty( $avialable_periods ) ) {
 		echo '<div class="anony-padding-10 anony-flex anony-space-between anony-full-width anony-grid-row">';
 		foreach ( $avialable_periods as $period ) {
