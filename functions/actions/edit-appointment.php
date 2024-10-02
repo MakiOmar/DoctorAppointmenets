@@ -198,8 +198,8 @@ add_action(
 			$change_fees     = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
 			$will_pay        = $price - ( ( $change_fees / 100 ) * $price );
 			$edited_before   = get_post_meta( $order_id, 'booking-edited', true );
-
-			if ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) {
+			// If not postponed then check for edit time.
+			if ( 'postponed' !== $booking->session_status && ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) ) {
 				wp_safe_redirect(
 					add_query_arg(
 						array(
@@ -213,7 +213,7 @@ add_action(
 			}
 
 			// Compare the input date and time with the modified current date and time.
-			if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds < snks_get_free_edit_before_seconds( $doctor_settings ) ) {
+			if ( ! snks_is_doctor() && 'postponed' !== $booking->session_status && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds < snks_get_free_edit_before_seconds( $doctor_settings ) ) {
 				$needs_payment = true;
 				$fees_order    = snks_create_edit_fees_order( $main_order, $will_pay, $booking, $_request['selected-hour'] );
 				if ( is_a( $fees_order, 'WC_Order' ) ) {
