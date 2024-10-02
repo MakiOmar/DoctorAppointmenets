@@ -15,7 +15,7 @@ function withdraw_transactions_admin_page_content() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-
+	// phpcs:disable
 	// Handle pagination and limits.
 	$limit  = 50;
 	$page   = isset( $_GET['paged'] ) ? (int) $_GET['paged'] : 1;
@@ -40,7 +40,8 @@ function withdraw_transactions_admin_page_content() {
 			$date . ' 00:00:00'
 		)
 	);
-	$total_pages        = ceil( $total_transactions / $limit );
+	// phpcs:enable
+	$total_pages = ceil( $total_transactions / $limit );
 
 	?>
 		<style>

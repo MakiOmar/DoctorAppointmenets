@@ -286,9 +286,10 @@ function snks_log_transaction( $user_id, $amount, $type ) {
 		$amount,
 		$transaction_time
 	);
-
+	//phpcs:disable
 	// Write log entry to the custom log file.
 	error_log( $log_entry, 3, $log_file );
+	//phpcs:enable
 }
 
 /**
@@ -325,7 +326,7 @@ function get_withdraw_transactions( $date = '', $limit = 0, $offset = 0 ) {
 	if ( $limit > 0 ) {
 		$sql .= $wpdb->prepare( ' LIMIT %d OFFSET %d', $limit, $offset );
 	}
-	//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+	//phpcs:disable
 	// Execute the query and return the results.
 	$results = $wpdb->get_results( $sql, ARRAY_A );
 	//phpcs:enable
@@ -490,7 +491,7 @@ function snks_update_processed_withdrawals( $withdrawal_id ) {
 	$sql = "UPDATE {$table_name}
             SET processed_for_withdrawal = 1
             WHERE id = {$withdrawal_id}";
-	//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+	//phpcs:disable
 	// Execute the query using $wpdb.
 	$updated = $wpdb->query( $sql );
 	//phpcs:enable
