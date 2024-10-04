@@ -413,3 +413,31 @@ function localize_date_to_arabic( $date_string ) {
 	return $localized_date;
 }
 
+/**
+ * Replace English time units with corresponding Arabic values.
+ *
+ * @param string $text The text containing English time units.
+ * @return string The text with time units replaced by Arabic values.
+ */
+function snks_replace_time_units_to_arabic( $text ) {
+	// Define an array with English time units as keys and Arabic values as their corresponding values.
+	$english_to_arabic = array(
+		'seconds' => 'ثواني',
+		'second'  => 'ثانية',
+		'minutes' => 'دقائق',
+		'minute'  => 'دقيقة',
+		'hours'   => 'ساعات',
+		'hour'    => 'ساعة',
+		'days'    => 'أيام',
+		'day'     => 'يوم',
+		'weeks'   => 'أسابيع',
+		'week'    => 'أسبوع',
+		'months'  => 'أشهر',
+		'month'   => 'شهر',
+		'years'   => 'سنوات',
+		'year'    => 'سنة',
+	);
+
+	// Replace each occurrence of the English time units with the corresponding Arabic values.
+	return str_replace( array_keys( $english_to_arabic ), array_values( $english_to_arabic ), $text );
+}

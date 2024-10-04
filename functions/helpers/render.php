@@ -492,7 +492,31 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
  * @return string
  */
 function snks_edit_button( $booking_id, $doctor_id ) {
-	return '<a class="anony-padding-5 snks-button edit-booking" style="width:80px;display:inline-flex" href="' . add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) ) . '" title="تحرير">تعديل</a>';
+	$doctor_settings    = snks_doctor_settings( $doctor_id );
+	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
+	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
+	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
+	$no_change_period   = $doctor_settings['block_if_before_number'] . ' ' . $doctor_settings['block_if_before_unit'];
+
+	return snks_replace_time_units_to_arabic(
+		sprintf(
+			'<a 
+			class="anony-padding-5 snks-button edit-booking" 
+			style="width:80px;display:inline-flex" 
+			href="#" 
+			data-href="%1$s" 
+			data-free_change_before="%2$s" 
+			data-paid_change_before="%3$s" 
+			data-paid_change_fees="%4$s" 
+			data-no_change_period="%5$s" 
+			title="تحرير">تعديل</a>',
+			add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) ),
+			$free_change_before,
+			$paid_change_before,
+			$paid_change_fees,
+			$no_change_period,
+		)
+	);
 }
 /**
  * Booking item template
