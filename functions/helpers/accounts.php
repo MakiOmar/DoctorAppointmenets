@@ -597,9 +597,9 @@ function custom_process_user_registration( $request ) {
 	update_user_meta( $user_id, 'billing_phone', $phone );
 	update_user_meta( $user_id, 'billing_email', $email );
 
-	// Assign the user role (e.g., 'patient').
+	// Assign the user role (e.g., 'customer').
 	$user = new WP_User( $user_id );
-	$user->set_role( 'patient' );
+	$user->set_role( 'customer' );
 
 	// Log in the user after registration.
 	wp_set_current_user( $user_id );
