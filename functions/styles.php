@@ -87,6 +87,9 @@ add_action(
 				padding: 10px;
 				text-align: center;
 			}
+			#appointments-preview, #add-appointments{
+				display: none;
+			}
 			#iban-container{
 				position: relative;
 				display: block;

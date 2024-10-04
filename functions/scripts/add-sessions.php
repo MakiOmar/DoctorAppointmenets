@@ -348,6 +348,31 @@ add_action(
 				<?php } ?>
 			} );
 		</script>
+		<script>
+			function showTab(tabId) {
+				document.querySelectorAll('.snks_tab-content').forEach((content) => {
+					content.classList.remove('snks_active');
+				});
+				document.querySelectorAll('.snks_active').forEach((content) => {
+					content.classList.remove('snks_active');
+				});
+				
+				document.getElementById(tabId).classList.add('snks_active');
+				
+				document.querySelectorAll('.snks_tab').forEach((tab) => {
+					tab.classList.remove('snks-bg');
+				});
+				
+				if (tabId === 'add-appointments') {
+					document.querySelector('.snks_tab-add').classList.add('snks-bg');
+				} else {
+					document.querySelector('.snks_tab-preview').classList.add('snks-bg');
+				}
+			}
+			
+			showTab('add-appointments');
+
+		</script>
 		<?php
 	}
 );
