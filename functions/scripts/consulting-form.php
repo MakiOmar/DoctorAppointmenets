@@ -192,6 +192,7 @@ add_action(
 					// Check if the 'edit-booking' query parameter exists
 					const editBookingId = getQueryParamValue('edit-booking') ?  getQueryParamValue('edit-booking') : '' ;
 					var attendanceType  = $('input[name=attendance_type]:checked').val();
+					var periodClicked   = $('input[name=period]:checked');
 					var period          = $('input[name=period]:checked').val();
 					var doctor_id       = $('input[name=filter_user_id]').val();
 					var nonce           = '<?php echo esc_html( wp_create_nonce( 'get_booking_form_nonce' ) ); ?>';
@@ -210,11 +211,17 @@ add_action(
 								editBookingId : editBookingId,
 								action        : 'get_booking_form',
 							},
+							beforeSend: function() {
+								$('label').removeClass('snks-loading');
+								periodClicked.prev('label').addClass('snks-loading');
+							},
 							success: function(response) {
 								$( '#consulting-forms-container' ).html( response );
-								$('html, body').animate({
-									scrollTop: $('.consulting-form').offset().top
-								}, 1000);
+								if ( $('.consulting-form').length > 0 ) {
+									$('html, body').animate({
+										scrollTop: $('.consulting-form').offset().top
+									}, 1000);
+								}
 								$('.anony-content-slider').slick({
 									slidesToShow: 3,
 									slidesToScroll: 1,
@@ -231,6 +238,9 @@ add_action(
 										}
 									]
 								});
+							},
+							complete: function() {
+								periodClicked.prev('label').removeClass('snks-loading');
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);
@@ -326,6 +336,7 @@ add_action(
 								$( this ).prev('label').addClass( 'active-day' );
 							}
 						}
+						var dayClicked = $(this);
 						var attendanceType = $('input[name=attendance_type]:checked').val();
 						var slectedDay = $(this).val();
 						var userID     = $(this).data('user');
@@ -343,12 +354,19 @@ add_action(
 								attendanceType    : attendanceType,
 								action    : 'fetch_start_times',
 							},
+							beforeSend: function() {
+								$('label').removeClass('snks-loading');
+								dayClicked.prev('label').addClass('snks-loading');
+							},
 							success: function(response) {
 								$( '.snks-available-hours', $( '.consulting-form-' + period ) ).html( response.resp );
 								$('#snks-available-hours-wrapper').show();
 								$('html, body').animate({
 									scrollTop: $('#snks-available-hours-wrapper').offset().top
 								}, 1000);
+							},
+							complete: function() {
+								dayClicked.prev('label').removeClass('snks-loading');
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);
