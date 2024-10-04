@@ -21,6 +21,10 @@ if ( ! function_exists( 'WC' ) ) {
 add_action(
 	'template_redirect',
 	function () {
+		// Start session if not already started.
+		if ( ! session_id() ) {
+			session_start();
+		}
 		// Check for the necessary request parameters.
 		if ( ! isset( $_REQUEST['direct_add_to_cart'] ) || ! empty( $_POST['edit-booking-id'] ) ) {
 			return;
@@ -82,7 +86,8 @@ add_action(
 		}
 		// Store form data in PHP session.
 		$_SESSION['consulting_form_data_temp'] = $form_data;
-
+		// Store form data in session.
+		WC()->session->set( 'consulting_form_data', $form_data );
 		// Check if the user is logged in; otherwise, redirect to login.
 		if ( is_user_logged_in() ) {
 			// Process form data for logged-in users.

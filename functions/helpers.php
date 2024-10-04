@@ -370,3 +370,46 @@ function snks_diff_seconds( $session ) {
 	$interval = $now->diff( $booking_dt_obj );
 	return $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
 }
+
+/**
+ * Localize an English date string to Arabic.
+ *
+ * @param string $date_string The date string in English format.
+ * @return string The localized Arabic date string.
+ */
+function localize_date_to_arabic( $date_string ) {
+	// English to Arabic day and month names.
+	$days = array(
+		'Saturday'  => 'السبت',
+		'Sunday'    => 'الأحد',
+		'Monday'    => 'الإثنين',
+		'Tuesday'   => 'الثلاثاء',
+		'Wednesday' => 'الأربعاء',
+		'Thursday'  => 'الخميس',
+		'Friday'    => 'الجمعة',
+	);
+
+	$months = array(
+		'January'   => 'يناير',
+		'February'  => 'فبراير',
+		'March'     => 'مارس',
+		'April'     => 'أبريل',
+		'May'       => 'مايو',
+		'June'      => 'يونيو',
+		'July'      => 'يوليو',
+		'August'    => 'أغسطس',
+		'September' => 'سبتمبر',
+		'October'   => 'أكتوبر',
+		'November'  => 'نوفمبر',
+		'December'  => 'ديسمبر',
+	);
+
+	// Replace English day names with Arabic.
+	$localized_date = str_replace( array_keys( $days ), $days, $date_string );
+
+	// Replace English month names with Arabic.
+	$localized_date = str_replace( array_keys( $months ), $months, $localized_date );
+
+	return $localized_date;
+}
+

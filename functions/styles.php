@@ -82,6 +82,28 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			table.consulting-session-table .consulting-session-label, table.consulting-session-table .consulting-session-data {
+				border: 1px solid <?php echo esc_attr( $dark_color ); ?>!important;
+				color: <?php echo esc_attr( $dark_color ); ?>!important;
+				text-align: center!important;
+				font-size: 16.5px;
+			}
+			<?php if ( is_page( 'booking-details' ) ) { ?>
+			.elementor-3537 .elementor-element.elementor-element-77c62da > .elementor-widget-container,
+			.elementor-3537 .elementor-element.elementor-element-df572ee > .elementor-widget-container{
+				background-color: <?php echo esc_attr( $darker_color ); ?>!important;
+			}
+			input,.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control.active-tab .jet-tabs__label-text,
+			.elementor-3578 .elementor-element.elementor-element-c5e7b50 .jet-form-builder__action-button{
+				color: <?php echo esc_attr( $dark_color ); ?>!important;
+			}
+			.elementor-3578 .elementor-element.elementor-element-c5e7b50 .jet-form-builder__action-button:hover{
+				color: #fff!important;
+			}
+			::placeholder, ::-moz-placeholder,::-webkit-input-placeholder{
+				color: <?php echo esc_attr( $dark_color ); ?>!important;
+			}
+			<?php } ?>
 			#consulting-forms-container > p {
 				margin: 0;
 				padding: 10px;
@@ -728,7 +750,7 @@ add_action(
 			td:not(.ui-datepicker-unselectable) a{
 				color:#fff
 			}
-			table:not(.ui-datepicker-calendar) {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.consulting-session-table) {
 				border: 1px solid #ccc;
 				border-collapse: collapse;
 				margin: 0;
@@ -737,44 +759,44 @@ add_action(
 				table-layout: fixed;
 			}
 
-			table:not(.ui-datepicker-calendar) caption {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) caption {
 				font-size: 1.5em;
 				margin: .5em 0 .75em;
 			}
 
-			table:not(.ui-datepicker-calendar) tr {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) tr {
 				background-color: #3a4091;
 				border: 1px solid #3a4091;
 				padding: .35em;
 				border-radius: 10px;
 				color: #fff;
 			}
-			table:not(.ui-datepicker-calendar) tr.snks-is-off{
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) tr.snks-is-off{
 				background-color: #000;
 				border-color: #000;
 			}
 
-			table:not(.ui-datepicker-calendar):not( .shop_table ) th,
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not( .shop_table ) th,
 			table:not( .shop_table ) td {
 				padding: .625em;
 				text-align: center;
 			}
 
-			table:not(.ui-datepicker-calendar) th {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) th {
 				font-size: .85em;
 				text-transform: uppercase;
 			}
 
 			@media screen and (max-width: 600px) {
-				table:not(.ui-datepicker-calendar) {
+				table:not(.ui-datepicker-calendar):not(.consulting-session-table) {
 				border: 0;
 			}
 
-			table:not(.ui-datepicker-calendar) caption {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) caption {
 				font-size: 1.3em;
 			}
 			
-			table:not(.ui-datepicker-calendar) thead {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) thead {
 				border: none;
 				clip: rect(0 0 0 0);
 				height: 1px;
@@ -785,20 +807,20 @@ add_action(
 				width: 1px;
 			}
 			
-			table:not(.ui-datepicker-calendar) tr {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) tr {
 				border-bottom: 3px solid #ddd;
 				display: block;
 				margin-bottom: .625em;
 			}
 			
-			table:not(.ui-datepicker-calendar) td {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) td {
 				border-bottom: 1px solid #ddd;
 				display: block;
 				font-size: .8em;
 				text-align: <?php echo is_rtl() ? 'left' : 'right'; ?>;
 			}
 			
-			table:not(.ui-datepicker-calendar) td::before {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) td::before {
 				/*
 				* aria-label has no advantage, it won't be read inside a table
 				content: attr(aria-label);
@@ -809,7 +831,7 @@ add_action(
 				text-transform: uppercase;
 			}
 			
-			table:not(.ui-datepicker-calendar) td:last-child {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table) td:last-child {
 				border-bottom: 0;
 			}
 			}
