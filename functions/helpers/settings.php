@@ -52,6 +52,49 @@ function snks_doctor_settings( $user_id = false ) {
 }
 
 /**
+ * Inserts preview timetables into the database.
+ *
+ * @param mixed $user_id user ID or false.
+ * @return array $errors Array of timetables that failed to insert.
+ */
+function snks_insert_preview_timetables( $user_id = false ) {
+	$preview_timetables = snks_get_preview_timetable( $user_id );
+	$errors             = array();
+
+	if ( $preview_timetables && ! empty( $preview_timetables ) ) {
+		foreach ( $preview_timetables as $preview_timetable ) {
+			foreach ( $preview_timetable as $data ) {
+				$dtime  = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+				$exists = snks_timetable_exists( get_current_user_id(), $dtime, $data['day'], $data['starts'], $data['ends'] );
+
+				if ( empty( $exists ) ) {
+					$inserting = array(
+						'user_id'         => $data['user_id'],
+						'session_status'  => $data['session_status'],
+						'day'             => $data['day'],
+						'base_hour'       => $data['base_hour'],
+						'period'          => $data['period'],
+						'date_time'       => $dtime,
+						'starts'          => $data['starts'],
+						'ends'            => $data['ends'],
+						'clinic'          => $data['clinic'],
+						'attendance_type' => $data['attendance_type'],
+					);
+
+					$inserted = snks_insert_timetable( $inserting );
+
+					if ( ! $inserted ) {
+						$errors[] = $data;
+					}
+				}
+			}
+		}
+	}
+
+	return $errors;
+}
+
+/**
  * Get doctor's available periods
  *
  * @param int    $user_id User's ID.
@@ -522,9 +565,13 @@ function snks_set_preview_timetable( $data ) {
 /**
  * Get preview timetable
  *
+ * @param mixed $user_d User ID or false.
  * @return mixed
  */
-function snks_get_preview_timetable() {
+function snks_get_preview_timetable( $user_id = false ) {
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
 	return get_user_meta( get_current_user_id(), 'preview_timetable', true );
 }
 
