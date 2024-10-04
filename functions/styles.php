@@ -82,6 +82,11 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			#consulting-forms-container > p {
+				margin: 0;
+				padding: 10px;
+				text-align: center;
+			}
 			#iban-container{
 				position: relative;
 				display: block;
