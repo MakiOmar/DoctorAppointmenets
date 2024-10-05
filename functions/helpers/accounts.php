@@ -541,7 +541,11 @@ function custom_log_patient_in( $_request ) {
 		wp_safe_redirect( wc_get_checkout_url() );
 		exit;
 	} else {
-		wp_safe_redirect( site_url( '/my-bookings' ) );
+		if ( snks_is_patient() ) {
+			wp_safe_redirect( site_url( '/my-bookings' ) );
+		} else {
+			wp_safe_redirect( site_url( '/account-setting' ) );
+		}
 		exit;
 	}
 }
