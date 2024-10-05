@@ -350,7 +350,7 @@ add_action(
 		</script>
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
-				if (document.querySelector('.snks_tab-content')) {
+				if (document.querySelector('#add-appointments')) {
 					function showTab(tabId) {
 						document.querySelectorAll('.snks_tab-content').forEach((content) => {
 							content.classList.remove('snks_active');
