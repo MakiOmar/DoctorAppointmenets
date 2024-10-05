@@ -535,6 +535,7 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 			?>
 			<!--edit_button-->
 		<?php } ?>
+		<!--start_button-->
 	</table>
 	<?php
 
@@ -1007,6 +1008,7 @@ function snks_render_sessions_listing( $tense ) {
 
 	$sessions = snks_get_patient_sessions( $tense );
 	$edit     = '';
+	$start    = '';
 	$output   = '';
 	if ( $sessions && is_array( $sessions ) ) {
 		foreach ( $sessions as $session ) {
@@ -1042,11 +1044,17 @@ function snks_render_sessions_listing( $tense ) {
 				'booking_id'   => $session->ID,
 				'_period'      => $session->period,
 			);
-			$output         .= str_replace(
-				'<!--edit_button-->',
-				$edit,
+			if ( 'online' === $session->attendance_type ) {
+				$start = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;border-top-color:#fff;" colspan="2">
+					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . $room . '" data-url="' . $room . '">ابدأ الجلسة</a>
+				</td></tr>';
+			}
+			$output .= str_replace(
+				array( '<!--edit_button-->', '<!--start_button-->' ),
+				array( $edit, $start ),
 				snks_booking_details( $session_details, false )
 			);
+
 		}
 	} else {
 		$output = 'عفواَ ليس لديك حجوزات حاليا!';

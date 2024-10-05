@@ -111,8 +111,6 @@ add_action(
 				width: 95%;
 				margin: auto;
 				border-collapse: separate;
-				border-top-right-radius: 10px;
-				border-top-left-radius: 10px;
 				margin-bottom: 10px;
 				border-spacing: 0;
 			}
@@ -128,6 +126,14 @@ add_action(
 
 			.consulting-session-table tr:first-child td:last-child {
 				border-top-left-radius: 10px;
+			}
+
+			.consulting-session-table tr:last-child td:first-child {
+				border-bottom-right-radius: 10px;
+			}
+
+			.consulting-session-table tr:last-child td:last-child {
+				border-bottom-left-radius: 10px;
 			}
 
 			table.consulting-session-table .consulting-session-data {
