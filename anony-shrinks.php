@@ -263,4 +263,11 @@ add_action(
 		}
 	}
 );
+add_filter(
+	'anwv_loading_with',
+	function ( $arr ) {
+		$arr[] = 'account-setting';
+		return $arr;
+	}
+);
 
