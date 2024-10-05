@@ -1049,11 +1049,13 @@ function snks_render_sessions_listing( $tense ) {
 					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . $room . '" data-url="' . $room . '">ابدأ الجلسة</a>
 				</td></tr>';
 			}
+			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" data-datetime="' . esc_attr( $session->date_time ) . '" class="snks-booking-item snks-patient-booking-item ' . $class . '"> ';
 			$output .= str_replace(
 				array( '<!--edit_button-->', '<!--start_button-->' ),
 				array( $edit, $start ),
 				snks_booking_details( $session_details, false )
 			);
+			$output .= '</div>';
 
 		}
 	} else {

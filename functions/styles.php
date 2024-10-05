@@ -135,7 +135,9 @@ add_action(
 			.consulting-session-table tr:last-child td:last-child {
 				border-bottom-left-radius: 10px;
 			}
-
+			.snks-booking-item.snks-patient-booking-item{
+				background-color: transparent;
+			}
 			table.consulting-session-table .consulting-session-data {
 				padding: 8px;
 				background-color: #fff!important;
