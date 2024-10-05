@@ -33,5 +33,10 @@ function snks_redirect_my_account_page() {
         wp_redirect( site_url('login') ); // Redirect to home page or specify another URL.
         exit;
     }
+
+    if ( is_page('account-setting') && ! is_user_logged_in() ) {
+        wp_redirect( site_url('doctor-login') ); // Redirect to home page or specify another URL.
+        exit;
+    }
 }
 add_action( 'template_redirect', 'snks_redirect_my_account_page' );
