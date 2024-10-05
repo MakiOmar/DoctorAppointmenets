@@ -485,6 +485,62 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
 }
 
 /**
+ * Render booking details
+ *
+ * @param array $form_data Booking details.
+ * @param bool  $is_booking If used within booking process.
+ * @return string
+ */
+function snks_booking_details( $form_data, $is_booking = true ) {
+	$booking = snks_get_timetable_by( 'ID', $form_data['booking_id'] );
+	if ( ! $booking ) {
+		return;
+	}
+	$doctor_details = snks_user_details( $booking->user_id );
+	$first_name     = ! empty( $doctor_details['billing_first_name'] ) ? $doctor_details['billing_first_name'] : '';
+	$last_name      = ! empty( $doctor_details['billing_last_name'] ) ? $doctor_details['billing_last_name'] : '';
+	$name           = $first_name . ' ' . $last_name;
+	// Format the booking date and time.
+	$booking_date = gmdate( 'l j F Y', strtotime( $form_data['booking_day'] ) ); // e.g., Saturday 24 October 2024.
+	$booking_date = localize_date_to_arabic( $booking_date );
+	$booking_time = $form_data['booking_hour'];
+	$session_type = 'online' === $booking->attendance_type ? 'أونلاين' : 'أوفلاين';
+
+	// Generate the table HTML.
+	ob_start();
+	?>
+	<table class="consulting-session-table">
+		<tr>
+			<td class="consulting-session-label">اسـم المعـالـج</td>
+			<td class="consulting-session-data"><?php echo esc_html( $name ); ?></td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label">نــوع الجـلسـة</td>
+			<td class="consulting-session-data"><?php echo esc_html( $session_type ); ?></td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label">مــدة الجـلسـة</td>
+			<td class="consulting-session-data"><?php echo esc_html( $form_data['_period'] ); ?> دقيقة</td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label">تاريـخ الجلسـة</td>
+			<td class="consulting-session-data"><?php echo esc_html( $booking_date ); ?></td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label">توقيت الجلسة</td>
+			<td class="consulting-session-data"><?php echo esc_html( $booking_time ); ?></td>
+		</tr>
+		<?php
+		if ( ! $is_booking ) {
+			?>
+			<!--edit_button-->
+		<?php } ?>
+	</table>
+	<?php
+
+	return ob_get_clean();
+}
+/**
  * Render edit button
  *
  * @param int $booking_id Booking ID.
@@ -502,14 +558,14 @@ function snks_edit_button( $booking_id, $doctor_id ) {
 		sprintf(
 			'<a 
 			class="anony-padding-5 snks-button edit-booking" 
-			style="width:80px;display:inline-flex" 
+			style="display:inline-flex" 
 			href="#" 
 			data-href="%1$s" 
 			data-free_change_before="%2$s" 
 			data-paid_change_before="%3$s" 
 			data-paid_change_fees="%4$s" 
 			data-no_change_period="%5$s" 
-			title="تحرير">تعديل</a>',
+			title="تحرير">تغيير موعد الجلسة</a>',
 			add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) ),
 			$free_change_before,
 			$paid_change_before,
@@ -969,13 +1025,28 @@ function snks_render_sessions_listing( $tense ) {
 					$diff_seconds  = snks_diff_seconds( $session );
 					// Compare the input date and time with the modified current date and time.
 					if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
-						$edit = snks_edit_button( $session->ID, $session->user_id );
+						$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id ) . '</td></tr>';
 					}
 				}
 			}
-			$output .= patient_template_str_replace( $session, $edit, $class, $room );
-
-			$output = str_replace( '{doctor_actions}', '', $output );
+			$session_details = array(
+				'booking_day'  => gmdate( 'Y-m-d', strtotime( $session->date_time ) ),
+				'booking_hour' => snks_localize_time(
+					sprintf(
+						/* translators: 1: start time, 2: end time */
+						esc_html__( 'من %1$s إلى %2$s', 'text-domain' ),
+						esc_html( gmdate( 'h:i a', strtotime( $session->starts ) ) ),
+						esc_html( gmdate( 'h:i a', strtotime( $session->ends ) ) )
+					)
+				),
+				'booking_id'   => $session->ID,
+				'_period'      => $session->period,
+			);
+			$output         .= str_replace(
+				'<!--edit_button-->',
+				$edit,
+				snks_booking_details( $session_details, false )
+			);
 		}
 	} else {
 		$output = 'عفواَ ليس لديك حجوزات حاليا!';

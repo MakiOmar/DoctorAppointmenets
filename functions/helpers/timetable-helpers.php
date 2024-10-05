@@ -689,7 +689,7 @@ function snks_get_patient_sessions( $tense ) {
 		if ( 'all' !== $tense ) {
 			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
 		}
-		$query .= " ORDER BY date_time ASC";
+		$query  .= " ORDER BY date_time ASC";
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				$query,

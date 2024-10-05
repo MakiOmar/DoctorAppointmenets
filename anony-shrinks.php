@@ -243,3 +243,24 @@ add_filter( 'deprecated_file_trigger_error', '__return_false' );
 add_filter( 'deprecated_function_trigger_error', '__return_false' );
 add_filter( 'deprecated_argument_trigger_error', '__return_false' );
 add_filter( 'deprecated_hook_trigger_error', '__return_false' );
+
+if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true ) ) {
+	add_action(
+		'wp_loaded',
+		function () {
+			remove_action( 'woocommerce_checkout_order_review', 'woocommerce_order_review', 10 );
+		}
+	);
+}
+add_action(
+	'woocommerce_checkout_order_review',
+	function () {
+		$wc_session = WC()->session->get( 'consulting_form_data' );
+
+		// Check if the session data exists and contains the expected keys.
+		if ( is_array( $wc_session ) ) {
+			echo wp_kses_post( snks_booking_details( $wc_session ) );
+		}
+	}
+);
+

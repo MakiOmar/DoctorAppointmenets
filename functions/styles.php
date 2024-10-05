@@ -83,12 +83,15 @@ add_action(
 			}
 			?>
 			table.consulting-session-table .consulting-session-label, table.consulting-session-table .consulting-session-data {
-				border: 1px solid <?php echo esc_attr( $dark_color ); ?>!important;
-				color: <?php echo esc_attr( $dark_color ); ?>!important;
 				text-align: center!important;
 				font-size: 16.5px;
+				border: 1px solid #024059;
 			}
 			<?php if ( is_page( 'booking-details' ) ) { ?>
+			table.consulting-session-table .consulting-session-label, table.consulting-session-table .consulting-session-data {
+				border: 1px solid <?php echo esc_attr( $dark_color ); ?>!important;
+				color: <?php echo esc_attr( $dark_color ); ?>!important
+			}
 			.elementor-3537 .elementor-element.elementor-element-77c62da > .elementor-widget-container,
 			.elementor-3537 .elementor-element.elementor-element-df572ee > .elementor-widget-container{
 				background-color: <?php echo esc_attr( $darker_color ); ?>!important;
@@ -104,6 +107,35 @@ add_action(
 				color: <?php echo esc_attr( $dark_color ); ?>!important;
 			}
 			<?php } ?>
+			.consulting-session-table {
+				width: 95%;
+				margin: auto;
+				border-collapse: separate;
+				border-top-right-radius: 10px;
+				border-top-left-radius: 10px;
+				margin-bottom: 10px;
+				border-spacing: 0;
+			}
+
+			table.consulting-session-table .consulting-session-label {
+				background-color: #c8c8c8!important;
+				padding: 8px;
+				width: 40%;
+			}
+			.consulting-session-table tr:first-child td:first-child {
+				border-top-right-radius: 10px;
+			}
+
+			.consulting-session-table tr:first-child td:last-child {
+				border-top-left-radius: 10px;
+			}
+
+			table.consulting-session-table .consulting-session-data {
+				padding: 8px;
+				background-color: #fff!important;
+				text-align: right;
+				width: 60%;
+			}
 			#consulting-forms-container > p {
 				margin: 0;
 				padding: 10px;

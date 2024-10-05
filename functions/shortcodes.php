@@ -632,63 +632,7 @@ function consulting_session_table_shortcode() {
 		return;
 	}
 
-	$booking = snks_get_timetable_by( 'ID', $form_data['booking_id'] );
-	if ( ! $booking ) {
-		return;
-	}
-	// Format the booking date and time.
-	$booking_date = gmdate( 'l j F Y', strtotime( $form_data['booking_day'] ) ); // e.g., Saturday 24 October 2024.
-	$booking_date = localize_date_to_arabic( $booking_date );
-	$booking_time = $form_data['booking_hour'];
-	$session_type = 'online' === $booking->attendance_type ? 'أونلاين' : 'أوفلاين';
-
-	// Generate the table HTML.
-	ob_start();
-	?>
-	<style>
-		.consulting-session-table {
-			width: 95%;
-			margin: auto;
-			border-collapse: collapse;
-			border-radius: 10px;
-			overflow: hidden;
-		}
-
-		table.consulting-session-table .consulting-session-label {
-			background-color: #c8c8c8!important;
-			padding: 8px;
-			width: 40%;
-		}
-
-		table.consulting-session-table .consulting-session-data {
-			padding: 8px;
-			background-color: #fff!important;
-			text-align: right;
-			width: 60%;
-		}
-
-	</style>
-	<table class="consulting-session-table">
-		<tr>
-			<td class="consulting-session-label">نــوع الجـلسـة</td>
-			<td class="consulting-session-data"><?php echo esc_html( $session_type ); ?></td>
-		</tr>
-		<tr>
-			<td class="consulting-session-label">مــدة الجـلسـة</td>
-			<td class="consulting-session-data"><?php echo esc_html( $form_data['_period'] ); ?> دقيقة</td>
-		</tr>
-		<tr>
-			<td class="consulting-session-label">تاريـخ الجلسـة</td>
-			<td class="consulting-session-data"><?php echo esc_html( $booking_date ); ?></td>
-		</tr>
-		<tr>
-			<td class="consulting-session-label">توقيت الجلسة</td>
-			<td class="consulting-session-data"><?php echo esc_html( $booking_time ); ?></td>
-		</tr>
-	</table>
-	<?php
-
-	return ob_get_clean();
+	return snks_booking_details( $form_data );
 }
 
 // Register the shortcode.
