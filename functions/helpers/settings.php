@@ -15,33 +15,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Validate doctor settings.
+ * Validate doctor settings and store all messages in a transient.
  *
- * Returns false if any of the following conditions are met:
- * - None of 60_minutes, 45_minutes, or 30_minutes are "on".
- * - attendance_type is empty.
- * - attendance_type equals "both" or "offline" and clinics_list is empty.
- * - The corresponding "others" value in doctor pricings is empty for the active time settings.
+ * If validation fails, store all messages in a transient.
  *
  * @param int $user_id User ID to retrieve doctor settings for.
  * @return bool False if validation fails, true otherwise.
  */
-function validate_snks_doctor_settings( $user_id ) {
+function snks_validate_doctor_settings( $user_id ) {
 	$settings = snks_doctor_settings( $user_id );
 	$pricings = snks_doctor_pricings( $user_id );
-
-	// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
-	if (
-		empty( $settings['60_minutes'] ) &&
-		empty( $settings['45_minutes'] ) &&
-		empty( $settings['30_minutes'] )
-	) {
-		return false;
-	}
+	$messages = array();
 
 	// Check if attendance_type is empty.
 	if ( empty( $settings['attendance_type'] ) ) {
-		return false;
+		$messages[] = ' طريقة استخدام التطبيق غير محددة.';
 	}
 
 	// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
@@ -49,21 +37,36 @@ function validate_snks_doctor_settings( $user_id ) {
 		( 'both' === $settings['attendance_type'] || 'offline' === $settings['attendance_type'] ) &&
 		empty( $settings['clinics_list'] )
 	) {
-		return false;
+		$messages[] = 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "كلاهما" أو "غير متصل".';
 	}
-
+	// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
+	if (
+		( empty( $settings['60_minutes'] ) || 'false' === $settings['60_minutes'] ) &&
+		( empty( $settings['45_minutes'] ) || 'false' === $settings['45_minutes'] ) &&
+		( empty( $settings['30_minutes'] ) || 'false' === $settings['30_minutes'] )
+	) {
+		$messages[] = 'لم يتم تفعيل أي من مدد الجلسات (30، 45، 60 دقيقة).';
+	}
 	// Check if the corresponding 'others' value is not empty for the active time settings.
-	if ( ! empty( $settings['30_minutes'] ) && empty( $pricings[30]['others'] ) ) {
-		return false;
+	if ( ! empty( $settings['30_minutes'] ) && 'false' !== $settings['30_minutes'] && empty( $pricings[30]['others'] ) ) {
+		$messages[] = 'سعر الجلسات لمدة 30 دقيقة غير موجود.';
 	}
-	if ( ! empty( $settings['45_minutes'] ) && empty( $pricings[45]['others'] ) ) {
-		return false;
+	if ( ! empty( $settings['45_minutes'] ) && 'false' !== $settings['45_minutes'] && empty( $pricings[45]['others'] ) ) {
+		$messages[] = 'سعر الجلسات لمدة 45 دقيقة غير موجود.';
 	}
-	if ( ! empty( $settings['60_minutes'] ) && empty( $pricings[60]['others'] ) ) {
+	if ( ! empty( $settings['60_minutes'] ) && 'false' !== $settings['60_minutes'] && empty( $pricings[60]['others'] ) ) {
+		$messages[] = 'سعر الجلسات لمدة 60 دقيقة غير موجود.';
+	}
+
+	// If there are any messages, set the transient with the messages for the current user.
+	if ( ! empty( $messages ) ) {
+		set_transient( 'snks_doctor_message_' . $user_id, $messages, 60 );
 		return false;
 	}
 
-	// Return true if none of the conditions are met.
+	// Clear any existing transient if validation passes.
+	delete_transient( 'snks_doctor_message_' . $user_id );
+
 	return true;
 }
 
