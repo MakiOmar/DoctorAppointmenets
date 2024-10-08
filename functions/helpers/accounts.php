@@ -89,71 +89,6 @@ function snks_is_programme_enrolled() {
 
 	return false;
 }
-add_shortcode(
-	'anony_email_verification',
-	function () {
-		?>
-		<style>
-			#verification_code_form{
-				text-align: center;
-			}
-			.verification_code_wrapper{
-				display: flex;
-				justify-content: center;
-				direction: ltr;
-			}
-			/* Style for the input fields */
-			input.verification_code_temp {
-				width: 40px;
-				height: 40px;
-				border-radius: 5px;
-				background-color: #F7F5F9;
-				border: 1px solid #024059;
-				text-align: center;
-				margin-right: 5px;
-				padding: 3px;
-			}
-			#verification_code{
-				display: none;
-			}
-			#verification_code_form_submit {
-				width: 100%;
-				border-radius: 5px;
-				background-color: #024059;
-				border: 1px solid #024059;
-				color: #fff;
-				margin-top: 15px;
-			}
-		</style>
-		<form method="post" id="verification_code_form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<input type="hidden" name="action" value="verify_email">
-			<div class="verification_code_wrapper">
-			<input type="text" maxlength="1" class="verification_code_temp" id="input1" oninput="moveToNextInput(this)">
-			<input type="text" maxlength="1" class="verification_code_temp" id="input2" oninput="moveToNextInput(this)">
-			<input type="text" maxlength="1" class="verification_code_temp" id="input3" oninput="moveToNextInput(this)">
-			<input type="text" maxlength="1" class="verification_code_temp" id="input4" oninput="moveToNextInput(this)">
-			</div>
-			<input type="text" name="verification_code" id="verification_code" required maxlength="4" pattern="[0-9]{4}">
-			<input id="verification_code_form_submit" type="submit" value="إرسال">
-		</form>
-		<script>
-			// Function to move focus to the next input
-			function moveToNextInput(currentInput) {
-				const nextInput = currentInput.nextElementSibling;
-				if (nextInput) {
-					nextInput.focus();
-				} else {
-					// All inputs are filled, concatenate the values
-					const inputValues = Array.from(document.querySelectorAll('.verification_code_temp'))
-						.map( input => input.value )
-						.join('');
-					document.getElementById('verification_code').value = inputValues;
-				}
-			}
-		</script>
-		<?php
-	}
-);
 
 /**
  * Register user
@@ -178,7 +113,6 @@ function snks_register_user( $_request ) {
 		if ( $user_password !== $confirm_password ) {
 			wp_die( 'Passwords do not match.' );
 		}
-		$verification_code = strval( wp_rand( 1000, 9999 ) );
 
 		$user_id = wp_create_user( $user_email, $user_password, $user_email );
 		$user    = new WP_User( $user_id );
@@ -188,96 +122,10 @@ function snks_register_user( $_request ) {
 			wp_die( $user_id->get_error_message() );
             //phpcs:enable
 		}
-		ob_start();
-		include SNKS_DIR . 'templates/email-template.php';
-		$template = ob_get_clean();
-
-		$message = str_replace(
-			array(
-				'{logo}',
-				'{title}',
-				'{sub_title}',
-				'{content_placeholder}',
-				'{text_1}',
-				'{text_2}',
-				'{text_3}',
-				'{button_text}',
-				'{button_url}',
-			),
-			array(
-				site_url( 'wp-content/uploads/2023/12/w2.png' ),
-				'تأكيد البريد الإلكتروني',
-				'لحسابك في جلسة',
-				site_url( '/wp-content/uploads/2024/04/sky-2667455_1280.jpg' ),
-				'شكراً لتسجيلك في جلسة',
-				'رمز التحقق الخاص بك هو',
-				$verification_code,
-				'تأكيد البريد الإلكتروني',
-				get_the_permalink( 1315 ),
-			),
-			$template
-		);
-
-		update_user_meta( $user_id, 'verification_code', $verification_code );
-
-		$to      = $user_email;
-		$subject = 'تأكيد البريد الإلكتروني لحسابك في جلسة';
-		$headers = array(
-			'Content-Type: text/html; charset=UTF-8',
-			'From: جلسة <customer@shrinks.clinic>',
-		);
-		$emailed = wp_mail( $to, $subject, $message, $headers );
-		if ( ! isset( $_request['account-type'] ) ) {
-			wp_safe_redirect( esc_url( home_url( '/verification' ) ) );
-			exit;
-		} else {
-			return $user;
-		}
+		return $user;
 	}
 }
 add_action( 'jet-form-builder/custom-action/register_patient', 'anony_register_user' );
-
-/**
- * Verify email
- *
- * @return void
- */
-function verify_email() {
-    //phpcs:disable
-    $_request = $_POST;
-    //phpcs:enable
-	if ( isset( $_request['verification_code'] ) ) {
-		$verification_code = sanitize_text_field( wp_unslash( $_request['verification_code'] ) );
-		//phpcs:disable
-		// Query for the user based on the meta key and value.
-		$args = array(
-			'meta_key'   => 'verification_code',
-			'meta_value' => $verification_code,
-		);
-		//phpcs:enable
-
-		// Get the user(s) matching the criteria.
-		$users = get_users( $args );
-
-		if ( ! empty( $users ) ) {
-			$user        = reset( $users );
-			$stored_code = get_user_meta( $user->ID, 'verification_code', true );
-
-			if ( $stored_code && $verification_code === $stored_code ) {
-				delete_user_meta( $user->ID, 'verification_code' );
-				update_user_meta( $user->ID, 'is_verified', true );
-				wp_set_current_user( $user->ID, $user->user_login );
-				wp_set_auth_cookie( $user->ID );
-				do_action( 'wp_login', $user->user_login, $user );
-				wp_safe_redirect( esc_url( home_url( '/consulting-form' ) ) );
-				exit;
-			} else {
-				wp_die( 'Invalid verification code.' );
-			}
-		}
-	}
-}
-add_action( 'init', 'verify_email' );
 
 /**
  * Verify user status
@@ -628,4 +476,3 @@ add_filter(
 	999,
 	2
 );
-
