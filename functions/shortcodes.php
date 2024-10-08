@@ -637,3 +637,42 @@ function consulting_session_table_shortcode() {
 
 // Register the shortcode.
 add_shortcode( 'consulting_session_table', 'consulting_session_table_shortcode' );
+
+/**
+ * Shortcode to display doctor validation messages in Arabic with a red cross.
+ *
+ * Retrieves the transient for the current user, displays the messages with a red cross,
+ * and then deletes the transient.
+ *
+ * @return string The messages to display, or an empty string if no messages exist.
+ */
+add_shortcode(
+	'snks_doctor_message',
+	function () {
+		$user_id = get_current_user_id();
+
+		// Get the transient message array for the current user.
+		$messages = get_transient( 'snks_doctor_message_' . $user_id );
+
+		// If there are messages, display them.
+		if ( ! empty( $messages ) ) {
+			// Start building the output.
+			$output = '<div class="snks-doctor-message">';
+			foreach ( $messages as $message ) {
+				// Add a red cross before each message.
+				$output .= '<p>&#10060; ' . esc_html( $message ) . '</p>';
+			}
+			$output .= '</div>';
+
+			// Delete the transient after rendering.
+			delete_transient( 'snks_doctor_message_' . $user_id );
+
+			// Return the output.
+			return $output;
+		}
+
+		// Return an empty string if no messages exist.
+		return '';
+	}
+);
+

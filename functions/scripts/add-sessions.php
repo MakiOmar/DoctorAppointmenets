@@ -313,7 +313,7 @@ add_action(
 				);
 				<?php
 				//phpcs:disable
-				if ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'appointments-settings' ) ) {
+				if ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'account-setting' ) ) {
 				//phpcs:enable
 					?>
 				$('input[name=attendance_type]').on(
@@ -324,11 +324,13 @@ add_action(
 						}
 					}
 				);
-				$('.jet-form-builder__field[type="checkbox"]').on('change', function() {
-
+				$(document).on(
+					'change',
+					'.jet-form-builder__field[type="checkbox"]',
+					function() {
 					const checkedFieldId = $(this).attr('id');
 					if ($(this).is(':checked')) {
-			 
+						
 						var sessionPeriodsContainer = $(this).closest(".session-periods-container");
 						if ( sessionPeriodsContainer.length > 0 ){
 							$('.session-periods-container').removeClass('shrinks-error');

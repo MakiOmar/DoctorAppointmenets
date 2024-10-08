@@ -398,6 +398,42 @@ add_action(
 	function () {
 		?>
 	<script type="text/javascript">
+		
+			// Define the URL where you want to prompt the user
+			const accountSettingUrlPath = '/account-setting';
+			var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
+			// Check if the current URL matches the account settings page
+			if (window.location.pathname.includes(accountSettingUrlPath)) {
+				
+				let preventNavigation = true; // Flag to control when to prompt
+
+				// Prompt the user when trying to leave the page (refresh, close tab, etc.)
+				/*window.addEventListener('beforeunload', function (e) {
+					if (preventNavigation) {
+						
+						e.returnValue = confirmationMessage; // For most browsers
+						return confirmationMessage;          // Some older browsers
+					}
+				});
+				*/
+				// Handle the case when the user clicks on a link within the page
+				document.querySelectorAll('a').forEach(function (link) {
+					link.addEventListener('click', function (e) {
+						// Ask for confirmation if the user clicks a link
+						var confirmation = confirm(confirmationMessage);
+						if (!confirmation) {
+							e.preventDefault(); // Stop the link navigation if the user cancels
+						} else {
+							// If the user confirms, allow navigation and turn off the beforeunload prompt
+							preventNavigation = false;
+						}
+					});
+				});
+			}
+
+
+
+
 		// Function to convert Arabic numbers to English numbers.
 		function toEnglishNumbers(input) {
 			const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];

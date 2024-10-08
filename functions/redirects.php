@@ -21,22 +21,21 @@ add_action(
 			wp_redirect( site_url() );
 			exit;
 		}
+
+		// Check if the current page is the WooCommerce My Account page.
+		if ( is_account_page() && ! is_user_logged_in() ) {
+			wp_redirect( site_url('login') );
+			exit;
+		}
+	
+		if ( is_page('account-setting') && ! is_user_logged_in() ) {
+			wp_redirect( site_url('doctor-login') );
+			exit;
+		}
+		// Make sure complete all required settings
+		if ( is_page('add-appointments') && ! snks_validate_doctor_settings( get_current_user_id() ) ) {
+			wp_redirect( add_query_arg( 'error', 'complete-settings', site_url('account-setting') ) );
+			exit;
+		}
 	}
 );
-
-/**
- * Redirect from WooCommerce My Account page to the home page.
- */
-function snks_redirect_my_account_page() {
-    // Check if the current page is the WooCommerce My Account page.
-    if ( is_account_page() && ! is_user_logged_in() ) {
-        wp_redirect( site_url('login') ); // Redirect to home page or specify another URL.
-        exit;
-    }
-
-    if ( is_page('account-setting') && ! is_user_logged_in() ) {
-        wp_redirect( site_url('doctor-login') ); // Redirect to home page or specify another URL.
-        exit;
-    }
-}
-add_action( 'template_redirect', 'snks_redirect_my_account_page' );
