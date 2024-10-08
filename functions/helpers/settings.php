@@ -15,6 +15,60 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Validate doctor settings.
+ *
+ * Returns false if any of the following conditions are met:
+ * - None of 60_minutes, 45_minutes, or 30_minutes are "on".
+ * - attendance_type is empty.
+ * - attendance_type equals "both" or "offline" and clinics_list is empty.
+ * - The corresponding "others" value in doctor pricings is empty for the active time settings.
+ *
+ * @param int $user_id User ID to retrieve doctor settings for.
+ * @return bool False if validation fails, true otherwise.
+ */
+function validate_snks_doctor_settings( $user_id ) {
+	$settings = snks_doctor_settings( $user_id );
+	$pricings = snks_doctor_pricings( $user_id );
+
+	// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
+	if (
+		empty( $settings['60_minutes'] ) &&
+		empty( $settings['45_minutes'] ) &&
+		empty( $settings['30_minutes'] )
+	) {
+		return false;
+	}
+
+	// Check if attendance_type is empty.
+	if ( empty( $settings['attendance_type'] ) ) {
+		return false;
+	}
+
+	// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
+	if (
+		( 'both' === $settings['attendance_type'] || 'offline' === $settings['attendance_type'] ) &&
+		empty( $settings['clinics_list'] )
+	) {
+		return false;
+	}
+
+	// Check if the corresponding 'others' value is not empty for the active time settings.
+	if ( ! empty( $settings['30_minutes'] ) && empty( $pricings[30]['others'] ) ) {
+		return false;
+	}
+	if ( ! empty( $settings['45_minutes'] ) && empty( $pricings[45]['others'] ) ) {
+		return false;
+	}
+	if ( ! empty( $settings['60_minutes'] ) && empty( $pricings[60]['others'] ) ) {
+		return false;
+	}
+
+	// Return true if none of the conditions are met.
+	return true;
+}
+
+
+/**
  * Return doctor settings
  *
  * @param mixed $user_id User's ID or false for current user.
