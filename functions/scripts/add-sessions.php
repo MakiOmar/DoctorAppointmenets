@@ -17,18 +17,6 @@ add_action(
 			jQuery( document ).ready( function( $ ) {
 				var disabledOptions = [];
 				var weekDays = ['sun','mon','tue','wed','thu','fri','sat'];
-				function checkRequiredSettings() {
-					var pass = true;
-					if ( ! $('input[name=attendance_type]').is(':checked') ) {
-						$('.shrinks-usage-method').addClass('shrinks-error');
-						pass = false;
-					}
-					if ( ! $('#60-minutes').is(':checked') && ! $('#45-minutes').is(':checked') && ! $('#30-minutes').is(':checked') ) {
-						$('.session-periods-container').addClass('shrinks-error');
-						pass = false;
-					}
-					return pass;
-				}//shrinks-usage-method
 				function showErrorpopup( msg ) {
 					if ( $('.shrinks-error').length > 0 ) {
 						$('#error-container').text(msg);
@@ -174,12 +162,6 @@ add_action(
 					flatPickrInput( disabledDays );
 				}
 				disableEmptyDays();
-				$('.appointment-settings-submit').on( 'click', function(e){
-					if ( ! checkRequiredSettings() ) {
-						e.preventDefault();
-					}
-					showErrorpopup( 'يرجى استكمال الإعدادات' );
-				} );
 
 				// Apply Select2 to existing selects
 				applySelect2();

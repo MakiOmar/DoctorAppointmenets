@@ -493,7 +493,7 @@ add_action(
 				background-image:none!important
 			}
 			
-			.field-type-select-field:after, .snks-timetable-accordion:after, .bulk-action-toggle-tip:after {
+			/*.field-type-select-field:after, */.snks-timetable-accordion:after, .bulk-action-toggle-tip:after {
 				content: '\25BC'; /* Unicode character for down arrow */
 				position: absolute;
 				top: 51%;
@@ -707,8 +707,8 @@ add_action(
 				border: none!important
 			}
 			input[type=number]{
-				background-color: #e4e4e4;
-				border: 1px solid #e4e4e4 !important;
+				background-color: #f5f5f5;
+				border: 1px solid #f5f5f5 !important;
 				top: 2px;
 				position: relative;
 			}

@@ -408,14 +408,14 @@ add_action(
 				let preventNavigation = true; // Flag to control when to prompt
 
 				// Prompt the user when trying to leave the page (refresh, close tab, etc.)
-				/*window.addEventListener('beforeunload', function (e) {
+				window.addEventListener('beforeunload', function (e) {
 					if (preventNavigation) {
-						
+						var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
 						e.returnValue = confirmationMessage; // For most browsers
 						return confirmationMessage;          // Some older browsers
 					}
 				});
-				*/
+				
 				// Handle the case when the user clicks on a link within the page
 				document.querySelectorAll('a').forEach(function (link) {
 					link.addEventListener('click', function (e) {

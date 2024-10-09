@@ -37,7 +37,7 @@ function snks_validate_doctor_settings( $user_id ) {
 		( 'both' === $settings['attendance_type'] || 'offline' === $settings['attendance_type'] ) &&
 		empty( $settings['clinics_list'] )
 	) {
-		$messages[] = 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "كلاهما" أو "غير متصل".';
+		$messages[] = 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.';
 	}
 	// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
 	if (
@@ -1019,10 +1019,90 @@ function snks_get_withdrawal_credit() {
 add_action(
 	'jet-form-builder/custom-action/settings_validate',
 	function ( $request ) {
+		$user_id = get_current_user_id();
+		// Check if attendance_type is empty.
+		if ( empty( $request['attendance_type'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( ' طريقة استخدام التطبيق غير محددة.' );
+		}
+
+		// Loop through clinics_list and check if all values are empty.
+		foreach ( $request['clinics_list'] as $key => $clinic ) {
+			if ( empty( array_filter( $clinic ) ) ) {
+				unset( $request['clinics_list'][ $key ] );
+			}
+		}
+		// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
+		if (
+		( 'both' === $request['attendance_type'] || 'offline' === $request['attendance_type'] ) && empty( $request['clinics_list'] )
+		) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.' );
+		}
+		// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
+		if ( ( 'on' !== $request['60-minutes'] ) && ( 'on' !== $request['45-minutes'] ) && ( 'on' !== $request['30-minutes'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'لم يتم تفعيل أي من مدد الجلسات (30، 45، 60 دقيقة).' );
+		}
+		if ( 'on' === $request['30-minutes'] ) {
+			$pricings[30] = array(
+				'countries' => get_user_meta( $user_id, '30_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, '30_minutes_pricing_others', true ),
+			);
+		}
+		if ( 'on' === $request['45-minutes'] ) {
+			$pricings[45] = array(
+				'countries' => get_user_meta( $user_id, '45_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, '45_minutes_pricing_others', true ),
+			);
+		}
+		if ( 'on' === $request['60-minutes'] ) {
+			$pricings[60] = array(
+				'countries' => get_user_meta( $user_id, '60_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, '60_minutes_pricing_others', true ),
+			);
+		}
+		// Check if the corresponding 'others' value is not empty for the active time request.
+		if (
+			( 'on' === $request['30-minutes'] && empty( $pricings[30]['others'] ) ) ||
+			( 'on' === $request['45-minutes'] && empty( $pricings[45]['others'] ) ) ||
+			( 'on' === $request['60-minutes'] && empty( $pricings[60]['others'] ) )
+		) {
+
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'سعر باقي الدول إلزامي للمدة الفعالة.' );
+		}
 		$edit_before      = snks_get_edit_before_seconds( $request );
 		$free_edit_before = snks_get_free_edit_before_seconds( $request );
 		if ( $edit_before > $free_edit_before ) {
 			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لابد أن تكون فترة التغيير المجاني أكبر من الفترة التي تحددها لآخر موعد لتعديل الحجز' );
+		}
+	},
+	0
+);
+
+add_action(
+	'jet-form-builder/custom-action/validate_pricings',
+	function ( $request ) {
+		foreach ( $request as $key => $pricing ) {
+			// Check if the key contains '_minutes_pricing'.
+			if ( strpos( $key, '_minutes_pricing' ) !== false ) {
+				$country_codes = array();
+
+				// Loop through each entry in the pricing array.
+				foreach ( $pricing as $entry ) {
+					$country_code = $entry['country_code'];
+
+					// Check if the country code already exists.
+					if ( in_array( $country_code, $country_codes, true ) ) {
+						// Return true if a duplicate is found.
+						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لديك أكثر من سعر لنفس الدولة' );
+					}
+					// Check if price is empty or missing.
+					if ( empty( $entry['price'] ) ) {
+						// Throw an exception if the price is not provided.
+						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! الدول المضافة ليس بها سعر.' );
+					}
+					// Add the country code to the list.
+					$country_codes[] = $country_code;
+				}
+			}
 		}
 	},
 	0
