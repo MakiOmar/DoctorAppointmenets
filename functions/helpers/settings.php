@@ -682,8 +682,11 @@ function snks_get_edit_before_seconds( $doctor_settings ) {
 		case 'month':
 			$base = 30 * 24;
 			break;
-		default:
+		case 'day':
 			$base = 24;
+			break;
+		default:
+			$base = 1;
 	}
 	return absint( $number ) * $base * 3600;
 }
