@@ -236,11 +236,12 @@ function phone_input_cb( $atts ) {
 					margin-bottom: 5px;
 				}
 				button.anony_dial_codes_selected_choice{
-					min-width:100px;
-					height:47px;
-					padding:0 10px;
+					min-width: 80px;
+					height: 47px;
+					padding: 0 10px;
 					color: #000;
 					background-color: #ddd;
+					margin-right: 3px;
 				}
 				.anony-dial-codes-phone-label{
 					text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;;
@@ -252,10 +253,10 @@ function phone_input_cb( $atts ) {
 		<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
 			<div class="anony-flex flex-v-center anony-full-width">
 				<label class="anony-dial-codes-phone-label jet-form-builder-col__start">رقم الموبايل *</label>
+				<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
 				<?php if ( 'yes' === $atts['country_code'] ) { ?>
 					<button class="anony_dial_codes_selected_choice"></button>
 				<?php } ?>
-				<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
 			</div>
 			<?php if ( 'yes' === $atts['country_code'] ) { ?>
 				<!-- Filter Input Box -->

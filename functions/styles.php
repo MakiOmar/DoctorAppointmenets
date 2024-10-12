@@ -110,11 +110,12 @@ add_action(
 			input[type="search"], input[type="tel"], input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="number"], textarea, select {
 				margin: 0!important;
 			}
-			#doctor-login label, #doctor-login .jet-form-builder__label-text{
+			#doctor-login label, #doctor-login .jet-form-builder__label-text, #normal-login label, #normal-login .jet-form-builder__label-text{
 				font-size: 14px!important;
 				color: #024059!important;
 				font-weight: bold;
 			}
+
 			.jet-form-builder-col__start{
 				display: inline-flex;
 				align-items: center;
