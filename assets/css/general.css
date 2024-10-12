@@ -44,6 +44,15 @@ div{
 .anony-default-padding{
 	padding: 10px;
 }
+.anony-default-border-radius{
+	border-radius: 10px;
+}
+.anony-default-margin-top{
+	margin-top: 10px;
+}
+.anony-default-margin-bottom{
+	margin-bottom: 10px;
+}
 input[type=search],input[type=tel],input[type=text],input[type=email],input[type=password],input[type=url], input[type=number],textarea, select{
 	outline: none;
 	padding: 10px;

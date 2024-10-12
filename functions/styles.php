@@ -546,6 +546,25 @@ add_action(
 				top: -10px;
 				left: 10px;
 			}
+			#add-appointments .jet-form-builder-repeater__row-fields  .wp-block-columns{
+				flex-direction: column;
+			}
+			#add-appointments select {
+				color: #024059;
+				background-color: #fff;
+			}
+			#add-appointments .wp-block-column > .wp-block-group{
+				background-color: #fff;
+				margin-bottom: 20px;
+				border-radius: 10px;
+			}
+			#add-appointments .jet-form-builder-row{
+				padding: 0;
+				border-radius: 10px;
+			}
+			#add-appointments .jet-form-builder-repeater{
+				padding: 10px;
+			}
 			.jet-form-builder-repeater__row-fields .clinc-row{
 				gap:10px
 			}
@@ -553,8 +572,8 @@ add_action(
 				border: none;
 			}
 			.jet-form-builder-repeater__row{
-				background-color: #e6e4e5;
-				padding: 5px!important;
+				background-color: #e6e4e4;
+				padding: 15px!important;
 				margin-top: 20px!important;
 				border-radius: 8px;
 				position: relative;
@@ -668,9 +687,12 @@ add_action(
 				border-radius:10px;
 				cursor:pointer;
 			}
-			.accordion-heading.active-accordion{
+			.accordion-heading{
 				background-color:#024059;
 				color:#fff!important
+			}
+			.accordion-heading.active-accordion{
+				background-color:'#012d3e';
 			}
 			.shrinks-error{
 				border:1px solid red;
@@ -696,6 +718,7 @@ add_action(
 			.change-fees .jet-form-builder-row.field-type-switcher {
 				border:none
 			}
+
 			.jet-form-builder-row.field-type-switcher {
 				display: flex;
 				flex-direction: row-reverse;
