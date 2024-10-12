@@ -662,6 +662,140 @@ function consulting_session_table_shortcode() {
 
 // Register the shortcode.
 add_shortcode( 'consulting_session_table', 'consulting_session_table_shortcode' );
+/**
+ * Order details
+ *
+ * @param mixed $form_data Booking form submitted data.
+ * @return string
+ */
+function consulting_session_pricing_table_shortcode( $form_data = false ) {
+	if ( ! $form_data ) {
+		// Start session if not already started.
+		if ( ! session_id() ) {
+			session_start();
+		}
+		// Retrieve the form data from the session.
+		// phpcs:disable
+		$form_data = $_SESSION['consulting_form_data_temp'] ?? array();
+	}
+	
+	// phpcs:enable
+	// Ensure that necessary data is available.
+	if ( ! $form_data || empty( $form_data ) ) {
+		return;
+	}
+	ob_start();
+	?>
+	<style>
+		#price-break {
+			background-color: #0a5468;
+			width: 300px;
+			margin: auto;
+			padding: 20px;
+			border: 2px dashed white;
+			border-radius: 10px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+		}
+
+		#price-break .discount-section {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-radius: 5px;
+			margin-bottom: 15px;
+		}
+
+		#price-break .discount-section button {
+			background-color: #024059;
+			border: 2px solid #024059;
+			color: white;
+			padding: 5px 10px;
+			border-radius: 5px;
+			cursor: pointer;
+			height: 45px;
+		}
+
+		#price-break .discount-section input {
+			padding: 5px;
+			border: none;
+			border-radius: 5px;
+			text-align: center;
+		}
+
+		#price-break .amount-section:first-child {
+			border-top: 1px solid white;
+			padding-top: 10px;
+		}
+		#price-break .amount-section {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 10px;
+		}
+
+		#price-break .amount-section p {
+			margin: 0;
+		}
+
+		#price-break .price {
+			background-color: white;
+			color: black;
+			padding: 5px;
+			border-radius: 15px;
+			text-align: center;
+			width: 100px; /* Set fixed width */
+			box-sizing: border-box;
+		}
+
+		#price-break .total {
+			display: flex;
+			justify-content: space-between;
+			font-weight: bold;
+			padding-top: 10px;
+			border-top: 1px solid white;
+		}
+		#price-break .amount-section > p:first-child, #price-break .total > p{
+			color:#fff
+		}
+		#price-break .total .price{
+			background-color: transparent!important;
+			color: white!important
+		}
+	</style>
+	
+	<div id="price-break" class="container">
+		<?php if ( ! is_page( 'booking-details' ) ) { ?>
+		<div class="discount-section">
+			<input type="text" placeholder="أدخل كود الخصم" style="background-color: #fff;margin-left: 3px !important;">
+			<button>تفعيل</button>
+		</div>
+		<?php } ?>
+		<div>
+			<div class="amount-section">
+				<p>رسوم الجلسة</p>
+				<p class="price">1000 ج.م</p>
+			</div>
+
+			<div class="amount-section">
+				<p>رسوم الخدمة</p>
+				<p class="price">56.23 ج.م</p>
+			</div>
+
+			<div class="amount-section">
+				<p>ضريبة القيمة المضافة</p>
+				<p class="price">7.88 ج.م</p>
+			</div>
+		</div>
+		<div class="total">
+			<p>الإجمالي</p>
+			<p class="price">1064.11 ج.م</p>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+// Register the shortcode.
+add_shortcode( 'consulting_session_pricing_table', 'consulting_session_pricing_table_shortcode' );
 
 /**
  * Shortcode to display doctor validation messages in Arabic with a red cross.

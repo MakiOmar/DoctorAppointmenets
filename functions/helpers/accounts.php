@@ -408,7 +408,7 @@ function custom_process_user_registration( $request ) {
 
 	// Check if the username (phone number) already exists.
 	if ( username_exists( $phone ) ) {
-		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم الهاتف هذا مأخوذ بالفعل.' );
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم الهاتف هذا موجود بالفعل. يرجى تسجيل الدخول بنفس الرقم أو الاستكمالربرقم آخر.' );
 	}
 
 	// Register the user.

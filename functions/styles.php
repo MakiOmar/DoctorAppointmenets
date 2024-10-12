@@ -87,18 +87,62 @@ add_action(
 				font-size: 16.5px;
 				border: 1px solid #024059;
 			}
-			<?php if ( is_page( 'booking-details' ) ) { ?>
+			.woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) #respond input#submit.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) a.button.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) button.button.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) input.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce #respond input#submit.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce a.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce button.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce input.button.alt{
+				background-color: <?php echo esc_attr( $darker_color ); ?>!important;
+			}
+			.woocommerce-privacy-policy-link{
+				color:#D89237
+			}
+			#price-break,#checkout-wrapper{
+				background-color: <?php echo esc_attr( $dark_color ); ?>!important;
+			}
+			#add_payment_method #payment ul.payment_methods, .woocommerce-cart #payment ul.payment_methods, .woocommerce-checkout #payment ul.payment_methods {
+				border-bottom: none;
+			}
+			#add_payment_method #payment, .woocommerce-cart #payment, .woocommerce-checkout #payment {
+				background: #e9e6ed00;
+				border-radius: 0;
+				color: #fff;
+			}
+			<?php if ( is_checkout() ) { ?>
+				body {
+					background-color: <?php echo esc_attr( $dark_color ); ?>!important;
+				}
+				#add_payment_method #payment, .woocommerce-cart #payment, .woocommerce-checkout #payment {
+					margin-bottom: 40px;
+				}
+				#add_payment_method #payment ul.payment_methods li, .woocommerce-cart #payment ul.payment_methods li, .woocommerce-checkout #payment ul.payment_methods li {
+					background-color: #fff;
+					padding: 10px;
+					border-radius: 10px;
+					color: <?php echo esc_attr( $dark_color ); ?>!important;;
+					font-weight: normal;
+				}
+				.woocommerce #payment #place_order, .woocommerce-page #payment #place_order {
+					float: none!important;
+				}
+				.form-row.place-order{
+					text-align: center;
+				}
+			<?php } ?>
+			<?php if ( is_page( 'booking-details' ) || is_checkout() ) { ?>
 			table.consulting-session-table .consulting-session-label, table.consulting-session-table .consulting-session-data {
 				border: 1px solid <?php echo esc_attr( $dark_color ); ?>!important;
 				color: <?php echo esc_attr( $dark_color ); ?>!important
 			}
+			
 			.elementor-3537 .elementor-element.elementor-element-77c62da > .elementor-widget-container,
-			.elementor-3537 .elementor-element.elementor-element-df572ee > .elementor-widget-container{
+			.elementor-3537 .elementor-element.elementor-element-df572ee > .elementor-widget-container,
+			.elementor-3537 .elementor-element.elementor-element-1a63c7b > .elementor-widget-container,
+			#price-break .discount-section button{
 				background-color: <?php echo esc_attr( $darker_color ); ?>!important;
 			}
 			input,.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control.active-tab .jet-tabs__label-text,
 			.elementor-3578 .elementor-element.elementor-element-c5e7b50 .jet-form-builder__action-button{
 				color: <?php echo esc_attr( $dark_color ); ?>!important;
+			}
+			#price-break .discount-section button{
+				border-color: <?php echo esc_attr( $dark_color ); ?>!important;
 			}
 			.elementor-3578 .elementor-element.elementor-element-c5e7b50 .jet-form-builder__action-button:hover{
 				color: #fff!important;
@@ -107,6 +151,9 @@ add_action(
 				color: <?php echo esc_attr( $dark_color ); ?>!important;
 			}
 			<?php } ?>
+			#order_review_heading, .woocommerce-form-coupon-toggle, .checkout_coupon, .woocommerce-terms-and-conditions-wrapper{
+				display: none;
+			}
 			input[type="search"], input[type="tel"], input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="number"], textarea, select {
 				margin: 0!important;
 			}
