@@ -307,6 +307,19 @@ add_action(
  * @throws \Jet_Form_Builder\Exceptions\Action_Exception If missing or not correct user credintials.
  */
 function custom_log_patient_in( $_request ) {
+	//phpcs:disable WordPress.Security.NonceVerification.Missing
+	$_req = $_POST;
+	if ( isset( $_req['login_with'] ) && 'mobile' === $_req['login_with'] && ! is_numeric( $_req['temp-phone'] ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى ادخال رقم موبايل صحيح.' );
+	}
+	if ( isset( $_req['login_with'] ) && 'mobile' === $_req['login_with'] && is_numeric( $_req['temp-phone'] ) && strlen( $_req['temp-phone'] ) !== 11 ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً رقم الموبايل يجب أن يتكون من 11 رقماَ' );
+	}
+
+	if ( isset( $_req['login_with'] ) && 'mobile' !== $_req['login_with'] && ! is_email( $_req['temp-phone'] ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال بريد إلكتروني صحيح' );
+	}
+
 	// Sanitize and retrieve username and password from the request.
 	$username = isset( $_request['username'] ) ? sanitize_text_field( $_request['username'] ) : '';
 	$password = isset( $_request['password'] ) ? sanitize_text_field( $_request['password'] ) : '';

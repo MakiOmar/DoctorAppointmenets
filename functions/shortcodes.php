@@ -141,12 +141,13 @@ add_shortcode(
 function phone_input_cb( $atts ) {
 	$atts     = shortcode_atts(
 		array(
-			'name'        => 'phone',
-			'with-styles' => 'yes',
-			'target'      => '',
-			'hide_target' => 'yes',
-			'height'      => '37px',
-			'label_color' => '#000',
+			'name'         => 'phone',
+			'with-styles'  => 'yes',
+			'target'       => '',
+			'hide_target'  => 'yes',
+			'height'       => '37px',
+			'label_color'  => '#000',
+			'country_code' => 'yes',
 		),
 		$atts,
 		'phone_input'
@@ -195,13 +196,13 @@ function phone_input_cb( $atts ) {
 					top: 3px;
 				}
 				input.anony_dial_phone{
-					margin-<?php echo is_rtl() ? 'right' : 'left'; ?>: 0;
+					margin-<?php echo is_rtl() ? 'left' : 'right'; ?>: 0;
+					direction: ltr;
+					text-align: left;
 				}
 				.anony-dial-codes {
 					position: relative;
 					display: flex;
-					direction: ltr;
-					text-align: left;
 					flex-grow: 1;
 				}
 				.anony-dial-codes-content {
@@ -244,40 +245,43 @@ function phone_input_cb( $atts ) {
 				.anony-dial-codes-phone-label{
 					text-align: <?php echo is_rtl() ? 'right' : 'left'; ?>;;
 					font-size: 20px;
-					margin-bottom: 10px;
 					font-weight: bold;
 				}
 			</style>
 		<?php } ?>
-		<label class="anony-dial-codes-phone-label">رقم الموبايل *</label>
 		<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
 			<div class="anony-flex flex-v-center anony-full-width">
-				<button class="anony_dial_codes_selected_choice"></button>
+				<label class="anony-dial-codes-phone-label jet-form-builder-col__start">رقم الموبايل *</label>
+				<?php if ( 'yes' === $atts['country_code'] ) { ?>
+					<button class="anony_dial_codes_selected_choice"></button>
+				<?php } ?>
 				<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
 			</div>
-			<!-- Filter Input Box -->
-			<div class="anony-dial-codes-content">
-			<input type="text" class="anony-filter-input" placeholder="إبحث عن الدولة...">
-			<?php
-			foreach ( $countries as $index => $country ) {
-				$full_label = $country['flag'] . ' (<span style="direction="ltr"">' . $country['dial_code'] . '</span>) ' . $country['name_ar'];
-				$label      = $country['flag'] . ' (' . $country['dial_code'] . ')';
-				if ( $user_country_code === $country['country_code'] ) {
-					$first_choice   = $label;
-					$user_dial_code = $country['dial_code'];
-				} elseif ( $index < 1 ) {
-					$first_choice   = $label;
-					$user_dial_code = $country['dial_code'];
+			<?php if ( 'yes' === $atts['country_code'] ) { ?>
+				<!-- Filter Input Box -->
+				<div class="anony-dial-codes-content">
+				<input type="text" class="anony-filter-input" placeholder="إبحث عن الدولة...">
+				<?php
+				foreach ( $countries as $index => $country ) {
+					$full_label = $country['flag'] . ' (<span style="direction="ltr"">' . $country['dial_code'] . '</span>) ' . $country['name_ar'];
+					$label      = $country['flag'] . ' (' . $country['dial_code'] . ')';
+					if ( $user_country_code === $country['country_code'] ) {
+						$first_choice   = $label;
+						$user_dial_code = $country['dial_code'];
+					} elseif ( $index < 1 ) {
+						$first_choice   = $label;
+						$user_dial_code = $country['dial_code'];
+					}
+					echo '<span>';
+					echo '<a class="anony-dialling-code" href="#" data-dial-code="' . esc_attr( $country['dial_code'] ) . '">' . wp_kses_post( $full_label ) . '</a>';
+					echo '<a style="display:none" class="anony_selected_dial_code">' . wp_kses_post( $label ) . '</a>';
+					echo '</span>';
 				}
-				echo '<span>';
-				echo '<a class="anony-dialling-code" href="#" data-dial-code="' . esc_attr( $country['dial_code'] ) . '">' . wp_kses_post( $full_label ) . '</a>';
-				echo '<a style="display:none" class="anony_selected_dial_code">' . wp_kses_post( $label ) . '</a>';
-				echo '</span>';
-			}
-			?>
-			</div>
-			<input type="text" style="display:none" name="country_code" class="anony_dial_code" id="<?php echo esc_attr( $atts['name'] ); ?>_country_code" value="<?php echo isset( $user_dial_code ) ? esc_attr( $user_dial_code ) : ''; ?>"/>
-			<div style="display:none" class="anony_dial_codes_first_choice"><?php echo isset( $first_choice ) ? wp_kses_post( $first_choice ) : ''; ?></div>
+				?>
+				</div>
+				<input type="text" style="display:none" name="country_code" class="anony_dial_code" id="<?php echo esc_attr( $atts['name'] ); ?>_country_code" value="<?php echo isset( $user_dial_code ) ? esc_attr( $user_dial_code ) : ''; ?>"/>
+				<div style="display:none" class="anony_dial_codes_first_choice"><?php echo isset( $first_choice ) ? wp_kses_post( $first_choice ) : ''; ?></div>
+			<?php } ?>
 		</div>
 	</div>
 	<?php
@@ -287,37 +291,55 @@ function phone_input_cb( $atts ) {
 			?>
 			<?php if ( ! empty( $atts['target'] ) ) { ?>
 				<script>
-					jQuery( document ).ready( function( $ ) {
+					jQuery(document).ready(function($) {
 						<?php do_action( 'phone_input_' . $atts['name'] . '_scripts', $atts ); ?>
 						<?php do_action( 'phone_input_scripts', $atts ); ?>
-						var parent = $( '#<?php echo esc_attr( $unique_id ); ?>' );
+
+						var parent = $('#<?php echo esc_attr( $unique_id ); ?>');
 						var phoneInput = $('input[name=<?php echo esc_attr( $atts['name'] ); ?>]', parent);
-						var countryCodeInput = $('input[name=country_code]', parent);
-			
+						var countryCodeInput = $('input[name=country_code]', parent); // Get country code input, may be undefined
 						var target = '<?php echo esc_html( $atts['target'] ); ?>';
-			
-						function updateBillingPhone( billingPhoneInput ) {
+						// Function to remove any non-numeric characters
+						function allowOnlyNumbers(input) {
+							var sanitizedValue = input.val().replace(/[^0-9]/g, ''); // Remove non-numeric characters
+							input.val(sanitizedValue); // Set the sanitized value back
+						}
+
+						// Update billing phone function
+						function updateBillingPhone(billingPhoneInput) {
 							var phone = phoneInput.val().trim();
-							var countryCode = countryCodeInput.val().trim();
-							billingPhoneInput.val( countryCode + phone ).change();
-						}
-						if ( $('input[name=' + target + ']').val() === '' ) {
-							// Set initial value on document ready
-							updateBillingPhone( $('input[name=' + target + ']') );
-						}
-						phoneInput.on(
-							'input',
-							function(){
-								updateBillingPhone( $('input[name=' + target + ']') );
+							var countryCode = '';
+							if (countryCodeInput.length > 0) {
+								countryCode = countryCodeInput.val().trim();
 							}
-						);
-						countryCodeInput.on(
-							'input',
-							function(){
-								updateBillingPhone( $('input[name=' + target + ']') );
-							}
-						);
-					} );
+							billingPhoneInput.val(countryCode + phone).change();
+						}
+
+						// Set initial value on document ready if the target input is empty
+						if ($('input[name=' + target + ']').val() === '') {
+							updateBillingPhone($('input[name=' + target + ']'));
+						}
+
+						// Listen for changes in phone input
+						phoneInput.on('input', function() {
+							allowOnlyNumbers($(this));
+							updateBillingPhone($('input[name=' + target + ']'));
+						});
+
+						// Apply the function when pasting
+						phoneInput.on('paste', function(e) {
+							setTimeout(function() {
+								allowOnlyNumbers(phoneInput);
+							}, 0); // Wait for the paste action to complete
+						});
+						// Check if countryCodeInput exists before adding event listener
+						if (countryCodeInput.length > 0) {
+							countryCodeInput.on('input', function() {
+								updateBillingPhone($('input[name=' + target + ']'));
+							});
+						}
+					});
+
 				</script>
 			<?php } ?>
 			<script>
@@ -385,12 +407,14 @@ add_action(
 							
 						}
 					);
-					$(".anony-dial-codes").each(
-						function () {
-							var thisDialCodes = $(this);
-							$('.anony_dial_codes_selected_choice', thisDialCodes).html($('.anony_dial_codes_first_choice', thisDialCodes).html(  )  );
-						}
-					);
+					if ( $( '.anony_dial_codes_first_choice' ).length > 0 ) {
+						$(".anony-dial-codes").each(
+							function () {
+								var thisDialCodes = $(this);
+								$('.anony_dial_codes_selected_choice', thisDialCodes).html($('.anony_dial_codes_first_choice', thisDialCodes).html(  )  );
+							}
+						);
+					}
 				}
 			);
 		</script>

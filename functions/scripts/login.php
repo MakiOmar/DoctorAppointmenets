@@ -23,7 +23,10 @@ add_action(
 			var phoneInput = $('input[name=temp-phone]');
 			var countryCodeInput = $('input[name=country_code]');
 			var phone = phoneInput.val().trim();
-			var countryCode = countryCodeInput.val().trim();
+			var countryCode = '';
+			if (countryCodeInput.length > 0) {
+				countryCode = countryCodeInput.val().trim();
+			}
 			billingPhoneInput.val( countryCode + phone ).change();
 		}
 		$('input[name="login_with"]').on('change', function() {
