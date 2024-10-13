@@ -33,10 +33,13 @@ function snks_create_timetable_table() {
         ends TIME NOT NULL,
         clinic VARCHAR(255) NOT NULL,
         attendance_type VARCHAR(255) NOT NULL,
-		order_id BIGINT(20) DEFAULT 0,
-		edit_order_id BIGINT(20) DEFAULT 0,
+        order_id BIGINT(20) DEFAULT 0,
+        edit_order_id BIGINT(20) DEFAULT 0,
+        notification_24hr_sent TINYINT(1) DEFAULT 0,
+        notification_1hr_sent TINYINT(1) DEFAULT 0,
         PRIMARY KEY (ID)
     ) $collate";
+
 	// Execute the SQL statement.
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );

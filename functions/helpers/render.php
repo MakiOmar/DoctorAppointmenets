@@ -62,7 +62,6 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 
 	$html            = '';
 	$n_bookable_days = array_slice( $bookable_days, 0, $days_count );
-	$days_labels     = json_decode( DAYS_ABBREVIATIONS, true );
 	$months_labels   = json_decode( MONTHS_FULL_NAMES, true );
 	foreach ( $n_bookable_days as $index => $current_date ) {
 		//phpcs:disable Universal.Operators.StrictComparisons.LooseEqual
@@ -73,7 +72,7 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 		$html .= '<div class="anony-content-slide snks-bg anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
 		$html .= "<span class='hacen_liner_print-outregular'>$months_labels[$month_name]</span>";
 		$html .= "<span class='hacen_liner_print-outregular anony-day-number'>$day_number</span>";
-		$html .= "<span class='hacen_liner_print-outregular'>$days_labels[$day_name]</span>";
+		$html .= '<span class="hacen_liner_print-outregular">' . snks_localize_day( $day_name ) . '</span>';
 		$html .= '</label>';
 		$html .= sprintf(
 			'<input id="%1$s-%4$s" class="' . $input_name . '-radio" type="radio" name="' . $input_name . '" value="%2$s" data-user="%3$s" data-period="%4$s">',
@@ -501,11 +500,11 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 	$last_name      = ! empty( $doctor_details['billing_last_name'] ) ? $doctor_details['billing_last_name'] : '';
 	$name           = $first_name . ' ' . $last_name;
 	// Format the booking date and time.
-	$booking_date = gmdate( 'l j F Y', strtotime( $form_data['booking_day'] ) ); // e.g., Saturday 24 October 2024.
-	$booking_date = localize_date_to_arabic( $booking_date );
-	$booking_time = $form_data['booking_hour'];
-	$session_type = 'online' === $booking->attendance_type ? 'أونلاين' : 'أوفلاين';
-
+	$booking_date   = gmdate( 'l j F Y', strtotime( $form_data['booking_day'] ) ); // e.g., Saturday 24 October 2024.
+	$booking_date   = localize_date_to_arabic( $booking_date );
+	$booking_time   = $form_data['booking_hour'];
+	$session_type   = 'online' === $booking->attendance_type ? 'أونلاين' : 'أوفلاين';
+	$clinic_details = snks_get_clinic( $booking->clinic, $booking->user_id );
 	// Generate the table HTML.
 	ob_start();
 	?>
@@ -530,6 +529,16 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 			<td class="consulting-session-label">توقيت الجلسة</td>
 			<td class="consulting-session-data"><?php echo esc_html( $booking_time ); ?></td>
 		</tr>
+		<?php if ( 'offline' === $booking->attendance_type ) { ?>
+		<tr>
+			<td class="consulting-session-label">اسم العيادة</td>
+			<td class="consulting-session-data"><?php echo esc_html( $clinic_details['clinic_title'] ); ?></td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label">موقع العيادة</td>
+			<td class="consulting-session-data"><a href="<?php echo esc_url( $clinic_details['google_map'] ); ?>">اتجاهات جوجل</a></td>
+		</tr>
+		<?php } ?>
 		<?php
 		if ( ! $is_booking ) {
 			?>
@@ -664,7 +673,7 @@ function snks_booking_item_template( $record ) {
 		</div>
 		<!--doctoraction-->
 		<div class="anony-flex flex-h-center">
-			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
+			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
 			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
 		</div>
 		<!--/doctoraction-->
@@ -861,8 +870,7 @@ function snks_generate_bookings() {
 		}
 	);
 
-	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
-	$output      = '';
+	$output = '';
 
 	if ( is_array( $timetables ) ) {
 		$day_groups = snks_group_objects_by( $timetables, 'date' );
@@ -877,7 +885,7 @@ function snks_generate_bookings() {
 			$output .= count( $timetables );
 			$output .= '</div>';
 			$output .= '<div class="anony-grid-col anony-grid-col-11 anony-inline-flex flex-h-center flex-v-center anony-padding-10">';
-			$output .= $days_labels[ $day ] . '  ' . $date;
+			$output .= snks_localize_day( $day ) . '  ' . $date;
 			$output .= '<div class="bulk-action-toggle">';
 			if ( $j && ! isset( $_COOKIE['hide-delay-tip'] ) ) {
 				$output .= '<span class="bulk-action-toggle-tip">';

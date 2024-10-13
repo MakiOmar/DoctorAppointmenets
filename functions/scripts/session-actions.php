@@ -119,6 +119,7 @@ add_action(
 
 					var date = $(this).val();
 					var mainDate = $(this).data('date');
+					var mainTime = $(this).data('time');
 				
 					// Send AJAX request.
 					$.ajax({
@@ -127,6 +128,7 @@ add_action(
 						data: {
 							action    : 'appointment_change_date',
 							date      : date,
+							time      : time,
 							nonce     : nonce,
 						},
 						success: function(response) {
@@ -144,8 +146,10 @@ add_action(
 				function() {
 					var oldAppointment = $(this).data('id');
 					var date = $(this).data('date');
+					var time = $(this).data('time');
 					$("#old-appointment").val(oldAppointment);
 					$("#change-to-date").attr('data-date', date);
+					$("#change-to-date").attr('data-time', time);
 					var list = $("#change-to-list");
 					list.removeAttr('id');
 					list.attr('id', date + '-change-to-list');

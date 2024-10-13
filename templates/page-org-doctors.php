@@ -11,13 +11,12 @@ get_header();
 global $wp;
 $org_slug = sanitize_text_field( $wp->query_vars['org'] );
 $org      = get_page_by_path( $org, OBJECT, 'organization' );
-$term     = get_term( $term_id );
-if ( is_wp_error( $term ) ) {
+$_term    = get_term( $_term_id );
+if ( is_wp_error( $_term ) ) {
 	return;
 }
 
 if ( $org ) {
-	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
 	?>
 	<style>
 		header, footer{
@@ -68,7 +67,7 @@ if ( $org ) {
 					<?php echo get_the_post_thumbnail( $org->ID, 'full' ); ?>
 				</a>
 			</div>
-			<h1 class="main_color_text" style="background-color: #fff;text-align:center;font-size:25px;position: relative;top: -8px;padding: 10px 0 12px 0;"><?php printf( 'حجز جلسات إشراف %s', esc_html( $term->name ) ); ?></h1>
+			<h1 class="main_color_text" style="background-color: #fff;text-align:center;font-size:25px;position: relative;top: -8px;padding: 10px 0 12px 0;"><?php printf( 'حجز جلسات إشراف %s', esc_html( $_term->name ) ); ?></h1>
 			<?php
 			$children_objects = anony_query_related_children( absint( $wp->query_vars['term_id'] ), 24 );
 			if ( ! empty( $children_objects ) ) {
@@ -132,7 +131,7 @@ if ( $org ) {
 
 										printf(
 											'%1$s | %2$s',
-											esc_html( $days_labels[ $closest_appointment[0]->day ] ),
+											esc_html( snks_localize_day( $closest_appointment[0]->day ) ),
 											esc_html( gmdate( 'Y-m-d', strtotime( $closest_appointment[0]->date_time ) ) )
 										);
 										?>

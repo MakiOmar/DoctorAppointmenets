@@ -56,6 +56,14 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 				snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
 				update_post_meta( $order_id, 'booking_id', $timetable->ID );
 				update_post_meta( $order_id, 'doctor_id', $timetable->user_id );
+				$message = sprintf(
+					'تم حجز جلسة أونلاين يوم %1$s الموافق %2$s الساعه %3$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%4$s',
+					$timetable->day,
+					gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
+					snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
+					esc_url( site_url( '/my-bookings' ) )
+				);
+				send_sms_via_whysms( $order->get_billing_phone(), $message );
 			}
 		}
 	}

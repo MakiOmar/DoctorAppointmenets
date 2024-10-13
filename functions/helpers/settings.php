@@ -432,8 +432,6 @@ function snks_get_clinic( $key, $user_id = false ) {
  * @return array
  */
 function snks_generate_appointments_dates( $week_days ) {
-	// Mapping of day abbreviations to full names.
-	$day_names = json_decode( DAYS_ABBREVIATIONS, true );
 
 	// Initialize the result array.
 	$result = array();
@@ -454,7 +452,7 @@ function snks_generate_appointments_dates( $week_days ) {
 			// Add the formatted entry to the result array.
 			$result[] = array(
 				'day'   => $day_abbr,
-				'label' => $day_names[ $day_abbr ],
+				'label' => snks_localize_day( $day_abbr ),
 				'date'  => $current_date->format( 'Y-m-d' ),
 			);
 		}
@@ -855,7 +853,6 @@ function snks_generate_preview() {
 		}
 	);
 
-	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
 	$output      = '';
 	if ( is_array( $timetables ) ) {
 		foreach ( $timetables as $day => $timetable ) {
@@ -887,7 +884,7 @@ function snks_generate_preview() {
 				if ( count( $details ) > 1 ) {
 					// Associate cells with columns.
 					$cells = array(
-						'day' => new TableCell( $days_labels[ $day ] . ' ' . $date, array( 'colspan' => '7' ) ),
+						'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
 					);
 					// define row attributes.
 					$attrs = array(
@@ -908,7 +905,7 @@ function snks_generate_preview() {
 					}
 					// Associate cells with columns.
 					$cells = array(
-						'day'        => new TableCell( $days_labels[ $data['day'] ], array( 'data-label' => 'اليوم' ) ),
+						'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
 						'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
 						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
 						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
@@ -927,7 +924,7 @@ function snks_generate_preview() {
 			// Finally generate html.
 			$output .= $table->html();
 			$output .= snks_render_conflicts( $data['day'] );
-			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], $days_labels[ $data['day'] ], 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
+			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], snks_localize_day( $data['day'] ), 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
 		}
 	}
 	$output .= '<input type="hidden" id="doctor-off-days" value="' . implode( ',', snks_get_off_days() ) . '"/>';

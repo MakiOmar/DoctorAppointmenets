@@ -372,6 +372,16 @@ function snks_diff_seconds( $session ) {
 }
 
 /**
+ * Get localized day name
+ *
+ * @param string $day Day name in Eng.
+ * @return string
+ */
+function snks_localize_day( $day ) {
+	$days_labels = json_decode( DAYS_ABBREVIATIONS, true );
+	return $days_labels[ $day ];
+}
+/**
  * Localize an English date string to Arabic.
  *
  * @param string $date_string The date string in English format.

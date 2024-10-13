@@ -105,6 +105,16 @@ add_action(
 				color: #fff;
 			}
 			<?php if ( is_checkout() ) { ?>
+				.wc_payment_methods li{
+					margin-top: 1rem!important;
+					padding: 10px!important;
+					min-height: 57.5px;
+				}
+				div.wc_payment_method.payment_method_cod{
+					margin-top: auto!important;
+					position: relative;
+						top: 30%;
+				}
 				body {
 					background-color: <?php echo esc_attr( $dark_color ); ?>!important;
 				}

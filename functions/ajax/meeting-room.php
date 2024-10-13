@@ -22,7 +22,14 @@ function doctor_presence_callback() {
 	}
 	$transient = get_transient( "doctor_has_joined_{$_request['roomID']}_{$_request['doctorID']}" );
 	if ( ! $transient ) {
-		$transient = set_transient( "doctor_has_joined_{$_request['roomID']}_{$_request['doctorID']}", '1' );
+		$transient     = set_transient( "doctor_has_joined_{$_request['roomID']}_{$_request['doctorID']}", '1' );
+		$session       = snks_get_timetable_by( 'ID', absint( $_request['roomID'] ) );
+		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
+		$message       = sprintf(
+			'المعالج جاهز لبدء الجلسة،  اضغط هنا للدخول:%s',
+			esc_url( add_query_arg( 'room_id', $session->ID, site_url( '/meeting-room' ) ) )
+		);
+		send_sms_via_whysms( $billing_phone, $message );
 	}
 	wp_send_json(
 		array(
@@ -34,7 +41,7 @@ function doctor_presence_callback() {
 
 add_action( 'wp_ajax_doctor_has_joind', 'doctor_has_joind_callback' );
 /**
- * Update attendance
+ * Check attendance
  *
  * @return void
  */
