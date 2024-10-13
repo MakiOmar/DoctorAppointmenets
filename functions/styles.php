@@ -82,6 +82,9 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			.consulting-session-data a{
+				color:#000!important
+			}
 			table.consulting-session-table .consulting-session-label, table.consulting-session-table .consulting-session-data {
 				text-align: center!important;
 				font-size: 16.5px;

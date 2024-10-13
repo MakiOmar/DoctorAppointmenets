@@ -857,7 +857,7 @@ add_shortcode(
 function snks_generate_bookings() {
 	$timetables = snks_get_doctor_sessions( 'all', 'open', true );
 	if ( empty( $timetables ) ) {
-		return '<p>ليس لديك حجوزات حتى الآن!</p>';
+		return '<p class="anony-center-text">ليس لديك حجوزات حتى الآن!</p>';
 	}
 	$days_sorted = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
 
