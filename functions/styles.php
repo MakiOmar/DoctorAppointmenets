@@ -82,6 +82,45 @@ add_action(
 				//phpcs:enable
 			}
 			?>
+			/* Overlay styling using ::before pseudo-element */
+			.jet-form-builder.processing::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(255, 255, 255, 0.7);
+				z-index: 10;
+				display: block;
+			}
+
+			/* To position the form container for overlay */
+			.jet-form-builder {
+				position: relative;
+			}
+
+			/* Optional: Spinner style */
+			.jet-form-builder.processing::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				width: 40px;
+				height: 40px;
+				border: 4px solid rgba(255, 255, 255, 0.3);
+				border-radius: 50%;
+				border-top: 4px solid #000;
+				animation: spin 1s linear infinite;
+				transform: translate(-50%, -50%);
+				z-index: 11;
+			}
+
+			@keyframes spin {
+				0% { transform: rotate(0deg); }
+				100% { transform: rotate(360deg); }
+			}
+
 			.consulting-session-data a{
 				color:#000!important
 			}
@@ -89,6 +128,9 @@ add_action(
 				text-align: center!important;
 				font-size: 16.5px;
 				border: 1px solid #024059;
+			}
+			.session-periods{
+				flex-direction: column;
 			}
 			.woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) #respond input#submit.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) a.button.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) button.button.alt, .woocommerce:where(body:not(.woocommerce-block-theme-has-button-styles)) input.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce #respond input#submit.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce a.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce button.button.alt, :where(body:not(.woocommerce-block-theme-has-button-styles)) .woocommerce input.button.alt{
 				background-color: <?php echo esc_attr( $darker_color ); ?>!important;

@@ -96,6 +96,45 @@ add_action(
 	function () {
 		?>
 		<script>
+			jQuery(document).ready(function($) {
+				// Event listener for the "Forgot Password" link
+				$('a[href="/forget-password/"]').on('click', function(event) {
+					event.preventDefault(); // Prevent the default link behavior
+
+					// Add the 'processing' class to show the overlay
+					$('.jet-form-builder').addClass('processing');
+
+					// Get the selected login method (mobile or email)
+					var loginWith = $('input[name="login_with"]:checked').val();
+					var tempPhone = $('input[name="temp-phone"]').val();
+					var username = $('#username').val();
+
+					// Proceed with the AJAX call without client-side validation
+					$.ajax({
+						url: '/wp-admin/admin-ajax.php', // WordPress AJAX handler
+						type: 'POST',
+						data: {
+							action: 'custom_forget_password_action', // Custom action name
+							login_with: loginWith,
+							phone: tempPhone,
+							email: username,
+							_wpnonce: '<?php echo esc_attr( wp_create_nonce( 'forgetpassword' ) ); ?>' // Include the nonce for security
+						},
+						success: function(response) {
+							// Remove the 'processing' class to hide the overlay
+							$('.jet-form-builder').removeClass('processing');
+							alert(response.msg); // Example response handling
+						},
+						error: function(xhr, status, error) {
+							// Remove the 'processing' class to hide the overlay
+							$('.jet-form-builder').removeClass('processing');
+
+							//alert('Error: ' + error);
+						}
+					});
+				});
+			});
+
 			jQuery( document ).ready( function( $ ) {
 				setTimeout(function() {
 					if ( $('.jet-form-builder-repeater__items').html() == '' ) {
