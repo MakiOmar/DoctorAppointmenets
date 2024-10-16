@@ -316,7 +316,7 @@ function custom_log_patient_in( $_request ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً رقم الموبايل يجب أن يتكون من 11 رقماَ' );
 	}
 
-	if ( isset( $_req['login_with'] ) && 'mobile' !== $_req['login_with'] && ! is_email( $_req['temp-phone'] ) ) {
+	if ( isset( $_req['login_with'] ) && 'mobile' !== $_req['login_with'] && ! is_email( $_req['username'] ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال بريد إلكتروني صحيح' );
 	}
 
@@ -450,4 +450,35 @@ add_filter(
 	},
 	999,
 	2
+);
+
+/**
+ * Generates a logout link shortcode for logged-in users.
+ *
+ * This shortcode displays a "Log Out" link if the user is logged in.
+ * When clicked, it logs the user out and redirects to the homepage.
+ *
+ * Usage: [custom_logout]
+ *
+ * @return string The HTML for the logout link, or an empty string if the user is not logged in.
+ */
+
+add_shortcode(
+	'custom_logout',
+	function () {
+		// Check if the user is logged in.
+		if ( is_user_logged_in() ) {
+			// Create a nonce for logout action.
+			$logout_nonce = wp_create_nonce( 'log-out' );
+
+			// Get the logout URL with the nonce.
+			$logout_url = wp_logout_url( site_url( '/login' ) ) . '&_wpnonce=' . $logout_nonce;
+
+			// Return the logout link.
+			return '<p style="text-align:center"><a href="' . esc_url( $logout_url ) . '">خروج</a></p>';
+		} else {
+			// If the user is not logged in, return an empty string.
+			return '';
+		}
+	}
 );
