@@ -1223,7 +1223,14 @@ add_action(
 				font-size: 27px;
 				margin: 8px;
 			}
-
+			.vertical-divider{
+				width: 2px;
+				height: 170px;
+				background-color:#024059;
+				position: absolute;
+				top: 65px;
+				left: 40%
+			}
 			.anony-greater-than .top {
 				transform: rotate(45deg);
 				top: 8px;
@@ -1243,10 +1250,61 @@ add_action(
 			.anony-smaller-than .bottom {
 				transform: rotate(45deg);
 			}
-			
 			.anony-content-slide{
 				max-width: 60px!important;
 				margin: 2px;
+			}
+			.clinic-rules {
+				max-width: 300px;
+				margin: auto;
+				margin-bottom: 30px;
+			}
+			.clinic-rules h1{
+				font-size: 100%;
+				text-align: center;
+			}
+			.clinic-rules h1, .clinic-rules p{
+				color: <?php echo esc_attr( $darker_color ); ?>!important;
+			}
+			.clinic-rules p{
+				display: flex;
+				align-items: center;
+			}
+			.clinic-rules p::before{
+				content: '-';
+				position: relative;
+				font-size: 20px;
+				top: 2px;
+				margin: 0 3px;
+			}
+			.jet-form-builder-message {
+				position: fixed;
+				bottom: 20px;
+				background-color: #fff;
+				z-index: 9;
+				left: 0;
+				right: 0;
+				margin: auto;
+				max-width: 432px;
+			}
+			.jet-form-builder-message::before{
+				content: 'x';
+				height: 30px;
+				width: 30px;
+				border-radius: 50%;
+				color: #fff;
+				position: absolute;
+				top: -20px;
+				left: 10px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			.jet-form-builder-message--error::before{
+				background-color: #d41c1c;
+			}
+			.jet-form-builder-message--success::before{
+				background-color: green;
 			}
 			@media screen and (min-width:481px) {
 				.snks-booking-page-container{
@@ -1271,12 +1329,8 @@ add_action(
 					flex-direction: column;
 				}
 				.vertical-divider{
-					width: 2px;
 					height: 120px;
-					background-color:#024059;
-					position: absolute;
-					top: 80px;
-					left: 40%
+					top:80
 				}
 			}
 			.elementor-3363 #email{

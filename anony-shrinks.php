@@ -260,6 +260,7 @@ add_action(
 		// Check if the session data exists and contains the expected keys.
 		if ( is_array( $wc_session ) ) {
 			//phpcs:disable
+			echo snks_doctor_rules( $wc_session['_user_id'] );
 			echo consulting_session_pricing_table_shortcode( $wc_session );
 			//phpcs:enable
 

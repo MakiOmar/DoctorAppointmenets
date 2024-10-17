@@ -850,6 +850,46 @@ add_shortcode(
 	}
 );
 /**
+ * Render doctor rules
+ *
+ * @param int $user_id User's ID.
+ * @return string
+ */
+function snks_doctor_rules( $user_id ) {
+	$doctor_settings    = snks_doctor_settings( $user_id );
+	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
+	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
+	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
+	$no_change_period   = $doctor_settings['block_if_before_number'] . ' ' . $doctor_settings['block_if_before_unit'];
+	$html               = '<div class="clinic-rules anony-flex anony-flex-column flex-h-center anony-default-border-radius anony-default-padding snks-light-bg">';
+	if ( 'on' !== $doctor_settings['allow_appointment_change'] ) {
+		$html .= '<p>لا يمكن تغيير موعد الجلسة بعد الحجز.</p>';
+	} else {
+		$html .= '<h1>شروط تغيير مواعيد الجلسات</h1>';
+		$html .= '<p>قبل موعدها بـ {free_change_before} مجانا</p>';
+		$html .= '<p>قبل موعدها بـ {paid_change_period} {paid_change_fees}% من قيمتها</p>';
+		$html .= '<p>ولا يمكن تغييرها قبل موعدها بـ {no_change_period}</p>';
+	}
+	$html .= '</div>';
+	return snks_replace_time_units_to_arabic(
+		str_replace(
+			array(
+				'{free_change_before}',
+				'{paid_change_period}',
+				'{paid_change_fees}',
+				'{no_change_period}',
+			),
+			array(
+				$free_change_before,
+				$paid_change_before,
+				$paid_change_fees,
+				$no_change_period,
+			),
+			$html
+		)
+	);
+}
+/**
  * Generate bookings
  *
  * @return string

@@ -32,8 +32,12 @@ add_action(
 			wp_redirect( site_url('doctor-login') );
 			exit;
 		}
+		if ( ( is_page('account-setting') ) && snks_is_patient() ) {
+			wp_redirect( site_url('my-bookings') );
+			exit;
+		}
 		// Make sure complete all required settings
-		if ( is_page('add-appointments') && ! snks_validate_doctor_settings( get_current_user_id() ) ) {
+		if ( snks_is_doctor() && is_page('add-appointments') && ! snks_validate_doctor_settings( get_current_user_id() ) ) {
 			wp_redirect( add_query_arg( 'error', 'complete-settings', site_url('account-setting') ) );
 			exit;
 		}

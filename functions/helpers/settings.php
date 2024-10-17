@@ -104,6 +104,7 @@ function snks_doctor_settings( $user_id = false ) {
 	$settings['attendance_type']           = get_user_meta( $user_id, 'attendance_type', true );
 	$settings['clinics_list']              = get_user_meta( $user_id, 'clinics_list', true );
 	$settings['form_days_count']           = get_user_meta( $user_id, 'form_days_count', true );
+	$settings['off_days']                  = get_user_meta( $user_id, 'off_days', true );
 
 	return $settings;
 }
@@ -903,6 +904,12 @@ function snks_generate_preview() {
 					} else {
 						$actions = snks_preview_actions( $data['day'], $index );
 					}
+					if ( 'offline' === $data['attendance_type'] ) {
+						$clinic = snks_get_clinic( $data['clinic'] );
+						$ttendance = $clinic[ 'clinic_title' ];
+					} else {
+						$ttendance = 'online';
+					}
 					// Associate cells with columns.
 					$cells = array(
 						'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
@@ -910,7 +917,7 @@ function snks_generate_preview() {
 						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
 						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
 						'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
-						'attendance' => new TableCell( $data['attendance_type'], array( 'data-label' => 'الحضور' ) ),
+						'attendance' => new TableCell( $ttendance, array( 'data-label' => 'الحضور' ) ),
 						'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
 					);
 					// define row attributes.
@@ -1033,9 +1040,20 @@ add_action(
 		}
 		// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
 		if (
-		( 'both' === $request['attendance_type'] || 'offline' === $request['attendance_type'] ) && empty( $request['clinics_list'] )
+		( 'both' === $request['attendance_type'] || 'offline' === $request['attendance_type'] )
 		) {
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.' );
+			if ( empty( $request['clinics_list'] ) ) {
+				throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.' );
+			}
+
+			// Check if any sub-array in 'clinics_list' has an empty 'clinic_title'.
+			if ( ! empty( $request['clinics_list'] ) ) {
+				foreach ( $request['clinics_list'] as $clinic ) {
+					if ( empty( $clinic['clinic_title'] ) ) {
+						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال اسم العيادة لكل عيادة موجودة في القائمة عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين".' );
+					}
+				}
+			}
 		}
 		// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
 		if ( ( 'on' !== $request['60-minutes'] ) && ( 'on' !== $request['45-minutes'] ) && ( 'on' !== $request['30-minutes'] ) ) {
@@ -1066,7 +1084,7 @@ add_action(
 			( 'on' === $request['60-minutes'] && empty( $pricings[60]['others'] ) )
 		) {
 
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'سعر باقي الدول إلزامي للمدة الفعالة.' );
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال أسعار الجلسات.' );
 		}
 		$edit_before      = snks_get_edit_before_seconds( $request );
 		$free_edit_before = snks_get_free_edit_before_seconds( $request );

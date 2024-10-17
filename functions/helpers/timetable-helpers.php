@@ -399,66 +399,82 @@ function snks_delete_timetable( $id ) {
  */
 function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_type = 'both' ) {
 	global $wpdb;
-	$doctor_settings      = snks_doctor_settings( $user_id );
+	//phpcs:disable
+	// Fetch doctor settings.
+	$doctor_settings = snks_doctor_settings( $user_id );
+
+	// Calculate seconds before blocking.
 	$seconds_before_block = 0;
 	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
 		$number               = $doctor_settings['block_if_before_number'];
 		$unit                 = $doctor_settings['block_if_before_unit'];
-		$base                 = 'day' === $unit ? 24 : 1;
+		$base                 = ( 'day' === $unit ) ? 24 : 1;
 		$seconds_before_block = $number * $base * 3600;
 	}
-	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
+
+	// Calculate current and end datetime.
 	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
 	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
-	$cache_key        = 'bookable-dates-' . $current_datetime . '-' . $period;
-	$results          = wp_cache_get( $cache_key );//phpcs:disable
-	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-	
+
+	// Cache key for the query.
+	$cache_key = 'bookable-dates-' . $current_datetime . '-' . $period;
+	$results   = wp_cache_get( $cache_key );
+
+	// Set the default order.
+	$_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+
 	if ( ! $results ) {
-		if ( 'both' === $attendance_type ) {
-			$_query = $wpdb->prepare(
-				"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE user_id = %d
-				AND period = %d
-				AND date_time
-				BETWEEN %s AND %s
-				AND session_status = %s
-				AND order_id = %d
-				ORDER BY date_time {$_order}",
-				$user_id,
-				$period,
-				$current_datetime,
-				$end_datetime,
-				'waiting',
-				0
-			);
-		} else {
-			$_query = $wpdb->prepare(
-				"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE user_id = %d
-				AND period = %d
-				AND date_time
-				BETWEEN %s AND %s
-				AND attendance_type = %s
-				AND session_status = %s
-				AND order_id = %d
-				ORDER BY date_time {$_order}",
-				$user_id,
-				$period,
-				$current_datetime,
-				$end_datetime,
-				$attendance_type,
-				'waiting',
-				0
-			);
+		// Fetch off-days from doctor settings.
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Prepare the off-days for SQL query.
+		$off_days_placeholder = '';
+		if ( ! empty( $off_days ) ) {
+			$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
 		}
+
+		// Common query parameters.
+		$query_params = array(
+			$user_id,
+			$period,
+			$current_datetime,
+			$end_datetime,
+			'waiting',
+			0,
+		);
+
+		// Build the SQL query with dynamic conditions.
+		$attendance_condition = ( 'both' === $attendance_type ) ? '' : $wpdb->prepare( 'AND attendance_type = %s', $attendance_type );
+		$off_days_condition   = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+
+		$sql = "
+			SELECT *
+			FROM {$wpdb->prefix}snks_provider_timetable
+			WHERE user_id = %d
+			AND period = %d
+			AND date_time BETWEEN %s AND %s
+			AND session_status = %s
+			AND order_id = %d
+			$attendance_condition
+			$off_days_condition
+			ORDER BY date_time {$_order}
+		";
+
+		// Merge off-days into query params.
+		$query_params = array_merge( $query_params, $off_days );
+
+		// Prepare and execute the query.
+		$_query  = $wpdb->prepare( $sql, $query_params );
 		$results = $wpdb->get_results( $_query );
+
+		// Cache the results.
 		wp_cache_set( $cache_key, $results );
+		//phpcs:enable
 	}
+
 	return $results;
 }
+
 /**
  * Get all bookable dates
  *

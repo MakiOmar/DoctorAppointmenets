@@ -124,6 +124,20 @@ add_action(
 						if ( ! $inserted ) {
 							$errors[] = $data;
 						}
+					} else {
+						foreach ( $exists as $appointment ) {
+							if ( 'waiting' === $appointment->session_status ) {
+
+								$updated = snks_update_timetable(
+									absint( $appointment->ID ),
+									array(
+										'period'          => $data['period'],
+										'clinic'          => $data['clinic'],
+										'attendance_type' => $data['attendance_type'],
+									)
+								);
+							}
+						}
 					}
 				}
 			}

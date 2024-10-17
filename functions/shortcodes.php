@@ -772,22 +772,22 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<div>
 			<div class="amount-section">
 				<p>رسوم الجلسة</p>
-				<p class="price">1000 ج.م</p>
+				<p class="price"><?php echo esc_html( $form_data['_main_price'] ); ?> ج.م</p>
 			</div>
 
 			<div class="amount-section">
 				<p>رسوم الخدمة</p>
-				<p class="price">56.23 ج.م</p>
+				<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] ); ?> ج.م</p>
 			</div>
 
 			<div class="amount-section">
 				<p>ضريبة القيمة المضافة</p>
-				<p class="price">7.88 ج.م</p>
+				<p class="price"><?php echo esc_html( $form_data['_vat'] ); ?> ج.م</p>
 			</div>
 		</div>
 		<div class="total">
 			<p>الإجمالي</p>
-			<p class="price">1064.11 ج.م</p>
+			<p class="price"><?php echo esc_html( $form_data['_total_price'] ); ?> ج.م</p>
 		</div>
 	</div>
 	<?php

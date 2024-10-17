@@ -97,6 +97,13 @@ add_action(
 		?>
 		<script>
 			jQuery(document).ready(function($) {
+				$(document).on(
+					'click',
+					'.jet-form-builder-message',
+					function(){
+						$(this).hide();
+					}
+				);
 				// Event listener for the "Forgot Password" link
 				$('a[href="/forget-password/"]').on('click', function(event) {
 					event.preventDefault(); // Prevent the default link behavior
@@ -137,7 +144,7 @@ add_action(
 
 			jQuery( document ).ready( function( $ ) {
 				setTimeout(function() {
-					if ( $('.jet-form-builder-repeater__items').html() == '' ) {
+					if ( $('.jet-form-builder-repeater__items').closest('.clinics-list').length == 0 && $('.jet-form-builder-repeater__items').html() == '' ) {
 						$('.jet-form-builder-repeater__new').trigger('click');
 					}
 				}, 100); // Adjust the delay as needed
@@ -148,9 +155,9 @@ add_action(
 				$('<span class="snks-switcher-text switcher-yes">نعم</span>').insertAfter('#allow_appointment_change');
 				$(document).on(
 					'click',
-					'.jet-form-builder-message--error',
+					'.jet-form-builder-message',
 					function(){
-						$(this).hide();
+						$('.jet-form-builder-message').hide();
 					}
 				);
 				$('.snks-count-down').each(
