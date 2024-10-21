@@ -189,15 +189,18 @@ add_action(
 				exit;
 			}
 			$new_booking     = snks_get_timetable_by( 'ID', absint( $_request['selected-hour'] ) );
-			$doctor_settings = snks_doctor_settings( $booking->user_id );
-			$diff_seconds    = snks_diff_seconds( $booking );
-			$order_id        = $booking->order_id;
-			$main_order      = wc_get_order( $order_id );
-			$country         = snsk_ip_api_country();
-			$price           = snks_calculated_price( $new_booking->user_id, $country, $new_booking->period );
-			$change_fees     = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
-			$will_pay        = $price - ( ( $change_fees / 100 ) * $price );
-			$edited_before   = get_post_meta( $order_id, 'booking-edited', true );
+			$doctor_settings = json_decode( $booking->settings, true );
+			if ( ! $doctor_settings || empty( $doctor_settings ) ) {
+				$doctor_settings = snks_doctor_settings( $booking->user_id );
+			}
+			$diff_seconds  = snks_diff_seconds( $booking );
+			$order_id      = $booking->order_id;
+			$main_order    = wc_get_order( $order_id );
+			$country       = snsk_ip_api_country();
+			$price         = snks_calculated_price( $new_booking->user_id, $country, $new_booking->period );
+			$change_fees   = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
+			$will_pay      = $price - ( ( $change_fees / 100 ) * $price );
+			$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 			// If not postponed then check for edit time.
 			if ( 'postponed' !== $booking->session_status && ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) ) {
 				wp_safe_redirect(

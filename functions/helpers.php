@@ -307,9 +307,7 @@ function snsk_ip_api_country() {
 	if ( isset( $_COOKIE['country_code'] ) ) {
 		return sanitize_text_field( wp_unslash( $_COOKIE['country_code'] ) ); // Return the cached country code.
 	}
-
-	// Return a default value or handle errors as needed.
-	return snks_get_country_code();
+	return 'Unknown';
 }
 
 add_action(

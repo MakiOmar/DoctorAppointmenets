@@ -260,8 +260,8 @@ add_action(
 		// Check if the session data exists and contains the expected keys.
 		if ( is_array( $wc_session ) ) {
 			//phpcs:disable
-			echo snks_doctor_rules( $wc_session['_user_id'] );
 			echo consulting_session_pricing_table_shortcode( $wc_session );
+			echo snks_doctor_rules( $wc_session['_user_id'] );
 			//phpcs:enable
 
 			echo '<h2 style="margin:20px 0;color:#fff;font-size:25px;text-align:center">إختر طريقة الدفع المناسبة</h2>';

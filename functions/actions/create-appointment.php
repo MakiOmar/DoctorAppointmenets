@@ -18,11 +18,9 @@ add_action( 'woocommerce_order_status_completed', 'snks_woocommerce_payment_comp
  */
 function snks_woocommerce_payment_complete_action( $order_id ) {
 
-	$order        = wc_get_order( $order_id );
-	$customer_id  = $order->get_customer_id();
-	$booking_day  = get_post_meta( $order_id, 'booking_day', true );
-	$booking_hour = get_post_meta( $order_id, 'booking_hour', true );
-	$booking_id   = get_post_meta( $order_id, 'booking_id', true );
+	$order       = wc_get_order( $order_id );
+	$customer_id = $order->get_customer_id();
+	$booking_id  = get_post_meta( $order_id, 'booking_id', true );
 	if ( ! empty( $booking_id ) ) {
 		$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
 		if ( 'waiting' === $timetable->session_status ) {
@@ -32,6 +30,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					'client_id'      => $customer_id,
 					'session_status' => 'open',
 					'order_id'       => $order_id,
+					'settings'       => wp_json_encode( snks_timetable_settings( $timetable->user_id ) ),
 				)
 			);
 			if ( $updated ) {

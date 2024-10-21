@@ -5,11 +5,6 @@
  * @package Shrinks
  */
 
-use erguncaner\Table\Table;
-use erguncaner\Table\TableColumn;
-use erguncaner\Table\TableRow;
-use erguncaner\Table\TableCell;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -481,9 +476,7 @@ function snks_get_appointments_settings() {
 		if ( ! $abb_settings || empty( $abb_settings ) ) {
 			continue;
 		}
-		if ( $abb_settings && ! empty( $abb_settings ) ) {
 			$settings[ $abb ] = $abb_settings;
-		}
 	}
 	return $settings;
 }
@@ -624,12 +617,42 @@ function snks_set_preview_timetable( $data ) {
  * @param mixed $user_d User ID or false.
  * @return mixed
  */
-function snks_get_preview_timetable( $user_id = false ) {
-	if ( ! $user_id ) {
-		$user_id = get_current_user_id();
+/**
+ * Get preview timetable filtered by attendance type.
+ *
+ * @param mixed $user_id User ID or false.
+ * @param bool $full If true, returns full timetable, otherwise returns only active attendance type.
+ * @return mixed
+ */
+function snks_get_preview_timetable( $user_id = false, $full = false ) {
+    if ( ! $user_id ) {
+        $user_id = get_current_user_id();
+    }
+
+    // Get the user's preview timetable.
+    $timetable = get_user_meta( $user_id, 'preview_timetable', true );
+	if ( $full ) {
+		return $timetable;
 	}
-	return get_user_meta( get_current_user_id(), 'preview_timetable', true );
+    // Fetch the doctor's settings.
+    $doctor_settings = snks_doctor_settings( $user_id );
+
+    // Check if the doctor has an attendance_type setting.
+    if ( ! empty( $doctor_settings['attendance_type'] ) && is_array( $timetable ) ) {
+        // Filter timetable based on the attendance_type.
+        foreach ( $timetable as $day => &$sessions ) {
+            $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings ) {
+                return $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'];
+            });
+        }
+
+        // Remove any empty days after filtering.
+        $timetable = array_filter( $timetable );
+    }
+
+    return $timetable;
 }
+
 
 /**
  * Preview actions
@@ -704,11 +727,10 @@ add_action(
 	'jet-form-builder/custom-action/Insert_appointment',
 	function ( $_req ) {
 		// Get 30 days timetable.
-		$timetables     = snks_generate_timetable();
+		$timetables     = snks_get_preview_timetable( false, true );
 		$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) ); // Slected hour.
 		$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) ); // Chosen periods.
 		$expected_hours = snks_expected_hours( $periods, $hour ); // Expected hours.
-
 		$tos = array();
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
@@ -719,98 +741,85 @@ add_action(
 		$tos = array_values( array_unique( $tos ) );
 		// Selected day timetables.
 		$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
-		if ( $day_timetables ) {
-			$date_timetables = array();
-			foreach ( $day_timetables as $timetable ) {
-				$_date = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
-				if ( $_date === $_req['date'] ) {
-					$date_timetables[] = $timetable;
-				}
-			}
-			$starts = array_column( $date_timetables, 'starts' );
-			$starts = array_unique( $starts );
-			$starts = array_map(
-				function ( $item ) {
-					return gmdate( 'H:i', strtotime( $item ) );
-				},
-				$starts
-			);
-
-			$conflicts_list     = array();
-			$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
-
-			foreach ( $starts as $start ) {
-				$start_time = strtotime( '1970-01-01 ' . $start );
-				if ( $selected_hour_time < $start_time ) {
-					foreach ( $tos as $to ) {
-						$to_time = strtotime( '1970-01-01 ' . $to );
-						if ( $to_time > $start_time ) {
-							$conflicts_list[] = $to;
-						}
-					}
-				}
-			}
-
-			if ( ! empty( $conflicts_list ) ) {
-				$conflicts_list = array_map(
-					function ( $item ) {
-						return gmdate( 'h:i a', strtotime( $item ) );
-					},
-					$conflicts_list
-				);
-				wp_safe_redirect(
-					add_query_arg(
-						array(
-							'error'     => 'conflict',
-							'conflicts' => rawurlencode( implode( '-', $conflicts_list ) ),
-							'day'       => $_req['day'],
-						),
-						site_url( '/my-account/sessions-preview/' )
-					)
-				);
-				exit;
-			}
-			$data = array();
-			foreach ( $expected_hours as $expected_hour ) {
-				$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $_req['app_hour'] ) ) );
-				if ( $date_time ) {
-					$date_time = $date_time->format( 'Y-m-d h:i a' );
-				}
-				$data[ sanitize_text_field( $_req['day'] ) ][] = array(
-					'user_id'         => get_current_user_id(),
-					'session_status'  => 'waiting',
-					'day'             => sanitize_text_field( $_req['day'] ),
-					'base_hour'       => sanitize_text_field( $_req['app_hour'] ),
-					'period'          => sanitize_text_field( $expected_hour['min'] ),
-					'date_time'       => $date_time,
-					'date'            => $_req['date'],
-					'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
-					'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
-					'clinic'          => sanitize_text_field( $_req['app_clinic'] ),
-					'attendance_type' => sanitize_text_field( $_req['app_attendance_type'] ),
-				);
-			}
-			$preview_timetables     = snks_get_preview_timetable();
-			$day_preview_timetables = $preview_timetables [ $_req['day'] ];
-			foreach ( $day_preview_timetables as $index => $day_preview_timetable ) {
-				foreach ( $data[ $_req['day'] ] as $data_preview_timetable ) {
-					if ( $day_preview_timetable === $data_preview_timetable ) {
-						wp_safe_redirect(
-							add_query_arg(
-								array(
-									'error' => 'already-exists',
-									'day'   => $_req['day'],
-								),
-								site_url( '/my-account/sessions-preview/' )
-							)
-						);
-						exit;
-					}
-				}
-			}
-			$preview_timetables [ $_req['day'] ] = array_merge( $preview_timetables [ $_req['day'] ], $data [ $_req['day'] ] );
-			snks_set_preview_timetable( $preview_timetables );
+		if ( ! $day_timetables ) {
+			return;
 		}
+		$date_timetables = array();
+		foreach ( $day_timetables as $timetable ) {
+			$_date = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
+			if ( $_date === $_req['date'] ) {
+				$date_timetables[] = $timetable;
+			}
+		}
+		$starts = array_column( $date_timetables, 'starts' );
+		$starts = array_unique( $starts );
+		$starts = array_map(
+			function ( $item ) {
+				return gmdate( 'H:i', strtotime( $item ) );
+			},
+			$starts
+		);
+		snks_error_log( $starts );
+		snks_error_log( $tos );
+		$conflicts_list     = array();
+		$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
+
+		foreach ( $starts as $start ) {
+			$start_time = strtotime( '1970-01-01 ' . $start );
+			if ( $selected_hour_time === $start_time ){
+				$conflicts_list[] = $start;
+			}elseif ( $selected_hour_time < $start_time ) {
+				foreach ( $tos as $to ) {
+					$to_time = strtotime( '1970-01-01 ' . $to );
+					if ( $to_time > $start_time ) {
+						$conflicts_list[] = $to;
+					}
+				}
+			}
+		}
+
+		if ( ! empty( $conflicts_list ) ) {
+			$conflicts_list = array_map(
+				function ( $item ) {
+					return gmdate( 'h:i a', strtotime( $item ) );
+				},
+				$conflicts_list
+			);
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'error'     => 'conflict',
+						'conflicts' => rawurlencode( implode( '-', $conflicts_list ) ),
+						'day'       => $_req['day'],
+					),
+					site_url( '/add-appointments/' )
+				)
+			);
+			exit;
+		}
+		$data = array();
+		foreach ( $expected_hours as $expected_hour ) {
+			$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $_req['app_hour'] ) ) );
+			if ( $date_time ) {
+				$date_time = $date_time->format( 'Y-m-d h:i a' );
+			}
+			$data[ sanitize_text_field( $_req['day'] ) ][] = array(
+				'user_id'         => get_current_user_id(),
+				'session_status'  => 'waiting',
+				'day'             => sanitize_text_field( $_req['day'] ),
+				'base_hour'       => sanitize_text_field( $_req['app_hour'] ),
+				'period'          => sanitize_text_field( $expected_hour['min'] ),
+				'date_time'       => $date_time,
+				'date'            => $_req['date'],
+				'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+				'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+				'clinic'          => sanitize_text_field( $_req['app_clinic'] ),
+				'attendance_type' => sanitize_text_field( $_req['app_attendance_type'] ),
+			);
+		}
+		$preview_timetables     = snks_get_preview_timetable();
+		$preview_timetables [ $_req['day'] ] = array_merge( $preview_timetables [ $_req['day'] ], $data [ $_req['day'] ] );
+		snks_set_preview_timetable( $preview_timetables );
 	}
 );
 /**
@@ -829,116 +838,6 @@ function snks_get_off_days( $user_id = false ) {
 	}
 	$off_days = str_replace( ' ', '', $off_days );
 	return explode( ',', $off_days );
-}
-
-/**
- * Generate preview
- *
- * @return string
- */
-function snks_generate_preview() {
-	$timetables = snks_get_preview_timetable();
-	if ( empty( $timetables ) ) {
-		return '<p>لم تقم بإضافة مواعيد</p>';
-	}
-	$off_days     = snks_get_off_days();
-	$days_indexes = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
-	$days_sorted  = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
-
-	uksort(
-		$timetables,
-		function ( $a, $b ) use ( $days_sorted ) {
-			$pos_a = array_search( $a, $days_sorted, true );
-			$pos_b = array_search( $b, $days_sorted, true );
-			return $pos_a - $pos_b;
-		}
-	);
-
-	$output      = '';
-	if ( is_array( $timetables ) ) {
-		foreach ( $timetables as $day => $timetable ) {
-			$date_groups = snks_group_by( 'date', $timetable );
-			// https://github.com/erguncaner/table.
-			// First create a table.
-			$table = new Table(
-				array(
-					'id'    => $day . '-preview-timetable',
-					'class' => 'preview-timetable',
-				)
-			);
-			// Create table columns with a column key and column object.
-			$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
-			$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
-			$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
-			$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
-			$table->addColumn( 'period', new TableColumn( 'المدة' ) );
-			$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
-			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
-			$position = 0;
-			foreach ( $date_groups as $date => $details ) {
-				if ( in_array( $date, $off_days, true ) ) {
-					continue;
-					$is_off = ' snks-is-off';
-				} else {
-					$is_off = '';
-				}
-				if ( count( $details ) > 1 ) {
-					// Associate cells with columns.
-					$cells = array(
-						'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
-					);
-					// define row attributes.
-					$attrs = array(
-						'id'          => 'timetable-tab-' . $day . '-' . $position,
-						'class'       => 'timetable-preview-tab' . $is_off,
-						'data-target' => 'timetable-' . $date,
-					);
-					$table->addRow( new TableRow( $cells, $attrs ) );
-					++$position;
-				}
-				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
-				foreach ( $details as $data ) {
-					$index = array_search( $data, $timetable, true );
-					if ( in_array( $date, $off_days, true ) ) {
-						$actions = 'أجازة';
-					} else {
-						$actions = snks_preview_actions( $data['day'], $index );
-					}
-					if ( 'offline' === $data['attendance_type'] ) {
-						$clinic = snks_get_clinic( $data['clinic'] );
-						$ttendance = $clinic[ 'clinic_title' ];
-					} else {
-						$ttendance = 'online';
-					}
-					// Associate cells with columns.
-					$cells = array(
-						'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
-						'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
-						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
-						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
-						'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
-						'attendance' => new TableCell( $ttendance, array( 'data-label' => 'الحضور' ) ),
-						'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
-					);
-					// define row attributes.
-					$attrs = array(
-						'id'    => 'timetable-' . $data['day'] . '-' . $index,
-						'class' => 'timetable-' . $date . $class . $is_off,
-					);
-					$table->addRow( new TableRow( $cells, $attrs ) );
-				}
-			}
-			// Finally generate html.
-			$output .= $table->html();
-			$output .= snks_render_conflicts( $data['day'] );
-			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], snks_localize_day( $data['day'] ), 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
-		}
-	}
-	$output .= '<input type="hidden" id="doctor-off-days" value="' . implode( ',', snks_get_off_days() ) . '"/>';
-	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
-	$output .= '<center><button id="insert-timetable">نشر</button></center>';
-	$output .= '<center id="insert-timetable-msg"></center>';
-	return $output;
 }
 
 /**
@@ -1099,26 +998,33 @@ add_action(
 	'jet-form-builder/custom-action/validate_pricings',
 	function ( $request ) {
 		foreach ( $request as $key => $pricing ) {
+			snks_error_log( $request );
 			// Check if the key contains '_minutes_pricing'.
 			if ( strpos( $key, '_minutes_pricing' ) !== false ) {
 				$country_codes = array();
+				if ( is_array( $pricing ) ) {
+					// Loop through each entry in the pricing array.
+					foreach ( $pricing as $entry ) {
+						$country_code = $entry['country_code'];
 
-				// Loop through each entry in the pricing array.
-				foreach ( $pricing as $entry ) {
-					$country_code = $entry['country_code'];
-
-					// Check if the country code already exists.
-					if ( in_array( $country_code, $country_codes, true ) ) {
-						// Return true if a duplicate is found.
-						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لديك أكثر من سعر لنفس الدولة' );
+						// Check if the country code already exists.
+						if ( in_array( $country_code, $country_codes, true ) ) {
+							// Return true if a duplicate is found.
+							throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لديك أكثر من سعر لنفس الدولة' );
+						}
+						// Check if price is empty or missing.
+						if ( empty( $entry['price'] ) ) {
+							// Throw an exception if the price is not provided.
+							throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! الدول المضافة ليس بها سعر.' );
+						}
+						// Add the country code to the list.
+						$country_codes[] = $country_code;
 					}
-					// Check if price is empty or missing.
-					if ( empty( $entry['price'] ) ) {
-						// Throw an exception if the price is not provided.
-						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! الدول المضافة ليس بها سعر.' );
-					}
-					// Add the country code to the list.
-					$country_codes[] = $country_code;
+				}
+			}
+			if ( strpos( $key, 'minutes_pricing_others' ) !== false ) {
+				if ( empty( $request[ $key ] ) ) {
+					throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً سعر باقي الدول إلزامي.' );
 				}
 			}
 		}

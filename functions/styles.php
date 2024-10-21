@@ -229,7 +229,35 @@ add_action(
 				margin-bottom: 10px;
 				border-spacing: 0;
 			}
-
+			.preview-container{
+				background-color: #fff;
+				padding: 10px;
+				margin-bottom: 10px;
+				border-radius: 10px;
+			}
+			.day-specific-form form > .field-type-heading-field{
+				background-color: #024059;
+				color: #fff;
+				padding: 10px;
+				border-radius: 10px;
+				text-align: center;
+				margin:10px 0;
+				cursor: pointer;
+			}
+			.day-specific-form form > .wp-block-columns-is-layout-flex{
+				background-color: #f1f1f1;
+				padding: 10px;
+				border-radius: 10px;
+				display: none;
+			}
+			.day-specific-form form > .field-type-submit-field{
+				display: none;
+			}
+			.day-specific-form form > .wp-block-columns-is-layout-flex select{
+				color: #024059;
+				background-color: #fff;
+				border: 1px solid #024059;
+			}
 			table.consulting-session-table .consulting-session-label {
 				background-color: #c8c8c8!important;
 				padding: 8px;

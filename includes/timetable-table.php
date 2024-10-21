@@ -34,6 +34,7 @@ function snks_create_timetable_table() {
         clinic VARCHAR(255) NOT NULL,
         attendance_type VARCHAR(255) NOT NULL,
         order_id BIGINT(20) DEFAULT 0,
+        settings VARCHAR(255) NOT NULL,
         edit_order_id BIGINT(20) DEFAULT 0,
         notification_24hr_sent TINYINT(1) DEFAULT 0,
         notification_1hr_sent TINYINT(1) DEFAULT 0,
@@ -44,3 +45,31 @@ function snks_create_timetable_table() {
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );
 }
+
+add_action(
+	'admin_init',
+	function () {
+		global $wpdb;
+		$table_name  = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+		$column_name = 'settings';
+        //phpcs:disable
+		// Check if the column already exists.
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s',
+				$table_name,
+				$column_name,
+				$wpdb->dbname // Gets the current database name.
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			// If the column doesn't exist, add it.
+			$wpdb->query(
+				"ALTER TABLE $table_name ADD COLUMN settings VARCHAR(255) NOT NULL"
+			);
+		}
+        //phpcs:enable
+	}
+);

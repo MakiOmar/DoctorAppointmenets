@@ -663,16 +663,6 @@ function save_order_product_author_ids( $order_id ) {
 
 add_filter( 'woocommerce_add_to_cart_validation', 'anony_validate_cart_author', 10, 3 );
 
-add_filter(
-	'logout_redirect',
-	function ( $redirect_to, $requested_redirect_to, $user ) {
-		$redirect_url = home_url(); // Replace with the URL you want to redirect to.
-		return $redirect_url;
-	},
-	10,
-	3
-);
-
 /**
  * Get the total savings on an order.
  *

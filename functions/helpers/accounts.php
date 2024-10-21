@@ -127,15 +127,6 @@ function snks_register_user( $_request ) {
 }
 add_action( 'jet-form-builder/custom-action/register_patient', 'anony_register_user' );
 
-add_action(
-	'wp_logout',
-	function () {
-		// // Redirect to login.
-		wp_safe_redirect( esc_url( site_url( '/' ) ) );
-		exit;
-	}
-);
-
 /**
  * Check if nickname exists
  *

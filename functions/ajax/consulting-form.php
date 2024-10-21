@@ -53,12 +53,12 @@ function get_booking_form_callback() {
 	$settings               = snks_doctor_settings( absint( $_req['doctor_id'] ) );
 	$doctor_attendance_type = $settings['attendance_type'];
 	if ( 'online' === $_req['attendanceType'] && ! in_array( $doctor_attendance_type, array( 'online', 'both' ), true ) ) {
-		echo '<p>عفواَ! الحجز أونلاين غير متاح حالياً</p>';
+		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 		die;
 	}
 
 	if ( 'offline' === $_req['attendanceType'] && ! in_array( $doctor_attendance_type, array( 'offline', 'both' ), true ) ) {
-		echo '';
+		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 		die;
 	}
 	//phpcs:disable
@@ -89,7 +89,7 @@ function get_periods_callback() {
 		die;
 	}
 
-	if ( 'offline' === $_req['attendanceType'] && 'offline' === $doctor_attendance_type ) {
+	if ( 'offline' === $_req['attendanceType'] && 'online' === $doctor_attendance_type ) {
 		//phpcs:disable
 		echo snks_render_doctor_clinics( $_req['doctor_id'] );
 		//phpcs:enable

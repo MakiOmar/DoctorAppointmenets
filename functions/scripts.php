@@ -70,6 +70,14 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				$('.field-type-heading-field').on(
+					'click',
+					function(){
+						var parent = $(this).closest('.day-specific-form');
+						$('.wp-block-columns-is-layout-flex', parent).toggle();
+						$('.field-type-submit-field', parent).toggle();
+					}
+				);
 				$.fn.justShowErrorpopup = function ( msg ) {
 				
 					$('#error-container').append(msg);

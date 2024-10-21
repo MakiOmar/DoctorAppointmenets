@@ -5,6 +5,11 @@
  * @package Shrinks
  */
 
+use erguncaner\Table\Table;
+use erguncaner\Table\TableColumn;
+use erguncaner\Table\TableRow;
+use erguncaner\Table\TableCell;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -144,6 +149,120 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
 	} else {
 		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 	}
+}
+
+/**
+ * Generate preview
+ *
+ * @return string
+ */
+function snks_generate_preview() {
+	$timetables = snks_get_preview_timetable();
+	if ( empty( $timetables ) ) {
+		return '<p>لم تقم بإضافة مواعيد</p>';
+	}
+	$off_days     = snks_get_off_days();
+	$days_indexes = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
+	$days_sorted  = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
+
+	uksort(
+		$timetables,
+		function ( $a, $b ) use ( $days_sorted ) {
+			$pos_a = array_search( $a, $days_sorted, true );
+			$pos_b = array_search( $b, $days_sorted, true );
+			return $pos_a - $pos_b;
+		}
+	);
+
+	$output = '';
+	if ( is_array( $timetables ) ) {
+		foreach ( $timetables as $day => $timetable ) {
+			$output .= '<div class="preview-container">';
+			$date_groups = snks_group_by( 'date', $timetable );
+			// https://github.com/erguncaner/table.
+			// First create a table.
+			$table = new Table(
+				array(
+					'id'    => $day . '-preview-timetable',
+					'class' => 'preview-timetable',
+				)
+			);
+			// Create table columns with a column key and column object.
+			$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
+			$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
+			$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
+			$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
+			$table->addColumn( 'period', new TableColumn( 'المدة' ) );
+			$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
+			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
+			$position = 0;
+			foreach ( $date_groups as $date => $details ) {
+				if ( in_array( $date, $off_days, true ) ) {
+					// is_off  ' snks-is-off'.
+					continue;
+				} else {
+					$is_off = '';
+				}
+				if ( count( $details ) > 1 ) {
+					// Associate cells with columns.
+					$cells = array(
+						'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
+					);
+					// define row attributes.
+					$attrs = array(
+						'id'          => 'timetable-tab-' . $day . '-' . $position,
+						'class'       => 'timetable-preview-tab' . $is_off,
+						'data-target' => 'timetable-' . $date,
+					);
+					$table->addRow( new TableRow( $cells, $attrs ) );
+					++$position;
+				}
+				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
+				foreach ( $details as $data ) {
+					$index = array_search( $data, $timetable, true );
+					if ( in_array( $date, $off_days, true ) ) {
+						$actions = 'أجازة';
+					} else {
+						$actions = snks_preview_actions( $data['day'], $index );
+					}
+					if ( 'offline' === $data['attendance_type'] ) {
+						$clinic    = snks_get_clinic( $data['clinic'] );
+						$ttendance = $clinic['clinic_title'];
+					} else {
+						$ttendance = 'online';
+					}
+					// Associate cells with columns.
+					$cells = array(
+						'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
+						'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
+						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
+						'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
+						'attendance' => new TableCell( $ttendance, array( 'data-label' => 'الحضور' ) ),
+						'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
+					);
+					// define row attributes.
+					$attrs = array(
+						'id'    => 'timetable-' . $data['day'] . '-' . $index,
+						'class' => 'timetable-' . $date . $class . $is_off,
+					);
+					$table->addRow( new TableRow( $cells, $attrs ) );
+				}
+			}
+			// Finally generate html.
+			$output .= $table->html();
+			$output .= snks_render_conflicts( $data['day'] );
+			$output .= '<div class="day-specific-form">';
+			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], snks_localize_day( $data['day'] ), 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
+			$output .= '</div>';
+			$output .= '</div>';
+		}
+	}
+	$output .= '<input type="hidden" id="doctor-off-days" value="' . implode( ',', snks_get_off_days() ) . '"/>';
+	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
+	$output .= '<center><button id="insert-timetable">نشر</button></center>';
+	$output .= '<center id="insert-timetable-msg"></center>';
+	return $output;
 }
 
 /**
@@ -553,12 +672,17 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 /**
  * Render edit button
  *
- * @param int $booking_id Booking ID.
- * @param int $doctor_id Doctor's ID.
+ * @param int   $booking_id Booking ID.
+ * @param int   $doctor_id Doctor's ID.
+ * @param mixed $session_settings Doctor's session specific settings.
  * @return string
  */
-function snks_edit_button( $booking_id, $doctor_id ) {
-	$doctor_settings    = snks_doctor_settings( $doctor_id );
+function snks_edit_button( $booking_id, $doctor_id, $session_settings = false ) {
+	if ( $session_settings && ! empty( $session_settings ) ) {
+		$doctor_settings = json_decode( $session_settings, true );
+	} else {
+		$doctor_settings = snks_doctor_settings( $doctor_id );
+	}
 	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
@@ -818,7 +942,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			$button_text,
 			'<span class="snks-apointment-timer"></span>',
 			$_class,
-			snks_edit_button( $record->ID, $record->user_id ),
+			snks_edit_button( $record->ID, $record->user_id, $record->settings ),
 		),
 		$template
 	);
@@ -849,6 +973,23 @@ add_shortcode(
 		return $output;
 	}
 );
+/**
+ * Get doctor rules
+ *
+ * @param int $user_id User's ID.
+ * @return array
+ */
+function snks_timetable_settings( $user_id ) {
+	$doctor_settings = snks_doctor_settings( $user_id );
+	return array(
+		'free_change_before_number' => $doctor_settings['free_change_before_number'],
+		'free_change_before_unit'   => $doctor_settings['free_change_before_unit'],
+		'before_change_number'      => $doctor_settings['before_change_number'],
+		'before_change_unit'        => $doctor_settings['before_change_unit'],
+		'appointment_change_fee'    => $doctor_settings['appointment_change_fee'],
+		'block_if_before_number'    => $doctor_settings['appointment_change_fee'],
+	);
+}
 /**
  * Render doctor rules
  *
@@ -1060,7 +1201,10 @@ function snks_render_sessions_listing( $tense ) {
 	$output   = '';
 	if ( $sessions && is_array( $sessions ) ) {
 		foreach ( $sessions as $session ) {
-			$doctor_settings = snks_doctor_settings( $session->user_id );
+			$doctor_settings = json_decode( $session->settings, true );
+			if ( ! $doctor_settings || empty( $doctor_settings ) ) {
+				$doctor_settings = snks_doctor_settings( $session->user_id );
+			}
 			if ( snks_is_past_date( $session->date_time ) ) {
 				$class = 'start';
 				$room  = '#';
@@ -1075,7 +1219,7 @@ function snks_render_sessions_listing( $tense ) {
 					$diff_seconds  = snks_diff_seconds( $session );
 					// Compare the input date and time with the modified current date and time.
 					if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
-						$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id ) . '</td></tr>';
+						$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings ) . '</td></tr>';
 					}
 				}
 			}
