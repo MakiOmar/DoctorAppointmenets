@@ -151,12 +151,6 @@ add_action(
 			});
 
 			jQuery( document ).ready( function( $ ) {
-				setTimeout(function() {
-					if ( $('.jet-form-builder-repeater__items').closest('.clinics-list').length == 0 && $('.jet-form-builder-repeater__items').html() == '' ) {
-						$('.jet-form-builder-repeater__new').trigger('click');
-					}
-				}, 100); // Adjust the delay as needed
-
 				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
 				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');
 				$('<span class="snks-switcher-text switcher-no">لا</span>').insertBefore('#allow_appointment_change');
@@ -453,41 +447,51 @@ add_action(
 		?>
 	<script type="text/javascript">
 		
-			// Define the URL where you want to prompt the user
-			const accountSettingUrlPath = '/account-setting';
-			var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
-			// Check if the current URL matches the account settings page
-			if (window.location.pathname.includes(accountSettingUrlPath)) {
-				
-				let preventNavigation = true; // Flag to control when to prompt
+		// Define the URL where you want to prompt the user
+		const accountSettingUrlPath = '/account-setting';
+		var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
 
-				// Prompt the user when trying to leave the page (refresh, close tab, etc.)
-				window.addEventListener('beforeunload', function (e) {
-					if (preventNavigation) {
-						var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
-						e.returnValue = confirmationMessage; // For most browsers
-						return confirmationMessage;          // Some older browsers
-					}
+		// Check if the current URL matches the account settings page
+		if (window.location.pathname.includes(accountSettingUrlPath)) {
+			
+			let preventNavigation = false; // Flag to control when to prompt
+
+			// Function to set preventNavigation to true when a form is changed
+			function setFormChanged() {
+				preventNavigation = true;
+			}
+
+			// Add event listeners for any interaction with form fields
+			const form = document.querySelector('.jet-form-builder');
+			if (form) {
+				form.querySelectorAll('input, select, textarea').forEach(function (field) {
+					field.addEventListener('input', setFormChanged);    // Text inputs
+					field.addEventListener('change', setFormChanged);   // Dropdowns, checkboxes, etc.
 				});
-				
-				// Handle the case when the user clicks on a link within the page
-				document.querySelectorAll('a').forEach(function (link) {
-					link.addEventListener('click', function (e) {
-						// Ask for confirmation if the user clicks a link
+			}
+
+			// Prompt the user when trying to leave the page (refresh, close tab, etc.)
+			window.addEventListener('beforeunload', function (e) {
+				if (preventNavigation) {
+					e.returnValue = confirmationMessage; // For most browsers
+					return confirmationMessage;          // Some older browsers
+				}
+			});
+			
+			// Handle the case when the user clicks on a link within the page
+			document.querySelectorAll('a').forEach(function (link) {
+				link.addEventListener('click', function (e) {
+					if (preventNavigation) {
 						var confirmation = confirm(confirmationMessage);
 						if (!confirmation) {
 							e.preventDefault(); // Stop the link navigation if the user cancels
 						} else {
-							// If the user confirms, allow navigation and turn off the beforeunload prompt
-							preventNavigation = false;
+							preventNavigation = false; // Allow navigation and turn off the beforeunload prompt
 						}
-					});
+					}
 				});
-			}
-
-
-
-
+			});
+		}
 		// Function to convert Arabic numbers to English numbers.
 		function toEnglishNumbers(input) {
 			const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
