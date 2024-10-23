@@ -463,10 +463,15 @@ add_shortcode(
 			$logout_nonce = wp_create_nonce( 'log-out' );
 
 			// Get the logout URL with the nonce.
-			$logout_url = wp_logout_url( site_url( '/login' ) ) . '&_wpnonce=' . $logout_nonce;
+			if ( snks_is_doctor() ) {
+				$to = '/doctor-login';
+			} else {
+				$to = '/login';
+			}
+			$logout_url = wp_logout_url( site_url( $to ) ) . '&_wpnonce=' . $logout_nonce;
 
 			// Return the logout link.
-			return '<p style="text-align:center"><a href="' . esc_url( $logout_url ) . '">خروج</a></p>';
+			return '<p style="text-align:center;position:relative;z-index:9999"><a href="' . esc_url( $logout_url ) . '">خروج</a></p>';
 		} else {
 			// If the user is not logged in, return an empty string.
 			return '';
