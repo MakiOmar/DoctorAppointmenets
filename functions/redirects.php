@@ -36,10 +36,17 @@ add_action(
 			wp_redirect( site_url('my-bookings') );
 			exit;
 		}
-		// Make sure complete all required settings
-		if ( snks_is_doctor() && is_page('add-appointments') && ! snks_validate_doctor_settings( get_current_user_id() ) ) {
-			wp_redirect( add_query_arg( 'error', 'complete-settings', site_url('account-setting') ) );
-			exit;
-		}
 	}
+);
+
+add_filter(
+	'jet-popup/ajax-request/get-elementor-content',
+	function($content, $popup_data) {
+		if ( 4085 === absint( $popup_data['popup_id'] ) && ! snks_validate_doctor_settings( get_current_user_id() ) ) {
+				$content = do_shortcode('[elementor-template id="4122"]');
+		}
+		return $content;
+	},
+	9999,
+	2
 );
