@@ -319,14 +319,14 @@ add_action(
 						}
 						const elementToClickId = checkedFieldId + '-settings-trigger';
 						$('#' + elementToClickId).click();
-						$('.jet-form-builder-repeater__actions').each(
+						/*$('.jet-form-builder-repeater__actions').each(
 							function() {
 								var $items = $(this).prev();
 								if ( $items.html() === '' ) {
 									$(this).find('.jet-form-builder-repeater__new').click();
 								}
 							}
-						);
+						);*/
 					}
 				});
 				<?php } ?>
@@ -341,12 +341,30 @@ add_action(
 	function () {
 		?>
 		<script>
+			jQuery(document).ready(function($) {
+				$('.jet-popup-target').on('click', function() {
+					// Get the attached popup ID from the clicked item
+					var attachedPopup = $(this).data('jet-popup').attachedPopup;
+
+					// Check if there is an open popup and its ID does not match the attached popup
+					var openPopup = $('.jet-popup--show-state'); // Assuming .jet-popup-active class indicates an open popup
+					if (openPopup.length && openPopup.attr('id') !== attachedPopup) {
+						// Trigger the close button click on the currently open popup
+						var closeButton = openPopup.find('.jet-popup__close-button');
+						if (closeButton.length) {
+							closeButton.click();
+						}
+					}
+				});
+			});
+
 			function showTab(tabId) {
 				document.querySelectorAll('.snks_tab-content').forEach((content) => {
 					content.classList.remove('snks_active');
 				});
-				document.querySelectorAll('.snks_active').forEach((content) => {
+				document.querySelectorAll('.tab-contents').forEach((content) => {
 					content.classList.remove('snks_active');
+					content.style.display = 'none';
 				});
 
 				document.getElementById(tabId).classList.add('snks_active');
