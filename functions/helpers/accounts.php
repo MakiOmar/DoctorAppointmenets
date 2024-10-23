@@ -42,13 +42,18 @@ function snks_user_details( $current_user_id ) {
 /**
  * Check if is doctor user
  *
+ * @param mixed $user_id User's ID.
  * @return bool
  */
-function snks_is_doctor() {
+function snks_is_doctor( $user_id = false ) {
 	if ( ! is_user_logged_in() ) {
 		return false;
 	}
-	$user = wp_get_current_user();
+	if ( ! $user_id ) {
+		$user = wp_get_current_user();
+	} else {
+		$user = get_user_by( 'ID', $user_id );
+	}
 	if ( ! in_array( 'doctor', $user->roles, true ) ) {
 		return false;
 	}
@@ -303,7 +308,7 @@ function custom_log_patient_in( $_request ) {
 	if ( isset( $_req['login_with'] ) && 'mobile' === $_req['login_with'] && ! is_numeric( $_req['temp-phone'] ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى ادخال رقم موبايل صحيح.' );
 	}
-	if ( isset( $_req['login_with'] ) && 'mobile' === $_req['login_with'] && is_numeric( $_req['temp-phone'] ) && strlen( $_req['temp-phone'] ) !== 11 ) {
+	if ( isset( $_req['login_with'] ) && isset( $_req['doctor_login'] ) && 'mobile' === $_req['login_with'] && is_numeric( $_req['temp-phone'] ) && strlen( $_req['temp-phone'] ) !== 11 ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً رقم الموبايل يجب أن يتكون من 11 رقماَ' );
 	}
 
@@ -333,7 +338,10 @@ function custom_log_patient_in( $_request ) {
 	if ( ! $user ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! بيانات الدخول غير صحيحة' );
 	}
-
+	// Check if the user is not a doctor.
+	if ( ! in_array( 'doctor', $user->roles, true ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! هذا ليس حساب طبيب' );
+	}
 	// Validate the password.
 	if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! كلمة المرور غير صحيحة' );
