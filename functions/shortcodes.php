@@ -548,8 +548,8 @@ function custom_withdrawal_form_shortcode() {
 	$user_id            = get_current_user_id();
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
-		<?php echo wp_kses_post( str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ) ); ?>
-		<?php echo wp_kses_post( str_replace( '{withdrawal_amount}', snks_get_latest_transaction_amount( $user_id ), do_shortcode( '[elementor-template id="3733"]' ) ) ); ?>
+		<?php echo str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ); //phpcs:disable ?>
+		<?php echo str_replace( '{withdrawal_amount}', snks_get_latest_transaction_amount( $user_id ), do_shortcode( '[elementor-template id="3733"]' ) ); ?>
 		<?php wp_nonce_field( 'save_withdrawal_settings', 'withdrawal_settings_nonce' ); ?>
 		<!-- First Section -->
 		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
@@ -632,10 +632,10 @@ function custom_withdrawal_form_shortcode() {
 		<!-- Submit Button (Initially disabled) -->
 		<button type="button" id="submit-withdrawal-form" class="anony-default-padding withdrawal-button" style="display:none;">حفظ</button>
 	</form>
-	<?php echo wp_kses_post( do_shortcode( '[elementor-template id="3737"]' ) ); ?>
+	<?php echo do_shortcode( '[elementor-template id="3737"]' ); ?>
 	<?php
 	return ob_get_clean();
-}
+}//phpcs:enable
 add_shortcode( 'custom_withdrawal_form', 'custom_withdrawal_form_shortcode' );
 
 /**
