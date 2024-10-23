@@ -292,7 +292,10 @@ add_action(
 				padding: 10px;
 				text-align: center;
 			}
-			#appointments-preview, #add-appointments{
+			.page-id-1935 .jet-popup{
+				height: calc(100% - 60px)!important;
+			}
+			#appointments-preview{
 				display: none;
 			}
 			#iban-container{
@@ -906,7 +909,7 @@ add_action(
 			.jet-form-builder-row{
 				position:relative
 			}
-			select {
+			select.jet-form-builder__field {
 				color: #fff;
 				background-color: #024059;
 			}
