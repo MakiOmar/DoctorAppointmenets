@@ -255,16 +255,17 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * This function uses an external API to fetch the country code of the user's IP address and stores
  * the code in a cookie for 24 hours. It uses WordPress functions for making HTTP requests and handling responses.
  *
+ * @param bool $set_cookie Weather to set cookie or not.
  * @return string
  */
-function snks_get_country_code() {
+function snks_get_country_code( $set_cookie = true ) {
 	//phpcs:disable
 	// Get the user's IP address, validating it for security.
 	$ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP );
 	//phpcs:enable
 	// If the IP address is not valid, return early.
 	if ( ! $ip ) {
-		return;
+		return 'Unknown';
 	}
 
 	// API key and URL for IP lookup.
@@ -288,8 +289,10 @@ function snks_get_country_code() {
 		if ( $data && isset( $data->countryCode ) ) { //phpcs:disable
 			$country_code = sanitize_text_field( $data->countryCode );
 			//phpcs:enable
-			// Store the country code in a cookie for 24 hours.
-			setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
+			if ( $set_cookie ) {
+				// Store the country code in a cookie for 24 hours.
+				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
+			}
 
 			return $country_code;
 		}
@@ -307,15 +310,15 @@ function snsk_ip_api_country() {
 	if ( isset( $_COOKIE['country_code'] ) ) {
 		return sanitize_text_field( wp_unslash( $_COOKIE['country_code'] ) ); // Return the cached country code.
 	}
-	return 'Unknown';
+	return snks_get_country_code();
 }
 
 add_action(
-	'template_redirect',
+	'init',
 	function () {
 		// Check if the country code is already stored in a cookie.
 		if ( ! isset( $_COOKIE['country_code'] ) ) {
-			snks_get_country_code();
+			snks_get_country_code( false );
 		}
 	}
 );
