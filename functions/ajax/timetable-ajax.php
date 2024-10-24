@@ -187,7 +187,7 @@ function snks_create_custom_timetable() {
 	// Selected day timetables.
 	$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
 	if ( ! $day_timetables ) {
-		wp_send_json_error( array( 'message' => 'No timetable available for the selected day.' ) );
+		wp_send_json_error( array( 'message' => 'هناك خطأ ما!' ) );
 	}
 
 	$date_timetables = array();
@@ -232,7 +232,7 @@ function snks_create_custom_timetable() {
 			$conflicts_list
 		);
 
-		wp_send_json_error( array( 'message' => 'Conflict found: ' . implode( ', ', $conflicts_list ) ) );
+		wp_send_json_error( array( 'message' => 'عفواً لايمكن إدخال الموعد! لديك تداخل هنا: ' . snks_localized_time( implode( ', ', $conflicts_list ) ) ) );
 	}
 
 	// No conflicts, save the timetable.

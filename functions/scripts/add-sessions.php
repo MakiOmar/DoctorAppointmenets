@@ -241,15 +241,44 @@ add_action(
 					success: function(response) {
 						// Check if there is a conflict in the response
 						if (response.success) {
-							// Show success message or handle the response data
-							alert('Timetable successfully created.');
+							// Show success alert using SweetAlert
+							Swal.fire({
+								icon: 'success',
+								title: 'تم الإدخال بنجاح',
+								text: 'تم إدخال الموعد بنجاح!',
+								confirmButtonText: 'غلق'
+							}).then((result) => {
+								if (result.isConfirmed) {
+									$.ajax({
+										url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // WordPress AJAX URL
+										type: 'POST',
+										data: {
+											action: 'get_preview_tables',
+										},
+										success: function(data) {
+											$('#preview-timetables').html( data );
+										}
+									});
+								}
+							});
 						} else {
-							// If there is a conflict, display the error
-							alert('Error: ' + response.data.message);
+							// Show error alert using SweetAlert
+							Swal.fire({
+								icon: 'error',
+								title: 'خطأ',
+								text: response.data.message, // Error message from server
+								confirmButtonText: 'غلق'
+							});
 						}
 					},
 					error: function(error) {
-						console.error('AJAX Error:', error);
+						// Show a generic error alert in case the AJAX request fails
+						Swal.fire({
+							icon: 'error',
+							title: 'حدث خطأ',
+							text: 'يرجى المحاولة مرة أخرى.',
+							confirmButtonText: 'غلق'
+						});
 					}
 				});
 			});

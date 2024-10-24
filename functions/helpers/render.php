@@ -253,7 +253,6 @@ function snks_generate_preview() {
 			$output .= $table->html();
 			$output .= snks_render_conflicts( $data['day'] );
 			$output .= '<a data-day="' . $data['day'] . '" data-day-label="' . snks_localize_day( $data['day'] ) . '" data-day-index="' . array_search( $data['day'], $days_indexes, true ) . '" class="custom-timetabl-trigger snks-bg anony-default-padding anony-default-margin-top rounded anony-full-width anony-center-text">إضافة موعد ليوم ' . snks_localize_day( $data['day'] ) . '</a>';
-			//$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], snks_localize_day( $data['day'] ), 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
 			$output .= '</div>';
 		}
 	}
