@@ -177,7 +177,7 @@ function snks_generate_preview() {
 	$output = '';
 	if ( is_array( $timetables ) ) {
 		foreach ( $timetables as $day => $timetable ) {
-			$output .= '<div class="preview-container">';
+			$output     .= '<div class="preview-container">';
 			$date_groups = snks_group_by( 'date', $timetable );
 			// https://github.com/erguncaner/table.
 			// First create a table.
@@ -258,13 +258,22 @@ function snks_generate_preview() {
 			$output .= '</div>';
 		}
 	}
-	$output .= '<input type="hidden" id="doctor-off-days" value="' . implode( ',', snks_get_off_days() ) . '"/>';
 	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';
 	$output .= '<center><button id="insert-timetable">نشر</button></center>';
 	$output .= '<center id="insert-timetable-msg"></center>';
 	return $output;
 }
-
+add_action(
+	'wp_footer',
+	function () {
+		if ( snks_is_patient() ) {
+			return;
+		}
+		?>
+		<input type="hidden" id="doctor-off-days" value="<?php echo implode( ',', snks_get_off_days() ); ?>"/>
+		<?php
+	}
+);
 /**
  * Render periods filter
  *

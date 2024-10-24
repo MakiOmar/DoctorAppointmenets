@@ -45,26 +45,60 @@ add_action(
 					}
 				);
 
-				$('input[name=date], input[data-field-name=date]').datepicker({
-					dateFormat: 'yy-mm-dd',
-					beforeShowDay: function(date) {
-						var enabledDay = parseInt($(this).data('day'));
-						var day = date.getDay();
-						var currentDate = new Date();
-						currentDate.setHours(0, 0, 0, 0);
-						date.setHours(0, 0, 0, 0);
-						var offDays = $('#doctor-off-days').val();
+				function initializeFlatpickr() {
+					$('input[name=date], input[data-field-name=date]').each(function() {
+						var enabledDay = parseInt($(this).data('day')); // The enabled day for this instance
+						var offDays = $('#doctor-off-days').val().split(','); // Days to be disabled
+						
+						// Initialize Flatpickr
+						flatpickr(this, {
+							dateFormat: 'Y-m-d',
+							disable: [
+								function(date) {
+									// Disable specific dates from offDays variable
+									var formattedDate = flatpickr.formatDate(date, 'Y-m-d');
+									return offDays.includes(formattedDate);
+								}
+							],
+							enable: [
+								function(date) {
+									// Enable only the specific day of the week
+									return date.getDay() === enabledDay;
+								}
+							],
+							minDate: "today",  // Disable past dates
+							onOpen: function(selectedDates, dateStr, instance) {
+								// Set a custom ID or class for the Flatpickr container
+								instance.calendarContainer.id = 'flatpickr-' + $(this.element).attr('id');
+							}
+						});
+					});
+				}
 
-						// Disable specific dates from offDays variable
-						var disabledDates = offDays.split(',');
-						var disabled = false;
-						var formattedDate = $.datepicker.formatDate('yy-mm-dd', date);
-						if (disabledDates.indexOf(formattedDate) !== -1) {
-							disabled = true;
-						}
-						return [(day === enabledDay) && currentDate <= date && ! disabled ];
-					}
-				});
+				// Call initializeDatepicker() on page load for existing inputs
+				initializeFlatpickr();
+
+				// Observe the parent container for injected elements
+				var targetNode = document.getElementById('jet-popup-4085');  // Change this to the container ID
+
+				var config = { childList: true, subtree: true }; // Observe child nodes inside the parent
+
+				var callback = function(mutationsList, observer) {
+					mutationsList.forEach(function(mutation) {
+						mutation.addedNodes.forEach(function(node) {
+							if ($(node).find('input[name=date], input[data-field-name=date]').length) {
+								initializeFlatpickr();  // Re-initialize datepicker for new inputs
+							}
+						});
+					});
+				};
+
+				// Create an observer instance linked to the callback function
+				var observer = new MutationObserver(callback);
+
+				// Start observing the target node for configured mutations
+				observer.observe(targetNode, config);
+				
 
 				$(document).on(
 					'click',
@@ -94,6 +128,18 @@ add_action(
 								}
 							}
 						});
+					}
+				);				
+
+				$(document).on(
+					'change',
+					'#app_attendance_type',
+					function( ) {
+						if ( $(this).val() === 'offline' ) {
+							$('#app_clinic', $(this).closest('.day-specific-form')).show();
+						} else {
+							$('#app_clinic', $(this).closest('.day-specific-form')).hide();
+						}
 					}
 				);
 			});
