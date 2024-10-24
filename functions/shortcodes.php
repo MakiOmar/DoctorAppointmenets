@@ -11,7 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_shortcode(
 	'snks_timetable_preview',
 	function () {
-		return snks_generate_preview();
+		$html  = '<div id="preview-timetables">';
+		$html .= snks_generate_preview();
+		$html .= '</div>';
+		return $html;
 	}
 );
 
