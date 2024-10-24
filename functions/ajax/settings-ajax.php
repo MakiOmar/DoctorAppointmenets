@@ -158,21 +158,9 @@ add_action(
 		if ( ! snks_is_doctor() && ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Doctor only.' );
 		}
+		//phpcs:disable
 		echo snks_generate_preview();
+		//phpcs:enable
 		die();
-	}
-);
-add_action(
-	'wp_ajax_insert_custom_timetable',
-	function () {
-		if ( ! snks_is_doctor() && ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'Doctor only.' );
-		}
-		// Output back the received form data.
-		if ( isset( $_POST['form_data'] ) ) {
-			parse_str( $_POST['form_data'], $form_data ); // Parse the serialized form data.
-			wp_send_json_success( $form_data ); // Send back the parsed data as JSON.
-		}
-		die(); // Required to properly end the AJAX request.
 	}
 );

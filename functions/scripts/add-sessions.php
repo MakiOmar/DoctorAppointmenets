@@ -183,6 +183,76 @@ add_action(
 					childList: true,
 					subtree: true
 			    });
+			function initializeFlatpickr(enabledDay) {
+					$('input[name=date], input[data-field-name=date]').each(function() {
+						var offDays = $('#doctor-off-days').val().split(','); // Days to be disabled
+						
+						// Initialize Flatpickr
+						flatpickr(this, {
+							dateFormat: 'Y-m-d',
+							disable: [
+								function(date) {
+									// Disable specific dates from offDays variable
+									var formattedDate = flatpickr.formatDate(date, 'Y-m-d');
+									return offDays.includes(formattedDate);
+								}
+							],
+							enable: [
+								function(date) {
+									// Enable only the specific day of the week
+									return date.getDay() === enabledDay;
+								}
+							],
+							minDate: "today",  // Disable past dates
+							onOpen: function(selectedDates, dateStr, instance) {
+								// Set a custom ID or class for the Flatpickr container
+								instance.calendarContainer.id = 'flatpickr-' + $(this.element).attr('id');
+							}
+						});
+					});
+				}
+			$(document).on('click', '.custom-timetabl-trigger', function(e) {
+				e.preventDefault();
+				$('#day-label').text( $(this).data('day-label') );
+				$('input[name=day]', $('.day-specific-form')).val( $(this).data('day') );
+				initializeFlatpickr($(this).data('day-index'));
+				$('#custom-timetabl-trigger').trigger( 'click' );
+			});
+			$(document).on('click', '.custom-timetable-submit', function(e) {
+				e.preventDefault(); // Prevent form default submission
+
+				// Collect form data
+				var formData = new FormData();
+				formData.append('action', 'create_custom_timetable'); // Action name
+				formData.append('app_hour', $('#app_hour').val()); // Selected hour
+				formData.append('app_choosen_period', $('#app_choosen_period').val()); // Chosen period
+				formData.append('date', $('#date').val()); // Selected date
+				formData.append('app_clinic', $('#app_clinic').val()); // Clinic
+				formData.append('app_attendance_type', $('#app_attendance_type').val()); // Attendance type
+				formData.append('day', $('input[name="day"]').val()); // Day field
+
+				// Send the AJAX request
+				$.ajax({
+					url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // URL for AJAX requests in WordPress
+					type: 'POST',
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function(response) {
+						// Check if there is a conflict in the response
+						if (response.success) {
+							// Show success message or handle the response data
+							alert('Timetable successfully created.');
+						} else {
+							// If there is a conflict, display the error
+							alert('Error: ' + response.data.message);
+						}
+					},
+					error: function(error) {
+						console.error('AJAX Error:', error);
+					}
+				});
+			});
 
 				$('body').on(
 					'click',
@@ -223,36 +293,6 @@ add_action(
 						)
 					}
 				);
-				$(document).on('submit', '.jet-form-builder', function(event) {
-					event.preventDefault(); // Prevent the default form submission
-
-					// Check if the form contains a field with the name 'custom-timetable'
-					if ($(this).find('[name="custom-timetable"]').length === 0) {
-						console.log('The field "custom-timetable" does not exist in the form.');
-						return; // Stop further execution if the field doesn't exist
-					}
-
-					// Get the form data
-					var formData = $(this).serialize(); // Serialize form data for sending in AJAX
-
-					// Perform the AJAX call
-					$.ajax({
-						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // WordPress AJAX URL
-						type: 'POST',
-						data: {
-							action: 'insert_custom_timetable',
-							form_data: formData // Sending the form data
-						},
-						success: function(response) {
-							// Log the response (sent data)
-							console.log('Response:', response);
-						},
-						error: function(error) {
-							console.log('AJAX Error:', error);
-						}
-					});
-				});
-
 
 				$(document).on(
 					'click',

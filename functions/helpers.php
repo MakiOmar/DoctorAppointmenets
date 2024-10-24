@@ -303,14 +303,15 @@ function snks_get_country_code( $set_cookie = true ) {
 /**
  * Get country code
  *
+ * @param bool $set_cookie Weather to set cookie or not.
  * @return string
  */
-function snsk_ip_api_country() {
+function snsk_ip_api_country( $set_cookie = true ) {
 	// Check if the country code is already stored in a cookie.
 	if ( isset( $_COOKIE['country_code'] ) ) {
 		return sanitize_text_field( wp_unslash( $_COOKIE['country_code'] ) ); // Return the cached country code.
 	}
-	return snks_get_country_code();
+	return snks_get_country_code( $set_cookie );
 }
 
 add_action(

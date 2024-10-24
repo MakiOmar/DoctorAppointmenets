@@ -160,3 +160,109 @@ function delete_timetable_callback() {
 	);
 	die;
 }
+/**
+ * Create custom timetable
+ *
+ * @return void
+ */
+function snks_create_custom_timetable() {
+	//phpcs:disable
+	$_req = wp_unslash( $_POST );
+	//phpcs:enable
+	// Get 30 days timetable.
+	$timetables     = snks_get_preview_timetable( false, true );
+	$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) ); // Selected hour.
+	$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) ); // Chosen periods.
+	$expected_hours = snks_expected_hours( $periods, $hour ); // Expected hours.
+
+	$tos = array();
+	if ( ! empty( $expected_hours ) ) {
+		foreach ( $expected_hours as $expected_hour ) {
+			$expected_hour_to = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
+			$tos[]            = $expected_hour_to;
+		}
+	}
+
+	$tos = array_values( array_unique( $tos ) );
+	// Selected day timetables.
+	$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
+	if ( ! $day_timetables ) {
+		wp_send_json_error( array( 'message' => 'No timetable available for the selected day.' ) );
+	}
+
+	$date_timetables = array();
+	foreach ( $day_timetables as $timetable ) {
+		$_date = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
+		if ( $_date === $_req['date'] ) {
+			$date_timetables[] = $timetable;
+		}
+	}
+
+	$starts = array_column( $date_timetables, 'starts' );
+	$starts = array_unique( $starts );
+	$starts = array_map(
+		function ( $item ) {
+			return gmdate( 'H:i', strtotime( $item ) );
+		},
+		$starts
+	);
+
+	$conflicts_list     = array();
+	$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
+
+	foreach ( $starts as $start ) {
+		$start_time = strtotime( '1970-01-01 ' . $start );
+		if ( $selected_hour_time === $start_time ) {
+			$conflicts_list[] = $start;
+		} elseif ( $selected_hour_time < $start_time ) {
+			foreach ( $tos as $to ) {
+				$to_time = strtotime( '1970-01-01 ' . $to );
+				if ( $to_time > $start_time ) {
+					$conflicts_list[] = $to;
+				}
+			}
+		}
+	}
+
+	if ( ! empty( $conflicts_list ) ) {
+		$conflicts_list = array_map(
+			function ( $item ) {
+				return gmdate( 'h:i a', strtotime( $item ) );
+			},
+			$conflicts_list
+		);
+
+		wp_send_json_error( array( 'message' => 'Conflict found: ' . implode( ', ', $conflicts_list ) ) );
+	}
+
+	// No conflicts, save the timetable.
+	$data = array();
+	foreach ( $expected_hours as $expected_hour ) {
+		$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $_req['app_hour'] ) ) );
+		if ( $date_time ) {
+			$date_time = $date_time->format( 'Y-m-d h:i a' );
+		}
+		$data[ sanitize_text_field( $_req['day'] ) ][] = array(
+			'user_id'         => get_current_user_id(),
+			'session_status'  => 'waiting',
+			'day'             => sanitize_text_field( $_req['day'] ),
+			'base_hour'       => sanitize_text_field( $_req['app_hour'] ),
+			'period'          => sanitize_text_field( $expected_hour['min'] ),
+			'date_time'       => $date_time,
+			'date'            => $_req['date'],
+			'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+			'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+			'clinic'          => sanitize_text_field( $_req['app_clinic'] ),
+			'attendance_type' => sanitize_text_field( $_req['app_attendance_type'] ),
+		);
+	}
+
+	// Update the timetable data.
+	$preview_timetables                 = snks_get_preview_timetable();
+	$preview_timetables[ $_req['day'] ] = array_merge( $preview_timetables[ $_req['day'] ], $data[ $_req['day'] ] );
+	snks_set_preview_timetable( $preview_timetables );
+
+	wp_send_json_success( array( 'message' => 'Timetable successfully created.' ) );
+}
+add_action( 'wp_ajax_create_custom_timetable', 'snks_create_custom_timetable' );
+add_action( 'wp_ajax_nopriv_create_custom_timetable', 'snks_create_custom_timetable' );

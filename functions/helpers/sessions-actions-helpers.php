@@ -58,7 +58,6 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 			gmdate( 'Y-d-m', strtotime( $date ) ),
 			add_query_arg( 'edit-booking', $id, site_url( '7jz/' . $nickname ) )
 		);
-		snks_error_log( send_sms_via_whysms( $billing_phone, $message ) );
 	}
 	// this.
 }
@@ -106,7 +105,6 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, 
 		$delay_period . ' دقيقة',
 		$new_hour
 	);
-	snks_error_log( send_sms_via_whysms( $billing_phone, $message ) );
 }
 
 

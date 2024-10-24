@@ -125,7 +125,7 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
 	if ( ! isset( $avialable_periods ) ) {
 		$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
 	}
-	$country      = snsk_ip_api_country();
+	$country      = snsk_ip_api_country( false );
 	$pricings     = snks_doctor_pricings( $user_id );
 	$has_discount = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
 	if ( is_array( $avialable_periods ) && ! empty( $avialable_periods ) ) {
@@ -252,9 +252,8 @@ function snks_generate_preview() {
 			// Finally generate html.
 			$output .= $table->html();
 			$output .= snks_render_conflicts( $data['day'] );
-			$output .= '<div class="day-specific-form">';
-			$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], snks_localize_day( $data['day'] ), 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
-			$output .= '</div>';
+			$output .= '<a data-day="' . $data['day'] . '" data-day-label="' . snks_localize_day( $data['day'] ) . '" data-day-index="' . array_search( $data['day'], $days_indexes, true ) . '" class="custom-timetabl-trigger snks-bg anony-default-padding anony-default-margin-top rounded anony-full-width anony-center-text">إضافة موعد ليوم ' . snks_localize_day( $data['day'] ) . '</a>';
+			//$output .= str_replace( array( '%day%', '%day_label%', 'name="date"' ), array( $data['day'], snks_localize_day( $data['day'] ), 'name="date" data-day=' . array_search( $data['day'], $days_indexes, true ) ), do_shortcode( '[jet_fb_form form_id="2271" submit_type="reload" required_mark="*" fields_layout="column" enable_progress="" fields_label_tag="div" load_nonce="render" use_csrf=""]' ) );
 			$output .= '</div>';
 		}
 	}
@@ -271,6 +270,8 @@ add_action(
 		}
 		?>
 		<input type="hidden" id="doctor-off-days" value="<?php echo implode( ',', snks_get_off_days() ); ?>"/>
+		<input type="hidden" id="custom-timetable-day" value=""/>
+		<a href="#" id="custom-timetabl-trigger"></a>
 		<?php
 	}
 );
@@ -282,7 +283,7 @@ add_action(
  */
 function snks_listing_periods( $user_id ) {
 	$avialable_periods = snks_get_periods( $user_id );
-	$country           = snsk_ip_api_country();
+	$country           = snsk_ip_api_country( false );
 	$pricings          = snks_doctor_pricings( $user_id );
 	if ( ! empty( $pricings ) && is_array( $avialable_periods ) ) {
 		echo '<div class="anony-padding-10 anony-flex flex-h-center  flex-v-center anony-full-width">';

@@ -173,7 +173,7 @@ function phone_input_cb( $atts ) {
 	$key_values = array_column( $countries, 'name_ar' );
 	array_multisort( $key_values, SORT_ASC, $countries );
 
-	$user_country_code = snsk_ip_api_country();
+	$user_country_code = snsk_ip_api_country( false );
 	$unique_id         = wp_unique_id( 'anony_' );
 	$current_phone     = apply_filters( 'anony_phone_input_' . str_replace( '-', '_', $atts['name'] . '_value' ), '' );
 	ob_start();

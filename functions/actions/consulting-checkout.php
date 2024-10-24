@@ -350,12 +350,12 @@ add_action(
 function set_woocommerce_default_country( $fields ) {
 	// Set the default billing country to Egypt.
 	if ( isset( $fields['billing']['billing_country'] ) ) {
-		$fields['billing']['billing_country']['default'] = snsk_ip_api_country();
+		$fields['billing']['billing_country']['default'] = snsk_ip_api_country( false );
 	}
 
 	// Set the default shipping country to Egypt, if shipping fields are enabled.
 	if ( isset( $fields['shipping']['shipping_country'] ) ) {
-		$fields['shipping']['shipping_country']['default'] = snsk_ip_api_country();
+		$fields['shipping']['shipping_country']['default'] = snsk_ip_api_country( false );
 	}
 
 	return $fields;
@@ -379,7 +379,7 @@ add_filter(
 		switch ( $key ) {
 
 			case 'billing_country':
-				return snsk_ip_api_country(); // Set the country to Saudi Arabia (SA).
+				return snsk_ip_api_country( false ); // Set the country to Saudi Arabia (SA).
 
 			default:
 				return $input;
