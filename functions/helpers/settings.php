@@ -1106,7 +1106,10 @@ function snks_clinic_colors_form() {
 
 	<script type="text/javascript">
 		jQuery(document).ready(function ($) {
-			$('#clinic-colors-form').on('submit', function (e) {
+			$(document).on(
+				'submit',
+				'#clinic-colors-form',
+				function (e) {
 				e.preventDefault();
 
 				const selectedColor = $('input[name="clinic_color"]:checked').val();
@@ -1132,8 +1135,9 @@ function snks_clinic_colors_form() {
 					}
 				});
 			});
-			$('input[name="clinic_color"]').on(
+			$(document).on(
 				'change',
+				'input[name="clinic_color"]',
 				function(){
 					$('.clinic-color-image').removeClass('selected'); // Remove selected class from all images
 					$('input[name="clinic_color"]:checked').closest('.clinic-color-item').find('img').addClass('selected');

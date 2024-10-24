@@ -23,7 +23,10 @@ add_action(
 				}
 			);
 			// When the element with class .bulk-action-toggle-tip-close is clicked
-			$('.bulk-action-toggle-tip-close').on('click', function() {
+			$(document).on(
+				'click',
+				'.bulk-action-toggle-tip-close',
+				function() {
 				// Set a cookie named 'hide-delay-tip' with a value '1' and no expiration date (never expires)
 				Cookies.set('hide-delay-tip', '1', { expires: 365 * 100 }); // Cookie set for 100 years
 			});

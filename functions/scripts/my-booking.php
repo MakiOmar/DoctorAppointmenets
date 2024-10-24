@@ -264,7 +264,10 @@ add_action(
 		<script>
 			jQuery(document).ready(function($) {
 				// Attach a click event to the .edit-booking element.
-				$('.edit-booking').on('click', function(event) {
+				$(document).on(
+					'click',
+					'.edit-booking',
+					function(event) {
 					event.preventDefault(); // Prevent the default action of the link.
 
 					// Get the data attributes from the clicked element.

@@ -15,6 +15,7 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+
 				var disabledOptions = [];
 				var weekDays = ['sun','mon','tue','wed','thu','fri','sat'];
 				function showErrorpopup( msg ) {
@@ -222,8 +223,40 @@ add_action(
 						)
 					}
 				);
-				$('#insert-timetable').on(
+				$(document).on('submit', '.jet-form-builder', function(event) {
+					event.preventDefault(); // Prevent the default form submission
+
+					// Check if the form contains a field with the name 'custom-timetable'
+					if ($(this).find('[name="custom-timetable"]').length === 0) {
+						console.log('The field "custom-timetable" does not exist in the form.');
+						return; // Stop further execution if the field doesn't exist
+					}
+
+					// Get the form data
+					var formData = $(this).serialize(); // Serialize form data for sending in AJAX
+
+					// Perform the AJAX call
+					$.ajax({
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // WordPress AJAX URL
+						type: 'POST',
+						data: {
+							action: 'insert_custom_timetable',
+							form_data: formData // Sending the form data
+						},
+						success: function(response) {
+							// Log the response (sent data)
+							console.log('Response:', response);
+						},
+						error: function(error) {
+							console.log('AJAX Error:', error);
+						}
+					});
+				});
+
+
+				$(document).on(
 					'click',
+					'#insert-timetable',
 					function( e ) {
 						e.preventDefault();
 						$("#insert-timetable-msg").text('');
@@ -298,8 +331,9 @@ add_action(
 				if ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'account-setting' ) ) {
 				//phpcs:enable
 					?>
-				$('input[name=attendance_type]').on(
+				$(document).on(
 					'change',
+					'input[name=attendance_type]',
 					function(){
 						if ( $(this).is(':checked') ) {
 							$('.shrinks-usage-method').removeClass('shrinks-error');
@@ -342,7 +376,76 @@ add_action(
 		?>
 		<script>
 			jQuery(document).ready(function($) {
-				$('.jet-popup-target').on('click', function() {
+				// Function to safely extract serializable data from formData and response
+				function extractSerializableData(data) {
+					let serializableData = {};
+					for (let key in data) {
+						if (data.hasOwnProperty(key) && typeof data[key] !== 'object') {
+							serializableData[key] = data[key];
+						}
+					}
+					return serializableData;
+				}				
+				// On the form success event, set a key in localStorage
+				jQuery(document).on("jet-form-builder/after-init", function(event, formContainer, jetFormInstance) {
+					// Access the form element
+					const formElement = formContainer[0].querySelector("form.jet-form-builder");
+					
+					// Retrieve the form ID from the dataset of the form element
+					const formId = formElement ? formElement.dataset.formId : null;
+
+					if (formId && formId == 2199) {
+						localStorage.setItem('ajaxForm', 'true');
+					}
+					if (formId && formId != 2199) {
+						localStorage.removeItem('ajaxForm');
+					}
+				});
+			
+				// On the form success event, set a key in localStorage
+				$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
+					if (localStorage.getItem('ajaxForm') === 'true') {
+						// Store a flag in localStorage
+						localStorage.setItem('ajaxInProgress', 'true');
+
+						// Store serializable formData and response (avoid circular structure)
+						localStorage.setItem('formData', JSON.stringify(extractSerializableData(formData)));
+						localStorage.setItem('response', JSON.stringify(extractSerializableData(response)));
+					}
+				});
+				// Use setInterval to periodically check for the flag in localStorage
+				let checkInterval = setInterval(function() {
+					if (localStorage.getItem('ajaxInProgress') === 'true') {
+						// If the flag is present, run the AJAX call
+						$.ajax({
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // WordPress AJAX URL
+							type: 'POST',
+							data: {
+								action: 'get_preview_tables',
+								form_data: JSON.parse(localStorage.getItem('formData')), // Get form data from localStorage
+								response_data: JSON.parse(localStorage.getItem('response')) // Get response data from localStorage
+							},
+							success: function(data) {
+								$('#preview-timetables').html( data );
+								// Handle the successful response here, such as updating the DOM
+								// Remove the localStorage key after success
+								localStorage.removeItem('ajaxInProgress');
+								localStorage.removeItem('ajaxForm');
+							},
+							error: function(error) {
+								console.log('AJAX error:', error);
+								// Handle errors here, maybe reset the localStorage key
+								localStorage.removeItem('ajaxInProgress');
+								localStorage.removeItem('ajaxForm');
+							}
+						});
+					}
+				}, 1000);
+
+				$(document).on(
+					'click',
+					'.jet-popup-target',
+					function() {
 					// Get the attached popup ID from the clicked item
 					var attachedPopup = $(this).data('jet-popup').attachedPopup;
 

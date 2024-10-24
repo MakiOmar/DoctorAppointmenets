@@ -27,7 +27,10 @@ add_action(
 				$('input[name="withdrawal_method"]:checked').closest('.withdrawal-radio').find('.withdrawal-accounts-fields').show();
 
 				// Select all radio buttons within the withdrawal-options container
-				$('.withdrawal-options input[type="radio"]').on('change', function() {
+				$(document).on(
+					'change',
+					'.withdrawal-options input[type="radio"]',
+					function() {
 					if ( $(this).val() === 'manual_withdrawal' ) {
 						$('.manual-withdrawal-button').slideDown();
 					} else {
@@ -42,7 +45,10 @@ add_action(
 					$(this).next('label').find('.anony-custom-radio').addClass('checked');
 				});
 				// Select all radio buttons within the withdrawal-options container
-				$('input[name="withdrawal_method"]').on('change', function() {
+				$(document).on(
+					'change',
+					'input[name="withdrawal_method"]',
+					function() {
 					// Hide all field containers first
 					$('.withdrawal-accounts-fields').slideUp();
 					
@@ -52,7 +58,10 @@ add_action(
 
 
 				// Handle sending OTP
-				$('#send-otp').on('click', function(e) {
+				$(document).on(
+					'click',
+					'#send-otp',
+					function(e) {
 					e.preventDefault();
 
 					// Disable the OTP button and display a message
@@ -87,7 +96,10 @@ add_action(
 				});
 
 				// Handle form submission with OTP verification
-				$('#submit-withdrawal-form').on('click', function(e) {
+				$(document).on(
+					'click',
+					'#submit-withdrawal-form',
+					function(e) {
 					e.preventDefault();
 
 					var formData = $('#withdrawal-settings-form').serialize(); // Serialize the form data including OTP

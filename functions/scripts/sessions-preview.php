@@ -30,11 +30,11 @@ add_action(
 						2000
 					);
 				}
-				$('.timetable-preview-tab').on(
+				$(document).on(
 					'click',
+					'.timetable-preview-tab',
 					function() {
 						var target = $( this ).data('target');
-						console.log(target);
 						if ( $('.' + target).hasClass('timetable-show') ) {
 							$('.' + target).slideUp();
 							$('.' + target).removeClass('timetable-show');
@@ -66,8 +66,9 @@ add_action(
 					}
 				});
 
-				$('.delete-slot').on(
+				$(document).on(
 					'click',
+					'.delete-slot',
 					function( e ) {
 						e.preventDefault();
 						if ( confirm("هل أنت متأكد") !== true ) {

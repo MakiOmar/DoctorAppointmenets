@@ -29,7 +29,10 @@ add_action(
 			}
 			billingPhoneInput.val( countryCode + phone ).change();
 		}
-		$('input[name="login_with"]').on('change', function() {
+		$(document).on(
+			'change',
+			'input[name="login_with"]',
+			function() {
 			var selectedValue = $('input[name="login_with"]:checked').val();
 
 			// If the selected radio value is 'email', clear the username field
