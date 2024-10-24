@@ -511,23 +511,25 @@ add_action(
 					}
 				}, 1000);
 
-				$(document).on(
+				$('.jet-popup-target').on(
 					'click',
-					'.jet-popup-target',
 					function() {
-					// Get the attached popup ID from the clicked item
-					var attachedPopup = $(this).data('jet-popup').attachedPopup;
-
-					// Check if there is an open popup and its ID does not match the attached popup
-					var openPopup = $('.jet-popup--show-state'); // Assuming .jet-popup-active class indicates an open popup
-					if (openPopup.length && openPopup.attr('id') !== attachedPopup) {
-						// Trigger the close button click on the currently open popup
-						var closeButton = openPopup.find('.jet-popup__close-button');
-						if (closeButton.length) {
-							closeButton.click();
+						if ( $(this).closest('#jet-theme-core-footer').length < 1 ) {
+							return;
+						}
+						// Get the attached popup ID from the clicked item
+						var attachedPopup = $(this).data('jet-popup');
+						// Check if there is an open popup and its ID does not match the attached popup
+						var openPopup = $('.jet-popup--show-state'); // Assuming .jet-popup-active class indicates an open popup
+						if (openPopup.length && openPopup.attr('id') !== attachedPopup) {
+							// Trigger the close button click on the currently open popup
+							var closeButton = openPopup.find('.jet-popup__close-button');
+							if (closeButton.length) {
+								closeButton.click();
+							}
 						}
 					}
-				});
+				);
 			});
 
 			function showTab(tabId) {
