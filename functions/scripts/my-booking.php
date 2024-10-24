@@ -130,7 +130,12 @@ add_shortcode(
 							},
 							success: function(response) {
 								if ( ! response.resp ) {
-									alert('عفوا! حدث خطأ ما يرجى الخروج ودخول الجلسة ملة أخرى..')
+									Swal.fire({
+										icon: 'error',
+										title: '!عفواً',
+										text: 'حدث خطأ ما يرجى الخروج ودخول الجلسة مرة أخرى.', // The original alert message
+										confirmButtonText: 'موافق'
+									});
 								}
 							}
 						});

@@ -316,12 +316,22 @@ add_action(
 					function(event){
 						if ( $( this ).find('input[name="selected-hour"]:checked').length === 0 || $( this ).find('input[name="current-month-day"]:checked').length === 0  ) {
 							event.preventDefault();
-							alert('فضلاً تأكد من أنك قمت بتحديد اليوم والساعة');
+							Swal.fire({
+								icon: 'warning',
+								title: 'تنبيه',
+								text: 'فضلاً تأكد من أنك قمت بتحديد اليوم والساعة', // The original alert message
+								confirmButtonText: 'موافق'
+							});
 						}
 
 						if (!$('#terms-conditions').is(':checked')) {
 							event.preventDefault();
-							$.fn.justShowErrorpopup( 'يرجى الموافقة على الشروط والأحكام حتى تستطيع المتابعة!' );
+							Swal.fire({
+								icon: 'error',
+								title: 'خطأ',
+								text: 'يرجى الموافقة على الشروط والأحكام حتى تستطيع المتابعة!', // The original message
+								confirmButtonText: 'موافق'
+							});
 						}
 					}
 				);

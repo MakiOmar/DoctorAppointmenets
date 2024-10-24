@@ -75,20 +75,35 @@ add_action(
 						data: formData + '&action=send_email_otp', // Action for backend to handle OTP generation
 						success: function(response) {
 							if (response.success) {
-								alert('تم إرسال كود التحقق بنجاح إلى بريدك الإلكتروني/موبايلك.');
+								Swal.fire({
+									icon: 'success', // Success icon to indicate the action was successful
+									title: 'تم بنجاح',
+									text: 'تم إرسال كود التحقق بنجاح إلى بريدك الإلكتروني/موبايلك.', // The original success message
+									confirmButtonText: 'غلق'
+								});
 								// Show the OTP section and enable submit button
 								$('#otp-section').slideDown();
 								$('#submit-withdrawal-form').show();
 								$('#send-otp').text('إرسال كود التحقق'); // Reset button text
 								$('#send-otp').attr('disabled', false);
 							} else {
-								alert(response.data.message); // Show error message
+								Swal.fire({
+									icon: 'error', // Error icon to indicate the issue
+									title: 'خطأ',
+									text: response.data.message, // The original error message
+									confirmButtonText: 'موافق'
+								});
 								$('#send-otp').text('إرسال كود التحقق');
 								$('#send-otp').attr('disabled', false);
 							}
 						},
 						error: function() {
-							alert('حدث خطأ في إرسال كود التحقق.');
+							Swal.fire({
+								icon: 'error',
+								title: 'خطأ',
+								text: 'حدث خطأ في إرسال كود التحقق.',
+								confirmButtonText: 'موافق'
+							});
 							$('#send-otp').text('إرسال كود التحقق');
 							$('#send-otp').attr('disabled', false);
 						}
@@ -109,13 +124,28 @@ add_action(
 						data: formData + '&action=verify_otp_and_save_withdrawal', // Pass the action for OTP verification and withdrawal submission
 						success: function(response) {
 							if(response.success) {
-								alert(response.data.message); // Success message
+								Swal.fire({
+									icon: 'success', // Error icon to indicate the issue
+									title: 'تم',
+									text: response.data.message, // The original error message
+									confirmButtonText: 'غلق'
+								});
 							} else {
-								alert(response.data.message); // OTP or form submission error
+								Swal.fire({
+									icon: 'error', // Error icon to indicate the issue
+									title: 'خطأ',
+									text: response.data.message, // The original error message
+									confirmButtonText: 'غلق'
+								});
 							}
 						},
 						error: function() {
-							alert('حدث خطأ أثناء تقديم النموذج.');
+							Swal.fire({
+									icon: 'error', // Error icon to indicate the issue
+									title: 'خطأ',
+									text: 'حدث خطأ أثناء تقديم النموذج.', // The original error message
+									confirmButtonText: 'غلق'
+								});
 						}
 					});
 				});

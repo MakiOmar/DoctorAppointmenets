@@ -143,13 +143,16 @@ add_action(
 						success: function(response) {
 							// Remove the 'processing' class to hide the overlay
 							$('.jet-form-builder').removeClass('processing');
-							alert(response.msg); // Example response handling
+							Swal.fire({
+								icon: 'success',
+								title: 'تم',
+								text: response.msg, // Assuming response.msg contains the message from the server
+								confirmButtonText: 'غلق'
+							});
 						},
 						error: function(xhr, status, error) {
 							// Remove the 'processing' class to hide the overlay
 							$('.jet-form-builder').removeClass('processing');
-
-							//alert('Error: ' + error);
 						}
 					});
 				});
@@ -303,7 +306,12 @@ add_action(
 								window.location.href = '<?php echo esc_url( $redirect_after_meeting ); ?>';
 							},
 							error: function(xhr, status, error) {
-								alert('Error:', error);
+								Swal.fire({
+									icon: 'error',
+									title: 'خطأ',
+									text: 'حدث خطأ: ' + error.statusText,
+									confirmButtonText: 'غلق'
+								});
 							}
 						});
 					});

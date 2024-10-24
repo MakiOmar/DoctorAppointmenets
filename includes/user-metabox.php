@@ -38,7 +38,12 @@ function snks_doctor_booking_url( $user ) {
 		el.select();
 		document.execCommand('copy');
 		document.body.removeChild(el);
-		alert('تم النسخ');
+		Swal.fire({
+			icon: 'success', // Error icon to indicate the issue
+			title: 'تم',
+			text: 'تم النسخ', // The original error message
+			confirmButtonText: 'غلق'
+		});
 	}
 	</script>
 	<?php

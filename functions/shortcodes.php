@@ -87,7 +87,12 @@ add_shortcode(
 			el.select();
 			document.execCommand('copy');
 			document.body.removeChild(el);
-			alert('تم النسخ');
+			Swal.fire({
+				icon: 'success',
+				title: 'تم',
+				text: 'تم النسخ',
+				confirmButtonText: 'غلق'
+			});
 		}
 		</script>
 		<?php
