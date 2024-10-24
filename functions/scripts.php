@@ -70,8 +70,9 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
-				$('.field-type-heading-field').on(
+				$(document).on(
 					'click',
+					'.field-type-heading-field',
 					function(){
 						var parent = $(this).closest('.day-specific-form');
 						$('.wp-block-columns-is-layout-flex', parent).toggle();
@@ -113,7 +114,10 @@ add_action(
 					}
 				);
 				// Event listener for the "Forgot Password" link
-				$('a[href="/forget-password/"]').on('click', function(event) {
+				$(document).on(
+					'click',
+					'a[href="/forget-password/"]',
+					function(event) {
 					event.preventDefault(); // Prevent the default link behavior
 
 					// Add the 'processing' class to show the overlay
@@ -184,8 +188,9 @@ add_action(
 					}
 				);
 
-				$('.doctor_actions').on(
+				$(document).on(
 					'submit',
+					'.doctor_actions',
 					function (e) {
 						e.preventDefault();
 						if ( confirm("هل أنت متأكد") !== true ) {
@@ -210,8 +215,9 @@ add_action(
 						});
 					}
 				);
-				$( '.snks-cancel-appointment' ).on(
+				$( document ).on(
 					'click',
+					'.snks-cancel-appointment',
 					function (e) {
 						e.preventDefault();
 						if ( confirm("هل أنت متأكد") !== true ) {
@@ -317,8 +323,9 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
-				$('#snks-insert_timetable').on(
+				$(document).on(
 					'click',
+					'#snks-insert_timetable',
 					function ( e ) {
 						e.preventDefault();
 						if ( '' === $( '#user_timetable_date' ).val() || '' ===  $( '#user_timetable_time' ).val() || '' === $( '#user_id' ).val() ) {
@@ -506,13 +513,19 @@ add_action(
 
 		// Apply the function on keyup using jQuery, excluding password fields.
 		jQuery(document).ready(function($) {
-			$('input:not([type="password"])').on('keyup', function() {
+			$(document).on(
+				'keyup',
+				'input:not([type="password"])',
+				function() {
 				const currentValue = $(this).val();
 				const englishValue = toEnglishNumbers(currentValue);
 				$(this).val(englishValue);
 			});
 
-			$('#iban_number').on('keyup', function() {
+			$(document).on(
+				'keyup',
+				'#iban_number',
+			function() {
 				// Replace any non-numeric characters with an empty string.
 				this.value = this.value.replace(/[^0-9]/g, '');
 			});
