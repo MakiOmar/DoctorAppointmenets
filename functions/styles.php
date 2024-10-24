@@ -298,6 +298,9 @@ add_action(
 			.page-id-1935 .jet-popup{
 				height: calc(100% - 60px)!important;
 			}
+			.page-id-1935 .jet-popup.jet-popup--front-mode .jet-popup__overlay{
+				background-color: transparent;
+			}
 			#appointments-preview{
 				display: none;
 			}
