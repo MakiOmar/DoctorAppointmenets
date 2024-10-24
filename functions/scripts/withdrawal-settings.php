@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || die();
 add_action(
 	'wp_footer',
 	function () {
-		if ( ! snks_is_doctor() ) {
+		if ( snks_is_patient() ) {
 			return;
 		}
 		?>
@@ -27,7 +27,7 @@ add_action(
 				$('input[name="withdrawal_method"]:checked').closest('.withdrawal-radio').find('.withdrawal-accounts-fields').show();
 
 				// Select all radio buttons within the withdrawal-options container
-				$(document).on(
+				$('body').on(
 					'change',
 					'.withdrawal-options input[type="radio"]',
 					function() {
@@ -45,10 +45,11 @@ add_action(
 					$(this).next('label').find('.anony-custom-radio').addClass('checked');
 				});
 				// Select all radio buttons within the withdrawal-options container
-				$(document).on(
+				$('body').on(
 					'change',
 					'input[name="withdrawal_method"]',
 					function() {
+						console.log('sdfsdfdsf');
 					// Hide all field containers first
 					$('.withdrawal-accounts-fields').slideUp();
 					
@@ -58,7 +59,7 @@ add_action(
 
 
 				// Handle sending OTP
-				$(document).on(
+				$('body').on(
 					'click',
 					'#send-otp',
 					function(e) {
@@ -111,7 +112,7 @@ add_action(
 				});
 
 				// Handle form submission with OTP verification
-				$(document).on(
+				$('body').on(
 					'click',
 					'#submit-withdrawal-form',
 					function(e) {

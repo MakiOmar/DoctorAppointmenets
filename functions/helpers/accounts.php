@@ -46,19 +46,23 @@ function snks_user_details( $current_user_id ) {
  * @return bool
  */
 function snks_is_doctor( $user_id = false ) {
-	if ( ! is_user_logged_in() ) {
-		return false;
+	$r = false;
+	if ( is_user_logged_in() ) {
+		$r = false;
 	}
 	if ( ! $user_id ) {
 		$user = wp_get_current_user();
 	} else {
 		$user = get_user_by( 'ID', $user_id );
 	}
-	if ( ! in_array( 'doctor', $user->roles, true ) ) {
-		return false;
+	if ( in_array( 'doctor', $user->roles, true ) ) {
+		$r = true;
+	}
+	if ( in_array( 'administrator', $user->roles, true ) ) {
+		$r = true;
 	}
 
-	return true;
+	return $r;
 }
 
 /**
