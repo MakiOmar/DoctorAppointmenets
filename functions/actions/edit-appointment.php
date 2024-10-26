@@ -9,35 +9,88 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+// Hook into WordPress AJAX.
 add_action(
-	'init',
+	'wp_ajax_doctor_change_appointment',
 	function () {
 		$_req = wp_unslash( $_POST );
+
+		// Check the nonce for security.
 		if ( ! isset( $_req['change_appointment_nonce'] ) || ! wp_verify_nonce( $_req['change_appointment_nonce'], 'change_appointment' ) ) {
-			return;
+			wp_send_json(
+				array(
+					'message' => 'فشل التحقق الأمني. يرجى إعادة المحاولة.',
+					'status'  => 'faild',
+				)
+			);
+			die;
 		}
 
-		if ( empty( $_req['old-appointment'] ) || empty( $_req['change-to-this-date'] ) ) {
-			return;
+		// Ensure required fields are provided.
+		if ( empty( $_req['old_appointment'] ) || empty( $_req['appointment_id'] ) ) {
+			wp_send_json(
+				array(
+					'message' => 'يرجى تحديد الموعد القديم والتاريخ الجديد.',
+					'status'  => 'faild',
+				)
+			);
+			die;
 		}
 
+		// Check if the user is a doctor.
 		if ( ! snks_is_doctor() ) {
-			wp_safe_redirect( add_query_arg( 'error', 'unknown', site_url( $_req['_wp_http_referer'] ) ) );
-			exit;
+			wp_send_json(
+				array(
+					'message' => 'غير مسموح. يجب أن تكون طبيباً لتغيير الموعد.',
+					'status'  => 'faild',
+				)
+			);
+			die;
 		}
 
-		$booking = snks_get_timetable_by( 'ID', absint( $_req['old-appointment'] ) );
+		// Retrieve the booking by the old appointment ID.
+		$booking = snks_get_timetable_by( 'ID', absint( $_req['old_appointment'] ) );
 
+		// Validate the booking and user.
 		if ( ! $booking || get_current_user_id() !== absint( $booking->user_id ) ) {
-			wp_safe_redirect( add_query_arg( 'error', 'not-allowed', site_url( $_req['_wp_http_referer'] ) ) );
-			exit;
+			wp_send_json(
+				array(
+					'message' => 'غير مسموح لك بتغيير هذا الموعد.',
+					'status'  => 'faild',
+				)
+			);
+			die;
 		}
+
+		// Process the booking change.
 		$main_order     = wc_get_order( $booking->order_id );
-		$new_booking_id = $_req['change-to-this-date'];
-		snks_apply_booking_edit( $booking, $main_order, $new_booking_id );
-		do_action( 'snks_doctor_edit_booking' );
+		$new_booking_id = $_req['appointment_id'];
+		$edited         = snks_apply_booking_edit( $booking, $main_order, $new_booking_id );
+		if ( $edited ) {
+			// Trigger the custom action for booking edit.
+			do_action( 'snks_doctor_edit_booking' );
+
+			// Send a success response.
+			wp_send_json(
+				array(
+					'message' => 'تم تغيير الموعد بنجاح.',
+					'status'  => 'success',
+				)
+			);
+			die;
+		} else {
+			wp_send_json(
+				array(
+					'message' => 'عفواّ لم يام تغيير الموعد.',
+					'status'  => 'faild',
+				)
+			);
+			die;
+		}
 	}
 );
+
+
 /**
  * Apply edit booking
  *
@@ -45,7 +98,7 @@ add_action(
  * @param object $main_order The main appointment order.
  * @param string $new_booking_id Selected hour.
  * @param bool   $free Is it free edit or not.
- * @return void
+ * @return mixed
  */
 function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free = true ) {
 	$_doctor_url = snks_encrypted_doctor_url( $booking->user_id );
@@ -100,6 +153,9 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
 			}
 			if ( $free ) {
+				if ( snks_is_doctor() ) {
+					return true;
+				}
 				wp_safe_redirect(
 					add_query_arg(
 						array(
@@ -111,8 +167,11 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				exit;
 			}
 		} elseif ( snks_is_patient() ) {
-				wp_safe_redirect( $error_url );
-				exit;
+			if ( snks_is_doctor() ) {
+				return false;
+			}
+			wp_safe_redirect( $error_url );
+			exit;
 		}
 	}
 
@@ -136,7 +195,7 @@ function snks_create_edit_fees_order( $main_order, $will_pay, $booking, $new_boo
 	$product_id = 2363;
 	$product    = wc_get_product( $product_id );
 	$product->set_price( $will_pay );
-	$fees_order->add_product( $product, 1 ); // 1 quantity
+	$fees_order->add_product( $product, 1 ); // 1 quantity.
 	$fees_order->set_total( $will_pay );
 	$fees_order->update_meta_data( 'connected_order', $main_order->get_id() );
 	$fees_order->update_meta_data( '_user_id', $booking->user_id );

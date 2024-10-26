@@ -206,8 +206,8 @@ function snks_create_custom_timetable() {
 		$starts
 	);
 
-	$ends = array_unique( array_column( $date_timetables, 'ends' ) );
-	$ends = array_map(
+	$ends               = array_unique( array_column( $date_timetables, 'ends' ) );
+	$ends               = array_map(
 		function ( $item ) {
 			return gmdate( 'H:i', strtotime( $item ) );
 		},

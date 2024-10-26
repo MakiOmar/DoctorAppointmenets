@@ -66,8 +66,9 @@ function appointment_change_date_callback() {
 			echo '<label for="change-to-this-date-' . esc_attr( $appointment->ID ) . '">' . esc_html( $appointment->period . ' دقيقة ' . snks_localized_time( $appointment->starts ) . ' - ' . snks_localized_time( $appointment->ends ) ) . '</label>';
 			echo '</div>';
 		}
+		die;
 	}
-	echo '';
+	echo '<p>عفواُ لا توجد مواعيد متاحة في هذا اليوم</p>';
 
 	die();
 }

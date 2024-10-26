@@ -118,6 +118,7 @@ add_action(
 				'change',
 				'#change-to-date',
 				function() {
+					console.log('ggg');
 					var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_change_date_nonce' ) ); ?>';
 
 					var date = $(this).val();
@@ -131,7 +132,6 @@ add_action(
 						data: {
 							action    : 'appointment_change_date',
 							date      : date,
-							time      : time,
 							nonce     : nonce,
 						},
 						success: function(response) {
@@ -156,8 +156,64 @@ add_action(
 					var list = $("#change-to-list");
 					list.removeAttr('id');
 					list.attr('id', date + '-change-to-list');
+					$('#snks-change-trigger').trigger('click');
 				}
 			);
+			$('#doctor-change-appointment').on('submit', function(e) {
+				e.preventDefault(); // Prevent the form from submitting normally
+
+				// Collect form data
+				var formData = {
+					action: 'doctor_change_appointment', // The action for AJAX
+					date: $('#change-to-date').val(), // Selected date
+					appointment_id: $('input[name="change-to-this-date"]:checked').val(), // Selected appointment
+					old_appointment: $('#old-appointment').val(), // Old appointment
+					change_appointment_nonce: $('#change_appointment_nonce').val() // Nonce field for security
+				};
+				// Send the AJAX request
+				$.ajax({
+					url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // WordPress AJAX URL
+					type: 'POST',
+					data: formData,
+					success: function(response) {
+						console.log(response);
+						if (response.status && response.status === 'success') {
+							// Show success message with SweetAlert
+							Swal.fire({
+								icon: 'success',
+								title: 'تم',
+								text: response.message,
+								confirmButtonText: 'موافق'
+							});
+						} else if (response.status && response.status === 'faild') {
+							// Show error message with SweetAlert
+							Swal.fire({
+								icon: 'error',
+								title: 'خطأ',
+								text: response.message,
+								confirmButtonText: 'موافق'
+							});
+						} else {
+							Swal.fire({
+								icon: 'error',
+								title: 'خطأ',
+								text: 'حدث خطأ.',
+								confirmButtonText: 'موافق'
+							});
+						}
+					},
+					error: function(error) {
+						// Show error message with SweetAlert if the AJAX request fails
+						Swal.fire({
+							icon: 'error',
+							title: 'خطأ',
+							text: 'حدث خطأ أثناء الاتصال بالخادم.',
+							confirmButtonText: 'موافق'
+						});
+					}
+				});
+			});
+
 
 			
 			$(document).on(
