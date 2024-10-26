@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump, WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 
 /**
  * Generates radio inputs for number of days
@@ -271,6 +271,7 @@ add_action(
 		<input type="hidden" id="doctor-off-days" value="<?php echo implode( ',', snks_get_off_days() ); ?>"/>
 		<input type="hidden" id="custom-timetable-day" value=""/>
 		<a href="#" id="custom-timetabl-trigger"></a>
+		<a href="#" id="snks-change-trigger"></a>
 		<?php
 	}
 );
@@ -747,7 +748,7 @@ function snks_booking_item_template( $record ) {
 			<div class="anony-grid-col anony-grid-col-2 snks-bg">
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
 
-				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);display: flex;align-items: center;">
+				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);left:-25%;display: flex;align-items: center;">
 					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
@@ -960,10 +961,10 @@ add_shortcode(
 	'snks_doctor_change_appointment',
 	function () {
 		$output = '';
-		if ( snks_is_doctor() && is_page( 'my-bookings' ) ) {
+		if ( snks_is_doctor() && is_page( 'account-setting' ) ) {
 			$bookable_days_obj = get_all_bookable_dates( get_current_user_id() );
 			$bookable_days     = snks_timetables_unique_dates( $bookable_days_obj );
-			$output           .= '<form method="post" action="">';
+			$output           .= '<form id="doctor-change-appointment" method="post">';
 			$output           .= '<select data-date="" id="change-to-date" name="change-to-date">';
 			ob_start();
 			echo '<option value="0">حدد التاريخ</option>';
@@ -977,7 +978,7 @@ add_shortcode(
 			$output .= '<div id="change-to-list"></div>';
 			$output .= wp_nonce_field( 'change_appointment', 'change_appointment_nonce' );
 			$output .= '<input type="text" style="display:none" id="old-appointment" name="old-appointment" value=""/>';
-			$output .= '<input type="submit" class="snks=bg anony-padding-10 anony-full-width" name="submit" value="حفظ"/>';
+			$output .= '<input type="submit" class="snks-bg anony-padding-10 anony-full-width" name="submit" value="حفظ"/>';
 		}
 		return $output;
 	}
@@ -1045,105 +1046,126 @@ function snks_doctor_rules( $user_id ) {
  * @return string
  */
 function snks_generate_bookings() {
-	$timetables = snks_get_doctor_sessions( 'all', 'open', true );
-	if ( empty( $timetables ) ) {
+	$_timetables = snks_get_doctor_sessions( 'all', 'open', true );
+	// Check if there are no bookings.
+	if ( empty( $_timetables ) ) {
 		return '<p class="anony-center-text">ليس لديك حجوزات حتى الآن!</p>';
 	}
+
 	$days_sorted = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
 
-	uksort(
-		$timetables,
+	// Sort timetables by day.
+	usort(
+		$_timetables,
 		function ( $a, $b ) use ( $days_sorted ) {
-			$pos_a = array_search( $a, $days_sorted, true );
-			$pos_b = array_search( $b, $days_sorted, true );
+			$pos_a = array_search( $a->day, $days_sorted, true );
+			$pos_b = array_search( $b->day, $days_sorted, true );
 			return $pos_a - $pos_b;
 		}
 	);
+	$day_groups = snks_group_objects_by( $_timetables, 'date' );
 
-	$output = '';
-
-	if ( is_array( $timetables ) ) {
-		$day_groups = snks_group_objects_by( $timetables, 'date' );
-		$j          = true;
+	// Start building HTML.
+	ob_start();
+	?>
+	<div id="my-bookings-container">
+		<?php
+		$j = true; // Variable to check the first occurrence for bulk action tip.
+		$t = true;
 		foreach ( $day_groups as $date => $timetables ) {
-			$main_date = $date;
-			$day       = gmdate( 'D', strtotime( $date ) );
-			$output   .= '<div class="snks-timetable-accordion-wrapper" data-id="' . $date . '">';
-			$output   .= '<div class="anony-grid-row snks-bg snks-timetable-accordion" data-id="' . $date . '">';
+			$day = gmdate( 'D', strtotime( $date ) ); // Get the day from the date.
+			?>
+			<div class="snks-timetable-accordion-wrapper" data-id="<?php echo esc_attr( $date ); ?>">
+				<div class="anony-grid-row snks-bg snks-timetable-accordion<?php echo $t ? ' snks-active-accordion' : ''; ?>" data-id="<?php echo esc_attr( $date ); ?>">
 
-			$output .= '<div class="anony-grid-col anony-grid-col-1 snks-timetables-count anony-inline-flex flex-h-center flex-v-center anony-padding-5" style="background-color:#fff; color:#024059">';
-			$output .= count( $timetables );
-			$output .= '</div>';
-			$output .= '<div class="anony-grid-col anony-grid-col-11 anony-inline-flex flex-h-center flex-v-center anony-padding-10">';
-			$output .= snks_localize_day( $day ) . '  ' . $date;
-			$output .= '<div class="bulk-action-toggle">';
-			if ( $j && ! isset( $_COOKIE['hide-delay-tip'] ) ) {
-				$output .= '<span class="bulk-action-toggle-tip">';
-				$output .= '<span class="bulk-action-toggle-tip-close">x</span>';
-				$output .= 'تأجيل/تأخير';
-				$output .= '</span>';
-				$j       = false;
-			}
-			$output .= '<svg fill="#ffffff" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 325.051 325.051" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"/><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M162.523,86.532c-41.904,0-76,34.089-76,75.994c0,41.901,34.096,75.996,76,75.996s76-34.095,76-75.996 C238.523,120.621,204.427,86.532,162.523,86.532z M162.523,226.225c-35.128,0-63.702-28.571-63.702-63.699 c0-35.122,28.574-63.696,63.702-63.696c35.131,0,63.702,28.574,63.702,63.696C226.225,197.653,197.654,226.225,162.523,226.225z"/> <path d="M302.503,130.583h-11.505c-5.975-24.202-18.537-45.916-36.587-63.3l5.765-9.977c6.329-10.965-0.865-26.571-16.382-35.531 c-6.484-3.738-13.654-5.803-20.206-5.803c-8.473,0-15.3,3.419-18.74,9.37l-5.759,9.974c-23.749-6.83-49.345-6.83-73.121,0 l-5.755-9.974c-3.444-5.957-10.269-9.37-18.744-9.37c-6.548,0-13.724,2.065-20.203,5.803C65.752,30.729,58.55,46.33,64.879,57.3 l5.768,9.977c-18.065,17.39-30.615,39.104-36.593,63.312H22.554C9.908,130.589,0,144.613,0,162.525s9.908,31.945,22.554,31.945 h11.499c5.978,24.199,18.534,45.913,36.593,63.303l-5.768,9.98c-6.329,10.964,0.874,26.564,16.387,35.523 c6.479,3.735,13.655,5.801,20.203,5.801c8.476,0,15.3-3.423,18.744-9.367l5.755-9.968c23.77,6.827,49.372,6.827,73.115-0.013 l5.765,9.98c3.44,5.957,10.268,9.367,18.74,9.367c6.552,0,13.722-2.065,20.206-5.801c15.517-8.959,22.711-24.56,16.382-35.523 l-5.765-9.98c18.062-17.39,30.612-39.104,36.587-63.303h11.493c12.64,0,22.554-14.027,22.56-31.945 c0.007-8.043-2.041-15.69-5.764-21.539C315.089,134.375,308.965,130.583,302.503,130.583z M302.492,182.173h-16.399 c-2.918,0-5.428,2.054-6.017,4.906c-5.23,25.196-18.212,47.653-37.536,64.941c-2.168,1.94-2.684,5.141-1.225,7.656l8.215,14.226 c2.432,4.203-2.145,13.103-11.884,18.723c-8.779,5.092-19.636,5.272-22.146,0.938l-8.215-14.22 c-1.123-1.946-3.177-3.075-5.32-3.075c-0.643,0-1.297,0.108-1.928,0.307c-24.205,7.98-50.771,7.992-75.018,0.006 c-2.759-0.889-5.786,0.24-7.248,2.769l-8.202,14.214c-2.504,4.335-13.352,4.154-22.149-0.932 c-9.74-5.62-14.309-14.52-11.886-18.723l8.214-14.226c1.45-2.521,0.94-5.716-1.222-7.649 c-19.332-17.294-32.314-39.752-37.542-64.948c-0.594-2.853-3.11-4.899-6.02-4.899H22.548c-4.837,0-10.256-8.401-10.256-19.648 c0-11.241,5.419-19.639,10.256-19.639h16.405c2.916,0,5.432-2.047,6.02-4.902c5.233-25.208,18.215-47.667,37.539-64.948 c2.17-1.939,2.681-5.137,1.225-7.656l-8.214-14.222c-2.429-4.207,2.147-13.105,11.886-18.726 c8.797-5.083,19.639-5.269,22.149-0.934l8.203,14.216c1.456,2.528,4.488,3.672,7.248,2.774c24.232-7.974,50.801-7.974,75.03,0 c2.769,0.892,5.783-0.24,7.248-2.768L215.5,31.51c2.504-4.32,13.354-4.144,22.146,0.942c9.739,5.618,14.304,14.523,11.878,18.729 l-8.215,14.222c-1.453,2.522-0.938,5.716,1.225,7.656c19.323,17.282,32.306,39.74,37.53,64.945c0.601,2.852,3.11,4.9,6.022,4.9 h16.411c2.174,0,4.504,1.714,6.413,4.71c2.438,3.843,3.837,9.284,3.837,14.94C312.748,173.772,307.326,182.173,302.492,182.173z"/> </g> </g> </g></svg>';
-			$output .= '</div>';
-			$output .= '</div>';
+					<div class="anony-grid-col anony-grid-col-1 snks-timetables-count anony-inline-flex flex-h-center flex-v-center anony-padding-5" style="background-color:#fff; color:#024059">
+						<?php echo count( $timetables ); ?>
+					</div>
 
-			$output .= '</div>';
-			$output .= '<div style="background-color:#dcdcdc;" class="anony-grid-row snks-timetable-accordion-actions anony-padding-10 anony-flex flex-h-center flex-v-center">';
-			$output .= '<div class="anony-grid-col anony-grid-col-6">';
-			$output .= '<button data-title="تأجيل" class="snks-postpon anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأجيل الجلسات</button>';
-			$output .= '</div>';
+					<div class="anony-grid-col anony-grid-col-11 anony-inline-flex flex-h-center flex-v-center anony-padding-10">
+						<?php echo esc_html( snks_localize_day( $day ) . ' ' . $date ); ?>
+						<div class="bulk-action-toggle">
+							<?php if ( $j && ! isset( $_COOKIE['hide-delay-tip'] ) ) : ?>
+								<span class="bulk-action-toggle-tip">
+									<span class="bulk-action-toggle-tip-close">x</span>
+									تأجيل/تأخير
+								</span>
+								<?php $j = false; ?>
+							<?php endif; ?>
+							<svg fill="#ffffff" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 325.051 325.051" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"/><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/><g id="SVGRepo_iconCarrier"> <g> <g> <path d="M162.523,86.532c-41.904,0-76,34.089-76,75.994c0,41.901,34.096,75.996,76,75.996s76-34.095,76-75.996 C238.523,120.621,204.427,86.532,162.523,86.532z M162.523,226.225c-35.128,0-63.702-28.571-63.702-63.699 c0-35.122,28.574-63.696,63.702-63.696c35.131,0,63.702,28.574,63.702,63.696C226.225,197.653,197.654,226.225,162.523,226.225z"/> <path d="M302.503,130.583h-11.505c-5.975-24.202-18.537-45.916-36.587-63.3l5.765-9.977c6.329-10.965-0.865-26.571-16.382-35.531 c-6.484-3.738-13.654-5.803-20.206-5.803c-8.473,0-15.3,3.419-18.74,9.37l-5.759,9.974c-23.749-6.83-49.345-6.83-73.121,0 l-5.755-9.974c-3.444-5.957-10.269-9.37-18.744-9.37c-6.548,0-13.724,2.065-20.203,5.803C65.752,30.729,58.55,46.33,64.879,57.3 l5.768,9.977c-18.065,17.39-30.615,39.104-36.593,63.312H22.554C9.908,130.589,0,144.613,0,162.525s9.908,31.945,22.554,31.945 h11.499c5.978,24.199,18.534,45.913,36.593,63.303l-5.768,9.98c-6.329,10.964,0.874,26.564,16.387,35.523 c6.479,3.735,13.655,5.801,20.203,5.801c8.476,0,15.3-3.423,18.744-9.367l5.755-9.968c23.77,6.827,49.372,6.827,73.115-0.013 l5.765,9.98c3.44,5.957,10.268,9.367,18.74,9.367c6.552,0,13.722-2.065,20.206-5.801c15.517-8.959,22.711-24.56,16.382-35.523 l-5.765-9.98c18.062-17.39,30.612-39.104,36.587-63.303h11.493c12.64,0,22.554-14.027,22.56-31.945 c0.007-8.043-2.041-15.69-5.764-21.539C315.089,134.375,308.965,130.583,302.503,130.583z M302.492,182.173h-16.399 c-2.918,0-5.428,2.054-6.017,4.906c-5.23,25.196-18.212,47.653-37.536,64.941c-2.168,1.94-2.684,5.141-1.225,7.656l8.215,14.226 c2.432,4.203-2.145,13.103-11.884,18.723c-8.779,5.092-19.636,5.272-22.146,0.938l-8.215-14.22 c-1.123-1.946-3.177-3.075-5.32-3.075c-0.643,0-1.297,0.108-1.928,0.307c-24.205,7.98-50.771,7.992-75.018,0.006 c-2.759-0.889-5.786,0.24-7.248,2.769l-8.202,14.214c-2.504,4.335-13.352,4.154-22.149-0.932 c-9.74-5.62-14.309-14.52-11.886-18.723l8.214-14.226c1.45-2.521,0.94-5.716-1.222-7.649 c-19.332-17.294-32.314-39.752-37.542-64.948c-0.594-2.853-3.11-4.899-6.02-4.899H22.548c-4.837,0-10.256-8.401-10.256-19.648 c0-11.241,5.419-19.639,10.256-19.639h16.405c2.916,0,5.432-2.047,6.02-4.902c5.233-25.208,18.215-47.667,37.539-64.948 c2.17-1.939,2.681-5.137,1.225-7.656l-8.214-14.222c-2.429-4.207,2.147-13.105,11.886-18.726 c8.797-5.083,19.639-5.269,22.149-0.934l8.203,14.216c1.456,2.528,4.488,3.672,7.248,2.774c24.232-7.974,50.801-7.974,75.03,0 c2.769,0.892,5.783-0.24,7.248-2.768L215.5,31.51c2.504-4.32,13.354-4.144,22.146,0.942c9.739,5.618,14.304,14.523,11.878,18.729 l-8.215,14.222c-1.453,2.522-0.938,5.716,1.225,7.656c19.323,17.282,32.306,39.74,37.53,64.945c0.601,2.852,3.11,4.9,6.022,4.9 h16.411c2.174,0,4.504,1.714,6.413,4.71c2.438,3.843,3.837,9.284,3.837,14.94C312.748,173.772,307.326,182.173,302.492,182.173z"/> </g> </g> </g></svg>
+						</div>
+						<span class="snks-timetable-accordion-toggle">
+							<svg width="20px" height="20px" fill="#fff" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+							<g>
+							<title>arrowhead</title>
+							<g data-name="Layer 2">
+							<g data-name="invisible box">
+							<rect width="48" height="48" fill="none"/>
+							</g>
+							<g data-name="icons Q2">
+							<path d="M24,46A22,22,0,1,0,2,24,21.9,21.9,0,0,0,24,46ZM14.3,19.8A2.5,2.5,0,0,1,16,19H32a2.5,2.5,0,0,1,1.7.8,2.1,2.1,0,0,1-.4,2.7l-7.9,7.9a1.9,1.9,0,0,1-2.8,0l-7.9-7.9A2.1,2.1,0,0,1,14.3,19.8Z"/>
+							</g>
+							</g>
+							</g>
+							</svg>
+						</span>
+					</div>
 
-			$output .= '<div class="anony-grid-col anony-grid-col-6">';
-			$output .= '<button data-title="تأخير" class="snks-delay anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأخير الجلسات</button>';
-			$output .= '</div>';
+				</div>
 
-			$output .= '</div>';
-			$output .= '<div class="snks-timetable-accordion-content" style="background-color:#fff;padding:10px 0 10px 10px" id="' . $date . '">';
+				<div class="snks-timetable-accordion-content-wrapper">
+					<div style="background-color:#dcdcdc;" class="anony-grid-row snks-timetable-accordion-actions anony-padding-10 anony-flex flex-h-center flex-v-center">
+						<div class="anony-grid-col anony-grid-col-6">
+							<button data-title="تأجيل" class="snks-postpon anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأجيل الجلسات</button>
+						</div>
+						<div class="anony-grid-col anony-grid-col-6">
+							<button data-title="تأخير" class="snks-delay anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأخير الجلسات</button>
+						</div>
+					</div>
 
-			foreach ( $day_groups as $date => $timetables ) {
-				/**
-				* Timetable queried object.
-				*
-				* @var object $data
-				*/
-				foreach ( $timetables as $data ) {
-					$output       .= '<div class="snks-booking-item-wrapper">';
-					$output       .= template_str_replace( $data );
-					$output       .= '<div class="snks-notes-form anony-padding-10">';
-					$session_notes = get_posts(
-						array(
-							'post_type'    => 'session_notes',
-							'meta_key'     => 'session_id',//phpcs:disable
-							'meta_value'   => $data->ID,
-							'meta_compare' => '=',
-						)
-					);//phpcs:enable
-					if ( ! $session_notes || empty( $session_notes ) ) {
-						$output .= str_replace(
-							'{session_id}',
-							$data->ID,
-							do_shortcode( '[user_insert_session_notes]' )
-						);
-					} else {
-						$session_note = $session_notes[0];
-						$edit_notes   = snks_edit_session_form_args( $session_note->ID );
-						$edit         = new ANONY_Create_Form( $edit_notes );
-						$output      .= str_replace(
-							'{session_id}',
-							$data->ID,
-							$edit->render( false ),
-						);
-					}
+					<div class="snks-timetable-accordion-content" style="background-color:#fff;padding:10px 0 10px 10px" id="<?php echo esc_attr( $date ); ?>">
+						<?php foreach ( $timetables as $data ) : ?>
+							<div class="snks-booking-item-wrapper">
+								<?php
+								//phpcs:disable
+								echo template_str_replace( $data );
+								//phpcs:enable
+								?>
+								<div class="snks-notes-form anony-padding-10">
+									<?php
+									//phpcs:disable
+									$session_notes = get_posts(
+										array(
+											'post_type'    => 'session_notes',
+											'meta_key'     => 'session_id',
+											'meta_value'   => $data->ID,
+											'meta_compare' => '=',
+										)
+									);
 
-					$output .= '</div>';
-					$output .= '</div>';
-				}
-			}
-			$output .= '</div>';
+									if ( empty( $session_notes ) ) {
+										echo str_replace( '{session_id}', $data->ID, do_shortcode( '[user_insert_session_notes]' ) );
+									} else {
+										$session_note = $session_notes[0];
+										$edit_notes   = snks_edit_session_form_args( $session_note->ID );
+										$edit         = new ANONY_Create_Form( $edit_notes );
+										echo str_replace( '{session_id}', $data->ID, $edit->render( false ) );
+									}
+									//phpcs:enable
+									?>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
+			</div>
+			<?php
+			$t = false;
 		}
-	}
-	return $output;
+		?>
+	</div>
+	<?php
+	return ob_get_clean();
 }
 
 /**
@@ -1331,7 +1353,7 @@ function anony_accordion( $data ) {
 						accordionContent.style.padding = '0px';
 					}
 
-					// Close other open accordion items
+					// Close other open accordion items.
 					document.querySelectorAll('.anony-accordion-header').forEach(otherButton => {
 						if (otherButton !== button) {
 							otherButton.classList.remove('active');

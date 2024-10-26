@@ -452,8 +452,12 @@ add_action(
 			.snks-disabled .snks-appointment-button {
 				background-color: #7a898f;
 			}
+			.snks-timetable-accordion-wrapper:nth-child(1) .snks-timetable-accordion-content-wrapper{
+				display: block;
+			}
 			.snks-timetable-accordion-wrapper{
 				max-width: 360px;
+				margin-bottom: 10px;
 			}
 			.snks-offline-border-radius{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
@@ -605,7 +609,7 @@ add_action(
 			.bulk-action-toggle{
 				position: absolute;
 				top: calc(50% - 10px);
-				left: 30px;
+				left: 40px;
 				cursor: pointer;
 			}
 			.bulk-action-toggle-tip{
@@ -656,7 +660,7 @@ add_action(
 				background-image:none!important
 			}
 			
-			/*.field-type-select-field:after, */.snks-timetable-accordion:after, .bulk-action-toggle-tip:after {
+			/*.field-type-select-field:after, .snks-timetable-accordion:after, */.bulk-action-toggle-tip:after {
 				content: '\25BC'; /* Unicode character for down arrow */
 				position: absolute;
 				top: 51%;
@@ -666,7 +670,17 @@ add_action(
 				color: #fff;
 				font-size: 12px;
 			}
-
+			.snks-timetable-accordion-toggle{
+				position: absolute;
+				left: 10px;
+				top:calc(50% - 10px);
+				transition: all 1s ease-in-out;
+			}
+			.snks-active-accordion .snks-timetable-accordion-toggle{
+				transform: rotate(180deg);
+				transform-origin: center center;
+				top:calc(50% - 20px);
+			}
 			.bulk-action-toggle-tip:after{
 				top: 39px;
 			}
@@ -1453,6 +1467,9 @@ add_action(
 			}
 			div:where(.swal2-container) {
 				z-index: 999999!important;
+			}
+			.snks-timetable-accordion-content-wrapper{
+				display: none;
 			}
 			.snks-org-doctors-container .snks-tear-shap-wrapper{
 				width: 150px;
