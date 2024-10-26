@@ -23,7 +23,7 @@ add_action(
 		wp_enqueue_style( 'slick', SNKS_URI . 'slick/slick.css', array(), time() );
 		wp_enqueue_style( 'slick-theme', SNKS_URI . 'slick/slick-theme.css', array(), time() );
 		wp_enqueue_script( 'slick', SNKS_URI . 'slick/slick.min.js', array( 'jquery' ), '4.6.13', true );
-		wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array( 'jquery' ), null, true );
+		wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array( 'jquery' ), time(), true );
 	}
 );
 
@@ -112,6 +112,21 @@ add_action(
 					'.jet-form-builder-message',
 					function(){
 						$(this).hide();
+					}
+				);
+				// Event listener for the "Forg
+				$(document).on(
+					'click',
+					'.snks-timetable-accordion-toggle',
+					function(){
+						var parent = $(this).closest('.snks-timetable-accordion');
+						if ( parent.hasClass('snks-active-accordion') ) {
+							parent.next( '.snks-timetable-accordion-content-wrapper' ).slideUp();
+							parent.removeClass('snks-active-accordion');
+						} else {
+							parent.addClass('snks-active-accordion');
+							parent.next( '.snks-timetable-accordion-content-wrapper' ).slideDown();
+						}
 					}
 				);
 				// Event listener for the "Forgot Password" link
