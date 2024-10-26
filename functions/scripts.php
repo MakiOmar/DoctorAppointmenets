@@ -197,9 +197,21 @@ add_action(
 					'.doctor_actions',
 					function (e) {
 						e.preventDefault();
-						if ( confirm("هل أنت متأكد") !== true ) {
-							return;
-						}
+						Swal.fire({
+							title: 'هل أنت متأكد؟',
+							text: "لا يمكنك التراجع بعد ذلك!",
+							icon: 'warning',
+							showCancelButton: true,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#d33',
+							confirmButtonText: 'نعم، أنا متأكد',
+							cancelButtonText: 'إلغاء'
+						}).then((result) => {
+							if (!result.isConfirmed) {
+								return;
+							}
+						});
+
 						var doctorActions = $(this).serializeArray();
 						// Perform nonce check.
 						var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
@@ -224,9 +236,21 @@ add_action(
 					'.snks-cancel-appointment',
 					function (e) {
 						e.preventDefault();
-						if ( confirm("هل أنت متأكد") !== true ) {
-							return;
-						}
+						Swal.fire({
+							title: 'هل أنت متأكد؟',
+							text: "لا يمكنك التراجع بعد ذلك!",
+							icon: 'warning',
+							showCancelButton: true,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#d33',
+							confirmButtonText: 'نعم، أنا متأكد',
+							cancelButtonText: 'إلغاء'
+						}).then((result) => {
+							if (!result.isConfirmed) {
+								return;
+							}
+						});
+
 						var clicked   = $(this);
 						var bookingID = $(this).data('id');
 						// Perform nonce check.
@@ -384,9 +408,21 @@ add_action(
 					'.timetable-action',
 					function (e) {
 						e.preventDefault();
-						if ( confirm( 'هل أنت متأكد؟' ) !== true ) {
-							return;
-						}
+						Swal.fire({
+							title: 'هل أنت متأكد؟',
+							text: "لا يمكنك التراجع بعد ذلك!",
+							icon: 'warning',
+							showCancelButton: true,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#d33',
+							confirmButtonText: 'نعم، أنا متأكد',
+							cancelButtonText: 'إلغاء'
+						}).then((result) => {
+							if (!result.isConfirmed) {
+								return;
+							}
+						});
+
 						// Perform nonce check.
 						var clicked = $( this );
 						var nonce   = '<?php echo esc_html( wp_create_nonce( 'delete_timetable_nonce' ) ); ?>';
