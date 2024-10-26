@@ -295,6 +295,15 @@ add_action(
 				padding: 10px;
 				text-align: center;
 			}
+			.jet-popup {
+				overflow: -moz-scrollbars-none; /* For older versions of Firefox */
+				-ms-overflow-style: none; /* For Internet Explorer and Edge */
+				scrollbar-width: none; /* For Firefox */
+			}
+
+			.jet-popup::-webkit-scrollbar, .jet-popup::-moz-scrollbar  {
+				display: none;
+			}
 			.page-id-1935 .jet-popup{
 				height: calc(100% - 60px)!important;
 			}
@@ -352,6 +361,8 @@ add_action(
 				max-height:0;
 				overflow:hidden;
 				transition: all 1s ease-in-out;
+				padding: 0;
+				margin-bottom: 20px;
 			}
 			.show-notes-form.snks-notes-form{
 				max-height: 500px;
@@ -1422,7 +1433,7 @@ add_action(
 				color: <?php echo esc_html( $light_color ); ?>!important;
 			}
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
-			.anony-day-radio label.active-day, input[type="submit"],
+			.anony-day-radio label.active-day,
 			.profile-details h1, .profile-details h2, #snks-booking-page .snks-light-bg, #snks-booking-page .slick-prev::before, #snks-booking-page .slick-next::before{
 				color: <?php echo esc_html( $dark_color ); ?>!important;
 			}
@@ -1439,6 +1450,9 @@ add_action(
 				margin: auto;
 				margin-top: 50px;
 				transform: rotate(45deg);
+			}
+			div:where(.swal2-container) {
+				z-index: 999999!important;
 			}
 			.snks-org-doctors-container .snks-tear-shap-wrapper{
 				width: 150px;
