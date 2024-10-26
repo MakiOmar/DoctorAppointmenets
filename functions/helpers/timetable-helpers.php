@@ -153,8 +153,11 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
  */
 function snks_get_timetable_by_date( $date ) {
 	global $wpdb;
+	// Get the current user ID.
+	$current_user_id = get_current_user_id();
+
 	// Generate a unique cache key.
-	$cache_key = 'snks_timetable_by_date_' . $date;
+	$cache_key = 'snks_timetable_by_date_' . $date . '_user_' . $current_user_id;
 
 	$results = wp_cache_get( $cache_key );
 
@@ -163,16 +166,24 @@ function snks_get_timetable_by_date( $date ) {
 		// Execute the query.
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE DATE(date_time) = %s",
-				$date
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+				 WHERE DATE(date_time) = %s 
+				 AND user_id = %d 
+				 AND session_status = %s",
+				$date,
+				$current_user_id,
+				'waiting'
 			)
 		);
-		//phpcs:enable
+
+		// Set the cache for the results.
 		wp_cache_set( $cache_key, $results, '', 3600 );
+		//phpcs:enable
 	}
 
 	return $results;
 }
+
 
 /**
  * Get closest timetable
