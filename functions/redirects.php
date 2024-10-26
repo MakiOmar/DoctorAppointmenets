@@ -32,6 +32,11 @@ add_action(
 			wp_redirect( site_url('doctor-login') );
 			exit;
 		}
+		
+		if ( is_page('doctor-login') && is_user_logged_in() && snks_is_doctor() ) {
+			wp_redirect( site_url('account-setting') );
+			exit;
+		}
 		if ( ( is_page('account-setting') ) && snks_is_patient() ) {
 			wp_redirect( site_url('my-bookings') );
 			exit;
