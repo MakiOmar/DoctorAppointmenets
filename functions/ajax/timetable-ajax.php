@@ -198,8 +198,7 @@ function snks_create_custom_timetable() {
 		}
 	}
 
-	$starts = array_column( $date_timetables, 'starts' );
-	$starts = array_unique( $starts );
+	$starts = array_unique( array_column( $date_timetables, 'starts' ) );
 	$starts = array_map(
 		function ( $item ) {
 			return gmdate( 'H:i', strtotime( $item ) );
@@ -207,6 +206,13 @@ function snks_create_custom_timetable() {
 		$starts
 	);
 
+	$ends = array_unique( array_column( $date_timetables, 'ends' ) );
+	$ends = array_map(
+		function ( $item ) {
+			return gmdate( 'H:i', strtotime( $item ) );
+		},
+		$ends
+	);
 	$conflicts_list     = array();
 	$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
 
@@ -219,6 +225,13 @@ function snks_create_custom_timetable() {
 				$to_time = strtotime( '1970-01-01 ' . $to );
 				if ( $to_time > $start_time ) {
 					$conflicts_list[] = $to;
+				}
+			}
+		} elseif ( $selected_hour_time > $start_time ) {
+			foreach ( $ends as $end ) {
+				$end_time = strtotime( '1970-01-01 ' . $end );
+				if ( $end_time > $selected_hour_time ) {
+					$conflicts_list[] = $end;
 				}
 			}
 		}
