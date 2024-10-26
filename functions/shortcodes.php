@@ -70,31 +70,13 @@ add_shortcode(
 		$user_id = get_current_user_id();
 
 		// Encrypt the user ID.
-		$url = '';
+		$url = snks_encrypted_doctor_url( $user_id );
 
 		ob_start();
 		?>
 		<div class="anony-flex flex-v-center flex-h-center" style="margin-top: 20px;">
-		<input type="hidden" id="booking-url" value="<?php echo esc_url( $url ); ?>"/>
-		<button onclick="copyToClipboard()">انسخ رابط الحجز الخاص بك</button>
+		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">انسخ رابط الحجز الخاص بك</button>
 		</div>
-		<script>
-		function copyToClipboard() {
-			const bookingUrl = document.getElementById('booking-url');
-			const el = document.createElement('textarea');
-			el.value = bookingUrl.value;
-			document.body.appendChild(el);
-			el.select();
-			document.execCommand('copy');
-			document.body.removeChild(el);
-			Swal.fire({
-				icon: 'success',
-				title: 'تم',
-				text: 'تم النسخ',
-				confirmButtonText: 'غلق'
-			});
-		}
-		</script>
 		<?php
 		return ob_get_clean();
 	}
@@ -394,6 +376,20 @@ add_action(
 		<script>
 			jQuery(document).ready(
 				function($) {
+					$(document).on('click', '#copyToClipboard', function() {
+						const textToCopy = $(this).data('url');
+						navigator.clipboard.writeText(textToCopy).then(function() {
+							Swal.fire({
+								icon: 'success',
+								title: 'تم',
+								text: 'تم النسخ',
+								confirmButtonText: 'غلق'
+							});
+						}).catch(function(error) {
+							console.error('Failed to copy text: ', error);
+						});
+					});
+
 					$(document).on(
 						'click',
 						'.anony_dial_codes_selected_choice',
