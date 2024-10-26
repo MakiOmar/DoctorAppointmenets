@@ -342,24 +342,26 @@ add_action(
 							if (!result.isConfirmed) {
 								return;
 							}
-						});
-
-						// Perform nonce check.
-						var nonce     = '<?php echo esc_html( wp_create_nonce( 'insert_timetable_nonce' ) ); ?>';
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: {
-								nonce    : nonce,
-								action   : 'insert_timetable',
-							},
-							success: function(response) {
-								if ( response.resp ) {
-									$("#insert-timetable-msg").text('تم الحفظ بنجاح');
+							// Perform nonce check.
+							var nonce     = '<?php echo esc_html( wp_create_nonce( 'insert_timetable_nonce' ) ); ?>';
+							// Send AJAX request.
+							$.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+								data: {
+									nonce    : nonce,
+									action   : 'insert_timetable',
+								},
+								success: function(response) {
+									if ( response.resp ) {
+										Swal.fire({
+											title: 'تم الحفظ بنجاح!',
+											icon: 'success',
+											confirmButtonText: 'موافق'
+										});
+									}
 								}
-								console.log( response.errors );
-							}
+							});
 						});
 					}
 				);
