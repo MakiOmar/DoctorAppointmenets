@@ -553,42 +553,48 @@ function snks_generate_date_time( $app_settings, $day, $appointment_hour ) {
 function snks_generate_timetable() {
 	// Get appointments settings.
 	$app_settings = snks_get_appointments_settings();
+	if (empty($app_settings)) {
+        return array(); // Return early if no settings.
+    }
 	// Array to store appointments details.
-	$data    = array();
-	$user_id = get_current_user_id();
-	if ( ! empty( $app_settings ) ) {
-		$week_days          = array_keys( $app_settings );
-		$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days ) );
-		$off_days           = snks_get_off_days();
+	$data               = array();
+	$user_id            = get_current_user_id();
+	$week_days          = array_keys( $app_settings );
+	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days ) );
+	$off_days           = snks_get_off_days();
 
-		foreach ( $appointments_dates as $day => $dates_details ) {
-			// Day settings ( e.g. SAT ).
-			$day_settings = $app_settings[ $day ];
-			// Loop through generated dates.
-			foreach ( $dates_details as $date_details ) {
-				$date = $date_details['date'];
-				foreach ( $day_settings as $details ) {
-					if ( empty( $details['appointment_hour'] ) ) {
-						continue;
-					}
-					// Get choosen periods.
-					$periods = array_map( 'absint', explode( '-', $details['appointment_choosen_period'] ) );
-					// String to time appointment hour.
-					$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
-					// Get a list of expected hours at this day according to periods and appointment hour.
-					$expected_hours = snks_expected_hours( $periods, $appointment_hour );
-					foreach ( $expected_hours as $expected_hour ) {
-						$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $date . ' ' . $appointment_hour );
-						if ( $date_time ) {
-							$date_time = $date_time->format( 'Y-m-d h:i a' );
-						}
+	foreach ( $appointments_dates as $day => $dates_details ) {
+		// Day settings ( e.g. SAT ).
+		$day_settings = $app_settings[ $day ];
+		if (empty($day_settings)) {
+            continue;
+        }
+		// Loop through generated dates.
+		foreach ( $dates_details as $date_details ) {
+			$date = $date_details['date'];
+			foreach ( $day_settings as $details ) {
+				if ( empty( $details['appointment_hour'] ) ) {
+					continue;
+				}
+				// Get choosen periods.
+				$periods = array_map( 'absint', explode( '-', $details['appointment_choosen_period'] ) );
+				// String to time appointment hour.
+				$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
+				// Get a list of expected hours at this day according to periods and appointment hour.
+				$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $date . ' ' . $appointment_hour );
+				$expected_hours = snks_expected_hours( $periods, $appointment_hour );
+				foreach ( $expected_hours as $expected_hour ) {
+					// Ensure the formatted date_time is valid and compare it with the current time.
+					if ( $date_time && strtotime( $date_time->format('Y-m-d h:i a') ) > current_time( 'timestamp' ) ) {
+						$formatted_date_time = $date_time->format('Y-m-d h:i a');
+				
 						$data[ sanitize_text_field( $day ) ][] = array(
 							'user_id'         => $user_id,
 							'session_status'  => in_array( $date, $off_days, true ) ? 'closed' : 'waiting',
 							'day'             => sanitize_text_field( $day ),
 							'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
 							'period'          => sanitize_text_field( $expected_hour['min'] ),
-							'date_time'       => $date_time,
+							'date_time'       => $formatted_date_time,
 							'date'            => $date,
 							'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
 							'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
@@ -597,9 +603,11 @@ function snks_generate_timetable() {
 						);
 					}
 				}
+				
 			}
 		}
 	}
+	
 	return( $data );
 }
 /**
