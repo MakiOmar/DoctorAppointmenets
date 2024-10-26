@@ -329,9 +329,21 @@ add_action(
 					function( e ) {
 						e.preventDefault();
 						$("#insert-timetable-msg").text('');
-						if ( confirm("هل أنت متأكد") !== true ) {
-							return;
-						}
+						Swal.fire({
+							title: 'هل أنت متأكد؟',
+							text: "لا يمكنك التراجع بعد ذلك!",
+							icon: 'warning',
+							showCancelButton: true,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#d33',
+							confirmButtonText: 'نعم، أنا متأكد',
+							cancelButtonText: 'إلغاء'
+						}).then((result) => {
+							if (!result.isConfirmed) {
+								return;
+							}
+						});
+
 						// Perform nonce check.
 						var nonce     = '<?php echo esc_html( wp_create_nonce( 'insert_timetable_nonce' ) ); ?>';
 						// Send AJAX request.
