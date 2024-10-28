@@ -550,6 +550,7 @@ function custom_withdrawal_form_shortcode() {
 		),
 	);
 	$user_id            = get_current_user_id();
+	ob_start();
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
 		<?php echo str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ); //phpcs:disable ?>
@@ -636,7 +637,7 @@ function custom_withdrawal_form_shortcode() {
 		<!-- Submit Button (Initially disabled) -->
 		<button type="button" id="submit-withdrawal-form" class="anony-default-padding withdrawal-button" style="display:none;">حفظ</button>
 	</form>
-	<?php echo do_shortcode( '[elementor-template id="3737"]' ); ?>
+	<?php echo do_shortcode( '[elementor-template id="3737"]' );?>
 	<?php
 	return ob_get_clean();
 }//phpcs:enable
