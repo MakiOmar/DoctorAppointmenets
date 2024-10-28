@@ -71,6 +71,57 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
+				$('.jet-popup-target').on(
+					'click',
+					function() {
+						if ( $(this).closest('#jet-theme-core-footer').length < 1 ) {
+							return;
+						}
+
+						// Get the attached popup ID from the clicked item
+						var attachedPopup = $(this).data('jet-popup');
+
+						// Check if there is an open popup and its ID does not match the attached popup
+						var openPopup = $('.jet-popup--show-state');
+						if (openPopup.length && openPopup.attr('id') !== attachedPopup) {
+							// Trigger the close button click on the currently open popup
+							var closeButton = openPopup.find('.jet-popup__close-button');
+							if (closeButton.length) {
+								closeButton.click();
+							}
+						}
+
+						// Slide #snks_account_settings to the right (off screen)
+						$('#snks_account_settings').css({
+							transform: 'translateX(100vw)', // Moves the element off-screen to the right
+							display: 'block' // Ensure it's still visible (not hidden)
+						});
+					}
+				);
+
+				$('.snks-settings-tab a').on('click', function(event) {
+					event.preventDefault();
+				});
+
+				$(document).on(
+					'click',
+					'.snks-settings-tab',
+					function(){
+						var openPopup = $('.jet-popup--show-state');
+						if (openPopup.length ) {
+							// Trigger the close button click on the currently open popup
+							var closeButton = openPopup.find('.jet-popup__close-button');
+							if (closeButton.length) {
+								closeButton.click();
+							}
+						}
+						$('#snks_account_settings').css({
+							transform: 'translateX(0)', // Moves the element back to its original position
+							display: 'block' // Ensure it's visible
+						});
+
+					}
+				);
 				$(document).on(
 					'click',
 					'.field-type-heading-field',

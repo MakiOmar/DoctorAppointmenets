@@ -1083,3 +1083,17 @@ function handle_clinic_colors_ajax_submission() {
 }
 add_action( 'wp_ajax_clinic_colors_submit', 'handle_clinic_colors_ajax_submission' );
 add_action( 'wp_ajax_nopriv_clinic_colors_submit', 'handle_clinic_colors_ajax_submission' );
+
+add_filter(
+	'elementor/frontend/the_content',
+	function ( $content ) {
+		$post_id = get_the_ID();
+
+		if ( 1935 === $post_id ) {
+			$content = '<div id="snks_account_settings">' . $content . '</div>';
+		}
+
+		return $content;
+	},
+	10
+);

@@ -445,7 +445,15 @@ add_action(
 				}
 				
 			}
-
+			#snks_account_settings{
+				transition: all 1s ease-in-out;
+			}
+			.jet-popup-loader {
+				border: 4px rgb(6, 68, 93) solid;
+				border-top-width: 4px;
+				border-top-style: solid;
+				border-top-color: #fff;
+			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
