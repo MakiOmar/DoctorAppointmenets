@@ -487,6 +487,10 @@ add_action(
 			
 				// On the form success event, set a key in localStorage
 				$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
+					// Check if personal details form
+					if ( response[0].dataset.formId == '3362' && ( $('input[name=username_copy]').val() !== $('input[name=username]').val() || $('input[name=new-password]').val() !== '' )  ) {
+						location.reload();
+					}
 					if (localStorage.getItem('ajaxForm') === 'true') {
 						// Store a flag in localStorage
 						localStorage.setItem('ajaxInProgress', 'true');

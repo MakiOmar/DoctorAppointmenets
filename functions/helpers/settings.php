@@ -731,6 +731,56 @@ add_action(
 	}
 );
 
+add_action(
+	'jet-form-builder/custom-action/update_doctor_profile',
+	function ( $request ) {
+		$current_user_id = get_current_user_id();
+		$current_user_info = get_userdata( $current_user_id );
+		$current_hashed_password = $current_user_info->user_pass;
+		$current_username = $current_user_info->user_login;
+		if ( empty( $request['profile-image'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إضافة الصورة الشخصية' );
+		}
+
+		if ( empty( $request['email'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'البريد الإلكتروني لايمكن أن يكون فارغاً' );
+		}
+		if ( empty( $request['username'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون لايمكن أن يكون فارغاً' );
+		}  elseif ( username_exists( $request['username'] ) && $request['username'] !== $current_username ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون موجود بالفعل' );
+		}
+
+		if ( empty( $request['password'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال كلمة مرورك الحالية لاستكمال تحديث البيانات' );
+		} elseif ( ! wp_check_password( $request['password'], $current_hashed_password, $current_user_id ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'كلمة المرور الحالية غير صحيحة' );
+		}
+	}
+);
+
+add_action(
+	'jet-form-builder/custom-action/update_doctor_phone',
+	function ( $request ) {
+		if ( ! empty( $request['username'] ) ) {
+			// Get the current user.
+			$current_user_id = get_current_user_id();
+			global $wpdb;
+			$wpdb->update(
+				$wpdb->users,
+				array( 'user_login' => $request['username'] ),
+				array( 'ID' => $current_user_id )
+			);
+		}
+		// If new password is passed, update the user's password.
+		if ( ! empty( $request['new-password'] ) ) {
+			// Sanitize and update the password.
+			$new_password = sanitize_text_field( $request['new-password'] );
+			wp_set_password( $new_password, $current_user_id );
+		}
+	}
+);
+
 /**
  * Get off days
  *
@@ -1089,7 +1139,7 @@ add_filter(
 	function ( $content ) {
 		$post_id = get_the_ID();
 
-		if ( 1935 === $post_id ) {
+		if ( 1935 === $post_id && false !== strpos( $content, '3939ceb3' ) ) {
 			$content = '<div id="snks_account_settings">' . $content . '</div>';
 		}
 

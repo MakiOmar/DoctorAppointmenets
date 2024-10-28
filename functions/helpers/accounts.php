@@ -480,7 +480,7 @@ add_shortcode(
 			} else {
 				$to = '/login';
 			}
-			$logout_url = wp_logout_url( site_url( $to ) ) . '&_wpnonce=' . $logout_nonce;
+			$logout_url = wp_logout_url( site_url( $to ) );
 
 			// Return the logout link.
 			return '<p style="text-align:center;position:relative;z-index:9999"><a href="' . esc_url( $logout_url ) . '">خروج</a></p>';
