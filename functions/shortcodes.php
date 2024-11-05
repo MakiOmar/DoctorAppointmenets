@@ -165,6 +165,7 @@ function phone_input_cb( $atts ) {
 	$current_phone     = apply_filters( 'anony_phone_input_' . str_replace( '-', '_', $atts['name'] . '_value' ), '' );
 	ob_start();
 	?>
+	<p style="position:fixed;z-index:-1">
 	<style>
 		<?php if ( '' !== $atts['target'] && 'yes' === $atts['hide_target'] ) { ?>
 			input[name=<?php echo esc_attr( $atts['target'] ); ?>]{
@@ -239,6 +240,7 @@ function phone_input_cb( $atts ) {
 			}
 		</style>
 	<?php } ?>
+	</p>
 	<div id="phone_input_main_wrapper_<?php echo esc_attr( $atts['name'] ); ?>" class="phone_input_main_wrapper">
 		<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
 			<div class="anony-flex flex-v-center anony-full-width">
@@ -422,6 +424,14 @@ add_action(
 							}
 						);
 					}
+					$(window).on('jet-popup/show-event/after-show', function(){
+						$(".anony-dial-codes").each(
+							function () {
+								var thisDialCodes = $(this);
+								$('.anony_dial_codes_selected_choice', thisDialCodes).html($('.anony_dial_codes_first_choice', thisDialCodes).html(  )  );
+							}
+						);
+					});
 				}
 			);
 		</script>
@@ -474,6 +484,23 @@ function custom_withdrawal_form_shortcode() {
 	);
 	// Define the withdrawal options with associated text fields.
 	$withdrawal_details = array(
+		array(
+			'id'     => 'wallet',
+			'value'  => 'wallet',
+			'label'  => 'محفظة إلكترونية',
+			'fields' => array(
+				array(
+					'label' => 'اسم صاحب المحفظة',
+					'name'  => 'wallet_holder_name',
+					'value' => isset( $withdrawal_settings['wallet_holder_name'] ) ? $withdrawal_settings['wallet_holder_name'] : '',
+				),
+				array(
+					'label' => 'رقم المحفظة',
+					'name'  => 'wallet_number',
+					'value' => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
+				),
+			),
+		),
 		array(
 			'id'     => 'bank_account',
 			'value'  => 'bank_account',
@@ -533,28 +560,11 @@ function custom_withdrawal_form_shortcode() {
 				),
 			),
 		),
-		array(
-			'id'     => 'wallet',
-			'value'  => 'wallet',
-			'label'  => 'محفظة إلكترونية',
-			'fields' => array(
-				array(
-					'label' => 'اسم صاحب المحفظة',
-					'name'  => 'wallet_holder_name',
-					'value' => isset( $withdrawal_settings['wallet_holder_name'] ) ? $withdrawal_settings['wallet_holder_name'] : '',
-				),
-				array(
-					'label' => 'رقم المحفظة',
-					'name'  => 'wallet_number',
-					'value' => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
-				),
-			),
-		),
 	);
 	$user_id            = get_current_user_id();
 	ob_start();
 	?>
-	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20">
+	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20 snks-confirm">
 		<?php echo str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ); //phpcs:disable ?>
 		<?php echo str_replace( '{withdrawal_amount}', snks_get_latest_transaction_amount( $user_id ), do_shortcode( '[elementor-template id="3733"]' ) ); ?>
 		<?php wp_nonce_field( 'save_withdrawal_settings', 'withdrawal_settings_nonce' ); ?>
@@ -841,4 +851,97 @@ add_shortcode(
 		return '';
 	}
 );
+
+/**
+ * Shortcode to display "Delete My Account" button with AJAX verification.
+ *
+ * @return string
+ */
+function delete_account_shortcode() {
+	if ( ! is_user_logged_in() ) {
+		return 'يجب أن تكون مسجل الدخول لحذف حسابك.';
+	}
+	ob_start();
+	?>
+	<div id="delete-account-section">
+		<button id="send-verification-code" type="button">حذف حسابي</button>
+		<div id="verification-code-section" style="display: none;">
+			<input type="text" id="verification-code" placeholder="أدخل رمز التحقق" required>
+			<button id="verify-and-delete" type="button">تحقق واحذف الحساب</button>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+add_shortcode( 'delete_account', 'delete_account_shortcode' );
+
+
+/**
+ * Shortcode to display current user's transactions with colored arrows in Arabic.
+ *
+ * @return string HTML output of the transaction table.
+ */
+
+add_shortcode(
+	'user_transactions',
+	function () {
+		// Check if the user is logged in.
+		if ( ! is_user_logged_in() ) {
+				return '<p>يجب تسجيل الدخول لعرض المعاملات.</p>';
+		}
+
+		// Get the current user ID.
+		$user_id = get_current_user_id();
+
+		global $wpdb;
+		$transactions_table = $wpdb->prefix . 'snks_booking_transactions';
+		$timetable_table    = $wpdb->prefix . 'snks_provider_timetable';
+
+		//phpcs:disable
+		// Query to fetch transactions for the current user with timetable date_time.
+		$transactions = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * 
+        FROM $transactions_table t
+        WHERE t.user_id = %d
+        ORDER BY t.transaction_time DESC",
+				$user_id
+			)
+		);
+		//phpcs:enable
+		// Check if there are any transactions.
+		if ( empty( $transactions ) ) {
+			return '<p>لم يتم العثور على معاملات.</p>';
+		}
+
+		// Start output buffering.
+		ob_start();
+
+		// Display the transactions table.
+		echo '<table class="user-transactions" style="text-align: right; direction: rtl;">';
+		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>موعد الجلسة</th></tr>';
+
+		foreach ( $transactions as $transaction ) {
+				// Determine the arrow color based on the transaction type.
+				$arrow_color           = ( 'add' === $transaction->transaction_type ) ? 'green' : 'red';
+				$arrow_icon            = ( 'add' === $transaction->transaction_type ) ? '↑' : '↓';
+				$transaction_type_text = ( 'add' === $transaction->transaction_type ) ? 'إضافة' : 'سحب';
+
+				// Display transaction data with timetable date_time if available.
+				echo '<tr>';
+				echo '<td><span style="color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
+				echo '<td>' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
+				echo '<td>' . esc_html( gmdate( 'Y-m-d H:i', strtotime( $transaction->transaction_time ) ) ) . '</td>';
+				echo '<td>' . esc_html( $transaction->date_time ? gmdate( 'Y-m-d H:i', strtotime( $transaction->date_time ) ) : 'غير متاح' ) . '</td>';
+				echo '</tr>';
+		}
+
+		echo '</table>';
+
+		return ob_get_clean();
+	}
+);
+
+
 

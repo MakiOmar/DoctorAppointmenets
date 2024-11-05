@@ -101,13 +101,15 @@ add_action(
 		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'insert_timetable_nonce' ) ) {
 			wp_send_json_error( 'Invalid nonce.' );
 		}
+		$user_id = get_current_user_id();
 		$preview_timetables = snks_get_preview_timetable();
 		$errors             = array();
+		snks_delete_waiting_sessions_by_user_id( $user_id );
 		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
 			foreach ( $preview_timetables as $preview_timetable ) {
 				foreach ( $preview_timetable as $data ) {
 					$dtime  = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-					$exists = snks_timetable_exists( get_current_user_id(), $dtime, $data['day'], $data['starts'], $data['ends'] );
+					$exists = snks_timetable_exists( $user_id, $dtime, $data['day'], $data['starts'], $data['ends'] );
 					if ( empty( $exists ) ) {
 						$inserting ['user_id']         = $data['user_id'];
 						$inserting ['session_status']  = $data['session_status'];

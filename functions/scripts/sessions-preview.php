@@ -33,7 +33,8 @@ add_action(
 				$(document).on(
 					'click',
 					'.timetable-preview-tab',
-					function() {
+					function(e) {
+						e.preventDefault();
 						var target = $( this ).data('target');
 						if ( $('.' + target).hasClass('timetable-show') ) {
 							$('.' + target).slideUp();

@@ -998,7 +998,7 @@ add_action(
 			td:not(.ui-datepicker-unselectable) a{
 				color:#fff
 			}
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.consulting-session-table) {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions):not(.consulting-session-table):not(.user-transactions) {
 				border: 1px solid #ccc;
 				border-collapse: collapse;
 				margin: 0;
@@ -1007,44 +1007,44 @@ add_action(
 				table-layout: fixed;
 			}
 
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) caption {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) caption {
 				font-size: 1.5em;
 				margin: .5em 0 .75em;
 			}
 
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) tr {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) tr {
 				background-color: #3a4091;
 				border: 1px solid #3a4091;
 				padding: .35em;
 				border-radius: 10px;
 				color: #fff;
 			}
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) tr.snks-is-off{
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) tr.snks-is-off{
 				background-color: #000;
 				border-color: #000;
 			}
 
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not( .shop_table ) th,
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions):not( .shop_table ) th,
 			table:not( .shop_table ) td {
 				padding: .625em;
 				text-align: center;
 			}
 
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) th {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) th {
 				font-size: .85em;
 				text-transform: uppercase;
 			}
 
 			@media screen and (max-width: 600px) {
-				table:not(.ui-datepicker-calendar):not(.consulting-session-table) {
+				table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) {
 				border: 0;
 			}
 
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) caption {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) caption {
 				font-size: 1.3em;
 			}
 			
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) thead {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) thead {
 				border: none;
 				clip: rect(0 0 0 0);
 				height: 1px;
@@ -1055,20 +1055,20 @@ add_action(
 				width: 1px;
 			}
 			
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) tr {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) tr {
 				border-bottom: 3px solid #ddd;
 				display: block;
 				margin-bottom: .625em;
 			}
 			
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) td {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) td {
 				border-bottom: 1px solid #ddd;
 				display: block;
 				font-size: .8em;
 				text-align: <?php echo is_rtl() ? 'left' : 'right'; ?>;
 			}
 			
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) td::before {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) td::before {
 				/*
 				* aria-label has no advantage, it won't be read inside a table
 				content: attr(aria-label);
@@ -1079,7 +1079,7 @@ add_action(
 				text-transform: uppercase;
 			}
 			
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table) td:last-child {
+			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) td:last-child {
 				border-bottom: 0;
 			}
 			}
@@ -1660,6 +1660,7 @@ add_action(
 			#account-manager-phone{
 				display: flex;
 				justify-content: space-between;
+				margin-top: 10px;
 			}
 			#account-manager-phone > p, #account-manager-phone > label{
 				-webkit-box-flex: 0;
@@ -1672,7 +1673,10 @@ add_action(
 				margin-right: 5px;
 				margin-right: 5px;
 				border: 0;
-				width: 168px;
+				width: 178px;
+			}
+			#account-manager-phone button.anony_dial_codes_selected_choice{
+				height: 38px;
 			}
 			.anony-dial-codes-phone-label, .anony-filter-input{
 				font-family: "hacen_liner_print-outregular"!important
@@ -1733,8 +1737,17 @@ add_action(
 				border: 0;
 			}
 			.certificates-repeater .field-type-text-field{
-				width: 325px;
+				width: 270px;
 				margin-right: 28px;
+			}
+			#account-manager-phone > p:first-child{
+				display: none;
+			}
+			#account-manager-phone .anony-dial-codes-phone-label{
+				width: 100px;
+				color: #333333;
+				font-weight: normal;
+				font-size: 20px;
 			}
 			.certificates-repeater .field-type-text-field .jet-form-builder__field-wrap::before{
 				content:'';
@@ -1803,7 +1816,7 @@ add_action(
 				margin-right: 10px;
 				display: inline-block;
 				margin-left: 5px;
-				background-color: #fff;
+				background-color: #024059;
 			}
 			.withdrawal-radio{
 				margin-bottom: 15px;
@@ -1825,7 +1838,7 @@ add_action(
 				background-color: #fff;
 			}
 			.withdrawal-radio .checked {
-				background-color: #024059;
+				background-color: #fff;
 			}
 			.withdrawal-section-title{
 				border-radius: 30px;

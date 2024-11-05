@@ -993,18 +993,18 @@ add_action(
 /**
  * Colors form
  *
- * @return void
+ * @return string
  */
 function snks_clinic_colors_form() {
 	$images         = range( 1, 20 );
 	$clinic_color   = get_user_meta( get_current_user_id(), 'clinic_colors', true );
 	$image_base_url = '/wp-content/uploads/2024/09';
 	$nonce          = wp_create_nonce( 'clinic_colors_nonce' ); // Generate a nonce for validation.
-
+	ob_start();
 	// HTML form with inline script for AJAX.
 	//phpcs:disable
 	?>
-	<form id="clinic-colors-form">
+	<form id="clinic-colors-form" class="snks-confirm" action="" method="post">
 		<div class="clinic-colors-grid">
 			<?php foreach ( $images as $image ) : ?>
 				<div class="clinic-color-item">
@@ -1062,53 +1062,52 @@ function snks_clinic_colors_form() {
 			border: 1px solid red;
 		}
 	</style>
+<script type="text/javascript">
+				jQuery(document).ready(function ($) {
+					$(document).on(
+						'submit',
+						'#clinic-colors-form',
+						function (e) {
+						e.preventDefault();
 
-	<script type="text/javascript">
-		jQuery(document).ready(function ($) {
-			$(document).on(
-				'submit',
-				'#clinic-colors-form',
-				function (e) {
-				e.preventDefault();
+						const selectedColor = $('input[name="clinic_color"]:checked').val();
+						const nonce = '<?php echo $nonce; ?>'; // Nonce passed to the script
 
-				const selectedColor = $('input[name="clinic_color"]:checked').val();
-				const nonce = '<?php echo $nonce; ?>'; // Nonce passed to the script
-
-				$.ajax({
-					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
-					type: 'POST',
-					data: {
-						action: 'clinic_colors_submit',
-						clinic_color: selectedColor,
-						nonce: nonce
-					},
-					success: function (response) {
-						if (response.success) {
-							$('#clinic-colors-response').html('<p class="clinic-color-response success">' + response.data.message + '</p>');
-						} else {
-							$('#clinic-colors-response').html('<p class="clinic-color-response error">' + response.data.message + '</p>');
+						$.ajax({
+							url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+							type: 'POST',
+							data: {
+								action: 'clinic_colors_submit',
+								clinic_color: selectedColor,
+								nonce: nonce
+							},
+							success: function (response) {
+								if (response.success) {
+									$('#clinic-colors-response').html('<p class="clinic-color-response success">' + response.data.message + '</p>');
+								} else {
+									$('#clinic-colors-response').html('<p class="clinic-color-response error">' + response.data.message + '</p>');
+								}
+							},
+							error: function () {
+								$('#clinic-colors-response').html('<p style="color: red;">حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.</p>');
+							}
+						});
+					});
+					$(document).on(
+						'change',
+						'input[name="clinic_color"]',
+						function(){
+							$('.clinic-color-image').removeClass('selected'); // Remove selected class from all images
+							$('input[name="clinic_color"]:checked').closest('.clinic-color-item').find('img').addClass('selected');
 						}
-					},
-					error: function () {
-						$('#clinic-colors-response').html('<p style="color: red;">حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.</p>');
-					}
+					);
 				});
-			});
-			$(document).on(
-				'change',
-				'input[name="clinic_color"]',
-				function(){
-					$('.clinic-color-image').removeClass('selected'); // Remove selected class from all images
-					$('input[name="clinic_color"]:checked').closest('.clinic-color-item').find('img').addClass('selected');
-				}
-			);
-		});
-	</script>
+			</script>
 	<?php
+	return ob_get_clean();
 }
 //phpcs:enable
-add_shortcode( 'clinic_colors_form', 'snks_clinic_colors_form' ); // Use [clinic_colors_form] shortcode to display the form.
-
+add_shortcode( 'clinic_colors_form', 'snks_clinic_colors_form' );
 /**
  * AJAX handler for saving the selected color
  *

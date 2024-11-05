@@ -276,6 +276,14 @@ add_filter(
 		return $arr;
 	}
 );
+// Register the widget with Elementor.
+add_action(
+	'elementor/widgets/register',
+	function ( $widgets_manager ) {
+		require_once plugin_dir_path( __FILE__ ) . 'clinic-colors-widget.php';
+		$widgets_manager->register( new \Clinic_Colors_Widget() );
+	}
+);
 
 add_action(
 	'wp_footer',

@@ -229,6 +229,9 @@ add_action(
 		if ( empty( $password ) && ! empty( $clinic_manager_password ) ) {
 			$password = sanitize_text_field( $clinic_manager_password );
 		}
+		if ( empty( $username ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون مطلوب' );
+		}
 		if ( empty( $email ) && ! empty( $clinic_manager_email ) && is_email( $clinic_manager_email ) ) {
 			$clinic_manager = get_user_by( 'email', $email );
 			if ( $clinic_manager ) {

@@ -400,6 +400,33 @@ function snks_delete_timetable( $id ) {
 }
 
 /**
+ * Deletes all records in the wpds_snks_provider_timetable table for a given user ID
+ * where session_status is not equal to 'waiting'.
+ *
+ * @param int $user_id The ID of the user whose records should be deleted.
+ */
+function snks_delete_waiting_sessions_by_user_id( $user_id ) {
+	global $wpdb;
+
+	// Sanitize the user ID.
+	$user_id = intval( $user_id );
+
+	// Define the table name with the WordPress table prefix.
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	//phpcs:disable
+	// Prepare and execute the delete query.
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM $table_name WHERE user_id = %d AND session_status = %s",
+			$user_id,
+			'waiting'
+		)
+	);
+	//phpcs:enable
+}
+
+
+/**
  * Get bookable dates
  *
  * @param int    $user_id User's ID.

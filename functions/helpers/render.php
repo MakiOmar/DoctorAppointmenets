@@ -203,7 +203,7 @@ function snks_generate_preview() {
 				} else {
 					$is_off = '';
 				}
-				if ( count( $details ) > 1 ) {
+				if ( count( $details ) > 1 || count( $details ) == 1 ) {
 					// Associate cells with columns.
 					$cells = array(
 						'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
@@ -217,7 +217,7 @@ function snks_generate_preview() {
 					$table->addRow( new TableRow( $cells, $attrs ) );
 					++$position;
 				}
-				$class = count( $details ) > 1 ? ' timetable-preview-item' : '';
+				$class = count( $details ) > 1 || count( $details ) == 1 ? ' timetable-preview-item' : '';
 				foreach ( $details as $data ) {
 					$index = array_search( $data, $timetable, true );
 					if ( in_array( $date, $off_days, true ) ) {

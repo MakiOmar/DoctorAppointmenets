@@ -470,7 +470,7 @@ add_action(
 					return serializableData;
 				}				
 				// On the form success event, set a key in localStorage
-				jQuery(document).on("jet-form-builder/after-init", function(event, formContainer, jetFormInstance) {
+				/*jQuery(document).on("jet-form-builder/after-init", function(event, formContainer, jetFormInstance) {
 					// Access the form element
 					const formElement = formContainer[0].querySelector("form.jet-form-builder");
 					
@@ -484,14 +484,14 @@ add_action(
 						localStorage.removeItem('ajaxForm');
 					}
 				});
-			
+				*/
 				// On the form success event, set a key in localStorage
 				$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
 					// Check if personal details form
 					if ( response[0].dataset.formId == '3362' && ( $('input[name=username_copy]').val() !== $('input[name=username]').val() || $('input[name=new-password]').val() !== '' )  ) {
 						location.reload();
 					}
-					if (localStorage.getItem('ajaxForm') === 'true') {
+					if (response[0].dataset.formId == '2199' /*&& localStorage.getItem('ajaxForm') === 'true'*/) {
 						// Store a flag in localStorage
 						localStorage.setItem('ajaxInProgress', 'true');
 
@@ -517,13 +517,17 @@ add_action(
 								// Handle the successful response here, such as updating the DOM
 								// Remove the localStorage key after success
 								localStorage.removeItem('ajaxInProgress');
-								localStorage.removeItem('ajaxForm');
+								//localStorage.removeItem('ajaxForm');
+								localStorage.removeItem('formData');
+								localStorage.removeItem('response');
 							},
 							error: function(error) {
 								console.log('AJAX error:', error);
 								// Handle errors here, maybe reset the localStorage key
 								localStorage.removeItem('ajaxInProgress');
-								localStorage.removeItem('ajaxForm');
+								//localStorage.removeItem('ajaxForm');
+								localStorage.removeItem('formData');
+								localStorage.removeItem('response');
 							}
 						});
 					}

@@ -40,55 +40,19 @@ add_action(
 				$_req['title'] = 'جلسة';
 			}
 			$link = ! empty( $_req['link'] ) ? $_req['link'] : '';
-			snks_insert_notification( wp_strip_all_tags( $_req['notif_content'] ), $link, $_req['notif_user'] );
-			if ( class_exists( 'Anonyengine_App_Notifications' ) && defined( 'ANOTF_DIR' ) ) {
-				require_once ANOTF_DIR . 'public/class-anonyengine-firebase.php';
-				$firebase = new Anonyengine_Firebase();
-				$firebase->trigger_notifier( $_req['title'], $_req['notif_content'], absint( $_req['notif_user'] ) );
+			// Use snks_insert_notification function if need to insert notification.
+			// Check if the class does not already exist and if the constant ANOTF_DIR is defined.
+			if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
+				// Use the correct namespace to initialize the class.
+				$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+
+				// Ensure that $_req parameters are sanitized before using them.
+				$title   = sanitize_text_field( $_req['title'] );
+				$content = sanitize_text_field( $_req['notif_content'] );
+				$user_id = absint( $_req['notif_user'] );
+				// Call the notifier method.
+				$firebase->trigger_notifier( $title, $content, $user_id );
 			}
-		}
-
-		if ( isset( $_req['programme_enrolled'] ) && 'true' === $_req['programme_enrolled'] ) {
-			update_user_meta( $user_id, 'programme_enrolled', 'yes' );
-			update_user_meta( $user_id, 'programme_enrolment_date', date_i18n( 'Y-m-d' ) );
-		}
-		if ( ! empty( $_req['payment-url'] ) ) {
-			ob_start();
-			include SNKS_DIR . 'templates/email-template.php';
-			$template = ob_get_clean();
-
-			$message = str_replace(
-				array(
-					'{logo}',
-					'{title}',
-					'{sub_title}',
-					'{content_placeholder}',
-					'{text_1}',
-					'{text_2}',
-					'{text_3}',
-					'{button_text}',
-					'{button_url}',
-				),
-				array(
-					site_url( 'wp-content/uploads/2023/12/w2.png' ),
-					'الدفع للإنضمام للبرنامج العلاجي',
-					'في جلسة',
-					site_url( '/wp-content/uploads/2024/04/sky-2667455_1280.jpg' ),
-					'شكراً لثقتك في جلسة',
-					'يرجى استكمال الدفع',
-					'أنقر على الزر التالي',
-					'إدفع الآن',
-					$_req['payment-url'],
-				),
-				$template
-			);
-			$to      = $_req['email'];
-			$subject = 'الإشتراك في البرنامج العلاجي من جلسة';
-			$headers = array(
-				'Content-Type: text/html; charset=UTF-8',
-				'From: جلسة <customer@shrinks.clinic>',
-			);
-			wp_mail( $to, $subject, $message, $headers );
 		}
 	}
 );
