@@ -9,6 +9,52 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+
+/**
+ * Using user blocker plugin meta key.
+ * Blocks a user by setting a meta field to mark the user as blocked.
+ *
+ * @param int $user_id The ID of the user to block.
+ */
+function snks_block_user( $user_id ) {
+	// Set a user meta field to mark the user as blocked.
+	update_user_meta( $user_id, 'is_active', 'n' );
+
+	/**
+	 * Fires after a user is blocked.
+	 *
+	 * @param int $user_id The ID of the blocked user.
+	 */
+	do_action( 'user_blocked', $user_id );
+}
+
+/**
+ * Unblocks a user by removing the blocked status from user meta.
+ *
+ * @param int $user_id The ID of the user to unblock.
+ */
+function snks_unblock_user( $user_id ) {
+	// Remove the blocked status from user meta.
+	delete_user_meta( $user_id, 'is_active' );
+
+	/**
+	 * Fires after a user is unblocked.
+	 *
+	 * @param int $user_id The ID of the unblocked user.
+	 */
+	do_action( 'user_unblocked', $user_id );
+}
+
+/**
+ * Checks if a user is blocked
+ *
+ * @param int $user_id The ID of the user to unblock.
+ */
+function snks_is_blocked( $user_id ) {
+	$is_active = get_user_meta( $user_id, 'is_active', true );
+	return 'n' === $is_active;
+}
+
 /**
  * Get patient details
  *
@@ -351,15 +397,17 @@ function custom_log_patient_in( $_request ) {
 	if ( ! $user ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! بيانات الدخول غير صحيحة' );
 	}
-	// Check if the user is not a doctor.
-	if ( ! in_array( 'doctor', $user->roles, true ) ) {
-		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! هذا ليس حساب طبيب' );
-	}
 	// Validate the password.
 	if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! كلمة المرور غير صحيحة' );
 	}
-
+	// Check if the user is not a doctor.
+	if ( isset( $_req['doctor_login'] ) && ! in_array( 'doctor', $user->roles, true ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! هذا ليس حساب طبيب' );
+	}
+	if ( snks_is_blocked( $user->ID ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! هذا الحساب لم يعد متاحاً.' );
+	}
 	// Log the user in.
 	wp_set_current_user( $user->ID );
 	wp_set_auth_cookie( $user->ID, true ); // The second parameter is true to remember the user.
