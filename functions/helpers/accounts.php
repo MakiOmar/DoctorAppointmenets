@@ -226,6 +226,12 @@ add_action(
 		$clinic_manager_email    = get_user_meta( $current_user_id, 'clinic_manager_email', true );
 		$clinic_manager_password = get_user_meta( $current_user_id, 'clinic_manager_password', true );
 		$clinic_manager_phone    = get_user_meta( $current_user_id, 'clinic_manager_phone', true );
+		if ( ! ctype_digit( $username ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً رقم الموبايل يجب أن يتكون من أرقام فقط بدو أحرف أو رموز.' );
+		}
+		if ( strlen( $username ) !== 11 ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً رقم الموبايل يجب أن يتكون من 11 رقماَ' );
+		}
 		if ( empty( $password ) && ! empty( $clinic_manager_password ) ) {
 			$password = sanitize_text_field( $clinic_manager_password );
 		}
