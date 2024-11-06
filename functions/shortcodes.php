@@ -836,10 +836,11 @@ add_shortcode(
 		// Query to fetch transactions for the current user with timetable date_time.
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * 
-        FROM $transactions_table t
-        WHERE t.user_id = %d
-        ORDER BY t.transaction_time DESC",
+				"SELECT t.*, s.*
+				FROM $transactions_table t
+				LEFT JOIN $timetable_table s ON t.timetable_id = s.id
+				WHERE t.user_id = %d
+				ORDER BY t.transaction_time DESC",
 				$user_id
 			)
 		);
@@ -855,7 +856,6 @@ add_shortcode(
 		// Display the transactions table.
 		echo '<table class="user-transactions" style="text-align: right; direction: rtl;">';
 		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>موعد الجلسة</th></tr>';
-
 		foreach ( $transactions as $transaction ) {
 				// Determine the arrow color based on the transaction type.
 				$arrow_color           = ( 'add' === $transaction->transaction_type ) ? 'green' : 'red';
@@ -863,11 +863,11 @@ add_shortcode(
 				$transaction_type_text = ( 'add' === $transaction->transaction_type ) ? 'إضافة' : 'سحب';
 
 				// Display transaction data with timetable date_time if available.
-				echo '<tr>';
-				echo '<td><span style="color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
-				echo '<td>' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
-				echo '<td>' . esc_html( gmdate( 'Y-m-d H:i', strtotime( $transaction->transaction_time ) ) ) . '</td>';
-				echo '<td>' . esc_html( $transaction->date_time ? gmdate( 'Y-m-d H:i', strtotime( $transaction->date_time ) ) : 'غير متاح' ) . '</td>';
+				echo '<tr style="font-size:13px !important">';
+				echo '<td style="vertical-align: middle;"><span style="font-size:25px;color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
+				echo '<td style="vertical-align: middle;">' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
+				echo '<td style="vertical-align: middle;">' . esc_html( snks_localized_datetime( $transaction->transaction_time ) ) . '</td>';
+				echo '<td style="vertical-align: middle;">' . esc_html( $transaction->date_time ? snks_localized_datetime( $transaction->date_time ) : 'غير متاح' ) . '</td>';
 				echo '</tr>';
 		}
 

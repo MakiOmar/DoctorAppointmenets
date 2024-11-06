@@ -159,6 +159,15 @@ function snks_localize_time( $time ) {
 function snks_localized_time( $time ) {
 	return snks_localize_time( gmdate( 'h:i a', strtotime( $time ) ) );
 }
+/**
+ * Localized datetime
+ *
+ * @param string $datetime Time.
+ * @return string
+ */
+function snks_localized_datetime( $datetime ) {
+	return str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), gmdate( 'Y-m-d h:i a', strtotime( $datetime ) ) );
+}
 
 
 
