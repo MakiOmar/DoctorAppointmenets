@@ -7,39 +7,6 @@
 
 defined( 'ABSPATH' ) || die();
 
-// Add custom column to the users table.
-add_filter(
-	'manage_users_columns',
-	function ( $columns ) {
-		$columns['family_member'] = 'Patient/Family';
-		return $columns;
-	}
-);
-
-// Display meta value for custom column.
-add_action(
-	'manage_users_custom_column',
-	function ( $value, $column_name, $user_id ) {
-		if ( 'family_member' === $column_name ) {
-			$user = get_user_by( 'id', $user_id );
-			if ( in_array( 'family', $user->roles, true ) ) {
-				$patient_id = get_user_meta( $user_id, 'patient-id', true );
-				if ( ! empty( $patient_id ) ) {
-					$value = '<a href="' . esc_url( add_query_arg( 'user_id', $patient_id, admin_url( '/user-edit.php' ) ) ) . '">Patient(' . $patient_id . ')</a>';
-				}
-			} elseif ( in_array( 'customer', $user->roles, true ) ) {
-				$family_id = get_user_meta( $user_id, 'family-id', true );
-				if ( ! empty( $family_id ) ) {
-					$value = '<a href="' . esc_url( add_query_arg( 'user_id', $family_id, admin_url( '/user-edit.php' ) ) ) . '">Family(' . $family_id . ')</a>';
-				}
-			}
-		}
-		return $value;
-	},
-	10,
-	3
-);
-
 add_filter(
 	'user_profile_update_errors',
 	function ( $errors, $update, $user ) {
@@ -81,3 +48,29 @@ add_action(
 	10,
 	1
 );
+
+/**
+ * Customizes the "From" name and email address in outgoing WordPress emails.
+ *
+ * @package SNKS_Custom_Email
+ */
+
+/**
+ * Changes the "From" email address in outgoing emails.
+ *
+ * @return string The customized email address.
+ */
+function snks_wp_mail_from() {
+	return get_option( 'admin_email' ); // Replace with your desired email address.
+}
+add_filter( 'wp_mail_from', 'snks_wp_mail_from' );
+
+/**
+ * Changes the "From" name in outgoing emails.
+ *
+ * @return string The customized "From" name.
+ */
+function snks_wp_mail_from_name() {
+	return bloginfo( 'name' ); // Replace with your desired "From" name.
+}
+add_filter( 'wp_mail_from_name', 'snks_wp_mail_from_name' );
