@@ -102,13 +102,16 @@ add_action(
 					}
 				});*/
 
-				$( document ).on('click', '.jet-form-builder-repeater__new', function(){
+				$( document ).on('click', '.jet-form-builder-repeater__new, .jet-form-builder-repeater__remove', function(){
 					preventNavigation = true;
 					setCookie('edited_form', $(this).closest('form').data('form-id'));
 				});
-				$(window).on('jet-popup/show-event/after-show', function(){
-					preventNavigation = false;
-					setCookie("next_popup", '', 0);
+				$(window).on('jet-popup/show-event/after-show', function( event, popup ){
+					let exclude = [ 'jet-popup-1961', 'jet-popup-1958', 'jet-popup-1964' ];
+					if ( ! exclude.includes(popup.data.popupId) ){
+						preventNavigation = false;
+						setCookie("next_popup", '', 0);
+					}
 				});
 				$( document ).on(
 					'click',
@@ -203,6 +206,10 @@ add_action(
 				);
 				$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
 					let formId = response[0].dataset.formId;
+					exclude = [ 1974, 2067, 2069 ];
+					if ( exclude.includes( parseInt( formId ) ) ) {
+						return;
+					}
 					// if is add sessions form
 					if ( formId == 2199 ) {
 						Swal.fire({
@@ -220,6 +227,7 @@ add_action(
 								}
 							});
 					}
+					
 					preventNavigation = false;
 					setCookie('edited_form', '', 0);
 					let nextPopup = getCookie('next_popup');
