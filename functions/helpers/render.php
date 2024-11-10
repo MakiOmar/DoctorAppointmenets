@@ -158,102 +158,103 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
  */
 function snks_generate_preview() {
 	$timetables = snks_get_preview_timetable();
+	$output     = '';
 	if ( empty( $timetables ) ) {
-		return '<p>لم تقم بإضافة مواعيد</p>';
-	}
-	$off_days     = snks_get_off_days();
-	$days_indexes = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
-	$days_sorted  = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
+		$output .= '<p style="text-align:center;padding:20px 10px">لم تقم بإضافة مواعيد</p>';
+	} else {
+		$off_days     = snks_get_off_days();
+		$days_indexes = array( 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' );
+		$days_sorted  = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
 
-	uksort(
-		$timetables,
-		function ( $a, $b ) use ( $days_sorted ) {
-			$pos_a = array_search( $a, $days_sorted, true );
-			$pos_b = array_search( $b, $days_sorted, true );
-			return $pos_a - $pos_b;
-		}
-	);
-
-	$output = '';
-	if ( is_array( $timetables ) ) {
-		foreach ( $timetables as $day => $timetable ) {
-			$output     .= '<div class="preview-container">';
-			$date_groups = snks_group_by( 'date', $timetable );
-			// https://github.com/erguncaner/table.
-			// First create a table.
-			$table = new Table(
-				array(
-					'id'    => $day . '-preview-timetable',
-					'class' => 'preview-timetable',
-				)
-			);
-			// Create table columns with a column key and column object.
-			$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
-			$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
-			$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
-			$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
-			$table->addColumn( 'period', new TableColumn( 'المدة' ) );
-			$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
-			$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
-			$position = 0;
-			foreach ( $date_groups as $date => $details ) {
-				if ( in_array( $date, $off_days, true ) ) {
-					// is_off  ' snks-is-off'.
-					continue;
-				} else {
-					$is_off = '';
-				}
-				if ( count( $details ) > 1 || count( $details ) == 1 ) {
-					// Associate cells with columns.
-					$cells = array(
-						'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
-					);
-					// define row attributes.
-					$attrs = array(
-						'id'          => 'timetable-tab-' . $day . '-' . $position,
-						'class'       => 'timetable-preview-tab' . $is_off,
-						'data-target' => 'timetable-' . $date,
-					);
-					$table->addRow( new TableRow( $cells, $attrs ) );
-					++$position;
-				}
-				$class = count( $details ) > 1 || count( $details ) == 1 ? ' timetable-preview-item' : '';
-				foreach ( $details as $data ) {
-					$index = array_search( $data, $timetable, true );
-					if ( in_array( $date, $off_days, true ) ) {
-						$actions = 'أجازة';
-					} else {
-						$actions = snks_preview_actions( $data['day'], $index );
-					}
-					if ( 'offline' === $data['attendance_type'] ) {
-						$clinic    = snks_get_clinic( $data['clinic'] );
-						$ttendance = $clinic['clinic_title'];
-					} else {
-						$ttendance = 'online';
-					}
-					// Associate cells with columns.
-					$cells = array(
-						'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
-						'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
-						'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
-						'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
-						'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
-						'attendance' => new TableCell( $ttendance, array( 'data-label' => 'الحضور' ) ),
-						'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
-					);
-					// define row attributes.
-					$attrs = array(
-						'id'    => 'timetable-' . $data['day'] . '-' . $index,
-						'class' => 'timetable-' . $date . $class . $is_off,
-					);
-					$table->addRow( new TableRow( $cells, $attrs ) );
-				}
+		uksort(
+			$timetables,
+			function ( $a, $b ) use ( $days_sorted ) {
+				$pos_a = array_search( $a, $days_sorted, true );
+				$pos_b = array_search( $b, $days_sorted, true );
+				return $pos_a - $pos_b;
 			}
-			// Finally generate html.
-			$output .= $table->html();
-			$output .= snks_render_conflicts( $data['day'] );
-			$output .= '<a data-day="' . $data['day'] . '" data-day-label="' . snks_localize_day( $data['day'] ) . '" data-day-index="' . array_search( $data['day'], $days_indexes, true ) . '" class="custom-timetabl-trigger snks-bg anony-default-padding anony-default-margin-top rounded anony-full-width anony-center-text">إضافة موعد ليوم ' . snks_localize_day( $data['day'] ) . '</a>';
-			$output .= '</div>';
+		);
+
+		if ( is_array( $timetables ) ) {
+			foreach ( $timetables as $day => $timetable ) {
+				$output     .= '<div class="preview-container">';
+				$date_groups = snks_group_by( 'date', $timetable );
+				// https://github.com/erguncaner/table.
+				// First create a table.
+				$table = new Table(
+					array(
+						'id'    => $day . '-preview-timetable',
+						'class' => 'preview-timetable',
+					)
+				);
+				// Create table columns with a column key and column object.
+				$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
+				$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
+				$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
+				$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
+				$table->addColumn( 'period', new TableColumn( 'المدة' ) );
+				$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
+				$table->addColumn( 'actions', new TableColumn( 'الخيارات' ) );
+				$position = 0;
+				foreach ( $date_groups as $date => $details ) {
+					if ( in_array( $date, $off_days, true ) ) {
+						// is_off  ' snks-is-off'.
+						continue;
+					} else {
+						$is_off = '';
+					}
+					if ( count( $details ) > 1 || count( $details ) == 1 ) {
+						// Associate cells with columns.
+						$cells = array(
+							'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
+						);
+						// define row attributes.
+						$attrs = array(
+							'id'          => 'timetable-tab-' . $day . '-' . $position,
+							'class'       => 'timetable-preview-tab' . $is_off,
+							'data-target' => 'timetable-' . $date,
+						);
+						$table->addRow( new TableRow( $cells, $attrs ) );
+						++$position;
+					}
+					$class = count( $details ) > 1 || count( $details ) == 1 ? ' timetable-preview-item' : '';
+					foreach ( $details as $data ) {
+						$index = array_search( $data, $timetable, true );
+						if ( in_array( $date, $off_days, true ) ) {
+							$actions = 'أجازة';
+						} else {
+							$actions = snks_preview_actions( $data['day'], $index );
+						}
+						if ( 'offline' === $data['attendance_type'] ) {
+							$clinic    = snks_get_clinic( $data['clinic'] );
+							$ttendance = $clinic['clinic_title'];
+						} else {
+							$ttendance = 'online';
+						}
+						// Associate cells with columns.
+						$cells = array(
+							'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
+							'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
+							'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+							'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
+							'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
+							'attendance' => new TableCell( $ttendance, array( 'data-label' => 'الحضور' ) ),
+							'actions'    => new TableCell( $actions, array( 'data-label' => 'الخيارت' ) ),
+						);
+						// define row attributes.
+						$attrs = array(
+							'id'    => 'timetable-' . $data['day'] . '-' . $index,
+							'class' => 'timetable-' . $date . $class . $is_off,
+						);
+						$table->addRow( new TableRow( $cells, $attrs ) );
+					}
+				}
+				// Finally generate html.
+				$output .= $table->html();
+				$output .= snks_render_conflicts( $data['day'] );
+				$output .= '<a data-day="' . $data['day'] . '" data-day-label="' . snks_localize_day( $data['day'] ) . '" data-day-index="' . array_search( $data['day'], $days_indexes, true ) . '" class="custom-timetabl-trigger snks-bg anony-default-padding anony-default-margin-top rounded anony-full-width anony-center-text">إضافة موعد ليوم ' . snks_localize_day( $data['day'] ) . '</a>';
+				$output .= '</div>';
+			}
 		}
 	}
 	$output .= '<br/><center>هل أنت جاهز للنشر؟</center><br/>';

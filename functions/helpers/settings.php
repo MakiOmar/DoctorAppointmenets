@@ -382,6 +382,10 @@ function snks_get_available_attendance_types_options() {
 		'value' => 'offline',
 		'label' => 'عيادة',
 	);
+	$both      = array(
+		'value' => 'both',
+		'label' => 'أونلاين/عيادة',
+	);
 	if ( 'online' === $settings['attendance_type'] ) {
 		$is_available[] = $online;
 	} elseif ( 'offline' === $settings['attendance_type'] ) {
@@ -389,6 +393,7 @@ function snks_get_available_attendance_types_options() {
 	} elseif ( 'both' === $settings['attendance_type'] ) {
 		$is_available[] = $online;
 		$is_available[] = $offline;
+		$is_available[] = $both;
 	}
 	return $is_available;
 }
@@ -644,13 +649,13 @@ function snks_get_preview_timetable( $user_id = false, $full = false ) {
 	}
     // Fetch the doctor's settings.
     $doctor_settings = snks_doctor_settings( $user_id );
-
+	$available_periods = snks_get_periods( $user_id );
     // Check if the doctor has an attendance_type setting.
     if ( ! empty( $doctor_settings['attendance_type'] ) && is_array( $timetable ) ) {
         // Filter timetable based on the attendance_type.
         foreach ( $timetable as $day => &$sessions ) {
-            $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings ) {
-                return $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'];
+            $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings, $available_periods ) {
+                return ( $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'] ) && in_array( $session['period'], $available_periods );
             });
         }
 

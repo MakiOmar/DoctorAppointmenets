@@ -101,7 +101,7 @@ add_action(
 		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'insert_timetable_nonce' ) ) {
 			wp_send_json_error( 'Invalid nonce.' );
 		}
-		$user_id = get_current_user_id();
+		$user_id            = get_current_user_id();
 		$preview_timetables = snks_get_preview_timetable();
 		$errors             = array();
 		snks_delete_waiting_sessions_by_user_id( $user_id );
@@ -122,22 +122,38 @@ add_action(
 						$inserting ['clinic']          = $data['clinic'];
 						$inserting ['attendance_type'] = $data['attendance_type'];
 
-						$inserted = snks_insert_timetable( $inserting );
-						if ( ! $inserted ) {
-							$errors[] = $data;
+						if ( 'both' === $data['attendance_type'] ) {
+							$inserting ['attendance_type'] = 'online';
+							snks_insert_timetable( $inserting );
+
+							$inserting ['attendance_type'] = 'offline';
+							snks_insert_timetable( $inserting );
+
+						} else {
+							snks_insert_timetable( $inserting );
 						}
 					} else {
 						foreach ( $exists as $appointment ) {
 							if ( 'waiting' === $appointment->session_status ) {
-
-								$updated = snks_update_timetable(
-									absint( $appointment->ID ),
-									array(
-										'period'          => $data['period'],
-										'clinic'          => $data['clinic'],
-										'attendance_type' => $data['attendance_type'],
-									)
-								);
+								$inserting = json_decode( wp_json_encode( $appointment ), true );
+								if ( 'both' === $data['attendance_type'] ) {
+									if ( 'online' === $appointment->attendance_type ) {
+										$ins = 'offline';
+									} else {
+										$ins = 'online';
+									}
+									$inserting['attendance_type'] = $ins;
+									snks_insert_timetable( $inserting );
+								} else {
+									snks_update_timetable(
+										absint( $appointment->ID ),
+										array(
+											'period' => $data['period'],
+											'clinic' => $data['clinic'],
+											'attendance_type' => $data['attendance_type'],
+										)
+									);
+								}
 							}
 						}
 					}
