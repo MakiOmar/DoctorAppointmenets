@@ -285,10 +285,101 @@ add_action(
 	}
 );
 
+/**
+ * Custom error handler to suppress specific error messages in WordPress.
+ *
+ * This handler checks if an error message contains any of the excluded text patterns
+ * and prevents it from being logged. The list of patterns can be modified via a filter.
+ *
+ * @param int    $errno   The level of the error raised.
+ * @param string $errstr  The error message.
+ * @param string $errfile The filename in which the error occurred.
+ * @param int    $errline The line number where the error occurred.
+ * @return bool True to suppress the error, false to proceed with default error handling.
+ */
+function snks_error_handler( $errno, $errstr, $errfile, $errline ) {
+	// Define default text patterns to exclude from logging.
+	$exclude_patterns = array(
+		'_load_textdomain_just_in_time',
+	);
+
+	/**
+	 * Filter the array of text patterns to exclude from logging.
+	 *
+	 * @param array $exclude_patterns Array of text patterns to check against error messages.
+	 */
+	$exclude_patterns = apply_filters( 'snks_error_handler_exclude_patterns', $exclude_patterns );
+
+	// Loop through each pattern and check if it's present in the error message.
+	foreach ( $exclude_patterns as $pattern ) {
+		if ( strpos( $errstr, $pattern ) !== false ) {
+			return true; // Skip logging if pattern is found.
+		}
+	}
+
+	return false; // Proceed with default error handling if no patterns match.
+}
+
+// Set the custom error handler.
+set_error_handler( 'snks_error_handler' );
+
+
 add_action(
 	'wp_footer',
 	function () {
-		return;
+		if ( empty( $_GET['testing'] ) ) {
+			return;
+		}
+		$day_preview_timetable = array(
+			array(
+				'user_id'         => 41,
+				'session_status'  => 'waiting',
+				'day'             => 'Sat',
+				'base_hour'       => '01:00',
+				'period'          => 60,
+				'date_time'       => '2024-11-23 01:00:00',
+				'starts'          => '01:00:00',
+				'ends'            => '02:00:00',
+				'clinic'          => '09886509-ff8c-41fa-8f2d-72dd40f0407a',
+				'attendance_type' => 'online',
+			),
+			array(
+				'user_id'         => 41,
+				'session_status'  => 'waiting',
+				'day'             => 'Sat',
+				'base_hour'       => '01:00',
+				'period'          => 60,
+				'date_time'       => '2024-11-23 01:00:00',
+				'starts'          => '01:00:00',
+				'ends'            => '02:00:00',
+				'clinic'          => '09886509-ff8c-41fa-8f2d-72dd40f0407a',
+				'attendance_type' => 'offline',
+			),
+		);
+		//$all_exits             = array();
+		foreach ( $day_preview_timetable as $data ) {
+			$dtime             = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+			$exists            = snks_timetable_exists( 41, $dtime, $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
+			$data['date_time'] = $dtime;
+			unset( $data['date'] );
+			if ( empty( $exists ) ) {
+				snks_insert_timetable( $data );
+			} else {
+				foreach ( $exists as $appointment ) {
+					if ( 'waiting' === $appointment->session_status ) {
+						snks_update_timetable(
+							absint( $appointment->ID ),
+							array(
+								'period'          => $data['period'],
+								'clinic'          => $data['clinic'],
+								'attendance_type' => $data['attendance_type'],
+							)
+						);
+					}
+				}
+			}
+		}
+		exit;
 	}
 );
 

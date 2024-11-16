@@ -106,56 +106,14 @@ add_action(
 		$errors             = array();
 		snks_delete_waiting_sessions_by_user_id( $user_id );
 		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
-			foreach ( $preview_timetables as $preview_timetable ) {
-				foreach ( $preview_timetable as $data ) {
-					$dtime  = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-					$exists = snks_timetable_exists( $user_id, $dtime, $data['day'], $data['starts'], $data['ends'] );
+			foreach ( $preview_timetables as $day_preview_timetable ) {
+				foreach ( $day_preview_timetable as $data ) {
+					$dtime             = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+					$exists            = snks_timetable_exists( $user_id, $dtime, $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
+					$data['date_time'] = $dtime;
+					unset( $data['date'] );
 					if ( empty( $exists ) ) {
-						$inserting ['user_id']         = $data['user_id'];
-						$inserting ['session_status']  = $data['session_status'];
-						$inserting ['day']             = $data['day'];
-						$inserting ['base_hour']       = $data['base_hour'];
-						$inserting ['period']          = $data['period'];
-						$inserting ['date_time']       = $dtime;
-						$inserting ['starts']          = $data['starts'];
-						$inserting ['ends']            = $data['ends'];
-						$inserting ['clinic']          = $data['clinic'];
-						$inserting ['attendance_type'] = $data['attendance_type'];
-
-						if ( 'both' === $data['attendance_type'] ) {
-							$inserting ['attendance_type'] = 'online';
-							snks_insert_timetable( $inserting );
-
-							$inserting ['attendance_type'] = 'offline';
-							snks_insert_timetable( $inserting );
-
-						} else {
-							snks_insert_timetable( $inserting );
-						}
-					} else {
-						foreach ( $exists as $appointment ) {
-							if ( 'waiting' === $appointment->session_status ) {
-								$inserting = json_decode( wp_json_encode( $appointment ), true );
-								if ( 'both' === $data['attendance_type'] ) {
-									if ( 'online' === $appointment->attendance_type ) {
-										$ins = 'offline';
-									} else {
-										$ins = 'online';
-									}
-									$inserting['attendance_type'] = $ins;
-									snks_insert_timetable( $inserting );
-								} else {
-									snks_update_timetable(
-										absint( $appointment->ID ),
-										array(
-											'period' => $data['period'],
-											'clinic' => $data['clinic'],
-											'attendance_type' => $data['attendance_type'],
-										)
-									);
-								}
-							}
-						}
+						snks_insert_timetable( $data );
 					}
 				}
 			}

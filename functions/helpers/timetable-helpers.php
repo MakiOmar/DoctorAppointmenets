@@ -12,54 +12,67 @@ if ( ! defined( 'ABSPATH' ) ) {
 // phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_dump, WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 /**
- * Get user timetable
+ * Get user timetable.
  *
- * @param int    $user_id User ID.
- * @param string $booking_day Booking day date.
- * @param string $start_time Start time.
+ * @param int    $user_id         User ID.
+ * @param string $booking_day     Booking day date.
+ * @param string $start_time      Start time.
+ * @param string $attendance_type Attendance type.
+ * @return object|null The timetable row or null if not found.
  */
-function snks_get_timetable( $user_id = false, $booking_day = '', $start_time = '' ) {
+function snks_get_timetable( $user_id = false, $booking_day = '', $start_time = '', $attendance_type = '' ) {
 	global $wpdb;
-	// Prepare the query parameters.
-	$user_id     = intval( $user_id );
-	$booking_day = sanitize_text_field( $booking_day );
-	$start_time  = sanitize_text_field( $start_time );
+
+	// Sanitize inputs.
+	$user_id         = $user_id ? intval( $user_id ) : null;
+	$booking_day     = sanitize_text_field( $booking_day );
+	$start_time      = sanitize_text_field( $start_time );
+	$attendance_type = sanitize_text_field( $attendance_type );
 
 	// Generate a unique cache key.
-	$cache_key = $user_id ? 'snks_timetable_' . $user_id . '_' . $booking_day . '_' . $start_time : 'snks_timetable_' . $booking_day . '_' . $start_time;
+	$cache_key = 'snks_timetable_';
+	if ( $user_id ) {
+		$cache_key .= $user_id;
+	} else {
+		$cache_key .= 'all';
+	}
+	$cache_key .= '_' . $booking_day . '_' . $start_time;
+	if ( $attendance_type ) {
+		$cache_key .= '_' . $attendance_type;
+	} else {
+		$cache_key .= '_all';
+	}
 
+	// Attempt to retrieve cached result.
 	$results = wp_cache_get( $cache_key );
 	if ( false === $results ) {
+		// Build the base query.
+		$query  = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE start_time = %s AND booking_day = %s";
+		$params = array( $start_time, $booking_day );
+
+		// Add user_id conditionally.
 		if ( $user_id ) {
-			// Execute the query.
-			$results = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE user_id = %d AND start_time = %s AND booking_day = %s",
-					$user_id,
-					$start_time,
-					$booking_day
-				)
-			);
-		} else {
-			// Execute the query.
-			$results = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE start_time = %s AND booking_day = %s",
-					$start_time,
-					$booking_day
-				)
-			);
+			$query   .= ' AND user_id = %d';
+			$params[] = $user_id;
 		}
 
+		// Add attendance_type conditionally.
+		if ( ! empty( $attendance_type ) ) {
+			$query   .= ' AND attendance_type = %s';
+			$params[] = $attendance_type;
+		}
+		//phpcs:disable
+		// Execute the query.
+		$results = $wpdb->get_row( $wpdb->prepare( $query, ...$params ) );
+		//phpcs:enable
+
+		// Cache the results.
 		wp_cache_set( $cache_key, $results, '', 3600 );
 	}
 
 	return $results;
 }
+
 
 /**
  * Get user timetables
@@ -278,29 +291,32 @@ function snks_close_others( $booked_timetable ) {
  * @param string $day Day Abbreviation.
  * @param mixed  $starts Stat time.
  * @param mixed  $ends end time.
+ * @param string $attendance_type attendance type.
  * @return mixed
  */
-function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends ) {
+function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $attendance_type = '' ) {
 	global $wpdb;
-
 	//phpcs:disable
+	// Base query.
+	$_query = "SELECT *
+              FROM {$wpdb->prefix}snks_provider_timetable
+              WHERE user_id = %d
+              AND date_time = %s
+              AND day = %s
+              AND starts = %s
+              AND ends = %s";
+
+	// Add attendance_type condition if not empty.
+	if ( ! empty( $attendance_type ) ) {
+		$_query         .= ' AND attendance_type = %s';
+		$prepared_query = $wpdb->prepare( $_query, $user_id, $date_time, $day, $starts, $ends, $attendance_type );
+	} else {
+		$prepared_query = $wpdb->prepare( $_query, $user_id, $date_time, $day, $starts, $ends );
+	}
 	// Execute the query.
-	$results = $wpdb->get_results(
-		$wpdb->prepare(
-			"SELECT *
-		FROM {$wpdb->prefix}snks_provider_timetable
-		WHERE user_id = %d
-		AND date_time = %s
-		AND day = %s
-		AND starts = %s
-		AND ends = %s",
-			$user_id,
-			$date_time,
-			$day,
-			$starts,
-			$ends
-		)
-	);
+	$results = $wpdb->get_results( $prepared_query );
+	//phpcs:enable
+
 	return $results;
 }
 /**

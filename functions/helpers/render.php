@@ -190,7 +190,7 @@ function snks_generate_preview() {
 				// Create table columns with a column key and column object.
 				$table->addColumn( 'day', new TableColumn( 'اليوم' ) );
 				$table->addColumn( 'datetime', new TableColumn( 'التاريخ والوقت' ) );
-				$table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
+				// $table->addColumn( 'starts', new TableColumn( 'تبدأ من' ) );
 				$table->addColumn( 'ends', new TableColumn( 'تنتهي عند' ) );
 				$table->addColumn( 'period', new TableColumn( 'المدة' ) );
 				$table->addColumn( 'attendance', new TableColumn( 'عيادة/أونلاين' ) );
@@ -206,7 +206,7 @@ function snks_generate_preview() {
 					if ( count( $details ) > 1 || count( $details ) == 1 ) {
 						// Associate cells with columns.
 						$cells = array(
-							'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '7' ) ),
+							'day' => new TableCell( snks_localize_day( $day ) . ' ' . $date, array( 'colspan' => '6' ) ),
 						);
 						// define row attributes.
 						$attrs = array(
@@ -234,8 +234,8 @@ function snks_generate_preview() {
 						// Associate cells with columns.
 						$cells = array(
 							'day'        => new TableCell( snks_localize_day( $data['day'] ), array( 'data-label' => 'اليوم' ) ),
-							'datetime'   => new TableCell( $date, array( 'data-label' => 'التاريخ والوقت' ) ),
-							'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
+							'datetime'   => new TableCell( $date . ' ' . snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'التاريخ والوقت' ) ),
+							// 'starts'     => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['starts'] ) ) ), array( 'data-label' => 'تبدأ من' ) ),
 							'ends'       => new TableCell( snks_localize_time( gmdate( 'h:i a', strtotime( $data['ends'] ) ) ), array( 'data-label' => 'تنتهي عند' ) ),
 							'period'     => new TableCell( $data['period'], array( 'data-label' => 'المدة' ) ),
 							'attendance' => new TableCell( $ttendance, array( 'data-label' => 'الحضور' ) ),
@@ -1372,6 +1372,24 @@ function anony_accordion( $data ) {
 	return $output;
 }
 
+add_filter(
+	'jet-form-builder/before-render-field',
+	function (
+		$x,
+		$name,
+		$attrs,
+		$content,
+		$wp_block
+	) {
+		if ( 'repeater-field' === $name && 'clinics_list' === $attrs['name'] ) {
+			return $x;
+		}
+
+		return $x;
+	},
+	10,
+	5
+);
 add_action(
 	'wp_footer',
 	function () {

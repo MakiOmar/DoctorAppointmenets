@@ -462,3 +462,26 @@ function snks_replace_time_units_to_arabic( $text ) {
 	// Replace each occurrence of the English time units with the corresponding Arabic values.
 	return str_replace( array_keys( $english_to_arabic ), array_values( $english_to_arabic ), $text );
 }
+
+/**
+ * Generates a version 4 UUID.
+ *
+ * This function creates a universally unique identifier (UUID) version 4
+ * based on random values. Each UUID generated will be unique and globally
+ * identifiable.
+ *
+ * @return string The generated UUID in the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.
+ */
+function snks_generate_uuid() {
+	return sprintf(
+		'%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+		wp_rand( 0, 0xffff ),
+		wp_rand( 0, 0xffff ),
+		wp_rand( 0, 0xffff ),
+		wp_rand( 0, 0x0fff ) | 0x4000,
+		wp_rand( 0, 0x3fff ) | 0x8000,
+		wp_rand( 0, 0xffff ),
+		wp_rand( 0, 0xffff ),
+		wp_rand( 0, 0xffff )
+	);
+}

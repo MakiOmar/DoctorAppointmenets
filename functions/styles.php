@@ -266,6 +266,9 @@ add_action(
 				padding: 8px;
 				width: 40%;
 			}
+			div[name="clinics_list"] .jet-form-builder-repeater__remove{
+				display:none!important
+			}
 			.consulting-session-table tr:first-child td:first-child {
 				border-top-right-radius: 10px;
 			}
@@ -1044,7 +1047,7 @@ add_action(
 				font-size: 1.3em;
 			}
 			
-			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) thead {
+			/*table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) thead {
 				border: none;
 				clip: rect(0 0 0 0);
 				height: 1px;
@@ -1069,16 +1072,12 @@ add_action(
 			}
 			
 			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) td::before {
-				/*
-				* aria-label has no advantage, it won't be read inside a table
-				content: attr(aria-label);
-				*/
 				content: attr(data-label);
 				float: <?php echo is_rtl() ? 'right' : 'left'; ?>;
 				font-weight: bold;
 				text-transform: uppercase;
 			}
-			
+			*/
 			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) td:last-child {
 				border-bottom: 0;
 			}

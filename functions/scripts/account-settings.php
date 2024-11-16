@@ -71,6 +71,26 @@ add_action(
 						});
 					}
 				}
+				function moveToNext() {
+					preventNavigation = false;
+					setCookie('edited_form', '', 0);
+					let nextPopup = getCookie('next_popup');
+					if ( nextPopup && nextPopup !== 'snks_account_settings' ) {
+						$('.popup-trigger').removeClass('snks-active-popup');
+						$('div[data-id="' + nextPopup + '"]').addClass('snks-active-popup');
+						$('div[data-id="' + nextPopup + '"]').next('.jet-popup-target').click();
+					}
+
+					if ( nextPopup && nextPopup == 'snks_account_settings' ) {
+						closeAllPopups();
+						$('.popup-trigger').removeClass('snks-active-popup');
+						$('#snks_account_settings').css({
+							transform: 'translateX(0)', // Moves the element back to its original position
+							display: 'block' // Ensure it's visible
+						});
+					}
+					setCookie('next_popup', '', 0);
+				}
 				function closeAllPopups() {
 					var openPopup = $('.jet-popup--show-state');
 					if ( openPopup.length > 0 ) {
@@ -81,6 +101,25 @@ add_action(
 						}
 					}
 				}
+				function repeaterCustomRemove() {
+					$('.jet-form-builder-repeater__remove').each(function() {
+						if (!$(this).next().hasClass('jet-form-builder-repeater__custom_remove')) {
+							// Create a new button element
+							const newButton = $('<button>', {
+								text: 'x', // Button text
+								class: 'jet-form-builder-repeater__custom_remove', // Add your custom class here
+								click: function() {
+									$(this).prev('.jet-form-builder-repeater__remove').trigger('click');
+								}
+							});
+
+							// Insert the new button after .jet-form-builder-repeater__remove
+							$(this).after(newButton);
+						}
+					});
+				}
+				repeaterCustomRemove();
+				setCookie('edited_form', '', 0);
 				// Add event listeners for any interaction with form fields
 				var confirmSave = document.querySelectorAll('.snks-confirm');
 				listenToForms( confirmSave );
@@ -93,7 +132,7 @@ add_action(
 					var forms = document.querySelectorAll('.jet-form-builder');
 					listenToForms( forms );
 				});
-
+				
 				// Prompt the user when trying to leave the page (refresh, close tab, etc.)
 				/*window.addEventListener('beforeunload', function (e) {
 					if (preventNavigation) {
@@ -103,9 +142,25 @@ add_action(
 				});*/
 
 				$( document ).on('click', '.jet-form-builder-repeater__new, .jet-form-builder-repeater__remove', function(){
+					$(".item-deleted").trigger('click');
+				});
+				$( document ).on('click', '.jet-form-builder-repeater__new', function(e){
+					e.preventDefault();
+					setTimeout(
+						function() {
+							repeaterCustomRemove();
+						},
+						200
+					);
+				});
+				/*$( document ).on('click', '.jet-form-builder-repeater__custom_remove', function(){
+					$(this).prev('.jet-form-builder-repeater__remove').trigger('click');
+				});*/
+				$( document ).on('click', '.item-deleted', function(){
 					preventNavigation = true;
 					setCookie('edited_form', $(this).closest('form').data('form-id'));
 				});
+
 				$(window).on('jet-popup/show-event/after-show', function( event, popup ){
 					let exclude = [ 'jet-popup-1961', 'jet-popup-1958', 'jet-popup-1964' ];
 					if ( ! exclude.includes(popup.data.popupId) ){
@@ -123,11 +178,11 @@ add_action(
 						} else {
 							cookieValue = $(this).data('id');
 						}
+						setCookie("next_popup", cookieValue, false);
 						if (preventNavigation) {
-							setCookie("next_popup", cookieValue, false);
 							Swal.fire({
-								title: 'هل انت متأكد؟',
-								text: "لم تقم بحفظ خياراتك",
+								title: 'أنت لم تقم بحفظ التعديلات',
+								text: "هل ترغب في الحفظ؟",
 								icon: 'warning',
 								showCancelButton: true,
 								confirmButtonColor: '#3085d6',
@@ -144,14 +199,14 @@ add_action(
 									}
 								} else {
 									Swal.fire({
-										title: 'هل تريد التراجع؟',
-										text: "يمكنك إلغاء الخيارات والرجوع للخيارات السابقة",
+										title: 'هل تريد استكمال التعديلات أو إلغاءها؟',
+										text: "يمكنك إلغاء التعديلات والرجوع للخيارات السابقة",
 										icon: 'warning',
 										showCancelButton: true,
 										confirmButtonColor: '#3085d6',
 										cancelButtonColor: '#d33',
-										confirmButtonText: 'نعم تراجع',
-										cancelButtonText: 'أغلق النافذة فقط'
+										confirmButtonText: 'إلغاء',
+										cancelButtonText: 'إستكمال'
 									}).then((result) => {
 										if (result.isConfirmed) {
 											location.reload();
@@ -213,39 +268,21 @@ add_action(
 					// if is add sessions form
 					if ( formId == 2199 ) {
 						Swal.fire({
-								title: 'مستعد لنشر المواعيد؟',
-								text: "يجب عليك الذهاب لملخص المواعيد للنشر",
-								icon: 'warning',
-								showCancelButton: true,
-								confirmButtonColor: '#3085d6',
-								cancelButtonColor: '#d33',
-								confirmButtonText: 'ملخص الجلسات',
-								cancelButtonText: 'إلغاء'
-							}).then((result) => {
-								if (result.isConfirmed) {
-									$('.snks_tab-preview').trigger('click');
-								}
-							});
-					}
-					
-					preventNavigation = false;
-					setCookie('edited_form', '', 0);
-					let nextPopup = getCookie('next_popup');
-					if ( nextPopup && nextPopup !== 'snks_account_settings' ) {
-						$('.popup-trigger').removeClass('snks-active-popup');
-						$('div[data-id="' + nextPopup + '"]').addClass('snks-active-popup');
-						$('div[data-id="' + nextPopup + '"]').next('.jet-popup-target').click();
-					}
-
-					if ( nextPopup && nextPopup == 'snks_account_settings' ) {
-						closeAllPopups();
-						$('.popup-trigger').removeClass('snks-active-popup');
-						$('#snks_account_settings').css({
-							transform: 'translateX(0)', // Moves the element back to its original position
-							display: 'block' // Ensure it's visible
+							title: 'إنتبه',
+							text: "يرجى العلم أنه لن يتم نشر المواعيد قبل الضغط على زر نشر في صفحة ملخص الجلسات.",
+							icon: 'warning',
+							showCancelButton: false,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#d33',
+							confirmButtonText: 'إغلاق',
+						}).then((result) => {
+							if (result.isConfirmed) {
+								moveToNext();
+							}
 						});
 					}
-					setCookie('next_popup', '', 0);
+					
+					moveToNext();
 				});
 				$(document).on(
 					'click',

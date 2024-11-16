@@ -54,8 +54,11 @@ class Snks_Get_Clinics extends Base {
 		);
 		if ( ! empty( $clinics_meta ) ) {
 			foreach ( $clinics_meta as $index => $clinic ) {
+				if ( empty( $clinic['uuid'] ) ) {
+					continue;
+				}
 				$result[] = array(
-					'value' => $index,
+					'value' => $clinic['uuid'],
 					'label' => $clinic['clinic_title'],
 				);
 			}

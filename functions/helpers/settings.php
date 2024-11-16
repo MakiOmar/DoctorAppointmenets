@@ -65,6 +65,78 @@ function snks_validate_doctor_settings( $user_id ) {
 	return true;
 }
 
+add_action(
+	'jet-form-builder/custom-action/settings_validate',
+	function ( $request ) {
+		$user_id = get_current_user_id();
+		// Check if attendance_type is empty.
+		if ( empty( $request['attendance_type'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( ' طريقة استخدام التطبيق غير محددة.' );
+		}
+
+		// Loop through clinics_list and check if all values are empty.
+		foreach ( $request['clinics_list'] as $key => $clinic ) {
+			if ( empty( array_filter( $clinic ) ) ) {
+				unset( $request['clinics_list'][ $key ] );
+			}
+		}
+		// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
+		if (
+		( 'both' === $request['attendance_type'] || 'offline' === $request['attendance_type'] )
+		) {
+			if ( empty( $request['clinics_list'] ) ) {
+				throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.' );
+			}
+
+			// Check if any sub-array in 'clinics_list' has an empty 'clinic_title'.
+			if ( ! empty( $request['clinics_list'] ) ) {
+				foreach ( $request['clinics_list'] as $clinic ) {
+					if ( empty( $clinic['clinic_title'] ) ) {
+						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال اسم العيادة لكل عيادة موجودة في القائمة عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين".' );
+					}
+				}
+			}
+		}
+		// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
+		if ( ( 'on' !== $request['60-minutes'] ) && ( 'on' !== $request['45-minutes'] ) && ( 'on' !== $request['30-minutes'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'لم يتم تفعيل أي من مدد الجلسات (30، 45، 60 دقيقة).' );
+		}
+		if ( 'on' === $request['30-minutes'] ) {
+			$pricings[30] = array(
+				'countries' => get_user_meta( $user_id, '30_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, '30_minutes_pricing_others', true ),
+			);
+		}
+		if ( 'on' === $request['45-minutes'] ) {
+			$pricings[45] = array(
+				'countries' => get_user_meta( $user_id, '45_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, '45_minutes_pricing_others', true ),
+			);
+		}
+		if ( 'on' === $request['60-minutes'] ) {
+			$pricings[60] = array(
+				'countries' => get_user_meta( $user_id, '60_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, '60_minutes_pricing_others', true ),
+			);
+		}
+		// Check if the corresponding 'others' value is not empty for the active time request.
+		if (
+			( 'on' === $request['30-minutes'] && empty( $pricings[30]['others'] ) ) ||
+			( 'on' === $request['45-minutes'] && empty( $pricings[45]['others'] ) ) ||
+			( 'on' === $request['60-minutes'] && empty( $pricings[60]['others'] ) )
+		) {
+
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال أسعار الجلسات.' );
+		}
+		$edit_before      = snks_get_edit_before_seconds( $request );
+		$free_edit_before = snks_get_free_edit_before_seconds( $request );
+		if ( $edit_before > $free_edit_before || $edit_before === $free_edit_before ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لابد أن تكون فترة التغيير المجاني أكبر من الفترة التي تحددها لآخر موعد لتعديل الحجز' );
+		}
+	},
+	0
+);
+
 
 /**
  * Return doctor settings
@@ -404,9 +476,12 @@ function snks_get_available_attendance_types_options() {
  * @return mixed
  */
 function snks_get_clinics( $user_id = false ) {
-	$settings = snks_doctor_settings( $user_id );
-	if ( is_array( $settings['clinics_list'] ) && ! empty( $settings['clinics_list'] ) ) {
-		return $settings['clinics_list'];
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
+	$clinics_list = get_user_meta( $user_id, 'clinics_list', true );
+	if ( is_array( $clinics_list ) && ! empty( $clinics_list ) ) {
+		return $clinics_list;
 	}
 	return false;
 }
@@ -414,14 +489,18 @@ function snks_get_clinics( $user_id = false ) {
 /**
  * Get clinic
  *
- * @param string $key Clinic array key.
+ * @param string $uuid Clinic UUID.
  * @param mixed  $user_id User's id.
  * @return array
  */
-function snks_get_clinic( $key, $user_id = false ) {
-	$clinics = snks_get_clinics( $user_id );
-	if ( $clinics ) {
-		return $clinics[ $key ];
+function snks_get_clinic( $uuid, $user_id = false ) {
+	$clinics_list = snks_get_clinics( $user_id );
+	if ( $clinics_list ) {
+		foreach ( $clinics_list as $key => $clinic ) {
+			if ( isset( $clinic['uuid'] ) && $clinic['uuid'] === $uuid ) {
+				return $clinic;
+			}
+		}
 	}
 	return false;
 }
@@ -592,8 +671,7 @@ function snks_generate_timetable() {
 					// Ensure the formatted date_time is valid and compare it with the current time.
 					if ( $date_time && strtotime( $date_time->format('Y-m-d h:i a') ) > current_time( 'timestamp' ) ) {
 						$formatted_date_time = $date_time->format('Y-m-d h:i a');
-				
-						$data[ sanitize_text_field( $day ) ][] = array(
+						$base = array(
 							'user_id'         => $user_id,
 							'session_status'  => in_array( $date, $off_days, true ) ? 'closed' : 'waiting',
 							'day'             => sanitize_text_field( $day ),
@@ -606,6 +684,16 @@ function snks_generate_timetable() {
 							'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
 							'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
 						);
+
+						if ( 'both' !== $details['appointment_attendance_type'] ) {
+							$data[ sanitize_text_field( $day ) ][] = $base;
+						} else {
+							$base['attendance_type'] = 'online';
+							$data[ sanitize_text_field( $day ) ][] = $base;
+				
+							$base['attendance_type'] = 'offline';
+							$data[ sanitize_text_field( $day ) ][] = $base;
+						}
 					}
 				}
 				
@@ -886,77 +974,7 @@ function snks_get_withdrawal_credit() {
 	return 0;
 }
 
-add_action(
-	'jet-form-builder/custom-action/settings_validate',
-	function ( $request ) {
-		$user_id = get_current_user_id();
-		// Check if attendance_type is empty.
-		if ( empty( $request['attendance_type'] ) ) {
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( ' طريقة استخدام التطبيق غير محددة.' );
-		}
 
-		// Loop through clinics_list and check if all values are empty.
-		foreach ( $request['clinics_list'] as $key => $clinic ) {
-			if ( empty( array_filter( $clinic ) ) ) {
-				unset( $request['clinics_list'][ $key ] );
-			}
-		}
-		// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
-		if (
-		( 'both' === $request['attendance_type'] || 'offline' === $request['attendance_type'] )
-		) {
-			if ( empty( $request['clinics_list'] ) ) {
-				throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.' );
-			}
-
-			// Check if any sub-array in 'clinics_list' has an empty 'clinic_title'.
-			if ( ! empty( $request['clinics_list'] ) ) {
-				foreach ( $request['clinics_list'] as $clinic ) {
-					if ( empty( $clinic['clinic_title'] ) ) {
-						throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال اسم العيادة لكل عيادة موجودة في القائمة عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين".' );
-					}
-				}
-			}
-		}
-		// Check if none of 60_minutes, 45_minutes, or 30_minutes are "on".
-		if ( ( 'on' !== $request['60-minutes'] ) && ( 'on' !== $request['45-minutes'] ) && ( 'on' !== $request['30-minutes'] ) ) {
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'لم يتم تفعيل أي من مدد الجلسات (30، 45، 60 دقيقة).' );
-		}
-		if ( 'on' === $request['30-minutes'] ) {
-			$pricings[30] = array(
-				'countries' => get_user_meta( $user_id, '30_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, '30_minutes_pricing_others', true ),
-			);
-		}
-		if ( 'on' === $request['45-minutes'] ) {
-			$pricings[45] = array(
-				'countries' => get_user_meta( $user_id, '45_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, '45_minutes_pricing_others', true ),
-			);
-		}
-		if ( 'on' === $request['60-minutes'] ) {
-			$pricings[60] = array(
-				'countries' => get_user_meta( $user_id, '60_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, '60_minutes_pricing_others', true ),
-			);
-		}
-		// Check if the corresponding 'others' value is not empty for the active time request.
-		if (
-			( 'on' === $request['30-minutes'] && empty( $pricings[30]['others'] ) ) ||
-			( 'on' === $request['45-minutes'] && empty( $pricings[45]['others'] ) ) ||
-			( 'on' === $request['60-minutes'] && empty( $pricings[60]['others'] ) )
-		) {
-
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال أسعار الجلسات.' );
-		}
-		$edit_before      = snks_get_edit_before_seconds( $request );
-		$free_edit_before = snks_get_free_edit_before_seconds( $request );
-		if ( $edit_before > $free_edit_before ) {
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لابد أن تكون فترة التغيير المجاني أكبر من الفترة التي تحددها لآخر موعد لتعديل الحجز' );
-		}
-	},
-	0
-);
 
 add_action(
 	'jet-form-builder/custom-action/validate_pricings',
@@ -1150,4 +1168,20 @@ add_filter(
 		return $content;
 	},
 	10
+);
+
+
+add_action(
+	'jet-form-builder/custom-action/set_clinic_uuid',
+	function () {
+		$user_id      = get_current_user_id();
+		$clinics_list = get_user_meta( $user_id, 'clinics_list', true );
+		foreach ( $clinics_list as $key => &$clinic ) {
+			if ( empty( $clinic['uuid'] ) ) {
+				$clinic['uuid'] = snks_generate_uuid();
+			}
+		}
+		update_user_meta( $user_id, 'clinics_list', $clinics_list );
+	},
+	50
 );
