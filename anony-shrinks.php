@@ -327,59 +327,7 @@ set_error_handler( 'snks_error_handler' );
 add_action(
 	'wp_footer',
 	function () {
-		if ( empty( $_GET['testing'] ) ) {
-			return;
-		}
-		$day_preview_timetable = array(
-			array(
-				'user_id'         => 41,
-				'session_status'  => 'waiting',
-				'day'             => 'Sat',
-				'base_hour'       => '01:00',
-				'period'          => 60,
-				'date_time'       => '2024-11-23 01:00:00',
-				'starts'          => '01:00:00',
-				'ends'            => '02:00:00',
-				'clinic'          => '09886509-ff8c-41fa-8f2d-72dd40f0407a',
-				'attendance_type' => 'online',
-			),
-			array(
-				'user_id'         => 41,
-				'session_status'  => 'waiting',
-				'day'             => 'Sat',
-				'base_hour'       => '01:00',
-				'period'          => 60,
-				'date_time'       => '2024-11-23 01:00:00',
-				'starts'          => '01:00:00',
-				'ends'            => '02:00:00',
-				'clinic'          => '09886509-ff8c-41fa-8f2d-72dd40f0407a',
-				'attendance_type' => 'offline',
-			),
-		);
-		//$all_exits             = array();
-		foreach ( $day_preview_timetable as $data ) {
-			$dtime             = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-			$exists            = snks_timetable_exists( 41, $dtime, $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
-			$data['date_time'] = $dtime;
-			unset( $data['date'] );
-			if ( empty( $exists ) ) {
-				snks_insert_timetable( $data );
-			} else {
-				foreach ( $exists as $appointment ) {
-					if ( 'waiting' === $appointment->session_status ) {
-						snks_update_timetable(
-							absint( $appointment->ID ),
-							array(
-								'period'          => $data['period'],
-								'clinic'          => $data['clinic'],
-								'attendance_type' => $data['attendance_type'],
-							)
-						);
-					}
-				}
-			}
-		}
-		exit;
+		return;
 	}
 );
 

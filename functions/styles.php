@@ -266,7 +266,7 @@ add_action(
 				padding: 8px;
 				width: 40%;
 			}
-			div[name="clinics_list"] .jet-form-builder-repeater__remove{
+			.jet-form-builder-repeater__remove{
 				display:none!important
 			}
 			.consulting-session-table tr:first-child td:first-child {
@@ -981,7 +981,7 @@ add_action(
 			.jet-form-builder-row.field-type-switcher {
 				position: relative;
 			}
-			.jet-form-builder-repeater__remove{
+			.jet-form-builder-repeater__custom_remove{
 				height: 25px!important;
 				width: 25px!important;
 				display: inline-flex!important;

@@ -162,6 +162,7 @@ add_action(
 				});
 
 				$(window).on('jet-popup/show-event/after-show', function( event, popup ){
+					repeaterCustomRemove();
 					let exclude = [ 'jet-popup-1961', 'jet-popup-1958', 'jet-popup-1964' ];
 					if ( ! exclude.includes(popup.data.popupId) ){
 						preventNavigation = false;
