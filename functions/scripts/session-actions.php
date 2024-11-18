@@ -65,7 +65,6 @@ add_action(
 						$.fn.justShowSurepopup(ulElement, $(this).data('title') + ' هذه المواعيد');
 						
 						if ( ele === '.snks-delay' ){
-							console.log(ele);
 							$("#sure-container").append($('<input type="number" id="delay-by" name="delay-by" placeholder="أدخل مدة التأخير بالدقيقة"/>'));
 						} else {
 							$("#delay-by").remove();
@@ -118,7 +117,6 @@ add_action(
 				'change',
 				'#change-to-date',
 				function() {
-					console.log('ggg');
 					var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_change_date_nonce' ) ); ?>';
 
 					var date = $(this).val();
@@ -176,7 +174,6 @@ add_action(
 					type: 'POST',
 					data: formData,
 					success: function(response) {
-						console.log(response);
 						if (response.status && response.status === 'success') {
 							// Show success message with SweetAlert
 							Swal.fire({

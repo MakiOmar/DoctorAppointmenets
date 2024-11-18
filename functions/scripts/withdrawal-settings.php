@@ -49,7 +49,6 @@ add_action(
 					'change',
 					'input[name="withdrawal_method"]',
 					function() {
-						console.log('sdfsdfdsf');
 					// Hide all field containers first
 					$('.withdrawal-accounts-fields').slideUp();
 					

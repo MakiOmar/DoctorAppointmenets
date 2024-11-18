@@ -140,3 +140,50 @@ add_action(
 		die();
 	}
 );
+
+/**
+ * Handles AJAX request to check for open sessions by UUID.
+ *
+ * @return void
+ */
+function snks_check_uuid_open_session() {
+	check_ajax_referer( 'snks_nonce', 'security' );
+	//phpcs:disable
+	// Ensure UUID is provided.
+	if ( empty( $_POST['uuid'] ) ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid request parameters.', 'textdomain' ) ) );
+	}
+
+	// Sanitize input.
+	$uuid = sanitize_text_field( $_POST['uuid'] );
+
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+
+	// _query to find any open session with the same UUID (clinic).
+	$_query = $wpdb->prepare(
+		"SELECT COUNT(*) FROM $table_name WHERE clinic = %s AND session_status = %s",
+		$uuid,
+		'open'
+	);
+
+	// Check if an open session exists.
+	$count = $wpdb->get_var( $_query );
+
+	if ( $count > 0 ) {
+		wp_send_json_error( array( 'message' => 'هناك مواعيد بالفعل محجوزة لهذه العيادة. يمكنك فقط تعطيلها لمنع استقبال حجوزات في المستقل' ) );
+	} else {
+		// If no open session exists, delete records where session_status is "waiting".
+		$delete_query = $wpdb->prepare(
+			"DELETE FROM $table_name WHERE clinic = %s AND session_status = %s",
+			$uuid,
+			'waiting'
+		);
+
+		$wpdb->query( $delete_query );
+
+		wp_send_json_success();
+	}
+	//phpcs:enable
+}
+add_action( 'wp_ajax_check_open_session', 'snks_check_uuid_open_session' );

@@ -226,7 +226,10 @@ function snks_generate_preview() {
 							$actions = snks_preview_actions( $data['day'], $index );
 						}
 						if ( 'offline' === $data['attendance_type'] ) {
-							$clinic    = snks_get_clinic( $data['clinic'] );
+							$clinic = snks_get_clinic( $data['clinic'] );
+							if ( ! $clinic ) {
+								continue;
+							}
 							$ttendance = $clinic['clinic_title'];
 						} else {
 							$ttendance = 'online';
@@ -573,7 +576,9 @@ function snks_render_offline_consulting_hours( $availables, $user_id = false ) {
 	$grouped = snks_group_objects_by( $availables, 'clinic' );
 	foreach ( $grouped as $clinic => $group ) {
 		$clinic_details = snks_get_clinic( $clinic, $user_id );
-
+		if ( ! $clinic_details ) {
+			continue;
+		}
 		$html .= '<li class="offline-clinic-hours">';
 		$html .= '<h3 style="color:#024059;text-align:center">' . $clinic_details['clinic_title'] . '</h3>';
 		$html .= '<ul class="anony-grid-row">';

@@ -108,8 +108,37 @@ add_action(
 							const newButton = $('<button>', {
 								text: 'x', // Button text
 								class: 'jet-form-builder-repeater__custom_remove', // Add your custom class here
-								click: function() {
-									$(this).prev('.jet-form-builder-repeater__remove').trigger('click');
+								click: function(e) {
+									e.preventDefault();
+									let clicked = $(this);
+									if ( $(this).closest('div[name="clinics_list"]').length > 0 ) {
+										let rowRemove = $(this).closest('.jet-form-builder-repeater__row-remove');
+										let uuid = rowRemove.prev('.jet-form-builder-repeater__row-fields').find('input[data-field-name="uuid"]').val();
+										$.ajax({
+											url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
+											type: 'POST',
+											data: {
+												action: 'check_open_session',
+												security: "<?php echo esc_attr( wp_create_nonce( 'snks_nonce' ) ); ?>",
+												uuid: uuid
+											},
+											success: function(response) {
+												if (!response.success) {
+													Swal.fire({
+														icon: 'error',
+														title: 'عفواً',
+														text: response.data.message,
+														confirmButtonText: 'إغلاق'
+													});
+												} else {
+													console.log(clicked.prev('.jet-form-builder-repeater__remove'));
+													clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+												}
+											}
+										});
+									} else {
+										clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+									}
 								}
 							});
 

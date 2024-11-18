@@ -62,7 +62,6 @@ add_action(
 				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
 						if ( '' === selectedPeriods || '' === selectedHour ) {
 							parentWrapper.find('.expected-hourse').html('');
-							console.log('No expected hours');
 							return;
 						}
 						// Perform nonce check.
@@ -320,7 +319,6 @@ add_action(
 						setTimeout(
 							function() {
 								$('select[data-field-name=appointment_hour] option', container).each( function() {
-									console.log($(this).val(),disabledOptions.includes( $(this).val() ));
 									if ( ! $(this).is(':selected') && disabledOptions.includes( $(this).val() ) ) {
 										$(this).prop('disabled', true)
 									}
@@ -532,7 +530,6 @@ add_action(
 								localStorage.removeItem('response');
 							},
 							error: function(error) {
-								console.log('AJAX error:', error);
 								// Handle errors here, maybe reset the localStorage key
 								localStorage.removeItem('ajaxInProgress');
 								//localStorage.removeItem('ajaxForm');

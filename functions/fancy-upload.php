@@ -253,7 +253,6 @@ add_shortcode(
 										</svg>
 									`;
 									fileRemoveDiv.addEventListener('click', function() {
-									console.log(  );
 										removeFile(i, '<?php echo esc_html( $id ); ?>'); // Call the removeFile function with the index to remove the file
 									});
 									// Append the file remove div to the preview element
