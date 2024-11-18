@@ -97,15 +97,21 @@ add_action(
 										$('#jet-popup-2219').removeClass('jet-popup--hide-state').addClass('jet-popup--show-state');
 									}, 200);
 								} else {
+									var hourDisable = [];
 									$('.shrinks-error').removeClass('shrinks-error');
 									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
 										if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
 											$(this).prop('disabled', true);
-											if ( ! disabledOptions.includes( $(this).val() ) ) {
-												disabledOptions.push( $(this).val() );
-											}
+											hourDisable.push( $(this).val() );
+
 										}
 									} );
+
+									if (hourDisable && hourDisable.length > 0) {
+										disabledOptions[selectedHour] = hourDisable;
+									}
+
+									console.log(disabledOptions);
 								}
 							}
 						});
@@ -321,6 +327,8 @@ add_action(
 								$('select[data-field-name=appointment_hour] option', container).each( function() {
 									if ( ! $(this).is(':selected') && disabledOptions.includes( $(this).val() ) ) {
 										$(this).prop('disabled', true)
+									} else {
+										$(this).prop('disabled', false)
 									}
 								} );
 								$('select[data-field-name=appointment_choosen_period]', container).trigger('change');
