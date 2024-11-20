@@ -15,7 +15,6 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
-
 				var disabledOptions = [];
 				var weekDays = ['sun','mon','tue','wed','thu','fri','sat'];
 				function showErrorpopup( msg ) {
@@ -50,7 +49,7 @@ add_action(
 						if ( timeSelectedHour.getTime() < timeStartingHour.getTime() ) {
 							tos.forEach( function( to ) {
 								timeTo = new Date(`1970-01-01T${to}`);
-								if ( timeTo.getTime() > timeStartingHour.getTime() ) {
+								if ( timeTo.getTime() > timeStartingHour.getTime() && !overlappedHours.includes(to) ) {
 									overlappedHours.push( to );
 								}
 							} );
@@ -59,7 +58,7 @@ add_action(
 
 					return overlappedHours;
 				}
-				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper) {
+				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper, repeaterName) {
 						if ( '' === selectedPeriods || '' === selectedHour ) {
 							parentWrapper.find('.expected-hourse').html('');
 							return;
@@ -78,7 +77,8 @@ add_action(
 							},
 							success: function(response) {
 								$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
-									if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour && ! disabledOptions.includes( $(this).val() ) ) {
+									var repeaterName = parentWrapper.closest('.accordion-content').data('field-name');
+									if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour && disabledOptions[repeaterName] && ! disabledOptions[repeaterName].includes( $(this).val() ) ) {
 										$(this).prop('disabled', false)
 									}
 								} );
@@ -102,16 +102,19 @@ add_action(
 									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
 										if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
 											$(this).prop('disabled', true);
-											hourDisable.push( $(this).val() );
-
+											if( ! hourDisable.includes($(this).val()) ) {
+												hourDisable.push( $(this).val() );
+											}
+										} else {
+											$(this).prop('disabled', false);
 										}
 									} );
 
 									if (hourDisable && hourDisable.length > 0) {
-										disabledOptions[selectedHour] = hourDisable;
+										disabledOptions[repeaterName] = [];
+										disabledOptions[repeaterName][selectedHour] = [];
+										disabledOptions[repeaterName][selectedHour] = hourDisable;
 									}
-
-									console.log(disabledOptions);
 								}
 							}
 						});
@@ -325,7 +328,7 @@ add_action(
 						setTimeout(
 							function() {
 								$('select[data-field-name=appointment_hour] option', container).each( function() {
-									if ( ! $(this).is(':selected') && disabledOptions.includes( $(this).val() ) ) {
+									if ( ! $(this).is(':selected') && disabledOptions[container.data('field-name')] && disabledOptions[container.data('field-name')].includes( $(this).val() ) ) {
 										$(this).prop('disabled', true)
 									} else {
 										$(this).prop('disabled', false)
@@ -384,11 +387,11 @@ add_action(
 					'change',
 					'select[data-field-name=appointment_choosen_period]',
 					function () {
-
+						var repeaterName    =  $(this).closest( '.accordion-content' ).data('field-name');
 						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
 						var selectedPeriods = $(this).val();
 						var selectedHour    = $('select[data-field-name=appointment_hour]', parentWrapper).val();
-						expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper)
+						expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper, repeaterName)
 					}
 				);
 
