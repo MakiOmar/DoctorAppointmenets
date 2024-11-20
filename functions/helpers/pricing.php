@@ -18,12 +18,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return int
  */
 function snks_calculated_price( $user_id, $country, $period ) {
-	$has_discount     = snks_discount_eligible( $user_id );
-	$pricings         = snks_doctor_pricings( $user_id );
-	$price            = get_price_by_period_and_country( $period, $country, $pricings );
-	$discount_percent = snks_get_period_discount( $user_id, $period );
+	$has_discount = snks_discount_eligible( $user_id );
+	$pricings     = snks_doctor_pricings( $user_id );
 	if ( $has_discount ) {
-		$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
+		$price = snks_latest_completed_order_session_price( $user_id );
+		if ( ! $price ) {
+			$price = get_price_by_period_and_country( $period, $country, $pricings );
+		}
+	} else {
+		$price = get_price_by_period_and_country( $period, $country, $pricings );
+		//phpcs:disable
+		/*
+		$discount_percent = snks_get_period_discount( $user_id, $period );
+		if ( $has_discount ) {
+			$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
+		}*/
+		//phpcs:enable
 	}
 	return $price;
 }
