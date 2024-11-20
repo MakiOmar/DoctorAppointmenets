@@ -131,7 +131,6 @@ add_action(
 														confirmButtonText: 'إغلاق'
 													});
 												} else {
-													console.log(clicked.prev('.jet-form-builder-repeater__remove'));
 													clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
 												}
 											}
@@ -170,7 +169,7 @@ add_action(
 					}
 				});*/
 
-				$( document ).on('click', '.jet-form-builder-repeater__new, .jet-form-builder-repeater__remove', function(){
+				$( document ).on('click', '.jet-form-builder-repeater__remove', function(){
 					$(".item-deleted").trigger('click');
 				});
 				$( document ).on('click', '.jet-form-builder-repeater__new', function(e){
