@@ -114,27 +114,31 @@ add_action(
 									if ( $(this).closest('div[name="clinics_list"]').length > 0 ) {
 										let rowRemove = $(this).closest('.jet-form-builder-repeater__row-remove');
 										let uuid = rowRemove.prev('.jet-form-builder-repeater__row-fields').find('input[data-field-name="uuid"]').val();
-										$.ajax({
-											url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
-											type: 'POST',
-											data: {
-												action: 'check_open_session',
-												security: "<?php echo esc_attr( wp_create_nonce( 'snks_nonce' ) ); ?>",
-												uuid: uuid
-											},
-											success: function(response) {
-												if (!response.success) {
-													Swal.fire({
-														icon: 'error',
-														title: 'عفواً',
-														text: response.data.message,
-														confirmButtonText: 'إغلاق'
-													});
-												} else {
-													clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+										if ( uuid !== '' ) {
+											$.ajax({
+												url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
+												type: 'POST',
+												data: {
+													action: 'check_open_session',
+													security: "<?php echo esc_attr( wp_create_nonce( 'snks_nonce' ) ); ?>",
+													uuid: uuid
+												},
+												success: function(response) {
+													if (!response.success) {
+														Swal.fire({
+															icon: 'error',
+															title: 'عفواً',
+															text: response.data.message,
+															confirmButtonText: 'إغلاق'
+														});
+													} else {
+														clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+													}
 												}
-											}
-										});
+											});
+										} else {
+											clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+										}
 									} else {
 										clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
 									}
@@ -181,9 +185,7 @@ add_action(
 						200
 					);
 				});
-				/*$( document ).on('click', '.jet-form-builder-repeater__custom_remove', function(){
-					$(this).prev('.jet-form-builder-repeater__remove').trigger('click');
-				});*/
+
 				$( document ).on('click', '.item-deleted', function(){
 					preventNavigation = true;
 					setCookie('edited_form', $(this).closest('form').data('form-id'));
