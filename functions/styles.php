@@ -981,6 +981,18 @@ add_action(
 			.jet-form-builder-row.field-type-switcher {
 				position: relative;
 			}
+			.anony-go-back{
+				position: absolute;
+				top: 10px;
+				right: 30px;
+				color: #fff !important;
+				display: inline-flex;
+				padding: 10px;
+				background-color: #000;
+				font-size: 25px;
+				border-radius: 3px;
+				line-height: 10px;
+			}
 			.jet-form-builder-repeater__custom_remove{
 				height: 25px!important;
 				width: 25px!important;
