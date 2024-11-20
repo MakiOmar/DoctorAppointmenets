@@ -130,14 +130,16 @@ snks_require_all_files( SNKS_DIR . 'functions/helpers' );
  */
 function snks_go_back() {
 
-	$referer      = wp_get_referer();
-	$referer_safe = esc_url( $referer );
+	if ( ! snks_is_doctor() ) {
+		return;
+	}
+	$referer = home_url( '/account-setting' );
+	// Sanitize the URL for use in an HTML attribute.
+	$referer_safe = $referer;
 
 	ob_start();
 	?>
-	<a class='anony-go-back' href="<?php echo esc_url( $referer_safe ); ?>">
-	<svg xmlns="http://www.w3.org/2000/svg" width="17" height="16" viewBox="0 0 17 16" fill="none"><path d="M10.086 11.9619L14.048 7.99991L10.086 4.03691" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.95101 8L13.937 8" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-	</a>
+			<a class='anony-go-back' href="<?php echo esc_url( $referer_safe ); ?>">x</a>
 	<?php
 	return ob_get_clean();
 }
