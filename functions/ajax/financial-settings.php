@@ -23,7 +23,7 @@ function send_email_otp() {
 	}
 	// Verify nonce.
 	if ( ! isset( $_POST['withdrawal_settings_nonce'] ) || ! wp_verify_nonce( $_POST['withdrawal_settings_nonce'], 'save_withdrawal_settings' ) ) {
-		wp_send_json_error( array( 'message' => 'Invalid nonce. Please refresh the page and try again.' ) );
+		wp_send_json_error( array( 'message' => 'خطأ في التحقق' ) );
 	}
 
 	$user_id = get_current_user_id();
@@ -41,7 +41,7 @@ function send_email_otp() {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لبطاقة ميزة.' ) );
 		}
 	} elseif ( 'wallet' === $withdrawal_method ) {
-		if ( empty( $_POST['wallet_holder_name'] ) || empty( $_POST['wallet_number'] ) ) {
+		if ( empty( $_POST['wallet_issuer'] ) || empty( $_POST['wallet_number'] ) ) {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة للمحفظة الإلكترونية.' ) );
 		}
 	}
@@ -60,9 +60,12 @@ function send_email_otp() {
 	// Send OTP to the user's email.
 	$subject = 'كود التحقق لضبط إعداداتك المحاسبية';
 	$message = 'كود التحقق الخاص بك هو: ' . $otp;
-	$headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>' );
+	$headers = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
+	);
 	$sent    = wp_mail( $user_email, $subject, $message, $headers );
-
+	send_sms_via_whysms( $user_info->user_login, $message );
 	if ( $sent ) {
 		wp_send_json_success();
 	} else {

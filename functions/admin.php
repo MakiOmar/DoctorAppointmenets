@@ -71,6 +71,6 @@ add_filter( 'wp_mail_from', 'snks_wp_mail_from' );
  * @return string The customized "From" name.
  */
 function snks_wp_mail_from_name() {
-	return bloginfo( 'name' ); // Replace with your desired "From" name.
+	return get_bloginfo( 'name' ); // Replace with your desired "From" name.
 }
 add_filter( 'wp_mail_from_name', 'snks_wp_mail_from_name' );

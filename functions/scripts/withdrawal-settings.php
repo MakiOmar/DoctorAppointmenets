@@ -195,3 +195,35 @@ function disable_withdrawal_form_based_on_time() {
 	</script>
 	<?php
 }
+
+
+add_action(
+	'wp_footer',
+	function () {
+		?>
+	<script type="text/javascript">
+		jQuery(document).ready(function ($) {
+			// Use delegated event handling for dynamically added buttons
+			$(document).on('click', '.details-button', function () {
+				// Retrieve data attributes
+				const dateTime = $(this).data('date-time');
+				const attendanceType = $(this).data('attendance-type');
+				const clientName = $(this).data('client-name');
+
+				// Display details in Arabic using SweetAlert2
+				Swal.fire({
+					title: 'تفاصيل الجلسة',
+					html: `
+						<p><strong>تاريخ ووقت الجلسة:</strong> ${dateTime}</p>
+						<p><strong>نوع الحضور:</strong> ${attendanceType}</p>
+						<p><strong>اسم العميل:</strong> ${clientName}</p>
+					`,
+					icon: 'info',
+					confirmButtonText: 'أغلق'
+				});
+			});
+		});
+	</script>
+		<?php
+	}
+);

@@ -392,10 +392,10 @@ function custom_withdrawal_form_shortcode() {
 	// Define the withdrawal options in an array.
 	$withdrawal_options = array(
 		array(
-			'id'          => 'monthly_withdrawal',
-			'value'       => 'monthly_withdrawal',
-			'label'       => 'النظام الشهري',
-			'description' => 'سيتم سحب رصيدك تلقائيا في أول يوم عمل من كل شهر.',
+			'id'          => 'daily_withdrawal',
+			'value'       => 'daily_withdrawal',
+			'label'       => 'النظام اليومي',
+			'description' => 'سيتم سحب رصيدك تلقائيا بشكل يومي.',
 		),
 		array(
 			'id'          => 'weekly_withdrawal',
@@ -404,11 +404,12 @@ function custom_withdrawal_form_shortcode() {
 			'description' => 'سيتم سحب رصيدك تلقائيا كل يوم أربعاء من كل أسبوع.',
 		),
 		array(
-			'id'          => 'daily_withdrawal',
-			'value'       => 'daily_withdrawal',
-			'label'       => 'النظام اليومي',
-			'description' => 'سيتم سحب رصيدك تلقائيا بشكل يومي.',
+			'id'          => 'monthly_withdrawal',
+			'value'       => 'monthly_withdrawal',
+			'label'       => 'النظام الشهري',
+			'description' => 'سيتم سحب رصيدك تلقائيا في أول يوم عمل من كل شهر.',
 		),
+
 		array(
 			'id'          => 'manual_withdrawal',
 			'value'       => 'manual_withdrawal',
@@ -546,10 +547,13 @@ function custom_withdrawal_form_shortcode() {
 					continue;
 				}
 				?>
+				<!-- We will need this when other withdrawal methods are enabeled-->
+				<?php checked( $withdrawal_method, $option['value'] , true ); ?>
 				<div class="withdrawal-radio">
-					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_method, $option['value'] ); ?>>
+					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" checked>
 					<label for="<?php echo esc_attr( $option['id'] ); ?>">
-						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?>"></span>
+						<!-- Remove the checked class when other withdrawal methods are enabeled-->
+						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?> checked"></span>
 						<?php echo esc_html( $option['label'] ); ?>
 					</label>
 					<!-- Hidden Fields Section -->
@@ -590,7 +594,8 @@ function custom_withdrawal_form_shortcode() {
 		</div>
 
 		<!-- Button to send OTP -->
-		<button type="button" id="send-otp" class="anony-default-padding withdrawal-button">إرسال كود التحقق</button>
+		<p class="anony-center-text">للحفظ يجب إرسال كود التحقق</p>
+		<button type="button" id="send-otp" class="anony-default-padding withdrawal-button">إرسال</button>
 		<!-- Submit Button (Initially disabled) -->
 		<button type="button" id="submit-withdrawal-form" class="anony-default-padding withdrawal-button" style="display:none;">حفظ</button>
 	</form>
@@ -866,20 +871,39 @@ add_shortcode(
 
 		// Display the transactions table.
 		echo '<table class="user-transactions" style="text-align: right; direction: rtl;">';
-		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>موعد الجلسة</th></tr>';
+		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>تفاصيل الجلسة</th></tr>';
 		foreach ( $transactions as $transaction ) {
-				// Determine the arrow color based on the transaction type.
-				$arrow_color           = ( 'add' === $transaction->transaction_type ) ? 'green' : 'red';
-				$arrow_icon            = ( 'add' === $transaction->transaction_type ) ? '↑' : '↓';
-				$transaction_type_text = ( 'add' === $transaction->transaction_type ) ? 'إضافة' : 'سحب';
+			// Determine the arrow color based on the transaction type.
+			$arrow_color           = ( 'add' === $transaction->transaction_type ) ? 'green' : 'red';
+			$arrow_icon            = ( 'add' === $transaction->transaction_type ) ? '↑' : '↓';
+			$transaction_type_text = ( 'add' === $transaction->transaction_type ) ? 'إضافة' : 'سحب';
 
-				// Display transaction data with timetable date_time if available.
-				echo '<tr style="font-size:13px !important">';
-				echo '<td style="vertical-align: middle;"><span style="font-size:25px;color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
-				echo '<td style="vertical-align: middle;">' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
-				echo '<td style="vertical-align: middle;">' . esc_html( snks_localized_datetime( $transaction->transaction_time ) ) . '</td>';
-				echo '<td style="vertical-align: middle;">' . esc_html( $transaction->date_time ? snks_localized_datetime( $transaction->date_time ) : 'غير متاح' ) . '</td>';
-				echo '</tr>';
+			if ( $transaction->date_time ) {
+				$clinic = snks_get_clinic( $transaction->clinic );
+				if ( 'offline' === $transaction->attendance_type ) {
+					if ( $clinic ) {
+						$attendance = $clinic['clinic_title'];
+					} else {
+						$attendance = 'عيادة';
+					}
+				} else {
+					$attendance = 'أونلاين';
+				}
+				$user_details = snks_user_details( $transaction->client_id );
+				$first_name   = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
+				$last_name    = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
+				$details      = '<button class="details-button" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
+			} else {
+				$details = 'غير متاح';
+			}
+
+			// Display transaction data with timetable date_time if available.
+			echo '<tr id="' . esc_attr( $transaction->id ) . '" style="font-size:13px !important">';
+			echo '<td style="vertical-align: middle;"><span style="font-size:25px;color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
+			echo '<td style="vertical-align: middle;">' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
+			echo '<td style="vertical-align: middle;">' . esc_html( snks_localized_datetime( $transaction->transaction_time ) ) . '</td>';
+			echo '<td style="vertical-align: middle;">' . wp_kses_post( $details ) . '</td>';
+			echo '</tr>';
 		}
 
 		echo '</table>';
@@ -887,6 +911,5 @@ add_shortcode(
 		return ob_get_clean();
 	}
 );
-
 
 

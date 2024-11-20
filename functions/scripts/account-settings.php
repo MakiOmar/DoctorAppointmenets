@@ -18,18 +18,24 @@ add_action(
 		?>
 		<script>
 			jQuery( document ).ready( function( $ ) {
-				function setCookie(name, value, days) {
-					var expires = "";
+				function setCookie(name, value, days, sameSite = "None", secure = true) {
+					let expires = "";
+
 					if (days) {
-						var date = new Date();
+						const date = new Date();
 						date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
 						expires = "; expires=" + date.toUTCString();
 					} else if (days === 0) {
 						// If days is 0, set the expiration to a past date to delete the cookie
 						expires = "; expires=Thu, 01 Jan 1970 00:00:00 UTC";
 					}
-					document.cookie = name + "=" + (value || "") + expires + "; path=/";
+
+					// Construct the cookie string
+					document.cookie = `${name}=${encodeURIComponent(value || "")}${expires}; path=/; SameSite=${sameSite}${
+						secure ? "; Secure" : ""
+					}`;
 				}
+
 				function getCookie(name) {
 					let cookieArr = document.cookie.split(";");
 
