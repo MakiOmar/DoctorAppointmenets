@@ -423,15 +423,22 @@ function custom_withdrawal_form_shortcode() {
 			'value'  => 'wallet',
 			'label'  => 'محفظة إلكترونية',
 			'fields' => array(
-				array(
+				//phpcs:disable
+				/*array(
 					'label' => 'اسم صاحب المحفظة',
 					'name'  => 'wallet_holder_name',
 					'value' => isset( $withdrawal_settings['wallet_holder_name'] ) ? $withdrawal_settings['wallet_holder_name'] : '',
-				),
+				),*/
+				//phpcs:enable
 				array(
 					'label' => 'رقم المحفظة',
 					'name'  => 'wallet_number',
 					'value' => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
+				),
+				array(
+					'label' => 'المصدر للمحفظة',
+					'name'  => 'wallet_issuer',
+					'value' => isset( $withdrawal_settings['wallet_issuer'] ) ? $withdrawal_settings['wallet_issuer'] : '',
 				),
 			),
 		),
@@ -534,7 +541,11 @@ function custom_withdrawal_form_shortcode() {
 		<!-- Second Section -->
 		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
 			<h1 class="white-bg anony-padding-20 withdrawal-section-title">طريقة السحب</h1>
-			<?php foreach ( $withdrawal_details as $option ) : ?>
+			<?php foreach ( $withdrawal_details as $index => $option ) :
+				if ( $index > 0 ) {
+					continue;
+				}
+				?>
 				<div class="withdrawal-radio">
 					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_method, $option['value'] ); ?>>
 					<label for="<?php echo esc_attr( $option['id'] ); ?>">

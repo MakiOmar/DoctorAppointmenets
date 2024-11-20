@@ -436,10 +436,12 @@ function snks_meza_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
  */
 function snks_wallet_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 	return array(
-		'user_id'           => $user_id,
-		'Wallet-Owner-Name' => $withdrawal_settings['wallet_holder_name'],
-		'Wallet-Number'     => $withdrawal_settings['wallet_number'],
-		'Amount'            => (string) $balance,
+		'user_id'       => $user_id,
+		'mobile number' => $withdrawal_settings['wallet_number'],
+		'amount'        => (string) $balance,
+		'issuer'        => $withdrawal_settings['wallet_issuer'],
+		'comment 1'     => '',
+		'comment 2'     => '',
 	);
 }
 
