@@ -17,6 +17,38 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return mixed
  */
 function snks_latest_completed_order_date( $doctors_id, $customer_id = false ) {
+	$latest_order = snks_latest_completed_order( $doctors_id, $customer_id );
+	// Check if completed orders exist for the customer.
+	if ( $latest_order ) {
+		return $latest_order->get_date_completed()->date( 'Y-m-d H:i:s' );
+	}
+	return false;
+}
+
+/**
+ * Get customers latest order date
+ *
+ * @param mixed $doctors_id Doctors ID.
+ * @param mixed $customer_id Users ID.
+ * @return mixed
+ */
+function snks_latest_completed_order_session_price( $doctors_id, $customer_id = false ) {
+	$latest_order = snks_latest_completed_order( $doctors_id, $customer_id );
+	// Check if completed orders exist for the customer.
+	if ( $latest_order ) {
+		return get_post_meta( $latest_order->get_id(), '_main_price', true );
+	}
+	return false;
+}
+
+/**
+ * Get customers latest order
+ *
+ * @param mixed $doctors_id Doctors ID.
+ * @param mixed $customer_id Users ID.
+ * @return mixed
+ */
+function snks_latest_completed_order( $doctors_id, $customer_id = false ) {
 	if ( ! $customer_id ) {
 		$customer_id = get_current_user_id();
 	}
@@ -37,7 +69,7 @@ function snks_latest_completed_order_date( $doctors_id, $customer_id = false ) {
 	// Check if completed orders exist for the customer.
 	if ( ! empty( $orders ) ) {
 		$latest_order = reset( $orders );
-		return $latest_order->get_date_completed()->date( 'Y-m-d H:i:s' );
+		return $latest_order;
 	}
 	return false;
 }
