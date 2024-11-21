@@ -41,7 +41,7 @@ function send_email_otp() {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لبطاقة ميزة.' ) );
 		}
 	} elseif ( 'wallet' === $withdrawal_method ) {
-		if ( empty( $_POST['wallet_issuer'] ) || empty( $_POST['wallet_number'] ) ) {
+		if ( empty( $_POST['wallet_issuer'] ) || empty( $_POST['wallet_number'] ) || empty( $_POST['wallet_owner_name'] ) ) {
 			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة للمحفظة الإلكترونية.' ) );
 		}
 	}
@@ -145,8 +145,9 @@ function verify_otp_and_save_withdrawal() {
 	$withdrawal_data['card_holder_last_name']  = sanitize_text_field( $_POST['card_holder_last_name'] );
 	$withdrawal_data['meza_bank_code']         = sanitize_text_field( $_POST['meza_bank_code'] );
 	$withdrawal_data['meza_card_number']       = sanitize_text_field( $_POST['meza_card_number'] );
-	$withdrawal_data['wallet_holder_name']     = sanitize_text_field( $_POST['wallet_holder_name'] );
+	$withdrawal_data['wallet_owner_name']      = sanitize_text_field( $_POST['wallet_owner_name'] );
 	$withdrawal_data['wallet_number']          = sanitize_text_field( $_POST['wallet_number'] );
+	$withdrawal_data['wallet_issuer']          = sanitize_text_field( $_POST['wallet_issuer'] );
 
 	update_user_meta( $user_id, 'withdrawal_settings', $withdrawal_data );
 

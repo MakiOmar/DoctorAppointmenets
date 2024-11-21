@@ -162,9 +162,10 @@ function snks_check_uuid_open_session() {
 
 	// _query to find any open session with the same UUID (clinic).
 	$_query = $wpdb->prepare(
-		"SELECT COUNT(*) FROM $table_name WHERE clinic = %s AND session_status = %s",
+		"SELECT COUNT(*) FROM $table_name WHERE clinic = %s AND session_status = %s AND attendance_type = %s",
 		$uuid,
-		'open'
+		'open',
+		'offline'
 	);
 
 	// Check if an open session exists.

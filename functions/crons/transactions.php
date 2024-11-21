@@ -174,7 +174,7 @@ function process_withdrawals_batch() {
 		if ( 'daily_withdrawal' === $withdrawal_option || ( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || ( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) ) {
 			// Get the eligible balance for withdrawal.
 			$available_balance = get_available_balance( $user_id );
-			$withdraw_amount   = $available_balance - 5;
+			$withdraw_amount   = $available_balance;
 
 			if ( $withdraw_amount > 5 ) {
 
@@ -431,18 +431,29 @@ function snks_meza_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
  *
  * @param int   $user_id User's ID.
  * @param mixed $balance Balance.
- * @param array $withdrawal_settings withdrawal settings.
+ * @param array $withdrawal_settings Withdrawal settings.
  * @return array
  */
 function snks_wallet_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
-	return array(
+	$data = array(
 		'user_id'       => $user_id,
 		'mobile number' => $withdrawal_settings['wallet_number'],
-		'amount'        => (string) $balance,
-		'issuer'        => $withdrawal_settings['wallet_issuer'],
-		'comment 1'     => '',
-		'comment 2'     => '',
 	);
+
+	// Add full name after mobile number if the issuer is 'orange'.
+	if ( 'orange' === strtolower( $withdrawal_settings['wallet_issuer'] ) ) {
+		$data['full name'] = isset( $withdrawal_settings['wallet_owner_name'] ) ? $withdrawal_settings['wallet_owner_name'] : '';
+	}
+
+	// Continue with the rest of the keys.
+	$data += array(
+		'amount'    => (string) $balance,
+		'issuer'    => $withdrawal_settings['wallet_issuer'],
+		'comment 1' => '',
+		'comment 2' => '',
+	);
+
+	return $data;
 }
 
 /**

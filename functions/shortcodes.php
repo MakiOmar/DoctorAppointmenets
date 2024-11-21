@@ -437,6 +437,11 @@ function custom_withdrawal_form_shortcode() {
 					'value' => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
 				),
 				array(
+					'label' => 'إسم صاحب المحفظة',
+					'name'  => 'wallet_owner_name',
+					'value' => isset( $withdrawal_settings['wallet_owner_name'] ) ? $withdrawal_settings['wallet_owner_name'] : '',
+				),
+				array(
 					'label' => 'المصدر للمحفظة',
 					'name'  => 'wallet_issuer',
 					'value' => isset( $withdrawal_settings['wallet_issuer'] ) ? $withdrawal_settings['wallet_issuer'] : '',
@@ -532,10 +537,6 @@ function custom_withdrawal_form_shortcode() {
 				<p style="color: #939393; text-align: justify;font-size: 23px;">
 					في حالة كان يوم السحب يوم عطلة رسمي، يتم السحب في أول يوم عمل تالي.
 				</p>
-				<hr style="border: none; height: 2px; background-color: #939393;" />
-				<p style="color: #939393; text-align: justify;font-size: 23px;margin-top:15px">
-					تكلفة كل عملية سحب هي 5 جنيه تخصم من رصيدك عند السحب ( تكلفة ثابتة أيا كان المبلغ المسحوب ).
-				</p>
 			</div>
 		</div>
 
@@ -558,25 +559,45 @@ function custom_withdrawal_form_shortcode() {
 					</label>
 					<!-- Hidden Fields Section -->
 					<div class="withdrawal-accounts-fields white-bg anony-padding-10" style="display: none;border-radius:10px">
-						<?php foreach ( $option['fields'] as $field ) : ?>
-							<div class="field-group">
-								<label for="<?php echo esc_attr( $field['name'] ); ?>">
-									<?php echo esc_html( $field['label'] ); ?>
-								</label>
-								<?php if ( 'iban_number' === $field['name'] ) { ?>
+					<?php foreach ( $option['fields'] as $field ) : ?>
+						<div class="field-group">
+							<label for="<?php echo esc_attr( $field['name'] ); ?>">
+								<?php echo esc_html( $field['label'] ); ?>
+							</label>
+							<?php if ( 'wallet_number' === $field['name'] ) { ?>
+								<input 
+									type="text" 
+									id="<?php echo esc_attr( $field['name'] ); ?>" 
+									name="<?php echo esc_attr( $field['name'] ); ?>" 
+									value="<?php echo esc_attr( $field['value'] ); ?>" 
+									pattern="\d{11}" 
+									maxlength="11" 
+									placeholder="أدخل 11 رقماً فقط"
+									title="يرجى إدخال 11 رقماً فقط">
+							<?php } elseif ( 'iban_number' === $field['name'] ) { ?>
 								<span id="iban-container">
-									<input <?php echo 'iban_number' === $field['name'] ? 'pattern="\d{27}" maxlength="27"' : ''; ?> type="text" id="<?php echo esc_attr( $field['name'] ); ?>" name="<?php echo esc_attr( $field['name'] ); ?>" placeholder="<?php echo 'iban_number' === $field['name'] ? 'أدخل 27 رقم فقط بدون رمز الدولة' : ''; ?>" value="<?php echo esc_attr( $field['value'] ); ?>">
+									<input 
+										type="text" 
+										id="<?php echo esc_attr( $field['name'] ); ?>" 
+										name="<?php echo esc_attr( $field['name'] ); ?>" 
+										placeholder="أدخل 27 رقم فقط بدون رمز الدولة" 
+										value="<?php echo esc_attr( $field['value'] ); ?>" 
+										pattern="\d{27}" 
+										maxlength="27">
 									<span id="iban-country-code">EG</span>
 								</span>
-								<p style="text-align: right;font-size: 14px;font-weight:bold">مثلا ان كان الرقم هو
-								EG123452457895795632145780009
-								أدخل
-								123452457895795632145780009</p>
-								<?php } else { ?>
-									<input type="text" id="<?php echo esc_attr( $field['name'] ); ?>" name="<?php echo esc_attr( $field['name'] ); ?>" value="<?php echo esc_attr( $field['value'] ); ?>">
-								<?php } ?>
-							</div>
-						<?php endforeach; ?>
+								<p style="text-align: right;font-size: 14px;font-weight:bold">
+									مثلا ان كان الرقم هو EG123452457895795632145780009 أدخل 123452457895795632145780009
+								</p>
+							<?php } else { ?>
+								<input 
+									type="text" 
+									id="<?php echo esc_attr( $field['name'] ); ?>" 
+									name="<?php echo esc_attr( $field['name'] ); ?>" 
+									value="<?php echo esc_attr( $field['value'] ); ?>">
+							<?php } ?>
+						</div>
+					<?php endforeach; ?>
 					</div>
 				</div>
 			<?php endforeach; ?>
