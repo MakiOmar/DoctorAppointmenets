@@ -687,6 +687,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		// Retrieve the form data from the session.
 		// phpcs:disable
 		$form_data = isset( $_SESSION['consulting_form_data_temp'] ) ? $_SESSION['consulting_form_data_temp'] : array();
+		session_write_close();
 	}
 	
 	// phpcs:enable

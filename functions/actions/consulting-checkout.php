@@ -22,14 +22,13 @@ add_action(
 	'init',
 	function () {
 		// Start session if not already started.
-		if ( ! session_id() ) {
-			session_start();
-		}
 		// Check for the necessary request parameters.
 		if ( ! isset( $_REQUEST['direct_add_to_cart'] ) || ! empty( $_POST['edit-booking-id'] ) ) {
 			return;
 		}
-
+		if ( ! session_id() ) {
+			session_start();
+		}
 		// Verify nonce and handle form submission.
 		if ( isset( $_POST ) && isset( $_POST['create_appointment_nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['create_appointment_nonce'] ) ), 'create_appointment' ) && isset( $_POST['create-appointment'] ) ) {
 			return;
@@ -82,6 +81,7 @@ add_action(
 		);
 		// Store form data in PHP session.
 		$_SESSION['consulting_form_data_temp'] = $form_data;
+		session_write_close();
 		// Store form data in session.
 		WC()->session->set( 'consulting_form_data', $form_data );
 		// Check if the user is logged in; otherwise, redirect to login.
@@ -137,6 +137,7 @@ function snks_logged_in_proccess_form_data() {
 			process_form_data( $form_data );
 		}
 	}
+	session_write_close();
 	//phpcs:enable
 }
 
