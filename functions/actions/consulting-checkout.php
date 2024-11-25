@@ -19,7 +19,7 @@ if ( ! function_exists( 'WC' ) ) {
  * @return void
  */
 add_action(
-	'template_redirect',
+	'init',
 	function () {
 		// Start session if not already started.
 		if ( ! session_id() ) {
@@ -78,12 +78,8 @@ add_action(
 			'_main_price'        => $price,
 			'_total_price'       => $total_price,
 			'_jalsah_commistion' => $pricing_data['service_fees'],
-			'_vat'               => $pricing_data['vat'],
+			'_paymob'            => $pricing_data['paymob'],
 		);
-		// Start PHP session if not already started.
-		if ( ! session_id() ) {
-			session_start();
-		}
 		// Store form data in PHP session.
 		$_SESSION['consulting_form_data_temp'] = $form_data;
 		// Store form data in session.
@@ -135,7 +131,7 @@ function snks_logged_in_proccess_form_data() {
 	// Check if the user was redirected for checkout.
 	if ( isset( $_SESSION['consulting_form_data_temp'] ) && isset( $_POST['tocheckout'] ) && 'yes' === $_POST['tocheckout'] ) {
 		$form_data = $_SESSION['consulting_form_data_temp'];
-		unset( $_SESSION['consulting_form_data_temp'] );
+		//unset( $_SESSION['consulting_form_data_temp'] );
 		if ( $form_data && ! empty( $form_data ) ) {
 			// Process the stored form data after login.
 			process_form_data( $form_data );

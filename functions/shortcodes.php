@@ -442,9 +442,16 @@ function custom_withdrawal_form_shortcode() {
 					'value' => isset( $withdrawal_settings['wallet_owner_name'] ) ? $withdrawal_settings['wallet_owner_name'] : '',
 				),
 				array(
-					'label' => 'المصدر للمحفظة',
-					'name'  => 'wallet_issuer',
-					'value' => isset( $withdrawal_settings['wallet_issuer'] ) ? $withdrawal_settings['wallet_issuer'] : '',
+					'label'   => 'المصدر للمحفظة',
+					'name'    => 'wallet_issuer',
+					'value'   => isset( $withdrawal_settings['wallet_issuer'] ) ? $withdrawal_settings['wallet_issuer'] : '',
+					'options' => array(
+						'vodafone'    => 'فودافون',
+						'etisalat'    => 'إتصالات',
+						'orange'      => 'أورانج',
+						'aman'        => 'أمان',
+						'bank_wallet' => 'محفظة بنكية',
+					),
 				),
 			),
 		),
@@ -590,11 +597,20 @@ function custom_withdrawal_form_shortcode() {
 									مثلا ان كان الرقم هو EG123452457895795632145780009 أدخل 123452457895795632145780009
 								</p>
 							<?php } else { ?>
-								<input 
+								<?php if ( ! empty( $field['options'] ) ) { ?>
+									<select name="<?php echo esc_attr( $field['name'] ); ?>" id="<?php echo esc_attr( $field['name'] ); ?>">
+									<?php foreach( $field['options'] as $k => $v ) { ?>
+										<option value="<?php echo esc_attr( $k );?>" <?php selected( $k, $field['value'] ); ?>><?php echo esc_html( $v ); ?></option>
+									<?php } ?>
+									</select>
+								<?php } else { ?>
+									<input 
 									type="text" 
 									id="<?php echo esc_attr( $field['name'] ); ?>" 
 									name="<?php echo esc_attr( $field['name'] ); ?>" 
 									value="<?php echo esc_attr( $field['value'] ); ?>">
+								<?php } ?>
+								
 							<?php } ?>
 						</div>
 					<?php endforeach; ?>
@@ -625,6 +641,16 @@ function custom_withdrawal_form_shortcode() {
 	return ob_get_clean();
 }//phpcs:enable
 add_shortcode( 'custom_withdrawal_form', 'custom_withdrawal_form_shortcode' );
+add_action(
+	'send_headers',
+	function () {
+		if ( is_page( 'booking-details' ) ) {
+			header( 'Cache-Control: no-cache, must-revalidate, max-age=0' );
+			header( 'Pragma: no-cache' );
+		}
+	}
+);
+
 
 /**
  * Order details
@@ -632,13 +658,9 @@ add_shortcode( 'custom_withdrawal_form', 'custom_withdrawal_form_shortcode' );
  * @return string
  */
 function consulting_session_table_shortcode() {
-	// Start session if not already started.
-	if ( ! session_id() ) {
-		session_start();
-	}
 	// Retrieve the form data from the session.
 	// phpcs:disable
-	$form_data = $_SESSION['consulting_form_data_temp'] ?? array();
+	$form_data = isset( $_SESSION['consulting_form_data_temp'] ) ? $_SESSION['consulting_form_data_temp'] : array();
 	// phpcs:enable
 	// Ensure that necessary data is available.
 	if ( empty( $form_data ) ) {
@@ -664,7 +686,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		}
 		// Retrieve the form data from the session.
 		// phpcs:disable
-		$form_data = $_SESSION['consulting_form_data_temp'] ?? array();
+		$form_data = isset( $_SESSION['consulting_form_data_temp'] ) ? $_SESSION['consulting_form_data_temp'] : array();
 	}
 	
 	// phpcs:enable
@@ -759,19 +781,24 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<?php } ?>
 		<div>
 			<div class="amount-section">
-				<p>رسوم الجلسة</p>
+				<p>رسوم المعالج</p>
 				<p class="price"><?php echo esc_html( $form_data['_main_price'] ); ?> ج.م</p>
 			</div>
 
 			<div class="amount-section">
-				<p>رسوم الخدمة</p>
+				<p>رسوم موقع جلسة</p>
 				<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] ); ?> ج.م</p>
 			</div>
 
 			<div class="amount-section">
-				<p>ضريبة القيمة المضافة</p>
-				<p class="price"><?php echo esc_html( $form_data['_vat'] ); ?> ج.م</p>
+				<p>رسوم  Paymob</p>
+				<p class="price"><?php echo esc_html( $form_data['_paymob'] ); ?> ج.م</p>
 			</div>
+
+			<!--<div class="amount-section">
+				<p>ضريبة القيمة المضافة</p>
+				<p class="price"><?php /*echo esc_html( $form_data['_vat'] );*/ ?> ج.م</p>
+			</div>-->
 		</div>
 		<div class="total">
 			<p>الإجمالي</p>

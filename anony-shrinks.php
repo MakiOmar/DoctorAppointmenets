@@ -17,7 +17,7 @@ define( 'SNKS_DOMAIN', 'anony-turn' );
 
 define( 'TIMETABLE_TABLE_NAME', 'snks_provider_timetable' );
 define( 'TRNS_TABLE_NAME', 'snks_booking_transactions' );
-define( 'WHYSMS_SENDER_ID', 'WhySMS Test' );
+define( 'WHYSMS_SENDER_ID', 'Jalsah' );
 define( 'WHYSMS_TOKEN', '391|s1StiJT5mVm1vlC5El7W7W4AYCIPqu7nyCiow5tBd3009807' );
 
 // Ensure the vendor autoload file is required.

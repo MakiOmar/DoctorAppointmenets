@@ -137,7 +137,7 @@ function snks_pricing_discount_enabled( $user_id = false ) {
  * @param string $context Calculation context weather if is first time book or edit. Accepts book|any.
  * @return mixed
  */
-function snks_session_total_price( $session_price, $attendance_type, $context = 'book' ) {
+function snks_session_total_price_old( $session_price, $attendance_type, $context = 'book' ) {
 
 	if ( 'book' !== $context ) {
 		$a = 0;
@@ -197,6 +197,75 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 			'service_fees'  => $service_fees,
 			'vat'           => $vat,
 			'total_price'   => $session_price + $service_fees + $vat,
+		);
+	}
+}
+/**
+ * Session price formula
+ *
+ * @param mixed  $session_price  Session original price.
+ * @param string $attendance_type Whether it is online or offline.
+ * @param string $context Calculation context weather if is first time book or edit. Accepts book|any.
+ * @return mixed
+ */
+function snks_session_total_price( $session_price, $attendance_type, $context = 'book' ) {
+	// Paymob accept.
+	$p = ( $session_price * 0.0275 + 3 ) * 1.14; // Payment gateway.
+	// Paymob send.
+	$b = ( $session_price * 0.01 ) * 1.14;
+
+	$pb = $b + $p;
+
+	if ( 'book' === $context ) {
+		// Determine D based on the session price and attendance type.
+		if ( 'online' === $attendance_type ) {
+			$a = 1.92;
+			if ( $session_price < 50 ) {
+				$c = 2.85; // Is jalash earnings.
+			} elseif ( $session_price >= 50 && $session_price < 100 ) {
+				$c = 5.7;
+			} else {
+				$c = 11.4;
+			}
+		} else {
+			$a = 0.96;
+			// Offline case.
+			$c = 5.7;
+		}
+	} else {
+		$a = 0;
+		$c = 0;
+	}
+
+	$d = ( $pb + $c + $a ) * 0.0275 * 1.03 * 1.14;
+
+	// Calculate F (the final total).
+	$f = $pb + $d;
+
+	$service_fees = round( ( $c + $a ), 2 );
+	$paymob       = round( ( $f ), 2 );
+	$total        = $session_price + $service_fees + $paymob;
+	// Return the final session price including service fees and VAT.
+	if ( $total < 1 ) {
+		return array(
+			'session_price' => 0,
+			'service_fees'  => 0,
+			'paymob'        => 0,
+			'total_price'   => 0,
+		);
+	} elseif ( $total > 0 && $total < 5 ) {
+		return array(
+			'session_price' => $session_price,
+			'service_fees'  => 5 - $session_price,
+			'paymob'        => 0,
+			'total_price'   => 5,
+		);
+	} else {
+		return array(
+			'session_price' => $session_price,
+			'service_fees'  => $service_fees,
+			'paymob'        => $paymob,
+			'total_price'   => $total,
 		);
 	}
 }

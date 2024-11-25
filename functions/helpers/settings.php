@@ -506,6 +506,40 @@ function snks_get_clinic( $uuid, $user_id = false ) {
 }
 
 /**
+ * Check if a wallet number exists for a user other than the given user ID.
+ *
+ * This function searches the wp_usermeta table for a serialized wallet number
+ * stored in the withdrawal_settings meta key, excluding a specific user ID.
+ *
+ * @param string $wallet_number The wallet number to search for.
+ * @param int    $user_id       The user ID to exclude from the search.
+ * @return int|false The user ID of the matching user, or false if no match is found.
+ */
+function snks_check_wallet_exists( $wallet_number, $user_id ) {
+    global $wpdb;
+
+    // Prepare the SQL query to search for the wallet number in serialized meta,
+    // excluding the specified user ID.
+    $query = $wpdb->prepare(
+        "
+        SELECT user_id 
+        FROM {$wpdb->usermeta}
+        WHERE meta_key = %s
+        AND meta_value LIKE %s
+        AND user_id != %d
+        ",
+        'withdrawal_settings',
+        '%' . $wpdb->esc_like( $wallet_number ) . '%',
+        $user_id
+    );
+
+    // Execute the query and retrieve the user ID if a match is found.
+    $found_user_id = $wpdb->get_var( $query );
+
+    // Return the user ID if found, or false otherwise.
+    return $found_user_id ? (int) $found_user_id : false;
+}
+/**
  * Generate appointments dates
  *
  * @param array $week_days An array of week days abbreviations array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' ).

@@ -33,7 +33,7 @@ function withdraw_transactions_admin_page_content() {
 		$wpdb->prepare(
 			"
             SELECT COUNT(*) 
-            FROM {$wpdb->prefix}booking_transactions 
+            FROM {$wpdb->prefix}snks_booking_transactions 
             WHERE transaction_type = 'withdraw' 
             AND DATE(transaction_time) = %s
             ",
