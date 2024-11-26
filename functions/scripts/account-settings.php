@@ -116,10 +116,10 @@ add_action(
 								class: 'jet-form-builder-repeater__custom_remove', // Add your custom class here
 								click: function(e) {
 									e.preventDefault();
-									let clicked = $(this);
-									if ( $(this).closest('div[name="clinics_list"]').length > 0 ) {
-										let rowRemove = $(this).closest('.jet-form-builder-repeater__row-remove');
-										let uuid = rowRemove.prev('.jet-form-builder-repeater__row-fields').find('input[data-field-name="uuid"]').val();
+									let rowRemove = $(this).closest('.jet-form-builder-repeater__row-remove');
+									let removeButton = rowRemove.find('.jet-form-builder-repeater__remove');
+									if ( $(this).closest('form[data-form-id="2199"]').length > 0 ) {
+										let uuid = rowRemove.prev().find('select[data-field-name="appointment_clinic"]').val();
 										if ( uuid !== '' ) {
 											$.ajax({
 												url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
@@ -138,20 +138,18 @@ add_action(
 															confirmButtonText: 'إغلاق'
 														});
 													} else {
-														clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+														removeButton.trigger('click');
 													}
 												}
 											});
 										} else {
-											clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+											removeButton.trigger('click');
 										}
 									} else {
-										clicked.prev('.jet-form-builder-repeater__remove').trigger('click');
+										removeButton.trigger('click');
 									}
 								}
 							});
-
-							// Insert the new button after .jet-form-builder-repeater__remove
 							$(this).after(newButton);
 						}
 					});
@@ -302,7 +300,24 @@ add_action(
 					if ( exclude.includes( parseInt( formId ) ) ) {
 						return;
 					}
+
 					// if is add sessions form
+					if ( formId == 1956 ) {
+						Swal.fire({
+							title: 'تم الحفظ بنجاح',
+							text: "يرجى البدء في إضافة مواعيدك أو تعديلها حسب الإعدادات الجديدة",
+							icon: 'succes',
+							confirmButtonColor: '#3085d6',
+							confirmButtonText: 'إغلاق',
+						});
+					} else if( formId !== 1956 && formId !== 2199 ) {
+						Swal.fire({
+							title: 'تم الحفظ بنجاح',
+							icon: 'succes',
+							confirmButtonColor: '#3085d6',
+							confirmButtonText: 'إغلاق',
+						});
+					}
 					if ( formId == 2199 ) {
 						Swal.fire({
 							title: 'إنتبه',

@@ -319,6 +319,34 @@ function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $att
 
 	return $results;
 }
+
+/**
+ * Checks if a timetable record exists for a user with the given date_time and session_status = 'open'.
+ *
+ * @param int    $user_id   User ID.
+ * @param string $date_time Date and time.
+ * @return bool True if a record exists, false otherwise.
+ */
+function snks_timetable_open_session_exists( $user_id, $date_time ) {
+	global $wpdb;
+
+	// Define the query to check if a record exists.
+	$_query = "
+        SELECT COUNT(*)
+        FROM {$wpdb->prefix}snks_provider_timetable
+        WHERE user_id = %d
+        AND date_time = %s
+        AND session_status = %s
+    ";
+	//phpcs:disable
+	// Prepare and execute the query.
+	$record_count = $wpdb->get_var( $wpdb->prepare( $_query, $user_id, $date_time, 'open' ) );
+	//phpcs:enable
+	// Return true if any record exists, otherwise false.
+	return ( $record_count > 0 );
+}
+
+
 /**
  * Get open timetable by ID
  *
@@ -417,11 +445,12 @@ function snks_delete_timetable( $id ) {
 
 /**
  * Deletes all records in the wpds_snks_provider_timetable table for a given user ID
- * where session_status is not equal to 'waiting'.
+ * where session_status is not equal to 'waiting' and optionally filters by attendance_type.
  *
- * @param int $user_id The ID of the user whose records should be deleted.
+ * @param int          $user_id The ID of the user whose records should be deleted.
+ * @param string|false $attendance_type The attendance type to filter by, or false for no filter.
  */
-function snks_delete_waiting_sessions_by_user_id( $user_id ) {
+function snks_delete_waiting_sessions_by_user_id( $user_id, $attendance_type = false ) {
 	global $wpdb;
 
 	// Sanitize the user ID.
@@ -429,17 +458,22 @@ function snks_delete_waiting_sessions_by_user_id( $user_id ) {
 
 	// Define the table name with the WordPress table prefix.
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+
+	// Build the base SQL query.
+	$sql = "DELETE FROM $table_name WHERE user_id = %d AND session_status = %s";
+
+	// Add the attendance_type condition if provided.
+	$params = array( $user_id, 'waiting' );
+	if ( $attendance_type ) {
+		$sql     .= ' AND attendance_type = %s';
+		$params[] = $attendance_type;
+	}
 	//phpcs:disable
-	// Prepare and execute the delete query.
-	$wpdb->query(
-		$wpdb->prepare(
-			"DELETE FROM $table_name WHERE user_id = %d AND session_status = %s",
-			$user_id,
-			'waiting'
-		)
-	);
+	// Execute the query with prepared statement.
+	$wpdb->query( $wpdb->prepare( $sql, $params ) );
 	//phpcs:enable
 }
+
 
 
 /**
@@ -602,34 +636,50 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
  * @param int    $user_id User's ID.
  * @param string $date Date.
  * @param int    $period Period.
+ * @param string|null $attendance_type Attendance_type.
  * @return mixed
  */
-function snks_user_appointments_by_date_period( $user_id, $date, $period ) {
-	global $wpdb;
-	//$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) + ( 2 * 3600 )  );
-	$cache_key = 'dates-appoointments-' . $user_id . '-' . $date . '-' . $period;
-	$results   = wp_cache_get( $cache_key );//phpcs:disable
-	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-	if ( ! $results ) {
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE user_id = %d
-				AND period = %d
-				AND DATE(date_time) = %s
-				AND order_id = 0
-				ORDER BY date_time {$_order}",
-				$user_id,
-				absint( $period ),
-				$date
-				//$current_date
-			)
-		);
+function snks_user_appointments_by_date_period( $user_id, $date, $period, $attendance_type = null ) {
+    global $wpdb;
+    //$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) + ( 2 * 3600 )  );
+    $cache_key = 'dates-appointments-' . $user_id . '-' . $date . '-' . $period . '-' . $attendance_type;
+    $results   = wp_cache_get( $cache_key ); // phpcs:disable
+    $_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+    
+    if ( ! $results ) {
+        // Prepare base SQL query
+        $sql = "SELECT *
+                FROM {$wpdb->prefix}snks_provider_timetable
+                WHERE user_id = %d
+                AND period = %d
+                AND DATE(date_time) = %s
+                AND order_id = 0";
 
-		wp_cache_set( $cache_key, $results );
-	}
-	return $results;
+        // Add attendance_type condition if provided
+        if ( $attendance_type !== null ) {
+            $sql .= " AND attendance_type = %s";
+        }
+
+        // Add order by clause
+        $sql .= " ORDER BY date_time {$_order}";
+
+        // Prepare query with parameters
+        $query_params = [
+            $user_id,
+            absint( $period ),
+            $date,
+        ];
+
+        if ( $attendance_type !== null ) {
+            $query_params[] = sanitize_text_field( $attendance_type );
+        }
+
+        $results = $wpdb->get_results( $wpdb->prepare( $sql, ...$query_params ) );
+
+        wp_cache_set( $cache_key, $results );
+    }
+
+    return $results;
 }
 
 /**

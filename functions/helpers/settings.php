@@ -1207,8 +1207,16 @@ add_filter(
 
 add_action(
 	'jet-form-builder/custom-action/set_clinic_uuid',
-	function () {
-		$user_id      = get_current_user_id();
+	function ( $request ) {
+		$user_id = get_current_user_id();
+		if ( 'both' != $request['attendance_type'] ) {
+			if ( 'online' == $request['attendance_type'] ) {
+				$delete = 'offline';
+			} else {
+				$delete = 'online';
+			}
+			snks_delete_waiting_sessions_by_user_id( $user_id, $delete );
+		}
 		$clinics_list = get_user_meta( $user_id, 'clinics_list', true );
 		foreach ( $clinics_list as $key => &$clinic ) {
 			if ( empty( $clinic['uuid'] ) ) {

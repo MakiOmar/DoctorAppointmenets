@@ -1359,14 +1359,21 @@ add_action(
 				margin: 0 3px;
 			}
 			.jet-form-builder-message {
-				position: fixed;
-				bottom: 20px;
-				background-color: #fff;
-				z-index: 9;
+				/*position: fixed;
+				top: calc(50% - 45px);
 				left: 0;
-				right: 0;
+				right: 0;*/
+				background-color: #fff;
 				margin: auto;
 				max-width: 432px;
+				position: relative;
+			}
+			.jet-form-builder-message--error{
+				position: fixed;
+				top: calc(50% - 45px);
+				left: 0;
+				right: 0;
+				z-index: 9;
 			}
 			.jet-form-builder-message::before{
 				content: 'x';
@@ -1422,6 +1429,7 @@ add_action(
 					text-align: left;
 			}
 			#snks-booking-page{
+				position: relative;
 				overflow: hidden;
 				max-width: 428px;
 				margin: auto;
