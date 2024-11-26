@@ -631,58 +631,6 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
 }
 
 /**
- * Get users appointments by date
- *
- * @param int    $user_id User's ID.
- * @param string $date Date.
- * @param int    $period Period.
- * @param string|null $attendance_type Attendance_type.
- * @return mixed
- */
-function snks_user_appointments_by_date_period( $user_id, $date, $period, $attendance_type = null ) {
-    global $wpdb;
-    //$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) + ( 2 * 3600 )  );
-    $cache_key = 'dates-appointments-' . $user_id . '-' . $date . '-' . $period . '-' . $attendance_type;
-    $results   = wp_cache_get( $cache_key ); // phpcs:disable
-    $_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-    
-    if ( ! $results ) {
-        // Prepare base SQL query
-        $sql = "SELECT *
-                FROM {$wpdb->prefix}snks_provider_timetable
-                WHERE user_id = %d
-                AND period = %d
-                AND DATE(date_time) = %s
-                AND order_id = 0";
-
-        // Add attendance_type condition if provided
-        if ( $attendance_type !== null ) {
-            $sql .= " AND attendance_type = %s";
-        }
-
-        // Add order by clause
-        $sql .= " ORDER BY date_time {$_order}";
-
-        // Prepare query with parameters
-        $query_params = [
-            $user_id,
-            absint( $period ),
-            $date,
-        ];
-
-        if ( $attendance_type !== null ) {
-            $query_params[] = sanitize_text_field( $attendance_type );
-        }
-
-        $results = $wpdb->get_results( $wpdb->prepare( $sql, ...$query_params ) );
-
-        wp_cache_set( $cache_key, $results );
-    }
-
-    return $results;
-}
-
-/**
  * Get bookable date times
  *
  * @param string $date Date.

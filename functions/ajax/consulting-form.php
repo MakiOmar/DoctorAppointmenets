@@ -23,11 +23,50 @@ function fetch_start_times_callback() {
 	}
 	$attendance_type = sanitize_text_field( $_request['attendanceType'] );
 
-	$date       = sanitize_text_field( $_request['slectedDay'] );
-	$user_id    = sanitize_text_field( $_request['userID'] );
-	$period     = sanitize_text_field( $_request['period'] );
-	$availables = snks_user_appointments_by_date_period( $user_id, $date, $period, $attendance_type );
-	$html       = snks_render_consulting_hours( $availables, $attendance_type, $user_id );
+	$date    = sanitize_text_field( $_request['slectedDay'] );
+	$user_id = sanitize_text_field( $_request['userID'] );
+	$period  = sanitize_text_field( $_request['period'] );
+
+	// Cache key generation.
+	$cache_key = 'dates-appointments-' . $user_id . '-' . $date . '-' . $period . '-' . $attendance_type;
+    $results   = wp_cache_get( $cache_key ); // phpcs:disable
+    $_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+
+    if ( ! $results ) {
+        // Initialize query builder.
+        $builder = wp_query_builder()
+            ->select( '*' )
+            ->from( 'snks_provider_timetable' )
+            ->where([
+                'user_id'  => $user_id,
+                'period'   => absint( $period ),
+                'order_id' => 0,
+            ]);
+
+        // Add a DATE condition using a raw condition within the array.
+        $builder->where([ 'DATE(date_time)' => $date ]);
+
+        // Add attendance_type condition if provided.
+        if ( $attendance_type !== null ) {
+            $builder->where([ 'attendance_type' => sanitize_text_field( $attendance_type ) ]);
+        }
+
+        // Add order by clause
+        $builder->order_by( 'date_time', $_order );
+
+        // Execute the query
+        $results = $builder->get();
+        
+        // Cache the results
+        wp_cache_set( $cache_key, $results );
+
+		$availables = $results;
+		$html       = snks_render_consulting_hours( $availables, $attendance_type, $user_id );
+    } else {
+		$html = '<p class="anony-center-text">هناك شيء خاطيء</p>';
+	}
+
+	
 	wp_send_json(
 		array(
 			'resp' => $html,
