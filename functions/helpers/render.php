@@ -1346,7 +1346,8 @@ function anony_accordion( $data ) {
 
 		<script type="text/javascript">
 			document.querySelectorAll('.anony-accordion-header').forEach(button => {
-				button.addEventListener('click', () => {
+				button.addEventListener('click', (e) => {
+					e.preventDefault();
 					const accordionContent = button.nextElementSibling;
 
 					button.classList.toggle('active');
@@ -1368,7 +1369,6 @@ function anony_accordion( $data ) {
 					});
 				});
 			});
-			const elements = document.querySelectorAll('.anony-accordion-header');
 		</script>
 		<?php
 		$output .= ob_get_clean();
@@ -1377,24 +1377,6 @@ function anony_accordion( $data ) {
 	return $output;
 }
 
-add_filter(
-	'jet-form-builder/before-render-field',
-	function (
-		$x,
-		$name,
-		$attrs,
-		$content,
-		$wp_block
-	) {
-		if ( 'repeater-field' === $name && 'clinics_list' === $attrs['name'] ) {
-			return $x;
-		}
-
-		return $x;
-	},
-	10,
-	5
-);
 add_action(
 	'wp_footer',
 	function () {

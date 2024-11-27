@@ -68,14 +68,16 @@ function appointment_change_date_callback() {
 	$timetables = snks_get_timetable_by_date( $_req['date'] );
 	if ( $timetables ) {
 		foreach ( $timetables as $appointment ) {
+			$attendance = 'online' === $appointment->attendance_type ? 'أونلاين' : 'أوفلاين';
 			echo '<div name="appointment">';
 			echo '<input type="radio" id="change-to-this-date-' . esc_attr( $appointment->ID ) . '" name="change-to-this-date" value="' . esc_attr( $appointment->ID ) . '">';
-			echo '<label for="change-to-this-date-' . esc_attr( $appointment->ID ) . '">' . esc_html( $appointment->period . ' دقيقة ' . snks_localized_time( $appointment->starts ) . ' - ' . snks_localized_time( $appointment->ends ) ) . '</label>';
+			//phpcs:disable
+			echo '<label for="change-to-this-date-' . esc_attr( $appointment->ID ) . '">' . esc_html( $appointment->period . ' دقيقة ' . snks_localized_time( $appointment->starts ) . ' - ' . snks_localized_time( $appointment->ends ) ) . ' - ' . $attendance . '</label>';
+			//phpcs:enable
 			echo '</div>';
 		}
 		die;
 	}
 	echo '<p>عفواُ لا توجد مواعيد متاحة في هذا اليوم</p>';
-
 	die();
 }

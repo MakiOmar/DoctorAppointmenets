@@ -18,7 +18,8 @@ add_action(
 			$(document).on(
 				'click',
 				'.snks-notes',
-				function(){
+				function(e){
+					e.preventDefault();
 					$(this).closest('.snks-booking-item-wrapper').find('.snks-notes-form').toggleClass('show-notes-form');
 				}
 			);
@@ -45,7 +46,8 @@ add_action(
 				$(document).on(
 					'click',
 					ele,
-					function() {
+					function(e) {
+						e.preventDefault();
 						let parent = $(this).closest('.snks-timetable-accordion-wrapper');
 						let values = getCheckedValues(parent, 'bulk-action[]');
 						if ( values.length == 0 ) {
@@ -81,6 +83,7 @@ add_action(
 				'click',
 				'#iam-sure',
 				function() {
+					let container = $(this).closest('.jet-popup__container');
 					let parent = $("#" + $(this).data('parent'));
 					let values = getCheckedValues(parent, 'bulk-action[]');
 					if ( values.length == 0 ) {
@@ -90,8 +93,11 @@ add_action(
 					var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_action_nonce' ) ); ?>';
 
 					var delayBy = false;
+					let swalTitle = 'نجحت العملية';
+					let swalText = 'تم تأجيل المواعيد بنجاح';
 					if ( $("#delay-by").length > 0 ) {
 						delayBy = $("#delay-by").val();
+						swalText = "تم إرسال إشعار  بتأخير  الموعد";
 					}
 				
 					// Send AJAX request.
@@ -106,7 +112,13 @@ add_action(
 							nonce     : nonce,
 						},
 						success: function(response) {
-							console.log(response);
+							$('.jet-popup__close-button', container).trigger('click');
+							Swal.fire({
+								title: swalTitle,
+								text: swalText,
+								icon: "success",
+								confirmButtonText: 'غلق',
+							});
 						}
 					});
 
@@ -133,8 +145,6 @@ add_action(
 							nonce     : nonce,
 						},
 						success: function(response) {
-
-							console.log("#" + mainDate + "-change-to-list");
 							$("#" + mainDate + "-change-to-list").html(response);
 						}
 					});
@@ -144,7 +154,8 @@ add_action(
 			$(document).on(
 				'click',
 				'.snks-change',
-				function() {
+				function(e) {
+					e.preventDefault();
 					var oldAppointment = $(this).data('id');
 					var date = $(this).data('date');
 					var time = $(this).data('time');
@@ -157,9 +168,9 @@ add_action(
 					$('#snks-change-trigger').trigger('click');
 				}
 			);
-			$('#doctor-change-appointment').on('submit', function(e) {
+			$(document).on('submit', '#doctor-change-appointment',function(e) {
 				e.preventDefault(); // Prevent the form from submitting normally
-
+				let popup = $(this).closest('jet-popup');
 				// Collect form data
 				var formData = {
 					action: 'doctor_change_appointment', // The action for AJAX
@@ -181,7 +192,13 @@ add_action(
 								title: 'تم',
 								text: response.message,
 								confirmButtonText: 'موافق'
+							}).then((result) => {
+								console.log(result.isConfirmed);
+								if (result.isConfirmed) {
+									location.reload();
+								}
 							});
+;
 						} else if (response.status && response.status === 'faild') {
 							// Show error message with SweetAlert
 							Swal.fire({
@@ -211,8 +228,6 @@ add_action(
 				});
 			});
 
-
-			
 			$(document).on(
 				'click',
 				'.bulk-action-toggle svg',

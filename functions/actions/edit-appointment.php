@@ -81,7 +81,7 @@ add_action(
 		} else {
 			wp_send_json(
 				array(
-					'message' => 'عفواّ لم يام تغيير الموعد.',
+					'message' => 'عفواّ لم يتم تغيير الموعد.',
 					'status'  => 'faild',
 				)
 			);
@@ -167,9 +167,6 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				exit;
 			}
 		} elseif ( snks_is_patient() ) {
-			if ( snks_is_doctor() ) {
-				return false;
-			}
 			wp_safe_redirect( $error_url );
 			exit;
 		}
@@ -179,6 +176,8 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 		wp_safe_redirect( $error_url );
 		exit;
 	}
+
+	return true;
 }
 /**
  * Create an order for edit appointment

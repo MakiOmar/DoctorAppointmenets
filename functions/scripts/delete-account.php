@@ -22,45 +22,48 @@ add_action(
 				$(document).on(
 					'click',
 					'#send-verification-code',
-					function() {
-					$.ajax({
-						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-						type: 'POST',
-						data: {
-							action: 'send_verification_code',
-							nonce: '<?php echo esc_html( wp_create_nonce( 'delete_account_nonce' ) ); ?>',
-						},
-						success: function(response) {
-							if (response.success) {
-								Swal.fire({
-									icon: 'success',
-									title: 'تم إرسال الرمز',
-									text: response.data.message,
-									confirmButtonText: 'حسنًا'
-								});
-								$('#verification-code-section').show();
-							} else {
+					function(e) {
+						e.preventDefault();
+						$.ajax({
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+							type: 'POST',
+							data: {
+								action: 'send_verification_code',
+								nonce: '<?php echo esc_html( wp_create_nonce( 'delete_account_nonce' ) ); ?>',
+							},
+							success: function(response) {
+								if (response.success) {
+									Swal.fire({
+										icon: 'success',
+										title: 'تم إرسال الرمز',
+										text: response.data.message,
+										confirmButtonText: 'حسنًا'
+									});
+									$('#verification-code-section').show();
+								} else {
+									Swal.fire({
+										icon: 'error',
+										title: 'خطأ',
+										text: response.data.message,
+										confirmButtonText: 'حسنًا'
+									});
+								}
+							},
+							error: function() {
 								Swal.fire({
 									icon: 'error',
-									title: 'خطأ',
-									text: response.data.message,
+									title: 'خطأ غير متوقع',
+									text: 'حدث خطأ غير متوقع. حاول مرة أخرى.',
 									confirmButtonText: 'حسنًا'
 								});
 							}
-						},
-						error: function() {
-							Swal.fire({
-								icon: 'error',
-								title: 'خطأ غير متوقع',
-								text: 'حدث خطأ غير متوقع. حاول مرة أخرى.',
-								confirmButtonText: 'حسنًا'
-							});
-						}
-					});
-				});
+						});
+					}
+				);
 
 				// Verify code and delete account
-				$('#verify-and-delete').on('click', function() {
+				$(document).on('click','#verify-and-delete' ,function(e) {
+					e.preventDefault();
 					const verificationCode = $('#verification-code').val();
 
 					$.ajax({

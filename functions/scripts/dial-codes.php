@@ -16,7 +16,8 @@ add_action(
 		<script>
 			jQuery(document).ready(
 				function($) {
-					$(document).on('click', '#copyToClipboard', function() {
+					$(document).on('click', '#copyToClipboard', function(e) {
+						e.preventDefault();
 						const textToCopy = $(this).data('url');
 						navigator.clipboard.writeText(textToCopy).then(function() {
 							Swal.fire({

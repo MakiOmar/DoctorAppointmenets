@@ -204,7 +204,8 @@ add_action(
 	<script type="text/javascript">
 		jQuery(document).ready(function ($) {
 			// Use delegated event handling for dynamically added buttons
-			$(document).on('click', '.details-button', function () {
+			$(document).on('click', '.details-button', function (e) {
+				e.preventDefault();
 				// Retrieve data attributes
 				const dateTime = $(this).data('date-time');
 				const attendanceType = $(this).data('attendance-type');

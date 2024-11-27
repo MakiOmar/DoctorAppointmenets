@@ -993,6 +993,12 @@ add_action(
 				border-radius: 3px;
 				line-height: 10px;
 			}
+			.jet-popup.jet-popup--front-mode.jet-popup--hide-state{
+				display: none;
+			}
+			.jet-popup.jet-popup--front-mode.jet-popup--show-state{
+				display: block;
+			}
 			.jet-form-builder-repeater__custom_remove{
 				height: 25px!important;
 				width: 25px!important;
