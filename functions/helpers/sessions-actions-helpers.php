@@ -78,6 +78,7 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, 
 	if ( ! $user || ! $doctor ) {
 		return;
 	}
+	// Delete custom emaol code on commit 8072d24.
 	$title    = 'تم تأخير موعدك';
 	$new_hour = gmdate( 'h:i a', strtotime( "+$delay_period minutes", strtotime( $time ) ) );
 	$to       = $user->user_email;
