@@ -78,33 +78,21 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, 
 	if ( ! $user || ! $doctor ) {
 		return;
 	}
-	$after_button  = '<p style="Margin:0;line-height:36px;mso-line-height-rule:exactly;font-family:georgia, times, times new roman, serif;font-size:30px;font-style:normal;font-weight:normal;color:#023047">';
-	$after_button  = '<b style="display:block;margin-top:20px;font-size:20px">';
-	$after_button  = 'مع الطبيب';
-	$after_button .= '<br>';
-	$after_button .= get_user_meta( $doctor_id, 'billing_first_name', true ) . ' ' . get_user_meta( $doctor_id, 'billing_last_name', true );
-	$after_button .= '</b>';
-	$after_button .= '</p>';
-	list($title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url) = array(
-		'تم تأخير موعدك',
-		'في جلسة',
-		'نعتذر لك! الطبيب يبلغك بتأخير الموعد قليلاَ',
-		'تم تأخير الموعد الخاص بك لمدة',
-		$delay_period . ' دقيقة',
-		'للموعد <img src="' . SNKS_ARROW . '"/> ' . snks_localize_day( gmdate( 'D', strtotime( $date ) ) ) . ' ' . $date,
-		'#',
-	);
-	snks_send_email( $user->user_email, $title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url, $after_button );
-	$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
-	// Convert the date_time string to a timestamp and add the period (in seconds).
+	$title    = 'تم تأخير موعدك';
 	$new_hour = gmdate( 'h:i a', strtotime( "+$delay_period minutes", strtotime( $time ) ) );
-
-	$message = sprintf(
+	$to       = $user->user_email;
+	$subject  = $title . ' - ' . SNKS_APP_NAME;
+	$message  = sprintf(
 		'نعتذر عن تاخير جلسة يوم %1$s لمدة %2$s ليصبح موعدها %3$s',
 		gmdate( 'Y-d-m', strtotime( $date ) ),
 		$delay_period . ' دقيقة',
 		$new_hour
 	);
+	$headers  = array(
+		'Content-Type: text/html; charset=UTF-8',
+		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
+	);
+	return wp_mail( $to, $subject, $message, $headers );
 }
 
 
