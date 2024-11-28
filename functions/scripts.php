@@ -237,8 +237,8 @@ add_action(
 				);
 
 				$(document).on(
-					'submit',
-					'.doctor_actions',
+					'click',
+					'.doctor_actions .snks-button',
 					function (e) {
 						e.preventDefault();
 						Swal.fire({
@@ -256,7 +256,10 @@ add_action(
 							}
 						});
 
-						var doctorActions = $(this).serializeArray();
+						// Get the parent form of the clicked button
+						var form = $(this).closest('form');
+						// Serialize the form data
+						var doctorActions = form.serializeArray();
 						// Perform nonce check.
 						var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
 						doctorActions.push({ name: 'nonce', value: nonce });

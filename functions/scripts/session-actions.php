@@ -168,7 +168,7 @@ add_action(
 					$('#snks-change-trigger').trigger('click');
 				}
 			);
-			$(document).on('submit', '#doctor-change-appointment',function(e) {
+			$(document).on('click', '#doctor-change-appointment #doctor-change-appointment',function(e) {
 				e.preventDefault(); // Prevent the form from submitting normally
 				let popup = $(this).closest('jet-popup');
 				// Collect form data

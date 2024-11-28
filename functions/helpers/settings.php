@@ -1122,8 +1122,8 @@ function snks_clinic_colors_form() {
 <script type="text/javascript">
 				jQuery(document).ready(function ($) {
 					$(document).on(
-						'submit',
-						'#clinic-colors-form',
+						'click',
+						'#clinic-colors-form button',
 						function (e) {
 						e.preventDefault();
 

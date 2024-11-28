@@ -143,8 +143,8 @@ add_action(
 				);
 
 				$(document).on(
-					'submit',
-					".consulting-form",
+					'click',
+					".consulting-form #consulting-form-submit",
 					function(event){
 						if ( $( this ).find('input[name="selected-hour"]:checked').length === 0 || $( this ).find('input[name="current-month-day"]:checked').length === 0  ) {
 							event.preventDefault();
