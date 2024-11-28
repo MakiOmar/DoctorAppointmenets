@@ -420,7 +420,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<div id="consulting-form-submit">';
 	$html .= '<div class="hacen_liner_print-outregular"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes"> أوافق على الشروط والأحكام وسياسة الاستخدام.</div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
-	$html .= '<input style="margin-top:18px" type="submit" value="' . $submit_text . '">';
+	$html .= '<input id="consulting-form-submit" style="margin-top:18px" type="submit" value="' . $submit_text . '">';
 	$html .= '</div>';
 	$html .= '</form>';
 
@@ -791,7 +791,7 @@ function snks_booking_item_template( $record ) {
 							<img class="anony-padding-5" src="<?php echo $detail['icon']; ?>"/>
 						</div>
 						<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
-							<a style="color:#024059;font-size:18px;font-weight:bold" href="<?php echo $detail['link']; ?>">{<?php echo $placeholder; ?>}</a>
+							<a style="color:#024059;font-size:18px;font-weight:bold<?php echo 'phone' === $placeholder ? ';direction:ltr' : ''; ?>" href="<?php echo $detail['link']; ?>">{<?php echo $placeholder; ?>}</a>
 						</div>
 						
 					</div>
@@ -984,7 +984,7 @@ add_shortcode(
 			$output .= '<div id="change-to-list"></div>';
 			$output .= wp_nonce_field( 'change_appointment', 'change_appointment_nonce' );
 			$output .= '<input type="text" style="display:none" id="old-appointment" name="old-appointment" value=""/>';
-			$output .= '<input type="submit" class="snks-bg anony-padding-10 anony-full-width" name="submit" value="حفظ"/>';
+			$output .= '<input id="doctor-change-appointment-submit" type="submit" class="snks-bg anony-padding-10 anony-full-width" name="submit" value="حفظ"/>';
 		}
 		return $output;
 	}
@@ -1148,14 +1148,11 @@ function snks_generate_bookings() {
 											'meta_compare' => '=',
 										)
 									);
-
 									if ( empty( $session_notes ) ) {
 										echo str_replace( '{session_id}', $data->ID, do_shortcode( '[user_insert_session_notes]' ) );
 									} else {
 										$session_note = $session_notes[0];
-										$edit_notes   = snks_edit_session_form_args( $session_note->ID );
-										$edit         = new ANONY_Create_Form( $edit_notes );
-										echo str_replace( '{session_id}', $data->ID, $edit->render( false ) );
+										echo str_replace( '{session_id}', $data->ID, do_shortcode( '[user_edit_session_notes id="' . $session_note->ID . '"]' ) );
 									}
 									//phpcs:enable
 									?>
