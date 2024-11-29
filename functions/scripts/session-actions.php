@@ -159,6 +159,7 @@ add_action(
 					var oldAppointment = $(this).data('id');
 					var date = $(this).data('date');
 					var time = $(this).data('time');
+					console.log(oldAppointment);
 					$("#old-appointment").val(oldAppointment);
 					$("#change-to-date").attr('data-date', date);
 					$("#change-to-date").attr('data-time', time);
@@ -168,7 +169,7 @@ add_action(
 					$('#snks-change-trigger').trigger('click');
 				}
 			);
-			$(document).on('click', '#doctor-change-appointment #doctor-change-appointment',function(e) {
+			$(document).on('click', '#doctor-change-appointment #doctor-change-appointment-submit',function(e) {
 				e.preventDefault(); // Prevent the form from submitting normally
 				let popup = $(this).closest('jet-popup');
 				// Collect form data
