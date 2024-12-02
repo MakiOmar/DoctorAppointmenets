@@ -84,3 +84,18 @@ if ( class_exists( 'ANONY_Create_Form' ) ) {
 	new ANONY_Create_Form( snks_create_session_form_args( 'user_insert_session_notes', 'insert' ) );
 	new ANONY_Create_Form( snks_create_session_form_args( 'user_edit_session_notes', 'edit' ) );
 }
+
+add_action(
+	'anony_form_submitted',
+	function ( $_request, $_id ) {
+		if ( isset( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_REQUESTED_WITH'] ) ) ) === 'xmlhttprequest' ) {
+			wp_send_json_success();
+		}
+		if ( in_array( $_id, array( 'user_insert_session_notes', 'user_edit_session_notes' ), true ) ) {
+			wp_safe_redirect( home_url( '/account-setting' ) );
+			exit;
+		}
+	},
+	10,
+	2
+);
