@@ -425,9 +425,9 @@ function custom_log_patient_in( $_request ) {
 		exit;
 	} else {
 		if ( snks_is_patient() ) {
-			wp_safe_redirect( site_url( '/my-bookings' ) );
+			wp_safe_redirect( add_query_arg('id', get_current_user_id(), site_url('my-bookings')) );
 		} else {
-			wp_safe_redirect( site_url( '/account-setting' ) );
+			wp_safe_redirect( add_query_arg('id', get_current_user_id(), site_url('account-setting')) );
 		}
 		exit;
 	}
