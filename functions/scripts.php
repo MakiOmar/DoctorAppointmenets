@@ -201,8 +201,21 @@ add_action(
 					});
 				});
 			});
-
 			jQuery( document ).ready( function( $ ) {
+				$(document).on(
+					'click',
+					'.snks-tab-item',
+					function () {
+						// Remove active class from all tabs and panels
+						$('.snks-tab-item').removeClass('snks-active');
+						$('.snks-tab-panel').removeClass('snks-active');
+
+						// Add active class to the clicked tab and corresponding panel
+						$(this).addClass('snks-active');
+						const tabName = $(this).data('snks-tab');
+						$('#snks-tab-' + tabName).addClass('snks-active');
+					}
+				);
 				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
 				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');
 				$('<span class="snks-switcher-text switcher-no">لا</span>').insertBefore('#allow_appointment_change');

@@ -99,17 +99,20 @@ add_action(
 						delayBy = $("#delay-by").val();
 						swalText = "تم إرسال إشعار  بتأخير  الموعد";
 					}
-				
-					// Send AJAX request.
-					$.ajax({
-						type: 'POST',
-						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-						data: {
+					let data = {
 							action    : 'appointment_action',
 							ele       : $(this).data('action'),
 							IDs       : values,
 							delayBy   : delayBy,
 							nonce     : nonce,
+						}
+					// Send AJAX request.
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+						data: data,
+						beforeSend : function() {
+
 						},
 						success: function(response) {
 							$('.jet-popup__close-button', container).trigger('click');
@@ -118,6 +121,10 @@ add_action(
 								text: swalText,
 								icon: "success",
 								confirmButtonText: 'غلق',
+							}).then((result) => {
+								if ( '.snks-postpon' === $(this).data('action') ) {
+									location.reload();
+								}
 							});
 						}
 					});
