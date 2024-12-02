@@ -31,13 +31,16 @@ function appointment_action_callback() {
 			}
 		}
 	}
-
 	if ( '.snks-delay' === $_req['ele'] ) {
-		foreach ( $_req['IDs'] as $data ) {
-			$sent = snks_delay_appointment( $data['patientID'], $data['doctorID'], $_req['delayBy'], $data['date'], $data['time'] );
-			if ( ! $sent ) {
-				$errors[] = $data['ID'];
+		if ( $_req['delayBy'] ) {
+			foreach ( $_req['IDs'] as $data ) {
+				$sent = snks_delay_appointment( $data['patientID'], $data['doctorID'], $_req['delayBy'], $data['date'], $_req['delayBy'] );
+				if ( ! $sent ) {
+					$errors[] = $data['ID'];
+				}
 			}
+		} else {
+			wp_send_json_error( 'لايمكن تأخير الجلسات' );
 		}
 	}
 	if ( empty( $errors ) ) {
