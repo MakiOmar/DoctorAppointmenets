@@ -496,7 +496,7 @@ add_action(
 			.snks-disabled .snks-appointment-button {
 				background-color: #7a898f;
 			}
-			.snks-timetable-accordion-wrapper:nth-child(1) .snks-timetable-accordion-content-wrapper{
+			.snks-timetable-accordion-wrapper.future:nth-child(1) .snks-timetable-accordion-content-wrapper{
 				display: block;
 			}
 			.snks-timetable-accordion-wrapper{
