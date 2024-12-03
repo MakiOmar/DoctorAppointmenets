@@ -754,11 +754,13 @@ function snks_get_patient_sessions( $tense ) {
 	$cache_key = 'patient-' . $tense . '-sessions-' . $user_id;
 	$results   = wp_cache_get( $cache_key );
 	$operator  = 'past' === $tense ? '<' : '>';
+	$wp_timestamp = current_time( 'mysql' );
+	snks_error_log($wp_timestamp);
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
+			$query .= " AND date_time {$operator}= '{$wp_timestamp}'";
 		}
 		$query  .= " ORDER BY date_time ASC";
 		$results = $wpdb->get_results(
