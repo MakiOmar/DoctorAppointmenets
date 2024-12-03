@@ -677,11 +677,13 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	$cache_key = 'doctor-' . $tense . '-sessions-' . $user_id;
 	$results   = wp_cache_get( $cache_key );
 	$operator  = 'past' === $tense ? '<' : '>';
+	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
+
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator}= CURRENT_TIMESTAMP()";
+			$query .= " AND date_time {$operator} {$compare_against}";
 		}
 		if ( $ordered ) {
 			$query .= " AND order_id != 0";
@@ -706,6 +708,7 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	}
 	return $results;
 }
+
 /**
  * Get patient bookings
  *
