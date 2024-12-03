@@ -91,14 +91,10 @@ add_shortcode(
 
 add_shortcode(
 	'snks_patient_sessions',
-	function ( $atts ) {
-		$atts = shortcode_atts(
-			array(
-				'tense' => 'all',
-			),
-			$atts
-		);
-		return snks_render_sessions_listing( $atts['tense'] );
+	function () {
+		$past               = snks_render_sessions_listing( 'past' );
+		$current_timetables = snks_render_sessions_listing( 'future' );
+		return snks_generate_the_bookings( $past, $current_timetables );
 	}
 );
 

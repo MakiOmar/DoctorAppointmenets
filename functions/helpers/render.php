@@ -1082,8 +1082,8 @@ function snks_render_bookings( $_timetables, $tens ) {
 		foreach ( $day_groups as $date => $timetables ) {
 			$day = gmdate( 'D', strtotime( $date ) ); // Get the day from the date.
 			?>
-			<div class="snks-timetable-accordion-wrapper" data-id="<?php echo esc_attr( $date ); ?>">
-				<div class="anony-grid-row snks-bg snks-timetable-accordion<?php echo $t ? ' snks-active-accordion' : ''; ?>" data-id="<?php echo esc_attr( $date ); ?>">
+			<div class="snks-timetable-accordion-wrapper <?php echo esc_html( $tens ); ?>" data-id="<?php echo esc_attr( $date ); ?>">
+				<div class="anony-grid-row snks-bg snks-timetable-accordion<?php echo $t && 'past' !== $tens ? ' snks-active-accordion' : ''; ?>" data-id="<?php echo esc_attr( $date ); ?>">
 
 					<div class="anony-grid-col anony-grid-col-1 snks-timetables-count anony-inline-flex flex-h-center flex-v-center anony-padding-5" style="background-color:#fff; color:#024059">
 						<?php echo count( $timetables ); ?>
@@ -1180,13 +1180,13 @@ function snks_render_bookings( $_timetables, $tens ) {
 	return ob_get_clean();
 }
 /**
- * Generate bookings
+ * Generate bookings helper
  *
+ * @param array $past Array of timetables.
+ * @param array $current_timetables Array of timetables.
  * @return string
  */
-function snks_generate_bookings() {
-	$past               = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
-	$current_timetables = snks_render_bookings( snks_get_doctor_sessions( 'future', 'open', true ), 'future' );
+function snks_generate_the_bookings( $past, $current_timetables ) {
 	//phpcs:disable
 	ob_start();
 	?>
@@ -1207,6 +1207,16 @@ function snks_generate_bookings() {
 	<?php
 	//phpcs:enable
 	return ob_get_clean();
+}
+/**
+ * Generate bookings
+ *
+ * @return string
+ */
+function snks_generate_bookings() {
+	$past               = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
+	$current_timetables = snks_render_bookings( snks_get_doctor_sessions( 'future', 'open', true ), 'future' );
+	return snks_generate_the_bookings( $past, $current_timetables );
 }
 add_shortcode( 'snks_bookings', 'snks_generate_bookings' );
 
@@ -1261,6 +1271,7 @@ function snks_doctor_actions( $session ) {
 	}
 	return $output;
 }
+
 /**
  * Render patient sessions
  *
