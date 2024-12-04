@@ -17,40 +17,41 @@ add_action(
 		}
 		?>
 		<script>
+			function setCookie(name, value, days, sameSite = "None", secure = true) {
+				let expires = "";
+
+				if (days) {
+					const date = new Date();
+					date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+					expires = "; expires=" + date.toUTCString();
+				} else if (days === 0) {
+					// If days is 0, set the expiration to a past date to delete the cookie
+					expires = "; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+				}
+
+				// Construct the cookie string
+				document.cookie = `${name}=${encodeURIComponent(value || "")}${expires}; path=/; SameSite=${sameSite}${
+					secure ? "; Secure" : ""
+				}`;
+			}
+
+			function getCookie(name) {
+				let cookieArr = document.cookie.split(";");
+
+				for (let i = 0; i < cookieArr.length; i++) {
+					let cookie = cookieArr[i].trim();
+
+					// Check if the cookie's name matches the specified name
+					if (cookie.indexOf(name + "=") === 0) {
+						return cookie.substring(name.length + 1, cookie.length);
+					}
+				}
+
+				// Return null if the cookie is not found
+				return null;
+			}
 			jQuery( document ).ready( function( $ ) {
-				function setCookie(name, value, days, sameSite = "None", secure = true) {
-					let expires = "";
-
-					if (days) {
-						const date = new Date();
-						date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-						expires = "; expires=" + date.toUTCString();
-					} else if (days === 0) {
-						// If days is 0, set the expiration to a past date to delete the cookie
-						expires = "; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-					}
-
-					// Construct the cookie string
-					document.cookie = `${name}=${encodeURIComponent(value || "")}${expires}; path=/; SameSite=${sameSite}${
-						secure ? "; Secure" : ""
-					}`;
-				}
-
-				function getCookie(name) {
-					let cookieArr = document.cookie.split(";");
-
-					for (let i = 0; i < cookieArr.length; i++) {
-						let cookie = cookieArr[i].trim();
-
-						// Check if the cookie's name matches the specified name
-						if (cookie.indexOf(name + "=") === 0) {
-							return cookie.substring(name.length + 1, cookie.length);
-						}
-					}
-
-					// Return null if the cookie is not found
-					return null;
-				}
+				
 				// Define the URL where you want to prompt the user
 				const accountSettingUrlPath = '/account-setting';
 				var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
@@ -182,6 +183,8 @@ add_action(
 				});
 				$( document ).on('click', '.jet-form-builder-repeater__new', function(e){
 					e.preventDefault();
+					preventNavigation = true;
+					setCookie('edited_form', $(this).closest('form').data('form-id'));
 					setTimeout(
 						function() {
 							repeaterCustomRemove();
