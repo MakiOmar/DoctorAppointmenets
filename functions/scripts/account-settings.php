@@ -232,8 +232,7 @@ add_action(
 									var saveFormId = getCookie('edited_form');
 									let targetForm = $('form[data-form-id="' + saveFormId + '"]');
 									if ( targetForm.length > 0 ) {
-										let ajaxButton = targetForm.find('.submit-type-ajax');
-										ajaxButton.click();
+										$('.submit-type-ajax', targetForm).click();
 									}
 								} else {
 									Swal.fire({
