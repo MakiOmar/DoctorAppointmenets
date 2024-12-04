@@ -309,14 +309,14 @@ add_action(
 						Swal.fire({
 							title: 'تم الحفظ بنجاح',
 							text: "يرجى البدء في إضافة مواعيدك أو تعديلها حسب الإعدادات الجديدة",
-							icon: 'succes',
+							icon: 'success',
 							confirmButtonColor: '#3085d6',
 							confirmButtonText: 'إغلاق',
 						});
 					} else if( formId !== 1956 && formId !== 2199 ) {
 						Swal.fire({
 							title: 'تم الحفظ بنجاح',
-							icon: 'succes',
+							icon: 'success',
 							confirmButtonColor: '#3085d6',
 							confirmButtonText: 'إغلاق',
 						});
