@@ -73,17 +73,16 @@ add_action(
 		if ( empty( $request['attendance_type'] ) ) {
 			throw new \Jet_Form_Builder\Exceptions\Action_Exception( ' طريقة استخدام التطبيق غير محددة.' );
 		}
-
-		// Loop through clinics_list and check if all values are empty.
-		foreach ( $request['clinics_list'] as $key => $clinic ) {
-			if ( empty( array_filter( $clinic ) ) ) {
-				unset( $request['clinics_list'][ $key ] );
-			}
-		}
 		// Check if attendance_type equals "both" or "offline" and clinics_list is empty.
 		if (
 		( 'both' === $request['attendance_type'] || 'offline' === $request['attendance_type'] )
 		) {
+			// Loop through clinics_list and check if all values are empty.
+			foreach ( $request['clinics_list'] as $key => $clinic ) {
+				if ( empty( array_filter( $clinic ) ) ) {
+					unset( $request['clinics_list'][ $key ] );
+				}
+			}
 			if ( empty( $request['clinics_list'] ) ) {
 				throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يجب إدخال قائمة العيادات عند اختيار نوع الحضور "أوفلاين فقط" أو "أونلاين وأوفلاين". على الأقل إسم العيادة.' );
 			}
@@ -1218,12 +1217,14 @@ add_action(
 			snks_delete_waiting_sessions_by_user_id( $user_id, $delete );
 		}
 		$clinics_list = get_user_meta( $user_id, 'clinics_list', true );
-		foreach ( $clinics_list as $key => &$clinic ) {
-			if ( empty( $clinic['uuid'] ) ) {
-				$clinic['uuid'] = snks_generate_uuid();
+		if ( is_array( $clinics_list ) ) {
+			foreach ( $clinics_list as $key => &$clinic ) {
+				if ( empty( $clinic['uuid'] ) ) {
+					$clinic['uuid'] = snks_generate_uuid();
+				}
 			}
+			update_user_meta( $user_id, 'clinics_list', $clinics_list );
 		}
-		update_user_meta( $user_id, 'clinics_list', $clinics_list );
 	},
 	50
 );
