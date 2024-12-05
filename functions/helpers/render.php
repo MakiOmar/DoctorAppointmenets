@@ -417,7 +417,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<input type="hidden" id="edit-booking-id" name="edit-booking-id" value="' . $booking_id . '">';
 	$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
 	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
-	$html .= '<div id="consulting-form-submit">';
+	$html .= '<div id="consulting-form-submit-wrapper">';
 	$html .= '<div class="hacen_liner_print-outregular"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes"> أوافق على الشروط والأحكام وسياسة الاستخدام.</div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
 	$html .= '<input id="consulting-form-submit" style="margin-top:18px" type="submit" value="' . $submit_text . '">';
@@ -465,10 +465,10 @@ function snks_render_consulting_hours_items( $availables ) {
 	foreach ( $availables as $available ) {
 		$id    = $available->ID;
 		$html .= '<li class="available-time anony-grid-col anony-grid-col-5 anony-padding-3">';
-		$html .= '<label class="hacen_liner_print-outregular" for="' . esc_attr( $id ) . '">';
+		$html .= '<label class="hacen_liner_print-outregular" for="hour-radio-' . esc_attr( $id ) . '">';
 
 		$html .= sprintf( '%1$s %2$s %3$s', esc_html( gmdate( 'h:i a', strtotime( $available->starts ) ) ), 'إلى', esc_html( gmdate( 'h:i a', strtotime( $available->ends ) ) ) );
-		$html .= '<input id="' . esc_attr( $id ) . '" type="radio" class="hour-radio" name="selected-hour" value="' . esc_attr( $id ) . '"/>';
+		$html .= '<input id="hour-radio-' . esc_attr( $id ) . '" type="radio" class="hour-radio" name="selected-hour" value="' . esc_attr( $id ) . '"/>';
 		$html .= '</label>';
 		$html .= '</li>';
 	}

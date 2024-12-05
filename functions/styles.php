@@ -1230,7 +1230,7 @@ add_action(
 				background-color: #fff;
 				color: #024059;
 			}
-			#consulting-form-submit{
+			#consulting-form-submit-wrapper{
 				display: none;
 			}
 			.snks-form .row{

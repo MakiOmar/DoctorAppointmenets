@@ -224,9 +224,9 @@ add_action(
 						$( '.available-time' ).removeClass( 'active-hour' );
 						if ($(this).is(':checked')) {
 							$( this ).closest('.available-time').addClass( 'active-hour' );
-							$('#consulting-form-submit').show();
+							$('#consulting-form-submit-wrapper').show();
 							$('html, body').animate({
-								scrollTop: $('#consulting-form-submit').offset().top
+								scrollTop: $('#consulting-form-submit-wrapper').offset().top
 							}, 2000);
 						}
 					}
