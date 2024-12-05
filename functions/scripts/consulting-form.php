@@ -146,7 +146,8 @@ add_action(
 					'click',
 					".consulting-form #consulting-form-submit",
 					function(event){
-						if ( $( this ).find('input[name="selected-hour"]:checked').length === 0 || $( this ).find('input[name="current-month-day"]:checked').length === 0  ) {
+						let form = $(this).closest('form');
+						if ( form.find('input[name="selected-hour"]:checked').length === 0 || form.find('input[name="current-month-day"]:checked').length === 0  ) {
 							event.preventDefault();
 							Swal.fire({
 								icon: 'warning',
