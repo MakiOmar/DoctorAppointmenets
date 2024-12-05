@@ -1501,7 +1501,7 @@ add_action(
 			#snks-booking-page #teeth-area,
 			#snks-booking-page .snks-bg,
 			#snks-booking-page .snks-available-hours li.available-time label,
-			#consulting-form-submit input[type=submit],
+			#consulting-form-submit,
 			.elementor-2988 .elementor-element.elementor-element-48a78d3:not(.elementor-motion-effects-element-type-background), .elementor-2988 .elementor-element.elementor-element-48a78d3 > .elementor-motion-effects-container > .elementor-motion-effects-layer, .elementor-3023 .elementor-element.elementor-element-45f1e78:not(.elementor-motion-effects-element-type-background), .elementor-3023 .elementor-element.elementor-element-45f1e78 > .elementor-motion-effects-container > .elementor-motion-effects-layer,
 			.elementor-3023 .elementor-element.elementor-element-0f8e6b8:not(.elementor-motion-effects-element-type-background), .elementor-3023 .elementor-element.elementor-element-0f8e6b8 > .elementor-motion-effects-container > .elementor-motion-effects-layer{
 				background-color: <?php echo esc_html( $dark_color ); ?>!important;
@@ -1517,7 +1517,7 @@ add_action(
 			.profile-details h1, .profile-details h2, #snks-booking-page .snks-light-bg, #snks-booking-page .slick-prev::before, #snks-booking-page .slick-next::before{
 				color: <?php echo esc_html( $dark_color ); ?>!important;
 			}
-			#consulting-form-submit input[type=submit]{
+			#consulting-form-submit{
 				color:#fff!important
 			}
 			#consulting-forms-container .snks-available-hours li.available-time.active-hour label{
