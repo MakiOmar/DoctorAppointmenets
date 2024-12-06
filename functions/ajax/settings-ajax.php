@@ -72,9 +72,9 @@ add_action(
 		$preview_timetable = snks_get_preview_timetable();
 
 		$solt   = $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ];
-		$exists = snks_timetable_exists( get_current_user_id(), gmdate( 'Y-m-d H:i:s', strtotime( $solt['date_time'] ) ), $solt['day'], $solt['starts'], $solt['ends'] );
+		$exists = snks_timetable_exists( snks_get_settings_doctor_id(), gmdate( 'Y-m-d H:i:s', strtotime( $solt['date_time'] ) ), $solt['day'], $solt['starts'], $solt['ends'] );
 		unset( $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ] );
-		$update = update_user_meta( get_current_user_id(), 'preview_timetable', $preview_timetable );
+		$update = update_user_meta( snks_get_settings_doctor_id(), 'preview_timetable', $preview_timetable );
 		if ( ! empty( $exists ) ) {
 			foreach ( $exists as $record ) {
 				snks_delete_timetable( $record->ID );
@@ -93,7 +93,7 @@ add_action(
 add_action(
 	'wp_ajax_insert_timetable',
 	function () {
-		if ( ! snks_is_doctor() && ! current_user_can( 'manage_options' ) ) {
+		if ( ! snks_is_doctor() && ! snks_is_clinic_manager() && ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Doctor only.' );
 		}
 		$_req = isset( $_POST ) ? wp_unslash( $_POST ) : array();
@@ -101,7 +101,7 @@ add_action(
 		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'insert_timetable_nonce' ) ) {
 			wp_send_json_error( 'Invalid nonce.' );
 		}
-		$user_id            = get_current_user_id();
+		$user_id            = snks_get_settings_doctor_id();
 		$preview_timetables = snks_get_preview_timetable();
 		$errors             = array();
 		snks_delete_waiting_sessions_by_user_id( $user_id );

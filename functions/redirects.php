@@ -50,7 +50,7 @@ add_action(
 add_filter(
 	'jet-popup/ajax-request/get-elementor-content',
 	function($content, $popup_data) {
-		if ( 4085 === absint( $popup_data['popup_id'] ) && ! snks_validate_doctor_settings( get_current_user_id() ) ) {
+		if ( 4085 === absint( $popup_data['popup_id'] ) && ! snks_validate_doctor_settings( snks_get_settings_doctor_id() ) ) {
 				$content = do_shortcode('[elementor-template id="4122"]');
 		}
 		return $content;

@@ -256,7 +256,7 @@ function snks_create_custom_timetable() {
 			$date_time = $date_time->format( 'Y-m-d h:i a' );
 		}
 		$base = array(
-			'user_id'         => get_current_user_id(),
+			'user_id'         => snks_get_settings_doctor_id(),
 			'session_status'  => 'waiting',
 			'day'             => sanitize_text_field( $_req['day'] ),
 			'base_hour'       => sanitize_text_field( $_req['app_hour'] ),
@@ -271,10 +271,10 @@ function snks_create_custom_timetable() {
 		if ( 'both' !== $_req['app_attendance_type'] ) {
 			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
 		} else {
-			$base['attendance_type'] = 'online';
+			$base['attendance_type']                       = 'online';
 			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
 
-			$base['attendance_type'] = 'offline';
+			$base['attendance_type']                       = 'offline';
 			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
 		}
 	}

@@ -68,7 +68,7 @@ function snks_validate_doctor_settings( $user_id ) {
 add_action(
 	'jet-form-builder/custom-action/settings_validate',
 	function ( $request ) {
-		$user_id = get_current_user_id();
+		$user_id = snks_get_settings_doctor_id();
 		// Check if attendance_type is empty.
 		if ( empty( $request['attendance_type'] ) ) {
 			throw new \Jet_Form_Builder\Exceptions\Action_Exception( ' طريقة استخدام التطبيق غير محددة.' );
@@ -146,8 +146,9 @@ add_action(
 function snks_doctor_settings( $user_id = false ) {
 	$settings = array();
 	if ( ! $user_id ) {
-		if ( snks_is_doctor() || current_user_can( 'manage_options' ) ) {
-			$user_id = get_current_user_id();
+		$user_id = get_current_user_id();
+		if ( snks_is_doctor() || snks_is_clinic_manager() ) {
+			$user_id = snks_get_settings_doctor_id();
 		}
 	}
 	$settings['60_minutes']                = get_user_meta( $user_id, '60-minutes', true );
@@ -189,7 +190,7 @@ function snks_insert_preview_timetables( $user_id = false ) {
 		foreach ( $preview_timetables as $preview_timetable ) {
 			foreach ( $preview_timetable as $data ) {
 				$dtime  = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-				$exists = snks_timetable_exists( get_current_user_id(), $dtime, $data['day'], $data['starts'], $data['ends'] );
+				$exists = snks_timetable_exists( snks_get_settings_doctor_id(), $dtime, $data['day'], $data['starts'], $data['ends'] );
 
 				if ( empty( $exists ) ) {
 					$inserting = array(
@@ -476,7 +477,7 @@ function snks_get_available_attendance_types_options() {
  */
 function snks_get_clinics( $user_id = false ) {
 	if ( ! $user_id ) {
-		$user_id = get_current_user_id();
+		$user_id = snks_get_settings_doctor_id();
 	}
 	$clinics_list = get_user_meta( $user_id, 'clinics_list', true );
 	if ( is_array( $clinics_list ) && ! empty( $clinics_list ) ) {
@@ -586,7 +587,7 @@ function snks_generate_appointments_dates( $week_days ) {
  */
 function snks_get_appointments_settings() {
 	$week_days = array_keys( json_decode( DAYS_ABBREVIATIONS, true ) );
-	$user_id   = get_current_user_id();
+	$user_id   = snks_get_settings_doctor_id();
 	$settings  = array();
 	foreach ( $week_days as $abb ) {
 		$abb_settings = get_user_meta( $user_id, lcfirst( $abb ) . '_timetable', true );
@@ -675,7 +676,7 @@ function snks_generate_timetable() {
     }
 	// Array to store appointments details.
 	$data               = array();
-	$user_id            = get_current_user_id();
+	$user_id            = snks_get_settings_doctor_id();
 	$week_days          = array_keys( $app_settings );
 	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days ) );
 	$off_days           = snks_get_off_days();
@@ -743,7 +744,7 @@ function snks_generate_timetable() {
  * @return mixed
  */
 function snks_set_preview_timetable( $data ) {
-	update_user_meta( get_current_user_id(), 'preview_timetable', $data );
+	update_user_meta( snks_get_settings_doctor_id(), 'preview_timetable', $data );
 }
 /**
  * Get preview timetable
@@ -760,7 +761,7 @@ function snks_set_preview_timetable( $data ) {
  */
 function snks_get_preview_timetable( $user_id = false, $full = false ) {
     if ( ! $user_id ) {
-        $user_id = get_current_user_id();
+        $user_id = snks_get_settings_doctor_id();
     }
 
     // Get the user's preview timetable.
@@ -915,9 +916,9 @@ add_action(
  */
 function snks_get_off_days( $user_id = false ) {
 	if ( ! $user_id ) {
-		$user_id = get_current_user_id();
+		$user_id = snks_get_settings_doctor_id();
 	}
-	$off_days = get_user_meta( get_current_user_id(), 'off_days', true );
+	$off_days = get_user_meta( $user_id, 'off_days', true );
 	if ( ! $off_days || empty( $off_days ) ) {
 		return array();
 	}
@@ -1053,7 +1054,7 @@ add_action(
  */
 function snks_clinic_colors_form() {
 	$images         = range( 1, 20 );
-	$clinic_color   = get_user_meta( get_current_user_id(), 'clinic_colors', true );
+	$clinic_color   = get_user_meta( snks_get_settings_doctor_id(), 'clinic_colors', true );
 	$image_base_url = '/wp-content/uploads/2024/09';
 	$nonce          = wp_create_nonce( 'clinic_colors_nonce' ); // Generate a nonce for validation.
 	ob_start();
@@ -1177,7 +1178,7 @@ function handle_clinic_colors_ajax_submission() {
 	}
 
 	$selected_color = sanitize_text_field( wp_unslash( $_POST['clinic_color'] ) );
-	$user_id        = get_current_user_id();
+	$user_id        = snks_get_settings_doctor_id();
 
 	if ( $user_id ) {
 		update_user_meta( $user_id, 'clinic_colors', $selected_color );
@@ -1207,7 +1208,7 @@ add_filter(
 add_action(
 	'jet-form-builder/custom-action/set_clinic_uuid',
 	function ( $request ) {
-		$user_id = get_current_user_id();
+		$user_id = snks_get_settings_doctor_id();
 		if ( 'both' != $request['attendance_type'] ) {
 			if ( 'online' == $request['attendance_type'] ) {
 				$delete = 'offline';

@@ -47,13 +47,14 @@ class Clinic_Colors_Widget extends Widget_Base {
 	}
 
 	protected function render() {
-		$current_user_id = get_current_user_id();
+		$current_user_id = snks_get_settings_doctor_id();
 		$clinic_color    = get_user_meta( $current_user_id, 'clinic_colors', true );
 		$image_base_url  = '/wp-content/uploads/2024/09';
 		$nonce           = wp_create_nonce( 'clinic_colors_nonce' );
 		$images          = range( 1, 20 );
 
 		// Output HTML form and AJAX JavaScript directly in the render method.
+		//phpcs:disable
 		?>
 		<form id="clinic-colors-form" action="" method="post">
 			<div class="clinic-colors-grid">

@@ -115,7 +115,7 @@ function snks_get_user_timetables( $user_id ) {
  * @return bool
  */
 function snks_is_timetable_eligible( $timetable_id ) {
-	$current_user = get_current_user_id();
+	$current_user = snks_get_settings_doctor_id();
 	if ( is_numeric( $timetable_id ) ) {
 		$timetable = snks_get_timetable_by( 'ID', $timetable_id );
 	} else {
@@ -167,7 +167,7 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 function snks_get_timetable_by_date( $date ) {
 	global $wpdb;
 	// Get the current user ID.
-	$current_user_id = get_current_user_id();
+	$current_user_id = snks_get_settings_doctor_id();
 
 	// Generate a unique cache key.
 	$cache_key = 'snks_timetable_by_date_' . $date . '_user_' . $current_user_id;
@@ -673,7 +673,7 @@ function get_bookable_date_available_times( $date ) {
  */
 function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false ) {
 	global $wpdb;
-	$user_id = get_current_user_id();
+	$user_id = snks_get_settings_doctor_id();
 	$cache_key = 'doctor-' . $tense . '-sessions-' . $user_id;
 	$results   = wp_cache_get( $cache_key );
 	$operator  = 'past' === $tense ? '<' : '>';

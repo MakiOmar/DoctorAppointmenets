@@ -234,7 +234,7 @@ function anony_available_withdrawal_credit( $user_id = false ) {
 function anony_current_user_sales_orders_vertical( $atts ) {
 	$current_user_id = get_current_user_id();
 
-	$withdrawal_amount = anony_available_withdrawal_credit();
+	$withdrawal_amount = anony_available_withdrawal_credit( $current_user_id );
 
 	$withdrawal_html = '';
 	if ( 0 != $withdrawal_amount ) {

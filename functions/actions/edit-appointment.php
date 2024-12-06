@@ -52,7 +52,7 @@ add_action(
 		$booking = snks_get_timetable_by( 'ID', absint( $_req['old_appointment'] ) );
 
 		// Validate the booking and user.
-		if ( ! $booking || get_current_user_id() !== absint( $booking->user_id ) ) {
+		if ( ! $booking || snks_get_settings_doctor_id() !== absint( $booking->user_id ) ) {
 			wp_send_json(
 				array(
 					'message' => 'غير مسموح لك بتغيير هذا الموعد.',

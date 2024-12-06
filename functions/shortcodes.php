@@ -67,7 +67,7 @@ add_shortcode(
 	'snks_booking_url_button',
 	function () {
 		// Get the user ID.
-		$user_id = get_current_user_id();
+		$user_id = snks_get_settings_doctor_id();
 
 		// Encrypt the user ID.
 		$url = snks_encrypted_doctor_url( $user_id );
@@ -511,7 +511,6 @@ function custom_withdrawal_form_shortcode() {
 			),
 		),
 	);
-	$user_id            = get_current_user_id();
 	ob_start();
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20 snks-confirm">
@@ -820,7 +819,7 @@ add_shortcode( 'consulting_session_pricing_table', 'consulting_session_pricing_t
 add_shortcode(
 	'snks_doctor_message',
 	function () {
-		$user_id = get_current_user_id();
+		$user_id = snks_get_settings_doctor_id();
 
 		// Get the transient message array for the current user.
 		$messages = get_transient( 'snks_doctor_message_' . $user_id );

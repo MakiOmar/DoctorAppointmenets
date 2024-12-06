@@ -45,7 +45,7 @@ class Snks_Get_Clinics extends Base {
 	 * @return array
 	 */
 	public function generate( $args ) {
-		$clinics_meta = get_user_meta( get_current_user_id(), 'clinics_list', true );
+		$clinics_meta = get_user_meta( snks_get_settings_doctor_id(), 'clinics_list', true );
 		$result       = array(
 			array(
 				'value' => '',
