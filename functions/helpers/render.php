@@ -810,7 +810,9 @@ function snks_booking_item_template( $record ) {
 		<!--doctoraction-->
 		<div class="anony-flex flex-h-center">
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
+			<?php if ( ! snks_is_clinic_manager() ) { ?>
 			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
+			<?php } ?>
 		</div>
 		<!--/doctoraction-->
 		<!--patientaction-->
