@@ -441,7 +441,7 @@ function custom_log_patient_in( $_request ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! كلمة المرور غير صحيحة' );
 	}
 	// Check if the user is not a doctor.
-	if ( isset( $_req['doctor_login'] ) && ! in_array( 'doctor', $user->roles, true ) ) {
+	if ( isset( $_req['doctor_login'] ) && ! in_array( 'doctor', $user->roles, true ) && ! in_array( 'clinic_manager', $user->roles, true ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! هذا ليس حساب طبيب' );
 	}
 	if ( snks_is_blocked( $user->ID ) ) {
