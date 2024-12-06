@@ -547,35 +547,3 @@ add_shortcode(
 		}
 	}
 );
-
-
-/**
- * Filter to dynamically determine the current user based on the `doctor_id` query parameter.
- *
- * Allows a clinic manager to impersonate a doctor for editing their account settings.
- *
- * @param int|false $user_id The ID of the current user as determined by WordPress.
- * @return int|false The ID of the user to impersonate, or the original user ID if no impersonation is allowed.
- */
-add_filter(
-	'determine_current_user',
-	function ( $user_id ) {
-		// Check if a 'doctor_id' parameter is provided in the URL and is valid.
-		if ( is_user_logged_in() ) {
-			$current_user = wp_get_current_user();
-			// Ensure the current user is a clinic manager.
-			if ( in_array( 'clinic_manager', $current_user->roles, true ) ) {
-				// Verify the relationship between the clinic manager and the doctor.
-				$linked_doctor = get_user_meta( $current_user->ID, 'clinic_doctor_id', true );
-
-				if ( $linked_doctor && ! empty( $linked_doctor ) ) {
-					// Return the doctor's user ID to impersonate.
-					return absint( $linked_doctor );
-				}
-			}
-		}
-		// Return the original user ID if no impersonation is allowed.
-		return $user_id;
-	},
-	10
-);
