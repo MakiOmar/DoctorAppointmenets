@@ -37,10 +37,13 @@ add_action(
 		if ( ( is_page('account-setting') ) ) {
 			if ( ! is_user_logged_in() ) {
 				wp_redirect( site_url('doctor-login') );
-				exit;
 			}
 			if ( snks_is_patient() ) {
 				wp_redirect( site_url('my-bookings') );
+				exit;
+			}
+			if( ( snks_is_doctor() || snks_is_clinic_manager() ) && empty( $_GET['id'] ) ) {
+				wp_redirect( site_url() );
 				exit;
 			}
 		}
