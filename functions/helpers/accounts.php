@@ -107,6 +107,9 @@ function snks_is_doctor( $user_id = false ) {
 	if ( in_array( 'administrator', $user->roles, true ) ) {
 		$r = true;
 	}
+	if ( in_array( 'clinic_manager', $user->roles, true ) ) {
+		$r = true;
+	}
 
 	return $r;
 }
@@ -122,6 +125,23 @@ function snks_is_patient() {
 	}
 	$user = wp_get_current_user();
 	if ( ! in_array( 'customer', $user->roles, true ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Check if is clinic_manager user
+ *
+ * @return bool
+ */
+function snks_is_clinic_manager() {
+	if ( ! is_user_logged_in() ) {
+		return false;
+	}
+	$user = wp_get_current_user();
+	if ( ! in_array( 'clinic_manager', $user->roles, true ) ) {
 		return false;
 	}
 
@@ -402,7 +422,7 @@ function custom_log_patient_in( $_request ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! كلمة المرور غير صحيحة' );
 	}
 	// Check if the user is not a doctor.
-	if ( isset( $_req['doctor_login'] ) && ! in_array( 'doctor', $user->roles, true ) ) {
+	if ( isset( $_req['doctor_login'] ) && ! in_array( 'doctor', $user->roles, true ) && ! in_array( 'clinic_manager', $user->roles, true ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! هذا ليس حساب طبيب' );
 	}
 	if ( snks_is_blocked( $user->ID ) ) {
@@ -562,11 +582,15 @@ add_filter(
 	function ( $user_id ) {
 		// Check if a 'doctor_id' parameter is provided in the URL and is valid.
 		if ( is_user_logged_in() ) {
-			$current_user = wp_get_current_user();
+			// Retrieve the current user ID directly to avoid recursion.
+			$current_user_id = $user_id ? $user_id : 0;
+
+			// Verify the current user's role without invoking wp_get_current_user().
+			$current_user_roles = get_user_meta( $current_user_id, 'wpds_capabilities', true );
 			// Ensure the current user is a clinic manager.
-			if ( in_array( 'clinic_manager', $current_user->roles, true ) ) {
+			if ( is_array( $current_user_roles ) && isset( $current_user_roles['clinic_manager'] ) ) {
 				// Verify the relationship between the clinic manager and the doctor.
-				$linked_doctor = get_user_meta( $current_user->ID, 'clinic_doctor_id', true );
+				$linked_doctor = get_user_meta( $current_user_id, 'clinic_doctor_id', true );
 
 				if ( $linked_doctor && ! empty( $linked_doctor ) ) {
 					// Return the doctor's user ID to impersonate.
