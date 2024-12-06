@@ -129,6 +129,23 @@ function snks_is_patient() {
 }
 
 /**
+ * Check if is clinic_manager user
+ *
+ * @return bool
+ */
+function snks_is_clinic_manager() {
+	if ( ! is_user_logged_in() ) {
+		return false;
+	}
+	$user = wp_get_current_user();
+	if ( ! in_array( 'clinic_manager', $user->roles, true ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Check if programme enrolled
  *
  * @return bool
@@ -228,6 +245,28 @@ add_action(
 		die;
 	}
 );
+
+/**
+ * Get settings' doctor's id
+ *
+ * @return int
+ */
+function snks_get_settings_doctor_id() {
+	$id = get_current_user_id();
+	if ( snks_is_clinic_manager() ) {
+		$linked_doctor = get_user_meta( get_current_user_id(), 'clinic_doctor_id', true );
+
+		if ( $linked_doctor && ! empty( $linked_doctor ) ) {
+
+			if ( $linked_doctor && ! empty( $linked_doctor )
+			) {
+				// Return the doctor's user ID to impersonate.
+				$id = absint( $linked_doctor );
+			}
+		}
+	}
+	return $id;
+}
 /**
  * Delete user.
  *
@@ -423,14 +462,12 @@ function custom_log_patient_in( $_request ) {
 	if ( isset( $_request['tocheckout'] ) ) {
 		wp_safe_redirect( wc_get_checkout_url() );
 		exit;
+	} elseif ( snks_is_patient() ) {
+		wp_safe_redirect( add_query_arg( 'id', get_current_user_id(), site_url( 'my-bookings' ) ) );
 	} else {
-		if ( snks_is_patient() ) {
-			wp_safe_redirect( add_query_arg( 'id', get_current_user_id(), site_url( 'my-bookings' ) ) );
-		} else {
-			wp_safe_redirect( add_query_arg( 'id', get_current_user_id(), site_url( 'account-setting' ) ) );
-		}
-		exit;
+		wp_safe_redirect( add_query_arg( 'id', snks_get_settings_doctor_id(), site_url( 'account-setting' ) ) );
 	}
+		exit;
 }
 add_action( 'jet-form-builder/custom-action/log_patient_in', 'custom_log_patient_in', 10, 2 );
 add_action( 'jet-form-builder/custom-action/loguserin', 'custom_log_patient_in', 10, 2 );
