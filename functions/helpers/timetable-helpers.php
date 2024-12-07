@@ -564,71 +564,83 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 }
 
 /**
- * Get all bookable dates
+ * Get all bookable dates.
  *
- * @param int    $user_id User's ID.
- * @param string $_for Period to get dates for.
- * @param string $attendance_type Attendance type.
- * @return mixed
+ * @param int    $user_id         User's ID.
+ * @param string $_for            Period to get dates for. Default is '+1 month'.
+ * @param string $attendance_type Attendance type. Default is 'both'.
+ * @return mixed Results array or false on failure.
  */
 function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type = 'both' ) {
 	global $wpdb;
+
+	// Fetch doctor settings for the user.
 	$doctor_settings      = snks_doctor_settings( $user_id );
 	$seconds_before_block = 0;
+
 	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
-		$number               = $doctor_settings['block_if_before_number'];
+		$number               = (int) $doctor_settings['block_if_before_number'];
 		$unit                 = $doctor_settings['block_if_before_unit'];
-		$base                 = 'day' === $unit ? 24 : 1;
+		$base                 = ( 'day' === $unit ) ? 24 : 1; // Convert unit to hours if 'day'.
 		$seconds_before_block = $number * $base * 3600;
 	}
-	//phpcs:disable WordPress.DateTime.CurrentTimeTimestamp.Requested
-	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
-	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
-	$cache_key        = 'bookable-dates-' . $current_datetime;
-	$results          = wp_cache_get( $cache_key );//phpcs:disable
-	$_order    = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 
-	if ( ! $results ) {
-		if ( 'both' === $attendance_type ) {
-			$_query = $wpdb->prepare(
-				"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE user_id = %d
-				AND date_time
-				BETWEEN %s AND %s
-				AND session_status = %s
-				AND order_id = %d
-				ORDER BY date_time {$_order}",
-				$user_id,
+	// Set the date range for the query.
+	$current_datetime = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) + $seconds_before_block );
+	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
+	//phpcs:disable
+	// Build a cache key to optimize repeated queries.
+	$cache_key = sprintf(
+		'bookable-dates-%d-%s-%s-%s',
+		$user_id,
+		md5( $current_datetime . $end_datetime ),
+		$attendance_type,
+		sanitize_text_field( $_GET['order'] ?? 'ASC' )
+	);
+	//phpcs:enable
+	// Attempt to fetch results from cache.
+	$results = wp_cache_get( $cache_key );
+
+	if ( false === $results ) {
+		// Build the base query.
+		$query = $wpdb->prepare(
+			"SELECT *
+            FROM {$wpdb->prefix}snks_provider_timetable
+            WHERE user_id = %d
+            AND session_status = %s
+            AND order_id = %d",
+			$user_id,
+			'waiting',
+			0
+		);
+
+		// Conditionally add date range only if the user is a patient.
+		if ( snks_is_patient() ) {
+			$query .= $wpdb->prepare(
+				' AND date_time BETWEEN %s AND %s',
 				$current_datetime,
-				$end_datetime,
-				'waiting',
-				0
-			);
-		} else {
-			$_query = $wpdb->prepare(
-				"SELECT *
-				FROM {$wpdb->prefix}snks_provider_timetable
-				WHERE user_id = %d
-				AND date_time
-				BETWEEN %s AND %s
-				AND attendance_type = %s
-				AND session_status = %s
-				AND order_id = %d
-				ORDER BY date_time {$_order}",
-				$user_id,
-				$current_datetime,
-				$end_datetime,
-				$attendance_type,
-				'waiting',
-				0
+				$end_datetime
 			);
 		}
-		$results = $wpdb->get_results( $_query );
-		wp_cache_set( $cache_key, $results );
+
+		// Add attendance type condition if applicable.
+		if ( 'both' !== $attendance_type ) {
+			$query .= $wpdb->prepare( ' AND attendance_type = %s', $attendance_type );
+		}
+		//phpcs:disable
+		// Append ordering.
+		$order  = in_array( $_GET['order'] ?? 'ASC', array( 'ASC', 'DESC' ), true ) ? $_GET['order'] : 'ASC';
+		$query .= " ORDER BY date_time {$order}";
+
+		// Execute the query and cache the results.
+		$results = $wpdb->get_results( $query );
+		//phpcs:enable
+		wp_cache_set( $cache_key, $results, '', HOUR_IN_SECONDS );
 	}
+
 	return $results;
 }
+
 
 /**
  * Get bookable date times
@@ -638,9 +650,9 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
  */
 function get_bookable_date_available_times( $date ) {
 	global $wpdb;
-	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) + ( 2 * 3600 )  );
-	$cache_key = 'bookable-date-times-' . $date;
-	$results = wp_cache_get( $cache_key );
+	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) + ( 2 * 3600 ) );
+	$cache_key    = 'bookable-date-times-' . $date;
+	$results      = wp_cache_get( $cache_key );
 
 	if ( ! $results ) {
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -673,22 +685,22 @@ function get_bookable_date_available_times( $date ) {
  */
 function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false ) {
 	global $wpdb;
-	$user_id = snks_get_settings_doctor_id();
-	$cache_key = 'doctor-' . $tense . '-sessions-' . $user_id;
-	$results   = wp_cache_get( $cache_key );
-	$operator  = 'past' === $tense ? '<' : '>';
+	$user_id         = snks_get_settings_doctor_id();
+	$cache_key       = 'doctor-' . $tense . '-sessions-' . $user_id;
+	$results         = wp_cache_get( $cache_key );
+	$operator        = 'past' === $tense ? '<' : '>';
 	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
-		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		//phpcs:disable
 		if ( 'all' !== $tense ) {
 			$query .= " AND date_time {$operator} {$compare_against}";
 		}
 		if ( $ordered ) {
-			$query .= " AND order_id != 0";
+			$query .= ' AND order_id != 0';
 		}
-		$query .= " ORDER BY date_time ASC";
+		$query  .= ' ORDER BY date_time ASC';
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				$query,
@@ -697,12 +709,13 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 			)
 		);
 		wp_cache_set( $cache_key, $results );
+		//phpcs:enable
 	}
-	$temp = [];
+	$temp = array();
 	if ( $results && is_array( $results ) ) {
-		foreach( $results as $result ){
+		foreach ( $results as $result ) {
 			$result->date = gmdate( 'Y-m-d', strtotime( $result->date_time ) );
-			$temp[] = $result;
+			$temp[]       = $result;
 		}
 		$results = $temp;
 	}
@@ -712,12 +725,13 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 /**
  * Get patient bookings
  *
+ * @param int|false $user_id User's ID.
  * @return mixed
  */
 function snks_get_patient_bookings( $user_id = false ) {
 	global $wpdb;
 	if ( ! $user_id ) {
-		$user_id   = get_current_user_id();
+		$user_id = get_current_user_id();
 	}
 	$cache_key = 'patient-bookings-' . $user_id;
 	$results   = wp_cache_get( $cache_key );
@@ -751,23 +765,24 @@ function snks_get_patient_sessions( $tense ) {
 	global $wpdb;
 	$user_id = get_current_user_id();
 
-	$cache_key = 'patient-' . $tense . '-sessions-' . $user_id;
-	$results   = wp_cache_get( $cache_key );
-	$operator  = 'past' === $tense ? '<' : '>';
+	$cache_key       = 'patient-' . $tense . '-sessions-' . $user_id;
+	$results         = wp_cache_get( $cache_key );
+	$operator        = 'past' === $tense ? '<' : '>';
 	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
-		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		//phpcs:disable
 		if ( 'all' !== $tense ) {
 			$query .= " AND date_time {$operator}= '{$compare_against}'";
 		}
-		$query  .= " ORDER BY date_time ASC";
+		$query  .= ' ORDER BY date_time ASC';
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				$query,
 				$user_id
 			)
 		);
+		//phpcs:enable
 		wp_cache_set( $cache_key, $results );
 	}
 	return $results;
@@ -777,7 +792,7 @@ function snks_get_patient_sessions( $tense ) {
  * Get formated date/time difference e.g. 2 days and 3 hours and 40 minutes and 25 seconds.
  *
  * @param  string $datetime       DateTime.
- * @var    object $time_zone  an object of DateTimeZone.
+ * @param  object $time_zone  an object of DateTimeZone.
  * @var    string $converted_date Store formated timestamp.
  * @var    object $date           object of formated date/time according to timezone.
  * @var    object $current_date   object of current date/time.
@@ -794,12 +809,12 @@ function snks_get_time_difference( $datetime, $time_zone ) {
 
 	$diff_seconds = $diff->s + $diff->i * 60 + $diff->h * 3600 + $diff->days * 86400;
 
-	// Check if the difference is less than or equal to 5 minutes
+	// Check if the difference is less than or equal to 5 minutes.
 	if ( $diff_seconds <= 5 * 60 ) {
-		// Calculate the difference in seconds
+		// Calculate the difference in seconds.
 		return $diff_seconds;
 	} else {
-		// Format the difference in the original format
+		// Format the difference in the original format.
 		$formatted_diff = $diff->format( 'باقي %a يوم و %H ساعة و %i دقيقة و %s ثانية' );
 		return $formatted_diff;
 	}
