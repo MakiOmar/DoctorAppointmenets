@@ -616,10 +616,17 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
 
 		// Conditionally add date range only if the user is a patient.
 		if ( snks_is_patient() ) {
+			// Add date range condition for patients.
 			$query .= $wpdb->prepare(
 				' AND date_time BETWEEN %s AND %s',
 				$current_datetime,
 				$end_datetime
+			);
+		} else {
+			// Add condition for non-patients.
+			$query .= $wpdb->prepare(
+				' AND date_time > %s',
+				current_time( 'mysql' ) // Corrected typo.
 			);
 		}
 
@@ -629,9 +636,8 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
 		}
 		//phpcs:disable
 		// Append ordering.
-		$order  = in_array( $_GET['order'] ?? 'ASC', array( 'ASC', 'DESC' ), true ) ? $_GET['order'] : 'ASC';
+		$order  = in_array($_GET['order'] ?? 'ASC', ['ASC', 'DESC'], true) ? ($_GET['order'] ?? 'ASC') : 'ASC';
 		$query .= " ORDER BY date_time {$order}";
-
 		// Execute the query and cache the results.
 		$results = $wpdb->get_results( $query );
 		//phpcs:enable
@@ -768,7 +774,7 @@ function snks_get_patient_sessions( $tense ) {
 	$cache_key       = 'patient-' . $tense . '-sessions-' . $user_id;
 	$results         = wp_cache_get( $cache_key );
 	$operator        = 'past' === $tense ? '<' : '>';
-	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
+	$compare_against = gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) );
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
 		//phpcs:disable
