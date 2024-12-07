@@ -361,7 +361,7 @@ add_action(
 		if ( absint( $session_user_id ) !== $current_doctor ) {
 			return;
 		}
-		$redirect_after_meeting = 'session' === $timetable->purpose ? get_the_permalink( 682 ) : get_the_permalink( 1194 );
+		$redirect_after_meeting = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
 		?>
 		<script>
 			jQuery( document ).ready(
