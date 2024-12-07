@@ -403,6 +403,9 @@ add_action(
 			.show-notes-form.snks-notes-form{
 				max-height: 500px;
 			}
+			.anony-gallery-thumbs::before{
+				display: none;
+			}
 			.width-280{
 				width: 280px;
 				margin:auto;

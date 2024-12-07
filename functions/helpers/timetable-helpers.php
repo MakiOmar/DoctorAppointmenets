@@ -754,12 +754,12 @@ function snks_get_patient_sessions( $tense ) {
 	$cache_key = 'patient-' . $tense . '-sessions-' . $user_id;
 	$results   = wp_cache_get( $cache_key );
 	$operator  = 'past' === $tense ? '<' : '>';
-	$wp_timestamp = current_time( 'mysql' );
+	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator}= '{$wp_timestamp}'";
+			$query .= " AND date_time {$operator}= '{$compare_against}'";
 		}
 		$query  .= " ORDER BY date_time ASC";
 		$results = $wpdb->get_results(
