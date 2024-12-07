@@ -46,7 +46,7 @@ add_action(
 				exit;
 			}
 			if( ( snks_is_doctor() || snks_is_clinic_manager() ) && empty( $_GET['id'] ) ) {
-				wp_redirect( site_url() );
+				wp_redirect( add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) ) );
 				exit;
 			}
 		}
