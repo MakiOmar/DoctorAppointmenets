@@ -965,7 +965,7 @@ add_shortcode(
 	'snks_doctor_change_appointment',
 	function () {
 		$output = '';
-		if ( snks_is_doctor() && is_page( 'account-setting' ) ) {
+		if ( ( snks_is_doctor() || snks_is_clinic_manager() ) && is_page( 'account-setting' ) ) {
 			$bookable_days_obj = get_all_bookable_dates( snks_get_settings_doctor_id() );
 			$bookable_days     = snks_timetables_unique_dates( $bookable_days_obj );
 			$output           .= '<form id="doctor-change-appointment" method="post">';
