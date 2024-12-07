@@ -10,6 +10,9 @@ defined( 'ABSPATH' ) || die();
 add_action(
 	'template_redirect',
 	function () {
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+			return;
+		}
 		global $wp;
 		//phpcs:disable
 		if ( false !== strpos( $_SERVER['REQUEST_URI'], '7jz' ) && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
