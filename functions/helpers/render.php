@@ -1069,7 +1069,6 @@ function snks_render_bookings( $_timetables, $tens ) {
 	);
 	$day_groups   = snks_group_objects_by( $_timetables, 'date' );
 	$current_date = current_time( 'Y-m-d' );
-	snks_error_log( $current_date );
 	// Start building HTML.
 	ob_start();
 	?>
