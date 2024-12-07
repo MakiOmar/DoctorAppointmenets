@@ -92,7 +92,7 @@ add_action(
 			wp_send_json_success();
 		}
 		if ( in_array( $_id, array( 'user_insert_session_notes', 'user_edit_session_notes' ), true ) ) {
-			wp_safe_redirect( home_url( '/account-setting' ) );
+			wp_safe_redirect( add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) ) );
 			exit;
 		}
 	},

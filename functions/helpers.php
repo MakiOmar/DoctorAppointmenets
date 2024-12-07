@@ -133,7 +133,7 @@ function snks_go_back() {
 	if ( ! snks_is_doctor() ) {
 		return;
 	}
-	$referer = home_url( '/account-setting' );
+	$referer = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
 	// Sanitize the URL for use in an HTML attribute.
 	$referer_safe = $referer;
 
