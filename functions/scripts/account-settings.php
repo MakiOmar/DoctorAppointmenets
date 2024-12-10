@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_footer',
 	function () {
-		if ( ! is_page( 'account-setting' ) ) {
+		if ( ! is_page( 'account-setting' ) && ! is_page( 'meeting-room' ) ) {
 			return;
 		}
 		?>
