@@ -14,7 +14,7 @@ add_action( 'wp_ajax_appointment_action', 'appointment_action_callback' );
  * @return void
  */
 function appointment_action_callback() {
-	if ( ! snks_is_doctor() ) {
+	if ( ! snks_is_doctor() && ! snks_is_clinic_manager()) {
 		wp_send_json_error( 'Doctor only.' );
 	}
 	$errors = array();
