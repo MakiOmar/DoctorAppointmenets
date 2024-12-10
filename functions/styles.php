@@ -1020,7 +1020,24 @@ add_action(
 			.anony-go-back{
 				position: absolute;
 				top: 10px;
-				right: 30px;
+				left: 30px;
+				color: #fff !important;
+				display: inline-flex;
+				justify-content: center;
+				align-items: center;
+				padding: 10px;
+				background-color: #000;
+				font-size: 25px;
+				border-radius: 3px;
+				line-height: 10px;
+				height: 40px;
+				width: 49px;
+				z-index: 11;
+			}
+			.anony-booking-popup{
+				position: absolute;
+				top: 60px;
+				left: 30px;
 				color: #fff !important;
 				display: inline-flex;
 				padding: 10px;
@@ -1028,6 +1045,7 @@ add_action(
 				font-size: 25px;
 				border-radius: 3px;
 				line-height: 10px;
+				z-index: 11;
 			}
 			/*.jet-popup.jet-popup--front-mode.jet-popup--hide-state{
 				display: none;
