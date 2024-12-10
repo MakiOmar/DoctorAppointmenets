@@ -747,7 +747,7 @@ function snks_booking_item_template( $record ) {
 	?>
 	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item {status_class}">
 		<div class="anony-grid-row">
-			<div class="anony-grid-col anony-grid-col-2 snks-bg">
+			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px">
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
 
 				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);left:-25%;display: flex;align-items: center;">
@@ -801,7 +801,7 @@ function snks_booking_item_template( $record ) {
 				</div>
 				<!--/timer-->
 			</div>
-			<?php if ( 'online' === $record->attendance_type ) { ?>
+			<?php if ( 'online' === $record->attendance_type && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
 				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
 			</div>
@@ -810,7 +810,7 @@ function snks_booking_item_template( $record ) {
 		<!--doctoraction-->
 		<div class="anony-flex flex-h-center">
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
-			<?php if ( ! snks_is_clinic_manager() ) { ?>
+			<?php if ( ! snks_is_clinic_manager() && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
 			<?php } ?>
 		</div>
@@ -965,7 +965,7 @@ add_shortcode(
 	'snks_doctor_change_appointment',
 	function () {
 		$output = '';
-		if ( ( snks_is_doctor() || snks_is_clinic_manager() ) && is_page( 'account-setting' ) ) {
+		if ( ( snks_is_doctor() || snks_is_clinic_manager() ) && ( is_page( 'account-setting' ) || is_page( 'meeting-room' ) ) ) {
 			$bookable_days_obj = get_all_bookable_dates( snks_get_settings_doctor_id() );
 			$bookable_days     = snks_timetables_unique_dates( $bookable_days_obj );
 			$output           .= '<form id="doctor-change-appointment" method="post">';
@@ -1140,8 +1140,9 @@ function snks_render_bookings( $_timetables, $tens ) {
 								//phpcs:disable
 								echo $output;
 								//phpcs:enable
+
 								?>
-								<?php if ( 'past' !== $tens ) { ?>
+								<?php if ( 'past' !== $tens && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 								<div class="snks-notes-form anony-padding-10">
 									<?php
 									//phpcs:disable
@@ -1287,17 +1288,16 @@ function snks_render_sessions_listing( $tense ) {
 			if ( ! $doctor_settings || empty( $doctor_settings ) ) {
 				$doctor_settings = snks_doctor_settings( $session->user_id );
 			}
+			$room  = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
 			if ( snks_is_past_date( $session->date_time ) ) {
 				$class = 'start';
-				$room  = '#';
+				
 			} else {
 				$class = 'remaining';
-				$room  = '#';
 				if ( 'on' === $doctor_settings['allow_appointment_change'] ) {
 					$order_id      = $session->order_id;
 					$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 					$class         = 'remaining';
-					$room          = '#';
 					$diff_seconds  = snks_diff_seconds( $session );
 					// Compare the input date and time with the modified current date and time.
 					if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
