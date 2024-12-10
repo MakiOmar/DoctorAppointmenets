@@ -105,6 +105,15 @@ add_shortcode(
 	}
 );
 add_shortcode(
+	'snks_bookings_popup',
+	function () {
+		if ( snks_is_patient() ) {
+			return '';
+		}
+		return "<a class='anony-booking-popup' href='#'><i class='fa fa-calendar'></i></a>";
+	}
+);
+add_shortcode(
 	'snks_appointment_form',
 	function () {
 		$html    = '';
