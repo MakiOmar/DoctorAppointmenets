@@ -129,11 +129,15 @@ snks_require_all_files( SNKS_DIR . 'functions/helpers' );
  * @return string
  */
 function snks_go_back() {
-
-	if ( ! snks_is_doctor() ) {
+	if ( ! is_user_logged_in() ) {
 		return;
 	}
-	$referer = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
+	if ( ! snks_is_patient() ) {
+		$referer = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
+	} else {
+		$referer = home_url( '/my-bookings' );
+	}
+
 	// Sanitize the URL for use in an HTML attribute.
 	$referer_safe = $referer;
 
