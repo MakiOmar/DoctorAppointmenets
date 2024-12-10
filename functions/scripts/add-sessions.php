@@ -430,7 +430,7 @@ add_action(
 				);
 				<?php
 				//phpcs:disable
-				if ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( $_SERVER['REQUEST_URI'], 'account-setting' ) ) {
+				if ( isset( $_SERVER['REQUEST_URI'] ) && ( false !== strpos( $_SERVER['REQUEST_URI'], 'account-setting' ) || false !== strpos( $_SERVER['REQUEST_URI'], 'meeting-room' ) ) ) {
 				//phpcs:enable
 					?>
 				$(document).on(
