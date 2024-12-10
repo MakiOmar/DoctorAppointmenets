@@ -80,9 +80,9 @@ add_shortcode(
 						const roomID = <?php echo $room_id;//phpcs:disable ?>;
 						const options = {
 						parentNode: document.querySelector('#meeting'),
-						roomName: 'عيادة الدكتور',
-						width: 700,
-						height: 700,
+						roomName: '<?php echo $room_id;//phpcs:disable ?> جلسة',
+						width: '100vw',
+						height: '100vh',
 						configOverwrite: {
 							prejoinPageEnabled: false,
 							participantsPane: {
