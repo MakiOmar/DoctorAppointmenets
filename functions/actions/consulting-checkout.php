@@ -84,15 +84,22 @@ add_action(
 		session_write_close();
 		// Store form data in session.
 		WC()->session->set( 'consulting_form_data', $form_data );
-		// Check if the user is logged in; otherwise, redirect to login.
-		if ( is_user_logged_in() ) {
-			// Process form data for logged-in users.
-			process_form_data( $form_data );
-		} else {
-			// Redirect to login page with a redirect back to the checkout page.
-			wp_safe_redirect( site_url( 'booking-details' ) );
-			exit;
-		}
+
+		// Pass form data to process_form_data using WooCommerce hooks.
+		add_action(
+			'woocommerce_init',
+			function () use ( $form_data ) {
+				// Check if the user is logged in; otherwise, redirect to login.
+				if ( is_user_logged_in() ) {
+					// Process form data for logged-in users.
+					process_form_data( $form_data );
+				} else {
+					// Redirect to login page with a redirect back to the checkout page.
+					wp_safe_redirect( site_url( 'booking-details' ) );
+					exit;
+				}
+			}
+		);
 	},
 	1
 );
