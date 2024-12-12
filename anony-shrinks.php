@@ -323,6 +323,200 @@ function snks_error_handler( $errno, $errstr, $errfile, $errline ) {
 // Set the custom error handler.
 set_error_handler( 'snks_error_handler' );
 
+add_action(
+	'restrict_manage_users',
+	function () {
+		?>
+	<a id="send-notification-button" class="button button-primary">
+		<?php esc_html_e( 'Send Notification' ); ?>
+	</a>
+		<?php
+	}
+);
+
+add_action(
+	'admin_footer',
+	function () {
+		$screen = get_current_screen();
+		if ( 'users' !== $screen->id ) {
+			return;
+		}
+		?>
+	<style>
+
+		#send-notification-modal h2 {
+			margin-top: 0;
+		}
+
+		#send-notification-modal {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background: #fff;
+			padding: 20px;
+			border: 1px solid #ccc;
+			z-index: 1000;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			width: 400px;
+		}
+
+		.modal-content {
+			position: relative;
+		}
+
+		.close-button {
+			position: absolute;
+			top: -10px;
+			right: 10px;
+			background: none;
+			border: none;
+			font-size: 20px;
+			cursor: pointer;
+			height: 30px;
+			width: 30px;
+			background-color: #d51b1b;
+			color: #fff;
+			border-radius: 50%;
+		}
+
+		.form-row {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			margin-bottom: 15px;
+		}
+
+		.form-row label {
+			flex: 1;
+			font-weight: bold;
+		}
+
+		.form-row input,
+		.form-row textarea,
+		.form-row button {
+			flex: 2;
+		}
+
+		.form-row textarea {
+			resize: vertical;
+		}
+	</style>
+	<div id="send-notification-modal" style="display:none;">
+		<div class="modal-content">
+			<button type="button" id="close-modal" class="close-button">&times;</button>
+			<h2><?php esc_html_e( 'Send Notification' ); ?></h2>
+			<form id="send-notification-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
+				<input type="hidden" name="action" value="send_notification">
+				<div class="form-row">
+					<label for="notif-title"><?php esc_html_e( 'Title' ); ?></label>
+					<input type="text" id="notif-title" name="title" required>
+				</div>
+				<div class="form-row">
+					<label for="notif-content"><?php esc_html_e( 'Content' ); ?></label>
+					<textarea id="notif-content" name="notif_content" required></textarea>
+				</div>
+				<div class="form-row">
+					<label for="notif-link"><?php esc_html_e( 'Link' ); ?></label>
+					<input type="url" id="notif-link" name="link">
+				</div>
+				<input type="hidden" id="notif-user-ids" name="user_ids">
+				<div class="form-row">
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Send' ); ?></button>
+				</div>
+			</form>
+		</div>
+	</div>
+		
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const closeModal = document.getElementById('close-modal');
+			const modal = document.getElementById('send-notification-modal');
+			const button = document.getElementById('send-notification-button');
+			const userCheckboxes = document.querySelectorAll('.check-column input[type="checkbox"]');
+			const userIdsField = document.getElementById('notif-user-ids');
+			const form = document.getElementById('send-notification-form');
+			// Close the modal when the close button is clicked.
+			closeModal.addEventListener('click', function () {
+				modal.style.display = 'none';
+			});
+			// Show the modal when the button is clicked.
+			button.addEventListener('click', function (event) {
+				event.preventDefault();
+				const selectedUserIds = Array.from(userCheckboxes)
+					.filter(checkbox => checkbox.checked)
+					.map(checkbox => checkbox.value)
+					.join(',');
+
+				if (!selectedUserIds) {
+					alert('<?php esc_html_e( 'Please select at least one user.' ); ?>');
+					return;
+				}
+
+				userIdsField.value = selectedUserIds;
+				modal.style.display = 'block';
+			});
+
+			// Handle form submission with AJAX.
+			form.addEventListener('submit', function (event) {
+				event.preventDefault(); // Prevent default form submission.
+
+				const formData = new FormData(form);
+
+				fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+					method: 'POST',
+					body: formData,
+				})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							alert(data.data.message);
+							modal.style.display = 'none';
+							//location.reload(); // Reload the page to update the user table.
+						} else {
+							alert(data.data.message);
+						}
+					})
+					.catch(error => {
+						console.error('Error:', error);
+						alert('<?php esc_html_e( 'Failed to send notification. Please try again.' ); ?>');
+					});
+			});
+		});
+	</script>
+		<?php
+	}
+);
+add_action(
+	'wp_ajax_send_notification',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized' ) ) );
+		}
+		$_req     = $_POST;
+		$title    = isset( $_req['title'] ) ? sanitize_text_field( $_req['title'] ) : '';
+		$content  = isset( $_req['notif_content'] ) ? sanitize_text_field( $_req['notif_content'] ) : '';
+		$link     = isset( $_req['link'] ) ? esc_url_raw( $_req['link'] ) : '';
+		$user_ids = isset( $_req['user_ids'] ) ? explode( ',', sanitize_text_field( $_req['user_ids'] ) ) : array();
+
+		if ( empty( $title ) || empty( $content ) || empty( $user_ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid data provided.' ) ) );
+		}
+
+		if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
+			$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+
+			foreach ( $user_ids as $user_id ) {
+				$firebase->trigger_notifier( $title, $content, absint( $user_id ) );
+			}
+
+			wp_send_json_success( array( 'message' => __( 'Notifications sent successfully.' ) ) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Firebase class not found.' ) ) );
+		}
+	}
+);
+
 
 add_action(
 	'wp_footer',
