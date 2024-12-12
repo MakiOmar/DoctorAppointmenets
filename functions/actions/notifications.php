@@ -51,7 +51,7 @@ add_action(
 				$content = sanitize_text_field( $_req['notif_content'] );
 				$user_id = absint( $_req['notif_user'] );
 				// Call the notifier method.
-				$firebase->trigger_notifier( $title, $content, $user_id );
+				$firebase->trigger_notifier( $title, $content, $user_id, $link );
 			}
 		}
 	}
