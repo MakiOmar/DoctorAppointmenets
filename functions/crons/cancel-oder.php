@@ -50,7 +50,7 @@ function snks_auto_cancel_wc_orders() {
 		'limit'   => 5,
 		'orderby' => 'date',
 		'order'   => 'DESC',
-		'status'  => array( 'pending', 'on-hold', 'processing' ),
+		'status'  => array( 'pending', 'on-hold', 'processing', 'faild', 'cancelled', 'refunded' ),
 	);
 
 	$orders = wc_get_orders( $query );
@@ -70,6 +70,10 @@ function snks_auto_cancel_wc_orders() {
 				)
 			);
 			if ( $updated ) {
+				$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
+				if ( $timetable ) {
+					snks_waiting_others( $timetable );
+				}
 				delete_post_meta( $order->get_id(), 'booking_id' );
 			}
 		}
