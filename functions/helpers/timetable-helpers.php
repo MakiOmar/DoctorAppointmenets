@@ -342,6 +342,31 @@ function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $att
 }
 
 /**
+ * Check if Timetable row exists with the same date_time and order_id > 0
+ *
+ * @param string $date_time Date time.
+ * @return bool
+ */
+function snks_timetable_with_order_exists( $date_time ) {
+	global $wpdb;
+	// phpcs:disable
+	// Base query.
+	$_query = "SELECT ID
+              FROM {$wpdb->prefix}snks_provider_timetable
+              WHERE date_time = %s
+              AND order_id > 0";
+
+	// Prepare the query.
+	$prepared_query = $wpdb->prepare( $_query, $date_time );
+
+	// Execute the query.
+	$exists = $wpdb->get_var( $prepared_query );
+	// phpcs:enable
+
+	return $exists;
+}
+
+/**
  * Checks if a timetable record exists for a user with the given date_time and session_status = 'open'.
  *
  * @param int    $user_id   User ID.
