@@ -699,9 +699,9 @@ function snks_generate_timetable() {
 				// String to time appointment hour.
 				$appointment_hour = gmdate( 'h:i a', strtotime( $details['appointment_hour'] ) );
 				// Get a list of expected hours at this day according to periods and appointment hour.
-				$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $date . ' ' . $appointment_hour );
 				$expected_hours = snks_expected_hours( $periods, $appointment_hour );
 				foreach ( $expected_hours as $expected_hour ) {
+					$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $date . ' ' . $expected_hour['from'] );
 					// Ensure the formatted date_time is valid and compare it with the current time.
 					if ( $date_time && strtotime( $date_time->format('Y-m-d h:i a') ) > current_time( 'timestamp' ) ) {
 						$formatted_date_time = $date_time->format('Y-m-d h:i a');

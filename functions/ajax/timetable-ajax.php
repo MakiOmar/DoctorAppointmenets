@@ -251,7 +251,7 @@ function snks_create_custom_timetable() {
 	// No conflicts, save the timetable.
 	$data = array();
 	foreach ( $expected_hours as $expected_hour ) {
-		$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $_req['app_hour'] ) ) );
+		$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $expected_hour['from'] ) ) );
 		if ( $date_time ) {
 			$date_time = $date_time->format( 'Y-m-d h:i a' );
 		}
