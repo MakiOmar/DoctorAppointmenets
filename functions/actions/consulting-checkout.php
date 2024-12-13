@@ -8,32 +8,30 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
-
 if ( ! function_exists( 'WC' ) ) {
 	return;
 }
-
 /**
  * Save form data to session or redirect non-logged-in users to login.
  *
  * @return void
  */
 add_action(
-	'init',
+	'template_redirect',
 	function () {
-		// Start session if not already started.
-		// Check for the necessary request parameters.
-		if ( ! isset( $_REQUEST['direct_add_to_cart'] ) || ! empty( $_POST['edit-booking-id'] ) ) {
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
 			return;
 		}
-		if ( ! session_id() ) {
-			session_start();
+
+		// Start session if not already started.
+		// Check for the necessary request parameters.
+		if ( ! isset( $_REQUEST['appointment_add_to_cart'] ) || ! empty( $_POST['edit-booking-id'] ) ) {
+			return;
 		}
 		// Verify nonce and handle form submission.
 		if ( isset( $_POST ) && isset( $_POST['create_appointment_nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['create_appointment_nonce'] ) ), 'create_appointment' ) && isset( $_POST['create-appointment'] ) ) {
 			return;
 		}
-
 		$_req       = wp_unslash( $_POST ); // Unslashing input data.
 		$doctor_url = snks_encrypted_doctor_url( sanitize_text_field( $_req['user-id'] ) );
 
@@ -79,27 +77,17 @@ add_action(
 			'_jalsah_commistion' => $pricing_data['service_fees'],
 			'_paymob'            => $pricing_data['paymob'],
 		);
-		// Store form data in PHP session.
-		$_SESSION['consulting_form_data_temp'] = $form_data;
-		session_write_close();
-		// Store form data in session.
-		WC()->session->set( 'consulting_form_data', $form_data );
 
-		// Pass form data to process_form_data using WooCommerce hooks.
-		add_action(
-			'woocommerce_init',
-			function () use ( $form_data ) {
-				// Check if the user is logged in; otherwise, redirect to login.
-				if ( is_user_logged_in() ) {
-					// Process form data for logged-in users.
-					process_form_data( $form_data );
-				} else {
-					// Redirect to login page with a redirect back to the checkout page.
-					wp_safe_redirect( site_url( 'booking-details' ) );
-					exit;
-				}
-			}
-		);
+		set_transient( snks_form_data_transient_key(), $form_data, 3600 );
+		// Check if the user is logged in; otherwise, redirect to login.
+		if ( is_user_logged_in() ) {
+			// Process form data for logged-in users.
+			process_form_data( $form_data );
+		} else {
+			// Redirect to login page with a redirect back to the checkout page.
+			wp_safe_redirect( site_url( 'booking-details' ) );
+			exit;
+		}
 	},
 	1
 );
@@ -110,42 +98,29 @@ add_action(
  * @param array $form_data The form data array.
  */
 function process_form_data( $form_data ) {
-	// Store form data in session.
-	WC()->session->set( 'consulting_form_data', $form_data );
+	if ( $form_data && ! empty( $form_data ) ) {
+		// Empty the cart before adding new items.
+		WC()->cart->empty_cart();
+		$product_id = 335;
 
-	// Empty the cart before adding new items.
-	WC()->cart->empty_cart();
-	$product_id = 335;
+		// Add the product to the cart.
+		WC()->cart->add_to_cart( $product_id );
 
-	// Add the product to the cart.
-	WC()->cart->add_to_cart( $product_id );
+		// Redirect to the checkout page.
+		wp_safe_redirect( wc_get_checkout_url() );
+		exit;
+	}
 
-	// Redirect to the checkout page.
-	wp_safe_redirect( wc_get_checkout_url() );
-	exit;
 }
 /**
  * Handle post-login redirection to checkout and process stored form data.
  */
 function snks_logged_in_proccess_form_data() {
-
-	// Start PHP session if not already started.
-	if ( ! session_id() ) {
-		session_start();
+	if ( snks_is_patient() ) {
+		$form_data = get_transient( snks_form_data_transient_key() );
+		// Process the stored form data after login.
+		process_form_data( $form_data );
 	}
-
-	//phpcs:disable
-	// Check if the user was redirected for checkout.
-	if ( isset( $_SESSION['consulting_form_data_temp'] ) && isset( $_POST['tocheckout'] ) && 'yes' === $_POST['tocheckout'] ) {
-		$form_data = $_SESSION['consulting_form_data_temp'];
-		//unset( $_SESSION['consulting_form_data_temp'] );
-		if ( $form_data && ! empty( $form_data ) ) {
-			// Process the stored form data after login.
-			process_form_data( $form_data );
-		}
-	}
-	session_write_close();
-	//phpcs:enable
 }
 
 add_action( 'wp_login', 'snks_logged_in_proccess_form_data' );
@@ -163,7 +138,7 @@ add_filter(
 		if ( ! $woocommerce ) {
 			return $cart_item_data;
 		}
-		$session = $woocommerce->session->get( 'consulting_form_data' );
+		$session = get_transient( snks_form_data_transient_key() );
 
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return $cart_item_data;
@@ -205,7 +180,7 @@ add_action(
 			return;
 		}
 		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$session = $woocommerce->session->get( 'consulting_form_data' );
+		$session = get_transient( snks_form_data_transient_key() );
 
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return;
@@ -235,7 +210,7 @@ add_filter(
 		if ( ! $woocommerce ) {
 			return $item_data;
 		}
-		$session = $woocommerce->session->get( 'consulting_form_data' );
+		$session = get_transient( snks_form_data_transient_key() );
 
 		if ( ! $session || ! isset( $session['booking_day'] ) ) {
 			return $item_data;
@@ -270,7 +245,7 @@ add_filter(
 add_action(
 	'woocommerce_checkout_create_order_line_item',
 	function ( $item ) {
-		$session = WC()->session->get( 'consulting_form_data' );
+		$session = get_transient( snks_form_data_transient_key() );
 
 		if ( ! $session || empty( $session ) || ! isset( $session['booking_day'] ) ) {
 			return;
@@ -291,7 +266,7 @@ add_action(
 add_action(
 	'woocommerce_new_order',
 	function ( $order_id ) {
-		$form_data = WC()->session->get( 'consulting_form_data' );
+		$form_data = get_transient( snks_form_data_transient_key() );
 		if ( ! $form_data || empty( $form_data ) || ! isset( $form_data['booking_day'] ) ) {
 			return;
 		}
@@ -299,7 +274,7 @@ add_action(
 			foreach ( $form_data as $key => $value ) {
 				update_post_meta( $order_id, $key, $value );
 			}
-			WC()->session->set( 'consulting_form_data', null );
+			delete_transient( snks_form_data_transient_key() );
 		}
 	},
 	10,
@@ -376,15 +351,12 @@ add_filter( 'woocommerce_checkout_fields', 'set_woocommerce_default_country', 99
 add_filter(
 	'woocommerce_checkout_get_value',
 	function ( $input, $key ) {
-		// Get the current user data.
-		$current_user = wp_get_current_user();
 
 		// Check which field is being populated and set the value accordingly.
 		switch ( $key ) {
 
 			case 'billing_country':
-				return snsk_ip_api_country( false ); // Set the country to Saudi Arabia (SA).
-
+				return snsk_ip_api_country( false );
 			default:
 				return $input;
 		}

@@ -381,7 +381,6 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	);
 
 	$submit_action = snks_encrypted_doctor_url( snks_url_get_doctors_id() );
-	$submit_action = add_query_arg( 'direct_add_to_cart', '1', $submit_action );
 
 	$n_bookable_days = array_unique( $bookable_days );
 	if ( count( $n_bookable_days ) > 3 ) {
@@ -417,6 +416,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<div class="hacen_liner_print-outregular"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes"> أوافق على الشروط والأحكام وسياسة الاستخدام.</div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
 	$html .= '<input id="consulting-form-submit" style="margin-top:18px" type="submit" value="' . $submit_text . '">';
+	$html .= '<input type="hidden" name="appointment_add_to_cart" value="1">';
 	$html .= '</div>';
 	$html .= '</form>';
 
@@ -1142,7 +1142,11 @@ function snks_render_bookings( $_timetables, $tens ) {
 								//phpcs:enable
 
 								?>
-								<?php if ( 'past' !== $tens && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
+								<?php
+								//phpcs:disable
+								if ( 'past' !== $tens && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { 
+								//phpcs:enable
+									?>
 								<div class="snks-notes-form anony-padding-10">
 									<?php
 									//phpcs:disable
@@ -1288,10 +1292,10 @@ function snks_render_sessions_listing( $tense ) {
 			if ( ! $doctor_settings || empty( $doctor_settings ) ) {
 				$doctor_settings = snks_doctor_settings( $session->user_id );
 			}
-			$room  = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
+			$room = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
 			if ( snks_is_past_date( $session->date_time ) ) {
 				$class = 'start';
-				
+
 			} else {
 				$class = 'remaining';
 				if ( 'on' === $doctor_settings['allow_appointment_change'] ) {

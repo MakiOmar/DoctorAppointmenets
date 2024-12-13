@@ -664,7 +664,7 @@ add_action(
 function consulting_session_table_shortcode() {
 	// Retrieve the form data from the session.
 	// phpcs:disable
-	$form_data = isset( $_SESSION['consulting_form_data_temp'] ) ? $_SESSION['consulting_form_data_temp'] : array();
+	$form_data = get_transient( snks_form_data_transient_key() );
 	// phpcs:enable
 	// Ensure that necessary data is available.
 	if ( empty( $form_data ) ) {
@@ -684,14 +684,8 @@ add_shortcode( 'consulting_session_table', 'consulting_session_table_shortcode' 
  */
 function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	if ( ! $form_data ) {
-		// Start session if not already started.
-		if ( ! session_id() ) {
-			session_start();
-		}
-		// Retrieve the form data from the session.
 		// phpcs:disable
-		$form_data = isset( $_SESSION['consulting_form_data_temp'] ) ? $_SESSION['consulting_form_data_temp'] : array();
-		session_write_close();
+		$form_data = get_transient( snks_form_data_transient_key() );
 	}
 	
 	// phpcs:enable
