@@ -283,6 +283,27 @@ function snks_close_others( $booked_timetable ) {
 	);
 	// phpcs:enable.
 }
+
+/**
+ * Will set other timetables to be waiting
+ *
+ * @param object $booked_timetable Booked timetable.
+ * @return void
+ */
+function snks_waiting_others( $booked_timetable ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	// phpcs:disable.
+	$wpdb->query(
+		$wpdb->prepare(
+			"UPDATE $table_name
+			SET session_status = 'waiting'
+			WHERE date_time = %s
+			AND order_id = 0",
+			$booked_timetable->date_time		)
+	);
+	// phpcs:enable.
+}
 /**
  * If Timetable exists
  *
@@ -460,10 +481,10 @@ function snks_delete_waiting_sessions_by_user_id( $user_id, $attendance_type = f
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
 
 	// Build the base SQL query.
-	$sql = "DELETE FROM $table_name WHERE user_id = %d AND session_status = %s";
+	$sql = "DELETE FROM $table_name WHERE user_id = %d AND session_status = %s AND order_id = %d";
 
 	// Add the attendance_type condition if provided.
-	$params = array( $user_id, 'waiting' );
+	$params = array( $user_id, 'waiting', 0 );
 	if ( $attendance_type ) {
 		$sql     .= ' AND attendance_type = %s';
 		$params[] = $attendance_type;
