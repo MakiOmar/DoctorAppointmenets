@@ -108,7 +108,11 @@ add_action(
 		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
 			foreach ( $preview_timetables as $day_preview_timetable ) {
 				foreach ( $day_preview_timetable as $data ) {
-					$dtime             = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+					$dtime   = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+					$ordered = snks_timetable_with_order_exists( $dtime );
+					if ( $ordered ) {
+						continue;
+					}
 					$exists            = snks_timetable_exists( $user_id, $dtime, $data['day'], $data['starts'], $data['ends'] );
 					$data['date_time'] = $dtime;
 					unset( $data['date'] );
@@ -118,7 +122,7 @@ add_action(
 					} else {
 						foreach ( $exists as $timetable ) {
 							//phpcs:disable
-							if ( 'open' != $timetable->session_status && $data['attendance_type'] != $timetable->session_status ) {
+							if (  ( ! in_array( $timetable->session_status, array( 'open' ), true ) ) && $data['attendance_type'] != $timetable->session_status ) {
 								//phpcs:enable
 								snks_insert_timetable( $data );
 								break;
