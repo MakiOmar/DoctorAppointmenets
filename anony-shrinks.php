@@ -516,7 +516,28 @@ add_action(
 		}
 	}
 );
+add_action(
+	'wp_head',
+	function () {
+		?>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
+	<script>
+			window.addEventListener( "pageshow", function ( event ) {
+				var historyTraversal = event.persisted || 
+										( typeof window.performance != "undefined" && 
+											window.performance.navigation.type === 2 );
+				if ( historyTraversal ) {
+					// Handle page restore.
+					window.location.reload( true );
+				}
+				});
 
+	</script>
+		<?php
+	}
+);
 
 add_action(
 	'wp_footer',
