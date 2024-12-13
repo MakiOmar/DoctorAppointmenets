@@ -123,6 +123,18 @@ function snks_require_all_files( $dir ) {
 }
 
 snks_require_all_files( SNKS_DIR . 'functions/helpers' );
+
+/**
+ * Get transient key
+ *
+ * @return string
+ */
+function snks_form_data_transient_key() {
+	//phpcs:disable
+	// $_COOKIE['booking_trans_key']
+	return 'consulting_form_data_' . str_replace( '.', '', $_SERVER['REMOTE_ADDR'] );
+	//phpcs:enable
+}
 /**
  * Go back
  *
