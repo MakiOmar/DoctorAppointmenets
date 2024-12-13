@@ -82,7 +82,7 @@ add_shortcode(
 						parentNode: document.querySelector('#meeting'),
 						roomName: '<?php echo $room_id;//phpcs:disable ?> جلسة',
 						width: '100vw',
-						height: '100vh',
+						height: (window.innerHeight - 20 ) + 'px',
 						configOverwrite: {
 							prejoinPageEnabled: false,
 							participantsPane: {
