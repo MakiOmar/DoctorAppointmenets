@@ -85,10 +85,9 @@ add_action(
 			$updated = snks_update_timetable(
 				absint( $booking_id ),
 				array(
-					'booking_availability' => true,
-					'client_id'            => 0,
-					'session_status'       => $status,
-					'order_id'             => 0,
+					'client_id'      => 0,
+					'session_status' => $status,
+					'order_id'       => 0,
 				)
 			);
 			if ( $updated ) {
