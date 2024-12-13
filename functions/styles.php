@@ -1458,8 +1458,12 @@ add_action(
 				.snks-booking-page-container{
 					background-color:#024059
 				}
+				.anony-go-back{
+					display:none
+				}
 			}
 			@media screen and (max-width:480px) {
+
 				.elementor-3537 .elementor-element.elementor-element-ba64801:not(.elementor-motion-effects-element-type-background){
 					position: fixed;
 					bottom: 0;
