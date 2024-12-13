@@ -110,7 +110,6 @@ function process_form_data( $form_data ) {
 		wp_safe_redirect( wc_get_checkout_url() );
 		exit;
 	}
-
 }
 /**
  * Handle post-login redirection to checkout and process stored form data.
@@ -318,6 +317,10 @@ add_action(
 				'order_id' => $order_id,
 			)
 		);
+		$timetable = snks_get_timetable_by( 'ID', absint( $booking_day ) );
+		if ( $timetable ) {
+			snks_close_others( $timetable );
+		}
 	}
 );
 /**
