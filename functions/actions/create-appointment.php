@@ -92,6 +92,11 @@ add_action(
 				)
 			);
 			if ( $updated ) {
+				if ( 'waiting' === $status ) {
+					if ( $booking ) {
+						snks_waiting_others( $booking );
+					}
+				}
 				delete_post_meta( $order_id, 'booking_id' );
 			}
 		}
