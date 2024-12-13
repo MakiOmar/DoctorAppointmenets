@@ -310,16 +310,22 @@ add_filter(
 add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
-		$booking_day = get_post_meta( $order_id, 'booking_id', true );
-		snks_update_timetable(
-			absint( $booking_day ),
-			array(
-				'order_id' => $order_id,
-			)
-		);
-		$timetable = snks_get_timetable_by( 'ID', absint( $booking_day ) );
-		if ( $timetable ) {
-			snks_close_others( $timetable );
+		$order = wc_get_order( $order_id );
+		if ( $order ) {
+			$status = $order->get_status();
+			if ( 'failed' !== $status ) {
+				$booking_day = get_post_meta( $order_id, 'booking_id', true );
+				snks_update_timetable(
+					absint( $booking_day ),
+					array(
+						'order_id' => $order_id,
+					)
+				);
+				$timetable = snks_get_timetable_by( 'ID', absint( $booking_day ) );
+				if ( $timetable ) {
+					snks_close_others( $timetable );
+				}
+			}
 		}
 	}
 );
