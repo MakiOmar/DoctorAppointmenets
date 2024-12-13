@@ -129,7 +129,7 @@ snks_require_all_files( SNKS_DIR . 'functions/helpers' );
  * @return string
  */
 function snks_go_back() {
-	if ( ! is_user_logged_in() ) {
+	if ( ! is_user_logged_in() && ! is_page( 'register' ) ) {
 		return;
 	}
 	if ( ! snks_is_patient() ) {
