@@ -50,6 +50,12 @@ add_action(
 				exit;
 			}
 		}
+		if ( ( is_page('cart') ) ) {
+			
+			wp_redirect( home_url( '/my-bookings' ) );
+			exit;
+
+		}
 	}
 );
 
