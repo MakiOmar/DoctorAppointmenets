@@ -58,7 +58,12 @@ add_action(
 		}
 	}
 );
-
+add_action('admin_init', function () {
+    if (!current_user_can('administrator') && !wp_doing_ajax()) {
+        wp_redirect(home_url('my-bookings'));
+        exit;
+    }
+});
 add_filter(
 	'jet-popup/ajax-request/get-elementor-content',
 	function($content, $popup_data) {
