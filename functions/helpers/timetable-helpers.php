@@ -164,38 +164,44 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
  * @param string $date Date to query.
  * @return mixed
  */
-function snks_get_timetable_by_date( $date ) {
+function snks_get_timetable_by_date( $date, $period = false ) {
 	global $wpdb;
 	// Get the current user ID.
 	$current_user_id = snks_get_settings_doctor_id();
 
 	// Generate a unique cache key.
-	$cache_key = 'snks_timetable_by_date_' . $date . '_user_' . $current_user_id;
+	$cache_key = 'snks_timetable_by_date_' . $date . '_user_' . $current_user_id . ( $period ? '_period_' . $period : '' );
 
-	$results = wp_cache_get( $cache_key );
-
+	$results = false;
+	//phpcs:disable
 	if ( false === $results ) {
-		//phpcs:disable
-		// Execute the query.
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
-				 WHERE DATE(date_time) = %s 
-				 AND user_id = %d 
-				 AND session_status = %s",
-				$date,
-				$current_user_id,
-				'waiting'
-			)
+		// Start building the base SQL query.
+		$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+		        WHERE DATE(date_time) = %s 
+		        AND user_id = %d 
+		        AND session_status = %s";
+
+		// Add the period condition if provided.
+		if ( $period ) {
+			$sql .= ' AND period = %s';
+		}
+
+		// Prepare the SQL query based on whether $period is set.
+		$query = $wpdb->prepare(
+			$sql,
+			$period ? array( $date, $current_user_id, 'waiting', $period ) : array( $date, $current_user_id, 'waiting' )
 		);
+
+		// Execute the query.
+		$results = $wpdb->get_results( $query );
 
 		// Set the cache for the results.
 		wp_cache_set( $cache_key, $results, '', 3600 );
-		//phpcs:enable
 	}
-
+	//phpcs:enable
 	return $results;
 }
+
 
 
 /**
