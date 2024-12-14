@@ -135,6 +135,13 @@ add_action(
 	function () {
 		?>
 		<script>
+			window.addEventListener('beforeunload', function () {
+				var pageTransition = document.querySelector('e-page-transition');
+				if (pageTransition) {
+					pageTransition.style.display = 'block';
+				}
+			});
+
 			jQuery(document).ready(function($) {
 				$(document).on(
 					'click',

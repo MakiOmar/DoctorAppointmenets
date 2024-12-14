@@ -250,7 +250,9 @@ add_action(
 				color: #024059!important;
 				font-weight: bold;
 			}
-
+			e-page-transition{
+				z-index: 9999999!important;
+			}
 			.jet-form-builder-col__start{
 				display: inline-flex;
 				align-items: center;
