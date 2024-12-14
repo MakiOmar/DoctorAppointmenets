@@ -14,7 +14,7 @@ add_action( 'wp_ajax_appointment_action', 'appointment_action_callback' );
  * @return void
  */
 function appointment_action_callback() {
-	if ( ! snks_is_doctor() && ! snks_is_clinic_manager()) {
+	if ( ! snks_is_doctor() && ! snks_is_clinic_manager() ) {
 		wp_send_json_error( 'Doctor only.' );
 	}
 	$errors = array();
@@ -67,8 +67,8 @@ function appointment_change_date_callback() {
 	if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'appointment_change_date_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
-
-	$timetables = snks_get_timetable_by_date( $_req['date'] );
+	$old_timetable = snks_get_timetable_by( 'ID', $_req['oldAppointment'] );
+	$timetables    = snks_get_timetable_by_date( $_req['date'], $old_timetable->period );
 	if ( $timetables ) {
 		foreach ( $timetables as $appointment ) {
 			$attendance = 'online' === $appointment->attendance_type ? 'أونلاين' : 'أوفلاين';
