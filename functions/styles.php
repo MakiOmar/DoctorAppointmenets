@@ -1460,7 +1460,7 @@ add_action(
 				.snks-booking-page-container{
 					background-color:#024059
 				}
-				.anony-go-back{
+				body:not(.page-id-2409) .anony-go-back{
 					display:none
 				}
 			}
