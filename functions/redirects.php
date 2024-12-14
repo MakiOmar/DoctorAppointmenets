@@ -31,6 +31,12 @@ add_action(
 			exit;
 		}
 		
+		if ( ( is_page('login') || is_page('doctor-login') ) && is_user_logged_in() ) {
+			$path = snks_is_patient() ? 'my-bookings' : 'account-setting';
+			wp_redirect( site_url($path) );
+			exit;
+		}
+		
 		if ( is_page('doctor-login') && is_user_logged_in() && ( snks_is_doctor() || snks_is_clinic_manager() ) ) {
 			wp_redirect( add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) ) );
 			exit;
