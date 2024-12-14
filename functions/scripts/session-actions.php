@@ -141,13 +141,14 @@ add_action(
 					var date = $(this).val();
 					var mainDate = $(this).data('date');
 					var mainTime = $(this).data('time');
-				
+					console.log($('#old-appointment').val());
 					// Send AJAX request.
 					$.ajax({
 						type: 'POST',
 						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
 						data: {
 							action    : 'appointment_change_date',
+							oldAppointment : $('#old-appointment').val(),
 							date      : date,
 							nonce     : nonce,
 						},
@@ -166,7 +167,6 @@ add_action(
 					var oldAppointment = $(this).data('id');
 					var date = $(this).data('date');
 					var time = $(this).data('time');
-					console.log(oldAppointment);
 					$("#old-appointment").val(oldAppointment);
 					$("#change-to-date").attr('data-date', date);
 					$("#change-to-date").attr('data-time', time);
