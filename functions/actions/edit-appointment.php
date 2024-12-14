@@ -102,6 +102,13 @@ add_action(
  */
 function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free = true ) {
 	$_doctor_url = snks_encrypted_doctor_url( $booking->user_id );
+	$error_url   = add_query_arg(
+		array(
+			'edit-booking' => $booking->ID,
+			'error'        => 'unknown',
+		),
+		$_doctor_url
+	);
 	$prev_date   = gmdate( 'Y-m-d', strtotime( $booking->date_time ) );
 	$updated     = snks_update_timetable(
 		$booking->ID,
@@ -109,13 +116,6 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 			'client_id' => 0,
 			'order_id'  => 0,
 		)
-	);
-	$error_url   = add_query_arg(
-		array(
-			'edit-booking' => $booking->ID,
-			'error'        => 'unknown',
-		),
-		$_doctor_url
 	);
 	// If previous appointment is reset.
 	if ( $updated ) {
@@ -130,45 +130,52 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				$status = 'closed';
 			}
 		}
-		snks_update_timetable(
+		$old_updated = snks_update_timetable(
 			$booking->ID,
 			array(
 				'session_status' => $status,
 			)
 		);
-		$updated = snks_update_timetable(
-			$new_timetable->ID,
-			array(
-				'session_status' => 'open',
-				'client_id'      => $booking->client_id,
-				'order_id'       => $main_order->get_id(),
-			)
-		);
-		if ( $updated ) {
-			update_post_meta( $main_order->get_id(), 'booking-edited', '1' );
-			update_post_meta( $main_order->get_id(), 'booking_id', $new_timetable->ID );
-			$line_items = $main_order->get_items();
-			// Loop through each line item.
-			foreach ( $line_items as $item_id => $item ) {
-				wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
+		if ( $old_updated ) {
+			if ( 'waiting' === $status ) {
+				snks_waiting_others( $booking );
+			} else {
+				snks_close_others( $booking );
 			}
-			if ( $free ) {
-				if ( snks_is_doctor() ) {
-					return true;
+			$updated = snks_update_timetable(
+				$new_timetable->ID,
+				array(
+					'session_status' => 'open',
+					'client_id'      => $booking->client_id,
+					'order_id'       => $main_order->get_id(),
+				)
+			);
+			if ( $updated ) {
+				update_post_meta( $main_order->get_id(), 'booking-edited', '1' );
+				update_post_meta( $main_order->get_id(), 'booking_id', $new_timetable->ID );
+				$line_items = $main_order->get_items();
+				// Loop through each line item.
+				foreach ( $line_items as $item_id => $item ) {
+					wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
 				}
-				wp_safe_redirect(
-					add_query_arg(
-						array(
-							'edit' => 'success',
-						),
-						site_url( '/my-bookings/' )
-					)
-				);
+				if ( $free ) {
+					if ( snks_is_doctor() ) {
+						return true;
+					}
+					wp_safe_redirect(
+						add_query_arg(
+							array(
+								'edit' => 'success',
+							),
+							site_url( '/my-bookings/' )
+						)
+					);
+					exit;
+				}
+			} elseif ( snks_is_patient() ) {
+				wp_safe_redirect( $error_url );
 				exit;
 			}
-		} elseif ( snks_is_patient() ) {
-			wp_safe_redirect( $error_url );
-			exit;
 		}
 	}
 
