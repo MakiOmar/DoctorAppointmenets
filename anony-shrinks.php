@@ -273,7 +273,7 @@ add_action(
  * Create one if they don't.
  */
 add_action(
-	'init',
+	'template_redirect',
 	function () {
 		if ( ! isset( $_COOKIE['booking_trans_key'] ) && ! wp_doing_ajax() ) {
 			setcookie( 'booking_trans_key', substr( md5( time() . wp_rand() ), 0, 8 ), time() + 60 * 60, '/' );
