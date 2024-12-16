@@ -553,7 +553,7 @@ function snks_generate_appointments_dates( $week_days ) {
 	// Get today's date.
 	$start_date = new DateTime();
 
-	for ( $i = 0; $i < 30; $i++ ) {
+	for ( $i = 0; $i <= 90; $i++ ) {
 		// Get the current date.
 		$current_date = clone $start_date;
 		$current_date->modify( "+$i days" );

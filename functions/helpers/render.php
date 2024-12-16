@@ -348,6 +348,9 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html       = '';
 	$settings   = snks_doctor_settings( $user_id );
 	$days_count = ! empty( $settings['form_days_count'] ) ? absint( $settings['form_days_count'] ) : 30;
+	if ( $days_count > 90 ) {
+		$days_count = 90;
+	}
 	$__for             = '+' . $days_count . ' day';
 	$bookable_days_obj = get_bookable_dates( $user_id, $period, $__for, $_attendance_type );
 
