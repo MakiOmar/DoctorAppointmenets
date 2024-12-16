@@ -148,6 +148,7 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					'session_status' => 'open',
 					'client_id'      => $booking->client_id,
 					'order_id'       => $main_order->get_id(),
+					'settings'       => $booking->settings,
 				)
 			);
 			if ( $updated ) {
