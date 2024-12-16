@@ -698,7 +698,7 @@ function snks_booking_details( $form_data, $is_booking = true ) {
  * @param mixed $session_settings Doctor's session specific settings.
  * @return string
  */
-function snks_edit_button( $booking_id, $doctor_id, $session_settings = false ) {
+function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $button_text = 'تغيير موعد الجلسة' ) {
 	if ( $session_settings && ! empty( $session_settings ) ) {
 		$doctor_settings = json_decode( $session_settings, true );
 	} else {
@@ -719,8 +719,7 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false ) 
 			data-free_change_before="%2$s" 
 			data-paid_change_before="%3$s" 
 			data-paid_change_fees="%4$s" 
-			data-no_change_period="%5$s" 
-			title="تحرير">تغيير موعد الجلسة</a>',
+			data-no_change_period="%5$s">' . $button_text . '</a>',
 			add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) ),
 			$free_change_before,
 			$paid_change_before,
@@ -1292,31 +1291,34 @@ function snks_doctor_actions( $session ) {
 function snks_render_sessions_listing( $tense ) {
 
 	$sessions = snks_get_patient_sessions( $tense );
-	$edit     = '';
-	$start    = '';
 	$output   = '';
 	if ( $sessions && is_array( $sessions ) ) {
 		foreach ( $sessions as $session ) {
+			$edit            = '';
+			$start           = '';
 			$doctor_settings = json_decode( $session->settings, true );
 			if ( ! $doctor_settings || empty( $doctor_settings ) ) {
 				$doctor_settings = snks_doctor_settings( $session->user_id );
 			}
 			$room = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
+			if ( 'postponed' === $session->session_status && ! snks_is_doctor() ) {
+				$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تغيير موعد الجلسة مجاناً' ) . '</td></tr>';
+			}
+			if ( isset( $doctor_settings['allow_appointment_change'] ) && 'on' === $doctor_settings['allow_appointment_change'] ) {
+				$order_id      = $session->order_id;
+				$edited_before = get_post_meta( $order_id, 'booking-edited', true );
+				$class         = 'remaining';
+				$diff_seconds  = snks_diff_seconds( $session );
+				// Compare the input date and time with the modified current date and time.
+				if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
+					$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings ) . '</td></tr>';
+				}
+			}
+
 			if ( snks_is_past_date( $session->date_time ) ) {
 				$class = 'start';
-
 			} else {
 				$class = 'remaining';
-				if ( 'on' === $doctor_settings['allow_appointment_change'] ) {
-					$order_id      = $session->order_id;
-					$edited_before = get_post_meta( $order_id, 'booking-edited', true );
-					$class         = 'remaining';
-					$diff_seconds  = snks_diff_seconds( $session );
-					// Compare the input date and time with the modified current date and time.
-					if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
-						$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings ) . '</td></tr>';
-					}
-				}
 			}
 			$session_details = array(
 				'booking_day'  => gmdate( 'Y-m-d', strtotime( $session->date_time ) ),
