@@ -1024,9 +1024,9 @@ function snks_doctor_rules( $user_id ) {
 		$html .= '<p>لا يمكن تغيير موعد الجلسة بعد الحجز.</p>';
 	} else {
 		$html .= '<h1>شروط تغيير مواعيد الجلسات</h1>';
-		$html .= '<p>قبل موعدها بـ {free_change_before} مجانا</p>';
-		$html .= '<p>قبل موعدها بـ {paid_change_period} {paid_change_fees}% من قيمتها</p>';
-		$html .= '<p>ولا يمكن تغييرها قبل موعدها بـ {no_change_period}</p>';
+		$html .= '<p>';
+		$html .= 'يمكنك تغيير موعد الجلسة مجاناً في حالة تغييرها قبل موعدها بـ {free_change_before} وبعد ذلك يتم فرض رسوم على تغيير موعدها بقيمة {paid_change_period} {paid_change_fees}% من ثمن الجلسة ولا يمكنك للعميل تغيير موعد الجلسة قبل موعدها بـ {no_change_period}';
+		$html .= '</p>';
 	}
 	$html .= '</div>';
 	return snks_replace_time_units_to_arabic(
