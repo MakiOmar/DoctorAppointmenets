@@ -49,13 +49,11 @@ function snks_calculated_price( $user_id, $country, $period ) {
 function get_price_by_period_and_country( $period, $country_code, $data_array ) {
 	if ( is_array( $data_array ) && is_array( $data_array[ $period ]['countries'] ) ) {
 		foreach ( $data_array[ $period ]['countries'] as $item ) {
-			snks_error_log( array( $item['country_code'], $country_code ) );
 			if ( $item['country_code'] === $country_code ) {
 				return $item['price'];
-			} else {
-				return $data_array[ $period ]['others'];
 			}
 		}
+		return $data_array[ $period ]['others'];
 	} elseif ( is_numeric( $data_array[ $period ]['others'] ) ) {
 		return $data_array[ $period ]['others'];
 	}
