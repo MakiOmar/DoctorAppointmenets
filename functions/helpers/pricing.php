@@ -52,7 +52,7 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
 			if ( $item['country_code'] === $country_code ) {
 				return $item['price'];
 			} else {
-				$data_array[ $period ]['others'];
+				return $data_array[ $period ]['others'];
 			}
 		}
 	} elseif ( is_numeric( $data_array[ $period ]['others'] ) ) {
