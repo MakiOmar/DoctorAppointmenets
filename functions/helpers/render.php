@@ -132,7 +132,6 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
 		echo '<div class="anony-padding-10 anony-flex anony-space-between anony-full-width anony-grid-row">';
 		foreach ( $avialable_periods as $period ) {
 			$discount_percent = snks_get_period_discount( $user_id, $period );
-			snks_error_log($country);
 			$price            = get_price_by_period_and_country( $period, $country, $pricings );
 			if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
 				$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
