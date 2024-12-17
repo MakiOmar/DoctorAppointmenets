@@ -158,10 +158,12 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 
 	return $results;
 }
+
 /**
  * Get timetable by date
  *
  * @param string $date Date to query.
+ * @param string|false $period Period to filter, optional.
  * @return mixed
  */
 function snks_get_timetable_by_date( $date, $period = false ) {
@@ -175,11 +177,11 @@ function snks_get_timetable_by_date( $date, $period = false ) {
 	$results = false;
 	//phpcs:disable
 	if ( false === $results ) {
-		// Start building the base SQL query.
+		// Start building the base SQL query with NOT IN for session_status.
 		$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
 		        WHERE DATE(date_time) = %s 
 		        AND user_id = %d 
-		        AND session_status = %s";
+		        AND session_status NOT IN ( 'cancelled', 'completed', 'open' )";
 
 		// Add the period condition if provided.
 		if ( $period ) {
@@ -189,7 +191,7 @@ function snks_get_timetable_by_date( $date, $period = false ) {
 		// Prepare the SQL query based on whether $period is set.
 		$query = $wpdb->prepare(
 			$sql,
-			$period ? array( $date, $current_user_id, 'waiting', $period ) : array( $date, $current_user_id, 'waiting' )
+			$period ? array( $date, $current_user_id, $period ) : array( $date, $current_user_id )
 		);
 
 		// Execute the query.
@@ -201,6 +203,7 @@ function snks_get_timetable_by_date( $date, $period = false ) {
 	//phpcs:enable
 	return $results;
 }
+
 
 
 
