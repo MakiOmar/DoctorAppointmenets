@@ -306,7 +306,7 @@ function snks_get_country_code( $set_cookie = true ) {
 	if ( is_wp_error( $response ) ) {
 		return; // Early return if there's an error in the response.
 	}
-
+	$country_code = 'Unknown';
 	// Retrieve the response body.
 	$body = wp_remote_retrieve_body( $response );
 	// Check if the body is not empty and contains serialized data.
@@ -324,7 +324,8 @@ function snks_get_country_code( $set_cookie = true ) {
 			return $country_code;
 		}
 	}
-	return 'Unknown';
+	snks_error_log( $country_code );
+	return $country_code;
 }
 
 /**
