@@ -885,6 +885,19 @@ add_action(
 		}
 	}
 );
+add_action(
+	'jet-form-builder/custom-action/update_patient_profile',
+	function ( $request ) {
+		$current_user_id = get_current_user_id();
+		$current_user_info = get_userdata( $current_user_id );
+		$current_hashed_password = $current_user_info->user_pass;
+		if ( empty( $request['password'] ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال كلمة مرورك الحالية لاستكمال تحديث البيانات' );
+		} elseif ( ! wp_check_password( $request['password'], $current_hashed_password, $current_user_id ) ) {
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'كلمة المرور الحالية غير صحيحة' );
+		}
+	}
+);
 
 add_action(
 	'jet-form-builder/custom-action/update_doctor_phone',
