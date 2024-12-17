@@ -1413,13 +1413,6 @@ add_action(
 				display: flex;
 				align-items: center;
 			}
-			.clinic-rules p::before{
-				content: '-';
-				position: relative;
-				font-size: 20px;
-				top: 2px;
-				margin: 0 3px;
-			}
 			.jet-form-builder-message {
 				/*position: fixed;
 				top: calc(50% - 45px);
