@@ -1640,8 +1640,9 @@ add_action(
 			.offline-clinic-hours{
 				flex-grow: 1;
 			}
-			.offline-clinic-hours .elementor-3023{
-				width:100%
+			.offline-clinic-hours .elementor-3023, .next-clinic-details{
+				width:100%;
+				flex-grow: 1;
 			}
 			.snks_tab {
 			flex: 1;
