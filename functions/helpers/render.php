@@ -546,7 +546,7 @@ function snks_render_doctor_clinics( $user_id = false ) {
 			$html .= snks_render_clinic( $clinic );
 		}
 	} else {
-		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
+		$html = '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 	}
 	return $html;
 }
@@ -577,15 +577,10 @@ function snks_render_offline_consulting_hours( $availables, $user_id = false ) {
 		}
 		$html .= '<li class="offline-clinic-hours">';
 		$html .= '<h3 style="color:#024059;text-align:center">' . $clinic_details['clinic_title'] . '</h3>';
-		$html .= '<p style="color:#024059;text-align:center">';
-		if ( ! empty( $clinic_details['clinic_address'] ) && ! empty( $clinic_details['clinic_phone'] ) ) {
-			$html .= '( ' . $clinic_details['clinic_address'] . '-' . $clinic_details['clinic_phone'] . ' )';
-		} elseif ( ! empty( $clinic_details['clinic_address'] ) ) {
-			$html .= '( ' . $clinic_details['clinic_address'] . ' )';
-		} elseif ( ! empty( $clinic_details['clinic_phone'] ) ) {
-			$html .= '( ' . $clinic_details['clinic_phone'] . ' )';
-		}
-		$html .= '</p>';
+		$html .= '<a onclick="event.preventDefault();" style="color:#024059;text-align:center">';
+		$html .= '( العنوان ورقم التليفون )';
+		$html .= '</a>';
+		$html .= snks_render_doctor_clinics( $user_id );
 		$html .= '<ul class="anony-grid-row">';
 		$html .= snks_render_consulting_hours_items( $group );
 		$html .= '</ul>';
