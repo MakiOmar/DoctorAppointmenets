@@ -50,6 +50,7 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
 	if ( is_array( $data_array ) && is_array( $data_array[ $period ]['countries'] ) ) {
 		foreach ( $data_array[ $period ]['countries'] as $item ) {
 			if ( $item['country_code'] === $country_code ) {
+				snks_print_r( array( $item['country_code'], $country_code ) );
 				return $item['price'];
 			} else {
 				return $data_array[ $period ]['others'];
