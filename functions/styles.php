@@ -1634,6 +1634,9 @@ add_action(
 				width: 100%;
 				width: 100%
 			}
+			.next-clinic-details{
+				display: none;
+			}
 			.offline-clinic-hours{
 				flex-grow: 1;
 			}

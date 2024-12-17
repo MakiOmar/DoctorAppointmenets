@@ -141,8 +141,19 @@ add_action(
 					pageTransition.style.display = 'block';
 				}
 			});
-
+			function showNextClinic(e){
+				
+				
+			}
 			jQuery(document).ready(function($) {
+				$(document).on(
+					'click',
+					'.showNextClinic',
+					function(e){
+						e.preventDefault();
+						$(this).next('.next-clinic-details').toggle();
+					}
+				);
 				$(document).on(
 					'click',
 					'.jet-form-builder-message',
