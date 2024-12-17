@@ -575,12 +575,13 @@ function snks_render_offline_consulting_hours( $availables, $user_id = false ) {
 		if ( ! $clinic_details ) {
 			continue;
 		}
+		//snks_error_log($clinic_details);
 		$html .= '<li class="offline-clinic-hours">';
 		$html .= '<h3 style="color:#024059;text-align:center">' . $clinic_details['clinic_title'] . '</h3>';
 		$html .= '<a onclick="event.preventDefault();" style="color:#024059;text-align:center">';
 		$html .= '( العنوان ورقم التليفون )';
 		$html .= '</a>';
-		$html .= snks_render_doctor_clinics( $user_id );
+		$html .= snks_render_clinic( $clinic_details );
 		$html .= '<ul class="anony-grid-row">';
 		$html .= snks_render_consulting_hours_items( $group );
 		$html .= '</ul>';
