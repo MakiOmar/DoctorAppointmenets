@@ -386,19 +386,30 @@ function snks_url_get_doctors_id() {
 }
 
 /**
- * Get the time difference between current time and sessions time.
+ * Calculate the time difference in seconds between the current time and a session's time.
  *
- * @param object $session Session object.
- * @return integer
+ * @param object $session Session object containing a `date_time` property.
+ * @return int Time difference in seconds. Positive for future sessions, negative for past sessions.
  */
 function snks_diff_seconds( $session ) {
-	// Create a DateTime object for the input date and time.
-	$booking_dt_obj = new DateTime( $session->date_time, wp_timezone() );
-	// Create a DateTime object for the current date and time.
-	$now = current_datetime();
-	// Calculate the time interval between the input and current date and time.
-	$interval = $now->diff( $booking_dt_obj );
-	return $interval->s + $interval->i * 60 + $interval->h * 3600 + $interval->days * 86400;
+	// Ensure the session object has a valid date_time property.
+	if ( ! isset( $session->date_time ) || empty( $session->date_time ) ) {
+		return 0; // Return 0 if date_time is missing or empty.
+	}
+
+	// Fetch the WordPress timezone.
+	$timezone = wp_timezone();
+
+	try {
+		// Create a DateTime object for the session time in the WordPress timezone.
+		$booking_dt_obj = new DateTime( $session->date_time, $timezone );
+		// Get the current date and time in the WordPress timezone.
+		$now = current_datetime();
+		// Calculate the difference in seconds.
+		return $booking_dt_obj->getTimestamp() - $now->getTimestamp();
+	} catch ( Exception $e ) {
+		return 0; // Return 0 in case of an error.
+	}
 }
 
 /**
