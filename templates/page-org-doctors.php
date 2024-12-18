@@ -69,7 +69,7 @@ if ( $org ) {
 			</div>
 			<h1 class="main_color_text" style="background-color: #fff;text-align:center;font-size:25px;position: relative;top: -8px;padding: 10px 0 12px 0;"><?php printf( 'حجز جلسات إشراف %s', esc_html( $_term->name ) ); ?></h1>
 			<?php
-			$children_objects = anony_query_related_children( absint( $wp->query_vars['term_id'] ), 24 );
+			$children_objects = anony_query_related_children( absint( $wp->query_vars['_term_id'] ), 24 );
 			if ( ! empty( $children_objects ) ) {
 				$users  = array_column( $children_objects, 'child_object_id' );
 				$orders = array();
@@ -116,7 +116,7 @@ if ( $org ) {
 								</a>
 							</div>
 		
-							<div class="profile-details">
+							<div class="org-profile-details">
 								<h1 class="kacstqurnkacstqurn snks-white-text" style="font-size:18px;text-align:center"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
 							</div>
 							<div class="snks-listing-periods anony-full-width">
