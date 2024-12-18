@@ -282,18 +282,11 @@ add_action(
 					var noChangePeriod = $(this).data('no_change_period');
 					var sessionUrl     = $(this).data('href');
 
-					// Get the edit-booking-popup element.
-					var popupElement = $('#edit-booking-popup');
-
-					// Replace the placeholders in the popup with the corresponding data values.
-					popupElement.html(function(index, html) {
-						return html
-							.replace('http://session_edit_url', sessionUrl)
-							.replace('{free_change_before}', freeChangeBefore)
-							.replace('{paid_change_period}', paidChangeBefore)
-							.replace('{paid_change_fees}', paidChangeFees)
-							.replace('{no_change_period}', noChangePeriod);
-					});
+					$('#popup_no_change_period').text(noChangePeriod);
+					$('#popup_paid_change_period').text(paidChangeBefore);
+					$('#popup_paid_change_fees').text(paidChangeFees);
+					$('#popup_free_change_before').text(freeChangeBefore);
+					$('a', $('#popup_change_url')).attr( 'href', sessionUrl);
 				});
 			});
 		</script>
