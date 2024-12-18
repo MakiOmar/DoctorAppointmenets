@@ -44,7 +44,7 @@ function snks_get_timetable( $user_id = false, $booking_day = '', $start_time = 
 	}
 
 	// Attempt to retrieve cached result.
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 	if ( false === $results ) {
 		// Build the base query.
 		$query  = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE start_time = %s AND booking_day = %s";
@@ -88,7 +88,7 @@ function snks_get_user_timetables( $user_id ) {
 	// Generate a unique cache key.
 	$cache_key = 'snks_user_timetables_' . $user_id;
 
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
 
@@ -139,7 +139,7 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 	// Generate a unique cache key.
 	$cache_key = 'snks_timetable_by_' . $column . '_' . $value;
 
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
 		//phpcs:disable
@@ -218,7 +218,7 @@ function snks_get_closest_timetable( $user_id ) {
 	// Generate a unique cache key.
 	$cache_key = 'snks_get_closest_timetable_' . $user_id;
 
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
 		//phpcs:disable
@@ -251,7 +251,7 @@ function snks_has_timetable( $user_id ) {
 	// Generate a unique cache key.
 	$cache_key = 'snks_has_timetable_' . $user_id;
 
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
 		//phpcs:disable
@@ -414,7 +414,7 @@ function snks_get_open_timetable_by( $column, $value ) {
 	// Generate a unique cache key.
 	$cache_key = 'snks_open_timetable_by_' . $column;
 
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
 		//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -654,7 +654,7 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
 	);
 	//phpcs:enable
 	// Attempt to fetch results from cache.
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
 		// Build the base query.
@@ -713,7 +713,7 @@ function get_bookable_date_available_times( $date ) {
 	global $wpdb;
 	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) + ( 2 * 3600 ) );
 	$cache_key    = 'bookable-date-times-' . $date;
-	$results      = wp_cache_get( $cache_key );
+	$results      = false( $cache_key );
 
 	if ( ! $results ) {
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -748,7 +748,7 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	global $wpdb;
 	$user_id         = snks_get_settings_doctor_id();
 	$cache_key       = 'doctor-' . $tense . '-sessions-' . $user_id;
-	$results         = wp_cache_get( $cache_key );
+	$results         = false( $cache_key );
 	$operator        = 'past' === $tense ? '<' : '>';
 	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 
@@ -795,7 +795,7 @@ function snks_get_patient_bookings( $user_id = false ) {
 		$user_id = get_current_user_id();
 	}
 	$cache_key = 'patient-bookings-' . $user_id;
-	$results   = wp_cache_get( $cache_key );
+	$results   = false( $cache_key );
 	if ( ! $results ) {
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$results = $wpdb->get_results(

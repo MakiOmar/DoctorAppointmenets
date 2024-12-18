@@ -24,7 +24,7 @@ function anony_get_related_objects( $cache_key, $select, $where, $object_id, $re
 
 	$table_suffix = ( $separate_table ) ? $rel_id : 'default';
 
-	$results = wp_cache_get( $cache_key );
+	$results = false;
 
 	if ( false === $results ) {
         //phpcs:disable
