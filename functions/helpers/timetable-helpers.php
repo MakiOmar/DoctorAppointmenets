@@ -561,7 +561,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 
 	// Cache key for the query.
 	$cache_key = 'bookable-dates-' . $current_datetime . '-' . $period;
-	$results   = wp_cache_get( $cache_key );
+	$results   = false;
 
 	// Set the default order.
 	$_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
@@ -827,14 +827,14 @@ function snks_get_patient_sessions( $tense ) {
 	$user_id = get_current_user_id();
 
 	$cache_key       = 'patient-' . $tense . '-sessions-' . $user_id;
-	$results         = wp_cache_get( $cache_key );
-	$operator        = 'past' === $tense ? '<' : '>';
+	$results         = false;
+	$operator        = 'past' === $tense ? '<=' : '>';
 	$compare_against = gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) );
 	if ( ! $results ) {
 		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
 		//phpcs:disable
 		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator}= '{$compare_against}'";
+			$query .= " AND date_time {$operator} '{$compare_against}'";
 		}
 		$query  .= ' ORDER BY date_time ASC';
 		$results = $wpdb->get_results(
