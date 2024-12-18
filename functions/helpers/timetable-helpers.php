@@ -713,7 +713,7 @@ function get_bookable_date_available_times( $date ) {
 	global $wpdb;
 	$current_date = date_i18n( 'Y-m-d H:i:s', current_time( 'timestamp' ) + ( 2 * 3600 ) );
 	$cache_key    = 'bookable-date-times-' . $date;
-	$results      = false( $cache_key );
+	$results      = false;
 
 	if ( ! $results ) {
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -748,7 +748,7 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	global $wpdb;
 	$user_id         = snks_get_settings_doctor_id();
 	$cache_key       = 'doctor-' . $tense . '-sessions-' . $user_id;
-	$results         = false( $cache_key );
+	$results         = false;
 	$operator        = 'past' === $tense ? '<' : '>';
 	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 
@@ -795,7 +795,7 @@ function snks_get_patient_bookings( $user_id = false ) {
 		$user_id = get_current_user_id();
 	}
 	$cache_key = 'patient-bookings-' . $user_id;
-	$results   = false( $cache_key );
+	$results   = false;
 	if ( ! $results ) {
 		//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$results = $wpdb->get_results(

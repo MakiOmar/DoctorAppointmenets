@@ -112,7 +112,7 @@ function snks_get_session_actions( $session_id, $client_id ) {
 
 	// Generate a unique cache key.
 	$cache_key = 'snks_session_actions_' . $session_id . '_' . $client_id;
-	$results   = false( $cache_key );
+	$results   = false;
 	if ( false === $results ) {
 		$results = $wpdb->get_row(
 			$wpdb->prepare(
@@ -141,7 +141,7 @@ function snks_get_session_actions_by( $session_id ) {
 
 	// Generate a unique cache key.
 	$cache_key = 'snks_session_actions_' . $session_id;
-	$results   = false( $cache_key );
+	$results   = false;
 	if ( false === $results ) {
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
