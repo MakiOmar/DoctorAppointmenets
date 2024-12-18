@@ -249,7 +249,7 @@ add_action(
 		if ( isset( $_POST ) && isset( $_POST['create_appointment_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['create_appointment_nonce'] ) ), 'create_appointment' ) && isset( $_POST['create-appointment'] ) ) {
 			$_request      = wp_unslash( $_POST );
 			$needs_payment = false;
-			$_doctor_url   = snks_encrypted_doctor_url( $_request['user_id'] );
+			$_doctor_url   = snks_encrypted_doctor_url( $_request['user-id'] );
 			$booking       = snks_get_timetable_by( 'ID', absint( $_request['edit-booking-id'] ) );
 			if ( ! $booking || get_current_user_id() !== absint( $booking->client_id ) ) {
 				wp_safe_redirect( add_query_arg( 'error', 'unknown', $_doctor_url ) );
