@@ -1742,7 +1742,7 @@ add_action(
 					animation-timing-function: ease-out;
 				}
 			}
-			.profile-details{
+			.profile-details, .org-profile-details{
 				margin-top: 20px;
 				display: flex;
 				flex-direction: column;
