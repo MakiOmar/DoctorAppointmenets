@@ -699,6 +699,7 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 	} else {
 		$doctor_settings = snks_doctor_settings( $doctor_id );
 	}
+	snks_error_log( [$booking_id,$doctor_settings] );
 	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
@@ -1004,7 +1005,8 @@ function snks_timetable_settings( $user_id ) {
 		'before_change_number'      => $doctor_settings['before_change_number'],
 		'before_change_unit'        => $doctor_settings['before_change_unit'],
 		'appointment_change_fee'    => $doctor_settings['appointment_change_fee'],
-		'block_if_before_number'    => $doctor_settings['appointment_change_fee'],
+		'block_if_before_number'    => $doctor_settings['block_if_before_number'],
+		'block_if_before_unit'      => $doctor_settings['block_if_before_unit'],
 	);
 }
 /**
