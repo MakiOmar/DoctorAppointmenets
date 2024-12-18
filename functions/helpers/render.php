@@ -699,7 +699,6 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 	} else {
 		$doctor_settings = snks_doctor_settings( $doctor_id );
 	}
-	snks_error_log( [$booking_id,$doctor_settings] );
 	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
@@ -1007,6 +1006,7 @@ function snks_timetable_settings( $user_id ) {
 		'appointment_change_fee'    => $doctor_settings['appointment_change_fee'],
 		'block_if_before_number'    => $doctor_settings['block_if_before_number'],
 		'block_if_before_unit'      => $doctor_settings['block_if_before_unit'],
+		'allow_appointment_change'  => $doctor_settings['allow_appointment_change'],
 	);
 }
 /**
@@ -1308,7 +1308,13 @@ function snks_render_sessions_listing( $tense ) {
 				$diff_seconds  = snks_diff_seconds( $session );
 				// Compare the input date and time with the modified current date and time.
 				if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
-					$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings ) . '</td></tr>';
+					$free_edit_before_seconds = snks_get_free_edit_before_seconds( $doctor_settings );
+					if ( $diff_seconds > $free_edit_before_seconds ) {
+						$edit_button = snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تغيير موعد الجلسة مجاناً' );
+					} else {
+						$edit_button = snks_edit_button( $session->ID, $session->user_id, $session->settings );
+					}
+					$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . $edit_button . '</td></tr>';
 				}
 			}
 
