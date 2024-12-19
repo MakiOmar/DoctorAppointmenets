@@ -162,7 +162,7 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
 /**
  * Get timetable by date
  *
- * @param string $date Date to query.
+ * @param string       $date Date to query.
  * @param string|false $period Period to filter, optional.
  * @return mixed
  */
@@ -216,9 +216,9 @@ function snks_get_timetable_by_date( $date, $period = false ) {
 function snks_get_closest_timetable( $user_id ) {
 	global $wpdb;
 	// Generate a unique cache key.
-	$cache_key = 'snks_get_closest_timetable_' . $user_id;
-
-	$results = false;
+	$cache_key    = 'snks_get_closest_timetable_' . $user_id;
+	$current_time = current_time( 'mysql' );
+	$results      = false;
 
 	if ( false === $results ) {
 		//phpcs:disable
@@ -227,12 +227,15 @@ function snks_get_closest_timetable( $user_id ) {
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
 				WHERE user_id = %s
-				AND date_time > NOW()
-				ORDER BY ABS(TIMESTAMPDIFF(SECOND, date_time, NOW()))
+				AND date_time > %s
+				ORDER BY ABS(TIMESTAMPDIFF(SECOND, date_time, %s))
 				LIMIT 1",
-				$user_id
+				$user_id,
+				$current_time,
+				$current_time
 			)
 		);
+
 		//phpcs:enable
 		wp_cache_set( $cache_key, $results, '', 3600 );
 	}
