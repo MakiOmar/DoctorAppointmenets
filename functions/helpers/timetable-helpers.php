@@ -278,26 +278,64 @@ function snks_has_timetable( $user_id ) {
 /**
  * Will close other timetables if one of the same datetime is booked
  *
- * @param object $booked_timetable Booked timetable.
+ * @param object $booked_session Booked timetable.
  * @return void
  */
-function snks_close_others( $booked_timetable ) {
+function snks_close_others( $booked_session ) {
+	//phpcs:disable
 	global $wpdb;
+
+	// Table name.
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
-	// phpcs:disable.
-	$wpdb->query(
-		$wpdb->prepare(
-			"UPDATE $table_name
-			SET session_status = 'closed'
-			WHERE date_time = %s
-			AND order_id = 0",
-			$booked_timetable->date_time		)
-	);
-	// phpcs:enable.
+
+	// Extract session details.
+	$date_time = $booked_session->date_time; // Full datetime (e.g., '2024-12-23 02:15:00').
+	$base_hour = $booked_session->base_hour; // Base hour (e.g., '2:15:00').
+	$starts    = $booked_session->starts;       // Start time (e.g., '2:15:00').
+	$ends      = $booked_session->ends;           // End time (e.g., '2:45:00').
+	$period    = $booked_session->period;       // Period (e.g., 30, 45, 60).
+
+	// Close sessions based on the booking rules.
+	if ( $period == 30 ) {
+		// Handle 30-minute booking.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE $table_name
+                 SET session_status = 'closed'
+                 WHERE DATE(date_time) = DATE(%s)
+				 AND order_id = 0
+                   AND base_hour = %s
+                   AND NOT (
+                     (starts = %s OR ends = %s) AND period = 30
+                   )
+                   AND session_status = 'waiting'",
+				$date_time,
+				$base_hour,
+				$ends,
+				$starts
+			)
+		);
+	} else {
+		// Handle 45 or 60-minute booking.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE $table_name
+                 SET session_status = 'closed'
+                 WHERE DATE(date_time) = DATE(%s)
+				 AND order_id = 0
+                 AND base_hour = %s
+                 AND session_status = 'waiting'",
+				$date_time,
+				$base_hour
+			)
+		);
+	}
+	//phpcs:enable
 }
 
+
 /**
- * Will set other timetables to be waiting
+ * Will set other timetables to be waiting for the same date and base_hour.
  *
  * @param object $booked_timetable Booked timetable.
  * @return void
@@ -305,17 +343,22 @@ function snks_close_others( $booked_timetable ) {
 function snks_waiting_others( $booked_timetable ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
-	// phpcs:disable.
-	$wpdb->query(
-		$wpdb->prepare(
-			"UPDATE $table_name
-			SET session_status = 'waiting'
-			WHERE date_time = %s
-			AND order_id = 0",
-			$booked_timetable->date_time		)
-	);
-	// phpcs:enable.
+
+    // phpcs:disable.
+    $wpdb->query(
+        $wpdb->prepare(
+            "UPDATE $table_name
+             SET session_status = 'waiting'
+             WHERE DATE(date_time) = DATE(%s)
+               AND base_hour = %s
+               AND order_id = 0",
+            $booked_timetable->date_time,
+            $booked_timetable->base_hour
+        )
+    );
+    // phpcs:enable.
 }
+
 /**
  * If Timetable exists
  *
