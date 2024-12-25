@@ -1075,15 +1075,6 @@ function snks_render_bookings( $_timetables, $tens ) {
 	if ( empty( $_timetables ) ) {
 		return '<p class="anony-center-text">ليس لديك حجوزات حتى الآن!</p>';
 	}
-	// Sort timetables by day.
-	/*usort(
-		$_timetables,
-		function ( $a, $b ) use ( $days_sorted ) {
-			$pos_a = array_search( $a->day, $days_sorted, true );
-			$pos_b = array_search( $b->day, $days_sorted, true );
-			return $pos_a - $pos_b;
-		}
-	);*/
 	$day_groups   = snks_group_objects_by( $_timetables, 'date' );
 	$current_date = current_time( 'Y-m-d' );
 	// Start building HTML.
