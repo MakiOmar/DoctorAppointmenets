@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || die();
 // Hook into the template loader.
-add_filter( 'woocommerce_locate_template', 'snks_thank_you_template', 10, 3 );
+add_filter( 'woocommerce_locate_template', 'snks_thank_you_template', 100, 3 );
 
 /**
  * Replace WooCommerce Thank You page template.
@@ -21,7 +21,7 @@ function snks_thank_you_template( $template, $template_name ) {
 	// Define the plugin template directory.
 	$plugin_path = SNKS_DIR . 'woocommerce/';
 	// Check if we're looking for the thankyou template.
-	if ( 'checkout/thankyou.php' === $template_name ) {
+	if ( 'checkout/thankyou.php' === $template_name || 'checkout/form-pay.php' === $template_name ) {
 		// If our custom template exists, load it instead of the default.
 		if ( file_exists( $plugin_path . $template_name ) ) {
 			$template = $plugin_path . $template_name;
