@@ -959,4 +959,35 @@ add_shortcode(
 	}
 );
 
+/**
+ * Generates a logout link shortcode for logged-in users.
+ *
+ * This shortcode displays a "Log Out" link if the user is logged in.
+ * When clicked, it logs the user out and redirects to the homepage.
+ *
+ * Usage: [custom_logout]
+ *
+ * @return string The HTML for the logout link, or an empty string if the user is not logged in.
+ */
 
+add_shortcode(
+	'custom_logout',
+	function () {
+		// Check if the user is logged in.
+		if ( is_user_logged_in() ) {
+			// Get the logout URL with the nonce.
+			if ( snks_is_doctor() ) {
+				$to = '/doctor-login';
+			} else {
+				$to = '/login';
+			}
+			$logout_url = wp_logout_url( site_url( $to ) );
+
+			// Return the logout link.
+			return '<p style="text-align:center;position:relative;z-index:9999"><a href="' . esc_url( $logout_url ) . '">خروج</a></p>';
+		} else {
+			// If the user is not logged in, return an empty string.
+			return '';
+		}
+	}
+);
