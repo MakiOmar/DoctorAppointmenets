@@ -153,7 +153,9 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 			);
 			if ( $updated ) {
 				snks_close_others( $new_timetable );
-				update_post_meta( $main_order->get_id(), 'booking-edited', '1' );
+				if ( snks_is_patient() ) {
+					update_post_meta( $main_order->get_id(), 'booking-edited', '1' );
+				}
 				update_post_meta( $main_order->get_id(), 'booking_id', $new_timetable->ID );
 				$line_items = $main_order->get_items();
 				// Loop through each line item.
