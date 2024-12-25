@@ -162,43 +162,40 @@ add_action(
  */
 function snks_check_uuid_open_session() {
 	check_ajax_referer( 'snks_nonce', 'security' );
-	//phpcs:disable
+
 	// Ensure UUID is provided.
-	if ( empty( $_POST['uuid'] ) ) {
+	if ( empty( $_POST['baseHour'] || $_POST['baseHourId'] ) ) {
 		wp_send_json_error( array( 'message' => __( 'Invalid request parameters.', 'textdomain' ) ) );
 	}
-
+	$_req = $_POST;
 	// Sanitize input.
-	$uuid = sanitize_text_field( $_POST['uuid'] );
+	$base_hour    = sanitize_text_field( $_req['baseHour'] );
+	$base_hour    = $base_hour . ':00';
+	$base_hour_id = sanitize_text_field( $_req['baseHourId'] );
+	$base_hour_id = explode( '_', $base_hour_id );
+	$day          = ucfirst( $base_hour_id[0] );
 
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
-
-	// _query to find any open session with the same UUID (clinic).
-	$_query = $wpdb->prepare(
-		"SELECT COUNT(*) FROM $table_name WHERE clinic = %s AND session_status = %s AND attendance_type = %s",
-		$uuid,
-		'open',
-		'offline'
+	//phpcs:disable
+	// If no open session exists, delete records where session_status is "waiting".
+	$delete_query = $wpdb->prepare(
+		"DELETE FROM $table_name WHERE day = %s AND base_hour = %s AND session_status = %s",
+		$day,
+		$base_hour,
+		'waiting'
 	);
 
-	// Check if an open session exists.
-	$count = $wpdb->get_var( $_query );
+	$result = $wpdb->query( $delete_query );
 
-	if ( $count > 0 ) {
-		wp_send_json_error( array( 'message' => 'هناك مواعيد بالفعل محجوزة لهذه العيادة. يمكنك فقط تعطيلها لمنع استقبال حجوزات في المستقل' ) );
-	} else {
-		// If no open session exists, delete records where session_status is "waiting".
-		$delete_query = $wpdb->prepare(
-			"DELETE FROM $table_name WHERE clinic = %s AND session_status = %s",
-			$uuid,
-			'waiting'
-		);
-
-		$wpdb->query( $delete_query );
-
-		wp_send_json_success();
+	// Check the result and respond accordingly.
+	if ( $result === false ) {
+		wp_send_json_error( array( 'message' => __( 'Failed to delete records.', 'textdomain' ) ) );
+	} elseif ( $result === 0 ) {
+		wp_send_json_error( array( 'message' => __( 'No records were found to delete.', 'textdomain' ) ) );
 	}
-	//phpcs:enable
+
+	wp_send_json_success();
 }
+
 add_action( 'wp_ajax_check_open_session', 'snks_check_uuid_open_session' );

@@ -120,15 +120,17 @@ add_action(
 									let rowRemove = $(this).closest('.jet-form-builder-repeater__row-remove');
 									let removeButton = rowRemove.find('.jet-form-builder-repeater__remove');
 									if ( $(this).closest('form[data-form-id="2199"]').length > 0 ) {
-										let uuid = rowRemove.prev().find('select[data-field-name="appointment_clinic"]').val();
-										if ( uuid !== '' ) {
+										let baseHour = rowRemove.prev().find('select[data-field-name="appointment_hour"]').val();
+										let baseHourId = rowRemove.prev().find('select[data-field-name="appointment_hour"]').attr('id');
+										if ( baseHour !== '' && baseHourId !== '' ) {
 											$.ajax({
 												url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
 												type: 'POST',
 												data: {
 													action: 'check_open_session',
 													security: "<?php echo esc_attr( wp_create_nonce( 'snks_nonce' ) ); ?>",
-													uuid: uuid
+													baseHour: baseHour,
+													baseHourId: baseHourId
 												},
 												success: function(response) {
 													if (!response.success) {
