@@ -300,6 +300,7 @@ add_action(
 					let formId = response[0].dataset.formId;
 					exclude = [ 1974, 2067, 2069 ];
 					if ( exclude.includes( parseInt( formId ) ) ) {
+						setCookie('edited_form', '1956');
 						return;
 					}
 
