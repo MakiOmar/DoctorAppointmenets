@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || die();
 add_action(
 	'template_redirect',
 	function () {
-		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+		if ( is_admin() || ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' === $_SERVER['REQUEST_METHOD'] ) {
 			return;
 		}
 		global $wp;
