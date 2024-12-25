@@ -1742,6 +1742,9 @@ add_action(
 					animation-timing-function: ease-out;
 				}
 			}
+			button.slick-arrow:hover{
+				background-color: transparent!important;
+			}
 			.profile-details, .org-profile-details{
 				margin-top: 20px;
 				display: flex;
