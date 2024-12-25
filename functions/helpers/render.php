@@ -688,9 +688,10 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 /**
  * Render edit button
  *
- * @param int   $booking_id Booking ID.
- * @param int   $doctor_id Doctor's ID.
- * @param mixed $session_settings Doctor's session specific settings.
+ * @param int    $booking_id Booking ID.
+ * @param int    $doctor_id Doctor's ID.
+ * @param mixed  $session_settings Doctor's session specific settings.
+ * @param string $button_text Button text.
  * @return string
  */
 function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $button_text = 'تغيير موعد الجلسة' ) {
@@ -703,7 +704,18 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
 	$no_change_period   = $doctor_settings['block_if_before_number'] . ' ' . $doctor_settings['block_if_before_unit'];
-
+	if ( 'تغيير موعد الجلسة مجاناً' === $button_text || 'تم الغاء الموعد، احجز موعد آخر مجانا' === $button_text ) {
+		return snks_replace_time_units_to_arabic(
+			sprintf(
+				'<a 
+				class="anony-padding-5 snks-button" 
+				style="display:inline-flex" 
+				href="%1$s" 
+				>' . $button_text . '</a>',
+				add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) )
+			)
+		);
+	}
 	return snks_replace_time_units_to_arabic(
 		sprintf(
 			'<a 
@@ -814,7 +826,7 @@ function snks_booking_item_template( $record ) {
 		<div class="anony-flex flex-h-center">
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
 			<?php if ( ! snks_is_clinic_manager() && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
-			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
+			<!--<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>-->
 			<?php } ?>
 		</div>
 		<!--/doctoraction-->
@@ -1064,14 +1076,14 @@ function snks_render_bookings( $_timetables, $tens ) {
 		return '<p class="anony-center-text">ليس لديك حجوزات حتى الآن!</p>';
 	}
 	// Sort timetables by day.
-	usort(
+	/*usort(
 		$_timetables,
 		function ( $a, $b ) use ( $days_sorted ) {
 			$pos_a = array_search( $a->day, $days_sorted, true );
 			$pos_b = array_search( $b->day, $days_sorted, true );
 			return $pos_a - $pos_b;
 		}
-	);
+	);*/
 	$day_groups   = snks_group_objects_by( $_timetables, 'date' );
 	$current_date = current_time( 'Y-m-d' );
 	// Start building HTML.
@@ -1299,7 +1311,7 @@ function snks_render_sessions_listing( $tense ) {
 			}
 			$room = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
 			if ( 'postponed' === $session->session_status && ! snks_is_doctor() ) {
-				$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تغيير موعد الجلسة مجاناً' ) . '</td></tr>';
+				$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تم الغاء الموعد، احجز موعد آخر مجانا' ) . '</td></tr>';
 			}
 			if ( isset( $doctor_settings['allow_appointment_change'] ) && 'on' === $doctor_settings['allow_appointment_change'] ) {
 				$order_id      = $session->order_id;
@@ -1336,7 +1348,7 @@ function snks_render_sessions_listing( $tense ) {
 				'booking_id'   => $session->ID,
 				'_period'      => $session->period,
 			);
-			if ( 'online' === $session->attendance_type ) {
+			if ( 'online' === $session->attendance_type && 'postponed' !== $session->session_status ) {
 				$start = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;border-top-color:#fff;" colspan="2">
 					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . $room . '" data-url="' . $room . '">ابدأ الجلسة</a>
 				</td></tr>';
