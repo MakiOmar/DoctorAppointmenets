@@ -95,13 +95,14 @@ add_action(
 					var delayBy = false;
 					let swalTitle = 'نجحت العملية';
 					let swalText = 'تم تأجيل المواعيد بنجاح';
+					var act     = $(this).data('action');
 					if ( $("#delay-by").length > 0 ) {
 						delayBy = $("#delay-by").val();
 						swalText = "تم إرسال إشعار  بتأخير  الموعد";
 					}
 					let data = {
 							action    : 'appointment_action',
-							ele       : $(this).data('action'),
+							ele       : act,
 							IDs       : values,
 							delayBy   : delayBy,
 							nonce     : nonce,
@@ -122,7 +123,7 @@ add_action(
 								icon: "success",
 								confirmButtonText: 'غلق',
 							}).then((result) => {
-								if ( '.snks-postpon' === $(this).data('action') ) {
+								if ( '.snks-postpon' === act ) {
 									location.reload();
 								}
 							});
