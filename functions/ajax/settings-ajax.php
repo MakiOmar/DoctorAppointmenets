@@ -186,14 +186,7 @@ function snks_check_uuid_open_session() {
 		'waiting'
 	);
 
-	$result = $wpdb->query( $delete_query );
-
-	// Check the result and respond accordingly.
-	if ( $result === false ) {
-		wp_send_json_error( array( 'message' => __( 'Failed to delete records.', 'textdomain' ) ) );
-	} elseif ( $result === 0 ) {
-		wp_send_json_error( array( 'message' => __( 'No records were found to delete.', 'textdomain' ) ) );
-	}
+	$wpdb->query( $delete_query );
 
 	wp_send_json_success();
 }
