@@ -76,10 +76,10 @@ add_action(
 								action    : 'expected_hours_output',
 							},
 							success: function(response) {
+								var repeaterName = parentWrapper.closest('.accordion-content').data('field-name');
 								$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
-									var repeaterName = parentWrapper.closest('.accordion-content').data('field-name');
 									if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour && disabledOptions[repeaterName] && ! disabledOptions[repeaterName].includes( $(this).val() ) ) {
-										$(this).prop('disabled', false)
+										$(this).prop('disabled', false);
 									}
 								} );
 								parentWrapper.find('.expected-hourse').html( response.resp );
@@ -105,8 +105,6 @@ add_action(
 											if( ! hourDisable.includes($(this).val()) ) {
 												hourDisable.push( $(this).val() );
 											}
-										} else {
-											$(this).prop('disabled', false);
 										}
 									} );
 
@@ -119,6 +117,19 @@ add_action(
 							}
 						});
 				}
+
+				/*setTimeout(
+					function() {
+						$('select[data-field-name=appointment_hour] option', container).each( function() {
+							if ( ! $(this).is(':selected') && disabledOptions[container.data('field-name')] && disabledOptions[container.data('field-name')].includes( $(this).val() ) ) {
+								$(this).prop('disabled', true)
+							} else {
+								$(this).prop('disabled', false)
+							}
+						} );
+					},
+					200
+				);*/
 				flatpickr.localize(flatpickr.l10ns.ar);
 				function flatPickrInput( disabledDays = false ) {
 					$('input[data-field-name=off_days]').each(
@@ -312,11 +323,10 @@ add_action(
 					'change',
 					'select[data-field-name=appointment_hour]',
 					function() {
-						var selectedValue = $(this).val();
-						var container     = $(this).closest('.accordion-content');
-						$('select[data-field-name=appointment_hour] option', container).prop('disabled', false);		
-						$('select[data-field-name=appointment_hour] option[value="' + selectedValue + '"]', container).not(this).prop('disabled', true);
-						$(this).find('option[value="' + selectedValue + '"]').prop('disabled', false);
+						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
+						setTimeout(function(){
+							$('select[data-field-name=appointment_choosen_period]', parentWrapper).trigger('change');
+						},200)
 					}
 				);
 				$(document).on(
@@ -325,8 +335,10 @@ add_action(
 					function(){
 						disableEmptyDays();
 						var container = $(this).closest('.accordion-content');
+
 						setTimeout(
 							function() {
+								$('select[data-field-name=appointment_choosen_period]', container).trigger('change');
 								$('select[data-field-name=appointment_hour] option', container).each( function() {
 									if ( ! $(this).is(':selected') && disabledOptions[container.data('field-name')] && disabledOptions[container.data('field-name')].includes( $(this).val() ) ) {
 										$(this).prop('disabled', true)
@@ -334,7 +346,6 @@ add_action(
 										$(this).prop('disabled', false)
 									}
 								} );
-								$('select[data-field-name=appointment_choosen_period]', container).trigger('change');
 							},
 							200
 						)
@@ -410,16 +421,7 @@ add_action(
 						)
 					}
 				);
-				$(document).on(
-					'change',
-					'select[data-field-name=appointment_hour]',
-					function () {
-						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
-						setTimeout(function(){
-							$('select[data-field-name=appointment_choosen_period]', parentWrapper).trigger('change');
-						},200)
-					}
-				);
+
 				$( '.jet-form-builder-repeater__actions', $('div[name=change_fees_list]') ).each(
 					function() {
 						var $items = $(this).prev();
@@ -455,14 +457,6 @@ add_action(
 						}
 						const elementToClickId = checkedFieldId + '-settings-trigger';
 						$('#' + elementToClickId).click();
-						/*$('.jet-form-builder-repeater__actions').each(
-							function() {
-								var $items = $(this).prev();
-								if ( $items.html() === '' ) {
-									$(this).find('.jet-form-builder-repeater__new').click();
-								}
-							}
-						);*/
 					}
 				});
 				<?php } ?>
