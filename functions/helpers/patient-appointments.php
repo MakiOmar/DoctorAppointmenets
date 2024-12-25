@@ -26,22 +26,6 @@ function snks_latest_completed_order_date( $doctors_id, $customer_id = false ) {
 }
 
 /**
- * Get customers latest order date
- *
- * @param mixed $doctors_id Doctors ID.
- * @param mixed $customer_id Users ID.
- * @return mixed
- */
-function snks_latest_completed_order_session_price( $doctors_id, $customer_id = false ) {
-	$latest_order = snks_latest_completed_order( $doctors_id, $customer_id );
-	// Check if completed orders exist for the customer.
-	if ( $latest_order ) {
-		return get_post_meta( $latest_order->get_id(), '_main_price', true );
-	}
-	return false;
-}
-
-/**
  * Get customers latest order
  *
  * @param mixed $doctors_id Doctors ID.
