@@ -703,7 +703,6 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
-	$no_change_period   = $doctor_settings['block_if_before_number'] . ' ' . $doctor_settings['block_if_before_unit'];
 	if ( 'تغيير موعد الجلسة مجاناً' === $button_text || 'تم الغاء الموعد، احجز موعد آخر مجانا' === $button_text ) {
 		return snks_replace_time_units_to_arabic(
 			sprintf(
@@ -726,12 +725,11 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 			data-free_change_before="%2$s" 
 			data-paid_change_before="%3$s" 
 			data-paid_change_fees="%4$s" 
-			data-no_change_period="%5$s">' . $button_text . '</a>',
+			data-no_change_period="%3$s">' . $button_text . '</a>',
 			add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) ),
 			$free_change_before,
 			$paid_change_before,
 			$paid_change_fees,
-			$no_change_period,
 		)
 	);
 }
@@ -1032,7 +1030,7 @@ function snks_doctor_rules( $user_id ) {
 	$free_change_before = $doctor_settings['free_change_before_number'] . ' ' . $doctor_settings['free_change_before_unit'];
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
-	$no_change_period   = $doctor_settings['block_if_before_number'] . ' ' . $doctor_settings['block_if_before_unit'];
+	$no_change_period   = $paid_change_before;
 	$html               = '<div class="clinic-rules anony-flex anony-flex-column flex-h-center anony-default-border-radius anony-default-padding snks-light-bg">';
 	if ( 'on' !== $doctor_settings['allow_appointment_change'] ) {
 		$html .= '<p>لا يمكن تغيير موعد الجلسة بعد الحجز.</p>';
