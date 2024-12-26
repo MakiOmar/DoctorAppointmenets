@@ -22,22 +22,28 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 <form id="order_review" method="post">
 
 	<?php
-	$order_type = $order->get_meta_data( 'order_type' );
+	$order_type = $order->get_meta( 'order_type' );
 	if ( 'edit-fees' === $order_type ) {
-		$_id = $order->get_meta_data( 'connected_order' );
+		$_id       = $order->get_meta( 'connected_order' );
+		$form_data = array(
+			'_period'            => get_post_meta( $_id, '_period', true ),
+			'_user_id'           => get_post_meta( $_id, '_user_id', true ),
+			'_main_price'        => $order->get_total(),
+			'_total_price'       => $order->get_total(),
+			'_jalsah_commistion' => 0,
+			'_paymob'            => 0,
+		);
 	} else {
-		$_id = $order->get_id();
+		$_id       = $order->get_id();
+		$form_data = array(
+			'_period'            => get_post_meta( $_id, '_period', true ),
+			'_user_id'           => get_post_meta( $_id, '_user_id', true ),
+			'_main_price'        => get_post_meta( $_id, '_main_price', true ),
+			'_total_price'       => get_post_meta( $_id, '_total_price', true ),
+			'_jalsah_commistion' => get_post_meta( $_id, '_jalsah_commistion', true ),
+			'_paymob'            => get_post_meta( $_id, '_paymob', true ),
+		);
 	}
-
-	$form_data = array(
-		'_period'            => get_post_meta( $_id, '_period', true ),
-		'_user_id'           => get_post_meta( $_id, '_user_id', true ),
-		'_main_price'        => get_post_meta( $_id, '_main_price', true ),
-		'_total_price'       => get_post_meta( $_id, '_total_price', true ),
-		'_jalsah_commistion' => get_post_meta( $_id, '_jalsah_commistion', true ),
-		'_paymob'            => get_post_meta( $_id, '_paymob', true ),
-	);
-
 
 	//phpcs:disable
 	echo consulting_session_pricing_table_shortcode( $form_data );

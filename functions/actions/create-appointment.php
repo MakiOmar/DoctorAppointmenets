@@ -122,7 +122,7 @@ add_action(
 				if ( 'order_type' === $meta->key && 'edit-fees' === $meta->value ) {
 					$html .= 'Connected Order: <a href="/wp-admin/post.php?post=' . $order->get_meta( 'connected_order' ) . '&action=edit">' . $order->get_meta( 'connected_order' ) . '</a><br>';
 					$html .= 'Doctor ID: <a href="/wp-admin/user-edit.php?user_id=' . $order->get_meta( '_user_id' ) . '">' . $order->get_meta( '_user_id' ) . '</a><br>';
-					$html .= 'Old Booking ID: ' . $order->get_meta( 'old_booking_id' ) . '<br>';
+					$html .= 'Old Booking ID: ' . $order->get_meta( 'booking_id' ) . '<br>';
 					$html .= 'New Booking ID: ' . $order->get_meta( 'new_booking_id' ) . '<br>';
 					$html .= 'Order Type: ' . $order->get_meta( 'order_type' ) . '<br>';
 				}
