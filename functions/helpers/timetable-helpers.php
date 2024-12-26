@@ -872,28 +872,25 @@ function snks_get_patient_sessions( $tense ) {
 	global $wpdb;
 	$user_id = get_current_user_id();
 
-	$cache_key       = 'patient-' . $tense . '-sessions-' . $user_id;
-	$results         = false;
 	$operator        = 'past' === $tense ? '<=' : '>';
 	$compare_against = gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) );
-	if ( ! $results ) {
-		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d";
-		//phpcs:disable
-		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator} '{$compare_against}'";
-		}
-		$query  .= ' ORDER BY date_time ASC';
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				$query,
-				$user_id
-			)
-		);
-		//phpcs:enable
-		wp_cache_set( $cache_key, $results );
+	$query           = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = %d AND session_status IN ('postponed', 'open')";
+	//phpcs:disable
+	if ( 'all' !== $tense ) {
+		$query .= " AND date_time {$operator} '{$compare_against}'";
 	}
+	$query  .= ' ORDER BY date_time ASC';
+
+	$results = $wpdb->get_results(
+		$wpdb->prepare(
+			$query,
+			$user_id
+		)
+	);
+	//phpcs:enable
 	return $results;
 }
+
 
 /**
  * Get formated date/time difference e.g. 2 days and 3 hours and 40 minutes and 25 seconds.
