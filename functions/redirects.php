@@ -55,6 +55,16 @@ add_action(
 				wp_redirect( add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) ) );
 				exit;
 			}
+		}		
+
+		if ( ( is_page('my-bookings') ) ) {
+			if ( ! is_user_logged_in() ) {
+				wp_redirect( site_url() );
+			}
+			if ( ! snks_is_patient() ) {
+				wp_redirect( site_url('account-setting') );
+				exit;
+			}
 		}
 		if ( ( is_page('cart') ) ) {
 			
