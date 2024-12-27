@@ -488,6 +488,10 @@ function snks_get_open_timetable_by( $column, $value ) {
  * @return mixed
  */
 function snks_insert_timetable( $data ) {
+	$exists = snks_timetable_exists( snks_get_settings_doctor_id(), $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
+	if ( ! empty( $exists ) ) {
+		return false;
+	}
 	global $wpdb;
 	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
 	// Insert the data into the table.

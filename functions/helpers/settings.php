@@ -189,28 +189,25 @@ function snks_insert_preview_timetables( $user_id = false ) {
 	if ( $preview_timetables && ! empty( $preview_timetables ) ) {
 		foreach ( $preview_timetables as $preview_timetable ) {
 			foreach ( $preview_timetable as $data ) {
-				$dtime  = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-				$exists = snks_timetable_exists( snks_get_settings_doctor_id(), $dtime, $data['day'], $data['starts'], $data['ends'] );
+				$dtime = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
 
-				if ( empty( $exists ) ) {
-					$inserting = array(
-						'user_id'         => $data['user_id'],
-						'session_status'  => $data['session_status'],
-						'day'             => $data['day'],
-						'base_hour'       => $data['base_hour'],
-						'period'          => $data['period'],
-						'date_time'       => $dtime,
-						'starts'          => $data['starts'],
-						'ends'            => $data['ends'],
-						'clinic'          => $data['clinic'],
-						'attendance_type' => $data['attendance_type'],
-					);
+				$inserting = array(
+					'user_id'         => $data['user_id'],
+					'session_status'  => $data['session_status'],
+					'day'             => $data['day'],
+					'base_hour'       => $data['base_hour'],
+					'period'          => $data['period'],
+					'date_time'       => $dtime,
+					'starts'          => $data['starts'],
+					'ends'            => $data['ends'],
+					'clinic'          => $data['clinic'],
+					'attendance_type' => $data['attendance_type'],
+				);
 
-					$inserted = snks_insert_timetable( $inserting );
+				$inserted = snks_insert_timetable( $inserting );
 
-					if ( ! $inserted ) {
-						$errors[] = $data;
-					}
+				if ( ! $inserted ) {
+					$errors[] = $data;
 				}
 			}
 		}
