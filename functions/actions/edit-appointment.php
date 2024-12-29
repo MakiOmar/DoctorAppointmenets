@@ -303,7 +303,8 @@ add_action(
 
 			// Compare the input date and time with the modified current date and time.
 			if ( ! snks_is_doctor() && 'postponed' !== $booking->session_status && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds < snks_get_free_edit_before_seconds( $doctor_settings ) ) {
-				$fees_order = snks_create_edit_fees_order( $main_order, $will_pay, $booking, $_request['selected-hour'] );
+				$needs_payment = true;
+				$fees_order    = snks_create_edit_fees_order( $main_order, $will_pay, $booking, $_request['selected-hour'] );
 				if ( is_a( $fees_order, 'WC_Order' ) ) {
 					wp_safe_redirect( $fees_order->get_checkout_payment_url() );
 					exit;
@@ -317,4 +318,3 @@ add_action(
 		}
 	}
 );
-
