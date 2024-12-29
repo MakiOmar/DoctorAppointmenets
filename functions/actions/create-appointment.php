@@ -7,6 +7,24 @@
 
 defined( 'ABSPATH' ) || die();
 
+add_action(
+	'woocommerce_order_status_changed',
+	function ( $order_id, $old_status, $new_status ) {
+		// Check if the new status is 'completed' or 'processing'.
+		if ( in_array( $new_status, array( 'completed', 'processing' ), true ) ) {
+			snks_woocommerce_payment_complete_action( $order_id );
+		}
+	},
+	10,
+	3
+);
+
+add_filter(
+	'woocommerce_payment_complete_order_status',
+	function () {
+		return array( 'completed', 'processing' );
+	}
+);
 
 add_action( 'woocommerce_payment_complete', 'snks_woocommerce_payment_complete_action' );
 
@@ -68,13 +86,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					snks_error_log( $order_id . ' :Failed to update timetable.' );
 					throw new Exception( 'Failed to update timetable.' );
 				}
-			} else {
-				snks_error_log( $order_id . ' :Timetable session status is not waiting.' );
-				throw new Exception( 'Timetable session status is not waiting.' );
 			}
-		} else {
-			snks_error_log( $order_id . ' :No booking ID found.' );
-			throw new Exception( 'No booking ID found.' );
 		}
 	} catch ( Exception $e ) {
 		// Log the failure for retry.
