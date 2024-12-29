@@ -20,7 +20,10 @@ function snks_latest_completed_order_date( $doctors_id, $customer_id = false ) {
 	$latest_order = snks_latest_completed_order( $doctors_id, $customer_id );
 	// Check if completed orders exist for the customer.
 	if ( $latest_order ) {
-		return $latest_order->get_date_completed()->date( 'Y-m-d H:i:s' );
+		$date_paid = $latest_order->get_date_paid();
+		if ( $date_paid ) {
+			return $date_paid->date( 'Y-m-d H:i:s' );
+		}
 	}
 	return false;
 }
@@ -40,7 +43,7 @@ function snks_latest_completed_order( $doctors_id, $customer_id = false ) {
 	$orders = wc_get_orders(
 		array(
 			'customer'     => $customer_id,
-			'status'       => 'completed',
+			'status'       => array( 'wc-completed', 'wc-processing' ),
 			'limit'        => 1,
 			'orderby'      => 'date',
 			'order'        => 'DESC',
@@ -49,7 +52,6 @@ function snks_latest_completed_order( $doctors_id, $customer_id = false ) {
 			'meta_compare' => '=',
 		)
 	);//phpcs:ensable
-
 	// Check if completed orders exist for the customer.
 	if ( ! empty( $orders ) ) {
 		$latest_order = reset( $orders );
