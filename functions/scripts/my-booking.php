@@ -32,13 +32,15 @@ add_shortcode(
 		}
 		$doctor_id = $timetable->user_id;
 
+		$name = snks_is_doctor() ? snks_get_doctor_name( $timetable->user_id ) : get_user_meta( $timetable->client_id, 'billing_first_name', true ) . ' ' . get_user_meta( $timetable->client_id, 'billing_last_name', true );
+
 		//phpcs:enable
 		if ( ! snks_is_timetable_eligible( $room_id ) ) {
 			return;
 		}
 		add_action(
 			'wp_footer',
-			function () use ( $room_id, $doctor_id ) {
+			function () use ( $room_id, $doctor_id, $name ) {
 				if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
 					?>
 					<script>
@@ -112,7 +114,7 @@ add_shortcode(
 					meetAPI = new JitsiMeetExternalAPI("s.jalsah.app", options);
 
 					
-					meetAPI.executeCommand('displayName', 'YourDisplayNameHere');
+					meetAPI.executeCommand('displayName', '<?php echo esc_html( $name ); ?>');
 					<?php if ( ! snks_is_patient() && ! empty( $room_id ) ) { ?>
 					//videoConferenceJoined
 					meetAPI.addListener('videoConferenceJoined', function(room){
