@@ -141,9 +141,6 @@ function snks_form_data_transient_key() {
  * @return string
  */
 function snks_go_back() {
-	if ( ! is_user_logged_in() && ! is_page( 'register' ) ) {
-		return;
-	}
 	if ( ! snks_is_patient() ) {
 		$referer = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
 	} else {
@@ -154,6 +151,15 @@ function snks_go_back() {
 	$referer_safe = $referer;
 
 	ob_start();
+	if ( is_page( 'my-bookings' ) && snks_is_patient() ) {
+		?>
+		<style>
+			.anony-go-back{
+				display: none;
+			}
+		</style>
+		<?php
+	}
 	?>
 			<a class='anony-go-back' href="<?php echo esc_url( $referer_safe ); ?>">x</a>
 	<?php
