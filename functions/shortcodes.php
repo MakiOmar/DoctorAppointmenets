@@ -975,16 +975,7 @@ add_shortcode(
 	function () {
 		// Check if the user is logged in.
 		if ( is_user_logged_in() ) {
-			// Get the logout URL with the nonce.
-			if ( snks_is_doctor() ) {
-				$to = '/doctor-login';
-			} else {
-				$to = '/login';
-			}
-			$logout_url = wp_logout_url( site_url( $to ) );
-
-			// Return the logout link.
-			return '<p style="text-align:center;position:relative;z-index:9999"><a href="' . esc_url( $logout_url ) . '">خروج</a></p>';
+			return '<p style="text-align:center;position:relative;z-index:9999"><a id="snks-logout" href="#">خروج</a></p>';
 		} else {
 			// If the user is not logged in, return an empty string.
 			return '';

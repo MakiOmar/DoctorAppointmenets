@@ -570,3 +570,48 @@ add_action(
 		}
 	}
 );
+
+add_action(
+	'wp_footer',
+	function () {
+		?>
+	<script type="text/javascript">
+		jQuery(document).ready(function ($) {
+			$(document).on('click', '#snks-logout', function (e) {
+				e.preventDefault();
+				var redirect = $(this).data('href');
+				Swal.fire({
+					title: 'هل تريد تسجيل الخروج؟',
+					text: 'سيتم تسجيل خروجك الآن.',
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'نعم، سجل خروجي',
+					cancelButtonText: 'إلغاء'
+				}).then((result) => {
+					if (result.isConfirmed) {
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+							data: {
+								action: 'snks_logout',
+								nonce: '<?php echo esc_attr( wp_create_nonce( 'snks_logout_nonce' ) ); ?>'
+							},
+							success: function (response) {
+								if (response.success) {
+									window.location.href = response.data.redirect_url; // Reload the page after successful logout
+								} else {
+									alert('خطأ: ' + response.data);
+								}
+							},
+							error: function () {
+								alert('تعذر إتمام الطلب. حاول مرة أخرى لاحقًا.');
+							}
+						});
+					}
+				});
+			});
+		});
+	</script>
+		<?php
+	}
+);
