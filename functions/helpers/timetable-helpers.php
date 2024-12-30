@@ -800,6 +800,7 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	$cache_key       = 'doctor-' . $tense . '-sessions-' . $user_id;
 	$results         = false;
 	$operator        = 'past' === $tense ? '<' : '>';
+	$order           = 'past' === $tense ? 'DESC' : 'ASC';
 	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 
 	if ( ! $results ) {
@@ -811,12 +812,13 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 		if ( $ordered ) {
 			$query .= ' AND order_id != 0';
 		}
-		$query  .= ' ORDER BY date_time ASC';
+		$query  .= ' ORDER BY date_time %s';
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				$query,
 				$user_id,
-				$status
+				$status,
+				$order
 			)
 		);
 		wp_cache_set( $cache_key, $results );
