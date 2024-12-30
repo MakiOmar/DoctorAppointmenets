@@ -503,13 +503,17 @@ function snks_render_clinic( $clinic ) {
 		array(
 			'{clinic_title}',
 			'{clinic_phone}',
+			'clinic_phone',
 			'{clinic_address}',
 			'{google_map}',
+			'google_map',
 		),
 		array(
 			esc_html( $clinic['clinic_title'] ),
 			esc_html( $clinic['clinic_phone'] ),
+			esc_html( $clinic['clinic_phone'] ),
 			esc_html( $clinic['clinic_address'] ),
+			esc_html( $clinic['google_map'] ),
 			esc_html( $clinic['google_map'] ),
 		),
 		$html
@@ -1312,6 +1316,7 @@ function snks_render_sessions_listing( $tense ) {
 				$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 				$class         = 'remaining';
 				$diff_seconds  = snks_diff_seconds( $session );
+				var_dump(( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ));
 				// Compare the input date and time with the modified current date and time.
 				if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
 					$free_edit_before_seconds = snks_get_free_edit_before_seconds( $doctor_settings );

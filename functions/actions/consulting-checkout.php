@@ -312,9 +312,8 @@ add_action(
 	function ( $order_id ) {
 		$order = wc_get_order( $order_id );
 		if ( $order ) {
-			$status = $order->get_status();
-			if ( 'failed' !== $status ) {
-				$booking_day = get_post_meta( $order_id, 'booking_id', true );
+			if ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) {
+				$booking_day = $order->get_meta( 'booking_id', true );
 				snks_update_timetable(
 					absint( $booking_day ),
 					array(

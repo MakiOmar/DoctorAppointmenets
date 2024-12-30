@@ -16,7 +16,7 @@ add_action(
 		?>
 		<style>
 			<?php
-			if ( ! is_page( 'account-setting' ) && ! is_page( 'profile' ) && ! is_page( 'my-bookings' ) ) {
+			if ( ! is_page( 'account-setting' ) && ! is_page( 'my-profile' ) && ! is_page( 'my-bookings' ) ) {
 				?>
 				footer{
 					display: none;

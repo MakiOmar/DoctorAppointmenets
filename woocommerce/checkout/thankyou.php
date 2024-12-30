@@ -18,7 +18,7 @@
  */
 
 defined( 'ABSPATH' ) || die();
-
+do_action( 'woocommerce_thankyou', $order->get_id() );
 ?>
 <div class="woocommerce-order">
 
@@ -30,7 +30,6 @@ defined( 'ABSPATH' ) || die();
 		} else {
 			echo do_shortcode( '[elementor-template id="3761"]' );
 		}
-		do_action( 'woocommerce_thankyou', $order->get_id() );
 	endif;
 	?>
 

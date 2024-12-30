@@ -42,24 +42,14 @@ function snks_latest_completed_order( $doctors_id, $customer_id = false ) {
 	// Retrieve the orders for the customer.
 	$orders = wc_get_orders(
 		array(
-			'customer'   => $customer_id,
-			'status'     => array( 'wc-completed', 'wc-processing' ),
-			'limit'      => 1,
-			'orderby'    => 'date',
-			'order'      => 'DESC',
-			'meta_query' => array(
-				'relation' => 'AND',
-				array(
-					'key'     => 'doctor_id',
-					'value'   => $doctors_id,
-					'compare' => '=',
-				),
-				array(
-					'key'     => 'order_type',
-					'value'   => 'edit-fees',
-					'compare' => '!=',
-				),
-			),
+			'customer'     => $customer_id,
+			'status'       => array( 'wc-completed', 'wc-processing' ),
+			'limit'        => 1,
+			'orderby'      => 'date',
+			'order'        => 'DESC',
+			'meta_key'     => 'doctor_id',
+			'meta_value'   => $doctors_id,
+			'meta_compare' => '=',
 		)
 	);// phpcs:ensable
 	// Check if completed orders exist for the customer.

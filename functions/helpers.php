@@ -151,7 +151,7 @@ function snks_go_back() {
 	$referer_safe = $referer;
 
 	ob_start();
-	if ( is_page( 'my-bookings' ) && snks_is_patient() ) {
+	if ( ( is_page( 'my-bookings' ) && snks_is_patient() ) || is_page( 'register' ) ) {
 		?>
 		<style>
 			.anony-go-back{

@@ -38,7 +38,7 @@ add_action( 'woocommerce_payment_complete', 'snks_woocommerce_payment_complete_a
 function snks_woocommerce_payment_complete_action( $order_id ) {
 	$order       = wc_get_order( $order_id );
 	$customer_id = $order->get_customer_id();
-	$booking_id  = get_post_meta( $order_id, 'booking_id', true );
+	$booking_id  = $order->get_meta( 'booking_id', true );
 
 	try {
 		if ( ! empty( $booking_id ) ) {

@@ -20,6 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free = true ) {
 	$_doctor_url = snks_encrypted_doctor_url( $booking->user_id );
+	$booking_changed = false;
 	$error_url   = add_query_arg(
 		array(
 			'edit-booking' => $booking->ID,
@@ -80,6 +81,7 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				foreach ( $line_items as $item_id => $item ) {
 					wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
 				}
+				$booking_changed = true;
 				if ( $free ) {
 					if ( snks_is_doctor() ) {
 						return true;
@@ -94,14 +96,12 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					);
 					exit;
 				}
-			} elseif ( snks_is_patient() ) {
-				wp_safe_redirect( $error_url );
-				exit;
+				$booking_changed = true;
+				return true;
 			}
 		}
 	}
-
-	if ( snks_is_patient() ) {
+	if ( snks_is_patient() && ! $booking_changed ) {
 		wp_safe_redirect( $error_url );
 		exit;
 	}
@@ -237,21 +237,26 @@ add_action(
  * @return void
  */
 add_action(
-	'woocommerce_order_status_completed',
-	function ( $order_id, $order ) {
-		$connected_order = $order->get_meta( 'connected_order' );
-		if ( ! $connected_order ) {
-			return;
+	'woocommerce_thankyou',
+	function ( $order_id ) {
+		$order      = wc_get_order( $order_id );
+		$order_type = $order->get_meta( 'order_type' );
+		if ( 'edit-fees' === $order_type && ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) ) {
+			$connected_order = $order->get_meta( 'connected_order' );
+			if ( ! $connected_order ) {
+				return;
+			}
+			$old_booking_id = $order->get_meta( 'booking_id' );
+			$new_booking_id = $order->get_meta( 'new_booking_id' );
+			$booking        = snks_get_timetable_by( 'ID', absint( $old_booking_id ) );
+			$main_order     = wc_get_order( absint( $connected_order ) );
+			snks_apply_booking_edit( $booking, $main_order, $new_booking_id, false );
+			do_action( 'snks_patient_edit_booking' );
+			wp_safe_redirect( home_url( '/my-bookings' ) );
+			exit;
 		}
-		$old_booking_id = $order->get_meta( 'booking_id' );
-		$new_booking_id = $order->get_meta( 'new_booking_id' );
-		$booking        = snks_get_timetable_by( 'ID', absint( $old_booking_id ) );
-		$main_order     = wc_get_order( absint( $connected_order ) );
-		snks_apply_booking_edit( $booking, $main_order, $new_booking_id, false );
-		do_action( 'snks_patient_edit_booking' );
 	},
-	10,
-	2
+	5
 );
 
 /**
