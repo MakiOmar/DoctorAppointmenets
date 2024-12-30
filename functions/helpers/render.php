@@ -704,7 +704,12 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 	$paid_change_before = $doctor_settings['before_change_number'] . ' ' . $doctor_settings['before_change_unit'];
 	$paid_change_fees   = $doctor_settings['appointment_change_fee'];
 	if ( 'تغيير موعد الجلسة مجاناً' === $button_text || 'تم الغاء الموعد، احجز موعد آخر مجانا' === $button_text ) {
-		return snks_replace_time_units_to_arabic(
+		$html = '';
+		if ( 'تم الغاء الموعد، احجز موعد آخر مجانا' === $button_text ) {
+			$html       .= '<p style="color:#fff;background-color:red;padding:10px">تم تأجيل الموعد</p>';
+			$button_text = 'تغيير موعد الجلسة مجاناً';
+		}
+		$html .= snks_replace_time_units_to_arabic(
 			sprintf(
 				'<a 
 				class="anony-padding-5 snks-button" 
@@ -714,6 +719,7 @@ function snks_edit_button( $booking_id, $doctor_id, $session_settings = false, $
 				add_query_arg( 'edit-booking', $booking_id, snks_encrypted_doctor_url( $doctor_id ) )
 			)
 		);
+		return $html;
 	}
 	return snks_replace_time_units_to_arabic(
 		sprintf(
@@ -1301,8 +1307,7 @@ function snks_render_sessions_listing( $tense ) {
 			$room = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
 			if ( 'postponed' === $session->session_status && ! snks_is_doctor() ) {
 				$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تم الغاء الموعد، احجز موعد آخر مجانا' ) . '</td></tr>';
-			}
-			if ( isset( $doctor_settings['allow_appointment_change'] ) && 'on' === $doctor_settings['allow_appointment_change'] ) {
+			} elseif ( isset( $doctor_settings['allow_appointment_change'] ) && 'on' === $doctor_settings['allow_appointment_change'] ) {
 				$order_id      = $session->order_id;
 				$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 				$class         = 'remaining';
