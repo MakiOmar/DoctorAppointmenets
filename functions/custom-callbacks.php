@@ -42,7 +42,7 @@ function snks_get_doctor_name( $id ) {
 	if ( is_numeric( $id ) ) {
 		$user_data = get_userdata( $id );
 		if ( ! $user_data ) {
-			return;
+			return 'جلسة';
 		}
 		$doctor_name = $user_data->first_name . ' ' . $user_data->last_name;
 		return $doctor_name;
