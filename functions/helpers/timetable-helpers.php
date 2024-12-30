@@ -797,33 +797,27 @@ function get_bookable_date_available_times( $date ) {
 function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false ) {
 	global $wpdb;
 	$user_id         = snks_get_settings_doctor_id();
-	$cache_key       = 'doctor-' . $tense . '-sessions-' . $user_id;
-	$results         = false;
 	$operator        = 'past' === $tense ? '<' : '>';
 	$order           = 'past' === $tense ? 'DESC' : 'ASC';
 	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
 
-	if ( ! $results ) {
-		$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
-		//phpcs:disable
-		if ( 'all' !== $tense ) {
-			$query .= " AND date_time {$operator} {$compare_against}";
-		}
-		if ( $ordered ) {
-			$query .= ' AND order_id != 0';
-		}
-		$query  .= ' ORDER BY date_time %s';
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				$query,
-				$user_id,
-				$status,
-				$order
-			)
-		);
-		wp_cache_set( $cache_key, $results );
-		//phpcs:enable
+	$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
+	//phpcs:disable
+	if ( 'all' !== $tense ) {
+		$query .= $wpdb->prepare( " AND date_time {$operator} %s", $compare_against );
 	}
+	if ( $ordered ) {
+		$query .= ' AND order_id != 0';
+	}
+	$query  .= " ORDER BY date_time {$order}";
+	$results = $wpdb->get_results(
+		$wpdb->prepare(
+			$query,
+			$user_id,
+			$status
+		)
+	);
+	//phpcs:enable
 	$temp = array();
 	if ( $results && is_array( $results ) ) {
 		foreach ( $results as $result ) {
