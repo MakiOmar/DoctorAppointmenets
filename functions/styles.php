@@ -16,6 +16,15 @@ add_action(
 		?>
 		<style>
 			<?php
+			if ( ! is_page( 'account-setting' ) && ! is_page( 'profile' ) && ! is_page( 'my-bookings' ) ) {
+				?>
+				footer{
+					display: none;
+				}
+				<?php
+			}
+			?>
+			<?php
 			$light_color  = ! empty( $_COOKIE['light_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['light_color'] ) ) : '#dcf5ff';
 			$dark_color   = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
 			$darker_color = ! empty( $_COOKIE['darker_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['darker_color'] ) ) : '#012d3e';
