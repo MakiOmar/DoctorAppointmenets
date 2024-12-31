@@ -171,7 +171,7 @@ add_shortcode(
 				}.room-loader-wrapper{width:95vw;height:450px;max-width:450px;background-color:#024059;margin:auto;}</style>';
 		$html .= '<div id="meeting">';
 		if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
-			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">يرجى انتظار الطبيب، شكراً لك</h5></div>';
+			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">يرجى انتظار المعالج شكراً لك</h5></div>';
 		}
 		$html .= '</div><input type="hidden" id="room_id" value="' . $room_id . '"/>';
 		return $html;
