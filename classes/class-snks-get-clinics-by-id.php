@@ -58,7 +58,7 @@ class Snks_Get_Clinics_By_Id extends Base {
 		);
 		if ( ! empty( $clinics_meta ) ) {
 			foreach ( $clinics_meta as $index => $clinic ) {
-				if ( empty( $clinic['uuid'] ) || ( isset( $clinic['disabled'] ) && 'on' === $clinic['disabled'] ) ) {
+				if ( empty( $clinic['uuid'] ) /*|| ( isset( $clinic['disabled'] ) && 'on' === $clinic['disabled'] )*/ ) {
 					continue;
 				}
 				$result[] = array(
