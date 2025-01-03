@@ -436,7 +436,6 @@ function snks_get_periods_possibilities_options() {
  * @return array
  */
 function snks_get_available_attendance_types_options() {
-	$settings     = snks_doctor_settings();
 	$is_available = array(
 		array(
 			'value' => '',
@@ -455,15 +454,10 @@ function snks_get_available_attendance_types_options() {
 		'value' => 'both',
 		'label' => 'أونلاين/عيادة',
 	);
-	if ( 'online' === $settings['attendance_type'] ) {
-		$is_available[] = $online;
-	} elseif ( 'offline' === $settings['attendance_type'] ) {
-		$is_available[] = $offline;
-	} elseif ( 'both' === $settings['attendance_type'] ) {
-		$is_available[] = $online;
-		$is_available[] = $offline;
-		$is_available[] = $both;
-	}
+	$is_available[] = $online;
+	$is_available[] = $offline;
+	$is_available[] = $both;
+	
 	return $is_available;
 }
 /**
