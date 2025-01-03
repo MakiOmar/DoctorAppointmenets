@@ -460,6 +460,22 @@ function snks_get_available_attendance_types_options() {
 	
 	return $is_available;
 }
+
+/**
+ * Get doctor's inactive attendance types
+ *
+ * @return array
+ */
+function snks_get_inactive_attendance_types() {
+	$settings     = snks_doctor_settings();
+	if ( 'online' === $settings['attendance_type'] ) {
+		return array('offline', 'both');
+	} elseif ( 'offline' === $settings['attendance_type'] ) {
+		return array('online', 'both');
+	} elseif ( 'both' === $settings['attendance_type'] ) {
+		return array();
+	}
+}
 /**
  * Get clinics
  *
