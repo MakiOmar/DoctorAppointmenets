@@ -157,6 +157,30 @@ add_action(
 						}
 					});
 				}
+				function disableAttendanceOptions() {
+					// Get the value of the hidden input field
+					var disabledTypes = $('#disabled-attendance-types').val().split('-');
+					// Find the select element with the specified data-field-name attribute
+					$('select[data-field-name="appointment_attendance_type"]').each(function() {
+						var $select = $(this);
+
+						// Iterate over each option in the select element
+						$select.find('option').each(function() {
+							var $option = $(this);
+
+							// Check if the option's value is in the disabledTypes array
+							if (disabledTypes.includes($option.val())) {
+								// Disable the option if it's not selected
+								if (!$option.is(':selected')) {
+									$option.prop('disabled', true);
+								}
+							} else {
+								// Enable the option if it's not in the disabledTypes array
+								$option.prop('disabled', false);
+							}
+						});
+					});
+				}
 				repeaterCustomRemove();
 				setCookie('edited_form', '', 0);
 				// Add event listeners for any interaction with form fields
@@ -168,6 +192,7 @@ add_action(
 				listenToForms( forms );
 
 				$(window).on('jet-popup/show-event/after-show', function(){
+					disableAttendanceOptions();
 					var forms = document.querySelectorAll('.jet-form-builder');
 					listenToForms( forms );
 				});
@@ -190,6 +215,7 @@ add_action(
 					setTimeout(
 						function() {
 							repeaterCustomRemove();
+							disableAttendanceOptions();
 						},
 						200
 					);

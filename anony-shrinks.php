@@ -554,7 +554,13 @@ add_action(
 add_action(
 	'wp_footer',
 	function () {
-		return;
+		if ( is_page( 'account-setting' ) ) {
+			$disabled = snks_get_inactive_attendance_types();
+			$value    = ! empty( $disabled ) ? implode( '-', $disabled ) : '';
+			?>
+			<input type="hidden" id="disabled-attendance-types" value="<?php echo esc_attr( $value ); ?>">
+			<?php
+		}
 	}
 );
 
