@@ -476,6 +476,27 @@ function snks_get_inactive_attendance_types() {
 		return array();
 	}
 }
+
+
+/**
+ * Returns disabled clinics
+ *
+ *
+ * @return array
+ */
+function snks_disabled_clinics() {
+	$clinics_meta = get_user_meta( snks_get_settings_doctor_id(), 'clinics_list', true );
+	$result       = array();
+	if ( ! empty( $clinics_meta ) ) {
+		foreach ( $clinics_meta as $index => $clinic ) {
+			if ( empty( $clinic['uuid'] ) || ( isset( $clinic['disabled'] ) && 'on' === $clinic['disabled'] ) ) {
+				$result[] = $clinic['uuid'];
+			}
+			
+		}
+	}
+	return $result;
+}
 /**
  * Get clinics
  *

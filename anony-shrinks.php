@@ -555,10 +555,13 @@ add_action(
 	'wp_footer',
 	function () {
 		if ( is_page( 'account-setting' ) ) {
-			$disabled = snks_get_inactive_attendance_types();
-			$value    = ! empty( $disabled ) ? implode( '-', $disabled ) : '';
+			$disabled         = snks_get_inactive_attendance_types();
+			$disabled_clinics = snks_disabled_clinics();
+			$value            = ! empty( $disabled ) ? implode( '-', $disabled ) : '';
+			$_clinics_value   = ! empty( $disabled_clinics ) ? implode( '|', $disabled_clinics ) : '';
 			?>
 			<input type="hidden" id="disabled-attendance-types" value="<?php echo esc_attr( $value ); ?>">
+			<input type="hidden" id="disabled-clinics" value="<?php echo esc_attr( $_clinics_value ); ?>">
 			<?php
 		}
 	}

@@ -157,29 +157,27 @@ add_action(
 						}
 					});
 				}
-				function disableAttendanceOptions() {
-					// Get the value of the hidden input field
-					var disabledTypes = $('#disabled-attendance-types').val().split('-');
-					// Find the select element with the specified data-field-name attribute
-					$('select[data-field-name="appointment_attendance_type"]').each(function() {
+				function disableOptions( valuesInput, target, separator ) {
+					var disabled = $(valuesInput).val().split(separator);
+					$('select[data-field-name="' + target + '"]').each(function() {
 						var $select = $(this);
-
-						// Iterate over each option in the select element
 						$select.find('option').each(function() {
 							var $option = $(this);
-
-							// Check if the option's value is in the disabledTypes array
-							if (disabledTypes.includes($option.val())) {
-								// Disable the option if it's not selected
+							if (disabled.includes($option.val())) {
 								if (!$option.is(':selected')) {
 									$option.prop('disabled', true);
 								}
 							} else {
-								// Enable the option if it's not in the disabledTypes array
 								$option.prop('disabled', false);
 							}
 						});
 					});
+				}
+				function disableAttendanceOptions() {
+					disableOptions( '#disabled-attendance-types', 'appointment_attendance_type', '-' )
+				}
+				function disableClinics() {
+					disableOptions( '#disabled-clinics', 'appointment_clinic', '|' )
 				}
 				repeaterCustomRemove();
 				setCookie('edited_form', '', 0);
@@ -193,6 +191,7 @@ add_action(
 
 				$(window).on('jet-popup/show-event/after-show', function(){
 					disableAttendanceOptions();
+					disableClinics();
 					var forms = document.querySelectorAll('.jet-form-builder');
 					listenToForms( forms );
 				});
@@ -216,6 +215,7 @@ add_action(
 						function() {
 							repeaterCustomRemove();
 							disableAttendanceOptions();
+							disableClinics();
 						},
 						200
 					);
