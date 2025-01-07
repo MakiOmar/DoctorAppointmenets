@@ -382,7 +382,7 @@ add_action(
 			}
 			body.woocommerce-order-received,
 			.elementor-3761 .elementor-element.elementor-element-2dc5242b:not(.elementor-motion-effects-element-type-background), 
-			.elementor-3761 .elementor-element.elementor-element-2dc5242b > .elementor-motion-effects-container > .elementor-motion-effects-layer
+			.elementor-3761 .elementor-element.elementor-element-2dc5242b > .elementor-motion-effects-container > .elementor-motion-effects-layer,.owl-carousel.days-container .owl-nav button
 			{
 				background-color: <?php echo esc_attr( $dark_color ); ?>!important;
 			}
@@ -471,15 +471,12 @@ add_action(
 				z-index: 9999;
 			}
 			.consulting-form{
-				max-width: 360px;
+				max-width: 340px;
 				margin: auto;
 				margin-top: 30px;
 			}
 
-			@media (min-width: 361px) and ( max-width: 480px ) {
-				.attendance_type_wrapper label{
-					font-size: 27px!important;
-				}
+			@media (min-width: 361px) and ( max-width: 400px ) {
 				.snks-period-label, .snks-period-price {
 					font-size: 17px!important;
 					width:126px!important;
@@ -487,13 +484,43 @@ add_action(
 				
 			}
 			@media (max-width: 400px) {
+				.consulting-form{
+					max-width: 250px;
+				}
 				.attendance_type_wrapper label{
-					font-size: 19px!important;
+					font-size: 16px!important;
 				}
 				.snks-period-label, .snks-period-price{
 					width:104px!important
 				}
 				
+			}
+			.clinic-detail {
+				display: none;
+				position: fixed;
+				max-width: 90%;
+				height: 300px;
+				top: calc(50% - 150px);
+				left: 0;
+				background-color: #fff;
+				right: 0;
+				margin: auto;
+				padding: 10px;
+				border-radius: 10px;
+			}
+			.close-clinic-popup {
+				height: 30px;
+				width: 30px;
+				background-color: #e61f1f;
+				color: #fff;
+				border-radius: 50%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				font-size: 20px;
+				position: absolute;
+				top: -15px;
+				cursor: pointer;
 			}
 			#snks_account_settings{
 				transition: all 1s ease-in-out;
@@ -1167,9 +1194,7 @@ add_action(
 			}
 		</style>
 		<style>
-			.slick-list {
-				max-width: 85vw!important;
-			}
+
 			#call-customer-care{
 				position: fixed;
 				bottom: 70px;
@@ -1340,36 +1365,29 @@ add_action(
 			}
 			/**Content slider */
 
-			.slick-slide {
-				margin: 0 5px;
-			}
 
-			.slick-prev, .slick-next {
-				font-size: 0!important;
-				line-height: 0;
+			.owl-carousel.days-container .owl-nav button {
 				position: absolute;
-				top: 50%;
+				top: calc(50% - 15px);
 				display: block;
-				width: 20px;
-				height: 20px;
+				width: 30px;
+				height: 30px;
 				padding: 0;
 				cursor: pointer;
-				color: transparent;
 				border: none;
 				outline: none;
-				background: transparent!important;
 				z-index: 12;
+				color: #fff !important;
+				border-radius: 50%;
+				font-size: 20px !important;
 			}
-			.slick-prev::before, .slick-next::before {
-				font-family: 'slick';
-				font-size: 23px;
-				line-height: 1;
-				opacity:1;
-				color: #024059;
-				-webkit-font-smoothing: antialiased;
-				-moz-osx-font-smoothing: grayscale;
-				cursor: pointer;
+			.owl-next{
+				left:-31px
 			}
+			.owl-prev{
+				right:-31px
+			}
+
 			
 			.anony-day-number{
 				font-size: 27px;
@@ -1403,8 +1421,9 @@ add_action(
 				transform: rotate(45deg);
 			}
 			.anony-content-slide{
-				max-width: 60px!important;
-				margin: 2px;
+				width: 60px!important;
+				align-items: center;
+					justify-content: center;
 			}
 			.clinic-rules {
 				max-width: 300px;
@@ -1543,7 +1562,7 @@ add_action(
 			}
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
 			.anony-day-radio label.active-day,
-			.profile-details h1, .profile-details h2, #snks-booking-page .snks-light-bg, #snks-booking-page .slick-prev::before, #snks-booking-page .slick-next::before{
+			.profile-details h1, .profile-details h2, #snks-booking-page .snks-light-bg{
 				color: <?php echo esc_html( $dark_color ); ?>!important;
 			}
 			#consulting-form-submit{
@@ -1750,9 +1769,6 @@ add_action(
 					transform: translate3d(0px, 30px, 0px);
 					animation-timing-function: ease-out;
 				}
-			}
-			button.slick-arrow:hover{
-				background-color: transparent!important;
 			}
 			.profile-details, .org-profile-details{
 				margin-top: 20px;

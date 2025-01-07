@@ -54,7 +54,7 @@ add_action(
 										scrollTop: $('.consulting-form').offset().top
 									}, 1000);
 								}
-								$('.anony-content-slider').slick({
+								/*$('.anony-content-slider').slick({
 									slidesToShow: 3,
 									slidesToScroll: 1,
 									autoplay: false,
@@ -69,6 +69,34 @@ add_action(
 											}
 										}
 									]
+								});
+								// Fix dragging issue
+								$('.anony-content-slider').on('afterChange', function(event, slick, currentSlide){
+									// Check if it's the last slide
+									if (currentSlide === slick.slideCount - slick.options.slidesToShow) {
+										$('.anony-content-slider').slick('slickSetOption', 'swipe', false);
+									} else {
+										$('.anony-content-slider').slick('slickSetOption', 'swipe', true);
+									}
+								});*/
+
+								$('.anony-content-slider').owlCarousel({
+									rtl: true,
+									loop: false,
+									margin: 10,
+									nav: true,
+									dots: false,
+									responsive: {
+										0: {
+											items: 4
+										},
+										480: {
+											items: 6
+										},
+										768: {
+											items: 6
+										}
+									}
 								});
 							},
 							complete: function() {

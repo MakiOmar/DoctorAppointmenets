@@ -20,9 +20,30 @@ add_action(
 		wp_enqueue_script( 'flatpickr-ar', SNKS_URI . 'assets/js/flatepickr-ar.js', array( 'flatpickr' ), '4.6.13', true );
 		wp_enqueue_style( 'shrinks-responsive', SNKS_URI . 'assets/css/responsive.min.css', array(), time() );
 		wp_enqueue_style( 'shrinks-general', SNKS_URI . 'assets/css/general.css', array(), time() );
-		wp_enqueue_style( 'slick', SNKS_URI . 'slick/slick.css', array(), time() );
-		wp_enqueue_style( 'slick-theme', SNKS_URI . 'slick/slick-theme.css', array(), time() );
-		wp_enqueue_script( 'slick', SNKS_URI . 'slick/slick.min.js', array( 'jquery' ), '4.6.13', true );
+		// Enqueue Owl Carousel CSS.
+		wp_enqueue_style(
+			'owl-carousel-css',
+			'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css',
+			array(),
+			null
+		);
+
+		// Enqueue Owl Carousel Theme CSS (optional).
+		wp_enqueue_style(
+			'owl-carousel-theme',
+			'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css',
+			array( 'owl-carousel-css' ),
+			null
+		);
+
+		// Enqueue Owl Carousel JS.
+		wp_enqueue_script(
+			'owl-carousel-js',
+			'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js',
+			array( 'jquery' ),
+			null,
+			true
+		);
 		wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array( 'jquery' ), time(), true );
 	}
 );
@@ -91,6 +112,21 @@ add_action(
 					var parent = $(this).closest('.day-specific-form');
 					$('.wp-block-columns-is-layout-flex', parent).toggle();
 					$('.field-type-submit-field', parent).toggle();
+				}
+			);
+			$(document).on(
+				'click',
+				'.clinic-popup',
+				function(e){
+					e.preventDefault();
+					$(this).next('.clinic-detail').show();
+				}
+			);
+			$(document).on(
+				'click',
+				'.close-clinic-popup',
+				function(){
+					$(this).closest('.clinic-detail').hide();
 				}
 			);
 			$.fn.justShowErrorpopup = function ( msg ) {

@@ -74,7 +74,7 @@ function snks_generate_consulting_days( $user_id, $bookable_days_obj, $input_nam
 		$day_name   = gmdate( 'D', strtotime( $current_date ) ); // Full day name.
 		$month_name = gmdate( 'F', strtotime( $current_date ) ); // Full day name.
 		//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
-		$html .= '<div class="anony-content-slide snks-bg anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
+		$html .= '<div class="anony-content-slide item snks-bg anony-day-radio ' . $input_name . '"><label for="' . esc_attr( $current_date ) . '-' . $period . '">';
 		$html .= "<span class='hacen_liner_print-outregular'>$months_labels[$month_name]</span>";
 		$html .= "<span class='hacen_liner_print-outregular anony-day-number'>$day_number</span>";
 		$html .= '<span class="hacen_liner_print-outregular">' . snks_localize_day( $day_name ) . '</span>';
@@ -400,7 +400,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= ' إختر موعد الحجز';
 	$html .= '</h5>';
 	$html .= '<div class="atrn-form-days anony-content-slider-container">';
-	$html .= '<div class="days-container' . esc_attr( $slider_class ) . '">';
+	$html .= '<div class="owl-carousel days-container' . esc_attr( $slider_class ) . '">';
 	$html .= snks_generate_consulting_days( $user_id, $bookable_days_obj, 'current-month-day', $period, $days_count );
 	$html .= '</div>';
 	$html .= '</div>';
@@ -635,6 +635,8 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 		return;
 	}
 	$doctor_details = snks_user_details( $booking->user_id );
+	$user           = get_user_by( 'id', $booking->user_id );
+	$doctor_url     = snks_encrypted_doctor_url( $user );
 	$first_name     = ! empty( $doctor_details['billing_first_name'] ) ? $doctor_details['billing_first_name'] : '';
 	$last_name      = ! empty( $doctor_details['billing_last_name'] ) ? $doctor_details['billing_last_name'] : '';
 	$name           = $first_name . ' ' . $last_name;
@@ -651,6 +653,10 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 		<tr>
 			<td class="consulting-session-label">اسـم المعـالـج</td>
 			<td class="consulting-session-data"><?php echo esc_html( $name ); ?></td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label">رابط المعـالـج</td>
+			<td class="consulting-session-data"><a href="<?php echo esc_url( $doctor_url ); ?>" target="_blank">إضغط هنا</td>
 		</tr>
 		<tr>
 			<td class="consulting-session-label">نــوع الجـلسـة</td>
@@ -670,12 +676,16 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 		</tr>
 		<?php if ( 'offline' === $booking->attendance_type ) { ?>
 		<tr>
-			<td class="consulting-session-label">اسم العيادة</td>
-			<td class="consulting-session-data"><?php echo esc_html( $clinic_details['clinic_title'] ); ?></td>
-		</tr>
-		<tr>
-			<td class="consulting-session-label">موقع العيادة</td>
-			<td class="consulting-session-data"><a href="<?php echo esc_url( $clinic_details['google_map'] ); ?>">اتجاهات جوجل</a></td>
+			<td class="consulting-session-label">تفاصيل العيادة</td>
+			<td class="consulting-session-data">
+				<a href="#" class="clinic-popup">إضغط هنا</a>
+				<div class="clinic-detail">
+					<span class="close-clinic-popup">x</span>
+					<?php
+					echo wp_kses_post( snks_render_clinic( $clinic_details ) );
+					?>
+				</div>
+			</td>
 		</tr>
 		<?php } ?>
 		<?php
@@ -1318,7 +1328,6 @@ function snks_render_sessions_listing( $tense ) {
 				$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 				$class         = 'remaining';
 				$diff_seconds  = snks_diff_seconds( $session );
-				var_dump(( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ));
 				// Compare the input date and time with the modified current date and time.
 				if ( ! snks_is_doctor() && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds > snks_get_edit_before_seconds( $doctor_settings ) ) {
 					$free_edit_before_seconds = snks_get_free_edit_before_seconds( $doctor_settings );

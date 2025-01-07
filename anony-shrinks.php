@@ -560,8 +560,8 @@ add_action(
 			$value            = ! empty( $disabled ) ? implode( '-', $disabled ) : '';
 			$_clinics_value   = ! empty( $disabled_clinics ) ? implode( '|', $disabled_clinics ) : '';
 			?>
-			<input type="hidden" id="disabled-attendance-types" value="<?php echo esc_attr( $value ); ?>">
-			<input type="hidden" id="disabled-clinics" value="<?php echo esc_attr( $_clinics_value ); ?>">
+			<input type="text" style="display:none" id="disabled-attendance-types" value="<?php echo esc_attr( $value ); ?>">
+			<input type="text" style="display:none" id="disabled-clinics" value="<?php echo esc_attr( $_clinics_value ); ?>">
 			<?php
 		}
 	}
