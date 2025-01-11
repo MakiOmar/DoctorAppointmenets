@@ -174,10 +174,12 @@ add_action(
 					});
 				}
 				function disableAttendanceOptions() {
-					disableOptions( '#disabled-attendance-types', 'appointment_attendance_type', '-' )
+					disableOptions( '#disabled-attendance-types', 'appointment_attendance_type', '-' );
+					disableOptions( '#disabled-attendance-types', 'app_attendance_type', '-' );
 				}
 				function disableClinics() {
-					disableOptions( '#disabled-clinics', 'appointment_clinic', '|' )
+					disableOptions( '#disabled-clinics', 'appointment_clinic', '|' );
+					disableOptions( '#disabled-clinics', 'app_clinic', '|' );
 				}
 				repeaterCustomRemove();
 				setCookie('edited_form', '', 0);
@@ -206,6 +208,19 @@ add_action(
 
 				$( document ).on('click', '.jet-form-builder-repeater__remove', function(){
 					$(".item-deleted").trigger('click');
+				});
+
+				$( document ).on('change', 'input[name=attendance_type]', function(){
+					var attendance;
+
+					if ( 'online' === $(this).val() ) {
+						attendance = 'offline-both';
+					} else if ( 'offline' === $(this).val() ) {
+						attendance = 'online-both';
+					} else {
+						attendance = '';
+					}
+					$('#disabled-attendance-types').val( attendance ).trigger('change');
 				});
 				$( document ).on('click', '.jet-form-builder-repeater__new', function(e){
 					e.preventDefault();
