@@ -15,7 +15,6 @@ add_action( 'wp_ajax_nopriv_fetch_start_times', 'fetch_start_times_callback' );
  * @return void
  */
 function fetch_start_times_callback() {
-
 	$_request = isset( $_POST ) ? wp_unslash( $_POST ) : array();
 	// Verify the nonce.
 	if ( isset( $_request['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_request['nonce'] ), 'fetch_start_times_nonce' ) ) {
@@ -28,33 +27,46 @@ function fetch_start_times_callback() {
 	$period  = sanitize_text_field( $_request['period'] );
 	$_order  = ! empty( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'ASC';
 
-	// Initialize query builder.
-	$builder = wp_query_builder()
-		->select( '*' )
-		->from( 'snks_provider_timetable' )
-		->where(
-			array(
-				'user_id'        => $user_id,
-				'period'         => absint( $period ),
-				'order_id'       => 0,
-				'session_status' => 'waiting',
-			)
-		);
+	global $wpdb;
 
-	// Add a DATE condition using a raw condition within the array.
-	$builder->where( array( 'DATE(date_time)' => $date ) );
+	// Fetch disabled clinics for the user.
+	$disabled_clinics = snks_disabled_clinics( $user_id );
 
-	// Add attendance_type condition if provided.
-	if ( null !== $attendance_type ) {
-		$builder->where( array( 'attendance_type' => sanitize_text_field( $attendance_type ) ) );
+	// Start building the SQL query.
+	$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+        WHERE user_id = %d 
+        AND period = %d 
+        AND order_id = 0 
+        AND session_status = 'waiting' 
+        AND DATE(date_time) = %s";
+
+	// Prepare the parameters for the query.
+	$query_params = array(
+		$user_id,
+		absint( $period ),
+		$date,
+	);
+
+	// Handle the NOT IN clause for disabled clinics.
+	if ( ! empty( $disabled_clinics ) ) {
+		$placeholders = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
+		$sql         .= " AND clinic NOT IN ($placeholders)";
+		$query_params = array_merge( $query_params, $disabled_clinics );
 	}
 
-	// Add order by clause.
-	$builder->order_by( 'date_time', $_order );
+	// Add the attendance type condition if present.
+	if ( ! empty( $attendance_type ) ) {
+		$sql           .= ' AND attendance_type = %s';
+		$query_params[] = sanitize_text_field( $attendance_type );
+	}
 
+	// Add the order by clause.
+	$sql .= ' ORDER BY date_time ' . esc_sql( $_order );
+	// phpcs:disable
 	// Execute the query.
-	$results = $builder->get();
-
+	$results = $wpdb->get_results( $wpdb->prepare( $sql, $query_params ) );
+	// phpcs:enable
+	// Render the results.
 	$availables = $results;
 	$html       = snks_render_consulting_hours( $availables, $attendance_type, $user_id );
 
@@ -66,8 +78,17 @@ function fetch_start_times_callback() {
 	die;
 }
 
+
 add_action( 'wp_ajax_get_booking_form', 'get_booking_form_callback' );
 add_action( 'wp_ajax_nopriv_get_booking_form', 'get_booking_form_callback' );
+
+add_filter(
+	'query_builder_query_query',
+	function ( $query ) {
+		snks_error_log( $query );
+		return $query;
+	}
+);
 
 /**
  * Get booking form
