@@ -481,11 +481,14 @@ function snks_get_inactive_attendance_types() {
 /**
  * Returns disabled clinics
  *
- *
+ * @param int|false $user_id User's ID.
  * @return array
  */
-function snks_disabled_clinics() {
-	$clinics_meta = get_user_meta( snks_get_settings_doctor_id(), 'clinics_list', true );
+function snks_disabled_clinics( $user_id = false ) {
+	if ( ! $user_id ) {
+		$user_id = snks_get_settings_doctor_id();
+	}
+	$clinics_meta = get_user_meta( $user_id, 'clinics_list', true );
 	$result       = array();
 	if ( ! empty( $clinics_meta ) ) {
 		foreach ( $clinics_meta as $index => $clinic ) {
@@ -497,6 +500,31 @@ function snks_disabled_clinics() {
 	}
 	return $result;
 }
+
+/**
+ * Checks if a specific clinic is disabled.
+ *
+ * @param string $uuid The UUID of the clinic to check.
+ * @return bool True if the clinic is disabled or does not exist, false otherwise.
+ */
+function snks_is_disabled_clinic( $uuid ) {
+    if ( empty( $uuid ) ) {
+        return true; // Treat empty UUIDs as disabled.
+    }
+
+    $clinics_meta = get_user_meta( snks_get_settings_doctor_id(), 'clinics_list', true );
+    
+    if ( ! empty( $clinics_meta ) ) {
+        foreach ( $clinics_meta as $clinic ) {
+            if ( isset( $clinic['uuid'] ) && $clinic['uuid'] === $uuid ) {
+                return isset( $clinic['disabled'] ) && 'on' === $clinic['disabled'];
+            }
+        }
+    }
+
+    return true; // If the clinic is not found, treat it as disabled.
+}
+
 /**
  * Get clinics
  *
