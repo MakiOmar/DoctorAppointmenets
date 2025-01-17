@@ -24,24 +24,56 @@ add_action(
 		$html           = '';
 		$hours          = array();
 		$to_hours       = array();
+
 		if ( ! empty( $expected_hours ) ) {
 			foreach ( $expected_hours as $expected_hour ) {
-				$expected_hour_from = gmdate( 'H:i', strtotime( $expected_hour['from'] ) );
-				$expected_hour_to   = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
-				$hours[]            = $expected_hour_from;
-				$hours[]            = $expected_hour_to;
-				$to_hours[]         = $expected_hour_to;
-				$html              .= sprintf( '<p class="expected-hour-text">من <span class="%1$s">%2$s</span> إلى <span class="%3$s">%4$s</span></p>', str_replace( array( ' ', ':' ), '-', $expected_hour_from ), esc_html( $expected_hour['from'] ), str_replace( array( ' ', ':' ), '-', $expected_hour_to ), esc_html( $expected_hour['to'] ) );
+				$from_timestamp = strtotime( $expected_hour['from'] );
+				$to_timestamp   = strtotime( $expected_hour['to'] );
+
+				// Adjust `to` timestamp if it's logically the next day.
+				if ( $to_timestamp <= $from_timestamp ) {
+					$to_timestamp += 86400; // Add 24 hours in seconds to `to`.
+				}
+
+				$expected_hour_from = gmdate( 'H:i', $from_timestamp );
+				$expected_hour_to   = gmdate( 'H:i', $to_timestamp );
+
+				$hours[]    = $expected_hour_from;
+				$hours[]    = $expected_hour_to;
+				$to_hours[] = $expected_hour_to;
+
+				$html .= sprintf(
+					'<p class="expected-hour-text">من <span class="%1$s">%2$s</span> إلى <span class="%3$s">%4$s</span></p>',
+					str_replace( array( ' ', ':' ), '-', $expected_hour_from ),
+					esc_html( $expected_hour['from'] ),
+					str_replace( array( ' ', ':' ), '-', $expected_hour_to ),
+					esc_html( $expected_hour['to'] )
+				);
 			}
 		}
+
+		// Remove duplicates and sort hours logically.
 		$hours = array_values( array_unique( $hours ) );
-		// Sort hours acsending.
+
+		// Sort hours, treating "next-day" times (e.g., `00:00`) as larger than same-day times.
 		usort(
 			$hours,
 			function ( $a, $b ) {
-				return strtotime( $a ) - strtotime( $b );
+				$a_timestamp = strtotime( $a );
+				$b_timestamp = strtotime( $b );
+
+				// Treat `00:00` as the next day's time if it's earlier than other times.
+				if ( $a_timestamp < strtotime( '12:00' ) ) {
+					$a_timestamp += 86400; // Add 24 hours in seconds.
+				}
+				if ( $b_timestamp < strtotime( '12:00' ) ) {
+					$b_timestamp += 86400; // Add 24 hours in seconds.
+				}
+
+				return $a_timestamp - $b_timestamp;
 			}
 		);
+		snks_error_log( $hours );
 		wp_send_json(
 			array(
 				'resp'        => $html,
@@ -57,6 +89,7 @@ add_action(
 		die();
 	}
 );
+
 
 add_action(
 	'wp_ajax_delete_slot',
