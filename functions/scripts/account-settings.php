@@ -240,9 +240,26 @@ add_action(
 					preventNavigation = true;
 					setCookie('edited_form', $(this).closest('form').data('form-id'));
 				});
+				// Function to auto-click the "Add New" button for repeaters with no items
+				function autoClickEmptyRepeaters() {
+					$('.jet-form-builder-repeater').each(function () {
+						const repeater = $(this);
+						const repeaterItems = repeater.find('.jet-form-builder-repeater__items');
+						const addNewButton = repeater.find('.jet-form-builder-repeater__new');
 
+						if (repeaterItems.length) {
+							// Check if the repeater items container is empty
+							if (repeaterItems.children().length === 0) {
+								addNewButton.click();
+							}
+						}
+					});
+				}
+
+				//autoClickEmptyRepeaters();
 				$(window).on('jet-popup/show-event/after-show', function( event, popup ){
 					repeaterCustomRemove();
+					autoClickEmptyRepeaters();
 					let exclude = [ 'jet-popup-1961', 'jet-popup-1958', 'jet-popup-1964' ];
 					if ( ! exclude.includes(popup.data.popupId) ){
 						preventNavigation = false;
