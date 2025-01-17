@@ -502,6 +502,29 @@ function snks_disabled_clinics( $user_id = false ) {
 }
 
 /**
+ * Returns enabled clinics
+ *
+ * @param int|false $user_id User's ID.
+ * @return array
+ */
+function snks_enabled_clinics( $user_id = false ) {
+	if ( ! $user_id ) {
+		$user_id = snks_get_settings_doctor_id();
+	}
+	$clinics_meta = get_user_meta( $user_id, 'clinics_list', true );
+	$result       = array();
+	if ( ! empty( $clinics_meta ) ) {
+		foreach ( $clinics_meta as $index => $clinic ) {
+			if ( !empty( $clinic['uuid'] ) && isset( $clinic['disabled'] ) && 'on' !== $clinic['disabled'] ) {
+				$result[] = $clinic['uuid'];
+			}
+			
+		}
+	}
+	return $result;
+}
+
+/**
  * Checks if a specific clinic is disabled.
  *
  * @param string $uuid The UUID of the clinic to check.
