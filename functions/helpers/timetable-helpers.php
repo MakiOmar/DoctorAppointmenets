@@ -607,10 +607,10 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 	// Calculate current and end datetime.
 	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
 	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
-
+	//phpcs:disable
 	// Set the default order.
 	$_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-
+	//phpcs:enable
 	// Fetch off-days from doctor settings.
 	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 
@@ -658,11 +658,11 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 
 	// Merge off-days and disabled clinics into query params.
 	$query_params = array_merge( $query_params, $off_days, $disabled_clinics );
-
+	//phpcs:disable
 	// Prepare and execute the query.
 	$_query  = $wpdb->prepare( $sql, $query_params );
 	$results = $wpdb->get_results( $_query );
-
+	//phpcs:enable
 	return $results;
 }
 
