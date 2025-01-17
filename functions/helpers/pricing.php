@@ -86,9 +86,12 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 	$has_discount = false;
 	if ( snks_pricing_discount_enabled( $doctor_id ) ) {
 		$latest_completed_order_date = snks_latest_completed_order_date( $doctor_id, $customer_id );
-		$to_be_old_number            = get_user_meta( $doctor_id, 'to_be_old_number', true );
-		$to_be_old_unit              = get_user_meta( $doctor_id, 'to_be_old_unit', true );
-		$multiply_base               = 24;
+		if ( ! $latest_completed_order_date ) {
+			return false;
+		}
+		$to_be_old_number = get_user_meta( $doctor_id, 'to_be_old_number', true );
+		$to_be_old_unit   = get_user_meta( $doctor_id, 'to_be_old_unit', true );
+		$multiply_base    = 24;
 		if ( 'week' === $to_be_old_unit ) {
 			$multiply_base = 7 * 24;
 		} elseif ( 'month' === $to_be_old_unit ) {
@@ -106,7 +109,7 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 		$compare_datetime = DateTime::createFromFormat( 'Y-m-d H:i:s', $latest_completed_order_date, wp_timezone() );
 
 		// Compare the given datetime with the current datetime.
-		if ( $compare_datetime < $current_datetime ) {
+		if ( $compare_datetime && $compare_datetime < $current_datetime ) {
 			$has_discount = true;
 		}
 	}
