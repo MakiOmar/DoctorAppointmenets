@@ -250,7 +250,10 @@ add_action(
 						if (repeaterItems.length) {
 							// Check if the repeater items container is empty
 							if (repeaterItems.children().length === 0) {
-								addNewButton.click();
+								setTimeout(function(){
+									addNewButton.click();
+								}, 500);
+								
 							}
 						}
 					});
