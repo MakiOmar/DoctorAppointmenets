@@ -99,14 +99,38 @@ add_action(
 								} else {
 									var hourDisable = [];
 									$('.shrinks-error').removeClass('shrinks-error');
-									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
-										if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour ) {
+									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each(function () {
+										const optionValue = $(this).val();
+										const lowestHour = response.lowesttHour; // e.g., "23:45"
+										const largestHour = response.largestHour; // e.g., "00:30"
+
+										// Base dates for the same day and next day
+										const baseDate = "2025-01-01";
+										const nextDayBaseDate = "2025-01-02";
+
+										// Parse option time
+										const optionDate = new Date(`${baseDate}T${optionValue}`);
+										const lowestDate = new Date(`${baseDate}T${lowestHour}`);
+										const largestDate =
+											largestHour < lowestHour
+												? new Date(`${nextDayBaseDate}T${largestHour}`) // largestHour falls on the next day
+												: new Date(`${baseDate}T${largestHour}`);
+
+										// Adjust option date for next day if it loops over midnight
+										if (optionValue < lowestHour) {
+											optionDate.setDate(optionDate.getDate() + 1); // Move optionDate to the next day
+										}
+
+										// Disable options between lowestHour (inclusive) and largestHour (exclusive)
+										if (!$(this).is(':selected') && optionDate >= lowestDate && optionDate < largestDate) {
 											$(this).prop('disabled', true);
-											if( ! hourDisable.includes($(this).val()) ) {
-												hourDisable.push( $(this).val() );
+											if (!hourDisable.includes(optionValue)) {
+												hourDisable.push(optionValue);
 											}
 										}
-									} );
+									});
+
+
 
 									if (hourDisable && hourDisable.length > 0) {
 										disabledOptions[repeaterName] = [];
@@ -117,19 +141,6 @@ add_action(
 							}
 						});
 				}
-
-				/*setTimeout(
-					function() {
-						$('select[data-field-name=appointment_hour] option', container).each( function() {
-							if ( ! $(this).is(':selected') && disabledOptions[container.data('field-name')] && disabledOptions[container.data('field-name')].includes( $(this).val() ) ) {
-								$(this).prop('disabled', true)
-							} else {
-								$(this).prop('disabled', false)
-							}
-						} );
-					},
-					200
-				);*/
 				flatpickr.localize(flatpickr.l10ns.ar);
 				function flatPickrInput( disabledDays = false ) {
 					$('input[data-field-name=off_days]').each(
