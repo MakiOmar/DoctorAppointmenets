@@ -982,3 +982,29 @@ add_shortcode(
 		}
 	}
 );
+
+/**
+ * Registers a shortcode to display a linked image with the current user's nickname in the URL.
+ *
+ * @return string The HTML output of the linked image.
+ */
+function render_user_linked_image() {
+	// Get the current user data.
+	$current_user = wp_get_current_user();
+
+	// Define the base URL and image source.
+	$base_url  = home_url( '/' );
+	$image_src = '/wp-content/uploads/2024/08/preview.png';
+	$user_link = esc_url( $base_url . '/7jz/' . $current_user->nickname );
+
+	// Return the linked image HTML.
+	return sprintf(
+		'<a href="%1$s" target="_blank" rel="noopener noreferrer">
+            <img src="%2$s" alt="%3$s">
+        </a>',
+		$base_url,
+		esc_url( $image_src ),
+		esc_attr__( 'Preview booking form', 'text-domain' )
+	);
+}
+add_shortcode( 'user_linked_image', 'render_user_linked_image' );
