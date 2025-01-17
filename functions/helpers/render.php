@@ -1061,6 +1061,9 @@ function snks_doctor_rules( $user_id ) {
 		$html .= '<p>';
 		$html .= 'يمكنك تغيير موعد الجلسة مجاناً في حالة تغييرها قبل موعدها بـ {free_change_before} وبعد ذلك يتم فرض رسوم على تغيير موعدها بقيمة {paid_change_fees}% من ثمن الجلسة ولا يمكنك تغيير موعد الجلسة قبل موعدها بـ {no_change_period}';
 		$html .= '</p>';
+		$html .= '<p>';
+		$html .= 'مع العلم انه يمكنك تغيير موعد جلستك مره واحده فقط.';
+		$html .= '</p>';
 	}
 	$html .= '</div>';
 	return snks_replace_time_units_to_arabic(
