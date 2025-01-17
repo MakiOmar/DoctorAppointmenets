@@ -4,3 +4,4 @@
 */_notes/*
 *.xml
 */*.xml
+/vendor
