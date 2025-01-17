@@ -139,7 +139,7 @@ function get_periods_callback() {
 		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
 		die;
 	}
-
+	$enabled_clinics = snks_enabled_clinics( $_req['doctor_id'] );
 	if ( 'offline' === $_req['attendanceType'] && 'online' === $doctor_attendance_type ) {
 		//phpcs:disable
 		echo snks_render_doctor_clinics( $_req['doctor_id'] );
@@ -147,6 +147,10 @@ function get_periods_callback() {
 		die;
 	}
 
+	if ( 'offline' === $_req['attendanceType'] && empty( $enabled_clinics ) ) {
+		echo '<p style="text-align:center;padding:16px 0 5px 0">عفواً! لا توجد بيانات متاحة.</p>';
+		die;
+	}
 	//phpcs:disable
 	snks_periods_filter( $_req['doctor_id'] , $_req['attendanceType'], $_req['editBookingId']);
 	//phpcs:enable
