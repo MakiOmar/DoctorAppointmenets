@@ -334,7 +334,33 @@ add_action(
 					'change',
 					'select[data-field-name=appointment_hour]',
 					function() {
-						var parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
+						let parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
+						let periods   = $('select[data-field-name=appointment_choosen_period]', parentWrapper);
+						if ( $(this).val() == '23:15' ) {
+							periods.find("option").each(function () {
+								if ($(this).val().includes("60")) {
+									$(this).prop("disabled", true); // Disable the option
+								} else {
+									$(this).prop("disabled", false);
+								}
+							});
+						}
+						if ( $(this).val() == '23:30' ) {
+							periods.find("option").each(function () {
+								let value = $(this).val();
+								if (value.includes("60") || value.includes("45")) {
+									$(this).prop("disabled", true); // Disable the option
+								} else {
+									$(this).prop("disabled", false);
+								}
+							});
+						}
+						if ( $(this).val() == '23:00' ) {
+							periods.find("option").each(function () {
+								$(this).prop("disabled", false); // Disable the option
+							});
+						}
+						
 						setTimeout(function(){
 							$('select[data-field-name=appointment_choosen_period]', parentWrapper).trigger('change');
 						},200)
