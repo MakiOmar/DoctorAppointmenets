@@ -222,17 +222,22 @@ add_action(
 					}
 					$('#disabled-attendance-types').val( attendance ).trigger('change');
 				});
+
 				$( document ).on('click', '.jet-form-builder-repeater__new', function(e){
 					e.preventDefault();
-					preventNavigation = true;
-					setCookie('edited_form', $(this).closest('form').data('form-id'));
+					let repeater = $(this).closest('.jet-form-builder__field-wrap');
+					let repeaterItems = $('.jet-form-builder-repeater__items', repeater);
+					if (repeaterItems.length && repeaterItems.children().length > 0) {
+						preventNavigation = true;
+						setCookie('edited_form', $(this).closest('form').data('form-id'));
+					}
 					setTimeout(
 						function() {
 							repeaterCustomRemove();
 							disableAttendanceOptions();
 							disableClinics();
 						},
-						200
+						300
 					);
 				});
 
@@ -241,28 +246,10 @@ add_action(
 					setCookie('edited_form', $(this).closest('form').data('form-id'));
 				});
 				// Function to auto-click the "Add New" button for repeaters with no items
-				function autoClickEmptyRepeaters() {
-					$('.jet-form-builder-repeater').each(function () {
-						const repeater = $(this);
-						const repeaterItems = repeater.find('.jet-form-builder-repeater__items');
-						const addNewButton = repeater.find('.jet-form-builder-repeater__new');
-
-						if (repeaterItems.length) {
-							// Check if the repeater items container is empty
-							if (repeaterItems.children().length === 0) {
-								setTimeout(function(){
-									addNewButton.click();
-								}, 500);
-								
-							}
-						}
-					});
-				}
-
-				//autoClickEmptyRepeaters();
+				
+				
 				$(window).on('jet-popup/show-event/after-show', function( event, popup ){
 					repeaterCustomRemove();
-					autoClickEmptyRepeaters();
 					let exclude = [ 'jet-popup-1961', 'jet-popup-1958', 'jet-popup-1964' ];
 					if ( ! exclude.includes(popup.data.popupId) ){
 						preventNavigation = false;
