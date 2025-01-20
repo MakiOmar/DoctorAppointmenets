@@ -351,6 +351,7 @@ add_action(
 					exclude = [ 1974, 2067, 2069 ];
 					if ( exclude.includes( parseInt( formId ) ) ) {
 						setCookie('edited_form', '1956');
+						$('form[data-form-id="' + formId + '"]').closest('.jet-popup').find('.jet-popup__close-button').click();
 						return;
 					}
 
