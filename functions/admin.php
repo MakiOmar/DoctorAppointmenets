@@ -12,9 +12,8 @@ add_filter(
 	function ( $errors, $update, $user ) {
 		//phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( $update && isset( $_POST['nickname'] ) ) {
-			$new_nickname = sanitize_text_field( wp_unslash( $_POST['nickname'] ) );
-
-			$existing_user = get_user_by( 'slug', $new_nickname );
+			$new_nickname  = sanitize_text_field( wp_unslash( $_POST['nickname'] ) );
+			$existing_user = get_user_by_nickname( $new_nickname );
 
 			if ( $existing_user && $existing_user->ID !== $user->ID ) {
 				$errors->add( 'nickname_exists', __( 'Nickname already exists. Please choose a different one.', 'text-domain' ) );
@@ -30,11 +29,9 @@ add_filter(
 add_action(
 	'user_register',
 	function ( $user_id ) {
-		$user     = get_user_by( 'id', $user_id );
-		$nickname = $user->user_nicename;
+		$nickname = get_user_meta( $user_id, 'nickname', true );
 
-		$existing_user = get_user_by( 'slug', $nickname );
-
+		$existing_user = get_user_by_nickname( $nickname );
 		if ( $existing_user && $existing_user->ID !== $user_id ) {
 			$unique_id = '_' . time();
 			wp_update_user(
