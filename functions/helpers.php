@@ -374,6 +374,7 @@ function snks_encrypted_doctor_url( $user ) {
 	}
 	return '#';
 }
+
 /**
  * Get current doctors id form doctors page URL
  *
@@ -383,14 +384,38 @@ function snks_url_get_doctors_id() {
 	global $wp;
 	$user_id = false;
 	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
-		$user = get_user_by( 'slug', $wp->query_vars['doctor_id'] );
+		$user = get_user_by_nickname( $wp->query_vars['doctor_id'] );
 		if ( $user ) {
 			$user_id = $user->ID;
 		}
 	}
 	return $user_id;
 }
+/**
+ * Get a user by their nickname.
+ *
+ * @param string $nickname The nickname to search for.
+ * @return WP_User|false The user object if found, or false if not.
+ */
+function get_user_by_nickname( $nickname ) {
+	// Sanitize the nickname input.
+	$nickname = sanitize_text_field( $nickname );
 
+	// Query users with the given nickname.
+	$user_query = new WP_User_Query(
+		array(
+			'meta_key'   => 'nickname',
+			'meta_value' => $nickname,
+			'number'     => 1, // Limit to 1 user.
+		)
+	);
+
+	// Get the results.
+	$users = $user_query->get_results();
+
+	// Return the first user if found, otherwise false.
+	return ! empty( $users ) ? $users[0] : false;
+}
 /**
  * Calculate the time difference in seconds between the current time and a session's time.
  *
