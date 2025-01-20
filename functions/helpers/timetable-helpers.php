@@ -642,6 +642,13 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 		$disabled_clinics_condition   = "AND clinic NOT IN ({$disabled_clinics_placeholder})";
 	}
 
+	$enabled_clinics = snks_enabled_clinics( $user_id );
+
+	if ( ! empty( $enabled_clinics ) ) {
+		$enabled_clinics_placeholder = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
+		$enabled_clinics_condition   = "AND clinic IN ({$enabled_clinics_placeholder})";
+	}
+
 	$sql = "
 		SELECT *
 		FROM {$wpdb->prefix}snks_provider_timetable timetable

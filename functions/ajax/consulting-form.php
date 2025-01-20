@@ -54,6 +54,13 @@ function fetch_start_times_callback() {
 		$query_params = array_merge( $query_params, $disabled_clinics );
 	}
 
+	// Handle the IN clause for enabled clinics.
+	if ( ! empty( $enabled_clinics ) ) {
+		$placeholders = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
+		$sql         .= " AND clinic IN ($placeholders)";
+		$query_params = array_merge( $query_params, $enabled_clinics );
+	}
+
 	// Add the attendance type condition if present.
 	if ( ! empty( $attendance_type ) ) {
 		$sql           .= ' AND attendance_type = %s';
