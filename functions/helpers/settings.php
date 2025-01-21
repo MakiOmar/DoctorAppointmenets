@@ -945,7 +945,7 @@ add_action(
 		$current_hashed_password = $current_user_info->user_pass;
 		$current_username = $current_user_info->user_login;
 		if ( empty( $request['profile-image'] ) ) {
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إضافة الصورة الشخصية' );
+			//throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إضافة الصورة الشخصية' );
 		}
 
 		if ( empty( $request['email'] ) ) {
@@ -955,6 +955,8 @@ add_action(
 			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون لايمكن أن يكون فارغاً' );
 		}  elseif ( username_exists( $request['username'] ) && $request['username'] !== $current_username ) {
 			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون موجود بالفعل' );
+		} elseif( ! validate_phone_number( $request['username'] ) ){
+			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'فضلاً ادخل رقم تليفون صالح' );
 		}
 
 		if ( empty( $request['password'] ) ) {
