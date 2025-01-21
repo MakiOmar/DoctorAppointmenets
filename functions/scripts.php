@@ -129,6 +129,9 @@ add_action(
 					$(this).closest('.clinic-detail').hide();
 				}
 			);
+			$("#password").on("focus", function () {
+				$(this).val(""); // Clear the value on focus
+			});
 			$.fn.justShowErrorpopup = function ( msg ) {
 			
 				$('#error-container').append(msg);
