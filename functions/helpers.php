@@ -392,6 +392,22 @@ function snks_url_get_doctors_id() {
 	return $user_id;
 }
 /**
+ * Validate if the given input is a phone number.
+ *
+ * @param string $username The input to validate.
+ * @return bool True if valid phone number, false otherwise.
+ */
+function validate_phone_number( $username ) {
+	// Sanitize the input.
+	$username = sanitize_text_field( $username );
+
+	// Regular expression for phone number validation (e.g., allows digits, spaces, and '+' for international format).
+	$pattern = '/^\+?[0-9\s]*$/';
+
+	// Return true if the input matches the pattern, false otherwise.
+	return (bool) preg_match( $pattern, $username );
+}
+/**
  * Get a user by their nickname.
  *
  * @param string $nickname The nickname to search for.
