@@ -359,21 +359,33 @@ add_action(
 );
 
 /**
- * Get doctor's url
+ * Get doctor's URL using nickname
  *
  * @param mixed $user User object or User ID.
  * @return string
  */
 function snks_encrypted_doctor_url( $user ) {
+	// If $user is a WP_User object.
 	if ( is_a( $user, 'WP_User' ) && $user ) {
-		return site_url( '/7jz/' . $user->user_nicename );
+		$nickname = get_user_meta( $user->ID, 'nickname', true );
+		if ( $nickname ) {
+			return site_url( '/7jz/' . $nickname );
+		}
 	}
+
+	// If $user is a user ID.
 	$user_obj = get_user_by( 'id', absint( $user ) );
 	if ( $user_obj ) {
-		return site_url( '/7jz/' . $user_obj->user_nicename );
+		$nickname = get_user_meta( $user_obj->ID, 'nickname', true );
+		if ( $nickname ) {
+			return site_url( '/7jz/' . $nickname );
+		}
 	}
+
+	// Default URL if no valid user or nickname is found.
 	return '#';
 }
+
 
 /**
  * Get current doctors id form doctors page URL
@@ -560,5 +572,56 @@ function snks_generate_uuid() {
 		wp_rand( 0, 0xffff ),
 		wp_rand( 0, 0xffff ),
 		wp_rand( 0, 0xffff )
+	);
+}
+
+/**
+ * Get Bank Names for Dropdowns
+ *
+ * @return array
+ */
+function get_bank_list() {
+	return array(
+		''     => 'حدد البنك',
+		'NBE'  => 'البنك الأهلي المصري',
+		'MISR' => 'بنك مصر',
+		'BDC'  => 'بنك القاهرة',
+		'BOA'  => 'بنك الإسكندرية',
+		'CIB'  => 'CIB',
+		'ADIB' => 'مصرف أبوظبي الإسلامي',
+		'AAIB' => 'البنك العربي الإفريقي الدولي',
+		'POST' => 'البريد المصري',
+		'EALB' => 'البنك العقاري المصري العربي',
+		'EGB'  => 'EG bank',
+		'EDBE' => 'البنك المصري لتنمية الصادرات',
+		'FAIB' => 'بنك فيصل الإسلامي',
+		'HDB'  => 'بنك التعمير والإسكان',
+		'IDB'  => 'بنك التنمية الصناعية',
+		'SCB'  => 'بنك قناة السويس',
+		'AUB'  => 'البنك الأهلي المتحد',
+		'ABK'  => 'البنك الأهلي الكويتي',
+		'ABRK' => 'بنك البركة',
+		'ARAB' => 'البنك العربي',
+		'ABC'  => 'ABC',
+		'ARIB' => 'المصرف العربي الدولي',
+		'AIB'  => 'AIB',
+		'BBE'  => 'بنك التجاري وفا',
+		'AUDI' => 'بنك عوده',
+		'BLOM' => 'بنك بلوم',
+		'CITI' => 'Citibank',
+		'CAE'  => 'كريدي أجريكول',
+		'ENBD' => 'بنك الإمارات دبي الوطني',
+		'FAB'  => 'بنك أبوظبي الأول',
+		'HSBC' => 'HSBC',
+		'MASH' => 'بنك المشرق',
+		'MIDB' => 'MIDBank',
+		'NSB'  => 'بنك ناصر الاجتماعي',
+		'NBG'  => 'البنك الأهلي اليوناني',
+		'NBK'  => 'بنك الكويت الوطني',
+		'QNB'  => 'QNB',
+		'SAIB' => 'SAIB',
+		'PDAC' => 'The Principal Bank For Development And Agri',
+		'UB'   => 'المصرف المتحد',
+		'UNB'  => 'بنك الإتحاد الوطني',
 	);
 }
