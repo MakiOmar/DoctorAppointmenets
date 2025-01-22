@@ -170,8 +170,8 @@ function process_withdrawals_batch() {
 		}
 		$withdrawal_option = $withdrawal_settings['withdrawal_option'];
 		$withdrawal_method = $withdrawal_settings['withdrawal_method'];
-		// 3 = Wednesday.
-		if ( 'daily_withdrawal' === $withdrawal_option || ( 'weekly_withdrawal' === $withdrawal_option && 3 === absint( $current_day_of_week ) ) || ( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) ) {
+		// 6 = Saturdaye.
+		if ( 'daily_withdrawal' === $withdrawal_option || ( 'weekly_withdrawal' === $withdrawal_option && 6 === absint( $current_day_of_week ) ) || ( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) ) {
 			// Get the eligible balance for withdrawal.
 			$available_balance = get_available_balance( $user_id );
 			$withdraw_amount   = $available_balance;
