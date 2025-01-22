@@ -75,7 +75,7 @@ add_shortcode(
 		ob_start();
 		?>
 		<div class="anony-flex flex-v-center flex-h-center" style="margin-top: 20px;">
-		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">انسخ رابط الحجز الخاص بك</button>
+		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard"></button>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -386,7 +386,7 @@ add_shortcode( 'phone_input', 'phone_input_cb' );
 function custom_withdrawal_form_shortcode() {
 	// Get the current user's ID.
 	$user_id = get_current_user_id();
-
+	$banks   = get_bank_list();
 	// Retrieve saved withdrawal settings from user meta.
 	$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
 
@@ -396,6 +396,12 @@ function custom_withdrawal_form_shortcode() {
 
 	// Define the withdrawal options in an array.
 	$withdrawal_options = array(
+		array(
+			'id'          => 'manual_withdrawal',
+			'value'       => 'manual_withdrawal',
+			'label'       => 'النظام اليدوي',
+			'description' => 'سيتم سحب رصيدك فقط عند الطلب.',
+		),
 		array(
 			'id'          => 'daily_withdrawal',
 			'value'       => 'daily_withdrawal',
@@ -414,13 +420,6 @@ function custom_withdrawal_form_shortcode() {
 			'label'       => 'النظام الشهري',
 			'description' => 'سيتم سحب رصيدك تلقائيا في أول يوم عمل من كل شهر.',
 		),
-
-		array(
-			'id'          => 'manual_withdrawal',
-			'value'       => 'manual_withdrawal',
-			'label'       => 'النظام اليدوي',
-			'description' => 'سيتم سحب رصيدك فقط عند الطلب.',
-		),
 	);
 	// Define the withdrawal options with associated text fields.
 	$withdrawal_details = array(
@@ -429,33 +428,25 @@ function custom_withdrawal_form_shortcode() {
 			'value'  => 'wallet',
 			'label'  => 'محفظة إلكترونية',
 			'fields' => array(
-				//phpcs:disable
-				/*array(
-					'label' => 'اسم صاحب المحفظة',
-					'name'  => 'wallet_holder_name',
-					'value' => isset( $withdrawal_settings['wallet_holder_name'] ) ? $withdrawal_settings['wallet_holder_name'] : '',
-				),*/
-				//phpcs:enable
 				array(
-					'label' => 'رقم المحفظة',
-					'name'  => 'wallet_number',
-					'value' => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
+					'label'      => 'رقم المحفظة',
+					'name'       => 'wallet_number',
+					'value'      => isset( $withdrawal_settings['wallet_number'] ) ? $withdrawal_settings['wallet_number'] : '',
+					'attributes' => array(
+						'pattern'     => '\d{11}',
+						'maxlength'   => '11',
+						'placeholder' => 'أدخل 11 رقماً فقط',
+						'title'       => 'يرجى إدخال 11 رقماً فقط بالإنجليزية.',
+					),
 				),
 				array(
-					'label' => 'إسم صاحب المحفظة',
-					'name'  => 'wallet_owner_name',
-					'value' => isset( $withdrawal_settings['wallet_owner_name'] ) ? $withdrawal_settings['wallet_owner_name'] : '',
-				),
-				array(
-					'label'   => 'المصدر للمحفظة',
-					'name'    => 'wallet_issuer',
-					'value'   => isset( $withdrawal_settings['wallet_issuer'] ) ? $withdrawal_settings['wallet_issuer'] : '',
-					'options' => array(
-						'vodafone'    => 'فودافون',
-						'etisalat'    => 'إتصالات',
-						'orange'      => 'أورانج',
-						'aman'        => 'أمان',
-						'bank_wallet' => 'محفظة بنكية',
+					'label'      => 'إسم صاحب المحفظة',
+					'name'       => 'wallet_owner_name',
+					'value'      => isset( $withdrawal_settings['wallet_owner_name'] ) ? $withdrawal_settings['wallet_owner_name'] : '',
+					'attributes' => array(
+						'pattern'     => '[A-Za-z ]+',
+						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
+						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
 					),
 				),
 			),
@@ -466,29 +457,35 @@ function custom_withdrawal_form_shortcode() {
 			'label'  => 'حساب بنكي',
 			'fields' => array(
 				array(
-					'label' => 'اسم صاحب الحساب',
-					'name'  => 'account_holder_name',
-					'value' => isset( $withdrawal_settings['account_holder_name'] ) ? $withdrawal_settings['account_holder_name'] : '',
+					'label'      => 'اسم صاحب الحساب',
+					'name'       => 'account_holder_name',
+					'value'      => isset( $withdrawal_settings['account_holder_name'] ) ? $withdrawal_settings['account_holder_name'] : '',
+					'attributes' => array(
+						'pattern'     => '[A-Za-z ]+',
+						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
+						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
+					),
 				),
 				array(
-					'label' => 'البنك',
-					'name'  => 'bank_name',
-					'value' => isset( $withdrawal_settings['bank_name'] ) ? $withdrawal_settings['bank_name'] : '',
+					'label'      => 'رقم الحساب',
+					'name'       => 'account_number',
+					'value'      => isset( $withdrawal_settings['account_number'] ) ? $withdrawal_settings['account_number'] : '',
+					'attributes' => array(
+						'pattern'     => '\d+',
+						'placeholder' => 'أدخل الأرقام الإنجليزية فقط',
+						'title'       => 'يرجى إدخال الأرقام الإنجليزية فقط.',
+					),
 				),
 				array(
-					'label' => 'الفرع',
-					'name'  => 'branch',
-					'value' => isset( $withdrawal_settings['branch'] ) ? $withdrawal_settings['branch'] : '',
-				),
-				array(
-					'label' => 'رقم الحساب',
-					'name'  => 'account_number',
-					'value' => isset( $withdrawal_settings['account_number'] ) ? $withdrawal_settings['account_number'] : '',
-				),
-				array(
-					'label' => 'رقم IBAN',
-					'name'  => 'iban_number',
-					'value' => isset( $withdrawal_settings['iban_number'] ) ? $withdrawal_settings['iban_number'] : '',
+					'label'      => 'البنك',
+					'name'       => 'bank_name',
+					'value'      => isset( $withdrawal_settings['bank_name'] ) ? $withdrawal_settings['bank_name'] : '',
+					'attributes' => array(
+						'pattern'     => '[A-Za-z ]+',
+						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
+						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
+					),
+					'options'    => $banks,
 				),
 			),
 		),
@@ -498,24 +495,37 @@ function custom_withdrawal_form_shortcode() {
 			'label'  => 'بطاقة ميزة',
 			'fields' => array(
 				array(
-					'label' => 'الإسم الأول لصاحب البطاقة',
-					'name'  => 'card_holder_first_name',
-					'value' => isset( $withdrawal_settings['card_holder_first_name'] ) ? $withdrawal_settings['card_holder_first_name'] : '',
+					'label'      => 'الإسم الثلاثي لصاحب البطاقة',
+					'name'       => 'card_holder_first_name',
+					'value'      => isset( $withdrawal_settings['card_holder_first_name'] ) ? $withdrawal_settings['card_holder_first_name'] : '',
+					'attributes' => array(
+						'pattern'     => '[A-Za-z ]+',
+						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
+						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
+					),
 				),
 				array(
-					'label' => 'الإسم الأخير لصاحب البطاقة',
-					'name'  => 'card_holder_last_name',
-					'value' => isset( $withdrawal_settings['card_holder_last_name'] ) ? $withdrawal_settings['card_holder_last_name'] : '',
+					'label'      => 'البنك',
+					'name'       => 'meza_bank_code',
+					'value'      => isset( $withdrawal_settings['meza_bank_code'] ) ? $withdrawal_settings['meza_bank_code'] : '',
+					'options'    => $banks,
+					'attributes' => array(
+						'pattern'     => '[A-Za-z ]+',
+						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
+						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
+					),
 				),
+
 				array(
-					'label' => 'كود البنك الصادر منه البطاقة',
-					'name'  => 'meza_bank_code',
-					'value' => isset( $withdrawal_settings['meza_bank_code'] ) ? $withdrawal_settings['meza_bank_code'] : '',
-				),
-				array(
-					'label' => 'رقم البطاقة',
-					'name'  => 'meza_card_number',
-					'value' => isset( $withdrawal_settings['meza_card_number'] ) ? $withdrawal_settings['meza_card_number'] : '',
+					'label'      => 'رقم البطاقة',
+					'name'       => 'meza_card_number',
+					'value'      => isset( $withdrawal_settings['meza_card_number'] ) ? $withdrawal_settings['meza_card_number'] : '',
+					'attributes' => array(
+						'pattern'     => '\d{16}',
+						'maxlength'   => '16',
+						'placeholder' => 'أدخل 16 رقماً فقط',
+						'title'       => 'يرجى إدخال 16 رقماً بالإنجليزية فقط.',
+					),
 				),
 			),
 		),
@@ -529,11 +539,11 @@ function custom_withdrawal_form_shortcode() {
 		<!-- First Section -->
 		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
 			<h1 class="white-bg anony-padding-20 withdrawal-section-title">نظام السحب</h1>
-			<?php foreach ( $withdrawal_options as $option ) : ?>
+			<?php foreach ( $withdrawal_options as $index => $option ) : ?>
 				<div class="withdrawal-radio">
-					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_option" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_option, $option['value'] ); ?>>
+					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_option" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_option, $option['value'] ); ?> <?php echo empty( $withdrawal_option ) && 1 > $index ? 'checked' : ''; ?>>
 					<label for="<?php echo esc_attr( $option['id'] ); ?>">
-						<span class="anony-custom-radio<?php echo $withdrawal_option === $option['value'] ? ' checked' : ''; ?>"></span>
+						<span class="anony-custom-radio<?php echo $withdrawal_option === $option['value'] ? ' checked' : ''; ?> <?php echo empty( $withdrawal_option ) && 1 > $index ? 'checked' : ''; ?>"></span>
 							<?php echo esc_html( $option['label'] ); ?>
 					</label>
 					<p><?php echo esc_html( $option['description'] ); ?></p>
@@ -555,17 +565,14 @@ function custom_withdrawal_form_shortcode() {
 		<div class="gray-bg anony-padding-20 withdrawal-options withdrawal-section">
 			<h1 class="white-bg anony-padding-20 withdrawal-section-title">طريقة السحب</h1>
 			<?php foreach ( $withdrawal_details as $index => $option ) :
-				if ( $index > 0 ) {
-					continue;
-				}
 				?>
 				<!-- We will need this when other withdrawal methods are enabeled-->
-				<?php checked( $withdrawal_method, $option['value'] , true ); ?>
+				
 				<div class="withdrawal-radio">
-					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" checked>
+					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_method, $option['value'] , true ); ?>>
 					<label for="<?php echo esc_attr( $option['id'] ); ?>">
 						<!-- Remove the checked class when other withdrawal methods are enabeled-->
-						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?> checked"></span>
+						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?>"></span>
 						<?php echo esc_html( $option['label'] ); ?>
 					</label>
 					<!-- Hidden Fields Section -->
@@ -575,46 +582,22 @@ function custom_withdrawal_form_shortcode() {
 							<label for="<?php echo esc_attr( $field['name'] ); ?>">
 								<?php echo esc_html( $field['label'] ); ?>
 							</label>
-							<?php if ( 'wallet_number' === $field['name'] ) { ?>
-								<input 
-									type="text" 
-									id="<?php echo esc_attr( $field['name'] ); ?>" 
-									name="<?php echo esc_attr( $field['name'] ); ?>" 
-									value="<?php echo esc_attr( $field['value'] ); ?>" 
-									pattern="\d{11}" 
-									maxlength="11" 
-									placeholder="أدخل 11 رقماً فقط"
-									title="يرجى إدخال 11 رقماً فقط">
-							<?php } elseif ( 'iban_number' === $field['name'] ) { ?>
-								<span id="iban-container">
-									<input 
-										type="text" 
-										id="<?php echo esc_attr( $field['name'] ); ?>" 
-										name="<?php echo esc_attr( $field['name'] ); ?>" 
-										placeholder="أدخل 27 رقم فقط بدون رمز الدولة" 
-										value="<?php echo esc_attr( $field['value'] ); ?>" 
-										pattern="\d{27}" 
-										maxlength="27">
-									<span id="iban-country-code">EG</span>
-								</span>
-								<p style="text-align: right;font-size: 14px;font-weight:bold">
-									مثلا ان كان الرقم هو EG123452457895795632145780009 أدخل 123452457895795632145780009
-								</p>
-							<?php } else { ?>
-								<?php if ( ! empty( $field['options'] ) ) { ?>
-									<select name="<?php echo esc_attr( $field['name'] ); ?>" id="<?php echo esc_attr( $field['name'] ); ?>">
-									<?php foreach( $field['options'] as $k => $v ) { ?>
-										<option value="<?php echo esc_attr( $k );?>" <?php selected( $k, $field['value'] ); ?>><?php echo esc_html( $v ); ?></option>
-									<?php } ?>
-									</select>
-								<?php } else { ?>
-									<input 
-									type="text" 
-									id="<?php echo esc_attr( $field['name'] ); ?>" 
-									name="<?php echo esc_attr( $field['name'] ); ?>" 
-									value="<?php echo esc_attr( $field['value'] ); ?>">
+							<?php if ( ! empty( $field['options'] ) ) { ?>
+								<select name="<?php echo esc_attr( $field['name'] ); ?>" id="<?php echo esc_attr( $field['name'] ); ?>">
+								<?php foreach( $field['options'] as $k => $v ) { ?>
+									<option value="<?php echo esc_attr( $k );?>" <?php selected( $k, $field['value'] ); ?>><?php echo esc_html( $v ); ?></option>
 								<?php } ?>
-								
+								</select>
+							<?php } else { ?>
+								<input 
+								type="text" 
+								id="<?php echo esc_attr( $field['name'] ); ?>" 
+								name="<?php echo esc_attr( $field['name'] ); ?>" 
+								value="<?php echo esc_attr( $field['value'] ); ?>"
+								<?php foreach ( $field['attributes'] as $attr => $val ) : ?>
+									<?php echo esc_attr( $attr ) . '="' . esc_attr( $val ) . '" '; ?>
+								<?php endforeach; ?>
+								>
 							<?php } ?>
 						</div>
 					<?php endforeach; ?>
@@ -995,14 +978,14 @@ function render_user_linked_image() {
 	// Define the base URL and image source.
 	$base_url  = home_url( '/' );
 	$image_src = '/wp-content/uploads/2024/08/preview.png';
-	$user_link = esc_url( $base_url . '/7jz/' . $current_user->nickname );
+	$user_link = esc_url( $base_url . '7jz/' . $current_user->nickname );
 
 	// Return the linked image HTML.
 	return sprintf(
 		'<a href="%1$s" target="_blank" rel="noopener noreferrer">
             <img src="%2$s" alt="%3$s">
         </a>',
-		$base_url,
+		$user_link,
 		esc_url( $image_src ),
 		esc_attr__( 'Preview booking form', 'text-domain' )
 	);

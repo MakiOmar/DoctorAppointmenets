@@ -25,28 +25,64 @@ function send_email_otp() {
 	if ( ! isset( $_POST['withdrawal_settings_nonce'] ) || ! wp_verify_nonce( $_POST['withdrawal_settings_nonce'], 'save_withdrawal_settings' ) ) {
 		wp_send_json_error( array( 'message' => 'خطأ في التحقق' ) );
 	}
-
-	$user_id = get_current_user_id();
-
-	// Get withdrawal method from the POST request.
+	$user_id           = get_current_user_id();
 	$withdrawal_method = isset( $_POST['withdrawal_method'] ) ? sanitize_text_field( $_POST['withdrawal_method'] ) : '';
 
-	// Validate required fields based on withdrawal method.
-	if ( 'bank_account' === $withdrawal_method ) {
-		if ( empty( $_POST['account_holder_name'] ) || empty( $_POST['bank_name'] ) || empty( $_POST['branch'] ) || empty( $_POST['account_number'] ) || empty( $_POST['iban_number'] ) ) {
-			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لحساب البنك.' ) );
+	// Validation rules based on attributes.
+	$validation_rules = array(
+		'wallet_number'          => array(
+			'pattern' => '/^\d{11}$/',
+			'message' => 'رقم المحفظة يجب أن يتكون من 11 رقماً بالإنجليزية فقط.',
+		),
+		'wallet_owner_name'      => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'إسم صاحب المحفظة يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'account_holder_name'    => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'اسم صاحب الحساب يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'account_number'         => array(
+			'pattern' => '/^\d+$/',
+			'message' => 'رقم الحساب يجب أن يحتوي على أرقام فقط.',
+		),
+		'bank_name'              => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'اسم البنك يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'card_holder_first_name' => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'اسم صاحب البطاقة يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'meza_card_number'       => array(
+			'pattern' => '/^\d{16}$/',
+			'message' => 'رقم البطاقة يجب أن يتكون من 16 رقماً بالإنجليزية فقط.',
+		),
+	);
+
+	// Required fields based on the withdrawal method.
+	$required_fields = array(
+		'wallet'       => array( 'wallet_number', 'wallet_owner_name' ),
+		'bank_account' => array( 'account_holder_name', 'bank_name', 'account_number' ),
+		'meza_card'    => array( 'card_holder_first_name', 'meza_bank_code', 'meza_card_number' ),
+	);
+
+	if ( isset( $required_fields[ $withdrawal_method ] ) ) {
+		foreach ( $required_fields[ $withdrawal_method ] as $field ) {
+			// Check if the field is empty.
+			if ( empty( $_POST[ $field ] ) ) {
+				wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة.' ) );
+			}
+			// Apply the pattern validation if defined.
+			if ( isset( $validation_rules[ $field ]['pattern'] ) && ! preg_match( $validation_rules[ $field ]['pattern'], $_POST[ $field ] ) ) {
+				wp_send_json_error( array( 'message' => $validation_rules[ $field ]['message'] ) );
+			}
 		}
-	} elseif ( 'meza_card' === $withdrawal_method ) {
-		if ( empty( $_POST['card_holder_first_name'] ) || empty( $_POST['card_holder_last_name'] ) || empty( $_POST['meza_bank_code'] ) || empty( $_POST['meza_card_number'] ) ) {
-			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لبطاقة ميزة.' ) );
-		}
-	} elseif ( 'wallet' === $withdrawal_method ) {
-		if ( empty( $_POST['wallet_issuer'] ) || empty( $_POST['wallet_number'] ) || empty( $_POST['wallet_owner_name'] ) ) {
-			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة للمحفظة الإلكترونية.' ) );
-		}
-		if ( snks_check_wallet_exists( sanitize_text_field( $_POST['wallet_number'] ), $user_id ) ) {
-			wp_send_json_error( array( 'message' => 'عفوا! رقم المحفظة مسجل لدى حساب آخر.' ) );
-		}
+	}
+
+	// Check for wallet number duplication (for 'wallet' method only).
+	if ( 'wallet' === $withdrawal_method && snks_check_wallet_exists( sanitize_text_field( $_POST['wallet_number'] ), $user_id ) ) {
+		wp_send_json_error( array( 'message' => 'عفوا! رقم المحفظة مسجل لدى حساب آخر.' ) );
 	}
 
 	// Proceed to generate and send OTP if all fields are valid.
@@ -68,7 +104,10 @@ function send_email_otp() {
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
 	$sent    = wp_mail( $user_email, $subject, $message, $headers );
+
+	// Send OTP via SMS.
 	send_sms_via_whysms( $user_info->user_login, $message );
+
 	if ( $sent ) {
 		wp_send_json_success();
 	} else {
@@ -76,10 +115,12 @@ function send_email_otp() {
 	}
 }
 
+
+
 add_action( 'wp_ajax_verify_otp_and_save_withdrawal', 'verify_otp_and_save_withdrawal' );
 add_action( 'wp_ajax_nopriv_verify_otp_and_save_withdrawal', 'verify_otp_and_save_withdrawal' );
 /**
- * OTP Verification and Save withdrawal settings
+ * OTP Verification and Save Withdrawal Settings
  *
  * @return void
  */
@@ -115,45 +156,82 @@ function verify_otp_and_save_withdrawal() {
 		wp_send_json_error( array( 'message' => 'كود التحقق غير صحيح أو منتهي الصلاحية.' ) );
 	}
 
-	// OTP is valid, proceed with saving the withdrawal settings.
-	$withdrawal_option = isset( $_POST['withdrawal_option'] ) ? sanitize_text_field( $_POST['withdrawal_option'] ) : '';
+	// Validation rules based on attributes.
+	$validation_rules = array(
+		'wallet_number'          => array(
+			'pattern' => '/^\d{11}$/',
+			'message' => 'رقم المحفظة يجب أن يتكون من 11 رقماً بالإنجليزية فقط.',
+		),
+		'wallet_owner_name'      => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'إسم صاحب المحفظة يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'account_holder_name'    => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'اسم صاحب الحساب يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'account_number'         => array(
+			'pattern' => '/^\d+$/',
+			'message' => 'رقم الحساب يجب أن يحتوي على أرقام فقط.',
+		),
+		'iban_number'            => array(
+			'pattern' => '/^\d{27}$/',
+			'message' => 'رقم IBAN يجب أن يتكون من 27 رقماً بدون رمز الدولة.',
+		),
+		'card_holder_first_name' => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'اسم صاحب البطاقة يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'card_holder_last_name'  => array(
+			'pattern' => '/^[A-Za-z ]+$/',
+			'message' => 'الاسم الأخير لصاحب البطاقة يجب أن يحتوي على أحرف إنجليزية فقط.',
+		),
+		'meza_card_number'       => array(
+			'pattern' => '/^\d{16}$/',
+			'message' => 'رقم البطاقة يجب أن يتكون من 16 رقماً بالإنجليزية فقط.',
+		),
+	);
+
+	// Required fields based on the withdrawal method.
+	$required_fields = array(
+		'bank_account' => array( 'account_holder_name', 'bank_name', 'account_number' ),
+		'meza_card'    => array( 'card_holder_first_name', 'meza_bank_code', 'meza_card_number' ),
+		'wallet'       => array( 'wallet_number', 'wallet_owner_name' ),
+	);
+
 	$withdrawal_method = isset( $_POST['withdrawal_method'] ) ? sanitize_text_field( $_POST['withdrawal_method'] ) : '';
-	// Validate required fields based on withdrawal method.
-	if ( 'bank_account' === $withdrawal_method ) {
-		if ( empty( $_POST['account_holder_name'] ) || empty( $_POST['bank_name'] ) || empty( $_POST['branch'] ) || empty( $_POST['account_number'] ) || empty( $_POST['iban_number'] ) ) {
-			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لحساب البنك.' ) );
-		}
-	} elseif ( 'meza_card' === $withdrawal_method ) {
-		if ( empty( $_POST['card_holder_first_name'] ) || empty( $_POST['card_holder_last_name'] ) || empty( $_POST['meza_bank_code'] ) || empty( $_POST['meza_card_number'] ) ) {
-			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة لبطاقة ميزة.' ) );
-		}
-	} elseif ( 'wallet' === $withdrawal_method ) {
-		if ( empty( $_POST['wallet_issuer'] ) || empty( $_POST['wallet_number'] ) || empty( $_POST['wallet_owner_name'] ) ) {
-			wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة للمحفظة الإلكترونية.' ) );
-		}
-		if ( snks_check_wallet_exists( sanitize_text_field( $_POST['wallet_number'] ), $user_id ) ) {
-			wp_send_json_error( array( 'message' => 'عفوا! رقم المحفظة مسجل لدى حساب آخر.' ) );
+
+	// Validate required fields for the selected withdrawal method.
+	if ( isset( $required_fields[ $withdrawal_method ] ) ) {
+		foreach ( $required_fields[ $withdrawal_method ] as $field ) {
+			// Check if the field is empty.
+			if ( empty( $_POST[ $field ] ) ) {
+				wp_send_json_error( array( 'message' => 'يرجى إدخال جميع الحقول المطلوبة. ' . $field ) );
+			}
+			// Apply the pattern validation if defined.
+			if ( isset( $validation_rules[ $field ]['pattern'] ) && ! preg_match( $validation_rules[ $field ]['pattern'], $_POST[ $field ] ) ) {
+				wp_send_json_error( array( 'message' => $validation_rules[ $field ]['message'] ) );
+			}
 		}
 	}
+
+	// Additional wallet-specific validation.
+	if ( 'wallet' === $withdrawal_method && snks_check_wallet_exists( sanitize_text_field( $_POST['wallet_number'] ), $user_id ) ) {
+		wp_send_json_error( array( 'message' => 'عفوا! رقم المحفظة مسجل لدى حساب آخر.' ) );
+	}
+
 	// Save the withdrawal settings.
 	$withdrawal_data = array(
-		'withdrawal_option' => $withdrawal_option,
+		'withdrawal_option' => isset( $_POST['withdrawal_option'] ) ? sanitize_text_field( $_POST['withdrawal_option'] ) : '',
 		'withdrawal_method' => $withdrawal_method,
 	);
-	// Save additional fields based on the withdrawal method selected.
-	$withdrawal_data['account_holder_name']    = isset( $_POST['account_holder_name'] ) ? sanitize_text_field( $_POST['account_holder_name'] ) : '';
-	$withdrawal_data['bank_name']              = isset( $_POST['bank_name'] ) ? sanitize_text_field( $_POST['bank_name'] ) : '';
-	$withdrawal_data['bank_code']              = isset( $_POST['bank_code'] ) ? substr( sanitize_text_field( $_POST['bank_code'] ), 2, 4 ) : '';
-	$withdrawal_data['branch']                 = isset( $_POST['branch'] ) ? sanitize_text_field( $_POST['branch'] ) : '';
-	$withdrawal_data['account_number']         = isset( $_POST['account_number'] ) ? sanitize_text_field( $_POST['account_number'] ) : '';
-	$withdrawal_data['iban_number']            = isset( $_POST['iban_number'] ) ? sanitize_text_field( $_POST['iban_number'] ) : '';
-	$withdrawal_data['card_holder_first_name'] = isset( $_POST['card_holder_first_name'] ) ? sanitize_text_field( $_POST['card_holder_first_name'] ) : '';
-	$withdrawal_data['card_holder_last_name']  = isset( $_POST['card_holder_last_name'] ) ? sanitize_text_field( $_POST['card_holder_last_name'] ) : '';
-	$withdrawal_data['meza_bank_code']         = isset( $_POST['meza_bank_code'] ) ? sanitize_text_field( $_POST['meza_bank_code'] ) : '';
-	$withdrawal_data['meza_card_number']       = isset( $_POST['meza_card_number'] ) ? sanitize_text_field( $_POST['meza_card_number'] ) : '';
-	$withdrawal_data['wallet_owner_name']      = isset( $_POST['wallet_owner_name'] ) ? sanitize_text_field( $_POST['wallet_owner_name'] ) : '';
-	$withdrawal_data['wallet_number']          = isset( $_POST['wallet_number'] ) ? sanitize_text_field( $_POST['wallet_number'] ) : '';
-	$withdrawal_data['wallet_issuer']          = isset( $_POST['wallet_issuer'] ) ? sanitize_text_field( $_POST['wallet_issuer'] ) : '';
+
+	// Save all fields dynamically.
+	foreach ( $_POST as $key => $value ) {
+		if ( array_key_exists( $key, $validation_rules ) ) {
+			$withdrawal_data[ $key ] = sanitize_text_field( $value );
+		}
+	}
 
 	update_user_meta( $user_id, 'withdrawal_settings', $withdrawal_data );
 
