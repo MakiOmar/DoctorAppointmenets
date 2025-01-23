@@ -714,14 +714,15 @@ function get_all_bookable_dates( $user_id, $_for = '+1 month', $attendance_type 
 
 	if ( false === $results ) {
 		// Build the base query.
-		$query = $wpdb->prepare(
+		//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$status_condition = snks_is_doctor() ? "session_status IN ('waiting', 'closed')" : "session_status = 'waiting'";
+		$query            = $wpdb->prepare(
 			"SELECT *
-            FROM {$wpdb->prefix}snks_provider_timetable
-            WHERE user_id = %d
-            AND session_status = %s
-            AND order_id = %d",
+			FROM {$wpdb->prefix}snks_provider_timetable
+			WHERE user_id = %d
+			AND {$status_condition}
+			AND order_id = %d",
 			$user_id,
-			'waiting',
 			0
 		);
 
