@@ -559,12 +559,14 @@ function custom_withdrawal_form_shortcode() {
 					</label>
 					<p><?php echo esc_html( $option['description'] ); ?></p>
 				</div>
+				<?php if ( 1 > $index ) {?>
+					<!-- Submit Button -->
+					<div class="manual-withdrawal-button" style="display:<?php echo ( 'manual_withdrawal' === $withdrawal_option || empty( $withdrawal_option ) )? 'block' : 'none'; ?>">
+					<button class="anony-default-padding withdrawal-button">إضغط هنا لطلب السحب</button>
+					</div>
+				<?php } ?>
 			<?php endforeach; ?>
 
-			<!-- Submit Button -->
-			<div class="manual-withdrawal-button" style="display:<?php echo 'manual_withdrawal' === $withdrawal_option ? 'block' : 'none'; ?>">
-			<button class="anony-default-padding withdrawal-button">إضغط هنا لطلب السحب</button>
-			</div>
 			<div class="financials-white-section anony-default-padding white-bg">
 				<p style="color: #939393; text-align: justify;font-size: 23px;">
 					في حالة كان يوم السحب يوم عطلة رسمي، يتم السحب في أول يوم عمل تالي.
