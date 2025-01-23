@@ -188,7 +188,9 @@ function disable_withdrawal_form_based_on_time() {
 					$('#withdrawal-form-overlay').remove(); // Remove overlay if exists
 				}
 			}
-			setInterval('checkTimeAndDisableForm', '3000');
+			setInterval(function(){
+				checkTimeAndDisableForm();
+			}, '10000');
 			// Run the check when the page loads
 			checkTimeAndDisableForm();
 		});
