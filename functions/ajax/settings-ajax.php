@@ -73,7 +73,6 @@ add_action(
 				return $a_timestamp - $b_timestamp;
 			}
 		);
-		snks_error_log( $hours );
 		wp_send_json(
 			array(
 				'resp'        => $html,
