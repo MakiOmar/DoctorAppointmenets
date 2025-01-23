@@ -75,12 +75,14 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					update_post_meta( $order_id, 'doctor_pricings', snks_doctor_pricings( $timetable->user_id ) );
 
 					$message = sprintf(
-						'تم حجز جلسة أونلاين يوم %1$s الموافق %2$s الساعه %3$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%4$s',
-						$timetable->day,
+						'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
+						'offline' === $timetable->atteandance_type ? 'أوفلاين' : 'أونلاين',
+						localize_date_to_arabic( $timetable->day ),
 						gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
 						snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
-						esc_url( site_url( '/my-bookings' ) )
+						'www.jalsah.link'
 					);
+
 					send_sms_via_whysms( $order->get_billing_phone(), $message );
 				} else {
 					snks_error_log( $order_id . ' :Failed to update timetable.' );
