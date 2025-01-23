@@ -489,7 +489,7 @@ function snks_localize_day( $day ) {
  */
 function localize_date_to_arabic( $date_string ) {
 	// English to Arabic day and month names.
-	$days = array(
+	$translations = array(
 		'Saturday'  => 'السبت',
 		'Sunday'    => 'الأحد',
 		'Monday'    => 'الإثنين',
@@ -497,9 +497,13 @@ function localize_date_to_arabic( $date_string ) {
 		'Wednesday' => 'الأربعاء',
 		'Thursday'  => 'الخميس',
 		'Friday'    => 'الجمعة',
-	);
-
-	$months = array(
+		'Mon'       => 'الإثنين',
+		'Tue'       => 'الثلاثاء',
+		'Wed'       => 'الأربعاء',
+		'Thu'       => 'الخميس',
+		'Fri'       => 'الجمعة',
+		'Sat'       => 'السبت',
+		'Sun'       => 'الأحد',
 		'January'   => 'يناير',
 		'February'  => 'فبراير',
 		'March'     => 'مارس',
@@ -513,13 +517,8 @@ function localize_date_to_arabic( $date_string ) {
 		'November'  => 'نوفمبر',
 		'December'  => 'ديسمبر',
 	);
-
 	// Replace English day names with Arabic.
-	$localized_date = str_replace( array_keys( $days ), $days, $date_string );
-
-	// Replace English month names with Arabic.
-	$localized_date = str_replace( array_keys( $months ), $months, $localized_date );
-
+	$localized_date = str_replace( array_keys( $translations ), $translations, $date_string );
 	return $localized_date;
 }
 
