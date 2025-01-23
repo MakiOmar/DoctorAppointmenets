@@ -144,7 +144,7 @@ function process_withdrawals_batch() {
 
 	$table_name   = $wpdb->prefix . TRNS_TABLE_NAME;
 	$current_date = SNKS_CURRENT_TIME;
-
+	//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	// Query 50 users with eligible transactions.
 	$users = $wpdb->get_results(
 		$wpdb->prepare(
