@@ -75,7 +75,7 @@ add_shortcode(
 		ob_start();
 		?>
 		<div class="anony-flex flex-v-center flex-h-center" style="margin-top: 20px;">
-		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard"></button>
+		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">نس رابط الحجز</button>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -384,6 +384,7 @@ add_shortcode( 'phone_input', 'phone_input_cb' );
  * @return string
  */
 function custom_withdrawal_form_shortcode() {
+	$current_datetime = current_datetime();
 	// Get the current user's ID.
 	$user_id = get_current_user_id();
 	$banks   = get_bank_list();
@@ -533,6 +534,16 @@ function custom_withdrawal_form_shortcode() {
 	ob_start();
 	?>
 	<form id="withdrawal-settings-form" action="" method="post" class="anony-padding-20 snks-confirm">
+		<?php
+			$current_hour = (int) $current_datetime->format( 'G' ); // 'G' returns the hour in 24-hour format without leading zeros.
+
+			// Check if the current time is between 12 AM (0) and 9 AM (9).
+		if ( $current_hour >= 0 && $current_hour < 9 ) {
+			?>
+				<div id="withdrawal-form-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;"></div>
+			<?php
+		}
+		?>
 		<?php echo str_replace( '{available_amount}', get_available_balance( $user_id ), do_shortcode( '[elementor-template id="3725"]' ) ); //phpcs:disable ?>
 		<?php echo str_replace( '{withdrawal_amount}', snks_get_latest_transaction_amount( $user_id ), do_shortcode( '[elementor-template id="3733"]' ) ); ?>
 		<?php wp_nonce_field( 'save_withdrawal_settings', 'withdrawal_settings_nonce' ); ?>
