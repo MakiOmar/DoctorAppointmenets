@@ -285,7 +285,6 @@ function handle_manual_withdrawal_ajax() {
 			)
 		);
 	}
-	snks_error_log( $withdrawal_settings );
 	if ( 'manual_withdrawal' !== $withdrawal_settings['withdrawal_option'] ) {
 		wp_send_json_error(
 			array(
