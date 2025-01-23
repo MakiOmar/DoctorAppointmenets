@@ -63,7 +63,7 @@ function snks_send_session_notifications() {
 				$message = sprintf(
 					'نذكرك بموعد جلستك غدا الساعه %1$s . رابط الدخول للجلسة:  %2$s',
 					snks_localize_time( gmdate( 'H:i a', strtotime( $session->date_time ) ) ),
-					esc_url( add_query_arg( 'room_id', $session->ID, site_url( '/meeting-room' ) ) )
+					'www.jalsah.link'
 				);
 				send_sms_via_whysms( $billing_phone, $message );
 				//phpcs:disable
@@ -80,7 +80,7 @@ function snks_send_session_notifications() {
 			if ( $time_diff <= 3600 && ! $session->notification_1hr_sent ) {
 				$message = sprintf(
 					'باقي ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
-					esc_url( add_query_arg( 'room_id', $session->ID, site_url( '/meeting-room' ) ) )
+					'www.jalsah.link'
 				);
 				send_sms_via_whysms( $billing_phone, $message );
 				$wpdb->update(
