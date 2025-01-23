@@ -19,17 +19,17 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return mixed
  */
 function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free = true ) {
-	$_doctor_url = snks_encrypted_doctor_url( $booking->user_id );
+	$_doctor_url     = snks_encrypted_doctor_url( $booking->user_id );
 	$booking_changed = false;
-	$error_url   = add_query_arg(
+	$error_url       = add_query_arg(
 		array(
 			'edit-booking' => $booking->ID,
 			'error'        => 'unknown',
 		),
 		$_doctor_url
 	);
-	$prev_date   = gmdate( 'Y-m-d', strtotime( $booking->date_time ) );
-	$updated     = snks_update_timetable(
+	$prev_date       = gmdate( 'Y-m-d', strtotime( $booking->date_time ) );
+	$updated         = snks_update_timetable(
 		$booking->ID,
 		array(
 			'client_id' => 0,
@@ -210,10 +210,43 @@ add_action(
 			// Trigger the custom action for booking edit.
 			do_action( 'snks_doctor_edit_booking' );
 
+			// Fetch patient and appointment details.
+			$patient_id    = $booking->client_id;
+			$patient_user  = get_user_by( 'id', $patient_id );
+			$patient_email = $patient_user->user_email;
+			$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
+
+			// Old and new appointment details.
+			$old_date      = gmdate( 'd/m/Y', strtotime( $booking->date_time ) );
+			$new_booking = snks_get_timetable_by( 'ID', absint( $new_booking_id ) );
+			$new_date_time = $new_booking->date_time; // Assuming this function fetches the new date & time.
+			$new_date      = gmdate( 'd/m/Y', strtotime( $new_date_time ) );
+			$new_time      = gmdate( 'h:i a', strtotime( $new_date_time ) );
+
+			// Notification title and message.
+			$title   = 'تم تعديل موعدك';
+			$message = sprintf(
+				'تم تغيير موعد جلسة يوم (%1$s) الي يوم (%2$s) الساعة (%3$s).',
+				$old_date,
+				$new_date,
+				$new_time
+			);
+
+			// Send SMS notification.
+			send_sms_via_whysms( $billing_phone, $message );
+
+			// Send email notification.
+			$subject = $title . ' - ' . SNKS_APP_NAME;
+			$headers = array(
+				'Content-Type: text/html; charset=UTF-8',
+				'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
+			);
+			wp_mail( $patient_email, $subject, $message, $headers );
+
 			// Send a success response.
 			wp_send_json(
 				array(
-					'message' => 'تم تغيير الموعد بنجاح.',
+					'message' => 'تم تغيير الموعد بنجاح. تم إشعار المريض عبر البريد والرسائل النصية.',
 					'status'  => 'success',
 				)
 			);
@@ -229,6 +262,7 @@ add_action(
 		}
 	}
 );
+
 
 /**
  * Function for `woocommerce_payment_complete` action-hook.
