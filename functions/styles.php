@@ -1892,6 +1892,16 @@ add_action(
 				font-weight: normal;
 				font-size: 20px;
 			}
+			e-preloader[type=pulse] {
+				height: 1em;
+				width: 1em;
+				position: fixed!important;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				left: 0;
+				margin: auto;
+			}
 			.certificates-repeater .field-type-text-field .jet-form-builder__field-wrap::before{
 				content:'';
 				position: absolute;
