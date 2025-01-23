@@ -50,7 +50,7 @@ function snks_auto_cancel_wc_orders() {
 		'limit'   => 5,
 		'orderby' => 'date',
 		'order'   => 'DESC',
-		'status'  => array( 'pending', 'on-hold', 'processing', 'faild', 'cancelled', 'refunded' ),
+		'status'  => array( 'pending', 'on-hold', 'faild', 'cancelled', 'refunded' ),
 	);
 
 	$orders = wc_get_orders( $query );
@@ -80,4 +80,4 @@ function snks_auto_cancel_wc_orders() {
 	}
 }
 
-add_action( 'autocancel_wc_orders_event', 'snks_auto_cancel_wc_orders' );
+//add_action( 'autocancel_wc_orders_event', 'snks_auto_cancel_wc_orders' );
