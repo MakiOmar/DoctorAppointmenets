@@ -58,6 +58,7 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 			gmdate( 'Y-d-m', strtotime( $date ) ),
 			add_query_arg( 'edit-booking', $id, site_url( '7jz/' . $nickname ) )
 		);
+		send_sms_via_whysms( $billing_phone, $message );
 	}
 	// this.
 }
@@ -73,8 +74,9 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
  * @return void
  */
 function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, $time ) {
-	$user   = get_user_by( 'id', $patient_id );
-	$doctor = get_user_by( 'id', $doctor_id );
+	$user          = get_user_by( 'id', $patient_id );
+	$doctor        = get_user_by( 'id', $doctor_id );
+	$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
 	if ( ! $user || ! $doctor ) {
 		return;
 	}
@@ -93,6 +95,7 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, 
 		'Content-Type: text/html; charset=UTF-8',
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
+	send_sms_via_whysms( $billing_phone, $message );
 	return wp_mail( $to, $subject, $message, $headers );
 }
 
