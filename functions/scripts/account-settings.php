@@ -158,6 +158,9 @@ add_action(
 					});
 				}
 				function disableOptions( valuesInput, target, separator ) {
+					if ( typeof $(valuesInput).val() === 'undefined' ) {
+						return;
+					}
 					var disabled = $(valuesInput).val().split(separator);
 					$('select[data-field-name="' + target + '"]').each(function() {
 						var $select = $(this);
