@@ -561,9 +561,11 @@ function custom_withdrawal_form_shortcode() {
 				</div>
 				<?php if ( 1 > $index ) {?>
 					<!-- Submit Button -->
-					<div class="manual-withdrawal-button" style="display:<?php echo ( 'manual_withdrawal' === $withdrawal_option || empty( $withdrawal_option ) )? 'block' : 'none'; ?>">
-					<button class="anony-default-padding withdrawal-button">إضغط هنا لطلب السحب</button>
+					<div class="manual-withdrawal-button" style="display:<?php echo ( 'manual_withdrawal' === $withdrawal_option || empty( $withdrawal_option ) ) ? 'block' : 'none'; ?>"
+						data-nonce="<?php echo wp_create_nonce( 'process_withdrawal_nonce' ); ?>">
+						<button class="anony-default-padding withdrawal-button">إضغط هنا لطلب السحب</button>
 					</div>
+
 				<?php } ?>
 			<?php endforeach; ?>
 

@@ -252,3 +252,63 @@ add_action( 'wp_ajax_send_email_otp', 'send_email_otp' );
 add_action( 'wp_ajax_nopriv_send_email_otp', 'send_email_otp' );
 add_action( 'wp_ajax_verify_otp_and_save_withdrawal', 'verify_otp_and_save_withdrawal' );
 add_action( 'wp_ajax_nopriv_verify_otp_and_save_withdrawal', 'verify_otp_and_save_withdrawal' );
+
+add_action( 'wp_ajax_process_manual_withdrawal', 'handle_manual_withdrawal_ajax' );
+
+/**
+ * Handle manual withdrawal processing for the current user.
+ *
+ * @return void
+ */
+function handle_manual_withdrawal_ajax() {
+	// Validate nonce for security.
+	check_ajax_referer( 'process_withdrawal_nonce', 'security' );
+
+	// Get the current user.
+	$current_user = wp_get_current_user();
+
+	if ( ! $current_user || 0 === $current_user->ID ) {
+		wp_send_json_error(
+			array(
+				'message' => 'لم يتم التعرف على المستخدم الحالي. يرجى تسجيل الدخول.',
+			)
+		);
+	}
+
+	// Check the user's withdrawal settings.
+	$withdrawal_settings = get_user_meta( $current_user->ID, 'withdrawal_settings', true );
+
+	if ( empty( $withdrawal_settings ) ) {
+		wp_send_json_error(
+			array(
+				'message' => 'ليس لديك إعدادات سحب مؤهلة.',
+			)
+		);
+	}
+	snks_error_log( $withdrawal_settings );
+	if ( 'manual_withdrawal' !== $withdrawal_settings['withdrawal_option'] ) {
+		wp_send_json_error(
+			array(
+				// 'message' => 'تأكد من اختيار السحب اليدوي ثم حفظ النموذج أولاً.',
+				'message' => $withdrawal_settings['withdrawal_option'],
+			)
+		);
+	}
+
+	// Prepare data for withdrawal.
+	global $wpdb;
+	$current_date         = current_time( 'mysql' );
+	$current_day_of_week  = gmdate( 'w', strtotime( $current_date ) );
+	$current_day_of_month = gmdate( 'j', strtotime( $current_date ) );
+	$table_name           = $wpdb->prefix . TRNS_TABLE_NAME;
+
+	// Process the withdrawal for the current user.
+	process_user_withdrawal( $current_user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
+
+	// Return success response.
+	wp_send_json_success(
+		array(
+			'message' => 'تم تنفيذ السحب بنجاح.',
+		)
+	);
+}

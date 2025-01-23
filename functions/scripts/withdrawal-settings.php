@@ -225,6 +225,73 @@ add_action(
 					confirmButtonText: 'أغلق'
 				});
 			});
+
+			jQuery(document).on('click', '.manual-withdrawal-button .withdrawal-button', function (e) {
+				e.preventDefault();
+
+				// Retrieve the nonce from the parent div
+				const nonce = jQuery(this).closest('.manual-withdrawal-button').data('nonce');
+
+				// Confirm withdrawal action using SweetAlert2
+				Swal.fire({
+					title: 'تأكيد السحب',
+					text: 'هل أنت متأكد أنك تريد تنفيذ عملية السحب؟',
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonColor: '#3085d6',
+					cancelButtonColor: '#d33',
+					confirmButtonText: 'نعم، قم بالسحب!',
+					cancelButtonText: 'إلغاء',
+				}).then((result) => {
+					if (result.isConfirmed) {
+						// Show a loading indicator
+						Swal.fire({
+							title: 'جاري التنفيذ...',
+							text: 'يرجى الانتظار حتى يتم معالجة السحب.',
+							icon: 'info',
+							showConfirmButton: false,
+							allowOutsideClick: false,
+						});
+
+						// Run AJAX to process withdrawal
+						jQuery.ajax({
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // WordPress AJAX handler
+							method: 'POST',
+							data: {
+								action: 'process_manual_withdrawal',
+								security: nonce, // Include the nonce in the AJAX request
+							},
+							success: function (response) {
+								if (response.success) {
+									Swal.fire({
+										title: 'تم بنجاح!',
+										text: response.data.message,
+										icon: 'success',
+										confirmButtonText: 'إغلاق',
+									});
+								} else {
+									Swal.fire({
+										title: 'فشل!',
+										text: response.data.message || 'حدث خطأ أثناء التنفيذ.',
+										icon: 'error',
+										confirmButtonText: 'إغلاق',
+									});
+								}
+							},
+							error: function () {
+								Swal.fire({
+									title: 'فشل!',
+									text: 'تعذر تنفيذ الطلب. حاول مرة أخرى لاحقًا.',
+									icon: 'error',
+									confirmButtonText: 'إغلاق',
+								});
+							},
+						});
+					}
+				});
+			});
+
+
 		});
 	</script>
 		<?php
