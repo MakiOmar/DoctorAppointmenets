@@ -218,45 +218,65 @@ add_action(
 				// Event listener for the "Forgot Password" link
 				$(document).on(
 					'click',
-					'a[href="/forget-password/"]',
+					'#forget-password',
 					function(event) {
-					event.preventDefault(); // Prevent the default link behavior
+						event.preventDefault(); // Prevent the default link behavior
 
-					// Add the 'processing' class to show the overlay
-					$('.jet-form-builder').addClass('processing');
-
-					// Get the selected login method (mobile or email)
-					var loginWith = $('input[name="login_with"]:checked').val();
-					var tempPhone = $('input[name="temp-phone"]').val();
-					var username = $('#username').val();
-
-					// Proceed with the AJAX call without client-side validation
-					$.ajax({
-						url: '/wp-admin/admin-ajax.php', // WordPress AJAX handler
-						type: 'POST',
-						data: {
-							action: 'custom_forget_password_action', // Custom action name
-							login_with: loginWith,
-							phone: tempPhone,
-							email: username,
-							_wpnonce: '<?php echo esc_attr( wp_create_nonce( 'forgetpassword' ) ); ?>' // Include the nonce for security
-						},
-						success: function(response) {
-							// Remove the 'processing' class to hide the overlay
-							$('.jet-form-builder').removeClass('processing');
+						// Get the selected login method (mobile or email)
+						var loginWith = $('input[name="login_with"]:checked').val();
+						var tempPhone = $('input[name="temp-phone"]').val();
+						var username = $('#username').val();
+						if ( loginWith === 'mobile' && tempPhone === '' ) {
 							Swal.fire({
-								icon: 'success',
-								title: 'تم',
-								text: response.msg, // Assuming response.msg contains the message from the server
+								icon: 'error',
+								title: 'عفواً',
+								text: 'قم بإدخال رقم التليفون', // Assuming response.msg contains the message from the server
 								confirmButtonText: 'غلق'
 							});
-						},
-						error: function(xhr, status, error) {
-							// Remove the 'processing' class to hide the overlay
-							$('.jet-form-builder').removeClass('processing');
+							return;
 						}
-					});
-				});
+
+						if ( loginWith === 'email' && username === '' ) {
+							Swal.fire({
+								icon: 'error',
+								title: 'عفواً',
+								text: 'قم بإدخال  البريد الإلكتروني', // Assuming response.msg contains the message from the server
+								confirmButtonText: 'غلق'
+							});
+							return;
+						}
+						// Add the 'processing' class to show the overlay
+						$('.jet-form-builder').addClass('processing');
+
+						// Proceed with the AJAX call without client-side validation
+						$.ajax({
+							url: '/wp-admin/admin-ajax.php', // WordPress AJAX handler
+							type: 'POST',
+							data: {
+								action: 'custom_forget_password_action', // Custom action name
+								login_with: loginWith,
+								phone: tempPhone,
+								email: username,
+								_wpnonce: '<?php echo esc_attr( wp_create_nonce( 'forgetpassword' ) ); ?>' // Include the nonce for security
+							},
+							success: function(response) {
+								console.log( response );
+								// Remove the 'processing' class to hide the overlay
+								$('.jet-form-builder').removeClass('processing');
+								Swal.fire({
+									icon: 'success',
+									title: 'تم',
+									text: response.data.msg, // Assuming response.msg contains the message from the server
+									confirmButtonText: 'غلق'
+								});
+							},
+							error: function(xhr, status, error) {
+								// Remove the 'processing' class to hide the overlay
+								$('.jet-form-builder').removeClass('processing');
+							}
+						});
+					}
+			);
 			});
 			jQuery( document ).ready( function( $ ) {
 				$(document).on(

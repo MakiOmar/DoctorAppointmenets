@@ -13,77 +13,79 @@ defined( 'ABSPATH' ) || die();
 function custom_forget_password_handler() {
     // phpcs:disable WordPress.Security.NonceVerification.Missing
 	$_req = $_POST;
+
 	// Check the nonce for security.
 	if ( ! isset( $_req['_wpnonce'] ) || ! wp_verify_nonce( $_req['_wpnonce'], 'forgetpassword' ) ) {
 		wp_send_json_error( 'Invalid nonce' );
 	}
 
 	// Get the data from the AJAX request.
-	$login_with = isset( $_req['login_with'] ) ? sanitize_text_field( $_req['login_with'] ) : '';
-	$phone      = isset( $_req['phone'] ) ? sanitize_text_field( trim( $_req['phone'] ) ) : '';
-	$email      = isset( $_req['email'] ) ? sanitize_text_field( $_req['email'] ) : '';
+	$login_with = sanitize_text_field( $_req['login_with'] ?? '' );
+	$phone      = sanitize_text_field( trim( $_req['phone'] ?? '' ) );
+	$email      = sanitize_text_field( $_req['email'] ?? '' );
 
-	// Server-side validation.
-	if ( ( 'mobile' === $login_with ) && empty( $phone ) ) {
-		wp_send_json_error( 'الرجاء إدخال رقم هاتف صالح أو استخدم البريد الإلكتروني بدلاً من ذلك.' );
-	} elseif ( ( 'email' === $login_with ) && empty( $email ) ) {
-		wp_send_json_error( 'الرجاء إدخال عنوان بريد إلكتروني صالح أو استخدام الهاتف بدلاً من ذلك.' );
+	// Validate input based on login method.
+	if ( ( 'mobile' === $login_with && empty( $phone ) ) || ( 'email' === $login_with && empty( $email ) ) ) {
+		wp_send_json_error( 'يرجى إدخال بيانات صحيحة.' );
 	}
-	$user = get_user_by( 'login', $email );
-	// Find the user based on the login method.
-	if ( ! $user ) {
+
+	// Find the user.
+	$user = null;
+	if ( 'mobile' === $login_with ) {
+		$user = get_users(
+			array(
+				'meta_key'   => 'billing_phone',
+				'meta_value' => $phone,
+				'number'     => 1,
+				'fields'     => 'all',
+			)
+		)[0] ?? get_user_by( 'login', $phone );
+	} elseif ( 'email' === $login_with ) {
 		$user = get_user_by( 'email', $email );
 	}
-	// If the user is not found, return an error.
+
+	// Return error if the user is not found.
 	if ( ! $user ) {
-		wp_send_json_error( 'عفوا! لايوجد مستخدم بهذه البيانات' );
+		wp_send_json_error( 'عفوا! لا يوجد مستخدم بهذه البيانات.' );
 	}
 
-	// Generate a new random 6-digit password.
+	// Generate a new password and update it.
 	$new_password = str_pad( wp_rand( 0, 999999 ), 6, '0', STR_PAD_LEFT );
-	// Update the user's password.
 	wp_set_password( $new_password, $user->ID );
 
-	// Prepare the email content.
-	$to       = $user->user_email;
-	$subject  = 'استعادة كلمة المرور';
-	$message  = '<div style="direction:rtl;text-align:right"><p>';
-	$message .= sprintf( 'تم تعيين كلمة مرور جديدة لحسابك: %s. كلمة المرور الجديدة هي: %s', $user->user_login, $new_password );
-	$message .= '</p></div>';
-	$headers  = array( 'Content-Type: text/html; charset=UTF-8' );
-
-	// Send the email.
-	wp_mail( $to, $subject, $message, $headers );
-
-	// Get the user's billing phone.
-	$billing_phone = get_user_meta( $user->ID, 'billing_phone', true );
-	$msg           = 'تم إرسال كلمة المرور الجديدة إلى بريدك الإلكتروني.';
-	if ( ! empty( $billing_phone ) ) {
-		// Check the last SMS sent timestamp.
-		$last_sms_time = get_user_meta( $user->ID, 'last_forget_sms_sent_time', true );
-		$current_time  = strtotime( current_time( 'mysql' ) ); // Convert current time to a Unix timestamp.
-
-		// If the last SMS was sent more than 5 minutes ago, send a new SMS.
-		if ( empty( $last_sms_time ) || ( $current_time - $last_sms_time ) > 300 ) {
-			send_sms_via_whysms( $billing_phone, sprintf( 'كلمة السر الجديدة الخاصة بك: %s', $new_password ) );
-
-			// Update the last SMS sent time.
-			update_user_meta( $user->ID, 'last_forget_sms_sent_time', $current_time );
-			// End the response with success.
-			$msg = 'تم إرسال كلمة المرور الجديدة إلى تليفونك وبريدك الإلكتروني.';
-
-		} else {
-			// End the response with success.
-			$msg = 'تم الإرسال على البريد ولكن لا يمكن إرسال رسالة للتليفون الآن. الرجاء المحاولة بعد 5 دقائق.';
+	// Handle notification.
+	$msg = '';
+	if ( 'mobile' === $login_with ) {
+		//phpcs:disable Universal.Operators.DisallowShortTernary.Found
+		$phone_to_use = get_user_meta( $user->ID, 'billing_phone', true ) ?: $user->user_login;
+		if ( in_array( 'doctor', $user->roles, true ) && strpos( $phone_to_use, '+2' ) === false ) {
+			$phone_to_use = '+2' . $phone_to_use;
 		}
-	}
 
-	// End the response with success.
-	wp_send_json(
-		array(
-			'msg' => $msg,
-		)
-	);
+		$last_sms_time = get_user_meta( $user->ID, 'last_forget_sms_sent_time', true );
+		$current_time  = strtotime( current_time( 'mysql' ) );
+
+		if ( ! empty( $phone_to_use ) && ( empty( $last_sms_time ) || ( $current_time - $last_sms_time ) > 300 ) ) {
+			send_sms_via_whysms( $phone_to_use, sprintf( 'كلمة السر الجديدة الخاصة بك: %s', $new_password ) );
+			update_user_meta( $user->ID, 'last_forget_sms_sent_time', $current_time );
+			$msg = 'تم إرسال كلمة المرور الجديدة إلى هاتفك.';
+		} else {
+			$msg = 'لا يمكن إرسال رسالة الآن. الرجاء المحاولة بعد 5 دقائق.';
+		}
+	} elseif ( 'email' === $login_with ) {
+		$to      = $user->user_email;
+		$subject = 'استعادة كلمة المرور';
+		$message = sprintf(
+			'<div style="direction:rtl;text-align:right"><p>تم تعيين كلمة مرور جديدة لحسابك: %s. كلمة المرور الجديدة هي: %s</p></div>',
+			$user->user_login,
+			$new_password
+		);
+		wp_mail( $to, $subject, $message, array( 'Content-Type: text/html; charset=UTF-8' ) );
+		$msg = 'تم إرسال كلمة المرور الجديدة إلى بريدك الإلكتروني.';
+	}
+	snks_error_log( $msg );
+	// Send the response.
+	wp_send_json_success( array( 'msg' => $msg ) );
 	die;
 }
 
