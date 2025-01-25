@@ -218,7 +218,7 @@ add_action(
 
 			// Old and new appointment details.
 			$old_date      = gmdate( 'd/m/Y', strtotime( $booking->date_time ) );
-			$new_booking = snks_get_timetable_by( 'ID', absint( $new_booking_id ) );
+			$new_booking   = snks_get_timetable_by( 'ID', absint( $new_booking_id ) );
 			$new_date_time = $new_booking->date_time; // Assuming this function fetches the new date & time.
 			$new_date      = gmdate( 'd/m/Y', strtotime( $new_date_time ) );
 			$new_time      = gmdate( 'h:i a', strtotime( $new_date_time ) );
@@ -231,7 +231,9 @@ add_action(
 				$new_date,
 				$new_time
 			);
-
+			if ( empty( $billing_phone ) ) {
+				$billing_phone = $patient_user->user_login;
+			}
 			// Send SMS notification.
 			send_sms_via_whysms( $billing_phone, $message );
 

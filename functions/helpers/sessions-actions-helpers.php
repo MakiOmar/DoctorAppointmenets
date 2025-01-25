@@ -53,7 +53,11 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 		);
 		snks_send_email( $user->user_email, $title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url, $after_button );
 		$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
-		$message       = sprintf(
+		if ( empty( $billing_phone ) ) {
+			$user          = get_user_by( 'id', $patient_id );
+			$billing_phone = $user->user_login;
+		}
+		$message = sprintf(
 			'نعتذر عن الغاء جلسة %1$s، لحجز موعد اخر مجانا : %2$s',
 			gmdate( 'Y-d-m', strtotime( $date ) ),
 			add_query_arg( 'edit-booking', $id, site_url( '7jz/' . $nickname ) )
@@ -79,6 +83,9 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, 
 	$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
 	if ( ! $user || ! $doctor ) {
 		return;
+	}
+	if ( empty( $billing_phone ) ) {
+		$billing_phone = $user->user_login;
 	}
 	// Delete custom emaol code on commit 8072d24.
 	$title    = 'تم تأخير موعدك';
