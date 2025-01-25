@@ -29,6 +29,10 @@ function doctor_presence_callback() {
 			'المعالج جاهز لبدء الجلسة،  اضغط هنا للدخول:%s',
 			'www.jalsah.link'
 		);
+		if ( empty( $billing_phone ) ) {
+			$user          = get_user_by( 'id', $session->client_id );
+			$billing_phone = $user->user_login;
+		}
 		send_sms_via_whysms( $billing_phone, $message );
 	}
 	wp_send_json(
