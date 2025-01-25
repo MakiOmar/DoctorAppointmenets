@@ -74,7 +74,7 @@ function verify_otp_and_save_withdrawal() {
 		return;
 	}
 
-	save_withdrawal_settings( $user_id, $_POST, $withdrawal_method );
+	save_withdrawal_settings( $user_id, $_POST );
 
 	wp_send_json_success( array( 'message' => 'تم حفظ إعدادات السحب بنجاح.' ) );
 }
@@ -152,12 +152,16 @@ function validate_withdrawal_fields( $method, $data, $user_id ) {
 /**
  * Save withdrawal settings.
  *
- * @param int    $user_id User ID.
- * @param array  $data Form data.
- * @param string $method Withdrawal method.
+ * @param int   $user_id User ID.
+ * @param array $data Form data.
  */
-function save_withdrawal_settings( $user_id, $data, $method ) {
-	$settings = array( 'withdrawal_method' => $method );
+function save_withdrawal_settings( $user_id, $data ) {
+	$withdrawal_option = isset( $data['withdrawal_option'] ) ? sanitize_text_field( $data['withdrawal_option'] ) : '';
+	$withdrawal_method = isset( $data['withdrawal_method'] ) ? sanitize_text_field( $data['withdrawal_method'] ) : '';
+	$settings          = array(
+		'withdrawal_method' => $withdrawal_method,
+		'withdrawal_option' => $withdrawal_option,
+	);
 
 	foreach ( $data as $key => $value ) {
 		if ( array_key_exists( $key, get_withdrawal_validation_rules() ) ) {
@@ -302,7 +306,7 @@ function handle_manual_withdrawal_ajax() {
 	$table_name           = $wpdb->prefix . TRNS_TABLE_NAME;
 
 	// Process the withdrawal for the current user.
-	process_user_withdrawal( $current_user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
+	process_user_withdrawal( $current_user, $current_day_of_week, $current_day_of_month, $current_date, $table_name, true );
 
 	// Return success response.
 	wp_send_json_success(

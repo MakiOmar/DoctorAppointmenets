@@ -183,8 +183,9 @@ function process_withdrawals_batch() {
  * @param int    $current_day_of_month Current day of the month.
  * @param string $current_date Current date.
  * @param string $table_name The table name.
+ * @param bool   $manual True if manual, Otherwise false.
  */
-function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name ) {
+function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name, $manual = false ) {
 	global $wpdb;
 
 	$user_id             = $user->user_id;
@@ -200,7 +201,7 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 	// Check if the user is eligible for withdrawal based on the option.
 	if ( 'daily_withdrawal' === $withdrawal_option ||
 		( 'weekly_withdrawal' === $withdrawal_option && 6 === absint( $current_day_of_week ) ) ||
-		( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) ) {
+		( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) || $manual ) {
 
 		// Get the eligible balance for withdrawal.
 		$available_balance = get_available_balance( $user_id );
