@@ -200,14 +200,6 @@ add_action(
 					var forms = document.querySelectorAll('.jet-form-builder');
 					listenToForms( forms );
 				});
-				
-				// Prompt the user when trying to leave the page (refresh, close tab, etc.)
-				/*window.addEventListener('beforeunload', function (e) {
-					if (preventNavigation) {
-						e.returnValue = confirmationMessage; // For most browsers
-						return confirmationMessage;          // Some older browsers
-					}
-				});*/
 
 				$( document ).on('click', '.jet-form-builder-repeater__remove', function(){
 					$(".item-deleted").trigger('click');
