@@ -38,6 +38,7 @@ function snks_send_session_notifications() {
 			"
         SELECT * FROM {$wpdb->prefix}snks_provider_timetable
         WHERE session_status = %s
+		AND attendance_type = 'online'
         AND ( ( date_time <= %s AND date_time >= %s AND notification_24hr_sent = %d )
         OR ( date_time <= %s AND date_time >= %s AND notification_1hr_sent = %d ) )
         LIMIT 50
