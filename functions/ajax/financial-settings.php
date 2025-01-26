@@ -26,7 +26,7 @@ function send_email_otp() {
 	$user_id           = get_current_user_id();
 	$withdrawal_method = sanitize_text_field( $_POST['withdrawal_method'] ?? '' );
 
-	if ( ! validate_withdrawal_fields( $withdrawal_method, $_POST, $user_id ) ) {
+	if ( ! validate_withdrawal_fields( $withdrawal_method, $_POST ) ) {
 		return;
 	}
 
@@ -70,7 +70,7 @@ function verify_otp_and_save_withdrawal() {
 	}
 
 	$withdrawal_method = sanitize_text_field( $_POST['withdrawal_method'] ?? '' );
-	if ( ! validate_withdrawal_fields( $withdrawal_method, $_POST, $user_id ) ) {
+	if ( ! validate_withdrawal_fields( $withdrawal_method, $_POST ) ) {
 		return;
 	}
 
@@ -129,11 +129,10 @@ function validate_otp( $user_id, $otp_input ) {
  *
  * @param string $method Withdrawal method.
  * @param array  $data Form data.
- * @param int    $user_id User ID.
  *
  * @return bool
  */
-function validate_withdrawal_fields( $method, $data, $user_id ) {
+function validate_withdrawal_fields( $method, $data ) {
 	$validation_rules = get_withdrawal_validation_rules();
 	$required_fields  = get_required_withdrawal_fields();
 
@@ -292,8 +291,7 @@ function handle_manual_withdrawal_ajax() {
 	if ( 'manual_withdrawal' !== $withdrawal_settings['withdrawal_option'] ) {
 		wp_send_json_error(
 			array(
-				// 'message' => 'تأكد من اختيار السحب اليدوي ثم حفظ النموذج أولاً.',
-				'message' => $withdrawal_settings['withdrawal_option'],
+				'message' => 'تأكد من اختيار السحب اليدوي ثم حفظ النموذج أولاً.',
 			)
 		);
 	}
