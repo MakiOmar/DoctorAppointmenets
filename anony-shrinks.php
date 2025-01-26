@@ -76,7 +76,28 @@ define(
 		)
 	)
 );
-
+/**
+ * Add a custom schedule for every 15 minutes.
+ *
+ * @param array $schedules Existing schedules.
+ * @return array Modified schedules.
+ */
+function snks_add_cron_schedule( $schedules ) {
+	$schedules['every_15_minutes'] = array(
+		'interval' => 15 * 60, // 15 minutes in seconds.
+		'display'  => __( 'Every 15 Minutes' ),
+	);	
+	$schedules['every_5_minutes'] = array(
+		'interval' => 5 * 60, // 5 minutes in seconds.
+		'display'  => __( 'Every 5 Minutes' ),
+	);
+	$schedules['every_minute']     = array(
+		'interval' => 60, // Minute in seconds.
+		'display'  => __( 'Every Minute' ),
+	);
+	return $schedules;
+}
+add_filter( 'cron_schedules', 'snks_add_cron_schedule' );
 
 require_once SNKS_DIR . 'functions/helpers.php';
 require_once SNKS_DIR . '/vendor/autoload.php';
