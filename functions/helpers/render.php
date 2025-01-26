@@ -1153,10 +1153,10 @@ function snks_render_bookings( $_timetables, $tens ) {
 					<?php if ( 'past' !== $tens ) { ?>
 					<div style="background-color:#dcdcdc;" class="anony-grid-row snks-timetable-accordion-actions anony-padding-10 anony-flex flex-h-center flex-v-center">
 						<div class="anony-grid-col anony-grid-col-6">
-							<button data-title="تأجيل" class="snks-postpon anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأجيل الجلسات</button>
+							<button data-title="تأجيل" data-action=".snks-postpon" class="snks-booking-bulk-action snks-postpon anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأجيل الجلسات</button>
 						</div>
 						<div class="anony-grid-col anony-grid-col-6">
-							<button data-title="تأخير" class="snks-delay anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأخير الجلسات</button>
+							<button data-title="تأخير" data-action=".snks-delay" class="snks-booking-bulk-action snks-delay anony-curved-5 anony-padding-5 snks-bg anony-full-width">تأخير الجلسات</button>
 						</div>
 					</div>
 					<?php } ?>

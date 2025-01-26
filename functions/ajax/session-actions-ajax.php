@@ -34,7 +34,7 @@ function appointment_action_callback() {
 	if ( '.snks-delay' === $_req['ele'] ) {
 		if ( $_req['delayBy'] ) {
 			foreach ( $_req['IDs'] as $data ) {
-				$sent = snks_delay_appointment( $data['patientID'], $data['doctorID'], $_req['delayBy'], $data['date'], $_req['delayBy'] );
+				$sent = snks_delay_appointment( $data['patientID'], $data['doctorID'], $_req['delayBy'], $data['date'] );
 				if ( ! $sent ) {
 					$errors[] = $data['ID'];
 				}

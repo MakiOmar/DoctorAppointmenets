@@ -41,13 +41,12 @@ add_action(
 
 				return values;
 			}
-			function snks_bookings_bulk_action_popup( ele ) {
-
-				$(document).on(
-					'click',
-					ele,
-					function(e) {
-						e.preventDefault();
+			$(document).on(
+				'click',
+				'.snks-booking-bulk-action',
+				function(e){
+					var ele = $(this).data('action');
+					e.preventDefault();
 						let parent = $(this).closest('.snks-timetable-accordion-wrapper');
 						let values = getCheckedValues(parent, 'bulk-action[]');
 						if ( values.length == 0 ) {
@@ -64,6 +63,7 @@ add_action(
 						});
 						$("#iam-sure").attr('data-action', ele);
 						$("#iam-sure").attr('data-parent', parent.attr('data-id'));
+						console.log('After update:', $("#iam-sure").attr('data-action'));
 						$.fn.justShowSurepopup(ulElement, $(this).data('title') + ' هذه المواعيد');
 						
 						if ( ele === '.snks-delay' ){
@@ -71,21 +71,15 @@ add_action(
 						} else {
 							$("#delay-by").remove();
 						}
-					}
-				);
-
-			}
-
-			snks_bookings_bulk_action_popup( '.snks-postpon');
-			snks_bookings_bulk_action_popup( '.snks-delay' );
-			
-			$(document).on(
+				}
+			);
+			var data;
+			$(document.body).on(
 				'click',
 				'#iam-sure',
 				function() {
 					let container = $(this).closest('.jet-popup__container');
-					let parent = $("#" + $(this).data('parent'));
-					let values = getCheckedValues(parent, 'bulk-action[]');
+					let values = getCheckedValues($("#" + $(this).data('parent')), 'bulk-action[]');
 					if ( values.length == 0 ) {
 						$.fn.justShowErrorpopup('فضلاً قم بتحديد جلسة!');
 						return;
@@ -93,14 +87,14 @@ add_action(
 					var nonce = '<?php echo esc_html( wp_create_nonce( 'appointment_action_nonce' ) ); ?>';
 
 					var delayBy = false;
-					let swalTitle = 'نجحت العملية';
-					let swalText = 'تم تأجيل المواعيد بنجاح';
-					var act     = $(this).data('action');
+					var swalTitle = 'نجحت العملية';
+					var swalText = 'تم تأجيل المواعيد بنجاح';
+					var act     = $("#iam-sure").attr('data-action');
 					if ( $("#delay-by").length > 0 ) {
 						delayBy = $("#delay-by").val();
 						swalText = "تم إرسال إشعار  بتأخير  الموعد";
 					}
-					let data = {
+					data = {
 							action    : 'appointment_action',
 							ele       : act,
 							IDs       : values,
@@ -207,7 +201,6 @@ add_action(
 									location.reload();
 								}
 							});
-;
 						} else if (response.status && response.status === 'faild') {
 							// Show error message with SweetAlert
 							Swal.fire({

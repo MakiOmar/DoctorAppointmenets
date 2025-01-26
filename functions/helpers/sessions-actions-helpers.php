@@ -22,6 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return void
  */
 function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
+	$date     = str_replace( 'م', 'PM', $date ); // Replace Arabic "م" with "PM".
+	$date     = str_replace( 'ص', 'AM', $date ); // Replace Arabic "ص" with "AM".
 	$updated  = snks_update_timetable(
 		$id,
 		array(
@@ -60,24 +62,24 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 		$message = sprintf(
 			'نعتذر عن الغاء جلسة %1$s، لحجز موعد اخر مجانا : %2$s',
 			gmdate( 'Y-d-m', strtotime( $date ) ),
-			add_query_arg( 'edit-booking', $id, site_url( '7jz/' . $nickname ) )
+			'www.jalsah.link'
 		);
 		send_sms_via_whysms( $billing_phone, $message );
 	}
 	// this.
 }
 
+
 /**
  * Delay appointment
  *
- * @param int    $patient_id  patient's ID.
- * @param int    $doctor_id  Doctor's ID.
- * @param string $delay_period  Delay period.
- * @param string $date  Appointment date.
- * @param string $time  Appointment time.
+ * @param int    $patient_id  Patient's ID.
+ * @param int    $doctor_id   Doctor's ID.
+ * @param string $delay_period Delay period.
+ * @param string $date        Appointment date.
  * @return void
  */
-function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, $time ) {
+function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date ) {
 	$user          = get_user_by( 'id', $patient_id );
 	$doctor        = get_user_by( 'id', $doctor_id );
 	$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
@@ -87,24 +89,39 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date, 
 	if ( empty( $billing_phone ) ) {
 		$billing_phone = $user->user_login;
 	}
-	// Delete custom emaol code on commit 8072d24.
+
+	// Parse date properly.
+	$date      = str_replace( 'م', 'PM', $date ); // Replace Arabic "م" with "PM".
+	$date      = str_replace( 'ص', 'AM', $date ); // Replace Arabic "ص" with "AM".
+	$timestamp = strtotime( $date );
+
+	if ( false === $timestamp ) {
+		// Handle invalid date parsing.
+		error_log( 'Invalid date provided: ' . $date );
+		return;
+	}
+
 	$title    = 'تم تأخير موعدك';
-	$new_hour = gmdate( 'h:i a', strtotime( "+$delay_period minutes", strtotime( $time ) ) );
+	$new_hour = gmdate( 'h:i a', strtotime( "+$delay_period minutes", $timestamp ) );
 	$to       = $user->user_email;
 	$subject  = $title . ' - ' . SNKS_APP_NAME;
-	$message  = sprintf(
+
+	$message = sprintf(
 		'نعتذر عن تاخير جلسة يوم %1$s لمدة %2$s ليصبح موعدها %3$s',
-		gmdate( 'Y-d-m', strtotime( $date ) ),
+		gmdate( 'Y-m-d', $timestamp ),
 		$delay_period . ' دقيقة',
 		$new_hour
 	);
-	$headers  = array(
+
+	$headers = array(
 		'Content-Type: text/html; charset=UTF-8',
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
+
 	send_sms_via_whysms( $billing_phone, $message );
 	return wp_mail( $to, $subject, $message, $headers );
 }
+
 
 
 /**
