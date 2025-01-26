@@ -83,22 +83,6 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				foreach ( $line_items as $item_id => $item ) {
 					wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
 				}
-				$booking_changed = true;
-				if ( $free ) {
-					if ( snks_is_doctor() ) {
-						return true;
-					}
-					wp_safe_redirect(
-						add_query_arg(
-							array(
-								'edit' => 'success',
-							),
-							site_url( '/my-bookings/' )
-						)
-					);
-					exit;
-				}
-				$booking_changed = true;
 				// Doctor.
 				if ( snks_is_patient() && class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 					// Use the correct namespace to initialize the class.
@@ -137,12 +121,28 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 						$billing_last_name,           // Client's last name.
 						$new_date_formatted           // New session date and time.
 					);
-
 					$user_id = $new_timetable->user_id;
 
 					// Call the notifier method.
 					$firebase->trigger_notifier( $title, $content, $user_id, '' );
 				}
+				$booking_changed = true;
+				if ( $free ) {
+					if ( snks_is_doctor() ) {
+						return true;
+					}
+
+					wp_safe_redirect(
+						add_query_arg(
+							array(
+								'edit' => 'success',
+							),
+							site_url( '/my-bookings/' )
+						)
+					);
+					exit;
+				}
+				$booking_changed = true;
 
 				return true;
 			}
