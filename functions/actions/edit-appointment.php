@@ -64,10 +64,12 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 			$updated = snks_update_timetable(
 				$new_timetable->ID,
 				array(
-					'session_status' => 'open',
-					'client_id'      => $booking->client_id,
-					'order_id'       => $main_order->get_id(),
-					'settings'       => $booking->settings,
+					'session_status'         => 'open',
+					'client_id'              => $booking->client_id,
+					'order_id'               => $main_order->get_id(),
+					'settings'               => $booking->settings,
+					'notification_24hr_sent' => 0,
+					'notification_1hr_sent'  => 0,
 				)
 			);
 			if ( $updated ) {
@@ -97,6 +99,51 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					exit;
 				}
 				$booking_changed = true;
+				// Doctor.
+				if ( snks_is_patient() && class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
+					// Use the correct namespace to initialize the class.
+					$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+
+					// Ensure that $_req parameters are sanitized before using them.
+					$title = 'تم تعديل موعد جلسة محجوزه';
+
+					// Fetch the client's user data.
+					$client_id          = $booking->client_id;
+					$billing_first_name = get_user_meta( $client_id, 'billing_first_name', true );
+					$billing_last_name  = get_user_meta( $client_id, 'billing_last_name', true );
+
+					// Generate the old session date and time.
+					$old_date_formatted = sprintf(
+						'%1$s %2$s الساعه %3$s',
+						localize_date_to_arabic( $booking->day ), // Localized old day name in Arabic.
+						gmdate( 'd/m/Y', strtotime( $booking->date_time ) ), // Old date formatted as DD/MM/YYYY.
+						snks_localize_time( gmdate( 'g a', strtotime( $booking->date_time ) ) ) // Old time localized in 12-hour format.
+					);
+
+					// Generate the new session date and time.
+					$new_date_formatted = sprintf(
+						'%1$s %2$s الساعه %3$s',
+						localize_date_to_arabic( $new_timetable->day ), // Localized new day name in Arabic.
+						gmdate( 'd/m/Y', strtotime( $new_timetable->date_time ) ), // New date formatted as DD/MM/YYYY.
+						snks_localize_time( gmdate( 'g a', strtotime( $new_timetable->date_time ) ) ) // New time localized in 12-hour format.
+					);
+
+					// Generate the content with the dynamic period.
+					$content = sprintf(
+						'تم تعديل موعد جلسة يوم %1$s ومدتها %2$s دقيقة باسم %3$s %4$s الي موعد يوم %5$s.',
+						$old_date_formatted,          // Old session date and time.
+						$new_timetable->period,       // Dynamic session period.
+						$billing_first_name,          // Client's first name.
+						$billing_last_name,           // Client's last name.
+						$new_date_formatted           // New session date and time.
+					);
+
+					$user_id = $new_timetable->user_id;
+
+					// Call the notifier method.
+					$firebase->trigger_notifier( $title, $content, $user_id, '' );
+				}
+
 				return true;
 			}
 		}
@@ -248,7 +295,7 @@ add_action(
 			// Send a success response.
 			wp_send_json(
 				array(
-					'message' => 'تم تغيير الموعد بنجاح. تم إشعار المريض عبر البريد والرسائل النصية.',
+					'message' => 'تم تغيير الموعد بنجاح. تم إ��عار المريض عبر البريد والرسائل النصية.',
 					'status'  => 'success',
 				)
 			);
