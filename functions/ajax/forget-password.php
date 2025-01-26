@@ -43,10 +43,9 @@ function custom_forget_password_handler() {
 	} elseif ( 'email' === $login_with ) {
 		$user = get_user_by( 'email', $email );
 	}
-
 	// Return error if the user is not found.
-	if ( ! $user ) {
-		wp_send_json_error( 'عفوا! لا يوجد مستخدم بهذه البيانات.' );
+	if ( ! $user || empty( $user ) ) {
+		wp_send_json_error( array( 'msg' => 'عفوا! لا يوجد مستخدم بهذه البيانات.' ) );
 	}
 
 	// Generate a new password and update it.
@@ -83,7 +82,6 @@ function custom_forget_password_handler() {
 		wp_mail( $to, $subject, $message, array( 'Content-Type: text/html; charset=UTF-8' ) );
 		$msg = 'تم إرسال كلمة المرور الجديدة إلى بريدك الإلكتروني.';
 	}
-	snks_error_log( $msg );
 	// Send the response.
 	wp_send_json_success( array( 'msg' => $msg ) );
 	die;
