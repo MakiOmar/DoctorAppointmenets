@@ -52,7 +52,6 @@ function snks_unblock_user( $user_id ) {
  */
 function snks_is_blocked( $user_id ) {
 	$is_active = get_user_meta( $user_id, 'is_active', true );
-	snks_error_log( $is_active );
 	return ! empty( $is_active ) && 'n' === $is_active;
 }
 
