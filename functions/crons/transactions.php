@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || die();
 define( 'SNKS_CURRENT_TIME', current_time( 'Y-m-d 00:00:00' ) );
 
 define( 'SNKS_DEV_MODE', true );
-
+//phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
 if ( ! function_exists( 'WP_Filesystem' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 }
@@ -117,11 +117,10 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name, $manual = false ) {
 	global $wpdb;
 
-	$user_id             = $user->user_id;
+	$user_id             = $user->ID;
 	$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
-
 	if ( empty( $withdrawal_settings ) ) {
-		return;
+		return false;
 	}
 
 	$withdrawal_option = $withdrawal_settings['withdrawal_option'];
@@ -139,7 +138,7 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 		if ( $withdraw_amount > 5 ) {
 			$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
 			if ( ! $withdrawal_id ) {
-				return;
+				return false;
 			}
 
 			$output_data = null;
@@ -156,16 +155,16 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 				$output_data = array( snks_wallet_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
 				$output_type = 'wallet';
 			}
-
 			if ( ! empty( $output_data ) ) {
 				$generated = snks_generate_xlsx( $output_data, $output_type );
 				if ( $generated ) {
 					snks_update_processed_withdrawals( $withdrawal_id );
 				}
 			}
-
+			//phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// Mark the eligible "add" transactions as processed.
-			$wpdb->query(
+			$result = $wpdb->query(
 				$wpdb->prepare(
 					"
 					UPDATE $table_name
@@ -179,8 +178,14 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 					$current_date
 				)
 			);
-
-			snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
+			// Check if the query was successful.
+			if ( false !== $result && $result > 0 ) {
+				// Log the transaction only if rows were updated.
+				snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 }
