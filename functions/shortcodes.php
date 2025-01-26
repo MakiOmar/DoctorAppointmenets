@@ -794,7 +794,12 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 
 			<!--<div class="amount-section">
 				<p>ضريبة القيمة المضافة</p>
-				<p class="price"><?php /*echo esc_html( $form_data['_vat'] );*/ ?> ج.م</p>
+				<p class="price">
+					<?php
+				//phpcs:disable Squiz.PHP.CommentedOutCode.Found
+					/*echo esc_html( $form_data['_vat'] );*/
+					?>
+				ج.م</p>
 			</div>-->
 		</div>
 		<div class="total">
