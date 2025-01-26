@@ -73,7 +73,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					update_post_meta( $order_id, 'booking_id', $timetable->ID );
 					update_post_meta( $order_id, 'doctor_id', $timetable->user_id );
 					update_post_meta( $order_id, 'doctor_pricings', snks_doctor_pricings( $timetable->user_id ) );
-
+					// Patient.
 					$message = sprintf(
 						'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
 						'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
@@ -84,6 +84,33 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					);
 
 					send_sms_via_whysms( $order->get_billing_phone(), $message );
+
+					// Doctor.
+					if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
+						// Use the correct namespace to initialize the class.
+						$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+
+						// Ensure that $_req parameters are sanitized before using them.
+						$title = 'تم حجز جلسة جديده';
+						// Fetch the client's user data.
+						$client_id          = $customer_id;
+						$billing_first_name = get_user_meta( $client_id, 'billing_first_name', true );
+						$billing_last_name  = get_user_meta( $client_id, 'billing_last_name', true );
+
+						// Generate the content with the desired format.
+						$content = sprintf(
+							'تم حجز جلسة يوم %1$s %2$s الساعه %3$s لمدة %4$s دقيقة باسم %5$s %6$s.',
+							localize_date_to_arabic( $timetable->day ), // Localized day name in Arabic.
+							gmdate( 'd/m/Y', strtotime( $timetable->date_time ) ), // Format date as DD/MM/YYYY.
+							snks_localize_time( gmdate( 'g a', strtotime( $timetable->date_time ) ) ), // Localize time in 12-hour format.
+							$timetable->period, // Dynamic session period.
+							$billing_first_name, // Client's first name.
+							$billing_last_name   // Client's last name.
+						);
+						$user_id = $timetable->user_id;
+						// Call the notifier method.
+						$firebase->trigger_notifier( $title, $content, $user_id, '' );
+					}
 				} else {
 					snks_error_log( $order_id . ' :Failed to update timetable.' );
 					throw new Exception( 'Failed to update timetable.' );
