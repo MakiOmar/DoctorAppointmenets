@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || die();
  * Schedules an event if not already scheduled.
  */
 if ( ! wp_next_scheduled( 'snks_check_session_notifications' ) ) {
-	wp_schedule_event( time(), 'every_15_minutes', 'snks_check_session_notifications' );
+	wp_schedule_event( time(), 'every_minute', 'snks_check_session_notifications' );
 }
 
 /**
@@ -41,7 +41,7 @@ function snks_send_session_notifications() {
 		AND attendance_type = 'online'
         AND ( ( date_time <= %s AND date_time >= %s AND notification_24hr_sent = %d )
         OR ( date_time <= %s AND date_time >= %s AND notification_1hr_sent = %d ) )
-        LIMIT 50
+        LIMIT 20
         ",
 			'open',
 			$time_24_hours,
@@ -57,8 +57,8 @@ function snks_send_session_notifications() {
 	foreach ( $results as $session ) {
 		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
 		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
+		$user          = get_user_by( 'id', $session->client_id );
 		if ( empty( $billing_phone ) ) {
-			$user          = get_user_by( 'id', $session->client_id );
 			$billing_phone = $user->user_login;
 		}
 		if ( ! empty( $billing_phone ) ) {
@@ -76,7 +76,7 @@ function snks_send_session_notifications() {
 				send_sms_via_whysms( $billing_phone, $message );
 				//phpcs:disable
 				$wpdb->update(
-					'snks_provider_timetable',
+					$wpdb->prefix . 'snks_provider_timetable',
 					array( 'notification_24hr_sent' => 1 ),
 					array( 'ID' => $session->ID ),
 					array( '%d' ),
@@ -92,7 +92,7 @@ function snks_send_session_notifications() {
 				);
 				send_sms_via_whysms( $billing_phone, $message );
 				$wpdb->update(
-					'snks_provider_timetable',
+					$wpdb->prefix . 'snks_provider_timetable',
 					array( 'notification_1hr_sent' => 1 ),
 					array( 'ID' => $session->ID ),
 					array( '%d' ),
