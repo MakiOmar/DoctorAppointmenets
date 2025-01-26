@@ -17,22 +17,6 @@ if ( ! function_exists( 'WP_Filesystem' ) ) {
 
 WP_Filesystem();
 
-
-/**
- * Add a custom schedule for every 15 minutes.
- *
- * @param array $schedules Existing schedules.
- * @return array Modified schedules.
- */
-function snks_add_cron_schedule( $schedules ) {
-	$schedules['every_15_minutes'] = array(
-		'interval' => 15 * 60, // 15 minutes in seconds.
-		'display'  => __( 'Every 15 Minutes' ),
-	);
-	return $schedules;
-}
-add_filter( 'cron_schedules', 'snks_add_cron_schedule' );
-
 /**
  * Schedule the withdrawal cron job to run every 15 minutes starting at 12 am.
  */
@@ -120,61 +104,6 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 		return $wpdb->insert_id; // This is the ID of the inserted row.
 	}
 }
-
-/**
- * Process withdrawal transactions for a batch of 50 users.
- */
-function process_withdrawals_batch() {
-	global $wpdb;
-
-	// Ensure the cron job runs only between 12 am and 9 am.
-	$current_time = current_time( 'H:i:s' );
-	if ( ! SNKS_DEV_MODE && ( $current_time < '00:00:00' || $current_time > '09:00:00' ) ) {
-		return;
-	}
-	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
-	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
-	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
-
-	// Get the transient offset for batch processing (50 users at a time).
-	$offset = get_transient( 'withdrawal_offset' );
-	if ( false === $offset ) {
-		$offset = 0;
-	}
-
-	$table_name   = $wpdb->prefix . TRNS_TABLE_NAME;
-	$current_date = SNKS_CURRENT_TIME;
-	//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	// Query 50 users with eligible transactions.
-	$users = $wpdb->get_results(
-		$wpdb->prepare(
-			"
-            SELECT user_id 
-            FROM $table_name 
-            WHERE transaction_type = 'add' 
-			AND transaction_time < %s
-			AND processed_for_withdrawal = 0
-            LIMIT 50 OFFSET %d
-            ",
-			$current_date,
-			$offset
-		)
-	);
-
-	// Process each user using the helper function.
-	foreach ( $users as $user ) {
-		process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
-	}
-
-	// Update the offset for the next batch of users.
-	if ( count( $users ) > 0 ) {
-		$offset += 50;
-		set_transient( 'withdrawal_offset', $offset, 15 * MINUTE_IN_SECONDS );
-	} else {
-		delete_transient( 'withdrawal_offset' );
-	}
-}
-
 /**
  * Helper function to process withdrawal for a single user.
  *
@@ -256,9 +185,62 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 	}
 }
 
+/**
+ * Process withdrawal transactions for a batch of 50 users.
+ */
+function process_withdrawals_batch() {
+	global $wpdb;
+
+	// Ensure the cron job runs only between 12 am and 9 am.
+	$current_time = current_time( 'H:i:s' );
+	if ( ! SNKS_DEV_MODE && ( $current_time < '00:00:00' || $current_time > '09:00:00' ) ) {
+		return;
+	}
+	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
+	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
+	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
+
+	// Get the transient offset for batch processing (50 users at a time).
+	$offset = get_transient( 'withdrawal_offset' );
+	if ( false === $offset ) {
+		$offset = 0;
+	}
+
+	$table_name   = $wpdb->prefix . TRNS_TABLE_NAME;
+	$current_date = SNKS_CURRENT_TIME;
+	//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// Query 50 users with eligible transactions.
+	$users = $wpdb->get_results(
+		$wpdb->prepare(
+			"
+            SELECT user_id 
+            FROM $table_name 
+            WHERE transaction_type = 'add' 
+			AND transaction_time < %s
+			AND processed_for_withdrawal = 0
+            LIMIT 50 OFFSET %d
+            ",
+			$current_date,
+			$offset
+		)
+	);
+
+	// Process each user using the helper function.
+	foreach ( $users as $user ) {
+		process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
+	}
+
+	// Update the offset for the next batch of users.
+	if ( count( $users ) > 0 ) {
+		$offset += 50;
+		set_transient( 'withdrawal_offset', $offset, 15 * MINUTE_IN_SECONDS );
+	} else {
+		delete_transient( 'withdrawal_offset' );
+	}
+}
+
 add_action( 'snks_process_withdrawals_event', 'process_withdrawals_batch' );
 add_action( 'wp', 'process_withdrawals_batch' );
-
 
 /**
  * Rotate the log file if it exceeds the maximum size using WP_Filesystem.
@@ -397,17 +379,6 @@ function snks_create_withdrawal_directory() {
 
 	return $withdrawals_dir;
 }
-
-/**
- * Schedule the custom cron job if it's not already scheduled.
- */
-function snks_schedule_withdrawal_cron() {
-	if ( ! wp_next_scheduled( 'snks_process_withdrawal_xlsx_event' ) ) {
-		wp_schedule_event( time(), 'every_15_minutes', 'snks_process_withdrawal_xlsx_event' );
-	}
-}
-add_action( 'wp', 'snks_schedule_withdrawal_cron' );
-
 /**
  * Bank xlsx generate
  *
