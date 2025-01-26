@@ -445,7 +445,7 @@ function custom_withdrawal_form_shortcode() {
 					'name'       => 'wallet_owner_name',
 					'value'      => isset( $withdrawal_settings['wallet_owner_name'] ) ? $withdrawal_settings['wallet_owner_name'] : '',
 					'attributes' => array(
-						'pattern'     => '[A-Za-z ]+',
+						'oninput'     => 'this.value=this.value.replace(/[^A-Za-z\s]/g,"");',
 						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
 						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
 					),
@@ -462,7 +462,7 @@ function custom_withdrawal_form_shortcode() {
 					'name'       => 'account_holder_name',
 					'value'      => isset( $withdrawal_settings['account_holder_name'] ) ? $withdrawal_settings['account_holder_name'] : '',
 					'attributes' => array(
-						'pattern'     => '[A-Za-z ]+',
+						'oninput'     => 'this.value=this.value.replace(/[^A-Za-z\s]/g,"");',
 						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
 						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
 					),
@@ -482,7 +482,7 @@ function custom_withdrawal_form_shortcode() {
 					'name'       => 'bank_name',
 					'value'      => isset( $withdrawal_settings['bank_name'] ) ? $withdrawal_settings['bank_name'] : '',
 					'attributes' => array(
-						'pattern'     => '[A-Za-z ]+',
+						'oninput'     => 'this.value=this.value.replace(/[^A-Za-z\s]/g,"");',
 						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
 						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
 					),
@@ -500,7 +500,7 @@ function custom_withdrawal_form_shortcode() {
 					'name'       => 'card_holder_first_name',
 					'value'      => isset( $withdrawal_settings['card_holder_first_name'] ) ? $withdrawal_settings['card_holder_first_name'] : '',
 					'attributes' => array(
-						'pattern'     => '[A-Za-z ]+',
+						'oninput'     => 'this.value=this.value.replace(/[^A-Za-z\s]/g,"");',
 						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
 						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
 					),
@@ -511,7 +511,7 @@ function custom_withdrawal_form_shortcode() {
 					'value'      => isset( $withdrawal_settings['meza_bank_code'] ) ? $withdrawal_settings['meza_bank_code'] : '',
 					'options'    => $banks,
 					'attributes' => array(
-						'pattern'     => '[A-Za-z ]+',
+						'oninput'     => 'this.value=this.value.replace(/[^A-Za-z\s]/g,"");',
 						'placeholder' => 'أدخل الأحرف الإنجليزية فقط',
 						'title'       => 'يرجى إدخال الأحرف الإنجليزية فقط.',
 					),
