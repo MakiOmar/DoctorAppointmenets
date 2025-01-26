@@ -58,7 +58,7 @@ function custom_forget_password_handler() {
 		//phpcs:disable Universal.Operators.DisallowShortTernary.Found
 		$phone_to_use = get_user_meta( $user->ID, 'billing_phone', true ) ?: $user->user_login;
 		if ( in_array( 'doctor', $user->roles, true ) && strpos( $phone_to_use, '+2' ) === false ) {
-			$phone_to_use = '+2' . $phone_to_use;
+			$phone_to_use = '+20' . $phone_to_use;
 		}
 
 		$last_sms_time = get_user_meta( $user->ID, 'last_forget_sms_sent_time', true );

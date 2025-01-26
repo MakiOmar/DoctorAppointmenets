@@ -62,7 +62,7 @@ function snks_send_session_notifications() {
 		}
 		if ( ! empty( $billing_phone ) ) {
 			if ( in_array( 'doctor', $user->roles, true ) && strpos( $billing_phone, '+2' ) === false ) {
-				$billing_phone = '+2' . $billing_phone;
+				$billing_phone = '+20' . $billing_phone;
 			}
 			// 24-hour reminder.
 			if ( $time_diff <= 86400 && ! $session->notification_24hr_sent ) {
