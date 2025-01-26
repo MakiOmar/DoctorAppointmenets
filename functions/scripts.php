@@ -224,7 +224,8 @@ add_action(
 
 						// Get the selected login method (mobile or email)
 						var loginWith = $('input[name="login_with"]:checked').val();
-						var tempPhone = $('input[name="temp-phone"]').val();
+						var tempPhoneVal = $('input[name="temp-phone"]').val();
+						var tempPhone = $('#temp-phone_country_code').length > 0 ? $('#temp-phone_country_code').val() + tempPhoneVal : tempPhoneVal;
 						var username = $('#username').val();
 						if ( loginWith === 'mobile' && tempPhone === '' ) {
 							Swal.fire({
@@ -261,18 +262,25 @@ add_action(
 							},
 							success: function(response) {
 								console.log( response );
-								// Remove the 'processing' class to hide the overlay
-								$('.jet-form-builder').removeClass('processing');
+								var icon , title;
+								if ( response.success ){
+									icon = 'success';
+									title = 'تم';
+								} else {
+									icon = 'error';
+									title = 'خطأ';
+								}
 								Swal.fire({
-									icon: 'success',
-									title: 'تم',
+									icon: icon,
+									title: title,
 									text: response.data.msg, // Assuming response.msg contains the message from the server
 									confirmButtonText: 'غلق'
 								});
 							},
-							error: function(xhr, status, error) {
-								// Remove the 'processing' class to hide the overlay
+							complete: function(){
 								$('.jet-form-builder').removeClass('processing');
+							},
+							error: function(xhr, status, error) {								
 							}
 						});
 					}
