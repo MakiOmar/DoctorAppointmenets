@@ -1123,9 +1123,9 @@ add_action(
 							throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! لديك أكثر من سعر لنفس الدولة' );
 						}
 						// Check if price is empty or missing.
-						if ( empty( $entry['price'] ) ) {
+						if ( empty( $entry['price'] ) || empty( $entry['country_code'] ) ) {
 							// Throw an exception if the price is not provided.
-							throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! الدول المضافة ليس بها سعر.' );
+							throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً! الدول المضافة ليس بها سعر، أو لم تقم بتحديد الدولة' );
 						}
 						// Add the country code to the list.
 						$country_codes[] = $country_code;
