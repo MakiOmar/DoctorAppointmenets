@@ -165,7 +165,9 @@ add_action(
 					$("#old-appointment").val(oldAppointment);
 					$("#change-to-date").attr('data-date', date);
 					$("#change-to-date").attr('data-time', time);
+					$("#change-to-date").val('0');
 					var list = $("#change-to-list");
+					$(".change-to-list").html('');
 					list.removeAttr('id');
 					list.attr('id', date + '-change-to-list');
 					$('#snks-change-trigger').trigger('click');

@@ -1014,7 +1014,7 @@ add_shortcode(
 			}
 			$output .= ob_get_clean();
 			$output .= '</select>';
-			$output .= '<div id="change-to-list"></div>';
+			$output .= '<div id="change-to-list" class="change-to-list"></div>';
 			$output .= wp_nonce_field( 'change_appointment', 'change_appointment_nonce' );
 			$output .= '<input type="text" style="display:none" id="old-appointment" name="old-appointment" value=""/>';
 			$output .= '<input id="doctor-change-appointment-submit" type="submit" class="snks-bg anony-padding-10 anony-full-width" name="submit" value="حفظ"/>';
