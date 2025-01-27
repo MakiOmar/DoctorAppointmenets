@@ -60,8 +60,11 @@ add_action(
 
 				// Function to set preventNavigation to true when a form is changed
 				function setFormChanged( form ) {
-					preventNavigation = true;
-					setCookie('edited_form', form.getAttribute('data-form-id'));
+					if ( form.getAttribute('data-form-id') ) {
+						preventNavigation = true;
+						setCookie('edited_form', form.getAttribute('data-form-id'));
+					}
+					
 				}
 				function listenToForms( forms ) {
 					if (forms.length > 0) {
