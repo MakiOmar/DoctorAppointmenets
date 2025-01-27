@@ -93,7 +93,7 @@ add_action(
 					'change',
 					'#app_attendance_type',
 					function( ) {
-						if ( $(this).val() === 'offline' ) {
+						if ( $(this).val() !== 'online' ) {
 							$('#app_clinic', $(this).closest('.day-specific-form')).show();
 						} else {
 							$('#app_clinic', $(this).closest('.day-specific-form')).hide();
