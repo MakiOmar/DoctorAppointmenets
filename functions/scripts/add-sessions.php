@@ -245,6 +245,12 @@ add_action(
 				$('#day-label').text( $(this).data('day-label') );
 				$('input[name=day]', $('.day-specific-form')).val( $(this).data('day') );
 				initializeFlatpickr($(this).data('day-index'));
+				$('#app_hour').val('');
+				$('#app_choosen_period').val('');
+				$('#date').val('');
+				$('#app_clinic').val('').hide();
+				$('#app_attendance_type').val('');
+				$('input[name="day"]').val('');
 				$('#custom-timetabl-trigger').trigger( 'click' );
 			});
 			$(document).on('click', '.custom-timetable-submit', function(e) {
