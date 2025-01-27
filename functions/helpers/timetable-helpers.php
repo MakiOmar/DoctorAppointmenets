@@ -823,7 +823,7 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	$user_id         = snks_get_settings_doctor_id();
 	$operator        = 'past' === $tense ? '<' : '>';
 	$order           = 'past' === $tense ? 'DESC' : 'ASC';
-	$compare_against = "'" . gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) ) . "'";
+	$compare_against = gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) );
 
 	$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
 	//phpcs:disable
@@ -834,6 +834,7 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 		$query .= ' AND order_id != 0';
 	}
 	$query  .= " ORDER BY date_time {$order}";
+
 	$results = $wpdb->get_results(
 		$wpdb->prepare(
 			$query,
