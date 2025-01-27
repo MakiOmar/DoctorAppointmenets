@@ -251,14 +251,45 @@ add_action(
 				e.preventDefault(); // Prevent form default submission
 
 				// Collect form data
+				var appHour = $('#app_hour').val();
+				var appChosenPeriod = $('#app_choosen_period').val();
+				var date = $('#date').val();
+				var appClinic = $('#app_clinic').val();
+				var appAttendanceType = $('#app_attendance_type').val();
+				var day = $('input[name="day"]').val();
+
+				// Validate form fields
+				if (!appHour || !appChosenPeriod || !date || !appAttendanceType || !day ) {
+					// Show error alert using SweetAlert
+					Swal.fire({
+						icon: 'error',
+						title: 'خطأ',
+						text: 'يرجى تعبئة جميع الحقول المطلوبة.',
+						confirmButtonText: 'غلق'
+					});
+					return; // Exit the function to prevent AJAX submission
+				}
+				// Validate form fields
+				if ( ( appAttendanceType === 'offline' || appAttendanceType === 'both' ) && !appClinic ) {
+					// Show error alert using SweetAlert
+					Swal.fire({
+						icon: 'error',
+						title: 'خطأ',
+						text: 'يرجى  تحديد العيادة.',
+						confirmButtonText: 'غلق'
+					});
+					return; // Exit the function to prevent AJAX submission
+				}
+
+				// All fields are valid, proceed with the AJAX request
 				var formData = new FormData();
 				formData.append('action', 'create_custom_timetable'); // Action name
-				formData.append('app_hour', $('#app_hour').val()); // Selected hour
-				formData.append('app_choosen_period', $('#app_choosen_period').val()); // Chosen period
-				formData.append('date', $('#date').val()); // Selected date
-				formData.append('app_clinic', $('#app_clinic').val()); // Clinic
-				formData.append('app_attendance_type', $('#app_attendance_type').val()); // Attendance type
-				formData.append('day', $('input[name="day"]').val()); // Day field
+				formData.append('app_hour', appHour); // Selected hour
+				formData.append('app_choosen_period', appChosenPeriod); // Chosen period
+				formData.append('date', date); // Selected date
+				formData.append('app_clinic', appClinic); // Clinic
+				formData.append('app_attendance_type', appAttendanceType); // Attendance type
+				formData.append('day', day); // Day field
 
 				// Send the AJAX request
 				$.ajax({
@@ -285,7 +316,7 @@ add_action(
 											action: 'get_preview_tables',
 										},
 										success: function(data) {
-											$('#preview-timetables').html( data );
+											$('#preview-timetables').html(data);
 										}
 									});
 								}
@@ -308,9 +339,20 @@ add_action(
 							text: 'يرجى المحاولة مرة أخرى.',
 							confirmButtonText: 'غلق'
 						});
+					},
+					complete: function() {
+						// Reset form values on completion of AJAX
+						$('#app_hour').val('');
+						$('#app_choosen_period').val('');
+						$('#date').val('');
+						$('#app_clinic').val('');
+						$('#app_attendance_type').val('');
+						$('input[name="day"]').val('');
 					}
+
 				});
 			});
+
 
 				$('body').on(
 					'click',
