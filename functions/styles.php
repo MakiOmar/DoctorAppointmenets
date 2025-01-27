@@ -279,7 +279,7 @@ add_action(
 				margin-bottom: 10px;
 				border-radius: 10px;
 			}
-			.day-specific-form form #app_clinic{
+			.day-specific-form #app_clinic{
 				display: none;
 			}
 			.day-specific-form form > .field-type-heading-field{
