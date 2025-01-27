@@ -948,7 +948,7 @@ add_shortcode(
 			}
 
 			// Display transaction data with timetable date_time if available.
-			echo '<tr id="' . esc_attr( $transaction->id ) . '" style="font-size:13px !important">';
+			echo '<tr id="' . esc_attr( $transaction->id . '-' . $transaction->timetable_id ) . '" style="font-size:13px !important">';
 			echo '<td style="vertical-align: middle;"><span style="font-size:25px;color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
 			echo '<td style="vertical-align: middle;">' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
 			echo '<td style="vertical-align: middle;">' . esc_html( snks_localized_datetime( $transaction->transaction_time ) ) . '</td>';
