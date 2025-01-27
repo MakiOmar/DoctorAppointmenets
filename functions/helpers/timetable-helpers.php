@@ -535,18 +535,35 @@ function snks_update_timetable( $id, $data ) {
  */
 function snks_delete_timetable( $id ) {
 	global $wpdb;
-
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
-	$wpdb->delete( $table_name, array( 'ID' => $id ), array( '%d' ) );
-	// phpcs:enable.
-	if ( $wpdb->rows_affected > 0 ) {
-		$result = true;
-	} else {
-		$result = false;
+	// Check if the record exists and has session_status equal to 'waiting'.
+	$record = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM $table_name WHERE ID = %d AND session_status = %s",
+			$id,
+			'waiting'
+		)
+	);
+
+	// Proceed with deletion if the record is found.
+	if ( $record ) {
+		$wpdb->delete(
+			$table_name,
+			array(
+				'ID'             => $id,
+				'session_status' => 'waiting',
+			),
+			array( '%d', '%s' )
+		);
+		// phpcs:enable.
+		if ( $wpdb->rows_affected > 0 ) {
+			return true;
+		}
 	}
-	return $result;
+	return false;
 }
+
 
 /**
  * Deletes all records in the wpds_snks_provider_timetable table for a given user ID
