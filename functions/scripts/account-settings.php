@@ -57,13 +57,17 @@ add_action(
 				var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
 
 				var preventNavigation = false; // Flag to control when to prompt
-
+				var preventWaithrawalNav = false;
 				// Function to set preventNavigation to true when a form is changed
 				function setFormChanged( form ) {
 					if ( form.getAttribute('data-form-id') ) {
 						preventNavigation = true;
 						setCookie('edited_form', form.getAttribute('data-form-id'));
 					}
+					if ( form.getAttribute('id') === 'withdrawal-settings-form' ){
+						preventWaithrawalNav = true;
+					}
+
 					
 				}
 				function listenToForms( forms ) {
@@ -265,6 +269,25 @@ add_action(
 							cookieValue = $(this).data('id');
 						}
 						setCookie("next_popup", cookieValue, false);
+						if (preventWaithrawalNav ) {
+							Swal.fire({
+								title: 'انت لم تقم بحفظ التعديلات، هل تريد الغاءها؟',
+								text: "يمكنك إلغاء التعديلات والرجوع للخيارات السابقة",
+								icon: 'warning',
+								showCancelButton: true,
+								confirmButtonColor: '#3085d6',
+								cancelButtonColor: '#d33',
+								confirmButtonText: 'إلغاء',
+								cancelButtonText: 'إستكمال'
+							}).then((result) => {
+								if (result.isConfirmed) {
+									location.reload();
+								} else {
+									$('.popup-trigger').removeClass('snks-active-popup');
+								}
+							});
+							return;
+						}
 						if (preventNavigation) {
 							Swal.fire({
 								title: 'أنت لم تقم بحفظ التعديلات',
