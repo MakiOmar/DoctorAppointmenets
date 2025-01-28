@@ -98,7 +98,6 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 			$multiply_base = 30 * 24;
 		}
 		$to_be_old_period = $to_be_old_number * $multiply_base;
-
 		// Get the current datetime.
 		$current_datetime = current_datetime();
 
