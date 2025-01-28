@@ -98,22 +98,26 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 			$multiply_base = 30 * 24;
 		}
 		$to_be_old_period = $to_be_old_number * $multiply_base;
+
 		// Get the current datetime.
 		$current_datetime = current_datetime();
-
-		// Subtract the specified number of hours from the current datetime.
-		$current_datetime->sub( new DateInterval( 'PT' . $to_be_old_period . 'H' ) );
 
 		// Create a DateTime object for the given datetime.
 		$compare_datetime = DateTime::createFromFormat( 'Y-m-d H:i:s', $latest_completed_order_date, wp_timezone() );
 
-		// Compare the given datetime with the current datetime.
-		if ( $compare_datetime && $compare_datetime < $current_datetime ) {
-			$has_discount = true;
+		// Check the difference in hours.
+		if ( $compare_datetime ) {
+			$interval         = $compare_datetime->diff( $current_datetime );
+			$hours_difference = ( $interval->days * 24 ) + $interval->h;
+
+			if ( $hours_difference <= $to_be_old_period ) {
+				$has_discount = true;
+			}
 		}
 	}
 	return $has_discount;
 }
+
 /**
  * Check if pricing discount is enabled
  *
