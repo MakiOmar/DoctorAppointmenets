@@ -24,9 +24,16 @@ function snks_latest_completed_order_date( $doctors_id, $customer_id = false ) {
 		if ( $date_paid ) {
 			return $date_paid->date( 'Y-m-d H:i:s' );
 		}
+
+		// If no date_paid, fallback to date_created.
+		$date_created = $latest_order->get_date_created();
+		if ( $date_created ) {
+			return $date_created->date( 'Y-m-d H:i:s' );
+		}
 	}
 	return false;
 }
+
 
 /**
  * Get customers latest order
