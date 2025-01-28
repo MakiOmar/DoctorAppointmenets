@@ -608,7 +608,7 @@ function snks_delete_waiting_sessions_by_user_id( $user_id, $attendance_type = f
  */
 function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_type = 'both' ) {
 	global $wpdb;
-
+	//phpcs:disable
 	// Fetch doctor settings.
 	$doctor_settings = snks_doctor_settings( $user_id );
 
@@ -624,10 +624,9 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 	// Calculate current and end datetime.
 	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
 	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
-	//phpcs:disable
+
 	// Set the default order.
 	$_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
-	//phpcs:enable
 	// Fetch off-days from doctor settings.
 	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 
@@ -651,6 +650,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 	$attendance_condition       = ( 'both' === $attendance_type ) ? '' : $wpdb->prepare( 'AND attendance_type = %s', $attendance_type );
 	$off_days_condition         = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
 	$disabled_clinics_condition = '';
+	$enabled_clinics_condition  = '';
 
 	// Fetch disabled clinics.
 	$disabled_clinics = snks_disabled_clinics( $user_id );
@@ -659,36 +659,38 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 		$disabled_clinics_condition   = "AND clinic NOT IN ({$disabled_clinics_placeholder})";
 	}
 
+	// Fetch enabled clinics.
 	$enabled_clinics = snks_enabled_clinics( $user_id );
-
 	if ( ! empty( $enabled_clinics ) ) {
 		$enabled_clinics_placeholder = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
 		$enabled_clinics_condition   = "AND clinic IN ({$enabled_clinics_placeholder})";
 	}
 
 	$sql = "
-		SELECT *
-		FROM {$wpdb->prefix}snks_provider_timetable timetable
-		WHERE user_id = %d
-		AND period = %d
-		AND date_time BETWEEN %s AND %s
-		AND session_status = %s
-		AND order_id = %d
-		$attendance_condition
-		$off_days_condition
-		$disabled_clinics_condition
-		ORDER BY date_time {$_order}
-	";
+        SELECT *
+        FROM {$wpdb->prefix}snks_provider_timetable timetable
+        WHERE user_id = %d
+        AND period = %d
+        AND date_time BETWEEN %s AND %s
+        AND session_status = %s
+        AND order_id = %d
+        $attendance_condition
+        $off_days_condition
+        $disabled_clinics_condition
+        $enabled_clinics_condition
+        ORDER BY date_time {$_order}
+    ";
 
-	// Merge off-days and disabled clinics into query params.
-	$query_params = array_merge( $query_params, $off_days, $disabled_clinics );
-	//phpcs:disable
+	// Merge off-days, disabled clinics, and enabled clinics into query params.
+	$query_params = array_merge( $query_params, $off_days, $disabled_clinics, $enabled_clinics );
+
 	// Prepare and execute the query.
 	$_query  = $wpdb->prepare( $sql, $query_params );
 	$results = $wpdb->get_results( $_query );
-	//phpcs:enable
+
 	return $results;
 }
+
 
 
 /**
