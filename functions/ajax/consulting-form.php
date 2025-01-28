@@ -92,7 +92,6 @@ add_action( 'wp_ajax_nopriv_get_booking_form', 'get_booking_form_callback' );
 add_filter(
 	'query_builder_query_query',
 	function ( $query ) {
-		//snks_error_log( $query );
 		return $query;
 	}
 );
