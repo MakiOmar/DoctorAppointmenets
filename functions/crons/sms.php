@@ -103,3 +103,77 @@ function snks_send_session_notifications() {
 		}
 	}
 }
+
+/**
+ * Sends notifications for users with open bookings today.
+ */
+function send_booking_notifications() {
+	global $wpdb;
+	$table = $wpdb->prefix . 'snks_provider_timetable'; // Ensure table prefix is used.
+	//phpcs:disable
+	// Get today's open bookings, grouped by user_id, with a count of bookings.
+	$users = $wpdb->get_results(
+		$wpdb->prepare(
+			"
+            SELECT user_id, COUNT(*) as open_bookings 
+            FROM $table
+            WHERE DATE(date_time) = %s
+            AND session_status = 'open'
+            GROUP BY user_id
+            ",
+			current_time( 'Y-m-d' ) // Use current_time to ensure correct timezone.
+		)
+	);
+
+	if ( empty( $users ) ) {
+		return;
+	}
+
+	foreach ( $users as $user ) {
+		$user_id       = intval( $user->user_id );
+		$open_bookings = intval( $user->open_bookings );
+
+		// Validate user_id and booking count.
+		if ( empty( $user_id ) || $open_bookings <= 0 ) {
+			continue;
+		}
+
+		// Transient key to check if the user has already been notified today.
+		$transient_key = 'notified_user_' . $user_id . '_' . current_time( 'Y-m-d' );
+
+		if ( get_transient( $transient_key ) ) {
+			continue; // Skip if already notified.
+		}
+
+		// Check if Firebase class exists before sending notifications.
+		if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
+			$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+
+			// Call the notifier method with proper data.
+			$notification_title   = esc_html__( 'جلساتك غدا', 'your-text-domain' );
+			$notification_message = sprintf(
+				//translators: Sessions count
+				esc_html__( 'لديك غدا عدد %s جلسات حتى الآن.', 'your-text-domain' ),
+				$open_bookings
+			);
+			snks_error_log( $user_id . '-' . $notification_message );
+			// Trigger the notification.
+			$firebase->trigger_notifier( $notification_title, $notification_message, $user_id, '' );
+
+		}
+
+		// Set transient to mark the user as notified for 24 hours.
+		set_transient( $transient_key, true, DAY_IN_SECONDS );
+	}
+}
+
+/**
+ * Schedules the booking notification event if not already scheduled.
+ */
+function schedule_hourly_booking_notifications() {
+    if ( ! wp_next_scheduled( 'send_hourly_booking_notifications' ) ) {
+        wp_schedule_event( time(), 'hourly', 'send_hourly_booking_notifications' );
+    }
+}
+add_action( 'wp', 'schedule_hourly_booking_notifications' );
+add_action( 'send_hourly_booking_notifications', 'send_booking_notifications' );
