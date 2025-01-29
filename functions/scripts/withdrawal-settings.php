@@ -265,14 +265,16 @@ add_action(
 								if (response.success) {
 									Swal.fire({
 										title: 'تم بنجاح!',
-										text: response.data.message,
+										text: response.msg,
 										icon: 'success',
 										confirmButtonText: 'إغلاق',
+									}).then((result) => {
+										location.reload();
 									});
 								} else {
 									Swal.fire({
 										title: 'فشل!',
-										text: response.data.message || 'حدث خطأ أثناء التنفيذ.',
+										text: response.msg || 'حدث خطأ أثناء التنفيذ.',
 										icon: 'error',
 										confirmButtonText: 'إغلاق',
 									});

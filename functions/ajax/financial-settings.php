@@ -304,12 +304,8 @@ function handle_manual_withdrawal_ajax() {
 	$table_name           = $wpdb->prefix . TRNS_TABLE_NAME;
 
 	// Process the withdrawal for the current user.
-	process_user_withdrawal( $current_user->ID, $current_day_of_week, $current_day_of_month, $current_date, $table_name, true );
-
-	// Return success response.
-	wp_send_json_success(
-		array(
-			'message' => 'تم تنفيذ السحب بنجاح.',
-		)
-	);
+	$processed = process_user_withdrawal( $current_user->ID, $current_day_of_week, $current_day_of_month, $current_date, $table_name, true );
+	// Return response.
+	wp_send_json( $processed );
+	die;
 }

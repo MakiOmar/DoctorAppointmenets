@@ -117,7 +117,10 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 	$user_id             = is_object( $user ) ? $user->user_id : $user;
 	$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
 	if ( empty( $withdrawal_settings ) ) {
-		return false;
+		return array(
+			'success' => false,
+			'msg'     => 'عفواً، ولكن يرجى حفظ الإعدادات أولاً',
+		);
 	}
 
 	$withdrawal_option = $withdrawal_settings['withdrawal_option'];
@@ -134,7 +137,10 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 		if ( $withdraw_amount > 25 || 25 === $withdraw_amount ) {
 			$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
 			if ( ! $withdrawal_id ) {
-				return false;
+				return array(
+					'success' => false,
+					'msg'     => 'عفواً، ولكن هناك خطأ ما يرجى المحاولة مرة أخرى',
+				);
 			}
 
 			$output_data = null;
@@ -179,12 +185,21 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 			if ( false !== $result && $result > 0 ) {
 				// Log the transaction only if rows were updated.
 				snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
-				return true;
+				return array(
+					'success' => true,
+					'msg'     => 'ًتهانينا، تم إرسال طلب السحب بنجاح',
+				);
 			} else {
-				return false;
+				return array(
+					'success' => false,
+					'msg'     => 'عفواً، ليس لديك معاملات قابلة للسحب حالياً',
+				);
 			}
 		} else {
-			return false;
+			return array(
+				'success' => false,
+				'msg'     => 'عفواً، غير متاح السحب لأقل من 25 جنيهاً',
+			);
 		}
 	}
 }
@@ -397,6 +412,7 @@ function snks_bank_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Recipient Number' => $withdrawal_settings['account_number'],
 		'Recipient Bank'   => $withdrawal_settings['bank_code'],
 		'Amount'           => (string) $balance,
+		'Interval'         => ucfirst( str_replace( '_', ' ', $withdrawal_settings['withdrawal_option'] ) ),
 	);
 }
 /**
@@ -414,6 +430,7 @@ function snks_meza_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Recipient Number' => $withdrawal_settings['meza_card_number'],
 		'Recipient Bank'   => $withdrawal_settings['meza_bank_code'],
 		'Amount'           => (string) $balance,
+		'Interval'         => ucfirst( str_replace( '_', ' ', $withdrawal_settings['withdrawal_option'] ) ),
 	);
 }
 /**
@@ -429,7 +446,9 @@ function snks_wallet_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Method'           => 'wallet',
 		'Recipient Name'   => $withdrawal_settings['wallet_owner_name'],
 		'Recipient Number' => $withdrawal_settings['wallet_number'],
+		'Recipient Bank'   => '',
 		'Amount'           => (string) $balance,
+		'Interval'         => ucfirst( str_replace( '_', ' ', $withdrawal_settings['withdrawal_option'] ) ),
 	);
 }
 
