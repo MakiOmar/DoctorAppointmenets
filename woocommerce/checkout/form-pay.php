@@ -47,7 +47,9 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 
 	//phpcs:disable
 	echo consulting_session_pricing_table_shortcode( $form_data );
-	echo snks_doctor_rules( $form_data['_user_id'] );
+	if ( 'edit-fees' !== $order_type ) {
+		echo snks_doctor_rules( $form_data['_user_id'] );
+	}
 	//phpcs:enable
 
 	echo '<h2 style="margin:20px 0;color:#fff;font-size:25px;text-align:center">إختر طريقة الدفع المناسبة</h2>';
