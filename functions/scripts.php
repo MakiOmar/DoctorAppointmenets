@@ -25,7 +25,7 @@ add_action(
 			'owl-carousel-css',
 			'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css',
 			array(),
-			null
+			'2.3.4'
 		);
 
 		// Enqueue Owl Carousel Theme CSS (optional).
@@ -33,7 +33,7 @@ add_action(
 			'owl-carousel-theme',
 			'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css',
 			array( 'owl-carousel-css' ),
-			null
+			'2.3.4'
 		);
 
 		// Enqueue Owl Carousel JS.
@@ -41,7 +41,7 @@ add_action(
 			'owl-carousel-js',
 			'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js',
 			array( 'jquery' ),
-			null,
+			'2.3.4',
 			true
 		);
 		wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array( 'jquery' ), time(), true );
