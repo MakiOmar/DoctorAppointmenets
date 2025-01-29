@@ -198,7 +198,7 @@ function process_withdrawals_batch() {
 	// Ensure the cron job runs only between 12 am and 9 am.
 	$current_time = current_time( 'H:i:s' );
 	if ( ! SNKS_DEV_MODE && $current_time < '23:59:59' && $current_time > '08:00:00' ) {
-		 return;
+		return;
 	}
 	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
 	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
