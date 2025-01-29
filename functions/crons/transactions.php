@@ -47,7 +47,6 @@ function get_available_balance( $user_id ) {
 	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
 
 	// Get current date for checking transactions before 12 am.
-	$current_date = SNKS_CURRENT_TIME;
 	//phpcs:disable
 	$available_amount = $wpdb->get_var(
 		$wpdb->prepare(
@@ -56,11 +55,9 @@ function get_available_balance( $user_id ) {
             FROM $table_name 
             WHERE user_id = %d 
             AND transaction_type = 'add'
-            AND transaction_time < %s
 			AND processed_for_withdrawal = 0
             ",
 			$user_id,
-			$current_date
 		)
 	);
 	//phpcs:enable
@@ -107,17 +104,17 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 /**
  * Helper function to process withdrawal for a single user.
  *
- * @param object $user The user object.
- * @param int    $current_day_of_week Current day of the week.
- * @param int    $current_day_of_month Current day of the month.
- * @param string $current_date Current date.
- * @param string $table_name The table name.
- * @param bool   $manual True if manual, Otherwise false.
+ * @param object|int $user The user object.
+ * @param int        $current_day_of_week Current day of the week.
+ * @param int        $current_day_of_month Current day of the month.
+ * @param string     $current_date Current date.
+ * @param string     $table_name The table name.
+ * @param bool       $manual True if manual, Otherwise false.
  */
 function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name, $manual = false ) {
 	global $wpdb;
 
-	$user_id             = $user->ID;
+	$user_id             = is_object( $user ) ? $user->user_id : $user;
 	$withdrawal_settings = get_user_meta( $user_id, 'withdrawal_settings', true );
 	if ( empty( $withdrawal_settings ) ) {
 		return false;
@@ -125,17 +122,16 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 
 	$withdrawal_option = $withdrawal_settings['withdrawal_option'];
 	$withdrawal_method = $withdrawal_settings['withdrawal_method'];
-
 	// Check if the user is eligible for withdrawal based on the option.
 	if ( 'daily_withdrawal' === $withdrawal_option ||
-		( 'weekly_withdrawal' === $withdrawal_option && 6 === absint( $current_day_of_week ) ) ||
+		( 'weekly_withdrawal' === $withdrawal_option && 0 === absint( $current_day_of_week ) ) ||
 		( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) || $manual ) {
 
 		// Get the eligible balance for withdrawal.
 		$available_balance = get_available_balance( $user_id );
 		$withdraw_amount   = $available_balance;
 
-		if ( $withdraw_amount > 5 ) {
+		if ( $withdraw_amount > 25 || 25 === $withdraw_amount ) {
 			$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
 			if ( ! $withdrawal_id ) {
 				return false;
@@ -144,15 +140,16 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 			$output_data = null;
 			$output_type = '';
 
+			$sheet_amount = $withdraw_amount - 12;
 			// Generate withdrawal data and files based on the method.
 			if ( 'bank_account' === $withdrawal_method ) {
-				$output_data = array( snks_bank_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
+				$output_data = array( snks_bank_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
 				$output_type = 'bank';
 			} elseif ( 'meza_card' === $withdrawal_method ) {
-				$output_data = array( snks_meza_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
+				$output_data = array( snks_meza_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
 				$output_type = 'meza';
 			} elseif ( 'wallet' === $withdrawal_method ) {
-				$output_data = array( snks_wallet_method_xlsx( $user_id, $withdraw_amount, $withdrawal_settings ) );
+				$output_data = array( snks_wallet_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
 				$output_type = 'wallet';
 			}
 			if ( ! empty( $output_data ) ) {
@@ -186,6 +183,8 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 			} else {
 				return false;
 			}
+		} else {
+			return false;
 		}
 	}
 }
@@ -198,8 +197,8 @@ function process_withdrawals_batch() {
 
 	// Ensure the cron job runs only between 12 am and 9 am.
 	$current_time = current_time( 'H:i:s' );
-	if ( ! SNKS_DEV_MODE && ( $current_time < '00:00:00' || $current_time > '09:00:00' ) ) {
-		return;
+	if ( ! SNKS_DEV_MODE && $current_time < '23:59:59' && $current_time > '08:00:00' ) {
+		 return;
 	}
 	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
 	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
@@ -229,7 +228,6 @@ function process_withdrawals_batch() {
 			$offset
 		)
 	);
-
 	// Process each user using the helper function.
 	foreach ( $users as $user ) {
 		process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
@@ -516,9 +514,10 @@ function snks_get_latest_transaction( $user_id ) {
 	$sql = $wpdb->prepare(
 		"SELECT * FROM {$table_name} 
          WHERE user_id = %d 
-         ORDER BY transaction_time DESC 
+		 AND transaction_type = 'withdraw'
+		 ORDER BY transaction_time DESC
          LIMIT 1",
-		$user_id
+		$user_id,
 	);
 
 	// Execute the query and get the latest transaction record.
