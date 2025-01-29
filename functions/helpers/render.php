@@ -479,6 +479,9 @@ function snks_render_consulting_hours_items( $availables ) {
  * @return string
  */
 function snks_render_clinic( $clinic ) {
+	if ( ! is_array( $clinic ) ) {
+		return '';
+	}
 	$html = do_shortcode( '[elementor-template id="3023"]' );
 
 	if ( empty( $clinic['google_map'] ) || '#' === $clinic['google_map'] ) {
