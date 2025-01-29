@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || die();
 
 define( 'SNKS_CURRENT_TIME', current_time( 'Y-m-d 00:00:00' ) );
 
-define( 'SNKS_DEV_MODE', true );
+define( 'SNKS_DEV_MODE', false );
 //phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
 if ( ! function_exists( 'WP_Filesystem' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/file.php';
