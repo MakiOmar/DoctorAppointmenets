@@ -273,7 +273,7 @@ add_action(
 			// Notification title and message.
 			$title   = 'تم تعديل موعدك';
 			$message = sprintf(
-				'تم تغيير موعد جلسة يوم (%1$s) الي يوم (%2$s) الساعة (%3$s).',
+				'تم تغيير موعد جلسة يوم %1$s الي يوم %2$s الساعة %3$s',
 				$old_date,
 				$new_date,
 				$new_time
