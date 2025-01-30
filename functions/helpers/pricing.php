@@ -139,135 +139,65 @@ function snks_pricing_discount_enabled( $user_id = false ) {
  * @param string $context Calculation context weather if is first time book or edit. Accepts book|any.
  * @return mixed
  */
-function snks_session_total_price_old( $session_price, $attendance_type, $context = 'book' ) {
+function snks_session_total_price( $session_price, $attendance_type, $context = 'book' ) {
+	/**
+	 * $x = $session_price
+	 * $a = kasheir gateway ( Receiving )
+	 * $b = Kasheir payout ( sending )
+	 * $c = Jalsah commission
+	 * $d = Receiving fees of a + b + c
+	 */
 
+	$a = ( $session_price * 0.025 + 2 ) * 1.14;
+	$b = ( $session_price * 0.001 ) * 1.14;
+	// For editing.
 	if ( 'book' !== $context ) {
-		$a = 0;
-	} else {
-		// Define A based on the attendance type.
-		$a = 'online' === $attendance_type ? 2.28 : 1.14; // sms fees.
-	}
-	// Calculate B and C (both are the same for online and offline).
-	$b = ( $session_price * 0.025 + 2 ) * 1.14; // Payment gateway.
-	$c = ( $session_price * 0.005 ) * 1.14; // Payout.
-	if ( 'book' === $context ) {
-		// Determine D based on the session price and attendance type.
-		if ( 'online' === $attendance_type ) {
-			if ( $session_price < 50 ) {
-				$d = 2.85; // Is jalash earnings.
-			} elseif ( $session_price >= 50 && $session_price < 100 ) {
-				$d = 5.7;
-			} elseif ( $session_price >= 100 && $session_price < 200 ) {
-				$d = 11.4;
-			} elseif ( $session_price >= 200 && $session_price < 300 ) {
-				$d = 13.68;
-			} elseif ( $session_price >= 300 && $session_price < 400 ) {
-				$d = 14.82;
-			} elseif ( $session_price >= 400 && $session_price < 500 ) {
-				$d = 15.96;
-			} else {
-				$d = 17.1;
-			}
+		$c = 0;
+		// For Booking.
+	} elseif ( 'online' === $attendance_type ) {
+		if ( $session_price < 50 ) {
+			$c = 3.99 + 1.92;
+		} elseif ( $session_price >= 50 && $session_price < 100 ) {
+			$c = 6.56 + 1.92;
+		} elseif ( $session_price >= 100 && $session_price < 200 ) {
+			$c = 13.68 + 1.92;
+		} elseif ( $session_price >= 200 && $session_price < 300 ) {
+			$c = 15.39 + 1.92;
+		} elseif ( $session_price >= 300 && $session_price < 400 ) {
+			$c = 17.1 + 1.92;
+		} elseif ( $session_price >= 400 && $session_price < 500 ) {
+			$c = 17.67 + 1.92;
+		} elseif ( $session_price >= 500 && $session_price < 600 ) {
+			$c = 18.25 + 1.92;
 		} else {
-			// Offline case.
-			$d = $session_price < 50 ? 2.85 : 5.7;
+			$c = 19.38 + 1.92;
 		}
 	} else {
-		$d = 0;
+		$c = 5.13 + 0.96;
 	}
-
-	// Calculate E based on A, B, C, D.
-	$e = ( $a + $b + $c + $d ) * 0.025 * 1.03 * 1.14;
+	snks_error_log( $c );
+	$d = ( $a + $b + $c ) * 0.025 * 1.03 * 1.14;
 
 	// Calculate F (the final total).
-	$f = $a + $b + $c + $d + $e;
+	$f = $a + $b + $c + $d + $session_price;
 
-	$service_fees = round( ( $f / 1.14 ), 2 );
-	$vat          = round( ( $f - $service_fees ), 2 );
-	$total        = $session_price + $service_fees + $vat;
-	// Return the final session price including service fees and VAT.
+	$service_fees = ceil( $c * 100 ) / 100;
+	$kasheir_fees = ceil( ( $a + $b + $d ) * 100 ) / 100;
+	$total        = $f;
+	// Return the final session price including service fees and kasheir_fees.
 	if ( $total < 5 ) {
 		return array(
 			'session_price' => 0,
 			'service_fees'  => 4.38,
-			'vat'           => 0.62,
+			'paymob'        => 0.62,
 			'total_price'   => 5,
 		);
 	} else {
 		return array(
 			'session_price' => $session_price,
 			'service_fees'  => $service_fees,
-			'vat'           => $vat,
-			'total_price'   => $session_price + $service_fees + $vat,
-		);
-	}
-}
-/**
- * Session price formula
- *
- * @param mixed  $session_price  Session original price.
- * @param string $attendance_type Whether it is online or offline.
- * @param string $context Calculation context weather if is first time book or edit. Accepts book|any.
- * @return mixed
- */
-function snks_session_total_price( $session_price, $attendance_type, $context = 'book' ) {
-	// Paymob accept.
-	$p = ( $session_price * 0.0275 + 3 ) * 1.14; // Payment gateway.
-	// Paymob send.
-	$b = ( $session_price * 0.01 ) * 1.14;
-
-	$pb = $b + $p;
-
-	if ( 'book' === $context ) {
-		// Determine D based on the session price and attendance type.
-		if ( 'online' === $attendance_type ) {
-			$a = 1.92;
-			if ( $session_price < 50 ) {
-				$c = 2.85; // Is jalash earnings.
-			} elseif ( $session_price >= 50 && $session_price < 100 ) {
-				$c = 5.7;
-			} else {
-				$c = 11.4;
-			}
-		} else {
-			$a = 0.96;
-			// Offline case.
-			$c = 5.7;
-		}
-	} else {
-		$a = 0;
-		$c = 0;
-	}
-
-	$d = ( $pb + $c + $a ) * 0.0275 * 1.03 * 1.14;
-
-	// Calculate F (the final total).
-	$f = $pb + $d;
-
-	$service_fees = round( ( $c + $a ), 2 );
-	$paymob       = round( ( $f ), 2 );
-	$total        = $session_price + $service_fees + $paymob;
-	// Return the final session price including service fees and VAT.
-	if ( $total < 1 ) {
-		return array(
-			'session_price' => 0,
-			'service_fees'  => 0,
-			'paymob'        => 0,
-			'total_price'   => 0,
-		);
-	} elseif ( $total > 0 && $total < 5 ) {
-		return array(
-			'session_price' => $session_price,
-			'service_fees'  => 5 - $session_price,
-			'paymob'        => 0,
-			'total_price'   => 5,
-		);
-	} else {
-		return array(
-			'session_price' => $session_price,
-			'service_fees'  => $service_fees,
-			'paymob'        => $paymob,
-			'total_price'   => $total,
+			'paymob'        => $kasheir_fees,
+			'total_price'   => ceil( $f * 100 ) / 100,
 		);
 	}
 }
