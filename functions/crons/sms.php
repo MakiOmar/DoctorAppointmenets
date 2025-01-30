@@ -29,8 +29,9 @@ add_action( 'snks_check_session_notifications', 'snks_send_session_notifications
 function snks_send_session_notifications() {
 	global $wpdb;
 	$current_time  = current_time( 'mysql' );
-	$time_24_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+24 hours' ) );
-	$time_1_hour   = gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour' ) );
+	$time_24_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+24 hours', current_time( 'timestamp' ) ) );
+	$time_23_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+23 hours', current_time( 'timestamp' ) ) );
+	$time_1_hour   = gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour', current_time( 'timestamp' ) ) );
 	//phpcs:disable
 	// Query to get up to 50 sessions happening in the next 24 hours or 1 hour where notifications haven't been sent.
 	$results = $wpdb->get_results(
@@ -38,14 +39,13 @@ function snks_send_session_notifications() {
 			"
         SELECT * FROM {$wpdb->prefix}snks_provider_timetable
         WHERE session_status = %s
-		AND attendance_type = 'online'
         AND ( ( date_time <= %s AND date_time >= %s AND notification_24hr_sent = %d )
         OR ( date_time <= %s AND date_time >= %s AND notification_1hr_sent = %d ) )
         LIMIT 20
         ",
 			'open',
 			$time_24_hours,
-			$current_time,
+			$time_23_hours,
 			0,
 			$time_1_hour,
 			$current_time,
@@ -66,13 +66,20 @@ function snks_send_session_notifications() {
 				$billing_phone = '+20' . $billing_phone;
 			}
 			// 24-hour reminder.
-			if ( $time_diff <= 86400 && ! $session->notification_24hr_sent ) {
+			if ( $time_diff > 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 82800 = 23 hrs, 86400 = 24 hrs
+				if ( 'online' === $session->attendance_type ) {
+					$message = sprintf(
+						'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
+						snks_localize_time( gmdate( 'H:i a', strtotime( $session->date_time ) ) ),
+						'www.jalsah.link'
+					);
+				} else {
+					$message = sprintf(
+						'نذكرك بموعد جلستك غدا الساعه %1$s',
+						snks_localize_time( gmdate( 'H:i a', strtotime( $session->date_time ) ) ),
+					);
+				}
 
-				$message = sprintf(
-					'نذكرك بموعد جلستك غدا الساعه %1$s . رابط الدخول للجلسة:  %2$s',
-					snks_localize_time( gmdate( 'H:i a', strtotime( $session->date_time ) ) ),
-					'www.jalsah.link'
-				);
 				send_sms_via_whysms( $billing_phone, $message );
 				//phpcs:disable
 				$wpdb->update(
@@ -83,11 +90,10 @@ function snks_send_session_notifications() {
 					array( '%d' )
 				);
 			}
-
 			// 1-hour reminder.
-			if ( $time_diff <= 3600 && ! $session->notification_1hr_sent ) {
+			if ( 'online' === $session->attendance_type && $time_diff <= 3600 && ! $session->notification_1hr_sent ) {
 				$message = sprintf(
-					'باقي ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
+					'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
 					'www.jalsah.link'
 				);
 				send_sms_via_whysms( $billing_phone, $message );
@@ -105,13 +111,22 @@ function snks_send_session_notifications() {
 }
 
 /**
- * Sends notifications for users with open bookings today.
+ * Sends notifications for users with open bookings tomorrow.
  */
 function send_booking_notifications() {
 	global $wpdb;
 	$table = $wpdb->prefix . 'snks_provider_timetable'; // Ensure table prefix is used.
-	//phpcs:disable
-	// Get today's open bookings, grouped by user_id, with a count of bookings.
+
+	// Ensure function runs only between 23:00 and 23:59.
+	$current_hour = (int) current_time( 'H' );
+	if ( $current_hour < 23 ) {
+		return;
+	}
+
+	// Get tomorrow's date.
+	$tomorrow_date = gmdate( 'Y-m-d', strtotime( '+1 day', current_time( 'timestamp' ) ) );
+	//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	// Get tomorrow's open bookings, grouped by user_id, with a count of bookings.
 	$users = $wpdb->get_results(
 		$wpdb->prepare(
 			"
@@ -121,7 +136,7 @@ function send_booking_notifications() {
             AND session_status = 'open'
             GROUP BY user_id
             ",
-			current_time( 'Y-m-d' ) // Use current_time to ensure correct timezone.
+			$tomorrow_date // Fetch bookings for tomorrow.
 		)
 	);
 
@@ -152,14 +167,13 @@ function send_booking_notifications() {
 			// Call the notifier method with proper data.
 			$notification_title   = esc_html__( 'جلساتك غدا', 'your-text-domain' );
 			$notification_message = sprintf(
-				//translators: Sessions count
+				// translators: Sessions count.
 				esc_html__( 'لديك غدا عدد %s جلسات حتى الآن.', 'your-text-domain' ),
 				$open_bookings
 			);
 			snks_error_log( $user_id . '-' . $notification_message );
 			// Trigger the notification.
 			$firebase->trigger_notifier( $notification_title, $notification_message, $user_id, '' );
-
 		}
 
 		// Set transient to mark the user as notified for 24 hours.
@@ -167,13 +181,14 @@ function send_booking_notifications() {
 	}
 }
 
+
 /**
  * Schedules the booking notification event if not already scheduled.
  */
 function schedule_hourly_booking_notifications() {
-    if ( ! wp_next_scheduled( 'send_hourly_booking_notifications' ) ) {
-        wp_schedule_event( time(), 'hourly', 'send_hourly_booking_notifications' );
-    }
+	if ( ! wp_next_scheduled( 'send_hourly_booking_notifications' ) ) {
+		wp_schedule_event( time(), 'hourly', 'send_hourly_booking_notifications' );
+	}
 }
 add_action( 'wp', 'schedule_hourly_booking_notifications' );
 add_action( 'send_hourly_booking_notifications', 'send_booking_notifications' );
