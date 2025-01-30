@@ -374,6 +374,7 @@ add_action(
 			$price         = snks_calculated_price( $new_booking->user_id, $country, $new_booking->period );
 			$change_fees   = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
 			$will_pay      = ( $change_fees / 100 ) * $price;
+			$will_pay      = snks_session_total_price( $will_pay, $new_booking->attendance_type, 'edit' )['total_price'];
 			$edited_before = get_post_meta( $order_id, 'booking-edited', true );
 			// If not postponed then check for edit time.
 			if ( 'postponed' !== $booking->session_status && ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) ) {
