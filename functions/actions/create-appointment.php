@@ -74,15 +74,25 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					update_post_meta( $order_id, 'doctor_id', $timetable->user_id );
 					update_post_meta( $order_id, 'doctor_pricings', snks_doctor_pricings( $timetable->user_id ) );
 					// Patient.
-					$message = sprintf(
-						'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
-						'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
-						localize_date_to_arabic( $timetable->day ),
-						gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
-						snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
-						'www.jalsah.link'
-					);
-
+					if ( 'online' === $timetable->attendance_type ) {
+						$message = sprintf(
+							'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
+							'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
+							localize_date_to_arabic( $timetable->day ),
+							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
+							snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
+							'www.jalsah.link'
+						);
+					} else {
+						$message = sprintf(
+							'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك معرفة تفاصيل الحجز أو تعديل الموعد بالضغط هنا :%5$s',
+							'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
+							localize_date_to_arabic( $timetable->day ),
+							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
+							snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
+							'www.jalsah.link'
+						);
+					}
 					send_sms_via_whysms( $order->get_billing_phone(), $message );
 
 					// Doctor.
