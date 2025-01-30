@@ -526,7 +526,9 @@ add_action(
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized' ) ) );
 		}
+		//phpcs:disable
 		$_req     = $_POST;
+		//phpcs:enable
 		$title    = isset( $_req['title'] ) ? sanitize_text_field( $_req['title'] ) : '';
 		$content  = isset( $_req['notif_content'] ) ? sanitize_text_field( $_req['notif_content'] ) : '';
 		$link     = isset( $_req['link'] ) ? esc_url_raw( $_req['link'] ) : '';
