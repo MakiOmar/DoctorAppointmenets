@@ -656,7 +656,8 @@ function save_order_product_author_ids( $order_id ) {
 
 	// Update the order meta with the product author IDs.
 	if ( ! empty( $product_author_ids ) ) {
-		update_post_meta( $order_id, 'product_author_ids', $product_author_ids );
+		$order->update_meta_data(' product_author_ids', $product_author_ids );
+		$order->save();
 	}
 }
 
@@ -703,8 +704,7 @@ add_action(
 	'woocommerce_checkout_order_processed',
 	function ( $order_id, $posted_data, $order ) {
 		$order_savings = anony_get_order_total_savings( $order );
-
-		update_post_meta( $order_id, 'anony_order_total_savings', $order_savings );
+		$order->update_meta_data( 'anony_order_total_savings', $order_savings );
 	},
 	10,
 	3

@@ -19,13 +19,6 @@ add_action(
 	3
 );
 
-add_filter(
-	'woocommerce_payment_complete_order_status',
-	function () {
-		return array( 'completed', 'processing' );
-	}
-);
-
 add_action( 'woocommerce_payment_complete', 'snks_woocommerce_payment_complete_action' );
 
 /**
@@ -57,7 +50,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 				if ( $updated ) {
 					// Existing logic for processing...
 					$current_hour   = current_time( 'H' );
-					$doctor_earning = get_post_meta( $order->get_id(), '_main_price', true );
+					$doctor_earning = $order->get_meta( '_main_price', true );
 
 					if ( $current_hour >= 0 && $current_hour < 9 ) {
 						$current_temp_wallet     = (float) get_user_meta( $timetable->user_id, 'temp_wallet', true );
@@ -70,9 +63,10 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					snks_add_transaction( $timetable->user_id, $timetable->ID, 'add', $doctor_earning );
 					snks_log_transaction( $timetable->user_id, $doctor_earning, 'add' );
 					snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
-					update_post_meta( $order_id, 'booking_id', $timetable->ID );
-					update_post_meta( $order_id, 'doctor_id', $timetable->user_id );
-					update_post_meta( $order_id, 'doctor_pricings', snks_doctor_pricings( $timetable->user_id ) );
+					$order->update_meta_data( 'booking_id', $timetable->ID );
+					$order->update_meta_data( 'doctor_id', $timetable->user_id );
+					$order->update_meta_data( 'doctor_pricings', snks_doctor_pricings( $timetable->user_id ) );
+					$order->save();
 					// Patient.
 					if ( 'online' === $timetable->attendance_type ) {
 						$message = sprintf(
@@ -141,7 +135,8 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 add_action(
 	'woocommerce_order_status_cancelled',
 	function ( $order_id ) {
-		$booking_id = get_post_meta( $order_id, 'booking_id', true );
+		$order = wc_get_order( $order_id );
+		$booking_id = $order->get_meta( 'booking_id', true );
 		$booking    = snks_get_timetable_by( 'ID', $booking_id );
 		if ( ! $booking || empty( $booking ) ) {
 			return;
@@ -176,7 +171,7 @@ add_action(
 add_action(
 	'woocommerce_admin_order_data_after_billing_address',
 	function ( $order ) {
-		$booking_id = get_post_meta( $order->get_id(), 'booking_id', true );
+		$booking_id = $order->get_meta( 'booking_id', true );
 		$html       = '';
 		if ( ! empty( $booking_id ) ) {
 			ob_start();

@@ -265,13 +265,15 @@ add_action(
 add_action(
 	'woocommerce_new_order',
 	function ( $order_id ) {
+		$order     = wc_get_order( $order_id );
 		$form_data = get_transient( snks_form_data_transient_key() );
 		if ( ! $form_data || empty( $form_data ) || ! isset( $form_data['booking_day'] ) ) {
 			return;
 		}
 		if ( $form_data && is_array( $form_data ) ) {
 			foreach ( $form_data as $key => $value ) {
-				update_post_meta( $order_id, $key, $value );
+				$order->update_meta_data( $key, $value );
+				$order->save();
 			}
 			delete_transient( snks_form_data_transient_key() );
 		}

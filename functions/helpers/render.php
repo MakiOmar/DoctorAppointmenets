@@ -1330,8 +1330,12 @@ function snks_render_sessions_listing( $tense ) {
 			if ( 'postponed' === $session->session_status && ! snks_is_doctor() ) {
 				$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تم الغاء الموعد، احجز موعد آخر مجانا' ) . '</td></tr>';
 			} elseif ( isset( $doctor_settings['allow_appointment_change'] ) && 'on' === $doctor_settings['allow_appointment_change'] ) {
-				$order_id      = $session->order_id;
-				$edited_before = get_post_meta( $order_id, 'booking-edited', true );
+				$order_id = $session->order_id;
+				$order    = wc_get_order( $order_id );
+				if ( ! $order ) {
+					continue;
+				}
+				$edited_before = $order->get_meta( 'booking-edited', true );
 				$class         = 'remaining';
 				$diff_seconds  = snks_diff_seconds( $session );
 				// Compare the input date and time with the modified current date and time.

@@ -75,9 +75,10 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 			if ( $updated ) {
 				snks_close_others( $new_timetable );
 				if ( snks_is_patient() ) {
-					update_post_meta( $main_order->get_id(), 'booking-edited', '1' );
+					$main_order->update_meta_data( 'booking-edited', '1' );
 				}
-				update_post_meta( $main_order->get_id(), 'booking_id', $new_timetable->ID );
+				$main_order->update_meta_data( 'booking_id', $new_timetable->ID );
+				$main_order->save();
 				$line_items = $main_order->get_items();
 				// Loop through each line item.
 				foreach ( $line_items as $item_id => $item ) {
@@ -333,6 +334,9 @@ add_action(
 			$new_booking_id = $order->get_meta( 'new_booking_id' );
 			$booking        = snks_get_timetable_by( 'ID', absint( $old_booking_id ) );
 			$main_order     = wc_get_order( absint( $connected_order ) );
+			if ( ! $main_order ) {
+				return;
+			}
 			snks_apply_booking_edit( $booking, $main_order, $new_booking_id, false );
 			do_action( 'snks_patient_edit_booking' );
 			wp_safe_redirect( home_url( '/my-bookings' ) );
@@ -375,7 +379,8 @@ add_action(
 			$change_fees   = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
 			$will_pay      = ( $change_fees / 100 ) * $price;
 			$will_pay      = snks_session_total_price( $will_pay, $new_booking->attendance_type, 'edit' )['total_price'];
-			$edited_before = get_post_meta( $order_id, 'booking-edited', true );
+			$order         = wc_get_order( $order_id );
+			$edited_before = $order->get_meta( 'booking-edited', true );
 			// If not postponed then check for edit time.
 			if ( 'postponed' !== $booking->session_status && ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) ) {
 				wp_safe_redirect(

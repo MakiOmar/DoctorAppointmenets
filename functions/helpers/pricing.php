@@ -21,7 +21,7 @@ function snks_calculated_price( $user_id, $country, $period ) {
 	$has_discount = snks_discount_eligible( $user_id );
 	$latest_order = snks_latest_completed_order( $user_id );
 	if ( $has_discount && $latest_order ) {
-		$pricings = get_post_meta( $latest_order->get_id(), 'doctor_pricings', true );
+		$pricings = $latest_order->get_meta( 'doctor_pricings', true );
 		if ( ! $pricings || empty( $pricings ) ) {
 			$pricings = snks_doctor_pricings( $user_id );
 		}

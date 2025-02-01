@@ -62,7 +62,7 @@ function snks_auto_cancel_wc_orders() {
 		$minutes_diff = $interval->format( '%i' );
 		if ( $minutes_diff > 10 ) {
 			$order->update_status( 'cancelled', 'Cancelled for missing payment' );
-			$booking_id = get_post_meta( $order->get_id(), 'booking_id', true );
+			$booking_id = $order->get_meta( 'booking_id', true );
 			$updated    = snks_update_timetable(
 				absint( $booking_id ),
 				array(
