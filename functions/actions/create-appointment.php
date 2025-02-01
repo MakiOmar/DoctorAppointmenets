@@ -74,7 +74,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 							'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
 							localize_date_to_arabic( $timetable->day ),
 							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
-							snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
+							snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) ),
 							'www.jalsah.link'
 						);
 					} else {
@@ -83,7 +83,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 							'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
 							localize_date_to_arabic( $timetable->day ),
 							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
-							snks_localize_time( gmdate( 'H:i a', strtotime( $timetable->date_time ) ) ),
+							snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) ),
 							'www.jalsah.link'
 						);
 					}
