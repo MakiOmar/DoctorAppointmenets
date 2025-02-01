@@ -225,7 +225,7 @@ add_action(
 						// Get the selected login method (mobile or email)
 						var loginWith = $('input[name="login_with"]:checked').val();
 						var tempPhoneVal = $('input[name="temp-phone"]').val();
-						var tempPhone = $('#temp-phone_country_code').length > 0 ? $('#temp-phone_country_code').val() + tempPhoneVal : tempPhoneVal;
+						var tempPhone = $('#temp-phone_country_code').length > 0 && tempPhoneVal !== '' ? $('#temp-phone_country_code').val() + tempPhoneVal : '';
 						var username = $('#username').val();
 						if ( loginWith === 'mobile' && tempPhone === '' ) {
 							Swal.fire({
