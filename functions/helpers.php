@@ -141,17 +141,16 @@ function snks_form_data_transient_key() {
  * @return string
  */
 function snks_go_back() {
-	if ( ! snks_is_patient() ) {
-		$referer = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
-	} else {
-		$referer = home_url( '/my-bookings' );
-	}
 
+	if ( ! snks_is_doctor() ) {
+		return;
+	}
+	$referer = add_query_arg( 'id', snks_get_settings_doctor_id(), home_url( '/account-setting' ) );
 	// Sanitize the URL for use in an HTML attribute.
 	$referer_safe = $referer;
 
 	ob_start();
-	if ( ( is_page( 'my-bookings' ) && snks_is_patient() ) || is_page( 'register' ) ) {
+	if ( is_page( 'register' ) ) {
 		?>
 		<style>
 			.anony-go-back{
