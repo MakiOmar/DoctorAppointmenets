@@ -25,6 +25,37 @@ add_action(
 			}
 			?>
 			<?php
+			if ( is_wc_endpoint_url( 'order-pay' ) ) {
+				?>
+				.order_details{
+					color: #fff;
+					display: flex;
+					flex-direction: column;
+					justify-content: center;
+					align-items: center;
+					text-align: center;
+				}
+				.woocommerce ul.order_details li {
+					float: none;
+					margin-left: 0;
+					margin-bottom: 20px;
+					text-transform: uppercase;
+					font-size: 18px;
+					line-height: 1;
+					border-left: 0;
+					padding-left: 0;
+				}
+				.el-kashier-div-button{
+					text-align: center;
+    				margin-bottom: 20px;
+				}
+				.woocommerce ul.order_details li strong {
+					font-size: 25px;
+				}
+				<?php
+			}
+			?>
+			<?php
 			$light_color  = ! empty( $_COOKIE['light_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['light_color'] ) ) : '#dcf5ff';
 			$dark_color   = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
 			$darker_color = ! empty( $_COOKIE['darker_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['darker_color'] ) ) : '#012d3e';
