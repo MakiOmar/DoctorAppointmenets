@@ -250,7 +250,6 @@ add_action(
 				$('#date').val('');
 				$('#app_clinic').val('').hide();
 				$('#app_attendance_type').val('');
-				$('input[name="day"]').val('');
 				$('#custom-timetabl-trigger').trigger( 'click' );
 			});
 			$(document).on('click', '.custom-timetable-submit', function(e) {
@@ -263,9 +262,8 @@ add_action(
 				var appClinic = $('#app_clinic').val();
 				var appAttendanceType = $('#app_attendance_type').val();
 				var day = $('input[name="day"]').val();
-
 				// Validate form fields
-				if (!appHour || !appChosenPeriod || !date || !appAttendanceType || !day ) {
+				if ( appHour === '' || appChosenPeriod === '' || date === '' || appAttendanceType === '') {
 					// Show error alert using SweetAlert
 					Swal.fire({
 						icon: 'error',
@@ -353,7 +351,6 @@ add_action(
 						$('#date').val('');
 						$('#app_clinic').val('');
 						$('#app_attendance_type').val('');
-						$('input[name="day"]').val('');
 					}
 
 				});
