@@ -70,13 +70,13 @@ function snks_send_session_notifications() {
 				if ( 'online' === $session->attendance_type ) {
 					$message = sprintf(
 						'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
-						snks_localize_time( gmdate( 'H:i a', strtotime( $session->date_time ) ) ),
+						snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
 						'www.jalsah.link'
 					);
 				} else {
 					$message = sprintf(
 						'نذكرك بموعد جلستك غدا الساعه %1$s',
-						snks_localize_time( gmdate( 'H:i a', strtotime( $session->date_time ) ) ),
+						snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
 					);
 				}
 
