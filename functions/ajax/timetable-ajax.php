@@ -174,8 +174,7 @@ function snks_create_custom_timetable() {
 	$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) ); // Selected hour.
 	$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) ); // Chosen periods.
 	$expected_hours = snks_expected_hours( $periods, $hour ); // Expected hours.
-
-	$tos = array();
+	$tos            = array();
 	if ( ! empty( $expected_hours ) ) {
 		foreach ( $expected_hours as $expected_hour ) {
 			$expected_hour_to = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
@@ -198,14 +197,13 @@ function snks_create_custom_timetable() {
 		}
 	}
 
-	$starts = array_unique( array_column( $date_timetables, 'starts' ) );
-	$starts = array_map(
+	$starts             = array_unique( array_column( $date_timetables, 'starts' ) );
+	$starts             = array_map(
 		function ( $item ) {
 			return gmdate( 'H:i', strtotime( $item ) );
 		},
 		$starts
 	);
-
 	$ends               = array_unique( array_column( $date_timetables, 'ends' ) );
 	$ends               = array_map(
 		function ( $item ) {
@@ -236,7 +234,7 @@ function snks_create_custom_timetable() {
 			}
 		}
 	}
-
+	$conflicts_list = array_unique( $conflicts_list );
 	if ( ! empty( $conflicts_list ) ) {
 		$conflicts_list = array_map(
 			function ( $item ) {
