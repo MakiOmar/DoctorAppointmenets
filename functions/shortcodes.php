@@ -998,7 +998,7 @@ function render_user_linked_image() {
 	// Define the base URL and image source.
 	$base_url  = home_url( '/' );
 	$image_src = '/wp-content/uploads/2024/08/preview.png';
-	$user_link = esc_url( $base_url . '7jz/' . $current_user->nickname );
+	$user_link = esc_url( $base_url . 'therapist/' . $current_user->nickname );
 
 	// Return the linked image HTML.
 	return sprintf(

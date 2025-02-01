@@ -93,7 +93,7 @@ add_action(
 				<?php
 			}
 
-			if ( isset( $_SERVER['REQUEST_URI'] ) && ( strpos( $_SERVER['REQUEST_URI'], '/7jz/' ) !== false || is_page('booking-details') ) ) {
+			if ( isset( $_SERVER['REQUEST_URI'] ) && ( strpos( $_SERVER['REQUEST_URI'], '/therapist/' ) !== false || is_page('booking-details') ) ) {
 				?>
 				body, .snks-booking-page-container,
 				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__content-wrapper,

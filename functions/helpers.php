@@ -369,7 +369,7 @@ function snks_encrypted_doctor_url( $user ) {
 	if ( is_a( $user, 'WP_User' ) && $user ) {
 		$nickname = get_user_meta( $user->ID, 'nickname', true );
 		if ( $nickname ) {
-			return site_url( '/7jz/' . $nickname );
+			return site_url( '/therapist/' . $nickname );
 		}
 	}
 
@@ -378,7 +378,7 @@ function snks_encrypted_doctor_url( $user ) {
 	if ( $user_obj ) {
 		$nickname = get_user_meta( $user_obj->ID, 'nickname', true );
 		if ( $nickname ) {
-			return site_url( '/7jz/' . $nickname );
+			return site_url( '/therapist/' . $nickname );
 		}
 	}
 
