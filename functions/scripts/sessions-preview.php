@@ -64,27 +64,26 @@ add_action(
 							if (!result.isConfirmed) {
 								return;
 							}
-						});
-
-						// Perform nonce check.
-						var nonce     = '<?php echo esc_html( wp_create_nonce( 'delete_slot_nonce' ) ); ?>';
-						var slotIndex = $(this).data('index');
-						var slotDay   = $(this).data('day');
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: {
-								slotIndex: slotIndex,
-								slotDay  : slotDay,
-								nonce    : nonce,
-								action   : 'delete_slot',
-							},
-							success: function(response) {
-								if ( response.resp ) {
-									$( '#timetable-' + slotDay + '-' + slotIndex ).remove();
+							// Perform nonce check.
+							var nonce     = '<?php echo esc_html( wp_create_nonce( 'delete_slot_nonce' ) ); ?>';
+							var slotIndex = $(this).data('index');
+							var slotDay   = $(this).data('day');
+							// Send AJAX request.
+							$.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
+								data: {
+									slotIndex: slotIndex,
+									slotDay  : slotDay,
+									nonce    : nonce,
+									action   : 'delete_slot',
+								},
+								success: function(response) {
+									if ( response.resp ) {
+										$( '#timetable-' + slotDay + '-' + slotIndex ).remove();
+									}
 								}
-							}
+							});
 						});
 					}
 				);				
