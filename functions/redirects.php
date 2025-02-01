@@ -67,13 +67,19 @@ add_action(
 			}
 		}
 		if ( ( is_page('cart') ) ) {
-			
 			wp_redirect( home_url( '/my-bookings' ) );
 			exit;
 
 		}
 	}
 );
+
+add_action('template_redirect', function() {
+    if (is_wc_endpoint_url('order-pay')) {
+        WC()->cart->empty_cart();
+    }
+});
+
 add_action('admin_init', function () {
     if (!current_user_can('administrator') && !wp_doing_ajax()) {
         wp_redirect(home_url('my-bookings'));
