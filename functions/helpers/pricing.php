@@ -98,7 +98,6 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 			$multiply_base = 30 * 24;
 		}
 		$to_be_old_period = $to_be_old_number * $multiply_base;
-
 		// Get the current datetime.
 		$current_datetime = current_datetime();
 
@@ -115,6 +114,7 @@ function snks_discount_eligible( $doctor_id, $customer_id = false ) {
 			}
 		}
 	}
+
 	return $has_discount;
 }
 
@@ -175,7 +175,6 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 	} else {
 		$c = 5.13 + 0.96;
 	}
-	snks_error_log( $c );
 	$d = ( $a + $b + $c ) * 0.025 * 1.03 * 1.14;
 
 	// Calculate F (the final total).
