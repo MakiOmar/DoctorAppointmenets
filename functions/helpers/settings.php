@@ -872,12 +872,13 @@ function snks_get_preview_timetable( $user_id = false, $full = false ) {
     // Fetch the doctor's settings.
     $doctor_settings = snks_doctor_settings( $user_id );
 	$available_periods = snks_get_periods( $user_id );
+	$enabled_clinics = snks_enabled_clinics( $user_id );
     // Check if the doctor has an attendance_type setting.
     if ( ! empty( $doctor_settings['attendance_type'] ) && is_array( $timetable ) ) {
         // Filter timetable based on the attendance_type.
         foreach ( $timetable as $day => &$sessions ) {
-            $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings, $available_periods ) {
-                return ( $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'] ) && in_array( $session['period'], $available_periods );
+            $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings, $available_periods, $enabled_clinics ) {
+                return ( $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'] ) && in_array( $session['period'], $available_periods )&& in_array( $session['clinic'], $enabled_clinics );
             });
         }
 
