@@ -63,7 +63,6 @@ add_action(
 						});
 						$("#iam-sure").attr('data-action', ele);
 						$("#iam-sure").attr('data-parent', parent.attr('data-id'));
-						console.log('After update:', $("#iam-sure").attr('data-action'));
 						$.fn.justShowSurepopup(ulElement, $(this).data('title') + ' هذه المواعيد');
 						
 						if ( ele === '.snks-delay' ){
