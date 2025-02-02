@@ -173,6 +173,27 @@ function snks_doctor_settings( $user_id = false ) {
 	$settings['form_days_count']           = get_user_meta( $user_id, 'form_days_count', true );
 	$settings['off_days']                  = get_user_meta( $user_id, 'off_days', true );
 
+	$available_periods = array();
+	if ( ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) ) {
+		$available_periods[] = 60;
+	}
+	if ( ( 'on' === $settings['45_minutes'] || 'true' === $settings['45_minutes'] ) ) {
+		$available_periods[] = 45;
+	}
+	if ( ( 'on' === $settings['30_minutes'] || 'true' === $settings['30_minutes'] ) ) {
+		$available_periods[] = 30;
+	}
+	sort( $available_periods );
+	$pricings = array();
+	foreach ( $available_periods as $period ) {
+		$pricings[ $period ] = array(
+			'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
+			'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
+		);
+	}
+
+	$settings['pricing'] = $pricings;
+
 	return $settings;
 }
 
