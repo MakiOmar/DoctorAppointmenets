@@ -54,6 +54,8 @@ function fetch_start_times_callback() {
 		$query_params = array_merge( $query_params, $disabled_clinics );
 	}
 
+	$enabled_clinics = snks_enabled_clinics( $user_id );
+
 	// Handle the IN clause for enabled clinics.
 	if ( ! empty( $enabled_clinics ) ) {
 		$placeholders = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
