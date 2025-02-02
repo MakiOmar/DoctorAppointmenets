@@ -1033,6 +1033,7 @@ add_shortcode(
  */
 function snks_timetable_settings( $user_id ) {
 	$doctor_settings = snks_doctor_settings( $user_id );
+
 	return array(
 		'free_change_before_number' => $doctor_settings['free_change_before_number'],
 		'free_change_before_unit'   => $doctor_settings['free_change_before_unit'],
@@ -1042,7 +1043,7 @@ function snks_timetable_settings( $user_id ) {
 		'block_if_before_number'    => $doctor_settings['block_if_before_number'],
 		'block_if_before_unit'      => $doctor_settings['block_if_before_unit'],
 		'allow_appointment_change'  => $doctor_settings['allow_appointment_change'],
-		'pricing'                   => snks_doctor_pricings( $user_id ),
+		'pricing'                   => $doctor_settings['pricing'],
 	);
 }
 /**
