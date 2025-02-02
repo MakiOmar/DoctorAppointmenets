@@ -72,13 +72,13 @@ add_action(
 						}
 				}
 			);
-			var data;
 			$(document.body).on(
 				'click',
 				'#iam-sure',
 				function() {
+					var data;
 					let container = $(this).closest('.jet-popup__container');
-					let values = getCheckedValues($("#" + $(this).data('parent')), 'bulk-action[]');
+					let values = getCheckedValues($("#" + $(this).attr('data-parent')), 'bulk-action[]');
 					if ( values.length == 0 ) {
 						$.fn.justShowErrorpopup('فضلاً قم بتحديد جلسة!');
 						return;
