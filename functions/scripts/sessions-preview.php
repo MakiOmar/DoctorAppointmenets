@@ -35,7 +35,7 @@ add_action(
 					'.timetable-preview-tab',
 					function(e) {
 						e.preventDefault();
-						var target = $( this ).data('target');
+						var target = $( this ).attr('data-target');
 						if ( $('.' + target).hasClass('timetable-show') ) {
 							$('.' + target).slideUp();
 							$('.' + target).removeClass('timetable-show');
