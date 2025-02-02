@@ -1483,11 +1483,11 @@ add_action(
 				position: relative;
 			}
 			.jet-form-builder-message--error{
-				position: fixed;
-				top: calc(50% - 45px);
-				left: 0;
-				right: 0;
-				z-index: 9;
+				position: fixed!important;
+				top: calc(50% - 45px)!important;
+				left: 0!important;
+				right: 0!important;
+				z-index: 9!important;
 			}
 			.jet-form-builder-message::before{
 				content: 'x';
