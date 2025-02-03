@@ -50,6 +50,7 @@ add_action(
 				// Return null if the cookie is not found
 				return null;
 			}
+			setCookie( 'edited_withdrawal_form', '', 0 );
 			jQuery( document ).ready( function( $ ) {
 				
 				// Define the URL where you want to prompt the user
@@ -57,7 +58,6 @@ add_action(
 				var confirmationMessage = "يرجى التأكد من حفظ الإعدادات، هل أنت متأكد؟";
 
 				var preventNavigation = false; // Flag to control when to prompt
-				var preventWaithrawalNav = false;
 				// Function to set preventNavigation to true when a form is changed
 				function setFormChanged( form ) {
 					if ( form.getAttribute('data-form-id') ) {
@@ -65,7 +65,7 @@ add_action(
 						setCookie('edited_form', form.getAttribute('data-form-id'));
 					}
 					if ( form.getAttribute('id') === 'withdrawal-settings-form' ){
-						preventWaithrawalNav = true;
+						setCookie('edited_withdrawal_form', 'yes');
 					}
 
 					
@@ -269,7 +269,7 @@ add_action(
 							cookieValue = $(this).data('id');
 						}
 						setCookie("next_popup", cookieValue, false);
-						if (preventWaithrawalNav ) {
+						if (getCookie( 'edited_withdrawal_form' ) ) {
 							Swal.fire({
 								title: 'انت لم تقم بحفظ التعديلات، هل تريد الغاءها؟',
 								text: "يمكنك إلغاء التعديلات والرجوع للخيارات السابقة",

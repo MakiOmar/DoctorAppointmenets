@@ -138,6 +138,7 @@ add_action(
 									confirmButtonText: 'غلق'
 								});
 							}
+							setCookie( 'edited_withdrawal_form', '', 0 );
 						},
 						error: function() {
 							Swal.fire({
