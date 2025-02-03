@@ -295,7 +295,23 @@ add_action(
 
 
 		});
+		document.querySelectorAll("#wallet_number, #account_number, #meza_card_number, #otp_input").forEach((input) => {
+			input.addEventListener("beforeinput", function(e) {
+				const nextVal = 
+					e.target.value.substring(0, e.target.selectionStart) +
+					(e.data ?? '') +
+					e.target.value.substring(e.target.selectionEnd);
+
+				console.log(nextVal);
+
+				if (!/^(\d{0,7}|\d{3}-?\d{0,4}|)$/.test(nextVal)) {
+					e.preventDefault();
+				}
+			});
+		});
+
 	</script>
 		<?php
 	}
 );
+
