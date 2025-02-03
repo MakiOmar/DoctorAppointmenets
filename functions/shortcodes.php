@@ -584,14 +584,14 @@ function custom_withdrawal_form_shortcode() {
 				<!-- We will need this when other withdrawal methods are enabeled-->
 				
 				<div class="withdrawal-radio">
-					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_method, $option['value'] , true ); ?>>
+					<input type="radio" id="<?php echo esc_attr( $option['id'] ); ?>" name="withdrawal_method" value="<?php echo esc_attr( $option['value'] ); ?>" <?php checked( $withdrawal_method, $option['value'] , true ); ?><?php echo $index < 1 && '' === $withdrawal_method ? ' checked' : ''; ?>>
 					<label for="<?php echo esc_attr( $option['id'] ); ?>">
 						<!-- Remove the checked class when other withdrawal methods are enabeled-->
-						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?>"></span>
+						<span class="anony-custom-radio<?php echo $withdrawal_method === $option['value'] ? ' checked' : ''; ?><?php echo $index < 1 && '' === $withdrawal_method ? ' checked' : ''; ?>"></span>
 						<?php echo esc_html( $option['label'] ); ?>
 					</label>
 					<!-- Hidden Fields Section -->
-					<div class="withdrawal-accounts-fields white-bg anony-padding-10" style="display: none;border-radius:10px">
+					<div class="withdrawal-accounts-fields white-bg anony-padding-10" style="display: <?php echo $index < 1 && '' === $withdrawal_method ? '' : ' none'; ?>;border-radius:10px">
 					<?php foreach ( $option['fields'] as $field ) : ?>
 						<div class="field-group">
 							<label for="<?php echo esc_attr( $field['name'] ); ?>">
