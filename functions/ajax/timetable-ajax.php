@@ -183,6 +183,7 @@ function snks_create_custom_timetable() {
 	}
 
 	$tos = array_values( array_unique( $tos ) );
+
 	// Selected day timetables.
 	$day_timetables = isset( $timetables[ $_req['day'] ] ) ? $timetables[ $_req['day'] ] : false;
 	if ( ! $day_timetables ) {
@@ -197,8 +198,8 @@ function snks_create_custom_timetable() {
 		}
 	}
 
-	$starts             = array_unique( array_column( $date_timetables, 'starts' ) );
-	$starts             = array_map(
+	$starts = array_unique( array_column( $date_timetables, 'starts' ) );
+	$starts = array_map(
 		function ( $item ) {
 			return gmdate( 'H:i', strtotime( $item ) );
 		},
@@ -213,7 +214,6 @@ function snks_create_custom_timetable() {
 	);
 	$conflicts_list     = array();
 	$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
-
 	foreach ( $starts as $start ) {
 		$start_time = strtotime( '1970-01-01 ' . $start );
 		if ( $selected_hour_time === $start_time ) {
@@ -228,22 +228,24 @@ function snks_create_custom_timetable() {
 		} elseif ( $selected_hour_time > $start_time ) {
 			foreach ( $ends as $end ) {
 				$end_time = strtotime( '1970-01-01 ' . $end );
-				if ( $end_time > $selected_hour_time ) {
+				if ( $end_time > $selected_hour_time && in_array( $end, $tos, true ) ) {
 					$conflicts_list[] = $end;
 				}
 			}
 		}
 	}
 	$conflicts_list = array_unique( $conflicts_list );
+
 	if ( ! empty( $conflicts_list ) ) {
 		$conflicts_list = array_map(
 			function ( $item ) {
-				return gmdate( 'h:i a', strtotime( $item ) );
+				$localized = snks_localize_time( gmdate( 'h:i a', strtotime( $item ) ) );
+				return $localized;
 			},
 			$conflicts_list
 		);
 
-		wp_send_json_error( array( 'message' => 'عفواً لايمكن إدخال الموعد! لديك تداخل هنا: ' . snks_localized_time( implode( ', ', $conflicts_list ) ) ) );
+		wp_send_json_error( array( 'message' => 'عفواً لايمكن إدخال الموعد! لديك تداخل هنا: ' . implode( ', ', $conflicts_list ) ) );
 	}
 
 	// No conflicts, save the timetable.
