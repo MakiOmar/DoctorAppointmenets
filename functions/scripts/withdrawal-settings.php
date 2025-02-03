@@ -303,13 +303,12 @@ add_action(
 					(e.data ?? '') +
 					e.target.value.substring(e.target.selectionEnd);
 
-				console.log(nextVal);
-
-				if (!/^(\d{0,7}|\d{3}-?\d{0,4}|)$/.test(nextVal)) {
+				if (!/^\d*$/.test(nextVal)) {
 					e.preventDefault();
 				}
 			});
 		});
+
 
 	</script>
 		<?php
