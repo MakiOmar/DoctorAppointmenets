@@ -119,6 +119,9 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					snks_error_log( $order_id . ' :Failed to update timetable.' );
 					throw new Exception( 'Failed to update timetable.' );
 				}
+			} else {
+				$order->set_status( 'cancelled' );
+				$order->save();
 			}
 		}
 	} catch ( Exception $e ) {
