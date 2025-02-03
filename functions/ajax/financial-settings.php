@@ -22,6 +22,12 @@ function send_email_otp() {
 	if ( ! verify_nonce( 'withdrawal_settings_nonce', 'save_withdrawal_settings' ) ) {
 		wp_send_json_error( array( 'message' => 'خطأ في التحقق' ) );
 	}
+	if ( empty( $_POST['withdrawal_method'] ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى تحديد طريقة السحب' ) );
+	}
+	if ( empty( $_POST['withdrawal_option'] ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى تحديد نظام السحب' ) );
+	}
 
 	$user_id           = get_current_user_id();
 	$withdrawal_method = sanitize_text_field( $_POST['withdrawal_method'] ?? '' );
@@ -62,7 +68,12 @@ function verify_otp_and_save_withdrawal() {
 	if ( ! validate_withdrawal_time() ) {
 		wp_send_json_error( array( 'message' => 'لا يمكن حفظ إعدادات السحب بين الساعة 12 صباحا و 9 صباحا.' ) );
 	}
-
+	if ( empty( $_POST['withdrawal_method'] ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى تحديد طريقة السحب' ) );
+	}
+	if ( empty( $_POST['withdrawal_option'] ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى تحديد نظام السحب' ) );
+	}
 	$user_id = get_current_user_id();
 
 	if ( ! validate_otp( $user_id, sanitize_text_field( $_POST['otp_input'] ?? '' ) ) ) {
