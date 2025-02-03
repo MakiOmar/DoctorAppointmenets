@@ -194,7 +194,14 @@ function snks_create_custom_timetable() {
 	foreach ( $day_timetables as $timetable ) {
 		$_date = gmdate( 'Y-m-d', strtotime( $timetable['date_time'] ) );
 		if ( $_date === $_req['date'] ) {
-			$date_timetables[] = $timetable;
+			if ( 'both' !== $_req['app_attendance_type'] ) {
+				if ( $_req['app_attendance_type'] !== $timetable['attendance_type'] ) {
+					continue;
+				}
+				$date_timetables[] = $timetable;
+			} else {
+				$date_timetables[] = $timetable;
+			}
 		}
 	}
 
