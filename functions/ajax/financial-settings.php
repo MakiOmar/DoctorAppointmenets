@@ -244,8 +244,12 @@ function send_otp_email_and_sms( $user_info, $message ) {
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
 
-	$email_sent = wp_mail( $user_info->user_email, $subject, $message, $headers );
-	send_sms_via_whysms( $user_info->user_login, $message );
+	$email_sent   = wp_mail( $user_info->user_email, $subject, $message, $headers );
+	$phone_to_use = get_user_meta( $user_info->ID, 'billing_phone', true ) ?: $user_info->user_login;
+	if ( strpos( $phone_to_use, '+2' ) === false ) {
+		$phone_to_use = '+20' . $phone_to_use;
+	}
+	send_sms_via_whysms( $phone_to_use, $message );
 
 	return $email_sent;
 }
