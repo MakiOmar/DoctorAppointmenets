@@ -1502,6 +1502,21 @@ add_action(
 				justify-content: center;
 				align-items: center;
 			}
+			#countdown-timer{
+				text-align: center;
+				font-size: 18px;
+				color: red;
+				font-weight: bold;
+				margin-bottom: 10px;
+				position: fixed;
+				background-color: #fff;
+				padding: 10px;
+				border-radius: 8px;
+				top: 10px;
+				left: 30px;
+				z-index: 21474836488;
+
+			}
 			.jet-form-builder-message--error::before{
 				background-color: #d41c1c;
 			}

@@ -19,8 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 ?>
-<div id="countdown-timer" style="text-align: center; font-size: 18px; color: red; font-weight: bold; margin-bottom: 10px;">
-		Time remaining: <span id="countdown">5:00</span>
+<div id="countdown-timer">
+		<p>يرجى دفع قيمة الحجز قبل انقضاء هذه المدة</p>
+		<span id="countdown">5:00</span>
 	</div>
 	<script>
 	document.addEventListener("DOMContentLoaded", function () {
