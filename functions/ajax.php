@@ -25,6 +25,7 @@ function snks_logout() {
 	} else {
 		$redirect_url = '/login';
 	}
+	delete_transient( snks_form_data_transient_key() );
 	// Log out the user and destroy session.
 	wp_logout();
 	wp_send_json_success( array( 'redirect_url' => home_url( $redirect_url ) ) );
