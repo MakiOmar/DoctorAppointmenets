@@ -878,7 +878,15 @@ function snks_get_preview_timetable( $user_id = false, $full = false ) {
         // Filter timetable based on the attendance_type.
         foreach ( $timetable as $day => &$sessions ) {
             $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings, $available_periods, $enabled_clinics ) {
-                return ( $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'] ) && in_array( $session['period'], $available_periods )&& in_array( $session['clinic'], $enabled_clinics );
+				$in  = false;
+				if ( ( $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'] ) && in_array( $session['period'], $available_periods ) ){
+					if ( 'online' === $session['attendance_type'] ) {
+						$in = true; 
+					} elseif( in_array( $session['clinic'], $enabled_clinics ) ) {
+						$in = true; 
+					}
+				}
+                return $in;
             });
         }
 
