@@ -768,7 +768,14 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 			color: white!important
 		}
 	</style>
-	
+	<div style="text-align:center">
+		<h3 class="elementor-heading-title elementor-size-default" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;background-color: #012D3E;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز</h3>
+	</div>
+	<?php echo snks_booking_details( $form_data ); ?>
+
+	<div style="text-align:center">
+		<h3 class="elementor-heading-title elementor-size-default" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;background-color: #012D3E;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
+	</div>
 	<div id="price-break" class="container">
 		<?php if ( ! is_page( 'booking-details' ) ) { ?>
 		<div class="discount-section">
