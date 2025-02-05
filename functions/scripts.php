@@ -225,7 +225,12 @@ add_action(
 						// Get the selected login method (mobile or email)
 						var loginWith = $('input[name="login_with"]:checked').val();
 						var tempPhoneVal = $('input[name="temp-phone"]').val();
-						var tempPhone = $('#temp-phone_country_code').length > 0 && tempPhoneVal !== '' ? $('#temp-phone_country_code').val() + tempPhoneVal : '';
+						var tempPhone;
+						if ( $('#temp-phone_country_code').length > 0 && tempPhoneVal !== '' ) {
+							tempPhone = $('#temp-phone_country_code').val() + tempPhoneVal;
+						} else {
+							tempPhone = tempPhoneVal
+						}
 						var username = $('#username').val();
 						if ( loginWith === 'mobile' && tempPhone === '' ) {
 							Swal.fire({
@@ -261,7 +266,6 @@ add_action(
 								_wpnonce: '<?php echo esc_attr( wp_create_nonce( 'forgetpassword' ) ); ?>' // Include the nonce for security
 							},
 							success: function(response) {
-								console.log( response );
 								var icon , title;
 								if ( response.success ){
 									icon = 'success';
