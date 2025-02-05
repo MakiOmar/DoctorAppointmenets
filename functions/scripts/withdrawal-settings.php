@@ -275,7 +275,7 @@ add_action(
 								} else {
 									Swal.fire({
 										title: 'فشل!',
-										text: response.msg || 'حدث خطأ أثناء التنفيذ.',
+										text: response.data.msg || 'حدث خطأ أثناء التنفيذ.',
 										icon: 'error',
 										confirmButtonText: 'إغلاق',
 									});

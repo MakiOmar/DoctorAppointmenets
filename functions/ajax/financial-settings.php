@@ -288,7 +288,7 @@ function handle_manual_withdrawal_ajax() {
 	if ( ! $current_user || 0 === $current_user->ID ) {
 		wp_send_json_error(
 			array(
-				'message' => 'لم يتم التعرف على المستخدم الحالي. يرجى تسجيل الدخول.',
+				'msg' => 'لم يتم التعرف على المستخدم الحالي. يرجى تسجيل الدخول.',
 			)
 		);
 	}
@@ -299,14 +299,14 @@ function handle_manual_withdrawal_ajax() {
 	if ( empty( $withdrawal_settings ) ) {
 		wp_send_json_error(
 			array(
-				'message' => 'ليس لديك إعدادات سحب مؤهلة.',
+				'msg' => 'ليس لديك إعدادات سحب مؤهلة.',
 			)
 		);
 	}
 	if ( 'manual_withdrawal' !== $withdrawal_settings['withdrawal_option'] ) {
 		wp_send_json_error(
 			array(
-				'message' => 'تأكد من اختيار السحب اليدوي ثم حفظ النموذج أولاً.',
+				'msg' => 'تأكد من اختيار السحب اليدوي ثم حفظ النموذج أولاً.',
 			)
 		);
 	}
