@@ -12,10 +12,11 @@ defined( 'ABSPATH' ) || die();
  *
  * @param string $recipient The recipient's phone number.
  * @param string $message The message content.
+ * @param string $type Message type.
  *
  * @return array|WP_Error Response data or error on failure.
  */
-function send_sms_via_whysms( $recipient, $message ) {
+function send_sms_via_whysms( $recipient, $message, $type = 'plain' ) {
 	// API URL.
 	$url = 'https://bulk.whysms.com/api/v3/sms/send';
 
@@ -30,7 +31,7 @@ function send_sms_via_whysms( $recipient, $message ) {
 	$body = array(
 		'recipient' => $recipient,
 		'sender_id' => WHYSMS_SENDER_ID,
-		'type'      => 'plain',
+		'type'      => $type,
 		'message'   => $message,
 	);
 
