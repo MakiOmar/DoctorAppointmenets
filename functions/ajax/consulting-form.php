@@ -16,21 +16,19 @@ add_action( 'wp_ajax_nopriv_fetch_start_times', 'fetch_start_times_callback' );
  */
 function fetch_start_times_callback() {
 	$_request = isset( $_POST ) ? wp_unslash( $_POST ) : array();
+
 	// Verify the nonce.
 	if ( isset( $_request['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_request['nonce'] ), 'fetch_start_times_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
-	$attendance_type = sanitize_text_field( $_request['attendanceType'] );
 
-	$date    = sanitize_text_field( $_request['slectedDay'] );
-	$user_id = sanitize_text_field( $_request['userID'] );
-	$period  = sanitize_text_field( $_request['period'] );
-	$_order  = ! empty( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'ASC';
+	$attendance_type = sanitize_text_field( $_request['attendanceType'] );
+	$date            = sanitize_text_field( $_request['slectedDay'] );
+	$user_id         = sanitize_text_field( $_request['userID'] );
+	$period          = sanitize_text_field( $_request['period'] );
+	$_order          = ! empty( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'ASC';
 
 	global $wpdb;
-
-	// Fetch disabled clinics for the user.
-	$disabled_clinics = snks_disabled_clinics( $user_id );
 
 	// Start building the SQL query.
 	$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
@@ -47,20 +45,23 @@ function fetch_start_times_callback() {
 		$date,
 	);
 
-	// Handle the NOT IN clause for disabled clinics.
-	if ( ! empty( $disabled_clinics ) ) {
-		$placeholders = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
-		$sql         .= " AND clinic NOT IN ($placeholders)";
-		$query_params = array_merge( $query_params, $disabled_clinics );
-	}
+	// Apply clinic conditions only if the attendance type is NOT online.
+	if ( $attendance_type !== 'online' ) {
+		// Fetch disabled clinics.
+		$disabled_clinics = snks_disabled_clinics( $user_id );
+		if ( ! empty( $disabled_clinics ) ) {
+			$placeholders = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
+			$sql         .= " AND clinic NOT IN ($placeholders)";
+			$query_params = array_merge( $query_params, $disabled_clinics );
+		}
 
-	$enabled_clinics = snks_enabled_clinics( $user_id );
-
-	// Handle the IN clause for enabled clinics.
-	if ( ! empty( $enabled_clinics ) ) {
-		$placeholders = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
-		$sql         .= " AND clinic IN ($placeholders)";
-		$query_params = array_merge( $query_params, $enabled_clinics );
+		// Fetch enabled clinics.
+		$enabled_clinics = snks_enabled_clinics( $user_id );
+		if ( ! empty( $enabled_clinics ) ) {
+			$placeholders = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
+			$sql         .= " AND clinic IN ($placeholders)";
+			$query_params = array_merge( $query_params, $enabled_clinics );
+		}
 	}
 
 	// Add the attendance type condition if present.
@@ -71,10 +72,12 @@ function fetch_start_times_callback() {
 
 	// Add the order by clause.
 	$sql .= ' ORDER BY date_time ' . esc_sql( $_order );
+
 	// phpcs:disable
 	// Execute the query.
 	$results = $wpdb->get_results( $wpdb->prepare( $sql, $query_params ) );
 	// phpcs:enable
+
 	// Render the results.
 	$availables = $results;
 	$html       = snks_render_consulting_hours( $availables, $attendance_type, $user_id );

@@ -627,6 +627,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 
 	// Set the default order.
 	$_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+
 	// Fetch off-days from doctor settings.
 	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 
@@ -652,18 +653,21 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
 	$disabled_clinics_condition = '';
 	$enabled_clinics_condition  = '';
 
-	// Fetch disabled clinics.
-	$disabled_clinics = snks_disabled_clinics( $user_id );
-	if ( ! empty( $disabled_clinics ) ) {
-		$disabled_clinics_placeholder = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
-		$disabled_clinics_condition   = "AND clinic NOT IN ({$disabled_clinics_placeholder})";
-	}
+	// Apply clinic conditions only if attendance type is NOT online.
+	if ( $attendance_type !== 'online' ) {
+		// Fetch disabled clinics.
+		$disabled_clinics = snks_disabled_clinics( $user_id );
+		if ( ! empty( $disabled_clinics ) ) {
+			$disabled_clinics_placeholder = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
+			$disabled_clinics_condition   = "AND clinic NOT IN ({$disabled_clinics_placeholder})";
+		}
 
-	// Fetch enabled clinics.
-	$enabled_clinics = snks_enabled_clinics( $user_id );
-	if ( ! empty( $enabled_clinics ) ) {
-		$enabled_clinics_placeholder = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
-		$enabled_clinics_condition   = "AND clinic IN ({$enabled_clinics_placeholder})";
+		// Fetch enabled clinics.
+		$enabled_clinics = snks_enabled_clinics( $user_id );
+		if ( ! empty( $enabled_clinics ) ) {
+			$enabled_clinics_placeholder = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
+			$enabled_clinics_condition   = "AND clinic IN ({$enabled_clinics_placeholder})";
+		}
 	}
 
 	$sql = "
@@ -682,7 +686,12 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
     ";
 
 	// Merge off-days, disabled clinics, and enabled clinics into query params.
-	$query_params = array_merge( $query_params, $off_days, $disabled_clinics, $enabled_clinics );
+	$query_params = array_merge( $query_params, $off_days );
+
+	// Add clinics only if attendance type is NOT online.
+	if ( $attendance_type !== 'online' ) {
+		$query_params = array_merge( $query_params, $disabled_clinics, $enabled_clinics );
+	}
 
 	// Prepare and execute the query.
 	$_query  = $wpdb->prepare( $sql, $query_params );
