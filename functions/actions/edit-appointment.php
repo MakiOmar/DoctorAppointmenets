@@ -165,9 +165,10 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
  * @param int    $will_pay Payment amount.
  * @param object $booking Booking object.
  * @param int    $new_booking_id New Booking ID.
+ * @param array  $extra Extra detals.
  * @return mixed
  */
-function snks_create_edit_fees_order( $main_order, $will_pay, $booking, $new_booking_id ) {
+function snks_create_edit_fees_order( $main_order, $will_pay, $booking, $new_booking_id, $extra = array() ) {
 	$fees_order = wc_create_order();
 	$fees_order->set_customer_id( get_current_user_id() );
 	$product_id = 2363;
@@ -180,6 +181,9 @@ function snks_create_edit_fees_order( $main_order, $will_pay, $booking, $new_boo
 	$fees_order->update_meta_data( 'booking_id', $booking->ID );
 	$fees_order->update_meta_data( 'new_booking_id', $new_booking_id );
 	$fees_order->update_meta_data( 'order_type', 'edit-fees' );
+	foreach ( $extra as $k => $v ) {
+		$fees_order->update_meta_data( $k, $v );
+	}
 	$fees_order->update_status( 'wc-pending-payment' );
 
 	// Set the billing details for the fees order.
@@ -371,16 +375,17 @@ add_action(
 			if ( ! $doctor_settings || empty( $doctor_settings ) ) {
 				$doctor_settings = snks_doctor_settings( $booking->user_id );
 			}
-			$diff_seconds  = snks_diff_seconds( $booking );
-			$order_id      = $booking->order_id;
-			$main_order    = wc_get_order( $order_id );
-			$country       = snsk_ip_api_country();
-			$price         = get_price_by_period_and_country( $new_booking->period, $country, $doctor_settings['pricing'] );
-			$change_fees   = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
-			$will_pay      = ( $change_fees / 100 ) * $price;
-			$will_pay      = snks_session_total_price( $will_pay, $new_booking->attendance_type, 'edit' )['total_price'];
-			$order         = wc_get_order( $order_id );
-			$edited_before = $order->get_meta( 'booking-edited', true );
+			$diff_seconds     = snks_diff_seconds( $booking );
+			$order_id         = $booking->order_id;
+			$main_order       = wc_get_order( $order_id );
+			$country          = snsk_ip_api_country();
+			$price            = get_price_by_period_and_country( $new_booking->period, $country, $doctor_settings['pricing'] );
+			$change_fees      = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
+			$will_pay         = ( $change_fees / 100 ) * $price;
+			$calculated_price = snks_session_total_price( $will_pay, $new_booking->attendance_type, 'edit' );
+			$will_pay         = $calculated_price['total_price'];
+			$order            = wc_get_order( $order_id );
+			$edited_before    = $order->get_meta( 'booking-edited', true );
 			// If not postponed then check for edit time.
 			if ( 'postponed' !== $booking->session_status && ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) ) {
 				wp_safe_redirect(
@@ -398,7 +403,13 @@ add_action(
 			// Compare the input date and time with the modified current date and time.
 			if ( ! snks_is_doctor() && 'postponed' !== $booking->session_status && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds < snks_get_free_edit_before_seconds( $doctor_settings ) ) {
 				$needs_payment = true;
-				$fees_order    = snks_create_edit_fees_order( $main_order, $will_pay, $booking, $_request['selected-hour'] );
+				$fees_order    = snks_create_edit_fees_order(
+					$main_order,
+					$will_pay,
+					$booking,
+					$_request['selected-hour'],
+					$calculated_price
+				);
 				if ( is_a( $fees_order, 'WC_Order' ) ) {
 					wp_safe_redirect( $fees_order->get_checkout_payment_url() );
 					exit;

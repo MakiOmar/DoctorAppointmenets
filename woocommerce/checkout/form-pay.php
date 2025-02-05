@@ -29,10 +29,10 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 		$form_data       = array(
 			'_period'            => $connected_order->get_meta( '_period', true ),
 			'_user_id'           => $connected_order->get_meta( '_user_id', true ),
-			'_main_price'        => $order->get_total(),
+			'_main_price'        => $order->get_meta( 'session_price', true ),
 			'_total_price'       => $order->get_total(),
-			'_jalsah_commistion' => 0,
-			'_paymob'            => 0,
+			'_jalsah_commistion' => $order->get_meta( 'service_fees', true ),
+			'_paymob'            => $order->get_meta( 'paymob', true ),
 		);
 	} else {
 		$form_data = array(
