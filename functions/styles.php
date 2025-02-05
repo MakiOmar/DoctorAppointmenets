@@ -1502,6 +1502,9 @@ add_action(
 				justify-content: center;
 				align-items: center;
 			}
+			.snks-booking-item-wrapper{
+				margin-bottom: 10px;
+			}
 			#countdown-timer{
 				text-align: center;
 				font-size: 18px;
