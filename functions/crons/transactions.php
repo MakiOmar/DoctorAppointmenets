@@ -122,7 +122,18 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 			'msg'     => 'عفواً، ولكن يرجى حفظ الإعدادات أولاً',
 		);
 	}
-
+	if ( empty( $withdrawal_settings['withdrawal_method'] ) ) {
+		return array(
+			'success' => false,
+			'msg'     => 'يرجى تحديد طريقة السحب',
+		);
+	}
+	if ( empty( $withdrawal_settings['withdrawal_option'] ) ) {
+		return array(
+			'success' => false,
+			'msg'     => 'يرجى تحديد نظام السحب',
+		);
+	}
 	$withdrawal_option = $withdrawal_settings['withdrawal_option'];
 	$withdrawal_method = $withdrawal_settings['withdrawal_method'];
 	// Check if the user is eligible for withdrawal based on the option.
@@ -212,7 +223,7 @@ function process_withdrawals_batch() {
 
 	// Ensure the cron job runs only between 12 am and 9 am.
 	$current_time = current_time( 'H:i:s' );
-	if ( ! SNKS_DEV_MODE && $current_time < '23:59:59' && $current_time > '08:00:00' ) {
+	if ( $current_time < '23:59:59' && $current_time > '09:00:00' ) {
 		return;
 	}
 	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
