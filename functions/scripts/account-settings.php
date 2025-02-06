@@ -250,11 +250,14 @@ add_action(
 				// Function to auto-click the "Add New" button for repeaters with no items
 				
 				
-				$(window).on('jet-popup/show-event/after-show', function( event, popup ){
+				$(window).on('jet-popup/show-event/after-show', function( event, popup, t ){
 					repeaterCustomRemove();
-					let exclude = [ 'jet-popup-1961', 'jet-popup-1958', 'jet-popup-1964' ];
-					if ( ! exclude.includes(popup.data.popupId) ){
-						preventNavigation = false;
+				});
+				$(window).on('jet-popup/render-content/render-custom-content', function( event, popup, t ){
+					let exclude = [ '1961', '1958', '1964' ];
+					if ( ! exclude.includes(popup.data.popup_id) ){
+						console.log('lll');
+						//preventNavigation = false;
 						setCookie("next_popup", '', 0);
 					}
 				});
@@ -288,6 +291,7 @@ add_action(
 							});
 							return;
 						}
+						console.log(preventNavigation);
 						if (preventNavigation) {
 							Swal.fire({
 								title: 'أنت لم تقم بحفظ التعديلات',
