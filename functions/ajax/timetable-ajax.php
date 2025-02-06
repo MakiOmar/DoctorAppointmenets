@@ -174,7 +174,8 @@ function snks_create_custom_timetable() {
 	$hour           = gmdate( 'H:i:s', strtotime( $_req['app_hour'] ) ); // Selected hour.
 	$periods        = array_map( 'absint', explode( '-', $_req['app_choosen_period'] ) ); // Chosen periods.
 	$expected_hours = snks_expected_hours( $periods, $hour ); // Expected hours.
-	$tos            = array();
+
+	$tos = array();
 	if ( ! empty( $expected_hours ) ) {
 		foreach ( $expected_hours as $expected_hour ) {
 			$expected_hour_to = gmdate( 'H:i', strtotime( $expected_hour['to'] ) );
@@ -198,15 +199,26 @@ function snks_create_custom_timetable() {
 				if ( $_req['app_attendance_type'] !== $timetable['attendance_type'] ) {
 					continue;
 				}
+
 				$date_timetables[] = $timetable;
 			} else {
 				$date_timetables[] = $timetable;
 			}
 		}
 	}
-
-	$starts = array_unique( array_column( $date_timetables, 'starts' ) );
-	$starts = array_map(
+	$grouped_by_start = snks_group_by( 'starts', $date_timetables );
+	$filtered_data    = array();
+	$base_hours       = array();
+	foreach ( $grouped_by_start as $start_time => $sessions ) {
+		foreach ( $sessions as $session ) {
+			$filtered_data[ $start_time ][] = gmdate( 'H:i', strtotime( $session['ends'] ) );
+			if ( ! isset( $base_hours[ $start_time ] ) ) {
+				$base_hours[ $start_time ] = $session['base_hour'];
+			}
+		}
+	}
+	$starts             = array_unique( array_column( $date_timetables, 'starts' ) );
+	$starts             = array_map(
 		function ( $item ) {
 			return gmdate( 'H:i', strtotime( $item ) );
 		},
@@ -222,21 +234,24 @@ function snks_create_custom_timetable() {
 	$conflicts_list     = array();
 	$selected_hour_time = strtotime( '1970-01-01 ' . $_req['app_hour'] );
 	foreach ( $starts as $start ) {
-		$start_time = strtotime( '1970-01-01 ' . $start );
+		$start_time_base = $base_hours[ gmdate( 'H:i:s', strtotime( $start ) ) ];
+		$start_time      = strtotime( '1970-01-01 ' . $start );
 		if ( $selected_hour_time === $start_time ) {
-			$conflicts_list[] = $start;
-		} elseif ( $selected_hour_time < $start_time ) {
+			$start = gmdate( 'H:i:s', strtotime( $start ) );
+			$_ends = $filtered_data[ $start ];
 			foreach ( $tos as $to ) {
-				$to_time = strtotime( '1970-01-01 ' . $to );
-				if ( $to_time > $start_time ) {
+				if ( in_array( $to, $_ends, true ) ) {
 					$conflicts_list[] = $to;
 				}
 			}
-		} elseif ( $selected_hour_time > $start_time ) {
-			foreach ( $ends as $end ) {
-				$end_time = strtotime( '1970-01-01 ' . $end );
-				if ( $end_time > $selected_hour_time && in_array( $end, $tos, true ) ) {
-					$conflicts_list[] = $end;
+		} elseif ( $selected_hour_time < $start_time ) {
+
+			foreach ( $tos as $to ) {
+				$to_time = strtotime( '1970-01-01 ' . $to );
+				// We need to check against base hour, but how.
+				// Base hour for $start_time should not equal to $hour.
+				if ( $to_time > $start_time && $start_time_base !== $hour ) {
+					$conflicts_list[] = $to;
 				}
 			}
 		}
