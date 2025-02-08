@@ -313,7 +313,7 @@ function snks_form_filter( $user_id ) {
 			<label for="online_attendance_type" class="hacen_liner_print-outregular">
 				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/camera-dark.png"/>
 				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/camera-light.png"/>
-				جلسة أونلاين
+				<span class="attendance_type_text">جلسة أونلاين</span>
 			</label>
 			<input id="online_attendance_type" type="radio" name="attendance_type" value="online"/>
 		</span>
@@ -321,7 +321,8 @@ function snks_form_filter( $user_id ) {
 			<label for="offline_attendance_type"  class="hacen_liner_print-outregular">
 				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/hand-light.png"/>
 				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/hand-dark.png"/>
-				جلسة أوفلاين</label>
+				<span class="attendance_type_text">جلسة عيادة</span>
+			</label>
 			<input id="offline_attendance_type" type="radio" name="attendance_type" value="offline"/>
 		</span>
 	</div>
@@ -413,7 +414,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
 	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
 	$html .= '<div id="consulting-form-submit-wrapper">';
-	$html .= '<div class="hacen_liner_print-outregular"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes"> أوافق على الشروط والأحكام وسياسة الاستخدام.</div>';
+	$html .= '<div class="hacen_liner_print-outregular" style="display: flex;align-items: baseline;"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes">&nbsp; أوافق على<a class="snks-color" href="/%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d8%b7-%d9%88%d8%a7%d9%84%d8%a3%d8%ad%d9%83%d8%a7%d9%85-2/"> الشروط والأحكام وسياسة الاستخدام.</a></div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
 	$html .= '<input id="consulting-form-submit" style="margin-top:18px" type="submit" value="' . $submit_text . '">';
 	$html .= '<input type="hidden" name="appointment_add_to_cart" value="1">';
@@ -919,7 +920,7 @@ function template_str_replace( $record ) {
 			esc_html( $first_name . ' ' . $last_name ),
 			esc_html( $phone ),
 			esc_html( $whatsapp ),
-			esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ),
+			add_query_arg( 'id', $record->user_id, esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ) ),
 			$button_text,
 			'',
 		),
@@ -1333,6 +1334,9 @@ function snks_render_sessions_listing( $tense ) {
 				$doctor_settings = snks_doctor_settings( $session->user_id );
 			}
 			$room = add_query_arg( 'room_id', $session->ID, home_url( '/meeting-room' ) );
+			if ( snks_is_doctor() ) {
+				$room = add_query_arg( 'id', $session->user_id, $room );
+			}
 			if ( 'postponed' === $session->session_status && ! snks_is_doctor() ) {
 				$edit = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;" colspan="2">' . snks_edit_button( $session->ID, $session->user_id, $session->settings, 'تم الغاء الموعد، احجز موعد آخر مجانا' ) . '</td></tr>';
 			} elseif ( isset( $doctor_settings['allow_appointment_change'] ) && 'on' === $doctor_settings['allow_appointment_change'] ) {

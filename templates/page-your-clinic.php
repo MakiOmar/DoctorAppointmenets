@@ -23,7 +23,7 @@ $user_details = snks_user_details( $user_id );
 		} else {
 			$profile_image = get_user_meta( $user_id, 'profile-image', true );
 			if ( empty( $profile_image ) ) {
-				$profile_image = '/wp-content/uploads/2024/08/portrait-3d-male-doctor_23-2151107083.avif';
+				$profile_image = '/wp-content/uploads/2025/02/360_F_346936114_RaxE6OQogebgAWTalE1myseY1Hbb5qPM.jpg';
 			} elseif ( is_numeric( $profile_image ) ) {
 				$profile_image_src = wp_get_attachment_image_src( absint( $profile_image ), 'full' );
 				$profile_image     = $profile_image_src[0];
@@ -42,7 +42,7 @@ $user_details = snks_user_details( $user_id );
 		</div>
 		<div class="profile-details">
 			<h1 class="kacstqurnkacstqurn" style="font-size:28px;"><?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?></h1>
-			<h2 style="font-size:25px;margin:0;margin-bottom:20px;text-align: center;"><?php echo wp_kses_post( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
+			<h2 style="font-size:25px;margin:0;margin-bottom:20px;text-align: center;padding: 0 25px;line-height: 35px;"><?php echo wp_kses_post( get_user_meta( $user_id, 'doctor_specialty', true ) ); ?></h2>
 			<div class="snks-profile-accordion">
 				<?php
 				//phpcs:disable

@@ -86,21 +86,30 @@ add_action(
 									margin: 10,
 									nav: true,
 									dots: false,
+									items : 6,
 									responsive: {
 										0: {
 											items: 4
 										},
-										480: {
-											items: 6
+										401: {
+											items: 5
 										},
 										768: {
-											items: 6
+											items: 5
 										}
 									}
 								});
 							},
 							complete: function() {
 								periodClicked.prev('label').removeClass('snks-loading');
+								setTimeout( function(){
+									console.log($( '.owl-nav' ).hasClass('disabled'));
+									if( $( '.owl-nav' ).hasClass('disabled') ){
+										$('.owl-stage').attr('style', 'width:100%!important');
+										$('.owl-item').attr('style', 'width:60px!important;margin-left:5px');
+										$('.consulting-form').attr('style', 'max-width:95%');
+									}
+								}, 500 );
 							},
 							error: function(xhr, status, error) {
 								console.error('Error:', error);

@@ -75,6 +75,9 @@ add_action(
 				.snks-booking-page-container {
 					background-color: #fff;
 				}
+				.snks-about-me li{
+					color: <?php echo esc_attr( $dark_color ); ?>!important;;
+				}
 				<?php
 			}
 			if ( ! is_page( 'switch-user' ) ) {
@@ -506,23 +509,34 @@ add_action(
 				margin: auto;
 				margin-top: 30px;
 			}
-
-			@media (min-width: 361px) and ( max-width: 400px ) {
+			@media (min-width: 320px) and ( max-width: 360px ) {
+				.attendance_type_wrapper label {
+					font-size: 19px!important;
+				}
+				
+			}
+			@media (min-width: 360px) and ( max-width: 400px ) {
 				.snks-period-label, .snks-period-price {
-					font-size: 17px!important;
-					width:126px!important;
+					font-size: 15px!important;
 				}
 				
 			}
 			@media (max-width: 400px) {
+				.snks-available-hours ul{
+					flex-direction: column;
+				}
+				.snks-available-hours ul li, .snks-available-hours li.available-time label{
+					width: 100%!important;
+				}
+				
 				.consulting-form{
 					max-width: 250px;
 				}
+				
+			}
+			@media (max-width: 320px) {
 				.attendance_type_wrapper label{
-					font-size: 16px!important;
-				}
-				.snks-period-label, .snks-period-price{
-					width:104px!important
+					font-size: 19px!important;
 				}
 				
 			}
@@ -635,9 +649,10 @@ add_action(
 			.snks-period-label, .snks-period-price {
 				width: 100%;
 				max-width: 126px;
-				text-align: center;
+				justify-content: center;
 				border-radius: 20px;
-				font-size: 17px;
+				font-size: 16px;
+				text-align: center;
 			}
 			.snks-period-price {
 				border-top-left-radius: 0;
@@ -677,17 +692,17 @@ add_action(
 				border-top: 1px solid #fff;
 			}
 			.attendance_type_wrapper label{
-				padding: 5px 10px;
+				padding: 5px;
 				background-color: #012d3e;
 				border-radius: 10px;
 				height: 50px;
 				box-sizing: border-box;
 				color:#fff;
 				width: 100%;
-				text-align: center;
 				display: flex;
-				font-size: 26px;
+				font-size: 24px;
 				align-items: center;
+				justify-content: center;
 			}
 			.attendance_type_wrapper label img{
 				margin: 0;
@@ -1264,6 +1279,7 @@ add_action(
 				justify-content: space-between;
 				flex-direction: column;
 				font-size: 16px;
+				width:100%
 			}
 			.anony-day-radio input{
 				display: none;
@@ -1287,6 +1303,7 @@ add_action(
 				align-items: center;
 				border-radius: 5px;
 				font-size: 15px;
+				padding: 0;
 			}
 			.snks-available-hours li.available-time label{
 				background-color: #024059;
@@ -1419,10 +1436,12 @@ add_action(
 				right:-31px
 			}
 
-			
+		
 			.anony-day-number{
 				font-size: 27px;
-				margin: 8px;
+				padding: 8px;
+				width: 45px;
+				text-align: center;
 			}
 			.vertical-divider{
 				width: 2px;
@@ -1465,8 +1484,14 @@ add_action(
 				font-size: 100%;
 				text-align: center;
 			}
-			.clinic-rules h1, .clinic-rules p{
+			.clinic-rules h1, .clinic-rules p, .offline-clinic-hours h3, .offline-clinic-hours .showNextClinic, .snks-color, .snks-color *{
 				color: <?php echo esc_attr( $darker_color ); ?>!important;
+			}
+			.offline-clinic-hours h3{
+				margin: 5px;
+			}
+			.offline-clinic-hours .showNextClinic{
+				margin-bottom: 15px;
 			}
 			.clinic-rules p{
 				display: flex;
@@ -1534,7 +1559,22 @@ add_action(
 					display:none
 				}
 			}
+			@media screen and (max-width:350px) {
+				#head2{
+					left:0px!important;
+				}
+				#head3{
+					right:0px!important;
+				}
+			}
 			@media screen and (max-width:480px) {
+				body{
+					padding: 0!important;
+				}
+				#snks-booking-page{
+					max-width: 480px!important;
+					border:none!important;
+				}
 
 				.elementor-3537 .elementor-element.elementor-element-ba64801:not(.elementor-motion-effects-element-type-background){
 					position: fixed;
@@ -1831,12 +1871,12 @@ add_action(
 				color:#024059
 			}
 			.snks-about-me{
-				padding: 20px 50px;
+				padding: 20px 20px;
 			}
 			.snks-about-me li {
-				margin-bottom: 15px;
-				font-size: 22px;
-				text-align: justify;
+				font-size: 20px;
+  				text-align: justify;
+				padding-bottom: 10px;
 			}
 			.anony-arrow-down {
 				width: 0;

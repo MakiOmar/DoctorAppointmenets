@@ -244,7 +244,6 @@ define(
  */
 function set_doctor_id_cookie() {
 	global $wp;
-
 	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
 		$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
 		$clinics_colors = json_decode( CLINICS_COLORS );
