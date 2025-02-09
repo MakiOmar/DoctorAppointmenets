@@ -270,12 +270,28 @@ add_action(
 		if ( ! $form_data || empty( $form_data ) || ! isset( $form_data['booking_day'] ) ) {
 			return;
 		}
-		if ( $form_data && is_array( $form_data ) ) {
-			foreach ( $form_data as $key => $value ) {
-				$order->update_meta_data( $key, $value );
+		if ( is_array( $form_data ) ) {
+			$timetable = snks_get_timetable_by( 'ID', $form_data['booking_id'] );
+			if ( 'waiting' === $timetable->session_status ) {
+				$updated = snks_update_timetable(
+					$timetable->ID,
+					array(
+						'session_status' => 'pending',
+					)
+				);
+				if ( $updated ) {
+					foreach ( $form_data as $key => $value ) {
+						$order->update_meta_data( $key, $value );
+						$order->save();
+					}
+					delete_transient( snks_form_data_transient_key() );
+				}
+			} else {
+				$order->set_status( 'cancelled' );
 				$order->save();
+				wp_safe_redirect( add_query_arg( 'error', 'booked', snks_encrypted_doctor_url( $form_data['_user_id'] ) ) );
+				exit;
 			}
-			delete_transient( snks_form_data_transient_key() );
 		}
 	},
 	10,
