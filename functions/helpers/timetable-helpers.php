@@ -181,7 +181,7 @@ function snks_get_timetable_by_date( $date, $period = false ) {
 		$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
 		        WHERE DATE(date_time) = %s 
 		        AND user_id = %d 
-		        AND session_status NOT IN ( 'cancelled', 'completed', 'open' )";
+		        AND session_status NOT IN ( 'cancelled', 'completed', 'open', 'pending' )";
 
 		// Add the period condition if provided.
 		if ( $period ) {
@@ -351,7 +351,8 @@ function snks_waiting_others( $booked_timetable ) {
              SET session_status = 'waiting'
              WHERE DATE(date_time) = DATE(%s)
                AND base_hour = %s
-               AND order_id = 0",
+               AND order_id = 0
+			   AND session_status != 'open'",
             $booked_timetable->date_time,
             $booked_timetable->base_hour
         )
