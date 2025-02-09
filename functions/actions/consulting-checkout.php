@@ -280,6 +280,7 @@ add_action(
 					)
 				);
 				if ( $updated ) {
+					snks_close_others( $timetable );
 					foreach ( $form_data as $key => $value ) {
 						$order->update_meta_data( $key, $value );
 						$order->save();
