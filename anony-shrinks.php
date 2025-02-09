@@ -86,8 +86,8 @@ function snks_add_cron_schedule( $schedules ) {
 	$schedules['every_15_minutes'] = array(
 		'interval' => 15 * 60, // 15 minutes in seconds.
 		'display'  => __( 'Every 15 Minutes' ),
-	);	
-	$schedules['every_5_minutes'] = array(
+	);
+	$schedules['every_5_minutes']  = array(
 		'interval' => 5 * 60, // 5 minutes in seconds.
 		'display'  => __( 'Every 5 Minutes' ),
 	);
@@ -280,7 +280,6 @@ add_action(
 		if ( is_array( $form_data ) ) {
 			//phpcs:disable
 			echo consulting_session_pricing_table_shortcode( $form_data );
-			echo snks_doctor_rules( $form_data['_user_id'] );
 			//phpcs:enable
 
 			echo '<h2 style="margin:20px 0;color:#fff;font-size:25px;text-align:center">إختر طريقة الدفع المناسبة</h2>';
@@ -589,3 +588,18 @@ add_action(
 	}
 );
 
+add_filter( 'wc_kashier_payment_icons', 'rename_payment_methods' );
+function rename_payment_methods( $list_icons ) {
+	snks_error_log($list_icons);
+	$temp = array();
+	foreach ( $list_icons as $index => $icon ) {
+		if ( $index == 'credit-card' || $index == 'meeza-wallet' ) {
+			$temp[ $index ] = '<div class="kasheir-method">' . $icon;
+		}elseif ( $index == 'meeza-wallet' || 'meeza' === $index ) {
+			$temp[ $index ] = $icon . '</div>';
+		}else {
+			$temp[ $index ] = $icon;
+		}
+	}
+	return $temp;
+}
