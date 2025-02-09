@@ -60,11 +60,11 @@ function snks_auto_cancel_wc_orders() {
 		$interval = $date->diff( $now );
 
 		$minutes_diff = $interval->format( '%i' );
-		if ( $minutes_diff > 10 ) {
-			$order->update_status( 'cancelled', 'Cancelled for missing payment' );
+		if ( $minutes_diff > 3 ) {
+			$order->set_status( 'cancelled', 'Cancelled for missing payment' );
+			$order->save();
 			$booking_id = $order->get_meta( 'booking_id', true );
 			$timetable  = snks_get_timetable_by( 'ID', absint( $booking_id ) );
-			delete_post_meta( $order->get_id(), 'booking_id' );
 			if ( ! $timetable || 'open' === $timetable->session_status ) {
 				return;
 			}
@@ -75,9 +75,7 @@ function snks_auto_cancel_wc_orders() {
 				)
 			);
 			if ( $updated ) {
-				if ( $timetable ) {
-					snks_waiting_others( $timetable );
-				}
+				snks_waiting_others( $timetable );
 				delete_post_meta( $order->get_id(), 'booking_id' );
 			}
 		}
