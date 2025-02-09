@@ -47,7 +47,7 @@ add_action(
 				}
 				.el-kashier-div-button{
 					text-align: center;
-    				margin-bottom: 20px;
+					margin-bottom: 20px;
 				}
 				.woocommerce ul.order_details li strong {
 					font-size: 25px;
@@ -232,14 +232,20 @@ add_action(
 				}
 				.wc_payment_method label{
 					display: inline-flex;
-  					width: 100%;
-					  justify-content: space-between;
-					  padding-right: 30px;
+						width: 100%;
+						justify-content: space-between;
+						padding-right: 30px;
 				}
 				.wc_payment_method label div{
 					display: flex;
 					width: 150px;
 					justify-content: flex-end;
+					align-items: center;
+				}
+				#add_payment_method #payment ul.payment_methods li img.kashier-icon, .woocommerce-checkout #payment ul.payment_methods li img.kashier-icon{
+					margin:0;
+					padding: 0;
+					max-width: 150px!important;
 				}
 				#secured-by-kashier-container{
 					padding-top: 0;
@@ -256,7 +262,7 @@ add_action(
 				}
 				#add_payment_method #payment ul.payment_methods li input, .woocommerce-cart #payment ul.payment_methods li input, .woocommerce-checkout #payment ul.payment_methods li input{
 					position: absolute;
-  					top: 19px;
+						top: 19px;
 				}
 				div.wc_payment_method.payment_method_cod{
 					margin-top: auto!important;
@@ -1902,7 +1908,7 @@ add_action(
 			}
 			.snks-about-me li {
 				font-size: 20px;
-  				text-align: justify;
+					text-align: justify;
 				padding-bottom: 10px;
 			}
 			.anony-arrow-down {

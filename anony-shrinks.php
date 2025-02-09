@@ -588,18 +588,19 @@ add_action(
 	}
 );
 
-add_filter( 'wc_kashier_payment_icons', 'rename_payment_methods' );
-function rename_payment_methods( $list_icons ) {
-	snks_error_log($list_icons);
-	$temp = array();
-	foreach ( $list_icons as $index => $icon ) {
-		if ( $index == 'credit-card' || $index == 'meeza-wallet' ) {
-			$temp[ $index ] = '<div class="kasheir-method">' . $icon;
-		}elseif ( $index == 'meeza-wallet' || 'meeza' === $index ) {
-			$temp[ $index ] = $icon . '</div>';
-		}else {
-			$temp[ $index ] = $icon;
+add_filter(
+	'wc_kashier_payment_icons',
+	function ( $list_icons ) {
+		$temp = array();
+		foreach ( $list_icons as $index => $icon ) {
+			if ( 'credit-card' === $index ) {
+				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="visa" src="/wp-content/uploads/2025/02/cards.png"></div>';
+			} elseif ( 'meeza-wallet' === $index ) {
+				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="visa" src="/wp-content/uploads/2025/02/wallets.png"></div>';
+			} else {
+				$temp[ $index ] = '';
+			}
 		}
+		return $temp;
 	}
-	return $temp;
-}
+);
