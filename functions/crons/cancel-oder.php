@@ -50,7 +50,7 @@ function snks_auto_cancel_wc_orders() {
 		'limit'   => 5,
 		'orderby' => 'date',
 		'order'   => 'DESC',
-		'status'  => array( 'pending', 'on-hold', 'faild', 'cancelled', 'refunded' ),
+		'status'  => array( 'pending', 'on-hold' ),
 	);
 
 	$orders = wc_get_orders( $query );
@@ -63,14 +63,18 @@ function snks_auto_cancel_wc_orders() {
 		if ( $minutes_diff > 10 ) {
 			$order->update_status( 'cancelled', 'Cancelled for missing payment' );
 			$booking_id = $order->get_meta( 'booking_id', true );
-			$updated    = snks_update_timetable(
+			$timetable  = snks_get_timetable_by( 'ID', absint( $booking_id ) );
+			delete_post_meta( $order->get_id(), 'booking_id' );
+			if ( ! $timetable || 'open' === $timetable->session_status ) {
+				return;
+			}
+			$updated = snks_update_timetable(
 				absint( $booking_id ),
 				array(
 					'order_id' => 0,
 				)
 			);
 			if ( $updated ) {
-				$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
 				if ( $timetable ) {
 					snks_waiting_others( $timetable );
 				}
@@ -80,4 +84,4 @@ function snks_auto_cancel_wc_orders() {
 	}
 }
 
-//add_action( 'autocancel_wc_orders_event', 'snks_auto_cancel_wc_orders' );
+add_action( 'autocancel_wc_orders_event', 'snks_auto_cancel_wc_orders' );
