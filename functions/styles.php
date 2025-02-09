@@ -227,9 +227,36 @@ add_action(
 			}
 			<?php if ( is_checkout() ) { ?>
 				.wc_payment_methods li{
-					margin-top: 1rem!important;
 					padding: 10px!important;
 					min-height: 57.5px;
+				}
+				.wc_payment_method label{
+					display: inline-flex;
+  					width: 100%;
+					  justify-content: space-between;
+					  padding-right: 30px;
+				}
+				.wc_payment_method label div{
+					display: flex;
+					width: 150px;
+					justify-content: flex-end;
+				}
+				#secured-by-kashier-container{
+					padding-top: 0;
+				}
+				#iFrame{
+					z-index: 20!important;
+				}
+				#add_payment_method #payment ul.payment_methods, .woocommerce-cart #payment ul.payment_methods, .woocommerce-checkout #payment ul.payment_methods{
+					padding-top: 5px;
+				}
+				#add_payment_method #payment ul.payment_methods li, .woocommerce-cart #payment ul.payment_methods li, .woocommerce-checkout #payment ul.payment_methods li{
+					margin-bottom: 10px;
+					position: relative;
+				}
+				#add_payment_method #payment ul.payment_methods li input, .woocommerce-cart #payment ul.payment_methods li input, .woocommerce-checkout #payment ul.payment_methods li input{
+					position: absolute;
+  					top: 19px;
 				}
 				div.wc_payment_method.payment_method_cod{
 					margin-top: auto!important;
@@ -1571,7 +1598,7 @@ add_action(
 				body{
 					padding: 0!important;
 				}
-				#snks-booking-page{
+				#snks-booking-page, #checkout-wrapper{
 					max-width: 480px!important;
 					border:none!important;
 				}
@@ -1629,7 +1656,7 @@ add_action(
 				border-radius: 10px;
 				padding: 10px;
 			}
-			[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover {
+			[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover, .snks-dynamic-bg {
 				background-color: <?php echo esc_html( $darker_color ); ?>!important;
 				color:#fff!important
 			}
