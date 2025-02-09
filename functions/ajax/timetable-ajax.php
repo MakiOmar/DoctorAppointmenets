@@ -104,6 +104,7 @@ add_action(
 			$order = wc_get_order( absint( $booking->order_id ) );
 			if ( $order ) {
 				$order->update_status( 'cancelled' );
+				$order->save();
 			}
 		}
 		wp_send_json(
