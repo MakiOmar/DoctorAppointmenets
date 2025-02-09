@@ -138,10 +138,11 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 add_action(
 	'woocommerce_order_status_cancelled',
 	function ( $order_id ) {
-		$order = wc_get_order( $order_id );
+		$order      = wc_get_order( $order_id );
 		$booking_id = $order->get_meta( 'booking_id', true );
 		$booking    = snks_get_timetable_by( 'ID', $booking_id );
-		if ( ! $booking || empty( $booking ) ) {
+		if ( ! $booking || empty( $booking ) || 'open' === $booking->session_status ) {
+			delete_post_meta( $order_id, 'booking_id' );
 			return;
 		}
 		if ( snks_is_past_date( $booking->date_time ) ) {
