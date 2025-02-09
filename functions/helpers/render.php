@@ -414,7 +414,10 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<input type="hidden" id="user-id" name="user-id" value="' . $user_id . '">';
 	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
 	$html .= '<div id="consulting-form-submit-wrapper">';
-	$html .= '<div class="hacen_liner_print-outregular" style="display: flex;align-items: baseline;"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes">&nbsp; أوافق على<a class="snks-color" href="/%d8%a7%d9%84%d8%b4%d8%b1%d9%88%d8%b7-%d9%88%d8%a7%d9%84%d8%a3%d8%ad%d9%83%d8%a7%d9%85-2/"> الشروط والأحكام وسياسة الاستخدام.</a></div>';
+	$html .= '<div class="hacen_liner_print-outregular snks-color" style="display: flex;align-items: baseline;"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes">';
+	$html .= '<a href="#" style="margin-right:10px">';
+	$html .= 'أوافق على الشروط والأحكام وسياسة الاستخدام.';
+	$html .= '</a></div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
 	$html .= '<input id="consulting-form-submit" style="margin-top:18px" type="submit" value="' . $submit_text . '">';
 	$html .= '<input type="hidden" name="appointment_add_to_cart" value="1">';
@@ -1072,7 +1075,7 @@ function snks_doctor_rules( $user_id ) {
 		$html .= 'يمكنك تغيير موعد الجلسة مجاناً في حالة تغييرها قبل موعدها بـ {free_change_before} وبعد ذلك يتم فرض رسوم على تغيير موعدها بقيمة {paid_change_fees}% من ثمن الجلسة ولا يمكنك تغيير موعد الجلسة قبل موعدها بـ {no_change_period}';
 		$html .= '</p>';
 		$html .= '<p>';
-		$html .= 'مع العلم انه يمكنك تغيير موعد جلستك مره واحده فقط.';
+		$html .= 'مع العلم انه يمكنك تغيير موعد جلستك مره واحده فقط.';
 		$html .= '</p>';
 	}
 	$html .= '</div>';

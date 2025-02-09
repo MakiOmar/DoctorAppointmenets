@@ -769,12 +769,16 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		}
 	</style>
 	<div style="text-align:center">
-		<h3 class="elementor-heading-title elementor-size-default" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;background-color: #012D3E;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز</h3>
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز</h3>
 	</div>
-	<?php echo snks_booking_details( $form_data ); ?>
+	<?php
+	echo snks_booking_details( $form_data );
+	echo '<br>';
+	echo snks_doctor_rules( $form_data['_user_id'] );
+	?>
 
 	<div style="text-align:center">
-		<h3 class="elementor-heading-title elementor-size-default" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;background-color: #012D3E;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
 	<div id="price-break" class="container">
 		<?php if ( ! is_page( 'booking-details' ) ) { ?>
@@ -795,7 +799,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 			</div>
 
 			<div class="amount-section">
-				<p>رسوم  Paymob</p>
+				<p>رسوم  إدارية</p>
 				<p class="price"><?php echo esc_html( $form_data['_paymob'] ); ?> ج.م</p>
 			</div>
 
