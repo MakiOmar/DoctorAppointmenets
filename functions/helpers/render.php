@@ -415,7 +415,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
 	$html .= '<div id="consulting-form-submit-wrapper">';
 	$html .= '<div class="hacen_liner_print-outregular snks-color" style="display: flex;align-items: baseline;"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes">';
-	$html .= '<a href="#" style="margin-right:10px">';
+	$html .= '<a href="/الشروط-والأحكام-2/" style="margin-right:10px" target="_blank">';
 	$html .= 'أوافق على الشروط والأحكام وسياسة الاستخدام.';
 	$html .= '</a></div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );
