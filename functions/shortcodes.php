@@ -29,35 +29,35 @@ add_shortcode(
 			$atts
 		);
 		$permalink = '';
-		$title     = '';
+		$title     = '<h1 class="pt_bold_headingregular" style="color:#024059">';
 		if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
 			$permalink = '#';
-			$title     = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">حجز موعد</a>';
+			$title     .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">حجز موعد</a>';
 		} elseif ( is_singular() ) {
 			global $post;
 			$permalink = get_permalink( $post->ID );
-			$title     = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
+			$title     .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
 		} elseif ( is_post_type_archive() ) {
 			$post_type        = get_post_type();
 			$permalink        = get_post_type_archive_link( $post_type );
 			$post_type_object = get_post_type_object( $post_type );
 			if ( $post_type_object ) {
 				$post_type_label = $post_type_object->labels->name; // or use 'singular_name' for the singular label.
-				$title           = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
+				$title           .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
 			}
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term      = get_queried_object();
 			$permalink = get_term_link( $term );
-			$title     = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
+			$title     .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
 		} elseif ( is_archive() ) {
 			$permalink      = get_post_type_archive_link( get_post_type() );
 			$queried_object = get_queried_object();
 			if ( $queried_object && isset( $queried_object->label ) ) {
 				$archive_label = $queried_object->label;
-				$title         = '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
+				$title         .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
 			}
 		}
-
+		$title     .= '</h1>';
 		return $title;
 	}
 );
@@ -248,9 +248,9 @@ function phone_input_cb( $atts ) {
 	</p>
 	<div id="phone_input_main_wrapper_<?php echo esc_attr( $atts['name'] ); ?>" class="phone_input_main_wrapper">
 		<div id="<?php echo esc_attr( $unique_id ); ?>" class="anony-dial-codes">
-			<div class="anony-flex flex-v-center anony-full-width">
-				<label class="anony-dial-codes-phone-label jet-form-builder-col__start">رقم الموبايل *</label>
-				<div class="anony-flex flex-v-center anony-full-width">
+			<div class="anony-flex flex-v-center" style="width:100%">
+				<label class="anony-dial-codes-phone-label jet-form-builder-col__start">رقم الموبايل <spna>*</span></label>
+				<div class="anony-flex flex-v-center" style="width:100%">
 				<input type="tel" pattern="[0-9]+" inputmode="numeric" class="anony_dial_phone" name="<?php echo esc_attr( $atts['name'] ); ?>" value="<?php echo esc_attr( str_replace( $user_country_code, '', $current_phone ) ); ?>"/>
 				<?php if ( 'yes' === $atts['country_code'] ) { ?>
 					<button class="anony_dial_codes_selected_choice"></button>
@@ -772,9 +772,9 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز</h3>
 	</div>
 	<?php
-	echo snks_booking_details( $form_data );
+	echo wp_kses_post( snks_booking_details( $form_data ) );
 	echo '<br>';
-	echo snks_doctor_rules( $form_data['_user_id'] );
+	echo wp_kses_post( snks_doctor_rules( $form_data['_user_id'] ) );
 	?>
 
 	<div style="text-align:center">

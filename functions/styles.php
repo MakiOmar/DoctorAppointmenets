@@ -78,6 +78,7 @@ add_action(
 				.snks-about-me li{
 					color: <?php echo esc_attr( $dark_color ); ?>!important;;
 				}
+				
 				<?php
 			}
 			if ( ! is_page( 'switch-user' ) ) {
@@ -225,6 +226,17 @@ add_action(
 				border-radius: 0;
 				color: #fff;
 			}
+			#jet-tabs-content-5392 .jet-form-builder__field-wrap label :checked + span::before{
+					background-color: <?php echo esc_attr( $darker_color ); ?>!important;
+				}
+			.booking-phone .anony-dial-codes > div{
+				flex-direction: column;
+  				align-items: flex-start;
+			}
+			.booking-phone .anony-dial-codes > div .anony-dial-codes-phone-label{
+				font-size: 16px;
+  				margin-bottom: 10px;
+			}
 			<?php if ( is_checkout() ) { ?>
 				.wc_payment_methods li{
 					padding: 10px!important;
@@ -232,9 +244,10 @@ add_action(
 				}
 				.wc_payment_method label{
 					display: inline-flex;
-						width: 100%;
-						justify-content: space-between;
-						padding-right: 30px;
+					width: 100%;
+					justify-content: space-between;
+					padding-right: 30px;
+					align-items: center;
 				}
 				.wc_payment_method label div{
 					display: flex;
@@ -262,7 +275,7 @@ add_action(
 				}
 				#add_payment_method #payment ul.payment_methods li input, .woocommerce-cart #payment ul.payment_methods li input, .woocommerce-checkout #payment ul.payment_methods li input{
 					position: absolute;
-						top: 19px;
+					top: 22px;
 				}
 				div.wc_payment_method.payment_method_cod{
 					margin-top: auto!important;
@@ -303,13 +316,19 @@ add_action(
 			}
 			input,.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control.active-tab .jet-tabs__label-text,
 			.elementor-3578 .elementor-element.elementor-element-c5e7b50 .jet-form-builder__action-button{
-				color: <?php echo esc_attr( $dark_color ); ?>!important;
+				color: <?php echo esc_attr( $dark_color ); ?>;
 			}
 			#price-break .discount-section button{
 				border-color: <?php echo esc_attr( $dark_color ); ?>!important;
 			}
 			.elementor-3578 .elementor-element.elementor-element-c5e7b50 .jet-form-builder__action-button:hover{
 				color: #fff!important;
+			}
+			.account-submit{
+				font-weight: 700!important;
+				font-size: 20px!important;
+				padding: 5px!important;
+				font-family: "pt_bold_headingregular", Sans-serif!important;
 			}
 			::placeholder, ::-moz-placeholder,::-webkit-input-placeholder{
 				color: <?php echo esc_attr( $dark_color ); ?>!important;
@@ -449,7 +468,8 @@ add_action(
 			}
 			body.woocommerce-order-received,
 			.elementor-3761 .elementor-element.elementor-element-2dc5242b:not(.elementor-motion-effects-element-type-background), 
-			.elementor-3761 .elementor-element.elementor-element-2dc5242b > .elementor-motion-effects-container > .elementor-motion-effects-layer,.owl-carousel.days-container .owl-nav button
+			.elementor-3761 .elementor-element.elementor-element-2dc5242b > .elementor-motion-effects-container > .elementor-motion-effects-layer,.owl-carousel.days-container .owl-nav button,
+			.elementor-3761 .elementor-element.elementor-element-1923cb73:not(.elementor-motion-effects-element-type-background), .elementor-3761 .elementor-element.elementor-element-1923cb73 > .elementor-motion-effects-container > .elementor-motion-effects-layer
 			{
 				background-color: <?php echo esc_attr( $dark_color ); ?>!important;
 			}
@@ -555,6 +575,20 @@ add_action(
 				
 			}
 			@media (max-width: 400px) {
+				body.page-id-137 .is-layout-flex{
+					width: 100%;
+				}
+				#certificate-1-preview.anony-nice-uploader, .snks-tear-shap-wrapper{
+					width: 120px!important;
+					height: 120px!important;
+				}
+				#certificate-2-preview.anony-nice-uploader,#certificate-3-preview.anony-nice-uploader ,#certificate-4-preview.anony-nice-uploader,#certificate-5-preview.anony-nice-uploader {
+					width: 60px!important;
+					height: 60px!important;
+				}
+				.elementor-137 .elementor-element.elementor-element-bfc1bf5 > .elementor-widget-container {
+					padding: 0!important;
+				}
 				.snks-available-hours ul{
 					flex-direction: column;
 				}
@@ -1205,8 +1239,8 @@ add_action(
 			}
 
 			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions) tr {
-				background-color: #3a4091;
-				border: 1px solid #3a4091;
+				background-color: #024059;
+				border: 1px solid #024059;
 				padding: .35em;
 				border-radius: 10px;
 				color: #fff;
@@ -1215,7 +1249,10 @@ add_action(
 				background-color: #000;
 				border-color: #000;
 			}
-
+			.required-upload .jet-form-builder__required{
+				top:0!important;
+				left:0!important
+			}
 			table:not(.ui-datepicker-calendar):not(.consulting-session-table):not(.user-transactions):not( .shop_table ) th,
 			table:not( .shop_table ) td {
 				padding: .625em;
@@ -1350,6 +1387,7 @@ add_action(
 				margin-bottom: 10px;
 				border:1px solid #fff;
 				overflow: hidden;
+				font-size: 14px;
 
 			}
 			.snks-available-hours ul{
@@ -1494,6 +1532,9 @@ add_action(
 				transform: rotate(-45deg);
 			}
 
+			.jet-tabs__content-wrapper{
+				min-height: 200px!important;
+			}
 			.anony-smaller-than .top {
 				transform: rotate(-45deg);
 				top: 8px;
@@ -1607,16 +1648,6 @@ add_action(
 				#snks-booking-page, #checkout-wrapper{
 					max-width: 480px!important;
 					border:none!important;
-				}
-
-				.elementor-3537 .elementor-element.elementor-element-ba64801:not(.elementor-motion-effects-element-type-background){
-					position: fixed;
-					bottom: 0;
-					width: 100%;
-					left: 0;
-				}
-				.elementor-3578 .elementor-element.elementor-element-72fcb67 {
-					padding-bottom: 200px;
 				}
 				.clinc-row{
 					flex-direction: column;
@@ -1737,6 +1768,7 @@ add_action(
 			}
 			.snks-listing-periods{
 				border-bottom: 1px solid #fff;
+				height: 162px;
 			}
 			.snks-doctor-listing{
 				overflow: hidden;
