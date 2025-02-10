@@ -290,7 +290,6 @@ add_action(
 			} else {
 				$order->set_status( 'cancelled' );
 				$order->save();
-				wp_safe_redirect( add_query_arg( 'error', 'booked', snks_encrypted_doctor_url( $form_data['_user_id'] ) ) );
 				exit;
 			}
 		}
