@@ -20,6 +20,7 @@ function set_order_expiration_time( $order_id ) {
 	if ( $order ) {
 		$expiration_time = time() + ( CANCELL_AFTER * 60 ); // Set expiration time (CANCELL_AFTER minutes from now).
 		$order->update_meta_data( '_order_expiration_time', $expiration_time );
+		$order->save();
 	}
 }
 add_action( 'woocommerce_new_order', 'set_order_expiration_time', 10, 1 );
@@ -32,7 +33,6 @@ add_action( 'woocommerce_new_order', 'set_order_expiration_time', 10, 1 );
  */
 function is_order_expired( $order ) {
 	$expiration_time = $order->get_meta( '_order_expiration_time', true );
-	snks_error_log( $order );
 	return ( $expiration_time && time() > $expiration_time );
 }
 
@@ -121,7 +121,7 @@ add_action(
             let cancelAfter = <?php echo CANCELL_AFTER;//phpcs:disable ?>
 
 			if (!expirationTime) {
-				expirationTime = Date.now() + ( cancelAfter * 60 * 100 ); // CANCELL_AFTER minutes in milliseconds
+				expirationTime = Date.now() + ( cancelAfter * 60 * 1000 ); // CANCELL_AFTER minutes in milliseconds
 				localStorage.setItem(storageKey, expirationTime);
 			} else {
 				expirationTime = parseInt(expirationTime);
@@ -153,10 +153,15 @@ add_action(
 						security: "<?php echo wp_create_nonce( 'check_order_expiry' ); //phpcs:disable ?>"
 					},
 					function(response) {
-                        console.log(response);
 						if (response.success && response.data.expired) {
-							localStorage.removeItem(storageKey);
-							window.location.href = '<?php echo esc_url( $doctor_url ); ?>';
+                            setTimeout(
+                                function(){
+                                    localStorage.removeItem(storageKey);
+                                    window.location.href = '<?php echo esc_url( $doctor_url ); ?>';
+                                },
+                                2000
+                            );
+
 						}
 					}
 				);
