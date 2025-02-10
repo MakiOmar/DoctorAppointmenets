@@ -35,7 +35,7 @@ add_filter( 'cron_schedules', 'register_custom_cron_intervals' );
  */
 function schedule_autocancel_wc_orders() {
 	if ( ! wp_next_scheduled( 'autocancel_wc_orders_event' ) ) {
-		wp_schedule_event( time(), 'custom_15_minutes', 'autocancel_wc_orders_event' );
+		wp_schedule_event( time(), 'every_minute', 'autocancel_wc_orders_event' );
 	}
 }
 add_action( 'wp', 'schedule_autocancel_wc_orders' );
@@ -60,7 +60,7 @@ function snks_auto_cancel_wc_orders() {
 		$interval = $date->diff( $now );
 
 		$minutes_diff = $interval->format( '%i' );
-		if ( $minutes_diff > 3 ) {
+		if ( $minutes_diff > 20 ) {
 			$order->set_status( 'cancelled', 'Cancelled for missing payment' );
 			$order->save();
 			$booking_id = $order->get_meta( 'booking_id', true );
