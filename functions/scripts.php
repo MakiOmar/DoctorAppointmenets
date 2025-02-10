@@ -90,6 +90,67 @@ add_action(
 	'wp_footer',
 	function () {
 		?>
+	<script>
+		document.querySelectorAll("#wallet_number, #account_number, #meza_card_number, #otp_input, #phone").forEach((input) => {
+				input.addEventListener("beforeinput", function(e) {
+					const nextVal = 
+						e.target.value.substring(0, e.target.selectionStart) +
+						(e.data ?? '') +
+						e.target.value.substring(e.target.selectionEnd);
+
+					if (!/^\d*$/.test(nextVal)) {
+						e.preventDefault();
+					}
+				});
+			});
+		function calculate() {
+			let sessionPrice = parseFloat(document.getElementById("sessionPrice").value);
+
+			if (isNaN(sessionPrice) || sessionPrice <= 0) {
+				alert("من فضلك أدخل سعر جلسة صحيح.");
+				return;
+			}
+
+			// Offline calculations
+			let A_offline = (sessionPrice * 0.025 + 2) * 1.14;
+			let B_offline = (sessionPrice * 0.001) * 1.14;
+			let C_offline = 5.13 + 0.96;
+			let D_offline = (A_offline + B_offline + C_offline) * 0.025 * 1.03 * 1.14;
+			let F_offline = A_offline + B_offline + D_offline;
+			let G_offline = A_offline + B_offline + C_offline + D_offline + sessionPrice;
+
+			// Online calculations
+			let C_online;
+			if (sessionPrice <= 49.999) C_online = 3.99 + 1.92;
+			else if (sessionPrice <= 99.999) C_online = 6.56 + 1.92;
+			else if (sessionPrice <= 199.999) C_online = 13.68 + 1.92;
+			else if (sessionPrice <= 299.999) C_online = 15.39 + 1.92;
+			else if (sessionPrice <= 399.999) C_online = 17.1 + 1.92;
+			else if (sessionPrice <= 499.999) C_online = 17.67 + 1.92;
+			else if (sessionPrice <= 599.999) C_online = 18.24 + 1.92;
+			else C_online = 19.38 + 1.92;
+
+			let A_online = (sessionPrice * 0.025 + 2) * 1.14;
+			let B_online = (sessionPrice * 0.001) * 1.14;
+			let D_online = (A_online + B_online + C_online) * 0.025 * 1.03 * 1.14;
+			let F_online = A_online + B_online + D_online;
+			let G_online = A_online + B_online + C_online + D_online + sessionPrice;
+
+			// Display results
+			document.getElementById("offlinePrice").innerText = sessionPrice.toFixed(2) + " ج.م";
+			document.getElementById("offlineExpenses").innerText = (C_offline + F_offline).toFixed(2) + " ج.م";
+			document.getElementById("offlineTotal").innerText = G_offline.toFixed(2) + " ج.م";
+			document.getElementById("onlinePrice").innerText = sessionPrice.toFixed(2) + " ج.م";
+			document.getElementById("onlineExpenses").innerText = (C_online + F_online).toFixed(2) + " ج.م";
+			document.getElementById("onlineTotal").innerText = G_online.toFixed(2) + " ج.م";
+		}
+
+		function handleEnter(event) {
+			if (event.key === "Enter") {
+				document.getElementById("calculateBtn").click();
+			}
+		}
+	</script>
 	<script type="text/javascript">
 		// Function to convert Arabic numbers to English numbers.
 		function toEnglishNumbers(input) {
