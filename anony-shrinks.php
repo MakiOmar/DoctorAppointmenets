@@ -604,3 +604,15 @@ add_filter(
 		return $temp;
 	}
 );
+
+add_filter(
+	'gettext',
+	function ( $translated_text, $text ) {
+		if ( stripos( $text, 'There was an error processing your order. Please check for any charges' ) !== false ) {
+			$translated_text = 'حدث خطأ أثناء عملية الحجز، ربما لأن الموعد تم حجزه من قبل عميل آخر ويرجى إعادة الحجز مرة أخرى.';
+		}
+		return $translated_text;
+	},
+	10,
+	2
+);
