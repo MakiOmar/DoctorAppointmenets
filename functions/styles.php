@@ -359,6 +359,11 @@ add_action(
 				margin-bottom: 10px;
 				border-spacing: 0;
 			}
+			.popup-trigger .elementor-widget-container, .popup-trigger .elementor-widget-container a{
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
 			.preview-container{
 				background-color: #fff;
 				padding: 10px;
