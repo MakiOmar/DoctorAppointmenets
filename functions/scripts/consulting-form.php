@@ -104,9 +104,15 @@ add_action(
 								periodClicked.prev('label').removeClass('snks-loading');
 								setTimeout( function(){
 									console.log($( '.owl-nav' ).hasClass('disabled'));
-									if( $( '.owl-nav' ).hasClass('disabled') ){
+									if( $( '.owl-nav' ).hasClass('disabled') || $( '.owl-nav' ).length == 0 ){
 										$('.owl-stage').attr('style', 'width:100%!important');
-										$('.owl-item').attr('style', 'width:60px!important;margin-left:5px');
+										if ( $( '.owl-item' ).length > 0 ) {
+											$('.owl-item').attr('style', 'width:60px!important;margin-left:5px');
+										} else {
+											$('.anony-content-slide').attr('style', 'width:60px!important;margin-left:5px');
+										}
+										
+										
 										$('.consulting-form').attr('style', 'max-width:95%');
 									}
 								}, 500 );
