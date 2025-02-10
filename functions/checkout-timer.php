@@ -16,9 +16,11 @@ function set_order_expiration_time( $order_id ) {
 	if ( ! $order_id ) {
 		return;
 	}
-
-	$expiration_time = time() + ( 20 * 60 ); // Set expiration time (20 minutes from now).
-	update_post_meta( $order_id, '_order_expiration_time', $expiration_time );
+	$order = wc_get_order( $order_id );
+	if ( $order ) {
+		$expiration_time = time() + ( CANCELL_AFTER * 60 ); // Set expiration time (CANCELL_AFTER minutes from now).
+		$order->update_meta_data( '_order_expiration_time', $expiration_time );
+	}
 }
 add_action( 'woocommerce_new_order', 'set_order_expiration_time', 10, 1 );
 
@@ -30,6 +32,7 @@ add_action( 'woocommerce_new_order', 'set_order_expiration_time', 10, 1 );
  */
 function is_order_expired( $order ) {
 	$expiration_time = $order->get_meta( '_order_expiration_time', true );
+	snks_error_log( $order );
 	return ( $expiration_time && time() > $expiration_time );
 }
 
@@ -96,14 +99,17 @@ add_action(
 		if ( ! is_wc_endpoint_url( 'order-pay' ) ) {
 			return;
 		}
-		$order_id   = get_query_var( 'order-pay', false );
-		$order      = wc_get_order( $order_id );
+		$order_id = get_query_var( 'order-pay', false );
+		$order    = wc_get_order( $order_id );
+		if ( is_order_expired( $order ) ) {
+			return;
+		}
 		$user_id    = $order ? $order->get_meta( '_user_id', true ) : 0;
 		$doctor_url = snks_encrypted_doctor_url( $user_id );
 		?>
 		<div id="countdown-timer">
 			<p>يرجى دفع قيمة الحجز قبل انقضاء هذه المدة</p>
-			<span id="countdown">20:00</span>
+			<span id="countdown"><?php echo CANCELL_AFTER;//phpcs:disable ?>:00</span>
 		</div>
 
 		<script type="text/javascript">
@@ -112,9 +118,10 @@ add_action(
 			let orderId = "<?php echo esc_js( $order_id ); ?>";
 			let storageKey = `countdown_expiration_${orderId}`;
 			let expirationTime = localStorage.getItem(storageKey);
+            let cancelAfter = <?php echo CANCELL_AFTER;//phpcs:disable ?>
 
 			if (!expirationTime) {
-				expirationTime = Date.now() + 1200000; // 20 minutes in milliseconds
+				expirationTime = Date.now() + ( cancelAfter * 60 * 100 ); // CANCELL_AFTER minutes in milliseconds
 				localStorage.setItem(storageKey, expirationTime);
 			} else {
 				expirationTime = parseInt(expirationTime);
@@ -146,6 +153,7 @@ add_action(
 						security: "<?php echo wp_create_nonce( 'check_order_expiry' ); //phpcs:disable ?>"
 					},
 					function(response) {
+                        console.log(response);
 						if (response.success && response.data.expired) {
 							localStorage.removeItem(storageKey);
 							window.location.href = '<?php echo esc_url( $doctor_url ); ?>';
@@ -154,7 +162,7 @@ add_action(
 				);
 			}
 
-			setInterval(checkOrderExpiry, 30000); // Check every 30 seconds
+			setInterval(checkOrderExpiry, 3000); // Check every 30 seconds
 		});
 		</script>
 		<?php
