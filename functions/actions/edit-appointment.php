@@ -300,7 +300,7 @@ add_action(
 			// Send a success response.
 			wp_send_json(
 				array(
-					'message' => 'تم تغيير الموعد بنجاح. تم إ��عار المريض عبر البريد والرسائل النصية.',
+					'message' => 'تم تغيير الموعد بنجاح. تم إشعار المريض عبر البريد والرسائل النصية.',
 					'status'  => 'success',
 				)
 			);
