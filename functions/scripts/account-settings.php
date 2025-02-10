@@ -51,6 +51,7 @@ add_action(
 				return null;
 			}
 			setCookie( 'edited_withdrawal_form', '', 0 );
+			setCookie('next_popup', '', 0);
 			jQuery( document ).ready( function( $ ) {
 				
 				// Define the URL where you want to prompt the user
@@ -270,7 +271,9 @@ add_action(
 						} else {
 							cookieValue = $(this).data('id');
 						}
-						setCookie("next_popup", cookieValue, false);
+						if ( getCookie('edited_form') ) {
+							setCookie("next_popup", cookieValue, false);
+						}
 						if (getCookie( 'edited_withdrawal_form' ) ) {
 							Swal.fire({
 								title: 'انت لم تقم بحفظ التعديلات، هل تريد الغاءها؟',
@@ -407,12 +410,12 @@ add_action(
 							confirmButtonText: 'إغلاق',
 						}).then((result) => {
 							if (result.isConfirmed) {
-								//moveToNext();
+								moveToNext();
 							}
 						});
+					} else {
+						moveToNext();
 					}
-					
-					//moveToNext();
 				});
 				$(document).on(
 					'click',
