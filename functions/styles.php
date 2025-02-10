@@ -611,7 +611,6 @@ add_action(
 				display: none;
 				position: fixed;
 				max-width: 90%;
-				height: 300px;
 				top: calc(50% - 150px);
 				left: 0;
 				background-color: #fff;
@@ -785,8 +784,8 @@ add_action(
 			.attendance_type_wrapper.active label .snks-light-icon{
 				display: none;
 			}
-			.attendance_type_wrapper.active label{
-				background-color: #fff;
+			#snks-booking-page .attendance_type_wrapper.active label{
+				background-color: #fff!important;
 				color: #024059;
 			}
 			.field-type-switcher, .field-type-select-field{
@@ -1387,13 +1386,14 @@ add_action(
 				margin-bottom: 10px;
 				border:1px solid #fff;
 				overflow: hidden;
-				font-size: 14px;
+				font-size: 16.5px;
 
 			}
 			.snks-available-hours ul{
 				display: flex;
 				flex-wrap: wrap;
 				max-width: 90vw;
+				width: 100%;
 				justify-content: center;
 			}
 			.offline-clinic-hours{
@@ -1710,8 +1710,11 @@ add_action(
 			#snks-booking-page .attendance_type_wrapper label, #snks-booking-page .period_wrapper label span{
 				background-color: <?php echo esc_html( $darker_color ); ?>!important;
 			}
-			#snks-booking-page .attendance_type_wrapper.active label, #snks-booking-page .period_wrapper label span{
+			#snks-booking-page .period_wrapper label span{
 				color: <?php echo esc_html( $light_color ); ?>!important;
+			}
+			#snks-booking-page .attendance_type_wrapper.active label{
+				color: <?php echo esc_html( $dark_color ); ?>!important;
 			}
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
 			.anony-day-radio label.active-day,
