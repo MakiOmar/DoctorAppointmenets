@@ -75,7 +75,7 @@ add_shortcode(
 		ob_start();
 		?>
 		<div class="anony-flex flex-v-center flex-h-center" style="margin-top: 20px;">
-		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">نس رابط الحجز</button>
+		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">نسخ رابط الحجز</button>
 		</div>
 		<?php
 		return ob_get_clean();
