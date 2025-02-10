@@ -307,20 +307,28 @@ function snks_listing_periods( $user_id ) {
 function snks_form_filter( $user_id ) {
 	$html = '';
 	ob_start();
+	$dark_color = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
 	?>
+	<style>
+		img, canvas {
+		height: 30px; /* Ensures uniform height */
+		width: auto;  /* Automatically adjust width */
+	}
+	</style>
 	<div class="attendance_types_wrapper">
 		<span class="attendance_type_wrapper">
-			<label for="online_attendance_type" class="hacen_liner_print-outregular">
-				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/camera-dark.png"/>
+			<label for="online_attendance_type" class="hacen_liner_print-outregular" onclick="showColoredIcon(event)">
+				<canvas class="iconCanvas" style="display: none;"></canvas>
 				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/camera-light.png"/>
 				<span class="attendance_type_text">جلسة أونلاين</span>
 			</label>
 			<input id="online_attendance_type" type="radio" name="attendance_type" value="online"/>
 		</span>
+
 		<span class="attendance_type_wrapper">
-			<label for="offline_attendance_type"  class="hacen_liner_print-outregular">
+			<label for="offline_attendance_type" class="hacen_liner_print-outregular" onclick="showColoredIcon(event)">
+				<canvas class="iconCanvas" style="display: none;"></canvas>
 				<img class="snks-light-icon" src="/wp-content/uploads/2024/09/hand-light.png"/>
-				<img class="snks-dark-icon" src="/wp-content/uploads/2024/09/hand-dark.png"/>
 				<span class="attendance_type_text">جلسة عيادة</span>
 			</label>
 			<input id="offline_attendance_type" type="radio" name="attendance_type" value="offline"/>
@@ -328,6 +336,69 @@ function snks_form_filter( $user_id ) {
 	</div>
 	<div class="periods_wrapper snks-bg snks-separator anony-full-width"></div>
 	<input type="hidden" name="filter_user_id" value="<?php echo esc_attr( $user_id ); ?>"/> 
+	<script>
+	// Simulated user color configuration
+	let userColor = "<?php echo $dark_color; //phpcs:disable ?>";  // Example color
+
+	function showColoredIcon(event) {
+		// Reset all labels before updating the clicked one
+		document.querySelectorAll(".attendance_type_wrapper label").forEach(label => {
+			let canvas = label.querySelector(".iconCanvas");
+			let img = label.querySelector(".snks-light-icon");
+
+			if (canvas && img) {
+				canvas.style.display = "none"; // Hide canvas
+				img.style.display = "inline"; // Show original image
+			}
+		});
+
+		let label = event.currentTarget; // Get clicked label
+		let canvas = label.querySelector(".iconCanvas");
+		let img = label.querySelector(".snks-light-icon");
+
+		if (!img) return; // Ensure an image exists
+
+		// Get high-quality image dimensions
+		let imgWidth = img.naturalWidth;  // Original width
+		let imgHeight = img.naturalHeight; // Original height
+
+		// Set canvas size to the image's natural size
+		canvas.width = imgWidth;
+		canvas.height = imgHeight;
+
+		let ctx = canvas.getContext("2d");
+
+		// Draw original image onto the canvas
+		ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+
+		let imageData = ctx.getImageData(0, 0, imgWidth, imgHeight);
+		let data = imageData.data;
+
+		let r = parseInt(userColor.substring(1, 3), 16);
+		let g = parseInt(userColor.substring(3, 5), 16);
+		let b = parseInt(userColor.substring(5, 7), 16);
+
+		// Loop through pixels and recolor only non-transparent areas
+		for (let i = 0; i < data.length; i += 4) {
+			if (data[i+3] > 0) {  // If pixel is not transparent
+				data[i] = r;   // Red
+				data[i+1] = g; // Green
+				data[i+2] = b; // Blue
+			}
+		}
+
+		// Apply the new color
+		ctx.putImageData(imageData, 0, 0);
+
+		// Ensure the canvas matches the displayed size
+		canvas.style.width = img.width + "px";  // Match displayed width
+		canvas.style.height = img.height + "px"; // Match displayed height
+
+		// Hide the original image and show the high-quality colored canvas
+		img.style.display = "none";
+		canvas.style.display = "inline-block";
+	}
+</script>
 	<?php
 	$html .= ob_get_clean();
 	return $html;
