@@ -382,7 +382,7 @@ function snks_encrypted_doctor_url( $user ) {
 	}
 
 	// Default URL if no valid user or nickname is found.
-	return '#';
+	return site_url( '/account-settings' );
 }
 
 
