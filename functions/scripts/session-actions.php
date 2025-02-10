@@ -197,7 +197,6 @@ add_action(
 								text: response.message,
 								confirmButtonText: 'موافق'
 							}).then((result) => {
-								console.log(result.isConfirmed);
 								if (result.isConfirmed) {
 									location.reload();
 								}
