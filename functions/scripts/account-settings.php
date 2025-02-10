@@ -256,7 +256,6 @@ add_action(
 				$(window).on('jet-popup/render-content/render-custom-content', function( event, popup, t ){
 					let exclude = [ '1961', '1958', '1964' ];
 					if ( ! exclude.includes(popup.data.popup_id) ){
-						console.log('lll');
 						//preventNavigation = false;
 						setCookie("next_popup", '', 0);
 					}
@@ -408,12 +407,12 @@ add_action(
 							confirmButtonText: 'إغلاق',
 						}).then((result) => {
 							if (result.isConfirmed) {
-								moveToNext();
+								//moveToNext();
 							}
 						});
 					}
 					
-					moveToNext();
+					//moveToNext();
 				});
 				$(document).on(
 					'click',
