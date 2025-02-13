@@ -30,9 +30,19 @@ $user_details = snks_user_details( $user_id );
 			}
 			?>
 		<div class="snks-profile-image-wrapper">
-			<img src="/wp-content/uploads/2024/09/head1-1.png" id="head1" class="shap-head">
-			<img src="/wp-content/uploads/2024/09/head3.png" id="head2" class="shap-head">
-			<img src="/wp-content/uploads/2024/09/head-2.png" id="head3" class="shap-head">
+			<div id="head1" class="shap-head">
+				<img src="/wp-content/uploads/2025/02/head1.png">
+				<div class="shap-head-bg"></div>
+			</div>
+			
+			<div id="head2" class="shap-head">
+				<img src="/wp-content/uploads/2025/02/head-3.png">
+				<div class="shap-head-bg"></div>
+			</div>			
+			<div id="head3" class="shap-head">
+				<img src="/wp-content/uploads/2025/02/head-2.png">
+				<div class="shap-head-bg"></div>
+			</div>
 			<div class="snks-tear-shap-wrapper">
 				<div class="snks-tear-shap">
 					<img src="<?php echo esc_url( $profile_image ); ?>"/>
