@@ -909,7 +909,7 @@ function snks_get_preview_timetable( $user_id = false, $full = false ) {
 function snks_preview_actions( $day, $index, $target = 'meta' ) {
 	$html = '';
 	if ( 'meta' === $target ) {
-		$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '" data-day="' . $day . '">Delete</a>';
+		$html .= '<a href="#" class="button delete-slot" data-index="' . $index . '" data-day="' . $day . '">حذف</a>';
 	} else {
 		// This will allow patient to book another free appointment. A messsage should be sent to the user to inform him about this.
 		$html .= '<a href="#" class="button postpon-booking" data-index="' . $index . '" data-day="' . $day . '">تأجيل</a>';
@@ -1164,7 +1164,7 @@ add_action(
 			}
 			if ( strpos( $key, 'minutes_pricing_others' ) !== false ) {
 				if ( empty( $request[ $key ] ) ) {
-					throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً سعر باقي الدول إلزامي.' );
+					throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً سعر كل الدول إلزامي.' );
 				}
 			}
 		}
