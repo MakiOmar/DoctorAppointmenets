@@ -32,11 +32,10 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 	$order       = wc_get_order( $order_id );
 	$customer_id = $order->get_customer_id();
 	$booking_id  = $order->get_meta( 'booking_id', true );
-
-	try {
-		if ( ! empty( $booking_id ) ) {
+	if ( ! empty( $booking_id ) ) {
+		try {
 			$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
-			if ( 'waiting' === $timetable->session_status ) {
+			if ( 'waiting' === $timetable->session_status || 'pending' === $timetable->session_status ) {
 				$updated = snks_update_timetable(
 					$timetable->ID,
 					array(
@@ -88,7 +87,9 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 						);
 					}
 					send_sms_via_whysms( $order->get_billing_phone(), $message );
-
+					$patient_user  = get_user_by( 'ID', $customer_id );
+					$patient_email = $patient_user->user_email;
+					wp_mail( $patient_email, 'تم حجز جلسة جديدة', $message );
 					// Doctor.
 					if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 						// Use the correct namespace to initialize the class.
@@ -119,17 +120,14 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					snks_error_log( $order_id . ' :Failed to update timetable.' );
 					throw new Exception( 'Failed to update timetable.' );
 				}
-			} else {
-				$order->set_status( 'cancelled' );
-				$order->save();
 			}
-		}
-	} catch ( Exception $e ) {
-		// Log the failure for retry.
-		$failed_orders = get_option( 'snks_failed_order_actions', array() );
-		if ( ! in_array( $order_id, $failed_orders, true ) ) {
-			$failed_orders[] = $order_id;
-			update_option( 'snks_failed_order_actions', $failed_orders );
+		} catch ( Exception $e ) {
+			// Log the failure for retry.
+			$failed_orders = get_option( 'snks_failed_order_actions', array() );
+			if ( ! in_array( $order_id, $failed_orders, true ) ) {
+				$failed_orders[] = $order_id;
+				update_option( 'snks_failed_order_actions', $failed_orders );
+			}
 		}
 	}
 }
