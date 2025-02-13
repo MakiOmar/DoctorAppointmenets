@@ -539,14 +539,29 @@ add_action(
 
 		if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 			$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+			$errors   = array();
 
 			foreach ( $user_ids as $user_id ) {
-				$firebase->trigger_notifier( $title, $content, absint( $user_id ) );
+				$response = $firebase->trigger_notifier( $title, $content, absint( $user_id ) );
+				if ( false !== strpos( $response, 400 ) ) {
+					$errors[] = sprintf( esc_html__( 'Failed to send notification to user ID %d: Unexpected error.', 'text-domain' ), $user_id );
+				}
 			}
 
-			wp_send_json_success( array( 'message' => __( 'Notifications sent successfully.' ) ) );
+			if ( ! empty( $errors ) ) {
+				wp_send_json_error(
+					array(
+						'message' => esc_html__( 'Some notifications failed to send.', 'text-domain' ),
+					)
+				);
+				die;
+			} else {
+				wp_send_json_success( array( 'message' => esc_html__( 'All notifications sent successfully.', 'text-domain' ) ) );
+				die;
+			}
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Firebase class not found.' ) ) );
+			wp_send_json_error( array( 'message' => esc_html__( 'Firebase class not found.', 'text-domain' ) ) );
+			die;
 		}
 	}
 );
