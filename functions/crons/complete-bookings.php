@@ -29,5 +29,5 @@ add_action( 'snks_retry_failed_orders_event', 'snks_retry_failed_orders' );
 
 // Schedule the event if not already scheduled.
 if ( ! wp_next_scheduled( 'snks_retry_failed_orders_event' ) ) {
-	wp_schedule_event( time(), 'hourly', 'snks_retry_failed_orders_event' );
+	wp_schedule_event( time(), 'every_minute', 'snks_retry_failed_orders_event' );
 }
