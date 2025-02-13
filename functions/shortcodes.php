@@ -75,7 +75,7 @@ add_shortcode(
 		ob_start();
 		?>
 		<div class="anony-flex flex-v-center flex-h-center" style="margin-top: 20px;">
-		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">نسخ رابط الحجز</button>
+		<button data-url="<?php echo esc_url( $url ); ?>" id="copyToClipboard">نسخ رابط الموقع</button>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -407,19 +407,19 @@ function custom_withdrawal_form_shortcode() {
 			'id'          => 'daily_withdrawal',
 			'value'       => 'daily_withdrawal',
 			'label'       => 'النظام اليومي',
-			'description' => 'سيتم سحب رصيدك تلقائيا بشكل يومي.',
+			'description' => 'سيتم عمل طلب سحب تلقائياً لرصيدك بشكل يومي في منتصف الليل',
 		),
 		array(
 			'id'          => 'weekly_withdrawal',
 			'value'       => 'weekly_withdrawal',
 			'label'       => 'النظام الأسبوعي',
-			'description' => 'سيتم سحب رصيدك تلقائيا كل يوم أربعاء من كل أسبوع.',
+			'description' => 'سيتم عمل طلب سحب تلقائياً لرصيدك كل يوم أحد من كل أسبوع',
 		),
 		array(
 			'id'          => 'monthly_withdrawal',
 			'value'       => 'monthly_withdrawal',
 			'label'       => 'النظام الشهري',
-			'description' => 'سيتم سحب رصيدك تلقائيا في أول يوم عمل من كل شهر.',
+			'description' => 'سيتم عمل طلب سحب تلقائياً لرصيدك في يوم 1 من كل شهر',
 		),
 	);
 	// Define the withdrawal options with associated text fields.
@@ -570,8 +570,14 @@ function custom_withdrawal_form_shortcode() {
 			<?php endforeach; ?>
 
 			<div class="financials-white-section anony-default-padding white-bg">
-				<p style="color: #939393; text-align: justify;font-size: 23px;">
-					في حالة كان يوم السحب يوم عطلة رسمي، يتم السحب في أول يوم عمل تالي.
+				<p style="color: #939393; text-align: justify;font-size: 17px;">
+				 - تستغرق كل عملية سحب من 1-3 ايام عمل لتصل الى حسابك.
+				</p>
+				<p style="color: #939393; text-align: justify;font-size: 17px;">
+				 - تكلفة كل عملية سحب 12 جنيهاً.
+				</p>
+				<p style="color: #939393; text-align: justify;font-size: 17px;">
+				 - أقل مبلغ يمكن سحبه 25 جنيهاً.
 				</p>
 			</div>
 		</div>
@@ -620,7 +626,7 @@ function custom_withdrawal_form_shortcode() {
 				</div>
 			<?php endforeach; ?>
 			<div class="financials-white-section anony-default-padding white-bg">
-				<p style="color: #939393; text-align: justify;font-size: 20px;">
+				<p style="color: #939393; text-align: justify;font-size: 17px;">
 				يرجى العلم أنه لا يمكنك تغيير بيانات السحب الخاصة بك في الفترة من الساعة 12 منتصف الليل وحتي الساعة 9 صباحا، وبحلول منتصف الليل يتم تلقائيا تسجيل بيانات حسابك ( نظام السحب, الرصيد وطريقة السحب ) الموجودة بحسابك لاستخدامها في عملية السحب التالية الخاصة بك.
 				</p>
 			</div>
@@ -634,9 +640,10 @@ function custom_withdrawal_form_shortcode() {
 
 		<!-- Button to send OTP -->
 		<p class="anony-center-text">للحفظ يجب إرسال كود التحقق</p>
-		<button type="button" id="send-otp" class="anony-default-padding withdrawal-button">إرسال</button>
 		<!-- Submit Button (Initially disabled) -->
 		<button type="button" id="submit-withdrawal-form" class="anony-default-padding withdrawal-button" style="display:none;">حفظ</button>
+		<button type="button" id="send-otp" class="anony-default-padding withdrawal-button">إرسال</button>
+		
 	</form>
 	<?php echo do_shortcode( '[elementor-template id="3737"]' );?>
 	<?php
@@ -769,7 +776,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		}
 	</style>
 	<div style="text-align:center">
-		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز</h3>
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز</h3>
 	</div>
 	<?php
 	echo wp_kses_post( snks_booking_details( $form_data ) );
@@ -778,7 +785,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	?>
 
 	<div style="text-align:center">
-		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
 	<div id="price-break" class="container">
 		<?php if ( ! is_page( 'booking-details' ) ) { ?>
@@ -989,7 +996,7 @@ add_shortcode(
 	function () {
 		// Check if the user is logged in.
 		if ( is_user_logged_in() ) {
-			return '<p style="text-align:center;position:relative;z-index:9999"><a id="snks-logout" href="#">خروج</a></p>';
+			return '<p style="text-align:center;position:relative;z-index:9999;"><a id="snks-logout" class="pt_bold_headingregular" style="background-color:#b94545;color:#fff;width:125px;padding:5px 10px" href="#">خروج</a></p>';
 		} else {
 			// If the user is not logged in, return an empty string.
 			return '';
@@ -1013,8 +1020,8 @@ function render_user_linked_image() {
 
 	// Return the linked image HTML.
 	return sprintf(
-		'<a href="%1$s" target="_blank" rel="noopener noreferrer">
-            <img src="%2$s" alt="%3$s">
+		'<a href="%1$s" target="_blank" style="display:flex" rel="noopener noreferrer">
+            <img style="width:40px" src="%2$s" alt="%3$s">
         </a>',
 		$user_link,
 		esc_url( $image_src ),
