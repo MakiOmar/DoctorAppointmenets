@@ -778,11 +778,19 @@ add_action(
 add_action(
 	'wp_footer',
 	function () {
+		global $wp;
 		$dark_color = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
+		if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
+			$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
+			$clinics_colors = json_decode( CLINICS_COLORS );
+			$clinic_colors  = 'color_' . $clinic_color;
+			$dark_color     = esc_attr( $clinics_colors->$clinic_colors[1] );
+		}
 		?>
 		<script>
 			document.addEventListener("DOMContentLoaded", function () {
 				applyParentImageColorChange(".color-change-trigger-load", "load", "<?php echo esc_html( $dark_color ); ?>", false);
+				applyParentImageColorChange(".shap-head", "load", "<?php echo esc_html( $dark_color ); ?>", false);
 				applyParentImageColorChange(".popup-trigger", "click", "#024059", true);
 				applyParentImageColorChange(".snks-settings-tab", "load", "#024059", false);
 				<?php
