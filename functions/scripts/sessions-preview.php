@@ -53,7 +53,7 @@ add_action(
 						e.preventDefault();
 						Swal.fire({
 							title: 'هل أنت متأكد؟',
-							text: "لا يمكنك التراجع بعد ذلك!",
+							text: "سيتم تطبيق الحذف مباشرة على الموقع الخاص بك بدون الحاجة للضغط على زر نشر، ولايمكنك التراجع بعد ذلك",
 							icon: 'warning',
 							showCancelButton: true,
 							confirmButtonColor: '#3085d6',
