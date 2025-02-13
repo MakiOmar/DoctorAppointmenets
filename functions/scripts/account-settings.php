@@ -386,7 +386,6 @@ add_action(
 					if ( formId == 1956 ) {
 						Swal.fire({
 							title: 'تم الحفظ بنجاح',
-							text: "يرجى البدء في إضافة مواعيدك أو تعديلها حسب الإعدادات الجديدة",
 							icon: 'success',
 							confirmButtonColor: '#3085d6',
 							confirmButtonText: 'إغلاق',
