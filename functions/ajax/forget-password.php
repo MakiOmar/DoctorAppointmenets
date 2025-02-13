@@ -65,11 +65,19 @@ function custom_forget_password_handler() {
 		$current_time  = strtotime( current_time( 'mysql' ) );
 
 		if ( ! empty( $phone_to_use ) && ( empty( $last_sms_time ) || ( $current_time - $last_sms_time ) > 300 ) ) {
-			send_sms_via_whysms( $phone_to_use, sprintf( 'كلمة السر الجديدة الخاصة بك: %s', $new_password ) );
+			$sent = send_sms_via_whysms( $phone_to_use, sprintf( 'كلمة السر الجديدة الخاصة بك: %s', $new_password ) );
 			update_user_meta( $user->ID, 'last_forget_sms_sent_time', $current_time );
-			$msg = 'تم إرسال كلمة المرور الجديدة إلى هاتفك.';
+			if ( ! is_wp_error( $sent ) ) {
+				$msg = 'تم إرسال كلمة المرور الجديدة إلى هاتفك.';
+				wp_send_json_success( array( 'msg' => $msg ) );
+			} else {
+				$msg = 'عفواً حدث خطأ ما!';
+				wp_send_json_error( array( 'msg' => $msg ) );
+			}
+			
 		} else {
 			$msg = 'لا يمكن إرسال رسالة الآن. الرجاء المحاولة بعد 5 دقائق.';
+			wp_send_json_error( array( 'msg' => $msg ) );
 		}
 	} elseif ( 'email' === $login_with ) {
 		$to      = $user->user_email;
@@ -81,9 +89,8 @@ function custom_forget_password_handler() {
 		);
 		wp_mail( $to, $subject, $message, array( 'Content-Type: text/html; charset=UTF-8' ) );
 		$msg = 'تم إرسال كلمة المرور الجديدة إلى بريدك الإلكتروني.';
+		wp_send_json_success( array( 'msg' => $msg ) );
 	}
-	// Send the response.
-	wp_send_json_success( array( 'msg' => $msg ) );
 	die;
 }
 
