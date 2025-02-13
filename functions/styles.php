@@ -56,9 +56,11 @@ add_action(
 			}
 			?>
 			<?php
+			global $wp;
 			$light_color  = ! empty( $_COOKIE['light_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['light_color'] ) ) : '#dcf5ff';
 			$dark_color   = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
 			$darker_color = ! empty( $_COOKIE['darker_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['darker_color'] ) ) : '#012d3e';
+
 			if ( isset( $wp->query_vars['doctor_id'] ) ) {
 				$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
 				$clinics_colors = json_decode( CLINICS_COLORS );
@@ -102,12 +104,14 @@ add_action(
 				body, .snks-booking-page-container,
 				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__content-wrapper,
 				.elementor-3578 .elementor-element.elementor-element-c5e7b50 > .elementor-widget-container,
-				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control:not(.active-tab),
 				.elementor-3546 .elementor-element.elementor-element-a809552:not(.elementor-motion-effects-element-type-background), .elementor-3546 .elementor-element.elementor-element-a809552 > .elementor-motion-effects-container > .elementor-motion-effects-layer,
 				div.elementor .elementor-3546 .elementor-element.elementor-element-a809552:not(.elementor-motion-effects-element-type-background),
 				.elementor-3546 .elementor-element.elementor-element-6fecfe97 > .elementor-widget-container, body.woocommerce-order-received
 				{
 					background-color: <?php echo esc_attr( $dark_color ); ?>!important;
+				}
+				.elementor-3537 .elementor-element.elementor-element-3368f02 > .elementor-widget-container > .jet-tabs > .jet-tabs__control-wrapper > .jet-tabs__control:not(.active-tab){
+					background-color: <?php echo esc_attr( $darker_color ); ?>!important;
 				}
 				<?php
 			}
@@ -177,7 +181,6 @@ add_action(
 			.snks-tab-item {
 				padding: 10px 20px;
 				cursor: pointer;
-				border: 1px solid #ccc;
 				border-bottom: none;
 				background: #f9f9f9;
 				margin-right: 5px;
@@ -231,11 +234,11 @@ add_action(
 				}
 			.booking-phone .anony-dial-codes > div{
 				flex-direction: column;
-  				align-items: flex-start;
+					align-items: flex-start;
 			}
 			.booking-phone .anony-dial-codes > div .anony-dial-codes-phone-label{
 				font-size: 16px;
-  				margin-bottom: 10px;
+					margin-bottom: 10px;
 			}
 			<?php if ( is_checkout() ) { ?>
 				.wc_payment_methods li{
@@ -580,12 +583,32 @@ add_action(
 				
 			}
 			@media (max-width: 400px) {
+				div.shap-head-bg {
+					width: 70px;
+					height: 70px;
+					bottom: -8px;
+					left: -11px;
+				}
+				#head3 div.shap-head-bg{
+					left:0;
+					right: -11px;
+				}
+				div#head2{
+					left:10px
+				}
+				div#head3 {
+					right: 13px;
+				}
+				.shap-head img{
+					width: 60px;
+				}
+				
 				body.page-id-137 .is-layout-flex{
 					width: 100%;
 				}
 				#certificate-1-preview.anony-nice-uploader, .snks-tear-shap-wrapper{
-					width: 120px!important;
-					height: 120px!important;
+					width: 170px!important;
+					height: 170px!important;
 				}
 				#certificate-2-preview.anony-nice-uploader,#certificate-3-preview.anony-nice-uploader ,#certificate-4-preview.anony-nice-uploader,#certificate-5-preview.anony-nice-uploader {
 					width: 60px!important;
@@ -640,6 +663,7 @@ add_action(
 			}
 			#snks_account_settings{
 				transition: all 1s ease-in-out;
+				padding: 0 10px;
 			}
 			.jet-popup-loader {
 				border: 4px rgb(6, 68, 93) solid;
@@ -658,7 +682,36 @@ add_action(
 			}
 			.snks-timetable-accordion-wrapper{
 				max-width: 360px;
+				margin: auto;
 				margin-bottom: 10px;
+			}
+			.snks-timetable-accordion{
+				border-top-left-radius: 10px;
+				border-top-right-radius: 10px;
+			}
+			.change-to-list > div {
+				display: flex;
+				margin: 10px 0;
+				align-items: center;
+			}
+			#withdrawal-settings-form h1 {
+				font-family: "pt_bold_headingregular", Sans-serif!important;
+			}
+			.change-to-list > div input{
+				margin-left: 10px;
+			}
+			#doctor-change-appointment-submit{
+				margin-top: 15px;
+			}
+			.snks-timetables-count{
+				border-top-right-radius: 10px;
+			}
+			.snks-timetable-accordion-content{
+				border-bottom-left-radius: 10px;
+				border-bottom-right-radius: 10px;
+			}
+			#my-bookings-container{
+				margin-top: 20px;
 			}
 			.snks-offline-border-radius{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
@@ -1627,6 +1680,9 @@ add_action(
 			.jet-form-builder-message--error::before{
 				background-color: #d41c1c;
 			}
+			.jet-form-builder-message--success{
+				display: none;
+			}
 			.jet-form-builder-message--success::before{
 				background-color: green;
 			}
@@ -1663,7 +1719,7 @@ add_action(
 				}
 				.vertical-divider{
 					height: 120px;
-					top:80
+					top:80px
 				}
 			}
 			.elementor-3363 #email{
@@ -1698,10 +1754,25 @@ add_action(
 				border-radius: 10px;
 				padding: 10px;
 			}
-			[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover, .snks-dynamic-bg {
+			[type="button"]:focus, [type="button"]:hover, [type="submit"]:focus, [type="submit"]:hover, button:focus, button:hover {
 				background-color: <?php echo esc_html( $darker_color ); ?>!important;
 				color:#fff!important
 			}
+			.justify{
+				text-align: justify!important;
+			}
+			.current-password{
+				background-color: #012d3e;
+			}
+			.current-password .jet-form-builder__label-text{
+				color:#fff;
+				font-size: 17px;
+			}
+			.snks-dynamic-bg-darker{
+				background-color: <?php echo esc_html( $darker_color ); ?>!important;
+				color:#fff!important;
+			}
+			.snks-dynamic-bg,
 			#snks-booking-page .anony-accordion-header, #snks-booking-page .periods_wrapper.snks-bg,#snks-booking-page .attendance_types_wrapper,
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
 			#snks-booking-page #teeth-area,
@@ -1827,12 +1898,14 @@ add_action(
 				width:100%;
 				flex-grow: 1;
 			}
-			.snks_tab {
+			.snks_tab, .snks-tab-item {
 			flex: 1;
 			padding: 10px;
 			text-align: center;
 			cursor: pointer;
 			background-color: #f1f1f1;
+			margin: 0 10px;
+			border-radius: 5px;
 			}
 
 			.snks_tab-content {
@@ -1888,6 +1961,22 @@ add_action(
 				height: 77px;
 				transition: transform 1.5s ease-in-out;
 			}
+			.shap-head-bg {
+				position: absolute;
+				width: 80px;
+				height: 80px;
+				background-color: #fff;
+				border-radius: 50%;
+				bottom: -20px;
+				left: -13px;
+				z-index: -1;
+				right: 0;
+			}
+			#head3 .shap-head-bg {
+				left: 0;
+				right: -13px;
+			}
+			
 			@-moz-keyframes spin { 
 				100% { -moz-transform: rotate(360deg); } 
 			}
@@ -1933,7 +2022,7 @@ add_action(
 				}
 			}
 			.profile-details, .org-profile-details{
-				margin-top: 20px;
+				margin-top: 27px;
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
@@ -2042,8 +2131,27 @@ add_action(
 				border: 0;
 			}
 			.certificates-repeater .field-type-text-field{
-				width: 270px;
 				margin-right: 28px;
+				margin-left: 5px;
+				
+			}
+			.page-id-3316 .elementor-3319 .elementor-element.elementor-element-69cd4439:not(.elementor-motion-effects-element-type-background){
+				display:none
+			}
+			.elementor-3319 .elementor-element.elementor-element-5a717ae5:not(.elementor-motion-effects-element-type-background){
+				width: 200px;
+				margin-right: auto;
+				margin-left: auto;
+			}
+			.snks-tabs-content{
+				margin-top: 20px;
+			}
+			#send-verification-code{
+				width: 129px;
+				background-color: #000;
+				margin: auto;
+				padding: 5px 10px;
+				display: block;
 			}
 			#account-manager-phone > p:first-child{
 				display: none;
@@ -2119,7 +2227,7 @@ add_action(
 				color: #024059;
 				display: flex;
 				align-items: center;
-				font-size: 25px;
+				font-size: 20px;
 				font-weight: bolder;
 				cursor: pointer;
 			}
@@ -2140,8 +2248,13 @@ add_action(
 				margin-top: 8px;
 				color: #656565;
 				margin-right: 15px;
-				font-size: 21px;
-				text-align: justify;
+				font-size: 17px;
+			}
+			.withdrawal-accounts-fields .field-group label{
+				margin: 10px 0;
+			}
+			#submit-withdrawal-form{
+				background-color: #09739d;
 			}
 			.withdrawal-radio input[type=radio]{
 				display: none;
@@ -2159,7 +2272,7 @@ add_action(
 				border-radius: 30px;
 				margin:auto;
 				width:150px;
-				font-size:28px;
+				font-size:23px;
 				font-weight: bold;
 				text-align:center;
 				color:#024059;
