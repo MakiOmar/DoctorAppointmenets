@@ -230,7 +230,7 @@ function snks_generate_preview() {
 							}
 							$ttendance = $clinic['clinic_title'];
 						} else {
-							$ttendance = 'online';
+							$ttendance = 'أونلاين';
 						}
 						// Associate cells with columns.
 						$cells = array(
@@ -307,14 +307,15 @@ function snks_listing_periods( $user_id ) {
 function snks_form_filter( $user_id ) {
 	$html = '';
 	ob_start();
+	global $wp;
 	$dark_color = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
-	?>
-	<style>
-		img, canvas {
-		height: 30px; /* Ensures uniform height */
-		width: auto;  /* Automatically adjust width */
+	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
+		$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
+		$clinics_colors = json_decode( CLINICS_COLORS );
+		$clinic_colors  = 'color_' . $clinic_color;
+		$dark_color     = esc_attr( $clinics_colors->$clinic_colors[1] );
 	}
-	</style>
+	?>
 	<div class="attendance_types_wrapper">
 		<span class="attendance_type_wrapper">
 			<label for="online_attendance_type" class="hacen_liner_print-outregular color-change-trigger">
@@ -1119,7 +1120,7 @@ function snks_render_bookings( $_timetables, $tens ) {
 	$days_sorted = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
 	// Check if there are no bookings.
 	if ( empty( $_timetables ) ) {
-		return '<p class="anony-center-text">ليس لديك حجوزات حتى الآن!</p>';
+		return '<p class="anony-center-text" style="margin-top: 30px;">ليس لديك حجوزات حتى الآن!</p>';
 	}
 	$day_groups   = snks_group_objects_by( $_timetables, 'date' );
 	$current_date = current_time( 'Y-m-d' );
