@@ -44,16 +44,6 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 		$after_button .= get_user_meta( $doctor_id, 'billing_first_name', true ) . ' ' . get_user_meta( $doctor_id, 'billing_last_name', true );
 		$after_button .= '</b>';
 		$after_button .= '</p>';
-		list($title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url) = array(
-			'تم تأجيل موعدك',
-			'في جلسة',
-			'نعتذر لك! الطبيب يبلغك بتأجيل موعد الجلسة الخاصة بك',
-			'تم تأجيل الموعد الخاص بك',
-			'يمكنك تغيير الموعد مجانا',
-			'تعديل الموعد <img src="' . SNKS_ARROW . '"/> ' . snks_localize_day( gmdate( 'D', strtotime( $date ) ) ) . ' ' . $date,
-			'#',
-		);
-		snks_send_email( $user->user_email, $title, $sub_title, $text_1, $text_2, $text_3, $button_text, $button_url, $after_button );
 		$billing_phone = get_user_meta( $patient_id, 'billing_phone', true );
 		if ( empty( $billing_phone ) ) {
 			$user          = get_user_by( 'id', $patient_id );
@@ -65,6 +55,9 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 			'www.jalsah.link'
 		);
 		send_sms_via_whysms( $billing_phone, $message );
+
+		$patient_email = $user->user_email;
+		wp_mail( $patient_email, 'تم تأجيل جلستك', $message );
 	}
 	// this.
 }
@@ -119,7 +112,7 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date )
 	);
 
 	send_sms_via_whysms( $billing_phone, $message );
-	return wp_mail( $to, $subject, $message, $headers );
+	return wp_mail( $to, 'تم تأخير موعد جلستك', $message, $headers );
 }
 
 
