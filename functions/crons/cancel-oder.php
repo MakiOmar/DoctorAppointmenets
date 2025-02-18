@@ -63,20 +63,35 @@ function snks_auto_cancel_wc_orders() {
 		if ( $minutes_diff > ( CANCELL_AFTER - 1 ) ) {
 			$order->set_status( 'cancelled', 'Cancelled for missing payment' );
 			$order->save();
-			$booking_id = $order->get_meta( 'booking_id', true );
-			$timetable  = snks_get_timetable_by( 'ID', absint( $booking_id ) );
-			if ( ! $timetable || 'open' === $timetable->session_status ) {
+			$booking_id = $order->get_meta( 'new_booking_id' );
+			$edit_order = true;
+			if ( ! $booking_id || empty( $booking_id ) ) {
+				$booking_id = $order->get_meta( 'booking_id', true );
+				$edit_order = false;
+			}
+
+			$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
+			if ( ( ! $timetable || 'open' === $timetable->session_status ) && ! $edit_order ) {
 				return;
 			}
-			$updated = snks_update_timetable(
-				absint( $booking_id ),
-				array(
-					'order_id' => 0,
-				)
-			);
+			if ( ! $edit_order ) {
+				$updated = snks_update_timetable(
+					absint( $booking_id ),
+					array(
+						'order_id' => 0,
+					)
+				);
+			} else {
+				$updated = snks_update_timetable(
+					absint( $booking_id ),
+					array(
+						'session_status' => 'waiting',
+					)
+				);
+			}
+
 			if ( $updated ) {
 				snks_waiting_others( $timetable );
-				delete_post_meta( $order->get_id(), 'booking_id' );
 			}
 		}
 	}
