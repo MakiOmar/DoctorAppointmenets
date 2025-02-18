@@ -401,19 +401,21 @@ function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $att
  * Check if Timetable row exists with the same date_time and order_id > 0
  *
  * @param string $date_time Date time.
+ * @param int    $user_id User id.
  * @return bool
  */
-function snks_timetable_with_order_exists( $date_time ) {
+function snks_timetable_with_order_exists( $date_time, $user_id ) {
 	global $wpdb;
 	// phpcs:disable
-	// Base query.
+	// Base query with user_id condition.
 	$_query = "SELECT ID
               FROM {$wpdb->prefix}snks_provider_timetable
               WHERE date_time = %s
-              AND order_id > 0";
+              AND order_id > 0
+              AND user_id = %d";
 
 	// Prepare the query.
-	$prepared_query = $wpdb->prepare( $_query, $date_time );
+	$prepared_query = $wpdb->prepare( $_query, $date_time, $user_id );
 
 	// Execute the query.
 	$exists = $wpdb->get_var( $prepared_query );
@@ -421,6 +423,7 @@ function snks_timetable_with_order_exists( $date_time ) {
 
 	return $exists;
 }
+
 
 /**
  * Checks if a timetable record exists for a user with the given date_time and session_status = 'open'.
@@ -536,14 +539,14 @@ function snks_update_timetable( $id, $data ) {
  */
 function snks_delete_timetable( $id ) {
 	global $wpdb;
-	// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    // phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
-	// Check if the record exists and has session_status equal to 'waiting'.
+
+	// Check if the record exists and session_status is neither 'open' nor 'pending'.
 	$record = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $table_name WHERE ID = %d AND session_status = %s",
-			$id,
-			'waiting'
+			"SELECT * FROM $table_name WHERE ID = %d AND session_status NOT IN ('open', 'pending')",
+			$id
 		)
 	);
 
@@ -552,18 +555,18 @@ function snks_delete_timetable( $id ) {
 		$wpdb->delete(
 			$table_name,
 			array(
-				'ID'             => $id,
-				'session_status' => 'waiting',
+				'ID' => $id,
 			),
-			array( '%d', '%s' )
+			array( '%d' )
 		);
-		// phpcs:enable.
+        // phpcs:enable.
 		if ( $wpdb->rows_affected > 0 ) {
 			return true;
 		}
 	}
 	return false;
 }
+
 
 
 /**
