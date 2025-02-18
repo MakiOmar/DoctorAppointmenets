@@ -456,7 +456,7 @@ function snks_get_periods_possibilities_options() {
  *
  * @return array
  */
-function snks_get_available_attendance_types_options() {
+function snks_get_available_attendance_types_options( $enable_both = true ) {
 	$is_available = array(
 		array(
 			'value' => '',
@@ -477,7 +477,9 @@ function snks_get_available_attendance_types_options() {
 	);
 	$is_available[] = $online;
 	$is_available[] = $offline;
-	$is_available[] = $both;
+	if ( $enable_both ) {
+		$is_available[] = $both;
+	}
 	
 	return $is_available;
 }
