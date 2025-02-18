@@ -365,7 +365,6 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	}
 	$__for             = '+' . $days_count . ' day';
 	$bookable_days_obj = get_bookable_dates( $user_id, $period, $__for, $_attendance_type );
-
 	if ( empty( $bookable_days_obj ) ) {
 		return '<p>عفواً! لا تتوفر مواعيد للحجز</p>';
 	}
@@ -648,6 +647,9 @@ function snks_render_consulting_hours( $availables, $_attendance_type, $user_id 
  * @return string
  */
 function snks_booking_details( $form_data, $is_booking = true ) {
+	if ( empty( $form_data['booking_id'] ) ) {
+		return;
+	}
 	$booking = snks_get_timetable_by( 'ID', $form_data['booking_id'] );
 	if ( ! $booking ) {
 		return;
@@ -1063,6 +1065,7 @@ function snks_timetable_settings( $user_id ) {
 		'block_if_before_unit'      => $doctor_settings['block_if_before_unit'],
 		'allow_appointment_change'  => $doctor_settings['allow_appointment_change'],
 		'pricing'                   => $doctor_settings['pricing'],
+		'country'                   => snsk_ip_api_country(),
 	);
 }
 /**
