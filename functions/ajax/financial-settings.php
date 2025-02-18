@@ -31,11 +31,9 @@ function send_email_otp() {
 
 	$user_id           = get_current_user_id();
 	$withdrawal_method = sanitize_text_field( $_POST['withdrawal_method'] ?? '' );
-
 	if ( ! validate_withdrawal_fields( $withdrawal_method, $_POST ) ) {
-		return;
+		wp_send_json_error( array( 'message' => 'عفوا! يوجد خطأ بالبيانات المدخلة..' ) );
 	}
-
 	if ( 'wallet' === $withdrawal_method && snks_check_wallet_exists( sanitize_text_field( $_POST['wallet_number'] ?? '' ), $user_id ) ) {
 		wp_send_json_error( array( 'message' => 'عفوا! رقم المحفظة مسجل لدى حساب آخر.' ) );
 	}
@@ -149,13 +147,12 @@ function validate_withdrawal_fields( $method, $data ) {
 
 	if ( isset( $required_fields[ $method ] ) ) {
 		foreach ( $required_fields[ $method ] as $field ) {
-			if ( empty( $data[ $field ] ) || ! preg_match( $validation_rules[ $field ]['pattern'], sanitize_text_field( $data[ $field ] ) ) ) {
+			if ( empty( $data[ $field ] ) || isset( $validation_rules[ $field ]['pattern'] ) && ! preg_match( $validation_rules[ $field ]['pattern'], sanitize_text_field( $data[ $field ] ) ) ) {
 				wp_send_json_error( array( 'message' => $validation_rules[ $field ]['message'] ) );
 				return false;
 			}
 		}
 	}
-
 	return true;
 }
 
@@ -249,14 +246,18 @@ function generate_otp( $user_id ) {
  * @return bool
  */
 function send_otp_email_and_sms( $user_info, $message ) {
-	$subject = 'كود التحقق لضبط إعداداتك المحاسبية';
+	$subject = 'Jalsah code:';
 	$headers = array(
 		'Content-Type: text/html; charset=UTF-8',
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
 
 	$email_sent   = wp_mail( $user_info->user_email, $subject, $message, $headers );
-	$phone_to_use = get_user_meta( $user_info->ID, 'billing_phone', true ) ?: $user_info->user_login;
+	$phone_to_use = get_user_meta( $user_info->ID, 'billing_phone', true );
+	if ( ! $phone_to_use || empty( $phone_to_use ) ) {
+		$phone_to_use = $user_info->user_login;
+	}
+
 	if ( strpos( $phone_to_use, '+2' ) === false ) {
 		$phone_to_use = '+20' . $phone_to_use;
 	}
@@ -306,7 +307,7 @@ function handle_manual_withdrawal_ajax() {
 	if ( 'manual_withdrawal' !== $withdrawal_settings['withdrawal_option'] ) {
 		wp_send_json_error(
 			array(
-				'msg' => 'تأكد من اختيار السحب اليدوي ثم حفظ النموذج أولاً.',
+				'msg' => 'يرجى عمل حفظ أولاً ثم إعادة طلب السحب..',
 			)
 		);
 	}
@@ -320,7 +321,18 @@ function handle_manual_withdrawal_ajax() {
 
 	// Process the withdrawal for the current user.
 	$processed = process_user_withdrawal( $current_user->ID, $current_day_of_week, $current_day_of_month, $current_date, $table_name, true );
-	// Return response.
-	wp_send_json( $processed );
+	if ( $processed['success'] ) {
+		wp_send_json_success(
+			array(
+				'msg' => $processed['msg'],
+			)
+		);
+	} else {
+		wp_send_json_error(
+			array(
+				'msg' => $processed['msg'],
+			)
+		);
+	}
 	die;
 }
