@@ -155,7 +155,9 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 		$c = 0;
 		// For Booking.
 	} elseif ( 'online' === $attendance_type ) {
-		if ( $session_price < 50 ) {
+		if ( $session_price < 5 ) {
+			$c = 0;
+		} elseif ( $session_price > 5 && $session_price < 50 ) {
 			$c = 3.99 + 1.92;
 		} elseif ( $session_price >= 50 && $session_price < 100 ) {
 			$c = 6.56 + 1.92;
@@ -184,19 +186,10 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 	$kasheir_fees = ceil( ( $a + $b + $d ) * 100 ) / 100;
 	$total        = $f;
 	// Return the final session price including service fees and kasheir_fees.
-	if ( $total < 5 ) {
-		return array(
-			'session_price' => 0,
-			'service_fees'  => 4.38,
-			'paymob'        => 0.62,
-			'total_price'   => 5,
-		);
-	} else {
-		return array(
-			'session_price' => $session_price,
-			'service_fees'  => $service_fees,
-			'paymob'        => $kasheir_fees,
-			'total_price'   => ceil( $f * 100 ) / 100,
-		);
-	}
+	return array(
+		'session_price' => $session_price,
+		'service_fees'  => $service_fees,
+		'paymob'        => $kasheir_fees,
+		'total_price'   => ceil( $f * 100 ) / 100,
+	);
 }
