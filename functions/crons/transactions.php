@@ -424,6 +424,7 @@ function snks_bank_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Recipient Bank'   => $withdrawal_settings['bank_code'],
 		'Amount'           => (string) $balance,
 		'Interval'         => ucfirst( str_replace( '_', ' ', $withdrawal_settings['withdrawal_option'] ) ),
+		'Nickname'         => get_user_meta( $user_id, 'nickname', true ),
 	);
 }
 /**
@@ -442,6 +443,7 @@ function snks_meza_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Recipient Bank'   => $withdrawal_settings['meza_bank_code'],
 		'Amount'           => (string) $balance,
 		'Interval'         => ucfirst( str_replace( '_', ' ', $withdrawal_settings['withdrawal_option'] ) ),
+		'Nickname'         => get_user_meta( $user_id, 'nickname', true ),
 	);
 }
 /**
@@ -460,6 +462,7 @@ function snks_wallet_method_xlsx( $user_id, $balance, $withdrawal_settings ) {
 		'Recipient Bank'   => '',
 		'Amount'           => (string) $balance,
 		'Interval'         => ucfirst( str_replace( '_', ' ', $withdrawal_settings['withdrawal_option'] ) ),
+		'Nickname'         => get_user_meta( $user_id, 'nickname', true ),
 	);
 }
 
