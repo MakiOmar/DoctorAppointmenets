@@ -140,7 +140,6 @@ add_action(
 		$booking_id = $order->get_meta( 'booking_id', true );
 		$booking    = snks_get_timetable_by( 'ID', $booking_id );
 		if ( ! $booking || empty( $booking ) || 'open' === $booking->session_status ) {
-			delete_post_meta( $order_id, 'booking_id' );
 			return;
 		}
 		if ( snks_is_past_date( $booking->date_time ) ) {
@@ -163,7 +162,6 @@ add_action(
 						snks_waiting_others( $booking );
 					}
 				}
-				delete_post_meta( $order_id, 'booking_id' );
 			}
 		}
 	}
