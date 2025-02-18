@@ -171,7 +171,6 @@ function send_booking_notifications() {
 				esc_html__( 'لديك غدا عدد %s جلسات حتى الآن.', 'your-text-domain' ),
 				$open_bookings
 			);
-			snks_error_log( $user_id . '-' . $notification_message );
 			// Trigger the notification.
 			$firebase->trigger_notifier( $notification_title, $notification_message, $user_id, '' );
 		}
