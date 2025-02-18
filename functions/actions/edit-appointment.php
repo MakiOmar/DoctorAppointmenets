@@ -49,18 +49,22 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				$status = 'closed';
 			}
 		}
-		$old_updated = snks_update_timetable(
-			$booking->ID,
-			array(
-				'session_status' => $status,
-			)
-		);
-		if ( $old_updated ) {
-			if ( 'waiting' === $status ) {
-				snks_waiting_others( $booking );
-			} else {
-				snks_close_others( $booking );
+		if ( 'postponed' !== $booking->session_status ) {
+			$old_updated = snks_update_timetable(
+				$booking->ID,
+				array(
+					'session_status' => $status,
+				)
+			);
+			if ( $old_updated ) {
+				if ( 'waiting' === $status ) {
+					snks_waiting_others( $booking );
+				} else {
+					snks_close_others( $booking );
+				}
 			}
+		}
+		if ( $old_updated || 'postponed' === $booking->session_status ) {
 			$updated = snks_update_timetable(
 				$new_timetable->ID,
 				array(
@@ -378,7 +382,7 @@ add_action(
 			$diff_seconds     = snks_diff_seconds( $booking );
 			$order_id         = $booking->order_id;
 			$main_order       = wc_get_order( $order_id );
-			$country          = snsk_ip_api_country();
+			$country          = $doctor_settings['country'];
 			$price            = get_price_by_period_and_country( $new_booking->period, $country, $doctor_settings['pricing'] );
 			$change_fees      = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
 			$will_pay         = ( $change_fees / 100 ) * $price;
@@ -399,7 +403,15 @@ add_action(
 				);
 				exit;
 			}
-
+			$updated = snks_update_timetable(
+				$new_booking->ID,
+				array(
+					'session_status' => 'pending',
+				)
+			);
+			if ( $updated ) {
+				snks_close_others( $new_booking );
+			}
 			// Compare the input date and time with the modified current date and time.
 			if ( ! snks_is_doctor() && 'postponed' !== $booking->session_status && ( ! $edited_before || empty( $edited_before ) ) && $diff_seconds < snks_get_free_edit_before_seconds( $doctor_settings ) ) {
 				$needs_payment = true;
