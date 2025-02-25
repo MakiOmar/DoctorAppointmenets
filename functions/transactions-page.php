@@ -43,6 +43,21 @@ function withdraw_transactions_admin_page_content() {
 	// phpcs:enable
 	$total_pages = ceil( $total_transactions / $limit );
 
+
+	$total_off_transactions = $wpdb->get_var(
+		$wpdb->prepare(
+			"
+			SELECT SUM(amount) 
+			FROM {$wpdb->prefix}snks_booking_transactions 
+			WHERE transaction_type = 'add' 
+			AND processed_for_withdrawal = 0
+			"
+		)
+	);
+	
+	// Ensure it's not null
+	$total_off_transactions = $total_off_transactions ? number_format($total_off_transactions, 2) : '0.00';
+
 	?>
 		<style>
 		/* Form Styling */
@@ -125,7 +140,12 @@ function withdraw_transactions_admin_page_content() {
 	</style>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Withdraw Transactions', 'your-textdomain' ); ?></h1>
-		
+		<div class="notice notice-info">
+			<p><strong><?php esc_html_e( 'Total Unprocessed "Off" Transactions:', 'your-textdomain' ); ?></strong> 
+				<?php echo esc_html( $total_off_transactions ); ?>
+			</p>
+		</div>
+
 		<!-- Date Filter Form -->
 		<form method="GET" action=""  class="withdraw-form">
 			<input type="hidden" name="page" value="withdraw-transactions">
