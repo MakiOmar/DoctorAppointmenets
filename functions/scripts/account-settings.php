@@ -261,7 +261,53 @@ add_action(
 						setCookie("next_popup", '', 0);
 					}
 				});
-				$( document ).on(
+				$(document).on('click', '#preview_button', function (event) {
+					let targetUrl = $(this).attr('href');
+
+					// Check if navigation should be prevented based on cookies
+					if (getCookie('edited_form') || getCookie('edited_withdrawal_form')) {
+						event.preventDefault(); // Prevent immediate navigation
+
+						Swal.fire({
+							title: 'أنت لم تقم بحفظ التعديلات',
+							text: "هل ترغب في الحفظ قبل مغادرة الصفحة؟",
+							icon: 'warning',
+							showCancelButton: true,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#d33',
+							confirmButtonText: 'حفظ',
+							cancelButtonText: 'إلغاء'
+						}).then((result) => {
+							if (result.isConfirmed) {
+								let saveFormId = getCookie('edited_form');
+								let targetForm = $('form[data-form-id="' + saveFormId + '"]');
+
+								if (targetForm.length > 0) {
+									$('.submit-type-ajax', targetForm).click();
+								}
+							} else {
+								Swal.fire({
+									title: 'هل تريد استكمال التعديلات أو إلغاءها؟',
+									text: "يمكنك إلغاء التعديلات والرجوع للخيارات السابقة",
+									icon: 'warning',
+									showCancelButton: true,
+									confirmButtonColor: '#3085d6',
+									cancelButtonColor: '#d33',
+									confirmButtonText: 'إلغاء',
+									cancelButtonText: 'إستكمال'
+								}).then((secondResult) => {
+									if (secondResult.isConfirmed) {
+										location.reload();
+									} else {
+										window.location.href = targetUrl; // Allow navigation after confirmation
+									}
+								});
+							}
+						});
+					}
+				});
+
+								$( document ).on(
 					'click',
 					'.popup-trigger',
 					function() {
@@ -293,12 +339,11 @@ add_action(
 							});
 							return;
 						}
-						console.log(preventNavigation);
 						if (preventNavigation) {
 							Swal.fire({
 								title: 'أنت لم تقم بحفظ التعديلات',
-								text: "هل ترغب في الحفظ؟",
-								icon: 'warning',
+								text : "هل ترغب في الحفظ؟",
+								icon : 'warning',
 								showCancelButton: true,
 								confirmButtonColor: '#3085d6',
 								cancelButtonColor: '#d33',
