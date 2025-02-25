@@ -1020,7 +1020,7 @@ function render_user_linked_image() {
 
 	// Return the linked image HTML.
 	return sprintf(
-		'<a href="%1$s" target="_blank" style="display:flex" rel="noopener noreferrer">
+		'<a href="%1$s" id="preview_button" target="_blank" style="display:flex" rel="noopener noreferrer">
             <img style="width:40px" src="%2$s" alt="%3$s">
         </a>',
 		$user_link,
