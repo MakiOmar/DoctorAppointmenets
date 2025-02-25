@@ -543,7 +543,8 @@ add_action(
 
 			foreach ( $user_ids as $user_id ) {
 				$response = $firebase->trigger_notifier( $title, $content, absint( $user_id ) );
-				if ( false !== strpos( $response, 400 ) ) {
+				if ( $response && false !== strpos( $response, 400 ) ) {
+					// Translators: %d is the user ID who failed to receive the notification.
 					$errors[] = sprintf( esc_html__( 'Failed to send notification to user ID %d: Unexpected error.', 'text-domain' ), $user_id );
 				}
 			}
