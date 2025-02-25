@@ -68,7 +68,13 @@ function appointment_change_date_callback() {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
 	$old_timetable = snks_get_timetable_by( 'ID', $_req['oldAppointment'] );
-	$timetables    = snks_get_timetable_by_date( $_req['date'], $old_timetable->period );
+	$old_date      = gmdate( 'Y-m-d', strtotime( $old_timetable->date_time ) );
+	if ( $old_date === $_req['date'] ) {
+		$show_closed = true;
+	} else {
+		$show_closed = false;
+	}
+	$timetables = snks_get_timetable_by_date( $_req['date'], $old_timetable->period, $show_closed );
 	if ( $timetables ) {
 		foreach ( $timetables as $appointment ) {
 			$attendance = 'online' === $appointment->attendance_type ? 'أونلاين' : 'أوفلاين';
