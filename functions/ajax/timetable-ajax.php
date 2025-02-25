@@ -300,6 +300,9 @@ function snks_create_custom_timetable() {
 			$base['attendance_type']                       = 'offline';
 			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
 		}
+		$inserting = $base;
+		unset( $inserting['date'] );
+		snks_insert_timetable( $inserting );
 	}
 
 	// Update the timetable data.
