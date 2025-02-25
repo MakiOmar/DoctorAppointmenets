@@ -410,13 +410,13 @@ function custom_log_patient_in( $_request ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفواً رقم الموبايل يجب أن يتكون من 11 رقماَ' );
 	}
 
-	if ( isset( $_req['login_with'] ) && 'mobile' !== $_req['login_with'] && ! is_email( $_req['username'] ) ) {
+	if ( isset( $_req['doctor_login'] ) && isset( $_req['login_with'] ) && 'mobile' !== $_req['login_with'] && ! is_email( $_req['username'] ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال بريد إلكتروني صحيح' );
 	}
 
 	// Sanitize and retrieve username and password from the request.
 	$username = isset( $_request['username'] ) ? sanitize_text_field( $_request['username'] ) : '';
-	$password = isset( $_request['password'] ) ? sanitize_text_field( $_request['password'] ) : '';
+	$password = isset( $_req['doctor_login'] ) && isset( $_request['password'] ) ? sanitize_text_field( $_request['password'] ) : '333333';
 
 	// Check if the username and password are provided.
 	if ( empty( $username ) || empty( $password ) ) {
@@ -424,7 +424,7 @@ function custom_log_patient_in( $_request ) {
 	}
 
 	// Determine if the username is an email.
-	if ( is_email( $username ) ) {
+	if ( isset( $_req['doctor_login'] ) && is_email( $username ) ) {
 		// Get the user by email.
 		$user = get_user_by( 'email', $username );
 	} else {
@@ -437,7 +437,7 @@ function custom_log_patient_in( $_request ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! بيانات الدخول غير صحيحة' );
 	}
 	// Validate the password.
-	if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+	if ( isset( $_req['doctor_login'] ) && ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! كلمة المرور غير صحيحة' );
 	}
 	// Check if the user is not a doctor.
