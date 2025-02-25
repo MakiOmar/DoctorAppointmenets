@@ -720,6 +720,34 @@ function snks_booking_details( $form_data, $is_booking = true ) {
 	return ob_get_clean();
 }
 /**
+ * Displays the user's personal information.
+ */
+function snks_user_info() {
+	?>
+	<div style="text-align: center;">
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" 
+			style="display: inline-block; margin: 0 0 20px 0; padding: 10px 10px 17px; border-radius: 8px; text-align: center; color: #fff;">
+			بياناتك الشخصية
+		</h3>
+	</div>
+	<table class="consulting-session-table">
+		<tr>
+			<td class="consulting-session-label"><?php esc_html_e( 'الإسـم', 'text-domain' ); ?></td>
+			<td class="consulting-session-data">
+				<?php echo esc_html( get_user_meta( get_current_user_id(), 'billing_first_name', true ) ); ?>
+			</td>
+		</tr>
+		<tr>
+			<td class="consulting-session-label"><?php esc_html_e( 'رقم الموبايل', 'text-domain' ); ?></td>
+			<td class="consulting-session-data" style="direction: ltr;">
+				<?php echo esc_html( get_user_meta( get_current_user_id(), 'billing_phone', true ) ); ?>
+			</td>
+		</tr>
+	</table>
+	<?php
+}
+
+/**
  * Render edit button
  *
  * @param int    $booking_id Booking ID.

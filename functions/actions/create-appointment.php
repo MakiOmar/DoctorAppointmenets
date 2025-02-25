@@ -89,7 +89,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					send_sms_via_whysms( $order->get_billing_phone(), $message );
 					$patient_user  = get_user_by( 'ID', $customer_id );
 					$patient_email = $patient_user->user_email;
-					wp_mail( $patient_email, 'تم حجز جلسة جديدة', $message );
+					//wp_mail( $patient_email, 'تم حجز جلسة جديدة', $message );
 					// Doctor.
 					if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 						// Use the correct namespace to initialize the class.

@@ -44,7 +44,7 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 			'_paymob'            => $order->get_meta( '_paymob', true ),
 		);
 	}
-
+	snks_user_info();
 	//phpcs:disable
 	echo consulting_session_pricing_table_shortcode( $form_data );
 	if ( 'edit-fees' !== $order_type ) {

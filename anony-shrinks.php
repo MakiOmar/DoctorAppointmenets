@@ -276,6 +276,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 add_action(
 	'woocommerce_checkout_order_review',
 	function () {
+		snks_user_info();
 		$form_data = get_transient( snks_form_data_transient_key() );
 		// Check if the session data exists and contains the expected keys.
 		if ( is_array( $form_data ) ) {
