@@ -116,9 +116,11 @@ add_action(
 								icon: "success",
 								confirmButtonText: 'غلق',
 							}).then((result) => {
+								<?php if ( is_page( 'account-setting' ) ) { ?>
 								if ( '.snks-postpon' === act ) {
 									location.reload();
 								}
+								<?php } ?>
 							});
 						}
 					});
