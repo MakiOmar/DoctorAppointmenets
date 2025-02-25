@@ -1814,6 +1814,15 @@ add_action(
 			div:where(.swal2-container) {
 				z-index: 999999!important;
 			}
+			.popup-trigger img, .popup-trigger canvas{
+				max-height: 40px;
+			}
+			.woocommerce #payment #place_order, .woocommerce-page #payment #place_order {
+				float: none;
+				width: 100%;
+				box-sizing: border-box;
+				margin-bottom: 1em;
+			}
 			.snks-timetable-accordion-content-wrapper{
 				display: none;
 			}
