@@ -166,7 +166,7 @@ function snks_get_timetable_by( $column, $value, $placeholder = '%d' ) {
  * @param string|false $period Period to filter, optional.
  * @return mixed
  */
-function snks_get_timetable_by_date( $date, $period = false ) {
+function snks_get_timetable_by_date( $date, $period = false, $show_closed = true ) {
 	global $wpdb;
 	// Get the current user ID.
 	$current_user_id = snks_get_settings_doctor_id();
@@ -180,9 +180,12 @@ function snks_get_timetable_by_date( $date, $period = false ) {
 		// Start building the base SQL query with NOT IN for session_status.
 		$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
 		        WHERE DATE(date_time) = %s 
-		        AND user_id = %d 
-		        AND session_status NOT IN ( 'cancelled', 'completed', 'open', 'pending' )";
-
+		        AND user_id = %d";
+		if ( $show_closed ) {
+			$sql .= " AND session_status NOT IN ( 'cancelled', 'completed', 'open', 'pending' )";
+		} else {
+			$sql .= " AND session_status NOT IN ( 'cancelled', 'completed', 'open', 'pending', 'closed' )";
+		}
 		// Add the period condition if provided.
 		if ( $period ) {
 			$sql .= ' AND period = %s';
