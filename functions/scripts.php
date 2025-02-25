@@ -241,10 +241,6 @@ add_action(
 					pageTransition.style.display = 'block';
 				}
 			});
-			function showNextClinic(e){
-				
-				
-			}
 			jQuery(document).ready(function($) {
 				$(document).on(
 					'click',
