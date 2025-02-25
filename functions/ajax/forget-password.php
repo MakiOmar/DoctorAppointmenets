@@ -74,22 +74,10 @@ function custom_forget_password_handler() {
 				$msg = 'عفواً حدث خطأ ما!';
 				wp_send_json_error( array( 'msg' => $msg ) );
 			}
-			
 		} else {
 			$msg = 'لا يمكن إرسال رسالة الآن. الرجاء المحاولة بعد 5 دقائق.';
 			wp_send_json_error( array( 'msg' => $msg ) );
 		}
-	} elseif ( 'email' === $login_with ) {
-		$to      = $user->user_email;
-		$subject = 'استعادة كلمة المرور';
-		$message = sprintf(
-			'<div style="direction:rtl;text-align:right"><p>تم تعيين كلمة مرور جديدة لحسابك: %s. كلمة المرور الجديدة هي: %s</p></div>',
-			$user->user_login,
-			$new_password
-		);
-		wp_mail( $to, $subject, $message, array( 'Content-Type: text/html; charset=UTF-8' ) );
-		$msg = 'تم إرسال كلمة المرور الجديدة إلى بريدك الإلكتروني.';
-		wp_send_json_success( array( 'msg' => $msg ) );
 	}
 	die;
 }

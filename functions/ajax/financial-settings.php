@@ -252,7 +252,7 @@ function send_otp_email_and_sms( $user_info, $message ) {
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
 
-	$email_sent   = wp_mail( $user_info->user_email, $subject, $message, $headers );
+	//$email_sent   = wp_mail( $user_info->user_email, $subject, $message, $headers );
 	$phone_to_use = get_user_meta( $user_info->ID, 'billing_phone', true );
 	if ( ! $phone_to_use || empty( $phone_to_use ) ) {
 		$phone_to_use = $user_info->user_login;
@@ -263,7 +263,7 @@ function send_otp_email_and_sms( $user_info, $message ) {
 	}
 	send_sms_via_whysms( $phone_to_use, $message );
 
-	return $email_sent;
+	return true;
 }
 
 

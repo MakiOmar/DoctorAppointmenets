@@ -299,7 +299,7 @@ add_action(
 				'Content-Type: text/html; charset=UTF-8',
 				'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 			);
-			wp_mail( $patient_email, 'تم تعديل موعدك', $message, $headers );
+			//wp_mail( $patient_email, 'تم تعديل موعدك', $message, $headers );
 
 			// Send a success response.
 			wp_send_json(

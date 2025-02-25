@@ -57,7 +57,7 @@ function snks_postpon_appointment( $id, $patient_id, $doctor_id, $date ) {
 		send_sms_via_whysms( $billing_phone, $message );
 
 		$patient_email = $user->user_email;
-		wp_mail( $patient_email, 'تم تأجيل جلستك', $message );
+		//wp_mail( $patient_email, 'تم تأجيل جلستك', $message );
 	}
 	// this.
 }
@@ -112,7 +112,7 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date )
 	);
 
 	send_sms_via_whysms( $billing_phone, $message );
-	return wp_mail( $to, 'تم تأخير موعد جلستك', $message, $headers );
+	//return wp_mail( $to, 'تم تأخير موعد جلستك', $message, $headers );
 }
 
 
