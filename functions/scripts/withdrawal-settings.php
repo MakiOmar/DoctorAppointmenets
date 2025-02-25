@@ -31,11 +31,14 @@ add_action(
 					'change',
 					'.withdrawal-options input[type="radio"]',
 					function() {
-					if ( $(this).val() === 'manual_withdrawal' ) {
-						$('.manual-withdrawal-button').slideDown();
-					} else {
-						$('.manual-withdrawal-button').slideUp();
+					if ( $(this).closest('.withdrawal-options').find('.manual-withdrawal-button').length > 0 ) {
+						if ( $(this).val() === 'manual_withdrawal' ) {
+							$('.manual-withdrawal-button').slideDown();
+						} else {
+							$('.manual-withdrawal-button').slideUp();
+						}
 					}
+
 					var parent = $(this).closest('.withdrawal-options');
 					
 					// Remove 'checked' class from all .anony-custom-radio spans
@@ -266,7 +269,7 @@ add_action(
 								if (response.success) {
 									Swal.fire({
 										title: 'تم بنجاح!',
-										text: response.msg,
+										text: response.data.msg,
 										icon: 'success',
 										confirmButtonText: 'إغلاق',
 									}).then((result) => {
@@ -275,7 +278,7 @@ add_action(
 								} else {
 									Swal.fire({
 										title: 'فشل!',
-										text: response.msg || 'حدث خطأ أثناء التنفيذ.',
+										text: response.data.msg || 'حدث خطأ أثناء التنفيذ.',
 										icon: 'error',
 										confirmButtonText: 'إغلاق',
 									});
