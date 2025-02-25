@@ -104,17 +104,20 @@ add_action(
 		$preview_timetable = snks_get_preview_timetable();
 
 		$solt   = $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ];
-		$exists = snks_timetable_exists( snks_get_settings_doctor_id(), gmdate( 'Y-m-d H:i:s', strtotime( $solt['date_time'] ) ), $solt['day'], $solt['starts'], $solt['ends'] );
+		$exists = snks_timetable_exists( snks_get_settings_doctor_id(), gmdate( 'Y-m-d H:i:s', strtotime( $solt['date_time'] ) ), $solt['day'], $solt['starts'], $solt['ends'], $solt['attendance_type'] );
 		unset( $preview_timetable[ $_req['slotDay'] ][ $_req['slotIndex'] ] );
-		$update = update_user_meta( snks_get_settings_doctor_id(), 'preview_timetable', $preview_timetable );
+		$update  = update_user_meta( snks_get_settings_doctor_id(), 'preview_timetable', $preview_timetable );
+		$deleted = array();
 		if ( ! empty( $exists ) ) {
 			foreach ( $exists as $record ) {
 				snks_delete_timetable( $record->ID );
+				$deleted[] = $record->ID;
 			}
 		}
 		wp_send_json(
 			array(
-				'resp' => $update,
+				'resp'    => $update,
+				'deleted' => implode( '-', $deleted ),
 			),
 		);
 
@@ -140,8 +143,9 @@ add_action(
 		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
 			foreach ( $preview_timetables as $day_preview_timetable ) {
 				foreach ( $day_preview_timetable as $data ) {
-					$dtime   = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-					$ordered = snks_timetable_with_order_exists( $dtime );
+					$dtime = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+
+					$ordered = snks_timetable_with_order_exists( $dtime, $data['user_id'] );
 					if ( $ordered ) {
 						continue;
 					}
