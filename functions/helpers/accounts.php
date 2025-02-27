@@ -483,16 +483,20 @@ add_action( 'jet-form-builder/custom-action/proccess_form_data', 'custom_process
 function custom_process_user_registration( $request ) {
 
 	// Sanitize form data.
-	$first_name       = sanitize_text_field( wp_unslash( $request['billing_first_name'] ) );
-	$password         = '333333';
-	$phone            = sanitize_text_field( wp_unslash( $request['uname'] ) );
-	$user_id = username_exists( $phone );
-
+	$first_name = sanitize_text_field( wp_unslash( $request['billing_first_name'] ) );
+	$password   = '333333';
+	$phone      = sanitize_text_field( wp_unslash( $request['uname'] ) );
+	$user_id    = username_exists( $phone );
+	if ( empty( $_POST['reg-temp-phone'] ) ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون حقل إلزامي' );
+	}
+	if ( strlen( $phone ) < 5 ) {
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال رقم تليفون صحيح' );
+	}
 	// Check if the username (phone number) already exists.
 	if ( $user_id ) {
 		// Assign the user role (e.g., 'customer').
-		$user = new WP_User( $user_id );
-		$user->set_role( 'customer' );
+		$user = get_user_by( 'ID', $user_id );
 
 		// Log in the user after registration.
 		wp_set_current_user( $user_id );
@@ -501,7 +505,7 @@ function custom_process_user_registration( $request ) {
 
 		return true;
 	}
-	$email = "{$phone}@jalsah.com";
+	$email = "{$phone}@jalsah.app";
 
 	// Register the user.
 	$user_id = wp_create_user( $phone, $password, $email );
