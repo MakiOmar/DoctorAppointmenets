@@ -1811,6 +1811,9 @@ add_action(
 				margin-top: 50px;
 				transform: rotate(45deg);
 			}
+			#username{
+				direction: ltr;
+			}
 			div:where(.swal2-container) {
 				z-index: 999999!important;
 			}
