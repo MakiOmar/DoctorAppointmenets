@@ -782,8 +782,14 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	echo wp_kses_post( snks_booking_details( $form_data ) );
 	echo '<br>';
 	echo wp_kses_post( snks_doctor_rules( $form_data['_user_id'] ) );
-	?>
 
+	$current_user = get_user_by( 'ID', absint( $form_data['_user_id'] ) );
+
+	// Define the base URL and image source.
+	$base_url  = home_url( '/' );
+	$user_link = $base_url . 'therapist/' . $current_user->nickname;
+	?>
+	<input type="hidden" id="selected_doctor_url" value="<?php echo esc_url( $user_link ); ?>"/>
 	<div style="text-align:center">
 		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
@@ -996,7 +1002,7 @@ add_shortcode(
 	function () {
 		// Check if the user is logged in.
 		if ( is_user_logged_in() ) {
-			return '<p style="text-align:center;position:relative;z-index:9999;"><a id="snks-logout" class="pt_bold_headingregular" style="background-color:#b94545;color:#fff;width:125px;padding:5px 10px" href="#">خروج</a></p>';
+			return '<p style="text-align:center;position:relative;z-index:9999;"><a id="snks-logout" class="pt_bold_headingregular" style="background-color:#b94545;color:#fff;width:125px;padding:5px 10px" href="#">تسجيل خروج</a></p>';
 		} else {
 			// If the user is not logged in, return an empty string.
 			return '';
