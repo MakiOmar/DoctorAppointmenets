@@ -624,6 +624,39 @@ function get_bank_list() {
 	);
 }
 /**
+ * Create or update a custom log file called 'team-log.log' in WordPress.
+ *
+ * @param string $message The message to be logged.
+ */
+function teamlog( $message ) {
+	// Load the WordPress Filesystem API.
+	if ( ! function_exists( 'WP_Filesystem' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
+	// Initialize the WP_Filesystem.
+	global $wp_filesystem;
+	if ( is_null( $wp_filesystem ) ) {
+		WP_Filesystem();
+	}
+
+	// Set the log file path inside the wp-content directory.
+	$log_file_path = WP_CONTENT_DIR . '/team-log.log';
+
+	// Format the log entry with a timestamp.
+	$log_entry = '[' . current_time( 'Y-m-d H:i:s' ) . '] ' . print_r( $message, true ) . PHP_EOL;
+
+	// Check if the file exists.
+	if ( ! $wp_filesystem->exists( $log_file_path ) ) {
+		// If the file doesn't exist, create it and add the first log entry.
+		$wp_filesystem->put_contents( $log_file_path, $log_entry );
+	} else {
+		// If the file exists, append the log entry.
+		$existing_log = $wp_filesystem->get_contents( $log_file_path );
+		$wp_filesystem->put_contents( $log_file_path, $existing_log . $log_entry );
+	}
+}
+/**
  * Apply timetable settings dynamically
  *
  * @param int|false $user_id User's ID otherwise,false.
@@ -636,4 +669,29 @@ function apply_timetable_settings( $user_id = false, $start_offset = 0, $days_co
 	if ( is_array( $timetables ) ) {
 		snks_set_preview_timetable( $timetables, $user_id );
 	}
+}
+/**
+ * Automatically publishes appointments for a user.
+ *
+ * @param int $user_id The user ID.
+ */
+function snks_auto_publish_appointments( $user_id ) {
+	$day_timetables     = snks_generate_timetable( 91, 8, $user_id );
+	$preview_timetables = snks_get_preview_timetable( $user_id );
+	if ( ! is_array( $preview_timetables ) ) {
+		return;
+	}
+	foreach ( $day_timetables as $day => $timetables ) {
+		foreach ( $timetables as $timetable ) {
+			$temp = $timetable;
+			unset( $timetable['date'] );
+			snks_insert_timetable( $timetable, $user_id );
+			if ( isset( $preview_timetables[ $day ] ) ) {
+				$preview_timetables[ $day ][] = $temp;
+			} else {
+				$preview_timetables[ $day ] = array( $temp );
+			}
+		}
+	}
+	snks_set_preview_timetable( $preview_timetables );
 }
