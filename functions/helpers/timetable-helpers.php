@@ -491,11 +491,15 @@ function snks_get_open_timetable_by( $column, $value ) {
 /**
  * Insert timetable
  *
- * @param array $data data to insert.
+ * @param array     $data data to insert.
+ * @param int|false $user_id User's ID.
  * @return mixed
  */
-function snks_insert_timetable( $data ) {
-	$exists = snks_timetable_exists( snks_get_settings_doctor_id(), $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
+function snks_insert_timetable( $data, $user_id = false ) {
+	if ( ! $user_id ) {
+		$user_id = snks_get_settings_doctor_id();
+	}
+	$exists = snks_timetable_exists( $user_id, $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
 	if ( ! empty( $exists ) ) {
 		return false;
 	}
