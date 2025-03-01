@@ -623,3 +623,17 @@ function get_bank_list() {
 		'UNB'  => 'بنك الإتحاد الوطني',
 	);
 }
+/**
+ * Apply timetable settings dynamically
+ *
+ * @param int|false $user_id User's ID otherwise,false.
+ * @param int       $start_offset Number of days from today to start generating appointments.
+ * @param int       $days_count Number of appointment dates to generate.
+ * @return void
+ */
+function apply_timetable_settings( $user_id = false, $start_offset = 0, $days_count = 90 ) {
+	$timetables = snks_generate_timetable( $start_offset, $days_count );
+	if ( is_array( $timetables ) ) {
+		snks_set_preview_timetable( $timetables, $user_id );
+	}
+}

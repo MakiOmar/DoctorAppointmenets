@@ -642,46 +642,38 @@ function snks_check_wallet_exists( $wallet_number, $user_id ) {
     return $found_user_id ? (int) $found_user_id : false;
 }
 /**
- * Generate appointments dates
+ * Generate appointment dates dynamically
  *
- * @param array $week_days An array of week days abbreviations array( 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun' ).
+ * @param array $week_days An array of week day abbreviations (e.g., ['Mon', 'Tue', 'Wed']).
+ * @param int $start_offset Number of days from today to start generating appointments.
+ * @param int $days_count Number of appointment dates to generate.
  * @return array
  */
-function snks_generate_appointments_dates( $week_days ) {
+function snks_generate_appointments_dates( $week_days, $start_offset = 0, $days_count = 90 ) {
+    $result = array();
+    $current_date = new DateTime();
+    $current_date->modify("+$start_offset days"); // Start from X days from today
 
-	// Initialize the result array.
-	$result = array();
+    while ( count($result) < $days_count ) {
+        // Get the day abbreviation (e.g., Mon, Tue)
+        $day_abbr = $current_date->format('D');
 
-	// Get today's date.
-	$start_date = new DateTime();
+        // If it's one of the desired days, add it to the result
+        if ( in_array( $day_abbr, $week_days, true ) ) {
+            $result[] = array(
+                'day'   => $day_abbr,
+                'label' => snks_localize_day( $day_abbr ),
+                'date'  => $current_date->format( 'Y-m-d' ),
+            );
+        }
 
-	for ( $i = 0; $i <= 90; $i++ ) {
-		// Get the current date.
-		$current_date = clone $start_date;
-		$current_date->modify( "+$i days" );
+        // Move to the next day
+        $current_date->modify('+1 day');
+    }
 
-		// Get the abbreviation of the current day.
-		$day_abbr = $current_date->format( 'D' );
-
-		// Check if the abbreviation is in the provided days array.
-		if ( in_array( $day_abbr, $week_days, true ) ) {
-			// Add the formatted entry to the result array.
-			$result[] = array(
-				'day'   => $day_abbr,
-				'label' => snks_localize_day( $day_abbr ),
-				'date'  => $current_date->format( 'Y-m-d' ),
-			);
-		}
-	}
-	// Sort the array by date in ascending order.
-	usort(
-		$result,
-		function ( $a, $b ) {
-			return strtotime( $a['date'] ) - strtotime( $b['date'] );
-		}
-	);
-	return $result;
+    return $result;
 }
+
 /**
  * Get doctors appointments settings
  *
@@ -770,7 +762,7 @@ function snks_generate_date_time( $app_settings, $day, $appointment_hour ) {
  *
  * @return array
  */
-function snks_generate_timetable() {
+function snks_generate_timetable( $offset = 0, $days_count = 90 ) {
 	// Get appointments settings.
 	$app_settings = snks_get_appointments_settings();
 	if (empty($app_settings)) {
@@ -780,7 +772,7 @@ function snks_generate_timetable() {
 	$data               = array();
 	$user_id            = snks_get_settings_doctor_id();
 	$week_days          = array_keys( $app_settings );
-	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days ) );
+	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days, $offset, $days_count ) );
 	$off_days           = snks_get_off_days();
 
 	foreach ( $appointments_dates as $day => $dates_details ) {
@@ -842,11 +834,15 @@ function snks_generate_timetable() {
 /**
  * Set preview timetable
  *
- * @param array $data data to set.
+ * @param array     $data data to set.
+ * @param int|false $user_id User's ID otherwise,false.
  * @return mixed
  */
-function snks_set_preview_timetable( $data ) {
-	update_user_meta( snks_get_settings_doctor_id(), 'preview_timetable', $data );
+function snks_set_preview_timetable( $data, $user_id = false ) {
+	if ( ! $user_id ) {
+		$user_id = snks_get_settings_doctor_id();
+	}
+	update_user_meta( $user_id, 'preview_timetable', $data );
 }
 /**
  * Get preview timetable
@@ -959,15 +955,7 @@ function snks_get_edit_before_seconds( $doctor_settings ) {
 	return absint( $number ) * $base * 3600;
 }
 
-add_action(
-	'jet-form-builder/custom-action/after_session_settings',
-	function () {
-		$timetables = snks_generate_timetable();
-		if ( is_array( $timetables ) ) {
-			snks_set_preview_timetable( $timetables );
-		}
-	}
-);
+add_action( 'jet-form-builder/custom-action/after_session_settings', 'apply_timetable_settings' );
 
 add_action(
 	'jet-form-builder/custom-action/update_doctor_profile',
