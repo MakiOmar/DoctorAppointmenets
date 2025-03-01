@@ -271,6 +271,11 @@ add_action(
 			return;
 		}
 		if ( is_array( $form_data ) ) {
+			$current_user_id = get_current_user_id();
+			$phone_edit_lock = get_user_meta( $current_user_id, 'phone_edit_lock', true );
+			if ( ! $phone_edit_lock || empty( $phone_edit_lock ) ) {
+				add_user_meta( $current_user_id, 'phone_edit_lock', 'locked' );
+			}
 			$timetable = snks_get_timetable_by( 'ID', $form_data['booking_id'] );
 			if ( 'waiting' === $timetable->session_status ) {
 				$updated = snks_update_timetable(

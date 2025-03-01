@@ -32,3 +32,22 @@ function snks_logout() {
 }
 add_action( 'wp_ajax_snks_logout', 'snks_logout' );
 add_action( 'wp_ajax_nopriv_snks_logout', 'snks_logout' );
+
+/**
+ * Booking details change
+ *
+ * @return void
+ */
+function edit_patient_phone() {
+	// Verify nonce for security.
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'edit_patient_phone' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	$user_id = get_current_user_id();
+	delete_transient( snks_form_data_transient_key() );
+	wp_delete_user( $user_id );
+	// Log out the user and destroy session.
+	wp_logout();
+	wp_send_json_success();
+}
+add_action( 'wp_ajax_edit_patient_phone', 'edit_patient_phone' );

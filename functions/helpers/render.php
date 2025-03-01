@@ -745,6 +745,20 @@ function snks_user_info() {
 		</tr>
 	</table>
 	<?php
+	$current_user_id = get_current_user_id();
+	$phone_edit_lock = get_user_meta( $current_user_id, 'phone_edit_lock', true );
+	if ( ! $phone_edit_lock || empty( $phone_edit_lock ) ) {
+		$edit_patient_phone_nonce = wp_create_nonce( 'edit_patient_phone' );
+		?>
+		<div style="text-align: center;">
+		<a id="edit_patient_phone" data-nonce="<?php echo esc_attr( $edit_patient_phone_nonce ); ?>" class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker"  style="display: inline-block; margin: 0 0 20px 0; padding: 10px 10px 17px; border-radius: 8px; text-align: center; color: #fff;">
+		تعديل
+		</a>
+		</div>
+		<?php
+	}
+	?>
+	<?php
 }
 
 /**

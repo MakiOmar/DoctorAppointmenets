@@ -739,6 +739,42 @@ add_action(
 				});
 			});
 		});
+		<?php if ( snks_is_patient() ) { ?>
+		jQuery(document).ready(function ($) {
+			$('#uname').val('').trigger('change');
+			$(document).on('click', '#edit_patient_phone', function (e) {
+				e.preventDefault();
+				var nonce = $(this).data('nonce');
+				
+				Swal.fire({
+					title: 'هل تريد تعديل بياناتك',
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'نعم، قم بالتعديل',
+					cancelButtonText: 'إلغاء'
+				}).then((result) => {
+					if (result.isConfirmed) {
+						$.ajax({
+							type: 'POST',
+							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+							data: {
+								action: 'edit_patient_phone',
+								nonce: nonce
+							},
+							success: function (response) {
+								if (response.success) {
+									window.location.href = $( '#selected_doctor_url' ).val();
+								}
+							},
+							error: function () {
+								Swal.fire('حدث خطأ ما', 'حاول مرة أخرى لاحقًا.', 'error');
+							}
+						});
+					}
+				});
+			});
+		});
+		<?php } ?>
 	</script>
 		<?php
 	}

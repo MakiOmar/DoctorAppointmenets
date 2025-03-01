@@ -1034,6 +1034,27 @@ add_action(
 	}
 );
 
+add_action(
+	'jet-form-builder/custom-action/update_patient_phone',
+	function ( $request ) {
+		if ( ! empty( $request['username'] ) ) {
+			// Get the current user.
+			$current_user_id = get_current_user_id();
+			global $wpdb;
+			$wpdb->update(
+				$wpdb->users,
+				array( 'user_login' => $request['username'], 'email' => $request['username'] . '@jalsah.app' ),
+				array( 'ID' => $current_user_id )
+			);
+			update_user_meta( $current_user_id, 'billing_phone', $request['username'] );
+		}
+		if ( ! empty( $request['first_name'] ) ) {
+			update_user_meta( $current_user_id, 'billing_first_name', $request['first_name'] );
+			update_user_meta( $current_user_id, 'first_name', $request['first_name'] );
+		}
+	}
+);
+
 /**
  * Get off days
  *
