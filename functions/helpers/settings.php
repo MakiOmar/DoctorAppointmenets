@@ -653,8 +653,8 @@ function snks_generate_appointments_dates( $week_days, $start_offset = 0, $days_
     $result = array();
     $current_date = new DateTime();
     $current_date->modify("+$start_offset days"); // Start from X days from today
-
-    while ( count($result) < $days_count ) {
+	$counter = 1;
+    while ( $counter <= $days_count ) {
         // Get the day abbreviation (e.g., Mon, Tue)
         $day_abbr = $current_date->format('D');
 
@@ -666,7 +666,7 @@ function snks_generate_appointments_dates( $week_days, $start_offset = 0, $days_
                 'date'  => $current_date->format( 'Y-m-d' ),
             );
         }
-
+		$counter++;
         // Move to the next day
         $current_date->modify('+1 day');
     }
@@ -677,11 +677,14 @@ function snks_generate_appointments_dates( $week_days, $start_offset = 0, $days_
 /**
  * Get doctors appointments settings
  *
+ * @param int $user_id User's ID.
  * @return array
  */
-function snks_get_appointments_settings() {
+function snks_get_appointments_settings( $user_id = false ) {
 	$week_days = array_keys( json_decode( DAYS_ABBREVIATIONS, true ) );
-	$user_id   = snks_get_settings_doctor_id();
+	if ( ! $user_id ) {
+		$user_id   = snks_get_settings_doctor_id();
+	}
 	$settings  = array();
 	foreach ( $week_days as $abb ) {
 		$abb_settings = get_user_meta( $user_id, lcfirst( $abb ) . '_timetable', true );
@@ -760,11 +763,16 @@ function snks_generate_date_time( $app_settings, $day, $appointment_hour ) {
 /**
  * Generate time table
  *
+ * @param int $user_id User's ID.
  * @return array
  */
-function snks_generate_timetable( $offset = 0, $days_count = 90 ) {
+function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = false) {
+	if ( ! $user_id ) {
+		$user_id = snks_get_settings_doctor_id();
+	}
 	// Get appointments settings.
-	$app_settings = snks_get_appointments_settings();
+	$app_settings = snks_get_appointments_settings( $user_id );
+
 	if (empty($app_settings)) {
         return array(); // Return early if no settings.
     }
@@ -774,7 +782,6 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 ) {
 	$week_days          = array_keys( $app_settings );
 	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days, $offset, $days_count ) );
 	$off_days           = snks_get_off_days();
-
 	foreach ( $appointments_dates as $day => $dates_details ) {
 		// Day settings ( e.g. SAT ).
 		$day_settings = $app_settings[ $day ];
@@ -828,8 +835,7 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 ) {
 			}
 		}
 	}
-	
-	return( $data );
+	return $data;
 }
 /**
  * Set preview timetable
@@ -955,7 +961,9 @@ function snks_get_edit_before_seconds( $doctor_settings ) {
 	return absint( $number ) * $base * 3600;
 }
 
-add_action( 'jet-form-builder/custom-action/after_session_settings', 'apply_timetable_settings' );
+add_action( 'jet-form-builder/custom-action/after_session_settings', function () {
+	apply_timetable_settings( false, 1, 90  );
+} );
 
 add_action(
 	'jet-form-builder/custom-action/update_doctor_profile',
