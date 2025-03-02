@@ -693,5 +693,5 @@ function snks_auto_publish_appointments( $user_id ) {
 			}
 		}
 	}
-	snks_set_preview_timetable( $preview_timetables );
+	snks_set_preview_timetable( $preview_timetables, $user_id );
 }

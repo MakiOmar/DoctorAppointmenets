@@ -16,7 +16,7 @@ function snks_auto_publish_appointments_for_doctors() {
 	$limit        = 10;
 	$current_time = current_time( 'H:i:s' );
 	// Only run between 00:00:00 and 06:00:00.
-	if ( $current_time > '18:00:00' && $current_time < '23:00:00' ) {
+	if ( $current_time > '00:00:00' && $current_time < '06:00:00' ) {
 			// Retrieve stored offset or initialize if not set.
 		$offset = get_transient( 'snks_doctor_offset' );
 		if ( false === $offset ) {

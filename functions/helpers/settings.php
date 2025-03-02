@@ -778,7 +778,6 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = fal
     }
 	// Array to store appointments details.
 	$data               = array();
-	$user_id            = snks_get_settings_doctor_id();
 	$week_days          = array_keys( $app_settings );
 	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days, $offset, $days_count ) );
 	$off_days           = snks_get_off_days();
@@ -884,10 +883,12 @@ function snks_get_preview_timetable( $user_id = false, $full = false ) {
             $sessions = array_filter( $sessions, function( $session ) use ( $doctor_settings, $available_periods, $enabled_clinics ) {
 				$in  = false;
 				if ( ( $session['attendance_type'] === $doctor_settings['attendance_type'] || 'both' === $doctor_settings['attendance_type'] ) && in_array( $session['period'], $available_periods ) ){
-					if ( 'online' === $session['attendance_type'] ) {
-						$in = true; 
-					} elseif( in_array( $session['clinic'], $enabled_clinics ) ) {
-						$in = true; 
+					if ( ! snks_is_past_date( $session['date_time'] ) ) {
+						if ( 'online' === $session['attendance_type'] ) {
+							$in = true; 
+						} elseif( in_array( $session['clinic'], $enabled_clinics ) ) {
+							$in = true; 
+						}
 					}
 				}
                 return $in;
