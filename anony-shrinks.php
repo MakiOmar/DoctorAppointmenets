@@ -32,6 +32,19 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 
 // Plugin path.
 define( 'SNKS_DIR', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
+define( 'SNKS_PLUGIN_SLUG', plugin_basename( __FILE__ ) );
+
+require SNKS_DIR . '/plugin-update-checker/plugin-update-checker.php';
+
+$my_update_checker = Puc_v4_Factory::buildUpdateChecker(
+	'https://github.com/MakiOmar/DoctorAppointmenets/',
+	__FILE__,
+	SNKS_PLUGIN_SLUG
+);
+
+// Set the branch that contains the stable release.
+$my_update_checker->setBranch( 'master' );
+
 define( 'SNKS_LOGO', site_url( '/wp-content/uploads/2024/08/logo.jpg' ) );
 define( 'SNKS_EMAIL', 'contact@jalsah.app' );
 define( 'SNKS_APP_NAME', 'جَلسَة' );
