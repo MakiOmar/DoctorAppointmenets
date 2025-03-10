@@ -1,6 +1,6 @@
  {
  	"name" : "DoctorsAppointments",
- 	"version" : "0.1",
+ 	"version" : "0.11",
  	"download_url" : "https://github.com/MakiOmar/DoctorAppointmenets/archive/refs/heads/master.zip",
  	"sections" : {
  		"description" : "Arrange doctors's appointments schedules"
