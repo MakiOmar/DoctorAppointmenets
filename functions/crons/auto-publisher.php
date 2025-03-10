@@ -38,9 +38,15 @@ function snks_auto_publish_appointments_for_doctors() {
 			return;
 		}
 		foreach ( $doctors as $doctor_id ) {
-			snks_auto_publish_appointments( $doctor_id );
-		}
+			$today         = gmdate( 'Y-m-d' );
+			$last_run_key  = 'snks_last_run_' . $doctor_id;
+			$last_run_date = get_transient( $last_run_key );
 
+			if ( $last_run_date !== $today ) {
+				snks_auto_publish_appointments( $doctor_id );
+				set_transient( $last_run_key, $today, DAY_IN_SECONDS ); // Store for 24 hours.
+			}
+		}
 		// Store the new offset for the next run.
 		set_transient( 'snks_doctor_offset', $offset + $limit, HOUR_IN_SECONDS );
 	}

@@ -678,20 +678,35 @@ function apply_timetable_settings( $user_id = false, $start_offset = 0, $days_co
 function snks_auto_publish_appointments( $user_id ) {
 	$day_timetables     = snks_generate_timetable( 91, 8, $user_id );
 	$preview_timetables = snks_get_preview_timetable( $user_id );
+
 	if ( ! is_array( $preview_timetables ) ) {
 		return;
 	}
+
 	foreach ( $day_timetables as $day => $timetables ) {
 		foreach ( $timetables as $timetable ) {
 			$temp = $timetable;
 			unset( $timetable['date'] );
 			snks_insert_timetable( $timetable, $user_id );
+
 			if ( isset( $preview_timetables[ $day ] ) ) {
-				$preview_timetables[ $day ][] = $temp;
+				// Check if $temp already exists in the array.
+				$exists = false;
+				foreach ( $preview_timetables[ $day ] as $existing_timetable ) {
+					if ( $existing_timetable === $temp ) {
+						$exists = true;
+						break;
+					}
+				}
+				if ( ! $exists ) {
+					$preview_timetables[ $day ][] = $temp;
+				}
 			} else {
 				$preview_timetables[ $day ] = array( $temp );
 			}
 		}
 	}
+
 	snks_set_preview_timetable( $preview_timetables, $user_id );
 }
+
