@@ -393,6 +393,32 @@ add_action(
 	}
 );
 
+add_action(
+	'jet-form-builder/custom-action/validate_therapist_registration',
+	function ( $_request ) {
+
+		$required_fields = array(
+			'name'             => 'يرجى تعبئة الاسم',
+			'name_en'          => 'يرجى تعبئة الاسم باللغة الإنجليزية',
+			'profile-image'    => 'يرجى تحميل الصورة الشخصية',
+			'identity-front'   => 'يرجى تحميل صورة وجه بطاقة الهوية',
+			'identity-back'    => 'يرجى تحميل صورة خلف بطاقة الهوية',
+			'doctor_specialty' => 'يرجى تعبئة المسمى الوظيفي',
+			'certificate-1'    => 'يرجى تحميل شهادة واحدة على الأقل لإثبات المسمى الوظيفي',
+			'email'            => 'يرجى إدخال البريد الإلكتروني',
+			'phone'            => 'يرجى إدخال رقم الموبايل',
+			'whatsapp'         => 'يرجى إدخال رقم الواتساب',
+			'accept_terms'     => 'يجب الموافقة على صحة البيانات',
+		);
+
+		foreach ( $required_fields as $field => $error_message ) {
+			if ( empty( $_request[ $field ] ) ) {
+				throw new \Jet_Form_Builder\Exceptions\Action_Exception( esc_html( $error_message ) );
+			}
+		}
+	}
+);
+
 /**
  * Custom log in action for JetFormBuilder.
  *
