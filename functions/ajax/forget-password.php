@@ -79,6 +79,8 @@ function custom_forget_password_handler() {
 			wp_send_json_error( array( 'msg' => $msg ) );
 		}
 	}
+	$msg = 'تم إرسال كلمة المرور الجديدة إلى بريدك الإلكتروني.';
+	wp_send_json_success( array( 'msg' => $msg ) );
 	die;
 }
 
