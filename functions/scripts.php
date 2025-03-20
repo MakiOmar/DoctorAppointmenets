@@ -667,6 +667,12 @@ add_action(
 		?>
 	<script type="text/javascript">
 		jQuery(document).ready(function ($) {
+			$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
+				// Check if personal details form
+				if ( response[0].dataset.formId == '2077' ) {
+					window.location.href = '<?php echo esc_url( add_query_arg( 'status', 'success', site_url( '/register/' ) ) ); ?>';
+				}
+			});
 			$(document).on('click', '#snks-logout', function (e) {
 				e.preventDefault();
 				var redirect = $(this).data('href');
