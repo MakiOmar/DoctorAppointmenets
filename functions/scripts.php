@@ -667,6 +667,16 @@ add_action(
 		?>
 	<script type="text/javascript">
 		jQuery(document).ready(function ($) {
+			$(document).on('click', '#pricing-details-toggle', function(){
+				const $icon = $(this);
+				// Toggle rotate class
+				if ($icon.hasClass('rotate')) {
+					$icon.removeClass('rotate');
+				} else {
+					$icon.addClass('rotate');
+				}
+				$('#pricing-details').toggle();
+			});
 			$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
 				// Check if personal details form
 				if ( response[0].dataset.formId == '2077' ) {

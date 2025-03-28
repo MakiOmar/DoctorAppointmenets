@@ -1814,6 +1814,13 @@ add_action(
 			#username{
 				direction: ltr;
 			}
+			#pricing-details-toggle{
+				cursor: pointer;
+				transition: transform 0.6s ease-in-out;
+			}
+			#pricing-details-toggle.rotate {
+				transform: rotate(180deg); /* or 360deg if you want full spin */
+			}
 			div:where(.swal2-container) {
 				z-index: 999999!important;
 			}

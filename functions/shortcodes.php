@@ -805,17 +805,29 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 				<p>رسوم المعالج</p>
 				<p class="price"><?php echo esc_html( $form_data['_main_price'] ); ?> ج.م</p>
 			</div>
-
 			<div class="amount-section">
-				<p>رسوم موقع جلسة</p>
-				<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] ); ?> ج.م</p>
+				<div class="anony-flex" style="align-items:center">
+					<p style="color:#fff;margin-left:2px;padding:0">رسوم إضافية</p>
+					<svg id="pricing-details-toggle"  style="width:19px;margin-left:2px" height="35px" width="35px" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+					<g fill="none" stroke="#FFFFFF" stroke-width="32">
+						<path d="m256 64c-106 0-192 86-192 192s86 192 192 192 192-86 192-192-86-192-192-192z" stroke-miterlimit="10"/>
+						<path d="m352 216-96 96-96-96" stroke-linecap="round" stroke-linejoin="round"/>
+					</g>
+					</svg>
+				</div>
+				<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] + $form_data['_paymob'] ); ?> ج.م</p>
 			</div>
+			<div id="pricing-details" style="display:none">
+				<div class="amount-section">
+					<p>رسوم موقع جلسة</p>
+					<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] ); ?> ج.م</p>
+				</div>
 
-			<div class="amount-section">
-				<p>رسوم  إدارية</p>
-				<p class="price"><?php echo esc_html( $form_data['_paymob'] ); ?> ج.م</p>
+				<div class="amount-section">
+					<p>رسوم  إدارية</p>
+					<p class="price"><?php echo esc_html( $form_data['_paymob'] ); ?> ج.م</p>
+				</div>
 			</div>
-
 			<!--<div class="amount-section">
 				<p>ضريبة القيمة المضافة</p>
 				<p class="price">
