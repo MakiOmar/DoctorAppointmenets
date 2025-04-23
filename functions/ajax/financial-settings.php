@@ -171,11 +171,9 @@ function save_withdrawal_settings( $user_id, $data ) {
 	);
 
 	foreach ( $data as $key => $value ) {
-		if ( array_key_exists( $key, get_withdrawal_validation_rules() ) ) {
-			$settings[ $key ] = sanitize_text_field( $value );
-		}
-	}
+		$settings[ $key ] = sanitize_text_field( $value );
 
+	}
 	update_user_meta( $user_id, 'withdrawal_settings', $settings );
 }
 
@@ -251,8 +249,9 @@ function send_otp_email_and_sms( $user_info, $message ) {
 		'Content-Type: text/html; charset=UTF-8',
 		'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 	);
-
-	//$email_sent   = wp_mail( $user_info->user_email, $subject, $message, $headers );
+	if ( snks_is_doctor() ) {
+		wp_mail( $user_info->user_email, $subject, $message, $headers );
+	}
 	$phone_to_use = get_user_meta( $user_info->ID, 'billing_phone', true );
 	if ( ! $phone_to_use || empty( $phone_to_use ) ) {
 		$phone_to_use = $user_info->user_login;
