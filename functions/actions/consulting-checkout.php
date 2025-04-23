@@ -290,6 +290,14 @@ add_action(
 						$order->update_meta_data( $key, $value );
 						$order->save();
 					}
+					if ( ! empty( $form_data['_coupon_id'] ) ) {
+						snks_log_coupon_usage(
+							absint( $form_data['_coupon_id'] ),
+							$current_user_id,
+							absint( $form_data['booking_id'] ),
+							$order_id
+						);
+					}
 					delete_transient( snks_form_data_transient_key() );
 				}
 			} else {

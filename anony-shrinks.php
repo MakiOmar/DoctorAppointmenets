@@ -137,6 +137,7 @@ add_action(
 require_once SNKS_DIR . 'includes/timetable-table.php';
 require_once SNKS_DIR . 'includes/sessions-actions-table.php';
 require_once SNKS_DIR . 'includes/transaction-table.php';
+require_once SNKS_DIR . 'includes/coupons-tables.php';
 /**
  * Plugin activation hook
  *
@@ -146,6 +147,8 @@ function plugin_activation_hook() {
 	snks_create_timetable_table();
 	snks_create_snks_sessions_actions_table();
 	snks_create_transactions_table();
+	snks_create_custom_coupons_table();
+	snks_create_coupon_usages_table();
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 

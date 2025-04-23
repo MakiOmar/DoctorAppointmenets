@@ -1,0 +1,6 @@
+<?php
+/**
+ * Coupons
+ *
+ * @package Shrinks
+ */

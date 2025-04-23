@@ -32,32 +32,32 @@ add_shortcode(
 		$title     = '<h1 class="pt_bold_headingregular" style="color:#024059">';
 		if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
 			$permalink = '#';
-			$title     .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">حجز موعد</a>';
+			$title    .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">حجز موعد</a>';
 		} elseif ( is_singular() ) {
 			global $post;
 			$permalink = get_permalink( $post->ID );
-			$title     .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
+			$title    .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post->post_title . '</a>';
 		} elseif ( is_post_type_archive() ) {
 			$post_type        = get_post_type();
 			$permalink        = get_post_type_archive_link( $post_type );
 			$post_type_object = get_post_type_object( $post_type );
 			if ( $post_type_object ) {
 				$post_type_label = $post_type_object->labels->name; // or use 'singular_name' for the singular label.
-				$title           .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
+				$title          .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $post_type_label . '</a>';
 			}
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term      = get_queried_object();
 			$permalink = get_term_link( $term );
-			$title     .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
+			$title    .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $term->name . '</a>';
 		} elseif ( is_archive() ) {
 			$permalink      = get_post_type_archive_link( get_post_type() );
 			$queried_object = get_queried_object();
 			if ( $queried_object && isset( $queried_object->label ) ) {
 				$archive_label = $queried_object->label;
-				$title         .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
+				$title        .= '<a href="' . $permalink . '" style="display:block;text-align:center;font-size:' . $atts['font-size'] . '">' . $archive_label . '</a>';
 			}
 		}
-		$title     .= '</h1>';
+		$title .= '</h1>';
 		return $title;
 	}
 );
@@ -794,11 +794,16 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
 	<div id="price-break" class="container">
-		<?php if ( ! is_page( 'booking-details' ) ) { ?>
+		<?php if ( ! is_page( 'booking-details' ) && ! isset( $form_data['_coupon_code'] ) ) { ?>
 		<div class="discount-section">
 			<input type="text" placeholder="أدخل كود الخصم" style="background-color: #fff;margin-left: 3px !important;">
 			<button>تفعيل</button>
 		</div>
+		<?php } else { ?>
+			<div class="amount-section">
+				<p>الكوبون المستخدم</p>
+				<p class="price" style="position:relative"><?php echo esc_html( $form_data['_coupon_code'] ); ?><button type="button" id="snks-remove-coupon" style="position:absolute;top:-15px;left:10px;border-radius:50%;padding:3px;background-color:#000;font-size:10px;height:22px;width:22px;cursor:pointer" class="remove-coupon-btn">❌</button></p>
+			</div>
 		<?php } ?>
 		<div>
 			<div class="amount-section">
@@ -1047,3 +1052,79 @@ function render_user_linked_image() {
 	);
 }
 add_shortcode( 'user_linked_image', 'render_user_linked_image' );
+
+/**
+ * Shortcode: [snks_doctor_coupons_ajax]
+ * Display doctor coupons table + Ajax-powered form.
+ *
+ * @return string
+ */
+function snks_doctor_coupons_ajax_shortcode() {
+	if ( ! is_user_logged_in() ) {
+		return '<p>يجب تسجيل الدخول.</p>';
+	}
+
+	$current_user_id = get_current_user_id();
+	$coupons         = snks_get_coupons_by_doctor( $current_user_id );
+
+	ob_start();
+	?>
+	<div id="snks-doctor-coupons">
+		<h3>كوبوناتك</h3>
+		<table id="snks-coupons-table">
+			<thead>
+				<tr>
+					<th>الكود</th>
+					<th>الخصم</th>
+					<th>الصلاحية</th>
+					<th>المتبقي</th>
+					<th>الحالة</th>
+					<th>إجراء</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php
+				foreach ( $coupons as $coupon ) :
+					$used      = snks_get_coupon_usage_count( $coupon->id );
+					$status    = ( ! empty( $coupon->expires_at ) && $coupon->expires_at < current_time( 'mysql' ) ) ? 'منتهي' : 'فعال';
+					$remaining = ( ! empty( $coupon->usage_limit ) ) ? ( $coupon->usage_limit - $used ) : 'غير محدد';
+					?>
+					<tr id="snks-coupon-row-<?php echo esc_attr( $coupon->id ); ?>">
+						<td><?php echo esc_html( $coupon->code ); ?></td>
+						<td><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
+						<td><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
+						<td><?php echo esc_html( $remaining ); ?></td>
+						<td><?php echo esc_html( $status ); ?></td>
+						<td>
+							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<hr>
+		<h4>إضافة كوبون جديد</h4>
+		<form id="snks-coupon-form">
+			<p>
+				<input type="text" name="code" id="snks-generated-code" placeholder="الكود" required>
+				<button type="button" id="snks-generate-code">🎲 توليد كود</button>
+			</p>
+			
+			<p>
+				<select name="discount_type">
+					<option value="fixed">مبلغ ثابت</option>
+					<option value="percent">نسبة مئوية</option>
+				</select>
+			</p>
+			<p><input type="number" name="discount_value" step="0.01" placeholder="قيمة الخصم" required></p>
+			<p><input type="date" name="expires_at"></p>
+			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
+			<button type="submit">➕ إضافة الكوبون</button>
+		</form>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'snks_doctor_coupons_ajax', 'snks_doctor_coupons_ajax_shortcode' );
+
