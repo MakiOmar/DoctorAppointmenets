@@ -65,6 +65,54 @@ function get_available_balance( $user_id ) {
 }
 
 /**
+ * Get available withdrawal balance and matching transaction IDs for a user.
+ *
+ * @param int $user_id The user ID.
+ * @return array {
+ *     @type float   $total_amount Total unprocessed amount before today.
+ *     @type int[]   $transaction_ids List of matching transaction IDs.
+ * }
+ */
+function get_available_withdrawal_balance( $user_id ) {
+	global $wpdb;
+
+	$table_name  = $wpdb->prefix . TRNS_TABLE_NAME;
+	$today_start = current_time( 'Y-m-d 00:00:00' );
+
+	// Fetch sum and IDs of valid transactions.
+	$results = $wpdb->get_results(
+		$wpdb->prepare(
+			"
+			SELECT id, amount 
+			FROM $table_name 
+			WHERE user_id = %d 
+				AND transaction_type = 'add'
+				AND processed_for_withdrawal = 0
+				AND transaction_time < %s
+			",
+			$user_id,
+			$today_start
+		),
+		ARRAY_A
+	);
+
+	$total           = 0;
+	$transaction_ids = array();
+
+	foreach ( $results as $row ) {
+		$total            += (float) $row['amount'];
+		$transaction_ids[] = (int) $row['id'];
+	}
+
+	return array(
+		'total_amount'    => $total,
+		'transaction_ids' => $transaction_ids,
+	);
+}
+
+
+
+/**
  * Add a transaction (add or withdraw) to the booking transactions table.
  *
  * @param int    $user_id          The user ID.
@@ -142,8 +190,8 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 		( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) || $manual ) {
 
 		// Get the eligible balance for withdrawal.
-		$available_balance = get_available_balance( $user_id );
-		$withdraw_amount   = $available_balance;
+		$available_balance = get_available_withdrawal_balance( $user_id );
+		$withdraw_amount   = $available_balance['total_amount'];
 
 		if ( $withdraw_amount > 25 || 25 === $withdraw_amount ) {
 			$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
@@ -175,23 +223,32 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 					snks_update_processed_withdrawals( $withdrawal_id );
 				}
 			}
+			// 2025-04-21 00:00:00
 			//phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
 			//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// Mark the eligible "add" transactions as processed.
-			$result = $wpdb->query(
-				$wpdb->prepare(
-					"
+			$transaction_ids = $available_balance['transaction_ids'];
+
+			if ( ! empty( $transaction_ids ) ) {
+				$placeholders = implode( ',', array_fill( 0, count( $transaction_ids ), '%d' ) );
+
+				// Prepare the query dynamically using IN (...).
+				$sql = "
 					UPDATE $table_name
 					SET processed_for_withdrawal = 1
-					WHERE user_id = %d 
-					AND transaction_type = 'add' 
-					AND transaction_time < %s
-					AND processed_for_withdrawal = 0
-					",
-					$user_id,
-					$current_date
-				)
-			);
+					WHERE user_id = %d
+						AND transaction_type = 'add'
+						AND processed_for_withdrawal = 0
+						AND id IN ($placeholders)
+				";
+
+				$params = array_merge( array( $user_id ), $transaction_ids );
+				//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+				$result = $wpdb->query( $wpdb->prepare( $sql, ...$params ) );
+				//phpcs:enable
+			} else {
+				$result = 0;
+			}
 			// Check if the query was successful.
 			if ( false !== $result && $result > 0 ) {
 				// Log the transaction only if rows were updated.
