@@ -448,11 +448,12 @@ function custom_log_patient_in( $_request ) {
 	if ( empty( $username ) || empty( $password ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى تعبئة البيانات كاملة' );
 	}
-
+	$msg  = 'رقم الموبايل الذي أدخلته غير صحيح، تأكد من كتابة الرقم تماما كما أدخلته عند الحجز ( مع أو بدون صفر في بداية الرقم ).';
 	// Determine if the username is an email.
 	if ( isset( $_req['doctor_login'] ) && is_email( $username ) ) {
 		// Get the user by email.
 		$user = get_user_by( 'email', $username );
+		$msg  = 'البريد الإلكتروني الذي أدخلته غير صحيح';
 	} else {
 		// Get the user by username.
 		$user = get_user_by( 'login', $username );
@@ -460,7 +461,7 @@ function custom_log_patient_in( $_request ) {
 
 	// Check if the user exists.
 	if ( ! $user ) {
-		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'عفوا! بيانات الدخول غير صحيحة' );
+		throw new \Jet_Form_Builder\Exceptions\Action_Exception( esc_html( $msg ) );
 	}
 	// Validate the password.
 	if ( isset( $_req['doctor_login'] ) && ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
