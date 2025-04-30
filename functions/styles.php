@@ -1772,6 +1772,9 @@ add_action(
 				background-color: <?php echo esc_html( $darker_color ); ?>!important;
 				color:#fff!important;
 			}
+			.snks-dynamic-text{
+				color: <?php echo esc_html( $darker_color ); ?>!important;
+			}
 			.snks-dynamic-bg,
 			#snks-booking-page .anony-accordion-header, #snks-booking-page .periods_wrapper.snks-bg,#snks-booking-page .attendance_types_wrapper,
 			#snks-booking-page .snks-period-label.snks-light-bg::before,
