@@ -1169,7 +1169,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 			white-space: normal;
 		}
 		
-		#snks-coupons-table td:before {
+		#snks-coupons-table td::before {
 			content: attr(data-label);
 			position: absolute;
 			right: 8px; /* Changed from left to right */
@@ -1232,7 +1232,9 @@ function snks_doctor_coupons_ajax_shortcode() {
 				</select>
 			</p>
 			<p><input type="number" name="discount_value" step="0.01" placeholder="قيمة الخصم" required></p>
-			<p><input type="date" name="expires_at"></p>
+			<p>
+				<label for="expires_at" style="margin-bottom:10px">صلاحية الكوبون حتى تاريخ</label>
+				<input type="date" id="expires_at" name="expires_at" style="width:100%"></p>
 			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
 			<button type="submit">➕ إضافة الكوبون</button>
 		</form>
