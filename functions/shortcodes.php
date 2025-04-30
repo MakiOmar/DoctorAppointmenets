@@ -1101,6 +1101,121 @@ function snks_doctor_coupons_ajax_shortcode() {
 
 	ob_start();
 	?>
+<style>
+	/* Responsive coupon table and form */
+	#snks-doctor-coupons {
+		padding: 10px;
+		max-width: 550px;
+		margin: auto;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		direction: rtl; /* RTL for Arabic */
+	}
+
+	#snks-coupons-table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-bottom: 20px;
+		direction: rtl; /* RTL for table */
+	}
+
+	#snks-coupons-table th, 
+	#snks-coupons-table td {
+		padding: 12px 8px;
+		border: 1px solid #ddd;
+		text-align: right;
+	}
+
+	#snks-coupons-table th {
+		position: sticky;
+		top: 0;
+	}
+
+	/* Mobile responsiveness - RTL version */
+	@media (max-width: 768px) {
+		#snks-coupons-table {
+			display: block;
+			overflow-x: auto;
+			white-space: nowrap;
+			direction: rtl;
+		}
+		
+		#snks-coupons-table thead,
+		#snks-coupons-table tbody,
+		#snks-coupons-table tr,
+		#snks-coupons-table th,
+		#snks-coupons-table td {
+			display: block;
+			direction: rtl;
+		}
+		
+		#snks-coupons-table thead tr {
+			position: absolute;
+			top: -9999px;
+			right: -9999px; /* Changed from left to right */
+		}
+		
+		#snks-coupons-table tr {
+			border: 1px solid #ddd;
+			margin-bottom: 10px;
+		}
+		
+		#snks-coupons-table td {
+			border: none;
+			border-bottom: 1px solid #eee;
+			position: relative;
+			padding-right: 50%; /* Changed from left to right */
+			text-align: right; /* Align text to right */
+			white-space: normal;
+		}
+		
+		#snks-coupons-table td:before {
+			content: attr(data-label);
+			position: absolute;
+			right: 8px; /* Changed from left to right */
+			width: 45%;
+			padding-left: 10px; /* Changed from right to left */
+			font-weight: bold;
+			text-align: right;
+		}
+	}
+
+	/* Form styles */
+	#snks-coupon-form {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+		direction: rtl;
+	}
+
+	#snks-coupon-form p {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+	}
+
+	#snks-coupon-form input,
+	#snks-coupon-form select,
+	#snks-coupon-form button {
+		padding: 8px 12px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		text-align: right;
+	}
+
+	#snks-coupon-form button {
+		background-color: #4CAF50;
+		color: white;
+		cursor: pointer;
+		border: none;
+	}
+
+	#snks-generate-code {
+		margin-top: 5px;
+		background-color: #2196F3;
+	}
+</style>
 	<div id="snks-doctor-coupons">
 		<h3>كوبوناتك</h3>
 		<table id="snks-coupons-table">
@@ -1122,12 +1237,12 @@ function snks_doctor_coupons_ajax_shortcode() {
 					$remaining = ( ! empty( $coupon->usage_limit ) ) ? ( $coupon->usage_limit - $used ) : 'غير محدد';
 					?>
 					<tr id="snks-coupon-row-<?php echo esc_attr( $coupon->id ); ?>">
-						<td><?php echo esc_html( $coupon->code ); ?></td>
-						<td><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
-						<td><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
-						<td><?php echo esc_html( $remaining ); ?></td>
-						<td><?php echo esc_html( $status ); ?></td>
-						<td>
+						<td data-label="الكود"><?php echo esc_html( $coupon->code ); ?></td>
+						<td data-label="الخصم"><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
+						<td data-label="الصلاحية"><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
+						<td data-label="المتبقي"><?php echo esc_html( $remaining ); ?></td>
+						<td data-label="الحالة"><?php echo esc_html( $status ); ?></td>
+						<td data-label="إجراء">
 							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>
 						</td>
 					</tr>
