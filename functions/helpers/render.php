@@ -1291,6 +1291,7 @@ function snks_render_bookings( $_timetables, $tens ) {
 function snks_generate_the_bookings( $past, $current_timetables ) {
 	//phpcs:disable
 	ob_start();
+	echo do_shortcode( '[notification_box]' );
 	?>
 	<div class="snks-tabs">
 		<ul class="snks-tabs-nav">
@@ -1306,6 +1307,7 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 			</div>
 		</div>
 	</div>
+	<a href="https://wa.me/201127145676" traget="_blank" title="خدمة عملاء جلسة" style="text-align: center;display: flex;"><img style="max-width: 150px;" src="/wp-content/uploads/2025/04/IMG_2418.png" alt="خدمة عملاء جلسة"></a>
 	<?php
 	//phpcs:enable
 	return ob_get_clean();
