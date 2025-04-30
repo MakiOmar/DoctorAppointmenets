@@ -17,7 +17,44 @@ add_shortcode(
 		return $html;
 	}
 );
+/**
+ * Notification box
+ *
+ * @return string
+ */
+function notification_box_shortcode() {
+	// Check if the cookie exists (box was already closed).
+	if ( isset( $_COOKIE['notification_box_closed'] ) && $_COOKIE['notification_box_closed'] == 'true' ) {
+		return '';
+	}
 
+	ob_start();
+	?>
+	<div id="custom-notification-box" style="background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 20px 0; position: relative; border-left: 4px solid #ff6b6b;">
+		<button id="close-notification-box" style="height:35px;width:35px;border-radius:50%;position: absolute; top: -25px; right: 5px; background: #e14343; padding: 5px;border: none; font-size: 16px; cursor: pointer; color: #fff;">x</button>
+		<p style="margin: 0; padding-right: 20px; color: #333;">
+			أثناء حضورك للجلسه الاونلاين، في حالة استقبالك مكالمه هاتفيه من اي تطبيق اخر يمكن ان يؤثر ذلك علي الصوت بالجلسه، وفي حالة حدوث ذلك او حدوث اي مشكله تقنية اثناء الجلسة يرجى اغلاق المكالمة واعادة فتحها مرة اخرى.
+		</p>
+	</div>
+
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		var closeButton = document.getElementById('close-notification-box');
+		var notificationBox = document.getElementById('custom-notification-box');
+		
+		closeButton.addEventListener('click', function() {
+			// Hide the box
+			notificationBox.style.display = 'none';
+			
+			// Set cookie to remember the box was closed (expires in 30 days)
+			document.cookie = 'notification_box_closed=true; max-age=' + (30 * 24 * 60 * 60) + '; path=/';
+		});
+	});
+	</script>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'notification_box', 'notification_box_shortcode' );
 add_shortcode(
 	'snks_object_title',
 	function ( $atts ) {
@@ -794,16 +831,11 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
 	<div id="price-break" class="container">
-		<?php if ( ! is_page( 'booking-details' ) && ! isset( $form_data['_coupon_code'] ) ) { ?>
+		<?php if ( ! is_page( 'booking-details' ) ) { ?>
 		<div class="discount-section">
 			<input type="text" placeholder="أدخل كود الخصم" style="background-color: #fff;margin-left: 3px !important;">
 			<button>تفعيل</button>
 		</div>
-		<?php } else { ?>
-			<div class="amount-section">
-				<p>الكوبون المستخدم</p>
-				<p class="price" style="position:relative"><?php echo esc_html( $form_data['_coupon_code'] ); ?><button type="button" id="snks-remove-coupon" style="position:absolute;top:-15px;left:10px;border-radius:50%;padding:3px;background-color:#000;font-size:10px;height:22px;width:22px;cursor:pointer" class="remove-coupon-btn">❌</button></p>
-			</div>
 		<?php } ?>
 		<div>
 			<div class="amount-section">
@@ -1052,79 +1084,3 @@ function render_user_linked_image() {
 	);
 }
 add_shortcode( 'user_linked_image', 'render_user_linked_image' );
-
-/**
- * Shortcode: [snks_doctor_coupons_ajax]
- * Display doctor coupons table + Ajax-powered form.
- *
- * @return string
- */
-function snks_doctor_coupons_ajax_shortcode() {
-	if ( ! is_user_logged_in() ) {
-		return '<p>يجب تسجيل الدخول.</p>';
-	}
-
-	$current_user_id = get_current_user_id();
-	$coupons         = snks_get_coupons_by_doctor( $current_user_id );
-
-	ob_start();
-	?>
-	<div id="snks-doctor-coupons">
-		<h3>كوبوناتك</h3>
-		<table id="snks-coupons-table">
-			<thead>
-				<tr>
-					<th>الكود</th>
-					<th>الخصم</th>
-					<th>الصلاحية</th>
-					<th>المتبقي</th>
-					<th>الحالة</th>
-					<th>إجراء</th>
-				</tr>
-			</thead>
-			<tbody>
-				<?php
-				foreach ( $coupons as $coupon ) :
-					$used      = snks_get_coupon_usage_count( $coupon->id );
-					$status    = ( ! empty( $coupon->expires_at ) && $coupon->expires_at < current_time( 'mysql' ) ) ? 'منتهي' : 'فعال';
-					$remaining = ( ! empty( $coupon->usage_limit ) ) ? ( $coupon->usage_limit - $used ) : 'غير محدد';
-					?>
-					<tr id="snks-coupon-row-<?php echo esc_attr( $coupon->id ); ?>">
-						<td><?php echo esc_html( $coupon->code ); ?></td>
-						<td><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
-						<td><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
-						<td><?php echo esc_html( $remaining ); ?></td>
-						<td><?php echo esc_html( $status ); ?></td>
-						<td>
-							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-			</tbody>
-		</table>
-
-		<hr>
-		<h4>إضافة كوبون جديد</h4>
-		<form id="snks-coupon-form">
-			<p>
-				<input type="text" name="code" id="snks-generated-code" placeholder="الكود" required>
-				<button type="button" id="snks-generate-code">🎲 توليد كود</button>
-			</p>
-			
-			<p>
-				<select name="discount_type">
-					<option value="fixed">مبلغ ثابت</option>
-					<option value="percent">نسبة مئوية</option>
-				</select>
-			</p>
-			<p><input type="number" name="discount_value" step="0.01" placeholder="قيمة الخصم" required></p>
-			<p><input type="date" name="expires_at"></p>
-			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
-			<button type="submit">➕ إضافة الكوبون</button>
-		</form>
-	</div>
-	<?php
-	return ob_get_clean();
-}
-add_shortcode( 'snks_doctor_coupons_ajax', 'snks_doctor_coupons_ajax_shortcode' );
-
