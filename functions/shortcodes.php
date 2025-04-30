@@ -1084,3 +1084,78 @@ function render_user_linked_image() {
 	);
 }
 add_shortcode( 'user_linked_image', 'render_user_linked_image' );
+
+/**
+ * Shortcode: [snks_doctor_coupons_ajax]
+ * Display doctor coupons table + Ajax-powered form.
+ *
+ * @return string
+ */
+function snks_doctor_coupons_ajax_shortcode() {
+	if ( ! is_user_logged_in() ) {
+		return '<p>يجب تسجيل الدخول.</p>';
+	}
+
+	$current_user_id = get_current_user_id();
+	$coupons         = snks_get_coupons_by_doctor( $current_user_id );
+
+	ob_start();
+	?>
+	<div id="snks-doctor-coupons">
+		<h3>كوبوناتك</h3>
+		<table id="snks-coupons-table">
+			<thead>
+				<tr>
+					<th>الكود</th>
+					<th>الخصم</th>
+					<th>الصلاحية</th>
+					<th>المتبقي</th>
+					<th>الحالة</th>
+					<th>إجراء</th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php
+				foreach ( $coupons as $coupon ) :
+					$used      = snks_get_coupon_usage_count( $coupon->id );
+					$status    = ( ! empty( $coupon->expires_at ) && $coupon->expires_at < current_time( 'mysql' ) ) ? 'منتهي' : 'فعال';
+					$remaining = ( ! empty( $coupon->usage_limit ) ) ? ( $coupon->usage_limit - $used ) : 'غير محدد';
+					?>
+					<tr id="snks-coupon-row-<?php echo esc_attr( $coupon->id ); ?>">
+						<td><?php echo esc_html( $coupon->code ); ?></td>
+						<td><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
+						<td><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
+						<td><?php echo esc_html( $remaining ); ?></td>
+						<td><?php echo esc_html( $status ); ?></td>
+						<td>
+							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+
+		<hr>
+		<h4>إضافة كوبون جديد</h4>
+		<form id="snks-coupon-form">
+			<p>
+				<input type="text" name="code" id="snks-generated-code" placeholder="الكود" required>
+				<button type="button" id="snks-generate-code">🎲 توليد كود</button>
+			</p>
+			
+			<p>
+				<select name="discount_type">
+					<option value="fixed">مبلغ ثابت</option>
+					<option value="percent">نسبة مئوية</option>
+				</select>
+			</p>
+			<p><input type="number" name="discount_value" step="0.01" placeholder="قيمة الخصم" required></p>
+			<p><input type="date" name="expires_at"></p>
+			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
+			<button type="submit">➕ إضافة الكوبون</button>
+		</form>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'snks_doctor_coupons_ajax', 'snks_doctor_coupons_ajax_shortcode' );
