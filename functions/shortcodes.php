@@ -1201,7 +1201,6 @@ function snks_doctor_coupons_ajax_shortcode() {
 		padding: 8px 12px;
 		border: 1px solid #ddd;
 		border-radius: 4px;
-		text-align: right;
 	}
 
 	#snks-coupon-form button {
@@ -1217,6 +1216,27 @@ function snks_doctor_coupons_ajax_shortcode() {
 	}
 </style>
 	<div id="snks-doctor-coupons">
+		
+		<h4>إضافة كوبون جديد</h4>
+		<form id="snks-coupon-form">
+			<p>
+				<button type="button" id="snks-generate-code" class="anont-center-text">🎲 توليد كود</button>
+				<input type="text" name="code" id="snks-generated-code" placeholder="الكود" required readonly>
+				
+			</p>
+			
+			<p>
+				<select name="discount_type">
+					<option value="fixed">مبلغ ثابت</option>
+					<option value="percent">نسبة مئوية</option>
+				</select>
+			</p>
+			<p><input type="number" name="discount_value" step="0.01" placeholder="قيمة الخصم" required></p>
+			<p><input type="date" name="expires_at"></p>
+			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
+			<button type="submit">➕ إضافة الكوبون</button>
+		</form>
+		<hr>
 		<h3>كوبوناتك</h3>
 		<table id="snks-coupons-table">
 			<thead>
@@ -1226,7 +1246,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 					<th>الصلاحية</th>
 					<th>المتبقي</th>
 					<th>الحالة</th>
-					<th>إجراء</th>
+					<th>حذف الكوبون</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -1242,33 +1262,13 @@ function snks_doctor_coupons_ajax_shortcode() {
 						<td data-label="الصلاحية"><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
 						<td data-label="المتبقي"><?php echo esc_html( $remaining ); ?></td>
 						<td data-label="الحالة"><?php echo esc_html( $status ); ?></td>
-						<td data-label="إجراء">
+						<td data-label="حذف الكوبون">
 							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>
 						</td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>
 		</table>
-
-		<hr>
-		<h4>إضافة كوبون جديد</h4>
-		<form id="snks-coupon-form">
-			<p>
-				<input type="text" name="code" id="snks-generated-code" placeholder="الكود" required>
-				<button type="button" id="snks-generate-code">🎲 توليد كود</button>
-			</p>
-			
-			<p>
-				<select name="discount_type">
-					<option value="fixed">مبلغ ثابت</option>
-					<option value="percent">نسبة مئوية</option>
-				</select>
-			</p>
-			<p><input type="number" name="discount_value" step="0.01" placeholder="قيمة الخصم" required></p>
-			<p><input type="date" name="expires_at"></p>
-			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
-			<button type="submit">➕ إضافة الكوبون</button>
-		</form>
 	</div>
 	<?php
 	return ob_get_clean();
