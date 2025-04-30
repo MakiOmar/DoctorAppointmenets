@@ -1307,8 +1307,13 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 			</div>
 		</div>
 	</div>
-	<a href="https://wa.me/201127145676" traget="_blank" title="خدمة عملاء جلسة" style="text-align: center;display: flex;"><img style="max-width: 150px;" src="/wp-content/uploads/2025/04/IMG_2418.png" alt="خدمة عملاء جلسة"></a>
+	<?php if( snks_is_patient() ) { ?>
+		<div class="anony-center-text">
+			<p>هل لديك مشاكل تقنية؟ اضغط هنا</p>
+			<a href="https://wa.me/201127145676" traget="_blank" title="خدمة عملاء جلسة" style="text-align: center;display: flex;"><img style="max-width: 150px;" src="https://jalsah.app/wp-content/uploads/2025/04/IMG_2418.png" alt="خدمة عملاء جلسة"></a>
+		</div>
 	<?php
+	}
 	//phpcs:enable
 	return ob_get_clean();
 }
@@ -1454,7 +1459,9 @@ function snks_render_sessions_listing( $tense ) {
 
 		}
 	} else {
-		$output = 'عفواَ ليس لديك حجوزات حاليا!';
+		$output  = '<p class="anony-center-text">';
+		$output .= 'عفواَ ليس لديك حجوزات حاليا!';
+		$output .= '</p>';
 	}
 	return $output;
 }
