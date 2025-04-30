@@ -59,88 +59,102 @@ add_action(
 					return overlappedHours;
 				}
 				function expectedHoursOutput(selectedPeriods, selectedHour, parentWrapper, repeaterName) {
-						if ( '' === selectedPeriods || '' === selectedHour ) {
-							parentWrapper.find('.expected-hourse').html('');
-							return;
-						}
-						// Perform nonce check.
-						var nonce = '<?php echo esc_html( wp_create_nonce( 'expected_hours_output_nonce' ) ); ?>';
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: {
-								selectedPeriods: selectedPeriods,
-								selectedHour: selectedHour,
-								nonce:nonce,
-								action    : 'expected_hours_output',
-							},
-							success: function(response) {
-								var repeaterName = parentWrapper.closest('.accordion-content').data('field-name');
-								$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each( function() {
-									if ( ! $(this).is(':selected') && $(this).val() >= response.lowesttHour && $(this).val() < response.largestHour && disabledOptions[repeaterName] && ! disabledOptions[repeaterName].includes( $(this).val() ) ) {
-										$(this).prop('disabled', false);
+					if ('' === selectedPeriods || '' === selectedHour) {
+						parentWrapper.find('.expected-hourse').html('');
+						return;
+					}
+
+					var nonce = '<?php echo esc_html( wp_create_nonce( 'expected_hours_output_nonce' ) ); ?>';
+
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+						data: {
+							selectedPeriods: selectedPeriods,
+							selectedHour: selectedHour,
+							nonce: nonce,
+							action: 'expected_hours_output',
+						},
+						success: function (response) {
+							const repeaterName = parentWrapper.closest('.accordion-content').data('field-name');
+
+							// إعادة تمكين الخيارات غير المتداخلة
+							$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each(function () {
+								if (
+									!$(this).is(':selected') &&
+									$(this).val() >= response.lowesttHour &&
+									$(this).val() < response.largestHour &&
+									disabledOptions[repeaterName] &&
+									!disabledOptions[repeaterName].includes($(this).val())
+								) {
+									$(this).prop('disabled', false);
+								}
+							});
+
+							// عرض الجملة النصية للفترة المحجوزة
+							parentWrapper.find('.expected-hourse').html(response.resp);
+
+							// فحص التداخلات البصرية
+							const hoursOverlaps = checkHoursOverlap(response.tos, selectedHour, parentWrapper);
+							if (hoursOverlaps.length > 0) {
+								hoursOverlaps.forEach(function (item) {
+									const className = item.replace(":", "-");
+									if (!$('.' + className, parentWrapper.closest('.accordion-content')).hasClass('shrinks-error')) {
+										$('.' + className, parentWrapper.closest('.accordion-content')).addClass('shrinks-error');
 									}
-								} );
-								parentWrapper.find('.expected-hourse').html( response.resp );
-								const hoursOverlaps = checkHoursOverlap(response.tos, selectedHour, parentWrapper);
-								if ( hoursOverlaps.length > 0 ) {
-									var className;
-									hoursOverlaps.forEach(function(item, index) {
-										className = item.replace(":", "-");
-										if ( ! $( '.' + className, parentWrapper.closest('.accordion-content') ).hasClass('shrinks-error') ) {
-											$( '.' + className, parentWrapper.closest('.accordion-content') ).addClass('shrinks-error');
+								});
+								setTimeout(() => {
+									showErrorpopup('هناك تداخل في المواعيد!');
+									$('#jet-popup-2219').removeClass('jet-popup--hide-state').addClass('jet-popup--show-state');
+								}, 200);
+							} else {
+								var hourDisable = [];
+								$('.shrinks-error').removeClass('shrinks-error');
+
+								$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each(function () {
+									const optionValue = $(this).val();
+									const lowestHour = response.lowesttHour;
+									const largestHour = response.largestHour;
+
+									const baseDate = "2025-01-01";
+									const nextDayBaseDate = "2025-01-02";
+
+									// بناء توقيتات قابلة للمقارنة
+									let optionDate = new Date(`${baseDate}T${optionValue}`);
+									const lowestDate = new Date(`${baseDate}T${lowestHour}`);
+									const largestDate = (largestHour < lowestHour)
+										? new Date(`${nextDayBaseDate}T${largestHour}`)
+										: new Date(`${baseDate}T${largestHour}`);
+
+									// إذا الوقت الحالي أصغر من بداية الفترة → نعتبره من اليوم التالي
+									if (optionValue < lowestHour) {
+										optionDate.setDate(optionDate.getDate() + 1);
+									}
+
+									// تعطيل الأوقات داخل الفترة المحجوزة
+									if (!$(this).is(':selected') && optionDate >= lowestDate && optionDate < largestDate) {
+										$(this).prop('disabled', true);
+										if (!hourDisable.includes(optionValue)) {
+											hourDisable.push(optionValue);
 										}
-									});
-									setTimeout(() => {
-										showErrorpopup('هناك تداخل في المواعيد!');
-										$('#jet-popup-2219').removeClass('jet-popup--hide-state').addClass('jet-popup--show-state');
-									}, 200);
-								} else {
-									var hourDisable = [];
-									$('.shrinks-error').removeClass('shrinks-error');
-									$('select[data-field-name=appointment_hour] option', parentWrapper.closest('.accordion-content')).each(function () {
-										const optionValue = $(this).val();
-										const lowestHour = response.lowesttHour; // e.g., "23:45"
-										const largestHour = response.largestHour; // e.g., "00:30"
+									}
+								});
 
-										// Base dates for the same day and next day
-										const baseDate = "2025-01-01";
-										const nextDayBaseDate = "2025-01-02";
-
-										// Parse option time
-										const optionDate = new Date(`${baseDate}T${optionValue}`);
-										const lowestDate = new Date(`${baseDate}T${lowestHour}`);
-										const largestDate =
-											largestHour < lowestHour
-												? new Date(`${nextDayBaseDate}T${largestHour}`) // largestHour falls on the next day
-												: new Date(`${baseDate}T${largestHour}`);
-
-										// Adjust option date for next day if it loops over midnight
-										if (optionValue < lowestHour) {
-											optionDate.setDate(optionDate.getDate() + 1); // Move optionDate to the next day
-										}
-
-										// Disable options between lowestHour (inclusive) and largestHour (exclusive)
-										if (!$(this).is(':selected') && optionDate >= lowestDate && optionDate < largestDate) {
-											$(this).prop('disabled', true);
-											if (!hourDisable.includes(optionValue)) {
-												hourDisable.push(optionValue);
-											}
-										}
-									});
-
-
-
-									if (hourDisable && hourDisable.length > 0) {
+								// حفظ القيم المعطلة حسب التكرار والساعة المختارة
+								if (hourDisable.length > 0) {
+									if (!disabledOptions[repeaterName]) {
 										disabledOptions[repeaterName] = [];
-										disabledOptions[repeaterName][selectedHour] = [];
-										disabledOptions[repeaterName][selectedHour] = hourDisable;
 									}
+									if (!disabledOptions[repeaterName][selectedHour]) {
+										disabledOptions[repeaterName][selectedHour] = [];
+									}
+									disabledOptions[repeaterName][selectedHour] = hourDisable;
 								}
 							}
-						});
+						}
+					});
 				}
+
 				flatpickr.localize(flatpickr.l10ns.ar);
 				function flatPickrInput( disabledDays = false ) {
 					$('input[data-field-name=off_days]').each(
