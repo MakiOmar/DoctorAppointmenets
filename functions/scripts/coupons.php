@@ -54,12 +54,12 @@ function snks_ajax_coupon_script() {
 					const c = response.data.coupon;
 					const newRow = `
 						<tr id="snks-coupon-row-${c.id}">
-							<td>${c.code}</td>
-							<td>${c.discount_value}${c.discount_type === 'percent' ? '%' : 'ج.م'}</td>
-							<td>${c.expires_at ?? 'بدون تاريخ صلاحية'}</td>
-							<td>${c.usage_limit ?? 'غير محدد'}</td>
-							<td>فعال</td>
-							<td><button class="snks-delete-coupon" data-id="${c.id}">❌</button></td>
+							<td data-label="الكود">${c.code}</td>
+							<td data-label="الخصم">${c.discount_value}${c.discount_type === 'percent' ? '%' : 'ج.م'}</td>
+							<td data-label="الصلاحية">${c.expires_at ?? 'بدون تاريخ صلاحية'}</td>
+							<td data-label="المتبقي">${c.usage_limit ?? 'غير محدد'}</td>
+							<td data-label="الحالة">فعال</td>
+							<td data-label="إجراء"><button class="snks-delete-coupon" data-id="${c.id}">❌</button></td>
 						</tr>
 					`;
 
