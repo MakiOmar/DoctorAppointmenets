@@ -1169,7 +1169,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 			white-space: normal;
 		}
 		
-		#snks-coupons-table td::before {
+		#snks-coupons-table td:before {
 			content: attr(data-label);
 			position: absolute;
 			right: 8px; /* Changed from left to right */
