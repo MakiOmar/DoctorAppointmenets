@@ -1006,6 +1006,35 @@ add_shortcode(
 		echo '<table class="user-transactions" style="text-align: right; direction: rtl;">';
 		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>تفاصيل الجلسة</th></tr>';
 		foreach ( $transactions as $transaction ) {
+			$timetable_id = $transaction->timetable_id;
+			if( $timetable_id > 0 ) {
+				$order_id = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT order_id 
+						 FROM {$wpdb->prefix}wc_orders_meta 
+						 WHERE meta_key = 'booking_id' 
+						 AND meta_value = %s 
+						 LIMIT 1",
+						$timetable_id
+					)
+				);
+				$coupon_code = null;
+				// تحقق من النتيجة
+				if ( $order_id ) {
+					// Step 2: Get order items
+					$order = wc_get_order( $order_id );
+					
+					if ( $order ) {
+						foreach ( $order->get_items() as $item ) {
+							$item_coupon = $item->get_meta( '_coupon_code' );
+							if ( $item_coupon ) {
+								$coupon_code = $item_coupon;
+								break; // Stop if one is found
+							}
+						}
+					}
+				}
+			}
 			// Determine the arrow color based on the transaction type.
 			$arrow_color           = ( 'add' === $transaction->transaction_type ) ? 'green' : 'red';
 			$arrow_icon            = ( 'add' === $transaction->transaction_type ) ? '↑' : '↓';
@@ -1022,18 +1051,19 @@ add_shortcode(
 				} else {
 					$attendance = 'أونلاين';
 				}
+				$coupon_text  = $coupon_code ? $coupon_code : '';
 				$user_details = snks_user_details( $transaction->client_id );
 				$first_name   = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
 				$last_name    = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
-				$details      = '<button class="details-button" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
+				$details      = '<button class="details-button" data-coupon="' . esc_attr( $coupon_text ) . '" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
 			} else {
 				$details = 'غير متاح';
 			}
-
+			
 			// Display transaction data with timetable date_time if available.
 			echo '<tr id="' . esc_attr( $transaction->id . '-' . $transaction->timetable_id ) . '" style="font-size:13px !important">';
 			echo '<td style="vertical-align: middle;"><span style="font-size:25px;color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
-			echo '<td style="vertical-align: middle;">' . esc_html( number_format( $transaction->amount, 2 ) ) . '</td>';
+			echo '<td style="vertical-align: middle;">' . wp_kses_post( number_format( $transaction->amount, 2 ) ) . '</td>';
 			echo '<td style="vertical-align: middle;">' . esc_html( snks_localized_datetime( $transaction->transaction_time ) ) . '</td>';
 			echo '<td style="vertical-align: middle;">' . wp_kses_post( $details ) . '</td>';
 			echo '</tr>';

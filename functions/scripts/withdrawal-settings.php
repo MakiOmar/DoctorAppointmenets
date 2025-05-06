@@ -216,7 +216,8 @@ add_action(
 				const dateTime = $(this).data('date-time');
 				const attendanceType = $(this).data('attendance-type');
 				const clientName = $(this).data('client-name');
-
+				const coupon = $(this).data('coupon');
+				const couponHtml = coupon && coupon !== '' ? `<p><strong>الكوبون:</strong> ${coupon}</p>` : '';
 				// Display details in Arabic using SweetAlert2
 				Swal.fire({
 					title: 'تفاصيل الجلسة',
@@ -224,6 +225,7 @@ add_action(
 						<p><strong>تاريخ ووقت الجلسة:</strong> ${dateTime}</p>
 						<p><strong>نوع الحضور:</strong> ${attendanceType}</p>
 						<p><strong>اسم العميل:</strong> ${clientName}</p>
+						${couponHtml}
 					`,
 					icon: 'info',
 					confirmButtonText: 'أغلق'
