@@ -309,7 +309,7 @@ function snks_get_country_code( $set_cookie = true ) {
 
 	// Check for errors and validate the response.
 	if ( is_wp_error( $response ) ) {
-		return; // Early return if there's an error in the response.
+		return 'Unknown'; // Early return if there's an error in the response.
 	}
 	$country_code = 'Unknown';
 	// Retrieve the response body.
@@ -348,11 +348,11 @@ function snsk_ip_api_country( $set_cookie = true ) {
 }
 
 add_action(
-	'init',
+	'wp',
 	function () {
 		// Check if the country code is already stored in a cookie.
 		if ( ! isset( $_COOKIE['country_code'] ) ) {
-			snks_get_country_code( false );
+			snks_get_country_code( true );
 		}
 	}
 );

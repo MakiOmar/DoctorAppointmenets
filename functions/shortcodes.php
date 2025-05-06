@@ -832,10 +832,20 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	</div>
 	<div id="price-break" class="container">
 		<?php if ( ! is_page( 'booking-details' ) ) { ?>
-		<div class="discount-section">
-			<input type="text" placeholder="أدخل كود الخصم" style="background-color: #fff;margin-left: 3px !important;">
-			<button>تفعيل</button>
-		</div>
+			<?php if ( ! isset( $form_data['_coupon_code'] ) ) { ?>
+			<div class="discount-section">
+				<input type="text" placeholder="أدخل كود الخصم" style="background-color: #fff;margin-left: 3px !important;">
+				<button>تفعيل</button>
+			</div>
+			<?php } else { ?>
+				<div class="amount-section">
+					<p>الكوبون المستخدم</p>
+					<p class="price" style="position:relative;">
+						<?php echo esc_html( $form_data['_coupon_code'] ); ?>
+						<button type="button" id="snks-remove-coupon" class="remove-coupon-btn" style="position:absolute;top:-20px;left:10px;padding: 3px;font-size: 12px;border-radius: 50%;">❌</button>
+					</p>
+				</div>
+			<?php } ?>
 		<?php } ?>
 		<div>
 			<div class="amount-section">

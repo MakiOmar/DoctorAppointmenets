@@ -55,15 +55,15 @@ function snks_insert_coupon( $args ) {
  * @return object|null Coupon object if found, null otherwise.
  */
 function snks_get_coupon_by_code( $code ) {
+	$code = sanitize_text_field( trim( $code ) );
 	global $wpdb;
 
 	$table = $wpdb->prefix . 'snks_custom_coupons';
-
+	snks_error_log("SELECT * FROM $table WHERE code = '$code'");
 	return $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT * FROM $table WHERE code = %s",
-			$code
-		)
+
+			"SELECT * FROM $table WHERE code = '$code'",
+			
 	);
 }
 
