@@ -151,6 +151,9 @@ function snks_apply_coupon_ajax_handler() {
 	if ( ! $form_data || empty( $form_data['_main_price'] ) ) {
 		wp_send_json_error( array( 'message' => 'لم يتم العثور على بيانات الحجز. حاول من جديد.' ) );
 	}
+	if ( ! empty( $form_data['_coupon_code'] ) ) {
+		wp_send_json_error( array( 'message' => 'عفوا! هناك كوبون مستخدم بالفعل' ) );
+	}
 	$coupon = snks_get_coupon_by_code( $code );
 	if ( null === $coupon ) {
 		wp_send_json_error( array( 'message' => 'كوبون غير صالح!' ) );
