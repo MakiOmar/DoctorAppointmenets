@@ -493,9 +493,10 @@ add_action(
 			button.addEventListener('click', function (event) {
 				event.preventDefault();
 				const selectedUserIds = Array.from(userCheckboxes)
-					.filter(checkbox => checkbox.checked)
+					.filter(checkbox => checkbox.checked && checkbox.name === 'users[]')
 					.map(checkbox => checkbox.value)
 					.join(',');
+
 
 				if (!selectedUserIds) {
 					alert('<?php esc_html_e( 'Please select at least one user.' ); ?>');
@@ -553,9 +554,9 @@ add_action(
 		if ( empty( $title ) || empty( $content ) || empty( $user_ids ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid data provided.' ) ) );
 		}
-
 		if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 			$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+
 			$errors   = array();
 
 			foreach ( $user_ids as $user_id ) {
