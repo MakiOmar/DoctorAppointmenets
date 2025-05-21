@@ -136,11 +136,23 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
 			if ( ! empty( $discount_percent ) && is_numeric( $discount_percent ) && $has_discount ) {
 				$price = $price - ( $price * ( absint( $discount_percent ) / 100 ) );
 			}
+			[$converted_price, $currency_label] = acrsw_currency( $price, 'جنيه مصري' );
 			?>
 			<span class="period_wrapper anony-grid-col anony-grid-col-4">
 				<label class="anony-inline-flex anony-flex-column flex-h-center flex-v-center anony-full-width" for="period_<?php echo esc_attr( $period ); ?>">
-					<?php printf( '<span class="hacen_liner_print-outregular anony-flex anony-flex-start flex-v-center snks-period-label snks-bg-secondary anony-padding-5 anony-margin-3" id="snks-period-label-%1$s">%2$s %3$s %4$s</span><span class="hacen_liner_print-outregular anony-flex flex-h-center flex-v-center snks-period-price snks-bg-secondary anony-padding-5 anony-margin-3">%5$s %6$s</span>', esc_attr( $period ), 'جلسة', esc_html( $period ), 'دقيقة', esc_html( $price ), 'جنيه مصري' ); ?>
-				</label>
+				<?php
+				printf(
+					'<span class="hacen_liner_print-outregular anony-flex anony-flex-start flex-v-center snks-period-label snks-bg-secondary anony-padding-5 anony-margin-3" id="snks-period-label-%1$s">%2$s %3$s %4$s</span>
+					<span class="hacen_liner_print-outregular anony-flex flex-h-center flex-v-center snks-period-price snks-bg-secondary anony-padding-5 anony-margin-3">%5$s %6$s</span>',
+					esc_attr( $period ),
+					'جلسة',
+					esc_html( $period ),
+					'دقيقة',
+					esc_html( $converted_price ),
+					esc_html( $currency_label )
+				);
+				?>
+								</label>
 				<input id="period_<?php echo esc_attr( $period ); ?>" type="radio" name="period" value="<?php echo esc_attr( $period ); ?>" data-price="<?php echo esc_attr( $price ); ?>"/>
 			</span>
 			<?php
@@ -425,7 +437,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '<input type="hidden" id="period" name="period" value="' . $period . '">';
 	$html .= '<div id="consulting-form-submit-wrapper">';
 	$html .= '<div class="hacen_liner_print-outregular snks-color" style="display: flex;align-items: baseline;"><input type="checkbox" id="terms-conditions" name="terms-conditions" value="yes">';
-	$html .= '<a href="/الشروط-والأحكام-2/" style="margin-right:10px" target="_blank">';
+	$html .= '<a href="/terms.html" style="margin-right:10px" target="_blank">';
 	$html .= 'أوافق على الشروط والأحكام وسياسة الاستخدام.';
 	$html .= '</a></div>';
 	$html .= wp_nonce_field( 'create_appointment', 'create_appointment_nonce' );

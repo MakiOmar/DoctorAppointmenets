@@ -52,6 +52,27 @@ add_action(
 	'wp_footer',
 	function () {
 		?>
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				let observer = new MutationObserver(function (mutations, observerInstance) {
+					const closeButton = document.getElementById('close-notification-box');
+					const notificationBox = document.getElementById('custom-notification-box');
+
+					if (closeButton && notificationBox) {
+						closeButton.addEventListener('click', function () {
+							notificationBox.style.display = 'none';
+							document.cookie = 'notification_box_closed=true; max-age=' + (30 * 24 * 60 * 60) + '; path=/';
+						});
+						observerInstance.disconnect(); // Stop watching once found and attached
+					}
+				});
+
+				observer.observe(document.body, {
+					childList: true,
+					subtree: true
+				});
+			});
+		</script>
 	<script>
 		document.querySelectorAll("#wallet_number, #account_number, #meza_card_number, #otp_input, #phone").forEach((input) => {
 				input.addEventListener("beforeinput", function(e) {

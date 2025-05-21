@@ -311,7 +311,8 @@ function snks_get_country_code( $set_cookie = true ) {
 	if ( is_wp_error( $response ) ) {
 		return 'Unknown'; // Early return if there's an error in the response.
 	}
-	$country_code = 'Unknown';
+	$country_codes = json_decode( COUNTRY_CURRENCIES, true );
+	$country_code  = 'Unknown';
 	// Retrieve the response body.
 	$body = wp_remote_retrieve_body( $response );
 	// Check if the body is not empty and contains serialized data.
@@ -324,12 +325,17 @@ function snks_get_country_code( $set_cookie = true ) {
 			if ( $set_cookie ) {
 				// Store the country code in a cookie for 24 hours.
 				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
+				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
+					$stored_currency = $country_codes[ $country_code ];
+				} else {
+					$stored_currency = 'USD';
+				}
+				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 			}
 
 			return $country_code;
 		}
 	}
-	snks_error_log( $country_code );
 	return $country_code;
 }
 

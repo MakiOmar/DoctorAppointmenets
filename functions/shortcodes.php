@@ -36,21 +36,6 @@ function notification_box_shortcode() {
 			أثناء حضورك للجلسه الاونلاين، في حالة استقبالك مكالمه هاتفيه من اي تطبيق اخر يمكن ان يؤثر ذلك علي الصوت بالجلسه، وفي حالة حدوث ذلك او حدوث اي مشكله تقنية اثناء الجلسة يرجى اغلاق المكالمة واعادة فتحها مرة اخرى.
 		</p>
 	</div>
-
-	<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		var closeButton = document.getElementById('close-notification-box');
-		var notificationBox = document.getElementById('custom-notification-box');
-		
-		closeButton.addEventListener('click', function() {
-			// Hide the box
-			notificationBox.style.display = 'none';
-			
-			// Set cookie to remember the box was closed (expires in 30 days)
-			document.cookie = 'notification_box_closed=true; max-age=' + (30 * 24 * 60 * 60) + '; path=/';
-		});
-	});
-	</script>
 	<?php
 	return ob_get_clean();
 }
@@ -729,7 +714,6 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		// phpcs:disable
 		$form_data = get_transient( snks_form_data_transient_key() );
 	}
-	
 	// phpcs:enable
 	// Ensure that necessary data is available.
 	if ( ! $form_data || empty( $form_data ) ) {
@@ -830,6 +814,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	<div style="text-align:center">
 		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
+	<?php echo do_shortcode( '[currency_switcher]' ); ?>
 	<div id="price-break" class="container">
 		<?php if ( ! is_page( 'booking-details' ) ) { ?>
 			<?php if ( ! isset( $form_data['_coupon_code'] ) ) { ?>
@@ -850,29 +835,41 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<div>
 			<div class="amount-section">
 				<p>رسوم المعالج</p>
-				<p class="price"><?php echo esc_html( $form_data['_main_price'] ); ?> ج.م</p>
+				<?php
+				[$converted_price, $currency_label] = acrsw_currency( $form_data['_main_price'] );
+				?>
+				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 			</div>
 			<div class="amount-section">
 				<div class="anony-flex" style="align-items:center">
 					<p style="color:#fff;margin-left:2px;padding:0">رسوم إضافية</p>
 					<svg id="pricing-details-toggle"  style="width:19px;margin-left:2px" height="35px" width="35px" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-					<g fill="none" stroke="#FFFFFF" stroke-width="32">
-						<path d="m256 64c-106 0-192 86-192 192s86 192 192 192 192-86 192-192-86-192-192-192z" stroke-miterlimit="10"/>
-						<path d="m352 216-96 96-96-96" stroke-linecap="round" stroke-linejoin="round"/>
-					</g>
+						<g fill="none" stroke="#FFFFFF" stroke-width="32">
+							<path d="m256 64c-106 0-192 86-192 192s86 192 192 192 192-86 192-192-86-192-192-192z" stroke-miterlimit="10"/>
+							<path d="m352 216-96 96-96-96" stroke-linecap="round" stroke-linejoin="round"/>
+						</g>
 					</svg>
 				</div>
-				<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] + $form_data['_paymob'] ); ?> ج.م</p>
+				<?php
+				[$converted_price, $currency_label] = acrsw_currency( ( $form_data['_jalsah_commistion'] + $form_data['_paymob'] ) );
+				?>
+				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 			</div>
 			<div id="pricing-details" style="display:none">
 				<div class="amount-section">
 					<p>رسوم موقع جلسة</p>
-					<p class="price"><?php echo esc_html( $form_data['_jalsah_commistion'] ); ?> ج.م</p>
+					<?php
+					[$converted_price, $currency_label] = acrsw_currency( $form_data['_jalsah_commistion'] );
+					?>
+					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 				</div>
 
 				<div class="amount-section">
 					<p>رسوم  إدارية</p>
-					<p class="price"><?php echo esc_html( $form_data['_paymob'] ); ?> ج.م</p>
+					<?php
+					[$converted_price, $currency_label] = acrsw_currency( $form_data['_paymob'] );
+					?>
+					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 				</div>
 			</div>
 			<!--<div class="amount-section">
@@ -887,7 +884,10 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		</div>
 		<div class="total">
 			<p>الإجمالي</p>
-			<p class="price"><?php echo esc_html( $form_data['_total_price'] ); ?> ج.م</p>
+			<?php
+			[$converted_price, $currency_label] = acrsw_currency( $form_data['_total_price'] );
+			?>
+			<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 		</div>
 	</div>
 	<?php

@@ -14,6 +14,7 @@ $user_details = snks_user_details( $user_id );
 <div class="snks-booking-page-container">
 	<div id="snks-booking-page">
 		<?php echo do_shortcode( '[snks_go_back]' ); ?>
+		<?php echo do_shortcode( '[currency_switcher]' ); ?>
 		<?php
 		if ( ! $user_id ) {
 			?>
