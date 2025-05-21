@@ -236,7 +236,7 @@ define(
 			'color_7'  => array( '#e4f3f4', '#1a3e40', '#122b2c' ),
 			'color_8'  => array( '#d9fff5', '#025942', '#013e2d' ),
 			'color_9'  => array( '#e2f5f0', '#184338', '#102e26' ),
-			'color_10' => array( '#f7ffd9', '#475902', '#475902' ),
+			'color_10' => array( '#f7ffd9', '#475902', '#323e01' ),
 			'color_11' => array( '#f0f3e4', '#383f1c', '#272c13' ),
 			'color_12' => array( '#ffe4d9', '#591b02', '#3e1201' ),
 			'color_13' => array( '#f5e7e2', '#432418', '#2e1810' ),
@@ -247,6 +247,25 @@ define(
 			'color_18' => array( '#f5e2ef', '#431837', '#2e1026' ),
 			'color_19' => array( '#f7d9ff', '#460259', '#30013e' ),
 			'color_20' => array( '#ececec', '#2d2d2d', '#1f1f1f' ),
+		)
+	)
+);
+define(
+	'COUNTRY_CURRENCIES',
+	wp_json_encode(
+		array(
+			'EG' => 'EGP',
+			'SA' => 'SAR',
+			'AE' => 'AED',
+			'KW' => 'KWD',
+			'QA' => 'QAR',
+			'BH' => 'BHD',
+			'OM' => 'OMR',
+			'EU' => 'EUR',
+			'US' => 'USD',
+			'GB' => 'GBP',
+			'CA' => 'CAD',
+			'AU' => 'AUD',
 		)
 	)
 );
