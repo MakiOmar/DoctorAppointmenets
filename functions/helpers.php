@@ -314,7 +314,15 @@ function snks_get_country_code( $set_cookie = true ) {
 	$country_codes = json_decode( COUNTRY_CURRENCIES, true );
 	$country_code  = 'Unknown';
 	// Retrieve the response body.
-	$body = wp_remote_retrieve_body( $response );
+	$body                 = wp_remote_retrieve_body( $response );
+	$europe_country_codes = array( // phpcs:disable
+			'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR',
+			'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GE', 'DE', 'GR', 'HU',
+			'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT', 'LU', 'MT',
+			'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU',
+			'SM', 'RS', 'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+		);
+		// phpcs:enable
 	// Check if the body is not empty and contains serialized data.
 	if ( ! empty( $body ) ) {
 		$data = json_decode( $body ); // Using @ to suppress potential warnings.
@@ -328,7 +336,7 @@ function snks_get_country_code( $set_cookie = true ) {
 				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
 					$stored_currency = $country_codes[ $country_code ];
 				} else {
-					$stored_currency = 'USD';
+					$stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
 				}
 				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 			}

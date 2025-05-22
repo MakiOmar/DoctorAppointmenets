@@ -1,4 +1,11 @@
 <?php
+/**
+ * Currency helpers
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
 
 if ( ! function_exists( 'acrsw_currency' ) ) {
 	/**
@@ -30,9 +37,23 @@ if ( ! function_exists( 'acrsw_currency' ) ) {
 			$selected_currency = isset( $_COOKIE['ced_selected_currency'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['ced_selected_currency'] ) ) : 'EGP';
 			$direction         = 'EGP' !== $selected_currency ? 'from' : 'to';
 			$converted         = Currency_Exchange_Dashboard::convert_currency( $price, $direction );
+
 			if ( null !== $converted ) {
-				$converted_price = floor($converted) != $converted ? number_format($converted, 2) : number_format($converted, 0);
-				snks_error_log( $currencies_labels );
+				// Get the fractional part.
+				$fraction = $converted - floor( $converted );
+
+				// Apply custom rounding rules.
+				if ( $fraction > 0 && $fraction <= 0.5 ) {
+					$converted_price = floor( $converted ) + 0.5;
+				} elseif ( $fraction > 0.5 ) {
+					$converted_price = ceil( $converted );
+				} else {
+					$converted_price = floor( $converted );
+				}
+
+				// Format the number (show .0 for whole numbers, .5 for half numbers).
+				$converted_price = number_format( $converted_price, ( floor( $converted_price ) != $converted_price ? 2 : 0 ) );
+
 				if ( isset( $_COOKIE['ced_selected_currency'] ) ) {
 					if ( isset( $currencies_labels[ strtoupper( $selected_currency ) ] ) ) {
 						$currency_label = $currencies_labels[ strtoupper( $selected_currency ) ];
