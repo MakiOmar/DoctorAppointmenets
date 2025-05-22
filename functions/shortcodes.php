@@ -814,7 +814,6 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	<div style="text-align:center">
 		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
 	</div>
-	<?php echo do_shortcode( '[currency_switcher]' ); ?>
 	<div id="price-break" class="container">
 		<?php if ( ! is_page( 'booking-details' ) ) { ?>
 			<?php if ( ! isset( $form_data['_coupon_code'] ) ) { ?>

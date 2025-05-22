@@ -53,6 +53,7 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 	//phpcs:enable
 
 	echo '<h2 style="margin:20px 0;color:#fff;font-size:25px;text-align:center">إختر طريقة الدفع المناسبة</h2>';
+	echo '<p class="hacen_liner_print-outregular" style="color:#fff;font-size:15px;text-align:center">( يرجى العلم أن عملية الدفع ستتم بالجنيه المصري )</p>';
 
 	?>
 

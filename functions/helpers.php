@@ -357,9 +357,9 @@ add_action(
 	'wp',
 	function () {
 		// Check if the country code is already stored in a cookie.
-		if ( ! isset( $_COOKIE['country_code'] ) ) {
+		//if ( ! isset( $_COOKIE['country_code'] ) ) {
 			snks_get_country_code( true );
-		}
+		//}
 	}
 );
 

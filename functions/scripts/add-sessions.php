@@ -388,11 +388,12 @@ add_action(
 						);
 					}
 				);
-
+				// Disable periods
 				$(document).on(
 					'change',
 					'select[data-field-name=appointment_hour]',
 					function() {
+						return;
 						let parentWrapper   = $(this).closest( '.jet-form-builder-repeater__row-fields' );
 						let periods   = $('select[data-field-name=appointment_choosen_period]', parentWrapper);
 						if ( $(this).val() == '23:15' ) {
