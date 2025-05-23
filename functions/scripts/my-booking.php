@@ -252,7 +252,7 @@ add_action(
 										if ( now - countDownDate > 3600000 ) {
 											$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
 											parent.addClass('snks-disabled');
-											$(".snks-start-meeting", parent).attr('href', '#');
+											//$(".snks-start-meeting", parent).attr('href', '#');
 											clearInterval(x);
 										} else if( now - countDownDate < 3600000 && now - countDownDate > 0 ) {
 											parent.removeClass('snks-disabled');
