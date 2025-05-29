@@ -356,6 +356,7 @@ add_action(
 						$('.jet-form-builder-message').hide();
 					}
 				);
+
 				$('.snks-count-down').each(
 					function () {
 						var countdownElement = $(this);

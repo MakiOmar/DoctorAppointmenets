@@ -91,13 +91,6 @@ add_action(
 				<?php
 			}
 			//phpcs:disable
-			if ( isset( $_SERVER['REQUEST_URI'] ) && strpos( $_SERVER['REQUEST_URI'], '/org/' ) !== false ) {
-				?>
-				body{
-					background-color: #481316!important;
-				}
-				<?php
-			}
 
 			if ( isset( $_SERVER['REQUEST_URI'] ) && ( strpos( $_SERVER['REQUEST_URI'], '/therapist/' ) !== false || is_page('booking-details') ) ) {
 				?>

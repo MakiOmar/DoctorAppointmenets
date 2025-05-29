@@ -1568,3 +1568,190 @@ add_action(
 		return;
 	}
 );
+/**
+ * Org styles
+ *
+ * @param string $main_color Color.
+ * @param string $secondary_color Color.
+ * @return void
+ */
+function snks_org_styles( $main_color, $secondary_color, $header_color = false ) {
+	if ( ! $header_color ) {
+		$header_color = $main_color;
+	}
+	?>
+	<style>
+		body{
+			background-color: <?php echo esc_html( $main_color ); ?>!important
+		}
+		#org-container{
+			max-width: 428px;
+			margin: auto;
+			border-right: 2px solid #fff;
+			border-bottom: 2px solid #fff;
+			border-left: 2px solid #fff;
+		}
+		.org-header { background: <?php echo esc_html( $header_color ); ?>; text-align: center; padding: 30px 15px; }
+		.org-logo img { max-width: 160px; border-radius: 50%; }
+		.org-slogan-section { text-align: center; padding: 30px 20px; }
+		.org-slogan-section h2 { margin: 10px;background: <?php echo esc_html( $main_color ); ?>; display: inline-block; padding: 10px 20px; border-radius: 12px; font-size: 1.4rem; }
+		.org-slogan-section p { margin-top: 15px; font-size: 1.1rem; line-height: 1.8; }
+		.org-green-section {padding: 40px 15px; text-align: center; }
+		.org-green-section h3{color: <?php echo esc_html( $secondary_color ); ?>;display: inline-flex;border-radius: 10px;background-color: #fff;padding: 10px;margin:0}
+		.org-contact-section { padding: 40px 15px; text-align: center; }
+		.org-contact-icons .contacts img { width: 40px; margin: 10px; }
+		.org-contact-icons .socials img { width: 30px; margin: 3px 10px;}
+		.org-contact-icons .socials,.org-contact-icons .socials a {display: inline-flex;justify-content: center;align-items: center;}
+		.green-link-card{display: flex; flex-direction: column; align-items: center; padding: 20px; border-radius: 5px; width: 180px; text-align: center; color: #229944; text-decoration: none;}
+		.green-link-card > span{
+			color:#fff;
+		}
+		.org-footer *{
+			color: <?php echo esc_html( $main_color ); ?>!important;
+		}
+	</style>
+	<?php
+}
+/**
+ * Gets the style attribute for a section with background and text colors.
+ *
+ * @param string $bg_color    The background color value.
+ * @param string $text_color  The text color value.
+ * @param string $fallback_bg Fallback background color if $bg_color is empty.
+ * @return string The style attribute string.
+ */
+function snks_get_section_style( $bg_color, $text_color, $fallback_bg ) {
+	$bg  = ! empty( $bg_color ) ? $bg_color : $fallback_bg;
+	$txt = ! empty( $text_color ) ? $text_color : '#ffffff';
+	return "style='background-color: {$bg}!important; color: {$txt}!important;'";
+}
+/**
+ * Gets the style attribute for a section with background and text colors.
+ *
+ * @param string $bg_color    The background color value.
+ * @param string $text_color  The text color value.
+ * @param string $fallback_bg Fallback background color if $bg_color is empty.
+ * @return string The style attribute string.
+ */
+function snks_get_header_style( $bg_color, $text_color, $fallback_bg ) {
+	$bg  = ! empty( $bg_color ) ? $bg_color : $fallback_bg;
+	$txt = ! empty( $text_color ) ? $text_color : '#ffffff';
+	return "style='background-color: {$bg}; color: {$txt}; padding: 10px; border-radius: 5px;display:inline-flex'";
+}
+
+/**
+ * Render doctor listing grid.
+ *
+ * @param WP_User[] $users Array of WP_User objects.
+ *
+ * @return void
+ */
+function snks_render_doctor_listing( $users ) {
+	if ( empty( $users ) || ! is_array( $users ) ) {
+		return;
+	}
+	?>
+	<div class="snks-doctor-listing anony-grid-row anony-padding-10">
+		<?php
+		foreach ( $users as $user ) {
+			$user_id             = $user->ID;
+			$user_details        = snks_user_details( $user_id );
+			$doctor_url          = snks_encrypted_doctor_url( $user_id );
+			$closest_appointment = snks_get_closest_timetable( $user_id );
+			$profile_image       = get_user_meta( $user_id, 'profile-image', true );
+
+			if ( empty( $profile_image ) ) {
+				$profile_image = '/wp-content/uploads/2024/08/portrait-3d-male-doctor_23-2151107083.avif';
+			} elseif ( is_numeric( $profile_image ) ) {
+				$image_src     = wp_get_attachment_image_src( absint( $profile_image ), 'full' );
+				$profile_image = $image_src[0];
+			}
+			?>
+			<div class="snks-doctor-listing-item anony-grid-col anony-grid-col-6 anony-padding-10">
+				<div class="item-content">
+					<div class="snks-profile-image-wrapper">
+						<a href="<?php echo esc_url( $doctor_url ); ?>" target="_blank">
+							<div class="snks-tear-shap-wrapper">
+								<div class="snks-tear-shap" style="background-image: url('<?php echo esc_url( $profile_image ); ?>'); background-position: center; background-repeat: repeat; background-size: cover;"></div>
+								<div class="snks-tear-shap sub anony-box-shadow"></div>
+							</div>
+						</a>
+					</div>
+
+					<div class="org-profile-details">
+						<h1 class="kacstqurnkacstqurn snks-white-text" style="font-size:18px;text-align:center">
+							<?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?>
+						</h1>
+					</div>
+
+					<div class="snks-listing-periods anony-full-width" style="margin-bottom: 20px;">
+						<?php snks_listing_periods( $user_id ); ?>
+					</div>
+					<?php
+					/*
+					<div class="snks-listing-closest-date anony-full-width anony-center-text">
+						<h5 class="hacen_liner_print-outregular snks-white-text anony-padding-10">أول موعد متاح للحجز</h5>
+						<span class="anony-grid-col hacen_liner_print-outregular anony-flex anony-flex-column flex-h-center flex-v-center anony-padding-10 anony-margin-5" style="background-color:#fff;border-radius:25px;font-size: 17px;width: 160px;margin: auto;height: 85px;">
+							<?php if ( is_array( $closest_appointment ) && ! empty( $closest_appointment ) ) : ?>
+								<span>
+									<?php
+									printf(
+										'%1$s | %2$s',
+										esc_html( snks_localize_day( $closest_appointment[0]->day ) ),
+										esc_html( gmdate( 'Y-m-d', strtotime( $closest_appointment[0]->date_time ) ) )
+									);
+									?>
+								</span>
+								<div class="main_color_bg anony-margin-5" style="width:100%;height:2px;"></div>
+								<span>
+									<?php
+									printf(
+										'%1$s %2$s',
+										'الساعة',
+										esc_html( snks_localized_time( $closest_appointment[0]->starts ) )
+									);
+									?>
+								</span>
+							<?php else : ?>
+								غير متاح
+							<?php endif; ?>
+						</span>
+					</div>
+					<div style="background-color:#fff;width:100%;height:2px;margin:20px 0"></div>
+					*/
+					?>
+					<a href="<?php echo esc_url( $doctor_url ); ?>" target="_blank" class="main_color_text anony-inline-flex anony-padding-3 flex-h-center" style="background-color:#fff;border-radius:25px;font-size: 18px;width: 80%;">
+						إحجز موعد
+					</a>
+				</div>
+			</div>
+			<?php
+		}
+		?>
+	</div>
+	<?php
+}
+
+/**
+ * Echo the organization header HTML (logo with permalink).
+ *
+ * @param int $org_id Organization post ID.
+ */
+function snks_print_org_header( $org_id ) {
+	if ( ! $org_id || get_post_type( $org_id ) !== 'organization' ) {
+		return;
+	}
+	?>
+	<div class="org-header">
+		<div class="org-logo">
+			<a href="<?php echo esc_url( get_the_permalink( $org_id ) ); ?>" target="_self">
+			<?php
+			if ( has_post_thumbnail( $org_id ) ) {
+				echo get_the_post_thumbnail( $org_id, 'medium' );
+			}
+			?>
+			</a>
+		</div>
+	</div>
+	<?php
+}

@@ -1006,8 +1006,8 @@ add_shortcode(
 		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>تفاصيل الجلسة</th></tr>';
 		foreach ( $transactions as $transaction ) {
 			$timetable_id = $transaction->timetable_id;
-			if( $timetable_id > 0 ) {
-				$order_id = $wpdb->get_var(
+			if ( $timetable_id > 0 ) {
+				$order_id    = $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT order_id 
 						 FROM {$wpdb->prefix}wc_orders_meta 
@@ -1022,7 +1022,7 @@ add_shortcode(
 				if ( $order_id ) {
 					// Step 2: Get order items
 					$order = wc_get_order( $order_id );
-					
+
 					if ( $order ) {
 						foreach ( $order->get_items() as $item ) {
 							$item_coupon = $item->get_meta( '_coupon_code' );
@@ -1058,7 +1058,7 @@ add_shortcode(
 			} else {
 				$details = 'غير متاح';
 			}
-			
+
 			// Display transaction data with timetable date_time if available.
 			echo '<tr id="' . esc_attr( $transaction->id . '-' . $transaction->timetable_id ) . '" style="font-size:13px !important">';
 			echo '<td style="vertical-align: middle;"><span style="font-size:25px;color:' . esc_attr( $arrow_color ) . ';">' . esc_html( $arrow_icon ) . '</span> ' . esc_html( $transaction_type_text ) . '</td>';
@@ -1315,3 +1315,102 @@ function snks_doctor_coupons_ajax_shortcode() {
 	return ob_get_clean();
 }
 add_shortcode( 'snks_doctor_coupons_ajax', 'snks_doctor_coupons_ajax_shortcode' );
+/**
+ * Display specialization grid shortcode
+ *
+ * @param array $atts Attributes.
+ * @return string
+ */
+function snks_display_specialization_grid_shortcode( $atts ) {
+	$atts = shortcode_atts(
+		array(
+			'box_color'  => '#fff',       // default white.
+			'text_color' => '#300808',   // default dark red.
+			'id'         => 0,           // optional post ID.
+		),
+		$atts,
+		'specialization_grid'
+	);
+	global $wp;
+	$org_slug   = sanitize_text_field( $wp->query_vars['org'] );
+	$box_color  = $atts['box_color'];
+	$text_color = $atts['text_color'];
+	$post_id    = absint( $atts['id'] );
+	$site_url   = site_url();
+
+	// Get terms based on post ID or all terms.
+	if ( $post_id ) {
+		$terms = get_the_terms( $post_id, 'specialization' );
+	} else {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'specialization',
+				'hide_empty' => false,
+			)
+		);
+	}
+
+	if ( empty( $terms ) || is_wp_error( $terms ) ) {
+		return '';
+	}
+
+	$output  = '<div class="specialization-grid">';
+	$output .= "<h2 style='background-color:$box_color;color:$text_color;padding:10px;border-radius:10px;font-size:22px;max-width: 50%;text-align: center;'>حجز جلسة نفسية</h2>";
+	$output .= '<div class="anony-grid-row">';
+
+	foreach ( $terms as $term ) {
+		$term_id   = $term->term_id;
+		$thumbnail = get_term_meta( $term_id, 'thumbnail', true );
+		$link      = esc_url( "$site_url/org/$org_slug/$term_id" );
+		$name      = esc_html( $term->name );
+
+		$output .= '<div class="anony-grid-col-6 anony-padding-10">';
+		$output .= "<a href=\"$link\" style='display:block'>";
+		$output .= '<div class="specialization-box">';
+		$output .= "<img src=\"$thumbnail\" alt=\"$name\">";
+		$output .= "<p>$name</p>";
+		$output .= '</div>';
+		$output .= '</a>';
+		$output .= '</div>';
+	}
+
+	$output .= '</div>';
+	$output .= '</div>';
+
+	// Styles.
+	$output .= '<style>
+		.specialization-grid {
+			justify-content: center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		#org-container:not(.org-home) .specialization-grid {
+			border-bottom: 10px solid ' . esc_html( $box_color ) . ';
+		}
+		.specialization-box {
+			background: ' . esc_attr( $box_color ) . ';
+			border-radius: 10px;
+			text-align: center;
+			padding: 20px;
+			box-sizing: border-box;
+			box-shadow: 0 0 5px rgba(0,0,0,0.1);
+		}
+		.specialization-box img {
+			height: 80px;
+			margin-bottom: 10px;
+		}
+		.specialization-box p {
+			font-size: 16px;
+			color: ' . esc_attr( $text_color ) . ';
+			font-weight: bold;
+			height: 50px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+	</style>';
+
+	return $output;
+}
+add_shortcode( 'specialization_grid', 'snks_display_specialization_grid_shortcode' );

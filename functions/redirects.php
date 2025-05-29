@@ -20,7 +20,7 @@ add_action(
 			exit;
 		}
 
-		if ( false !== strpos( $_SERVER['REQUEST_URI'], '/org/' ) && ( ! isset( $wp->query_vars ) || ( empty( $wp->query_vars['organization'] ) && empty( $wp->query_vars['_term_id'] ) ) ) ) {
+		if ( false !== strpos( $_SERVER['REQUEST_URI'], '/org/' ) && false === strpos( $_SERVER['REQUEST_URI'], '/specialties' ) && ( ! isset( $wp->query_vars ) || ( empty( $wp->query_vars['organization'] ) && empty( $wp->query_vars['_term_id'] ) ) ) ) {
 			wp_redirect( site_url() );
 			exit;
 		}
