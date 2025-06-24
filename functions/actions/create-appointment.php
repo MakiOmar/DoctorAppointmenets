@@ -88,9 +88,44 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					}
 					send_sms_via_whysms( $order->get_billing_phone(), $message );
 					$patient_user  = get_user_by( 'ID', $customer_id );
+					$doctor_user   = get_user_by( 'ID', $timetable->user_id );
 					$patient_email = $patient_user->user_email;
-					//wp_mail( $patient_email, 'تم حجز جلسة جديدة', $message );
-					// Doctor.
+					$doctor_email  = $doctor_user->user_email;
+					// wp_mail( $patient_email, 'تم حجز جلسة جديدة', $message );
+
+					$doctor_name      = get_user_meta( $timetable->user_id, 'billing_first_name', true ) . ' ' . get_user_meta( $timetable->user_id, 'billing_last_name', true );
+					$patient_name     = get_user_meta( $customer_id, 'billing_first_name', true ) . ' ' . get_user_meta( $customer_id, 'billing_last_name', true );
+					$session_duration = $timetable->period;
+					$session_date     = gmdate( 'Y-m-d', strtotime( $timetable->date_time ) );
+					$session_start    = snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) );
+					$session_end      = snks_localize_time( gmdate( 'h:i a', strtotime( "+$session_duration minutes", strtotime( $timetable->date_time ) ) ) );
+					$session_price    = $order->get_meta( '_main_price', true );
+
+					// إعداد الرسالة بصيغة HTML و RTL.
+					$message = "
+<html dir='rtl' lang='ar'>
+<head><meta charset='UTF-8'></head>
+<body style='font-family: Tahoma, Arial, sans-serif; direction: rtl; text-align: right;'>
+  <h3>تم حجز جلسة جديدة:</h3>
+  <ul style='list-style: none; padding: 0;'>
+    <li><strong>اسم المعالج:</strong> $doctor_name</li>
+    <li><strong>اسم العميل:</strong> $patient_name</li>
+    <li><strong>مدة الجلسة:</strong> $session_duration دقيقة</li>
+    <li><strong>موعد الجلسة:</strong> $session_date</li>
+    <li><strong>وقت الجلسة:</strong> من $session_start إلى $session_end</li>
+    <li><strong>سعر الجلسة:</strong> $session_price ج.م</li>
+  </ul>
+</body>
+</html>
+";
+
+					wp_mail(
+						$doctor_email,
+						'تم حجز جلسة جديدة',
+						$message,
+						array( 'Content-Type: text/html; charset=UTF-8' )
+					);
+
 					if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 						// Use the correct namespace to initialize the class.
 						$firebase = new \FbCloudMessaging\AnonyengineFirebase();

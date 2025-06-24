@@ -41,7 +41,6 @@ function snks_insert_coupon( $args ) {
 		),
 		array( '%s', '%s', '%f', '%s', '%d', '%d' )
 	);
-	snks_error_log( $inserted );
 	return $inserted ? $wpdb->insert_id : false;
 }
 
@@ -59,11 +58,8 @@ function snks_get_coupon_by_code( $code ) {
 	global $wpdb;
 
 	$table = $wpdb->prefix . 'snks_custom_coupons';
-	snks_error_log("SELECT * FROM $table WHERE code = '$code'");
 	return $wpdb->get_row(
-
-			"SELECT * FROM $table WHERE code = '$code'",
-			
+		"SELECT * FROM $table WHERE code = '$code'",
 	);
 }
 

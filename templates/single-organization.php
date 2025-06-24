@@ -22,6 +22,7 @@ if ( have_posts() ) :
 		$main_color      = get_post_meta( $_id, 'main_color', true );
 		$secondary_color = get_post_meta( $_id, 'secondary_color', true );
 		$header_color    = get_post_meta( $_id, 'header_color', true );
+		$footer_color    = get_post_meta( $_id, 'footer_background_color', true );
 
 		$description_section_background              = get_post_meta( $_id, 'description_section_background', true );
 		$description_section_text_color              = get_post_meta( $_id, 'description_section_text_color', true );
@@ -51,7 +52,7 @@ if ( have_posts() ) :
 		$enable_specialties_section  = get_post_meta( $_id, 'enable_specialties_section', true );
 		$enable_custom_links_section = get_post_meta( $_id, 'enable_custom_links_section', true );
 		$content                     = get_the_content();
-		snks_org_styles( $main_color, $secondary_color, $header_color );
+		snks_org_styles( $main_color, $secondary_color, $header_color, $footer_color );
 		?>
 		<div id="org-container" class="org-home">
 			<!-- Top Logo Section -->
@@ -112,8 +113,8 @@ if ( have_posts() ) :
 				<!-- specialties section -->
 			<div <?php echo snks_get_section_style( $specialties_section_background, $specialties_section_text_color, $main_color ); ?>>
 				<?php
-				$box_color  = ! empty( $specialties_section_background ) ? $specialties_section_background : $main_color;
-				$text_color = ! empty( $specialties_section_text_color ) ? $specialties_section_text_color : '#ffffff';
+				$box_color  = $main_color;
+				$text_color = '#ffffff';
 				echo do_shortcode( "[specialization_grid box_color={$box_color} text_color={$text_color} id={$_id}]" );
 				?>
 			</div>
@@ -133,28 +134,42 @@ if ( have_posts() ) :
 					<div class="contacts">
 						<?php
 						$contact_keys = array(
-							'phone'    => array(
+							'phone'      => array(
 								'prefix' => 'tel:',
 								'icon'   => '/wp-content/uploads/2025/05/phone.png',
 							),
-							'whatsapp' => array(
+							'whatsapp'   => array(
 								'prefix' => 'https://wa.me/',
 								'icon'   => '/wp-content/uploads/2025/05/whatsapp.png',
 							),
-							'email'    => array(
+							'email'      => array(
 								'prefix' => 'mailto:',
 								'icon'   => '/wp-content/uploads/2025/05/mails.png',
+							),
+							'address'    => array(
+								'prefix' => '',
+								'icon'   => '/wp-content/uploads/2025/05/address.png',
+							),
+							'google_map' => array(
+								'prefix' => '',
+								'icon'   => '/wp-content/uploads/2025/05/google_map.png',
 							),
 						);
 
 						foreach ( $contact_keys as $key => $data ) {
 							$value = get_post_meta( get_the_ID(), $key, true );
 							if ( $value && '' !== $value ) {
-								$url      = $data['prefix'] . $value;
 								$icon_url = $data['icon'];
-								echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer"><img src="' . esc_url( $icon_url ) . '" alt="' . esc_attr( $key ) . '"></a>';
+								if ( 'address' === $key ) {
+									// Show swal on click for address
+									echo '<a href="#" onclick="showAddressSwal(\'' . esc_js( $value ) . '\'); return false;"><img src="' . esc_url( $icon_url ) . '" alt="' . esc_attr( $key ) . '"></a>';
+								} else {
+									$url = $data['prefix'] . $value;
+									echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener noreferrer"><img src="' . esc_url( $icon_url ) . '" alt="' . esc_attr( $key ) . '"></a>';
+								}
 							}
 						}
+
 						?>
 					</div>
 					<div class="socials" style="background-color: #fff;border-radius: 10px;padding: 8px;">
@@ -202,5 +217,17 @@ if ( have_posts() ) :
 		<?php
 	endwhile;
 endif;
-
+?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+	function showAddressSwal(address) {
+		Swal.fire({
+			icon: 'info',
+			title: 'العنوان',
+			text: address,
+			confirmButtonText: 'حسنًا'
+		});
+	}
+</script>
+<?php
 get_footer();

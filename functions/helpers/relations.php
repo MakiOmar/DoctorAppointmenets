@@ -82,3 +82,37 @@ function get_doctors_by_org_and_specialty( $organization_id, $specialty_term_id 
 
 	return $user_query->get_results();
 }
+
+/**
+ * Get the organization post assigned to a user (doctor).
+ *
+ * @param int $user_id User ID.
+ *
+ * @return WP_Post|null The organization post object, or null if not found.
+ */
+function snks_get_user_organization( $user_id ) {
+	global $wpdb;
+
+	$table  = $wpdb->prefix . 'jet_rel_default';
+	$rel_id = 23; // Organization to Doctor relation ID.
+
+	$parent_id = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT parent_object_id FROM $table WHERE rel_id = %d AND child_object_id = %d LIMIT 1",
+			$rel_id,
+			$user_id
+		)
+	);
+
+	if ( ! $parent_id ) {
+		return null;
+	}
+
+	$organization = get_post( absint( $parent_id ) );
+
+	if ( $organization && 'organization' === $organization->post_type ) {
+		return $organization;
+	}
+
+	return null;
+}

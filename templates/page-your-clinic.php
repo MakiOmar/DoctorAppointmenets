@@ -12,6 +12,33 @@ $user_id      = snks_url_get_doctors_id();
 $user_details = snks_user_details( $user_id );
 ?>
 <div class="snks-booking-page-container">
+	<?php
+	$org_post = snks_get_user_organization( $user_id );
+
+	if ( $org_post && $org_post instanceof WP_Post ) {
+		$org_slug       = $org_post->post_name;
+		$org_logo       = get_the_post_thumbnail_url( $org_post->ID, 'medium' );
+		$org_main_color = get_post_meta( $org_post->ID, 'main_color', true );
+		//phpcs:disable
+		$back_url = isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : site_url( '/org/' . $org_slug );
+		//phpcs:enable
+		if ( ! $org_logo ) {
+			$org_logo = '/wp-content/uploads/2024/10/default-logo.png';
+		}
+		?>
+			<div style="background-color: <?php echo esc_html( $org_main_color ); ?>; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; overflow: hidden;max-width: 428px;margin: auto;">
+				<a href="<?php echo esc_url( site_url( '/org/' . $org_slug ) ); ?>">
+				<img src="<?php echo esc_url( $org_logo ); ?>" alt="شعار المنظمة" style="height: 60px; border-radius: 50%; border: 3px solid #fff;margin: 0;" />
+				</a>
+				<a href="<?php echo esc_url( $back_url ); ?>" style="display: flex; align-items: center; text-decoration: none;">
+					<svg style="width: 30px; height: 30px; fill: white;" viewBox="0 0 24 24">
+						<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+					</svg>
+				</a>
+				
+			</div>
+	<?php } ?>
+
 	<div id="snks-booking-page">
 		<?php echo do_shortcode( '[snks_go_back]' ); ?>
 		<?php

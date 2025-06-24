@@ -64,26 +64,41 @@ function snks_is_blocked( $user_id ) {
 function snks_user_details( $current_user_id ) {
 	global $wpdb;
 
+	$expected_keys = array(
+		'billing_first_name',
+		'billing_last_name',
+		'billing_phone',
+		'whatsapp',
+		'about-me',
+		'certificates',
+		'profile-image',
+	);
+
+	// Escape the meta keys for safe SQL inclusion.
+	$escaped_keys = array_map( array( $wpdb, 'prepare' ), array_fill( 0, count( $expected_keys ), '%s' ), $expected_keys );
+	$keys_list    = implode( ',', $escaped_keys );
+
+	// Prepare the SQL query.
 	$sql = $wpdb->prepare(
-		"
-		SELECT meta_key, meta_value
-		FROM {$wpdb->prefix}usermeta
-		WHERE user_id = %d
-		AND meta_key IN ('billing_first_name', 'billing_last_name', 'billing_phone', 'whatsapp', 'about-me', 'certificates', 'profile-image')
-	",
+		"SELECT meta_key, meta_value
+        FROM {$wpdb->prefix}usermeta
+        WHERE user_id = %d
+        AND meta_key IN ($keys_list)",
 		$current_user_id
 	);
-	//phpcs:disable
+
+	// Execute the query.
 	$results = $wpdb->get_results( $sql );
-	//phpcs:enable
 
-	$meta_values = array();
+	// Initialize array with empty values for all expected keys.
+	$meta_values = array_fill_keys( $expected_keys, '' );
 
+	// Populate the array with actual values.
 	foreach ( $results as $row ) {
 		$meta_values[ $row->meta_key ] = $row->meta_value;
 	}
 
-	return( $meta_values );
+	return $meta_values;
 }
 /**
  * Check if is doctor user
@@ -448,7 +463,7 @@ function custom_log_patient_in( $_request ) {
 	if ( empty( $username ) || empty( $password ) ) {
 		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى تعبئة البيانات كاملة' );
 	}
-	$msg  = 'رقم الموبايل الذي أدخلته غير صحيح، تأكد من كتابة الرقم تماما كما أدخلته عند الحجز ( مع أو بدون صفر في بداية الرقم ).';
+	$msg = 'رقم الموبايل الذي أدخلته غير صحيح، تأكد من كتابة الرقم تماما كما أدخلته عند الحجز ( مع أو بدون صفر في بداية الرقم ).';
 	// Determine if the username is an email.
 	if ( isset( $_req['doctor_login'] ) && is_email( $username ) ) {
 		// Get the user by email.

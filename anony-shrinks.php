@@ -18,7 +18,7 @@ define( 'SNKS_DOMAIN', 'anony-turn' );
 define( 'TIMETABLE_TABLE_NAME', 'snks_provider_timetable' );
 define( 'TRNS_TABLE_NAME', 'snks_booking_transactions' );
 define( 'WHYSMS_SENDER_ID', 'Jalsah' );
-define( 'WHYSMS_TOKEN', '391|s1StiJT5mVm1vlC5El7W7W4AYCIPqu7nyCiow5tBd3009807' );
+define( 'WHYSMS_TOKEN', '299|dXuaaScFgVVEUu1FcRa8ApgmE5p0uY6dmsUfp6gR2d0970da' );
 define( 'CANCELL_AFTER', 15 );
 
 // Ensure the vendor autoload file is required.

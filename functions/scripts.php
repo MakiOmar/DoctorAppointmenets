@@ -816,9 +816,11 @@ add_action(
 		$dark_color = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
 		if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
 			$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
-			$clinics_colors = json_decode( CLINICS_COLORS );
-			$clinic_colors  = 'color_' . $clinic_color;
-			$dark_color     = esc_attr( $clinics_colors->$clinic_colors[1] );
+			if ( $clinic_color && '' !== $clinic_color ) {
+				$clinics_colors = json_decode( CLINICS_COLORS );
+				$clinic_colors  = 'color_' . $clinic_color;
+				$dark_color     = esc_attr( $clinics_colors->$clinic_colors[1] );
+			}
 		}
 		?>
 		<script>
@@ -944,7 +946,7 @@ add_action(
 					}
 				});
 			}
-			</script>
+		</script>
 		<?php
 	},
 	999

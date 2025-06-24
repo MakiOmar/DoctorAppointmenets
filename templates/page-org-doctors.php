@@ -90,7 +90,7 @@ if ( $org ) {
 		</div>
 	<?php } ?>
 	<div class="snks-org-doctors-container">
-			<div class="anony-flex flex-v center flex-h-center anony-padding-20 secondary_color_bg">
+			<div class="anony-flex flex-v center flex-h-center anony-padding-20">
 				<a href="/org/<?php echo esc_html( $org_slug ); ?>" style="display:block;height:150px">
 					<?php echo get_the_post_thumbnail( $org->ID, 'full' ); ?>
 				</a>
@@ -98,8 +98,13 @@ if ( $org ) {
 			<div style="background-color: #fff;padding-top: 20px;">
 				<?php
 				if ( ! empty( $children_objects ) ) {
+					$_title       = sprintf( 'حجز جلسات إشراف %s',  $_term->name );
+					$custom_title = get_term_meta( $_term->term_id, 'custom_title', true );
+					if ( $custom_title && ! empty( $custom_title ) ) {
+						$_title = $custom_title;
+					}
 					?>
-				<h1 style="border-radius: 10px; margin: auto; background-color: <?php echo esc_html( $main_color ); ?>;text-align:center;color:#fff;max-width: 80%; font-size:25px;position: relative;padding: 10px 0 12px 0;"><?php printf( 'حجز جلسات إشراف %s', esc_html( $_term->name ) ); ?></h1>
+				<h1 style="border-radius: 10px; margin: auto; background-color: <?php echo esc_html( $main_color ); ?>;text-align:center;color:#fff;max-width: 80%; font-size:25px;position: relative;padding: 10px 0 12px 0;"><?php echo esc_html( $_title ) ?></h1>
 					<?php
 					$orders = array();
 

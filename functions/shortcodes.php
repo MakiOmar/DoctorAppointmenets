@@ -1340,7 +1340,9 @@ function snks_display_specialization_grid_shortcode( $atts ) {
 
 	// Get terms based on post ID or all terms.
 	if ( $post_id ) {
-		$terms = get_the_terms( $post_id, 'specialization' );
+		$_post    = get_post( $post_id );
+		$org_slug = $_post->post_name;
+		$terms    = get_the_terms( $post_id, 'specialization' );
 	} else {
 		$terms = get_terms(
 			array(
@@ -1397,17 +1399,18 @@ function snks_display_specialization_grid_shortcode( $atts ) {
 			box-shadow: 0 0 5px rgba(0,0,0,0.1);
 		}
 		.specialization-box img {
-			height: 80px;
-			margin-bottom: 10px;
+			height: 110px;
+			margin-bottom: 0px;
 		}
 		.specialization-box p {
-			font-size: 16px;
+			font-size: 20px;
 			color: ' . esc_attr( $text_color ) . ';
 			font-weight: bold;
 			height: 50px;
 			display: flex;
 			justify-content: center;
 			align-items: center;
+			margin-bottom: 0px;
 		}
 	</style>';
 

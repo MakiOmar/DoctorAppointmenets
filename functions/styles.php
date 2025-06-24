@@ -600,8 +600,8 @@ add_action(
 					width: 100%;
 				}
 				#certificate-1-preview.anony-nice-uploader, .snks-tear-shap-wrapper{
-					width: 170px!important;
-					height: 170px!important;
+					width: 130px!important;
+					height: 130px!important;
 				}
 				#certificate-2-preview.anony-nice-uploader,#certificate-3-preview.anony-nice-uploader ,#certificate-4-preview.anony-nice-uploader,#certificate-5-preview.anony-nice-uploader {
 					width: 60px!important;

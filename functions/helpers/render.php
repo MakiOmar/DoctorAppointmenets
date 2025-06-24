@@ -323,9 +323,11 @@ function snks_form_filter( $user_id ) {
 	$dark_color = ! empty( $_COOKIE['dark_color'] ) ? sanitize_text_field( wp_unslash( $_COOKIE['dark_color'] ) ) : '#024059';
 	if ( isset( $wp->query_vars ) && isset( $wp->query_vars['doctor_id'] ) ) {
 		$clinic_color   = get_user_meta( snks_url_get_doctors_id(), 'clinic_colors', true );
-		$clinics_colors = json_decode( CLINICS_COLORS );
-		$clinic_colors  = 'color_' . $clinic_color;
-		$dark_color     = esc_attr( $clinics_colors->$clinic_colors[1] );
+		if ( $clinic_color && '' !== $clinic_color ) {
+			$clinics_colors = json_decode( CLINICS_COLORS );
+			$clinic_colors  = 'color_' . $clinic_color;
+			$dark_color     = esc_attr( $clinics_colors->$clinic_colors[1] );
+		}
 	}
 	?>
 	<div class="attendance_types_wrapper">
@@ -1573,9 +1575,11 @@ add_action(
  *
  * @param string $main_color Color.
  * @param string $secondary_color Color.
+ * @param string $header_color Color.
+ * @param string $secondary_color Color.
  * @return void
  */
-function snks_org_styles( $main_color, $secondary_color, $header_color = false ) {
+function snks_org_styles( $main_color, $secondary_color, $header_color = false, $footer_color = '#fff' ) {
 	if ( ! $header_color ) {
 		$header_color = $main_color;
 	}
@@ -1602,12 +1606,16 @@ function snks_org_styles( $main_color, $secondary_color, $header_color = false )
 		.org-contact-icons .contacts img { width: 40px; margin: 10px; }
 		.org-contact-icons .socials img { width: 30px; margin: 3px 10px;}
 		.org-contact-icons .socials,.org-contact-icons .socials a {display: inline-flex;justify-content: center;align-items: center;}
-		.green-link-card{display: flex; flex-direction: column; align-items: center; padding: 20px; border-radius: 5px; width: 180px; text-align: center; color: #229944; text-decoration: none;}
+		.green-link-card{display: flex; flex-direction: column; align-items: center; padding: 20px; border-radius: 5px; max-width: 180px; text-align: center; color: #229944; text-decoration: none;}
 		.green-link-card > span{
 			color:#fff;
+			font-size: 19px;
 		}
 		.org-footer *{
 			color: <?php echo esc_html( $main_color ); ?>!important;
+		}
+		.org-footer .booking-form-subfooter {
+			background: <?php echo esc_html( $footer_color ); ?>!important;
 		}
 	</style>
 	<?php
@@ -1679,7 +1687,7 @@ function snks_render_doctor_listing( $users ) {
 					</div>
 
 					<div class="org-profile-details">
-						<h1 class="kacstqurnkacstqurn snks-white-text" style="font-size:18px;text-align:center">
+						<h1 class="kacstqurnkacstqurn snks-white-text" style="font-size:18px;text-align:center;height:45px">
 							<?php echo esc_html( $user_details['billing_first_name'] . ' ' . $user_details['billing_last_name'] ); ?>
 						</h1>
 					</div>
