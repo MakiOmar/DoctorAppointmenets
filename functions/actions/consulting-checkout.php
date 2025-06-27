@@ -55,7 +55,7 @@ add_action(
 			exit;
 		}
 		$country      = snsk_ip_api_country();
-		$price        = snks_calculated_price( $user_id, $country, sanitize_text_field( $_req['period'] ) );
+		$price        = snks_calculated_price( $user_id, $country, sanitize_text_field( $_req['period'] ), $timetable->attendance_type );
 		$pricing_data = snks_session_total_price( $price, $timetable->attendance_type );
 		$total_price  = $pricing_data['total_price'];
 		// Prepare form data to store in session.

@@ -15,18 +15,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param int    $user_id Doctor's ID.
  * @param string $country Country code.
  * @param int    $period Period.
+ * @param string $attendance_type Attendance type (online/offline).
  * @return int
  */
-function snks_calculated_price( $user_id, $country, $period ) {
+function snks_calculated_price( $user_id, $country, $period, $attendance_type = 'online' ) {
 	$has_discount = snks_discount_eligible( $user_id );
 	$latest_order = snks_latest_completed_order( $user_id );
 	if ( $has_discount && $latest_order ) {
 		$pricings = $latest_order->get_meta( 'doctor_pricings', true );
 		if ( ! $pricings || empty( $pricings ) ) {
-			$pricings = snks_doctor_pricings( $user_id );
+			$pricings = snks_doctor_pricings( $user_id, $attendance_type );
 		}
 	} else {
-		$pricings = snks_doctor_pricings( $user_id );
+		$pricings = snks_doctor_pricings( $user_id, $attendance_type );
 	}
 	$price = get_price_by_period_and_country( $period, $country, $pricings );
 
@@ -54,22 +55,62 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
 	}
 	return 0;
 }
+
 /**
  * Get doctor pricings.
+ *
+ * @param int    $user_id User's ID.
+ * @param string $attendance_type Attendance type (online/offline).
+ * @return array
+ */
+function snks_doctor_pricings( $user_id, $attendance_type = 'online' ) {
+	$available_periods = snks_get_periods( $user_id );
+	$pricings          = array();
+	
+	foreach ( $available_periods as $period ) {
+		if ( 'offline' === $attendance_type ) {
+			// Get offline pricing
+			$offline_countries = get_user_meta( $user_id, $period . '_minutes_pricing_offline', true );
+			$offline_others = get_user_meta( $user_id, $period . '_minutes_pricing_offline_others', true );
+			
+			// Get online pricing for fallback
+			$online_countries = get_user_meta( $user_id, $period . '_minutes_pricing', true );
+			$online_others = get_user_meta( $user_id, $period . '_minutes_pricing_others', true );
+			
+			// Use offline prices if set, otherwise fallback to online prices
+			$pricings[ $period ] = array(
+				'countries' => ! empty( $offline_countries ) ? $offline_countries : $online_countries,
+				'others'    => ! empty( $offline_others ) ? $offline_others : $online_others,
+			);
+		} else {
+			// Use online pricing fields (original fields)
+			$pricings[ $period ] = array(
+				'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
+				'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
+			);
+		}
+	}
+	return $pricings;
+}
+
+/**
+ * Get doctor offline pricings.
  *
  * @param int $user_id User's ID.
  * @return array
  */
-function snks_doctor_pricings( $user_id ) {
-	$available_periods = snks_get_periods( $user_id );
-	$pricings          = array();
-	foreach ( $available_periods as $period ) {
-		$pricings[ $period ] = array(
-			'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
-			'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
-		);
-	}
-	return $pricings;
+function snks_doctor_offline_pricings( $user_id ) {
+	return snks_doctor_pricings( $user_id, 'offline' );
+}
+
+/**
+ * Get doctor online pricings.
+ *
+ * @param int $user_id User's ID.
+ * @return array
+ */
+function snks_doctor_online_pricings( $user_id ) {
+	return snks_doctor_pricings( $user_id, 'online' );
 }
 
 /**
@@ -131,6 +172,7 @@ function snks_pricing_discount_enabled( $user_id = false ) {
 	$enable_discount = get_user_meta( $user_id, 'enable_discount', true );
 	return 'on' === $enable_discount;
 }
+
 /**
  * Session price formula
  *

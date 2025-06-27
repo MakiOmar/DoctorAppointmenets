@@ -228,7 +228,8 @@ function snks_remove_coupon_ajax_handler() {
 	$price = snks_calculated_price(
 		absint( $form_data['_user_id'] ),
 		snsk_ip_api_country(),
-		$form_data['_period']
+		$form_data['_period'],
+		$form_data['attendance_type'] ?? 'online'
 	);
 
 	$pricing_data = snks_session_total_price( $price, $form_data['attendance_type'] ?? 'online' );
