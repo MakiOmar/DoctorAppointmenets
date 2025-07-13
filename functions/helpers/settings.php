@@ -803,30 +803,41 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = fal
 				foreach ( $expected_hours as $expected_hour ) {
 					$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $date . ' ' . $expected_hour['from'] );
 					// Ensure the formatted date_time is valid and compare it with the current time.
-					if ( $date_time && strtotime( $date_time->format('Y-m-d h:i a') ) > current_time( 'timestamp' ) ) {
-						$formatted_date_time = $date_time->format('Y-m-d h:i a');
-						$base = array(
-							'user_id'         => $user_id,
-							'session_status'  => in_array( $date, $off_days, true ) ? 'closed' : 'waiting',
-							'day'             => sanitize_text_field( $day ),
-							'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
-							'period'          => sanitize_text_field( $expected_hour['min'] ),
-							'date_time'       => $formatted_date_time,
-							'date'            => $date,
-							'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
-							'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
-							'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
-							'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
-						);
+					// Allow appointments for today if the time slot is still in the future
+					if ( $date_time ) {
+						$appointment_timestamp = strtotime( $date_time->format('Y-m-d h:i a') );
+						$current_timestamp = current_time( 'timestamp' );
+						
+						// Check if this is today and the time is still in the future, or if it's a future date
+						$is_today = ( $date === current_time( 'Y-m-d' ) );
+						$is_future_time = $appointment_timestamp > $current_timestamp;
+						$is_future_date = $date > current_time( 'Y-m-d' );
+						
+						if ( $is_future_time || $is_future_date ) {
+							$formatted_date_time = $date_time->format('Y-m-d h:i a');
+							$base = array(
+								'user_id'         => $user_id,
+								'session_status'  => in_array( $date, $off_days, true ) ? 'closed' : 'waiting',
+								'day'             => sanitize_text_field( $day ),
+								'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
+								'period'          => sanitize_text_field( $expected_hour['min'] ),
+								'date_time'       => $formatted_date_time,
+								'date'            => $date,
+								'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+								'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+								'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
+								'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
+							);
 
-						if ( 'both' !== $details['appointment_attendance_type'] ) {
-							$data[ sanitize_text_field( $day ) ][] = $base;
-						} else {
-							$base['attendance_type'] = 'online';
-							$data[ sanitize_text_field( $day ) ][] = $base;
-				
-							$base['attendance_type'] = 'offline';
-							$data[ sanitize_text_field( $day ) ][] = $base;
+							if ( 'both' !== $details['appointment_attendance_type'] ) {
+								$data[ sanitize_text_field( $day ) ][] = $base;
+							} else {
+								$base['attendance_type'] = 'online';
+								$data[ sanitize_text_field( $day ) ][] = $base;
+					
+								$base['attendance_type'] = 'offline';
+								$data[ sanitize_text_field( $day ) ][] = $base;
+							}
 						}
 					}
 				}
@@ -963,7 +974,7 @@ function snks_get_edit_before_seconds( $doctor_settings ) {
 }
 
 add_action( 'jet-form-builder/custom-action/after_session_settings', function () {
-	apply_timetable_settings( false, 1, 90  );
+	apply_timetable_settings( false, 0, 90  );
 } );
 
 add_action(
