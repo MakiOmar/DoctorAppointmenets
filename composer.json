@@ -1,6 +1,7 @@
 {
     "require": {
         "erguncaner/table": "dev-master",
-        "phpoffice/phpspreadsheet": "^2.2"
+        "phpoffice/phpspreadsheet": "^2.2",
+        "firebase/php-jwt": "^6.0"
     }
 }
