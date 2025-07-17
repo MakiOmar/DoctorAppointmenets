@@ -126,7 +126,17 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
 		$avialable_periods = snks_get_available_periods( $user_id, $attendance_type );
 	}
 	$country      = snsk_ip_api_country( false );
-	$pricings     = snks_doctor_pricings( $user_id );
+	
+	// Determine which pricing to use based on attendance type
+	$pricing_type = 'online'; // default
+	if ( 'offline' === $attendance_type ) {
+		$pricing_type = 'offline';
+	} elseif ( 'both' === $attendance_type ) {
+		// For 'both', we'll show online pricing by default, but this can be overridden by JavaScript
+		$pricing_type = 'online';
+	}
+	
+	$pricings     = snks_doctor_pricings( $user_id, $pricing_type );
 	$has_discount = is_user_logged_in() ? snks_discount_eligible( $user_id ) : false;
 	if ( is_array( $avialable_periods ) && ! empty( $avialable_periods ) ) {
 		echo '<div class="anony-padding-10 anony-flex anony-space-between anony-full-width anony-grid-row">';
@@ -153,7 +163,7 @@ function snks_periods_filter( $user_id, $attendance_type = 'both', $edit_booking
 				);
 				?>
 								</label>
-				<input id="period_<?php echo esc_attr( $period ); ?>" type="radio" name="period" value="<?php echo esc_attr( $period ); ?>" data-price="<?php echo esc_attr( $price ); ?>"/>
+				<input id="period_<?php echo esc_attr( $period ); ?>" type="radio" name="period" value="<?php echo esc_attr( $period ); ?>" data-price="<?php echo esc_attr( $price ); ?>" data-pricing-type="<?php echo esc_attr( $pricing_type ); ?>"/>
 			</span>
 			<?php
 		}
@@ -296,14 +306,17 @@ add_action(
 function snks_listing_periods( $user_id ) {
 	$avialable_periods = snks_get_periods( $user_id );
 	$country           = snsk_ip_api_country( false );
-	$pricings          = snks_doctor_pricings( $user_id );
-	if ( ! empty( $pricings ) && is_array( $avialable_periods ) ) {
-		echo '<div class="anony-padding-10 anony-flex flex-h-center  flex-v-center anony-full-width">';
+	$online_pricings   = snks_doctor_online_pricings( $user_id );
+	$offline_pricings  = snks_doctor_offline_pricings( $user_id );
+	
+	if ( ! empty( $online_pricings ) && is_array( $avialable_periods ) ) {
+		echo '<div class="anony-padding-10 anony-flex flex-h-center flex-v-center anony-full-width">';
 		foreach ( $avialable_periods as $period ) {
-			$price = get_price_by_period_and_country( $period, $country, $pricings );
+			$online_price = get_price_by_period_and_country( $period, $country, $online_pricings );
+			$offline_price = get_price_by_period_and_country( $period, $country, $offline_pricings );
 			?>
-			<span class="anony-grid-col hacen_liner_print-outregular anony-flex flex-h-center flex-v-center anony-padding-5 anony-margin-5" style="background-color:#fff;border-radius:25px;width: 120px;font-size: 18px;">
-				<?php printf( '%1$s %2$s | %3$s %4$s', esc_html( $period ), 'د', esc_html( $price ), 'ج.م' ); ?>
+			<span class="anony-grid-col hacen_liner_print-outregular anony-flex flex-h-center flex-v-center anony-padding-5 anony-margin-5" style="background-color:#fff;border-radius:25px;width: 180px;font-size: 16px;">
+				<?php printf( '%1$s %2$s | أونلاين: %3$s | أوفلاين: %4$s', esc_html( $period ), 'د', esc_html( $online_price ), esc_html( $offline_price ) ); ?>
 			</span>
 			<?php
 		}

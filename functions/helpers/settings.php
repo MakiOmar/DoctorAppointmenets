@@ -19,7 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_validate_doctor_settings( $user_id ) {
 	$settings = snks_doctor_settings( $user_id );
-	$pricings = snks_doctor_pricings( $user_id );
+	$online_pricings = snks_doctor_online_pricings( $user_id );
+	$offline_pricings = snks_doctor_offline_pricings( $user_id );
 	$messages = array();
 
 	// Check if attendance_type is empty.
@@ -42,15 +43,31 @@ function snks_validate_doctor_settings( $user_id ) {
 	) {
 		$messages[] = 'لم يتم تفعيل أي من مدد الجلسات (30، 45، 60 دقيقة).';
 	}
-	// Check if the corresponding 'others' value is not empty for the active time settings.
-	if ( ! empty( $settings['30_minutes'] ) && 'false' !== $settings['30_minutes'] && empty( $pricings[30]['others'] ) ) {
-		$messages[] = 'سعر الجلسات لمدة 30 دقيقة غير موجود.';
+	
+	// Check online pricing (for online and both attendance types)
+	if ( 'online' === $settings['attendance_type'] || 'both' === $settings['attendance_type'] ) {
+		if ( ! empty( $settings['30_minutes'] ) && 'false' !== $settings['30_minutes'] && empty( $online_pricings[30]['others'] ) ) {
+			$messages[] = 'سعر الجلسات أونلاين لمدة 30 دقيقة غير موجود.';
+		}
+		if ( ! empty( $settings['45_minutes'] ) && 'false' !== $settings['45_minutes'] && empty( $online_pricings[45]['others'] ) ) {
+			$messages[] = 'سعر الجلسات أونلاين لمدة 45 دقيقة غير موجود.';
+		}
+		if ( ! empty( $settings['60_minutes'] ) && 'false' !== $settings['60_minutes'] && empty( $online_pricings[60]['others'] ) ) {
+			$messages[] = 'سعر الجلسات أونلاين لمدة 60 دقيقة غير موجود.';
+		}
 	}
-	if ( ! empty( $settings['45_minutes'] ) && 'false' !== $settings['45_minutes'] && empty( $pricings[45]['others'] ) ) {
-		$messages[] = 'سعر الجلسات لمدة 45 دقيقة غير موجود.';
-	}
-	if ( ! empty( $settings['60_minutes'] ) && 'false' !== $settings['60_minutes'] && empty( $pricings[60]['others'] ) ) {
-		$messages[] = 'سعر الجلسات لمدة 60 دقيقة غير موجود.';
+	
+	// Check offline pricing (for offline and both attendance types)
+	if ( 'offline' === $settings['attendance_type'] || 'both' === $settings['attendance_type'] ) {
+		if ( ! empty( $settings['30_minutes'] ) && 'false' !== $settings['30_minutes'] && empty( $offline_pricings[30]['others'] ) ) {
+			$messages[] = 'سعر الجلسات أوفلاين لمدة 30 دقيقة غير موجود.';
+		}
+		if ( ! empty( $settings['45_minutes'] ) && 'false' !== $settings['45_minutes'] && empty( $offline_pricings[45]['others'] ) ) {
+			$messages[] = 'سعر الجلسات أوفلاين لمدة 45 دقيقة غير موجود.';
+		}
+		if ( ! empty( $settings['60_minutes'] ) && 'false' !== $settings['60_minutes'] && empty( $offline_pricings[60]['others'] ) ) {
+			$messages[] = 'سعر الجلسات أوفلاين لمدة 60 دقيقة غير موجود.';
+		}
 	}
 
 	// If there are any messages, set the transient with the messages for the current user.
@@ -100,33 +117,71 @@ add_action(
 		if ( ( 'on' !== $request['60-minutes'] ) && ( 'on' !== $request['45-minutes'] ) && ( 'on' !== $request['30-minutes'] ) ) {
 			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'لم يتم تفعيل أي من مدد الجلسات (30، 45، 60 دقيقة).' );
 		}
-		if ( 'on' === $request['30-minutes'] ) {
-			$pricings[30] = array(
-				'countries' => get_user_meta( $user_id, '30_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, '30_minutes_pricing_others', true ),
-			);
+		
+		// Check online pricing (for online and both attendance types)
+		if ( 'online' === $request['attendance_type'] || 'both' === $request['attendance_type'] ) {
+			$online_pricings = array();
+			if ( 'on' === $request['30-minutes'] ) {
+				$online_pricings[30] = array(
+					'countries' => get_user_meta( $user_id, '30_minutes_pricing', true ),
+					'others'    => get_user_meta( $user_id, '30_minutes_pricing_others', true ),
+				);
+			}
+			if ( 'on' === $request['45-minutes'] ) {
+				$online_pricings[45] = array(
+					'countries' => get_user_meta( $user_id, '45_minutes_pricing', true ),
+					'others'    => get_user_meta( $user_id, '45_minutes_pricing_others', true ),
+				);
+			}
+			if ( 'on' === $request['60-minutes'] ) {
+				$online_pricings[60] = array(
+					'countries' => get_user_meta( $user_id, '60_minutes_pricing', true ),
+					'others'    => get_user_meta( $user_id, '60_minutes_pricing_others', true ),
+				);
+			}
+			
+			// Check if the corresponding 'others' value is not empty for the active time request.
+			if (
+				( 'on' === $request['30-minutes'] && empty( $online_pricings[30]['others'] ) ) ||
+				( 'on' === $request['45-minutes'] && empty( $online_pricings[45]['others'] ) ) ||
+				( 'on' === $request['60-minutes'] && empty( $online_pricings[60]['others'] ) )
+			) {
+				throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال أسعار الجلسات أونلاين.' );
+			}
 		}
-		if ( 'on' === $request['45-minutes'] ) {
-			$pricings[45] = array(
-				'countries' => get_user_meta( $user_id, '45_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, '45_minutes_pricing_others', true ),
-			);
+		
+		// Check offline pricing (for offline and both attendance types)
+		if ( 'offline' === $request['attendance_type'] || 'both' === $request['attendance_type'] ) {
+			$offline_pricings = array();
+			if ( 'on' === $request['30-minutes'] ) {
+				$offline_pricings[30] = array(
+					'countries' => get_user_meta( $user_id, '30_minutes_pricing_offline', true ),
+					'others'    => get_user_meta( $user_id, '30_minutes_pricing_offline_others', true ),
+				);
+			}
+			if ( 'on' === $request['45-minutes'] ) {
+				$offline_pricings[45] = array(
+					'countries' => get_user_meta( $user_id, '45_minutes_pricing_offline', true ),
+					'others'    => get_user_meta( $user_id, '45_minutes_pricing_offline_others', true ),
+				);
+			}
+			if ( 'on' === $request['60-minutes'] ) {
+				$offline_pricings[60] = array(
+					'countries' => get_user_meta( $user_id, '60_minutes_pricing_offline', true ),
+					'others'    => get_user_meta( $user_id, '60_minutes_pricing_offline_others', true ),
+				);
+			}
+			
+			// Check if the corresponding 'others' value is not empty for the active time request.
+			if (
+				( 'on' === $request['30-minutes'] && empty( $offline_pricings[30]['others'] ) ) ||
+				( 'on' === $request['45-minutes'] && empty( $offline_pricings[45]['others'] ) ) ||
+				( 'on' === $request['60-minutes'] && empty( $offline_pricings[60]['others'] ) )
+			) {
+				throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال أسعار الجلسات أوفلاين.' );
+			}
 		}
-		if ( 'on' === $request['60-minutes'] ) {
-			$pricings[60] = array(
-				'countries' => get_user_meta( $user_id, '60_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, '60_minutes_pricing_others', true ),
-			);
-		}
-		// Check if the corresponding 'others' value is not empty for the active time request.
-		if (
-			( 'on' === $request['30-minutes'] && empty( $pricings[30]['others'] ) ) ||
-			( 'on' === $request['45-minutes'] && empty( $pricings[45]['others'] ) ) ||
-			( 'on' === $request['60-minutes'] && empty( $pricings[60]['others'] ) )
-		) {
-
-			throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال أسعار الجلسات.' );
-		}
+		
 		$edit_before      = snks_get_edit_before_seconds( $request );
 		$free_edit_before = snks_get_free_edit_before_seconds( $request );
 		if ( $edit_before > $free_edit_before || $edit_before === $free_edit_before ) {
@@ -184,15 +239,28 @@ function snks_doctor_settings( $user_id = false ) {
 		$available_periods[] = 30;
 	}
 	sort( $available_periods );
-	$pricings = array();
+	
+	// Online pricing (original pricing)
+	$online_pricings = array();
 	foreach ( $available_periods as $period ) {
-		$pricings[ $period ] = array(
+		$online_pricings[ $period ] = array(
 			'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
 			'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
 		);
 	}
+	
+	// Offline pricing
+	$offline_pricings = array();
+	foreach ( $available_periods as $period ) {
+		$offline_pricings[ $period ] = array(
+			'countries' => get_user_meta( $user_id, $period . '_minutes_pricing_offline', true ),
+			'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_offline_others', true ),
+		);
+	}
 
-	$settings['pricing'] = $pricings;
+	$settings['pricing'] = $online_pricings; // Keep backward compatibility
+	$settings['online_pricing'] = $online_pricings;
+	$settings['offline_pricing'] = $offline_pricings;
 
 	return $settings;
 }

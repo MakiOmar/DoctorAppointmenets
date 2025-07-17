@@ -383,7 +383,7 @@ add_action(
 			$order_id         = $booking->order_id;
 			$main_order       = wc_get_order( $order_id );
 			$country          = $doctor_settings['country'];
-			$price            = get_price_by_period_and_country( $new_booking->period, $country, $doctor_settings['pricing'] );
+			$price            = snks_calculated_price( $new_booking->user_id, $country, $new_booking->period, $new_booking->attendance_type );
 			$change_fees      = ! empty( $doctor_settings['appointment_change_fee'] ) ? $doctor_settings['appointment_change_fee'] : 0;
 			$will_pay         = ( $change_fees / 100 ) * $price;
 			$calculated_price = snks_session_total_price( $will_pay, $new_booking->attendance_type, 'edit' );

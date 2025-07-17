@@ -64,7 +64,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					snks_insert_session_actions( $timetable->ID, $customer_id, 'no' );
 					$order->update_meta_data( 'booking_id', $timetable->ID );
 					$order->update_meta_data( 'doctor_id', $timetable->user_id );
-					$order->update_meta_data( 'doctor_pricings', snks_doctor_pricings( $timetable->user_id ) );
+					$order->update_meta_data( 'doctor_pricings', snks_doctor_pricings( $timetable->user_id, $timetable->attendance_type ) );
 					$order->save();
 					// Patient.
 					if ( 'online' === $timetable->attendance_type ) {
