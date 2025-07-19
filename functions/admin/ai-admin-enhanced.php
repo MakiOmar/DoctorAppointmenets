@@ -125,6 +125,186 @@ function snks_add_enhanced_ai_admin_menu() {
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu' );
 
 /**
+ * Load AI Admin Styles
+ */
+function snks_load_ai_admin_styles() {
+	?>
+	<style>
+	/* Force full width for all AI admin pages */
+	.wp-admin .wrap {
+		max-width: none !important;
+		width: 100% !important;
+		padding: 20px !important;
+		margin: 0 !important;
+	}
+	
+	/* Override WordPress default container constraints */
+	.wp-admin #wpcontent .wrap {
+		max-width: none !important;
+		width: 100% !important;
+	}
+	
+	/* Force full width cards */
+	.wp-admin .card {
+		background: white;
+		padding: 20px;
+		margin: 20px 0;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		width: 100% !important;
+		max-width: none !important;
+		box-sizing: border-box;
+		display: block !important;
+	}
+	
+	/* Force full width tables */
+	.wp-admin .wp-list-table {
+		width: 100% !important;
+		max-width: none !important;
+	}
+	
+	/* Force full width forms */
+	.wp-admin .form-table {
+		width: 100% !important;
+		max-width: none !important;
+	}
+	
+	.wp-admin .form-table th {
+		width: 200px !important;
+	}
+	
+	.wp-admin .form-table td {
+		width: calc(100% - 200px) !important;
+	}
+	
+	/* Override any WordPress admin constraints */
+	.wp-admin #wpcontent,
+	.wp-admin #wpbody,
+	.wp-admin #wpbody-content {
+		max-width: none !important;
+	}
+	
+	.wp-admin #wpcontent .wrap {
+		max-width: none !important;
+		width: 100% !important;
+	}
+	
+	/* Ensure admin area uses full width */
+	.wp-admin #wpcontent {
+		margin-left: 160px !important;
+		padding: 0 !important;
+	}
+	
+	.wp-admin.folded #wpcontent {
+		margin-left: 36px !important;
+	}
+	
+	/* Force full width on all admin containers */
+	.wp-admin .wrap,
+	.wp-admin .card,
+	.wp-admin .wp-list-table,
+	.wp-admin .form-table {
+		width: 100% !important;
+		max-width: none !important;
+		box-sizing: border-box !important;
+	}
+	
+	/* Stats grid */
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 20px;
+		margin: 20px 0;
+	}
+	
+	.stat-item {
+		text-align: center;
+		padding: 20px;
+		background: #f9f9f9;
+		border-radius: 8px;
+	}
+	
+	.stat-item h3 {
+		font-size: 2em;
+		margin: 0;
+		color: #0073aa;
+	}
+	
+	.quick-actions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		margin: 20px 0;
+	}
+	
+	/* Filters form */
+	.filters-form {
+		display: flex;
+		gap: 20px;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	
+	.filters-form label {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+	
+	/* AI badge */
+	.ai-badge {
+		background: #28a745;
+		color: white;
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 11px;
+		font-weight: bold;
+	}
+	
+	.status-waiting { color: #ffc107; }
+	.status-open { color: #007cba; }
+	.status-past { color: #6c757d; }
+	
+	/* Template sections */
+	.template-section {
+		margin-bottom: 30px;
+		padding: 20px;
+		border: 1px solid #ddd;
+		border-radius: 5px;
+	}
+	
+	.template-section h3 {
+		margin-top: 0;
+	}
+	
+	/* Time range sections */
+	.time-range-section {
+		margin: 10px 0;
+		padding: 10px;
+		border: 1px solid #ddd;
+		border-radius: 3px;
+	}
+	
+	.time-range-section label {
+		margin-right: 20px;
+	}
+	
+	/* Analytics grid */
+	.analytics-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 20px;
+		margin: 20px 0;
+	}
+	
+	/* Status colors */
+	.status-active { color: #28a745; }
+	.status-inactive { color: #6c757d; }
+	</style>
+	<?php
+}
+
+/**
  * Enhanced AI Admin Dashboard
  */
 function snks_enhanced_ai_admin_page() {
@@ -219,40 +399,8 @@ function snks_enhanced_ai_admin_page() {
 			?>
 		</div>
 	</div>
-
-	<style>
-	.stats-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: 20px;
-		margin: 20px 0;
-	}
-	.stat-item {
-		text-align: center;
-		padding: 20px;
-		background: #f9f9f9;
-		border-radius: 8px;
-	}
-	.stat-item h3 {
-		font-size: 2em;
-		margin: 0;
-		color: #0073aa;
-	}
-	.quick-actions {
-		display: flex;
-		gap: 10px;
-		flex-wrap: wrap;
-		margin: 20px 0;
-	}
-	.card {
-		background: white;
-		padding: 20px;
-		margin: 20px 0;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-	}
-	</style>
 	<?php
+	snks_load_ai_admin_styles();
 }
 
 /**
@@ -260,6 +408,8 @@ function snks_enhanced_ai_admin_page() {
  */
 function snks_enhanced_ai_therapists_page() {
 	global $wpdb;
+	
+	snks_load_ai_admin_styles();
 	
 	// Handle form submissions
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_therapist_profile' ) {
@@ -526,10 +676,178 @@ function snks_load_enhanced_therapist_profile() {
 add_action( 'wp_ajax_load_enhanced_therapist_profile', 'snks_load_enhanced_therapist_profile' ); 
 
 /**
+ * Enhanced Diagnoses Page
+ */
+function snks_enhanced_ai_diagnoses_page() {
+	global $wpdb;
+	
+	snks_load_ai_admin_styles();
+	
+	// Handle form submissions
+	if ( isset( $_POST['action'] ) ) {
+		if ( $_POST['action'] === 'add_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'add_diagnosis' ) ) {
+			$name = sanitize_text_field( $_POST['name'] );
+			$description = sanitize_textarea_field( $_POST['description'] );
+			
+			$wpdb->insert(
+				$wpdb->prefix . 'snks_diagnoses',
+				array(
+					'name' => $name,
+					'description' => $description,
+				),
+				array( '%s', '%s' )
+			);
+			
+			echo '<div class="notice notice-success"><p>Diagnosis added successfully!</p></div>';
+		}
+		
+		if ( $_POST['action'] === 'edit_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'edit_diagnosis' ) ) {
+			$diagnosis_id = intval( $_POST['diagnosis_id'] );
+			$name = sanitize_text_field( $_POST['name'] );
+			$description = sanitize_textarea_field( $_POST['description'] );
+			
+			$wpdb->update(
+				$wpdb->prefix . 'snks_diagnoses',
+				array(
+					'name' => $name,
+					'description' => $description,
+				),
+				array( 'id' => $diagnosis_id ),
+				array( '%s', '%s' ),
+				array( '%d' )
+			);
+			
+			echo '<div class="notice notice-success"><p>Diagnosis updated successfully!</p></div>';
+		}
+		
+		if ( $_POST['action'] === 'delete_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'delete_diagnosis' ) ) {
+			$diagnosis_id = intval( $_POST['diagnosis_id'] );
+			
+			// Delete from diagnoses table
+			$wpdb->delete( $wpdb->prefix . 'snks_diagnoses', array( 'id' => $diagnosis_id ), array( '%d' ) );
+			
+			// Delete from therapist-diagnosis relationships
+			$wpdb->delete( $wpdb->prefix . 'snks_therapist_diagnoses', array( 'diagnosis_id' => $diagnosis_id ), array( '%d' ) );
+			
+			echo '<div class="notice notice-success"><p>Diagnosis deleted successfully!</p></div>';
+		}
+	}
+	
+	$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+	?>
+	<div class="wrap">
+		<h1>AI Diagnoses Management</h1>
+		
+		<div class="card">
+			<h2>Add New Diagnosis</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'add_diagnosis' ); ?>
+				<input type="hidden" name="action" value="add_diagnosis">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="name">Diagnosis Name</label></th>
+						<td><input type="text" id="name" name="name" class="regular-text" required></td>
+					</tr>
+					<tr>
+						<th><label for="description">Description</label></th>
+						<td><textarea id="description" name="description" rows="3" class="large-text"></textarea></td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Add Diagnosis' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Existing Diagnoses</h2>
+			<?php if ( $diagnoses ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Description</th>
+							<th>Therapists Assigned</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $diagnoses as $diagnosis ) : ?>
+							<?php
+							$therapist_count = $wpdb->get_var( $wpdb->prepare(
+								"SELECT COUNT(*) FROM {$wpdb->prefix}snks_therapist_diagnoses WHERE diagnosis_id = %d",
+								$diagnosis->id
+							) );
+							?>
+							<tr>
+								<td><strong><?php echo esc_html( $diagnosis->name ); ?></strong></td>
+								<td><?php echo esc_html( $diagnosis->description ); ?></td>
+								<td><?php echo esc_html( $therapist_count ); ?> therapists</td>
+								<td>
+									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo esc_js( $diagnosis->name ); ?>', '<?php echo esc_js( $diagnosis->description ); ?>')">Edit</button>
+									<form method="post" style="display:inline;">
+										<?php wp_nonce_field( 'delete_diagnosis' ); ?>
+										<input type="hidden" name="action" value="delete_diagnosis">
+										<input type="hidden" name="diagnosis_id" value="<?php echo $diagnosis->id; ?>">
+										<button type="submit" class="button button-small button-link-delete" onclick="return confirm('Are you sure you want to delete this diagnosis?')">Delete</button>
+									</form>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p>No diagnoses found.</p>
+			<?php endif; ?>
+		</div>
+		
+		<!-- Edit Diagnosis Modal -->
+		<div id="edit-diagnosis-modal" style="display:none;" class="card">
+			<h2>Edit Diagnosis</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'edit_diagnosis' ); ?>
+				<input type="hidden" name="action" value="edit_diagnosis">
+				<input type="hidden" name="diagnosis_id" id="edit_diagnosis_id">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="edit_name">Diagnosis Name</label></th>
+						<td><input type="text" id="edit_name" name="name" class="regular-text" required></td>
+					</tr>
+					<tr>
+						<th><label for="edit_description">Description</label></th>
+						<td><textarea id="edit_description" name="description" rows="3" class="large-text"></textarea></td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Update Diagnosis' ); ?>
+				<button type="button" class="button" onclick="hideEditModal()">Cancel</button>
+			</form>
+		</div>
+	</div>
+	
+	<script>
+	function editDiagnosis(id, name, description) {
+		document.getElementById('edit_diagnosis_id').value = id;
+		document.getElementById('edit_name').value = name;
+		document.getElementById('edit_description').value = description;
+		document.getElementById('edit-diagnosis-modal').style.display = 'block';
+	}
+	
+	function hideEditModal() {
+		document.getElementById('edit-diagnosis-modal').style.display = 'none';
+	}
+	</script>
+	<?php
+}
+
+/**
  * Enhanced Sessions & Attendance Page
  */
 function snks_enhanced_ai_sessions_page() {
 	global $wpdb;
+	
+	snks_load_ai_admin_styles();
 	
 	// Handle attendance updates
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_attendance' ) {
@@ -725,30 +1043,7 @@ function snks_enhanced_ai_sessions_page() {
 		</div>
 	</div>
 
-	<style>
-	.filters-form {
-		display: flex;
-		gap: 20px;
-		align-items: center;
-		flex-wrap: wrap;
-	}
-	.filters-form label {
-		display: flex;
-		align-items: center;
-		gap: 5px;
-	}
-	.ai-badge {
-		background: #28a745;
-		color: white;
-		padding: 2px 6px;
-		border-radius: 3px;
-		font-size: 11px;
-		font-weight: bold;
-	}
-	.status-waiting { color: #ffc107; }
-	.status-open { color: #007cba; }
-	.status-past { color: #6c757d; }
-	</style>
+
 	<?php
 }
 
@@ -757,6 +1052,8 @@ function snks_enhanced_ai_sessions_page() {
  */
 function snks_enhanced_ai_coupons_page() {
 	global $wpdb;
+	
+	snks_load_ai_admin_styles();
 	
 	// Handle coupon creation/editing
 	if ( isset( $_POST['action'] ) ) {
@@ -919,13 +1216,7 @@ function snks_enhanced_ai_coupons_page() {
 		</div>
 	</div>
 
-	<style>
-	.coupon-form .form-table th {
-		width: 150px;
-	}
-	.status-active { color: #28a745; }
-	.status-inactive { color: #6c757d; }
-	</style>
+
 	<?php
 } 
 
@@ -934,6 +1225,8 @@ function snks_enhanced_ai_coupons_page() {
  */
 function snks_enhanced_ai_analytics_page() {
 	global $wpdb;
+	
+	snks_load_ai_admin_styles();
 	
 	// Get analytics data
 	$total_ai_users = count( get_users( array( 
@@ -1050,14 +1343,7 @@ function snks_enhanced_ai_analytics_page() {
 		</div>
 	</div>
 
-	<style>
-	.analytics-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-		gap: 20px;
-		margin: 20px 0;
-	}
-	</style>
+
 	<?php
 }
 
@@ -1065,6 +1351,8 @@ function snks_enhanced_ai_analytics_page() {
  * ChatGPT Integration Page
  */
 function snks_enhanced_ai_chatgpt_page() {
+	snks_load_ai_admin_styles();
+	
 	// Handle settings updates
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_chatgpt_settings' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_chatgpt_settings' ) ) {
@@ -1234,6 +1522,8 @@ function snks_test_chatgpt_integration( $test_prompt ) {
  * WhatsApp Integration Page
  */
 function snks_enhanced_ai_whatsapp_page() {
+	snks_load_ai_admin_styles();
+	
 	// Handle settings updates
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_whatsapp_settings' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_whatsapp_settings' ) ) {
@@ -1320,17 +1610,7 @@ function snks_enhanced_ai_whatsapp_page() {
 		</div>
 	</div>
 
-	<style>
-	.template-section {
-		margin-bottom: 30px;
-		padding: 20px;
-		border: 1px solid #ddd;
-		border-radius: 5px;
-	}
-	.template-section h3 {
-		margin-top: 0;
-	}
-	</style>
+
 	<?php
 }
 
@@ -1338,6 +1618,8 @@ function snks_enhanced_ai_whatsapp_page() {
  * Rochtah Integration Page
  */
 function snks_enhanced_ai_rochtah_page() {
+	snks_load_ai_admin_styles();
+	
 	// Handle settings updates
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_rochtah_settings' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_rochtah_settings' ) ) {
@@ -1460,17 +1742,7 @@ function snks_enhanced_ai_rochtah_page() {
 		</div>
 	</div>
 
-	<style>
-	.time-range-section {
-		margin: 10px 0;
-		padding: 10px;
-		border: 1px solid #ddd;
-		border-radius: 3px;
-	}
-	.time-range-section label {
-		margin-right: 20px;
-	}
-	</style>
+
 	<?php
 }
 
@@ -1478,6 +1750,8 @@ function snks_enhanced_ai_rochtah_page() {
  * Email Settings Page
  */
 function snks_enhanced_ai_email_page() {
+	snks_load_ai_admin_styles();
+	
 	// Handle settings updates
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_email_settings' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_email_settings' ) ) {
@@ -1552,6 +1826,8 @@ function snks_enhanced_ai_email_page() {
  * Admin Tools Page
  */
 function snks_enhanced_ai_tools_page() {
+	snks_load_ai_admin_styles();
+	
 	// Handle switch user action
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'switch_user' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'switch_user' ) ) {
@@ -1619,12 +1895,6 @@ function snks_enhanced_ai_tools_page() {
 		</div>
 	</div>
 
-	<style>
-	.quick-actions {
-		display: flex;
-		gap: 10px;
-		flex-wrap: wrap;
-	}
-	</style>
+
 	<?php
 } 

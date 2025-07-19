@@ -10,8 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Add AI admin menu
+ * Add AI admin menu - DISABLED (Using Enhanced Version)
  */
+/*
 function snks_add_ai_admin_menu() {
 	add_menu_page(
 		'Jalsah AI Management',
@@ -42,6 +43,7 @@ function snks_add_ai_admin_menu() {
 	);
 }
 add_action( 'admin_menu', 'snks_add_ai_admin_menu' );
+*/
 
 /**
  * AI Admin Page
