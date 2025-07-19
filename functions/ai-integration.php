@@ -32,6 +32,7 @@ class SNKS_AI_Integration {
 	 */
 	private function init_hooks() {
 		add_action( 'init', array( $this, 'register_ai_endpoints' ) );
+		add_action( 'template_redirect', array( $this, 'debug_ai_endpoint' ) );
 		add_action( 'wp_ajax_nopriv_ai_auth', array( $this, 'handle_ai_auth' ) );
 		add_action( 'wp_ajax_ai_auth', array( $this, 'handle_ai_auth' ) );
 		add_action( 'wp_ajax_nopriv_ai_therapists', array( $this, 'handle_ai_therapists' ) );
@@ -42,15 +43,147 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_ai_cart', array( $this, 'handle_ai_cart' ) );
 		add_action( 'wp_ajax_nopriv_ai_diagnoses', array( $this, 'handle_ai_diagnoses' ) );
 		add_action( 'wp_ajax_ai_diagnoses', array( $this, 'handle_ai_diagnoses' ) );
+		
+		// Add CORS headers early
+		add_action( 'init', array( $this, 'handle_cors' ) );
+		add_action( 'send_headers', array( $this, 'handle_cors' ) );
+		add_action( 'wp_head', array( $this, 'handle_cors' ) );
+		
+		// Handle API requests very early
+		add_action( 'parse_request', array( $this, 'handle_early_api_requests' ) );
+		
+		// Add very early CORS handling
+		add_action( 'plugins_loaded', array( $this, 'handle_very_early_cors' ) );
+		
+		// Add activation hook to flush rewrite rules
+		register_activation_hook( __FILE__, array( $this, 'flush_rewrite_rules' ) );
+		
+		// Add admin action to flush rewrite rules manually
+		add_action( 'admin_post_flush_ai_rewrite_rules', array( $this, 'flush_rewrite_rules' ) );
 	}
 	
 	/**
 	 * Register AI endpoints
 	 */
 	public function register_ai_endpoints() {
+		// Add rewrite rules for API endpoints
 		add_rewrite_rule( '^api/ai/(.*?)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
+		
 		add_filter( 'query_vars', array( $this, 'add_ai_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_ai_requests' ) );
+		
+		// Also add a simple test endpoint
+		add_action( 'wp_ajax_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
+		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
+	}
+	
+	/**
+	 * Handle CORS headers
+	 */
+	public function handle_cors() {
+		// Only handle CORS for API requests
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+			header( 'Access-Control-Allow-Origin: *' );
+			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+			header( 'Access-Control-Allow-Credentials: true' );
+			
+			// Handle preflight OPTIONS request
+			if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
+				http_response_code( 200 );
+				exit;
+			}
+			
+			// Prevent WordPress from redirecting API requests
+			remove_action( 'template_redirect', 'redirect_canonical' );
+		}
+	}
+
+	/**
+	 * Handle very early CORS
+	 */
+	public function handle_very_early_cors() {
+		// Check if this is an AI API request
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+			// Set CORS headers immediately
+			header( 'Access-Control-Allow-Origin: *' );
+			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+			header( 'Access-Control-Allow-Credentials: true' );
+			
+			// Handle preflight OPTIONS request
+			if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
+				http_response_code( 200 );
+				exit;
+			}
+		}
+	}
+
+	/**
+	 * Handle early API requests
+	 */
+	public function handle_early_api_requests( $wp ) {
+		// Check if this is an AI API request
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+			// Set CORS headers immediately
+			header( 'Access-Control-Allow-Origin: *' );
+			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+			header( 'Access-Control-Allow-Credentials: true' );
+			
+			// Handle preflight OPTIONS request
+			if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
+				http_response_code( 200 );
+				exit;
+			}
+			
+			// Don't prevent WordPress from processing - let it continue
+			// but ensure our handler gets called
+		}
+	}
+
+	/**
+	 * Test AI endpoint
+	 */
+	public function test_ai_endpoint() {
+		header( 'Content-Type: application/json' );
+		header( 'Access-Control-Allow-Origin: *' );
+		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+		
+		echo json_encode( array(
+			'success' => true,
+			'message' => 'AI endpoint test successful',
+			'timestamp' => current_time( 'mysql' ),
+			'request_uri' => $_SERVER['REQUEST_URI'],
+		) );
+		exit;
+	}
+
+	/**
+	 * Flush rewrite rules
+	 */
+	public function flush_rewrite_rules() {
+		flush_rewrite_rules();
+	}
+	
+	/**
+	 * Debug endpoint (for testing)
+	 */
+	public function debug_ai_endpoint() {
+		if ( isset( $_GET['debug_ai'] ) ) {
+			header( 'Content-Type: application/json' );
+			header( 'Access-Control-Allow-Origin: *' );
+			echo json_encode( array(
+				'success' => true,
+				'message' => 'AI endpoint is working!',
+				'endpoint' => get_query_var( 'ai_endpoint' ),
+				'request_uri' => $_SERVER['REQUEST_URI'],
+				'query_vars' => $GLOBALS['wp_query']->query_vars,
+			) );
+			exit;
+		}
 	}
 	
 	/**
@@ -66,20 +199,52 @@ class SNKS_AI_Integration {
 	 */
 	public function handle_ai_requests() {
 		$endpoint = get_query_var( 'ai_endpoint' );
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Endpoint: ' . $endpoint );
+			error_log( 'AI Integration Debug - Request URI: ' . $_SERVER['REQUEST_URI'] );
+			error_log( 'AI Integration Debug - Query Vars: ' . print_r( $GLOBALS['wp_query']->query_vars, true ) );
+		}
+		
+		// Check if this is an AI API request
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) === false ) {
+			return;
+		}
+		
+		if ( ! $endpoint ) {
+			// If no endpoint is set, try to extract it from the URL
+			$path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+			$path_parts = explode( '/', trim( $path, '/' ) );
+			
+			// Find the 'ai' part and get what comes after it
+			$ai_index = array_search( 'ai', $path_parts );
+			if ( $ai_index !== false && isset( $path_parts[ $ai_index + 1 ] ) ) {
+				$endpoint = $path_parts[ $ai_index + 1 ];
+			}
+		}
+		
 		if ( ! $endpoint ) {
 			return;
 		}
 		
-		// Set JSON header
-		header( 'Content-Type: application/json' );
+		// Prevent WordPress from outputting anything else
+		define( 'DOING_AJAX', true );
+		
+		// Set CORS headers early to prevent redirects
 		header( 'Access-Control-Allow-Origin: *' );
 		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-		header( 'Access-Control-Allow-Headers: Content-Type, Authorization' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+		header( 'Access-Control-Allow-Credentials: true' );
 		
+		// Handle preflight OPTIONS request
 		if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
 			http_response_code( 200 );
 			exit;
 		}
+		
+		// Set JSON header
+		header( 'Content-Type: application/json' );
 		
 		// Route the request
 		$this->route_ai_request( $endpoint );
@@ -94,6 +259,27 @@ class SNKS_AI_Integration {
 		$path = explode( '/', $endpoint );
 		
 		switch ( $path[0] ) {
+			case 'test':
+				$this->send_success( array( 'message' => 'AI endpoint is working!', 'endpoint' => $endpoint ) );
+				break;
+			case 'debug':
+				$this->send_success( array( 
+					'message' => 'Debug endpoint',
+					'endpoint' => $endpoint,
+					'method' => $method,
+					'path' => $path,
+					'request_uri' => $_SERVER['REQUEST_URI'],
+					'query_vars' => $GLOBALS['wp_query']->query_vars,
+					'headers' => getallheaders()
+				) );
+				break;
+			case 'ping':
+				$this->send_success( array( 
+					'message' => 'Pong!',
+					'timestamp' => current_time( 'mysql' ),
+					'endpoint' => $endpoint
+				) );
+				break;
 			case 'auth':
 				$this->handle_auth_endpoint( $method, $path );
 				break;
@@ -137,6 +323,13 @@ class SNKS_AI_Integration {
 	 * Handle therapists endpoints
 	 */
 	private function handle_therapists_endpoint( $method, $path ) {
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Therapists endpoint called' );
+			error_log( 'AI Integration Debug - Method: ' . $method );
+			error_log( 'AI Integration Debug - Path: ' . print_r( $path, true ) );
+		}
+		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
@@ -224,9 +417,16 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 		
-		// Check if user is a patient
-		if ( ! in_array( 'customer', $user->roles, true ) ) {
-			$this->send_error( 'Access denied', 403 );
+		// Debug: Log user roles
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Login Debug - User ID: ' . $user->ID );
+			error_log( 'AI Login Debug - User Roles: ' . print_r( $user->roles, true ) );
+		}
+		
+		// Check if user is a patient (customer) or doctor
+		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
+		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
+			$this->send_error( 'Access denied. Only patients and doctors can access this platform.', 403 );
 		}
 		
 		$token = $this->generate_jwt_token( $user->ID );
@@ -238,6 +438,8 @@ class SNKS_AI_Integration {
 				'email' => $user->user_email,
 				'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
 				'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
+				'role' => $user->roles[0], // Primary role
+				'roles' => $user->roles,   // All roles
 			)
 		) );
 	}
@@ -317,6 +519,11 @@ class SNKS_AI_Integration {
 	 * Get AI Therapists
 	 */
 	private function get_ai_therapists() {
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Getting therapists' );
+		}
+		
 		$therapists = get_users( array(
 			'role' => 'doctor',
 			'meta_query' => array(
@@ -327,6 +534,11 @@ class SNKS_AI_Integration {
 				)
 			)
 		) );
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Found therapists: ' . count( $therapists ) );
+		}
 		
 		$result = array();
 		foreach ( $therapists as $therapist ) {
@@ -655,6 +867,11 @@ class SNKS_AI_Integration {
 		$headers = getallheaders();
 		$auth_header = isset( $headers['Authorization'] ) ? $headers['Authorization'] : '';
 		
+		// Also check for HTTP_AUTHORIZATION (some servers use this)
+		if ( empty( $auth_header ) && isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+			$auth_header = $_SERVER['HTTP_AUTHORIZATION'];
+		}
+		
 		if ( ! preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
 			$this->send_error( 'No token provided', 401 );
 		}
@@ -675,6 +892,7 @@ class SNKS_AI_Integration {
 	private function send_success( $data ) {
 		http_response_code( 200 );
 		echo json_encode( array( 'success' => true, 'data' => $data ) );
+		exit;
 	}
 	
 	/**
@@ -683,6 +901,7 @@ class SNKS_AI_Integration {
 	private function send_error( $message, $code = 400 ) {
 		http_response_code( $code );
 		echo json_encode( array( 'success' => false, 'error' => $message ) );
+		exit;
 	}
 }
 

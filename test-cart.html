@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        .result { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 3px; white-space: pre-wrap; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Cart API Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Register/Login</h3>
+        <input type="email" id="email" placeholder="Email" value="test@example.com">
+        <input type="password" id="password" placeholder="Password" value="testpass123">
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+        <div id="auth-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Test Cart</h3>
+        <button onclick="loadCart()">Load Cart</button>
+        <button onclick="addToCart()">Add to Cart (Slot ID: 1)</button>
+        <button onclick="checkout()">Checkout</button>
+        <div id="cart-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Current Token</h3>
+        <button onclick="showToken()">Show Token</button>
+        <div id="token-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost/shrinks/api/ai';
+        let currentToken = '';
+        let currentUserId = null;
+
+        function showResult(elementId, data) {
+            document.getElementById(elementId).textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(currentToken && { 'Authorization': `Bearer ${currentToken}` }),
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return { status: response.status, data };
+            } catch (error) {
+                return { status: 'error', data: { error: error.message } };
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const result = await makeRequest(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    first_name: 'Test',
+                    last_name: 'User',
+                    age: 25,
+                    email: email,
+                    phone: '123456789',
+                    whatsapp: '123456789',
+                    country: 'US',
+                    password: password
+                })
+            });
+            
+            if (result.data.success) {
+                currentToken = result.data.data.token;
+                currentUserId = result.data.data.user.id;
+                showResult('auth-result', { message: 'Registration successful', user: result.data.data.user });
+            } else {
+                showResult('auth-result', result.data);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const result = await makeRequest(`${API_BASE}/auth`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
+            if (result.data.success) {
+                currentToken = result.data.data.token;
+                currentUserId = result.data.data.user.id;
+                showResult('auth-result', { message: 'Login successful', user: result.data.data.user });
+            } else {
+                showResult('auth-result', result.data);
+            }
+        }
+
+        async function loadCart() {
+            if (!currentUserId) {
+                showResult('cart-result', { error: 'Please login first' });
+                return;
+            }
+            
+            const result = await makeRequest(`${API_BASE}/cart/${currentUserId}`);
+            showResult('cart-result', result.data);
+        }
+
+        async function addToCart() {
+            if (!currentToken) {
+                showResult('cart-result', { error: 'Please login first' });
+                return;
+            }
+            
+            const result = await makeRequest(`${API_BASE}/cart/add`, {
+                method: 'POST',
+                body: JSON.stringify({ slot_id: 1 })
+            });
+            
+            showResult('cart-result', result.data);
+        }
+
+        async function checkout() {
+            if (!currentToken) {
+                showResult('cart-result', { error: 'Please login first' });
+                return;
+            }
+            
+            const result = await makeRequest(`${API_BASE}/cart/checkout`, {
+                method: 'POST'
+            });
+            
+            showResult('cart-result', result.data);
+        }
+
+        function showToken() {
+            showResult('token-result', { 
+                token: currentToken ? currentToken.substring(0, 50) + '...' : 'No token',
+                userId: currentUserId 
+            });
+        }
+    </script>
+</body>
+</html> 

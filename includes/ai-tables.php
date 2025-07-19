@@ -37,9 +37,7 @@ function snks_create_ai_tables() {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
-		UNIQUE KEY unique_therapist_diagnosis (therapist_id, diagnosis_id),
-		FOREIGN KEY (therapist_id) REFERENCES {$wpdb->users}(ID) ON DELETE CASCADE,
-		FOREIGN KEY (diagnosis_id) REFERENCES {$diagnoses_table}(id) ON DELETE CASCADE
+		UNIQUE KEY unique_therapist_diagnosis (therapist_id, diagnosis_id)
 	) " . $wpdb->get_charset_collate();
 	
 	// Execute SQL

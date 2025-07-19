@@ -193,22 +193,32 @@ function snks_ai_therapists_page() {
 			$show_on_ai = isset( $_POST['show_on_ai_site'] ) ? '1' : '0';
 			$ai_bio = sanitize_textarea_field( $_POST['ai_bio'] );
 			
+
+			
 			update_user_meta( $therapist_id, 'show_on_ai_site', $show_on_ai );
 			update_user_meta( $therapist_id, 'ai_bio', $ai_bio );
 			
 			// Handle diagnosis assignments
 			$diagnoses = $wpdb->get_results( "SELECT id FROM {$wpdb->prefix}snks_diagnoses" );
+			$assigned_count = 0;
+			
 			foreach ( $diagnoses as $diagnosis ) {
 				$rating_key = 'rating_' . $diagnosis->id;
 				$message_key = 'message_' . $diagnosis->id;
 				$assigned_key = 'assigned_' . $diagnosis->id;
 				
 				if ( isset( $_POST[ $assigned_key ] ) ) {
-					$rating = floatval( $_POST[ $rating_key ] );
-					$message = sanitize_textarea_field( $_POST[ $message_key ] );
+					$rating = isset( $_POST[ $rating_key ] ) ? floatval( $_POST[ $rating_key ] ) : 0;
+					$message = isset( $_POST[ $message_key ] ) ? sanitize_textarea_field( $_POST[ $message_key ] ) : '';
+					
+					// Validate rating
+					if ( $rating < 0 ) $rating = 0;
+					if ( $rating > 5 ) $rating = 5;
+					
+
 					
 					// Insert or update assignment
-					$wpdb->replace(
+					$result = $wpdb->replace(
 						$wpdb->prefix . 'snks_therapist_diagnoses',
 						array(
 							'therapist_id' => $therapist_id,
@@ -218,9 +228,13 @@ function snks_ai_therapists_page() {
 						),
 						array( '%d', '%d', '%f', '%s' )
 					);
+					
+					if ( $result !== false ) {
+						$assigned_count++;
+					}
 				} else {
 					// Remove assignment
-					$wpdb->delete(
+					$delete_result = $wpdb->delete(
 						$wpdb->prefix . 'snks_therapist_diagnoses',
 						array(
 							'therapist_id' => $therapist_id,
@@ -228,10 +242,12 @@ function snks_ai_therapists_page() {
 						),
 						array( '%d', '%d' )
 					);
+					
+
 				}
 			}
 			
-			echo '<div class="notice notice-success"><p>Therapist AI settings updated successfully!</p></div>';
+			echo '<div class="notice notice-success"><p>Therapist AI settings updated successfully! (' . $assigned_count . ' diagnosis assignments saved)</p></div>';
 		}
 	}
 	
@@ -290,13 +306,13 @@ function snks_ai_therapists_page() {
 								<tr>
 									<td><?php echo esc_html( $diagnosis->name ); ?></td>
 									<td>
-										<input type="checkbox" name="assigned_<?php echo $diagnosis->id; ?>" value="1">
+										<input type="checkbox" name="assigned_<?php echo $diagnosis->id; ?>" value="1" id="assigned_<?php echo $diagnosis->id; ?>">
 									</td>
 									<td>
-										<input type="number" name="rating_<?php echo $diagnosis->id; ?>" min="0" max="5" step="0.1" class="small-text">
+										<input type="number" name="rating_<?php echo $diagnosis->id; ?>" min="0" max="5" step="0.1" class="small-text" value="0" id="rating_<?php echo $diagnosis->id; ?>">
 									</td>
 									<td>
-										<textarea name="message_<?php echo $diagnosis->id; ?>" rows="2" class="large-text"></textarea>
+										<textarea name="message_<?php echo $diagnosis->id; ?>" rows="2" class="large-text" id="message_<?php echo $diagnosis->id; ?>"></textarea>
 									</td>
 								</tr>
 							<?php endforeach; ?>
@@ -320,6 +336,9 @@ function snks_ai_therapists_page() {
 		document.getElementById('therapist-settings').style.display = 'block';
 		document.getElementById('therapist_id').value = therapistId;
 		
+		// Clear all form fields first
+		clearFormFields();
+		
 		// Load therapist data via AJAX
 		jQuery.post(ajaxurl, {
 			action: 'load_therapist_ai_settings',
@@ -334,17 +353,49 @@ function snks_ai_therapists_page() {
 				document.getElementById('ai_bio').value = data.ai_bio || '';
 				
 				// Set diagnosis assignments
-				data.diagnoses.forEach(function(diagnosis) {
-					var assignedCheckbox = document.querySelector('input[name="assigned_' + diagnosis.diagnosis_id + '"]');
-					var ratingInput = document.querySelector('input[name="rating_' + diagnosis.diagnosis_id + '"]');
-					var messageTextarea = document.querySelector('textarea[name="message_' + diagnosis.diagnosis_id + '"]');
-					
-					if (assignedCheckbox) assignedCheckbox.checked = true;
-					if (ratingInput) ratingInput.value = diagnosis.rating;
-					if (messageTextarea) messageTextarea.value = diagnosis.suitability_message;
-				});
+				if (data.diagnoses && data.diagnoses.length > 0) {
+					data.diagnoses.forEach(function(diagnosis) {
+						var assignedCheckbox = document.getElementById('assigned_' + diagnosis.diagnosis_id);
+						var ratingInput = document.getElementById('rating_' + diagnosis.diagnosis_id);
+						var messageTextarea = document.getElementById('message_' + diagnosis.diagnosis_id);
+						
+						if (assignedCheckbox) {
+							assignedCheckbox.checked = true;
+						}
+						if (ratingInput) {
+							ratingInput.value = diagnosis.rating || 0;
+						}
+						if (messageTextarea) {
+							messageTextarea.value = diagnosis.suitability_message || '';
+						}
+					});
+				}
 			}
 		});
+	}
+	
+	function clearFormFields() {
+		// Clear all checkboxes
+		var checkboxes = document.querySelectorAll('input[type="checkbox"][name^="assigned_"]');
+		checkboxes.forEach(function(checkbox) {
+			checkbox.checked = false;
+		});
+		
+		// Clear all rating inputs
+		var ratingInputs = document.querySelectorAll('input[name^="rating_"]');
+		ratingInputs.forEach(function(input) {
+			input.value = '0';
+		});
+		
+		// Clear all message textareas
+		var messageTextareas = document.querySelectorAll('textarea[name^="message_"]');
+		messageTextareas.forEach(function(textarea) {
+			textarea.value = '';
+		});
+		
+		// Clear basic fields
+		document.getElementById('show_on_ai_site').checked = false;
+		document.getElementById('ai_bio').value = '';
 	}
 	</script>
 	<?php
@@ -360,6 +411,8 @@ function snks_load_therapist_ai_settings() {
 	
 	$therapist_id = intval( $_POST['therapist_id'] );
 	
+
+	
 	$data = array(
 		'show_on_ai_site' => get_user_meta( $therapist_id, 'show_on_ai_site', true ),
 		'ai_bio' => get_user_meta( $therapist_id, 'ai_bio', true ),
@@ -371,6 +424,8 @@ function snks_load_therapist_ai_settings() {
 		"SELECT * FROM {$wpdb->prefix}snks_therapist_diagnoses WHERE therapist_id = %d",
 		$therapist_id
 	) );
+	
+
 	
 	foreach ( $diagnoses as $diagnosis ) {
 		$data['diagnoses'][] = array(

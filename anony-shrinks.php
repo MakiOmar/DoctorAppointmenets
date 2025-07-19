@@ -125,8 +125,10 @@ add_action(
 		snks_require_all_files( SNKS_DIR . 'scripts' );
 		
 		// Load AI integration
-		require_once SNKS_DIR . 'functions/ai-integration.php';
-		require_once SNKS_DIR . 'functions/admin/ai-admin.php';
+require_once SNKS_DIR . 'functions/ai-integration.php';
+require_once SNKS_DIR . 'functions/admin/ai-admin.php';
+require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
+require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 	},
 	20
 );
@@ -158,6 +160,10 @@ function plugin_activation_hook() {
 	// Create AI tables
 	do_action( 'snks_create_ai_tables' );
 	do_action( 'snks_add_ai_meta_fields' );
+	do_action( 'snks_create_enhanced_ai_tables' );
+	do_action( 'snks_add_enhanced_ai_meta_fields' );
+	do_action( 'snks_add_enhanced_ai_user_meta_fields' );
+	do_action( 'snks_create_rochtah_doctor_role' );
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 
