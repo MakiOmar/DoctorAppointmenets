@@ -263,7 +263,7 @@ export default {
     const loadAppointments = async () => {
       loading.value = true
       try {
-        const response = await api.get('/api/ai/appointments')
+        const response = await api.get('/ai/appointments')
         appointments.value = response.data.data || []
       } catch (error) {
         toast.error('Failed to load appointments')
@@ -366,7 +366,7 @@ export default {
       cancelling.value = true
       
       try {
-        await api.put(`/api/ai/appointments/${appointmentToCancel.value}/cancel`)
+        await api.put(`/ai/appointments/${appointmentToCancel.value}/cancel`)
         
         toast.success('Appointment cancelled successfully')
         

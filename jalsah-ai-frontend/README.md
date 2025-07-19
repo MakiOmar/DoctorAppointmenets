@@ -40,7 +40,8 @@ A modern Vue.js frontend for the Jalsah AI mental health platform, featuring AI-
 3. **Set up environment variables**
    Create a `.env` file in the root directory:
    ```env
-   VITE_API_URL=https://jalsah.app
+   VITE_API_TARGET=https://jalsah.app
+   VITE_API_BASE_URL=/api
    ```
 
 4. **Start development server**
@@ -174,7 +175,8 @@ npm run preview
 ### Environment Variables
 ```env
 # API Configuration
-VITE_API_URL=https://jalsah.app
+VITE_API_TARGET=https://jalsah.app
+VITE_API_BASE_URL=/api
 
 # Feature Flags
 VITE_ENABLE_ANALYTICS=false

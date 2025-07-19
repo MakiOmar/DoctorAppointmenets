@@ -16,7 +16,7 @@ export const useCartStore = defineStore('cart', () => {
   const addToCart = async (slotId) => {
     loading.value = true
     try {
-      const response = await api.post('/api/ai/cart/add', { slot_id: slotId })
+      const response = await api.post('/ai/cart/add', { slot_id: slotId })
       await loadCart()
       toast.success('Added to cart successfully!')
       return true
@@ -36,7 +36,7 @@ export const useCartStore = defineStore('cart', () => {
 
   const loadCart = async () => {
     try {
-      const response = await api.get(`/api/ai/cart/${getCurrentUserId()}`)
+      const response = await api.get(`/ai/cart/${getCurrentUserId()}`)
       items.value = response.data.data || []
     } catch (error) {
       console.error('Failed to load cart:', error)
@@ -46,7 +46,7 @@ export const useCartStore = defineStore('cart', () => {
   const checkout = async () => {
     loading.value = true
     try {
-      const response = await api.post('/api/ai/cart/checkout')
+      const response = await api.post('/ai/cart/checkout')
       const { checkout_url, order_id } = response.data.data
       
       // Clear cart after successful checkout

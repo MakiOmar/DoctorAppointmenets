@@ -295,7 +295,9 @@ export default {
       })
       
       if (success) {
-        router.push('/diagnosis')
+        // Role-based redirect will be handled by router navigation guard
+        // Just push to home and let the router handle the redirect
+        router.push('/')
       }
     }
 

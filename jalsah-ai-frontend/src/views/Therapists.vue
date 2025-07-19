@@ -241,7 +241,7 @@ export default {
     const loadTherapists = async () => {
       loading.value = true
       try {
-        const response = await api.get('/api/ai/therapists')
+        const response = await api.get('/ai/therapists')
         therapists.value = response.data.data || []
       } catch (error) {
         toast.error('Failed to load therapists')

@@ -19,47 +19,55 @@ const routes = [
     component: () => import('@/views/Register.vue'),
     meta: { guest: true }
   },
+  // Customer routes
   {
     path: '/diagnosis',
     name: 'Diagnosis',
     component: () => import('@/views/Diagnosis.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
     path: '/therapists',
     name: 'Therapists',
     component: () => import('@/views/Therapists.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
     path: '/therapist/:id',
     name: 'TherapistDetail',
     component: () => import('@/views/TherapistDetail.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
     path: '/booking/:therapistId',
     name: 'Booking',
     component: () => import('@/views/Booking.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
     path: '/cart',
     name: 'Cart',
     component: () => import('@/views/Cart.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
     path: '/appointments',
     name: 'Appointments',
     component: () => import('@/views/Appointments.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, roles: ['customer'] }
+  },
+  // Doctor routes
+  {
+    path: '/doctor',
+    name: 'DoctorDashboard',
+    component: () => import('@/views/DoctorDashboard.vue'),
+    meta: { requiresAuth: true, roles: ['doctor', 'clinic_manager'] }
   }
 ]
 
@@ -71,13 +79,72 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
+  // Debug logging
+  console.log('Router Guard:', {
+    to: to.path,
+    from: from.path,
+    isAuthenticated: authStore.isAuthenticated,
+    user: authStore.user,
+    userRole: authStore.user?.role
+  })
+  
+  // Check if authentication is required
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    console.log('Redirecting to login - not authenticated')
     next('/login')
-  } else if (to.meta.guest && authStore.isAuthenticated) {
-    next('/')
-  } else {
-    next()
+    return
   }
+  
+  // Check if user is already authenticated and trying to access guest pages
+  if (to.meta.guest && authStore.isAuthenticated) {
+    // Redirect based on user role
+    const userRole = authStore.user?.role
+    if (userRole === 'doctor' || userRole === 'clinic_manager') {
+      next('/doctor')
+    } else {
+      next('/therapists') // Default customer landing page
+    }
+    return
+  }
+  
+  // Check role-based access
+  if (to.meta.roles && authStore.isAuthenticated) {
+    const userRole = authStore.user?.role
+    const userRoles = authStore.user?.roles || []
+    
+    // Check if user has any of the required roles
+    const hasRequiredRole = to.meta.roles.some(role => 
+      userRoles.includes(role) || userRole === role
+    )
+    
+    if (!hasRequiredRole) {
+      console.log('Role access denied, redirecting:', {
+        requiredRoles: to.meta.roles,
+        userRole: userRole,
+        userRoles: userRoles
+      })
+      // Redirect to appropriate dashboard based on role
+      if (userRole === 'doctor' || userRole === 'clinic_manager') {
+        next('/doctor')
+      } else {
+        next('/therapists')
+      }
+      return
+    }
+  }
+  
+  // If user is authenticated and accessing home page, redirect to appropriate dashboard
+  if (to.path === '/' && authStore.isAuthenticated) {
+    const userRole = authStore.user?.role
+    if (userRole === 'doctor' || userRole === 'clinic_manager') {
+      next('/doctor')
+    } else {
+      next('/therapists')
+    }
+    return
+  }
+  
+  next()
 })
 
 export default router 

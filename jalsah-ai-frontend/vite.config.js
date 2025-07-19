@@ -13,7 +13,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://jalsah.app',
+        target: process.env.VITE_API_TARGET || 'http://localhost/shrinks',
         changeOrigin: true,
         secure: false,
       },

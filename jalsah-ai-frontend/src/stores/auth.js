@@ -4,7 +4,7 @@ import { useToast } from 'vue-toastification'
 import api from '@/services/api'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null)
+  const user = ref(JSON.parse(localStorage.getItem('jalsah_user') || 'null'))
   const token = ref(localStorage.getItem('jalsah_token'))
   const loading = ref(false)
   const toast = useToast()
@@ -14,12 +14,16 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials) => {
     loading.value = true
     try {
-      const response = await api.post('/api/ai/auth', credentials)
+      const response = await api.post('/ai/auth', credentials)
       const { token: authToken, user: userData } = response.data.data
       
       token.value = authToken
       user.value = userData
       localStorage.setItem('jalsah_token', authToken)
+      localStorage.setItem('jalsah_user', JSON.stringify(userData))
+      
+      // Set token in API headers for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
       toast.success('Login successful!')
       return true
@@ -35,12 +39,16 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (userData) => {
     loading.value = true
     try {
-      const response = await api.post('/api/ai/auth/register', userData)
+      const response = await api.post('/ai/auth/register', userData)
       const { token: authToken, user: newUser } = response.data.data
       
       token.value = authToken
       user.value = newUser
       localStorage.setItem('jalsah_token', authToken)
+      localStorage.setItem('jalsah_user', JSON.stringify(newUser))
+      
+      // Set token in API headers for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
       toast.success('Registration successful!')
       return true
@@ -57,6 +65,8 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     localStorage.removeItem('jalsah_token')
+    localStorage.removeItem('jalsah_user')
+    delete api.defaults.headers.common['Authorization']
     toast.success('Logged out successfully')
   }
 
@@ -66,6 +76,11 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       // Set token in API headers
       api.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+      
+      // If we have user data in localStorage, use it
+      if (user.value) {
+        return true
+      }
       
       // You might want to add an endpoint to get current user data
       // For now, we'll just check if the token is valid
@@ -77,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Initialize auth state
-  if (token.value) {
+  if (token.value && user.value) {
     loadUser()
   }
 
