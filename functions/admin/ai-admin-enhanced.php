@@ -1620,20 +1620,111 @@ function snks_enhanced_ai_whatsapp_page() {
 function snks_enhanced_ai_rochtah_page() {
 	snks_load_ai_admin_styles();
 	
+	global $wpdb;
+	
 	// Handle settings updates
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_rochtah_settings' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_rochtah_settings' ) ) {
 			update_option( 'snks_ai_rochtah_enabled', isset( $_POST['enabled'] ) ? '1' : '0' );
 			update_option( 'snks_ai_rochtah_available_days', serialize( $_POST['available_days'] ) );
-			update_option( 'snks_ai_rochtah_time_ranges', serialize( $_POST['time_ranges'] ) );
 			
 			echo '<div class="notice notice-success"><p>Rochtah settings updated successfully!</p></div>';
 		}
 	}
 	
+	// Handle appointment addition
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'add_appointment' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'add_rochtah_appointment' ) ) {
+			$day = sanitize_text_field( $_POST['day'] );
+			$start_time = sanitize_text_field( $_POST['start_time'] );
+			$end_time = sanitize_text_field( $_POST['end_time'] );
+			
+			// Check if table exists, if not create it
+			$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+			$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name;
+			
+			if ( ! $table_exists ) {
+				// Create the table
+				require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+				$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+					id INT(11) NOT NULL AUTO_INCREMENT,
+					day_of_week VARCHAR(20) NOT NULL,
+					start_time TIME NOT NULL,
+					end_time TIME NOT NULL,
+					current_bookings INT(11) DEFAULT 0,
+					status ENUM('active', 'inactive') DEFAULT 'active',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+					PRIMARY KEY (id),
+					KEY day_of_week (day_of_week),
+					KEY start_time (start_time),
+					KEY status (status)
+				) " . $wpdb->get_charset_collate();
+				
+				dbDelta( $sql );
+			}
+			
+			$result = $wpdb->insert(
+				$table_name,
+				array(
+					'day_of_week' => $day,
+					'start_time' => $start_time,
+					'end_time' => $end_time,
+					'status' => 'active'
+				),
+				array( '%s', '%s', '%s', '%s' )
+			);
+			
+			if ( $result ) {
+				echo '<div class="notice notice-success"><p>Appointment slot added successfully!</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>Error adding appointment slot: ' . $wpdb->last_error . '</p></div>';
+			}
+		}
+	}
+	
+	// Handle appointment deletion
+	if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete_appointment' && isset( $_GET['id'] ) ) {
+		if ( wp_verify_nonce( $_GET['_wpnonce'], 'delete_rochtah_appointment' ) ) {
+			$appointment_id = intval( $_GET['id'] );
+			$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+			$wpdb->delete(
+				$table_name,
+				array( 'id' => $appointment_id ),
+				array( '%d' )
+			);
+			
+			echo '<div class="notice notice-success"><p>Appointment slot deleted successfully!</p></div>';
+		}
+	}
+	
+	// Handle manual table creation (for testing)
+	if ( isset( $_GET['action'] ) && $_GET['action'] === 'create_table' ) {
+		if ( wp_verify_nonce( $_GET['_wpnonce'], 'create_rochtah_table' ) ) {
+			$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+				id INT(11) NOT NULL AUTO_INCREMENT,
+				day_of_week VARCHAR(20) NOT NULL,
+				start_time TIME NOT NULL,
+				end_time TIME NOT NULL,
+				current_bookings INT(11) DEFAULT 0,
+				status ENUM('active', 'inactive') DEFAULT 'active',
+				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				KEY day_of_week (day_of_week),
+				KEY start_time (start_time),
+				KEY status (status)
+			) " . $wpdb->get_charset_collate();
+			
+			dbDelta( $sql );
+			echo '<div class="notice notice-success"><p>Rochtah appointments table created successfully!</p></div>';
+		}
+	}
+	
 	$enabled = get_option( 'snks_ai_rochtah_enabled', '0' );
 	$available_days = unserialize( get_option( 'snks_ai_rochtah_available_days', serialize( array() ) ) );
-	$time_ranges = unserialize( get_option( 'snks_ai_rochtah_time_ranges', serialize( array() ) ) );
 	
 	$days = array(
 		'monday' => 'Monday',
@@ -1644,6 +1735,31 @@ function snks_enhanced_ai_rochtah_page() {
 		'saturday' => 'Saturday',
 		'sunday' => 'Sunday'
 	);
+	
+	// Generate 20-minute time slots from 8:00 AM to 8:00 PM
+	$time_slots = array();
+	$start_hour = 8;
+	$end_hour = 20;
+	
+	for ( $hour = $start_hour; $hour < $end_hour; $hour++ ) {
+		for ( $minute = 0; $minute < 60; $minute += 20 ) {
+			$time = sprintf( '%02d:%02d', $hour, $minute );
+			$time_slots[] = $time;
+		}
+	}
+	
+	// Get existing appointments
+	$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+	$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name;
+	
+	if ( $table_exists ) {
+		$existing_appointments = $wpdb->get_results( "
+			SELECT * FROM $table_name 
+			ORDER BY day_of_week, start_time
+		" );
+	} else {
+		$existing_appointments = array();
+	}
 	?>
 	<div class="wrap">
 		<h1>Rochtah Integration</h1>
@@ -1670,25 +1786,110 @@ function snks_enhanced_ai_rochtah_page() {
 					</label><br>
 				<?php endforeach; ?>
 				
-				<h3>Time Ranges</h3>
-				<?php foreach ( $days as $day_key => $day_name ) : ?>
-					<div class="time-range-section">
-						<h4><?php echo esc_html( $day_name ); ?></h4>
-						<label>
-							Start Time:
-							<input type="time" name="time_ranges[<?php echo esc_attr( $day_key ); ?>][start]" 
-								value="<?php echo esc_attr( $time_ranges[ $day_key ]['start'] ?? '09:00' ); ?>">
-						</label>
-						<label>
-							End Time:
-							<input type="time" name="time_ranges[<?php echo esc_attr( $day_key ); ?>][end]" 
-								value="<?php echo esc_attr( $time_ranges[ $day_key ]['end'] ?? '17:00' ); ?>">
-						</label>
-					</div>
-				<?php endforeach; ?>
-				
 				<?php submit_button( 'Save Settings' ); ?>
 			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Add Appointment Slots</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'add_rochtah_appointment' ); ?>
+				<input type="hidden" name="action" value="add_appointment">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="day">Day of Week</label></th>
+						<td>
+							<select id="day" name="day" required>
+								<option value="">Select a day...</option>
+								<?php foreach ( $days as $day_key => $day_name ) : ?>
+									<option value="<?php echo esc_attr( $day_key ); ?>"><?php echo esc_html( $day_name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="start_time">Start Time</label></th>
+						<td>
+							<select id="start_time" name="start_time" required>
+								<option value="">Select start time...</option>
+								<?php foreach ( $time_slots as $time ) : ?>
+									<option value="<?php echo esc_attr( $time ); ?>"><?php echo esc_html( $time ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="end_time">End Time</label></th>
+						<td>
+							<select id="end_time" name="end_time" required>
+								<option value="">Select end time...</option>
+								<?php foreach ( $time_slots as $time ) : ?>
+									<option value="<?php echo esc_attr( $time ); ?>"><?php echo esc_html( $time ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description">Appointments are 20 minutes long. End time should be 20 minutes after start time.</p>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Add Appointment Slot' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Database Status</h2>
+			<?php if ( $table_exists ) : ?>
+				<p><strong>✅ Table Status:</strong> Rochtah appointments table exists and is ready.</p>
+			<?php else : ?>
+				<p><strong>❌ Table Status:</strong> Rochtah appointments table does not exist.</p>
+				<p>
+					<a href="<?php echo wp_nonce_url( admin_url( 'admin.php?page=jalsah-ai-rochtah&action=create_table' ), 'create_rochtah_table' ); ?>" 
+					   class="button button-primary">
+						Create Table Manually
+					</a>
+				</p>
+			<?php endif; ?>
+		</div>
+		
+		<div class="card">
+			<h2>Current Appointment Slots</h2>
+			<?php if ( $existing_appointments ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Day</th>
+							<th>Time</th>
+							<th>Duration</th>
+							<th>Status</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $existing_appointments as $appointment ) : ?>
+							<tr>
+								<td><?php echo esc_html( ucfirst( $appointment->day_of_week ) ); ?></td>
+								<td><?php echo esc_html( $appointment->start_time . ' - ' . $appointment->end_time ); ?></td>
+								<td>20 minutes</td>
+								<td>
+									<span class="status-<?php echo esc_attr( $appointment->status ); ?>">
+										<?php echo esc_html( ucfirst( $appointment->status ) ); ?>
+									</span>
+								</td>
+								<td>
+									<a href="<?php echo wp_nonce_url( admin_url( 'admin.php?page=jalsah-ai-rochtah&action=delete_appointment&id=' . $appointment->id ), 'delete_rochtah_appointment' ); ?>" 
+									   class="button button-small button-link-delete" 
+									   onclick="return confirm('Are you sure you want to delete this appointment slot?')">
+										Delete
+									</a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p>No appointment slots configured yet. Add some using the form above.</p>
+			<?php endif; ?>
 		</div>
 		
 		<div class="card">
@@ -1742,6 +1943,58 @@ function snks_enhanced_ai_rochtah_page() {
 		</div>
 	</div>
 
+	<script>
+	jQuery(document).ready(function($) {
+		// Auto-calculate end time when start time is selected
+		$('#start_time').on('change', function() {
+			var startTime = $(this).val();
+			if (startTime) {
+				// Parse the time and add 20 minutes
+				var timeParts = startTime.split(':');
+				var hours = parseInt(timeParts[0]);
+				var minutes = parseInt(timeParts[1]);
+				
+				// Add 20 minutes
+				minutes += 20;
+				if (minutes >= 60) {
+					hours += 1;
+					minutes -= 60;
+				}
+				
+				// Format the end time
+				var endTime = sprintf('%02d:%02d', hours, minutes);
+				$('#end_time').val(endTime);
+			}
+		});
+		
+		// Validate that end time is 20 minutes after start time
+		$('form').on('submit', function(e) {
+			var startTime = $('#start_time').val();
+			var endTime = $('#end_time').val();
+			
+			if (startTime && endTime) {
+				var startParts = startTime.split(':');
+				var endParts = endTime.split(':');
+				var startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+				var endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+				
+				if (endMinutes - startMinutes !== 20) {
+					alert('End time must be exactly 20 minutes after start time.');
+					e.preventDefault();
+					return false;
+				}
+			}
+		});
+		
+		// Helper function for sprintf
+		function sprintf(format) {
+			var args = Array.prototype.slice.call(arguments, 1);
+			return format.replace(/%(\d*)d/g, function(match, number) {
+				return args[parseInt(number) - 1];
+			});
+		}
+	});
+	</script>
 
 	<?php
 }

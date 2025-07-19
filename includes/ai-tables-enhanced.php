@@ -57,6 +57,23 @@ function snks_create_enhanced_ai_tables() {
 		KEY status (status)
 	) " . $wpdb->get_charset_collate();
 	
+	// Create Rochtah appointments table
+	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+	$rochtah_appointments_sql = "CREATE TABLE IF NOT EXISTS $rochtah_appointments_table (
+		id INT(11) NOT NULL AUTO_INCREMENT,
+		day_of_week VARCHAR(20) NOT NULL,
+		start_time TIME NOT NULL,
+		end_time TIME NOT NULL,
+		current_bookings INT(11) DEFAULT 0,
+		status ENUM('active', 'inactive') DEFAULT 'active',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY day_of_week (day_of_week),
+		KEY start_time (start_time),
+		KEY status (status)
+	) " . $wpdb->get_charset_collate();
+	
 	// Create AI analytics table
 	$analytics_table = $wpdb->prefix . 'snks_ai_analytics';
 	$analytics_sql = "CREATE TABLE IF NOT EXISTS $analytics_table (
@@ -97,6 +114,7 @@ function snks_create_enhanced_ai_tables() {
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $coupons_sql );
 	dbDelta( $rochtah_bookings_sql );
+	dbDelta( $rochtah_appointments_sql );
 	dbDelta( $analytics_sql );
 	dbDelta( $notifications_sql );
 	
