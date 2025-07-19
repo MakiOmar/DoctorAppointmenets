@@ -121,6 +121,26 @@ function snks_add_enhanced_ai_admin_menu() {
 		'jalsah-ai-tools',
 		'snks_enhanced_ai_tools_page'
 	);
+	
+	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Rochtah Doctor Dashboard',
+		'Rochtah Doctor',
+		'manage_rochtah',
+		'rochtah-doctor-dashboard',
+		'snks_rochtah_doctor_dashboard'
+	);
+	
+	// Add Rochtah Doctor Management (only for admins)
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Manage Rochtah Doctors',
+		'Manage Rochtah Doctors',
+		'manage_options',
+		'rochtah-doctor-management',
+		'snks_rochtah_doctor_management'
+	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu' );
 

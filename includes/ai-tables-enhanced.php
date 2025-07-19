@@ -44,8 +44,13 @@ function snks_create_enhanced_ai_tables() {
 		symptoms TEXT,
 		booking_date DATE NOT NULL,
 		booking_time TIME NOT NULL,
-		status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
+		status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'prescribed') DEFAULT 'pending',
 		prescription_text TEXT,
+		medications TEXT,
+		dosage_instructions TEXT,
+		doctor_notes TEXT,
+		prescribed_by INT(11) NULL,
+		prescribed_at TIMESTAMP NULL,
 		prescription_file VARCHAR(255),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -193,7 +198,24 @@ function snks_create_rochtah_doctor_role() {
 			'edit_posts' => false,
 			'delete_posts' => false,
 			'manage_rochtah' => true,
+			'view_rochtah_appointments' => true,
+			'manage_rochtah_prescriptions' => true,
+			'view_rochtah_patients' => true,
+			'edit_rochtah_prescriptions' => true,
+			'delete_rochtah_prescriptions' => true,
+			'upload_files' => true,
 		) );
+	}
+	
+	// Add capabilities to administrator role
+	$admin_role = get_role( 'administrator' );
+	if ( $admin_role ) {
+		$admin_role->add_cap( 'manage_rochtah' );
+		$admin_role->add_cap( 'view_rochtah_appointments' );
+		$admin_role->add_cap( 'manage_rochtah_prescriptions' );
+		$admin_role->add_cap( 'view_rochtah_patients' );
+		$admin_role->add_cap( 'edit_rochtah_prescriptions' );
+		$admin_role->add_cap( 'delete_rochtah_prescriptions' );
 	}
 }
 
