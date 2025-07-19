@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
+import { useCartStore } from './cart'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('jalsah_user') || 'null'))
@@ -24,6 +25,10 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+      
+      // Load cart after successful login
+      const cartStore = useCartStore()
+      cartStore.loadCart()
       
       toast.success('Login successful!')
       return true
@@ -50,6 +55,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
+      // Load cart after successful registration
+      const cartStore = useCartStore()
+      cartStore.loadCart()
+      
       toast.success('Registration successful!')
       return true
     } catch (error) {
@@ -67,6 +76,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('jalsah_token')
     localStorage.removeItem('jalsah_user')
     delete api.defaults.headers.common['Authorization']
+    
+    // Clear cart on logout
+    const cartStore = useCartStore()
+    cartStore.clearCart()
+    
     toast.success('Logged out successfully')
   }
 
@@ -79,6 +93,9 @@ export const useAuthStore = defineStore('auth', () => {
       
       // If we have user data in localStorage, use it
       if (user.value) {
+        // Load cart when user is loaded
+        const cartStore = useCartStore()
+        cartStore.loadCart()
         return true
       }
       

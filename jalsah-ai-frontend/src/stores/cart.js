@@ -35,11 +35,22 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   const loadCart = async () => {
+    const userId = getCurrentUserId()
+    if (!userId) {
+      console.log('No user ID found, skipping cart load')
+      return
+    }
+    
     try {
-      const response = await api.get(`/ai/cart/${getCurrentUserId()}`)
+      const response = await api.get(`/ai/cart/${userId}`)
       items.value = response.data.data || []
     } catch (error) {
-      console.error('Failed to load cart:', error)
+      if (error.response?.status === 401) {
+        console.log('User not authenticated, clearing cart')
+        items.value = []
+      } else {
+        console.error('Failed to load cart:', error)
+      }
     }
   }
 
@@ -73,23 +84,29 @@ export const useCartStore = defineStore('cart', () => {
 
   const getCurrentUserId = () => {
     // Get user ID from auth store or localStorage
-    const token = localStorage.getItem('jalsah_token')
-    if (token) {
+    const userData = localStorage.getItem('jalsah_user')
+    if (userData) {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        return payload.user_id
+        const user = JSON.parse(userData)
+        return user.id
       } catch (error) {
-        console.error('Failed to decode token:', error)
+        console.error('Failed to parse user data:', error)
         return null
       }
     }
     return null
   }
 
-  // Load cart on store initialization
-  if (getCurrentUserId()) {
-    loadCart()
+  // Load cart on store initialization - only if user is logged in
+  const initializeCart = () => {
+    const userId = getCurrentUserId()
+    if (userId) {
+      loadCart()
+    }
   }
+  
+  // Initialize cart if user is already logged in
+  initializeCart()
 
   return {
     items,
@@ -100,6 +117,7 @@ export const useCartStore = defineStore('cart', () => {
     removeFromCart,
     loadCart,
     checkout,
-    clearCart
+    clearCart,
+    initializeCart
   }
 }) 
