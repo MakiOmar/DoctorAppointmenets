@@ -54,6 +54,11 @@ function snks_migrate_to_bilingual() {
 		// 3. Add bilingual user meta fields
 		// This will be handled by the admin interface when users update their profiles
 		
+		// 4. Test the migration by checking if tables exist
+		if ( ! $wpdb->get_var( "SHOW TABLES LIKE '{$diagnoses_table}'" ) ) {
+			throw new Exception( 'Diagnoses table does not exist. Please ensure AI tables are created first.' );
+		}
+		
 		// Commit transaction
 		$wpdb->query( 'COMMIT' );
 		
@@ -73,20 +78,13 @@ function snks_migrate_to_bilingual() {
 	}
 }
 
-// Add migration page to admin
-function snks_add_bilingual_migration_page() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Bilingual Migration',
-		'Bilingual Migration',
-		'manage_options',
-		'jalsah-ai-bilingual-migration',
-		'snks_bilingual_migration_page'
-	);
-}
-add_action( 'admin_menu', 'snks_add_bilingual_migration_page' );
+// Migration page is now registered in the main AI admin menu
 
 function snks_bilingual_migration_page() {
+	// Load admin styles
+	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
+		snks_load_ai_admin_styles();
+	}
 	?>
 	<div class="wrap">
 		<h1>Bilingual Migration</h1>
@@ -125,6 +123,60 @@ function snks_bilingual_migration_page() {
 			}
 		}
 		?>
+		
+		<div class="card">
+			<h2>Current Database Status</h2>
+			<?php
+			global $wpdb;
+			$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+			$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+			
+			$diagnoses_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$diagnoses_table}'" );
+			$therapist_diagnoses_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$therapist_diagnoses_table}'" );
+			
+			if ( $diagnoses_exists ) {
+				$diagnoses_columns = $wpdb->get_results( "SHOW COLUMNS FROM {$diagnoses_table}" );
+				$diagnoses_column_names = array_column( $diagnoses_columns, 'Field' );
+				$has_bilingual_diagnoses = in_array( 'name_en', $diagnoses_column_names );
+			} else {
+				$has_bilingual_diagnoses = false;
+			}
+			
+			if ( $therapist_diagnoses_exists ) {
+				$therapist_columns = $wpdb->get_results( "SHOW COLUMNS FROM {$therapist_diagnoses_table}" );
+				$therapist_column_names = array_column( $therapist_columns, 'Field' );
+				$has_bilingual_therapist = in_array( 'suitability_message_en', $therapist_column_names );
+			} else {
+				$has_bilingual_therapist = false;
+			}
+			?>
+			<ul>
+				<li><strong>Diagnoses Table:</strong> 
+					<?php if ( $diagnoses_exists ): ?>
+						✅ Exists
+						<?php if ( $has_bilingual_diagnoses ): ?>
+							✅ Bilingual columns present
+						<?php else: ?>
+							❌ Needs migration
+						<?php endif; ?>
+					<?php else: ?>
+						❌ Does not exist
+					<?php endif; ?>
+				</li>
+				<li><strong>Therapist Diagnoses Table:</strong> 
+					<?php if ( $therapist_diagnoses_exists ): ?>
+						✅ Exists
+						<?php if ( $has_bilingual_therapist ): ?>
+							✅ Bilingual columns present
+						<?php else: ?>
+							❌ Needs migration
+						<?php endif; ?>
+					<?php else: ?>
+						❌ Does not exist
+					<?php endif; ?>
+				</li>
+			</ul>
+		</div>
 		
 		<div class="card">
 			<h2>What This Migration Does</h2>

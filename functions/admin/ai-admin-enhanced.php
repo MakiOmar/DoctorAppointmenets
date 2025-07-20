@@ -125,6 +125,15 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_tools_page'
 	);
 	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Bilingual Migration',
+		'Bilingual Migration',
+		'manage_options',
+		'jalsah-ai-bilingual-migration',
+		'snks_bilingual_migration_page'
+	);
+	
 	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
 	add_submenu_page(
 		'jalsah-ai-management',
