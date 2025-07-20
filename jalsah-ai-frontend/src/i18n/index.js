@@ -10,7 +10,12 @@ const messages = {
 // Get the default locale from localStorage or use Arabic as default
 const getDefaultLocale = () => {
   const savedLocale = localStorage.getItem('locale')
-  return savedLocale || 'ar'
+  const locale = savedLocale || 'ar'
+  
+  // Also store in jalsah_locale for API calls
+  localStorage.setItem('jalsah_locale', locale)
+  
+  return locale
 }
 
 export default createI18n({

@@ -600,11 +600,42 @@ class SNKS_AI_Integration {
 	private function format_ai_therapist( $therapist ) {
 		$diagnoses = $this->get_therapist_diagnoses( $therapist->ID );
 		
+		// Get current locale from request or default to English
+		$locale = isset( $_GET['locale'] ) ? sanitize_text_field( $_GET['locale'] ) : 'en';
+		
+		// Get bilingual data
+		$display_name_en = get_user_meta( $therapist->ID, 'ai_display_name_en', true );
+		$display_name_ar = get_user_meta( $therapist->ID, 'ai_display_name_ar', true );
+		$bio_en = get_user_meta( $therapist->ID, 'ai_bio_en', true );
+		$bio_ar = get_user_meta( $therapist->ID, 'ai_bio_ar', true );
+		$public_bio_en = get_user_meta( $therapist->ID, 'public_short_bio_en', true );
+		$public_bio_ar = get_user_meta( $therapist->ID, 'public_short_bio_ar', true );
+		
+		// Select appropriate language based on locale
+		$name = $locale === 'ar' ? $display_name_ar : $display_name_en;
+		if ( empty( $name ) ) {
+			$name = get_user_meta( $therapist->ID, 'billing_first_name', true ) . ' ' . get_user_meta( $therapist->ID, 'billing_last_name', true );
+		}
+		
+		$bio = $locale === 'ar' ? $bio_ar : $bio_en;
+		if ( empty( $bio ) ) {
+			$bio = get_user_meta( $therapist->ID, 'ai_bio', true ); // Fallback to old field
+		}
+		
+		$public_bio = $locale === 'ar' ? $public_bio_ar : $public_bio_en;
+		
 		return array(
 			'id' => $therapist->ID,
-			'name' => get_user_meta( $therapist->ID, 'billing_first_name', true ) . ' ' . get_user_meta( $therapist->ID, 'billing_last_name', true ),
+			'name' => $name,
+			'name_en' => $display_name_en,
+			'name_ar' => $display_name_ar,
 			'photo' => get_user_meta( $therapist->ID, 'profile-image', true ),
-			'bio' => get_user_meta( $therapist->ID, 'ai_bio', true ),
+			'bio' => $bio,
+			'bio_en' => $bio_en,
+			'bio_ar' => $bio_ar,
+			'public_bio' => $public_bio,
+			'public_bio_en' => $public_bio_en,
+			'public_bio_ar' => $public_bio_ar,
 			'certifications' => get_user_meta( $therapist->ID, 'ai_certifications', true ),
 			'earliest_slot' => get_user_meta( $therapist->ID, 'ai_earliest_slot', true ),
 			'price' => $this->get_therapist_ai_price( $therapist->ID ),
@@ -618,13 +649,43 @@ class SNKS_AI_Integration {
 	private function get_therapist_diagnoses( $therapist_id ) {
 		global $wpdb;
 		
+		// Get current locale from request or default to English
+		$locale = isset( $_GET['locale'] ) ? sanitize_text_field( $_GET['locale'] ) : 'en';
+		
 		$diagnoses = $wpdb->get_results( $wpdb->prepare(
-			"SELECT d.*, td.rating, td.suitability_message 
+			"SELECT d.*, td.rating, td.suitability_message_en, td.suitability_message_ar 
 			FROM {$wpdb->prefix}snks_diagnoses d
 			JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON d.id = td.diagnosis_id
 			WHERE td.therapist_id = %d",
 			$therapist_id
 		) );
+		
+		// Process each diagnosis to include bilingual data
+		foreach ( $diagnoses as $diagnosis ) {
+			// Get bilingual diagnosis names
+			$name_en = $diagnosis->name_en ?: $diagnosis->name;
+			$name_ar = $diagnosis->name_ar ?: '';
+			$description_en = $diagnosis->description_en ?: $diagnosis->description;
+			$description_ar = $diagnosis->description_ar ?: '';
+			
+			// Select appropriate language based on locale
+			$diagnosis->name = $locale === 'ar' ? $name_ar : $name_en;
+			$diagnosis->description = $locale === 'ar' ? $description_ar : $description_en;
+			
+			// Add bilingual fields
+			$diagnosis->name_en = $name_en;
+			$diagnosis->name_ar = $name_ar;
+			$diagnosis->description_en = $description_en;
+			$diagnosis->description_ar = $description_ar;
+			
+			// Handle suitability messages
+			$suitability_message_en = $diagnosis->suitability_message_en ?: $diagnosis->suitability_message;
+			$suitability_message_ar = $diagnosis->suitability_message_ar ?: '';
+			
+			$diagnosis->suitability_message = $locale === 'ar' ? $suitability_message_ar : $suitability_message_en;
+			$diagnosis->suitability_message_en = $suitability_message_en;
+			$diagnosis->suitability_message_ar = $suitability_message_ar;
+		}
 		
 		return $diagnoses;
 	}
@@ -842,7 +903,29 @@ class SNKS_AI_Integration {
 	private function get_ai_diagnoses() {
 		global $wpdb;
 		
-		$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+		// Get current locale from request or default to English
+		$locale = isset( $_GET['locale'] ) ? sanitize_text_field( $_GET['locale'] ) : 'en';
+		
+		$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name_en, name" );
+		
+		// Process each diagnosis to include bilingual data
+		foreach ( $diagnoses as $diagnosis ) {
+			// Get bilingual diagnosis names
+			$name_en = $diagnosis->name_en ?: $diagnosis->name;
+			$name_ar = $diagnosis->name_ar ?: '';
+			$description_en = $diagnosis->description_en ?: $diagnosis->description;
+			$description_ar = $diagnosis->description_ar ?: '';
+			
+			// Select appropriate language based on locale
+			$diagnosis->name = $locale === 'ar' ? $name_ar : $name_en;
+			$diagnosis->description = $locale === 'ar' ? $description_ar : $description_en;
+			
+			// Add bilingual fields
+			$diagnosis->name_en = $name_en;
+			$diagnosis->name_ar = $name_ar;
+			$diagnosis->description_en = $description_en;
+			$diagnosis->description_ar = $description_ar;
+		}
 		
 		$this->send_success( $diagnoses );
 	}

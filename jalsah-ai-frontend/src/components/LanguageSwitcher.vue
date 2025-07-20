@@ -59,6 +59,7 @@ export default {
     const switchLanguage = (langCode) => {
       locale.value = langCode
       localStorage.setItem('locale', langCode)
+      localStorage.setItem('jalsah_locale', langCode) // Store for API calls
       isOpen.value = false
       
       // Update document direction for RTL support

@@ -9,13 +9,22 @@ const api = axios.create({
   },
 })
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and locale
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('jalsah_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // Add locale parameter to all requests
+    const locale = localStorage.getItem('jalsah_locale') || 'en'
+    if (config.params) {
+      config.params.locale = locale
+    } else {
+      config.params = { locale }
+    }
+    
     return config
   },
   (error) => {
