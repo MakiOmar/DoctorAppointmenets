@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -99,7 +102,57 @@
 
   /* Arabic font support */
   [dir="rtl"] {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  /* Global font improvements */
+  body {
+    font-family: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Ensure Cairo is used for Arabic text */
+  [lang="ar"], [dir="rtl"] {
+    font-family: 'Cairo', sans-serif;
+  }
+
+  /* Font weight optimizations for Cairo */
+  .font-light {
+    font-weight: 300;
+  }
+
+  .font-normal {
+    font-weight: 400;
+  }
+
+  .font-medium {
+    font-weight: 500;
+  }
+
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .font-extrabold {
+    font-weight: 800;
+  }
+
+  /* Improved typography for Arabic */
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6 {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+  }
+
+  [dir="rtl"] p, [dir="rtl"] span, [dir="rtl"] div {
+    font-family: 'Cairo', sans-serif;
+  }
+
+  /* Better line height for Arabic text */
+  [dir="rtl"] {
+    line-height: 1.6;
   }
 
   /* RTL specific spacing adjustments */

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header />
+
     
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">My Appointments</h1>
@@ -55,11 +55,12 @@
             <!-- Appointment Info -->
             <div class="md:flex md:items-center md:space-x-6">
               <!-- Therapist Image -->
-              <img 
-                :src="appointment.therapist?.photo || '/default-therapist.jpg'" 
-                :alt="appointment.therapist?.name"
-                class="w-16 h-16 object-cover rounded-full mb-4 md:mb-0"
-              />
+                              <img 
+                  :src="appointment.therapist?.photo || '/default-therapist.svg'" 
+                  :alt="appointment.therapist?.name"
+                  class="w-16 h-16 rounded-full mb-4 md:mb-0"
+                  :class="appointment.therapist?.photo ? 'object-cover' : 'object-contain bg-gray-100 p-1'"
+                />
 
               <!-- Details -->
               <div class="flex-1">
@@ -211,13 +212,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
-import Header from '@/components/Header.vue'
-
 export default {
   name: 'Appointments',
-  components: {
-    Header
-  },
   setup() {
     const router = useRouter()
     const toast = useToast()

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header />
+
     
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="text-center mb-8">
@@ -197,13 +197,8 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
-import Header from '@/components/Header.vue'
-
 export default {
   name: 'Diagnosis',
-  components: {
-    Header
-  },
   setup() {
     const router = useRouter()
     const toast = useToast()

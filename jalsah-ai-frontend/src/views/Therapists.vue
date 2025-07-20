@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <Header />
+  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
@@ -85,9 +84,10 @@
           <!-- Therapist Image -->
           <div class="relative mb-4">
             <img 
-              :src="therapist.photo || '/default-therapist.jpg'" 
+              :src="therapist.photo || '/default-therapist.svg'" 
               :alt="therapist.name"
-              class="w-full h-48 object-cover rounded-lg"
+              class="w-full h-48 rounded-lg"
+              :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
             />
             <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
               {{ therapist.price?.others || 'Contact' }}
@@ -169,13 +169,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
-import Header from '@/components/Header.vue'
-
 export default {
   name: 'Therapists',
-  components: {
-    Header
-  },
   setup() {
     const router = useRouter()
     const toast = useToast()
@@ -234,8 +229,10 @@ export default {
 
     const getAverageRating = (therapist) => {
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) return 0
-      const total = therapist.diagnoses.reduce((sum, d) => sum + (d.rating || 0), 0)
-      return total / therapist.diagnoses.length
+      const validRatings = therapist.diagnoses.filter(d => d.rating && !isNaN(d.rating) && d.rating > 0)
+      if (validRatings.length === 0) return 0
+      const total = validRatings.reduce((sum, d) => sum + (d.rating || 0), 0)
+      return total / validRatings.length
     }
 
     const loadTherapists = async () => {
@@ -282,5 +279,18 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+.rtl .md\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
 }
 </style> 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header />
+
     
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Back Button -->
@@ -141,11 +141,12 @@
             
             <!-- Therapist Info -->
             <div class="flex items-center space-x-4 mb-6">
-              <img 
-                :src="therapist.photo || '/default-therapist.jpg'" 
-                :alt="therapist.name"
-                class="w-16 h-16 object-cover rounded-full"
-              />
+                              <img 
+                  :src="therapist.photo || '/default-therapist.svg'" 
+                  :alt="therapist.name"
+                  class="w-16 h-16 rounded-full"
+                  :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-1'"
+                />
               <div>
                 <h3 class="font-semibold text-gray-900">{{ therapist.name }}</h3>
                 <p class="text-sm text-gray-600">Licensed Therapist</p>
@@ -220,13 +221,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
-import Header from '@/components/Header.vue'
-
 export default {
   name: 'Booking',
-  components: {
-    Header
-  },
   setup() {
     const route = useRoute()
     const router = useRouter()

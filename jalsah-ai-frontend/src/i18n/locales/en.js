@@ -273,7 +273,9 @@ export default {
   // Therapist Detail
   therapistDetail: {
     backToTherapists: 'Back to Therapists',
+    reviews: 'reviews',
     perSession: 'per session',
+    bioDefault: 'Experienced therapist specializing in mental health and well-being. Committed to providing compassionate, evidence-based care to help clients achieve their mental health goals.',
     about: 'About',
     experience: 'Experience',
     experienceText: 'Licensed therapist with extensive experience in mental health counseling and therapy',

@@ -24,7 +24,7 @@ app.use(Toast, {
   hideProgressBar: false,
   closeButton: 'button',
   icon: true,
-  rtl: false
+  rtl: i18n.global.locale.value === 'ar'
 })
 
 app.mount('#app') 

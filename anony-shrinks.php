@@ -129,6 +129,7 @@ require_once SNKS_DIR . 'functions/ai-integration.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
+require_once SNKS_DIR . 'functions/admin/test-data-populator.php';
 require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
 	},

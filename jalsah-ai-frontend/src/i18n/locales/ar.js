@@ -273,7 +273,9 @@ export default {
   // Therapist Detail
   therapistDetail: {
     backToTherapists: 'العودة للمعالجين',
+    reviews: 'تقييمات',
     perSession: 'للساعة الواحدة',
+    bioDefault: 'معالج ذو خبرة متخصص في الصحة النفسية والعافية. ملتزم بتقديم رعاية شفقة قائمة على الأدلة لمساعدة العملاء على تحقيق أهدافهم في الصحة النفسية.',
     about: 'حول',
     experience: 'الخبرة',
     experienceText: 'معالج مرخص بخبرة واسعة في الاستشارة النفسية والعلاج',

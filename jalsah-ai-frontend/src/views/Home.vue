@@ -1,6 +1,5 @@
 <template>
   <div>
-    <Header />
     
     <!-- Hero Section -->
     <section class="bg-gradient-to-br from-primary-50 to-secondary-50 py-20">
@@ -189,12 +188,7 @@
 </template>
 
 <script>
-import Header from '@/components/Header.vue'
-
 export default {
-  name: 'Home',
-  components: {
-    Header
-  }
+  name: 'Home'
 }
 </script> 

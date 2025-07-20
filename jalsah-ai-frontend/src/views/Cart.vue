@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header />
+
     
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
@@ -30,11 +30,12 @@
                 class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg"
               >
                 <!-- Therapist Image -->
-                <img 
-                  :src="item.therapist?.photo || '/default-therapist.jpg'" 
-                  :alt="item.therapist?.name"
-                  class="w-20 h-20 object-cover rounded-lg"
-                />
+                                  <img 
+                    :src="item.therapist?.photo || '/default-therapist.svg'" 
+                    :alt="item.therapist?.name"
+                    class="w-20 h-20 rounded-lg"
+                    :class="item.therapist?.photo ? 'object-cover' : 'object-contain bg-gray-100 p-2'"
+                  />
 
                 <!-- Item Details -->
                 <div class="flex-1">
@@ -157,13 +158,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useCartStore } from '@/stores/cart'
-import Header from '@/components/Header.vue'
-
 export default {
   name: 'Cart',
-  components: {
-    Header
-  },
   setup() {
     const router = useRouter()
     const toast = useToast()
