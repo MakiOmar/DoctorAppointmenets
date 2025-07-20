@@ -944,7 +944,7 @@ function snks_enhanced_ai_diagnoses_page() {
 								<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->description_ar ); ?></td>
 								<td><?php echo esc_html( $therapist_count ); ?> therapists</td>
 								<td>
-									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo esc_js( $diagnosis->name_en ?: $diagnosis->name ); ?>', '<?php echo esc_js( $diagnosis->name_ar ); ?>', '<?php echo esc_js( $diagnosis->description_en ?: $diagnosis->description ); ?>', '<?php echo esc_js( $diagnosis->description_ar ); ?>')">Edit</button>
+									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo addslashes( $diagnosis->name_en ?: $diagnosis->name ?: '' ); ?>', '<?php echo addslashes( $diagnosis->name_ar ?: '' ); ?>', '<?php echo addslashes( $diagnosis->description_en ?: $diagnosis->description ?: '' ); ?>', '<?php echo addslashes( $diagnosis->description_ar ?: '' ); ?>')">Edit</button>
 									<form method="post" style="display:inline;">
 										<?php wp_nonce_field( 'delete_diagnosis' ); ?>
 										<input type="hidden" name="action" value="delete_diagnosis">
@@ -961,9 +961,15 @@ function snks_enhanced_ai_diagnoses_page() {
 			<?php endif; ?>
 		</div>
 		
+		<!-- Modal Backdrop -->
+		<div id="modal-backdrop" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;"></div>
+		
 		<!-- Edit Diagnosis Modal -->
-		<div id="edit-diagnosis-modal" style="display:none;" class="card">
-			<h2>Edit Diagnosis</h2>
+		<div id="edit-diagnosis-modal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; border: 2px solid #0073aa; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; max-height: 90%; overflow-y: auto;" class="card">
+			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+				<h2>Edit Diagnosis</h2>
+				<button type="button" onclick="hideEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+			</div>
 			<form method="post">
 				<?php wp_nonce_field( 'edit_diagnosis' ); ?>
 				<input type="hidden" name="action" value="edit_diagnosis">
@@ -1004,19 +1010,89 @@ function snks_enhanced_ai_diagnoses_page() {
 		</div>
 	</div>
 	
+	<style>
+	/* Ensure modal is hidden by default */
+	#edit-diagnosis-modal {
+		display: none !important;
+		visibility: hidden !important;
+	}
+	
+	#modal-backdrop {
+		display: none !important;
+	}
+	
+	/* Modal styles when visible */
+	#edit-diagnosis-modal.show {
+		display: block !important;
+		visibility: visible !important;
+	}
+	
+	#modal-backdrop.show {
+		display: block !important;
+	}
+	</style>
+	
 	<script>
 	function editDiagnosis(id, name_en, name_ar, description_en, description_ar) {
-		document.getElementById('edit_diagnosis_id').value = id;
-		document.getElementById('edit_name_en').value = name_en || '';
-		document.getElementById('edit_name_ar').value = name_ar || '';
-		document.getElementById('edit_description_en').value = description_en || '';
-		document.getElementById('edit_description_ar').value = description_ar || '';
-		document.getElementById('edit-diagnosis-modal').style.display = 'block';
+		try {
+			console.log('editDiagnosis called with:', { id, name_en, name_ar, description_en, description_ar });
+			
+			// Set the diagnosis ID
+			document.getElementById('edit_diagnosis_id').value = id;
+			
+			// Set the form fields with proper fallbacks
+			document.getElementById('edit_name_en').value = name_en || '';
+			document.getElementById('edit_name_ar').value = name_ar || '';
+			document.getElementById('edit_description_en').value = description_en || '';
+			document.getElementById('edit_description_ar').value = description_ar || '';
+			
+			// Show the modal and backdrop
+			document.getElementById('edit-diagnosis-modal').classList.add('show');
+			document.getElementById('modal-backdrop').classList.add('show');
+			
+			// Scroll to the modal
+			document.getElementById('edit-diagnosis-modal').scrollIntoView({ behavior: 'smooth' });
+			
+		} catch (error) {
+			console.error('Error in editDiagnosis:', error);
+			alert('Error opening edit form. Please try again.');
+		}
 	}
 	
 	function hideEditModal() {
-		document.getElementById('edit-diagnosis-modal').style.display = 'none';
+		try {
+			document.getElementById('edit-diagnosis-modal').classList.remove('show');
+			document.getElementById('modal-backdrop').classList.remove('show');
+		} catch (error) {
+			console.error('Error hiding modal:', error);
+		}
 	}
+	
+	// Close modal when clicking outside
+	document.addEventListener('click', function(event) {
+		var modal = document.getElementById('edit-diagnosis-modal');
+		var backdrop = document.getElementById('modal-backdrop');
+		if (event.target === modal || event.target === backdrop) {
+			hideEditModal();
+		}
+	});
+	
+	// Close modal with Escape key
+	document.addEventListener('keydown', function(event) {
+		if (event.key === 'Escape') {
+			hideEditModal();
+		}
+	});
+	
+	// Ensure modal is hidden on page load
+	document.addEventListener('DOMContentLoaded', function() {
+		hideEditModal();
+	});
+	
+	// Also ensure modal is hidden when page is ready
+	window.addEventListener('load', function() {
+		hideEditModal();
+	});
 	</script>
 	<?php
 }
