@@ -37,11 +37,13 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '@/stores/settings'
 
 export default {
   name: 'LanguageSwitcher',
   setup() {
     const { locale } = useI18n()
+    const settingsStore = useSettingsStore()
     const isOpen = ref(false)
 
     const languages = [
@@ -73,13 +75,23 @@ export default {
       }
     }
 
-    onMounted(() => {
+    onMounted(async () => {
       document.addEventListener('click', handleClickOutside)
       
+      // Load settings first
+      await settingsStore.loadSettings()
+      
       // Set initial document direction
-      const savedLocale = localStorage.getItem('locale') || 'ar'
+      const savedLocale = localStorage.getItem('locale') || settingsStore.getDefaultLanguage
       document.documentElement.dir = savedLocale === 'ar' ? 'rtl' : 'ltr'
       document.documentElement.lang = savedLocale
+      
+      // Set initial locale if not already set
+      if (!localStorage.getItem('locale')) {
+        locale.value = savedLocale
+        localStorage.setItem('locale', savedLocale)
+        localStorage.setItem('jalsah_locale', savedLocale)
+      }
     })
 
     onUnmounted(() => {

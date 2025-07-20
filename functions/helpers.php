@@ -724,3 +724,89 @@ function snks_auto_publish_appointments( $user_id ) {
 	snks_set_preview_timetable( $preview_timetables, $user_id );
 }
 
+/**
+ * Check if bilingual support is enabled
+ *
+ * @return bool
+ */
+function snks_is_bilingual_enabled() {
+	return get_option( 'snks_ai_bilingual_enabled', '1' ) === '1';
+}
+
+/**
+ * Get the default language for the AI site
+ *
+ * @return string 'ar' for Arabic, 'en' for English
+ */
+function snks_get_default_language() {
+	return get_option( 'snks_ai_default_language', 'ar' );
+}
+
+/**
+ * Get the current language for the AI site
+ * If bilingual is disabled, returns the default language
+ * If bilingual is enabled, tries to get from user preference or defaults to default language
+ *
+ * @return string 'ar' for Arabic, 'en' for English
+ */
+function snks_get_current_language() {
+	if ( ! snks_is_bilingual_enabled() ) {
+		return snks_get_default_language();
+	}
+	
+	// Try to get from user preference (localStorage in frontend)
+	if ( isset( $_GET['locale'] ) ) {
+		$locale = sanitize_text_field( $_GET['locale'] );
+		if ( in_array( $locale, array( 'ar', 'en' ) ) ) {
+			return $locale;
+		}
+	}
+	
+	// Try to get from session/cookie
+	if ( isset( $_COOKIE['jalsah_locale'] ) ) {
+		$locale = sanitize_text_field( $_COOKIE['jalsah_locale'] );
+		if ( in_array( $locale, array( 'ar', 'en' ) ) ) {
+			return $locale;
+		}
+	}
+	
+	// Default to the configured default language
+	return snks_get_default_language();
+}
+
+/**
+ * Get bilingual site title
+ *
+ * @param string $locale Optional locale, defaults to current language
+ * @return string
+ */
+function snks_get_site_title( $locale = null ) {
+	if ( ! $locale ) {
+		$locale = snks_get_current_language();
+	}
+	
+	if ( $locale === 'ar' ) {
+		return get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
+	} else {
+		return get_option( 'snks_ai_site_title_en', 'Jalsah AI - Mental Health Support' );
+	}
+}
+
+/**
+ * Get bilingual site description
+ *
+ * @param string $locale Optional locale, defaults to current language
+ * @return string
+ */
+function snks_get_site_description( $locale = null ) {
+	if ( ! $locale ) {
+		$locale = snks_get_current_language();
+	}
+	
+	if ( $locale === 'ar' ) {
+		return get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
+	} else {
+		return get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
+	}
+}
+

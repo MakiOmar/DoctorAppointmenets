@@ -49,7 +49,7 @@
         <!-- Right side -->
         <div class="flex items-center space-x-4">
           <!-- Language Switcher -->
-          <LanguageSwitcher />
+          <LanguageSwitcher v-if="shouldShowLanguageSwitcher" />
 
           <!-- Cart Icon -->
           <router-link 
@@ -199,6 +199,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import { useSettingsStore } from '@/stores/settings'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 
 export default {
@@ -210,12 +211,14 @@ export default {
     const router = useRouter()
     const authStore = useAuthStore()
     const cartStore = useCartStore()
+    const settingsStore = useSettingsStore()
     
     const mobileMenuOpen = ref(false)
     const userMenuOpen = ref(false)
 
     const isAuthenticated = computed(() => authStore.isAuthenticated)
     const cartItemCount = computed(() => cartStore.itemCount)
+    const shouldShowLanguageSwitcher = computed(() => settingsStore.shouldShowLanguageSwitcher)
 
     const logout = () => {
       authStore.logout()
@@ -230,8 +233,9 @@ export default {
       }
     }
 
-    onMounted(() => {
+    onMounted(async () => {
       document.addEventListener('click', handleClickOutside)
+      await settingsStore.loadSettings()
     })
 
     onUnmounted(() => {
@@ -243,6 +247,7 @@ export default {
       userMenuOpen,
       isAuthenticated,
       cartItemCount,
+      shouldShowLanguageSwitcher,
       logout
     }
   }

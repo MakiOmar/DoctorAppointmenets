@@ -44,6 +44,10 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_ai_diagnoses', array( $this, 'handle_ai_diagnoses' ) );
 		add_action( 'wp_ajax_ai_diagnoses', array( $this, 'handle_ai_diagnoses' ) );
 		
+		// Add AJAX handlers for frontend settings
+		add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
+		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
+		
 		// Add CORS headers early
 		add_action( 'init', array( $this, 'handle_cors' ) );
 		add_action( 'send_headers', array( $this, 'handle_cors' ) );
@@ -600,8 +604,8 @@ class SNKS_AI_Integration {
 	private function format_ai_therapist( $therapist ) {
 		$diagnoses = $this->get_therapist_diagnoses( $therapist->ID );
 		
-		// Get current locale from request or default to English
-		$locale = isset( $_GET['locale'] ) ? sanitize_text_field( $_GET['locale'] ) : 'en';
+		// Get current locale using helper function
+		$locale = snks_get_current_language();
 		
 		// Get bilingual data
 		$display_name_en = get_user_meta( $therapist->ID, 'ai_display_name_en', true );
@@ -649,8 +653,8 @@ class SNKS_AI_Integration {
 	private function get_therapist_diagnoses( $therapist_id ) {
 		global $wpdb;
 		
-		// Get current locale from request or default to English
-		$locale = isset( $_GET['locale'] ) ? sanitize_text_field( $_GET['locale'] ) : 'en';
+		// Get current locale using helper function
+		$locale = snks_get_current_language();
 		
 		$diagnoses = $wpdb->get_results( $wpdb->prepare(
 			"SELECT d.*, td.rating, td.suitability_message_en, td.suitability_message_ar 
@@ -903,8 +907,8 @@ class SNKS_AI_Integration {
 	private function get_ai_diagnoses() {
 		global $wpdb;
 		
-		// Get current locale from request or default to English
-		$locale = isset( $_GET['locale'] ) ? sanitize_text_field( $_GET['locale'] ) : 'en';
+		// Get current locale using helper function
+		$locale = snks_get_current_language();
 		
 		$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name_en, name" );
 		
@@ -985,6 +989,22 @@ class SNKS_AI_Integration {
 		http_response_code( $code );
 		echo json_encode( array( 'success' => false, 'error' => $message ) );
 		exit;
+	}
+	
+	/**
+	 * Get AI Settings AJAX Handler
+	 */
+	public function get_ai_settings_ajax() {
+		$current_language = snks_get_current_language();
+		
+		$settings = array(
+			'bilingual_enabled' => snks_is_bilingual_enabled(),
+			'default_language' => snks_get_default_language(),
+			'site_title' => snks_get_site_title( $current_language ),
+			'site_description' => snks_get_site_description( $current_language ),
+		);
+		
+		wp_send_json_success( $settings );
 	}
 }
 

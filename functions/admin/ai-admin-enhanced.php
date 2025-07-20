@@ -109,6 +109,15 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
+		'General Settings',
+		'General Settings',
+		'manage_options',
+		'jalsah-ai-settings',
+		'snks_enhanced_ai_settings_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
 		'Email Settings',
 		'Email Settings',
 		'manage_options',
@@ -2167,6 +2176,101 @@ function snks_enhanced_ai_rochtah_page() {
 	});
 	</script>
 
+	<?php
+}
+
+/**
+ * General Settings Page
+ */
+function snks_enhanced_ai_settings_page() {
+	snks_load_ai_admin_styles();
+	
+	// Handle settings updates
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_general_settings' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_general_settings' ) ) {
+			update_option( 'snks_ai_bilingual_enabled', isset( $_POST['bilingual_enabled'] ) ? '1' : '0' );
+			update_option( 'snks_ai_default_language', sanitize_text_field( $_POST['default_language'] ) );
+			update_option( 'snks_ai_site_title_en', sanitize_text_field( $_POST['site_title_en'] ) );
+			update_option( 'snks_ai_site_title_ar', sanitize_text_field( $_POST['site_title_ar'] ) );
+			update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
+			update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
+			
+			echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
+		}
+	}
+	
+	$bilingual_enabled = get_option( 'snks_ai_bilingual_enabled', '1' ); // Default to enabled
+	$default_language = get_option( 'snks_ai_default_language', 'ar' ); // Default to Arabic
+	$site_title_en = get_option( 'snks_ai_site_title_en', 'Jalsah AI - Mental Health Support' );
+	$site_title_ar = get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
+	$site_description_en = get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
+	$site_description_ar = get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
+	?>
+	<div class="wrap">
+		<h1>General Settings</h1>
+		
+		<div class="card">
+			<h2>Language & Localization</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'update_general_settings' ); ?>
+				<input type="hidden" name="action" value="update_general_settings">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="bilingual_enabled">Enable Bilingual Support</label></th>
+						<td>
+							<input type="checkbox" id="bilingual_enabled" name="bilingual_enabled" value="1" <?php checked( $bilingual_enabled, '1' ); ?>>
+							<p class="description">Enable this to show language switcher and support both English and Arabic content.</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="default_language">Default Language</label></th>
+						<td>
+							<select id="default_language" name="default_language">
+								<option value="ar" <?php selected( $default_language, 'ar' ); ?>>العربية (Arabic)</option>
+								<option value="en" <?php selected( $default_language, 'en' ); ?>>English</option>
+							</select>
+							<p class="description">The default language for new users and when bilingual is disabled.</p>
+						</td>
+					</tr>
+				</table>
+				
+				<h3>Site Information</h3>
+				
+				<div class="bilingual-field">
+					<label for="site_title_en">Site Title (English)</label>
+					<input type="text" id="site_title_en" name="site_title_en" value="<?php echo esc_attr( $site_title_en ); ?>" class="regular-text">
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="site_title_ar">Site Title (Arabic)</label>
+					<input type="text" id="site_title_ar" name="site_title_ar" value="<?php echo esc_attr( $site_title_ar ); ?>" class="regular-text" dir="rtl">
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="site_description_en">Site Description (English)</label>
+					<textarea id="site_description_en" name="site_description_en" rows="3" class="large-text"><?php echo esc_textarea( $site_description_en ); ?></textarea>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="site_description_ar">Site Description (Arabic)</label>
+					<textarea id="site_description_ar" name="site_description_ar" rows="3" class="large-text" dir="rtl"><?php echo esc_textarea( $site_description_ar ); ?></textarea>
+				</div>
+				
+				<?php submit_button( 'Save Settings' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Language Settings Information</h2>
+			<ul>
+				<li><strong>Bilingual Enabled:</strong> Shows language switcher and allows content in both languages</li>
+				<li><strong>Bilingual Disabled:</strong> Shows content only in the default language, no language switcher</li>
+				<li><strong>Default Language:</strong> Used when bilingual is disabled or for new users</li>
+				<li><strong>Arabic Default:</strong> Recommended for Arabic-speaking regions</li>
+			</ul>
+		</div>
+	</div>
 	<?php
 }
 
