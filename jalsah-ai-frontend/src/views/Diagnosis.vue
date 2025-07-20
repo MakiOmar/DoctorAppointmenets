@@ -1,14 +1,13 @@
 <template>
-  <div>
-
+  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-4">
-          AI-Powered Mental Health Diagnosis
+          {{ $t('diagnosis.title') }}
         </h1>
         <p class="text-lg text-gray-600">
-          Get a personalized assessment to help you find the right therapist for your needs.
+          {{ $t('diagnosis.subtitle') }}
         </p>
       </div>
 
@@ -17,31 +16,31 @@
         <form @submit.prevent="submitDiagnosis" class="space-y-6">
           <!-- Step 1: Basic Information -->
           <div v-if="currentStep === 1">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Step 1: Tell us about yourself</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('diagnosis.step1.title') }}</h2>
             
             <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <label class="form-label">How would you describe your current mood?</label>
+                <label class="form-label">{{ $t('diagnosis.step1.mood') }}</label>
                 <select v-model="form.mood" class="input-field" required>
-                  <option value="">Select your mood</option>
-                  <option value="happy">Happy and content</option>
-                  <option value="neutral">Neutral</option>
-                  <option value="sad">Sad or depressed</option>
-                  <option value="anxious">Anxious or worried</option>
-                  <option value="angry">Angry or irritable</option>
-                  <option value="stressed">Stressed or overwhelmed</option>
+                  <option value="">{{ $t('common.select') }}</option>
+                  <option value="happy">{{ $t('diagnosis.step1.moodOptions.happy') }}</option>
+                  <option value="neutral">{{ $t('diagnosis.step1.moodOptions.neutral') }}</option>
+                  <option value="sad">{{ $t('diagnosis.step1.moodOptions.sad') }}</option>
+                  <option value="anxious">{{ $t('diagnosis.step1.moodOptions.anxious') }}</option>
+                  <option value="angry">{{ $t('diagnosis.step1.moodOptions.angry') }}</option>
+                  <option value="stressed">{{ $t('diagnosis.step1.moodOptions.stressed') }}</option>
                 </select>
               </div>
               
               <div>
-                <label class="form-label">How long have you been feeling this way?</label>
+                <label class="form-label">{{ $t('diagnosis.step1.duration') }}</label>
                 <select v-model="form.duration" class="input-field" required>
-                  <option value="">Select duration</option>
-                  <option value="less_than_week">Less than a week</option>
-                  <option value="few_weeks">A few weeks</option>
-                  <option value="few_months">A few months</option>
-                  <option value="six_months">6 months or more</option>
-                  <option value="year_plus">Over a year</option>
+                  <option value="">{{ $t('common.select') }}</option>
+                  <option value="less_than_week">{{ $t('diagnosis.step1.durationOptions.less_than_week') }}</option>
+                  <option value="few_weeks">{{ $t('diagnosis.step1.durationOptions.few_weeks') }}</option>
+                  <option value="few_months">{{ $t('diagnosis.step1.durationOptions.few_months') }}</option>
+                  <option value="six_months">{{ $t('diagnosis.step1.durationOptions.six_months') }}</option>
+                  <option value="year_plus">{{ $t('diagnosis.step1.durationOptions.year_plus') }}</option>
                 </select>
               </div>
             </div>
@@ -49,7 +48,7 @@
 
           <!-- Step 2: Symptoms -->
           <div v-if="currentStep === 2">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Step 2: What symptoms are you experiencing?</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('diagnosis.step2.title') }}</h2>
             
             <div class="space-y-4">
               <div class="grid md:grid-cols-2 gap-4">
@@ -62,7 +61,7 @@
                     class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                   />
                   <label :for="symptom.id" class="ml-2 text-sm text-gray-900">
-                    {{ symptom.name }}
+                    {{ $t(`diagnosis.step2.symptoms.${symptom.id}`) }}
                   </label>
                 </div>
               </div>
@@ -71,23 +70,23 @@
 
           <!-- Step 3: Impact -->
           <div v-if="currentStep === 3">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Step 3: How is this affecting your life?</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('diagnosis.step3.title') }}</h2>
             
             <div class="space-y-4">
               <div>
-                <label class="form-label">How much are these symptoms affecting your daily life?</label>
+                <label class="form-label">{{ $t('diagnosis.step3.impact') }}</label>
                 <select v-model="form.impact" class="input-field" required>
-                  <option value="">Select impact level</option>
-                  <option value="minimal">Minimal impact</option>
-                  <option value="mild">Mild impact</option>
-                  <option value="moderate">Moderate impact</option>
-                  <option value="severe">Severe impact</option>
-                  <option value="extreme">Extreme impact</option>
+                  <option value="">{{ $t('common.select') }}</option>
+                  <option value="minimal">{{ $t('diagnosis.step3.impactOptions.minimal') }}</option>
+                  <option value="mild">{{ $t('diagnosis.step3.impactOptions.mild') }}</option>
+                  <option value="moderate">{{ $t('diagnosis.step3.impactOptions.moderate') }}</option>
+                  <option value="severe">{{ $t('diagnosis.step3.impactOptions.severe') }}</option>
+                  <option value="extreme">{{ $t('diagnosis.step3.impactOptions.extreme') }}</option>
                 </select>
               </div>
               
               <div>
-                <label class="form-label">Which areas of your life are most affected?</label>
+                <label class="form-label">{{ $t('diagnosis.step3.affectedAreas') }}</label>
                 <div class="grid md:grid-cols-2 gap-4 mt-2">
                   <div v-for="area in lifeAreas" :key="area.id" class="flex items-center">
                     <input
@@ -98,7 +97,7 @@
                       class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
                     <label :for="area.id" class="ml-2 text-sm text-gray-900">
-                      {{ area.name }}
+                      {{ $t(`diagnosis.step3.areas.${area.id}`) }}
                     </label>
                   </div>
                 </div>
@@ -108,43 +107,43 @@
 
           <!-- Step 4: Goals -->
           <div v-if="currentStep === 4">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Step 4: What are your goals for therapy?</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('diagnosis.step4.title') }}</h2>
             
             <div class="space-y-4">
               <div>
-                <label class="form-label">What would you like to achieve through therapy?</label>
+                <label class="form-label">{{ $t('diagnosis.step4.goals') }}</label>
                 <textarea
                   v-model="form.goals"
                   rows="4"
                   class="input-field"
-                  placeholder="Describe your goals and what you hope to accomplish..."
+                  :placeholder="$t('diagnosis.step4.goalsPlaceholder')"
                   required
                 ></textarea>
               </div>
               
               <div>
-                <label class="form-label">What type of therapy approach interests you most?</label>
+                <label class="form-label">{{ $t('diagnosis.step4.preferredApproach') }}</label>
                 <select v-model="form.preferredApproach" class="input-field">
-                  <option value="">No preference</option>
-                  <option value="cbt">Cognitive Behavioral Therapy (CBT)</option>
-                  <option value="psychodynamic">Psychodynamic Therapy</option>
-                  <option value="humanistic">Humanistic Therapy</option>
-                  <option value="mindfulness">Mindfulness-Based Therapy</option>
-                  <option value="solution_focused">Solution-Focused Therapy</option>
+                  <option value="">{{ $t('diagnosis.step4.approachOptions.none') }}</option>
+                  <option value="cbt">{{ $t('diagnosis.step4.approachOptions.cbt') }}</option>
+                  <option value="psychodynamic">{{ $t('diagnosis.step4.approachOptions.psychodynamic') }}</option>
+                  <option value="humanistic">{{ $t('diagnosis.step4.approachOptions.humanistic') }}</option>
+                  <option value="mindfulness">{{ $t('diagnosis.step4.approachOptions.mindfulness') }}</option>
+                  <option value="solution_focused">{{ $t('diagnosis.step4.approachOptions.solution_focused') }}</option>
                 </select>
               </div>
             </div>
           </div>
 
           <!-- Navigation Buttons -->
-          <div class="flex justify-between pt-6">
+          <div class="flex justify-between pt-6" :class="$i18n.locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
             <button
               v-if="currentStep > 1"
               type="button"
               @click="previousStep"
               class="btn-secondary"
             >
-              Previous
+              {{ $t('common.previous') }}
             </button>
             <div></div>
             
@@ -154,7 +153,7 @@
               @click="nextStep"
               class="btn-primary"
             >
-              Next
+              {{ $t('common.next') }}
             </button>
             
             <button
@@ -168,9 +167,9 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Analyzing...
+                {{ $t('diagnosis.analyzing') }}
               </span>
-              <span v-else>Get My Diagnosis</span>
+              <span v-else>{{ $t('diagnosis.submit') }}</span>
             </button>
           </div>
         </form>
@@ -179,8 +178,8 @@
       <!-- Progress Bar -->
       <div class="mt-8">
         <div class="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Step {{ currentStep }} of 4</span>
-          <span>{{ Math.round((currentStep / 4) * 100) }}% Complete</span>
+          <span>{{ $t('diagnosis.progress', { step: currentStep }) }}</span>
+          <span>{{ $t('diagnosis.complete', { percent: Math.round((currentStep / 4) * 100) }) }}</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2">
           <div 
@@ -292,4 +291,50 @@ export default {
     }
   }
 }
-</script> 
+</script>
+
+<style scoped>
+/* RTL Support */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.rtl .mr-3 {
+  margin-right: 0;
+  margin-left: 0.75rem;
+}
+
+.rtl .-ml-1 {
+  margin-left: 0;
+  margin-right: -0.25rem;
+}
+
+/* Form styling for RTL */
+.rtl .form-label {
+  text-align: right;
+}
+
+.rtl .input-field {
+  text-align: right;
+}
+
+.rtl .input-field::placeholder {
+  text-align: right;
+}
+
+/* Checkbox and label alignment for RTL */
+.rtl .flex.items-center {
+  flex-direction: row-reverse;
+}
+
+/* Progress bar text alignment for RTL */
+.rtl .flex.justify-between {
+  flex-direction: row-reverse;
+}
+</style> 
