@@ -143,6 +143,15 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_bilingual_migration_page'
 	);
 	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Add Arabic Diagnoses',
+		'Add Arabic Diagnoses',
+		'manage_options',
+		'jalsah-ai-add-arabic-diagnoses',
+		'snks_arabic_diagnoses_page'
+	);
+	
 	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
 	add_submenu_page(
 		'jalsah-ai-management',
@@ -163,7 +172,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_rochtah_doctor_management'
 	);
 }
-add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu' );
+add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 
 /**
  * Load AI Admin Styles

@@ -272,20 +272,12 @@ function snks_add_arabic_diagnoses() {
 	}
 }
 
-// Add admin page for running this script
-function snks_add_arabic_diagnoses_page() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Add Arabic Diagnoses',
-		'Add Arabic Diagnoses',
-		'manage_options',
-		'jalsah-ai-add-arabic-diagnoses',
-		'snks_arabic_diagnoses_page'
-	);
-}
-add_action( 'admin_menu', 'snks_add_arabic_diagnoses_page' );
+// Note: Menu registration is now handled in ai-admin-enhanced.php
 
 function snks_arabic_diagnoses_page() {
+	// Debug: Check if function is being called
+	error_log('snks_arabic_diagnoses_page function called');
+	
 	// Load admin styles
 	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
 		snks_load_ai_admin_styles();
