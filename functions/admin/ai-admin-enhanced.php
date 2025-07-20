@@ -9,6 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+// Include bilingual migration
+require_once __DIR__ . '/bilingual-migration.php';
+
 /**
  * Add enhanced AI admin menu
  */
@@ -198,6 +201,47 @@ function snks_load_ai_admin_styles() {
 	}
 	
 	/* Override any WordPress admin constraints */
+	
+	/* Bilingual Form Styling */
+	.bilingual-field {
+		margin-bottom: 15px;
+	}
+	
+	.bilingual-field label {
+		display: block;
+		font-weight: bold;
+		margin-bottom: 5px;
+	}
+	
+	.bilingual-field .language-label {
+		font-weight: bold;
+		color: #0073aa;
+		margin-bottom: 5px;
+		display: block;
+	}
+	
+	.bilingual-field input[type="text"],
+	.bilingual-field textarea {
+		width: 100%;
+		margin-bottom: 10px;
+	}
+	
+	.bilingual-field .arabic-input {
+		direction: rtl;
+		text-align: right;
+		font-family: 'Cairo', 'Arial', sans-serif;
+	}
+	
+	.bilingual-field .arabic-input::placeholder {
+		text-align: right;
+	}
+	
+	/* RTL Support for Arabic Text */
+	.rtl-text {
+		direction: rtl;
+		text-align: right;
+		font-family: 'Cairo', 'Arial', sans-serif;
+	}
 	.wp-admin #wpcontent,
 	.wp-admin #wpbody,
 	.wp-admin #wpbody-content {
@@ -438,9 +482,12 @@ function snks_enhanced_ai_therapists_page() {
 			
 			// Update basic AI settings
 			update_user_meta( $therapist_id, 'show_on_ai_site', isset( $_POST['show_on_ai_site'] ) ? '1' : '0' );
-			update_user_meta( $therapist_id, 'ai_display_name', sanitize_text_field( $_POST['ai_display_name'] ) );
-			update_user_meta( $therapist_id, 'ai_bio', sanitize_textarea_field( $_POST['ai_bio'] ) );
-			update_user_meta( $therapist_id, 'public_short_bio', sanitize_textarea_field( $_POST['public_short_bio'] ) );
+			update_user_meta( $therapist_id, 'ai_display_name_en', sanitize_text_field( $_POST['ai_display_name_en'] ) );
+			update_user_meta( $therapist_id, 'ai_display_name_ar', sanitize_text_field( $_POST['ai_display_name_ar'] ) );
+			update_user_meta( $therapist_id, 'ai_bio_en', sanitize_textarea_field( $_POST['ai_bio_en'] ) );
+			update_user_meta( $therapist_id, 'ai_bio_ar', sanitize_textarea_field( $_POST['ai_bio_ar'] ) );
+			update_user_meta( $therapist_id, 'public_short_bio_en', sanitize_textarea_field( $_POST['public_short_bio_en'] ) );
+			update_user_meta( $therapist_id, 'public_short_bio_ar', sanitize_textarea_field( $_POST['public_short_bio_ar'] ) );
 			update_user_meta( $therapist_id, 'secretary_phone', sanitize_text_field( $_POST['secretary_phone'] ) );
 			update_user_meta( $therapist_id, 'ai_first_session_percentage', floatval( $_POST['ai_first_session_percentage'] ) );
 			update_user_meta( $therapist_id, 'ai_followup_session_percentage', floatval( $_POST['ai_followup_session_percentage'] ) );
@@ -454,7 +501,8 @@ function snks_enhanced_ai_therapists_page() {
 				
 				if ( isset( $_POST[ $assigned_key ] ) ) {
 					$rank = intval( $_POST[ $rank_key ] );
-					$message = sanitize_textarea_field( $_POST[ $message_key ] );
+					$message_en = sanitize_textarea_field( $_POST[ $message_key . '_en' ] );
+					$message_ar = sanitize_textarea_field( $_POST[ $message_key . '_ar' ] );
 					
 					$wpdb->replace(
 						$wpdb->prefix . 'snks_therapist_diagnoses',
@@ -462,9 +510,10 @@ function snks_enhanced_ai_therapists_page() {
 							'therapist_id' => $therapist_id,
 							'diagnosis_id' => $diagnosis->id,
 							'rating' => $rank,
-							'suitability_message' => $message,
+							'suitability_message_en' => $message_en,
+							'suitability_message_ar' => $message_ar,
 						),
-						array( '%d', '%d', '%f', '%s' )
+						array( '%d', '%d', '%f', '%s', '%s' )
 					);
 				} else {
 					$wpdb->delete(
@@ -514,16 +563,43 @@ function snks_enhanced_ai_therapists_page() {
 							<td><input type="checkbox" id="show_on_ai_site" name="show_on_ai_site" value="1"></td>
 						</tr>
 						<tr>
-							<th><label for="ai_display_name">AI Display Name</label></th>
-							<td><input type="text" id="ai_display_name" name="ai_display_name" class="regular-text"></td>
+							<th><label>AI Display Name</label></th>
+							<td>
+								<div style="margin-bottom: 10px;">
+									<label for="ai_display_name_en" style="font-weight: bold; color: #0073aa;">English:</label>
+									<input type="text" id="ai_display_name_en" name="ai_display_name_en" class="regular-text" placeholder="Enter display name in English">
+								</div>
+								<div>
+									<label for="ai_display_name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+									<input type="text" id="ai_display_name_ar" name="ai_display_name_ar" class="regular-text" placeholder="أدخل اسم العرض بالعربية" style="direction: rtl; text-align: right;">
+								</div>
+							</td>
 						</tr>
 						<tr>
-							<th><label for="ai_bio">AI Bio</label></th>
-							<td><textarea id="ai_bio" name="ai_bio" rows="4" class="large-text"></textarea></td>
+							<th><label>AI Bio</label></th>
+							<td>
+								<div style="margin-bottom: 10px;">
+									<label for="ai_bio_en" style="font-weight: bold; color: #0073aa;">English:</label>
+									<textarea id="ai_bio_en" name="ai_bio_en" rows="4" class="large-text" placeholder="Enter AI bio in English"></textarea>
+								</div>
+								<div>
+									<label for="ai_bio_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+									<textarea id="ai_bio_ar" name="ai_bio_ar" rows="4" class="large-text" placeholder="أدخل السيرة الذاتية للذكاء الاصطناعي بالعربية" style="direction: rtl; text-align: right;"></textarea>
+								</div>
+							</td>
 						</tr>
 						<tr>
-							<th><label for="public_short_bio">Public Short Bio</label></th>
-							<td><textarea id="public_short_bio" name="public_short_bio" rows="3" class="large-text"></textarea></td>
+							<th><label>Public Short Bio</label></th>
+							<td>
+								<div style="margin-bottom: 10px;">
+									<label for="public_short_bio_en" style="font-weight: bold; color: #0073aa;">English:</label>
+									<textarea id="public_short_bio_en" name="public_short_bio_en" rows="3" class="large-text" placeholder="Enter public short bio in English"></textarea>
+								</div>
+								<div>
+									<label for="public_short_bio_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+									<textarea id="public_short_bio_ar" name="public_short_bio_ar" rows="3" class="large-text" placeholder="أدخل السيرة الذاتية العامة المختصرة بالعربية" style="direction: rtl; text-align: right;"></textarea>
+								</div>
+							</td>
 						</tr>
 						<tr>
 							<th><label for="secretary_phone">Secretary Phone</label></th>
@@ -554,13 +630,14 @@ function snks_enhanced_ai_therapists_page() {
 								<th>Diagnosis</th>
 								<th>Assigned</th>
 								<th>Rank Points (0-100)</th>
-								<th>Custom Message</th>
+								<th>Custom Message (English)</th>
+								<th>Custom Message (العربية)</th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach ( $diagnoses as $diagnosis ) : ?>
 								<tr>
-									<td><?php echo esc_html( $diagnosis->name ); ?></td>
+									<td><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></td>
 									<td>
 										<input type="checkbox" name="assigned_<?php echo $diagnosis->id; ?>" value="1" id="assigned_<?php echo $diagnosis->id; ?>">
 									</td>
@@ -568,7 +645,10 @@ function snks_enhanced_ai_therapists_page() {
 										<input type="number" name="rank_<?php echo $diagnosis->id; ?>" min="0" max="100" class="small-text" value="0" id="rank_<?php echo $diagnosis->id; ?>">
 									</td>
 									<td>
-										<textarea name="message_<?php echo $diagnosis->id; ?>" rows="2" class="large-text" id="message_<?php echo $diagnosis->id; ?>"></textarea>
+										<textarea name="message_<?php echo $diagnosis->id; ?>_en" rows="2" class="large-text" id="message_<?php echo $diagnosis->id; ?>_en" placeholder="Enter custom message in English"></textarea>
+									</td>
+									<td>
+										<textarea name="message_<?php echo $diagnosis->id; ?>_ar" rows="2" class="large-text" id="message_<?php echo $diagnosis->id; ?>_ar" placeholder="أدخل رسالة مخصصة بالعربية" style="direction: rtl; text-align: right;"></textarea>
 									</td>
 								</tr>
 							<?php endforeach; ?>
@@ -605,9 +685,12 @@ function snks_enhanced_ai_therapists_page() {
 				
 				// Set basic fields
 				document.getElementById('show_on_ai_site').checked = data.show_on_ai_site === '1';
-				document.getElementById('ai_display_name').value = data.ai_display_name || '';
-				document.getElementById('ai_bio').value = data.ai_bio || '';
-				document.getElementById('public_short_bio').value = data.public_short_bio || '';
+				document.getElementById('ai_display_name_en').value = data.ai_display_name_en || '';
+				document.getElementById('ai_display_name_ar').value = data.ai_display_name_ar || '';
+				document.getElementById('ai_bio_en').value = data.ai_bio_en || '';
+				document.getElementById('ai_bio_ar').value = data.ai_bio_ar || '';
+				document.getElementById('public_short_bio_en').value = data.public_short_bio_en || '';
+				document.getElementById('public_short_bio_ar').value = data.public_short_bio_ar || '';
 				document.getElementById('secretary_phone').value = data.secretary_phone || '';
 				document.getElementById('ai_first_session_percentage').value = data.ai_first_session_percentage || 0;
 				document.getElementById('ai_followup_session_percentage').value = data.ai_followup_session_percentage || 0;
@@ -617,11 +700,13 @@ function snks_enhanced_ai_therapists_page() {
 					data.diagnoses.forEach(function(diagnosis) {
 						var assignedCheckbox = document.getElementById('assigned_' + diagnosis.diagnosis_id);
 						var rankInput = document.getElementById('rank_' + diagnosis.diagnosis_id);
-						var messageTextarea = document.getElementById('message_' + diagnosis.diagnosis_id);
+						var messageTextareaEn = document.getElementById('message_' + diagnosis.diagnosis_id + '_en');
+						var messageTextareaAr = document.getElementById('message_' + diagnosis.diagnosis_id + '_ar');
 						
 						if (assignedCheckbox) assignedCheckbox.checked = true;
 						if (rankInput) rankInput.value = diagnosis.rating || 0;
-						if (messageTextarea) messageTextarea.value = diagnosis.suitability_message || '';
+						if (messageTextareaEn) messageTextareaEn.value = diagnosis.suitability_message_en || '';
+						if (messageTextareaAr) messageTextareaAr.value = diagnosis.suitability_message_ar || '';
 					});
 				}
 			}
@@ -631,9 +716,12 @@ function snks_enhanced_ai_therapists_page() {
 	function clearProfileFields() {
 		// Clear all form fields
 		document.getElementById('show_on_ai_site').checked = false;
-		document.getElementById('ai_display_name').value = '';
-		document.getElementById('ai_bio').value = '';
-		document.getElementById('public_short_bio').value = '';
+		document.getElementById('ai_display_name_en').value = '';
+		document.getElementById('ai_display_name_ar').value = '';
+		document.getElementById('ai_bio_en').value = '';
+		document.getElementById('ai_bio_ar').value = '';
+		document.getElementById('public_short_bio_en').value = '';
+		document.getElementById('public_short_bio_ar').value = '';
 		document.getElementById('secretary_phone').value = '';
 		document.getElementById('ai_first_session_percentage').value = '0';
 		document.getElementById('ai_followup_session_percentage').value = '0';
@@ -668,9 +756,12 @@ function snks_load_enhanced_therapist_profile() {
 	
 	$data = array(
 		'show_on_ai_site' => get_user_meta( $therapist_id, 'show_on_ai_site', true ),
-		'ai_display_name' => get_user_meta( $therapist_id, 'ai_display_name', true ),
-		'ai_bio' => get_user_meta( $therapist_id, 'ai_bio', true ),
-		'public_short_bio' => get_user_meta( $therapist_id, 'public_short_bio', true ),
+		'ai_display_name_en' => get_user_meta( $therapist_id, 'ai_display_name_en', true ),
+		'ai_display_name_ar' => get_user_meta( $therapist_id, 'ai_display_name_ar', true ),
+		'ai_bio_en' => get_user_meta( $therapist_id, 'ai_bio_en', true ),
+		'ai_bio_ar' => get_user_meta( $therapist_id, 'ai_bio_ar', true ),
+		'public_short_bio_en' => get_user_meta( $therapist_id, 'public_short_bio_en', true ),
+		'public_short_bio_ar' => get_user_meta( $therapist_id, 'public_short_bio_ar', true ),
 		'secretary_phone' => get_user_meta( $therapist_id, 'secretary_phone', true ),
 		'ai_first_session_percentage' => get_user_meta( $therapist_id, 'ai_first_session_percentage', true ),
 		'ai_followup_session_percentage' => get_user_meta( $therapist_id, 'ai_followup_session_percentage', true ),
@@ -687,7 +778,8 @@ function snks_load_enhanced_therapist_profile() {
 		$data['diagnoses'][] = array(
 			'diagnosis_id' => $diagnosis->diagnosis_id,
 			'rating' => $diagnosis->rating,
-			'suitability_message' => $diagnosis->suitability_message,
+			'suitability_message_en' => $diagnosis->suitability_message_en,
+			'suitability_message_ar' => $diagnosis->suitability_message_ar,
 		);
 	}
 	
@@ -706,16 +798,20 @@ function snks_enhanced_ai_diagnoses_page() {
 	// Handle form submissions
 	if ( isset( $_POST['action'] ) ) {
 		if ( $_POST['action'] === 'add_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'add_diagnosis' ) ) {
-			$name = sanitize_text_field( $_POST['name'] );
-			$description = sanitize_textarea_field( $_POST['description'] );
+			$name_en = sanitize_text_field( $_POST['name_en'] );
+			$name_ar = sanitize_text_field( $_POST['name_ar'] );
+			$description_en = sanitize_textarea_field( $_POST['description_en'] );
+			$description_ar = sanitize_textarea_field( $_POST['description_ar'] );
 			
 			$wpdb->insert(
 				$wpdb->prefix . 'snks_diagnoses',
 				array(
-					'name' => $name,
-					'description' => $description,
+					'name_en' => $name_en,
+					'name_ar' => $name_ar,
+					'description_en' => $description_en,
+					'description_ar' => $description_ar,
 				),
-				array( '%s', '%s' )
+				array( '%s', '%s', '%s', '%s' )
 			);
 			
 			echo '<div class="notice notice-success"><p>Diagnosis added successfully!</p></div>';
@@ -723,17 +819,21 @@ function snks_enhanced_ai_diagnoses_page() {
 		
 		if ( $_POST['action'] === 'edit_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'edit_diagnosis' ) ) {
 			$diagnosis_id = intval( $_POST['diagnosis_id'] );
-			$name = sanitize_text_field( $_POST['name'] );
-			$description = sanitize_textarea_field( $_POST['description'] );
+			$name_en = sanitize_text_field( $_POST['name_en'] );
+			$name_ar = sanitize_text_field( $_POST['name_ar'] );
+			$description_en = sanitize_textarea_field( $_POST['description_en'] );
+			$description_ar = sanitize_textarea_field( $_POST['description_ar'] );
 			
 			$wpdb->update(
 				$wpdb->prefix . 'snks_diagnoses',
 				array(
-					'name' => $name,
-					'description' => $description,
+					'name_en' => $name_en,
+					'name_ar' => $name_ar,
+					'description_en' => $description_en,
+					'description_ar' => $description_ar,
 				),
 				array( 'id' => $diagnosis_id ),
-				array( '%s', '%s' ),
+				array( '%s', '%s', '%s', '%s' ),
 				array( '%d' )
 			);
 			
@@ -766,12 +866,30 @@ function snks_enhanced_ai_diagnoses_page() {
 				
 				<table class="form-table">
 					<tr>
-						<th><label for="name">Diagnosis Name</label></th>
-						<td><input type="text" id="name" name="name" class="regular-text" required></td>
+						<th><label>Diagnosis Name</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="name_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<input type="text" id="name_en" name="name_en" class="regular-text" placeholder="Enter diagnosis name in English" required>
+							</div>
+							<div>
+								<label for="name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<input type="text" id="name_ar" name="name_ar" class="regular-text" placeholder="أدخل اسم التشخيص بالعربية" required style="direction: rtl; text-align: right;">
+							</div>
+						</td>
 					</tr>
 					<tr>
-						<th><label for="description">Description</label></th>
-						<td><textarea id="description" name="description" rows="3" class="large-text"></textarea></td>
+						<th><label>Description</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="description_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<textarea id="description_en" name="description_en" rows="3" class="large-text" placeholder="Enter diagnosis description in English"></textarea>
+							</div>
+							<div>
+								<label for="description_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<textarea id="description_ar" name="description_ar" rows="3" class="large-text" placeholder="أدخل وصف التشخيص بالعربية" style="direction: rtl; text-align: right;"></textarea>
+							</div>
+						</td>
 					</tr>
 				</table>
 				
@@ -785,8 +903,10 @@ function snks_enhanced_ai_diagnoses_page() {
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
-							<th>Name</th>
-							<th>Description</th>
+							<th>Name (English)</th>
+							<th>Name (العربية)</th>
+							<th>Description (English)</th>
+							<th>Description (العربية)</th>
 							<th>Therapists Assigned</th>
 							<th>Actions</th>
 						</tr>
@@ -800,11 +920,13 @@ function snks_enhanced_ai_diagnoses_page() {
 							) );
 							?>
 							<tr>
-								<td><strong><?php echo esc_html( $diagnosis->name ); ?></strong></td>
-								<td><?php echo esc_html( $diagnosis->description ); ?></td>
+								<td><strong><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></strong></td>
+								<td style="direction: rtl; text-align: right;"><strong><?php echo esc_html( $diagnosis->name_ar ); ?></strong></td>
+								<td><?php echo esc_html( $diagnosis->description_en ?: $diagnosis->description ); ?></td>
+								<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->description_ar ); ?></td>
 								<td><?php echo esc_html( $therapist_count ); ?> therapists</td>
 								<td>
-									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo esc_js( $diagnosis->name ); ?>', '<?php echo esc_js( $diagnosis->description ); ?>')">Edit</button>
+									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo esc_js( $diagnosis->name_en ?: $diagnosis->name ); ?>', '<?php echo esc_js( $diagnosis->name_ar ); ?>', '<?php echo esc_js( $diagnosis->description_en ?: $diagnosis->description ); ?>', '<?php echo esc_js( $diagnosis->description_ar ); ?>')">Edit</button>
 									<form method="post" style="display:inline;">
 										<?php wp_nonce_field( 'delete_diagnosis' ); ?>
 										<input type="hidden" name="action" value="delete_diagnosis">
@@ -831,12 +953,30 @@ function snks_enhanced_ai_diagnoses_page() {
 				
 				<table class="form-table">
 					<tr>
-						<th><label for="edit_name">Diagnosis Name</label></th>
-						<td><input type="text" id="edit_name" name="name" class="regular-text" required></td>
+						<th><label>Diagnosis Name</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="edit_name_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<input type="text" id="edit_name_en" name="name_en" class="regular-text" placeholder="Enter diagnosis name in English" required>
+							</div>
+							<div>
+								<label for="edit_name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<input type="text" id="edit_name_ar" name="name_ar" class="regular-text" placeholder="أدخل اسم التشخيص بالعربية" required style="direction: rtl; text-align: right;">
+							</div>
+						</td>
 					</tr>
 					<tr>
-						<th><label for="edit_description">Description</label></th>
-						<td><textarea id="edit_description" name="description" rows="3" class="large-text"></textarea></td>
+						<th><label>Description</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="edit_description_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<textarea id="edit_description_en" name="description_en" rows="3" class="large-text" placeholder="Enter diagnosis description in English"></textarea>
+							</div>
+							<div>
+								<label for="edit_description_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<textarea id="edit_description_ar" name="description_ar" rows="3" class="large-text" placeholder="أدخل وصف التشخيص بالعربية" style="direction: rtl; text-align: right;"></textarea>
+							</div>
+						</td>
 					</tr>
 				</table>
 				
@@ -847,10 +987,12 @@ function snks_enhanced_ai_diagnoses_page() {
 	</div>
 	
 	<script>
-	function editDiagnosis(id, name, description) {
+	function editDiagnosis(id, name_en, name_ar, description_en, description_ar) {
 		document.getElementById('edit_diagnosis_id').value = id;
-		document.getElementById('edit_name').value = name;
-		document.getElementById('edit_description').value = description;
+		document.getElementById('edit_name_en').value = name_en || '';
+		document.getElementById('edit_name_ar').value = name_ar || '';
+		document.getElementById('edit_description_en').value = description_en || '';
+		document.getElementById('edit_description_ar').value = description_ar || '';
 		document.getElementById('edit-diagnosis-modal').style.display = 'block';
 	}
 	
