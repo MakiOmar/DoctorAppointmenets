@@ -261,7 +261,7 @@ export default {
     const loadProfile = async () => {
       loading.value = true
       try {
-        const response = await api.get('/ai/profile')
+        const response = await api.get('/api/ai/profile')
         const userData = response.data.data
         
         profile.value = {
@@ -301,7 +301,7 @@ export default {
           address: profile.value.address
         }
 
-        await api.put('/ai/profile', profileData)
+        await api.put('/api/ai/profile', profileData)
         
         toast.success('Profile updated successfully!')
         
@@ -327,7 +327,7 @@ export default {
           new_password: password.value.new
         }
 
-        await api.put('/ai/profile/password', passwordData)
+        await api.put('/api/ai/profile/password', passwordData)
         
         toast.success('Password changed successfully!')
         

@@ -446,5 +446,13 @@ export default {
     ar: 'العربية',
     en: 'English',
     switchLanguage: 'Switch Language'
+  },
+
+  // Not Found
+  notFound: {
+    title: 'Page Not Found',
+    message: 'The page you are looking for doesn\'t exist or has been moved.',
+    goHome: 'Go to Home',
+    goBack: 'Go Back'
   }
 } 

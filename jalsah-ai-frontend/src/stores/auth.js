@@ -15,8 +15,22 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials) => {
     loading.value = true
     try {
-      const response = await api.post('/ai/auth', credentials)
+      console.log('Attempting login with credentials:', { email: credentials.email })
+      
+      const response = await api.post('/api/ai/auth', credentials)
+      
+      console.log('Login response:', response.data)
+      
+      // Check if response has the expected structure
+      if (!response.data.success || !response.data.data) {
+        throw new Error('Invalid response format from server')
+      }
+      
       const { token: authToken, user: userData } = response.data.data
+      
+      if (!authToken || !userData) {
+        throw new Error('Missing token or user data in response')
+      }
       
       token.value = authToken
       user.value = userData
@@ -33,8 +47,21 @@ export const useAuthStore = defineStore('auth', () => {
       toast.success('Login successful!')
       return true
     } catch (error) {
-      const message = error.response?.data?.error || 'Login failed'
-      toast.error(message)
+      console.error('Login error:', error)
+      
+      // Handle different types of errors
+      if (error.response?.status === 302 || error.response?.status === 301) {
+        // Redirect response - this shouldn't happen with API calls
+        console.error('Received redirect response from API:', error.response)
+        toast.error('Unexpected redirect response from server')
+      } else if (error.response?.data?.error) {
+        toast.error(error.response.data.error)
+      } else if (error.message) {
+        toast.error(error.message)
+      } else {
+        toast.error('Login failed')
+      }
+      
       return false
     } finally {
       loading.value = false
@@ -44,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (userData) => {
     loading.value = true
     try {
-      const response = await api.post('/ai/auth/register', userData)
+      const response = await api.post('/api/ai/auth/register', userData)
       const { token: authToken, user: newUser } = response.data.data
       
       token.value = authToken

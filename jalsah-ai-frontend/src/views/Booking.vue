@@ -264,7 +264,7 @@ export default {
     const loadTherapist = async () => {
       loading.value = true
       try {
-        const response = await api.get(`/ai/therapists/${route.params.id}`)
+        const response = await api.get(`/api/ai/therapists/${route.params.id}`)
         therapist.value = response.data.data
       } catch (error) {
         toast.error('Failed to load therapist information')
@@ -290,7 +290,7 @@ export default {
           }
         }
 
-        const response = await api.post('/ai/bookings', bookingData)
+        const response = await api.post('/api/ai/bookings', bookingData)
         
         toast.success('Booking submitted successfully!')
         

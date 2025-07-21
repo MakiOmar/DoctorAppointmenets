@@ -48,6 +48,13 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
 		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
 		
+		// Add test endpoint
+		add_action( 'wp_ajax_test_connection', array( $this, 'test_connection_ajax' ) );
+		add_action( 'wp_ajax_nopriv_test_connection', array( $this, 'test_connection_ajax' ) );
+		
+		// Add REST API endpoint for settings
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		
 		// Add CORS headers early
 		add_action( 'init', array( $this, 'handle_cors' ) );
 		add_action( 'send_headers', array( $this, 'handle_cors' ) );
@@ -80,6 +87,23 @@ class SNKS_AI_Integration {
 		// Also add a simple test endpoint
 		add_action( 'wp_ajax_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
 		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
+	}
+	
+	/**
+	 * Register REST API routes
+	 */
+	public function register_rest_routes() {
+		register_rest_route( 'jalsah-ai/v1', '/settings', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_ai_settings_rest' ),
+			'permission_callback' => '__return_true',
+		) );
+		
+		register_rest_route( 'jalsah-ai/v1', '/ping', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'ping_rest' ),
+			'permission_callback' => '__return_true',
+		) );
 	}
 	
 	/**
@@ -1005,6 +1029,48 @@ class SNKS_AI_Integration {
 		);
 		
 		wp_send_json_success( $settings );
+	}
+	
+	/**
+	 * Test Connection AJAX Handler
+	 */
+	public function test_connection_ajax() {
+		wp_send_json_success( array(
+			'message' => 'Connection successful',
+			'timestamp' => current_time( 'mysql' ),
+			'wordpress_version' => get_bloginfo( 'version' ),
+			'plugin_active' => true
+		) );
+	}
+	
+	/**
+	 * Get AI Settings REST API Handler
+	 */
+	public function get_ai_settings_rest( $request ) {
+		$current_language = snks_get_current_language();
+		
+		$settings = array(
+			'bilingual_enabled' => snks_is_bilingual_enabled(),
+			'default_language' => snks_get_default_language(),
+			'site_title' => snks_get_site_title( $current_language ),
+			'site_description' => snks_get_site_description( $current_language ),
+		);
+		
+		return new WP_REST_Response( array(
+			'success' => true,
+			'data' => $settings
+		), 200 );
+	}
+	
+	/**
+	 * Ping REST API Handler
+	 */
+	public function ping_rest( $request ) {
+		return new WP_REST_Response( array(
+			'success' => true,
+			'message' => 'Jalsah AI API is working',
+			'timestamp' => current_time( 'mysql' )
+		), 200 );
 	}
 }
 

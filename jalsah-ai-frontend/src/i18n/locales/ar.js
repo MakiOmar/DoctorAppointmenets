@@ -267,7 +267,8 @@ export default {
     nextAvailable: 'التوفر التالي: {time}',
     contactForAvailability: 'تواصل للتحقق من التوفر',
     bookSession: 'حجز جلسة',
-    viewProfile: 'عرض الملف الشخصي'
+    viewProfile: 'عرض الملف الشخصي',
+    bioDefault: 'معالج ذو خبرة متخصص في الصحة النفسية والعافية. ملتزم بتقديم رعاية شفقة قائمة على الأدلة لمساعدة العملاء على تحقيق أهدافهم في الصحة النفسية.'
   },
 
   // Therapist Detail
@@ -446,5 +447,13 @@ export default {
     ar: 'العربية',
     en: 'English',
     switchLanguage: 'تغيير اللغة'
+  },
+
+  // Not Found
+  notFound: {
+    title: 'الصفحة غير موجودة',
+    message: 'الصفحة التي تبحث عنها غير موجودة أو تم نقلها.',
+    goHome: 'الذهاب للرئيسية',
+    goBack: 'العودة'
   }
 } 

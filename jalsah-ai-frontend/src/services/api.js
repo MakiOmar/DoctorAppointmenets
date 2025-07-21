@@ -1,9 +1,24 @@
 import axios from 'axios'
 import { useToast } from 'vue-toastification'
 
+// Determine the base URL based on environment
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  
+  // In development, use relative paths for proxy
+  if (import.meta.env.DEV) {
+    return ''
+  }
+  
+  // In production, use the current domain
+  return window.location.origin
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 10000,
+  baseURL: getBaseURL(),
+  timeout: 15000, // Increased timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -40,10 +55,21 @@ api.interceptors.response.use(
   (error) => {
     const toast = useToast()
     
+    // Log the error for debugging
+    console.error('API Error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      method: error.config?.method,
+      data: error.response?.data
+    })
+    
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid - only redirect if not on login page
       localStorage.removeItem('jalsah_token')
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
       toast.error('Session expired. Please login again.')
     } else if (error.response?.status === 403) {
       toast.error('Access denied')

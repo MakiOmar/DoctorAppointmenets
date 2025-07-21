@@ -18,24 +18,32 @@ app.use(i18n)
 const pinia = app._context.provides.pinia
 const settingsStore = useSettingsStore(pinia)
 
-// Load settings and update locale
-settingsStore.loadSettings().then(() => {
-  // Update i18n locale based on settings
-  const savedLocale = localStorage.getItem('locale')
-  const defaultLocale = settingsStore.getDefaultLanguage
-  
-  if (!savedLocale) {
-    // Set default language from settings
-    i18n.global.locale.value = defaultLocale
-    localStorage.setItem('locale', defaultLocale)
-    localStorage.setItem('jalsah_locale', defaultLocale)
-  }
-  
-  // Update document direction
-  const currentLocale = i18n.global.locale.value
-  document.documentElement.dir = currentLocale === 'ar' ? 'rtl' : 'ltr'
-  document.documentElement.lang = currentLocale
-})
+// Initialize settings immediately
+settingsStore.initializeSettings()
+
+// Update i18n locale based on settings
+const savedLocale = localStorage.getItem('locale')
+const defaultLocale = settingsStore.getDefaultLanguage
+
+// Always use the default language from settings if no saved locale
+if (!savedLocale || savedLocale !== defaultLocale) {
+  // Set default language from settings
+  i18n.global.locale.value = defaultLocale
+  localStorage.setItem('locale', defaultLocale)
+  localStorage.setItem('jalsah_locale', defaultLocale)
+  console.log('Setting default language to:', defaultLocale)
+} else {
+  // Use saved locale
+  i18n.global.locale.value = savedLocale
+  console.log('Using saved locale:', savedLocale)
+}
+
+// Update document direction
+const currentLocale = i18n.global.locale.value
+document.documentElement.dir = currentLocale === 'ar' ? 'rtl' : 'ltr'
+document.documentElement.lang = currentLocale
+console.log('Document direction set to:', document.documentElement.dir)
+console.log('Document language set to:', document.documentElement.lang)
 
 app.use(Toast, {
   position: 'top-right',

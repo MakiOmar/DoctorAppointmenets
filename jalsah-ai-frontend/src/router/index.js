@@ -68,6 +68,36 @@ const routes = [
     name: 'DoctorDashboard',
     component: () => import('@/views/DoctorDashboard.vue'),
     meta: { requiresAuth: true, roles: ['doctor', 'clinic_manager'] }
+  },
+  // Catch-all route for API endpoints that might be accessed as frontend routes
+  {
+    path: '/api/ai/:pathMatch(.*)*',
+    name: 'APIRedirect',
+    beforeEnter: (to, from, next) => {
+      // Redirect API calls to the appropriate frontend route
+      console.log('API route accessed as frontend route:', to.path)
+      
+      // Extract locale from query parameters if present
+      const locale = to.query.locale
+      if (locale) {
+        localStorage.setItem('locale', locale)
+        localStorage.setItem('jalsah_locale', locale)
+      }
+      
+      if (to.path.startsWith('/api/ai/auth')) {
+        // Redirect auth-related API calls to login page
+        next('/login')
+      } else {
+        // For other API calls, redirect to home
+        next('/')
+      }
+    }
+  },
+  // 404 catch-all route
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFound.vue')
   }
 ]
 

@@ -25,6 +25,16 @@ export default defineConfig({
           });
         },
       },
+      '/wp-admin': {
+        target: process.env.VITE_API_TARGET || 'http://localhost/shrinks',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/wp-json': {
+        target: process.env.VITE_API_TARGET || 'http://localhost/shrinks',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
