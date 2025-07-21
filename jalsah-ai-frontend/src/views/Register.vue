@@ -19,36 +19,38 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="card">
-        <form @submit.prevent="handleRegister" class="space-y-6">
+        <form @submit.prevent="handleRegister" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="first_name" class="form-label">First name</label>
+              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }}</label>
               <input
                 id="first_name"
                 v-model="form.first_name"
                 type="text"
                 required
                 class="input-field"
-                placeholder="First name"
+                :placeholder="$t('auth.register.firstName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
               />
             </div>
             <div>
-              <label for="last_name" class="form-label">Last name</label>
+              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }}</label>
               <input
                 id="last_name"
                 v-model="form.last_name"
                 type="text"
                 required
                 class="input-field"
-                placeholder="Last name"
+                :placeholder="$t('auth.register.lastName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
               />
             </div>
           </div>
 
           <!-- Age -->
           <div>
-            <label for="age" class="form-label">Age</label>
+            <label for="age" class="form-label">{{ $t('auth.register.age') }}</label>
             <input
               id="age"
               v-model="form.age"
@@ -57,46 +59,50 @@
               max="120"
               required
               class="input-field"
-              placeholder="Your age"
+              :placeholder="$t('auth.register.agePlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
             />
           </div>
 
           <!-- Email -->
           <div>
-            <label for="email" class="form-label">Email address</label>
+            <label for="email" class="form-label">{{ $t('auth.register.email') }}</label>
             <input
               id="email"
               v-model="form.email"
               type="email"
               required
               class="input-field"
-              placeholder="Enter your email"
+              :placeholder="$t('auth.register.emailPlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
             />
           </div>
 
           <!-- Phone -->
           <div>
-            <label for="phone" class="form-label">Phone number</label>
+            <label for="phone" class="form-label">{{ $t('auth.register.phone') }}</label>
             <input
               id="phone"
               v-model="form.phone"
               type="tel"
               required
               class="input-field"
-              placeholder="+1234567890"
+              :placeholder="$t('auth.register.phonePlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
             />
           </div>
 
           <!-- WhatsApp -->
           <div>
-            <label for="whatsapp" class="form-label">WhatsApp number</label>
+            <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
             <input
               id="whatsapp"
               v-model="form.whatsapp"
               type="tel"
               required
               class="input-field"
-              placeholder="+1234567890"
+              :placeholder="$t('auth.register.whatsappPlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
             />
           </div>
 

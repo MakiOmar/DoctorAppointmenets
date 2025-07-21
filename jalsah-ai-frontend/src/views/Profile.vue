@@ -70,19 +70,19 @@
               </div>
 
               <div>
-                <label class="form-label">Emergency Contact</label>
+                <label class="form-label">{{ $t('profile.emergencyContact') }}</label>
                 <div class="grid md:grid-cols-2 gap-4">
                   <input 
                     v-model="profile.emergencyName" 
                     type="text" 
                     class="input-field"
-                    placeholder="Contact name"
+                                          :placeholder="$t('profile.contactName')"
                   />
                   <input 
                     v-model="profile.emergencyPhone" 
                     type="tel" 
                     class="input-field"
-                    placeholder="Contact phone"
+                                          :placeholder="$t('profile.contactPhone')"
                   />
                 </div>
               </div>

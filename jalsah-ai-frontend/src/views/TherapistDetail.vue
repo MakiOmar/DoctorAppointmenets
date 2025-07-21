@@ -53,7 +53,7 @@
 
             <!-- Price -->
             <div class="text-2xl font-bold text-primary-600 mb-4">
-              ${{ therapist.price?.others || 'Contact' }} {{ $t('therapistDetail.perSession') }}
+              ${{ therapist.price?.others || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
             </div>
 
             <!-- Bio -->

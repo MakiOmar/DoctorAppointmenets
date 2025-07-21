@@ -17,22 +17,17 @@
         <div class="grid md:grid-cols-4 gap-4">
           <div>
             <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
-            <select v-model="filters.specialization" class="input-field">
+            <select v-model="filters.specialization" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
-              <option value="anxiety">{{ $t('therapists.specializations.anxiety') }}</option>
-              <option value="depression">{{ $t('therapists.specializations.depression') }}</option>
-              <option value="stress">{{ $t('therapists.specializations.stress') }}</option>
-              <option value="relationships">{{ $t('therapists.specializations.relationships') }}</option>
-              <option value="trauma">{{ $t('therapists.specializations.trauma') }}</option>
-              <option value="addiction">{{ $t('therapists.specializations.addiction') }}</option>
-              <option value="eating">{{ $t('therapists.specializations.eating') }}</option>
-              <option value="sleep">{{ $t('therapists.specializations.sleep') }}</option>
+              <option v-for="diagnosis in diagnoses" :key="diagnosis.id" :value="diagnosis.id">
+                {{ diagnosis.name }}
+              </option>
             </select>
           </div>
           
           <div>
             <label class="form-label">{{ $t('therapists.filters.priceRange') }}</label>
-            <select v-model="filters.priceRange" class="input-field">
+            <select v-model="filters.priceRange" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.anyPrice') }}</option>
               <option value="0-50">{{ $t('therapists.priceRanges.0-50') }}</option>
               <option value="50-100">{{ $t('therapists.priceRanges.50-100') }}</option>
@@ -43,7 +38,7 @@
           
           <div>
             <label class="form-label">{{ $t('therapists.filters.availability') }}</label>
-            <select v-model="filters.availability" class="input-field">
+            <select v-model="filters.availability" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.anyTime') }}</option>
               <option value="morning">{{ $t('therapists.availability.morning') }}</option>
               <option value="afternoon">{{ $t('therapists.availability.afternoon') }}</option>
@@ -54,7 +49,7 @@
           
           <div>
             <label class="form-label">{{ $t('therapists.filters.sortBy') }}</label>
-            <select v-model="filters.sortBy" class="input-field">
+            <select v-model="filters.sortBy" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="rating">{{ $t('therapists.filters.highestRated') }}</option>
               <option value="price_low">{{ $t('therapists.filters.lowestPrice') }}</option>
               <option value="price_high">{{ $t('therapists.filters.highestPrice') }}</option>
@@ -177,6 +172,7 @@ export default {
     
     const loading = ref(true)
     const therapists = ref([])
+    const diagnoses = ref([])
     
     const filters = reactive({
       specialization: '',
@@ -192,7 +188,7 @@ export default {
       if (filters.specialization) {
         filtered = filtered.filter(therapist => 
           therapist.diagnoses?.some(d => 
-            d.name.toLowerCase().includes(filters.specialization.toLowerCase())
+            d.id.toString() === filters.specialization
           )
         )
       }
@@ -248,6 +244,15 @@ export default {
       }
     }
 
+    const loadDiagnoses = async () => {
+      try {
+        const response = await api.get('/api/ai/diagnoses')
+        diagnoses.value = response.data.data || []
+      } catch (error) {
+        console.error('Error loading diagnoses:', error)
+      }
+    }
+
     const viewTherapist = (therapistId) => {
       router.push(`/therapist/${therapistId}`)
     }
@@ -258,11 +263,13 @@ export default {
 
     onMounted(() => {
       loadTherapists()
+      loadDiagnoses()
     })
 
     return {
       loading,
       therapists,
+      diagnoses,
       filters,
       filteredTherapists,
       getAverageRating,

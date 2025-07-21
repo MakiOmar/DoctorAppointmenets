@@ -83,19 +83,19 @@
 
               <!-- Emergency Contact -->
               <div>
-                <label class="form-label">Emergency Contact (Optional)</label>
+                <label class="form-label">{{ $t('booking.emergencyContact') }}</label>
                 <div class="grid md:grid-cols-2 gap-4">
                   <input 
                     v-model="booking.emergencyName" 
                     type="text" 
                     class="input-field"
-                    placeholder="Contact name"
+                                          :placeholder="$t('booking.contactName')"
                   />
                   <input 
                     v-model="booking.emergencyPhone" 
                     type="tel" 
                     class="input-field"
-                    placeholder="Contact phone"
+                                          :placeholder="$t('booking.contactPhone')"
                   />
                 </div>
               </div>

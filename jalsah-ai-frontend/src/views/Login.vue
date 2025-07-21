@@ -19,28 +19,30 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="card">
-        <form @submit.prevent="handleLogin" class="space-y-6">
+        <form @submit.prevent="handleLogin" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <div>
-            <label for="email" class="form-label">Email address</label>
+            <label for="email" class="form-label">{{ $t('login.email') }}</label>
             <input
               id="email"
               v-model="form.email"
               type="email"
               required
               class="input-field"
-              placeholder="Enter your email"
+              :placeholder="$t('login.emailPlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
             />
           </div>
 
           <div>
-            <label for="password" class="form-label">Password</label>
+            <label for="password" class="form-label">{{ $t('login.password') }}</label>
             <input
               id="password"
               v-model="form.password"
               type="password"
               required
               class="input-field"
-              placeholder="Enter your password"
+              :placeholder="$t('login.passwordPlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
             />
           </div>
 
