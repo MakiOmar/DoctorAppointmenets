@@ -33,7 +33,8 @@ export default {
     required: 'مطلوب',
     optional: 'اختياري',
     unknown: 'غير معروف',
-    na: 'غير متوفر'
+    na: 'غير متوفر',
+    contact: 'تواصل'
   },
 
   // Navigation

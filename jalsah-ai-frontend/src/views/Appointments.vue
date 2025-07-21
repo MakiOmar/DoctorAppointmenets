@@ -156,17 +156,17 @@
         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
         </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointments.noAppointments') }}</h3>
         <p class="text-gray-600 mb-6">
-          {{ activeTab === 'upcoming' ? 'You don\'t have any upcoming appointments.' : 
-             activeTab === 'past' ? 'You don\'t have any past appointments.' : 
-             'You don\'t have any cancelled appointments.' }}
+          {{ activeTab === 'upcoming' ? $t('appointments.noUpcoming') : 
+             activeTab === 'past' ? $t('appointments.noPast') : 
+             $t('appointments.noCancelled') }}
         </p>
         <button 
           @click="$router.push('/therapists')"
           class="btn-primary"
         >
-          Book a Session
+          {{ $t('appointments.bookSession') }}
         </button>
       </div>
     </div>
@@ -175,9 +175,9 @@
     <div v-if="showCancelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3 text-center">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Cancel Appointment</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('appointments.cancelTitle') }}</h3>
           <p class="text-sm text-gray-600 mb-6">
-            Are you sure you want to cancel this appointment? This action cannot be undone.
+            {{ $t('appointments.cancelMessage') }}
           </p>
           <div class="flex justify-center space-x-4">
             <button 
@@ -190,15 +190,15 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Cancelling...
+                {{ $t('appointments.cancelling') }}
               </span>
-              <span v-else>Yes, Cancel</span>
+              <span v-else>{{ $t('appointments.yesCancel') }}</span>
             </button>
             <button 
               @click="showCancelModal = false"
               class="btn-outline"
             >
-              No, Keep
+              {{ $t('appointments.noKeep') }}
             </button>
           </div>
         </div>
@@ -211,12 +211,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 export default {
   name: 'Appointments',
   setup() {
     const router = useRouter()
     const toast = useToast()
+    const { t: $t } = useI18n()
     
     const loading = ref(true)
     const cancelling = ref(false)
@@ -228,17 +230,17 @@ export default {
     const tabs = computed(() => [
       { 
         id: 'upcoming', 
-        name: 'Upcoming', 
+        name: $t('appointments.tabs.upcoming'), 
         count: appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending').length 
       },
       { 
         id: 'past', 
-        name: 'Past', 
+        name: $t('appointments.tabs.past'), 
         count: appointments.value.filter(a => a.status === 'completed').length 
       },
       { 
         id: 'cancelled', 
-        name: 'Cancelled', 
+        name: $t('appointments.tabs.cancelled'), 
         count: appointments.value.filter(a => a.status === 'cancelled').length 
       }
     ])

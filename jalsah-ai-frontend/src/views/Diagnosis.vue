@@ -193,14 +193,16 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
 export default {
   name: 'Diagnosis',
   setup() {
     const router = useRouter()
     const toast = useToast()
+    const { t: $t } = useI18n()
     
     const currentStep = ref(1)
     const loading = ref(false)
@@ -215,31 +217,31 @@ export default {
       preferredApproach: ''
     })
 
-    const symptoms = [
-      { id: 'anxiety', name: 'Anxiety or excessive worry' },
-      { id: 'depression', name: 'Depression or low mood' },
-      { id: 'stress', name: 'High stress levels' },
-      { id: 'sleep', name: 'Sleep problems' },
-      { id: 'appetite', name: 'Changes in appetite' },
-      { id: 'energy', name: 'Low energy or fatigue' },
-      { id: 'concentration', name: 'Difficulty concentrating' },
-      { id: 'irritability', name: 'Irritability or anger' },
-      { id: 'isolation', name: 'Social withdrawal' },
-      { id: 'hopelessness', name: 'Feelings of hopelessness' },
-      { id: 'panic', name: 'Panic attacks' },
-      { id: 'trauma', name: 'Trauma-related symptoms' }
-    ]
+    const symptoms = computed(() => [
+      { id: 'anxiety', name: $t('diagnosis.step2.symptoms.anxiety') },
+      { id: 'depression', name: $t('diagnosis.step2.symptoms.depression') },
+      { id: 'stress', name: $t('diagnosis.step2.symptoms.stress') },
+      { id: 'sleep', name: $t('diagnosis.step2.symptoms.sleep') },
+      { id: 'appetite', name: $t('diagnosis.step2.symptoms.appetite') },
+      { id: 'energy', name: $t('diagnosis.step2.symptoms.energy') },
+      { id: 'concentration', name: $t('diagnosis.step2.symptoms.concentration') },
+      { id: 'irritability', name: $t('diagnosis.step2.symptoms.irritability') },
+      { id: 'isolation', name: $t('diagnosis.step2.symptoms.isolation') },
+      { id: 'hopelessness', name: $t('diagnosis.step2.symptoms.hopelessness') },
+      { id: 'panic', name: $t('diagnosis.step2.symptoms.panic') },
+      { id: 'trauma', name: $t('diagnosis.step2.symptoms.trauma') }
+    ])
 
-    const lifeAreas = [
-      { id: 'work', name: 'Work or career' },
-      { id: 'relationships', name: 'Relationships' },
-      { id: 'family', name: 'Family life' },
-      { id: 'social', name: 'Social life' },
-      { id: 'health', name: 'Physical health' },
-      { id: 'finances', name: 'Financial situation' },
-      { id: 'hobbies', name: 'Hobbies and interests' },
-      { id: 'daily_routine', name: 'Daily routine' }
-    ]
+    const lifeAreas = computed(() => [
+      { id: 'work', name: $t('diagnosis.step3.areas.work') },
+      { id: 'relationships', name: $t('diagnosis.step3.areas.relationships') },
+      { id: 'family', name: $t('diagnosis.step3.areas.family') },
+      { id: 'social', name: $t('diagnosis.step3.areas.social') },
+      { id: 'health', name: $t('diagnosis.step3.areas.health') },
+      { id: 'finances', name: $t('diagnosis.step3.areas.finances') },
+      { id: 'hobbies', name: $t('diagnosis.step3.areas.hobbies') },
+      { id: 'daily_routine', name: $t('diagnosis.step3.areas.daily_routine') }
+    ])
 
     const nextStep = () => {
       if (currentStep.value < 4) {
