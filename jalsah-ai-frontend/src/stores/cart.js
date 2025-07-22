@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
+import { useAuthStore } from './auth'
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref([])
@@ -106,7 +107,10 @@ export const useCartStore = defineStore('cart', () => {
   }
   
   // Initialize cart if user is already logged in
-  initializeCart()
+  const authStore = useAuthStore()
+  if (authStore && authStore.isAuthenticated) {
+    initializeCart()
+  }
 
   return {
     items,

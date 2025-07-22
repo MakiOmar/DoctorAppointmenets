@@ -158,12 +158,14 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
 export default {
   name: 'Cart',
   setup() {
     const router = useRouter()
     const toast = useToast()
     const cartStore = useCartStore()
+    const authStore = useAuthStore()
     
     const checkoutLoading = ref(false)
     const promoCode = ref('')
@@ -230,6 +232,12 @@ export default {
       } finally {
         checkoutLoading.value = false
       }
+    }
+
+    // Only show cart if authenticated
+    if (!authStore.isAuthenticated) {
+      router.push('/login')
+      return {}
     }
 
     return {

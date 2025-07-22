@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <div class="flex justify-center">
         <div class="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
@@ -7,12 +7,12 @@
         </div>
       </div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        Create your account
+        {{ $t('auth.register.title') }}
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
-        Or
+        {{ $t('auth.register.or') }}
         <router-link to="/login" class="font-medium text-primary-600 hover:text-primary-500">
-          sign in to your existing account
+          {{ $t('auth.register.signInToExisting') }}
         </router-link>
       </p>
     </div>
@@ -108,63 +108,63 @@
 
           <!-- Country -->
           <div>
-            <label for="country" class="form-label">Country</label>
+            <label for="country" class="form-label">{{ $t('auth.register.country') }}</label>
             <select
               id="country"
               v-model="form.country"
               required
               class="input-field"
             >
-              <option value="">Select your country</option>
-              <option value="Saudi Arabia">Saudi Arabia</option>
-              <option value="United Arab Emirates">United Arab Emirates</option>
-              <option value="Kuwait">Kuwait</option>
-              <option value="Qatar">Qatar</option>
-              <option value="Bahrain">Bahrain</option>
-              <option value="Oman">Oman</option>
-              <option value="Jordan">Jordan</option>
-              <option value="Lebanon">Lebanon</option>
-              <option value="Egypt">Egypt</option>
-              <option value="Morocco">Morocco</option>
-              <option value="Tunisia">Tunisia</option>
-              <option value="Algeria">Algeria</option>
-              <option value="Libya">Libya</option>
-              <option value="Sudan">Sudan</option>
-              <option value="Iraq">Iraq</option>
-              <option value="Syria">Syria</option>
-              <option value="Palestine">Palestine</option>
-              <option value="Yemen">Yemen</option>
-              <option value="Other">Other</option>
+              <option value="">{{ $t('auth.register.selectCountry') }}</option>
+              <option value="Saudi Arabia">{{ $t('auth.register.countries.saudiArabia') }}</option>
+              <option value="United Arab Emirates">{{ $t('auth.register.countries.uae') }}</option>
+              <option value="Kuwait">{{ $t('auth.register.countries.kuwait') }}</option>
+              <option value="Qatar">{{ $t('auth.register.countries.qatar') }}</option>
+              <option value="Bahrain">{{ $t('auth.register.countries.bahrain') }}</option>
+              <option value="Oman">{{ $t('auth.register.countries.oman') }}</option>
+              <option value="Jordan">{{ $t('auth.register.countries.jordan') }}</option>
+              <option value="Lebanon">{{ $t('auth.register.countries.lebanon') }}</option>
+              <option value="Egypt">{{ $t('auth.register.countries.egypt') }}</option>
+              <option value="Morocco">{{ $t('auth.register.countries.morocco') }}</option>
+              <option value="Tunisia">{{ $t('auth.register.countries.tunisia') }}</option>
+              <option value="Algeria">{{ $t('auth.register.countries.algeria') }}</option>
+              <option value="Libya">{{ $t('auth.register.countries.libya') }}</option>
+              <option value="Sudan">{{ $t('auth.register.countries.sudan') }}</option>
+              <option value="Iraq">{{ $t('auth.register.countries.iraq') }}</option>
+              <option value="Syria">{{ $t('auth.register.countries.syria') }}</option>
+              <option value="Palestine">{{ $t('auth.register.countries.palestine') }}</option>
+              <option value="Yemen">{{ $t('auth.register.countries.yemen') }}</option>
+              <option value="Other">{{ $t('auth.register.countries.other') }}</option>
             </select>
           </div>
 
           <!-- Password -->
           <div>
-            <label for="password" class="form-label">Password</label>
+            <label for="password" class="form-label">{{ $t('auth.register.password') }}</label>
             <input
               id="password"
               v-model="form.password"
               type="password"
               required
               class="input-field"
-              placeholder="Create a password"
+              :placeholder="$t('auth.register.createPassword')"
               minlength="8"
             />
             <p class="mt-1 text-sm text-gray-500">
-              Must be at least 8 characters long
+              {{ $t('auth.register.passwordHint') }}
             </p>
           </div>
 
           <!-- Confirm Password -->
           <div>
-            <label for="confirm_password" class="form-label">Confirm password</label>
+            <label for="confirm_password" class="form-label">{{ $t('auth.register.confirmPassword') }}</label>
             <input
               id="confirm_password"
               v-model="form.confirm_password"
               type="password"
               required
               class="input-field"
-              placeholder="Confirm your password"
+              :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
             />
           </div>
 
@@ -178,10 +178,10 @@
               class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
             <label for="terms" class="ml-2 block text-sm text-gray-900">
-              I agree to the
-              <a href="#" class="text-primary-600 hover:text-primary-500">Terms of Service</a>
-              and
-              <a href="#" class="text-primary-600 hover:text-primary-500">Privacy Policy</a>
+              {{ $t('auth.register.agreeTo') }}
+              <a href="#" class="text-primary-600 hover:text-primary-500">{{ $t('auth.register.termsOfService') }}</a>
+              {{ $t('auth.register.and') }}
+              <a href="#" class="text-primary-600 hover:text-primary-500">{{ $t('auth.register.privacyPolicy') }}</a>
             </label>
           </div>
 
@@ -196,9 +196,9 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Creating account...
+                {{ $t('auth.register.creatingAccount') }}
               </span>
-              <span v-else>Create account</span>
+              <span v-else>{{ $t('auth.register.createAccount') }}</span>
             </button>
           </div>
         </form>
@@ -209,7 +209,7 @@
               <div class="w-full border-t border-gray-300" />
             </div>
             <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">Or continue with</span>
+              <span class="px-2 bg-white text-gray-500">{{ $t('auth.register.orContinueWith') }}</span>
             </div>
           </div>
 
@@ -224,7 +224,7 @@
                 <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              <span class="ml-2">Google</span>
+              <span class="ml-2">{{ $t('auth.register.google') }}</span>
             </button>
 
             <button
@@ -234,7 +234,7 @@
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
-              <span class="ml-2">Facebook</span>
+              <span class="ml-2">{{ $t('auth.register.facebook') }}</span>
             </button>
           </div>
         </div>
