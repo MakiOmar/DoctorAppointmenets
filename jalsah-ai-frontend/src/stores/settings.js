@@ -10,12 +10,14 @@ export const useSettingsStore = defineStore('settings', () => {
   const siteDescription = ref('دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.')
   const isLoading = ref(false)
   const isInitialized = ref(false)
+  const therapistRegistrationPasswordMode = ref('auto')
 
   // Getters
   const isBilingualEnabled = computed(() => bilingualEnabled.value)
   const getDefaultLanguage = computed(() => defaultLanguage.value)
   const getSiteTitle = computed(() => siteTitle.value)
   const getSiteDescription = computed(() => siteDescription.value)
+  const getTherapistRegistrationPasswordMode = computed(() => therapistRegistrationPasswordMode.value)
 
   // Actions
   const initializeSettings = () => {
@@ -30,6 +32,7 @@ export const useSettingsStore = defineStore('settings', () => {
         defaultLanguage.value = settings.default_language ?? 'ar'
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+        therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         console.log('Loaded settings from localStorage:', settings)
       } catch (e) {
         console.error('Failed to parse saved settings:', e)
@@ -75,6 +78,7 @@ export const useSettingsStore = defineStore('settings', () => {
         defaultLanguage.value = settings.default_language
         siteTitle.value = settings.site_title
         siteDescription.value = settings.site_description
+        therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         
         // Save to localStorage
         localStorage.setItem('jalsah_settings', JSON.stringify(settings))
@@ -102,6 +106,7 @@ export const useSettingsStore = defineStore('settings', () => {
     defaultLanguage.value = settings.default_language ?? 'ar'
     siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
     siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+    therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
     
     // Save to localStorage
     localStorage.setItem('jalsah_settings', JSON.stringify(settings))
@@ -115,6 +120,7 @@ export const useSettingsStore = defineStore('settings', () => {
     siteDescription,
     isLoading,
     isInitialized,
+    therapistRegistrationPasswordMode,
     
     // Getters
     isBilingualEnabled,
@@ -122,6 +128,7 @@ export const useSettingsStore = defineStore('settings', () => {
     getSiteTitle,
     getSiteDescription,
     shouldShowLanguageSwitcher,
+    getTherapistRegistrationPasswordMode,
     
     // Actions
     loadSettings,

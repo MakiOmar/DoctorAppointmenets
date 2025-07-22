@@ -47,7 +47,8 @@ export default {
     login: 'Login',
     register: 'Register',
     logout: 'Logout',
-    language: 'Language'
+    language: 'Language',
+    therapistRegister: 'Therapist Registration'
   },
 
   // Home Page
@@ -482,6 +483,30 @@ export default {
     ar: 'العربية',
     en: 'English',
     switchLanguage: 'Switch Language'
+  },
+
+  // Therapist Register
+  therapistRegister: {
+    title: 'Therapist Registration',
+    subtitle: 'Register as a therapist to join the platform.',
+    name: 'Name (Arabic)',
+    nameEn: 'Name (English)',
+    email: 'Email',
+    phone: 'Phone',
+    whatsapp: 'WhatsApp',
+    specialty: 'Specialty / Job Title',
+    profileImage: 'Profile Image',
+    identityFront: 'Identity Front',
+    identityBack: 'Identity Back',
+    certificates: 'Certificates',
+    password: 'Password',
+    passwordConfirm: 'Confirm Password',
+    passwordAuto: 'A password will be generated and sent to your email.',
+    acceptTerms: 'I accept the terms and conditions',
+    submit: 'Register',
+    submitting: 'Registering...',
+    success: 'Registration successful! Please check your email.',
+    error: 'Registration failed. Please try again.'
   },
 
   // Not Found

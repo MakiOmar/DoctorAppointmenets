@@ -44,6 +44,13 @@
           >
             {{ $t('nav.appointments') }}
           </router-link>
+          <router-link 
+            to="/therapist-register" 
+            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+            :class="{ 'text-primary-600': $route.path === '/therapist-register' }"
+          >
+            {{ $t('nav.therapistRegister') }}
+          </router-link>
         </nav>
 
         <!-- Right side -->
@@ -162,6 +169,13 @@
             @click="mobileMenuOpen = false"
           >
             {{ $t('nav.appointments') }}
+          </router-link>
+          <router-link
+            to="/therapist-register"
+            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+            @click="mobileMenuOpen = false"
+          >
+            {{ $t('nav.therapistRegister') }}
           </router-link>
           <router-link
             to="/cart"

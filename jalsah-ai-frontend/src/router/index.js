@@ -69,6 +69,11 @@ const routes = [
     component: () => import('@/views/DoctorDashboard.vue'),
     meta: { requiresAuth: true, roles: ['doctor', 'clinic_manager'] }
   },
+  {
+    path: '/therapist-register',
+    name: 'TherapistRegister',
+    component: () => import('@/views/TherapistRegister.vue')
+  },
   // Catch-all route for API endpoints that might be accessed as frontend routes
   {
     path: '/api/ai/:pathMatch(.*)*',

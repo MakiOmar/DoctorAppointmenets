@@ -48,7 +48,8 @@ export default {
     login: 'تسجيل الدخول',
     register: 'إنشاء حساب',
     logout: 'تسجيل الخروج',
-    language: 'اللغة'
+    language: 'اللغة',
+    therapistRegister: 'تسجيل المعالج'
   },
 
   // Home Page
@@ -486,6 +487,30 @@ export default {
     takeDiagnosis: 'إجراء التشخيص الذكي',
     logout: 'تسجيل الخروج',
     logoutSuccess: 'تم تسجيل الخروج بنجاح'
+  },
+
+  // Therapist Register
+  therapistRegister: {
+    title: 'تسجيل المعالج',
+    subtitle: 'سجل كمعالج للانضمام إلى المنصة.',
+    name: 'الاسم (بالعربية)',
+    nameEn: 'الاسم (بالإنجليزية)',
+    email: 'البريد الإلكتروني',
+    phone: 'رقم الجوال',
+    whatsapp: 'واتساب',
+    specialty: 'التخصص / المسمى الوظيفي',
+    profileImage: 'الصورة الشخصية',
+    identityFront: 'هوية (الوجه الأمامي)',
+    identityBack: 'هوية (الوجه الخلفي)',
+    certificates: 'الشهادات',
+    password: 'كلمة المرور',
+    passwordConfirm: 'تأكيد كلمة المرور',
+    passwordAuto: 'سيتم إنشاء كلمة مرور وإرسالها إلى بريدك الإلكتروني.',
+    acceptTerms: 'أوافق على الشروط والأحكام',
+    submit: 'تسجيل',
+    submitting: 'جاري التسجيل...',
+    success: 'تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني.',
+    error: 'فشل التسجيل. يرجى المحاولة مرة أخرى.'
   },
 
   // Language

@@ -1433,3 +1433,20 @@ add_action(
 	},
 	50
 );
+
+// Add to REST API output if not present
+add_action('rest_api_init', function() {
+    register_rest_route('jalsah-ai/v1', '/settings', array(
+        'methods' => 'GET',
+        'callback' => function() {
+            $settings = array();
+            $settings['bilingual_enabled'] = get_option('jalsah_bilingual_enabled', true);
+            $settings['default_language'] = get_option('jalsah_default_language', 'ar');
+            $settings['site_title'] = get_option('jalsah_site_title', 'جلسة الذكية - دعم الصحة النفسية');
+            $settings['site_description'] = get_option('jalsah_site_description', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.');
+            $settings['therapist_registration_password_mode'] = get_option('jalsah_therapist_registration_password_mode', 'auto');
+            return [ 'success' => true, 'data' => $settings ];
+        },
+        'permission_callback' => '__return_true',
+    ));
+});
