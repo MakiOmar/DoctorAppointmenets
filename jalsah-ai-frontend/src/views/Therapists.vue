@@ -204,23 +204,15 @@ export default {
 
       // Filter by nearest appointment
       if (filters.nearestAppointment) {
-        // Sort by earliest slot time first
-        filtered.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
-        
         // Filter out therapists with no availability
         filtered = filtered.filter(therapist => getEarliestSlotTime(therapist) !== 999999)
         
-        // Take top 50% for closest, bottom 50% for farthest
-        const totalAvailable = filtered.length
-        const halfCount = Math.ceil(totalAvailable / 2)
-        
-        switch (filters.nearestAppointment) {
-          case 'closest':
-            filtered = filtered.slice(0, halfCount)
-            break
-          case 'farthest':
-            filtered = filtered.slice(halfCount)
-            break
+        if (filters.nearestAppointment === 'closest') {
+          // Sort by soonest slot (ascending)
+          filtered.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
+        } else if (filters.nearestAppointment === 'farthest') {
+          // Sort by latest slot (descending)
+          filtered.sort((a, b) => getEarliestSlotTime(b) - getEarliestSlotTime(a))
         }
       }
 
