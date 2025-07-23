@@ -143,9 +143,10 @@ function snks_cleanup_demo_data_page() {
             <p>The existing demo data contains ratings above 5.0 (like 5.6, 5.8), which are illogical for a 5-star rating system. This cleanup will:</p>
             <ul style="list-style-type: disc; margin-left: 20px;">
                 <li>Ensure all ratings are between 4.0 and 5.0</li>
-                <li>Provide more realistic demo data</li>
+                <li>Provide more realistic demo data in Arabic</li>
                 <li>Fix the display issues on the frontend</li>
-                <li>Make the demo more professional</li>
+                <li>Make the demo more professional and culturally appropriate</li>
+                <li>Include Arabic names, specialties, and review messages</li>
             </ul>
         </div>
         

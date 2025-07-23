@@ -179,14 +179,14 @@ function snks_demo_doctors_manager_page() {
 					<tr>
 						<th><label for="name">Doctor Name</label></th>
 						<td>
-							<input type="text" id="name" name="name" value="Dr. Sarah Johnson" required class="regular-text">
+							<input type="text" id="name" name="name" value="د. أحمد محمد" required class="regular-text">
 							<p class="description">Full name of the doctor</p>
 						</td>
 					</tr>
 					<tr>
 						<th><label for="name_en">English Name</label></th>
 						<td>
-							<input type="text" id="name_en" name="name_en" value="Dr. Sarah Johnson" required class="regular-text">
+							<input type="text" id="name_en" name="name_en" value="Dr. Ahmed Mohamed" required class="regular-text">
 							<p class="description">English name for the doctor</p>
 						</td>
 					</tr>
@@ -214,14 +214,14 @@ function snks_demo_doctors_manager_page() {
 					<tr>
 						<th><label for="specialty">Specialty</label></th>
 						<td>
-							<input type="text" id="specialty" name="specialty" value="Clinical Psychologist" required class="regular-text">
+							<input type="text" id="specialty" name="specialty" value="أخصائي نفسي إكلينيكي" required class="regular-text">
 							<p class="description">Professional specialty/title</p>
 						</td>
 					</tr>
 					<tr>
 						<th><label for="bio">Bio</label></th>
 						<td>
-							<textarea id="bio" name="bio" rows="4" class="large-text">Experienced clinical psychologist specializing in cognitive behavioral therapy and trauma treatment. With over 10 years of experience, I help clients overcome anxiety, depression, and PTSD through evidence-based therapeutic approaches.</textarea>
+							<textarea id="bio" name="bio" rows="4" class="large-text">أخصائي نفسي إكلينيكي ذو خبرة في العلاج السلوكي المعرفي وعلاج الصدمات. مع أكثر من 10 سنوات من الخبرة، أساعد العملاء على التغلب على القلق والاكتئاب واضطراب ما بعد الصدمة من خلال نهج علاجي قائم على الأدلة العلمية.</textarea>
 							<p class="description">Professional biography</p>
 						</td>
 					</tr>
@@ -456,16 +456,16 @@ function snks_create_bulk_demo_doctors( $count ) {
 	$error_count = 0;
 	
 	$demo_names = array(
-		'Dr. Sarah Johnson', 'Dr. Michael Chen', 'Dr. Emily Rodriguez', 'Dr. David Thompson',
-		'Dr. Lisa Park', 'Dr. James Wilson', 'Dr. Maria Garcia', 'Dr. Robert Brown',
-		'Dr. Jennifer Lee', 'Dr. Christopher Davis', 'Dr. Amanda White', 'Dr. Daniel Martinez',
-		'Dr. Rachel Green', 'Dr. Kevin Taylor', 'Dr. Nicole Anderson', 'Dr. Steven Clark',
-		'Dr. Jessica Hall', 'Dr. Matthew Lewis', 'Dr. Samantha Walker', 'Dr. Andrew Young'
+		'د. أحمد محمد', 'د. فاطمة علي', 'د. عمر حسن', 'د. سارة عبدالله',
+		'د. محمد خالد', 'د. نورا أحمد', 'د. يوسف إبراهيم', 'د. ليلى محمود',
+		'د. عبدالرحمن سعد', 'د. ريم محمد', 'د. خالد عبدالعزيز', 'د. منى أحمد',
+		'د. علي حسن', 'د. هدى محمد', 'د. أحمد فؤاد', 'د. نادية علي',
+		'د. محمد عبدالله', 'د. فاطمة الزهراء', 'د. عمر عبدالرحمن', 'د. سارة محمد'
 	);
 	
 	$specialties = array(
-		'Clinical Psychologist', 'Psychiatrist', 'Counseling Psychologist', 'Marriage and Family Therapist',
-		'Licensed Professional Counselor', 'Social Worker', 'Art Therapist', 'Cognitive Behavioral Therapist'
+		'أخصائي نفسي إكلينيكي', 'طبيب نفسي', 'أخصائي نفسي استشاري', 'معالج أسري',
+		'مستشار نفسي مرخص', 'أخصائي اجتماعي', 'معالج بالفن', 'معالج سلوكي معرفي'
 	);
 	
 	$diagnoses = array( 'Anxiety Disorders', 'Depression', 'PTSD', 'OCD', 'Bipolar Disorder', 'Stress Management' );
@@ -483,7 +483,7 @@ function snks_create_bulk_demo_doctors( $count ) {
 			'phone' => $phone_base,
 			'whatsapp' => $phone_base,
 			'specialty' => $specialty,
-			'bio' => "Experienced {$specialty} with expertise in mental health treatment. Committed to providing compassionate care and evidence-based therapeutic approaches.",
+			'bio' => "{$specialty} ذو خبرة في علاج الصحة النفسية. ملتزم بتقديم رعاية متعاطفة ونهج علاجي قائم على الأدلة العلمية.",
 			'price' => $price,
 			'password' => 'demo123',
 			'diagnoses' => array( rand( 1, 6 ) ) // Random diagnosis
@@ -583,18 +583,28 @@ function snks_create_demo_reviews() {
 	$success_count = 0;
 	$error_count = 0;
 	
-	// Demo review messages
+	// Demo review messages in Arabic
 	$review_messages = array(
-		'Excellent therapist with deep understanding of this condition.',
-		'Very professional and caring approach to treatment.',
-		'Highly recommended for anyone dealing with this issue.',
-		'Great results and compassionate care.',
-		'Skilled professional with proven treatment methods.',
-		'Outstanding expertise in this area.',
-		'Patient and understanding therapist.',
-		'Effective treatment strategies and support.',
-		'Professional and knowledgeable approach.',
-		'Compassionate care with excellent results.'
+		'معالج ممتاز مع فهم عميق لهذه الحالة.',
+		'نهج مهني ومهتم جداً في العلاج.',
+		'موصى به بشدة لأي شخص يتعامل مع هذه المشكلة.',
+		'نتائج رائعة ورعاية متعاطفة.',
+		'محترف ماهر مع طرق علاج مثبتة.',
+		'خبرة استثنائية في هذا المجال.',
+		'معالج صبور ومتفهم.',
+		'استراتيجيات علاج فعالة ودعم.',
+		'نهج مهني ومطلع.',
+		'رعاية متعاطفة مع نتائج ممتازة.',
+		'تجربة علاجية إيجابية جداً.',
+		'معالج محترف ومتفهم لاحتياجات المريض.',
+		'نهج شامل ومهني في العلاج.',
+		'نتائج ملموسة وتحسن ملحوظ.',
+		'معالج موثوق به مع خبرة طويلة.',
+		'رعاية شخصية واهتمام بالتفاصيل.',
+		'طريقة علاج مبتكرة وفعالة.',
+		'معالج متخصص في هذا النوع من الحالات.',
+		'دعم مستمر ومتابعة دقيقة.',
+		'تجربة علاجية مريحة وآمنة.'
 	);
 	
 	foreach ( $demo_doctors as $doctor ) {
