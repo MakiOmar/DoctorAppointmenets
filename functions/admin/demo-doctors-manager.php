@@ -13,6 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Add demo doctors manager page
  */
 function snks_add_demo_doctors_manager_page() {
+	// Debug: Check if parent menu exists
+	global $submenu;
+	
+	// Add the submenu page
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Demo Doctors Manager',
@@ -21,8 +25,13 @@ function snks_add_demo_doctors_manager_page() {
 		'demo-doctors-manager',
 		'snks_demo_doctors_manager_page'
 	);
+	
+	// Debug: Log if function is called
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( 'Demo Doctors Manager: Submenu registration attempted' );
+	}
 }
-add_action( 'admin_menu', 'snks_add_demo_doctors_manager_page' );
+add_action( 'admin_menu', 'snks_add_demo_doctors_manager_page', 25 );
 
 /**
  * Demo Doctors Manager Page
