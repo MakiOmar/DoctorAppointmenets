@@ -318,7 +318,8 @@ export default {
       minDate,
       getSessionPrice,
       getTotalPrice,
-      submitBooking
+      submitBooking,
+      formatPrice
     }
   }
 }

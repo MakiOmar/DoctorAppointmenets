@@ -259,7 +259,8 @@ export default {
       therapist,
       getAverageRating,
       bookAppointment,
-      addToCart
+      addToCart,
+      formatPrice
     }
   }
 }

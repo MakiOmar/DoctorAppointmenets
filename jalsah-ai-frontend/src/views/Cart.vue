@@ -251,7 +251,8 @@ export default {
       appliedPromo,
       removeFromCart,
       applyPromoCode,
-      proceedToCheckout
+      proceedToCheckout,
+      formatPrice
     }
   }
 }
