@@ -35,13 +35,12 @@
           </div>
           
           <div>
-            <label class="form-label">{{ $t('therapists.filters.availability') }}</label>
-            <select v-model="filters.availability" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+            <label class="form-label">{{ $t('therapists.filters.nearestAppointment') }}</label>
+            <select v-model="filters.nearestAppointment" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.anyTime') }}</option>
-              <option value="morning">{{ $t('therapists.availability.morning') }}</option>
-              <option value="afternoon">{{ $t('therapists.availability.afternoon') }}</option>
-              <option value="evening">{{ $t('therapists.availability.evening') }}</option>
-              <option value="weekend">{{ $t('therapists.availability.weekend') }}</option>
+              <option value="today">{{ $t('therapists.filters.today') }}</option>
+              <option value="tomorrow">{{ $t('therapists.filters.tomorrow') }}</option>
+              <option value="this_week">{{ $t('therapists.filters.thisWeek') }}</option>
             </select>
           </div>
           
@@ -177,7 +176,7 @@ export default {
     const filters = reactive({
       specialization: '',
       priceRange: '',
-      availability: '',
+      nearestAppointment: '',
       sortBy: 'rating'
     })
 
@@ -200,6 +199,34 @@ export default {
         } else if (filters.priceRange === 'highest') {
           filtered = filtered.sort((a, b) => (b.price?.others || 0) - (a.price?.others || 0))
         }
+      }
+
+      // Filter by nearest appointment
+      if (filters.nearestAppointment) {
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        const endOfWeek = new Date(today)
+        endOfWeek.setDate(endOfWeek.getDate() + 7)
+
+        filtered = filtered.filter(therapist => {
+          const slotTime = getEarliestSlotTime(therapist)
+          if (slotTime === 999999) return false // No availability
+
+          const slotDate = new Date(slotTime)
+          
+          switch (filters.nearestAppointment) {
+            case 'today':
+              return slotDate >= today && slotDate < tomorrow
+            case 'tomorrow':
+              return slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+            case 'this_week':
+              return slotDate >= today && slotDate <= endOfWeek
+            default:
+              return true
+          }
+        })
       }
 
       // Sort therapists

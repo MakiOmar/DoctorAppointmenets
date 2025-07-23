@@ -271,7 +271,10 @@ export default {
       highestRated: 'Highest Rated',
       lowestPrice: 'Lowest Price',
       highestPrice: 'Highest Price',
-      nearestAppointment: 'Nearest Appointment'
+      nearestAppointment: 'Nearest Appointment',
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      thisWeek: 'This Week'
     },
     specializations: {
       anxiety: 'Anxiety Disorders',

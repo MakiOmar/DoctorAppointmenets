@@ -281,7 +281,10 @@ export default {
       highestRated: 'الأعلى تقييماً',
       lowestPrice: 'أقل سعر',
       highestPrice: 'أعلى سعر',
-      nearestAppointment: 'أقرب موعد'
+      nearestAppointment: 'أقرب موعد',
+      today: 'اليوم',
+      tomorrow: 'غداً',
+      thisWeek: 'هذا الأسبوع'
     },
     specializations: {
       anxiety: 'اضطرابات القلق',
