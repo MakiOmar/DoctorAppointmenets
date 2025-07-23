@@ -392,9 +392,18 @@ function snks_create_demo_doctor( $data ) {
 	$user = get_user_by( 'ID', $user_id );
 	$user->set_role( 'doctor' );
 	
+	// Split names for proper storage
+	$name_parts = explode(' ', $data['name'], 2);
+	$name_en_parts = explode(' ', $data['name_en'], 2);
+	
+	$first_name = isset($name_parts[0]) ? $name_parts[0] : $data['name'];
+	$last_name = isset($name_parts[1]) ? $name_parts[1] : '';
+	$first_name_en = isset($name_en_parts[0]) ? $name_en_parts[0] : $data['name_en'];
+	$last_name_en = isset($name_en_parts[1]) ? $name_en_parts[1] : '';
+	
 	// Update user meta
-	update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $data['name'] ) );
-	update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $data['name_en'] ) );
+	update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $first_name ) );
+	update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $last_name ) );
 	update_user_meta( $user_id, 'billing_phone', sanitize_text_field( $data['phone'] ) );
 	update_user_meta( $user_id, 'whatsapp', sanitize_text_field( $data['whatsapp'] ) );
 	update_user_meta( $user_id, 'doctor_specialty', sanitize_text_field( $data['specialty'] ) );
@@ -406,7 +415,7 @@ function snks_create_demo_doctor( $data ) {
 	
 	// Set AI-related meta fields
 	update_user_meta( $user_id, 'show_on_ai_site', '1' );
-	update_user_meta( $user_id, 'ai_display_name', sanitize_text_field( $data['name'] ) );
+	update_user_meta( $user_id, 'ai_display_name', sanitize_text_field( $first_name . ' ' . $last_name ) );
 	update_user_meta( $user_id, 'ai_bio', sanitize_textarea_field( $data['bio'] ) );
 	update_user_meta( $user_id, 'public_short_bio', sanitize_text_field( $data['specialty'] ) );
 	update_user_meta( $user_id, 'secretary_phone', sanitize_text_field( $data['phone'] ) );
