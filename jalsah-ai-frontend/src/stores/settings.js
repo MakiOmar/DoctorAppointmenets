@@ -33,7 +33,7 @@ export const useSettingsStore = defineStore('settings', () => {
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
-        console.log('Loaded settings from localStorage:', settings)
+
       } catch (e) {
         console.error('Failed to parse saved settings:', e)
       }
@@ -47,7 +47,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const loadSettingsFromAPI = async () => {
     try {
-      console.log('Loading settings from API...')
+
       
       // Try multiple endpoints
       let response = null
@@ -55,18 +55,18 @@ export const useSettingsStore = defineStore('settings', () => {
       // Try REST API first
       try {
         response = await api.get('/wp-json/jalsah-ai/v1/settings')
-        console.log('REST API response:', response.data)
+
       } catch (e) {
-        console.log('REST API failed, trying AJAX...')
+
         
         // Try WordPress AJAX
         try {
           response = await api.get('/wp-admin/admin-ajax.php', {
             params: { action: 'get_ai_settings' }
           })
-          console.log('WordPress AJAX response:', response.data)
+
         } catch (e2) {
-          console.log('WordPress AJAX failed:', e2.message)
+
           return
         }
       }
@@ -82,7 +82,7 @@ export const useSettingsStore = defineStore('settings', () => {
         
         // Save to localStorage
         localStorage.setItem('jalsah_settings', JSON.stringify(settings))
-        console.log('Settings updated from API:', settings)
+
       }
     } catch (error) {
       console.error('Failed to load settings from API:', error)

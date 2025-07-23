@@ -114,18 +114,11 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   
-  // Debug logging
-  console.log('Router Guard:', {
-    to: to.path,
-    from: from.path,
-    isAuthenticated: authStore.isAuthenticated,
-    user: authStore.user,
-    userRole: authStore.user?.role
-  })
+
   
   // Check if authentication is required
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    console.log('Redirecting to login - not authenticated')
+
     next('/login')
     return
   }
@@ -153,11 +146,7 @@ router.beforeEach((to, from, next) => {
     )
     
     if (!hasRequiredRole) {
-      console.log('Role access denied, redirecting:', {
-        requiredRoles: to.meta.roles,
-        userRole: userRole,
-        userRoles: userRoles
-      })
+
       // Redirect to appropriate dashboard based on role
       if (userRole === 'doctor' || userRole === 'clinic_manager') {
         next('/doctor')

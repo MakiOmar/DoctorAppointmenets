@@ -31,19 +31,18 @@ if (!savedLocale || savedLocale !== defaultLocale) {
   i18n.global.locale.value = defaultLocale
   localStorage.setItem('locale', defaultLocale)
   localStorage.setItem('jalsah_locale', defaultLocale)
-  console.log('Setting default language to:', defaultLocale)
+
 } else {
   // Use saved locale
   i18n.global.locale.value = savedLocale
-  console.log('Using saved locale:', savedLocale)
+
 }
 
 // Update document direction
 const currentLocale = i18n.global.locale.value
 document.documentElement.dir = currentLocale === 'ar' ? 'rtl' : 'ltr'
 document.documentElement.lang = currentLocale
-console.log('Document direction set to:', document.documentElement.dir)
-console.log('Document language set to:', document.documentElement.lang)
+
 
 app.use(Toast, {
   position: 'top-right',
