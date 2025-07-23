@@ -182,25 +182,21 @@ export default {
     })
 
     const filteredTherapists = computed(() => {
-      let sorted = [...therapists.value]
+      let filtered = [...therapists.value]
 
-      // Sort by specialization (matching at the top)
+      // Filter by specialization (diagnosis)
       if (filters.specialization) {
-        sorted.sort((a, b) => {
-          const aHas = a.diagnoses?.some(d => d.id.toString() === filters.specialization)
-          const bHas = b.diagnoses?.some(d => d.id.toString() === filters.specialization)
-          if (aHas && !bHas) return -1
-          if (!aHas && bHas) return 1
-          return 0
-        })
+        filtered = filtered.filter(therapist =>
+          therapist.diagnoses?.some(d => d.id.toString() === filters.specialization)
+        )
       }
 
       // Sort by price range
       if (filters.priceRange) {
         if (filters.priceRange === 'lowest') {
-          sorted.sort((a, b) => (a.price?.others || 0) - (b.price?.others || 0))
+          filtered.sort((a, b) => (a.price?.others || 0) - (b.price?.others || 0))
         } else if (filters.priceRange === 'highest') {
-          sorted.sort((a, b) => (b.price?.others || 0) - (a.price?.others || 0))
+          filtered.sort((a, b) => (b.price?.others || 0) - (a.price?.others || 0))
         }
       }
 
@@ -208,15 +204,15 @@ export default {
       if (filters.nearestAppointment) {
         if (filters.nearestAppointment === 'closest') {
           // Sort by soonest slot (ascending), therapists with no slot at the end
-          sorted.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
+          filtered.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
         } else if (filters.nearestAppointment === 'farthest') {
           // Sort by latest slot (descending), therapists with no slot at the end
-          sorted.sort((a, b) => getEarliestSlotTime(b) - getEarliestSlotTime(a))
+          filtered.sort((a, b) => getEarliestSlotTime(b) - getEarliestSlotTime(a))
         }
       }
 
       // Sort therapists by main sortBy dropdown
-      sorted.sort((a, b) => {
+      filtered.sort((a, b) => {
         switch (filters.sortBy) {
           case 'rating':
             return getAverageRating(b) - getAverageRating(a)
@@ -231,7 +227,7 @@ export default {
         }
       })
 
-      return sorted
+      return filtered
     })
 
     const getAverageRating = (therapist) => {
