@@ -271,7 +271,7 @@ export default {
       highestRated: 'Highest Rated',
       lowestPrice: 'Lowest Price',
       highestPrice: 'Highest Price',
-      mostAvailable: 'Most Available'
+      nearestAppointment: 'Nearest Appointment'
     },
     specializations: {
       anxiety: 'Anxiety Disorders',

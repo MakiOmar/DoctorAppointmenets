@@ -51,7 +51,7 @@
               <option value="rating">{{ $t('therapists.filters.highestRated') }}</option>
               <option value="price_low">{{ $t('therapists.filters.lowestPrice') }}</option>
               <option value="price_high">{{ $t('therapists.filters.highestPrice') }}</option>
-              <option value="availability">{{ $t('therapists.filters.mostAvailable') }}</option>
+              <option value="nearest_appointment">{{ $t('therapists.filters.nearestAppointment') }}</option>
             </select>
           </div>
         </div>
@@ -211,6 +211,8 @@ export default {
             return (a.price?.others || 0) - (b.price?.others || 0)
           case 'price_high':
             return (b.price?.others || 0) - (a.price?.others || 0)
+          case 'nearest_appointment':
+            return getEarliestSlotTime(a) - getEarliestSlotTime(b)
           default:
             return 0
         }
@@ -230,6 +232,34 @@ export default {
       const total = validRatings.reduce((sum, d) => sum + Math.min(d.rating || 0, 5), 0)
       const average = total / validRatings.length
       return Math.min(average, 5) // Cap at 5.0
+    }
+
+    const getEarliestSlotTime = (therapist) => {
+      // If no earliest slot, return a very high number to push to end
+      if (!therapist.earliest_slot) {
+        return 999999
+      }
+      
+      // Parse the earliest slot time (format: "2024-01-15 09:00" or "09:00")
+      let slotTime = therapist.earliest_slot
+      
+      // If it's just a time (like "09:00"), assume it's today
+      if (slotTime.includes(':')) {
+        const today = new Date()
+        const [hours, minutes] = slotTime.split(':')
+        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+        
+        // If the time has passed today, assume it's tomorrow
+        if (slotDate < new Date()) {
+          slotDate.setDate(slotDate.getDate() + 1)
+        }
+        
+        return slotDate.getTime()
+      }
+      
+      // If it's a full datetime string, parse it
+      const slotDate = new Date(slotTime)
+      return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
     }
 
     const loadTherapists = async () => {

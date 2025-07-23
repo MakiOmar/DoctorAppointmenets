@@ -281,7 +281,7 @@ export default {
       highestRated: 'الأعلى تقييماً',
       lowestPrice: 'أقل سعر',
       highestPrice: 'أعلى سعر',
-      mostAvailable: 'الأكثر توفراً'
+      nearestAppointment: 'أقرب موعد'
     },
     specializations: {
       anxiety: 'اضطرابات القلق',
