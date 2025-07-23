@@ -35,30 +35,55 @@ function snks_cleanup_and_regenerate_demo_data() {
         )
     ));
     
-    if (empty($demo_doctors)) {
-        return array('success' => false, 'message' => 'No demo doctors found.');
-    }
-    
-    $results['details'][] = "Found " . count($demo_doctors) . " demo doctors";
-    
-    // Step 2: Remove existing demo reviews
-    foreach ($demo_doctors as $doctor) {
-        $deleted = $wpdb->delete(
-            $wpdb->prefix . 'snks_therapist_diagnoses',
-            array('therapist_id' => $doctor->ID),
-            array('%d')
-        );
+    if (!empty($demo_doctors)) {
+        $results['details'][] = "Found " . count($demo_doctors) . " old demo doctors to remove";
         
-        if ($deleted !== false) {
-            $success_count++;
-            $results['details'][] = "✅ Removed existing reviews for " . get_user_meta($doctor->ID, 'billing_first_name', true) . " " . get_user_meta($doctor->ID, 'billing_last_name', true);
-        } else {
-            $error_count++;
-            $results['details'][] = "❌ Failed to remove reviews for " . get_user_meta($doctor->ID, 'billing_first_name', true) . " " . get_user_meta($doctor->ID, 'billing_last_name', true);
+        // Step 2: Remove existing demo reviews first
+        foreach ($demo_doctors as $doctor) {
+            $deleted = $wpdb->delete(
+                $wpdb->prefix . 'snks_therapist_diagnoses',
+                array('therapist_id' => $doctor->ID),
+                array('%d')
+            );
+            
+            if ($deleted !== false) {
+                $results['details'][] = "✅ Removed reviews for " . get_user_meta($doctor->ID, 'billing_first_name', true) . " " . get_user_meta($doctor->ID, 'billing_last_name', true);
+            } else {
+                $error_count++;
+                $results['details'][] = "❌ Failed to remove reviews for " . get_user_meta($doctor->ID, 'billing_first_name', true) . " " . get_user_meta($doctor->ID, 'billing_last_name', true);
+            }
         }
+        
+        // Step 3: Remove demo doctors completely
+        foreach ($demo_doctors as $doctor) {
+            $deleted = wp_delete_user($doctor->ID);
+            
+            if ($deleted) {
+                $success_count++;
+                $results['details'][] = "✅ Removed demo doctor: " . get_user_meta($doctor->ID, 'billing_first_name', true) . " " . get_user_meta($doctor->ID, 'billing_last_name', true);
+            } else {
+                $error_count++;
+                $results['details'][] = "❌ Failed to remove demo doctor: " . get_user_meta($doctor->ID, 'billing_first_name', true) . " " . get_user_meta($doctor->ID, 'billing_last_name', true);
+            }
+        }
+    } else {
+        $results['details'][] = "No existing demo doctors found";
     }
     
-    // Step 3: Regenerate demo reviews with proper ratings
+    // Step 4: Create new demo doctors with Arabic content
+    $results['details'][] = "Creating new demo doctors with Arabic content...";
+    $create_result = snks_create_bulk_demo_doctors(5); // Create 5 new demo doctors
+    
+    if ($create_result['success']) {
+        $results['details'][] = "✅ " . $create_result['message'];
+        $success_count += 5;
+    } else {
+        $results['details'][] = "❌ " . $create_result['message'];
+        $error_count++;
+    }
+    
+    // Step 5: Create demo reviews for new doctors
+    $results['details'][] = "Creating demo reviews with Arabic content...";
     $regenerate_result = snks_create_demo_reviews();
     
     if ($regenerate_result['success']) {
@@ -68,10 +93,10 @@ function snks_cleanup_and_regenerate_demo_data() {
         $error_count++;
     }
     
-    // Step 4: Summary
+    // Step 6: Summary
     if ($error_count === 0) {
         $results['success'] = true;
-        $results['message'] = "Successfully cleaned up and regenerated demo data. All ratings are now properly capped at 5.0.";
+        $results['message'] = "Successfully cleaned up old demo data and created new Arabic demo content. All ratings are properly capped at 5.0.";
     } else {
         $results['success'] = false;
         $results['message'] = "Completed with {$error_count} errors. Some data may need manual cleanup.";
@@ -130,9 +155,9 @@ function snks_cleanup_demo_data_page() {
             <h2>⚠️ Important Notice</h2>
             <p>This action will:</p>
             <ul style="list-style-type: disc; margin-left: 20px;">
-                <li><strong>Delete all existing demo reviews</strong> from the database</li>
-                <li>Regenerate new demo reviews with proper ratings (4.0-5.0)</li>
-                <li>Keep all demo doctors and their profiles</li>
+                <li><strong>Delete all existing demo doctors and their reviews</strong> from the database</li>
+                <li>Create 5 new demo doctors with Arabic names and content</li>
+                <li>Generate new demo reviews with proper ratings (4.0-5.0) in Arabic</li>
                 <li>Only affect demo data (real data is safe)</li>
             </ul>
             
@@ -143,11 +168,12 @@ function snks_cleanup_demo_data_page() {
             <h2>Why Cleanup Demo Data?</h2>
             <p>The existing demo data contains ratings above 5.0 (like 5.6, 5.8), which are illogical for a 5-star rating system. This cleanup will:</p>
             <ul style="list-style-type: disc; margin-left: 20px;">
+                <li>Remove all old demo doctors with English names</li>
+                <li>Create new demo doctors with Arabic names and content</li>
                 <li>Ensure all ratings are between 4.0 and 5.0</li>
-                <li>Provide more realistic demo data in Arabic</li>
+                <li>Provide culturally appropriate Arabic demo data</li>
                 <li>Fix the display issues on the frontend</li>
-                <li>Make the demo more professional and culturally appropriate</li>
-                <li>Include Arabic names, specialties, and review messages</li>
+                <li>Make the demo more professional and realistic</li>
             </ul>
         </div>
         
