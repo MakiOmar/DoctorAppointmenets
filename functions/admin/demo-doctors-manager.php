@@ -455,12 +455,20 @@ function snks_create_bulk_demo_doctors( $count ) {
 	$success_count = 0;
 	$error_count = 0;
 	
-	$demo_names = array(
+	$demo_names_ar = array(
 		'د. أحمد محمد', 'د. فاطمة علي', 'د. عمر حسن', 'د. سارة عبدالله',
 		'د. محمد خالد', 'د. نورا أحمد', 'د. يوسف إبراهيم', 'د. ليلى محمود',
 		'د. عبدالرحمن سعد', 'د. ريم محمد', 'د. خالد عبدالعزيز', 'د. منى أحمد',
 		'د. علي حسن', 'د. هدى محمد', 'د. أحمد فؤاد', 'د. نادية علي',
 		'د. محمد عبدالله', 'د. فاطمة الزهراء', 'د. عمر عبدالرحمن', 'د. سارة محمد'
+	);
+	
+	$demo_names_en = array(
+		'Dr. Ahmed Mohamed', 'Dr. Fatima Ali', 'Dr. Omar Hassan', 'Dr. Sara Abdullah',
+		'Dr. Mohamed Khalid', 'Dr. Nora Ahmed', 'Dr. Youssef Ibrahim', 'Dr. Layla Mahmoud',
+		'Dr. Abdulrahman Saad', 'Dr. Reem Mohamed', 'Dr. Khalid Abdulaziz', 'Dr. Mona Ahmed',
+		'Dr. Ali Hassan', 'Dr. Huda Mohamed', 'Dr. Ahmed Fouad', 'Dr. Nadia Ali',
+		'Dr. Mohamed Abdullah', 'Dr. Fatima Al-Zahra', 'Dr. Omar Abdulrahman', 'Dr. Sara Mohamed'
 	);
 	
 	$specialties = array(
@@ -471,14 +479,15 @@ function snks_create_bulk_demo_doctors( $count ) {
 	$diagnoses = array( 'Anxiety Disorders', 'Depression', 'PTSD', 'OCD', 'Bipolar Disorder', 'Stress Management' );
 	
 	for ( $i = 0; $i < $count; $i++ ) {
-		$name = $demo_names[ $i % count( $demo_names ) ];
+		$name_ar = $demo_names_ar[ $i % count( $demo_names_ar ) ];
+		$name_en = $demo_names_en[ $i % count( $demo_names_en ) ];
 		$specialty = $specialties[ $i % count( $specialties ) ];
 		$price = rand( 100, 300 );
 		$phone_base = 966500000000 + $i;
 		
 		$data = array(
-			'name' => $name,
-			'name_en' => $name,
+			'name' => $name_ar,
+			'name_en' => $name_en,
 			'email' => 'demo.doctor' . $i . '@jalsah.app',
 			'phone' => $phone_base,
 			'whatsapp' => $phone_base,
@@ -493,10 +502,10 @@ function snks_create_bulk_demo_doctors( $count ) {
 		
 		if ( $result['success'] ) {
 			$success_count++;
-			$results['details'][] = "✅ Created: {$name} ({$specialty}) - \${$price}";
+			$results['details'][] = "✅ Created: {$name_ar} ({$specialty}) - \${$price}";
 		} else {
 			$error_count++;
-			$results['details'][] = "❌ Failed: {$name} - {$result['message']}";
+			$results['details'][] = "❌ Failed: {$name_ar} - {$result['message']}";
 		}
 	}
 	
