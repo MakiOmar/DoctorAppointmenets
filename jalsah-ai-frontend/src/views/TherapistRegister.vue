@@ -36,22 +36,38 @@
               <label class="form-label" for="doctor_specialty">{{ $t('therapistRegister.specialty') }}</label>
               <input v-model="form.doctor_specialty" id="doctor_specialty" type="text" required class="input-field" />
             </div>
-            <div>
-              <label class="form-label" for="profile_image">{{ $t('therapistRegister.profileImage') }}</label>
-              <input @change="onFileChange($event, 'profile_image')" id="profile_image" type="file" accept="image/*" required class="input-field" />
-            </div>
-            <div>
-              <label class="form-label" for="identity_front">{{ $t('therapistRegister.identityFront') }}</label>
-              <input @change="onFileChange($event, 'identity_front')" id="identity_front" type="file" accept="image/*" required class="input-field" />
-            </div>
-            <div>
-              <label class="form-label" for="identity_back">{{ $t('therapistRegister.identityBack') }}</label>
-              <input @change="onFileChange($event, 'identity_back')" id="identity_back" type="file" accept="image/*" required class="input-field" />
-            </div>
-            <div>
-              <label class="form-label" for="certificates">{{ $t('therapistRegister.certificates') }}</label>
-              <input @change="onFileChange($event, 'certificates', true)" id="certificates" type="file" accept="image/*,application/pdf" multiple class="input-field" />
-            </div>
+            <FancyUpload
+              v-model="form.profile_image"
+              :label="$t('therapistRegister.profileImage')"
+              id="profile_image"
+              accept="image/*"
+              :multiple="false"
+              :buttonText="$t('therapistRegister.profileImage')"
+            />
+            <FancyUpload
+              v-model="form.identity_front"
+              :label="$t('therapistRegister.identityFront')"
+              id="identity_front"
+              accept="image/*"
+              :multiple="false"
+              :buttonText="$t('therapistRegister.identityFront')"
+            />
+            <FancyUpload
+              v-model="form.identity_back"
+              :label="$t('therapistRegister.identityBack')"
+              id="identity_back"
+              accept="image/*"
+              :multiple="false"
+              :buttonText="$t('therapistRegister.identityBack')"
+            />
+            <FancyUpload
+              v-model="form.certificates"
+              :label="$t('therapistRegister.certificates')"
+              id="certificates"
+              accept="image/*,application/pdf"
+              :multiple="true"
+              :buttonText="$t('therapistRegister.certificates')"
+            />
             <div v-if="passwordMode === 'user'">
               <label class="form-label" for="password">{{ $t('therapistRegister.password') }}</label>
               <input v-model="form.password" id="password" type="password" required class="input-field" />
@@ -87,6 +103,7 @@ import { ref, computed } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
+import FancyUpload from '@/components/FancyUpload.vue'
 
 const { t } = useI18n()
 const settingsStore = useSettingsStore()
@@ -140,7 +157,7 @@ async function onSubmit() {
     data.append('action', 'register_therapist')
     const response = await axios.post('/wp-admin/admin-ajax.php', data)
     if (response.data.success) {
-      success.value = t('therapistRegister.success')
+      success.value = t('therapistRegister.applicationSubmitted')
       form.value = {
         name: '', name_en: '', email: '', phone: '', whatsapp: '', doctor_specialty: '',
         profile_image: null, identity_front: null, identity_back: null, certificates: [],

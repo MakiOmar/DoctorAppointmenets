@@ -299,87 +299,86 @@ add_action( 'wp_ajax_save_prescription', 'snks_save_rochtah_prescription' );
 
 add_action('wp_ajax_nopriv_register_therapist', 'snks_ajax_register_therapist');
 function snks_ajax_register_therapist() {
+    error_log('Therapist application: start');
     // Get password mode from settings
     $mode = get_option('jalsah_therapist_registration_password_mode', 'auto');
     // Check required fields
     $required = ['name', 'name_en', 'email', 'phone', 'whatsapp', 'doctor_specialty'];
     foreach ($required as $field) {
         if (empty($_POST[$field])) {
+            error_log('Therapist application: missing field ' . $field);
             wp_send_json_error(['message' => 'Missing required field: ' . $field]);
         }
     }
     // Email validation
     if (!is_email($_POST['email'])) {
+        error_log('Therapist application: invalid email');
         wp_send_json_error(['message' => 'Invalid email address']);
     }
-    if (email_exists($_POST['email'])) {
-        wp_send_json_error(['message' => 'Email already exists']);
-    }
-    // Phone validation (basic)
-    if (username_exists($_POST['phone'])) {
-        wp_send_json_error(['message' => 'Phone already exists']);
-    }
-    // Password logic
-    if ($mode === 'user') {
-        if (empty($_POST['password']) || empty($_POST['password_confirm'])) {
-            wp_send_json_error(['message' => 'Password and confirmation are required']);
-        }
-        if ($_POST['password'] !== $_POST['password_confirm']) {
-            wp_send_json_error(['message' => 'Passwords do not match']);
-        }
-        $password = $_POST['password'];
-    } else {
-        $password = wp_generate_password(8, false);
-    }
-    // Create user
-    $user_id = wp_create_user($_POST['phone'], $password, $_POST['email']);
-    if (is_wp_error($user_id)) {
-        wp_send_json_error(['message' => $user_id->get_error_message()]);
-    }
-    // Set user meta
-    update_user_meta($user_id, 'first_name', sanitize_text_field($_POST['name']));
-    update_user_meta($user_id, 'last_name', sanitize_text_field($_POST['name_en']));
-    update_user_meta($user_id, 'billing_phone', sanitize_text_field($_POST['phone']));
-    update_user_meta($user_id, 'whatsapp', sanitize_text_field($_POST['whatsapp']));
-    update_user_meta($user_id, 'doctor_specialty', sanitize_text_field($_POST['doctor_specialty']));
-    // Set role
-    $user = get_user_by('id', $user_id);
-    $user->set_role('doctor');
-    // Handle file uploads (profile image, identity, certificates)
-    $upload_fields = ['profileImage', 'identityFront', 'identityBack'];
-    foreach ($upload_fields as $field) {
+    // Handle file uploads
+    $uploads = [];
+    $file_fields = ['profile_image', 'identity_front', 'identity_back'];
+    foreach ($file_fields as $field) {
         if (!empty($_FILES[$field]['name'])) {
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-            $uploaded = media_handle_upload($field, 0);
-            if (!is_wp_error($uploaded)) {
-                update_user_meta($user_id, $field, $uploaded);
+            $attachment_id = media_handle_upload($field, 0);
+            if (is_wp_error($attachment_id)) {
+                error_log('Therapist application: file upload failed for ' . $field);
+                wp_send_json_error(['message' => 'File upload failed: ' . $field]);
             }
+            $uploads[$field] = $attachment_id;
         }
     }
-    // Certificates (multiple)
+    error_log('Therapist application: file uploads done');
+    // Handle certificates (multiple)
+    $certificates = [];
     if (!empty($_FILES['certificates'])) {
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        $cert_ids = [];
         foreach ($_FILES['certificates']['name'] as $i => $name) {
             if (!empty($name)) {
                 $file = [
-                    'name' => $_FILES['certificates']['name'][$i],
-                    'type' => $_FILES['certificates']['type'][$i],
+                    'name'     => $_FILES['certificates']['name'][$i],
+                    'type'     => $_FILES['certificates']['type'][$i],
                     'tmp_name' => $_FILES['certificates']['tmp_name'][$i],
-                    'error' => $_FILES['certificates']['error'][$i],
-                    'size' => $_FILES['certificates']['size'][$i],
+                    'error'    => $_FILES['certificates']['error'][$i],
+                    'size'     => $_FILES['certificates']['size'][$i],
                 ];
                 $_FILES['single_certificate'] = $file;
                 $cert_id = media_handle_upload('single_certificate', 0);
                 if (!is_wp_error($cert_id)) {
-                    $cert_ids[] = $cert_id;
+                    $certificates[] = $cert_id;
+                } else {
+                    error_log('Therapist application: certificate upload failed at index ' . $i);
                 }
             }
         }
-        if ($cert_ids) {
-            update_user_meta($user_id, 'certificates', $cert_ids);
-        }
     }
-    // Success
-    wp_send_json_success(['message' => 'Registration successful', 'user_id' => $user_id]);
+    error_log('Therapist application: certificates done');
+    // Store as custom post type 'therapist_application'
+    $post_data = [
+        'post_type' => 'therapist_app',
+        'post_title' => sanitize_text_field($_POST['name_en']),
+        'post_status' => 'pending',
+        'meta_input' => [
+            'name' => sanitize_text_field($_POST['name']),
+            'name_en' => sanitize_text_field($_POST['name_en']),
+            'email' => sanitize_email($_POST['email']),
+            'phone' => sanitize_text_field($_POST['phone']),
+            'whatsapp' => sanitize_text_field($_POST['whatsapp']),
+            'doctor_specialty' => sanitize_text_field($_POST['doctor_specialty']),
+            'profile_image' => $uploads['profile_image'] ?? '',
+            'identity_front' => $uploads['identity_front'] ?? '',
+            'identity_back' => $uploads['identity_back'] ?? '',
+            'certificates' => $certificates,
+            'password_mode' => $mode,
+            'password' => ($mode === 'user' && !empty($_POST['password'])) ? $_POST['password'] : '',
+        ]
+    ];
+    error_log('Therapist application: before wp_insert_post');
+    $post_id = wp_insert_post($post_data);
+    error_log('Therapist application: after wp_insert_post, post_id=' . print_r($post_id, true));
+    if (is_wp_error($post_id) || !$post_id) {
+        error_log('Therapist application: wp_insert_post failed: ' . (is_wp_error($post_id) ? $post_id->get_error_message() : 'no post id'));
+        wp_send_json_error(['message' => 'Failed to submit application.']);
+    }
+    error_log('Therapist application: success');
+    wp_send_json_success(['message' => 'Application submitted and pending approval.']);
 } 

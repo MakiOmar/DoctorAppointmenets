@@ -506,7 +506,8 @@ export default {
     submit: 'Register',
     submitting: 'Registering...',
     success: 'Registration successful! Please check your email.',
-    error: 'Registration failed. Please try again.'
+    error: 'Registration failed. Please try again.',
+    applicationSubmitted: 'Your application has been submitted and is pending admin approval.'
   },
 
   // Not Found
