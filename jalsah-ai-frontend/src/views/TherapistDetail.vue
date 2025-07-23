@@ -184,6 +184,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
 import { formatPrice } from '@/utils/currency'
@@ -197,6 +198,7 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
+    const { t } = useI18n()
     const cartStore = useCartStore()
     
     const loading = ref(true)
@@ -217,7 +219,7 @@ export default {
 
     const formatEarliestSlot = (earliestSlot) => {
       if (!earliestSlot) {
-        return $t('therapists.contactForAvailability')
+        return t('therapists.contactForAvailability')
       }
       
       // Parse the slot time
@@ -240,7 +242,7 @@ export default {
       // Parse the full datetime
       const slotDate = new Date(slotTime)
       if (isNaN(slotDate.getTime())) {
-        return $t('therapists.contactForAvailability')
+        return t('therapists.contactForAvailability')
       }
       
       const now = new Date()
@@ -251,13 +253,13 @@ export default {
       // Format based on when the slot is
       if (slotDate >= today && slotDate < tomorrow) {
         // Today
-        return $t('therapists.availableToday', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+        return t('therapists.availableToday', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
       } else if (slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)) {
         // Tomorrow
-        return $t('therapists.availableTomorrow', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+        return t('therapists.availableTomorrow', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
       } else {
         // Other days
-        return $t('therapists.availableOn', { 
+        return t('therapists.availableOn', { 
           date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
         })
