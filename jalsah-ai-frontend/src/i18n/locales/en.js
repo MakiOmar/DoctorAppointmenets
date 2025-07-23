@@ -283,12 +283,7 @@ export default {
       eating: 'Eating Disorders',
       sleep: 'Sleep Disorders'
     },
-    priceRanges: {
-      '0-50': '$0 - $50',
-      '50-100': '$50 - $100',
-      '100-150': '$100 - $150',
-      '150+': '$150+'
-    },
+
     availability: {
       morning: 'Morning',
       afternoon: 'Afternoon',

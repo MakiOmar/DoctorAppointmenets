@@ -29,10 +29,8 @@
             <label class="form-label">{{ $t('therapists.filters.priceRange') }}</label>
             <select v-model="filters.priceRange" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.anyPrice') }}</option>
-              <option value="0-50">{{ $t('therapists.priceRanges.0-50') }}</option>
-              <option value="50-100">{{ $t('therapists.priceRanges.50-100') }}</option>
-              <option value="100-150">{{ $t('therapists.priceRanges.100-150') }}</option>
-              <option value="150+">{{ $t('therapists.priceRanges.150+') }}</option>
+              <option value="lowest">{{ $t('therapists.filters.lowestPrice') }}</option>
+              <option value="highest">{{ $t('therapists.filters.highestPrice') }}</option>
             </select>
           </div>
           
@@ -197,15 +195,11 @@ export default {
 
       // Filter by price range
       if (filters.priceRange) {
-        const [min, max] = filters.priceRange.split('-').map(Number)
-        filtered = filtered.filter(therapist => {
-          const price = therapist.price?.others || 0
-          if (max) {
-            return price >= min && price <= max
-          } else {
-            return price >= min
-          }
-        })
+        if (filters.priceRange === 'lowest') {
+          filtered = filtered.sort((a, b) => (a.price?.others || 0) - (b.price?.others || 0))
+        } else if (filters.priceRange === 'highest') {
+          filtered = filtered.sort((a, b) => (b.price?.others || 0) - (a.price?.others || 0))
+        }
       }
 
       // Sort therapists
