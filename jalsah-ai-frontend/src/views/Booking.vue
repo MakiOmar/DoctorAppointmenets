@@ -173,15 +173,15 @@
             <div class="border-t border-gray-200 pt-4">
               <div class="flex justify-between mb-2">
                 <span class="text-gray-600">Session Fee:</span>
-                <span class="font-medium">${{ getSessionPrice() }}</span>
+                <span class="font-medium">{{ formatPrice(getSessionPrice(), $i18n.locale) }}</span>
               </div>
               <div class="flex justify-between mb-2">
                 <span class="text-gray-600">Platform Fee:</span>
-                <span class="font-medium">$5.00</span>
+                <span class="font-medium">{{ formatPrice(5, $i18n.locale) }}</span>
               </div>
               <div class="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
                 <span>Total:</span>
-                <span>${{ getTotalPrice() }}</span>
+                <span>{{ formatPrice(getTotalPrice(), $i18n.locale) }}</span>
               </div>
             </div>
 
@@ -221,6 +221,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
+import { formatPrice } from '@/utils/currency'
 export default {
   name: 'Booking',
   setup() {

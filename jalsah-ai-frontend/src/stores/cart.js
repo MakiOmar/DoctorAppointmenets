@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import api from '@/services/api'
 import { useAuthStore } from './auth'
+import { formatPrice } from '@/utils/currency'
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref([])

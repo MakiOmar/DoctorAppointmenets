@@ -55,7 +55,7 @@
 
             <!-- Price -->
             <div class="text-2xl font-bold text-primary-600 mb-4">
-              ${{ therapist.price?.others || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
+              {{ formatPrice(therapist.price?.others, $i18n.locale) || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
             </div>
 
             <!-- Bio -->
@@ -194,6 +194,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
+import { formatPrice } from '@/utils/currency'
 export default {
   name: 'TherapistDetail',
   setup() {

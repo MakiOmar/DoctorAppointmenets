@@ -54,7 +54,7 @@
                 <!-- Price and Actions -->
                 <div class="text-right">
                   <div class="text-lg font-semibold text-gray-900 mb-2">
-                    ${{ item.price }}
+                    {{ formatPrice(item.price, $i18n.locale) }}
                   </div>
                   <button 
                     @click="removeFromCart(item.id)"
@@ -77,15 +77,15 @@
             <div class="space-y-3 mb-6">
               <div class="flex justify-between">
                 <span class="text-gray-600">Sessions ({{ cartItems.length }})</span>
-                <span class="font-medium">${{ subtotal }}</span>
+                <span class="font-medium">{{ formatPrice(subtotal, $i18n.locale) }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-600">Platform Fee</span>
-                <span class="font-medium">${{ platformFee }}</span>
+                <span class="font-medium">{{ formatPrice(platformFee, $i18n.locale) }}</span>
               </div>
               <div class="flex justify-between text-lg font-semibold border-t border-gray-200 pt-3">
                 <span>Total</span>
-                <span>${{ total }}</span>
+                <span>{{ formatPrice(total, $i18n.locale) }}</span>
               </div>
             </div>
 
@@ -108,7 +108,7 @@
                 </button>
               </div>
               <div v-if="appliedPromo" class="mt-2 text-sm text-green-600">
-                Promo code applied: {{ appliedPromo.code }} (-${{ appliedPromo.discount }})
+                Promo code applied: {{ appliedPromo.code }} (-{{ formatPrice(appliedPromo.discount, $i18n.locale) }})
               </div>
             </div>
 
@@ -159,6 +159,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
+import { formatPrice } from '@/utils/currency'
 export default {
   name: 'Cart',
   setup() {

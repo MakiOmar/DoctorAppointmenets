@@ -34,7 +34,7 @@
           <div class="bg-purple-50 rounded-lg p-6">
             <h2 class="text-xl font-semibold text-purple-800 mb-4">This Month</h2>
             <div class="text-center">
-              <div class="text-3xl font-bold text-purple-600">${{ monthlyEarnings }}</div>
+              <div class="text-3xl font-bold text-purple-600">{{ formatPrice(monthlyEarnings, 'en') }}</div>
               <p class="text-purple-700">Earnings</p>
             </div>
             <button class="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full">
@@ -91,6 +91,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { formatPrice } from '@/utils/currency'
 
 const authStore = useAuthStore()
 const user = computed(() => authStore.user)
