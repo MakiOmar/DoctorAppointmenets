@@ -19,7 +19,7 @@
             <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
             <select v-model="filters.specialization" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
-              <option v-for="diagnosis in diagnoses" :key="diagnosis.id" :value="diagnosis.id">
+              <option v-for="diagnosis in diagnosesWithTherapists" :key="diagnosis.id" :value="diagnosis.id">
                 {{ diagnosis.name }}
               </option>
             </select>
@@ -230,6 +230,16 @@ export default {
       return filtered
     })
 
+    const diagnosesWithTherapists = computed(() => {
+      // Build a set of diagnosis IDs that are assigned to at least one therapist
+      const assignedIds = new Set()
+      therapists.value.forEach(therapist => {
+        therapist.diagnoses?.forEach(d => assignedIds.add(d.id))
+      })
+      // Return only diagnoses that are assigned
+      return diagnoses.value.filter(d => assignedIds.has(d.id))
+    })
+
     const getAverageRating = (therapist) => {
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
         return 0
@@ -361,6 +371,7 @@ export default {
       diagnoses,
       filters,
       filteredTherapists,
+      diagnosesWithTherapists,
       getAverageRating,
       formatEarliestSlot,
       viewTherapist,
