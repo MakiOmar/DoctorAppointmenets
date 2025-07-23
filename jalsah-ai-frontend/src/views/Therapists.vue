@@ -164,6 +164,9 @@ import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 export default {
   name: 'Therapists',
+  components: {
+    StarRating
+  },
   setup() {
     const router = useRouter()
     const toast = useToast()

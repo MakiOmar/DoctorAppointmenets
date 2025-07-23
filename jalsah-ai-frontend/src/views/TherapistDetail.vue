@@ -190,6 +190,9 @@ import { formatPrice } from '@/utils/currency'
 import StarRating from '@/components/StarRating.vue'
 export default {
   name: 'TherapistDetail',
+  components: {
+    StarRating
+  },
   setup() {
     const route = useRoute()
     const router = useRouter()

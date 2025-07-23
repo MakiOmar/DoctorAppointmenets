@@ -1,5 +1,6 @@
 <template>
   <div class="flex text-yellow-400">
+    <!-- Debug: Rating = {{ rating }} -->
     <svg 
       v-for="i in 5" 
       :key="i" 
