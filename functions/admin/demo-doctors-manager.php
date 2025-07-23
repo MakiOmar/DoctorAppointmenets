@@ -13,10 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Add demo doctors manager page
  */
 function snks_add_demo_doctors_manager_page() {
-	// Debug: Check if parent menu exists
-	global $submenu;
-	
-	// Add the submenu page
+	// Try to add as submenu first
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Demo Doctors Manager',
@@ -26,9 +23,20 @@ function snks_add_demo_doctors_manager_page() {
 		'snks_demo_doctors_manager_page'
 	);
 	
+	// Also add as standalone menu page for easier access
+	add_menu_page(
+		'Demo Doctors Manager',
+		'Demo Doctors',
+		'manage_options',
+		'demo-doctors-manager',
+		'snks_demo_doctors_manager_page',
+		'dashicons-businessperson',
+		31
+	);
+	
 	// Debug: Log if function is called
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( 'Demo Doctors Manager: Submenu registration attempted' );
+		error_log( 'Demo Doctors Manager: Menu registration completed' );
 	}
 }
 add_action( 'admin_menu', 'snks_add_demo_doctors_manager_page', 25 );
