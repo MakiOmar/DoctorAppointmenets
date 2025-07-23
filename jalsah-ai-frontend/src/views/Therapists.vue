@@ -119,7 +119,7 @@
               <svg class="w-4 h-4" :class="$i18n.locale === 'ar' ? 'ml-1' : 'mr-1'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <span>{{ $t('therapists.nextAvailable', { time: therapist.earliest_slot || $t('therapists.contactForAvailability') }) }}</span>
+              <span>{{ formatEarliestSlot(therapist.earliest_slot) }}</span>
             </div>
 
             <!-- Action Buttons -->
@@ -280,6 +280,55 @@ export default {
       // If it's a full datetime string, parse it
       const slotDate = new Date(slotTime)
       return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
+    }
+
+    const formatEarliestSlot = (earliestSlot) => {
+      if (!earliestSlot) {
+        return $t('therapists.contactForAvailability')
+      }
+      
+      // Parse the slot time
+      let slotTime = earliestSlot
+      
+      // If it's just a time (like "09:00"), assume it's today
+      if (slotTime.includes(':') && !slotTime.includes('-')) {
+        const today = new Date()
+        const [hours, minutes] = slotTime.split(':')
+        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+        
+        // If the time has passed today, assume it's tomorrow
+        if (slotDate < new Date()) {
+          slotDate.setDate(slotDate.getDate() + 1)
+        }
+        
+        slotTime = slotDate.toISOString()
+      }
+      
+      // Parse the full datetime
+      const slotDate = new Date(slotTime)
+      if (isNaN(slotDate.getTime())) {
+        return $t('therapists.contactForAvailability')
+      }
+      
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
+      // Format based on when the slot is
+      if (slotDate >= today && slotDate < tomorrow) {
+        // Today
+        return $t('therapists.availableToday', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+      } else if (slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)) {
+        // Tomorrow
+        return $t('therapists.availableTomorrow', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+      } else {
+        // Other days
+        return $t('therapists.availableOn', { 
+          date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        })
+      }
     }
 
     const loadTherapists = async () => {

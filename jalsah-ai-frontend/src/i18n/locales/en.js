@@ -300,6 +300,9 @@ export default {
     more: '+{count} more',
     nextAvailable: 'Next available: {time}',
     contactForAvailability: 'Contact for availability',
+    availableToday: 'Available today at {time}',
+    availableTomorrow: 'Available tomorrow at {time}',
+    availableOn: 'Available {date} at {time}',
     bookSession: 'Book Session',
     viewProfile: 'View Profile'
   },

@@ -421,7 +421,13 @@ function snks_create_demo_doctor( $data ) {
 	update_user_meta( $user_id, 'secretary_phone', sanitize_text_field( $data['phone'] ) );
 	update_user_meta( $user_id, 'ai_first_session_percentage', '15' );
 	update_user_meta( $user_id, 'ai_followup_session_percentage', '10' );
-	update_user_meta( $user_id, 'ai_earliest_slot', '09:00' );
+		// Generate random future appointment time (within next 7 days)
+		$random_days = rand(0, 7);
+		$random_hours = rand(9, 17); // Between 9 AM and 5 PM
+		$random_minutes = rand(0, 3) * 15; // 0, 15, 30, or 45 minutes
+		
+		$future_date = date('Y-m-d H:i', strtotime("+{$random_days} days {$random_hours}:{$random_minutes}"));
+		update_user_meta( $user_id, 'ai_earliest_slot', $future_date );
 	
 	// Set price for 45-minute sessions
 	update_user_meta( $user_id, 'price_45_min', intval( $data['price'] ) );

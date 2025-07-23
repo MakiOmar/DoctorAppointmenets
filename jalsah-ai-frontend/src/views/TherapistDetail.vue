@@ -119,7 +119,7 @@
           <div class="space-y-4">
             <div>
               <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.nextAvailable') }}</h3>
-              <p class="text-gray-600">{{ therapist.earliest_slot || $t('therapists.contactForAvailability') }}</p>
+              <p class="text-gray-600">{{ formatEarliestSlot(therapist.earliest_slot) }}</p>
             </div>
             <div>
               <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionDuration') }}</h3>
@@ -215,6 +215,55 @@ export default {
       return Math.min(average, 5) // Cap at 5.0
     }
 
+    const formatEarliestSlot = (earliestSlot) => {
+      if (!earliestSlot) {
+        return $t('therapists.contactForAvailability')
+      }
+      
+      // Parse the slot time
+      let slotTime = earliestSlot
+      
+      // If it's just a time (like "09:00"), assume it's today
+      if (slotTime.includes(':') && !slotTime.includes('-')) {
+        const today = new Date()
+        const [hours, minutes] = slotTime.split(':')
+        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+        
+        // If the time has passed today, assume it's tomorrow
+        if (slotDate < new Date()) {
+          slotDate.setDate(slotDate.getDate() + 1)
+        }
+        
+        slotTime = slotDate.toISOString()
+      }
+      
+      // Parse the full datetime
+      const slotDate = new Date(slotTime)
+      if (isNaN(slotDate.getTime())) {
+        return $t('therapists.contactForAvailability')
+      }
+      
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
+      // Format based on when the slot is
+      if (slotDate >= today && slotDate < tomorrow) {
+        // Today
+        return $t('therapists.availableToday', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+      } else if (slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)) {
+        // Tomorrow
+        return $t('therapists.availableTomorrow', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+      } else {
+        // Other days
+        return $t('therapists.availableOn', { 
+          date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        })
+      }
+    }
+
     const loadTherapist = async () => {
       loading.value = true
       try {
@@ -248,7 +297,8 @@ export default {
       getAverageRating,
       bookAppointment,
       addToCart,
-      formatPrice
+      formatPrice,
+      formatEarliestSlot
     }
   }
 }

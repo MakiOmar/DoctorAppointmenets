@@ -310,6 +310,9 @@ export default {
     more: '+{count} المزيد',
     nextAvailable: 'التوفر التالي: {time}',
     contactForAvailability: 'تواصل للتحقق من التوفر',
+    availableToday: 'متوفر اليوم في {time}',
+    availableTomorrow: 'متوفر غداً في {time}',
+    availableOn: 'متوفر {date} في {time}',
     bookSession: 'حجز جلسة',
     viewProfile: 'عرض الملف الشخصي',
     bioDefault: 'معالج ذو خبرة متخصص في الصحة النفسية والعافية. ملتزم بتقديم رعاية شفقة قائمة على الأدلة لمساعدة العملاء على تحقيق أهدافهم في الصحة النفسية.'
