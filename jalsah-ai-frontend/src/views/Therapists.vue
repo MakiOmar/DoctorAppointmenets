@@ -93,7 +93,6 @@
             
             <div class="flex items-center" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
               <StarRating :rating="getAverageRating(therapist)" />
-              <!-- Debug: {{ getAverageRating(therapist) }} -->
               <span class="text-sm text-gray-600">
                 {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
               </span>
@@ -228,8 +227,9 @@ export default {
       if (validRatings.length === 0) {
         return 0
       }
-      const total = validRatings.reduce((sum, d) => sum + (d.rating || 0), 0)
-      return total / validRatings.length
+      const total = validRatings.reduce((sum, d) => sum + Math.min(d.rating || 0, 5), 0)
+      const average = total / validRatings.length
+      return Math.min(average, 5) // Cap at 5.0
     }
 
     const loadTherapists = async () => {

@@ -1,6 +1,5 @@
 <template>
   <div class="flex text-yellow-400">
-    <!-- Debug: Rating = {{ rating }} -->
     <svg 
       v-for="i in 5" 
       :key="i" 
@@ -27,7 +26,6 @@ export default {
   },
   methods: {
     getStarClass(i, rating) {
-      console.log(`Star ${i}, Rating: ${rating}, Type: ${typeof rating}`)
       const fullRating = Math.floor(rating)
       const partialRating = rating - fullRating
       

@@ -620,7 +620,7 @@ function snks_create_demo_reviews() {
 			
 			if ( ! $existing ) {
 				// Create new review
-				$rating = rand( 4, 5 ) + ( rand( 0, 10 ) / 10 ); // 4.0 to 5.0 with decimals
+				$rating = rand( 40, 50 ) / 10; // 4.0 to 5.0 with decimals, capped at 5.0
 				$message = $review_messages[ array_rand( $review_messages ) ];
 				
 				$result = $wpdb->insert(

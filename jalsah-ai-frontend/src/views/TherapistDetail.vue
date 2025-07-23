@@ -210,8 +210,9 @@ export default {
       if (validRatings.length === 0) {
         return 0
       }
-      const total = validRatings.reduce((sum, d) => sum + (d.rating || 0), 0)
-      return total / validRatings.length
+      const total = validRatings.reduce((sum, d) => sum + Math.min(d.rating || 0, 5), 0)
+      const average = total / validRatings.length
+      return Math.min(average, 5) // Cap at 5.0
     }
 
     const loadTherapist = async () => {
