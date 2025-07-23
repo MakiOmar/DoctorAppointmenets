@@ -44,13 +44,6 @@
           >
             {{ $t('nav.appointments') }}
           </router-link>
-          <router-link 
-            to="/therapist-register" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            :class="{ 'text-primary-600': $route.path === '/therapist-register' }"
-          >
-            {{ $t('nav.therapistRegister') }}
-          </router-link>
         </nav>
 
         <!-- Right side -->
@@ -63,8 +56,16 @@
             to="/cart" 
             class="relative p-2 text-gray-700 hover:text-primary-600 transition-colors"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-6 h-6">
+              <title>troley</title>
+              <g id="troley-2" data-name="troley">
+                <path d="M15,39a3,3,0,1,0,3-3A3,3,0,0,0,15,39Zm4,0a1,1,0,1,1-1-1A1,1,0,0,1,19,39Z"/>
+                <path d="M31,39a3,3,0,1,0,3-3A3,3,0,0,0,31,39Zm4,0a1,1,0,1,1-1-1A1,1,0,0,1,35,39Z"/>
+                <circle cx="28.55" cy="20.55" r="1.45"/>
+                <path d="M23.45,16.9A1.45,1.45,0,1,0,22,15.45,1.45,1.45,0,0,0,23.45,16.9Z"/>
+                <path d="M23,22a1,1,0,0,0,.71-.29l6-6a1,1,0,0,0-1.42-1.42l-6,6a1,1,0,0,0,0,1.42A1,1,0,0,0,23,22Z"/>
+                <path d="M7,10A1,1,0,0,0,8,9,1,1,0,0,1,9,8h2.26l5.4,17.27,1.38,5A1,1,0,0,0,19,31H32a1,1,0,0,1,0,2H20a1,1,0,0,0,0,2H32a3,3,0,0,0,0-6H19.76l-.83-3H32.47a6.92,6.92,0,0,0,3.58-1,7,7,0,0,0,3-3.46,6.45,6.45,0,0,0,.21-.62L42,11.27a1,1,0,0,0-.16-.87A1,1,0,0,0,41,10H14L13,6.7A1,1,0,0,0,12,6H9A3,3,0,0,0,6,9,1,1,0,0,0,7,10Zm32.67,2L38,18l-.68,2.37A5,5,0,0,1,32.47,24H18.36l-1.87-6-1.88-6Z"/>
+              </g>
             </svg>
             <span 
               v-if="cartItemCount > 0"
@@ -125,6 +126,12 @@
             >
               {{ $t('nav.register') }}
             </router-link>
+            <router-link
+              to="/therapist-register"
+              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+            >
+              {{ $t('nav.therapistRegister') }}
+            </router-link>
           </div>
 
           <!-- Mobile menu button -->
@@ -170,20 +177,6 @@
           >
             {{ $t('nav.appointments') }}
           </router-link>
-          <router-link
-            to="/therapist-register"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.therapistRegister') }}
-          </router-link>
-          <router-link
-            to="/cart"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.cart') }}
-          </router-link>
         </div>
 
         <!-- Mobile auth buttons -->
@@ -201,6 +194,13 @@
             @click="mobileMenuOpen = false"
           >
             {{ $t('nav.register') }}
+          </router-link>
+          <router-link
+            to="/therapist-register"
+            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+            @click="mobileMenuOpen = false"
+          >
+            {{ $t('nav.therapistRegister') }}
           </router-link>
         </div>
       </div>
