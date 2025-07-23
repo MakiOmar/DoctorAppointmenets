@@ -688,8 +688,14 @@ class SNKS_AI_Integration {
 			$therapist_id
 		) );
 		
+		// Debug: Log the raw diagnoses data
+		error_log( 'AI Integration Debug - Raw diagnoses for therapist ' . $therapist_id . ': ' . print_r( $diagnoses, true ) );
+		
 		// Process each diagnosis to include bilingual data
 		foreach ( $diagnoses as $diagnosis ) {
+			// Ensure rating is a number
+			$diagnosis->rating = floatval( $diagnosis->rating );
+			
 			// Get bilingual diagnosis names
 			$name_en = $diagnosis->name_en ?: $diagnosis->name;
 			$name_ar = $diagnosis->name_ar ?: '';
@@ -714,6 +720,9 @@ class SNKS_AI_Integration {
 			$diagnosis->suitability_message_en = $suitability_message_en;
 			$diagnosis->suitability_message_ar = $suitability_message_ar;
 		}
+		
+		// Debug: Log the processed diagnoses data
+		error_log( 'AI Integration Debug - Processed diagnoses for therapist ' . $therapist_id . ': ' . print_r( $diagnoses, true ) );
 		
 		return $diagnoses;
 	}
