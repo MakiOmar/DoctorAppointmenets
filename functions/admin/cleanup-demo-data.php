@@ -82,13 +82,14 @@ function snks_cleanup_and_regenerate_demo_data() {
 
 // Add admin page for cleanup
 function snks_add_cleanup_demo_data_page() {
-    add_submenu_page(
-        'demo-doctors-manager',
+    add_menu_page(
         'Cleanup Demo Data',
         'Cleanup Demo Data',
         'manage_options',
         'cleanup-demo-data',
-        'snks_cleanup_demo_data_page'
+        'snks_cleanup_demo_data_page',
+        'dashicons-admin-tools',
+        30
     );
 }
 add_action('admin_menu', 'snks_add_cleanup_demo_data_page');
