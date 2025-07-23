@@ -91,6 +91,35 @@ function snks_demo_doctors_manager_page() {
 		}
 	}
 	
+	// Handle demo reviews creation
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'create_demo_reviews' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'create_demo_reviews' ) ) {
+			
+			$result = snks_create_demo_reviews();
+			
+			echo '<div class="wrap">';
+			echo '<h1>Demo Reviews Creation Results</h1>';
+			
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
+			
+			if ( ! empty( $result['details'] ) ) {
+				echo '<h2>Creation Details:</h2>';
+				echo '<ul>';
+				foreach ( $result['details'] as $detail ) {
+					echo '<li>' . esc_html( $detail ) . '</li>';
+				}
+				echo '</ul>';
+			}
+			
+			echo '</div>';
+			return;
+		}
+	}
+	
 	// Handle bulk demo doctor creation
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'create_bulk_demo_doctors' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'create_bulk_demo_doctors' ) ) {
@@ -294,6 +323,18 @@ function snks_demo_doctors_manager_page() {
 			<?php endif; ?>
 		</div>
 		
+		<!-- Create Demo Reviews -->
+		<div class="card">
+			<h2>Create Demo Reviews</h2>
+			<p>Add realistic reviews and ratings to existing demo doctors for testing the frontend display.</p>
+			<form method="post">
+				<?php wp_nonce_field( 'create_demo_reviews' ); ?>
+				<input type="hidden" name="action" value="create_demo_reviews">
+				
+				<?php submit_button( 'Create Demo Reviews for All Demo Doctors' ); ?>
+			</form>
+		</div>
+		
 		<!-- Quick Actions -->
 		<div class="card">
 			<h2>Quick Actions</h2>
@@ -302,6 +343,18 @@ function snks_demo_doctors_manager_page() {
 				<a href="<?php echo admin_url( 'users.php?role=doctor' ); ?>" class="button">View All Doctors</a>
 				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-management' ); ?>" class="button">AI Dashboard</a>
 			</p>
+		</div>
+		
+		<!-- Reviews Information -->
+		<div class="card">
+			<h2>📋 Reviews & Ratings Information</h2>
+			<p><strong>Where to find reviews in admin:</strong></p>
+			<ul>
+				<li><strong>AI Therapist Settings:</strong> WordPress Admin → Jalsah AI → Therapist Profiles → Select Therapist → Diagnosis Assignments</li>
+				<li><strong>Database Table:</strong> <code>wp_snks_therapist_diagnoses</code> (therapist_id, diagnosis_id, rating, suitability_message)</li>
+				<li><strong>Frontend Display:</strong> Reviews are shown as ratings (0-5 stars) for each diagnosis/specialization</li>
+			</ul>
+			<p><strong>Review System:</strong> Each therapist has ratings for different diagnoses/specializations. The frontend displays the average rating and shows individual diagnosis ratings.</p>
 		</div>
 	</div>
 	<?php
@@ -373,9 +426,9 @@ function snks_create_demo_doctor( $data ) {
 		
 		foreach ( $data['diagnoses'] as $diagnosis_id ) {
 			$wpdb->insert(
-				$wpdb->prefix . 'snks_doctor_diagnoses',
+				$wpdb->prefix . 'snks_therapist_diagnoses',
 				array(
-					'doctor_id' => $user_id,
+					'therapist_id' => $user_id,
 					'diagnosis_id' => intval( $diagnosis_id ),
 					'rating' => rand( 4, 5 ), // Random rating between 4-5
 					'suitability_message' => 'This therapist specializes in treating this condition with evidence-based approaches.'
@@ -495,4 +548,115 @@ function snks_create_demo_availability_slots( $doctor_id ) {
 		}
 		$current_date = date( 'Y-m-d', strtotime( $current_date . ' +1 day' ) );
 	}
+}
+
+/**
+ * Create demo reviews for existing demo doctors
+ */
+function snks_create_demo_reviews() {
+	global $wpdb;
+	
+	// Get all demo doctors
+	$demo_doctors = get_users( array(
+		'role' => 'doctor',
+		'meta_query' => array(
+			array(
+				'key' => 'is_demo_doctor',
+				'value' => '1',
+				'compare' => '='
+			)
+		)
+	) );
+	
+	if ( empty( $demo_doctors ) ) {
+		return array( 'success' => false, 'message' => 'No demo doctors found. Please create demo doctors first.' );
+	}
+	
+	// Get all diagnoses
+	$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+	
+	if ( empty( $diagnoses ) ) {
+		return array( 'success' => false, 'message' => 'No diagnoses found. Please add diagnoses first.' );
+	}
+	
+	$results = array();
+	$success_count = 0;
+	$error_count = 0;
+	
+	// Demo review messages
+	$review_messages = array(
+		'Excellent therapist with deep understanding of this condition.',
+		'Very professional and caring approach to treatment.',
+		'Highly recommended for anyone dealing with this issue.',
+		'Great results and compassionate care.',
+		'Skilled professional with proven treatment methods.',
+		'Outstanding expertise in this area.',
+		'Patient and understanding therapist.',
+		'Effective treatment strategies and support.',
+		'Professional and knowledgeable approach.',
+		'Compassionate care with excellent results.'
+	);
+	
+	foreach ( $demo_doctors as $doctor ) {
+		$doctor_name = get_user_meta( $doctor->ID, 'billing_first_name', true ) . ' ' . get_user_meta( $doctor->ID, 'billing_last_name', true );
+		$doctor_reviews = 0;
+		
+		// Assign 3-6 random diagnoses to each doctor
+		$random_diagnoses = array_rand( $diagnoses, rand( 3, min( 6, count( $diagnoses ) ) ) );
+		if ( ! is_array( $random_diagnoses ) ) {
+			$random_diagnoses = array( $random_diagnoses );
+		}
+		
+		foreach ( $random_diagnoses as $index ) {
+			$diagnosis = $diagnoses[ $index ];
+			
+			// Check if review already exists
+			$existing = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_therapist_diagnoses 
+				WHERE therapist_id = %d AND diagnosis_id = %d",
+				$doctor->ID,
+				$diagnosis->id
+			) );
+			
+			if ( ! $existing ) {
+				// Create new review
+				$rating = rand( 4, 5 ) + ( rand( 0, 10 ) / 10 ); // 4.0 to 5.0 with decimals
+				$message = $review_messages[ array_rand( $review_messages ) ];
+				
+				$result = $wpdb->insert(
+					$wpdb->prefix . 'snks_therapist_diagnoses',
+					array(
+						'therapist_id' => $doctor->ID,
+						'diagnosis_id' => $diagnosis->id,
+						'rating' => $rating,
+						'suitability_message' => $message
+					),
+					array( '%d', '%d', '%f', '%s' )
+				);
+				
+				if ( $result !== false ) {
+					$doctor_reviews++;
+					$success_count++;
+				} else {
+					$error_count++;
+				}
+			}
+		}
+		
+		if ( $doctor_reviews > 0 ) {
+			$results['details'][] = "✅ Added {$doctor_reviews} reviews for {$doctor_name}";
+		} else {
+			$results['details'][] = "ℹ️ No new reviews needed for {$doctor_name}";
+		}
+	}
+	
+	if ( $success_count > 0 ) {
+		$results['success'] = true;
+		$results['message'] = "Successfully created {$success_count} demo reviews. {$error_count} errors occurred.";
+	} else {
+		$results['success'] = false;
+		$results['message'] = "No new reviews were created. All demo doctors may already have reviews.";
+	}
+	
+	return $results;
 } 
