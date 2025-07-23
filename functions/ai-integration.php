@@ -80,6 +80,9 @@ class SNKS_AI_Integration {
 		// Add rewrite rules for API endpoints
 		add_rewrite_rule( '^api/ai/(.*?)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
+		// Add rewrite rule for v2 endpoints
+		add_rewrite_rule( '^api/ai/v2/(.*?)/?$', 'index.php?ai_endpoint=v2/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/v2/?$', 'index.php?ai_endpoint=v2/ping', 'top' );
 		
 		add_filter( 'query_vars', array( $this, 'add_ai_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_ai_requests' ) );
@@ -285,6 +288,21 @@ class SNKS_AI_Integration {
 	private function route_ai_request( $endpoint ) {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$path = explode( '/', $endpoint );
+		// Check for v2 endpoints
+		if ($path[0] === 'v2') {
+			switch ($path[1]) {
+				case 'therapists':
+					$this->handle_therapists_endpoint_v2($method, array_slice($path, 1));
+					break;
+				// Add more v2 endpoints as needed
+				case 'ping':
+					$this->send_success(['message' => 'Pong! (v2)', 'timestamp' => current_time('mysql'), 'endpoint' => $endpoint]);
+					break;
+				default:
+					$this->send_error('V2 Endpoint not found', 404);
+			}
+			return;
+		}
 		
 		switch ( $path[0] ) {
 			case 'test':
@@ -1078,6 +1096,16 @@ class SNKS_AI_Integration {
 			'message' => 'Jalsah AI API is working',
 			'timestamp' => current_time( 'mysql' )
 		), 200 );
+	}
+
+	// Placeholder for v2 therapists endpoint handler
+	private function handle_therapists_endpoint_v2($method, $path) {
+		// TODO: Implement country-based pricing and currency logic here
+		if ($method === 'GET' && count($path) === 1) {
+			$this->send_success(['message' => 'v2 therapists endpoint placeholder']);
+		} else {
+			$this->send_error('Method not allowed or not implemented (v2)', 405);
+		}
 	}
 }
 
