@@ -93,6 +93,7 @@
             
             <div class="flex items-center" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
               <StarRating :rating="getAverageRating(therapist)" />
+              <!-- Debug: {{ getAverageRating(therapist) }} -->
               <span class="text-sm text-gray-600">
                 {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
               </span>
