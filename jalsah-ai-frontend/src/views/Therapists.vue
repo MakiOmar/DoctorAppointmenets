@@ -38,9 +38,8 @@
             <label class="form-label">{{ $t('therapists.filters.nearestAppointment') }}</label>
             <select v-model="filters.nearestAppointment" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
               <option value="">{{ $t('therapists.filters.anyTime') }}</option>
-              <option value="today">{{ $t('therapists.filters.today') }}</option>
-              <option value="tomorrow">{{ $t('therapists.filters.tomorrow') }}</option>
-              <option value="this_week">{{ $t('therapists.filters.thisWeek') }}</option>
+              <option value="closest">{{ $t('therapists.filters.closest') }}</option>
+              <option value="farthest">{{ $t('therapists.filters.farthest') }}</option>
             </select>
           </div>
           
@@ -203,30 +202,24 @@ export default {
 
       // Filter by nearest appointment
       if (filters.nearestAppointment) {
-        const now = new Date()
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        const endOfWeek = new Date(today)
-        endOfWeek.setDate(endOfWeek.getDate() + 7)
-
-        filtered = filtered.filter(therapist => {
-          const slotTime = getEarliestSlotTime(therapist)
-          if (slotTime === 999999) return false // No availability
-
-          const slotDate = new Date(slotTime)
-          
-          switch (filters.nearestAppointment) {
-            case 'today':
-              return slotDate >= today && slotDate < tomorrow
-            case 'tomorrow':
-              return slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
-            case 'this_week':
-              return slotDate >= today && slotDate <= endOfWeek
-            default:
-              return true
-          }
-        })
+        // Sort by earliest slot time first
+        filtered.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
+        
+        // Filter out therapists with no availability
+        filtered = filtered.filter(therapist => getEarliestSlotTime(therapist) !== 999999)
+        
+        // Take top 50% for closest, bottom 50% for farthest
+        const totalAvailable = filtered.length
+        const halfCount = Math.ceil(totalAvailable / 2)
+        
+        switch (filters.nearestAppointment) {
+          case 'closest':
+            filtered = filtered.slice(0, halfCount)
+            break
+          case 'farthest':
+            filtered = filtered.slice(halfCount)
+            break
+        }
       }
 
       // Sort therapists
