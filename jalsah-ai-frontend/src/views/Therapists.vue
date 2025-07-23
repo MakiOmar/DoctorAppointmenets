@@ -202,16 +202,13 @@ export default {
         }
       }
 
-      // Filter by nearest appointment
+      // Sort by nearest appointment if selected
       if (filters.nearestAppointment) {
-        // Filter out therapists with no availability
-        filtered = filtered.filter(therapist => getEarliestSlotTime(therapist) !== 999999)
-        
         if (filters.nearestAppointment === 'closest') {
-          // Sort by soonest slot (ascending)
+          // Sort by soonest slot (ascending), therapists with no slot at the end
           filtered.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
         } else if (filters.nearestAppointment === 'farthest') {
-          // Sort by latest slot (descending)
+          // Sort by latest slot (descending), therapists with no slot at the end
           filtered.sort((a, b) => getEarliestSlotTime(b) - getEarliestSlotTime(a))
         }
       }
