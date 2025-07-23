@@ -373,6 +373,7 @@ export default {
       filters,
       filteredTherapists,
       getAverageRating,
+      formatEarliestSlot,
       viewTherapist,
       bookAppointment
     }
