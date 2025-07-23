@@ -220,24 +220,15 @@ export default {
     })
 
     const getAverageRating = (therapist) => {
-      console.log('getAverageRating called for therapist:', therapist.name, 'diagnoses:', therapist.diagnoses)
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
-        console.log('No diagnoses found, returning 0')
         return 0
       }
-      const validRatings = therapist.diagnoses.filter(d => {
-        console.log('Checking diagnosis:', d.name, 'rating:', d.rating, 'type:', typeof d.rating)
-        return d.rating && !isNaN(d.rating) && d.rating > 0
-      })
-      console.log('Valid ratings:', validRatings)
+      const validRatings = therapist.diagnoses.filter(d => d.rating && !isNaN(d.rating) && d.rating > 0)
       if (validRatings.length === 0) {
-        console.log('No valid ratings found, returning 0')
         return 0
       }
       const total = validRatings.reduce((sum, d) => sum + (d.rating || 0), 0)
-      const average = total / validRatings.length
-      console.log('Total:', total, 'Count:', validRatings.length, 'Average:', average)
-      return average
+      return total / validRatings.length
     }
 
     const loadTherapists = async () => {
