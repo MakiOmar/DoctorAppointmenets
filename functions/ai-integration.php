@@ -23,53 +23,35 @@ class SNKS_AI_Integration {
 	private $jwt_algorithm = 'HS256';
 	
 	public function __construct() {
-		$this->jwt_secret = defined( 'JWT_SECRET' ) ? JWT_SECRET : wp_salt( 'auth' );
+		$this->jwt_secret = defined( 'JWT_SECRET' ) ? JWT_SECRET : 'your-secret-key';
+		$this->jwt_algorithm = 'HS256';
+		
 		$this->init_hooks();
+		
+		// Force flush rewrite rules on construction (for debugging)
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			flush_rewrite_rules();
+			error_log( 'AI Integration Debug - Rewrite rules flushed' );
+		}
 	}
 	
 	/**
 	 * Initialize hooks
 	 */
 	private function init_hooks() {
+		// Register AI endpoints
 		add_action( 'init', array( $this, 'register_ai_endpoints' ) );
-		add_action( 'template_redirect', array( $this, 'debug_ai_endpoint' ) );
-		add_action( 'wp_ajax_nopriv_ai_auth', array( $this, 'handle_ai_auth' ) );
-		add_action( 'wp_ajax_ai_auth', array( $this, 'handle_ai_auth' ) );
-		add_action( 'wp_ajax_nopriv_ai_therapists', array( $this, 'handle_ai_therapists' ) );
-		add_action( 'wp_ajax_ai_therapists', array( $this, 'handle_ai_therapists' ) );
-		add_action( 'wp_ajax_nopriv_ai_appointments', array( $this, 'handle_ai_appointments' ) );
-		add_action( 'wp_ajax_ai_appointments', array( $this, 'handle_ai_appointments' ) );
-		add_action( 'wp_ajax_nopriv_ai_cart', array( $this, 'handle_ai_cart' ) );
-		add_action( 'wp_ajax_ai_cart', array( $this, 'handle_ai_cart' ) );
-		add_action( 'wp_ajax_nopriv_ai_diagnoses', array( $this, 'handle_ai_diagnoses' ) );
-		add_action( 'wp_ajax_ai_diagnoses', array( $this, 'handle_ai_diagnoses' ) );
+		add_action( 'init', array( $this, 'register_rest_routes' ) );
 		
-		// Add AJAX handlers for frontend settings
-		add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
-		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
-		
-		// Add test endpoint
-		add_action( 'wp_ajax_test_connection', array( $this, 'test_connection_ajax' ) );
-		add_action( 'wp_ajax_nopriv_test_connection', array( $this, 'test_connection_ajax' ) );
-		
-		// Add REST API endpoint for settings
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		
-		// Add CORS headers early
+		// Handle CORS
 		add_action( 'init', array( $this, 'handle_cors' ) );
-		add_action( 'send_headers', array( $this, 'handle_cors' ) );
-		add_action( 'wp_head', array( $this, 'handle_cors' ) );
-		
-		// Handle API requests very early
+		add_action( 'send_headers', array( $this, 'handle_very_early_cors' ) );
 		add_action( 'parse_request', array( $this, 'handle_early_api_requests' ) );
 		
-		// Add very early CORS handling
-		add_action( 'plugins_loaded', array( $this, 'handle_very_early_cors' ) );
-		
-		// Add activation hook to flush rewrite rules
+		// Flush rewrite rules on activation
 		register_activation_hook( __FILE__, array( $this, 'flush_rewrite_rules' ) );
 		
-		// Add admin action to flush rewrite rules manually
+		// Add admin action for flushing rewrite rules
 		add_action( 'admin_post_flush_ai_rewrite_rules', array( $this, 'flush_rewrite_rules' ) );
 		
 		// Add AJAX endpoints for testing
@@ -77,6 +59,13 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
 		add_action( 'wp_ajax_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
+		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
+		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
+		
+		// Debug: Log when hooks are registered
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - AJAX hooks registered' );
+		}
 	}
 	
 	/**
@@ -184,10 +173,32 @@ class SNKS_AI_Integration {
 	 * Test AI endpoint
 	 */
 	public function test_ai_endpoint() {
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - test_ai_endpoint called' );
+		}
+		
 		$this->send_success( array( 
 			'message' => 'AI endpoint is working!', 
 			'timestamp' => current_time( 'mysql' ),
 			'endpoint' => 'test'
+		) );
+	}
+	
+	/**
+	 * Simple test AJAX endpoint
+	 */
+	public function simple_test_ajax() {
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - simple_test_ajax called' );
+			error_log( 'AI Integration Debug - POST data: ' . print_r( $_POST, true ) );
+		}
+		
+		wp_send_json_success( array(
+			'message' => 'Simple AJAX test successful!',
+			'timestamp' => current_time( 'mysql' ),
+			'post_data' => $_POST
 		) );
 	}
 	

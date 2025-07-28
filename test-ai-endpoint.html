@@ -9,6 +9,7 @@
     <h1>AI Endpoint Test</h1>
     <button onclick="testAPIEndpoint()">Test API Endpoint</button>
     <button onclick="testAJAXEndpoint()">Test AJAX Endpoint</button>
+    <button onclick="testSimpleAJAX()">Test Simple AJAX</button>
     <div id="result"></div>
 
     <script>
@@ -48,6 +49,27 @@
                 resultDiv.innerHTML = `<h3>AJAX Endpoint Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
                 resultDiv.innerHTML = `<h3>AJAX Endpoint Error:</h3><p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testSimpleAJAX() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing Simple AJAX...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'simple_test_ajax');
+                formData.append('test', 'hello');
+                
+                const response = await fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<h3>Simple AJAX Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>Simple AJAX Error:</h3><p style="color: red;">Error: ${error.message}</p>`;
             }
         }
     </script>
