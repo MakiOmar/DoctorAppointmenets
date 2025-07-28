@@ -271,18 +271,27 @@ export default {
           preferredApproach: form.preferredApproach
         })
         
-        // Send diagnosis data to API for processing
-        const response = await api.post('/api/ai/diagnosis/process', {
-          mood: form.mood,
-          duration: form.duration,
-          selectedSymptoms: form.selectedSymptoms,
-          impact: form.impact,
-          affectedAreas: form.affectedAreas,
-          goals: form.goals,
-          preferredApproach: form.preferredApproach
+        // Send diagnosis data directly to AJAX endpoint
+        console.log('Sending to AJAX endpoint...')
+        
+        // Create URL-encoded form data for WordPress AJAX
+        const formData = new URLSearchParams()
+        formData.append('action', 'test_diagnosis_ajax')
+        formData.append('mood', form.mood)
+        formData.append('duration', form.duration)
+        formData.append('selectedSymptoms', JSON.stringify(form.selectedSymptoms))
+        formData.append('impact', form.impact)
+        formData.append('affectedAreas', JSON.stringify(form.affectedAreas))
+        formData.append('goals', form.goals)
+        formData.append('preferredApproach', form.preferredApproach)
+        
+        const ajaxResponse = await api.post('/wp-admin/admin-ajax.php', formData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
         })
         
-        console.log('API Response:', response.data)
+        console.log('AJAX Response:', ajaxResponse.data)
         
         // Store diagnosis data in localStorage for therapist matching
         const diagnosisData = {
@@ -294,12 +303,12 @@ export default {
         toast.success('Diagnosis completed! Finding therapists for you...')
         
         // Redirect to diagnosis results page with the diagnosis ID
-        const diagnosisId = response.data.data?.diagnosis_id
-        console.log('Diagnosis ID from API:', diagnosisId)
+        const diagnosisId = ajaxResponse.data.data?.diagnosis_id
+        console.log('Diagnosis ID from AJAX:', diagnosisId)
         if (diagnosisId) {
           router.push(`/diagnosis-results/${diagnosisId}`)
         } else {
-          console.log('No diagnosis ID in response, redirecting to results page')
+          console.log('No diagnosis ID in AJAX response, redirecting to results page')
           router.push('/diagnosis-results')
         }
         
@@ -312,67 +321,15 @@ export default {
           url: error.config?.url
         })
         
-        // Try AJAX endpoint as fallback
-        try {
-          console.log('Trying AJAX endpoint as fallback...')
-          
-          // Create URL-encoded form data for WordPress AJAX
-          const formData = new URLSearchParams()
-          formData.append('action', 'test_diagnosis_ajax')
-          formData.append('mood', form.mood)
-          formData.append('duration', form.duration)
-          formData.append('selectedSymptoms', JSON.stringify(form.selectedSymptoms))
-          formData.append('impact', form.impact)
-          formData.append('affectedAreas', JSON.stringify(form.affectedAreas))
-          formData.append('goals', form.goals)
-          formData.append('preferredApproach', form.preferredApproach)
-          
-          const ajaxResponse = await api.post('/wp-admin/admin-ajax.php', formData, {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          })
-          
-          console.log('AJAX Response:', ajaxResponse.data)
-          
-          // Store diagnosis data in localStorage for therapist matching
-          const diagnosisData = {
-            ...form,
-            timestamp: new Date().toISOString()
-          }
-          localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
-          
-          toast.success('Diagnosis completed! Finding therapists for you...')
-          
-          // Redirect to diagnosis results page with the diagnosis ID
-          const diagnosisId = ajaxResponse.data.data?.diagnosis_id
-          console.log('Diagnosis ID from AJAX:', diagnosisId)
-          if (diagnosisId) {
-            router.push(`/diagnosis-results/${diagnosisId}`)
-          } else {
-            console.log('No diagnosis ID in AJAX response, redirecting to results page')
-            router.push('/diagnosis-results')
-          }
-          
-        } catch (ajaxError) {
-          console.error('AJAX fallback also failed:', ajaxError)
-          console.error('AJAX Error details:', {
-            status: ajaxError.response?.status,
-            statusText: ajaxError.response?.statusText,
-            data: ajaxError.response?.data,
-            url: ajaxError.config?.url
-          })
-          
-          // Final fallback: store data and redirect to results page for simulation
-          const diagnosisData = {
-            ...form,
-            timestamp: new Date().toISOString()
-          }
-          localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
-          
-          toast.success('Diagnosis completed! Finding therapists for you...')
-          router.push('/diagnosis-results')
+        // Fallback: store data and redirect to results page for simulation
+        const diagnosisData = {
+          ...form,
+          timestamp: new Date().toISOString()
         }
+        localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
+        
+        toast.success('Diagnosis completed! Finding therapists for you...')
+        router.push('/diagnosis-results')
       } finally {
         loading.value = false
       }
