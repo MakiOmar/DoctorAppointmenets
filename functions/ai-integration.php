@@ -178,7 +178,7 @@ class SNKS_AI_Integration {
 			error_log( 'AI Integration Debug - test_ai_endpoint called' );
 		}
 		
-		$this->send_success( array( 
+		wp_send_json_success( array( 
 			'message' => 'AI endpoint is working!', 
 			'timestamp' => current_time( 'mysql' ),
 			'endpoint' => 'test'
@@ -208,7 +208,7 @@ class SNKS_AI_Integration {
 	public function test_diagnosis_ajax() {
 		// Check if this is a POST request
 		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
-			$this->send_error( 'Method not allowed', 405 );
+			wp_send_json_error( 'Method not allowed', 405 );
 		}
 		
 		// Debug logging
@@ -238,7 +238,7 @@ class SNKS_AI_Integration {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( 'AI Integration Debug - Validation failed: mood or selectedSymptoms missing' );
 			}
-			$this->send_error( 'Mood and symptoms are required', 400 );
+			wp_send_json_error( 'Mood and symptoms are required', 400 );
 		}
 		
 		// Process the diagnosis
@@ -254,7 +254,7 @@ class SNKS_AI_Integration {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( 'AI Integration Debug - No diagnosis found, returning error' );
 			}
-			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
+			wp_send_json_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
 		}
 		
 		$response_data = array( 
@@ -267,7 +267,7 @@ class SNKS_AI_Integration {
 			error_log( 'AI Integration Debug - Sending success response: ' . print_r( $response_data, true ) );
 		}
 		
-		$this->send_success( $response_data );
+		wp_send_json_success( $response_data );
 	}
 	
 	/**
