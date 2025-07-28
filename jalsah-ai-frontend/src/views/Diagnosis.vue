@@ -358,10 +358,93 @@ export default {
 /* Checkbox and label alignment for RTL */
 .rtl .flex.items-center {
   flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 
 /* Progress bar text alignment for RTL */
 .rtl .flex.justify-between {
   flex-direction: row-reverse;
+}
+
+/* Grid layout improvements for RTL */
+.rtl .grid.md\:grid-cols-2 {
+  direction: rtl;
+}
+
+.rtl .grid.md\:grid-cols-2 > * {
+  direction: rtl;
+}
+
+/* Symptom selection grid RTL improvements */
+.rtl .space-y-4 .grid.md\:grid-cols-2 {
+  gap: 1rem;
+}
+
+.rtl .space-y-4 .grid.md\:grid-cols-2 .flex.items-center {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+}
+
+.rtl .space-y-4 .grid.md\:grid-cols-2 .flex.items-center:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Button spacing for RTL */
+.rtl .flex.justify-between.pt-6 {
+  gap: 1rem;
+}
+
+.rtl .btn-secondary {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rtl .btn-primary {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* Responsive RTL adjustments */
+@media (max-width: 768px) {
+  .rtl .grid.md\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .rtl .flex.justify-between.pt-6 {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .rtl .btn-secondary,
+  .rtl .btn-primary {
+    margin: 0;
+    width: 100%;
+  }
+}
+
+/* Card styling improvements for RTL */
+.rtl .card {
+  text-align: right;
+}
+
+.rtl .card h2 {
+  text-align: right;
+}
+
+.rtl .card p {
+  text-align: right;
+}
+
+/* Select and textarea RTL improvements */
+.rtl select.input-field {
+  background-position: left 0.5rem center;
+  padding-left: 2.5rem;
+  padding-right: 0.75rem;
+}
+
+.rtl textarea.input-field {
+  text-align: right;
+  resize: vertical;
 }
 </style> 

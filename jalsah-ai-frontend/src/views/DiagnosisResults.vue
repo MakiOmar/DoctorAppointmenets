@@ -254,6 +254,7 @@ export default {
   overflow: hidden;
 }
 
+/* RTL Support */
 .rtl {
   direction: rtl;
   text-align: right;
@@ -265,5 +266,80 @@ export default {
 
 .rtl .md\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 1;
+}
+
+/* RTL specific improvements */
+.rtl .text-center {
+  text-align: center;
+}
+
+.rtl .text-center h1,
+.rtl .text-center p {
+  text-align: center;
+}
+
+/* RTL button layout */
+.rtl .flex.justify-center.space-x-4 {
+  flex-direction: row-reverse;
+}
+
+.rtl .space-x-4 > * + * {
+  margin-right: 1rem;
+  margin-left: 0;
+}
+
+/* RTL card improvements */
+.rtl .card {
+  text-align: right;
+}
+
+.rtl .card h2,
+.rtl .card h3,
+.rtl .card p {
+  text-align: right;
+}
+
+/* RTL grid improvements */
+.rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
+  direction: rtl;
+}
+
+.rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 > * {
+  direction: rtl;
+}
+
+/* RTL responsive adjustments */
+@media (max-width: 768px) {
+  .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .rtl .flex.justify-center.space-x-4 {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .rtl .space-x-4 > * + * {
+    margin: 0;
+  }
+}
+
+/* RTL text alignment for specific elements */
+.rtl .text-gray-600 {
+  text-align: right;
+}
+
+.rtl .text-gray-900 {
+  text-align: right;
+}
+
+/* RTL loading and error states */
+.rtl .text-center.py-12 {
+  text-align: center;
+}
+
+.rtl .text-center.py-12 h3,
+.rtl .text-center.py-12 p {
+  text-align: center;
 }
 </style> 

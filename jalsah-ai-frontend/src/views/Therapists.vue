@@ -274,6 +274,7 @@ export default {
   overflow: hidden;
 }
 
+/* RTL Support */
 .rtl {
   direction: rtl;
   text-align: right;
@@ -287,7 +288,76 @@ export default {
   --tw-space-x-reverse: 1;
 }
 
+/* RTL form improvements */
 .rtl .form-label {
   text-align: right;
+}
+
+.rtl .input-field {
+  text-align: right;
+}
+
+.rtl select.input-field {
+  background-position: left 0.5rem center;
+  padding-left: 2.5rem;
+  padding-right: 0.75rem;
+}
+
+/* RTL grid improvements */
+.rtl .grid.md\:grid-cols-4 {
+  direction: rtl;
+}
+
+.rtl .grid.md\:grid-cols-4 > * {
+  direction: rtl;
+}
+
+.rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
+  direction: rtl;
+}
+
+.rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 > * {
+  direction: rtl;
+}
+
+/* RTL card improvements */
+.rtl .card {
+  text-align: right;
+}
+
+.rtl .card h1,
+.rtl .card h2,
+.rtl .card h3,
+.rtl .card p {
+  text-align: right;
+}
+
+/* RTL responsive adjustments */
+@media (max-width: 768px) {
+  .rtl .grid.md\:grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+  
+  .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* RTL text alignment */
+.rtl .text-gray-600 {
+  text-align: right;
+}
+
+.rtl .text-gray-900 {
+  text-align: right;
+}
+
+/* RTL loading state */
+.rtl .text-center.py-12 {
+  text-align: center;
+}
+
+.rtl .text-center.py-12 p {
+  text-align: center;
 }
 </style> 

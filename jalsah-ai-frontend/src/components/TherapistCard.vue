@@ -158,6 +158,7 @@ export default {
   overflow: hidden;
 }
 
+/* RTL Support */
 .rtl {
   direction: rtl;
   text-align: right;
@@ -169,5 +170,50 @@ export default {
 
 .rtl .md\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 1;
+}
+
+/* RTL specific spacing adjustments */
+.rtl .flex.items-center {
+  flex-direction: row-reverse;
+}
+
+.rtl .flex.flex-wrap {
+  flex-direction: row-reverse;
+}
+
+.rtl .gap-1 > * {
+  margin-left: 0.25rem;
+  margin-right: 0;
+}
+
+.rtl .gap-1 > *:first-child {
+  margin-left: 0;
+}
+
+/* RTL button positioning */
+.rtl .absolute.top-2.right-2 {
+  right: auto;
+  left: 0.5rem;
+}
+
+/* RTL text alignment */
+.rtl .text-sm {
+  text-align: right;
+}
+
+.rtl .text-xs {
+  text-align: right;
+}
+
+/* RTL card hover effects */
+.rtl .card:hover {
+  transform: translateY(-2px);
+}
+
+/* RTL responsive adjustments */
+@media (max-width: 768px) {
+  .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
 }
 </style> 
