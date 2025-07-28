@@ -381,7 +381,7 @@ export default {
   therapistDetail: {
     backToTherapists: 'Back to Therapists',
     reviews: 'reviews',
-    perSession: 'per session',
+    perSession: 'for a 45-minute session',
     bioDefault: 'Experienced therapist specializing in mental health and well-being. Committed to providing compassionate, evidence-based care to help clients achieve their mental health goals.',
     about: 'About',
     experience: 'Experience',
