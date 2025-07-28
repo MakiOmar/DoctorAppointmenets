@@ -31,6 +31,20 @@
         {{ therapist.bio || $t('therapists.bioDefault') }}
       </p>
 
+      <!-- Specializations/Diagnoses -->
+      <div class="flex flex-wrap gap-1">
+        <span 
+          v-for="diagnosis in therapist.diagnoses?.slice(0, 3)" 
+          :key="diagnosis.id"
+          class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
+        >
+          {{ diagnosis.name }}
+        </span>
+        <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500">
+          {{ $t('therapists.more', { count: therapist.diagnoses.length - 3 }) }}
+        </span>
+      </div>
+
       <!-- Suitability Message (only show if provided) -->
       <div v-if="suitabilityMessage" class="bg-primary-50 border border-primary-200 rounded-lg p-3">
         <p class="text-sm text-primary-800">
