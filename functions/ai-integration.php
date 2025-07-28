@@ -288,6 +288,15 @@ class SNKS_AI_Integration {
 	private function route_ai_request( $endpoint ) {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$path = explode( '/', $endpoint );
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - route_ai_request called' );
+			error_log( 'AI Integration Debug - Endpoint: ' . $endpoint );
+			error_log( 'AI Integration Debug - Method: ' . $method );
+			error_log( 'AI Integration Debug - Path: ' . print_r( $path, true ) );
+		}
+		
 		// Check for v2 endpoints
 		if ($path[0] === 'v2') {
 			switch ($path[1]) {
@@ -342,9 +351,15 @@ class SNKS_AI_Integration {
 				$this->handle_diagnoses_endpoint( $method, $path );
 				break;
 			case 'diagnosis':
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'AI Integration Debug - Routing to diagnosis endpoint' );
+				}
 				$this->handle_diagnosis_endpoint( $method, $path );
 				break;
 			default:
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'AI Integration Debug - Endpoint not found: ' . $path[0] );
+				}
 				$this->send_error( 'Endpoint not found', 404 );
 		}
 	}
@@ -459,13 +474,31 @@ class SNKS_AI_Integration {
 	 * Handle diagnosis endpoint
 	 */
 	private function handle_diagnosis_endpoint( $method, $path ) {
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - handle_diagnosis_endpoint called' );
+			error_log( 'AI Integration Debug - Method: ' . $method );
+			error_log( 'AI Integration Debug - Path: ' . print_r( $path, true ) );
+		}
+		
 		switch ( $method ) {
 			case 'POST':
 				if ( count( $path ) === 1 ) {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( 'AI Integration Debug - Calling process_diagnosis_data' );
+					}
 					$this->process_diagnosis_data();
+				} else {
+					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+						error_log( 'AI Integration Debug - Invalid path length for POST' );
+					}
+					$this->send_error( 'Invalid endpoint', 404 );
 				}
 				break;
 			default:
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( 'AI Integration Debug - Method not allowed: ' . $method );
+				}
 				$this->send_error( 'Method not allowed', 405 );
 		}
 	}
@@ -1046,10 +1079,24 @@ class SNKS_AI_Integration {
 	 * Process diagnosis data
 	 */
 	private function process_diagnosis_data() {
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - process_diagnosis_data called' );
+			error_log( 'AI Integration Debug - Raw input: ' . file_get_contents( 'php://input' ) );
+		}
+		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Parsed data: ' . print_r( $data, true ) );
+		}
 		
 		// Validate required fields
 		if ( ! isset( $data['mood'] ) || ! isset( $data['selectedSymptoms'] ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'AI Integration Debug - Validation failed: mood or selectedSymptoms missing' );
+			}
 			$this->send_error( 'Mood and symptoms are required', 400 );
 		}
 		
@@ -1057,15 +1104,30 @@ class SNKS_AI_Integration {
 		// In a real implementation, this would call ChatGPT or another AI service
 		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
 		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Diagnosis ID returned: ' . $diagnosis_id );
+		}
+		
 		// If no diagnosis found, return error
 		if ( $diagnosis_id === null ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'AI Integration Debug - No diagnosis found, returning error' );
+			}
 			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
 		}
 		
-		$this->send_success( array( 
+		$response_data = array( 
 			'diagnosis_id' => $diagnosis_id,
 			'message' => 'Diagnosis processed successfully'
-		) );
+		);
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Sending success response: ' . print_r( $response_data, true ) );
+		}
+		
+		$this->send_success( $response_data );
 	}
 	
 	/**
