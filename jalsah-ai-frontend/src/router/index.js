@@ -157,17 +157,8 @@ router.beforeEach((to, from, next) => {
     }
   }
   
-  // If user is authenticated and accessing home page, redirect to appropriate dashboard
-  if (to.path === '/' && authStore.isAuthenticated) {
-    const userRole = authStore.user?.role
-    if (userRole === 'doctor' || userRole === 'clinic_manager') {
-      next('/doctor')
-    } else {
-      next('/therapists')
-    }
-    return
-  }
-  
+  // Allow authenticated users to access the homepage without redirecting
+  // This enables users to stay on homepage after login
   next()
 })
 

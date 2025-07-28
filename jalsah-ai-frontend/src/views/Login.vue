@@ -150,8 +150,7 @@ export default {
       })
       
       if (success) {
-        // Role-based redirect will be handled by router navigation guard
-        // Just push to home and let the router handle the redirect
+        // Redirect to homepage after successful login
         router.push('/')
       }
     }
