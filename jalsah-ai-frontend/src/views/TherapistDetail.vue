@@ -1,5 +1,5 @@
 <template>
-  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+  <div :dir="locale === 'ar' ? 'rtl' : 'ltr'" :class="locale === 'ar' ? 'rtl' : 'ltr'">
     
     <div v-if="loading" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="text-center py-12">
@@ -16,19 +16,19 @@
       <button 
         @click="$router.go(-1)"
         class="flex items-center text-primary-600 hover:text-primary-700 mb-6"
-        :class="$i18n.locale === 'ar' ? 'flex-row-reverse' : 'flex-row'"
+        :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'"
       >
-        <svg class="w-5 h-5" :class="$i18n.locale === 'ar' ? 'ml-2' : 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="$i18n.locale === 'ar' ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'"></path>
+        <svg class="w-5 h-5" :class="locale === 'ar' ? 'ml-2' : 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="locale === 'ar' ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'"></path>
         </svg>
         {{ $t('therapistDetail.backToTherapists') }}
       </button>
 
       <!-- Therapist Header -->
       <div class="card mb-8">
-        <div class="md:flex" :class="$i18n.locale === 'ar' ? 'md:space-x-reverse md:space-x-8' : 'md:space-x-8'">
+        <div class="md:flex" :class="locale === 'ar' ? 'md:space-x-reverse md:space-x-8' : 'md:space-x-8'">
           <!-- Therapist Image -->
-          <div class="md:w-1/3 mb-6 md:mb-0" :class="$i18n.locale === 'ar' ? 'md:order-2' : 'md:order-1'">
+          <div class="md:w-1/3 mb-6 md:mb-0" :class="locale === 'ar' ? 'md:order-2' : 'md:order-1'">
             <img 
               :src="therapist.photo || '/default-therapist.svg'" 
               :alt="therapist.name"
@@ -38,11 +38,11 @@
           </div>
 
           <!-- Therapist Info -->
-          <div class="md:w-2/3" :class="$i18n.locale === 'ar' ? 'md:order-1' : 'md:order-2'">
+          <div class="md:w-2/3" :class="locale === 'ar' ? 'md:order-1' : 'md:order-2'">
             <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ therapist.name }}</h1>
             
             <!-- Rating -->
-            <div class="flex items-center mb-4" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
+            <div class="flex items-center mb-4" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
               <StarRating :rating="getAverageRating()" size="w-5 h-5" />
               <span class="text-lg text-gray-600">
                 {{ isNaN(getAverageRating()) ? '0.0' : getAverageRating().toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{ $t('therapistDetail.reviews') }})
@@ -51,7 +51,7 @@
 
             <!-- Price -->
             <div class="text-2xl font-bold text-primary-600 mb-4">
-              {{ formatPrice(therapist.price?.others, $i18n.locale) || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
+              {{ formatPrice(therapist.price?.others, locale) || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
             </div>
 
             <!-- Bio -->
@@ -198,7 +198,7 @@ export default {
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const cartStore = useCartStore()
     
     const loading = ref(true)
@@ -243,7 +243,7 @@ export default {
       const diffTime = slotDate.getTime() - now.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       
-      const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
+      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
       
       // Format based on when the slot is
       if (diffDays === 0) {
@@ -296,7 +296,8 @@ export default {
       bookAppointment,
       addToCart,
       formatPrice,
-      formatEarliestSlot
+      formatEarliestSlot,
+      locale
     }
   }
 }
