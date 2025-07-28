@@ -1,5 +1,5 @@
 <template>
-  <div class="flex text-yellow-400">
+  <div class="flex text-yellow-400" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <div 
       v-for="i in 5" 
       :key="i" 
@@ -26,6 +26,8 @@
 </template>
 
 <script>
+import { useI18n } from 'vue-i18n'
+
 export default {
   name: 'StarRating',
   props: {
@@ -38,10 +40,15 @@ export default {
       default: 'w-4 h-4'
     }
   },
+  setup() {
+    const { locale } = useI18n()
+    return { locale }
+  },
   methods: {
     getStarStyle(i, rating) {
       const fullRating = Math.floor(rating)
       const partialRating = rating - fullRating
+      const isRTL = this.locale === 'ar'
       
       if (i <= fullRating) {
         // Full star - show completely
@@ -50,11 +57,21 @@ export default {
           opacity: 1
         }
       } else if (i === fullRating + 1 && partialRating > 0) {
-        // Partial star - clip based on percentage
+        // Partial star - clip based on percentage and direction
         const percentage = Math.round(partialRating * 100)
-        return {
-          clipPath: `inset(0 ${100 - percentage}% 0 0)`,
-          opacity: 1
+        
+        if (isRTL) {
+          // For RTL: clip from left side (inset left)
+          return {
+            clipPath: `inset(0 0 0 ${percentage}%)`,
+            opacity: 1
+          }
+        } else {
+          // For LTR: clip from right side (inset right)
+          return {
+            clipPath: `inset(0 ${100 - percentage}% 0 0)`,
+            opacity: 1
+          }
         }
       } else {
         // Empty star - hide completely
