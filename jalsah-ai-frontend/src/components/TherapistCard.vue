@@ -20,7 +20,7 @@
     <div class="space-y-3">
       <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
       
-      <div class="flex items-center" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
+      <div class="flex items-center" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
         <StarRating :rating="getAverageRating(therapist)" />
         <span class="text-sm text-gray-600">
           {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
@@ -53,7 +53,7 @@
       </div>
 
       <!-- Next Available Slot -->
-      <div class="flex items-center text-sm text-gray-600" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
+      <div class="flex items-center text-sm text-gray-600" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -93,7 +93,7 @@ export default {
   },
   emits: ['click', 'book'],
   setup(props) {
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
 
     const getAverageRating = (therapist) => {
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
@@ -125,7 +125,7 @@ export default {
       const diffTime = slotDate.getTime() - now.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       
-      const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
+      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
       
       if (diffDays === 0) {
         return t('therapists.availableToday', { 
@@ -146,7 +146,8 @@ export default {
     return {
       getAverageRating,
       suitabilityMessage,
-      formatEarliestSlot
+      formatEarliestSlot,
+      locale
     }
   }
 }
