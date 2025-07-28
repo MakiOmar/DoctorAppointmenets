@@ -1057,6 +1057,11 @@ class SNKS_AI_Integration {
 		// In a real implementation, this would call ChatGPT or another AI service
 		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
 		
+		// If no diagnosis found, return error
+		if ( $diagnosis_id === null ) {
+			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
+		}
+		
 		$this->send_success( array( 
 			'diagnosis_id' => $diagnosis_id,
 			'message' => 'Diagnosis processed successfully'
@@ -1073,29 +1078,152 @@ class SNKS_AI_Integration {
 		$symptoms = $data['selectedSymptoms'];
 		$impact = $data['impact'] ?? 'moderate';
 		
-		// Simple simulation logic based on symptoms
-		$diagnosis_id = null;
+		// Get all available diagnoses from database
+		$all_diagnoses = $wpdb->get_results( "SELECT id, name, name_en FROM {$wpdb->prefix}snks_diagnoses ORDER BY id ASC" );
 		
-		if ( in_array( 'anxiety', $symptoms ) && in_array( 'panic', $symptoms ) ) {
-			// Anxiety disorder
-			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%anxiety%' OR name_en LIKE '%panic%' LIMIT 1" );
-		} elseif ( in_array( 'depression', $symptoms ) && in_array( 'hopelessness', $symptoms ) ) {
-			// Depression
-			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%depression%' OR name_en LIKE '%mood%' LIMIT 1" );
-		} elseif ( in_array( 'stress', $symptoms ) && $impact === 'severe' ) {
-			// Stress management
-			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%stress%' OR name_en LIKE '%burnout%' LIMIT 1" );
-		} elseif ( in_array( 'trauma', $symptoms ) ) {
-			// PTSD/Trauma
-			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%trauma%' OR name_en LIKE '%ptsd%' LIMIT 1" );
+		if ( empty( $all_diagnoses ) ) {
+			// If no diagnoses exist, return null
+			return null;
 		}
 		
-		// If no specific diagnosis found, return a general one
-		if ( ! $diagnosis_id ) {
-			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses ORDER BY id ASC LIMIT 1" );
+		// Map symptoms to diagnosis keywords
+		$symptom_mapping = array(
+			// Anxiety-related symptoms
+			'anxiety' => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
+			'panic' => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
+			'worry' => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
+			'fear' => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
+			'nervous' => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
+			
+			// Depression-related symptoms
+			'depression' => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
+			'hopelessness' => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
+			'sadness' => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
+			'worthless' => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
+			
+			// Stress-related symptoms
+			'stress' => array( 'stress', 'burnout', 'overwhelmed', 'pressure' ),
+			'overwhelmed' => array( 'stress', 'burnout', 'overwhelmed', 'pressure' ),
+			'pressure' => array( 'stress', 'burnout', 'overwhelmed', 'pressure' ),
+			
+			// Trauma-related symptoms
+			'trauma' => array( 'trauma', 'ptsd', 'flashback', 'nightmare' ),
+			'flashback' => array( 'trauma', 'ptsd', 'flashback', 'nightmare' ),
+			'nightmare' => array( 'trauma', 'ptsd', 'flashback', 'nightmare' ),
+			
+			// Sleep-related symptoms
+			'insomnia' => array( 'sleep', 'insomnia', 'restless' ),
+			'sleep' => array( 'sleep', 'insomnia', 'restless' ),
+			'restless' => array( 'sleep', 'insomnia', 'restless' ),
+			
+			// Relationship issues
+			'relationship' => array( 'relationship', 'couple', 'family', 'marriage' ),
+			'couple' => array( 'relationship', 'couple', 'family', 'marriage' ),
+			'family' => array( 'relationship', 'couple', 'family', 'marriage' ),
+			
+			// Eating disorders
+			'eating' => array( 'eating', 'food', 'anorexia', 'bulimia' ),
+			'food' => array( 'eating', 'food', 'anorexia', 'bulimia' ),
+			
+			// Addiction
+			'addiction' => array( 'addiction', 'substance', 'alcohol', 'drug' ),
+			'substance' => array( 'addiction', 'substance', 'alcohol', 'drug' ),
+			
+			// OCD
+			'obsession' => array( 'ocd', 'obsession', 'compulsion', 'ritual' ),
+			'compulsion' => array( 'ocd', 'obsession', 'compulsion', 'ritual' ),
+			'ritual' => array( 'ocd', 'obsession', 'compulsion', 'ritual' ),
+			
+			// Anger
+			'anger' => array( 'anger', 'rage', 'irritable', 'aggressive' ),
+			'rage' => array( 'anger', 'rage', 'irritable', 'aggressive' ),
+			'irritable' => array( 'anger', 'rage', 'irritable', 'aggressive' ),
+			
+			// Grief
+			'grief' => array( 'grief', 'loss', 'bereavement', 'mourning' ),
+			'loss' => array( 'grief', 'loss', 'bereavement', 'mourning' ),
+			
+			// Self-esteem
+			'confidence' => array( 'self-esteem', 'confidence', 'worth', 'value' ),
+			'worth' => array( 'self-esteem', 'confidence', 'worth', 'value' ),
+			'value' => array( 'self-esteem', 'confidence', 'worth', 'value' ),
+			
+			// Work-life balance
+			'work' => array( 'work', 'balance', 'career', 'professional' ),
+			'balance' => array( 'work', 'balance', 'career', 'professional' ),
+			'career' => array( 'work', 'balance', 'career', 'professional' ),
+			
+			// Bipolar
+			'manic' => array( 'bipolar', 'manic', 'mania', 'mood swing' ),
+			'mania' => array( 'bipolar', 'manic', 'mania', 'mood swing' ),
+			'mood swing' => array( 'bipolar', 'manic', 'mania', 'mood swing' ),
+			
+			// Phobias
+			'phobia' => array( 'phobia', 'fear', 'avoidance', 'panic' ),
+			'avoidance' => array( 'phobia', 'fear', 'avoidance', 'panic' ),
+			
+			// Personality disorders
+			'personality' => array( 'personality', 'borderline', 'narcissistic', 'antisocial' ),
+			'borderline' => array( 'personality', 'borderline', 'narcissistic', 'antisocial' ),
+			'narcissistic' => array( 'personality', 'borderline', 'narcissistic', 'antisocial' ),
+			
+			// Child and adolescent
+			'child' => array( 'child', 'adolescent', 'teen', 'youth' ),
+			'adolescent' => array( 'child', 'adolescent', 'teen', 'youth' ),
+			'teen' => array( 'child', 'adolescent', 'teen', 'youth' ),
+			'youth' => array( 'child', 'adolescent', 'teen', 'youth' )
+		);
+		
+		// Find matching diagnoses based on symptoms
+		$matched_diagnoses = array();
+		
+		foreach ( $symptoms as $symptom ) {
+			if ( isset( $symptom_mapping[$symptom] ) ) {
+				$keywords = $symptom_mapping[$symptom];
+				
+				foreach ( $all_diagnoses as $diagnosis ) {
+					$diagnosis_name = strtolower( $diagnosis->name_en ?: $diagnosis->name );
+					
+					foreach ( $keywords as $keyword ) {
+						if ( strpos( $diagnosis_name, $keyword ) !== false ) {
+							$matched_diagnoses[$diagnosis->id] = $diagnosis;
+							break 2; // Found a match for this diagnosis, move to next symptom
+						}
+					}
+				}
+			}
 		}
 		
-		return $diagnosis_id ? intval( $diagnosis_id ) : 1; // Fallback to ID 1
+		// If we found matches, return the first one
+		if ( ! empty( $matched_diagnoses ) ) {
+			$first_match = reset( $matched_diagnoses );
+			return intval( $first_match->id );
+		}
+		
+		// If no specific matches found, return a general diagnosis based on mood
+		$mood_mapping = array(
+			'very_bad' => array( 'depression', 'anxiety', 'stress' ),
+			'bad' => array( 'stress', 'anxiety', 'depression' ),
+			'neutral' => array( 'stress', 'work', 'relationship' ),
+			'good' => array( 'work', 'relationship', 'self-esteem' ),
+			'very_good' => array( 'work', 'relationship', 'self-esteem' )
+		);
+		
+		if ( isset( $mood_mapping[$mood] ) ) {
+			$mood_keywords = $mood_mapping[$mood];
+			
+			foreach ( $mood_keywords as $keyword ) {
+				foreach ( $all_diagnoses as $diagnosis ) {
+					$diagnosis_name = strtolower( $diagnosis->name_en ?: $diagnosis->name );
+					if ( strpos( $diagnosis_name, $keyword ) !== false ) {
+						return intval( $diagnosis->id );
+					}
+				}
+			}
+		}
+		
+		// Final fallback: return the first available diagnosis
+		return intval( $all_diagnoses[0]->id );
 	}
 	
 	/**
