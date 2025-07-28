@@ -808,9 +808,35 @@ class SNKS_AI_Integration {
 	 * Get Therapist AI Price
 	 */
 	private function get_therapist_ai_price( $therapist_id ) {
-		// Get 45-minute online price
-		$pricing = snks_doctor_online_pricings( $therapist_id );
-		return isset( $pricing['45_minutes'] ) ? $pricing['45_minutes'] : array();
+		// Check if this is a demo therapist
+		$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
+		
+		if ( $is_demo_doctor ) {
+			// For demo therapists, use the simple pricing fields
+			$price_45_min = get_user_meta( $therapist_id, 'price_45_min', true );
+			$price_60_min = get_user_meta( $therapist_id, 'price_60_min', true );
+			$price_90_min = get_user_meta( $therapist_id, 'price_90_min', true );
+			
+			// Return pricing in the format expected by the frontend
+			return array(
+				'45_minutes' => array(
+					'countries' => array(),
+					'others' => intval( $price_45_min ) ?: 150 // Default to 150 if not set
+				),
+				'60_minutes' => array(
+					'countries' => array(),
+					'others' => intval( $price_60_min ) ?: 200 // Default to 200 if not set
+				),
+				'90_minutes' => array(
+					'countries' => array(),
+					'others' => intval( $price_90_min ) ?: 300 // Default to 300 if not set
+				)
+			);
+		} else {
+			// For regular therapists, use the main pricing system
+			$pricing = snks_doctor_online_pricings( $therapist_id );
+			return isset( $pricing['45_minutes'] ) ? $pricing['45_minutes'] : array();
+		}
 	}
 	
 	/**

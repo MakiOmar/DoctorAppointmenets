@@ -52,101 +52,44 @@ function snks_demo_doctors_manager_page() {
 	
 	global $wpdb;
 	
-	// Handle form submission for creating demo doctor
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'create_demo_doctor' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'create_demo_doctor' ) ) {
-			
+	// Handle form submissions
+	if ( isset( $_POST['action'] ) ) {
+		if ( $_POST['action'] === 'create_demo_doctor' && wp_verify_nonce( $_POST['_wpnonce'], 'create_demo_doctor' ) ) {
 			$result = snks_create_demo_doctor( $_POST );
-			
-			if ( $result['success'] ) {
-				echo '<div class="wrap">';
-				echo '<h1>Demo Doctor Created Successfully!</h1>';
-				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
-				
-				echo '<h2>Created Doctor Details:</h2>';
-				echo '<div class="card">';
-				echo '<table class="form-table">';
-				echo '<tr><th>Name:</th><td>' . esc_html( $_POST['name'] ) . '</td></tr>';
-				echo '<tr><th>Email:</th><td>' . esc_html( $_POST['email'] ) . '</td></tr>';
-				echo '<tr><th>Phone:</th><td>' . esc_html( $_POST['phone'] ) . '</td></tr>';
-				echo '<tr><th>Specialty:</th><td>' . esc_html( $_POST['specialty'] ) . '</td></tr>';
-				echo '<tr><th>Price (45 min):</th><td>$' . esc_html( $_POST['price'] ) . '</td></tr>';
-				echo '<tr><th>Username:</th><td>' . esc_html( $_POST['phone'] ) . '</td></tr>';
-				echo '<tr><th>Password:</th><td>' . esc_html( $_POST['password'] ) . '</td></tr>';
-				echo '</table>';
-				echo '</div>';
-				
-				echo '<h3>🔗 Quick Links:</h3>';
-				echo '<ul>';
-				echo '<li><a href="' . admin_url( 'admin.php?page=jalsah-ai-management' ) . '">AI Dashboard</a></li>';
-				echo '<li><a href="' . admin_url( 'admin.php?page=ai-admin' ) . '">AI Therapist Settings</a></li>';
-				echo '<li><a href="' . admin_url( 'users.php?role=doctor' ) . '">All Doctors</a></li>';
-				echo '</ul>';
-				
-				echo '</div>';
-				return;
-			} else {
-				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
-			}
-		}
-	}
-	
-	// Handle demo reviews creation
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'create_demo_reviews' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'create_demo_reviews' ) ) {
-			
-			$result = snks_create_demo_reviews();
-			
-			echo '<div class="wrap">';
-			echo '<h1>Demo Reviews Creation Results</h1>';
-			
 			if ( $result['success'] ) {
 				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
 			}
-			
-			if ( ! empty( $result['details'] ) ) {
-				echo '<h2>Creation Details:</h2>';
-				echo '<ul>';
-				foreach ( $result['details'] as $detail ) {
-					echo '<li>' . esc_html( $detail ) . '</li>';
-				}
-				echo '</ul>';
-			}
-			
-			echo '</div>';
-			return;
-		}
-	}
-	
-	// Handle bulk demo doctor creation
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'create_bulk_demo_doctors' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'create_bulk_demo_doctors' ) ) {
-			
+		} elseif ( $_POST['action'] === 'create_bulk_demo_doctors' && wp_verify_nonce( $_POST['_wpnonce'], 'create_bulk_demo_doctors' ) ) {
 			$count = intval( $_POST['count'] );
-			$results = snks_create_bulk_demo_doctors( $count );
-			
-			echo '<div class="wrap">';
-			echo '<h1>Bulk Demo Doctors Creation Results</h1>';
-			
-			if ( $results['success'] ) {
-				echo '<div class="notice notice-success"><p>' . esc_html( $results['message'] ) . '</p></div>';
-			} else {
-				echo '<div class="notice notice-error"><p>' . esc_html( $results['message'] ) . '</p></div>';
-			}
-			
-			if ( ! empty( $results['details'] ) ) {
-				echo '<h2>Creation Details:</h2>';
-				echo '<ul>';
-				foreach ( $results['details'] as $detail ) {
-					echo '<li>' . esc_html( $detail ) . '</li>';
+			$result = snks_create_bulk_demo_doctors( $count );
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+				if ( ! empty( $result['details'] ) ) {
+					echo '<div class="notice notice-info"><ul>';
+					foreach ( $result['details'] as $detail ) {
+						echo '<li>' . esc_html( $detail ) . '</li>';
+					}
+					echo '</ul></div>';
 				}
-				echo '</ul>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
 			}
-			
-			echo '</div>';
-			return;
+		} elseif ( $_POST['action'] === 'create_demo_reviews' && wp_verify_nonce( $_POST['demo_reviews_nonce'], 'create_demo_reviews' ) ) {
+			$result = snks_create_demo_reviews();
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
+		} elseif ( $_POST['action'] === 'migrate_demo_pricing' && wp_verify_nonce( $_POST['demo_pricing_nonce'], 'migrate_demo_pricing' ) ) {
+			$result = snks_migrate_demo_doctors_pricing();
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
 		}
 	}
 	
@@ -326,12 +269,22 @@ function snks_demo_doctors_manager_page() {
 		<!-- Create Demo Reviews -->
 		<div class="card">
 			<h2>Create Demo Reviews</h2>
-			<p>Add realistic reviews and ratings to existing demo doctors for testing the frontend display.</p>
-			<form method="post">
-				<?php wp_nonce_field( 'create_demo_reviews' ); ?>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'create_demo_reviews', 'demo_reviews_nonce' ); ?>
 				<input type="hidden" name="action" value="create_demo_reviews">
-				
-				<?php submit_button( 'Create Demo Reviews for All Demo Doctors' ); ?>
+				<p>Create sample reviews for demo doctors to improve their ratings.</p>
+				<input type="submit" class="button button-primary" value="Create Demo Reviews">
+			</form>
+		</div>
+		
+		<!-- Migrate Demo Doctors Pricing -->
+		<div class="card">
+			<h2>Migrate Demo Doctors Pricing</h2>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'migrate_demo_pricing', 'demo_pricing_nonce' ); ?>
+				<input type="hidden" name="action" value="migrate_demo_pricing">
+				<p>Update existing demo doctors to have proper pricing structure for the AI system.</p>
+				<input type="submit" class="button button-primary" value="Migrate Demo Pricing">
 			</form>
 		</div>
 		
@@ -433,6 +386,33 @@ function snks_create_demo_doctor( $data ) {
 	update_user_meta( $user_id, 'price_45_min', intval( $data['price'] ) );
 	update_user_meta( $user_id, 'price_60_min', intval( $data['price'] * 1.33 ) );
 	update_user_meta( $user_id, 'price_90_min', intval( $data['price'] * 2 ) );
+	
+	// Set up proper pricing structure for AI system
+	$pricing_45 = array(
+		'countries' => array(),
+		'others' => intval( $data['price'] )
+	);
+	$pricing_60 = array(
+		'countries' => array(),
+		'others' => intval( $data['price'] * 1.33 )
+	);
+	$pricing_90 = array(
+		'countries' => array(),
+		'others' => intval( $data['price'] * 2 )
+	);
+	
+	// Store pricing in the format expected by the main plugin
+	update_user_meta( $user_id, '45_minutes_pricing', $pricing_45 );
+	update_user_meta( $user_id, '45_minutes_pricing_others', intval( $data['price'] ) );
+	update_user_meta( $user_id, '60_minutes_pricing', $pricing_60 );
+	update_user_meta( $user_id, '60_minutes_pricing_others', intval( $data['price'] * 1.33 ) );
+	update_user_meta( $user_id, '90_minutes_pricing', $pricing_90 );
+	update_user_meta( $user_id, '90_minutes_pricing_others', intval( $data['price'] * 2 ) );
+	
+	// Enable 45-minute sessions for demo doctors
+	update_user_meta( $user_id, '45_minutes', 'on' );
+	update_user_meta( $user_id, '60_minutes', 'on' );
+	update_user_meta( $user_id, '90_minutes', 'on' );
 	
 	// Assign diagnoses if selected
 	if ( ! empty( $data['diagnoses'] ) && is_array( $data['diagnoses'] ) ) {
@@ -693,4 +673,90 @@ function snks_create_demo_reviews() {
 	}
 	
 	return $results;
+} 
+
+/**
+ * Migrate existing demo doctors to have proper pricing structure
+ */
+function snks_migrate_demo_doctors_pricing() {
+	global $wpdb;
+	
+	// Get all demo doctors
+	$demo_doctors = get_users( array(
+		'meta_key' => 'is_demo_doctor',
+		'meta_value' => '1',
+		'role' => 'doctor'
+	) );
+	
+	if ( empty( $demo_doctors ) ) {
+		return array(
+			'success' => false,
+			'message' => 'No demo doctors found to migrate.'
+		);
+	}
+	
+	$migrated_count = 0;
+	$errors = array();
+	
+	foreach ( $demo_doctors as $doctor ) {
+		$user_id = $doctor->ID;
+		
+		// Get existing simple pricing
+		$price_45_min = get_user_meta( $user_id, 'price_45_min', true );
+		$price_60_min = get_user_meta( $user_id, 'price_60_min', true );
+		$price_90_min = get_user_meta( $user_id, 'price_90_min', true );
+		
+		// If no simple pricing exists, use default values
+		if ( ! $price_45_min ) {
+			$price_45_min = 150;
+			$price_60_min = 200;
+			$price_90_min = 300;
+			
+			// Set the simple pricing fields
+			update_user_meta( $user_id, 'price_45_min', $price_45_min );
+			update_user_meta( $user_id, 'price_60_min', $price_60_min );
+			update_user_meta( $user_id, 'price_90_min', $price_90_min );
+		}
+		
+		// Set up proper pricing structure for AI system
+		$pricing_45 = array(
+			'countries' => array(),
+			'others' => intval( $price_45_min )
+		);
+		$pricing_60 = array(
+			'countries' => array(),
+			'others' => intval( $price_60_min )
+		);
+		$pricing_90 = array(
+			'countries' => array(),
+			'others' => intval( $price_90_min )
+		);
+		
+		// Store pricing in the format expected by the main plugin
+		update_user_meta( $user_id, '45_minutes_pricing', $pricing_45 );
+		update_user_meta( $user_id, '45_minutes_pricing_others', intval( $price_45_min ) );
+		update_user_meta( $user_id, '60_minutes_pricing', $pricing_60 );
+		update_user_meta( $user_id, '60_minutes_pricing_others', intval( $price_60_min ) );
+		update_user_meta( $user_id, '90_minutes_pricing', $pricing_90 );
+		update_user_meta( $user_id, '90_minutes_pricing_others', intval( $price_90_min ) );
+		
+		// Enable session durations for demo doctors
+		update_user_meta( $user_id, '45_minutes', 'on' );
+		update_user_meta( $user_id, '60_minutes', 'on' );
+		update_user_meta( $user_id, '90_minutes', 'on' );
+		
+		$migrated_count++;
+	}
+	
+	if ( $migrated_count > 0 ) {
+		return array(
+			'success' => true,
+			'message' => "Successfully migrated pricing structure for {$migrated_count} demo doctors."
+		);
+	} else {
+		return array(
+			'success' => false,
+			'message' => 'No demo doctors were migrated.'
+		);
+	}
 } 
