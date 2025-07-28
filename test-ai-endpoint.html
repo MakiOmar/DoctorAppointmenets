@@ -7,13 +7,14 @@
 </head>
 <body>
     <h1>AI Endpoint Test</h1>
-    <button onclick="testEndpoint()">Test AI Endpoint</button>
+    <button onclick="testAPIEndpoint()">Test API Endpoint</button>
+    <button onclick="testAJAXEndpoint()">Test AJAX Endpoint</button>
     <div id="result"></div>
 
     <script>
-        async function testEndpoint() {
+        async function testAPIEndpoint() {
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = 'Testing...';
+            resultDiv.innerHTML = 'Testing API endpoint...';
             
             try {
                 const response = await fetch('/api/ai/ping', {
@@ -24,9 +25,29 @@
                 });
                 
                 const data = await response.json();
-                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                resultDiv.innerHTML = `<h3>API Endpoint Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                resultDiv.innerHTML = `<h3>API Endpoint Error:</h3><p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testAJAXEndpoint() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing AJAX endpoint...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'test_ai_endpoint');
+                
+                const response = await fetch('/wp-admin/admin-ajax.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `<h3>AJAX Endpoint Result:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>AJAX Endpoint Error:</h3><p style="color: red;">Error: ${error.message}</p>`;
             }
         }
     </script>

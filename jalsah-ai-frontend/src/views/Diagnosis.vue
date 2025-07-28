@@ -315,15 +315,22 @@ export default {
         // Try AJAX endpoint as fallback
         try {
           console.log('Trying AJAX endpoint as fallback...')
-          const ajaxResponse = await api.post('/wp-admin/admin-ajax.php', {
-            action: 'test_diagnosis_ajax',
-            mood: form.mood,
-            duration: form.duration,
-            selectedSymptoms: form.selectedSymptoms,
-            impact: form.impact,
-            affectedAreas: form.affectedAreas,
-            goals: form.goals,
-            preferredApproach: form.preferredApproach
+          
+          // Create FormData for WordPress AJAX
+          const formData = new FormData()
+          formData.append('action', 'test_diagnosis_ajax')
+          formData.append('mood', form.mood)
+          formData.append('duration', form.duration)
+          formData.append('selectedSymptoms', JSON.stringify(form.selectedSymptoms))
+          formData.append('impact', form.impact)
+          formData.append('affectedAreas', JSON.stringify(form.affectedAreas))
+          formData.append('goals', form.goals)
+          formData.append('preferredApproach', form.preferredApproach)
+          
+          const ajaxResponse = await api.post('/wp-admin/admin-ajax.php', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
           })
           
           console.log('AJAX Response:', ajaxResponse.data)
@@ -349,6 +356,12 @@ export default {
           
         } catch (ajaxError) {
           console.error('AJAX fallback also failed:', ajaxError)
+          console.error('AJAX Error details:', {
+            status: ajaxError.response?.status,
+            statusText: ajaxError.response?.statusText,
+            data: ajaxError.response?.data,
+            url: ajaxError.config?.url
+          })
           
           // Final fallback: store data and redirect to results page for simulation
           const diagnosisData = {

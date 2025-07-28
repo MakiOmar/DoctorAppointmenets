@@ -200,19 +200,33 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Method not allowed', 405 );
 		}
 		
-		// Get the raw input
-		$raw_input = file_get_contents( 'php://input' );
-		$data = json_decode( $raw_input, true );
-		
 		// Debug logging
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( 'AI Integration Debug - test_diagnosis_ajax called' );
-			error_log( 'AI Integration Debug - Raw input: ' . $raw_input );
+			error_log( 'AI Integration Debug - POST data: ' . print_r( $_POST, true ) );
+		}
+		
+		// Get data from POST (WordPress AJAX sends data via $_POST)
+		$data = array(
+			'mood' => $_POST['mood'] ?? '',
+			'duration' => $_POST['duration'] ?? '',
+			'selectedSymptoms' => json_decode( $_POST['selectedSymptoms'] ?? '[]', true ),
+			'impact' => $_POST['impact'] ?? '',
+			'affectedAreas' => json_decode( $_POST['affectedAreas'] ?? '[]', true ),
+			'goals' => $_POST['goals'] ?? '',
+			'preferredApproach' => $_POST['preferredApproach'] ?? ''
+		);
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( 'AI Integration Debug - Parsed data: ' . print_r( $data, true ) );
 		}
 		
 		// Validate required fields
-		if ( ! isset( $data['mood'] ) || ! isset( $data['selectedSymptoms'] ) ) {
+		if ( empty( $data['mood'] ) || empty( $data['selectedSymptoms'] ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'AI Integration Debug - Validation failed: mood or selectedSymptoms missing' );
+			}
 			$this->send_error( 'Mood and symptoms are required', 400 );
 		}
 		
@@ -226,6 +240,9 @@ class SNKS_AI_Integration {
 		
 		// If no diagnosis found, return error
 		if ( $diagnosis_id === null ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'AI Integration Debug - No diagnosis found, returning error' );
+			}
 			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
 		}
 		
