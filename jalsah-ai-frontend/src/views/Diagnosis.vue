@@ -359,35 +359,119 @@ export default {
 .rtl .flex.items-center {
   flex-direction: row-reverse;
   justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-/* Progress bar text alignment for RTL */
-.rtl .flex.justify-between {
-  flex-direction: row-reverse;
+.rtl .flex.items-center:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  transform: translateY(-1px);
 }
 
-/* Grid layout improvements for RTL */
+/* RTL checkbox specific styling */
+.rtl input[type="checkbox"] {
+  order: 2;
+  margin-left: 0;
+  margin-right: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
+  border: 2px solid #d1d5db;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rtl input[type="checkbox"]:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+  background-size: 0.75rem;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* RTL label styling */
+.rtl label {
+  order: 1;
+  margin-left: 0;
+  margin-right: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  line-height: 1.4;
+  text-align: right;
+  flex: 1;
+}
+
+/* RTL checkbox focus states */
+.rtl input[type="checkbox"]:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #2563eb;
+  ring-offset: 2px;
+}
+
+/* RTL grid improvements for checkboxes */
 .rtl .grid.md\:grid-cols-2 {
   direction: rtl;
+  gap: 1rem;
 }
 
 .rtl .grid.md\:grid-cols-2 > * {
   direction: rtl;
 }
 
-/* Symptom selection grid RTL improvements */
+/* RTL space-y improvements */
+.rtl .space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+/* RTL checkbox container improvements */
 .rtl .space-y-4 .grid.md\:grid-cols-2 {
   gap: 1rem;
 }
 
 .rtl .space-y-4 .grid.md\:grid-cols-2 .flex.items-center {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  margin: 0;
 }
 
 .rtl .space-y-4 .grid.md\:grid-cols-2 .flex.items-center:hover {
-  background-color: rgba(59, 130, 246, 0.05);
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* RTL checkbox checked state styling */
+.rtl .space-y-4 .grid.md\:grid-cols-2 .flex.items-center:has(input:checked) {
+  background-color: #eff6ff;
+  border-color: #2563eb;
+}
+
+/* RTL responsive checkbox improvements */
+@media (max-width: 768px) {
+  .rtl .grid.md\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .rtl .flex.items-center {
+    padding: 1rem;
+  }
+  
+  .rtl label {
+    font-size: 1rem;
+  }
+}
+
+/* Progress bar text alignment for RTL */
+.rtl .flex.justify-between {
+  flex-direction: row-reverse;
 }
 
 /* Button spacing for RTL */
@@ -407,10 +491,6 @@ export default {
 
 /* Responsive RTL adjustments */
 @media (max-width: 768px) {
-  .rtl .grid.md\:grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-  
   .rtl .flex.justify-between.pt-6 {
     flex-direction: column-reverse;
     gap: 0.75rem;
