@@ -357,7 +357,7 @@ export default {
 
 /* Checkbox and label alignment for RTL */
 .rtl .flex.items-center {
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: flex-start;
   gap: 0.5rem;
   padding: 0.75rem;
@@ -373,7 +373,7 @@ export default {
 
 /* RTL checkbox specific styling */
 .rtl input[type="checkbox"] {
-  order: 2;
+  order: 1;
   margin-left: 0;
   margin-right: 0;
   width: 1.25rem;
@@ -396,7 +396,7 @@ export default {
 
 /* RTL label styling */
 .rtl label {
-  order: 1;
+  order: 2;
   margin-left: 0;
   margin-right: 0;
   font-size: 0.875rem;

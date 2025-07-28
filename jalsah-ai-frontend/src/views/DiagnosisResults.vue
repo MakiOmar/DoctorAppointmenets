@@ -270,7 +270,7 @@ export default {
 
 /* RTL button layout */
 .rtl .flex.justify-center.space-x-4 {
-  flex-direction: row-reverse;
+  flex-direction: row;
 }
 
 .rtl .space-x-4 > * + * {

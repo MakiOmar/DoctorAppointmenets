@@ -174,11 +174,11 @@ export default {
 
 /* RTL specific spacing adjustments */
 .rtl .flex.items-center {
-  flex-direction: row-reverse;
+  flex-direction: row;
 }
 
 .rtl .flex.flex-wrap {
-  flex-direction: row-reverse;
+  flex-direction: row;
 }
 
 .rtl .gap-1 > * {
