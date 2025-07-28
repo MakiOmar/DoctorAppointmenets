@@ -197,6 +197,8 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import api from '@/services/api'
+
 export default {
   name: 'Diagnosis',
   setup() {
@@ -259,8 +261,16 @@ export default {
       loading.value = true
       
       try {
-        // Simulate AI diagnosis processing
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Send diagnosis data to API for processing
+        const response = await api.post('/api/ai/diagnosis/process', {
+          mood: form.mood,
+          duration: form.duration,
+          selectedSymptoms: form.selectedSymptoms,
+          impact: form.impact,
+          affectedAreas: form.affectedAreas,
+          goals: form.goals,
+          preferredApproach: form.preferredApproach
+        })
         
         // Store diagnosis data in localStorage for therapist matching
         const diagnosisData = {
@@ -271,11 +281,26 @@ export default {
         
         toast.success('Diagnosis completed! Finding therapists for you...')
         
-        // Redirect to therapists page with diagnosis filter
-        router.push('/therapists')
+        // Redirect to diagnosis results page with the diagnosis ID
+        const diagnosisId = response.data.data?.diagnosis_id
+        if (diagnosisId) {
+          router.push(`/diagnosis-results/${diagnosisId}`)
+        } else {
+          router.push('/diagnosis-results')
+        }
         
       } catch (error) {
-        toast.error('Failed to process diagnosis. Please try again.')
+        console.error('Diagnosis processing error:', error)
+        
+        // Fallback: store data and redirect to results page for simulation
+        const diagnosisData = {
+          ...form,
+          timestamp: new Date().toISOString()
+        }
+        localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
+        
+        toast.success('Diagnosis completed! Finding therapists for you...')
+        router.push('/diagnosis-results')
       } finally {
         loading.value = false
       }

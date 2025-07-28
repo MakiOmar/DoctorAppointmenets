@@ -179,48 +179,48 @@ export default {
 
   // Diagnosis
   diagnosis: {
-    title: 'AI-Powered Mental Health Diagnosis',
-    subtitle: 'Get a personalized assessment to help you find the right therapist',
+    title: 'AI-Powered Diagnosis',
+    subtitle: 'Answer a few questions to get a personalized diagnosis and find the right therapist for you',
     step1: {
-      title: 'Step 1: Tell us about yourself',
-      mood: 'How would you describe your current mood?',
+      title: 'How are you feeling?',
+      mood: 'Current Mood',
       moodOptions: {
-        happy: 'Happy and content',
+        happy: 'Happy',
         neutral: 'Neutral',
-        sad: 'Sad or depressed',
-        anxious: 'Anxious or worried',
-        angry: 'Angry or irritable',
-        stressed: 'Stressed or overwhelmed'
+        sad: 'Sad',
+        anxious: 'Anxious',
+        angry: 'Angry',
+        stressed: 'Stressed'
       },
       duration: 'How long have you been feeling this way?',
       durationOptions: {
         less_than_week: 'Less than a week',
         few_weeks: 'A few weeks',
         few_months: 'A few months',
-        six_months: '6 months or more',
-        year_plus: 'Over a year'
+        six_months: 'Six months',
+        year_plus: 'A year or more'
       }
     },
     step2: {
-      title: 'Step 2: What symptoms are you experiencing?',
+      title: 'What symptoms are you experiencing?',
       symptoms: {
-        anxiety: 'Anxiety or excessive worry',
-        depression: 'Depression or low mood',
-        stress: 'High stress levels',
+        anxiety: 'Anxiety or worry',
+        depression: 'Depression or sadness',
+        stress: 'Stress or overwhelm',
         sleep: 'Sleep problems',
-        appetite: 'Changes in appetite',
+        appetite: 'Appetite changes',
         energy: 'Low energy or fatigue',
         concentration: 'Difficulty concentrating',
         irritability: 'Irritability or anger',
-        isolation: 'Social withdrawal',
+        isolation: 'Social isolation',
         hopelessness: 'Feelings of hopelessness',
         panic: 'Panic attacks',
-        trauma: 'Trauma-related symptoms'
+        trauma: 'Trauma or PTSD symptoms'
       }
     },
     step3: {
-      title: 'Step 3: How is this affecting your life?',
-      impact: 'How much are these symptoms affecting your daily life?',
+      title: 'How is this affecting your life?',
+      impact: 'Impact Level',
       impactOptions: {
         minimal: 'Minimal impact',
         mild: 'Mild impact',
@@ -228,7 +228,7 @@ export default {
         severe: 'Severe impact',
         extreme: 'Extreme impact'
       },
-      affectedAreas: 'Which areas of your life are most affected?',
+      affectedAreas: 'Which areas of your life are affected?',
       areas: {
         work: 'Work or career',
         relationships: 'Relationships',
@@ -241,10 +241,10 @@ export default {
       }
     },
     step4: {
-      title: 'Step 4: What are your goals for therapy?',
+      title: 'What are your goals?',
       goals: 'What would you like to achieve through therapy?',
-      goalsPlaceholder: 'Describe your goals and what you hope to accomplish...',
-      preferredApproach: 'What type of therapy approach interests you most?',
+      goalsPlaceholder: 'Describe your goals and what you hope to gain from therapy...',
+      preferredApproach: 'Do you have a preferred therapy approach?',
       approachOptions: {
         none: 'No preference',
         cbt: 'Cognitive Behavioral Therapy (CBT)',
@@ -256,9 +256,42 @@ export default {
     },
     progress: 'Step {step} of 4',
     complete: '{percent}% Complete',
-    submit: 'Get My Diagnosis',
     analyzing: 'Analyzing...',
-    success: 'Diagnosis completed! Finding therapists for you...'
+    submit: 'Get Diagnosis'
+  },
+
+  // Diagnosis Results
+  diagnosisResults: {
+    title: 'Your Diagnosis Results',
+    subtitle: 'Based on your responses, here\'s what we found and therapists who can help',
+    rediagnose: 'Take Diagnosis Again',
+    browseAll: 'Browse All Therapists',
+    matchedTherapists: 'Therapists Matched for You',
+    loadingTherapists: 'Finding the best therapists for you...',
+    noTherapistsFound: 'No Therapists Found',
+    noTherapistsDescription: 'We couldn\'t find therapists specifically matched to your diagnosis, but you can browse all available therapists.',
+    browseAllTherapists: 'Browse All Therapists',
+    errorLoadingTherapists: 'Failed to load matched therapists',
+    defaultTitle: 'General Mental Health Support',
+    defaultDescription: 'Based on your responses, you may benefit from general mental health support and therapy.',
+    simulatedResults: {
+      anxiety: {
+        title: 'Anxiety Disorder',
+        description: 'You may be experiencing symptoms of anxiety disorder. Professional therapy can help you develop coping strategies and reduce anxiety symptoms.'
+      },
+      depression: {
+        title: 'Depression',
+        description: 'Your responses suggest symptoms of depression. Therapy can help you understand and manage these feelings effectively.'
+      },
+      stress: {
+        title: 'Stress Management',
+        description: 'You\'re experiencing significant stress that\'s impacting your daily life. Stress management therapy can help you develop healthy coping mechanisms.'
+      },
+      general: {
+        title: 'Mental Health Support',
+        description: 'You may benefit from general mental health support. A qualified therapist can help you work through your concerns and improve your well-being.'
+      }
+    }
   },
 
   // Therapists

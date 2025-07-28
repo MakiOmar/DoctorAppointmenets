@@ -341,6 +341,9 @@ class SNKS_AI_Integration {
 			case 'diagnoses':
 				$this->handle_diagnoses_endpoint( $method, $path );
 				break;
+			case 'diagnosis':
+				$this->handle_diagnosis_endpoint( $method, $path );
+				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
 		}
@@ -441,7 +444,26 @@ class SNKS_AI_Integration {
 	private function handle_diagnoses_endpoint( $method, $path ) {
 		switch ( $method ) {
 			case 'GET':
-				$this->get_ai_diagnoses();
+				if ( count( $path ) === 1 ) {
+					$this->get_ai_diagnoses();
+				} elseif ( is_numeric( $path[1] ) ) {
+					$this->get_ai_diagnosis( $path[1] );
+				}
+				break;
+			default:
+				$this->send_error( 'Method not allowed', 405 );
+		}
+	}
+	
+	/**
+	 * Handle diagnosis endpoint
+	 */
+	private function handle_diagnosis_endpoint( $method, $path ) {
+		switch ( $method ) {
+			case 'POST':
+				if ( count( $path ) === 1 ) {
+					$this->process_diagnosis_data();
+				}
 				break;
 			default:
 				$this->send_error( 'Method not allowed', 405 );
@@ -981,6 +1003,99 @@ class SNKS_AI_Integration {
 		}
 		
 		$this->send_success( $diagnoses );
+	}
+
+	/**
+	 * Get AI Diagnosis by ID
+	 */
+	private function get_ai_diagnosis( $diagnosis_id ) {
+		global $wpdb;
+
+		// Get current locale using helper function
+		$locale = snks_get_current_language();
+
+		$diagnosis = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_diagnoses WHERE id = %d",
+			$diagnosis_id
+		) );
+
+		if ( ! $diagnosis ) {
+			$this->send_error( 'Diagnosis not found', 404 );
+		}
+
+		// Get bilingual diagnosis names
+		$name_en = $diagnosis->name_en ?: $diagnosis->name;
+		$name_ar = $diagnosis->name_ar ?: '';
+		$description_en = $diagnosis->description_en ?: $diagnosis->description;
+		$description_ar = $diagnosis->description_ar ?: '';
+		
+		// Select appropriate language based on locale
+		$diagnosis->name = $locale === 'ar' ? $name_ar : $name_en;
+		$diagnosis->description = $locale === 'ar' ? $description_ar : $description_en;
+		
+		// Add bilingual fields
+		$diagnosis->name_en = $name_en;
+		$diagnosis->name_ar = $name_ar;
+		$diagnosis->description_en = $description_en;
+		$diagnosis->description_ar = $description_ar;
+
+		$this->send_success( $diagnosis );
+	}
+	
+	/**
+	 * Process diagnosis data
+	 */
+	private function process_diagnosis_data() {
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		// Validate required fields
+		if ( ! isset( $data['mood'] ) || ! isset( $data['selectedSymptoms'] ) ) {
+			$this->send_error( 'Mood and symptoms are required', 400 );
+		}
+		
+		// Simulate AI diagnosis processing
+		// In a real implementation, this would call ChatGPT or another AI service
+		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
+		
+		$this->send_success( array( 
+			'diagnosis_id' => $diagnosis_id,
+			'message' => 'Diagnosis processed successfully'
+		) );
+	}
+	
+	/**
+	 * Simulate AI diagnosis based on form data
+	 */
+	private function simulate_ai_diagnosis( $data ) {
+		global $wpdb;
+		
+		$mood = $data['mood'];
+		$symptoms = $data['selectedSymptoms'];
+		$impact = $data['impact'] ?? 'moderate';
+		
+		// Simple simulation logic based on symptoms
+		$diagnosis_id = null;
+		
+		if ( in_array( 'anxiety', $symptoms ) && in_array( 'panic', $symptoms ) ) {
+			// Anxiety disorder
+			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%anxiety%' OR name_en LIKE '%panic%' LIMIT 1" );
+		} elseif ( in_array( 'depression', $symptoms ) && in_array( 'hopelessness', $symptoms ) ) {
+			// Depression
+			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%depression%' OR name_en LIKE '%mood%' LIMIT 1" );
+		} elseif ( in_array( 'stress', $symptoms ) && $impact === 'severe' ) {
+			// Stress management
+			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%stress%' OR name_en LIKE '%burnout%' LIMIT 1" );
+		} elseif ( in_array( 'trauma', $symptoms ) ) {
+			// PTSD/Trauma
+			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE name_en LIKE '%trauma%' OR name_en LIKE '%ptsd%' LIMIT 1" );
+		}
+		
+		// If no specific diagnosis found, return a general one
+		if ( ! $diagnosis_id ) {
+			$diagnosis_id = $wpdb->get_var( "SELECT id FROM {$wpdb->prefix}snks_diagnoses ORDER BY id ASC LIMIT 1" );
+		}
+		
+		return $diagnosis_id ? intval( $diagnosis_id ) : 1; // Fallback to ID 1
 	}
 	
 	/**
