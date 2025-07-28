@@ -817,20 +817,10 @@ class SNKS_AI_Integration {
 			$price_60_min = get_user_meta( $therapist_id, 'price_60_min', true );
 			$price_90_min = get_user_meta( $therapist_id, 'price_90_min', true );
 			
-			// Return pricing in the format expected by the frontend
+			// Return pricing in the format expected by the frontend (45_minutes structure)
 			return array(
-				'45_minutes' => array(
-					'countries' => array(),
-					'others' => intval( $price_45_min ) ?: 150 // Default to 150 if not set
-				),
-				'60_minutes' => array(
-					'countries' => array(),
-					'others' => intval( $price_60_min ) ?: 200 // Default to 200 if not set
-				),
-				'90_minutes' => array(
-					'countries' => array(),
-					'others' => intval( $price_90_min ) ?: 300 // Default to 300 if not set
-				)
+				'countries' => array(),
+				'others' => intval( $price_45_min ) ?: 150 // Default to 150 if not set
 			);
 		} else {
 			// For regular therapists, use the main pricing system
