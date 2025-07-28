@@ -126,15 +126,24 @@ export default {
       const diagnosisData = localStorage.getItem('diagnosis_data')
       const diagnosisId = route.params.diagnosisId
       
+      console.log('Loading diagnosis result:', {
+        diagnosisId,
+        hasDiagnosisData: !!diagnosisData,
+        routeParams: route.params
+      })
+      
       if (diagnosisId) {
         // Load diagnosis details from API
+        console.log('Loading diagnosis details from API for ID:', diagnosisId)
         loadDiagnosisDetails(diagnosisId)
       } else if (diagnosisData) {
         // Use stored diagnosis data (for simulation)
+        console.log('Using stored diagnosis data for simulation')
         const data = JSON.parse(diagnosisData)
         simulateDiagnosisResult(data)
       } else {
         // Fallback to default
+        console.log('Using default diagnosis result')
         diagnosisResult.value = {
           title: t('diagnosisResults.defaultTitle'),
           description: t('diagnosisResults.defaultDescription')
@@ -144,14 +153,24 @@ export default {
 
     const loadDiagnosisDetails = async (diagnosisId) => {
       try {
+        console.log('Making API call to get diagnosis details for ID:', diagnosisId)
         const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
+        console.log('Diagnosis details API response:', response.data)
+        
         const diagnosis = response.data.data
         diagnosisResult.value = {
           title: diagnosis.name,
           description: diagnosis.description
         }
+        console.log('Set diagnosis result:', diagnosisResult.value)
       } catch (error) {
         console.error('Error loading diagnosis details:', error)
+        console.error('Error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          url: error.config?.url
+        })
         // Fallback to default
         diagnosisResult.value = {
           title: t('diagnosisResults.defaultTitle'),

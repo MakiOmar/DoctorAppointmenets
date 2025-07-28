@@ -261,6 +261,16 @@ export default {
       loading.value = true
       
       try {
+        console.log('Submitting diagnosis data:', {
+          mood: form.mood,
+          duration: form.duration,
+          selectedSymptoms: form.selectedSymptoms,
+          impact: form.impact,
+          affectedAreas: form.affectedAreas,
+          goals: form.goals,
+          preferredApproach: form.preferredApproach
+        })
+        
         // Send diagnosis data to API for processing
         const response = await api.post('/api/ai/diagnosis/process', {
           mood: form.mood,
@@ -271,6 +281,8 @@ export default {
           goals: form.goals,
           preferredApproach: form.preferredApproach
         })
+        
+        console.log('API Response:', response.data)
         
         // Store diagnosis data in localStorage for therapist matching
         const diagnosisData = {
@@ -283,14 +295,22 @@ export default {
         
         // Redirect to diagnosis results page with the diagnosis ID
         const diagnosisId = response.data.data?.diagnosis_id
+        console.log('Diagnosis ID from API:', diagnosisId)
         if (diagnosisId) {
           router.push(`/diagnosis-results/${diagnosisId}`)
         } else {
+          console.log('No diagnosis ID in response, redirecting to results page')
           router.push('/diagnosis-results')
         }
         
       } catch (error) {
         console.error('Diagnosis processing error:', error)
+        console.error('Error details:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          url: error.config?.url
+        })
         
         // Fallback: store data and redirect to results page for simulation
         const diagnosisData = {
