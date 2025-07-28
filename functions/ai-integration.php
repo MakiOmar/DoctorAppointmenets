@@ -41,7 +41,7 @@ class SNKS_AI_Integration {
 	private function init_hooks() {
 		// Register AI endpoints
 		add_action( 'init', array( $this, 'register_ai_endpoints' ) );
-		add_action( 'init', array( $this, 'register_rest_routes' ) );
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 		
 		// Handle CORS
 		add_action( 'init', array( $this, 'handle_cors' ) );
@@ -203,6 +203,37 @@ class SNKS_AI_Integration {
 	}
 	
 	/**
+	 * Parse JSON field that may have escaped quotes
+	 */
+	private function parse_json_field( $json_string ) {
+		// First try to decode as is
+		$decoded = json_decode( $json_string, true );
+		
+		if ( $decoded !== null ) {
+			return $decoded;
+		}
+		
+		// If that fails, try to fix escaped quotes
+		$fixed_json = str_replace( '\\"', '"', $json_string );
+		$decoded = json_decode( $fixed_json, true );
+		
+		if ( $decoded !== null ) {
+			return $decoded;
+		}
+		
+		// If still fails, try to strip all backslashes
+		$fixed_json = stripslashes( $json_string );
+		$decoded = json_decode( $fixed_json, true );
+		
+		if ( $decoded !== null ) {
+			return $decoded;
+		}
+		
+		// Final fallback - return empty array
+		return array();
+	}
+	
+	/**
 	 * Test diagnosis endpoint via AJAX
 	 */
 	public function test_diagnosis_ajax() {
@@ -225,9 +256,9 @@ class SNKS_AI_Integration {
 		$data = array(
 			'mood' => $_POST['mood'] ?? '',
 			'duration' => $_POST['duration'] ?? '',
-			'selectedSymptoms' => json_decode( $_POST['selectedSymptoms'] ?? '[]', true ),
+			'selectedSymptoms' => $this->parse_json_field( $_POST['selectedSymptoms'] ?? '[]' ),
 			'impact' => $_POST['impact'] ?? '',
-			'affectedAreas' => json_decode( $_POST['affectedAreas'] ?? '[]', true ),
+			'affectedAreas' => $this->parse_json_field( $_POST['affectedAreas'] ?? '[]' ),
 			'goals' => $_POST['goals'] ?? '',
 			'preferredApproach' => $_POST['preferredApproach'] ?? ''
 		);
@@ -873,8 +904,11 @@ class SNKS_AI_Integration {
 			$diagnosis->description_ar = $description_ar;
 			
 			// Handle suitability messages
-			$suitability_message_en = $diagnosis->suitability_message_en ?: $diagnosis->suitability_message;
-			$suitability_message_ar = $diagnosis->suitability_message_ar ?: '';
+			$suitability_message_en = isset( $diagnosis->suitability_message_en ) ? $diagnosis->suitability_message_en : '';
+			$suitability_message_ar = isset( $diagnosis->suitability_message_ar ) ? $diagnosis->suitability_message_ar : '';
+			$suitability_message = isset( $diagnosis->suitability_message ) ? $diagnosis->suitability_message : '';
+			
+			$suitability_message_en = $suitability_message_en ?: $suitability_message;
 			
 			$diagnosis->suitability_message = $locale === 'ar' ? $suitability_message_ar : $suitability_message_en;
 			$diagnosis->suitability_message_en = $suitability_message_en;
