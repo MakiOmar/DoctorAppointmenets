@@ -176,6 +176,47 @@ export default {
       return diagnoses.value.filter(d => assignedIds.has(d.id))
     })
 
+    const getAverageRating = (therapist) => {
+      if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
+        return 0
+      }
+      const validRatings = therapist.diagnoses.filter(d => d.rating && !isNaN(d.rating) && d.rating > 0)
+      if (validRatings.length === 0) {
+        return 0
+      }
+      const total = validRatings.reduce((sum, d) => sum + Math.min(d.rating || 0, 5), 0)
+      const average = total / validRatings.length
+      return Math.min(average, 5) // Cap at 5.0
+    }
+
+    const getEarliestSlotTime = (therapist) => {
+      // If no earliest slot, return a very high number to push to end
+      if (!therapist.earliest_slot) {
+        return 999999
+      }
+      
+      // Parse the earliest slot time (format: "2024-01-15 09:00" or "09:00")
+      let slotTime = therapist.earliest_slot
+      
+      // If it's just a time (like "09:00"), assume it's today
+      if (slotTime.includes(':') && !slotTime.includes('-')) {
+        const today = new Date()
+        const [hours, minutes] = slotTime.split(':')
+        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+        
+        // If the time has passed today, assume it's tomorrow
+        if (slotDate < new Date()) {
+          slotDate.setDate(slotDate.getDate() + 1)
+        }
+        
+        return slotDate.getTime()
+      }
+      
+      // If it's a full datetime string, parse it
+      const slotDate = new Date(slotTime)
+      return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
+    }
+
     const loadTherapists = async () => {
       loading.value = true
       try {
