@@ -236,6 +236,7 @@ export default {
       loading,
       matchedTherapists,
       diagnosisResult,
+      route,
       rediagnose,
       browseAllTherapists,
       viewTherapist,
