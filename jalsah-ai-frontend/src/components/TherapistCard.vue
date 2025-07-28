@@ -196,20 +196,6 @@ export default {
   left: 0.5rem;
 }
 
-/* RTL text alignment */
-.rtl .text-sm {
-  text-align: right;
-}
-
-.rtl .text-xs {
-  text-align: right;
-}
-
-/* RTL card hover effects */
-.rtl .card:hover {
-  transform: translateY(-2px);
-}
-
 /* RTL responsive adjustments */
 @media (max-width: 768px) {
   .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {

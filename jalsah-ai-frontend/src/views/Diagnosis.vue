@@ -454,21 +454,6 @@ export default {
   border-color: #2563eb;
 }
 
-/* RTL responsive checkbox improvements */
-@media (max-width: 768px) {
-  .rtl .grid.md\:grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-  
-  .rtl .flex.items-center {
-    padding: 1rem;
-  }
-  
-  .rtl label {
-    font-size: 1rem;
-  }
-}
-
 /* Progress bar text alignment for RTL */
 .rtl .flex.justify-between {
   flex-direction: row-reverse;
@@ -491,6 +476,18 @@ export default {
 
 /* Responsive RTL adjustments */
 @media (max-width: 768px) {
+  .rtl .grid.md\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .rtl .flex.items-center {
+    padding: 1rem;
+  }
+  
+  .rtl label {
+    font-size: 1rem;
+  }
+  
   .rtl .flex.justify-between.pt-6 {
     flex-direction: column-reverse;
     gap: 0.75rem;
@@ -501,19 +498,6 @@ export default {
     margin: 0;
     width: 100%;
   }
-}
-
-/* Card styling improvements for RTL */
-.rtl .card {
-  text-align: right;
-}
-
-.rtl .card h2 {
-  text-align: right;
-}
-
-.rtl .card p {
-  text-align: right;
 }
 
 /* Select and textarea RTL improvements */

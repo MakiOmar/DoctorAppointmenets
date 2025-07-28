@@ -320,18 +320,6 @@ export default {
   direction: rtl;
 }
 
-/* RTL card improvements */
-.rtl .card {
-  text-align: right;
-}
-
-.rtl .card h1,
-.rtl .card h2,
-.rtl .card h3,
-.rtl .card p {
-  text-align: right;
-}
-
 /* RTL responsive adjustments */
 @media (max-width: 768px) {
   .rtl .grid.md\:grid-cols-4 {
@@ -341,23 +329,5 @@ export default {
   .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
     grid-template-columns: 1fr;
   }
-}
-
-/* RTL text alignment */
-.rtl .text-gray-600 {
-  text-align: right;
-}
-
-.rtl .text-gray-900 {
-  text-align: right;
-}
-
-/* RTL loading state */
-.rtl .text-center.py-12 {
-  text-align: center;
-}
-
-.rtl .text-center.py-12 p {
-  text-align: center;
 }
 </style> 
