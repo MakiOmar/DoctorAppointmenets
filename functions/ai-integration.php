@@ -27,12 +27,6 @@ class SNKS_AI_Integration {
 		$this->jwt_algorithm = 'HS256';
 		
 		$this->init_hooks();
-		
-		// Force flush rewrite rules on construction (for debugging)
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			flush_rewrite_rules();
-			error_log( 'AI Integration Debug - Rewrite rules flushed' );
-		}
 	}
 	
 	/**
@@ -61,11 +55,6 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
-		
-		// Debug: Log when hooks are registered
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - AJAX hooks registered' );
-		}
 	}
 	
 	/**
@@ -173,11 +162,6 @@ class SNKS_AI_Integration {
 	 * Test AI endpoint
 	 */
 	public function test_ai_endpoint() {
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - test_ai_endpoint called' );
-		}
-		
 		wp_send_json_success( array( 
 			'message' => 'AI endpoint is working!', 
 			'timestamp' => current_time( 'mysql' ),
@@ -189,12 +173,6 @@ class SNKS_AI_Integration {
 	 * Simple test AJAX endpoint
 	 */
 	public function simple_test_ajax() {
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - simple_test_ajax called' );
-			error_log( 'AI Integration Debug - POST data: ' . print_r( $_POST, true ) );
-		}
-		
 		wp_send_json_success( array(
 			'message' => 'Simple AJAX test successful!',
 			'timestamp' => current_time( 'mysql' ),
@@ -313,13 +291,6 @@ class SNKS_AI_Integration {
 	public function handle_ai_requests() {
 		$endpoint = get_query_var( 'ai_endpoint' );
 		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Endpoint: ' . $endpoint );
-			error_log( 'AI Integration Debug - Request URI: ' . $_SERVER['REQUEST_URI'] );
-			error_log( 'AI Integration Debug - Query Vars: ' . print_r( $GLOBALS['wp_query']->query_vars, true ) );
-		}
-		
 		// Check if this is an AI API request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) === false ) {
 			return;
@@ -370,14 +341,6 @@ class SNKS_AI_Integration {
 	private function route_ai_request( $endpoint ) {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$path = explode( '/', $endpoint );
-		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - route_ai_request called' );
-			error_log( 'AI Integration Debug - Endpoint: ' . $endpoint );
-			error_log( 'AI Integration Debug - Method: ' . $method );
-			error_log( 'AI Integration Debug - Path: ' . print_r( $path, true ) );
-		}
 		
 		// Check for v2 endpoints
 		if ($path[0] === 'v2') {
@@ -433,15 +396,9 @@ class SNKS_AI_Integration {
 				$this->handle_diagnoses_endpoint( $method, $path );
 				break;
 			case 'diagnosis':
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					error_log( 'AI Integration Debug - Routing to diagnosis endpoint' );
-				}
 				$this->handle_diagnosis_endpoint( $method, $path );
 				break;
 			default:
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					error_log( 'AI Integration Debug - Endpoint not found: ' . $path[0] );
-				}
 				$this->send_error( 'Endpoint not found', 404 );
 		}
 	}
@@ -469,13 +426,6 @@ class SNKS_AI_Integration {
 	 * Handle therapists endpoints
 	 */
 	private function handle_therapists_endpoint( $method, $path ) {
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Therapists endpoint called' );
-			error_log( 'AI Integration Debug - Method: ' . $method );
-			error_log( 'AI Integration Debug - Path: ' . print_r( $path, true ) );
-		}
-		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
@@ -556,31 +506,15 @@ class SNKS_AI_Integration {
 	 * Handle diagnosis endpoint
 	 */
 	private function handle_diagnosis_endpoint( $method, $path ) {
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - handle_diagnosis_endpoint called' );
-			error_log( 'AI Integration Debug - Method: ' . $method );
-			error_log( 'AI Integration Debug - Path: ' . print_r( $path, true ) );
-		}
-		
 		switch ( $method ) {
 			case 'POST':
 				if ( count( $path ) === 1 ) {
-					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-						error_log( 'AI Integration Debug - Calling process_diagnosis_data' );
-					}
 					$this->process_diagnosis_data();
 				} else {
-					if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-						error_log( 'AI Integration Debug - Invalid path length for POST' );
-					}
 					$this->send_error( 'Invalid endpoint', 404 );
 				}
 				break;
 			default:
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-					error_log( 'AI Integration Debug - Method not allowed: ' . $method );
-				}
 				$this->send_error( 'Method not allowed', 405 );
 		}
 	}
@@ -702,26 +636,13 @@ class SNKS_AI_Integration {
 	 * Get AI Therapists
 	 */
 	private function get_ai_therapists() {
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Getting therapists' );
-		}
-		
+		// Get all therapists with doctor role
 		$therapists = get_users( array(
 			'role' => 'doctor',
-			'meta_query' => array(
-				array(
-					'key' => 'show_on_ai_site',
-					'value' => '1',
-					'compare' => '='
-				)
-			)
+			'number' => -1,
+			'orderby' => 'display_name',
+			'order' => 'ASC'
 		) );
-		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Found therapists: ' . count( $therapists ) );
-		}
 		
 		$result = array();
 		foreach ( $therapists as $therapist ) {
@@ -1164,41 +1085,20 @@ class SNKS_AI_Integration {
 	 * Process diagnosis data
 	 */
 	private function process_diagnosis_data() {
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - process_diagnosis_data called' );
-			error_log( 'AI Integration Debug - Raw input: ' . file_get_contents( 'php://input' ) );
-		}
-		
-		$data = json_decode( file_get_contents( 'php://input' ), true );
-		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Parsed data: ' . print_r( $data, true ) );
-		}
+		// Get the raw input
+		$raw_input = file_get_contents( 'php://input' );
+		$data = json_decode( $raw_input, true );
 		
 		// Validate required fields
 		if ( ! isset( $data['mood'] ) || ! isset( $data['selectedSymptoms'] ) ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'AI Integration Debug - Validation failed: mood or selectedSymptoms missing' );
-			}
 			$this->send_error( 'Mood and symptoms are required', 400 );
 		}
 		
-		// Simulate AI diagnosis processing
-		// In a real implementation, this would call ChatGPT or another AI service
+		// Process the diagnosis
 		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
-		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Diagnosis ID returned: ' . $diagnosis_id );
-		}
 		
 		// If no diagnosis found, return error
 		if ( $diagnosis_id === null ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'AI Integration Debug - No diagnosis found, returning error' );
-			}
 			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
 		}
 		
@@ -1206,11 +1106,6 @@ class SNKS_AI_Integration {
 			'diagnosis_id' => $diagnosis_id,
 			'message' => 'Diagnosis processed successfully'
 		);
-		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Integration Debug - Sending success response: ' . print_r( $response_data, true ) );
-		}
 		
 		$this->send_success( $response_data );
 	}
