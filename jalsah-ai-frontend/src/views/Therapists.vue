@@ -66,79 +66,13 @@
 
       <!-- Therapists Grid -->
       <div v-else-if="filteredTherapists.length > 0" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div 
+        <TherapistCard
           v-for="therapist in filteredTherapists" 
           :key="therapist.id"
-          class="card hover:shadow-lg transition-shadow cursor-pointer"
-          @click="viewTherapist(therapist.id)"
-        >
-          <!-- Therapist Image -->
-          <div class="relative mb-4">
-            <img 
-              :src="therapist.photo || '/default-therapist.svg'" 
-              :alt="therapist.name"
-              class="w-full h-48 rounded-lg"
-              :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
-            />
-            <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
-              {{ therapist.price?.others || $t('common.contact') }}
-            </div>
-          </div>
-
-          <!-- Therapist Info -->
-          <div class="space-y-3">
-            <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
-            
-            <div class="flex items-center" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-              <StarRating :rating="getAverageRating(therapist)" />
-              <span class="text-sm text-gray-600">
-                {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
-              </span>
-            </div>
-
-            <p class="text-gray-600 text-sm line-clamp-2">
-              {{ therapist.bio || $t('therapists.bioDefault') }}
-            </p>
-
-            <!-- Specializations -->
-            <div class="flex flex-wrap gap-1">
-              <span 
-                v-for="diagnosis in therapist.diagnoses?.slice(0, 3)" 
-                :key="diagnosis.id"
-                class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
-              >
-                {{ diagnosis.name }}
-              </span>
-              <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500">
-                {{ $t('therapists.more', { count: therapist.diagnoses.length - 3 }) }}
-              </span>
-            </div>
-
-            <!-- Availability -->
-            <div class="flex items-center text-sm text-gray-600">
-              <svg class="w-4 h-4" :class="$i18n.locale === 'ar' ? 'ml-1' : 'mr-1'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span>{{ formatEarliestSlot(therapist.earliest_slot) }}</span>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex pt-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-              <button 
-                @click.stop="bookAppointment(therapist.id)"
-                class="flex-1 btn-primary text-sm py-2"
-              >
-                {{ $t('therapists.bookSession') }}
-              </button>
-              <button 
-                @click.stop="viewTherapist(therapist.id)"
-                class="btn-outline text-sm py-2"
-              >
-                {{ $t('therapists.viewProfile') }}
-              </button>
-            </div>
-          </div>
-        </div>
+          :therapist="therapist"
+          @click="viewTherapist"
+          @book="bookAppointment"
+        />
       </div>
 
       <!-- Empty State -->
@@ -160,10 +94,12 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
+import TherapistCard from '@/components/TherapistCard.vue'
 export default {
   name: 'Therapists',
   components: {
-    StarRating
+    StarRating,
+    TherapistCard
   },
   setup() {
     const router = useRouter()
@@ -240,96 +176,6 @@ export default {
       return diagnoses.value.filter(d => assignedIds.has(d.id))
     })
 
-    const getAverageRating = (therapist) => {
-      if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
-        return 0
-      }
-      const validRatings = therapist.diagnoses.filter(d => d.rating && !isNaN(d.rating) && d.rating > 0)
-      if (validRatings.length === 0) {
-        return 0
-      }
-      const total = validRatings.reduce((sum, d) => sum + Math.min(d.rating || 0, 5), 0)
-      const average = total / validRatings.length
-      return Math.min(average, 5) // Cap at 5.0
-    }
-
-    const getEarliestSlotTime = (therapist) => {
-      // If no earliest slot, return a very high number to push to end
-      if (!therapist.earliest_slot) {
-        return 999999
-      }
-      
-      // Parse the earliest slot time (format: "2024-01-15 09:00" or "09:00")
-      let slotTime = therapist.earliest_slot
-      
-      // If it's just a time (like "09:00"), assume it's today
-      if (slotTime.includes(':')) {
-        const today = new Date()
-        const [hours, minutes] = slotTime.split(':')
-        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
-        
-        // If the time has passed today, assume it's tomorrow
-        if (slotDate < new Date()) {
-          slotDate.setDate(slotDate.getDate() + 1)
-        }
-        
-        return slotDate.getTime()
-      }
-      
-      // If it's a full datetime string, parse it
-      const slotDate = new Date(slotTime)
-      return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
-    }
-
-    const formatEarliestSlot = (earliestSlot) => {
-      if (!earliestSlot) {
-        return t('therapists.contactForAvailability')
-      }
-      
-      // Parse the slot time
-      let slotTime = earliestSlot
-      
-      // If it's just a time (like "09:00"), assume it's today
-      if (slotTime.includes(':') && !slotTime.includes('-')) {
-        const today = new Date()
-        const [hours, minutes] = slotTime.split(':')
-        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
-        
-        // If the time has passed today, assume it's tomorrow
-        if (slotDate < new Date()) {
-          slotDate.setDate(slotDate.getDate() + 1)
-        }
-        
-        slotTime = slotDate.toISOString()
-      }
-      
-      // Parse the full datetime
-      const slotDate = new Date(slotTime)
-      if (isNaN(slotDate.getTime())) {
-        return t('therapists.contactForAvailability')
-      }
-      
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      // Format based on when the slot is
-      if (slotDate >= today && slotDate < tomorrow) {
-        // Today
-        return t('therapists.availableToday', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
-      } else if (slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)) {
-        // Tomorrow
-        return t('therapists.availableTomorrow', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
-      } else {
-        // Other days
-        return t('therapists.availableOn', { 
-          date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-          time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-        })
-      }
-    }
-
     const loadTherapists = async () => {
       loading.value = true
       try {
@@ -372,8 +218,6 @@ export default {
       filters,
       filteredTherapists,
       diagnosesWithTherapists,
-      getAverageRating,
-      formatEarliestSlot,
       viewTherapist,
       bookAppointment
     }

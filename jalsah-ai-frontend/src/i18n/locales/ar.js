@@ -306,54 +306,32 @@ export default {
 
   // Therapists
   therapists: {
-    title: 'ابحث عن معالجك المثالي',
-    subtitle: 'تصفح معالجينا المؤهلين واعثر على المناسب لك',
+    title: 'ابحث عن معالجك',
+    subtitle: 'تصفح معالجينا المؤهلين وابحث عن المطابقة المثالية لاحتياجاتك',
+    loading: 'جاري تحميل المعالجين...',
+    bioDefault: 'معالج محترف متخصص في الصحة النفسية والرفاهية.',
+    bookSession: 'احجز جلسة',
+    viewProfile: 'عرض الملف الشخصي',
+    more: '+{count} المزيد',
+    noSlotsAvailable: 'تواصل للاستفسار عن التوفر',
+    availableToday: 'متاح اليوم في {time}',
+    availableTomorrow: 'متاح غداً في {time}',
+    availableOn: 'متاح {date} في {time}',
+    contactForAvailability: 'تواصل للاستفسار عن التوفر',
     filters: {
       specialization: 'التخصص',
       allSpecializations: 'جميع التخصصات',
       priceRange: 'نطاق السعر',
       anyPrice: 'أي سعر',
-      availability: 'التوفر',
-      anyTime: 'أي وقت',
-      sortBy: 'ترتيب حسب',
-      highestRated: 'الأعلى تقييماً',
       lowestPrice: 'أقل سعر',
       highestPrice: 'أعلى سعر',
       nearestAppointment: 'أقرب موعد',
+      anyTime: 'أي وقت',
       closest: 'الأقرب',
-      farthest: 'الأبعد'
-    },
-    specializations: {
-      anxiety: 'اضطرابات القلق',
-      depression: 'الاكتئاب',
-      stress: 'إدارة التوتر',
-      relationships: 'مشاكل العلاقات',
-      trauma: 'الصدمة واضطراب ما بعد الصدمة',
-      addiction: 'الإدمان',
-      eating: 'اضطرابات الأكل',
-      sleep: 'اضطرابات النوم'
-    },
-
-    availability: {
-      morning: 'صباحاً',
-      afternoon: 'ظهراً',
-      evening: 'مساءً',
-      weekend: 'عطلة نهاية الأسبوع'
-    },
-    loading: 'جاري تحميل المعالجين...',
-    noResults: 'لم يتم العثور على معالجين',
-    noResultsMessage: 'جرب تعديل الفلاتر أو تحقق لاحقاً من المعالجين الجدد',
-    rating: '{rating} ({count} تقييم)',
-    specializations: 'التخصصات',
-    more: '+{count} المزيد',
-    nextAvailable: 'التوفر التالي: {time}',
-    contactForAvailability: 'تواصل للتحقق من التوفر',
-    availableToday: 'متوفر اليوم في {time}',
-    availableTomorrow: 'متوفر غداً في {time}',
-    availableOn: 'متوفر {date} في {time}',
-    bookSession: 'حجز جلسة',
-    viewProfile: 'عرض الملف الشخصي',
-    bioDefault: 'معالج ذو خبرة متخصص في الصحة النفسية والعافية. ملتزم بتقديم رعاية شفقة قائمة على الأدلة لمساعدة العملاء على تحقيق أهدافهم في الصحة النفسية.'
+      farthest: 'الأبعد',
+      sortBy: 'ترتيب حسب',
+      highestRated: 'الأعلى تقييماً'
+    }
   },
 
   // Therapist Detail

@@ -296,53 +296,32 @@ export default {
 
   // Therapists
   therapists: {
-    title: 'Find Your Perfect Therapist',
-    subtitle: 'Browse our qualified therapists and find the one that\'s right for you',
-    filters: {
-      specialization: 'Specialization',
-      allSpecializations: 'All specializations',
-      priceRange: 'Price Range',
-      anyPrice: 'Any price',
-      availability: 'Availability',
-      anyTime: 'Any time',
-      sortBy: 'Sort By',
-      highestRated: 'Highest Rated',
-      lowestPrice: 'Lowest Price',
-      highestPrice: 'Highest Price',
-      nearestAppointment: 'Nearest Appointment',
-      closest: 'Closest',
-      farthest: 'Farthest'
-    },
-    specializations: {
-      anxiety: 'Anxiety Disorders',
-      depression: 'Depression',
-      stress: 'Stress Management',
-      relationships: 'Relationship Issues',
-      trauma: 'Trauma and PTSD',
-      addiction: 'Addiction',
-      eating: 'Eating Disorders',
-      sleep: 'Sleep Disorders'
-    },
-
-    availability: {
-      morning: 'Morning',
-      afternoon: 'Afternoon',
-      evening: 'Evening',
-      weekend: 'Weekend'
-    },
+    title: 'Find Your Therapist',
+    subtitle: 'Browse our qualified therapists and find the perfect match for your needs',
     loading: 'Loading therapists...',
-    noResults: 'No therapists found',
-    noResultsMessage: 'Try adjusting your filters or check back later for new therapists',
-    rating: '{rating} ({count} reviews)',
-    specializations: 'Specializations',
+    bioDefault: 'Professional therapist with expertise in mental health and well-being.',
+    bookSession: 'Book Session',
+    viewProfile: 'View Profile',
     more: '+{count} more',
-    nextAvailable: 'Next available: {time}',
-    contactForAvailability: 'Contact for availability',
+    noSlotsAvailable: 'Contact for availability',
     availableToday: 'Available today at {time}',
     availableTomorrow: 'Available tomorrow at {time}',
     availableOn: 'Available {date} at {time}',
-    bookSession: 'Book Session',
-    viewProfile: 'View Profile'
+    contactForAvailability: 'Contact for availability',
+    filters: {
+      specialization: 'Specialization',
+      allSpecializations: 'All Specializations',
+      priceRange: 'Price Range',
+      anyPrice: 'Any Price',
+      lowestPrice: 'Lowest Price',
+      highestPrice: 'Highest Price',
+      nearestAppointment: 'Nearest Appointment',
+      anyTime: 'Any Time',
+      closest: 'Closest',
+      farthest: 'Farthest',
+      sortBy: 'Sort By',
+      highestRated: 'Highest Rated'
+    }
   },
 
   // Therapist Detail
