@@ -61,7 +61,7 @@
               </div>
 
               <div>
-                <label class="form-label">Date of Birth</label>
+                <label class="form-label">{{ $t('profile.dateOfBirth') }}</label>
                 <input 
                   v-model="profile.dateOfBirth" 
                   type="date" 
@@ -76,24 +76,24 @@
                     v-model="profile.emergencyName" 
                     type="text" 
                     class="input-field"
-                                          :placeholder="$t('profile.contactName')"
+                    :placeholder="$t('profile.contactName')"
                   />
                   <input 
                     v-model="profile.emergencyPhone" 
                     type="tel" 
                     class="input-field"
-                                          :placeholder="$t('profile.contactPhone')"
+                    :placeholder="$t('profile.contactPhone')"
                   />
                 </div>
               </div>
 
               <div>
-                <label class="form-label">Address</label>
+                <label class="form-label">{{ $t('profile.address') }}</label>
                 <textarea 
                   v-model="profile.address" 
                   rows="3" 
                   class="input-field"
-                  placeholder="Your address"
+                  :placeholder="$t('profile.addressPlaceholder')"
                 ></textarea>
               </div>
 
@@ -108,9 +108,9 @@
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Updating...
+                    {{ $t('profile.updating') }}
                   </span>
-                  <span v-else>Update Profile</span>
+                  <span v-else>{{ $t('profile.updateProfile') }}</span>
                 </button>
               </div>
             </form>
@@ -118,11 +118,11 @@
 
           <!-- Change Password -->
           <div class="card mt-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">Change Password</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.changePassword') }}</h2>
             
             <form @submit.prevent="changePassword" class="space-y-6">
               <div>
-                <label class="form-label">Current Password</label>
+                <label class="form-label">{{ $t('profile.currentPassword') }}</label>
                 <input 
                   v-model="password.current" 
                   type="password" 
@@ -132,7 +132,7 @@
               </div>
 
               <div>
-                <label class="form-label">New Password</label>
+                <label class="form-label">{{ $t('profile.newPassword') }}</label>
                 <input 
                   v-model="password.new" 
                   type="password" 
@@ -142,7 +142,7 @@
               </div>
 
               <div>
-                <label class="form-label">Confirm New Password</label>
+                <label class="form-label">{{ $t('profile.confirmNewPassword') }}</label>
                 <input 
                   v-model="password.confirm" 
                   type="password" 
@@ -158,13 +158,13 @@
                   class="btn-outline"
                 >
                   <span v-if="changingPassword" class="flex items-center">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Changing...
+                    {{ $t('profile.changing') }}
                   </span>
-                  <span v-else>Change Password</span>
+                  <span v-else>{{ $t('profile.changePasswordButton') }}</span>
                 </button>
               </div>
             </form>
@@ -174,45 +174,45 @@
         <!-- Sidebar -->
         <div class="md:col-span-1">
           <!-- Account Summary -->
-          <div class="card mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Summary</h3>
-            <div class="space-y-3">
+          <div class="card mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.accountSummary') }}</h2>
+            <div class="space-y-4">
               <div class="flex justify-between">
-                <span class="text-gray-600">Member since:</span>
+                <span class="text-gray-600">{{ $t('profile.memberSince') }}</span>
                 <span class="font-medium">{{ formatDate(profile.createdAt) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600">Total sessions:</span>
-                <span class="font-medium">{{ profile.totalSessions || 0 }}</span>
+                <span class="text-gray-600">{{ $t('profile.totalSessions') }}</span>
+                <span class="font-medium">{{ profile.totalSessions }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-600">Account status:</span>
-                <span class="font-medium text-green-600">Active</span>
+                <span class="text-gray-600">{{ $t('profile.accountStatus') }}</span>
+                <span class="font-medium text-green-600">{{ $t('profile.active') }}</span>
               </div>
             </div>
           </div>
 
           <!-- Quick Actions -->
-          <div class="card">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div class="card mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.quickActions') }}</h2>
             <div class="space-y-3">
               <button 
                 @click="$router.push('/appointments')"
                 class="w-full btn-outline text-left"
               >
-                View Appointments
+                {{ $t('profile.viewAppointments') }}
               </button>
               <button 
                 @click="$router.push('/diagnosis')"
                 class="w-full btn-outline text-left"
               >
-                Take AI Diagnosis
+                {{ $t('profile.takeDiagnosis') }}
               </button>
               <button 
                 @click="logout"
                 class="w-full btn-outline text-left text-red-600 hover:text-red-700"
               >
-                Logout
+                {{ $t('profile.logout') }}
               </button>
             </div>
           </div>

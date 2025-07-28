@@ -433,43 +433,34 @@ export default {
   // Appointments
   appointments: {
     title: 'مواعيدي',
+    loading: 'جاري تحميل المواعيد...',
     tabs: {
       upcoming: 'القادمة',
       past: 'السابقة',
-      cancelled: 'الملغاة'
+      cancelled: 'الملغية'
     },
-    loading: 'جاري تحميل المواعيد...',
-    noAppointments: 'لم يتم العثور على مواعيد',
-    noUpcoming: 'ليس لديك مواعيد قادمة',
-    noPast: 'ليس لديك مواعيد سابقة',
-    noCancelled: 'ليس لديك مواعيد ملغاة',
-    bookSession: 'حجز جلسة',
-    date: 'التاريخ:',
-    time: 'الوقت:',
-    duration: 'المدة:',
-    status: 'الحالة:',
-    notes: 'ملاحظات:',
+    date: 'التاريخ',
+    time: 'الوقت',
+    duration: 'المدة',
+    status: 'الحالة',
+    notes: 'ملاحظات',
     joinSession: 'انضم للجلسة',
     reschedule: 'إعادة جدولة',
     cancel: 'إلغاء',
     viewDetails: 'عرض التفاصيل',
-    sessionLinkAvailable: 'رابط الجلسة متوفر',
-    sessionLinkMessage: 'انقر على الرابط أدناه للانضمام لجلستك',
+    sessionLinkAvailable: 'رابط الجلسة متاح',
+    sessionLinkMessage: 'انقر على الرابط أدناه للانضمام إلى جلستك',
     joinNow: 'انضم الآن',
-    cancelModal: {
-      title: 'إلغاء الموعد',
-      message: 'هل أنت متأكد من أنك تريد إلغاء هذا الموعد؟ لا يمكن التراجع عن هذا الإجراء',
-      confirm: 'نعم، إلغاء',
-      keep: 'لا، احتفظ',
-      cancelling: 'جاري الإلغاء...'
-    },
-    statuses: {
-      pending: 'في الانتظار',
-      confirmed: 'مؤكد',
-      completed: 'مكتمل',
-      cancelled: 'ملغي',
-      no_show: 'لم يحضر'
-    }
+    noAppointments: 'لا توجد مواعيد',
+    noUpcoming: 'ليس لديك مواعيد قادمة.',
+    noPast: 'ليس لديك مواعيد سابقة.',
+    noCancelled: 'ليس لديك مواعيد ملغية.',
+    bookSession: 'حجز جلسة',
+    cancelTitle: 'إلغاء الموعد',
+    cancelMessage: 'هل أنت متأكد من أنك تريد إلغاء هذا الموعد؟ لا يمكن التراجع عن هذا الإجراء.',
+    cancelling: 'جاري الإلغاء...',
+    yesCancel: 'نعم، إلغاء',
+    noKeep: 'لا، احتفظ'
   },
 
   // Profile
@@ -483,6 +474,8 @@ export default {
     phone: 'رقم الهاتف',
     dateOfBirth: 'تاريخ الميلاد',
     emergencyContact: 'جهة اتصال للطوارئ',
+    contactName: 'اسم جهة الاتصال',
+    contactPhone: 'هاتف جهة الاتصال',
     address: 'العنوان',
     addressPlaceholder: 'عنوانك',
     updateProfile: 'تحديث الملف الشخصي',
@@ -500,7 +493,7 @@ export default {
     active: 'نشط',
     quickActions: 'إجراءات سريعة',
     viewAppointments: 'عرض المواعيد',
-    takeDiagnosis: 'إجراء التشخيص الذكي',
+    takeDiagnosis: 'إجراء تشخيص ذكي',
     logout: 'تسجيل الخروج',
     logoutSuccess: 'تم تسجيل الخروج بنجاح'
   },

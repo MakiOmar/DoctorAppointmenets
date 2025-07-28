@@ -423,22 +423,17 @@ export default {
   // Appointments
   appointments: {
     title: 'My Appointments',
+    loading: 'Loading appointments...',
     tabs: {
       upcoming: 'Upcoming',
       past: 'Past',
       cancelled: 'Cancelled'
     },
-    loading: 'Loading appointments...',
-    noAppointments: 'No appointments found',
-    noUpcoming: 'You don\'t have any upcoming appointments',
-    noPast: 'You don\'t have any past appointments',
-    noCancelled: 'You don\'t have any cancelled appointments',
-    bookSession: 'Book a Session',
-    date: 'Date:',
-    time: 'Time:',
-    duration: 'Duration:',
-    status: 'Status:',
-    notes: 'Notes:',
+    date: 'Date',
+    time: 'Time',
+    duration: 'Duration',
+    status: 'Status',
+    notes: 'Notes',
     joinSession: 'Join Session',
     reschedule: 'Reschedule',
     cancel: 'Cancel',
@@ -446,20 +441,16 @@ export default {
     sessionLinkAvailable: 'Session Link Available',
     sessionLinkMessage: 'Click the link below to join your session',
     joinNow: 'Join Now',
-    cancelModal: {
-      title: 'Cancel Appointment',
-      message: 'Are you sure you want to cancel this appointment? This action cannot be undone',
-      confirm: 'Yes, Cancel',
-      keep: 'No, Keep',
-      cancelling: 'Cancelling...'
-    },
-    statuses: {
-      pending: 'Pending',
-      confirmed: 'Confirmed',
-      completed: 'Completed',
-      cancelled: 'Cancelled',
-      no_show: 'No Show'
-    }
+    noAppointments: 'No Appointments',
+    noUpcoming: 'You have no upcoming appointments.',
+    noPast: 'You have no past appointments.',
+    noCancelled: 'You have no cancelled appointments.',
+    bookSession: 'Book Session',
+    cancelTitle: 'Cancel Appointment',
+    cancelMessage: 'Are you sure you want to cancel this appointment? This action cannot be undone.',
+    cancelling: 'Cancelling...',
+    yesCancel: 'Yes, Cancel',
+    noKeep: 'No, Keep'
   },
 
   // Profile
@@ -473,6 +464,8 @@ export default {
     phone: 'Phone Number',
     dateOfBirth: 'Date of Birth',
     emergencyContact: 'Emergency Contact',
+    contactName: 'Contact name',
+    contactPhone: 'Contact phone',
     address: 'Address',
     addressPlaceholder: 'Your address',
     updateProfile: 'Update Profile',

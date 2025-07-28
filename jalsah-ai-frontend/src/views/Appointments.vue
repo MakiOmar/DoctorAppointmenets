@@ -3,7 +3,7 @@
 
     
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-8">My Appointments</h1>
+      <h1 class="text-3xl font-bold text-gray-900 mb-8">{{ $t('appointments.title') }}</h1>
 
       <!-- Filter Tabs -->
       <div class="mb-8">
@@ -41,7 +41,7 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p class="text-gray-600">Loading appointments...</p>
+        <p class="text-gray-600">{{ $t('appointments.loading') }}</p>
       </div>
 
       <!-- Appointments List -->
@@ -69,16 +69,16 @@
                 </h3>
                 <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
-                    <span class="font-medium">Date:</span> {{ formatDate(appointment.date) }}
+                    <span class="font-medium">{{ $t('appointments.date') }}:</span> {{ formatDate(appointment.date) }}
                   </div>
                   <div>
-                    <span class="font-medium">Time:</span> {{ formatTime(appointment.time) }}
+                    <span class="font-medium">{{ $t('appointments.time') }}:</span> {{ formatTime(appointment.time) }}
                   </div>
                   <div>
-                    <span class="font-medium">Duration:</span> {{ appointment.session_type }} minutes
+                    <span class="font-medium">{{ $t('appointments.duration') }}:</span> {{ appointment.session_type }} minutes
                   </div>
                   <div>
-                    <span class="font-medium">Status:</span> 
+                    <span class="font-medium">{{ $t('appointments.status') }}:</span> 
                     <span :class="getStatusClass(appointment.status)">
                       {{ getStatusText(appointment.status) }}
                     </span>
@@ -87,7 +87,7 @@
                 
                 <!-- Notes -->
                 <div v-if="appointment.notes" class="mt-3">
-                  <span class="font-medium text-gray-900">Notes:</span>
+                  <span class="font-medium text-gray-900">{{ $t('appointments.notes') }}:</span>
                   <p class="text-gray-600 text-sm mt-1">{{ appointment.notes }}</p>
                 </div>
               </div>
@@ -101,7 +101,7 @@
                 @click="joinSession(appointment.id)"
                 class="btn-primary text-sm"
               >
-                Join Session
+                {{ $t('appointments.joinSession') }}
               </button>
 
               <!-- Reschedule Button -->
@@ -110,7 +110,7 @@
                 @click="rescheduleAppointment(appointment.id)"
                 class="btn-outline text-sm"
               >
-                Reschedule
+                {{ $t('appointments.reschedule') }}
               </button>
 
               <!-- Cancel Button -->
@@ -119,7 +119,7 @@
                 @click="cancelAppointment(appointment.id)"
                 class="btn-outline text-sm text-red-600 hover:text-red-700"
               >
-                Cancel
+                {{ $t('appointments.cancel') }}
               </button>
 
               <!-- View Details -->
@@ -127,7 +127,7 @@
                 @click="viewAppointmentDetails(appointment.id)"
                 class="btn-outline text-sm"
               >
-                View Details
+                {{ $t('appointments.viewDetails') }}
               </button>
             </div>
           </div>
@@ -136,15 +136,15 @@
           <div v-if="appointment.session_link" class="mt-4 p-3 bg-blue-50 rounded-lg">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-blue-900">Session Link Available</p>
-                <p class="text-xs text-blue-700">Click the link below to join your session</p>
+                <p class="text-sm font-medium text-blue-900">{{ $t('appointments.sessionLinkAvailable') }}</p>
+                <p class="text-xs text-blue-700">{{ $t('appointments.sessionLinkMessage') }}</p>
               </div>
               <a 
                 :href="appointment.session_link" 
                 target="_blank"
                 class="btn-primary text-sm"
               >
-                Join Now
+                {{ $t('appointments.joinNow') }}
               </a>
             </div>
           </div>
