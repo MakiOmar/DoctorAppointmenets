@@ -261,18 +261,7 @@ export default {
       loading.value = true
       
       try {
-        console.log('Submitting diagnosis data:', {
-          mood: form.mood,
-          duration: form.duration,
-          selectedSymptoms: form.selectedSymptoms,
-          impact: form.impact,
-          affectedAreas: form.affectedAreas,
-          goals: form.goals,
-          preferredApproach: form.preferredApproach
-        })
-        
         // Send diagnosis data directly to AJAX endpoint
-        console.log('Sending to AJAX endpoint...')
         
         // Create URL-encoded form data for WordPress AJAX
         const formData = new URLSearchParams()
@@ -291,8 +280,6 @@ export default {
           }
         })
         
-        console.log('AJAX Response:', ajaxResponse.data)
-        
         // Store diagnosis data in localStorage for therapist matching
         const diagnosisData = {
           ...form,
@@ -304,22 +291,14 @@ export default {
         
         // Redirect to diagnosis results page with the diagnosis ID
         const diagnosisId = ajaxResponse.data.data?.diagnosis_id
-        console.log('Diagnosis ID from AJAX:', diagnosisId)
         if (diagnosisId) {
           router.push(`/diagnosis-results/${diagnosisId}`)
         } else {
-          console.log('No diagnosis ID in AJAX response, redirecting to results page')
           router.push('/diagnosis-results')
         }
         
       } catch (error) {
         console.error('Diagnosis processing error:', error)
-        console.error('Error details:', {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          url: error.config?.url
-        })
         
         // Fallback: store data and redirect to results page for simulation
         const diagnosisData = {
