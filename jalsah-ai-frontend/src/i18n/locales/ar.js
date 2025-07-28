@@ -52,6 +52,11 @@ export default {
     therapistRegister: 'تسجيل المعالج'
   },
 
+  // Logo
+  logo: {
+    text: 'جلسة'
+  },
+
   // Home Page
   home: {
     hero: {

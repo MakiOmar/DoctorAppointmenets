@@ -51,6 +51,11 @@ export default {
     therapistRegister: 'Therapist Registration'
   },
 
+  // Logo
+  logo: {
+    text: 'Jalsah'
+  },
+
   // Home Page
   home: {
     hero: {
