@@ -218,7 +218,7 @@ export default {
   setup() {
     const router = useRouter()
     const toast = useToast()
-    const { t: $t } = useI18n()
+    const { t: $t, locale } = useI18n()
     
     const loading = ref(true)
     const cancelling = ref(false)
@@ -273,7 +273,8 @@ export default {
 
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A'
-      return new Date(dateString).toLocaleDateString('en-US', {
+      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
+      return new Date(dateString).toLocaleDateString(currentLocale, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -285,7 +286,7 @@ export default {
       if (!timeString) return 'N/A'
       const [hours, minutes] = timeString.split(':')
       const hour = parseInt(hours)
-      const ampm = hour >= 12 ? 'PM' : 'AM'
+      const ampm = hour >= 12 ? $t('dateTime.pm') : $t('dateTime.am')
       const displayHour = hour % 12 || 12
       return `${displayHour}:${minutes} ${ampm}`
     }

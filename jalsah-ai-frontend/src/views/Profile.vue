@@ -354,7 +354,8 @@ export default {
 
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A'
-      return new Date(dateString).toLocaleDateString()
+      const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
+      return new Date(dateString).toLocaleDateString(currentLocale)
     }
 
     onMounted(() => {

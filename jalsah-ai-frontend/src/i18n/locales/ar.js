@@ -318,6 +318,7 @@ export default {
     availableTomorrow: 'متاح غداً في {time}',
     availableOn: 'متاح {date} في {time}',
     contactForAvailability: 'تواصل للاستفسار عن التوفر',
+    specializations: 'التخصصات',
     filters: {
       specialization: 'التخصص',
       allSpecializations: 'جميع التخصصات',
@@ -528,6 +529,58 @@ export default {
     ar: 'العربية',
     en: 'English',
     switchLanguage: 'تغيير اللغة'
+  },
+
+  // Date and Time
+  dateTime: {
+    am: 'ص',
+    pm: 'م',
+    months: {
+      january: 'يناير',
+      february: 'فبراير',
+      march: 'مارس',
+      april: 'أبريل',
+      may: 'مايو',
+      june: 'يونيو',
+      july: 'يوليو',
+      august: 'أغسطس',
+      september: 'سبتمبر',
+      october: 'أكتوبر',
+      november: 'نوفمبر',
+      december: 'ديسمبر'
+    },
+    monthsShort: {
+      jan: 'ينا',
+      feb: 'فبر',
+      mar: 'مار',
+      apr: 'أبر',
+      may: 'ماي',
+      jun: 'يون',
+      jul: 'يول',
+      aug: 'أغس',
+      sep: 'سبت',
+      oct: 'أكت',
+      nov: 'نوف',
+      dec: 'ديس'
+    },
+    days: {
+      sunday: 'الأحد',
+      monday: 'الاثنين',
+      tuesday: 'الثلاثاء',
+      wednesday: 'الأربعاء',
+      thursday: 'الخميس',
+      friday: 'الجمعة',
+      saturday: 'السبت'
+    },
+    daysShort: {
+      sun: 'أحد',
+      mon: 'اثن',
+      tue: 'ثلا',
+      wed: 'أرب',
+      thu: 'خمي',
+      fri: 'جمع',
+      sat: 'سبت'
+    }
   },
 
   // Not Found

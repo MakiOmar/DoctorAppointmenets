@@ -308,6 +308,7 @@ export default {
     availableTomorrow: 'Available tomorrow at {time}',
     availableOn: 'Available {date} at {time}',
     contactForAvailability: 'Contact for availability',
+    specializations: 'Specializations',
     filters: {
       specialization: 'Specialization',
       allSpecializations: 'All Specializations',
@@ -321,6 +322,58 @@ export default {
       farthest: 'Farthest',
       sortBy: 'Sort By',
       highestRated: 'Highest Rated'
+    }
+  },
+
+  // Date and Time
+  dateTime: {
+    am: 'AM',
+    pm: 'PM',
+    months: {
+      january: 'January',
+      february: 'February',
+      march: 'March',
+      april: 'April',
+      may: 'May',
+      june: 'June',
+      july: 'July',
+      august: 'August',
+      september: 'September',
+      october: 'October',
+      november: 'November',
+      december: 'December'
+    },
+    monthsShort: {
+      jan: 'Jan',
+      feb: 'Feb',
+      mar: 'Mar',
+      apr: 'Apr',
+      may: 'May',
+      jun: 'Jun',
+      jul: 'Jul',
+      aug: 'Aug',
+      sep: 'Sep',
+      oct: 'Oct',
+      nov: 'Nov',
+      dec: 'Dec'
+    },
+    days: {
+      sunday: 'Sunday',
+      monday: 'Monday',
+      tuesday: 'Tuesday',
+      wednesday: 'Wednesday',
+      thursday: 'Thursday',
+      friday: 'Friday',
+      saturday: 'Saturday'
+    },
+    daysShort: {
+      sun: 'Sun',
+      mon: 'Mon',
+      tue: 'Tue',
+      wed: 'Wed',
+      thu: 'Thu',
+      fri: 'Fri',
+      sat: 'Sat'
     }
   },
 

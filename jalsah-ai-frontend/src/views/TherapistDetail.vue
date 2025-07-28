@@ -217,51 +217,47 @@ export default {
       return Math.min(average, 5) // Cap at 5.0
     }
 
-    const formatEarliestSlot = (earliestSlot) => {
-      if (!earliestSlot) {
-        return t('therapists.contactForAvailability')
+    const formatEarliestSlot = (slotTime) => {
+      if (!slotTime) {
+        return t('therapists.noSlotsAvailable')
       }
       
       // Parse the slot time
-      let slotTime = earliestSlot
-      
-      // If it's just a time (like "09:00"), assume it's today
-      if (slotTime.includes(':') && !slotTime.includes('-')) {
-        const today = new Date()
+      let slotDate
+      if (slotTime.includes('T') || slotTime.includes(' ')) {
+        // Full datetime string
+        slotDate = new Date(slotTime)
+      } else {
+        // Time only string (e.g., "09:00")
         const [hours, minutes] = slotTime.split(':')
-        const slotDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes))
+        const now = new Date()
+        slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes))
         
         // If the time has passed today, assume it's tomorrow
-        if (slotDate < new Date()) {
+        if (slotDate < now) {
           slotDate.setDate(slotDate.getDate() + 1)
         }
-        
-        slotTime = slotDate.toISOString()
-      }
-      
-      // Parse the full datetime
-      const slotDate = new Date(slotTime)
-      if (isNaN(slotDate.getTime())) {
-        return t('therapists.contactForAvailability')
       }
       
       const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
+      const diffTime = slotDate.getTime() - now.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
       
       // Format based on when the slot is
-      if (slotDate >= today && slotDate < tomorrow) {
-        // Today
-        return t('therapists.availableToday', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
-      } else if (slotDate >= tomorrow && slotDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)) {
-        // Tomorrow
-        return t('therapists.availableTomorrow', { time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) })
+      if (diffDays === 0) {
+        return t('therapists.availableToday', { 
+          time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true }) 
+        })
+      } else if (diffDays === 1) {
+        return t('therapists.availableTomorrow', { 
+          time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true }) 
+        })
       } else {
-        // Other days
         return t('therapists.availableOn', { 
-          date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-          time: slotDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+          date: slotDate.toLocaleDateString(currentLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
+          time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true })
         })
       }
     }
