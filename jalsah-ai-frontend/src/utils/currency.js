@@ -10,23 +10,23 @@
  */
 export function formatPrice(amount, locale = 'en') {
   if (amount === null || amount === undefined || isNaN(amount)) {
-    return 'ج.م 0'
+    return '0 ج.م'
   }
   
   const numAmount = parseFloat(amount)
   
   if (locale === 'ar') {
-    // Arabic format: ج.م 1,234.56
-    return `ج.م ${numAmount.toLocaleString('en-US', {
+    // Arabic format: 1,234.56 ج.م
+    return `${numAmount.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
-    })}`
+    })} ج.م`
   } else {
-    // English format: ج.م 1,234.56
-    return `ج.م ${numAmount.toLocaleString('en-US', {
+    // English format: 1,234.56 ج.م
+    return `${numAmount.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
-    })}`
+    })} ج.م`
   }
 }
 
