@@ -316,8 +316,8 @@ export default {
         try {
           console.log('Trying AJAX endpoint as fallback...')
           
-          // Create FormData for WordPress AJAX
-          const formData = new FormData()
+          // Create URL-encoded form data for WordPress AJAX
+          const formData = new URLSearchParams()
           formData.append('action', 'test_diagnosis_ajax')
           formData.append('mood', form.mood)
           formData.append('duration', form.duration)
@@ -329,7 +329,7 @@ export default {
           
           const ajaxResponse = await api.post('/wp-admin/admin-ajax.php', formData, {
             headers: {
-              'Content-Type': 'multipart/form-data'
+              'Content-Type': 'application/x-www-form-urlencoded'
             }
           })
           

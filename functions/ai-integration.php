@@ -211,10 +211,14 @@ class SNKS_AI_Integration {
 			wp_send_json_error( 'Method not allowed', 405 );
 		}
 		
-		// Debug logging
+		// Debug logging - Log everything we receive
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( 'AI Integration Debug - test_diagnosis_ajax called' );
-			error_log( 'AI Integration Debug - POST data: ' . print_r( $_POST, true ) );
+			error_log( 'AI Integration Debug - REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD'] );
+			error_log( 'AI Integration Debug - Content-Type: ' . ( $_SERVER['CONTENT_TYPE'] ?? 'not set' ) );
+			error_log( 'AI Integration Debug - Raw POST data: ' . file_get_contents( 'php://input' ) );
+			error_log( 'AI Integration Debug - $_POST data: ' . print_r( $_POST, true ) );
+			error_log( 'AI Integration Debug - $_REQUEST data: ' . print_r( $_REQUEST, true ) );
 		}
 		
 		// Get data from POST (WordPress AJAX sends data via $_POST)
@@ -228,15 +232,21 @@ class SNKS_AI_Integration {
 			'preferredApproach' => $_POST['preferredApproach'] ?? ''
 		);
 		
-		// Debug logging
+		// Debug logging - Log parsed data
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( 'AI Integration Debug - Parsed data: ' . print_r( $data, true ) );
+			error_log( 'AI Integration Debug - Mood value: "' . $data['mood'] . '"' );
+			error_log( 'AI Integration Debug - SelectedSymptoms value: ' . print_r( $data['selectedSymptoms'], true ) );
+			error_log( 'AI Integration Debug - Mood empty check: ' . ( empty( $data['mood'] ) ? 'true' : 'false' ) );
+			error_log( 'AI Integration Debug - SelectedSymptoms empty check: ' . ( empty( $data['selectedSymptoms'] ) ? 'true' : 'false' ) );
 		}
 		
 		// Validate required fields
 		if ( empty( $data['mood'] ) || empty( $data['selectedSymptoms'] ) ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				error_log( 'AI Integration Debug - Validation failed: mood or selectedSymptoms missing' );
+				error_log( 'AI Integration Debug - Mood is empty: ' . ( empty( $data['mood'] ) ? 'yes' : 'no' ) );
+				error_log( 'AI Integration Debug - SelectedSymptoms is empty: ' . ( empty( $data['selectedSymptoms'] ) ? 'yes' : 'no' ) );
 			}
 			wp_send_json_error( 'Mood and symptoms are required', 400 );
 		}
