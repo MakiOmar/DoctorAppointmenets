@@ -71,6 +71,12 @@ class SNKS_AI_Integration {
 		
 		// Add admin action to flush rewrite rules manually
 		add_action( 'admin_post_flush_ai_rewrite_rules', array( $this, 'flush_rewrite_rules' ) );
+		
+		// Add AJAX endpoints for testing
+		add_action( 'wp_ajax_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
+		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
+		add_action( 'wp_ajax_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
+		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 	}
 	
 	/**
@@ -178,20 +184,64 @@ class SNKS_AI_Integration {
 	 * Test AI endpoint
 	 */
 	public function test_ai_endpoint() {
-		header( 'Content-Type: application/json' );
-		header( 'Access-Control-Allow-Origin: *' );
-		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
-		
-		echo json_encode( array(
-			'success' => true,
-			'message' => 'AI endpoint test successful',
+		$this->send_success( array( 
+			'message' => 'AI endpoint is working!', 
 			'timestamp' => current_time( 'mysql' ),
-			'request_uri' => $_SERVER['REQUEST_URI'],
+			'endpoint' => 'test'
 		) );
-		exit;
 	}
-
+	
+	/**
+	 * Test diagnosis endpoint via AJAX
+	 */
+	public function test_diagnosis_ajax() {
+		// Check if this is a POST request
+		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
+			$this->send_error( 'Method not allowed', 405 );
+		}
+		
+		// Get the raw input
+		$raw_input = file_get_contents( 'php://input' );
+		$data = json_decode( $raw_input, true );
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - test_diagnosis_ajax called' );
+			error_log( 'AI Integration Debug - Raw input: ' . $raw_input );
+			error_log( 'AI Integration Debug - Parsed data: ' . print_r( $data, true ) );
+		}
+		
+		// Validate required fields
+		if ( ! isset( $data['mood'] ) || ! isset( $data['selectedSymptoms'] ) ) {
+			$this->send_error( 'Mood and symptoms are required', 400 );
+		}
+		
+		// Process the diagnosis
+		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Diagnosis ID returned: ' . $diagnosis_id );
+		}
+		
+		// If no diagnosis found, return error
+		if ( $diagnosis_id === null ) {
+			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
+		}
+		
+		$response_data = array( 
+			'diagnosis_id' => $diagnosis_id,
+			'message' => 'Diagnosis processed successfully'
+		);
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( 'AI Integration Debug - Sending success response: ' . print_r( $response_data, true ) );
+		}
+		
+		$this->send_success( $response_data );
+	}
+	
 	/**
 	 * Flush rewrite rules
 	 */

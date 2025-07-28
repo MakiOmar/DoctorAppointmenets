@@ -312,15 +312,54 @@ export default {
           url: error.config?.url
         })
         
-        // Fallback: store data and redirect to results page for simulation
-        const diagnosisData = {
-          ...form,
-          timestamp: new Date().toISOString()
+        // Try AJAX endpoint as fallback
+        try {
+          console.log('Trying AJAX endpoint as fallback...')
+          const ajaxResponse = await api.post('/wp-admin/admin-ajax.php', {
+            action: 'test_diagnosis_ajax',
+            mood: form.mood,
+            duration: form.duration,
+            selectedSymptoms: form.selectedSymptoms,
+            impact: form.impact,
+            affectedAreas: form.affectedAreas,
+            goals: form.goals,
+            preferredApproach: form.preferredApproach
+          })
+          
+          console.log('AJAX Response:', ajaxResponse.data)
+          
+          // Store diagnosis data in localStorage for therapist matching
+          const diagnosisData = {
+            ...form,
+            timestamp: new Date().toISOString()
+          }
+          localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
+          
+          toast.success('Diagnosis completed! Finding therapists for you...')
+          
+          // Redirect to diagnosis results page with the diagnosis ID
+          const diagnosisId = ajaxResponse.data.data?.diagnosis_id
+          console.log('Diagnosis ID from AJAX:', diagnosisId)
+          if (diagnosisId) {
+            router.push(`/diagnosis-results/${diagnosisId}`)
+          } else {
+            console.log('No diagnosis ID in AJAX response, redirecting to results page')
+            router.push('/diagnosis-results')
+          }
+          
+        } catch (ajaxError) {
+          console.error('AJAX fallback also failed:', ajaxError)
+          
+          // Final fallback: store data and redirect to results page for simulation
+          const diagnosisData = {
+            ...form,
+            timestamp: new Date().toISOString()
+          }
+          localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
+          
+          toast.success('Diagnosis completed! Finding therapists for you...')
+          router.push('/diagnosis-results')
         }
-        localStorage.setItem('diagnosis_data', JSON.stringify(diagnosisData))
-        
-        toast.success('Diagnosis completed! Finding therapists for you...')
-        router.push('/diagnosis-results')
       } finally {
         loading.value = false
       }
