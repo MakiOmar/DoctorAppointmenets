@@ -3,9 +3,9 @@
     class="card hover:shadow-lg transition-shadow cursor-pointer"
     @click="$emit('click', therapist.id)"
   >
-    <div class="flex" :class="locale === 'ar' ? 'space-x-reverse space-x-6' : 'space-x-6'">
+    <div class="flex items-start gap-6" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
       <!-- Therapist Image -->
-      <div class="relative flex-shrink-0" :class="locale === 'ar' ? 'order-2' : 'order-1'">
+      <div class="relative flex-shrink-0">
         <img 
           :src="therapist.photo || '/default-therapist.svg'" 
           :alt="therapist.name"
@@ -18,31 +18,34 @@
       </div>
 
       <!-- Therapist Info -->
-      <div class="flex-1 flex flex-col justify-between" :class="locale === 'ar' ? 'order-1' : 'order-2'">
-        <div class="space-y-3">
-          <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
-          
-          <div class="flex items-center" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-            <StarRating :rating="getAverageRating(therapist)" />
-            <span class="text-sm text-gray-600">
-              {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
-            </span>
+      <div class="flex-1 flex flex-col justify-between min-h-32">
+        <!-- Top Section: Name, Rating, Bio -->
+        <div class="space-y-4">
+          <div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ therapist.name }}</h3>
+            
+            <div class="flex items-center gap-2">
+              <StarRating :rating="getAverageRating(therapist)" />
+              <span class="text-sm text-gray-600">
+                {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
+              </span>
+            </div>
           </div>
 
-          <p class="text-gray-600 text-sm line-clamp-2">
+          <p class="text-gray-600 text-sm line-clamp-2 leading-relaxed">
             {{ therapist.bio || $t('therapists.bioDefault') }}
           </p>
 
           <!-- Specializations/Diagnoses -->
-          <div class="flex flex-wrap gap-1">
+          <div class="flex flex-wrap gap-2">
             <span 
               v-for="diagnosis in therapist.diagnoses?.slice(0, 3)" 
               :key="diagnosis.id"
-              class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
+              class="bg-primary-100 text-primary-800 text-xs px-3 py-1 rounded-full"
             >
               {{ diagnosis.name }}
             </span>
-            <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500">
+            <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500 px-2 py-1">
               {{ $t('therapists.more', { count: therapist.diagnoses.length - 3 }) }}
             </span>
           </div>
@@ -53,21 +56,22 @@
               {{ suitabilityMessage }}
             </p>
           </div>
+        </div>
 
+        <!-- Bottom Section: Availability and Book Button -->
+        <div class="flex items-center justify-between mt-6" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
           <!-- Next Available Slot -->
-          <div class="flex items-center text-sm text-gray-600" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
             <span>{{ formatEarliestSlot(therapist) }}</span>
           </div>
-        </div>
 
-        <!-- Book Button -->
-        <div class="mt-4">
+          <!-- Book Button -->
           <button
             @click.stop="$emit('book', therapist.id)"
-            class="btn-primary"
+            class="btn-primary px-6 py-2"
           >
             {{ $t('therapists.bookSession') }}
           </button>
@@ -205,24 +209,30 @@ export default {
   left: 0.5rem;
 }
 
-/* RTL horizontal layout adjustments */
-.rtl .flex.space-x-reverse.space-x-6 {
+/* RTL layout adjustments */
+.rtl .flex.flex-row-reverse {
   flex-direction: row-reverse;
 }
 
-.rtl .flex.space-x-reverse.space-x-6 > * {
+.rtl .flex.flex-row-reverse .gap-6 > * {
   margin-left: 1.5rem;
   margin-right: 0;
 }
 
-.rtl .flex.space-x-reverse.space-x-6 > *:first-child {
+.rtl .flex.flex-row-reverse .gap-6 > *:first-child {
   margin-left: 0;
+}
+
+/* RTL button positioning */
+.rtl .absolute.top-2.right-2 {
+  right: auto;
+  left: 0.5rem;
 }
 
 /* Responsive adjustments for horizontal layout */
 @media (max-width: 768px) {
   .card .flex {
-    flex-direction: column;
+    flex-direction: column !important;
     gap: 1rem;
   }
   
@@ -238,6 +248,16 @@ export default {
     width: 8rem;
     height: 8rem;
   }
+  
+  .card .flex.items-center.justify-between {
+    flex-direction: column !important;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .card .btn-primary {
+    width: 100%;
+  }
 }
 
 /* RTL responsive adjustments */
@@ -247,7 +267,11 @@ export default {
   }
   
   .rtl .card .flex {
-    flex-direction: column;
+    flex-direction: column !important;
+  }
+  
+  .rtl .card .flex.items-center.justify-between {
+    flex-direction: column !important;
   }
 }
 </style> 
