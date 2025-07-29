@@ -224,41 +224,55 @@ export default {
       
       // Parse the slot time
       let slotDate
-      if (slotTime.includes('T') || slotTime.includes(' ')) {
-        // Full datetime string
-        slotDate = new Date(slotTime)
-      } else {
-        // Time only string (e.g., "09:00")
-        const [hours, minutes] = slotTime.split(':')
-        const now = new Date()
-        slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes))
-        
-        // If the time has passed today, assume it's tomorrow
-        if (slotDate < now) {
-          slotDate.setDate(slotDate.getDate() + 1)
+      try {
+        if (slotTime.includes('T') || slotTime.includes(' ')) {
+          // Full datetime string
+          slotDate = new Date(slotTime)
+        } else {
+          // Time only string (e.g., "09:00")
+          const [hours, minutes] = slotTime.split(':')
+          if (!hours || !minutes || isNaN(parseInt(hours)) || isNaN(parseInt(minutes))) {
+            return t('therapists.noSlotsAvailable')
+          }
+          const now = new Date()
+          slotDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes))
+          
+          // If the time has passed today, assume it's tomorrow
+          if (slotDate < now) {
+            slotDate.setDate(slotDate.getDate() + 1)
+          }
         }
-      }
-      
-      const now = new Date()
-      const diffTime = slotDate.getTime() - now.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      
-      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
-      
-      // Format based on when the slot is
-      if (diffDays === 0) {
-        return t('therapists.availableToday', { 
-          time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true }) 
-        })
-      } else if (diffDays === 1) {
-        return t('therapists.availableTomorrow', { 
-          time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true }) 
-        })
-      } else {
-        return t('therapists.availableOn', { 
-          date: slotDate.toLocaleDateString(currentLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
-          time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true })
-        })
+        
+        // Check if the date is valid
+        if (isNaN(slotDate.getTime())) {
+          return t('therapists.noSlotsAvailable')
+        }
+        
+        const now = new Date()
+        const diffTime = slotDate.getTime() - now.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        
+        const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
+        
+        // Format based on when the slot is
+        if (diffDays === 0) {
+          return t('therapists.availableToday', { 
+            time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true }) 
+          })
+        } else if (diffDays === 1) {
+          return t('therapists.availableTomorrow', { 
+            time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true }) 
+          })
+        } else {
+          return t('therapists.availableOn', { 
+            date: slotDate.toLocaleDateString(currentLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true })
+          })
+        }
+      } catch (error) {
+        // If there's any error in date parsing or formatting, return the fallback message
+        console.warn('Error formatting date:', error)
+        return t('therapists.noSlotsAvailable')
       }
     }
 
