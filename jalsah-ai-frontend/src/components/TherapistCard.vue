@@ -179,6 +179,7 @@
         </div>
       </div>
     </div>
+    </div>
 
     <!-- Lightbox Modal -->
     <div v-if="showLightbox" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" @click="closeLightbox">
