@@ -87,14 +87,14 @@
             
             <div>
               <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.certificatesCount') }}</label>
-              <p class="text-gray-900">{{ details.certificates.length }} {{ $t('therapistDetails.certificates') }}</p>
+              <p class="text-gray-900">{{ (details.certificates || []).length }} {{ $t('therapistDetails.certificates') }}</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Certificates Section -->
-      <div v-if="details.certificates.length > 0" class="mt-8">
+      <div v-if="details.certificates && details.certificates.length > 0" class="mt-8">
         <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4">
           {{ $t('therapistDetails.certificates') }}
         </h3>
@@ -102,7 +102,7 @@
         <!-- Certificates Grid -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div 
-            v-for="(cert, index) in details.certificates" 
+            v-for="(cert, index) in (details.certificates || [])" 
             :key="cert.id"
             class="relative group cursor-pointer"
             @click="openLightbox(index)"
@@ -219,7 +219,7 @@ export default {
     const currentCertificateIndex = ref(0)
 
     const currentCertificate = computed(() => {
-      if (!details.value || !details.value.certificates) return null
+      if (!details.value || !details.value.certificates || !Array.isArray(details.value.certificates)) return null
       return details.value.certificates[currentCertificateIndex.value] || null
     })
 

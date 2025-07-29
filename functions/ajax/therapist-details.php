@@ -112,7 +112,7 @@ function snks_get_therapist_details_rest($request) {
         'profile_image' => $meta['profile_image'][0] ?? '',
         'identity_front' => $meta['identity_front'][0] ?? '',
         'identity_back' => $meta['identity_back'][0] ?? '',
-        'certificates' => $certificates_data,
+        'certificates' => is_array($certificates_data) ? $certificates_data : [],
         'jalsah_ai_name' => snks_get_jalsah_ai_name($therapist_id),
         'application_date' => get_the_date('Y-m-d', $app->ID),
         'approval_date' => get_the_modified_date('Y-m-d', $app->ID)
@@ -220,7 +220,7 @@ function snks_ajax_get_therapist_details() {
         'profile_image' => $meta['profile_image'][0] ?? '',
         'identity_front' => $meta['identity_front'][0] ?? '',
         'identity_back' => $meta['identity_back'][0] ?? '',
-        'certificates' => $certificates_data,
+        'certificates' => is_array($certificates_data) ? $certificates_data : [],
         'jalsah_ai_name' => snks_get_jalsah_ai_name($therapist_id),
         'application_date' => get_the_date('Y-m-d', $app->ID),
         'approval_date' => get_the_modified_date('Y-m-d', $app->ID)
