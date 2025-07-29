@@ -78,10 +78,9 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Therapist Details Inside Card -->
-  <div v-if="showDetails" class="mt-6 border-t border-gray-200 pt-6">
+    <!-- Therapist Details Inside Card -->
+    <div v-if="showDetails" class="mt-6 border-t border-gray-200 pt-6">
     <div v-if="loading" class="text-center py-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
       <p class="text-gray-600 mt-2">{{ $t('therapistDetails.loading') }}</p>
