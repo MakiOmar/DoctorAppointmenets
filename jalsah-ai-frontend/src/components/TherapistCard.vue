@@ -3,70 +3,76 @@
     class="card hover:shadow-lg transition-shadow cursor-pointer"
     @click="$emit('click', therapist.id)"
   >
-    <!-- Therapist Image -->
-    <div class="relative mb-4">
-      <img 
-        :src="therapist.photo || '/default-therapist.svg'" 
-        :alt="therapist.name"
-        class="w-full h-48 rounded-lg"
-        :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
-      />
-      <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
-        {{ therapist.price?.others || $t('common.contact') }}
-      </div>
-    </div>
-
-    <!-- Therapist Info -->
-    <div class="space-y-3">
-      <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
-      
-      <div class="flex items-center" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-        <StarRating :rating="getAverageRating(therapist)" />
-        <span class="text-sm text-gray-600">
-          {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
-        </span>
+    <div class="flex" :class="locale === 'ar' ? 'space-x-reverse space-x-6' : 'space-x-6'">
+      <!-- Therapist Image -->
+      <div class="relative flex-shrink-0" :class="locale === 'ar' ? 'order-2' : 'order-1'">
+        <img 
+          :src="therapist.photo || '/default-therapist.svg'" 
+          :alt="therapist.name"
+          class="w-32 h-32 rounded-lg"
+          :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
+        />
+        <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
+          {{ therapist.price?.others || $t('common.contact') }}
+        </div>
       </div>
 
-      <p class="text-gray-600 text-sm line-clamp-2">
-        {{ therapist.bio || $t('therapists.bioDefault') }}
-      </p>
+      <!-- Therapist Info -->
+      <div class="flex-1 flex flex-col justify-between" :class="locale === 'ar' ? 'order-1' : 'order-2'">
+        <div class="space-y-3">
+          <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
+          
+          <div class="flex items-center" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
+            <StarRating :rating="getAverageRating(therapist)" />
+            <span class="text-sm text-gray-600">
+              {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
+            </span>
+          </div>
 
-      <!-- Specializations/Diagnoses -->
-      <div class="flex flex-wrap gap-1">
-        <span 
-          v-for="diagnosis in therapist.diagnoses?.slice(0, 3)" 
-          :key="diagnosis.id"
-          class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
-        >
-          {{ diagnosis.name }}
-        </span>
-        <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500">
-          {{ $t('therapists.more', { count: therapist.diagnoses.length - 3 }) }}
-        </span>
+          <p class="text-gray-600 text-sm line-clamp-2">
+            {{ therapist.bio || $t('therapists.bioDefault') }}
+          </p>
+
+          <!-- Specializations/Diagnoses -->
+          <div class="flex flex-wrap gap-1">
+            <span 
+              v-for="diagnosis in therapist.diagnoses?.slice(0, 3)" 
+              :key="diagnosis.id"
+              class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
+            >
+              {{ diagnosis.name }}
+            </span>
+            <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500">
+              {{ $t('therapists.more', { count: therapist.diagnoses.length - 3 }) }}
+            </span>
+          </div>
+
+          <!-- Suitability Message (only show if provided) -->
+          <div v-if="suitabilityMessage" class="bg-primary-50 border border-primary-200 rounded-lg p-3">
+            <p class="text-sm text-primary-800">
+              {{ suitabilityMessage }}
+            </p>
+          </div>
+
+          <!-- Next Available Slot -->
+          <div class="flex items-center text-sm text-gray-600" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>{{ formatEarliestSlot(therapist) }}</span>
+          </div>
+        </div>
+
+        <!-- Book Button -->
+        <div class="mt-4">
+          <button
+            @click.stop="$emit('book', therapist.id)"
+            class="btn-primary"
+          >
+            {{ $t('therapists.bookSession') }}
+          </button>
+        </div>
       </div>
-
-      <!-- Suitability Message (only show if provided) -->
-      <div v-if="suitabilityMessage" class="bg-primary-50 border border-primary-200 rounded-lg p-3">
-        <p class="text-sm text-primary-800">
-          {{ suitabilityMessage }}
-        </p>
-      </div>
-
-      <!-- Next Available Slot -->
-      <div class="flex items-center text-sm text-gray-600" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span>{{ formatEarliestSlot(therapist) }}</span>
-      </div>
-
-      <!-- Book Button -->
-      <button
-        @click.stop="$emit('book', therapist.id)"
-        class="w-full btn-primary"
-      >
-        {{ $t('therapists.bookSession') }}
-      </button>
     </div>
   </div>
 </template>
@@ -199,10 +205,49 @@ export default {
   left: 0.5rem;
 }
 
+/* RTL horizontal layout adjustments */
+.rtl .flex.space-x-reverse.space-x-6 {
+  flex-direction: row-reverse;
+}
+
+.rtl .flex.space-x-reverse.space-x-6 > * {
+  margin-left: 1.5rem;
+  margin-right: 0;
+}
+
+.rtl .flex.space-x-reverse.space-x-6 > *:first-child {
+  margin-left: 0;
+}
+
+/* Responsive adjustments for horizontal layout */
+@media (max-width: 768px) {
+  .card .flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .card .flex > * {
+    margin: 0;
+  }
+  
+  .card .relative.flex-shrink-0 {
+    align-self: center;
+  }
+  
+  .card .w-32.h-32 {
+    width: 8rem;
+    height: 8rem;
+  }
+}
+
 /* RTL responsive adjustments */
 @media (max-width: 768px) {
   .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
     grid-template-columns: 1fr;
+  }
+  
+  .rtl .card .flex {
+    flex-direction: column;
   }
 }
 </style> 

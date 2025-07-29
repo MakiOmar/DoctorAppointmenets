@@ -77,8 +77,8 @@
           </button>
         </div>
 
-        <!-- Therapists Grid -->
-        <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Therapists List -->
+        <div v-else class="space-y-6">
           <TherapistCard
             v-for="therapist in matchedTherapists" 
             :key="therapist.id"
@@ -290,21 +290,13 @@ export default {
   margin-left: 0;
 }
 
-/* RTL grid improvements */
-.rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
-  direction: rtl;
-}
-
-.rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 > * {
+/* RTL list improvements */
+.rtl .space-y-6 > * {
   direction: rtl;
 }
 
 /* RTL responsive adjustments */
 @media (max-width: 768px) {
-  .rtl .grid.md\:grid-cols-2.lg\:grid-cols-3 {
-    grid-template-columns: 1fr;
-  }
-  
   .rtl .flex.justify-center.space-x-4 {
     flex-direction: column;
     gap: 0.75rem;
