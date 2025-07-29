@@ -76,8 +76,14 @@
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4">
               <button 
-                @click="bookAppointment"
+                @click="showCertificates"
                 class="btn-primary text-lg px-8 py-3"
+              >
+                {{ $t('therapistDetail.viewCertificates') }}
+              </button>
+              <button 
+                @click="bookAppointment"
+                class="btn-outline text-lg px-8 py-3"
               >
                 {{ $t('therapistDetail.bookSession') }}
               </button>
@@ -178,6 +184,14 @@
       </div>
     </div>
   </div>
+
+  <!-- Certificates Carousel Modal -->
+  <CertificatesCarousel
+    :show="showCertificatesModal"
+    :therapist-id="route.params.id"
+    :therapist-name="therapist?.name || ''"
+    @close="closeCertificatesModal"
+  />
 </template>
 
 <script>
@@ -189,10 +203,12 @@ import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
 import { formatPrice } from '@/utils/currency'
 import StarRating from '@/components/StarRating.vue'
+import CertificatesCarousel from '@/components/CertificatesCarousel.vue'
 export default {
   name: 'TherapistDetail',
   components: {
-    StarRating
+    StarRating,
+    CertificatesCarousel
   },
   setup() {
     const route = useRoute()
@@ -203,6 +219,7 @@ export default {
     
     const loading = ref(true)
     const therapist = ref(null)
+    const showCertificatesModal = ref(false)
 
     const getAverageRating = () => {
       if (!therapist.value?.diagnoses || therapist.value.diagnoses.length === 0) {
@@ -289,6 +306,14 @@ export default {
       }
     }
 
+    const showCertificates = () => {
+      showCertificatesModal.value = true
+    }
+
+    const closeCertificatesModal = () => {
+      showCertificatesModal.value = false
+    }
+
     const bookAppointment = () => {
       router.push(`/booking/${route.params.id}`)
     }
@@ -311,7 +336,10 @@ export default {
       addToCart,
       formatPrice,
       formatEarliestSlot,
-      locale
+      locale,
+      showCertificatesModal,
+      showCertificates,
+      closeCertificatesModal
     }
   }
 }

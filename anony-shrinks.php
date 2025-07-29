@@ -136,6 +136,7 @@ require_once SNKS_DIR . 'functions/admin/demo-doctors-manager.php';
 require_once SNKS_DIR . 'functions/admin/cleanup-demo-data.php';
 require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
+require_once SNKS_DIR . 'functions/ajax/therapist-certificates.php';
 	},
 	20
 );

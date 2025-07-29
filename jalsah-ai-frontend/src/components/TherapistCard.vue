@@ -70,7 +70,7 @@
 
           <!-- Book Button -->
           <button
-            @click.stop="$emit('book', therapist.id)"
+            @click.stop="showCertificates"
             class="btn-primary px-6 py-2"
           >
             {{ $t('therapists.bookSession') }}
@@ -79,17 +79,27 @@
       </div>
     </div>
   </div>
+
+  <!-- Certificates Carousel Modal -->
+  <CertificatesCarousel
+    :show="showCertificatesModal"
+    :therapist-id="therapist.id"
+    :therapist-name="therapist.name"
+    @close="closeCertificatesModal"
+  />
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StarRating from './StarRating.vue'
+import CertificatesCarousel from './CertificatesCarousel.vue'
 
 export default {
   name: 'TherapistCard',
   components: {
-    StarRating
+    StarRating,
+    CertificatesCarousel
   },
   props: {
     therapist: {
@@ -104,6 +114,8 @@ export default {
   emits: ['click', 'book'],
   setup(props) {
     const { t, locale } = useI18n()
+    
+    const showCertificatesModal = ref(false)
 
     const getAverageRating = (therapist) => {
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
@@ -124,6 +136,14 @@ export default {
       const diagnosis = props.therapist.diagnoses.find(d => d.id.toString() === props.diagnosisId.toString())
       return diagnosis?.suitability_message || null
     })
+
+    const showCertificates = () => {
+      showCertificatesModal.value = true
+    }
+
+    const closeCertificatesModal = () => {
+      showCertificatesModal.value = false
+    }
 
     const formatEarliestSlot = (therapist) => {
       if (!therapist.earliest_slot) {
@@ -170,7 +190,10 @@ export default {
       getAverageRating,
       suitabilityMessage,
       formatEarliestSlot,
-      locale
+      locale,
+      showCertificatesModal,
+      showCertificates,
+      closeCertificatesModal
     }
   }
 }

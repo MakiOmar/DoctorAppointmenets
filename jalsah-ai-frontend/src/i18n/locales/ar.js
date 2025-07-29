@@ -358,6 +358,7 @@ export default {
     noReviews: 'لا توجد مراجعات متاحة بعد',
     bookSession: 'حجز جلسة 45 دقيقة',
     addToCart: 'إضافة للسلة',
+    viewCertificates: 'عرض الشهادات',
     therapistNotFound: 'المعالج غير موجود',
     therapistNotFoundMessage: 'المعالج الذي تبحث عنه غير موجود أو تم إزالته',
     browseTherapists: 'تصفح المعالجين'
@@ -522,6 +523,17 @@ export default {
     success: 'تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني.',
     error: 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
     applicationSubmitted: 'تم إرسال طلبك وهو قيد المراجعة من قبل الإدارة.'
+  },
+
+  // Certificates
+  certificates: {
+    title: 'الشهادات والمؤهلات',
+    loading: 'جاري تحميل الشهادات...',
+    error: 'خطأ في تحميل الشهادات',
+    loadError: 'فشل في تحميل الشهادات. يرجى المحاولة مرة أخرى.',
+    noCertificates: 'لا توجد شهادات متاحة',
+    noCertificatesMessage: 'لم يقم هذا المعالج برفع أي شهادات بعد.',
+    noDescription: 'لا يوجد وصف متاح'
   },
 
   // Language

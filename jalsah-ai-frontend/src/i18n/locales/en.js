@@ -400,6 +400,7 @@ export default {
     noReviews: 'No reviews available yet',
     bookSession: 'Book 45-Minute Session',
     addToCart: 'Add to Cart',
+    viewCertificates: 'View Certificates',
     therapistNotFound: 'Therapist not found',
     therapistNotFoundMessage: 'The therapist you\'re looking for doesn\'t exist or has been removed',
     browseTherapists: 'Browse Therapists'
@@ -571,6 +572,17 @@ export default {
     success: 'Registration successful! Please check your email.',
     error: 'Registration failed. Please try again.',
     applicationSubmitted: 'Your application has been submitted and is pending admin approval.'
+  },
+
+  // Certificates
+  certificates: {
+    title: 'Certificates & Credentials',
+    loading: 'Loading certificates...',
+    error: 'Error loading certificates',
+    loadError: 'Failed to load certificates. Please try again.',
+    noCertificates: 'No certificates available',
+    noCertificatesMessage: 'This therapist has not uploaded any certificates yet.',
+    noDescription: 'No description available'
   },
 
   // Not Found
