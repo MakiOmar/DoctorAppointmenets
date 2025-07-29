@@ -76,10 +76,10 @@
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4">
               <button 
-                @click="showCertificates"
+                @click="showTherapistDetails"
                 class="btn-primary text-lg px-8 py-3"
               >
-                {{ $t('therapistDetail.viewDetails') }}
+                {{ showDetails ? $t('common.hide') : $t('therapistDetail.viewDetails') }}
               </button>
               <button 
                 @click="bookAppointment"
@@ -185,12 +185,10 @@
     </div>
   </div>
 
-  <!-- Certificates Carousel Modal -->
-  <CertificatesCarousel
-    :show="showCertificatesModal"
+  <!-- Therapist Details Inline -->
+  <TherapistDetailsInline
+    :show="showDetails"
     :therapist-id="route.params.id"
-    :therapist-name="therapist?.name || ''"
-    @close="closeCertificatesModal"
   />
 </template>
 
@@ -203,12 +201,12 @@ import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
 import { formatPrice } from '@/utils/currency'
 import StarRating from '@/components/StarRating.vue'
-import CertificatesCarousel from '@/components/CertificatesCarousel.vue'
+import TherapistDetailsInline from '@/components/TherapistDetailsInline.vue'
 export default {
   name: 'TherapistDetail',
   components: {
     StarRating,
-    CertificatesCarousel
+    TherapistDetailsInline
   },
   setup() {
     const route = useRoute()
@@ -219,7 +217,7 @@ export default {
     
     const loading = ref(true)
     const therapist = ref(null)
-    const showCertificatesModal = ref(false)
+    const showDetails = ref(false)
 
     const getAverageRating = () => {
       if (!therapist.value?.diagnoses || therapist.value.diagnoses.length === 0) {
@@ -306,12 +304,8 @@ export default {
       }
     }
 
-    const showCertificates = () => {
-      showCertificatesModal.value = true
-    }
-
-    const closeCertificatesModal = () => {
-      showCertificatesModal.value = false
+    const showTherapistDetails = () => {
+      showDetails.value = !showDetails.value
     }
 
     const bookAppointment = () => {
@@ -337,9 +331,8 @@ export default {
       formatPrice,
       formatEarliestSlot,
       locale,
-      showCertificatesModal,
-      showCertificates,
-      closeCertificatesModal
+      showDetails,
+      showTherapistDetails
     }
   }
 }

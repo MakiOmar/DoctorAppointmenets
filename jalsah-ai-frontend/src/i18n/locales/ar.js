@@ -25,6 +25,7 @@ export default {
     ok: 'موافق',
     retry: 'إعادة المحاولة',
     refresh: 'تحديث',
+    hide: 'إخفاء',
     download: 'تحميل',
     upload: 'رفع',
     select: 'اختيار',
@@ -534,7 +535,21 @@ export default {
     loadError: 'فشل في تحميل التفاصيل. يرجى المحاولة مرة أخرى.',
     noCertificates: 'لا توجد شهادات متاحة',
     noCertificatesMessage: 'لم يقم هذا المعالج برفع أي شهادات بعد.',
-    noDescription: 'لا يوجد وصف متاح'
+    noDescription: 'لا يوجد وصف متاح',
+    personalInfo: 'المعلومات الشخصية',
+    name: 'الاسم',
+    nameEn: 'الاسم (بالإنجليزية)',
+    specialty: 'التخصص',
+    jalsahAiName: 'اسم جلسة الذكي',
+    email: 'البريد الإلكتروني',
+    phone: 'الهاتف',
+    whatsapp: 'واتساب',
+    applicationInfo: 'معلومات الطلب',
+    applicationDate: 'تاريخ التقديم',
+    approvalDate: 'تاريخ الموافقة',
+    certificatesCount: 'الشهادات',
+    certificates: 'الشهادات',
+    downloadFile: 'تحميل الملف'
   },
 
   // Certificates

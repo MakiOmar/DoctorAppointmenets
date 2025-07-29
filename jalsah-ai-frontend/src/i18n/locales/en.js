@@ -25,6 +25,7 @@ export default {
     ok: 'OK',
     retry: 'Retry',
     refresh: 'Refresh',
+    hide: 'Hide',
     download: 'Download',
     upload: 'Upload',
     select: 'Select',
@@ -583,7 +584,21 @@ export default {
     loadError: 'Failed to load details. Please try again.',
     noCertificates: 'No certificates available',
     noCertificatesMessage: 'This therapist has not uploaded any certificates yet.',
-    noDescription: 'No description available'
+    noDescription: 'No description available',
+    personalInfo: 'Personal Information',
+    name: 'Name',
+    nameEn: 'Name (English)',
+    specialty: 'Specialty',
+    jalsahAiName: 'Jalsah AI Name',
+    email: 'Email',
+    phone: 'Phone',
+    whatsapp: 'WhatsApp',
+    applicationInfo: 'Application Information',
+    applicationDate: 'Application Date',
+    approvalDate: 'Approval Date',
+    certificatesCount: 'Certificates',
+    certificates: 'Certificates',
+    downloadFile: 'Download File'
   },
 
   // Certificates

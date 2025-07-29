@@ -57,27 +57,30 @@ add_action('admin_init', function() {
         if ($mode === 'auto' || empty($password)) {
             $password = wp_generate_password(8, false);
         }
-        // Create user
-        if (email_exists($email) || username_exists($phone)) return;
-        $user_id = wp_create_user($phone, $password, $email);
-        if (is_wp_error($user_id)) return;
+        // Check if user already exists
+        $existing_user = get_user_by('email', $email);
+        if ($existing_user) {
+            $user_id = $existing_user->ID;
+        } else {
+            // Create new user
+            if (username_exists($phone)) return;
+            $user_id = wp_create_user($phone, $password, $email);
+            if (is_wp_error($user_id)) return;
+        }
+        
         $user = get_user_by('id', $user_id);
         $user->set_role('doctor');
-        update_user_meta($user_id, 'first_name', $name);
-        update_user_meta($user_id, 'last_name', $name_en);
-        update_user_meta($user_id, 'billing_phone', $phone);
-        update_user_meta($user_id, 'whatsapp', $whatsapp);
-        update_user_meta($user_id, 'doctor_specialty', $specialty);
-        update_user_meta($user_id, 'profile_image', $profile_image);
-        update_user_meta($user_id, 'identity_front', $identity_front);
-        update_user_meta($user_id, 'identity_back', $identity_back);
-        update_user_meta($user_id, 'certificates', $certificates);
         
         // Set Jalsah AI name using the therapist's name
         $jalsah_ai_name = !empty($name) ? $name : $name_en;
         update_user_meta($user_id, 'jalsah_ai_name', $jalsah_ai_name);
-        // Mark application as approved
-        wp_update_post(['ID' => $post_id, 'post_status' => 'publish']);
+        
+        // Mark application as approved and set the author to the created user
+        wp_update_post([
+            'ID' => $post_id, 
+            'post_status' => 'publish',
+            'post_author' => $user_id
+        ]);
         // Notify user
         $email_subject = __('Your therapist application is approved');
         $email_message = sprintf(

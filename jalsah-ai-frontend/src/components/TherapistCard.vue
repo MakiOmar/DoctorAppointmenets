@@ -70,22 +70,20 @@
 
           <!-- Book Button -->
           <button
-            @click.stop="showCertificates"
+            @click.stop="showTherapistDetails"
             class="btn-primary px-6 py-2"
           >
-            {{ $t('therapists.viewDetails') }}
+            {{ showDetails ? $t('common.hide') : $t('therapists.viewDetails') }}
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Certificates Carousel Modal -->
-  <CertificatesCarousel
-    :show="showCertificatesModal"
+  <!-- Therapist Details Inline -->
+  <TherapistDetailsInline
+    :show="showDetails"
     :therapist-id="therapist.id"
-    :therapist-name="therapist.name"
-    @close="closeCertificatesModal"
   />
 </template>
 
@@ -93,13 +91,13 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import StarRating from './StarRating.vue'
-import CertificatesCarousel from './CertificatesCarousel.vue'
+import TherapistDetailsInline from './TherapistDetailsInline.vue'
 
 export default {
   name: 'TherapistCard',
   components: {
     StarRating,
-    CertificatesCarousel
+    TherapistDetailsInline
   },
   props: {
     therapist: {
@@ -115,7 +113,7 @@ export default {
   setup(props) {
     const { t, locale } = useI18n()
     
-    const showCertificatesModal = ref(false)
+    const showDetails = ref(false)
 
     const getAverageRating = (therapist) => {
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
@@ -137,12 +135,8 @@ export default {
       return diagnosis?.suitability_message || null
     })
 
-    const showCertificates = () => {
-      showCertificatesModal.value = true
-    }
-
-    const closeCertificatesModal = () => {
-      showCertificatesModal.value = false
+    const showTherapistDetails = () => {
+      showDetails.value = !showDetails.value
     }
 
     const formatEarliestSlot = (therapist) => {
@@ -191,9 +185,8 @@ export default {
       suitabilityMessage,
       formatEarliestSlot,
       locale,
-      showCertificatesModal,
-      showCertificates,
-      closeCertificatesModal
+      showDetails,
+      showTherapistDetails
     }
   }
 }
