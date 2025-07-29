@@ -155,7 +155,6 @@ add_action('add_meta_boxes', function() {
                     border: 1px solid #ddd;
                     border-radius: 4px;
                     background: #f9f9f9;
-                    display: none;
                 }
                 .snks-upload-preview img {
                     max-width: 150px;
@@ -407,8 +406,8 @@ add_action('add_meta_boxes', function() {
                     preview.innerHTML = '<img src="' + attachment.url + '" alt="' + attachment.filename + '" />' +
                         '<div class="file-info">' +
                         '<strong>' + attachment.filename + '</strong><br>' +
-                        'Size: ' + attachment.filesizeHumanReadable + '<br>' +
-                        'Dimensions: ' + attachment.width + ' × ' + attachment.height +
+                        'Size: ' + (attachment.filesizeHumanReadable || 'Unknown') + '<br>' +
+                        'Dimensions: ' + (attachment.width || 'Unknown') + ' × ' + (attachment.height || 'Unknown') +
                         '<a href="#" class="remove-file" onclick="snksRemoveFile(\'' + fieldId + '\')">Remove</a>' +
                         '</div>';
                 } else {
@@ -417,7 +416,7 @@ add_action('add_meta_boxes', function() {
                         '</div>' +
                         '<div class="file-info">' +
                         '<strong>' + attachment.filename + '</strong><br>' +
-                        'Size: ' + attachment.filesizeHumanReadable +
+                        'Size: ' + (attachment.filesizeHumanReadable || 'Unknown') +
                         '<a href="#" class="remove-file" onclick="snksRemoveFile(\'' + fieldId + '\')">Remove</a>' +
                         '</div>';
                 }
@@ -430,7 +429,7 @@ add_action('add_meta_boxes', function() {
                 var preview = document.getElementById('certificates_preview');
                 var removeBtn = preview.previousElementSibling;
                 
-                if (certificateIds.length > 0) {
+                if (certificateIds && certificateIds.length > 0) {
                     // Fetch certificate details via AJAX
                     jQuery.post(ajaxurl, {
                         action: 'snks_get_certificates_preview',
@@ -444,6 +443,7 @@ add_action('add_meta_boxes', function() {
                         }
                     });
                 } else {
+                    preview.innerHTML = '';
                     preview.style.display = 'none';
                     removeBtn.style.display = 'none';
                 }
@@ -478,20 +478,40 @@ add_action('add_meta_boxes', function() {
                 removeBtn.style.display = 'none';
             }
 
-            // Show/hide remove buttons on page load
+            // Show/hide remove buttons and previews on page load
             document.addEventListener('DOMContentLoaded', function() {
                 ['profile_image', 'identity_front', 'identity_back'].forEach(function(fieldId) {
                     var field = document.getElementById(fieldId);
                     var removeBtn = field.nextElementSibling.nextElementSibling;
-                    if (field.value) {
+                    var preview = document.getElementById(fieldId + '_preview');
+                    
+                    console.log('Field:', fieldId, 'Value:', field.value, 'Preview content:', preview.innerHTML.trim());
+                    
+                    if (field.value && preview.innerHTML.trim() !== '') {
                         removeBtn.style.display = 'inline-block';
+                        preview.style.display = 'block';
+                        console.log('Showing preview for:', fieldId);
+                    } else {
+                        removeBtn.style.display = 'none';
+                        preview.style.display = 'none';
+                        console.log('Hiding preview for:', fieldId);
                     }
                 });
                 
                 var certificatesField = document.getElementById('certificates');
                 var certificatesRemoveBtn = certificatesField.nextElementSibling.nextElementSibling;
-                if (certificatesField.value) {
+                var certificatesPreview = document.getElementById('certificates_preview');
+                
+                console.log('Certificates field value:', certificatesField.value, 'Preview content:', certificatesPreview.innerHTML.trim());
+                
+                if (certificatesField.value && certificatesPreview.innerHTML.trim() !== '') {
                     certificatesRemoveBtn.style.display = 'inline-block';
+                    certificatesPreview.style.display = 'block';
+                    console.log('Showing certificates preview');
+                } else {
+                    certificatesRemoveBtn.style.display = 'none';
+                    certificatesPreview.style.display = 'none';
+                    console.log('Hiding certificates preview');
                 }
             });
             </script>
