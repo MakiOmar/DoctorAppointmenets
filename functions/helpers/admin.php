@@ -103,16 +103,26 @@ add_action('init', function() {
         'labels' => array(
             'name' => __('Therapist Applications'),
             'singular_name' => __('Therapist Application'),
+            'add_new' => __('Add New Application'),
+            'add_new_item' => __('Add New Therapist Application'),
+            'edit_item' => __('Edit Therapist Application'),
+            'new_item' => __('New Therapist Application'),
+            'view_item' => __('View Therapist Application'),
+            'search_items' => __('Search Applications'),
+            'not_found' => __('No applications found'),
+            'not_found_in_trash' => __('No applications found in trash'),
         ),
         'public' => false,
         'show_ui' => true,
         'show_in_menu' => true,
         'capability_type' => 'post',
-        'supports' => array('title', 'custom-fields'),
+        'supports' => array('title', 'custom-fields', 'author'),
         'menu_icon' => 'dashicons-businessperson',
         'has_archive' => false,
+        'map_meta_cap' => true,
     ));
 });
+// Add meta boxes for therapist applications
 add_action('add_meta_boxes', function() {
     add_meta_box(
         'therapist_app_details',
@@ -178,7 +188,119 @@ add_action('add_meta_boxes', function() {
         'normal',
         'high'
     );
+
+    // Add form meta box for editing applications
+    add_meta_box(
+        'therapist_app_form',
+        __('Edit Application'),
+        function($post) {
+            if ($post->post_type !== 'therapist_app') return;
+            
+            // Add nonce for security
+            wp_nonce_field('therapist_app_form', 'therapist_app_nonce');
+            
+            $meta = get_post_meta($post->ID);
+            ?>
+            <table class="form-table">
+                <tr>
+                    <th><label for="name"><?php _e('Name (Arabic)'); ?></label></th>
+                    <td><input type="text" id="name" name="name" value="<?php echo esc_attr($meta['name'][0] ?? ''); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="name_en"><?php _e('Name (English)'); ?></label></th>
+                    <td><input type="text" id="name_en" name="name_en" value="<?php echo esc_attr($meta['name_en'][0] ?? ''); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="email"><?php _e('Email'); ?></label></th>
+                    <td><input type="email" id="email" name="email" value="<?php echo esc_attr($meta['email'][0] ?? ''); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="phone"><?php _e('Phone'); ?></label></th>
+                    <td><input type="text" id="phone" name="phone" value="<?php echo esc_attr($meta['phone'][0] ?? ''); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="whatsapp"><?php _e('WhatsApp'); ?></label></th>
+                    <td><input type="text" id="whatsapp" name="whatsapp" value="<?php echo esc_attr($meta['whatsapp'][0] ?? ''); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="doctor_specialty"><?php _e('Specialty'); ?></label></th>
+                    <td><input type="text" id="doctor_specialty" name="doctor_specialty" value="<?php echo esc_attr($meta['doctor_specialty'][0] ?? ''); ?>" class="regular-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="password_mode"><?php _e('Password Mode'); ?></label></th>
+                    <td>
+                        <select id="password_mode" name="password_mode">
+                            <option value="auto" <?php selected($meta['password_mode'][0] ?? '', 'auto'); ?>><?php _e('Auto Generate'); ?></option>
+                            <option value="manual" <?php selected($meta['password_mode'][0] ?? '', 'manual'); ?>><?php _e('Manual Entry'); ?></option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="profile_image"><?php _e('Profile Image ID'); ?></label></th>
+                    <td><input type="number" id="profile_image" name="profile_image" value="<?php echo esc_attr($meta['profile_image'][0] ?? ''); ?>" class="small-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="identity_front"><?php _e('Identity Front ID'); ?></label></th>
+                    <td><input type="number" id="identity_front" name="identity_front" value="<?php echo esc_attr($meta['identity_front'][0] ?? ''); ?>" class="small-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="identity_back"><?php _e('Identity Back ID'); ?></label></th>
+                    <td><input type="number" id="identity_back" name="identity_back" value="<?php echo esc_attr($meta['identity_back'][0] ?? ''); ?>" class="small-text" /></td>
+                </tr>
+                <tr>
+                    <th><label for="certificates"><?php _e('Certificates (comma-separated IDs)'); ?></label></th>
+                    <td>
+                        <input type="text" id="certificates" name="certificates" value="<?php 
+                            $certs = isset($meta['certificates']) ? maybe_unserialize($meta['certificates'][0]) : [];
+                            echo esc_attr(is_array($certs) ? implode(',', $certs) : ''); 
+                        ?>" class="regular-text" />
+                        <p class="description"><?php _e('Enter attachment IDs separated by commas'); ?></p>
+                    </td>
+                </tr>
+            </table>
+            <?php
+        },
+        'therapist_app',
+        'normal',
+        'default'
+    );
 });
+
+// Save therapist application form data
+add_action('save_post', function($post_id, $post, $update) {
+    // Only handle therapist_app post type
+    if ($post->post_type !== 'therapist_app') return;
+    
+    // Check if this is an autosave
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    
+    // Check nonce
+    if (!isset($_POST['therapist_app_nonce']) || !wp_verify_nonce($_POST['therapist_app_nonce'], 'therapist_app_form')) return;
+    
+    // Check permissions
+    if (!current_user_can('edit_post', $post_id)) return;
+    
+    // Save form fields
+    $fields = [
+        'name', 'name_en', 'email', 'phone', 'whatsapp', 
+        'doctor_specialty', 'password_mode', 'profile_image', 
+        'identity_front', 'identity_back'
+    ];
+    
+    foreach ($fields as $field) {
+        if (isset($_POST[$field])) {
+            update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
+        }
+    }
+    
+    // Handle certificates (convert comma-separated string to array)
+    if (isset($_POST['certificates'])) {
+        $certificates = array_filter(array_map('trim', explode(',', $_POST['certificates'])));
+        $certificates = array_map('intval', $certificates);
+        update_post_meta($post_id, 'certificates', $certificates);
+    }
+    
+}, 10, 3);
 
 /**
  * Get Jalsah AI name for a therapist
