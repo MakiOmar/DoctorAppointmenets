@@ -123,72 +123,13 @@ add_action('init', function() {
     ));
 });
 // Add meta boxes for therapist applications
+// Hide default custom fields metabox for therapist_app
 add_action('add_meta_boxes', function() {
-    add_meta_box(
-        'therapist_app_details',
-        __('Application Details'),
-        function($post) {
-            if ($post->post_type !== 'therapist_app') return;
-            $meta = get_post_meta($post->ID);
-            echo '<table class="form-table">';
-            $fields = [
-                'name' => __('Name'),
-                'name_en' => __('Name (English)'),
-                'email' => __('Email'),
-                'phone' => __('Phone'),
-                'whatsapp' => __('WhatsApp'),
-                'doctor_specialty' => __('Specialty'),
-                'password_mode' => __('Password Mode'),
-            ];
-            
-            // Show what the Jalsah AI name will be
-            $jalsah_ai_name = !empty($meta['name'][0]) ? $meta['name'][0] : $meta['name_en'][0];
-            echo "<tr><th>" . __('Jalsah AI Name') . "</th><td><strong>" . esc_html($jalsah_ai_name) . "</strong></td></tr>";
-            foreach ($fields as $key => $label) {
-                $val = esc_html($meta[$key][0] ?? '');
-                echo "<tr><th>{$label}</th><td>{$val}</td></tr>";
-            }
-            // Images
-            $img_fields = [
-                'profile_image' => __('Profile Image'),
-                'identity_front' => __('Identity Front'),
-                'identity_back' => __('Identity Back'),
-            ];
-            foreach ($img_fields as $key => $label) {
-                $id = $meta[$key][0] ?? '';
-                if ($id && wp_attachment_is_image($id)) {
-                    $url = wp_get_attachment_url($id);
-                    echo "<tr><th>{$label}</th><td><a href='" . esc_url($url) . "' class='snks-lightbox-link'><img src='" . esc_url($url) . "' style='max-width:120px;max-height:120px;border:1px solid #ccc;cursor:pointer;' /></a></td></tr>";
-                } elseif ($id) {
-                    $url = wp_get_attachment_url($id);
-                    echo "<tr><th>{$label}</th><td><a href='" . esc_url($url) . "' target='_blank'>" . basename($url) . "</a></td></tr>";
-                }
-            }
-            // Certificates
-            $certs = isset($meta['certificates']) ? maybe_unserialize($meta['certificates'][0]) : [];
-            if ($certs && is_array($certs)) {
-                echo "<tr><th>" . __('Certificates') . "</th><td>";
-                foreach ($certs as $cid) {
-                    $url = wp_get_attachment_url($cid);
-                    if (wp_attachment_is_image($cid)) {
-                        echo "<a href='" . esc_url($url) . "' class='snks-lightbox-link'><img src='" . esc_url($url) . "' style='max-width:80px;max-height:80px;margin:2px;border:1px solid #ccc;cursor:pointer;' /></a> ";
-                    } else {
-                        echo "<a href='" . esc_url($url) . "' target='_blank'>" . basename($url) . "</a> ";
-                    }
-                }
-                echo "</td></tr>";
-            }
-            echo '</table>';
-            // Lightbox overlay markup
-            echo "<div id='snks-lightbox-overlay' style='display:none;position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;'><img id='snks-lightbox-img' src='' style='max-width:90vw;max-height:90vh;border:4px solid #fff;border-radius:8px;box-shadow:0 0 24px #000;'/></div>";
-            // Lightbox JS
-            echo "<script>document.addEventListener('DOMContentLoaded',function(){var links=document.querySelectorAll('.snks-lightbox-link');var overlay=document.getElementById('snks-lightbox-overlay');var img=document.getElementById('snks-lightbox-img');links.forEach(function(link){link.addEventListener('click',function(e){e.preventDefault();img.src=link.href;overlay.style.display='flex';});});overlay.addEventListener('click',function(){overlay.style.display='none';img.src='';});});</script>";
-        },
-        'therapist_app',
-        'normal',
-        'high'
-    );
+    remove_meta_box('postcustom', 'therapist_app', 'normal');
+}, 20);
 
+// Add meta boxes for therapist applications
+add_action('add_meta_boxes', function() {
     // Add form meta box for editing applications
     add_meta_box(
         'therapist_app_form',
@@ -200,7 +141,66 @@ add_action('add_meta_boxes', function() {
             wp_nonce_field('therapist_app_form', 'therapist_app_nonce');
             
             $meta = get_post_meta($post->ID);
+            
+            // Enqueue media uploader
+            wp_enqueue_media();
             ?>
+            <style>
+                .snks-upload-field {
+                    margin-bottom: 20px;
+                }
+                .snks-upload-preview {
+                    margin-top: 10px;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    background: #f9f9f9;
+                    display: none;
+                }
+                .snks-upload-preview img {
+                    max-width: 150px;
+                    max-height: 150px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                }
+                .snks-upload-preview .file-info {
+                    margin-top: 10px;
+                    font-size: 12px;
+                    color: #666;
+                }
+                .snks-upload-preview .remove-file {
+                    color: #dc3232;
+                    text-decoration: none;
+                    margin-left: 10px;
+                }
+                .snks-upload-preview .remove-file:hover {
+                    color: #a00;
+                }
+                .snks-certificates-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                    gap: 10px;
+                    margin-top: 10px;
+                }
+                .snks-certificate-item {
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    padding: 8px;
+                    text-align: center;
+                    background: white;
+                }
+                .snks-certificate-item img {
+                    max-width: 100px;
+                    max-height: 100px;
+                    border-radius: 4px;
+                }
+                .snks-certificate-item .file-name {
+                    font-size: 11px;
+                    margin-top: 5px;
+                    word-break: break-word;
+                }
+            </style>
+            
             <table class="form-table">
                 <tr>
                     <th><label for="name"><?php _e('Name (Arabic)'); ?></label></th>
@@ -235,29 +235,266 @@ add_action('add_meta_boxes', function() {
                         </select>
                     </td>
                 </tr>
-                <tr>
-                    <th><label for="profile_image"><?php _e('Profile Image ID'); ?></label></th>
-                    <td><input type="number" id="profile_image" name="profile_image" value="<?php echo esc_attr($meta['profile_image'][0] ?? ''); ?>" class="small-text" /></td>
-                </tr>
-                <tr>
-                    <th><label for="identity_front"><?php _e('Identity Front ID'); ?></label></th>
-                    <td><input type="number" id="identity_front" name="identity_front" value="<?php echo esc_attr($meta['identity_front'][0] ?? ''); ?>" class="small-text" /></td>
-                </tr>
-                <tr>
-                    <th><label for="identity_back"><?php _e('Identity Back ID'); ?></label></th>
-                    <td><input type="number" id="identity_back" name="identity_back" value="<?php echo esc_attr($meta['identity_back'][0] ?? ''); ?>" class="small-text" /></td>
-                </tr>
-                <tr>
-                    <th><label for="certificates"><?php _e('Certificates (comma-separated IDs)'); ?></label></th>
-                    <td>
-                        <input type="text" id="certificates" name="certificates" value="<?php 
-                            $certs = isset($meta['certificates']) ? maybe_unserialize($meta['certificates'][0]) : [];
-                            echo esc_attr(is_array($certs) ? implode(',', $certs) : ''); 
-                        ?>" class="regular-text" />
-                        <p class="description"><?php _e('Enter attachment IDs separated by commas'); ?></p>
-                    </td>
-                </tr>
             </table>
+
+            <h3><?php _e('File Uploads'); ?></h3>
+            
+            <!-- Profile Image Upload -->
+            <div class="snks-upload-field">
+                <label for="profile_image"><?php _e('Profile Image'); ?></label>
+                <input type="hidden" id="profile_image" name="profile_image" value="<?php echo esc_attr($meta['profile_image'][0] ?? ''); ?>" />
+                <button type="button" class="button" onclick="snksOpenMediaUploader('profile_image')"><?php _e('Choose Image'); ?></button>
+                <button type="button" class="button" onclick="snksRemoveFile('profile_image')" style="display: none;"><?php _e('Remove'); ?></button>
+                <div id="profile_image_preview" class="snks-upload-preview">
+                    <?php
+                    $profile_id = $meta['profile_image'][0] ?? '';
+                    if ($profile_id && wp_attachment_is_image($profile_id)) {
+                        $url = wp_get_attachment_url($profile_id);
+                        $file_info = wp_get_attachment_metadata($profile_id);
+                        echo '<img src="' . esc_url($url) . '" alt="Profile Image" />';
+                        echo '<div class="file-info">';
+                        echo '<strong>' . basename($url) . '</strong><br>';
+                        echo 'Size: ' . size_format(filesize(get_attached_file($profile_id))) . '<br>';
+                        echo 'Dimensions: ' . $file_info['width'] . ' × ' . $file_info['height'];
+                        echo '<a href="#" class="remove-file" onclick="snksRemoveFile(\'profile_image\')">Remove</a>';
+                        echo '</div>';
+                    }
+                    ?>
+                </div>
+            </div>
+
+            <!-- Identity Front Upload -->
+            <div class="snks-upload-field">
+                <label for="identity_front"><?php _e('Identity Front'); ?></label>
+                <input type="hidden" id="identity_front" name="identity_front" value="<?php echo esc_attr($meta['identity_front'][0] ?? ''); ?>" />
+                <button type="button" class="button" onclick="snksOpenMediaUploader('identity_front')"><?php _e('Choose File'); ?></button>
+                <button type="button" class="button" onclick="snksRemoveFile('identity_front')" style="display: none;"><?php _e('Remove'); ?></button>
+                <div id="identity_front_preview" class="snks-upload-preview">
+                    <?php
+                    $front_id = $meta['identity_front'][0] ?? '';
+                    if ($front_id) {
+                        $url = wp_get_attachment_url($front_id);
+                        $file_info = wp_get_attachment_metadata($front_id);
+                        if (wp_attachment_is_image($front_id)) {
+                            echo '<img src="' . esc_url($url) . '" alt="Identity Front" />';
+                        } else {
+                            echo '<div style="padding: 20px; background: #f0f0f0; border-radius: 4px; text-align: center;">';
+                            echo '<strong>Document File</strong>';
+                            echo '</div>';
+                        }
+                        echo '<div class="file-info">';
+                        echo '<strong>' . basename($url) . '</strong><br>';
+                        echo 'Size: ' . size_format(filesize(get_attached_file($front_id)));
+                        echo '<a href="#" class="remove-file" onclick="snksRemoveFile(\'identity_front\')">Remove</a>';
+                        echo '</div>';
+                    }
+                    ?>
+                </div>
+            </div>
+
+            <!-- Identity Back Upload -->
+            <div class="snks-upload-field">
+                <label for="identity_back"><?php _e('Identity Back'); ?></label>
+                <input type="hidden" id="identity_back" name="identity_back" value="<?php echo esc_attr($meta['identity_back'][0] ?? ''); ?>" />
+                <button type="button" class="button" onclick="snksOpenMediaUploader('identity_back')"><?php _e('Choose File'); ?></button>
+                <button type="button" class="button" onclick="snksRemoveFile('identity_back')" style="display: none;"><?php _e('Remove'); ?></button>
+                <div id="identity_back_preview" class="snks-upload-preview">
+                    <?php
+                    $back_id = $meta['identity_back'][0] ?? '';
+                    if ($back_id) {
+                        $url = wp_get_attachment_url($back_id);
+                        $file_info = wp_get_attachment_metadata($back_id);
+                        if (wp_attachment_is_image($back_id)) {
+                            echo '<img src="' . esc_url($url) . '" alt="Identity Back" />';
+                        } else {
+                            echo '<div style="padding: 20px; background: #f0f0f0; border-radius: 4px; text-align: center;">';
+                            echo '<strong>Document File</strong>';
+                            echo '</div>';
+                        }
+                        echo '<div class="file-info">';
+                        echo '<strong>' . basename($url) . '</strong><br>';
+                        echo 'Size: ' . size_format(filesize(get_attached_file($back_id)));
+                        echo '<a href="#" class="remove-file" onclick="snksRemoveFile(\'identity_back\')">Remove</a>';
+                        echo '</div>';
+                    }
+                    ?>
+                </div>
+            </div>
+
+            <!-- Certificates Upload -->
+            <div class="snks-upload-field">
+                <label for="certificates"><?php _e('Certificates'); ?></label>
+                <input type="hidden" id="certificates" name="certificates" value="<?php 
+                    $certs = isset($meta['certificates']) ? maybe_unserialize($meta['certificates'][0]) : [];
+                    echo esc_attr(is_array($certs) ? implode(',', $certs) : ''); 
+                ?>" />
+                <button type="button" class="button" onclick="snksOpenMediaUploader('certificates', true)"><?php _e('Add Certificates'); ?></button>
+                <button type="button" class="button" onclick="snksRemoveAllCertificates()" style="display: none;"><?php _e('Remove All'); ?></button>
+                <div id="certificates_preview" class="snks-upload-preview">
+                    <?php
+                    if ($certs && is_array($certs)) {
+                        echo '<div class="snks-certificates-grid">';
+                        foreach ($certs as $cert_id) {
+                            $url = wp_get_attachment_url($cert_id);
+                            $file_name = basename($url);
+                            if (wp_attachment_is_image($cert_id)) {
+                                echo '<div class="snks-certificate-item">';
+                                echo '<img src="' . esc_url($url) . '" alt="' . esc_attr($file_name) . '" />';
+                                echo '<div class="file-name">' . esc_html($file_name) . '</div>';
+                                echo '<a href="#" class="remove-file" onclick="snksRemoveCertificate(' . $cert_id . ')">Remove</a>';
+                                echo '</div>';
+                            } else {
+                                echo '<div class="snks-certificate-item">';
+                                echo '<div style="padding: 20px; background: #f0f0f0; border-radius: 4px; text-align: center;">';
+                                echo '<strong>Document</strong>';
+                                echo '</div>';
+                                echo '<div class="file-name">' . esc_html($file_name) . '</div>';
+                                echo '<a href="#" class="remove-file" onclick="snksRemoveCertificate(' . $cert_id . ')">Remove</a>';
+                                echo '</div>';
+                            }
+                        }
+                        echo '</div>';
+                    }
+                    ?>
+                </div>
+            </div>
+
+            <script>
+            function snksOpenMediaUploader(fieldId, multiple = false) {
+                var frame = wp.media({
+                    title: 'Select File',
+                    multiple: multiple,
+                    library: {
+                        type: multiple ? null : 'image'
+                    }
+                });
+
+                frame.on('select', function() {
+                    var attachments = frame.state().get('selection').map(function(attachment) {
+                        attachment = attachment.toJSON();
+                        return attachment;
+                    });
+
+                    if (multiple) {
+                        // Handle multiple files (certificates)
+                        var currentIds = document.getElementById(fieldId).value;
+                        var currentArray = currentIds ? currentIds.split(',').map(function(id) { return id.trim(); }) : [];
+                        
+                        attachments.forEach(function(attachment) {
+                            if (currentArray.indexOf(attachment.id.toString()) === -1) {
+                                currentArray.push(attachment.id);
+                            }
+                        });
+                        
+                        document.getElementById(fieldId).value = currentArray.join(',');
+                        snksUpdateCertificatesPreview(currentArray);
+                    } else {
+                        // Handle single file
+                        var attachment = attachments[0];
+                        document.getElementById(fieldId).value = attachment.id;
+                        snksUpdateFilePreview(fieldId, attachment);
+                    }
+                });
+
+                frame.open();
+            }
+
+            function snksUpdateFilePreview(fieldId, attachment) {
+                var preview = document.getElementById(fieldId + '_preview');
+                var removeBtn = preview.previousElementSibling;
+                
+                if (attachment.type === 'image') {
+                    preview.innerHTML = '<img src="' + attachment.url + '" alt="' + attachment.filename + '" />' +
+                        '<div class="file-info">' +
+                        '<strong>' + attachment.filename + '</strong><br>' +
+                        'Size: ' + attachment.filesizeHumanReadable + '<br>' +
+                        'Dimensions: ' + attachment.width + ' × ' + attachment.height +
+                        '<a href="#" class="remove-file" onclick="snksRemoveFile(\'' + fieldId + '\')">Remove</a>' +
+                        '</div>';
+                } else {
+                    preview.innerHTML = '<div style="padding: 20px; background: #f0f0f0; border-radius: 4px; text-align: center;">' +
+                        '<strong>Document File</strong>' +
+                        '</div>' +
+                        '<div class="file-info">' +
+                        '<strong>' + attachment.filename + '</strong><br>' +
+                        'Size: ' + attachment.filesizeHumanReadable +
+                        '<a href="#" class="remove-file" onclick="snksRemoveFile(\'' + fieldId + '\')">Remove</a>' +
+                        '</div>';
+                }
+                
+                preview.style.display = 'block';
+                removeBtn.style.display = 'inline-block';
+            }
+
+            function snksUpdateCertificatesPreview(certificateIds) {
+                var preview = document.getElementById('certificates_preview');
+                var removeBtn = preview.previousElementSibling;
+                
+                if (certificateIds.length > 0) {
+                    // Fetch certificate details via AJAX
+                    jQuery.post(ajaxurl, {
+                        action: 'snks_get_certificates_preview',
+                        certificate_ids: certificateIds,
+                        nonce: '<?php echo wp_create_nonce('snks_certificates_preview'); ?>'
+                    }, function(response) {
+                        if (response.success) {
+                            preview.innerHTML = response.data.html;
+                            preview.style.display = 'block';
+                            removeBtn.style.display = 'inline-block';
+                        }
+                    });
+                } else {
+                    preview.style.display = 'none';
+                    removeBtn.style.display = 'none';
+                }
+            }
+
+            function snksRemoveFile(fieldId) {
+                document.getElementById(fieldId).value = '';
+                var preview = document.getElementById(fieldId + '_preview');
+                var removeBtn = preview.previousElementSibling;
+                preview.innerHTML = '';
+                preview.style.display = 'none';
+                removeBtn.style.display = 'none';
+            }
+
+            function snksRemoveCertificate(certificateId) {
+                var field = document.getElementById('certificates');
+                var currentIds = field.value.split(',').map(function(id) { return id.trim(); });
+                var index = currentIds.indexOf(certificateId.toString());
+                if (index > -1) {
+                    currentIds.splice(index, 1);
+                }
+                field.value = currentIds.join(',');
+                snksUpdateCertificatesPreview(currentIds);
+            }
+
+            function snksRemoveAllCertificates() {
+                document.getElementById('certificates').value = '';
+                var preview = document.getElementById('certificates_preview');
+                var removeBtn = preview.previousElementSibling;
+                preview.innerHTML = '';
+                preview.style.display = 'none';
+                removeBtn.style.display = 'none';
+            }
+
+            // Show/hide remove buttons on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                ['profile_image', 'identity_front', 'identity_back'].forEach(function(fieldId) {
+                    var field = document.getElementById(fieldId);
+                    var removeBtn = field.nextElementSibling.nextElementSibling;
+                    if (field.value) {
+                        removeBtn.style.display = 'inline-block';
+                    }
+                });
+                
+                var certificatesField = document.getElementById('certificates');
+                var certificatesRemoveBtn = certificatesField.nextElementSibling.nextElementSibling;
+                if (certificatesField.value) {
+                    certificatesRemoveBtn.style.display = 'inline-block';
+                }
+            });
+            </script>
             <?php
         },
         'therapist_app',
@@ -301,6 +538,41 @@ add_action('save_post', function($post_id, $post, $update) {
     }
     
 }, 10, 3);
+
+// AJAX handler for certificates preview
+add_action('wp_ajax_snks_get_certificates_preview', function() {
+    check_ajax_referer('snks_certificates_preview', 'nonce');
+    
+    $certificate_ids = $_POST['certificate_ids'] ?? [];
+    $html = '';
+    
+    if (!empty($certificate_ids)) {
+        $html .= '<div class="snks-certificates-grid">';
+        foreach ($certificate_ids as $cert_id) {
+            $url = wp_get_attachment_url($cert_id);
+            $file_name = basename($url);
+            
+            if (wp_attachment_is_image($cert_id)) {
+                $html .= '<div class="snks-certificate-item">';
+                $html .= '<img src="' . esc_url($url) . '" alt="' . esc_attr($file_name) . '" />';
+                $html .= '<div class="file-name">' . esc_html($file_name) . '</div>';
+                $html .= '<a href="#" class="remove-file" onclick="snksRemoveCertificate(' . $cert_id . ')">Remove</a>';
+                $html .= '</div>';
+            } else {
+                $html .= '<div class="snks-certificate-item">';
+                $html .= '<div style="padding: 20px; background: #f0f0f0; border-radius: 4px; text-align: center;">';
+                $html .= '<strong>Document</strong>';
+                $html .= '</div>';
+                $html .= '<div class="file-name">' . esc_html($file_name) . '</div>';
+                $html .= '<a href="#" class="remove-file" onclick="snksRemoveCertificate(' . $cert_id . ')">Remove</a>';
+                $html .= '</div>';
+            }
+        }
+        $html .= '</div>';
+    }
+    
+    wp_send_json_success(['html' => $html]);
+});
 
 /**
  * Get Jalsah AI name for a therapist
