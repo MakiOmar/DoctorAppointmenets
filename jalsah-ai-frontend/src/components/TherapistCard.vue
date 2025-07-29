@@ -73,7 +73,7 @@
             @click.stop="showTherapistDetails"
             class="btn-primary px-6 py-2"
           >
-            {{ showDetails ? $t('common.hide') : $t('therapists.viewDetails') }}
+            {{ showDetails ? $t('common.hide') : $t('therapistDetails.certificates') }}
           </button>
         </div>
       </div>
@@ -94,60 +94,6 @@
     </div>
     
     <div v-else-if="details" class="space-y-6">
-      <!-- Personal Information -->
-      <div class="bg-gray-50 rounded-lg p-4">
-        <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.personalInfo') }}</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.name') }}</label>
-            <p class="text-gray-900">{{ details.name }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.nameEn') }}</label>
-            <p class="text-gray-900">{{ details.name_en }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.specialty') }}</label>
-            <p class="text-gray-900">{{ details.specialty }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.jalsahAiName') }}</label>
-            <p class="text-gray-900">{{ details.jalsah_ai_name }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.email') }}</label>
-            <p class="text-gray-900">{{ details.email }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.phone') }}</label>
-            <p class="text-gray-900">{{ details.phone }}</p>
-          </div>
-          <div v-if="details.whatsapp">
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.whatsapp') }}</label>
-            <p class="text-gray-900">{{ details.whatsapp }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Application Information -->
-      <div class="bg-gray-50 rounded-lg p-4">
-        <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.applicationInfo') }}</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.applicationDate') }}</label>
-            <p class="text-gray-900">{{ details.application_date }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.approvalDate') }}</label>
-            <p class="text-gray-900">{{ details.approval_date }}</p>
-          </div>
-          <div>
-            <label class="text-sm font-medium text-gray-500">{{ $t('therapistDetails.certificatesCount') }}</label>
-            <p class="text-gray-900">{{ (details.certificates || []).length }} {{ $t('therapistDetails.certificates') }}</p>
-          </div>
-        </div>
-      </div>
-
       <!-- Certificates Section -->
       <div v-if="details.certificates && details.certificates.length > 0" class="bg-gray-50 rounded-lg p-4">
         <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
@@ -177,6 +123,15 @@
             </div>
           </div>
         </div>
+      </div>
+      
+      <!-- No Certificates Message -->
+      <div v-else class="bg-gray-50 rounded-lg p-8 text-center">
+        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h4 class="text-lg font-semibold text-gray-900 mb-2">{{ $t('therapistDetails.noCertificates') }}</h4>
+        <p class="text-gray-600">{{ $t('therapistDetails.noCertificatesMessage') }}</p>
       </div>
     </div>
     </div>
