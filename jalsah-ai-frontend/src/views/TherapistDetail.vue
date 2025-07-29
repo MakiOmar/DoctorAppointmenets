@@ -79,7 +79,7 @@
                 @click="showCertificates"
                 class="btn-primary text-lg px-8 py-3"
               >
-                {{ $t('therapistDetail.viewCertificates') }}
+                {{ $t('therapistDetail.viewDetails') }}
               </button>
               <button 
                 @click="bookAppointment"

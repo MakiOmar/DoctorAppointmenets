@@ -10,7 +10,7 @@
         <div class="bg-white px-4 py-3 border-b border-gray-200 sm:px-6">
           <div class="flex items-center justify-between">
             <h3 class="text-lg leading-6 font-medium text-gray-900">
-              {{ $t('certificates.title') }} - {{ therapistName }}
+              {{ $t('therapistDetails.title') }} - {{ therapistName }}
             </h3>
             <button
               @click="closeModal"
@@ -32,7 +32,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-600">{{ $t('certificates.loading') }}</p>
+            <p class="text-gray-600">{{ $t('therapistDetails.loading') }}</p>
           </div>
 
           <!-- Error state -->
@@ -40,7 +40,7 @@
             <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
             </svg>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('certificates.error') }}</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('therapistDetails.error') }}</h3>
             <p class="text-gray-600">{{ error }}</p>
             <button @click="loadCertificates" class="btn-primary mt-4">
               {{ $t('common.retry') }}
@@ -90,7 +90,7 @@
               <!-- Certificate info overlay -->
               <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">
                 <h4 class="font-medium">{{ currentCertificate.name }}</h4>
-                <p class="text-sm opacity-90">{{ currentCertificate.description || $t('certificates.noDescription') }}</p>
+                <p class="text-sm opacity-90">{{ currentCertificate.description || $t('therapistDetails.noDescription') }}</p>
               </div>
             </div>
 
@@ -117,8 +117,8 @@
             <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('certificates.noCertificates') }}</h3>
-            <p class="text-gray-600">{{ $t('certificates.noCertificatesMessage') }}</p>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('therapistDetails.noCertificates') }}</h3>
+            <p class="text-gray-600">{{ $t('therapistDetails.noCertificatesMessage') }}</p>
           </div>
         </div>
 
@@ -201,7 +201,7 @@ export default {
         certificates.value = response.data.data || []
         currentIndex.value = 0
       } catch (err) {
-        error.value = err.response?.data?.message || t('certificates.loadError')
+        error.value = err.response?.data?.message || t('therapistDetails.loadError')
         console.error('Error loading certificates:', err)
       } finally {
         loading.value = false

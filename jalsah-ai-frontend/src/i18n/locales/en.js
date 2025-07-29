@@ -302,6 +302,7 @@ export default {
     bioDefault: 'Professional therapist with expertise in mental health and well-being.',
     bookSession: 'Book Session',
     viewProfile: 'View Profile',
+    viewDetails: 'View Details',
     more: '+{count} more',
     noSlotsAvailable: 'Contact for availability',
     availableToday: 'Available today at {time}',
@@ -400,7 +401,7 @@ export default {
     noReviews: 'No reviews available yet',
     bookSession: 'Book 45-Minute Session',
     addToCart: 'Add to Cart',
-    viewCertificates: 'View Certificates',
+    viewDetails: 'View Details',
     therapistNotFound: 'Therapist not found',
     therapistNotFoundMessage: 'The therapist you\'re looking for doesn\'t exist or has been removed',
     browseTherapists: 'Browse Therapists'
@@ -572,6 +573,17 @@ export default {
     success: 'Registration successful! Please check your email.',
     error: 'Registration failed. Please try again.',
     applicationSubmitted: 'Your application has been submitted and is pending admin approval.'
+  },
+
+  // Therapist Details
+  therapistDetails: {
+    title: 'Therapist Details',
+    loading: 'Loading details...',
+    error: 'Error loading details',
+    loadError: 'Failed to load details. Please try again.',
+    noCertificates: 'No certificates available',
+    noCertificatesMessage: 'This therapist has not uploaded any certificates yet.',
+    noDescription: 'No description available'
   },
 
   // Certificates

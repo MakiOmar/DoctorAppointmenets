@@ -73,7 +73,7 @@
             @click.stop="showCertificates"
             class="btn-primary px-6 py-2"
           >
-            {{ $t('therapists.bookSession') }}
+            {{ $t('therapists.viewDetails') }}
           </button>
         </div>
       </div>

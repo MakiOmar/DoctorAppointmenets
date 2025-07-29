@@ -312,6 +312,7 @@ export default {
     bioDefault: 'معالج محترف متخصص في الصحة النفسية والرفاهية.',
     bookSession: 'احجز جلسة',
     viewProfile: 'عرض الملف الشخصي',
+    viewDetails: 'عرض التفاصيل',
     more: '+{count} المزيد',
     noSlotsAvailable: 'تواصل للاستفسار عن التوفر',
     availableToday: 'متاح اليوم في {time}',
@@ -358,7 +359,7 @@ export default {
     noReviews: 'لا توجد مراجعات متاحة بعد',
     bookSession: 'حجز جلسة 45 دقيقة',
     addToCart: 'إضافة للسلة',
-    viewCertificates: 'عرض الشهادات',
+    viewDetails: 'عرض التفاصيل',
     therapistNotFound: 'المعالج غير موجود',
     therapistNotFoundMessage: 'المعالج الذي تبحث عنه غير موجود أو تم إزالته',
     browseTherapists: 'تصفح المعالجين'
@@ -523,6 +524,17 @@ export default {
     success: 'تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني.',
     error: 'فشل التسجيل. يرجى المحاولة مرة أخرى.',
     applicationSubmitted: 'تم إرسال طلبك وهو قيد المراجعة من قبل الإدارة.'
+  },
+
+  // Therapist Details
+  therapistDetails: {
+    title: 'تفاصيل المعالج',
+    loading: 'جاري تحميل التفاصيل...',
+    error: 'خطأ في تحميل التفاصيل',
+    loadError: 'فشل في تحميل التفاصيل. يرجى المحاولة مرة أخرى.',
+    noCertificates: 'لا توجد شهادات متاحة',
+    noCertificatesMessage: 'لم يقم هذا المعالج برفع أي شهادات بعد.',
+    noDescription: 'لا يوجد وصف متاح'
   },
 
   // Certificates
