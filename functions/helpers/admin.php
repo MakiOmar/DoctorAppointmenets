@@ -72,10 +72,25 @@ add_action('admin_init', function() {
         update_user_meta($user_id, 'identity_front', $identity_front);
         update_user_meta($user_id, 'identity_back', $identity_back);
         update_user_meta($user_id, 'certificates', $certificates);
+        
+        // Set Jalsah AI name using the therapist's name
+        $jalsah_ai_name = !empty($name) ? $name : $name_en;
+        update_user_meta($user_id, 'jalsah_ai_name', $jalsah_ai_name);
         // Mark application as approved
         wp_update_post(['ID' => $post_id, 'post_status' => 'publish']);
         // Notify user
-        wp_mail($email, __('Your therapist application is approved'), __('Your account has been created. Username: ') . $phone . __(' Password: ') . $password);
+        $email_subject = __('Your therapist application is approved');
+        $email_message = sprintf(
+            __('Your account has been created successfully!') . "\n\n" .
+            __('Username: %s') . "\n" .
+            __('Password: %s') . "\n" .
+            __('Jalsah AI Name: %s') . "\n\n" .
+            __('You can now log in to your account and start using the platform.'),
+            $phone,
+            $password,
+            $jalsah_ai_name
+        );
+        wp_mail($email, $email_subject, $email_message);
         wp_redirect(admin_url('edit.php?post_type=therapist_app&approved=1'));
         exit;
     }
@@ -112,6 +127,10 @@ add_action('add_meta_boxes', function() {
                 'doctor_specialty' => __('Specialty'),
                 'password_mode' => __('Password Mode'),
             ];
+            
+            // Show what the Jalsah AI name will be
+            $jalsah_ai_name = !empty($meta['name'][0]) ? $meta['name'][0] : $meta['name_en'][0];
+            echo "<tr><th>" . __('Jalsah AI Name') . "</th><td><strong>" . esc_html($jalsah_ai_name) . "</strong></td></tr>";
             foreach ($fields as $key => $label) {
                 $val = esc_html($meta[$key][0] ?? '');
                 echo "<tr><th>{$label}</th><td>{$val}</td></tr>";
@@ -156,4 +175,38 @@ add_action('add_meta_boxes', function() {
         'normal',
         'high'
     );
-}); 
+});
+
+/**
+ * Get Jalsah AI name for a therapist
+ * 
+ * @param int $user_id The user ID
+ * @return string The Jalsah AI name
+ */
+function snks_get_jalsah_ai_name($user_id) {
+    $jalsah_ai_name = get_user_meta($user_id, 'jalsah_ai_name', true);
+    
+    // If Jalsah AI name is not set, fall back to first_name or display_name
+    if (empty($jalsah_ai_name)) {
+        $user = get_user_by('id', $user_id);
+        if ($user) {
+            $jalsah_ai_name = get_user_meta($user_id, 'first_name', true);
+            if (empty($jalsah_ai_name)) {
+                $jalsah_ai_name = $user->display_name;
+            }
+        }
+    }
+    
+    return $jalsah_ai_name;
+}
+
+/**
+ * Set Jalsah AI name for a therapist
+ * 
+ * @param int $user_id The user ID
+ * @param string $name The name to set
+ * @return bool Success status
+ */
+function snks_set_jalsah_ai_name($user_id, $name) {
+    return update_user_meta($user_id, 'jalsah_ai_name', sanitize_text_field($name));
+} 
