@@ -117,6 +117,8 @@ function snks_get_therapist_details_rest($request) {
         'application_date' => get_the_date('Y-m-d', $app->ID),
         'approval_date' => get_the_modified_date('Y-m-d', $app->ID)
     ];
+    
+    error_log('SNKS Debug REST - Final therapist details: ' . print_r($therapist_details, true));
 
     return [
         'success' => true,

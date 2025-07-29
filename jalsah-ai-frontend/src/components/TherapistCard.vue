@@ -94,6 +94,16 @@
     </div>
     
     <div v-else-if="details" class="space-y-6">
+      <!-- Debug Information -->
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+        <h4 class="text-sm font-semibold text-yellow-800 mb-2">Debug Info:</h4>
+        <p class="text-xs text-yellow-700">Details loaded: {{ !!details }}</p>
+        <p class="text-xs text-yellow-700">Certificates exists: {{ !!details.certificates }}</p>
+        <p class="text-xs text-yellow-700">Certificates is array: {{ Array.isArray(details.certificates) }}</p>
+        <p class="text-xs text-yellow-700">Certificates length: {{ details.certificates?.length || 0 }}</p>
+        <p class="text-xs text-yellow-700">Certificates data: {{ JSON.stringify(details.certificates) }}</p>
+      </div>
+      
       <!-- Certificates Section -->
       <div v-if="details.certificates && details.certificates.length > 0" class="bg-gray-50 rounded-lg p-4">
         <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
@@ -236,13 +246,21 @@ export default {
       loading.value = true
       error.value = null
       
+      console.log('Loading therapist details for ID:', props.therapist.id)
+      
       try {
         const response = await fetch(`/api/ai/therapists/${props.therapist.id}/details`)
         const data = await response.json()
         
+        console.log('API Response:', data)
+        
         if (data.success) {
           details.value = data.data
+          console.log('Therapist details loaded:', details.value)
+          console.log('Certificates count:', details.value?.certificates?.length || 0)
+          console.log('Certificates data:', details.value?.certificates)
         } else {
+          console.error('API Error:', data.message)
           error.value = data.message || t('therapistDetails.loadError')
         }
       } catch (err) {
