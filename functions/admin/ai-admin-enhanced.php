@@ -97,6 +97,15 @@ function snks_add_enhanced_ai_admin_menu() {
 		'jalsah-ai-whatsapp',
 		'snks_enhanced_ai_whatsapp_page'
 	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'API Test',
+		'API Test',
+		'manage_options',
+		'jalsah-ai-api-test',
+		'snks_ai_api_test_page'
+	);
 
 	add_submenu_page(
 		'jalsah-ai-management',
@@ -2509,5 +2518,127 @@ function snks_enhanced_ai_tools_page() {
 	</div>
 
 
+	<?php
+}
+
+/**
+ * API Test Page
+ */
+function snks_ai_api_test_page() {
+	snks_load_ai_admin_styles();
+	
+	// Handle flush rewrite rules
+	if ( isset( $_POST['flush_rules'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'flush_rules' ) ) {
+			flush_rewrite_rules();
+			echo '<div class="notice notice-success"><p>Rewrite rules flushed successfully!</p></div>';
+		}
+	}
+	
+	// Handle test API endpoint
+	if ( isset( $_POST['test_endpoint'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'test_endpoint' ) ) {
+			$endpoint = sanitize_text_field( $_POST['endpoint'] );
+			$test_url = home_url( '/api/ai/' . $endpoint );
+			
+			echo '<div class="notice notice-info"><p>Testing endpoint: <code>' . esc_html( $test_url ) . '</code></p></div>';
+			
+			// Make a test request
+			$response = wp_remote_get( $test_url );
+			if ( is_wp_error( $response ) ) {
+				echo '<div class="notice notice-error"><p>Error: ' . esc_html( $response->get_error_message() ) . '</p></div>';
+			} else {
+				$status_code = wp_remote_retrieve_response_code( $response );
+				$body = wp_remote_retrieve_body( $response );
+				
+				echo '<div class="notice notice-' . ( $status_code === 200 ? 'success' : 'error' ) . '">';
+				echo '<p><strong>Status Code:</strong> ' . esc_html( $status_code ) . '</p>';
+				echo '<p><strong>Response:</strong></p>';
+				echo '<pre>' . esc_html( $body ) . '</pre>';
+				echo '</div>';
+			}
+		}
+	}
+	?>
+	<div class="wrap">
+		<h1>AI API Test</h1>
+		
+		<div class="card">
+			<h2>1. Check Rewrite Rules</h2>
+			<?php
+			$rewrite_rules = get_option( 'rewrite_rules' );
+			$ai_rules = array_filter( $rewrite_rules, function( $rule, $pattern ) {
+				return strpos( $pattern, 'api/ai' ) !== false;
+			}, ARRAY_FILTER_USE_BOTH );
+			
+			if ( empty( $ai_rules ) ) {
+				echo '<p style="color: red;">❌ No AI API rewrite rules found!</p>';
+				echo '<p>This means the rewrite rules need to be flushed.</p>';
+			} else {
+				echo '<p style="color: green;">✅ AI API rewrite rules found:</p>';
+				echo '<ul>';
+				foreach ( $ai_rules as $pattern => $rule ) {
+					echo '<li><strong>' . esc_html( $pattern ) . '</strong> → ' . esc_html( $rule ) . '</li>';
+				}
+				echo '</ul>';
+			}
+			?>
+		</div>
+		
+		<div class="card">
+			<h2>2. Flush Rewrite Rules</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'flush_rules' ); ?>
+				<input type="hidden" name="flush_rules" value="1">
+				<?php submit_button( 'Flush Rewrite Rules', 'secondary' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>3. Test API Endpoints</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'test_endpoint' ); ?>
+				<input type="hidden" name="test_endpoint" value="1">
+				
+				<label>
+					Endpoint to test:
+					<select name="endpoint">
+						<option value="ping">ping</option>
+						<option value="test">test</option>
+						<option value="debug">debug</option>
+					</select>
+				</label>
+				
+				<?php submit_button( 'Test Endpoint', 'secondary' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>4. Manual Testing</h2>
+			<p>Try accessing these URLs in your browser:</p>
+			<ul>
+				<li><a href="<?php echo home_url( '/api/ai/ping' ); ?>" target="_blank"><?php echo home_url( '/api/ai/ping' ); ?></a></li>
+				<li><a href="<?php echo home_url( '/api/ai/test' ); ?>" target="_blank"><?php echo home_url( '/api/ai/test' ); ?></a></li>
+				<li><a href="<?php echo home_url( '/api/ai/debug' ); ?>" target="_blank"><?php echo home_url( '/api/ai/debug' ); ?></a></li>
+			</ul>
+		</div>
+		
+		<div class="card">
+			<h2>5. Debug Information</h2>
+			<p><strong>Site URL:</strong> <?php echo get_site_url(); ?></p>
+			<p><strong>Home URL:</strong> <?php echo get_home_url(); ?></p>
+			<p><strong>Current URL:</strong> <?php echo $_SERVER['REQUEST_URI']; ?></p>
+			<p><strong>AI Integration Class:</strong> <?php echo class_exists( 'SNKS_AI_Integration' ) ? '✅ Loaded' : '❌ Not found'; ?></p>
+		</div>
+		
+		<div class="card">
+			<h2>6. Frontend API Test</h2>
+			<p>Test the cart API endpoint that's causing the 404 error:</p>
+			<ul>
+				<li><a href="<?php echo home_url( '/api/ai/cart/42' ); ?>" target="_blank"><?php echo home_url( '/api/ai/cart/42' ); ?></a> (GET cart for user 42)</li>
+			</ul>
+			<p><strong>Note:</strong> This endpoint requires authentication, so it might return an error even if the API is working.</p>
+		</div>
+	</div>
 	<?php
 } 
