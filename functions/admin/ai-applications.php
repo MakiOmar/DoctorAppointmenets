@@ -511,7 +511,7 @@ function snks_display_application_details( $application_id ) {
 					FROM $therapist_diagnoses_table td 
 					JOIN $diagnoses_table d ON td.diagnosis_id = d.id 
 					WHERE td.therapist_id = %d 
-					ORDER BY d.name",
+					ORDER BY td.display_order ASC, d.name ASC",
 					$application->user_id
 				) );
 				
@@ -520,17 +520,21 @@ function snks_display_application_details( $application_id ) {
 					<table class="wp-list-table widefat fixed striped">
 						<thead>
 							<tr>
+								<th style="width: 50px;">Order</th>
 								<th>Diagnosis</th>
-								<th>Rating</th>
-								<th>Suitability Message</th>
+								<th style="width: 100px;">Rating</th>
+								<th>Suitability Message (English)</th>
+								<th>Suitability Message (Arabic)</th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach ( $therapist_diagnoses as $td ) : ?>
 								<tr>
+									<td><?php echo esc_html( $td->display_order ); ?></td>
 									<td><strong><?php echo esc_html( $td->diagnosis_name ); ?></strong></td>
 									<td><?php echo number_format( $td->rating, 1 ); ?> / 5.0</td>
 									<td><?php echo !empty( $td->suitability_message ) ? esc_html( $td->suitability_message ) : '<span class="description">No message</span>'; ?></td>
+									<td><?php echo !empty( $td->suitability_message_ar ) ? esc_html( $td->suitability_message_ar ) : '<span class="description">لا توجد رسالة</span>'; ?></td>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
@@ -783,72 +787,90 @@ function snks_display_application_edit_form( $application_id ) {
 				$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
 				$all_diagnoses = $wpdb->get_results( "SELECT * FROM $diagnoses_table ORDER BY name" );
 				
-				// Get current therapist diagnoses
+				// Get current therapist diagnoses with order
 				$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
 				$current_diagnoses = [];
 				if ( $application->user_id ) {
 					$current_diagnoses = $wpdb->get_results( $wpdb->prepare(
-						"SELECT diagnosis_id, rating, suitability_message FROM $therapist_diagnoses_table WHERE therapist_id = %d",
+						"SELECT diagnosis_id, rating, suitability_message, suitability_message_ar, display_order FROM $therapist_diagnoses_table WHERE therapist_id = %d ORDER BY display_order ASC, diagnosis_id ASC",
 						$application->user_id
 					) );
 				}
 				$current_diagnosis_ids = array_column( $current_diagnoses, 'diagnosis_id' );
 				?>
 				
-				<table class="form-table">
-					<tr>
-						<th>Available Diagnoses</th>
-						<td>
-							<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
-								<?php if ( !empty( $all_diagnoses ) ) : ?>
-									<?php foreach ( $all_diagnoses as $diagnosis ) : ?>
-										<?php
-										$is_selected = in_array( $diagnosis->id, $current_diagnosis_ids );
-										$current_rating = 0;
-										$current_message = '';
-										
-										if ( $is_selected ) {
-											foreach ( $current_diagnoses as $td ) {
-												if ( $td->diagnosis_id == $diagnosis->id ) {
-													$current_rating = $td->rating;
-													$current_message = $td->suitability_message;
-													break;
-												}
-											}
+				<table class="wp-list-table widefat fixed striped" id="diagnoses-table">
+					<thead>
+						<tr>
+							<th style="width: 50px;">Order</th>
+							<th style="width: 80px;">Active</th>
+							<th>Diagnosis</th>
+							<th style="width: 100px;">Rating</th>
+							<th>Suitability Message (English)</th>
+							<th>Suitability Message (Arabic)</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php if ( !empty( $all_diagnoses ) ) : ?>
+							<?php foreach ( $all_diagnoses as $diagnosis ) : ?>
+								<?php
+								$is_selected = in_array( $diagnosis->id, $current_diagnosis_ids );
+								$current_rating = 0;
+								$current_message = '';
+								$current_message_ar = '';
+								$display_order = 0;
+								
+								if ( $is_selected ) {
+									foreach ( $current_diagnoses as $td ) {
+										if ( $td->diagnosis_id == $diagnosis->id ) {
+											$current_rating = $td->rating;
+											$current_message = $td->suitability_message;
+											$current_message_ar = $td->suitability_message_ar;
+											$display_order = $td->display_order;
+											break;
 										}
-										?>
-										<div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-											<label style="display: block; margin-bottom: 5px;">
-												<input type="checkbox" name="diagnoses[]" value="<?php echo $diagnosis->id; ?>" <?php checked( $is_selected ); ?> />
-												<strong><?php echo esc_html( $diagnosis->name ); ?></strong>
-											</label>
-											
-											<?php if ( $is_selected ) : ?>
-												<div style="margin-left: 20px; margin-top: 5px;">
-													<label>
-														Rating (0-5):
-														<input type="number" name="diagnosis_rating_<?php echo $diagnosis->id; ?>" 
-															   value="<?php echo esc_attr( $current_rating ); ?>" 
-															   step="0.1" min="0" max="5" style="width: 80px;" />
-													</label>
-													<br>
-													<label>
-														Suitability Message:
-														<textarea name="diagnosis_message_<?php echo $diagnosis->id; ?>" 
-																  rows="2" style="width: 100%; margin-top: 5px;"><?php echo esc_textarea( $current_message ); ?></textarea>
-													</label>
-												</div>
-											<?php endif; ?>
-										</div>
-									<?php endforeach; ?>
-								<?php else : ?>
-									<p>No diagnoses available. Please add diagnoses first.</p>
-								<?php endif; ?>
-							</div>
-							<p class="description">Select diagnoses this therapist specializes in. For selected diagnoses, you can set a rating and suitability message.</p>
-						</td>
-					</tr>
+									}
+								}
+								?>
+								<tr data-diagnosis-id="<?php echo $diagnosis->id; ?>">
+									<td>
+										<input type="number" name="diagnosis_order_<?php echo $diagnosis->id; ?>" 
+											   value="<?php echo esc_attr( $display_order ); ?>" 
+											   class="small-text" min="0" style="width: 50px;" />
+									</td>
+									<td>
+										<input type="checkbox" name="diagnoses[]" value="<?php echo $diagnosis->id; ?>" 
+											   <?php checked( $is_selected ); ?> class="diagnosis-checkbox" />
+									</td>
+									<td><strong><?php echo esc_html( $diagnosis->name ); ?></strong></td>
+									<td>
+										<input type="number" name="diagnosis_rating_<?php echo $diagnosis->id; ?>" 
+											   value="<?php echo esc_attr( $current_rating ); ?>" 
+											   step="0.1" min="0" max="5" class="small-text" style="width: 80px;" 
+											   <?php echo !$is_selected ? 'disabled' : ''; ?> />
+									</td>
+									<td>
+										<textarea name="diagnosis_message_<?php echo $diagnosis->id; ?>" 
+												  rows="3" class="large-text" 
+												  placeholder="Why is this doctor good at treating this diagnosis?"
+												  <?php echo !$is_selected ? 'disabled' : ''; ?>><?php echo esc_textarea( $current_message ); ?></textarea>
+									</td>
+									<td>
+										<textarea name="diagnosis_message_ar_<?php echo $diagnosis->id; ?>" 
+												  rows="3" class="large-text" 
+												  placeholder="لماذا هذا الطبيب جيد في علاج هذا التشخيص؟"
+												  <?php echo !$is_selected ? 'disabled' : ''; ?>><?php echo esc_textarea( $current_message_ar ); ?></textarea>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						<?php else : ?>
+							<tr>
+								<td colspan="6">No diagnoses available. Please add diagnoses first.</td>
+							</tr>
+						<?php endif; ?>
+					</tbody>
 				</table>
+				<p class="description">Select diagnoses this therapist specializes in. For selected diagnoses, you can set a rating and suitability messages in both English and Arabic.</p>
 			</div>
 			
 			<?php submit_button( 'Update Profile' ); ?>
@@ -968,23 +990,36 @@ function snks_display_application_edit_form( $application_id ) {
 		diagnosisCheckboxes.forEach(function(checkbox) {
 			checkbox.addEventListener('change', function() {
 				const diagnosisId = this.value;
-				const ratingField = document.querySelector('input[name="diagnosis_rating_' + diagnosisId + '"]');
-				const messageField = document.querySelector('textarea[name="diagnosis_message_' + diagnosisId + '"]');
-				const parentDiv = this.closest('div').querySelector('div');
+				const row = this.closest('tr');
+				const ratingField = row.querySelector('input[name="diagnosis_rating_' + diagnosisId + '"]');
+				const messageField = row.querySelector('textarea[name="diagnosis_message_' + diagnosisId + '"]');
+				const messageArField = row.querySelector('textarea[name="diagnosis_message_ar_' + diagnosisId + '"]');
+				const orderField = row.querySelector('input[name="diagnosis_order_' + diagnosisId + '"]');
 				
 				if (this.checked) {
-					// Show rating and message fields
-					if (parentDiv) {
-						parentDiv.style.display = 'block';
-					}
+					// Enable fields
+					if (ratingField) ratingField.disabled = false;
+					if (messageField) messageField.disabled = false;
+					if (messageArField) messageArField.disabled = false;
+					if (orderField) orderField.disabled = false;
 				} else {
-					// Hide rating and message fields
-					if (parentDiv) {
-						parentDiv.style.display = 'none';
+					// Disable fields and clear values
+					if (ratingField) {
+						ratingField.disabled = true;
+						ratingField.value = '';
 					}
-					// Clear values
-					if (ratingField) ratingField.value = '';
-					if (messageField) messageField.value = '';
+					if (messageField) {
+						messageField.disabled = true;
+						messageField.value = '';
+					}
+					if (messageArField) {
+						messageArField.disabled = true;
+						messageArField.value = '';
+					}
+					if (orderField) {
+						orderField.disabled = true;
+						orderField.value = '';
+					}
 				}
 			});
 			
@@ -1071,6 +1106,8 @@ function snks_save_application_data( $application_id ) {
 		foreach ( $selected_diagnoses as $diagnosis_id ) {
 			$rating = isset( $_POST["diagnosis_rating_$diagnosis_id"] ) ? floatval( $_POST["diagnosis_rating_$diagnosis_id"] ) : 0;
 			$message = isset( $_POST["diagnosis_message_$diagnosis_id"] ) ? sanitize_textarea_field( $_POST["diagnosis_message_$diagnosis_id"] ) : '';
+			$message_ar = isset( $_POST["diagnosis_message_ar_$diagnosis_id"] ) ? sanitize_textarea_field( $_POST["diagnosis_message_ar_$diagnosis_id"] ) : '';
+			$order = isset( $_POST["diagnosis_order_$diagnosis_id"] ) ? intval( $_POST["diagnosis_order_$diagnosis_id"] ) : 0;
 			
 			$wpdb->replace(
 				$therapist_diagnoses_table,
@@ -1078,9 +1115,11 @@ function snks_save_application_data( $application_id ) {
 					'therapist_id' => $application->user_id,
 					'diagnosis_id' => $diagnosis_id,
 					'rating' => $rating,
-					'suitability_message' => $message
+					'suitability_message' => $message,
+					'suitability_message_ar' => $message_ar,
+					'display_order' => $order
 				],
-				['%d', '%d', '%f', '%s']
+				['%d', '%d', '%f', '%s', '%s', '%d']
 			);
 		}
 	}

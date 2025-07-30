@@ -155,6 +155,11 @@ require_once SNKS_DIR . 'includes/sessions-actions-table.php';
 require_once SNKS_DIR . 'includes/transaction-table.php';
 require_once SNKS_DIR . 'includes/coupons-tables.php';
 require_once SNKS_DIR . 'includes/ai-tables.php';
+
+// Add missing columns to existing installations
+if ( function_exists( 'snks_add_missing_therapist_diagnoses_columns' ) ) {
+	snks_add_missing_therapist_diagnoses_columns();
+}
 /**
  * Plugin activation hook
  *

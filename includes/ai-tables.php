@@ -34,6 +34,8 @@ function snks_create_ai_tables() {
 		diagnosis_id INT(11) NOT NULL,
 		rating DECIMAL(3,2) DEFAULT 0.00,
 		suitability_message TEXT,
+		suitability_message_ar TEXT,
+		display_order INT(11) DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
@@ -126,6 +128,41 @@ function snks_add_ai_meta_fields() {
 function snks_add_ai_user_meta_fields() {
 	// These will be added automatically when needed
 	// show_on_ai_site, ai_bio, ai_certifications, ai_earliest_slot
+}
+
+/**
+ * Add missing columns to therapist diagnoses table
+ */
+function snks_add_missing_therapist_diagnoses_columns() {
+	global $wpdb;
+	
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	
+	// Check if suitability_message_ar column exists
+	$column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$therapist_diagnoses_table,
+		'suitability_message_ar',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $therapist_diagnoses_table ADD COLUMN suitability_message_ar TEXT AFTER suitability_message" );
+	}
+	
+	// Check if display_order column exists
+	$column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$therapist_diagnoses_table,
+		'display_order',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $therapist_diagnoses_table ADD COLUMN display_order INT(11) DEFAULT 0 AFTER suitability_message_ar" );
+	}
 }
 
 // Hook to create tables on plugin activation
