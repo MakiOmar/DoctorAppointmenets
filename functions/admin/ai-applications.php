@@ -408,8 +408,14 @@ function snks_display_application_details( $application_id ) {
 							<?php 
 							$attachment = get_post( $application->identity_front );
 							$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_front ) ) ) : 'Document';
+							
+							// Check if it's an image
+							if ( wp_attachment_is_image( $application->identity_front ) ) {
+								echo wp_get_attachment_image( $application->identity_front, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+							} else {
+								echo '<a href="' . wp_get_attachment_url( $application->identity_front ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+							}
 							?>
-							<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 						<?php else : ?>
 							No document uploaded
 						<?php endif; ?>
@@ -422,8 +428,14 @@ function snks_display_application_details( $application_id ) {
 							<?php 
 							$attachment = get_post( $application->identity_back );
 							$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_back ) ) ) : 'Document';
+							
+							// Check if it's an image
+							if ( wp_attachment_is_image( $application->identity_back ) ) {
+								echo wp_get_attachment_image( $application->identity_back, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+							} else {
+								echo '<a href="' . wp_get_attachment_url( $application->identity_back ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+							}
 							?>
-							<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 						<?php else : ?>
 							No document uploaded
 						<?php endif; ?>
@@ -569,8 +581,14 @@ function snks_display_application_edit_form( $application_id ) {
 									<?php 
 									$attachment = get_post( $application->identity_front );
 									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_front ) ) ) : 'Document';
+									
+									// Check if it's an image
+									if ( wp_attachment_is_image( $application->identity_front ) ) {
+										echo wp_get_attachment_image( $application->identity_front, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . wp_get_attachment_url( $application->identity_front ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
 									?>
-									<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 								<?php endif; ?>
 							</div>
 							<button type="button" class="button" onclick="snks_upload_document('identity_front')">Upload Document</button>
@@ -586,8 +604,14 @@ function snks_display_application_edit_form( $application_id ) {
 									<?php 
 									$attachment = get_post( $application->identity_back );
 									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_back ) ) ) : 'Document';
+									
+									// Check if it's an image
+									if ( wp_attachment_is_image( $application->identity_back ) ) {
+										echo wp_get_attachment_image( $application->identity_back, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . wp_get_attachment_url( $application->identity_back ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
 									?>
-									<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 								<?php endif; ?>
 							</div>
 							<button type="button" class="button" onclick="snks_upload_document('identity_back')">Upload Document</button>
@@ -679,9 +703,22 @@ function snks_display_application_edit_form( $application_id ) {
 			var attachment = frame.state().get('selection').first().toJSON();
 			document.getElementById(field_id).value = attachment.id;
 			
-			// Show filename and link
-			var filename = attachment.filename || attachment.title || 'Document';
-			document.getElementById(field_id + '_preview').innerHTML = '<a href="' + attachment.url + '" target="_blank">' + filename + '</a>';
+			// Check if it's an image and display accordingly
+			if (attachment.type === 'image') {
+				var imageUrl = '';
+				if (attachment.sizes && attachment.sizes.thumbnail) {
+					imageUrl = attachment.sizes.thumbnail.url;
+				} else if (attachment.sizes && attachment.sizes.medium) {
+					imageUrl = attachment.sizes.medium.url;
+				} else {
+					imageUrl = attachment.url;
+				}
+				document.getElementById(field_id + '_preview').innerHTML = '<img src="' + imageUrl + '" style="max-width: 150px; height: auto;" />';
+			} else {
+				// Show filename and link for non-images
+				var filename = attachment.filename || attachment.title || 'Document';
+				document.getElementById(field_id + '_preview').innerHTML = '<a href="' + attachment.url + '" target="_blank">' + filename + '</a>';
+			}
 		});
 		
 		frame.open();
