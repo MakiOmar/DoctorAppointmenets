@@ -470,6 +470,84 @@ function snks_display_application_details( $application_id ) {
 		</div>
 		
 		<div class="card">
+			<h2>AI Platform Settings</h2>
+			<table class="form-table">
+				<tr>
+					<th>Show on AI Site</th>
+					<td><?php echo $application->show_on_ai_site ? 'Yes' : 'No'; ?></td>
+				</tr>
+				<tr>
+					<th>Rating</th>
+					<td><?php echo number_format( $application->rating, 2 ); ?> / 5.00 (<?php echo $application->total_ratings; ?> ratings)</td>
+				</tr>
+				<tr>
+					<th>AI Bio (Arabic)</th>
+					<td><?php echo !empty( $application->ai_bio ) ? nl2br( esc_html( $application->ai_bio ) ) : '<span class="description">Not set</span>'; ?></td>
+				</tr>
+				<tr>
+					<th>AI Bio (English)</th>
+					<td><?php echo !empty( $application->ai_bio_en ) ? nl2br( esc_html( $application->ai_bio_en ) ) : '<span class="description">Not set</span>'; ?></td>
+				</tr>
+				<tr>
+					<th>AI Certifications</th>
+					<td><?php echo !empty( $application->ai_certifications ) ? nl2br( esc_html( $application->ai_certifications ) ) : '<span class="description">Not set</span>'; ?></td>
+				</tr>
+				<tr>
+					<th>Earliest Slot</th>
+					<td><?php echo $application->ai_earliest_slot; ?> days in advance</td>
+				</tr>
+			</table>
+		</div>
+		
+		<div class="card">
+			<h2>Diagnoses & Specializations</h2>
+			<?php
+			if ( $application->user_id ) {
+				$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+				$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+				
+				$therapist_diagnoses = $wpdb->get_results( $wpdb->prepare(
+					"SELECT td.*, d.name as diagnosis_name 
+					FROM $therapist_diagnoses_table td 
+					JOIN $diagnoses_table d ON td.diagnosis_id = d.id 
+					WHERE td.therapist_id = %d 
+					ORDER BY d.name",
+					$application->user_id
+				) );
+				
+				if ( !empty( $therapist_diagnoses ) ) :
+					?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th>Diagnosis</th>
+								<th>Rating</th>
+								<th>Suitability Message</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $therapist_diagnoses as $td ) : ?>
+								<tr>
+									<td><strong><?php echo esc_html( $td->diagnosis_name ); ?></strong></td>
+									<td><?php echo number_format( $td->rating, 1 ); ?> / 5.0</td>
+									<td><?php echo !empty( $td->suitability_message ) ? esc_html( $td->suitability_message ) : '<span class="description">No message</span>'; ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+					<?php
+				else :
+					?>
+					<p class="description">No diagnoses assigned yet.</p>
+					<?php
+				endif;
+			} else {
+				echo '<p class="description">User ID not set. Cannot display diagnoses.</p>';
+			}
+			?>
+		</div>
+		
+		<div class="card">
 			<h2>Actions</h2>
 			<?php if ( $application->status === 'pending' ) : ?>
 				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $application_id ) ); ?>" 
@@ -552,6 +630,55 @@ function snks_display_application_edit_form( $application_id ) {
 					<tr>
 						<th><label for="bio_en">Bio (English)</label></th>
 						<td><textarea id="bio_en" name="bio_en" rows="4" class="large-text"><?php echo esc_textarea( $application->bio_en ); ?></textarea></td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card">
+				<h2>AI Platform Settings</h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="show_on_ai_site">Show on AI Site</label></th>
+						<td>
+							<input type="checkbox" id="show_on_ai_site" name="show_on_ai_site" value="1" <?php checked( $application->show_on_ai_site, 1 ); ?> />
+							<label for="show_on_ai_site">Display this therapist on the AI platform</label>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="rating">Rating</label></th>
+						<td>
+							<input type="number" id="rating" name="rating" value="<?php echo esc_attr( $application->rating ); ?>" class="small-text" step="0.01" min="0" max="5" />
+							<p class="description">Overall rating (0.00 - 5.00)</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="total_ratings">Total Ratings</label></th>
+						<td>
+							<input type="number" id="total_ratings" name="total_ratings" value="<?php echo esc_attr( $application->total_ratings ); ?>" class="small-text" min="0" />
+							<p class="description">Number of ratings received</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="ai_bio">AI Bio (Arabic)</label></th>
+						<td><textarea id="ai_bio" name="ai_bio" rows="4" class="large-text"><?php echo esc_textarea( $application->ai_bio ); ?></textarea>
+						<p class="description">Bio specifically for AI platform display</p></td>
+					</tr>
+					<tr>
+						<th><label for="ai_bio_en">AI Bio (English)</label></th>
+						<td><textarea id="ai_bio_en" name="ai_bio_en" rows="4" class="large-text"><?php echo esc_textarea( $application->ai_bio_en ); ?></textarea>
+						<p class="description">Bio specifically for AI platform display</p></td>
+					</tr>
+					<tr>
+						<th><label for="ai_certifications">AI Certifications</label></th>
+						<td><textarea id="ai_certifications" name="ai_certifications" rows="3" class="large-text"><?php echo esc_textarea( $application->ai_certifications ); ?></textarea>
+						<p class="description">Certifications to display on AI platform</p></td>
+					</tr>
+					<tr>
+						<th><label for="ai_earliest_slot">Earliest Slot (Days)</label></th>
+						<td>
+							<input type="number" id="ai_earliest_slot" name="ai_earliest_slot" value="<?php echo esc_attr( $application->ai_earliest_slot ); ?>" class="small-text" min="0" />
+							<p class="description">Minimum days in advance for booking (0 = same day)</p>
+						</td>
 					</tr>
 				</table>
 			</div>
@@ -644,6 +771,81 @@ function snks_display_application_edit_form( $application_id ) {
 							</div>
 							<button type="button" class="button" onclick="snks_upload_certificates()">Upload Certificates</button>
 							<button type="button" class="button" onclick="snks_remove_certificates()">Remove All</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card">
+				<h2>Diagnoses & Specializations</h2>
+				<?php
+				// Get all diagnoses
+				$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+				$all_diagnoses = $wpdb->get_results( "SELECT * FROM $diagnoses_table ORDER BY name" );
+				
+				// Get current therapist diagnoses
+				$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+				$current_diagnoses = [];
+				if ( $application->user_id ) {
+					$current_diagnoses = $wpdb->get_results( $wpdb->prepare(
+						"SELECT diagnosis_id, rating, suitability_message FROM $therapist_diagnoses_table WHERE therapist_id = %d",
+						$application->user_id
+					) );
+				}
+				$current_diagnosis_ids = array_column( $current_diagnoses, 'diagnosis_id' );
+				?>
+				
+				<table class="form-table">
+					<tr>
+						<th>Available Diagnoses</th>
+						<td>
+							<div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+								<?php if ( !empty( $all_diagnoses ) ) : ?>
+									<?php foreach ( $all_diagnoses as $diagnosis ) : ?>
+										<?php
+										$is_selected = in_array( $diagnosis->id, $current_diagnosis_ids );
+										$current_rating = 0;
+										$current_message = '';
+										
+										if ( $is_selected ) {
+											foreach ( $current_diagnoses as $td ) {
+												if ( $td->diagnosis_id == $diagnosis->id ) {
+													$current_rating = $td->rating;
+													$current_message = $td->suitability_message;
+													break;
+												}
+											}
+										}
+										?>
+										<div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+											<label style="display: block; margin-bottom: 5px;">
+												<input type="checkbox" name="diagnoses[]" value="<?php echo $diagnosis->id; ?>" <?php checked( $is_selected ); ?> />
+												<strong><?php echo esc_html( $diagnosis->name ); ?></strong>
+											</label>
+											
+											<?php if ( $is_selected ) : ?>
+												<div style="margin-left: 20px; margin-top: 5px;">
+													<label>
+														Rating (0-5):
+														<input type="number" name="diagnosis_rating_<?php echo $diagnosis->id; ?>" 
+															   value="<?php echo esc_attr( $current_rating ); ?>" 
+															   step="0.1" min="0" max="5" style="width: 80px;" />
+													</label>
+													<br>
+													<label>
+														Suitability Message:
+														<textarea name="diagnosis_message_<?php echo $diagnosis->id; ?>" 
+																  rows="2" style="width: 100%; margin-top: 5px;"><?php echo esc_textarea( $current_message ); ?></textarea>
+													</label>
+												</div>
+											<?php endif; ?>
+										</div>
+									<?php endforeach; ?>
+								<?php else : ?>
+									<p>No diagnoses available. Please add diagnoses first.</p>
+								<?php endif; ?>
+							</div>
+							<p class="description">Select diagnoses this therapist specializes in. For selected diagnoses, you can set a rating and suitability message.</p>
 						</td>
 					</tr>
 				</table>
@@ -758,6 +960,38 @@ function snks_display_application_edit_form( $application_id ) {
 		document.getElementById('certificates').value = '';
 		document.getElementById('certificates_preview').innerHTML = '';
 	}
+	
+	// Handle diagnoses checkboxes
+	document.addEventListener('DOMContentLoaded', function() {
+		const diagnosisCheckboxes = document.querySelectorAll('input[name="diagnoses[]"]');
+		
+		diagnosisCheckboxes.forEach(function(checkbox) {
+			checkbox.addEventListener('change', function() {
+				const diagnosisId = this.value;
+				const ratingField = document.querySelector('input[name="diagnosis_rating_' + diagnosisId + '"]');
+				const messageField = document.querySelector('textarea[name="diagnosis_message_' + diagnosisId + '"]');
+				const parentDiv = this.closest('div').querySelector('div');
+				
+				if (this.checked) {
+					// Show rating and message fields
+					if (parentDiv) {
+						parentDiv.style.display = 'block';
+					}
+				} else {
+					// Hide rating and message fields
+					if (parentDiv) {
+						parentDiv.style.display = 'none';
+					}
+					// Clear values
+					if (ratingField) ratingField.value = '';
+					if (messageField) messageField.value = '';
+				}
+			});
+			
+			// Trigger change event on page load to set initial state
+			checkbox.dispatchEvent(new Event('change'));
+		});
+	});
 	</script>
 	<?php
 }
@@ -772,17 +1006,84 @@ function snks_save_application_data( $application_id ) {
 	$fields = [
 		'name', 'name_en', 'email', 'phone', 'whatsapp', 'doctor_specialty',
 		'experience_years', 'education', 'bio', 'bio_en',
-		'profile_image', 'identity_front', 'identity_back', 'certificates'
+		'profile_image', 'identity_front', 'identity_back', 'certificates',
+		'rating', 'total_ratings', 'ai_bio', 'ai_bio_en', 'ai_certifications',
+		'ai_earliest_slot', 'show_on_ai_site'
 	];
 	
 	$data = [];
 	foreach ( $fields as $field ) {
 		if ( isset( $_POST[$field] ) ) {
-			$data[$field] = $_POST[$field];
+			// Handle different field types
+			switch ( $field ) {
+				case 'rating':
+				case 'total_ratings':
+				case 'ai_earliest_slot':
+					$data[$field] = floatval( $_POST[$field] );
+					break;
+				case 'show_on_ai_site':
+					$data[$field] = intval( $_POST[$field] );
+					break;
+				default:
+					$data[$field] = $_POST[$field];
+					break;
+			}
 		}
 	}
 	
-	$wpdb->update( $table_name, $data, ['id' => $application_id] );
+	$result = $wpdb->update( $table_name, $data, ['id' => $application_id] );
+	
+	if ( $result === false ) {
+		wp_die( 'Error saving application data: ' . $wpdb->last_error );
+	}
+	
+	// Also update user meta if user_id exists
+	$application = $wpdb->get_row( $wpdb->prepare( "SELECT user_id FROM $table_name WHERE id = %d", $application_id ) );
+	if ( $application && $application->user_id ) {
+		update_user_meta( $application->user_id, 'show_on_ai_site', $data['show_on_ai_site'] ?? 0 );
+		update_user_meta( $application->user_id, 'ai_bio', $data['ai_bio'] ?? '' );
+		update_user_meta( $application->user_id, 'ai_bio_en', $data['ai_bio_en'] ?? '' );
+		update_user_meta( $application->user_id, 'ai_certifications', $data['ai_certifications'] ?? '' );
+		update_user_meta( $application->user_id, 'ai_earliest_slot', $data['ai_earliest_slot'] ?? 0 );
+		
+		// Handle diagnoses relationships
+		$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+		
+		// Get current diagnoses
+		$current_diagnoses = $wpdb->get_col( $wpdb->prepare(
+			"SELECT diagnosis_id FROM $therapist_diagnoses_table WHERE therapist_id = %d",
+			$application->user_id
+		) );
+		
+		// Get selected diagnoses from form
+		$selected_diagnoses = isset( $_POST['diagnoses'] ) ? array_map( 'intval', $_POST['diagnoses'] ) : [];
+		
+		// Remove unselected diagnoses
+		$diagnoses_to_remove = array_diff( $current_diagnoses, $selected_diagnoses );
+		if ( !empty( $diagnoses_to_remove ) ) {
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM $therapist_diagnoses_table WHERE therapist_id = %d AND diagnosis_id IN (" . implode( ',', array_fill( 0, count( $diagnoses_to_remove ), '%d' ) ) . ")",
+				array_merge( [$application->user_id], $diagnoses_to_remove )
+			) );
+		}
+		
+		// Add or update selected diagnoses
+		foreach ( $selected_diagnoses as $diagnosis_id ) {
+			$rating = isset( $_POST["diagnosis_rating_$diagnosis_id"] ) ? floatval( $_POST["diagnosis_rating_$diagnosis_id"] ) : 0;
+			$message = isset( $_POST["diagnosis_message_$diagnosis_id"] ) ? sanitize_textarea_field( $_POST["diagnosis_message_$diagnosis_id"] ) : '';
+			
+			$wpdb->replace(
+				$therapist_diagnoses_table,
+				[
+					'therapist_id' => $application->user_id,
+					'diagnosis_id' => $diagnosis_id,
+					'rating' => $rating,
+					'suitability_message' => $message
+				],
+				['%d', '%d', '%f', '%s']
+			);
+		}
+	}
 }
 
 // Table creation handled in main plugin file 
