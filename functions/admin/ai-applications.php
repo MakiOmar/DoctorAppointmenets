@@ -395,7 +395,7 @@ function snks_display_application_details( $application_id ) {
 					<th>Profile Image</th>
 					<td>
 						<?php if ( !empty( $application->profile_image ) ) : ?>
-							<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail' ); ?>
+							<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') ); ?>
 						<?php else : ?>
 							No image uploaded
 						<?php endif; ?>
@@ -405,7 +405,11 @@ function snks_display_application_details( $application_id ) {
 					<th>Identity Front</th>
 					<td>
 						<?php if ( !empty( $application->identity_front ) ) : ?>
-							<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank">View Document</a>
+							<?php 
+							$attachment = get_post( $application->identity_front );
+							$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_front ) ) ) : 'Document';
+							?>
+							<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 						<?php else : ?>
 							No document uploaded
 						<?php endif; ?>
@@ -415,7 +419,11 @@ function snks_display_application_details( $application_id ) {
 					<th>Identity Back</th>
 					<td>
 						<?php if ( !empty( $application->identity_back ) ) : ?>
-							<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank">View Document</a>
+							<?php 
+							$attachment = get_post( $application->identity_back );
+							$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_back ) ) ) : 'Document';
+							?>
+							<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 						<?php else : ?>
 							No document uploaded
 						<?php endif; ?>
@@ -428,12 +436,13 @@ function snks_display_application_details( $application_id ) {
 						$certificates = !empty( $application->certificates ) ? json_decode( $application->certificates, true ) : [];
 						if ( !empty( $certificates ) ) :
 							foreach ( $certificates as $cert_id ) :
-								$url = wp_get_attachment_url( $cert_id );
-								if ( $url ) :
+								$attachment = get_post( $cert_id );
+								if ( $attachment ) :
+									$filename = $attachment->post_title ?: basename( wp_get_attachment_url( $cert_id ) );
 									?>
 									<div style="margin-bottom: 10px;">
-										<a href="<?php echo esc_url( $url ); ?>" target="_blank">
-											<?php echo esc_html( basename( $url ) ); ?>
+										<a href="<?php echo esc_url( wp_get_attachment_url( $cert_id ) ); ?>" target="_blank">
+											<?php echo esc_html( $filename ); ?>
 										</a>
 									</div>
 									<?php
@@ -544,7 +553,7 @@ function snks_display_application_edit_form( $application_id ) {
 							<input type="hidden" id="profile_image" name="profile_image" value="<?php echo esc_attr( $application->profile_image ); ?>" />
 							<div id="profile_image_preview">
 								<?php if ( !empty( $application->profile_image ) ) : ?>
-									<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail' ); ?>
+									<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') ); ?>
 								<?php endif; ?>
 							</div>
 							<button type="button" class="button" onclick="snks_upload_image('profile_image')">Upload Image</button>
@@ -557,7 +566,11 @@ function snks_display_application_edit_form( $application_id ) {
 							<input type="hidden" id="identity_front" name="identity_front" value="<?php echo esc_attr( $application->identity_front ); ?>" />
 							<div id="identity_front_preview">
 								<?php if ( !empty( $application->identity_front ) ) : ?>
-									<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank">View Document</a>
+									<?php 
+									$attachment = get_post( $application->identity_front );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_front ) ) ) : 'Document';
+									?>
+									<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 								<?php endif; ?>
 							</div>
 							<button type="button" class="button" onclick="snks_upload_document('identity_front')">Upload Document</button>
@@ -570,7 +583,11 @@ function snks_display_application_edit_form( $application_id ) {
 							<input type="hidden" id="identity_back" name="identity_back" value="<?php echo esc_attr( $application->identity_back ); ?>" />
 							<div id="identity_back_preview">
 								<?php if ( !empty( $application->identity_back ) ) : ?>
-									<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank">View Document</a>
+									<?php 
+									$attachment = get_post( $application->identity_back );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_back ) ) ) : 'Document';
+									?>
+									<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank"><?php echo esc_html( $filename ); ?></a>
 								<?php endif; ?>
 							</div>
 							<button type="button" class="button" onclick="snks_upload_document('identity_back')">Upload Document</button>
@@ -586,12 +603,13 @@ function snks_display_application_edit_form( $application_id ) {
 								$certificates = !empty( $application->certificates ) ? json_decode( $application->certificates, true ) : [];
 								if ( !empty( $certificates ) ) :
 									foreach ( $certificates as $cert_id ) :
-										$url = wp_get_attachment_url( $cert_id );
-										if ( $url ) :
+										$attachment = get_post( $cert_id );
+										if ( $attachment ) :
+											$filename = $attachment->post_title ?: basename( wp_get_attachment_url( $cert_id ) );
 											?>
 											<div style="margin-bottom: 10px;">
-												<a href="<?php echo esc_url( $url ); ?>" target="_blank">
-													<?php echo esc_html( basename( $url ) ); ?>
+												<a href="<?php echo esc_url( wp_get_attachment_url( $cert_id ) ); ?>" target="_blank">
+													<?php echo esc_html( $filename ); ?>
 												</a>
 											</div>
 											<?php
@@ -626,7 +644,18 @@ function snks_display_application_edit_form( $application_id ) {
 		frame.on('select', function() {
 			var attachment = frame.state().get('selection').first().toJSON();
 			document.getElementById(field_id).value = attachment.id;
-			document.getElementById(field_id + '_preview').innerHTML = '<img src="' + attachment.sizes.thumbnail.url + '" />';
+			
+			// Handle different image sizes
+			var imageUrl = '';
+			if (attachment.sizes && attachment.sizes.thumbnail) {
+				imageUrl = attachment.sizes.thumbnail.url;
+			} else if (attachment.sizes && attachment.sizes.medium) {
+				imageUrl = attachment.sizes.medium.url;
+			} else {
+				imageUrl = attachment.url;
+			}
+			
+			document.getElementById(field_id + '_preview').innerHTML = '<img src="' + imageUrl + '" style="max-width: 150px; height: auto;" />';
 		});
 		
 		frame.open();
@@ -649,7 +678,10 @@ function snks_display_application_edit_form( $application_id ) {
 		frame.on('select', function() {
 			var attachment = frame.state().get('selection').first().toJSON();
 			document.getElementById(field_id).value = attachment.id;
-			document.getElementById(field_id + '_preview').innerHTML = '<a href="' + attachment.url + '" target="_blank">View Document</a>';
+			
+			// Show filename and link
+			var filename = attachment.filename || attachment.title || 'Document';
+			document.getElementById(field_id + '_preview').innerHTML = '<a href="' + attachment.url + '" target="_blank">' + filename + '</a>';
 		});
 		
 		frame.open();
@@ -676,7 +708,8 @@ function snks_display_application_edit_form( $application_id ) {
 			
 			var preview = '';
 			attachments.forEach(function(attachment) {
-				preview += '<div style="margin-bottom: 10px;"><a href="' + attachment.url + '" target="_blank">' + attachment.filename + '</a></div>';
+				var filename = attachment.filename || attachment.title || 'Certificate';
+				preview += '<div style="margin-bottom: 10px;"><a href="' + attachment.url + '" target="_blank">' + filename + '</a></div>';
 			});
 			document.getElementById('certificates_preview').innerHTML = preview;
 		});
