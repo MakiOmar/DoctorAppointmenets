@@ -352,33 +352,38 @@ function snks_ajax_register_therapist() {
         }
     }
     error_log('Therapist application: certificates done');
-    // Store as custom post type 'therapist_application'
-    $post_data = [
-        'post_type' => 'therapist_app',
-        'post_title' => sanitize_text_field($_POST['name_en']),
-        'post_status' => 'pending',
-        'meta_input' => [
-            'name' => sanitize_text_field($_POST['name']),
-            'name_en' => sanitize_text_field($_POST['name_en']),
-            'email' => sanitize_email($_POST['email']),
-            'phone' => sanitize_text_field($_POST['phone']),
-            'whatsapp' => sanitize_text_field($_POST['whatsapp']),
-            'doctor_specialty' => sanitize_text_field($_POST['doctor_specialty']),
-            'profile_image' => $uploads['profile_image'] ?? '',
-            'identity_front' => $uploads['identity_front'] ?? '',
-            'identity_back' => $uploads['identity_back'] ?? '',
-            'certificates' => $certificates,
-            'password_mode' => $mode,
-            'password' => ($mode === 'user' && !empty($_POST['password'])) ? $_POST['password'] : '',
-        ]
+    // Store in custom database table
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'therapist_applications';
+    
+    $application_data = [
+        'name' => sanitize_text_field($_POST['name']),
+        'name_en' => sanitize_text_field($_POST['name_en']),
+        'email' => sanitize_email($_POST['email']),
+        'phone' => sanitize_text_field($_POST['phone']),
+        'whatsapp' => sanitize_text_field($_POST['whatsapp']),
+        'doctor_specialty' => sanitize_text_field($_POST['doctor_specialty']),
+        'experience_years' => intval($_POST['experience_years'] ?? 0),
+        'education' => sanitize_textarea_field($_POST['education'] ?? ''),
+        'bio' => sanitize_textarea_field($_POST['bio'] ?? ''),
+        'bio_en' => sanitize_textarea_field($_POST['bio_en'] ?? ''),
+        'profile_image' => $uploads['profile_image'] ?? null,
+        'identity_front' => $uploads['identity_front'] ?? null,
+        'identity_back' => $uploads['identity_back'] ?? null,
+        'certificates' => !empty($certificates) ? json_encode($certificates) : null,
+        'status' => 'pending'
     ];
-    error_log('Therapist application: before wp_insert_post');
-    $post_id = wp_insert_post($post_data);
-    error_log('Therapist application: after wp_insert_post, post_id=' . print_r($post_id, true));
-    if (is_wp_error($post_id) || !$post_id) {
-        error_log('Therapist application: wp_insert_post failed: ' . (is_wp_error($post_id) ? $post_id->get_error_message() : 'no post id'));
+    
+    error_log('Therapist application: before database insert');
+    $result = $wpdb->insert($table_name, $application_data);
+    error_log('Therapist application: after database insert, result=' . print_r($result, true));
+    
+    if ($result === false) {
+        error_log('Therapist application: database insert failed: ' . $wpdb->last_error);
         wp_send_json_error(['message' => 'Failed to submit application.']);
     }
+    
+    $application_id = $wpdb->insert_id;
     error_log('Therapist application: success');
     wp_send_json_success(['message' => 'Application submitted and pending approval.']);
 } 

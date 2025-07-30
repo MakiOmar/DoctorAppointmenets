@@ -41,23 +41,21 @@ function snks_get_therapist_details_rest($request) {
         return new WP_Error('therapist_not_found', 'Therapist not found', ['status' => 404]);
     }
 
-    // Get the therapist's application
-    $application = get_posts([
-        'post_type' => 'therapist_app',
-        'post_author' => $therapist_id,
-        'post_status' => 'publish',
-        'numberposts' => 1
-    ]);
+    // Get the therapist's application from custom table
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'therapist_applications';
+    
+    $application = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE user_id = %d AND status = 'approved'",
+        $therapist_id
+    ));
 
-    if (empty($application)) {
+    if (!$application) {
         return new WP_Error('application_not_found', 'Therapist application not found', ['status' => 404]);
     }
 
-    $app = $application[0];
-    $meta = get_post_meta($app->ID);
-
     // Get certificates
-    $certificates = isset($meta['certificates']) ? maybe_unserialize($meta['certificates'][0]) : [];
+    $certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];
     $certificates_data = [];
 
     foreach ($certificates as $cert_id) {
@@ -103,19 +101,19 @@ function snks_get_therapist_details_rest($request) {
     // Build therapist details
     $therapist_details = [
         'id' => $therapist_id,
-        'name' => $meta['name'][0] ?? '',
-        'name_en' => $meta['name_en'][0] ?? '',
-        'email' => $meta['email'][0] ?? '',
-        'phone' => $meta['phone'][0] ?? '',
-        'whatsapp' => $meta['whatsapp'][0] ?? '',
-        'specialty' => $meta['doctor_specialty'][0] ?? '',
-        'profile_image' => $meta['profile_image'][0] ?? '',
-        'identity_front' => $meta['identity_front'][0] ?? '',
-        'identity_back' => $meta['identity_back'][0] ?? '',
+        'name' => $application->name,
+        'name_en' => $application->name_en,
+        'email' => $application->email,
+        'phone' => $application->phone,
+        'whatsapp' => $application->whatsapp,
+        'specialty' => $application->doctor_specialty,
+        'profile_image' => $application->profile_image,
+        'identity_front' => $application->identity_front,
+        'identity_back' => $application->identity_back,
         'certificates' => is_array($certificates_data) ? $certificates_data : [],
         'jalsah_ai_name' => snks_get_jalsah_ai_name($therapist_id),
-        'application_date' => get_the_date('Y-m-d', $app->ID),
-        'approval_date' => get_the_modified_date('Y-m-d', $app->ID)
+        'application_date' => date('Y-m-d', strtotime($application->created_at)),
+        'approval_date' => date('Y-m-d', strtotime($application->updated_at))
     ];
     
     error_log('SNKS Debug REST - Final therapist details: ' . print_r($therapist_details, true));
