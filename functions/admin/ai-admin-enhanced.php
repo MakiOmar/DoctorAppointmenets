@@ -46,6 +46,15 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
+		'Therapist Applications',
+		'Applications',
+		'manage_options',
+		'jalsah-ai-applications',
+		'snks_enhanced_ai_applications_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
 		'Therapist Profiles',
 		'Therapist Profiles',
 		'manage_options',

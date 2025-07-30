@@ -128,6 +128,7 @@ add_action(
 require_once SNKS_DIR . 'functions/ai-integration.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
+require_once SNKS_DIR . 'functions/admin/ai-applications.php';
 require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
 require_once SNKS_DIR . 'functions/admin/add-arabic-diagnoses.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
