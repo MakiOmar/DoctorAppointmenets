@@ -1,7 +1,7 @@
 <?php
 /**
- * Centralized Therapist Applications Management
- * Applications serve as complete therapist profiles
+ * Custom Therapist Applications Management System
+ * Admin-only interface without WordPress post types
  * 
  * @package Shrinks
  */
@@ -11,10 +11,52 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Create custom table for therapist applications
+ */
+function snks_create_therapist_applications_table() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	$charset_collate = $wpdb->get_charset_collate();
+	
+	$sql = "CREATE TABLE $table_name (
+		id mediumint(9) NOT NULL AUTO_INCREMENT,
+		user_id bigint(20) DEFAULT NULL,
+		name varchar(255) NOT NULL,
+		name_en varchar(255) DEFAULT '',
+		email varchar(255) NOT NULL,
+		phone varchar(50) NOT NULL,
+		whatsapp varchar(50) DEFAULT '',
+		doctor_specialty varchar(255) DEFAULT '',
+		experience_years int(11) DEFAULT 0,
+		education text,
+		bio text,
+		bio_en text,
+		profile_image bigint(20) DEFAULT NULL,
+		identity_front bigint(20) DEFAULT NULL,
+		identity_back bigint(20) DEFAULT NULL,
+		certificates longtext,
+		status varchar(20) DEFAULT 'pending',
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY user_id (user_id),
+		KEY status (status),
+		KEY email (email)
+	) $charset_collate;";
+	
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql );
+}
+
+/**
  * Enhanced Therapist Applications Page
  */
 function snks_enhanced_ai_applications_page() {
 	snks_load_ai_admin_styles();
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
 	
 	// Handle bulk actions
 	if ( isset( $_POST['action'] ) && $_POST['action'] !== '-1' ) {
@@ -26,24 +68,21 @@ function snks_enhanced_ai_applications_page() {
 				$processed = 0;
 				
 				foreach ( $application_ids as $app_id ) {
-					$post = get_post( $app_id );
-					if ( $post && $post->post_type === 'therapist_app' ) {
+					$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $app_id ) );
+					if ( $application ) {
 						switch ( $action ) {
 							case 'approve':
-								if ( $post->post_status === 'pending' ) {
+								if ( $application->status === 'pending' ) {
 									snks_approve_therapist_application( $app_id );
 									$processed++;
 								}
 								break;
 							case 'reject':
-								wp_update_post( [
-									'ID' => $app_id,
-									'post_status' => 'rejected'
-								] );
+								$wpdb->update( $table_name, ['status' => 'rejected'], ['id' => $app_id] );
 								$processed++;
 								break;
 							case 'delete':
-								wp_delete_post( $app_id, true );
+								$wpdb->delete( $table_name, ['id' => $app_id] );
 								$processed++;
 								break;
 						}
@@ -63,27 +102,35 @@ function snks_enhanced_ai_applications_page() {
 		$app_id = intval( $_GET['application_id'] );
 		
 		if ( wp_verify_nonce( $_GET['_wpnonce'], 'application_' . $action . '_' . $app_id ) ) {
-			$post = get_post( $app_id );
-			if ( $post && $post->post_type === 'therapist_app' ) {
+			$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $app_id ) );
+			if ( $application ) {
 				switch ( $action ) {
 					case 'approve':
-						if ( $post->post_status === 'pending' ) {
+						if ( $application->status === 'pending' ) {
 							snks_approve_therapist_application( $app_id );
 							echo '<div class="notice notice-success"><p>Application approved successfully!</p></div>';
 						}
 						break;
 					case 'reject':
-						wp_update_post( [
-							'ID' => $app_id,
-							'post_status' => 'rejected'
-						] );
+						$wpdb->update( $table_name, ['status' => 'rejected'], ['id' => $app_id] );
 						echo '<div class="notice notice-success"><p>Application rejected.</p></div>';
 						break;
 					case 'view':
 						snks_display_application_details( $app_id );
 						return;
+					case 'edit':
+						snks_display_application_edit_form( $app_id );
+						return;
 				}
 			}
+		}
+	}
+	
+	// Handle form submission for editing
+	if ( isset( $_POST['save_application'] ) && isset( $_POST['application_id'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'save_application_' . $_POST['application_id'] ) ) {
+			snks_save_application_data( $_POST['application_id'] );
+			echo '<div class="notice notice-success"><p>Application updated successfully!</p></div>';
 		}
 	}
 	
@@ -91,28 +138,36 @@ function snks_enhanced_ai_applications_page() {
 	$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
 	$search_filter = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
 	
-	$args = [
-		'post_type' => 'therapist_app',
-		'post_status' => ['pending', 'publish', 'rejected'],
-		'numberposts' => -1,
-		'orderby' => 'date',
-		'order' => 'DESC'
-	];
+	$where_clauses = [];
+	$where_values = [];
 	
 	if ( $status_filter ) {
-		$args['post_status'] = $status_filter;
+		$where_clauses[] = 'status = %s';
+		$where_values[] = $status_filter;
 	}
 	
 	if ( $search_filter ) {
-		$args['s'] = $search_filter;
+		$where_clauses[] = '(name LIKE %s OR name_en LIKE %s OR email LIKE %s OR phone LIKE %s)';
+		$where_values[] = '%' . $search_filter . '%';
+		$where_values[] = '%' . $search_filter . '%';
+		$where_values[] = '%' . $search_filter . '%';
+		$where_values[] = '%' . $search_filter . '%';
 	}
 	
-	$applications = get_posts( $args );
+	$where_sql = '';
+	if ( !empty( $where_clauses ) ) {
+		$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+	}
+	
+	$applications = $wpdb->get_results( $wpdb->prepare( 
+		"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC",
+		$where_values
+	) );
 	
 	// Count by status
-	$pending_count = count( get_posts( ['post_type' => 'therapist_app', 'post_status' => 'pending', 'numberposts' => -1] ) );
-	$approved_count = count( get_posts( ['post_type' => 'therapist_app', 'post_status' => 'publish', 'numberposts' => -1] ) );
-	$rejected_count = count( get_posts( ['post_type' => 'therapist_app', 'post_status' => 'rejected', 'numberposts' => -1] ) );
+	$pending_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE status = 'pending'" );
+	$approved_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE status = 'approved'" );
+	$rejected_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE status = 'rejected'" );
 	?>
 	
 	<div class="wrap">
@@ -128,8 +183,8 @@ function snks_enhanced_ai_applications_page() {
 			   class="nav-tab <?php echo $status_filter === 'pending' ? 'nav-tab-active' : ''; ?>">
 				Pending <span class="count">(<?php echo $pending_count; ?>)</span>
 			</a>
-			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&status=publish' ); ?>" 
-			   class="nav-tab <?php echo $status_filter === 'publish' ? 'nav-tab-active' : ''; ?>">
+			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&status=approved' ); ?>" 
+			   class="nav-tab <?php echo $status_filter === 'approved' ? 'nav-tab-active' : ''; ?>">
 				Active Profiles <span class="count">(<?php echo $approved_count; ?>)</span>
 			</a>
 			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&status=rejected' ); ?>" 
@@ -185,57 +240,55 @@ function snks_enhanced_ai_applications_page() {
 						</tr>
 					<?php else : ?>
 						<?php foreach ( $applications as $app ) : ?>
-							<?php $meta = get_post_meta( $app->ID ); ?>
 							<tr>
 								<th class="check-column">
-									<input type="checkbox" name="application_ids[]" value="<?php echo $app->ID; ?>">
+									<input type="checkbox" name="application_ids[]" value="<?php echo $app->id; ?>">
 								</th>
 								<td class="column-name">
 									<strong>
-										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=view&application_id=' . $app->ID . '&_wpnonce=' . wp_create_nonce( 'application_view_' . $app->ID ) ); ?>">
-											<?php echo esc_html( $meta['name'][0] ?? $meta['name_en'][0] ?? 'Unknown' ); ?>
+										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=view&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_view_' . $app->id ) ); ?>">
+											<?php echo esc_html( $app->name ?: $app->name_en ?: 'Unknown' ); ?>
 										</a>
 									</strong>
-									<?php if ( $meta['name_en'][0] && $meta['name_en'][0] !== $meta['name'][0] ) : ?>
-										<br><small><?php echo esc_html( $meta['name_en'][0] ); ?></small>
+									<?php if ( $app->name_en && $app->name_en !== $app->name ) : ?>
+										<br><small><?php echo esc_html( $app->name_en ); ?></small>
 									<?php endif; ?>
 								</td>
 								<td class="column-email">
-									<?php echo esc_html( $meta['email'][0] ?? '' ); ?>
+									<?php echo esc_html( $app->email ); ?>
 								</td>
 								<td class="column-phone">
-									<?php echo esc_html( $meta['phone'][0] ?? '' ); ?>
+									<?php echo esc_html( $app->phone ); ?>
 								</td>
 								<td class="column-specialty">
-									<?php echo esc_html( $meta['doctor_specialty'][0] ?? '' ); ?>
+									<?php echo esc_html( $app->doctor_specialty ); ?>
 								</td>
 								<td class="column-status">
 									<?php
-									$status = get_post_status( $app->ID );
 									$status_labels = [
 										'pending' => '<span class="status-pending">Pending</span>',
-										'publish' => '<span class="status-approved">Active</span>',
+										'approved' => '<span class="status-approved">Active</span>',
 										'rejected' => '<span class="status-rejected">Rejected</span>'
 									];
-									echo $status_labels[ $status ] ?? $status;
+									echo $status_labels[ $app->status ] ?? $app->status;
 									?>
 								</td>
 								<td class="column-date">
-									<?php echo get_the_date( 'Y-m-d H:i', $app->ID ); ?>
+									<?php echo date( 'Y-m-d H:i', strtotime( $app->created_at ) ); ?>
 								</td>
 								<td class="column-actions">
-									<?php if ( $status === 'pending' ) : ?>
-										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $app->ID . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $app->ID ) ); ?>" 
+									<?php if ( $app->status === 'pending' ) : ?>
+										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $app->id ) ); ?>" 
 										   class="button button-small button-primary">Approve</a>
-										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=reject&application_id=' . $app->ID . '&_wpnonce=' . wp_create_nonce( 'application_reject_' . $app->ID ) ); ?>" 
+										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=reject&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_reject_' . $app->id ) ); ?>" 
 										   class="button button-small">Reject</a>
-									<?php elseif ( $status === 'rejected' ) : ?>
-										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $app->ID . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $app->ID ) ); ?>" 
+									<?php elseif ( $app->status === 'rejected' ) : ?>
+										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $app->id ) ); ?>" 
 										   class="button button-small button-primary">Approve</a>
 									<?php endif; ?>
-									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=view&application_id=' . $app->ID . '&_wpnonce=' . wp_create_nonce( 'application_view_' . $app->ID ) ); ?>" 
+									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=view&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_view_' . $app->id ) ); ?>" 
 									   class="button button-small">View</a>
-									<a href="<?php echo admin_url( 'post.php?post=' . $app->ID . '&action=edit' ); ?>" 
+									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $app->id ) ); ?>" 
 									   class="button button-small">Edit Profile</a>
 								</td>
 							</tr>
@@ -259,33 +312,25 @@ function snks_enhanced_ai_applications_page() {
  * Approve therapist application and create minimal user account
  */
 function snks_approve_therapist_application( $application_id ) {
-	$post = get_post( $application_id );
-	if ( !$post || $post->post_type !== 'therapist_app' || $post->post_status !== 'pending' ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	
+	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d AND status = 'pending'", $application_id ) );
+	if ( !$application ) {
 		return false;
 	}
 	
-	$meta = get_post_meta( $application_id );
-	$email = $meta['email'][0] ?? '';
-	$phone = $meta['phone'][0] ?? '';
-	$name = $meta['name'][0] ?? '';
-	$name_en = $meta['name_en'][0] ?? '';
-	$mode = $meta['password_mode'][0] ?? 'auto';
-	$password = $meta['password'][0] ?? '';
-	
-	if ( $mode === 'auto' || empty( $password ) ) {
-		$password = wp_generate_password( 8, false );
-	}
-	
 	// Check if user already exists
-	$existing_user = get_user_by( 'email', $email );
+	$existing_user = get_user_by( 'email', $application->email );
 	if ( $existing_user ) {
 		$user_id = $existing_user->ID;
 	} else {
 		// Create new user with minimal data
-		if ( username_exists( $phone ) ) {
+		$password = wp_generate_password( 8, false );
+		if ( username_exists( $application->phone ) ) {
 			return false;
 		}
-		$user_id = wp_create_user( $phone, $password, $email );
+		$user_id = wp_create_user( $application->phone, $password, $application->email );
 		if ( is_wp_error( $user_id ) ) {
 			return false;
 		}
@@ -295,15 +340,14 @@ function snks_approve_therapist_application( $application_id ) {
 	$user->set_role( 'doctor' );
 	
 	// Set only essential user meta for login purposes
-	update_user_meta( $user_id, 'billing_phone', $phone );
-	update_user_meta( $user_id, 'billing_email', $email );
+	update_user_meta( $user_id, 'billing_phone', $application->phone );
+	update_user_meta( $user_id, 'billing_email', $application->email );
 	
-	// Mark application as approved and link to user
-	wp_update_post( [
-		'ID' => $application_id,
-		'post_status' => 'publish',
-		'post_author' => $user_id
-	] );
+	// Update application status and link to user
+	$wpdb->update( $table_name, [
+		'status' => 'approved',
+		'user_id' => $user_id
+	], ['id' => $application_id] );
 	
 	// Notify user
 	$email_subject = __( 'Your therapist application is approved' );
@@ -312,10 +356,10 @@ function snks_approve_therapist_application( $application_id ) {
 		__( 'Username: %s' ) . "\n" .
 		__( 'Password: %s' ) . "\n\n" .
 		__( 'You can now log in to your account and start using the platform.' ),
-		$phone,
+		$application->phone,
 		$password
 	);
-	wp_mail( $email, $email_subject, $email_message );
+	wp_mail( $application->email, $email_subject, $email_message );
 	
 	return true;
 }
@@ -324,59 +368,59 @@ function snks_approve_therapist_application( $application_id ) {
  * Display application/profile details
  */
 function snks_display_application_details( $application_id ) {
-	$post = get_post( $application_id );
-	if ( !$post || $post->post_type !== 'therapist_app' ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	
+	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $application_id ) );
+	if ( !$application ) {
 		wp_die( 'Application not found.' );
 	}
-	
-	$meta = get_post_meta( $application_id );
-	$status = get_post_status( $application_id );
 	?>
 	<div class="wrap">
-		<h1><?php echo $status === 'publish' ? 'Therapist Profile' : 'Application Details'; ?></h1>
+		<h1><?php echo $application->status === 'approved' ? 'Therapist Profile' : 'Application Details'; ?></h1>
 		
 		<div class="card">
 			<h2>Basic Information</h2>
 			<table class="form-table">
 				<tr>
 					<th>Name (Arabic)</th>
-					<td><?php echo esc_html( $meta['name'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->name ); ?></td>
 				</tr>
 				<tr>
 					<th>Name (English)</th>
-					<td><?php echo esc_html( $meta['name_en'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->name_en ); ?></td>
 				</tr>
 				<tr>
 					<th>Email</th>
-					<td><?php echo esc_html( $meta['email'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->email ); ?></td>
 				</tr>
 				<tr>
 					<th>Phone</th>
-					<td><?php echo esc_html( $meta['phone'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->phone ); ?></td>
 				</tr>
 				<tr>
 					<th>WhatsApp</th>
-					<td><?php echo esc_html( $meta['whatsapp'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->whatsapp ); ?></td>
 				</tr>
 				<tr>
 					<th>Specialty</th>
-					<td><?php echo esc_html( $meta['doctor_specialty'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->doctor_specialty ); ?></td>
 				</tr>
 				<tr>
 					<th>Experience Years</th>
-					<td><?php echo esc_html( $meta['experience_years'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->experience_years ); ?></td>
 				</tr>
 				<tr>
 					<th>Education</th>
-					<td><?php echo esc_html( $meta['education'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->education ); ?></td>
 				</tr>
 				<tr>
 					<th>Bio (Arabic)</th>
-					<td><?php echo esc_html( $meta['bio'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->bio ); ?></td>
 				</tr>
 				<tr>
 					<th>Bio (English)</th>
-					<td><?php echo esc_html( $meta['bio_en'][0] ?? '' ); ?></td>
+					<td><?php echo esc_html( $application->bio_en ); ?></td>
 				</tr>
 			</table>
 		</div>
@@ -387,8 +431,8 @@ function snks_display_application_details( $application_id ) {
 				<tr>
 					<th>Profile Image</th>
 					<td>
-						<?php if ( !empty( $meta['profile_image'][0] ) ) : ?>
-							<?php echo wp_get_attachment_image( $meta['profile_image'][0], 'thumbnail' ); ?>
+						<?php if ( !empty( $application->profile_image ) ) : ?>
+							<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail' ); ?>
 						<?php else : ?>
 							No image uploaded
 						<?php endif; ?>
@@ -397,8 +441,8 @@ function snks_display_application_details( $application_id ) {
 				<tr>
 					<th>Identity Front</th>
 					<td>
-						<?php if ( !empty( $meta['identity_front'][0] ) ) : ?>
-							<a href="<?php echo wp_get_attachment_url( $meta['identity_front'][0] ); ?>" target="_blank">View Document</a>
+						<?php if ( !empty( $application->identity_front ) ) : ?>
+							<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank">View Document</a>
 						<?php else : ?>
 							No document uploaded
 						<?php endif; ?>
@@ -407,8 +451,8 @@ function snks_display_application_details( $application_id ) {
 				<tr>
 					<th>Identity Back</th>
 					<td>
-						<?php if ( !empty( $meta['identity_back'][0] ) ) : ?>
-							<a href="<?php echo wp_get_attachment_url( $meta['identity_back'][0] ); ?>" target="_blank">View Document</a>
+						<?php if ( !empty( $application->identity_back ) ) : ?>
+							<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank">View Document</a>
 						<?php else : ?>
 							No document uploaded
 						<?php endif; ?>
@@ -418,7 +462,7 @@ function snks_display_application_details( $application_id ) {
 					<th>Certificates</th>
 					<td>
 						<?php
-						$certificates = isset( $meta['certificates'] ) ? maybe_unserialize( $meta['certificates'][0] ) : [];
+						$certificates = !empty( $application->certificates ) ? json_decode( $application->certificates, true ) : [];
 						if ( !empty( $certificates ) ) :
 							foreach ( $certificates as $cert_id ) :
 								$url = wp_get_attachment_url( $cert_id );
@@ -443,16 +487,16 @@ function snks_display_application_details( $application_id ) {
 		
 		<div class="card">
 			<h2>Actions</h2>
-			<?php if ( $post->post_status === 'pending' ) : ?>
+			<?php if ( $application->status === 'pending' ) : ?>
 				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $application_id ) ); ?>" 
 				   class="button button-primary">Approve Application</a>
 				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=reject&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_reject_' . $application_id ) ); ?>" 
 				   class="button">Reject Application</a>
-			<?php elseif ( $post->post_status === 'rejected' ) : ?>
+			<?php elseif ( $application->status === 'rejected' ) : ?>
 				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $application_id ) ); ?>" 
 				   class="button button-primary">Approve Application</a>
 			<?php endif; ?>
-			<a href="<?php echo admin_url( 'post.php?post=' . $application_id . '&action=edit' ); ?>" class="button">Edit Profile</a>
+			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $application_id ) ); ?>" class="button">Edit Profile</a>
 			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button">Back to Applications</a>
 		</div>
 	</div>
@@ -460,136 +504,151 @@ function snks_display_application_details( $application_id ) {
 }
 
 /**
- * Add custom meta boxes to therapist application edit page
+ * Display application edit form
  */
-function snks_add_therapist_application_meta_boxes() {
-	add_meta_box(
-		'therapist_profile_data',
-		'Therapist Profile Data',
-		'snks_therapist_profile_meta_box',
-		'therapist_app',
-		'normal',
-		'high'
-	);
-}
-add_action( 'add_meta_boxes', 'snks_add_therapist_application_meta_boxes' );
-
-/**
- * Therapist profile meta box content
- */
-function snks_therapist_profile_meta_box( $post ) {
-	wp_nonce_field( 'save_therapist_profile', 'therapist_profile_nonce' );
+function snks_display_application_edit_form( $application_id ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
 	
-	$meta = get_post_meta( $post->ID );
+	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $application_id ) );
+	if ( !$application ) {
+		wp_die( 'Application not found.' );
+	}
+	
+	// Enqueue media uploader
+	wp_enqueue_media();
 	?>
-	<table class="form-table">
-		<tr>
-			<th><label for="name">Name (Arabic)</label></th>
-			<td><input type="text" id="name" name="name" value="<?php echo esc_attr( $meta['name'][0] ?? '' ); ?>" class="regular-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="name_en">Name (English)</label></th>
-			<td><input type="text" id="name_en" name="name_en" value="<?php echo esc_attr( $meta['name_en'][0] ?? '' ); ?>" class="regular-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="email">Email</label></th>
-			<td><input type="email" id="email" name="email" value="<?php echo esc_attr( $meta['email'][0] ?? '' ); ?>" class="regular-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="phone">Phone</label></th>
-			<td><input type="text" id="phone" name="phone" value="<?php echo esc_attr( $meta['phone'][0] ?? '' ); ?>" class="regular-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="whatsapp">WhatsApp</label></th>
-			<td><input type="text" id="whatsapp" name="whatsapp" value="<?php echo esc_attr( $meta['whatsapp'][0] ?? '' ); ?>" class="regular-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="doctor_specialty">Specialty</label></th>
-			<td><input type="text" id="doctor_specialty" name="doctor_specialty" value="<?php echo esc_attr( $meta['doctor_specialty'][0] ?? '' ); ?>" class="regular-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="experience_years">Experience Years</label></th>
-			<td><input type="number" id="experience_years" name="experience_years" value="<?php echo esc_attr( $meta['experience_years'][0] ?? '' ); ?>" class="small-text" /></td>
-		</tr>
-		<tr>
-			<th><label for="education">Education</label></th>
-			<td><textarea id="education" name="education" rows="3" class="large-text"><?php echo esc_textarea( $meta['education'][0] ?? '' ); ?></textarea></td>
-		</tr>
-		<tr>
-			<th><label for="bio">Bio (Arabic)</label></th>
-			<td><textarea id="bio" name="bio" rows="4" class="large-text"><?php echo esc_textarea( $meta['bio'][0] ?? '' ); ?></textarea></td>
-		</tr>
-		<tr>
-			<th><label for="bio_en">Bio (English)</label></th>
-			<td><textarea id="bio_en" name="bio_en" rows="4" class="large-text"><?php echo esc_textarea( $meta['bio_en'][0] ?? '' ); ?></textarea></td>
-		</tr>
-		<tr>
-			<th><label for="profile_image">Profile Image</label></th>
-			<td>
-				<input type="hidden" id="profile_image" name="profile_image" value="<?php echo esc_attr( $meta['profile_image'][0] ?? '' ); ?>" />
-				<div id="profile_image_preview">
-					<?php if ( !empty( $meta['profile_image'][0] ) ) : ?>
-						<?php echo wp_get_attachment_image( $meta['profile_image'][0], 'thumbnail' ); ?>
-					<?php endif; ?>
-				</div>
-				<button type="button" class="button" onclick="snks_upload_image('profile_image')">Upload Image</button>
-				<button type="button" class="button" onclick="snks_remove_image('profile_image')">Remove</button>
-			</td>
-		</tr>
-		<tr>
-			<th><label for="identity_front">Identity Front</label></th>
-			<td>
-				<input type="hidden" id="identity_front" name="identity_front" value="<?php echo esc_attr( $meta['identity_front'][0] ?? '' ); ?>" />
-				<div id="identity_front_preview">
-					<?php if ( !empty( $meta['identity_front'][0] ) ) : ?>
-						<a href="<?php echo wp_get_attachment_url( $meta['identity_front'][0] ); ?>" target="_blank">View Document</a>
-					<?php endif; ?>
-				</div>
-				<button type="button" class="button" onclick="snks_upload_document('identity_front')">Upload Document</button>
-				<button type="button" class="button" onclick="snks_remove_document('identity_front')">Remove</button>
-			</td>
-		</tr>
-		<tr>
-			<th><label for="identity_back">Identity Back</label></th>
-			<td>
-				<input type="hidden" id="identity_back" name="identity_back" value="<?php echo esc_attr( $meta['identity_back'][0] ?? '' ); ?>" />
-				<div id="identity_back_preview">
-					<?php if ( !empty( $meta['identity_back'][0] ) ) : ?>
-						<a href="<?php echo wp_get_attachment_url( $meta['identity_back'][0] ); ?>" target="_blank">View Document</a>
-					<?php endif; ?>
-				</div>
-				<button type="button" class="button" onclick="snks_upload_document('identity_back')">Upload Document</button>
-				<button type="button" class="button" onclick="snks_remove_document('identity_back')">Remove</button>
-			</td>
-		</tr>
-		<tr>
-			<th><label for="certificates">Certificates</label></th>
-			<td>
-				<input type="hidden" id="certificates" name="certificates" value="<?php echo esc_attr( $meta['certificates'][0] ?? '' ); ?>" />
-				<div id="certificates_preview">
-					<?php
-					$certificates = isset( $meta['certificates'] ) ? maybe_unserialize( $meta['certificates'][0] ) : [];
-					if ( !empty( $certificates ) ) :
-						foreach ( $certificates as $cert_id ) :
-							$url = wp_get_attachment_url( $cert_id );
-							if ( $url ) :
-								?>
-								<div style="margin-bottom: 10px;">
-									<a href="<?php echo esc_url( $url ); ?>" target="_blank">
-										<?php echo esc_html( basename( $url ) ); ?>
-									</a>
-								</div>
+	<div class="wrap">
+		<h1>Edit Therapist Profile</h1>
+		
+		<form method="post" action="">
+			<?php wp_nonce_field( 'save_application_' . $application_id ); ?>
+			<input type="hidden" name="application_id" value="<?php echo $application_id; ?>">
+			<input type="hidden" name="save_application" value="1">
+			
+			<div class="card">
+				<h2>Basic Information</h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="name">Name (Arabic)</label></th>
+						<td><input type="text" id="name" name="name" value="<?php echo esc_attr( $application->name ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="name_en">Name (English)</label></th>
+						<td><input type="text" id="name_en" name="name_en" value="<?php echo esc_attr( $application->name_en ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="email">Email</label></th>
+						<td><input type="email" id="email" name="email" value="<?php echo esc_attr( $application->email ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="phone">Phone</label></th>
+						<td><input type="text" id="phone" name="phone" value="<?php echo esc_attr( $application->phone ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="whatsapp">WhatsApp</label></th>
+						<td><input type="text" id="whatsapp" name="whatsapp" value="<?php echo esc_attr( $application->whatsapp ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="doctor_specialty">Specialty</label></th>
+						<td><input type="text" id="doctor_specialty" name="doctor_specialty" value="<?php echo esc_attr( $application->doctor_specialty ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="experience_years">Experience Years</label></th>
+						<td><input type="number" id="experience_years" name="experience_years" value="<?php echo esc_attr( $application->experience_years ); ?>" class="small-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="education">Education</label></th>
+						<td><textarea id="education" name="education" rows="3" class="large-text"><?php echo esc_textarea( $application->education ); ?></textarea></td>
+					</tr>
+					<tr>
+						<th><label for="bio">Bio (Arabic)</label></th>
+						<td><textarea id="bio" name="bio" rows="4" class="large-text"><?php echo esc_textarea( $application->bio ); ?></textarea></td>
+					</tr>
+					<tr>
+						<th><label for="bio_en">Bio (English)</label></th>
+						<td><textarea id="bio_en" name="bio_en" rows="4" class="large-text"><?php echo esc_textarea( $application->bio_en ); ?></textarea></td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card">
+				<h2>Documents</h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="profile_image">Profile Image</label></th>
+						<td>
+							<input type="hidden" id="profile_image" name="profile_image" value="<?php echo esc_attr( $application->profile_image ); ?>" />
+							<div id="profile_image_preview">
+								<?php if ( !empty( $application->profile_image ) ) : ?>
+									<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail' ); ?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_image('profile_image')">Upload Image</button>
+							<button type="button" class="button" onclick="snks_remove_image('profile_image')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="identity_front">Identity Front</label></th>
+						<td>
+							<input type="hidden" id="identity_front" name="identity_front" value="<?php echo esc_attr( $application->identity_front ); ?>" />
+							<div id="identity_front_preview">
+								<?php if ( !empty( $application->identity_front ) ) : ?>
+									<a href="<?php echo wp_get_attachment_url( $application->identity_front ); ?>" target="_blank">View Document</a>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('identity_front')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('identity_front')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="identity_back">Identity Back</label></th>
+						<td>
+							<input type="hidden" id="identity_back" name="identity_back" value="<?php echo esc_attr( $application->identity_back ); ?>" />
+							<div id="identity_back_preview">
+								<?php if ( !empty( $application->identity_back ) ) : ?>
+									<a href="<?php echo wp_get_attachment_url( $application->identity_back ); ?>" target="_blank">View Document</a>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('identity_back')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('identity_back')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="certificates">Certificates</label></th>
+						<td>
+							<input type="hidden" id="certificates" name="certificates" value="<?php echo esc_attr( $application->certificates ); ?>" />
+							<div id="certificates_preview">
 								<?php
-							endif;
-						endforeach;
-					endif;
-					?>
-				</div>
-				<button type="button" class="button" onclick="snks_upload_certificates()">Upload Certificates</button>
-				<button type="button" class="button" onclick="snks_remove_certificates()">Remove All</button>
-			</td>
-		</tr>
-	</table>
+								$certificates = !empty( $application->certificates ) ? json_decode( $application->certificates, true ) : [];
+								if ( !empty( $certificates ) ) :
+									foreach ( $certificates as $cert_id ) :
+										$url = wp_get_attachment_url( $cert_id );
+										if ( $url ) :
+											?>
+											<div style="margin-bottom: 10px;">
+												<a href="<?php echo esc_url( $url ); ?>" target="_blank">
+													<?php echo esc_html( basename( $url ) ); ?>
+												</a>
+											</div>
+											<?php
+										endif;
+									endforeach;
+								endif;
+								?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_certificates()">Upload Certificates</button>
+							<button type="button" class="button" onclick="snks_remove_certificates()">Remove All</button>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<?php submit_button( 'Update Profile' ); ?>
+		</form>
+		
+		<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button">Back to Applications</a>
+	</div>
 	
 	<script>
 	function snks_upload_image(field_id) {
@@ -671,20 +730,11 @@ function snks_therapist_profile_meta_box( $post ) {
 }
 
 /**
- * Save therapist profile data
+ * Save application data
  */
-function snks_save_therapist_profile( $post_id ) {
-	if ( !isset( $_POST['therapist_profile_nonce'] ) || !wp_verify_nonce( $_POST['therapist_profile_nonce'], 'save_therapist_profile' ) ) {
-		return;
-	}
-	
-	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-		return;
-	}
-	
-	if ( !current_user_can( 'edit_post', $post_id ) ) {
-		return;
-	}
+function snks_save_application_data( $application_id ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
 	
 	$fields = [
 		'name', 'name_en', 'email', 'phone', 'whatsapp', 'doctor_specialty',
@@ -692,14 +742,15 @@ function snks_save_therapist_profile( $post_id ) {
 		'profile_image', 'identity_front', 'identity_back', 'certificates'
 	];
 	
+	$data = [];
 	foreach ( $fields as $field ) {
 		if ( isset( $_POST[$field] ) ) {
-			$value = $_POST[$field];
-			if ( $field === 'certificates' && !empty( $value ) ) {
-				$value = json_decode( $value, true );
-			}
-			update_post_meta( $post_id, $field, $value );
+			$data[$field] = $_POST[$field];
 		}
 	}
+	
+	$wpdb->update( $table_name, $data, ['id' => $application_id] );
 }
-add_action( 'save_post', 'snks_save_therapist_profile' ); 
+
+// Create table on plugin activation
+register_activation_hook( __FILE__, 'snks_create_therapist_applications_table' ); 

@@ -177,6 +177,9 @@ function plugin_activation_hook() {
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 
+// Create therapist applications table on activation
+register_activation_hook( __FILE__, 'snks_create_therapist_applications_table' );
+
 add_filter(
 	'gettext',
 	function ( $translated_text, $untranslated_text ) {
