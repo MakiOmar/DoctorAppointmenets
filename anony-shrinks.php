@@ -180,6 +180,45 @@ register_activation_hook( __FILE__, 'plugin_activation_hook' );
 // Create therapist applications table on activation
 register_activation_hook( __FILE__, 'snks_create_therapist_applications_table' );
 
+/**
+ * Create custom table for therapist applications
+ */
+function snks_create_therapist_applications_table() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	$charset_collate = $wpdb->get_charset_collate();
+	
+	$sql = "CREATE TABLE $table_name (
+		id mediumint(9) NOT NULL AUTO_INCREMENT,
+		user_id bigint(20) DEFAULT NULL,
+		name varchar(255) NOT NULL,
+		name_en varchar(255) DEFAULT '',
+		email varchar(255) NOT NULL,
+		phone varchar(50) NOT NULL,
+		whatsapp varchar(50) DEFAULT '',
+		doctor_specialty varchar(255) DEFAULT '',
+		experience_years int(11) DEFAULT 0,
+		education text,
+		bio text,
+		bio_en text,
+		profile_image bigint(20) DEFAULT NULL,
+		identity_front bigint(20) DEFAULT NULL,
+		identity_back bigint(20) DEFAULT NULL,
+		certificates longtext,
+		status varchar(20) DEFAULT 'pending',
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY user_id (user_id),
+		KEY status (status),
+		KEY email (email)
+	) $charset_collate;";
+	
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql );
+}
+
 add_filter(
 	'gettext',
 	function ( $translated_text, $untranslated_text ) {
