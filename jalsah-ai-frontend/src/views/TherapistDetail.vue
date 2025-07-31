@@ -54,21 +54,7 @@
               {{ formatPrice(therapist.price?.others, locale) || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4">
-              <button 
-                @click="bookAppointment"
-                class="btn-primary text-lg px-8 py-3"
-              >
-                {{ $t('therapistDetail.bookSession') }}
-              </button>
-              <button 
-                @click="addToCart"
-                class="btn-outline text-lg px-8 py-3"
-              >
-                {{ $t('therapistDetail.addToCart') }}
-              </button>
-            </div>
+
           </div>
         </div>
       </div>
@@ -123,50 +109,23 @@
           </div>
         </div>
 
-        <!-- Right Column: Sidebar -->
-        <div class="space-y-8">
-          <!-- Availability -->
-          <div class="card">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.availability') }}</h2>
-            <div class="space-y-4">
-              <div>
-                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.nextAvailable') }}</h3>
-                <p class="text-gray-600">{{ formatEarliestSlot(therapist.earliest_slot) }}</p>
-              </div>
-              <div>
-                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionDuration') }}</h3>
-                <p class="text-gray-600">{{ therapist.earliest_slot ? '45 ' + $t('therapistDetail.minutes') : $t('therapistDetail.contactForDetails') }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Contact & Booking -->
-          <div class="card">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.contactAndBooking') }}</h2>
-            <div class="space-y-4">
-              <div>
-                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionPrice') }}</h3>
-                <p class="text-2xl font-bold text-primary-600">
-                  {{ formatPrice(therapist.price?.others, locale) || $t('common.contact') }}
-                </p>
-              </div>
-              <div class="flex flex-col gap-3">
-                <button 
-                  @click="bookAppointment"
-                  class="btn-primary w-full"
-                >
-                  {{ $t('therapistDetail.bookSession') }}
-                </button>
-                <button 
-                  @click="addToCart"
-                  class="btn-outline w-full"
-                >
-                  {{ $t('therapistDetail.addToCart') }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                 <!-- Right Column: Sidebar -->
+         <div class="space-y-8">
+           <!-- Availability -->
+           <div class="card">
+             <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.availability') }}</h2>
+             <div class="space-y-4">
+               <div>
+                 <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.nextAvailable') }}</h3>
+                 <p class="text-gray-600">{{ formatEarliestSlot(therapist.earliest_slot) }}</p>
+               </div>
+               <div>
+                 <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionDuration') }}</h3>
+                 <p class="text-gray-600">{{ therapist.earliest_slot ? '45 ' + $t('therapistDetail.minutes') : $t('therapistDetail.contactForDetails') }}</p>
+               </div>
+             </div>
+           </div>
+         </div>
       </div>
     </div>
 
@@ -195,7 +154,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
-import { useCartStore } from '@/stores/cart'
+
 import api from '@/services/api'
 import { formatPrice } from '@/utils/currency'
 import StarRating from '@/components/StarRating.vue'
@@ -209,7 +168,7 @@ export default {
     const router = useRouter()
     const toast = useToast()
     const { t, locale } = useI18n()
-    const cartStore = useCartStore()
+
     
     const loading = ref(true)
     const therapist = ref(null)
@@ -300,19 +259,7 @@ export default {
       }
     }
 
-    const bookAppointment = () => {
-      if (route && route.params && route.params.id) {
-        router.push(`/booking/${route.params.id}`)
-      }
-    }
 
-    const addToCart = async () => {
-      // This would typically add a default slot to cart
-      // For now, we'll redirect to booking page
-      if (route && route.params && route.params.id) {
-        router.push(`/booking/${route.params.id}`)
-      }
-    }
 
     onMounted(() => {
       // Load therapist data on component mount
@@ -323,8 +270,6 @@ export default {
       loading,
       therapist,
       route,
-      bookAppointment,
-      addToCart,
       formatPrice,
       formatEarliestSlot,
       locale
