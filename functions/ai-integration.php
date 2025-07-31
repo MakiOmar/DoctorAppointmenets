@@ -91,6 +91,43 @@ class SNKS_AI_Integration {
 			'callback' => array( $this, 'ping_rest' ),
 			'permission_callback' => '__return_true',
 		) );
+
+		// New REST routes for existing timetable system
+		register_rest_route( 'jalsah-ai/v1', '/therapist-availability', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_ai_therapist_availability' ),
+			'permission_callback' => '__return_true',
+		) );
+
+		register_rest_route( 'jalsah-ai/v1', '/add-appointment-to-cart', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'add_appointment_to_cart' ),
+			'permission_callback' => '__return_true',
+		) );
+
+		register_rest_route( 'jalsah-ai/v1', '/get-user-cart', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_user_cart' ),
+			'permission_callback' => '__return_true',
+		) );
+
+		register_rest_route( 'jalsah-ai/v1', '/remove-from-cart', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'remove_from_cart' ),
+			'permission_callback' => '__return_true',
+		) );
+
+		register_rest_route( 'jalsah-ai/v1', '/book-appointments-from-cart', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'book_appointments_from_cart' ),
+			'permission_callback' => '__return_true',
+		) );
+
+		register_rest_route( 'jalsah-ai/v1', '/get-user-appointments', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_user_appointments' ),
+			'permission_callback' => '__return_true',
+		) );
 	}
 	
 	/**
@@ -1455,6 +1492,281 @@ class SNKS_AI_Integration {
 			'message' => 'Jalsah AI API is working',
 			'timestamp' => current_time( 'mysql' )
 		), 200 );
+	}
+
+	/**
+	 * Get therapist availability for a specific date
+	 */
+	public function get_ai_therapist_availability($request) {
+		$therapist_id = $request->get_param('therapist_id');
+		$date = $request->get_param('date');
+		
+		if (!$therapist_id || !$date) {
+			return new WP_REST_Response(['error' => 'Missing therapist_id or date'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Query the existing timetable system for available slots
+		$available_slots = $wpdb->get_results($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d 
+			 AND DATE(date_time) = %s 
+			 AND session_status = 'waiting' 
+			 AND order_id = 0
+			 AND attendance_type = 'online'
+			 ORDER BY starts ASC",
+			$therapist_id, $date
+		));
+		
+		$formatted_slots = [];
+		foreach ($available_slots as $slot) {
+			$formatted_slots[] = [
+				'time' => $slot->starts,
+				'formatted_time' => date('g:i A', strtotime($slot->starts)),
+				'slot_id' => $slot->ID,
+				'available' => true
+			];
+		}
+		
+		return new WP_REST_Response([
+			'available_slots' => $formatted_slots,
+			'therapist_id' => $therapist_id,
+			'date' => $date
+		], 200);
+	}
+
+	/**
+	 * Add appointment to cart using existing timetable system
+	 */
+	public function add_appointment_to_cart($request) {
+		$user_id = $request->get_param('user_id');
+		$slot_id = $request->get_param('slot_id');
+		
+		if (!$user_id || !$slot_id) {
+			return new WP_REST_Response(['error' => 'Missing user_id or slot_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Check if slot is still available
+		$slot = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND session_status = 'waiting' AND order_id = 0",
+			$slot_id
+		));
+		
+		if (!$slot) {
+			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
+		}
+		
+		// Check if already in cart
+		$in_cart = $wpdb->get_var($wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting'",
+			$slot_id, $user_id
+		));
+		
+		if ($in_cart) {
+			return new WP_REST_Response(['error' => 'Appointment already in cart'], 400);
+		}
+		
+		// Add to cart by updating the slot
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			[
+				'client_id' => $user_id,
+				'session_status' => 'waiting' // Keep as waiting until checkout
+			],
+			['ID' => $slot_id],
+			['%d', '%s'],
+			['%d']
+		);
+		
+		if ($result === false) {
+			return new WP_REST_Response(['error' => 'Failed to add to cart'], 500);
+		}
+		
+		return new WP_REST_Response([
+			'success' => true,
+			'message' => 'Appointment added to cart',
+			'slot_id' => $slot_id
+		], 200);
+	}
+
+	/**
+	 * Get user's cart using existing timetable system
+	 */
+	public function get_user_cart($request) {
+		$user_id = $request->get_param('user_id');
+		
+		if (!$user_id) {
+			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		$cart_items = $wpdb->get_results($wpdb->prepare(
+			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
+			 FROM {$wpdb->prefix}snks_provider_timetable t
+			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
+			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0
+			 ORDER BY t.date_time ASC",
+			$user_id
+		));
+		
+		$total_price = 0;
+		foreach ($cart_items as $item) {
+			$total_price += 200.00; // Default price
+			// Add therapist image URL
+			if ($item->profile_image) {
+				$item->therapist_image_url = wp_get_attachment_image_url($item->profile_image, 'thumbnail');
+			}
+		}
+		
+		return new WP_REST_Response([
+			'cart_items' => $cart_items,
+			'total_price' => $total_price,
+			'item_count' => count($cart_items)
+		], 200);
+	}
+
+	/**
+	 * Remove item from cart using existing timetable system
+	 */
+	public function remove_from_cart($request) {
+		$slot_id = $request->get_param('slot_id');
+		$user_id = $request->get_param('user_id');
+		
+		if (!$slot_id || !$user_id) {
+			return new WP_REST_Response(['error' => 'Missing slot_id or user_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Remove from cart by resetting the slot
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			[
+				'client_id' => 0,
+				'session_status' => 'waiting'
+			],
+			['ID' => $slot_id, 'client_id' => $user_id],
+			['%d', '%s'],
+			['%d', '%d']
+		);
+		
+		if ($result === false) {
+			return new WP_REST_Response(['error' => 'Failed to remove from cart'], 500);
+		}
+		
+		return new WP_REST_Response([
+			'success' => true,
+			'message' => 'Item removed from cart'
+		], 200);
+	}
+
+	/**
+	 * Book appointments from cart using existing timetable system
+	 */
+	public function book_appointments_from_cart($request) {
+		$user_id = $request->get_param('user_id');
+		
+		if (!$user_id) {
+			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Get cart items
+		$cart_items = $wpdb->get_results($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE client_id = %d AND session_status = 'waiting' AND order_id = 0",
+			$user_id
+		));
+		
+		if (empty($cart_items)) {
+			return new WP_REST_Response(['error' => 'Cart is empty'], 400);
+		}
+		
+		$wpdb->query('START TRANSACTION');
+		
+		try {
+			$booked_appointments = [];
+			
+			foreach ($cart_items as $item) {
+				// Check if slot is still available
+				$is_booked = $wpdb->get_var($wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable 
+					 WHERE ID = %d AND session_status != 'waiting'",
+					$item->ID
+				));
+				
+				if ($is_booked) {
+					throw new Exception("Time slot {$item->date_time} is no longer available");
+				}
+				
+				// Book the appointment
+				$appointment_result = $wpdb->update(
+					$wpdb->prefix . 'snks_provider_timetable',
+					[
+						'session_status' => 'open',
+						'order_id' => 1 // Demo order ID
+					],
+					['ID' => $item->ID],
+					['%s', '%d'],
+					['%d']
+				);
+				
+				if ($appointment_result === false) {
+					throw new Exception('Failed to book appointment');
+				}
+				
+				$booked_appointments[] = $item->ID;
+			}
+			
+			$wpdb->query('COMMIT');
+			
+			return new WP_REST_Response([
+				'success' => true,
+				'message' => 'Appointments booked successfully',
+				'appointment_ids' => $booked_appointments
+			], 200);
+			
+		} catch (Exception $e) {
+			$wpdb->query('ROLLBACK');
+			return new WP_REST_Response(['error' => $e->getMessage()], 500);
+		}
+	}
+
+	/**
+	 * Get user's appointments using existing timetable system
+	 */
+	public function get_user_appointments($request) {
+		$user_id = $request->get_param('user_id');
+		
+		if (!$user_id) {
+			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		$appointments = $wpdb->get_results($wpdb->prepare(
+			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
+			 FROM {$wpdb->prefix}snks_provider_timetable t
+			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
+			 WHERE t.client_id = %d AND t.session_status = 'open'
+			 ORDER BY t.date_time ASC",
+			$user_id
+		));
+		
+		foreach ($appointments as $appointment) {
+			if ($appointment->profile_image) {
+				$appointment->therapist_image_url = wp_get_attachment_image_url($appointment->profile_image, 'thumbnail');
+			}
+		}
+		
+		return new WP_REST_Response(['appointments' => $appointments], 200);
 	}
 
 	// Placeholder for v2 therapists endpoint handler

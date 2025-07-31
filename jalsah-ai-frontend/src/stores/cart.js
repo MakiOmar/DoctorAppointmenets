@@ -1,128 +1,137 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useToast } from 'vue-toastification'
-import api from '@/services/api'
-import { useAuthStore } from './auth'
-import { formatPrice } from '@/utils/currency'
+import { api } from '../services/api'
 
 export const useCartStore = defineStore('cart', () => {
-  const items = ref([])
+  const cartItems = ref([])
   const loading = ref(false)
-  const toast = useToast()
+  const error = ref(null)
 
-  const itemCount = computed(() => items.value.length)
-  const total = computed(() => {
-    return items.value.reduce((sum, item) => sum + (item.price?.others || 0), 0)
+  // Computed properties
+  const totalPrice = computed(() => {
+    return cartItems.value.reduce((total, item) => total + 200.00, 0) // Default price
   })
 
-  const addToCart = async (slotId) => {
+  const itemCount = computed(() => cartItems.value.length)
+
+  // Actions
+  const loadCart = async (userId) => {
+    if (!userId) return
+    
     loading.value = true
+    error.value = null
+    
     try {
-      const response = await api.post('/api/ai/cart/add', { slot_id: slotId })
-      await loadCart()
-      toast.success('Added to cart successfully!')
-      return true
-    } catch (error) {
-      const message = error.response?.data?.error || 'Failed to add to cart'
-      toast.error(message)
-      return false
+      const response = await api.get('/api/ai/get-user-cart', {
+        params: { user_id: userId }
+      })
+      
+      cartItems.value = response.data.cart_items || []
+    } catch (err) {
+      error.value = 'Failed to load cart'
+      console.error('Error loading cart:', err)
     } finally {
       loading.value = false
     }
   }
 
-  const removeFromCart = (slotId) => {
-    items.value = items.value.filter(item => item.slot_id !== slotId)
-    toast.success('Removed from cart')
-  }
-
-  const loadCart = async () => {
-    const userId = getCurrentUserId()
-    if (!userId) {
-      console.log('No user ID found, skipping cart load')
-      return
-    }
+  const addToCart = async (appointmentData) => {
+    loading.value = true
+    error.value = null
     
     try {
-      const response = await api.get(`/api/ai/cart/${userId}`)
-      items.value = response.data.data || []
-    } catch (error) {
-      if (error.response?.status === 401) {
-        console.log('User not authenticated, clearing cart')
-        items.value = []
+      const response = await api.post('/api/ai/add-appointment-to-cart', appointmentData)
+      
+      if (response.data.success) {
+        // Reload cart to get updated data
+        await loadCart(appointmentData.user_id)
+        return { success: true }
       } else {
-        console.error('Failed to load cart:', error)
+        error.value = response.data.error || 'Failed to add to cart'
+        return { success: false, message: error.value }
       }
+    } catch (err) {
+      error.value = 'Failed to add to cart'
+      console.error('Error adding to cart:', err)
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
     }
   }
 
-  const checkout = async () => {
+  const removeFromCart = async (slotId, userId) => {
     loading.value = true
+    error.value = null
+    
     try {
-      const response = await api.post('/api/ai/cart/checkout')
-      const { checkout_url, order_id } = response.data.data
+      const response = await api.post('/api/ai/remove-from-cart', {
+        slot_id: slotId,
+        user_id: userId
+      })
       
-      // Clear cart after successful checkout
-      items.value = []
+      if (response.data.success) {
+        // Reload cart to get updated data
+        await loadCart(userId)
+        return { success: true }
+      } else {
+        error.value = response.data.error || 'Failed to remove from cart'
+        return { success: false, message: error.value }
+      }
+    } catch (err) {
+      error.value = 'Failed to remove from cart'
+      console.error('Error removing from cart:', err)
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const checkout = async (userId) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await api.post('/api/ai/book-appointments-from-cart', {
+        user_id: userId
+      })
       
-      toast.success('Checkout successful!')
-      
-      // Redirect to WooCommerce checkout
-      window.location.href = checkout_url
-      
-      return { checkout_url, order_id }
-    } catch (error) {
-      const message = error.response?.data?.error || 'Checkout failed'
-      toast.error(message)
-      return false
+      if (response.data.success) {
+        // Clear cart after successful checkout
+        cartItems.value = []
+        return { success: true, appointmentIds: response.data.appointment_ids }
+      } else {
+        error.value = response.data.error || 'Failed to checkout'
+        return { success: false, message: error.value }
+      }
+    } catch (err) {
+      error.value = 'Failed to checkout'
+      console.error('Error during checkout:', err)
+      return { success: false, message: error.value }
     } finally {
       loading.value = false
     }
   }
 
   const clearCart = () => {
-    items.value = []
-  }
-
-  const getCurrentUserId = () => {
-    // Get user ID from auth store or localStorage
-    const userData = localStorage.getItem('jalsah_user')
-    if (userData) {
-      try {
-        const user = JSON.parse(userData)
-        return user.id
-      } catch (error) {
-        console.error('Failed to parse user data:', error)
-        return null
-      }
-    }
-    return null
-  }
-
-  // Load cart on store initialization - only if user is logged in
-  const initializeCart = () => {
-    const userId = getCurrentUserId()
-    if (userId) {
-      loadCart()
-    }
-  }
-  
-  // Initialize cart if user is already logged in
-  const authStore = useAuthStore()
-  if (authStore && authStore.isAuthenticated) {
-    initializeCart()
+    cartItems.value = []
+    error.value = null
   }
 
   return {
-    items,
+    // State
+    cartItems,
     loading,
+    error,
+    
+    // Computed
+    totalPrice,
     itemCount,
-    total,
+    
+    // Actions
+    loadCart,
     addToCart,
     removeFromCart,
-    loadCart,
     checkout,
-    clearCart,
-    initializeCart
+    clearCart
   }
 }) 

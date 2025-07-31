@@ -165,6 +165,11 @@ if ( function_exists( 'snks_add_missing_therapist_diagnoses_columns' ) ) {
 if ( function_exists( 'snks_add_missing_therapist_applications_columns' ) ) {
 	snks_add_missing_therapist_applications_columns();
 }
+
+// Create demo booking data using existing timetable system
+if ( function_exists( 'snks_create_demo_booking_data' ) ) {
+	snks_create_demo_booking_data();
+}
 /**
  * Plugin activation hook
  *
