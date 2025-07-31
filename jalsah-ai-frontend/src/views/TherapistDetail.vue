@@ -164,6 +164,7 @@ export default {
     StarRating
   },
   setup() {
+    // Initialize component setup
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
