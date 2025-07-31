@@ -29,10 +29,6 @@
               <span class="text-sm text-gray-600">
                 {{ (therapist.rating || 0).toFixed(1) }} ({{ therapist.total_ratings || 0 }} {{$t('therapistDetail.reviews')}})
               </span>
-              <!-- Debug info -->
-              <span class="text-xs text-red-500" v-if="therapist.total_ratings !== undefined">
-                Debug: total_ratings={{ therapist.total_ratings }}, type={{ typeof therapist.total_ratings }}
-              </span>
             </div>
           </div>
 

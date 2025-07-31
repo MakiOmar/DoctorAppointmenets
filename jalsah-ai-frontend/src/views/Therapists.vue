@@ -220,8 +220,19 @@ export default {
     const loadTherapists = async () => {
       loading.value = true
       try {
-        const response = await api.get('/api/ai/therapists')
+        // Add cache busting parameter
+        const response = await api.get('/api/ai/therapists', {
+          params: {
+            _t: Date.now() // Cache busting
+          }
+        })
         therapists.value = response.data.data || []
+        
+        // Debug logging
+        console.log('Therapists loaded:', therapists.value)
+        therapists.value.forEach(therapist => {
+          console.log(`Therapist ${therapist.id}: rating=${therapist.rating}, total_ratings=${therapist.total_ratings}`)
+        })
       } catch (error) {
         toast.error('Failed to load therapists')
         console.error('Error loading therapists:', error)
