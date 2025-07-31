@@ -315,6 +315,7 @@ export default {
     }
 
     onMounted(() => {
+      // Load therapist data on component mount
       loadTherapist()
     })
 
