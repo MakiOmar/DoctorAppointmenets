@@ -160,6 +160,11 @@ require_once SNKS_DIR . 'includes/ai-tables.php';
 if ( function_exists( 'snks_add_missing_therapist_diagnoses_columns' ) ) {
 	snks_add_missing_therapist_diagnoses_columns();
 }
+
+// Add missing columns to therapist applications table
+if ( function_exists( 'snks_add_missing_therapist_applications_columns' ) ) {
+	snks_add_missing_therapist_applications_columns();
+}
 /**
  * Plugin activation hook
  *
@@ -229,6 +234,39 @@ function snks_create_therapist_applications_table() {
 	
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql );
+	
+	// Add missing columns to existing installations
+	snks_add_missing_therapist_applications_columns();
+}
+
+function snks_add_missing_therapist_applications_columns() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	
+	// Check if columns exist and add them if they don't
+	$columns_to_add = [
+		'rating' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN rating decimal(3,2) DEFAULT 0.00',
+		'total_ratings' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN total_ratings int(11) DEFAULT 0',
+		'ai_bio' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_bio text',
+		'ai_bio_en' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_bio_en text',
+		'ai_certifications' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_certifications text',
+		'ai_earliest_slot' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_earliest_slot int(11) DEFAULT 0',
+		'show_on_ai_site' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN show_on_ai_site tinyint(1) DEFAULT 0'
+	];
+	
+	foreach ( $columns_to_add as $column_name => $sql ) {
+		$column_exists = $wpdb->get_results( $wpdb->prepare( 
+			"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s",
+			DB_NAME,
+			$table_name,
+			$column_name
+		) );
+		
+		if ( empty( $column_exists ) ) {
+			$wpdb->query( $sql );
+			error_log( "Added missing column: $column_name to $table_name" );
+		}
+	}
 }
 
 add_filter(

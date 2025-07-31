@@ -91,13 +91,10 @@ function snks_enhanced_ai_applications_page() {
 	
 	// Handle form submission for editing
 	if ( isset( $_POST['save_application'] ) && isset( $_POST['application_id'] ) ) {
-		error_log( 'Form submission detected for application ID: ' . $_POST['application_id'] );
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'save_application_' . $_POST['application_id'] ) ) {
-			error_log( 'Nonce verification passed' );
 			snks_save_application_data( $_POST['application_id'] );
 			echo '<div class="notice notice-success"><p>Application updated successfully!</p></div>';
 		} else {
-			error_log( 'Nonce verification failed' );
 			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
 		}
 	}
@@ -1045,10 +1042,6 @@ function snks_display_application_edit_form( $application_id ) {
 function snks_save_application_data( $application_id ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'therapist_applications';
-	
-	// Debug logging
-	error_log( 'Saving application data for ID: ' . $application_id );
-	error_log( 'POST data: ' . print_r( $_POST, true ) );
 	
 	$fields = [
 		'name', 'name_en', 'email', 'phone', 'whatsapp', 'doctor_specialty',
