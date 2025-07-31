@@ -187,6 +187,7 @@
 
   <!-- Therapist Details Inline -->
   <TherapistDetailsInline
+    v-if="route && route.params && route.params.id"
     :show="showDetails"
     :therapist-id="route.params.id"
   />
@@ -294,11 +295,23 @@ export default {
     const loadTherapist = async () => {
       loading.value = true
       try {
+        // Check if route and params are available
+        if (!route || !route.params || !route.params.id) {
+          throw new Error('Invalid route parameters')
+        }
+        
         const response = await api.get(`/api/ai/therapists/${route.params.id}`)
         therapist.value = response.data.data
       } catch (error) {
-        toast.error('Failed to load therapist profile')
         console.error('Error loading therapist:', error)
+        
+        if (error.response?.status === 404) {
+          toast.error('Therapist not found or not available')
+          // Redirect back to therapists list
+          router.push('/therapists')
+        } else {
+          toast.error('Failed to load therapist profile')
+        }
       } finally {
         loading.value = false
       }
@@ -309,13 +322,17 @@ export default {
     }
 
     const bookAppointment = () => {
-      router.push(`/booking/${route.params.id}`)
+      if (route && route.params && route.params.id) {
+        router.push(`/booking/${route.params.id}`)
+      }
     }
 
     const addToCart = async () => {
       // This would typically add a default slot to cart
       // For now, we'll redirect to booking page
-      router.push(`/booking/${route.params.id}`)
+      if (route && route.params && route.params.id) {
+        router.push(`/booking/${route.params.id}`)
+      }
     }
 
     onMounted(() => {
@@ -325,6 +342,7 @@ export default {
     return {
       loading,
       therapist,
+      route,
       getAverageRating,
       bookAppointment,
       addToCart,
