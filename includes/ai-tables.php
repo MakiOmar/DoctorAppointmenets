@@ -170,11 +170,11 @@ function snks_create_demo_booking_data() {
         return; // Demo data already exists
     }
     
-    // Create demo appointments for user 85 using the existing timetable system
+    // Create demo appointments for user 85 (patient) with doctor 1
     $demo_appointments = [
         [
-            'user_id' => 1, // Therapist ID
-            'client_id' => 85,
+            'user_id' => 1, // Doctor ID
+            'client_id' => 85, // Patient ID
             'session_status' => 'open',
             'day' => 'Mon',
             'base_hour' => '10:00:00',
@@ -188,8 +188,8 @@ function snks_create_demo_booking_data() {
             'settings' => 'demo_booking'
         ],
         [
-            'user_id' => 1,
-            'client_id' => 85,
+            'user_id' => 1, // Doctor ID
+            'client_id' => 85, // Patient ID
             'session_status' => 'open',
             'day' => 'Wed',
             'base_hour' => '14:30:00',
@@ -212,11 +212,11 @@ function snks_create_demo_booking_data() {
         );
     }
     
-    // Create demo available slots for therapist 1 (for booking)
+    // Create demo available slots for doctor 1 (available for booking)
     $demo_slots = [
         [
-            'user_id' => 1,
-            'client_id' => 0,
+            'user_id' => 1, // Doctor ID
+            'client_id' => 0, // No patient assigned yet (available slot)
             'session_status' => 'waiting',
             'day' => 'Mon',
             'base_hour' => '09:00:00',
@@ -230,8 +230,8 @@ function snks_create_demo_booking_data() {
             'settings' => 'demo_slot'
         ],
         [
-            'user_id' => 1,
-            'client_id' => 0,
+            'user_id' => 1, // Doctor ID
+            'client_id' => 0, // No patient assigned yet (available slot)
             'session_status' => 'waiting',
             'day' => 'Tue',
             'base_hour' => '16:00:00',
@@ -245,8 +245,8 @@ function snks_create_demo_booking_data() {
             'settings' => 'demo_slot'
         ],
         [
-            'user_id' => 1,
-            'client_id' => 0,
+            'user_id' => 1, // Doctor ID
+            'client_id' => 0, // No patient assigned yet (available slot)
             'session_status' => 'waiting',
             'day' => 'Thu',
             'base_hour' => '11:00:00',
