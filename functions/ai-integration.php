@@ -636,24 +636,19 @@ class SNKS_AI_Integration {
 	 * Get AI Therapists
 	 */
 	private function get_ai_therapists() {
-		// Get all therapists with doctor role who are enabled for AI platform
-		$therapists = get_users( array(
-			'role' => 'doctor',
-			'number' => -1,
-			'orderby' => 'display_name',
-			'order' => 'ASC',
-			'meta_query' => array(
-				array(
-					'key' => 'show_on_ai_site',
-					'value' => '1',
-					'compare' => '='
-				)
-			)
-		) );
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'therapist_applications';
+		
+		// Get all approved therapists who are enabled for AI platform
+		$applications = $wpdb->get_results(
+			"SELECT * FROM $table_name 
+			WHERE status = 'approved' AND show_on_ai_site = 1 
+			ORDER BY name ASC"
+		);
 		
 		$result = array();
-		foreach ( $therapists as $therapist ) {
-			$result[] = $this->format_ai_therapist( $therapist );
+		foreach ( $applications as $application ) {
+			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
 		
 		$this->send_success( $result );
@@ -663,18 +658,19 @@ class SNKS_AI_Integration {
 	 * Get AI Therapist
 	 */
 	private function get_ai_therapist( $therapist_id ) {
-		$therapist = get_user_by( 'ID', $therapist_id );
-		if ( ! $therapist || ! in_array( 'doctor', $therapist->roles, true ) ) {
-			$this->send_error( 'Therapist not found', 404 );
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'therapist_applications';
+		
+		$application = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM $table_name WHERE user_id = %d AND status = 'approved' AND show_on_ai_site = 1",
+			$therapist_id
+		) );
+		
+		if ( ! $application ) {
+			$this->send_error( 'Therapist not found or not available on AI platform', 404 );
 		}
 		
-		// Check if therapist is enabled for AI platform
-		$show_on_ai_site = get_user_meta( $therapist->ID, 'show_on_ai_site', true );
-		if ( $show_on_ai_site !== '1' ) {
-			$this->send_error( 'Therapist not available on AI platform', 404 );
-		}
-		
-		$this->send_success( $this->format_ai_therapist( $therapist ) );
+		$this->send_success( $this->format_ai_therapist_from_application( $application ) );
 	}
 	
 	/**
@@ -682,37 +678,72 @@ class SNKS_AI_Integration {
 	 */
 	private function get_ai_therapists_by_diagnosis( $diagnosis_id ) {
 		global $wpdb;
+		$table_name = $wpdb->prefix . 'therapist_applications';
 		
-		$therapist_ids = $wpdb->get_col( $wpdb->prepare(
-			"SELECT therapist_id FROM {$wpdb->prefix}snks_therapist_diagnoses WHERE diagnosis_id = %d",
+		$applications = $wpdb->get_results( $wpdb->prepare(
+			"SELECT ta.* FROM $table_name ta
+			JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON ta.user_id = td.therapist_id
+			WHERE td.diagnosis_id = %d AND ta.status = 'approved' AND ta.show_on_ai_site = 1
+			ORDER BY ta.name ASC",
 			$diagnosis_id
 		) );
 		
-		if ( empty( $therapist_ids ) ) {
-			$this->send_success( array() );
-		}
-		
-		$therapists = get_users( array(
-			'include' => $therapist_ids,
-			'meta_query' => array(
-				array(
-					'key' => 'show_on_ai_site',
-					'value' => '1',
-					'compare' => '='
-				)
-			)
-		) );
-		
 		$result = array();
-		foreach ( $therapists as $therapist ) {
-			$result[] = $this->format_ai_therapist( $therapist );
+		foreach ( $applications as $application ) {
+			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
 		
 		$this->send_success( $result );
 	}
 	
 	/**
-	 * Format AI Therapist
+	 * Format AI Therapist from Application
+	 */
+	private function format_ai_therapist_from_application( $application ) {
+		$diagnoses = $this->get_therapist_diagnoses( $application->user_id );
+		
+		// Get current locale using helper function
+		$locale = snks_get_current_language();
+		
+		// Select appropriate language based on locale
+		$name = $locale === 'ar' ? $application->name : $application->name_en;
+		if ( empty( $name ) ) {
+			$name = $application->name; // Fallback to Arabic name
+		}
+		
+		$bio = $locale === 'ar' ? $application->bio : $application->bio_en;
+		if ( empty( $bio ) ) {
+			$bio = $application->bio; // Fallback to Arabic bio
+		}
+		
+		$ai_bio = $locale === 'ar' ? $application->ai_bio : $application->ai_bio_en;
+		if ( empty( $ai_bio ) ) {
+			$ai_bio = $bio; // Fallback to regular bio
+		}
+		
+		return array(
+			'id' => $application->user_id,
+			'name' => $name,
+			'name_en' => $application->name_en,
+			'name_ar' => $application->name,
+			'photo' => $application->profile_image,
+			'bio' => $ai_bio,
+			'bio_en' => $application->ai_bio_en,
+			'bio_ar' => $application->ai_bio,
+			'public_bio' => $ai_bio,
+			'public_bio_en' => $application->ai_bio_en,
+			'public_bio_ar' => $application->ai_bio,
+			'certifications' => $application->ai_certifications,
+			'earliest_slot' => $application->ai_earliest_slot,
+			'rating' => floatval( $application->rating ),
+			'total_ratings' => intval( $application->total_ratings ),
+			'price' => $this->get_therapist_ai_price( $application->user_id ),
+			'diagnoses' => $diagnoses,
+		);
+	}
+	
+	/**
+	 * Format AI Therapist (Legacy function for backward compatibility)
 	 */
 	private function format_ai_therapist( $therapist ) {
 		$diagnoses = $this->get_therapist_diagnoses( $therapist->ID );
