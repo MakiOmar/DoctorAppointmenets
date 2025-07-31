@@ -730,7 +730,7 @@ class SNKS_AI_Integration {
 			}
 		}
 		
-		return array(
+		$result = array(
 			'id' => $application->user_id,
 			'name' => $name,
 			'name_en' => $application->name_en,
@@ -749,6 +749,11 @@ class SNKS_AI_Integration {
 			'price' => $this->get_therapist_ai_price( $application->user_id ),
 			'diagnoses' => $diagnoses,
 		);
+		
+		// Debug logging
+		error_log( 'Therapist API Response for ID ' . $application->user_id . ': ' . print_r( $result, true ) );
+		
+		return $result;
 	}
 	
 	/**
