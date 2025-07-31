@@ -34,6 +34,7 @@ function snks_create_ai_tables() {
 		diagnosis_id INT(11) NOT NULL,
 		rating DECIMAL(3,2) DEFAULT 0.00,
 		suitability_message TEXT,
+		suitability_message_en TEXT,
 		suitability_message_ar TEXT,
 		display_order INT(11) DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -148,7 +149,20 @@ function snks_add_missing_therapist_diagnoses_columns() {
 	) );
 	
 	if ( empty( $column_exists ) ) {
-		$wpdb->query( "ALTER TABLE $therapist_diagnoses_table ADD COLUMN suitability_message_ar TEXT AFTER suitability_message" );
+		$wpdb->query( "ALTER TABLE $therapist_diagnoses_table ADD COLUMN suitability_message_en TEXT AFTER suitability_message" );
+	}
+	
+	// Check if suitability_message_ar column exists
+	$column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$therapist_diagnoses_table,
+		'suitability_message_ar',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $therapist_diagnoses_table ADD COLUMN suitability_message_ar TEXT AFTER suitability_message_en" );
 	}
 	
 	// Check if display_order column exists
