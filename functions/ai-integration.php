@@ -636,12 +636,19 @@ class SNKS_AI_Integration {
 	 * Get AI Therapists
 	 */
 	private function get_ai_therapists() {
-		// Get all therapists with doctor role
+		// Get all therapists with doctor role who are enabled for AI platform
 		$therapists = get_users( array(
 			'role' => 'doctor',
 			'number' => -1,
 			'orderby' => 'display_name',
-			'order' => 'ASC'
+			'order' => 'ASC',
+			'meta_query' => array(
+				array(
+					'key' => 'show_on_ai_site',
+					'value' => '1',
+					'compare' => '='
+				)
+			)
 		) );
 		
 		$result = array();
@@ -659,6 +666,12 @@ class SNKS_AI_Integration {
 		$therapist = get_user_by( 'ID', $therapist_id );
 		if ( ! $therapist || ! in_array( 'doctor', $therapist->roles, true ) ) {
 			$this->send_error( 'Therapist not found', 404 );
+		}
+		
+		// Check if therapist is enabled for AI platform
+		$show_on_ai_site = get_user_meta( $therapist->ID, 'show_on_ai_site', true );
+		if ( $show_on_ai_site !== '1' ) {
+			$this->send_error( 'Therapist not available on AI platform', 404 );
 		}
 		
 		$this->send_success( $this->format_ai_therapist( $therapist ) );
