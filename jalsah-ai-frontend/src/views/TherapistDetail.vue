@@ -54,36 +54,11 @@
               {{ formatPrice(therapist.price?.others, locale) || $t('common.contact') }} {{ $t('therapistDetail.perSession') }}
             </div>
 
-            <!-- Bio -->
-            <p class="text-gray-600 mb-6 leading-relaxed">
-              {{ therapist.bio || $t('therapistDetail.bioDefault') }}
-            </p>
-
-            <!-- Specializations -->
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ $t('therapists.specializations') }}</h3>
-              <div class="flex flex-wrap gap-2">
-                <span 
-                  v-for="diagnosis in therapist.diagnoses" 
-                  :key="diagnosis.id"
-                  class="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm"
-                >
-                  {{ diagnosis.name }}
-                </span>
-              </div>
-            </div>
-
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4">
               <button 
-                @click="showTherapistDetails"
-                class="btn-primary text-lg px-8 py-3"
-              >
-                {{ showDetails ? $t('common.hide') : $t('therapistDetail.viewDetails') }}
-              </button>
-              <button 
                 @click="bookAppointment"
-                class="btn-outline text-lg px-8 py-3"
+                class="btn-primary text-lg px-8 py-3"
               >
                 {{ $t('therapistDetail.bookSession') }}
               </button>
@@ -98,72 +73,99 @@
         </div>
       </div>
 
-      <!-- Detailed Information -->
-      <div class="grid md:grid-cols-2 gap-8">
-        <!-- About -->
-        <div class="card">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.about') }}</h2>
-          <div class="space-y-4">
-            <div>
-              <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.experience') }}</h3>
-              <p class="text-gray-600">{{ $t('therapistDetail.experienceText') }}</p>
-            </div>
-            <div>
-              <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.approach') }}</h3>
-              <p class="text-gray-600">{{ $t('therapistDetail.approachText') }}</p>
-            </div>
-            <div>
-              <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.languages') }}</h3>
-              <p class="text-gray-600">{{ $t('therapistDetail.languagesText') }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Availability -->
-        <div class="card">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.availability') }}</h2>
-          <div class="space-y-4">
-            <div>
-              <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.nextAvailable') }}</h3>
-              <p class="text-gray-600">{{ formatEarliestSlot(therapist.earliest_slot) }}</p>
-            </div>
-            <div>
-              <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionDuration') }}</h3>
-              <p class="text-gray-600">{{ $t('therapistDetail.sessionDurationText') }}</p>
-            </div>
-            <div>
-              <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionType') }}</h3>
-              <p class="text-gray-600">{{ $t('therapistDetail.sessionTypeText') }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reviews -->
-      <div class="card mt-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('therapistDetail.reviews') }}</h2>
-        
-        <div v-if="therapist.diagnoses && therapist.diagnoses.length > 0" class="space-y-6">
-          <div 
-            v-for="diagnosis in therapist.diagnoses" 
-            :key="diagnosis.id"
-            class="border-b border-gray-200 pb-6 last:border-b-0"
-          >
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-medium text-gray-900">{{ diagnosis.name }}</h3>
-              <div class="flex items-center" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-                <StarRating :rating="diagnosis.rating || 0" size="w-4 h-4" />
-                <span class="text-sm text-gray-600">{{ diagnosis.rating || 0 }}/5</span>
+      <!-- Main Content Grid -->
+      <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Left Column: About & Bio -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- About Section -->
+          <div class="card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.about') }}</h2>
+            <div class="space-y-4">
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.bio') }}</h3>
+                <p class="text-gray-600 leading-relaxed">
+                  {{ therapist.bio || $t('therapistDetail.bioDefault') }}
+                </p>
+              </div>
+              <div v-if="therapist.certifications">
+                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.certifications') }}</h3>
+                <p class="text-gray-600">{{ therapist.certifications }}</p>
               </div>
             </div>
-            <p v-if="diagnosis.suitability_message" class="text-gray-600 text-sm">
-              {{ diagnosis.suitability_message }}
-            </p>
+          </div>
+
+          <!-- Specializations & Expertise -->
+          <div class="card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('therapists.specializations') }}</h2>
+            
+            <div v-if="therapist.diagnoses && therapist.diagnoses.length > 0" class="space-y-6">
+              <div 
+                v-for="diagnosis in therapist.diagnoses" 
+                :key="diagnosis.id"
+                class="border-b border-gray-200 pb-6 last:border-b-0"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-medium text-gray-900 text-lg">{{ diagnosis.name }}</h3>
+                  <div class="flex items-center" :class="$i18n.locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
+                    <StarRating :rating="diagnosis.rating || 0" size="w-4 h-4" />
+                    <span class="text-sm text-gray-600">{{ diagnosis.rating || 0 }}/5</span>
+                  </div>
+                </div>
+                <p v-if="diagnosis.suitability_message" class="text-gray-600">
+                  {{ diagnosis.suitability_message }}
+                </p>
+              </div>
+            </div>
+            
+            <div v-else class="text-center py-8">
+              <p class="text-gray-600">{{ $t('therapistDetail.noSpecializations') }}</p>
+            </div>
           </div>
         </div>
-        
-        <div v-else class="text-center py-8">
-          <p class="text-gray-600">{{ $t('therapistDetail.noReviews') }}</p>
+
+        <!-- Right Column: Sidebar -->
+        <div class="space-y-8">
+          <!-- Availability -->
+          <div class="card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.availability') }}</h2>
+            <div class="space-y-4">
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.nextAvailable') }}</h3>
+                <p class="text-gray-600">{{ formatEarliestSlot(therapist.earliest_slot) }}</p>
+              </div>
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionDuration') }}</h3>
+                <p class="text-gray-600">{{ therapist.earliest_slot ? '45 ' + $t('therapistDetail.minutes') : $t('therapistDetail.contactForDetails') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact & Booking -->
+          <div class="card">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('therapistDetail.contactAndBooking') }}</h2>
+            <div class="space-y-4">
+              <div>
+                <h3 class="font-medium text-gray-900 mb-2">{{ $t('therapistDetail.sessionPrice') }}</h3>
+                <p class="text-2xl font-bold text-primary-600">
+                  {{ formatPrice(therapist.price?.others, locale) || $t('common.contact') }}
+                </p>
+              </div>
+              <div class="flex flex-col gap-3">
+                <button 
+                  @click="bookAppointment"
+                  class="btn-primary w-full"
+                >
+                  {{ $t('therapistDetail.bookSession') }}
+                </button>
+                <button 
+                  @click="addToCart"
+                  class="btn-outline w-full"
+                >
+                  {{ $t('therapistDetail.addToCart') }}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -185,12 +187,7 @@
     </div>
   </div>
 
-  <!-- Therapist Details Inline -->
-  <TherapistDetailsInline
-    v-if="route && route.params && route.params.id"
-    :show="showDetails"
-    :therapist-id="route.params.id"
-  />
+
 </template>
 
 <script>
@@ -202,12 +199,10 @@ import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
 import { formatPrice } from '@/utils/currency'
 import StarRating from '@/components/StarRating.vue'
-import TherapistDetailsInline from '@/components/TherapistDetailsInline.vue'
 export default {
   name: 'TherapistDetail',
   components: {
-    StarRating,
-    TherapistDetailsInline
+    StarRating
   },
   setup() {
     const route = useRoute()
@@ -218,20 +213,8 @@ export default {
     
     const loading = ref(true)
     const therapist = ref(null)
-    const showDetails = ref(false)
 
-    const getAverageRating = () => {
-      if (!therapist.value?.diagnoses || therapist.value.diagnoses.length === 0) {
-        return 0
-      }
-      const validRatings = therapist.value.diagnoses.filter(d => d.rating && !isNaN(d.rating) && d.rating > 0)
-      if (validRatings.length === 0) {
-        return 0
-      }
-      const total = validRatings.reduce((sum, d) => sum + Math.min(d.rating || 0, 5), 0)
-      const average = total / validRatings.length
-      return Math.min(average, 5) // Cap at 5.0
-    }
+
 
     const formatEarliestSlot = (slotTime) => {
       if (!slotTime) {
@@ -317,10 +300,6 @@ export default {
       }
     }
 
-    const showTherapistDetails = () => {
-      showDetails.value = !showDetails.value
-    }
-
     const bookAppointment = () => {
       if (route && route.params && route.params.id) {
         router.push(`/booking/${route.params.id}`)
@@ -343,14 +322,11 @@ export default {
       loading,
       therapist,
       route,
-      getAverageRating,
       bookAppointment,
       addToCart,
       formatPrice,
       formatEarliestSlot,
-      locale,
-      showDetails,
-      showTherapistDetails
+      locale
     }
   }
 }
