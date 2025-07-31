@@ -91,9 +91,14 @@ function snks_enhanced_ai_applications_page() {
 	
 	// Handle form submission for editing
 	if ( isset( $_POST['save_application'] ) && isset( $_POST['application_id'] ) ) {
+		error_log( 'Form submission detected for application ID: ' . $_POST['application_id'] );
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'save_application_' . $_POST['application_id'] ) ) {
+			error_log( 'Nonce verification passed' );
 			snks_save_application_data( $_POST['application_id'] );
 			echo '<div class="notice notice-success"><p>Application updated successfully!</p></div>';
+		} else {
+			error_log( 'Nonce verification failed' );
+			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
 		}
 	}
 	
@@ -587,7 +592,7 @@ function snks_display_application_edit_form( $application_id ) {
 	<div class="wrap">
 		<h1>Edit Therapist Profile</h1>
 		
-		<form method="post" action="">
+		<form method="post" action="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>">
 			<?php wp_nonce_field( 'save_application_' . $application_id ); ?>
 			<input type="hidden" name="application_id" value="<?php echo $application_id; ?>">
 			<input type="hidden" name="save_application" value="1">
@@ -644,6 +649,7 @@ function snks_display_application_edit_form( $application_id ) {
 					<tr>
 						<th><label for="show_on_ai_site">Show on AI Site</label></th>
 						<td>
+							<input type="hidden" name="show_on_ai_site" value="0" />
 							<input type="checkbox" id="show_on_ai_site" name="show_on_ai_site" value="1" <?php checked( $application->show_on_ai_site, 1 ); ?> />
 							<label for="show_on_ai_site">Display this therapist on the AI platform</label>
 						</td>
@@ -1040,6 +1046,10 @@ function snks_save_application_data( $application_id ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'therapist_applications';
 	
+	// Debug logging
+	error_log( 'Saving application data for ID: ' . $application_id );
+	error_log( 'POST data: ' . print_r( $_POST, true ) );
+	
 	$fields = [
 		'name', 'name_en', 'email', 'phone', 'whatsapp', 'doctor_specialty',
 		'experience_years', 'education', 'bio', 'bio_en',
@@ -1059,7 +1069,7 @@ function snks_save_application_data( $application_id ) {
 					$data[$field] = floatval( $_POST[$field] );
 					break;
 				case 'show_on_ai_site':
-					$data[$field] = intval( $_POST[$field] );
+					$data[$field] = isset( $_POST[$field] ) ? intval( $_POST[$field] ) : 0;
 					break;
 				default:
 					$data[$field] = $_POST[$field];
