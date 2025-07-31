@@ -25,9 +25,9 @@
             <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ therapist.name }}</h3>
             
             <div class="flex items-center gap-2">
-              <StarRating :rating="getAverageRating(therapist)" />
+              <StarRating :rating="therapist.rating || 0" />
               <span class="text-sm text-gray-600">
-                {{ isNaN(getAverageRating(therapist)) ? '0.0' : getAverageRating(therapist).toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{$t('therapistDetail.reviews')}})
+                {{ (therapist.rating || 0).toFixed(1) }} ({{ therapist.total_ratings || 0 }} {{$t('therapistDetail.reviews')}})
               </span>
             </div>
           </div>

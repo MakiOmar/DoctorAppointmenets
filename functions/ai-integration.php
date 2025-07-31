@@ -721,12 +721,21 @@ class SNKS_AI_Integration {
 			$ai_bio = $bio; // Fallback to regular bio
 		}
 		
+		// Get profile image URL
+		$profile_image_url = '';
+		if ( $application->profile_image ) {
+			$profile_image_url = wp_get_attachment_image_url( $application->profile_image, 'medium' );
+			if ( ! $profile_image_url ) {
+				$profile_image_url = wp_get_attachment_url( $application->profile_image );
+			}
+		}
+		
 		return array(
 			'id' => $application->user_id,
 			'name' => $name,
 			'name_en' => $application->name_en,
 			'name_ar' => $application->name,
-			'photo' => $application->profile_image,
+			'photo' => $profile_image_url,
 			'bio' => $ai_bio,
 			'bio_en' => $application->ai_bio_en,
 			'bio_ar' => $application->ai_bio,
