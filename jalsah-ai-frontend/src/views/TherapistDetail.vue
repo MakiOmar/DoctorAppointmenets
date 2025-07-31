@@ -43,9 +43,9 @@
             
             <!-- Rating -->
             <div class="flex items-center mb-4" :class="locale === 'ar' ? 'space-x-reverse space-x-2' : 'space-x-2'">
-              <StarRating :rating="getAverageRating()" size="w-5 h-5" />
+              <StarRating :rating="therapist.rating || 0" size="w-5 h-5" />
               <span class="text-lg text-gray-600">
-                {{ isNaN(getAverageRating()) ? '0.0' : getAverageRating().toFixed(1) }} ({{ therapist.diagnoses?.length || 0 }} {{ $t('therapistDetail.reviews') }})
+                {{ (therapist.rating || 0).toFixed(1) }} ({{ therapist.total_ratings || 0 }} {{ $t('therapistDetail.reviews') }})
               </span>
             </div>
 
