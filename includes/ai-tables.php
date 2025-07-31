@@ -158,7 +158,7 @@ function snks_add_missing_therapist_diagnoses_columns() {
 }
 
 /**
- * Create demo data for user 85
+ * Create demo data for user 85 using existing timetable system
  */
 function snks_create_demo_booking_data() {
     global $wpdb;
@@ -166,6 +166,7 @@ function snks_create_demo_booking_data() {
     // Check if demo data already exists
     $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = 85");
     if ($existing_appointments > 0) {
+        error_log('Demo data already exists for user 85');
         return; // Demo data already exists
     }
     
@@ -211,7 +212,7 @@ function snks_create_demo_booking_data() {
         );
     }
     
-    // Create demo available slots for therapist 1
+    // Create demo available slots for therapist 1 (for booking)
     $demo_slots = [
         [
             'user_id' => 1,
@@ -242,6 +243,21 @@ function snks_create_demo_booking_data() {
             'attendance_type' => 'online',
             'order_id' => 0,
             'settings' => 'demo_slot'
+        ],
+        [
+            'user_id' => 1,
+            'client_id' => 0,
+            'session_status' => 'waiting',
+            'day' => 'Thu',
+            'base_hour' => '11:00:00',
+            'period' => 45,
+            'date_time' => date('Y-m-d H:i:s', strtotime('+10 days 11:00:00')),
+            'starts' => '11:00:00',
+            'ends' => '11:45:00',
+            'clinic' => 'Online',
+            'attendance_type' => 'online',
+            'order_id' => 0,
+            'settings' => 'demo_slot'
         ]
     ];
     
@@ -254,8 +270,4 @@ function snks_create_demo_booking_data() {
     }
     
     error_log('Demo booking data created for user 85 using existing timetable system');
-}
-
-// Hook to create tables on plugin activation
-add_action( 'snks_create_ai_tables', 'snks_create_ai_tables' );
-add_action( 'snks_add_ai_meta_fields', 'snks_add_ai_meta_fields' ); 
+} 
