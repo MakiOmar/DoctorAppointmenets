@@ -91,6 +91,19 @@ class SNKS_AI_Orders {
 		$order->update_meta_data( 'ai_appointments_count', count( $cart_items ) );
 		$order->update_meta_data( 'ai_total_amount', $order->get_total() );
 		
+		// Store form data for AI pricing table
+		$form_data = [
+			'_is_ai_booking' => true,
+			'_total_price' => $order->get_total(),
+			'_session_date' => $cart_items[0]->date_time ?? '',
+			'_session_time' => $cart_items[0]->starts ?? '',
+			'_session_duration' => SNKS_AI_Products::get_session_duration(),
+			'_coupon_code' => '' // Can be added later if needed
+		];
+		
+		// Store form data in transient for pricing table
+		set_transient( 'snks_ai_form_data_' . $order->get_id(), $form_data, 3600 ); // 1 hour expiry
+		
 		// Set payment method (will be selected at checkout)
 		$order->set_payment_method( '' ); // Let user select at checkout
 		$order->set_payment_method_title( '' );

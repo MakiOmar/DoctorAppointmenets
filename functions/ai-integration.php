@@ -2330,6 +2330,26 @@ function snks_handle_ai_checkout_order($order_id, $posted_data, $order) {
 add_filter('woocommerce_order_item_get_total', 'snks_ai_order_item_total', 10, 2);
 add_filter('woocommerce_order_item_get_subtotal', 'snks_ai_order_item_subtotal', 10, 2);
 
+/**
+ * Filter to modify form data transient key for AI orders
+ */
+add_filter('snks_form_data_transient_key', 'snks_ai_form_data_transient_key', 10, 1);
+
+function snks_ai_form_data_transient_key($key) {
+	// Check if we're on a WooCommerce order page
+	if (isset($_GET['order-pay']) && !empty($_GET['order-pay'])) {
+		$order_id = intval($_GET['order-pay']);
+		$order = wc_get_order($order_id);
+		
+		if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
+			// Return AI-specific transient key
+			return 'snks_ai_form_data_' . $order_id;
+		}
+	}
+	
+	return $key;
+}
+
 function snks_ai_order_item_total($total, $item) {
 	if ($item->get_meta('is_ai_session') === 'true') {
 		$line_total = $item->get_meta('_line_total');
