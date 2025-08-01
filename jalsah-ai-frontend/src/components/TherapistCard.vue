@@ -174,7 +174,11 @@
                 class="btn-primary px-4 py-2 text-sm"
                 :disabled="bookingLoading"
               >
-                {{ bookingLoading ? $t('common.loading') : $t('therapistDetails.bookThis') }}
+                <span v-if="bookingLoading" class="flex items-center">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {{ $t('common.loading') }}
+                </span>
+                <span v-else>{{ $t('therapistDetails.bookThis') }}</span>
               </button>
             </div>
           </div>
@@ -225,9 +229,14 @@
                     <button
                       v-if="!slot.inCart"
                       @click="addToCart(slot)"
-                      class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50"
+                      :disabled="cartLoading[slot.id]"
+                      class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {{ formatTimeSlot(slot.time) }}
+                      <span v-if="cartLoading[slot.id]" class="flex items-center justify-center">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
+                        {{ $t('common.loading') }}
+                      </span>
+                      <span v-else>{{ formatTimeSlot(slot.time) }}</span>
                     </button>
                     <div
                       v-else
@@ -236,10 +245,15 @@
                       <span>{{ formatTimeSlot(slot.time) }}</span>
                       <button
                         @click="removeFromCart(slot)"
-                        class="ml-2 text-red-600 hover:text-red-800 text-xs font-medium"
+                        :disabled="cartLoading[slot.id]"
+                        class="ml-2 text-red-600 hover:text-red-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Remove from cart"
                       >
-                        {{ $t('common.remove') }}
+                        <span v-if="cartLoading[slot.id]" class="flex items-center">
+                          <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600 mr-1"></div>
+                          {{ $t('common.loading') }}
+                        </span>
+                        <span v-else>{{ $t('common.remove') }}</span>
                       </button>
                     </div>
                   </div>
@@ -312,6 +326,7 @@ export default {
     const selectedDate = ref(null)
     const timeSlots = ref([])
     const bookingLoading = ref(false)
+    const cartLoading = ref({}) // Track loading state for each slot
     const earliestSlot = ref(null)
 
     const getAverageRating = (therapist) => {
@@ -496,6 +511,9 @@ export default {
         return
       }
       
+      // Set loading state for this slot
+      cartLoading.value[slot.id] = true
+      
       try {
         // Use the cart store with new REST API
         const result = await cartStore.addToCart({
@@ -513,6 +531,9 @@ export default {
         }
       } catch (err) {
         toast.error(t('common.error'))
+      } finally {
+        // Clear loading state
+        cartLoading.value[slot.id] = false
       }
     }
 
@@ -522,6 +543,9 @@ export default {
         toast.error(t('common.pleaseLogin'))
         return
       }
+      
+      // Set loading state for this slot
+      cartLoading.value[slot.id] = true
       
       try {
         // Use the cart store with new REST API
@@ -537,6 +561,9 @@ export default {
         }
       } catch (err) {
         toast.error(t('common.error'))
+      } finally {
+        // Clear loading state
+        cartLoading.value[slot.id] = false
       }
     }
 

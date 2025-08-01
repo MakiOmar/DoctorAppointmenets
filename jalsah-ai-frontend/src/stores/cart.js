@@ -35,7 +35,6 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       error.value = 'Failed to load cart'
-      console.error('Error loading cart:', err)
       cartItems.value = []
     } finally {
       loading.value = false
@@ -59,7 +58,6 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       error.value = 'Failed to add to cart'
-      console.error('Error adding to cart:', err)
       return { success: false, message: error.value }
     } finally {
       loading.value = false
@@ -86,7 +84,6 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       error.value = 'Failed to remove from cart'
-      console.error('Error removing from cart:', err)
       return { success: false, message: error.value }
     } finally {
       loading.value = false
@@ -112,7 +109,6 @@ export const useCartStore = defineStore('cart', () => {
       }
     } catch (err) {
       error.value = 'Failed to checkout'
-      console.error('Error during checkout:', err)
       return { success: false, message: error.value }
     } finally {
       loading.value = false
