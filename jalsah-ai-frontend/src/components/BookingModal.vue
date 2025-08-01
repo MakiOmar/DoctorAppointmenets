@@ -137,7 +137,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
-import { api } from '../services/api'
+import api from '../services/api'
 
 const { t } = useI18n()
 const cartStore = useCartStore()

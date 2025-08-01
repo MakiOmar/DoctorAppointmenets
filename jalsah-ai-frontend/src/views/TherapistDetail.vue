@@ -140,7 +140,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { api } from '../services/api'
+import api from '../services/api'
 import { formatPrice } from '../utils/currency'
 import BookingModal from '../components/BookingModal.vue'
 
