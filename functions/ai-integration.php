@@ -2183,7 +2183,7 @@ class SNKS_AI_Integration {
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND DATE(date_time) = %s
-			 AND settings LIKE '%ai_booking%'
+			 AND (settings LIKE '%ai_booking%' OR settings = '')
 			 ORDER BY starts ASC",
 			$therapist_id,
 			$date

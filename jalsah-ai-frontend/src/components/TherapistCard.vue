@@ -469,15 +469,49 @@ export default {
       selectedDate.value = date
       loadingDates.value = true
       try {
-        const response = await fetch(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
-        const data = await response.json()
-        if (data.success) {
-          timeSlots.value = data.data.map(slot => ({
-            ...slot,
-            inCart: false
-          }))
+        console.log('selectDate Debug: Selected date:', date)
+        
+        // Since the time-slots endpoint has routing issues, let's generate time slots
+        // based on the available_dates data we already have
+        if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
+          const selectedDateInfo = props.therapist.available_dates.find(d => d.date === date.value)
+          console.log('selectDate Debug: Found date info:', selectedDateInfo)
+          
+          if (selectedDateInfo) {
+            // Create a time slot based on the earliest_time for this date
+            timeSlots.value = [{
+              id: `slot_${date.value}_${selectedDateInfo.earliest_time}`,
+              value: selectedDateInfo.earliest_time,
+              time: selectedDateInfo.earliest_time,
+              end_time: this.calculateEndTime(selectedDateInfo.earliest_time, 45), // 45 minutes period
+              period: 45,
+              clinic: 'Online',
+              attendance_type: 'online',
+              date_time: `${date.value} ${selectedDateInfo.earliest_time}`,
+              inCart: false
+            }]
+            console.log('selectDate Debug: Generated time slots:', timeSlots.value)
+          } else {
+            console.log('selectDate Debug: No date info found for selected date')
+            timeSlots.value = []
+          }
+        } else {
+          console.log('selectDate Debug: No available_dates data, trying API call')
+          
+          // Fallback to API call
+          const response = await fetch(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
+          const data = await response.json()
+          if (data.success && Array.isArray(data.data)) {
+            timeSlots.value = data.data.map(slot => ({
+              ...slot,
+              inCart: false
+            }))
+          } else {
+            timeSlots.value = []
+          }
         }
       } catch (err) {
+        console.error('selectDate Debug: Error:', err)
         timeSlots.value = []
       } finally {
         loadingDates.value = false
@@ -600,6 +634,15 @@ export default {
       const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       return `${displayHours}:${minutes} ${period}`
+    }
+
+    const calculateEndTime = (startTime, durationMinutes) => {
+      const [hours, minutes] = startTime.split(':').map(Number)
+      const startDate = new Date()
+      startDate.setHours(hours, minutes, 0, 0)
+      
+      const endDate = new Date(startDate.getTime() + durationMinutes * 60000)
+      return endDate.toTimeString().slice(0, 5)
     }
 
     const formatSlot = (slot) => {
