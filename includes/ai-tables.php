@@ -164,58 +164,16 @@ function snks_create_demo_booking_data() {
     global $wpdb;
     
     // Check if demo data already exists
-    $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = 85 AND settings LIKE '%ai_booking%'");
+    $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND settings LIKE '%ai_booking%'");
     if ($existing_appointments > 0) {
-        error_log('Demo data already exists for user 85');
+        error_log('Demo data already exists for doctor 85');
         return; // Demo data already exists
     }
     
-    // Create demo appointments for user 85 (patient) with doctor 1
-    $demo_appointments = [
-        [
-            'user_id' => 1, // Doctor ID
-            'client_id' => 85, // Patient ID
-            'session_status' => 'open',
-            'day' => 'Mon',
-            'base_hour' => '10:00:00',
-            'period' => 45,
-            'date_time' => date('Y-m-d H:i:s', strtotime('+3 days 10:00:00')),
-            'starts' => '10:00:00',
-            'ends' => '10:45:00',
-            'clinic' => 'Online',
-            'attendance_type' => 'online',
-            'order_id' => 1,
-            'settings' => 'ai_booking:demo_confirmed'
-        ],
-        [
-            'user_id' => 1, // Doctor ID
-            'client_id' => 85, // Patient ID
-            'session_status' => 'open',
-            'day' => 'Wed',
-            'base_hour' => '14:30:00',
-            'period' => 45,
-            'date_time' => date('Y-m-d H:i:s', strtotime('+5 days 14:30:00')),
-            'starts' => '14:30:00',
-            'ends' => '15:15:00',
-            'clinic' => 'Online',
-            'attendance_type' => 'online',
-            'order_id' => 2,
-            'settings' => 'ai_booking:demo_confirmed'
-        ]
-    ];
-    
-    foreach ($demo_appointments as $appointment) {
-        $wpdb->insert(
-            $wpdb->prefix . 'snks_provider_timetable',
-            $appointment,
-            ['%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s']
-        );
-    }
-    
-    // Create demo available slots for doctor 1 (available for booking)
+    // Create demo available slots for doctor 85 (available for booking)
     $demo_slots = [
         [
-            'user_id' => 1, // Doctor ID
+            'user_id' => 85, // Doctor ID (doctor 85)
             'client_id' => 0, // No patient assigned yet (available slot)
             'session_status' => 'waiting',
             'day' => 'Mon',
@@ -230,7 +188,7 @@ function snks_create_demo_booking_data() {
             'settings' => 'ai_booking:available_slot'
         ],
         [
-            'user_id' => 1, // Doctor ID
+            'user_id' => 85, // Doctor ID (doctor 85)
             'client_id' => 0, // No patient assigned yet (available slot)
             'session_status' => 'waiting',
             'day' => 'Tue',
@@ -245,7 +203,7 @@ function snks_create_demo_booking_data() {
             'settings' => 'ai_booking:available_slot'
         ],
         [
-            'user_id' => 1, // Doctor ID
+            'user_id' => 85, // Doctor ID (doctor 85)
             'client_id' => 0, // No patient assigned yet (available slot)
             'session_status' => 'waiting',
             'day' => 'Thu',
@@ -254,6 +212,21 @@ function snks_create_demo_booking_data() {
             'date_time' => date('Y-m-d H:i:s', strtotime('+10 days 11:00:00')),
             'starts' => '11:00:00',
             'ends' => '11:45:00',
+            'clinic' => 'Online',
+            'attendance_type' => 'online',
+            'order_id' => 0,
+            'settings' => 'ai_booking:available_slot'
+        ],
+        [
+            'user_id' => 85, // Doctor ID (doctor 85)
+            'client_id' => 0, // No patient assigned yet (available slot)
+            'session_status' => 'waiting',
+            'day' => 'Fri',
+            'base_hour' => '14:00:00',
+            'period' => 45,
+            'date_time' => date('Y-m-d H:i:s', strtotime('+12 days 14:00:00')),
+            'starts' => '14:00:00',
+            'ends' => '14:45:00',
             'clinic' => 'Online',
             'attendance_type' => 'online',
             'order_id' => 0,
@@ -269,5 +242,5 @@ function snks_create_demo_booking_data() {
         );
     }
     
-    error_log('Demo booking data created for user 85 using existing timetable system with AI identifier');
+    error_log('Demo booking data created for doctor 85 using existing timetable system with AI identifier');
 } 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Manual script to create demo data for user 85
+ * Manual script to create demo data for doctor 85
  * Run this file directly in the browser to create demo data
  */
 
@@ -9,49 +9,25 @@ require_once('../../../wp-load.php');
 
 // Check if demo data already exists
 global $wpdb;
-$existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = 85 AND settings LIKE '%ai_booking%'");
+$existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND settings LIKE '%ai_booking%'");
 
 if ($existing_appointments > 0) {
-    echo "Demo data already exists for user 85. Found {$existing_appointments} AI appointments.<br>";
+    echo "Demo data already exists for doctor 85. Found {$existing_appointments} AI available slots.<br>";
     echo "You can test the booking system now!<br>";
 } else {
     // Create demo data
     if (function_exists('snks_create_demo_booking_data')) {
         snks_create_demo_booking_data();
-        echo "Demo data created successfully for user 85!<br>";
+        echo "Demo data created successfully for doctor 85!<br>";
         echo "You can now test the booking system.<br>";
     } else {
         echo "Error: snks_create_demo_booking_data function not found.<br>";
     }
 }
 
-// Show existing data for user 85 (patient)
-echo "<h3>Current AI appointments for patient 85:</h3>";
-$appointments = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = 85 AND settings LIKE '%ai_booking%'");
-if ($appointments) {
-    echo "<table border='1' style='border-collapse: collapse;'>";
-    echo "<tr><th>ID</th><th>Doctor ID</th><th>Patient ID</th><th>Status</th><th>Date/Time</th><th>Starts</th><th>Ends</th><th>Order ID</th><th>Settings</th></tr>";
-    foreach ($appointments as $apt) {
-        echo "<tr>";
-        echo "<td>{$apt->ID}</td>";
-        echo "<td>{$apt->user_id}</td>";
-        echo "<td>{$apt->client_id}</td>";
-        echo "<td>{$apt->session_status}</td>";
-        echo "<td>{$apt->date_time}</td>";
-        echo "<td>{$apt->starts}</td>";
-        echo "<td>{$apt->ends}</td>";
-        echo "<td>{$apt->order_id}</td>";
-        echo "<td>{$apt->settings}</td>";
-        echo "</tr>";
-    }
-    echo "</table>";
-} else {
-    echo "No AI appointments found for patient 85.";
-}
-
-// Show available AI slots for doctor 1
-echo "<h3>Available AI slots for doctor 1:</h3>";
-$slots = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 1 AND session_status = 'waiting' AND client_id = 0 AND settings LIKE '%ai_booking%'");
+// Show available AI slots for doctor 85
+echo "<h3>Available AI slots for doctor 85:</h3>";
+$slots = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND session_status = 'waiting' AND client_id = 0 AND settings LIKE '%ai_booking%'");
 if ($slots) {
     echo "<table border='1' style='border-collapse: collapse;'>";
     echo "<tr><th>ID</th><th>Doctor ID</th><th>Patient ID</th><th>Day</th><th>Date/Time</th><th>Starts</th><th>Ends</th><th>Period</th><th>Settings</th></tr>";
@@ -70,7 +46,31 @@ if ($slots) {
     }
     echo "</table>";
 } else {
-    echo "No available AI slots found for doctor 1.";
+    echo "No available AI slots found for doctor 85.";
+}
+
+// Show any AI bookings for doctor 85 (if any patients have booked)
+echo "<h3>AI bookings for doctor 85 (if any):</h3>";
+$bookings = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND client_id > 0 AND settings LIKE '%ai_booking%'");
+if ($bookings) {
+    echo "<table border='1' style='border-collapse: collapse;'>";
+    echo "<tr><th>ID</th><th>Doctor ID</th><th>Patient ID</th><th>Status</th><th>Date/Time</th><th>Starts</th><th>Ends</th><th>Order ID</th><th>Settings</th></tr>";
+    foreach ($bookings as $booking) {
+        echo "<tr>";
+        echo "<td>{$booking->ID}</td>";
+        echo "<td>{$booking->user_id}</td>";
+        echo "<td>{$booking->client_id}</td>";
+        echo "<td>{$booking->session_status}</td>";
+        echo "<td>{$booking->date_time}</td>";
+        echo "<td>{$booking->starts}</td>";
+        echo "<td>{$booking->ends}</td>";
+        echo "<td>{$booking->order_id}</td>";
+        echo "<td>{$booking->settings}</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+} else {
+    echo "No AI bookings found for doctor 85 yet.";
 }
 
 // Show all AI data for reference
