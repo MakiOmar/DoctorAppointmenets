@@ -2301,6 +2301,61 @@ function snks_ai_order_thankyou_redirect($order_id) {
 	}
 }
 
+/**
+ * Add AI Frontend URL setting to WordPress admin
+ */
+add_action('admin_init', 'snks_ai_admin_settings');
+
+function snks_ai_admin_settings() {
+	register_setting('general', 'snks_ai_frontend_url', [
+		'type' => 'string',
+		'description' => 'Frontend URL for Jalsah AI application',
+		'sanitize_callback' => 'esc_url_raw',
+		'default' => 'https://jalsah-ai.com'
+	]);
+}
+
+add_action('admin_menu', 'snks_ai_admin_menu');
+
+function snks_ai_admin_menu() {
+	add_options_page(
+		'Jalsah AI Settings',
+		'Jalsah AI',
+		'manage_options',
+		'snks-ai-settings',
+		'snks_ai_settings_page'
+	);
+}
+
+function snks_ai_settings_page() {
+	?>
+	<div class="wrap">
+		<h1>Jalsah AI Settings</h1>
+		<form method="post" action="options.php">
+			<?php settings_fields('general'); ?>
+			<table class="form-table">
+				<tr>
+					<th scope="row">
+						<label for="snks_ai_frontend_url">Frontend URL</label>
+					</th>
+					<td>
+						<input type="url" 
+							   id="snks_ai_frontend_url" 
+							   name="snks_ai_frontend_url" 
+							   value="<?php echo esc_attr(get_option('snks_ai_frontend_url', 'https://jalsah-ai.com')); ?>" 
+							   class="regular-text" />
+						<p class="description">
+							The URL of your Jalsah AI frontend application (e.g., https://jalsah-ai.com)
+						</p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button(); ?>
+		</form>
+	</div>
+	<?php
+}
+
 function snks_customize_ai_checkout_fields($fields) {
 	// Check if current order is from Jalsah AI
 	$order_id = get_query_var('order-pay');
