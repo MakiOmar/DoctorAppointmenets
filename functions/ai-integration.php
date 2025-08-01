@@ -2288,7 +2288,8 @@ add_action('woocommerce_checkout_order_processed', 'snks_handle_ai_checkout_orde
 /**
  * Redirect AI orders to appointments page after payment completion
  */
-add_action('woocommerce_thankyou', 'snks_ai_order_thankyou_redirect', 10, 1);
+add_action('woocommerce_thankyou', 'snks_ai_order_thankyou_redirect', 5, 1);
+add_action('template_redirect', 'snks_ai_order_template_redirect', 5);
 
 function snks_ai_order_thankyou_redirect($order_id) {
 	$order = wc_get_order($order_id);
@@ -2298,6 +2299,23 @@ function snks_ai_order_thankyou_redirect($order_id) {
 		$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
 		wp_safe_redirect($frontend_url . '/appointments');
 		exit;
+	}
+}
+
+function snks_ai_order_template_redirect() {
+	// Check if we're on the order received page
+	if (is_wc_endpoint_url('order-received')) {
+		$order_id = get_query_var('order-received');
+		if ($order_id) {
+			$order = wc_get_order($order_id);
+			
+			if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
+				// Redirect AI orders to the frontend appointments page
+				$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
+				wp_safe_redirect($frontend_url . '/appointments');
+				exit;
+			}
+		}
 	}
 }
 
