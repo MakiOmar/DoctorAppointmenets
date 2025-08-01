@@ -254,6 +254,7 @@
 import { computed, ref, watch, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 import { useToast } from 'vue-toastification'
 import StarRating from './StarRating.vue'
 
@@ -276,6 +277,7 @@ export default {
   setup(props) {
     const { t, locale } = useI18n()
     const authStore = useAuthStore()
+    const cartStore = useCartStore()
     const toast = useToast()
     
     const showDetails = ref(false)
@@ -404,28 +406,19 @@ export default {
       }
       
       try {
-        const response = await fetch('/api/ai/cart/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authStore.token}`
-          },
-          body: JSON.stringify({
-            therapist_id: props.therapist.id,
-            date: selectedDate.value.value,
-            time: slot.value,
-            duration: 30 // Default duration
-          })
+        // Use the cart store with new REST API
+        const result = await cartStore.addToCart({
+          slot_id: slot.id,
+          user_id: authStore.user.id
         })
         
-        const data = await response.json()
-        if (data.success) {
+        if (result.success) {
           slot.inCart = true
           toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
         } else {
-          toast.error(data.error || t('common.error'))
+          toast.error(result.message || t('common.error'))
         }
       } catch (err) {
         console.error('Error adding to cart:', err)
@@ -449,43 +442,28 @@ export default {
       
       bookingLoading.value = true
       try {
-        const requestBody = {
-          therapist_id: props.therapist.id,
-          date: earliestSlot.value.date,
-          time: earliestSlot.value.time,
-          duration: 30
-        }
-        
-        console.log('Request body:', requestBody)
-        console.log('Authorization header:', `Bearer ${authStore.token}`)
-        
-        const response = await fetch('/api/ai/cart/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authStore.token}`
-          },
-          body: JSON.stringify(requestBody)
+        // Use the cart store with new REST API
+        const result = await cartStore.addToCart({
+          slot_id: earliestSlot.value.id,
+          user_id: authStore.user.id
         })
         
-        console.log('Response status:', response.status)
-        const data = await response.json()
-        console.log('Response data:', data)
+        console.log('Cart store result:', result)
         
-        if (data.success) {
+        if (result.success) {
           toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
         } else {
           // Check if it's a token expiration error
-          if (data.error && data.error.includes('Please login again')) {
+          if (result.message && result.message.includes('Please login again')) {
             toast.error(t('common.sessionExpired'))
             // Clear auth data and redirect to login
             authStore.logout()
             // Redirect to login page
             window.location.href = '/login'
           } else {
-            toast.error(data.error || t('common.error'))
+            toast.error(result.message || t('common.error'))
           }
         }
       } catch (err) {
