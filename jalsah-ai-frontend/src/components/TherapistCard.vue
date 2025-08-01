@@ -414,24 +414,54 @@ export default {
       loadingDates.value = true
       try {
         console.log('loadAvailableDates Debug: Loading dates for therapist ID:', props.therapist.id)
-        const response = await fetch(`/api/ai/therapists/${props.therapist.id}/available-dates`)
-        const data = await response.json()
-        console.log('loadAvailableDates Debug: Response data:', data)
         
-        if (data.success) {
-          availableDates.value = data.data.map(date => {
-            console.log('loadAvailableDates Debug: Processing date:', date)
-            const dateObj = new Date(date.date)
-            console.log('loadAvailableDates Debug: Date object:', dateObj)
-            console.log('loadAvailableDates Debug: Date is valid:', !isNaN(dateObj.getTime()))
+        // Since the available-dates endpoint has routing issues, let's use the earliest_slot_data
+        // and create a simple date selection based on the next few days
+        if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
+          console.log('loadAvailableDates Debug: Using earliest_slot_data as base:', props.therapist.earliest_slot_data)
+          
+          const baseDate = new Date(props.therapist.earliest_slot_data.date)
+          const dates = []
+          
+          // Generate next 7 days starting from the earliest slot date
+          for (let i = 0; i < 7; i++) {
+            const date = new Date(baseDate)
+            date.setDate(baseDate.getDate() + i)
             
-            return {
-              value: date.date,
-              day: dateObj.toLocaleDateString(locale.value, { weekday: 'short' }),
-              date: dateObj.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
-            }
-          })
-          console.log('loadAvailableDates Debug: Final availableDates:', availableDates.value)
+            dates.push({
+              value: date.toISOString().split('T')[0],
+              day: date.toLocaleDateString(locale.value, { weekday: 'short' }),
+              date: date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
+            })
+          }
+          
+          availableDates.value = dates
+          console.log('loadAvailableDates Debug: Generated availableDates:', availableDates.value)
+        } else {
+          console.log('loadAvailableDates Debug: No earliest_slot_data available, trying API call')
+          
+          // Fallback to API call
+          const response = await fetch(`/api/ai/therapists/${props.therapist.id}/available-dates`)
+          const data = await response.json()
+          console.log('loadAvailableDates Debug: API Response data:', data)
+          
+          if (data.success && Array.isArray(data.data)) {
+            availableDates.value = data.data.map(date => {
+              console.log('loadAvailableDates Debug: Processing date:', date)
+              const dateObj = new Date(date.date)
+              console.log('loadAvailableDates Debug: Date object:', dateObj)
+              console.log('loadAvailableDates Debug: Date is valid:', !isNaN(dateObj.getTime()))
+              
+              return {
+                value: date.date,
+                day: dateObj.toLocaleDateString(locale.value, { weekday: 'short' }),
+                date: dateObj.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
+              }
+            })
+          } else {
+            console.log('loadAvailableDates Debug: API returned invalid data structure')
+            availableDates.value = []
+          }
         }
       } catch (err) {
         console.error('loadAvailableDates Debug: Error:', err)
@@ -581,50 +611,33 @@ export default {
     const formatSlot = (slot) => {
       if (!slot) return ''
       
-      console.log('formatSlot Debug: Input slot:', slot)
-      
       // Handle the date parsing - the API returns date in Y-m-d format
       let date
       if (slot.date) {
-        console.log('formatSlot Debug: Using slot.date:', slot.date)
         date = new Date(slot.date)
       } else if (slot.date_time) {
-        console.log('formatSlot Debug: Using slot.date_time:', slot.date_time)
         date = new Date(slot.date_time)
       } else {
-        console.log('formatSlot Debug: No date field found')
         return t('therapists.noSlotsAvailable')
       }
       
-      console.log('formatSlot Debug: Parsed date:', date)
-      console.log('formatSlot Debug: Date is valid:', !isNaN(date.getTime()))
-      
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        console.log('formatSlot Debug: Invalid date, returning noSlotsAvailable')
         return t('therapists.noSlotsAvailable')
       }
       
       const time = slot.time
       if (!time) {
-        console.log('formatSlot Debug: No time field found')
         return t('therapists.noSlotsAvailable')
       }
-      
-      console.log('formatSlot Debug: Time field:', time)
       
       // Convert 24-hour format to 12-hour format with AM/PM
       // Handle both "09:00" and "09:00:00" formats
       const timeParts = time.split(':')
-      console.log('formatSlot Debug: Time parts:', timeParts)
-      
       const hours = parseInt(timeParts[0])
       const minutes = parseInt(timeParts[1]) // Parse minutes as integer
       
-      console.log('formatSlot Debug: Parsed hours:', hours, 'minutes:', minutes)
-      
       if (isNaN(hours) || isNaN(minutes)) {
-        console.log('formatSlot Debug: Invalid time format:', time, 'parts:', timeParts)
         return t('therapists.noSlotsAvailable')
       }
       
@@ -632,20 +645,13 @@ export default {
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedTime = `${displayHours}:${minutes} ${period}`
       
-      console.log('formatSlot Debug: Formatted time:', formattedTime)
-      
       const dateStr = date.toLocaleDateString(locale.value, { 
         weekday: 'short', 
         month: 'short', 
         day: 'numeric' 
       })
       
-      console.log('formatSlot Debug: Formatted date:', dateStr)
-      
-      const result = `${dateStr} ${t('dateTime.at')} ${formattedTime}`
-      console.log('formatSlot Debug: Final result:', result)
-      
-      return result
+      return `${dateStr} ${t('dateTime.at')} ${formattedTime}`
     }
 
     const formatEarliestSlot = (therapist) => {
