@@ -2199,10 +2199,14 @@ class SNKS_AI_Integration {
 			// Create WooCommerce order from existing cart
 			$order = SNKS_AI_Orders::create_order_from_existing_cart($user_id, $cart_items);
 			
+			// Generate auto-login URL for main website
+			$auto_login_url = self::generate_auto_login_url($user_id, $order->get_id());
+			
 			return new WP_REST_Response([
 				'success' => true,
 				'order_id' => $order->get_id(),
 				'checkout_url' => $order->get_checkout_payment_url(),
+				'auto_login_url' => $auto_login_url,
 				'total' => $order->get_total(),
 				'appointments_count' => count($cart_items)
 			]);
@@ -2210,6 +2214,37 @@ class SNKS_AI_Integration {
 		} catch (Exception $e) {
 			return new WP_REST_Response(['error' => $e->getMessage()], 500);
 		}
+	}
+	
+	/**
+	 * Generate auto-login URL for main website
+	 */
+	private function generate_auto_login_url($user_id, $order_id) {
+		$user = get_userdata($user_id);
+		if (!$user) {
+			return '';
+		}
+		
+		// Create a secure token for auto-login
+		$token = wp_create_nonce('ai_auto_login_' . $user_id . '_' . $order_id);
+		$expires = time() + (15 * 60); // 15 minutes expiry
+		
+		// Store the auto-login token
+		update_user_meta($user_id, 'ai_auto_login_token', $token);
+		update_user_meta($user_id, 'ai_auto_login_expires', $expires);
+		update_user_meta($user_id, 'ai_auto_login_order_id', $order_id);
+		
+		// Generate the auto-login URL for main website
+		$main_site_url = home_url('/wp-admin/admin-ajax.php');
+		$auto_login_url = add_query_arg([
+			'action' => 'ai_auto_login',
+			'user_id' => $user_id,
+			'token' => $token,
+			'order_id' => $order_id,
+			'redirect' => urlencode(wc_get_order($order_id)->get_checkout_payment_url())
+		], $main_site_url);
+		
+		return $auto_login_url;
 	}
 }
 
@@ -2286,5 +2321,49 @@ function snks_handle_ai_checkout_order($order_id, $posted_data, $order) {
 		$order->update_meta_data('from_jalsah_ai', true);
 		$order->update_meta_data('ai_user_id', get_current_user_id());
 		$order->save();
+	}
+}
+
+/**
+ * AJAX handler for AI auto-login
+ */
+add_action('wp_ajax_ai_auto_login', 'snks_ai_auto_login_handler');
+add_action('wp_ajax_nopriv_ai_auto_login', 'snks_ai_auto_login_handler');
+
+function snks_ai_auto_login_handler() {
+	$user_id = intval($_GET['user_id']);
+	$token = sanitize_text_field($_GET['token']);
+	$order_id = intval($_GET['order_id']);
+	$redirect_url = urldecode($_GET['redirect']);
+	
+	// Verify token
+	$stored_token = get_user_meta($user_id, 'ai_auto_login_token', true);
+	$stored_expires = get_user_meta($user_id, 'ai_auto_login_expires', true);
+	$stored_order_id = get_user_meta($user_id, 'ai_auto_login_order_id', true);
+	
+	// Check if token is valid and not expired
+	if (!$stored_token || $token !== $stored_token || time() > $stored_expires || $order_id != $stored_order_id) {
+		wp_die('Invalid or expired auto-login token');
+	}
+	
+	// Force logout any existing session
+	wp_logout();
+	
+	// Auto-login the user
+	$user = get_userdata($user_id);
+	if ($user) {
+		wp_set_current_user($user_id, $user->user_login);
+		wp_set_auth_cookie($user_id, true);
+		
+		// Clear the auto-login token
+		delete_user_meta($user_id, 'ai_auto_login_token');
+		delete_user_meta($user_id, 'ai_auto_login_expires');
+		delete_user_meta($user_id, 'ai_auto_login_order_id');
+		
+		// Redirect to checkout
+		wp_redirect($redirect_url);
+		exit;
+	} else {
+		wp_die('User not found');
 	}
 } 

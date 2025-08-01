@@ -45,6 +45,8 @@ class SNKS_AI_Orders {
 			}
 			
 			$item = new WC_Order_Item_Product();
+			$session_price = $cart_item->price ?? SNKS_AI_Products::get_default_session_price();
+			
 			$item->set_props( [
 				'name' => sprintf(
 					'جلسة علاج نفسي - %s - %s %s',
@@ -53,10 +55,14 @@ class SNKS_AI_Orders {
 					$cart_item->starts
 				),
 				'quantity' => 1,
-				'total' => $cart_item->price ?? SNKS_AI_Products::get_default_session_price(),
-				'subtotal' => $cart_item->price ?? SNKS_AI_Products::get_default_session_price(),
+				'total' => $session_price,
+				'subtotal' => $session_price,
 				'product_id' => $product_id
 			] );
+			
+			// Set the product price for this order item
+			$item->set_total( $session_price );
+			$item->set_subtotal( $session_price );
 			
 			// Add appointment metadata
 			$item->add_meta_data( 'therapist_id', $cart_item->user_id );

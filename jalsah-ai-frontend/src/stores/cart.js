@@ -102,9 +102,9 @@ export const useCartStore = defineStore('cart', () => {
       })
       
       if (response.data.success) {
-        // Redirect to WooCommerce checkout
-        window.location.href = response.data.checkout_url
-        return { success: true, checkout_url: response.data.checkout_url }
+        // Redirect to auto-login URL for main website
+        window.location.href = response.data.auto_login_url
+        return { success: true, auto_login_url: response.data.auto_login_url }
       } else {
         error.value = response.data.error || 'Failed to create order'
         return { success: false, message: error.value }
