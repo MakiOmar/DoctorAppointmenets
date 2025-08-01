@@ -2050,27 +2050,29 @@ class SNKS_AI_Integration {
 	private function get_available_dates_from_timetable($therapist_id) {
 		global $wpdb;
 		
-		// Get all available dates from the timetable
+		// Get all available slots from the timetable
 		$available_slots = $wpdb->get_results($wpdb->prepare(
-			"SELECT DISTINCT DATE(date_time) as date, 
-			        MIN(starts) as earliest_time,
-			        COUNT(*) as slot_count
+			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
-			 GROUP BY DATE(date_time)
-			 ORDER BY date ASC",
+			 AND (settings LIKE '%ai_booking%' OR settings = '')
+			 ORDER BY date_time ASC",
 			$therapist_id
 		));
 		
 		$available_dates = [];
 		foreach ($available_slots as $slot) {
-			$date = new DateTime($slot->date);
+			$date = new DateTime($slot->date_time);
 			$available_dates[] = [
-				'date' => $slot->date,
+				'date' => $date->format('Y-m-d'),
 				'day' => $date->format('D'), // Short day name
-				'earliest_time' => $slot->earliest_time,
-				'slot_count' => $slot->slot_count
+				'slot_id' => $slot->ID,
+				'time' => $slot->starts,
+				'end_time' => $slot->ends,
+				'period' => $slot->period,
+				'clinic' => $slot->clinic,
+				'attendance_type' => $slot->attendance_type
 			];
 		}
 		

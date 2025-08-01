@@ -454,16 +454,16 @@ export default {
           const selectedDateInfo = props.therapist.available_dates.find(d => d.date === date.value)
           
           if (selectedDateInfo) {
-            // Create a time slot based on the earliest_time for this date
+            // Create a time slot using the real slot data from the database
             timeSlots.value = [{
-              id: `slot_${date.value}_${selectedDateInfo.earliest_time}`,
-              value: selectedDateInfo.earliest_time,
-              time: selectedDateInfo.earliest_time,
-              end_time: calculateEndTime(selectedDateInfo.earliest_time, 45), // 45 minutes period
-              period: 45,
-              clinic: 'Online',
-              attendance_type: 'online',
-              date_time: `${date.value} ${selectedDateInfo.earliest_time}`,
+              id: selectedDateInfo.slot_id, // Use the real database slot ID
+              value: selectedDateInfo.time,
+              time: selectedDateInfo.time,
+              end_time: selectedDateInfo.end_time,
+              period: selectedDateInfo.period,
+              clinic: selectedDateInfo.clinic,
+              attendance_type: selectedDateInfo.attendance_type,
+              date_time: `${date.value} ${selectedDateInfo.time}`,
               inCart: false
             }]
           } else {
