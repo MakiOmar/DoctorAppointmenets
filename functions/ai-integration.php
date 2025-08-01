@@ -1630,10 +1630,10 @@ class SNKS_AI_Integration {
 			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
 		}
 		
-		// Check if already in cart
+		// Check if already in cart (check for AI booking marker)
 		$in_cart = $wpdb->get_var($wpdb->prepare(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable 
-			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting'",
+			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking%'",
 			$slot_id, $user_id
 		));
 		
@@ -1697,7 +1697,8 @@ class SNKS_AI_Integration {
 		}
 		
 		return new WP_REST_Response([
-			'cart_items' => $cart_items,
+			'success' => true,
+			'data' => $cart_items,
 			'total_price' => $total_price,
 			'item_count' => count($cart_items)
 		], 200);
@@ -1721,10 +1722,11 @@ class SNKS_AI_Integration {
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
 				'client_id' => 0,
-				'session_status' => 'waiting'
+				'session_status' => 'waiting',
+				'settings' => '' // Clear the AI booking marker
 			],
 			['ID' => $slot_id, 'client_id' => $user_id],
-			['%d', '%s'],
+			['%d', '%s', '%s'],
 			['%d', '%d']
 		);
 		
