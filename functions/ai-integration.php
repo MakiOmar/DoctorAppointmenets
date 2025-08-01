@@ -2302,58 +2302,28 @@ function snks_ai_order_thankyou_redirect($order_id) {
 }
 
 /**
- * Add AI Frontend URL setting to WordPress admin
+ * Add admin notice for missing frontend URL
  */
-add_action('admin_init', 'snks_ai_admin_settings');
+add_action('admin_notices', 'snks_ai_frontend_url_notice');
 
-function snks_ai_admin_settings() {
-	register_setting('general', 'snks_ai_frontend_url', [
-		'type' => 'string',
-		'description' => 'Frontend URL for Jalsah AI application',
-		'sanitize_callback' => 'esc_url_raw',
-		'default' => 'https://jalsah-ai.com'
-	]);
-}
-
-add_action('admin_menu', 'snks_ai_admin_menu');
-
-function snks_ai_admin_menu() {
-	add_options_page(
-		'Jalsah AI Settings',
-		'Jalsah AI',
-		'manage_options',
-		'snks-ai-settings',
-		'snks_ai_settings_page'
-	);
-}
-
-function snks_ai_settings_page() {
-	?>
-	<div class="wrap">
-		<h1>Jalsah AI Settings</h1>
-		<form method="post" action="options.php">
-			<?php settings_fields('general'); ?>
-			<table class="form-table">
-				<tr>
-					<th scope="row">
-						<label for="snks_ai_frontend_url">Frontend URL</label>
-					</th>
-					<td>
-						<input type="url" 
-							   id="snks_ai_frontend_url" 
-							   name="snks_ai_frontend_url" 
-							   value="<?php echo esc_attr(get_option('snks_ai_frontend_url', 'https://jalsah-ai.com')); ?>" 
-							   class="regular-text" />
-						<p class="description">
-							The URL of your Jalsah AI frontend application (e.g., https://jalsah-ai.com)
-						</p>
-					</td>
-				</tr>
-			</table>
-			<?php submit_button(); ?>
-		</form>
-	</div>
-	<?php
+function snks_ai_frontend_url_notice() {
+	// Only show on AI admin pages
+	if (!isset($_GET['page']) || strpos($_GET['page'], 'jalsah-ai') === false) {
+		return;
+	}
+	
+	$frontend_url = get_option('snks_ai_frontend_url');
+	if (empty($frontend_url)) {
+		?>
+		<div class="notice notice-warning is-dismissible">
+			<p>
+				<strong>Jalsah AI Configuration Required:</strong> 
+				Please set the Frontend URL in <a href="<?php echo admin_url('admin.php?page=jalsah-ai-settings'); ?>">Jalsah AI Settings</a> 
+				to enable proper payment redirects for AI orders.
+			</p>
+		</div>
+		<?php
+	}
 }
 
 function snks_customize_ai_checkout_fields($fields) {

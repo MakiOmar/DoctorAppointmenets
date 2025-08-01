@@ -2288,6 +2288,7 @@ function snks_enhanced_ai_settings_page() {
 			update_option( 'snks_ai_site_title_ar', sanitize_text_field( $_POST['site_title_ar'] ) );
 			update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
 			update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
+			update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
 			
 			echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 		}
@@ -2299,6 +2300,7 @@ function snks_enhanced_ai_settings_page() {
 	$site_title_ar = get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
 	$site_description_en = get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
 	$site_description_ar = get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
+	$frontend_url = get_option( 'snks_ai_frontend_url', 'https://jalsah-ai.com' );
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -2349,6 +2351,14 @@ function snks_enhanced_ai_settings_page() {
 				<div class="bilingual-field">
 					<label for="site_description_ar">Site Description (Arabic)</label>
 					<textarea id="site_description_ar" name="site_description_ar" rows="3" class="large-text" dir="rtl"><?php echo esc_textarea( $site_description_ar ); ?></textarea>
+				</div>
+				
+				<h3>Payment Integration</h3>
+				
+				<div class="bilingual-field">
+					<label for="frontend_url">Frontend URL</label>
+					<input type="url" id="frontend_url" name="frontend_url" value="<?php echo esc_attr( $frontend_url ); ?>" class="regular-text">
+					<p class="description">The URL of your Jalsah AI frontend application. Used for payment redirects after AI order completion. (e.g., https://jalsah-ai.com)</p>
 				</div>
 				
 				<?php submit_button( 'Save Settings' ); ?>
