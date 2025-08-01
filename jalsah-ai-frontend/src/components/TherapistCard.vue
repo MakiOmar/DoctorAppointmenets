@@ -469,11 +469,16 @@ export default {
       selectedDate.value = date
       loadingDates.value = true
       try {
-        console.log('selectDate Debug: Selected date:', date)
+        console.log('selectDate Debug: Selected date object:', date)
+        console.log('selectDate Debug: Selected date.value:', date.value)
+        console.log('selectDate Debug: Selected date type:', typeof date.value)
         
         // Since the time-slots endpoint has routing issues, let's generate time slots
         // based on the available_dates data we already have
         if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
+          console.log('selectDate Debug: Available dates from therapist:', props.therapist.available_dates)
+          console.log('selectDate Debug: Looking for date:', date.value)
+          
           const selectedDateInfo = props.therapist.available_dates.find(d => d.date === date.value)
           console.log('selectDate Debug: Found date info:', selectedDateInfo)
           
@@ -483,7 +488,7 @@ export default {
               id: `slot_${date.value}_${selectedDateInfo.earliest_time}`,
               value: selectedDateInfo.earliest_time,
               time: selectedDateInfo.earliest_time,
-              end_time: this.calculateEndTime(selectedDateInfo.earliest_time, 45), // 45 minutes period
+              end_time: calculateEndTime(selectedDateInfo.earliest_time, 45), // 45 minutes period
               period: 45,
               clinic: 'Online',
               attendance_type: 'online',
