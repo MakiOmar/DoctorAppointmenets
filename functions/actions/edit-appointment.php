@@ -332,6 +332,12 @@ add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
 		$order      = wc_get_order( $order_id );
+		
+		// Skip processing if this is an AI order (handled separately)
+		if ( $order->get_meta( 'from_jalsah_ai' ) === 'true' ) {
+			return;
+		}
+		
 		$order_type = $order->get_meta( 'order_type' );
 		if ( 'edit-fees' === $order_type && ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) ) {
 			$connected_order = $order->get_meta( 'connected_order' );
