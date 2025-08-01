@@ -149,23 +149,42 @@ const userId = computed(() => authStore.user?.id)
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''
-  const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
-  return new Date(dateTime).toLocaleDateString(currentLocale, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  try {
+    const currentLocale = locale?.value === 'ar' ? 'ar-SA' : 'en-US'
+    return new Date(dateTime).toLocaleDateString(currentLocale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  } catch (error) {
+    // Fallback to English if there's any error
+    return new Date(dateTime).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 }
 
 const formatTime = (time) => {
   if (!time) return ''
-  const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
-  return new Date(`2000-01-01T${time}`).toLocaleTimeString(currentLocale, {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
+  try {
+    const currentLocale = locale?.value === 'ar' ? 'ar-SA' : 'en-US'
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString(currentLocale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  } catch (error) {
+    // Fallback to English if there's any error
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
 }
 
 const removeItem = async (slotId) => {
