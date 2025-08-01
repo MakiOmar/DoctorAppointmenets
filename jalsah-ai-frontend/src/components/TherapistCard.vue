@@ -217,19 +217,32 @@
               <div v-if="selectedDate && timeSlots.length > 0" class="bg-white rounded-lg border border-gray-200 p-4">
                 <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
                 <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-                  <button
+                  <div
                     v-for="slot in timeSlots"
                     :key="slot.value"
-                    @click="addToCart(slot)"
-                    class="px-3 py-2 text-sm rounded border transition-colors"
-                    :class="slot.inCart 
-                      ? 'border-green-600 bg-green-50 text-green-700' 
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50'"
-                    :disabled="slot.inCart"
+                    class="relative"
                   >
-                    {{ formatTimeSlot(slot.time) }}
-                    <span v-if="slot.inCart" class="block text-xs">✓ {{ $t('common.added') }}</span>
-                  </button>
+                    <button
+                      v-if="!slot.inCart"
+                      @click="addToCart(slot)"
+                      class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50"
+                    >
+                      {{ formatTimeSlot(slot.time) }}
+                    </button>
+                    <div
+                      v-else
+                      class="w-full px-3 py-2 text-sm rounded border border-green-600 bg-green-50 text-green-700 flex items-center justify-between"
+                    >
+                      <span>{{ formatTimeSlot(slot.time) }}</span>
+                      <button
+                        @click="removeFromCart(slot)"
+                        class="ml-2 text-red-600 hover:text-red-800 text-xs font-medium"
+                        title="Remove from cart"
+                      >
+                        {{ $t('common.remove') }}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -503,6 +516,30 @@ export default {
       }
     }
 
+    const removeFromCart = async (slot) => {
+      // Check if user is authenticated
+      if (!authStore.isAuthenticated) {
+        toast.error(t('common.pleaseLogin'))
+        return
+      }
+      
+      try {
+        // Use the cart store with new REST API
+        const result = await cartStore.removeFromCart(slot.id, authStore.user.id)
+        
+        if (result.success) {
+          slot.inCart = false
+          toast.success(t('therapistDetails.appointmentRemoved'))
+          // Emit event to update cart
+          window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else {
+          toast.error(result.message || t('common.error'))
+        }
+      } catch (err) {
+        toast.error(t('common.error'))
+      }
+    }
+
     const bookEarliestSlot = async () => {
       if (!earliestSlot.value) return
       
@@ -755,6 +792,7 @@ export default {
       earliestSlot,
       selectDate,
       addToCart,
+      removeFromCart,
       bookEarliestSlot,
       formatSlot,
       loadTherapistDetails

@@ -641,7 +641,8 @@ export default {
     availableTimes: 'Available Times',
     noTimeSlots: 'No time slots available for this date',
     noAvailableDates: 'No available dates found',
-    appointmentAdded: 'Appointment added to cart successfully'
+    appointmentAdded: 'Appointment added to cart successfully',
+    appointmentRemoved: 'Appointment removed from cart successfully'
   },
 
   // Certificates

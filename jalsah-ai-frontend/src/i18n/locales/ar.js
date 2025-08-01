@@ -590,7 +590,8 @@ export default {
     availableTimes: 'الأوقات المتاحة',
     noTimeSlots: 'لا توجد أوقات متاحة لهذا التاريخ',
     noAvailableDates: 'لا توجد تواريخ متاحة',
-    appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح'
+    appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح',
+    appointmentRemoved: 'تم إزالة الموعد من السلة بنجاح'
   },
 
   // Certificates
