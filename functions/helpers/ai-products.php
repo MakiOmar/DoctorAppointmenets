@@ -42,7 +42,7 @@ class SNKS_AI_Products {
 		$ai_session_product->set_name( 'جلسة علاج نفسي - AI' );
 		$ai_session_product->set_description( 'جلسة علاج نفسي عبر منصة جلسة AI - مدة الجلسة 45 دقيقة' );
 		$ai_session_product->set_short_description( 'جلسة علاج نفسي عبر الإنترنت' );
-		$ai_session_product->set_regular_price( '0' ); // Default price 0, will be overridden dynamically
+		$ai_session_product->set_regular_price( SNKS_AI_Products::get_default_session_price() ); // Set default price
 		$ai_session_product->set_virtual( true ); // Virtual product
 		$ai_session_product->set_downloadable( false );
 		$ai_session_product->set_status( 'publish' );

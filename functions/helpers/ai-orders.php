@@ -44,9 +44,10 @@ class SNKS_AI_Orders {
 				throw new Exception( 'Failed to get AI session product' );
 			}
 			
-			$item = new WC_Order_Item_Product();
 			$session_price = $cart_item->price ?? SNKS_AI_Products::get_default_session_price();
 			
+			// Create a custom order item with the correct price
+			$item = new WC_Order_Item_Product();
 			$item->set_props( [
 				'name' => sprintf(
 					'جلسة علاج نفسي - %s - %s %s',
@@ -55,12 +56,10 @@ class SNKS_AI_Orders {
 					$cart_item->starts
 				),
 				'quantity' => 1,
-				'total' => $session_price,
-				'subtotal' => $session_price,
 				'product_id' => $product_id
 			] );
 			
-			// Set the product price for this order item
+			// Set the price directly on the item
 			$item->set_total( $session_price );
 			$item->set_subtotal( $session_price );
 			
@@ -71,9 +70,14 @@ class SNKS_AI_Orders {
 			$item->add_meta_data( 'session_duration', SNKS_AI_Products::get_session_duration() );
 			$item->add_meta_data( 'is_ai_session', true );
 			$item->add_meta_data( 'slot_id', $cart_item->ID );
+			$item->add_meta_data( '_line_total', $session_price );
+			$item->add_meta_data( '_line_subtotal', $session_price );
 			
 			$order->add_item( $item );
 		}
+		
+		// Recalculate order totals
+		$order->calculate_totals();
 		
 		// Set customer data
 		$order->set_billing_email( $user->user_email );

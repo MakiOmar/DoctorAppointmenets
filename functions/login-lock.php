@@ -6,7 +6,7 @@
  */
 
 defined( 'ABSPATH' ) || die();
-
+return;
 /**
  * Adds custom rewrite rule for login endpoint.
  */

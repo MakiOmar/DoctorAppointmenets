@@ -2325,6 +2325,32 @@ function snks_handle_ai_checkout_order($order_id, $posted_data, $order) {
 }
 
 /**
+ * Filter to ensure AI session prices are used correctly
+ */
+add_filter('woocommerce_order_item_get_total', 'snks_ai_order_item_total', 10, 2);
+add_filter('woocommerce_order_item_get_subtotal', 'snks_ai_order_item_subtotal', 10, 2);
+
+function snks_ai_order_item_total($total, $item) {
+	if ($item->get_meta('is_ai_session') === 'true') {
+		$line_total = $item->get_meta('_line_total');
+		if ($line_total) {
+			return floatval($line_total);
+		}
+	}
+	return $total;
+}
+
+function snks_ai_order_item_subtotal($subtotal, $item) {
+	if ($item->get_meta('is_ai_session') === 'true') {
+		$line_subtotal = $item->get_meta('_line_subtotal');
+		if ($line_subtotal) {
+			return floatval($line_subtotal);
+		}
+	}
+	return $subtotal;
+}
+
+/**
  * AJAX handler for AI auto-login
  */
 add_action('wp_ajax_ai_auto_login', 'snks_ai_auto_login_handler');
