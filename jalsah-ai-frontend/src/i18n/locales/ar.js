@@ -453,6 +453,18 @@ export default {
   remove: 'إزالة',
   duration: 'المدة',
 
+  // Checkout page translations
+  checkout: 'إتمام الحجز',
+  completeYourBooking: 'أكمل عملية الحجز الخاصة بك',
+  loadingCheckout: 'جاري تحميل صفحة الدفع...',
+  errorLoadingCheckout: 'خطأ في تحميل صفحة الدفع',
+  paymentMethod: 'طريقة الدفع',
+  cashPayment: 'الدفع نقداً',
+  cardPayment: 'الدفع بالبطاقة',
+  paymentSummary: 'ملخص الدفع',
+  completePayment: 'إتمام الدفع',
+  backToCart: 'العودة إلى السلة',
+
   // Appointments Page
   appointmentsPage: {
     title: 'مواعيدي',

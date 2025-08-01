@@ -137,10 +137,12 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
+import { useRouter } from 'vue-router'
 import api from '../services/api'
 
 const { t } = useI18n()
 const cartStore = useCartStore()
+const router = useRouter()
 
 // Props
 const props = defineProps({
@@ -281,6 +283,9 @@ const addToCart = async () => {
         slot_id: selectedTimeSlot.value.slot_id
       })
       closeModal()
+      
+      // Redirect directly to checkout page
+      router.push('/checkout')
     } else {
       // Handle error - you might want to show a toast notification
       console.error('Failed to add to cart:', result.message)

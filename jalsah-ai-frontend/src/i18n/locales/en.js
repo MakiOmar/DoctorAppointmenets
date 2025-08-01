@@ -497,6 +497,18 @@ export default {
   remove: 'Remove',
   duration: 'Duration',
 
+  // Checkout page translations
+  checkout: 'Checkout',
+  completeYourBooking: 'Complete your booking',
+  loadingCheckout: 'Loading checkout...',
+  errorLoadingCheckout: 'Error loading checkout',
+  paymentMethod: 'Payment Method',
+  cashPayment: 'Cash Payment',
+  cardPayment: 'Card Payment',
+  paymentSummary: 'Payment Summary',
+  completePayment: 'Complete Payment',
+  backToCart: 'Back to Cart',
+
   // Appointments Page
   appointmentsPage: {
     title: 'My Appointments',
