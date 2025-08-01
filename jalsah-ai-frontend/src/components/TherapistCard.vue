@@ -415,51 +415,45 @@ export default {
       try {
         console.log('loadAvailableDates Debug: Loading dates for therapist ID:', props.therapist.id)
         
-        // Since the available-dates endpoint has routing issues, let's use the earliest_slot_data
-        // and create a simple date selection based on the next few days
-        if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
-          console.log('loadAvailableDates Debug: Using earliest_slot_data as base:', props.therapist.earliest_slot_data)
+        // Use the actual available dates from the therapist data
+        if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
+          console.log('loadAvailableDates Debug: Using available_dates from therapist:', props.therapist.available_dates)
           
-          const baseDate = new Date(props.therapist.earliest_slot_data.date)
-          const dates = []
+          availableDates.value = props.therapist.available_dates.map(dateInfo => {
+            const dateObj = new Date(dateInfo.date)
+            return {
+              value: dateInfo.date,
+              day: dateObj.toLocaleDateString(locale.value, { weekday: 'short' }),
+              date: dateObj.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' }),
+              earliest_time: dateInfo.earliest_time,
+              slot_count: dateInfo.slot_count
+            }
+          })
           
-          // Generate next 7 days starting from the earliest slot date
-          for (let i = 0; i < 7; i++) {
-            const date = new Date(baseDate)
-            date.setDate(baseDate.getDate() + i)
-            
-            dates.push({
-              value: date.toISOString().split('T')[0],
-              day: date.toLocaleDateString(locale.value, { weekday: 'short' }),
-              date: date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
-            })
-          }
-          
-          availableDates.value = dates
-          console.log('loadAvailableDates Debug: Generated availableDates:', availableDates.value)
+          console.log('loadAvailableDates Debug: Processed availableDates:', availableDates.value)
         } else {
-          console.log('loadAvailableDates Debug: No earliest_slot_data available, trying API call')
+          console.log('loadAvailableDates Debug: No available_dates found, using earliest_slot_data as fallback')
           
-          // Fallback to API call
-          const response = await fetch(`/api/ai/therapists/${props.therapist.id}/available-dates`)
-          const data = await response.json()
-          console.log('loadAvailableDates Debug: API Response data:', data)
-          
-          if (data.success && Array.isArray(data.data)) {
-            availableDates.value = data.data.map(date => {
-              console.log('loadAvailableDates Debug: Processing date:', date)
-              const dateObj = new Date(date.date)
-              console.log('loadAvailableDates Debug: Date object:', dateObj)
-              console.log('loadAvailableDates Debug: Date is valid:', !isNaN(dateObj.getTime()))
+          // Fallback to generating dates from earliest_slot_data
+          if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
+            const baseDate = new Date(props.therapist.earliest_slot_data.date)
+            const dates = []
+            
+            // Generate next 7 days starting from the earliest slot date
+            for (let i = 0; i < 7; i++) {
+              const date = new Date(baseDate)
+              date.setDate(baseDate.getDate() + i)
               
-              return {
-                value: date.date,
-                day: dateObj.toLocaleDateString(locale.value, { weekday: 'short' }),
-                date: dateObj.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
-              }
-            })
+              dates.push({
+                value: date.toISOString().split('T')[0],
+                day: date.toLocaleDateString(locale.value, { weekday: 'short' }),
+                date: date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
+              })
+            }
+            
+            availableDates.value = dates
           } else {
-            console.log('loadAvailableDates Debug: API returned invalid data structure')
+            console.log('loadAvailableDates Debug: No data available, setting empty array')
             availableDates.value = []
           }
         }

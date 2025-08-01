@@ -879,6 +879,9 @@ class SNKS_AI_Integration {
 		// Get the actual earliest slot from timetable
 		$earliest_slot_data = $this->get_earliest_slot_from_timetable($application->user_id);
 		
+		// Get all available dates from timetable
+		$available_dates = $this->get_available_dates_from_timetable($application->user_id);
+		
 		$result = array(
 			'id' => $application->user_id,
 			'name' => $name,
@@ -894,6 +897,7 @@ class SNKS_AI_Integration {
 			'certifications' => $application->ai_certifications,
 			'earliest_slot' => $application->ai_earliest_slot,
 			'earliest_slot_data' => $earliest_slot_data,
+			'available_dates' => $available_dates,
 			'rating' => floatval( $application->rating ),
 			'total_ratings' => intval( $application->total_ratings ),
 			'price' => $this->get_therapist_ai_price( $application->user_id ),
@@ -2038,6 +2042,39 @@ class SNKS_AI_Integration {
 		}
 		
 		return null;
+	}
+
+	/**
+	 * Get available dates from timetable for a therapist
+	 */
+	private function get_available_dates_from_timetable($therapist_id) {
+		global $wpdb;
+		
+		// Get all available dates from the timetable
+		$available_slots = $wpdb->get_results($wpdb->prepare(
+			"SELECT DISTINCT DATE(date_time) as date, 
+			        MIN(starts) as earliest_time,
+			        COUNT(*) as slot_count
+			 FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d AND session_status = 'waiting' 
+			 AND date_time >= NOW()
+			 GROUP BY DATE(date_time)
+			 ORDER BY date ASC",
+			$therapist_id
+		));
+		
+		$available_dates = [];
+		foreach ($available_slots as $slot) {
+			$date = new DateTime($slot->date);
+			$available_dates[] = [
+				'date' => $slot->date,
+				'day' => $date->format('D'), // Short day name
+				'earliest_time' => $slot->earliest_time,
+				'slot_count' => $slot->slot_count
+			];
+		}
+		
+		return $available_dates;
 	}
 
 	/**
