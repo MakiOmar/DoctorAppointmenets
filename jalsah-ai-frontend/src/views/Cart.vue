@@ -21,7 +21,7 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
           </div>
-          <div class="ml-3">
+          <div class="mr-3 rtl:ml-3 rtl:mr-0">
             <h3 class="text-sm font-medium text-red-800">{{ $t('errorLoadingCart') }}</h3>
             <p class="mt-2 text-sm text-red-700">{{ cartStore.error }}</p>
           </div>
@@ -52,7 +52,7 @@
             </div>
             <div class="divide-y divide-gray-200">
               <div v-for="item in cartStore.cartItems" :key="item.ID" class="p-6">
-                <div class="flex items-start space-x-4">
+                <div class="flex items-start space-x-4 rtl:space-x-reverse">
                   <!-- Therapist Image -->
                   <div class="flex-shrink-0">
                     <img 
@@ -82,7 +82,7 @@
                           {{ $t('duration') }}: {{ item.period }} {{ $t('minutes') }}
                         </p>
                       </div>
-                      <div class="text-right">
+                      <div class="text-right rtl:text-left">
                         <p class="text-lg font-medium text-gray-900">{{ formatPrice(200.00) }}</p>
                         <button
                           @click="removeItem(item.ID)"
@@ -140,7 +140,7 @@ import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { formatPrice } from '../utils/currency'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
 
@@ -149,7 +149,8 @@ const userId = computed(() => authStore.user?.id)
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''
-  return new Date(dateTime).toLocaleDateString('en-US', {
+  const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
+  return new Date(dateTime).toLocaleDateString(currentLocale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -159,7 +160,8 @@ const formatDate = (dateTime) => {
 
 const formatTime = (time) => {
   if (!time) return ''
-  return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+  const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
+  return new Date(`2000-01-01T${time}`).toLocaleTimeString(currentLocale, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true

@@ -438,6 +438,16 @@ export default {
     ]
   },
 
+  // Cart page specific translations
+  shoppingCart: 'سلة التسوق',
+  cartDescription: 'راجع مواعيدك المختارة وأكمل عملية الحجز',
+  loadingCart: 'جاري تحميل السلة...',
+  errorLoadingCart: 'خطأ في تحميل السلة',
+  emptyCart: 'السلة فارغة',
+  emptyCartDescription: 'لم تقم بإضافة أي مواعيد إلى سلتك بعد',
+  subtotal: 'المجموع الفرعي',
+  minutes: 'دقائق',
+
   // Appointments
   appointments: {
     title: 'مواعيدي',

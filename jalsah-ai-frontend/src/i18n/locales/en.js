@@ -482,6 +482,16 @@ export default {
     ]
   },
 
+  // Cart page specific translations
+  shoppingCart: 'Shopping Cart',
+  cartDescription: 'Review your selected appointments and complete your booking',
+  loadingCart: 'Loading cart...',
+  errorLoadingCart: 'Error loading cart',
+  emptyCart: 'Cart is empty',
+  emptyCartDescription: 'You haven\'t added any appointments to your cart yet',
+  subtotal: 'Subtotal',
+  minutes: 'minutes',
+
   // Appointments
   appointments: {
     title: 'My Appointments',
