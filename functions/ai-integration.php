@@ -1613,7 +1613,13 @@ class SNKS_AI_Integration {
 		$user_id = $request->get_param('user_id');
 		$slot_id = $request->get_param('slot_id');
 		
+		// Debug logging
+		error_log("=== ADD TO CART DEBUG ===");
+		error_log("Slot ID: " . $slot_id);
+		error_log("User ID: " . $user_id);
+		
 		if (!$user_id || !$slot_id) {
+			error_log("ERROR: Missing user_id or slot_id");
 			return new WP_REST_Response(['error' => 'Missing user_id or slot_id'], 400);
 		}
 		
@@ -1626,22 +1632,32 @@ class SNKS_AI_Integration {
 			$slot_id
 		));
 		
+		error_log("Slot data: " . print_r($slot, true));
+		
 		if (!$slot) {
+			error_log("ERROR: Time slot is no longer available");
 			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
 		}
 		
 		// Check if slot is already in user's cart
-		$in_cart = $wpdb->get_var($wpdb->prepare(
+		$cart_check_query = $wpdb->prepare(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking:in_cart%'",
 			$slot_id, $user_id
-		));
+		);
+		error_log("Cart check query: " . $cart_check_query);
+		
+		$in_cart = $wpdb->get_var($cart_check_query);
+		error_log("In cart result: " . $in_cart);
 		
 		if ($in_cart) {
+			error_log("ERROR: Appointment already in cart");
 			return new WP_REST_Response(['error' => 'Appointment already in cart'], 400);
 		}
 		
 		// Add to cart by updating the slot with AI identifier
+		error_log("Attempting to update slot with user_id: {$user_id}, settings: ai_booking:in_cart");
+		
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
@@ -1654,7 +1670,11 @@ class SNKS_AI_Integration {
 			['%d']
 		);
 		
+		error_log("Update result: " . $result);
+		error_log("Last SQL error: " . $wpdb->last_error);
+		
 		if ($result === false) {
+			error_log("ERROR: Failed to add to cart");
 			return new WP_REST_Response(['error' => 'Failed to add to cart'], 500);
 		}
 		
@@ -1671,13 +1691,18 @@ class SNKS_AI_Integration {
 	public function get_user_cart($request) {
 		$user_id = $request->get_param('user_id');
 		
+		// Debug logging
+		error_log("=== GET USER CART DEBUG ===");
+		error_log("User ID: " . $user_id);
+		
 		if (!$user_id) {
+			error_log("ERROR: Missing user_id");
 			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
 		}
 		
 		global $wpdb;
 		
-		$cart_items = $wpdb->get_results($wpdb->prepare(
+		$cart_query = $wpdb->prepare(
 			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
 			 FROM {$wpdb->prefix}snks_provider_timetable t
 			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
@@ -1685,7 +1710,12 @@ class SNKS_AI_Integration {
 			 AND t.settings LIKE '%ai_booking%'
 			 ORDER BY t.date_time ASC",
 			$user_id
-		));
+		);
+		error_log("Cart query: " . $cart_query);
+		
+		$cart_items = $wpdb->get_results($cart_query);
+		error_log("Cart items count: " . count($cart_items));
+		error_log("Cart items: " . print_r($cart_items, true));
 		
 		$total_price = 0;
 		foreach ($cart_items as $item) {
