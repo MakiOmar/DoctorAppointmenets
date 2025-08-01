@@ -38,7 +38,8 @@ export default {
     unknown: 'Unknown',
     na: 'N/A',
     contact: 'Contact',
-    pleaseLogin: 'Please login first'
+    pleaseLogin: 'Please login first',
+    sessionExpired: 'Session expired. Please login again'
   },
 
   // Navigation

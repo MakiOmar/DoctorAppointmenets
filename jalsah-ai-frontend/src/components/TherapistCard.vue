@@ -477,7 +477,16 @@ export default {
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
         } else {
-          toast.error(data.error || t('common.error'))
+          // Check if it's a token expiration error
+          if (data.error && data.error.includes('Please login again')) {
+            toast.error(t('common.sessionExpired'))
+            // Clear auth data and redirect to login
+            authStore.logout()
+            // Redirect to login page
+            window.location.href = '/login'
+          } else {
+            toast.error(data.error || t('common.error'))
+          }
         }
       } catch (err) {
         console.error('Error booking earliest slot:', err)

@@ -38,7 +38,8 @@ export default {
     unknown: 'غير معروف',
     na: 'غير متوفر',
     contact: 'تواصل',
-    pleaseLogin: 'يرجى تسجيل الدخول أولاً'
+    pleaseLogin: 'يرجى تسجيل الدخول أولاً',
+    sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى'
   },
 
   // Navigation

@@ -137,7 +137,7 @@ function snks_add_ai_user_meta_fields() {
 function snks_add_missing_therapist_diagnoses_columns() {
     global $wpdb;
     
-    $table_name = $wpdb->prefix . 'therapist_diagnoses';
+    $table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
     
     // Check if columns exist
     $columns = $wpdb->get_results("SHOW COLUMNS FROM $table_name");

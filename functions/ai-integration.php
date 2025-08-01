@@ -1478,7 +1478,13 @@ class SNKS_AI_Integration {
 			return $decoded->user_id;
 		} catch ( Exception $e ) {
 			error_log( 'JWT Debug - Token decode error: ' . $e->getMessage() );
-			$this->send_error( 'Invalid token: ' . $e->getMessage(), 401 );
+			
+			// If it's a signature verification failure, suggest re-login
+			if ( strpos( $e->getMessage(), 'Signature verification failed' ) !== false ) {
+				$this->send_error( 'Token expired. Please login again.', 401 );
+			} else {
+				$this->send_error( 'Invalid token: ' . $e->getMessage(), 401 );
+			}
 		}
 	}
 	
