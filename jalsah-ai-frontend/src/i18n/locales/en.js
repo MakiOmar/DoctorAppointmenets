@@ -497,8 +497,8 @@ export default {
   remove: 'Remove',
   duration: 'Duration',
 
-  // Appointments
-  appointments: {
+  // Appointments Page
+  appointmentsPage: {
     title: 'My Appointments',
     loading: 'Loading appointments...',
     tabs: {

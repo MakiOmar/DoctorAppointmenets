@@ -453,8 +453,8 @@ export default {
   remove: 'إزالة',
   duration: 'المدة',
 
-  // Appointments
-  appointments: {
+  // Appointments Page
+  appointmentsPage: {
     title: 'مواعيدي',
     loading: 'جاري تحميل المواعيد...',
     tabs: {
