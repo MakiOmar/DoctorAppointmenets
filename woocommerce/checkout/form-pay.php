@@ -46,9 +46,19 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 	}
 	snks_user_info();
 	//phpcs:disable
-	echo consulting_session_pricing_table_shortcode( $form_data );
-	if ( 'edit-fees' !== $order_type ) {
-		echo snks_doctor_rules( $form_data['_user_id'] );
+	
+	// Check if this is an AI order
+	$is_ai_order = $order->get_meta( 'from_jalsah_ai' ) === 'true';
+	
+	if ( $is_ai_order ) {
+		// Use AI session pricing table for AI orders
+		echo ai_session_pricing_table_shortcode( $form_data );
+	} else {
+		// Use regular pricing table for normal orders
+		echo consulting_session_pricing_table_shortcode( $form_data );
+		if ( 'edit-fees' !== $order_type ) {
+			echo snks_doctor_rules( $form_data['_user_id'] );
+		}
 	}
 	//phpcs:enable
 

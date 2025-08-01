@@ -720,13 +720,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		return;
 	}
 	
-	// Check if this is an AI session booking
-	$is_ai_booking = isset( $form_data['_is_ai_booking'] ) && $form_data['_is_ai_booking'] === true;
-	
-	// If it's an AI booking, use the AI pricing table
-	if ( $is_ai_booking ) {
-		return snks_ai_session_pricing_table_shortcode( $form_data );
-	}
+
 	ob_start();
 	?>
 	<style>
@@ -904,10 +898,58 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 // Register the shortcode.
 add_shortcode( 'consulting_session_pricing_table', 'consulting_session_pricing_table_shortcode' );
 
+
+
 /**
- * AI Session Pricing Table Shortcode
+ * AI Booking Details Helper Function
  */
-function snks_ai_session_pricing_table_shortcode( $form_data = false ) {
+function snks_ai_booking_details( $form_data ) {
+	$output = '<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+	$output .= '<h4 style="color: #0a5468; margin-bottom: 15px;">تفاصيل الجلسة</h4>';
+	
+	// Display session information
+	if ( isset( $form_data['_session_date'] ) ) {
+		$output .= '<p><strong>التاريخ:</strong> ' . esc_html( $form_data['_session_date'] ) . '</p>';
+	}
+	
+	if ( isset( $form_data['_session_time'] ) ) {
+		$output .= '<p><strong>الوقت:</strong> ' . esc_html( $form_data['_session_time'] ) . '</p>';
+	}
+	
+	if ( isset( $form_data['_session_duration'] ) ) {
+		$output .= '<p><strong>المدة:</strong> ' . esc_html( $form_data['_session_duration'] ) . ' دقيقة</p>';
+	} else {
+		$output .= '<p><strong>المدة:</strong> 45 دقيقة</p>';
+	}
+	
+	$output .= '<p><strong>نوع الجلسة:</strong> جلسة علاج نفسي عبر منصة جلسة AI</p>';
+	$output .= '</div>';
+	
+	return $output;
+}
+
+/**
+ * AI Session Rules Helper Function
+ */
+function snks_ai_session_rules() {
+	$output = '<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+	$output .= '<h4 style="color: #856404; margin-bottom: 15px;">قواعد الجلسة</h4>';
+	$output .= '<ul style="color: #856404; margin: 0; padding-left: 20px;">';
+	$output .= '<li>الجلسة تتم عبر الإنترنت باستخدام منصة جلسة AI</li>';
+	$output .= '<li>مدة الجلسة 45 دقيقة</li>';
+	$output .= '<li>يجب الحضور في الوقت المحدد</li>';
+	$output .= '<li>يمكن إلغاء الجلسة قبل 24 ساعة من موعدها</li>';
+	$output .= '<li>الجلسات غير قابلة للاسترداد بعد بدايتها</li>';
+	$output .= '</ul>';
+	$output .= '</div>';
+	
+	return $output;
+}
+
+/**
+ * AI Session Pricing Table Shortcode - Separate from regular pricing table
+ */
+function ai_session_pricing_table_shortcode( $form_data = false ) {
 	if ( ! $form_data ) {
 		$form_data = get_transient( snks_form_data_transient_key() );
 	}
@@ -1084,51 +1126,8 @@ function snks_ai_session_pricing_table_shortcode( $form_data = false ) {
 	return ob_get_clean();
 }
 
-/**
- * AI Booking Details Helper Function
- */
-function snks_ai_booking_details( $form_data ) {
-	$output = '<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
-	$output .= '<h4 style="color: #0a5468; margin-bottom: 15px;">تفاصيل الجلسة</h4>';
-	
-	// Display session information
-	if ( isset( $form_data['_session_date'] ) ) {
-		$output .= '<p><strong>التاريخ:</strong> ' . esc_html( $form_data['_session_date'] ) . '</p>';
-	}
-	
-	if ( isset( $form_data['_session_time'] ) ) {
-		$output .= '<p><strong>الوقت:</strong> ' . esc_html( $form_data['_session_time'] ) . '</p>';
-	}
-	
-	if ( isset( $form_data['_session_duration'] ) ) {
-		$output .= '<p><strong>المدة:</strong> ' . esc_html( $form_data['_session_duration'] ) . ' دقيقة</p>';
-	} else {
-		$output .= '<p><strong>المدة:</strong> 45 دقيقة</p>';
-	}
-	
-	$output .= '<p><strong>نوع الجلسة:</strong> جلسة علاج نفسي عبر منصة جلسة AI</p>';
-	$output .= '</div>';
-	
-	return $output;
-}
-
-/**
- * AI Session Rules Helper Function
- */
-function snks_ai_session_rules() {
-	$output = '<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
-	$output .= '<h4 style="color: #856404; margin-bottom: 15px;">قواعد الجلسة</h4>';
-	$output .= '<ul style="color: #856404; margin: 0; padding-left: 20px;">';
-	$output .= '<li>الجلسة تتم عبر الإنترنت باستخدام منصة جلسة AI</li>';
-	$output .= '<li>مدة الجلسة 45 دقيقة</li>';
-	$output .= '<li>يجب الحضور في الوقت المحدد</li>';
-	$output .= '<li>يمكن إلغاء الجلسة قبل 24 ساعة من موعدها</li>';
-	$output .= '<li>الجلسات غير قابلة للاسترداد بعد بدايتها</li>';
-	$output .= '</ul>';
-	$output .= '</div>';
-	
-	return $output;
-}
+// Register the AI session pricing table shortcode
+add_shortcode( 'ai_session_pricing_table', 'ai_session_pricing_table_shortcode' );
 
 /**
  * Shortcode to display doctor validation messages in Arabic with a red cross.
