@@ -1052,8 +1052,12 @@ class SNKS_AI_Integration {
 	 * Add to AI Cart
 	 */
 	private function add_to_ai_cart() {
+		error_log("=== OLD ADD TO AI CART DEBUG ===");
 		$user_id = $this->verify_jwt_token();
+		error_log("User ID from JWT: " . $user_id);
+		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
+		error_log("Request data: " . print_r($data, true));
 		
 		// Support both old format (slot_id) and new format (therapist_id, date, time)
 		if ( isset( $data['slot_id'] ) ) {
@@ -1098,9 +1102,13 @@ class SNKS_AI_Integration {
 			$cart = array();
 		}
 		
+		error_log("Current cart: " . print_r($cart, true));
+		error_log("Slot ID to add: " . $slot_id);
+		
 		// Check if slot is already in cart
 		foreach ( $cart as $item ) {
 			if ( $item['slot_id'] == $slot_id ) {
+				error_log("ERROR: Slot already in cart (old system)");
 				$this->send_error( 'Slot already in cart', 400 );
 			}
 		}
