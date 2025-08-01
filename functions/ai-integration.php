@@ -1571,15 +1571,16 @@ class SNKS_AI_Integration {
 			return new WP_REST_Response(['error' => 'Appointment already in cart'], 400);
 		}
 		
-		// Add to cart by updating the slot
+		// Add to cart by updating the slot with AI identifier
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
 				'client_id' => $user_id,
-				'session_status' => 'waiting' // Keep as waiting until checkout
+				'session_status' => 'waiting', // Keep as waiting until checkout
+				'settings' => 'ai_booking:in_cart' // Mark as AI booking
 			],
 			['ID' => $slot_id],
-			['%d', '%s'],
+			['%d', '%s', '%s'],
 			['%d']
 		);
 		
@@ -1610,7 +1611,8 @@ class SNKS_AI_Integration {
 			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
 			 FROM {$wpdb->prefix}snks_provider_timetable t
 			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
-			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0
+			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
+			 AND t.settings LIKE '%ai_booking%'
 			 ORDER BY t.date_time ASC",
 			$user_id
 		));
@@ -1711,10 +1713,11 @@ class SNKS_AI_Integration {
 					$wpdb->prefix . 'snks_provider_timetable',
 					[
 						'session_status' => 'open',
-						'order_id' => 1 // Demo order ID
+						'order_id' => 1, // Demo order ID
+						'settings' => 'ai_booking:confirmed' // Mark as confirmed AI booking
 					],
 					['ID' => $item->ID],
-					['%s', '%d'],
+					['%s', '%d', '%s'],
 					['%d']
 				);
 				
@@ -1755,7 +1758,8 @@ class SNKS_AI_Integration {
 			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
 			 FROM {$wpdb->prefix}snks_provider_timetable t
 			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
-			 WHERE t.client_id = %d AND t.session_status = 'open'
+			 WHERE t.client_id = %d AND t.session_status = 'open' 
+			 AND t.settings LIKE '%ai_booking%'
 			 ORDER BY t.date_time ASC",
 			$user_id
 		));

@@ -164,7 +164,7 @@ function snks_create_demo_booking_data() {
     global $wpdb;
     
     // Check if demo data already exists
-    $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = 85");
+    $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE client_id = 85 AND settings LIKE '%ai_booking%'");
     if ($existing_appointments > 0) {
         error_log('Demo data already exists for user 85');
         return; // Demo data already exists
@@ -185,7 +185,7 @@ function snks_create_demo_booking_data() {
             'clinic' => 'Online',
             'attendance_type' => 'online',
             'order_id' => 1,
-            'settings' => 'demo_booking'
+            'settings' => 'ai_booking:demo_confirmed'
         ],
         [
             'user_id' => 1, // Doctor ID
@@ -200,7 +200,7 @@ function snks_create_demo_booking_data() {
             'clinic' => 'Online',
             'attendance_type' => 'online',
             'order_id' => 2,
-            'settings' => 'demo_booking'
+            'settings' => 'ai_booking:demo_confirmed'
         ]
     ];
     
@@ -227,7 +227,7 @@ function snks_create_demo_booking_data() {
             'clinic' => 'Online',
             'attendance_type' => 'online',
             'order_id' => 0,
-            'settings' => 'demo_slot'
+            'settings' => 'ai_booking:available_slot'
         ],
         [
             'user_id' => 1, // Doctor ID
@@ -242,7 +242,7 @@ function snks_create_demo_booking_data() {
             'clinic' => 'Online',
             'attendance_type' => 'online',
             'order_id' => 0,
-            'settings' => 'demo_slot'
+            'settings' => 'ai_booking:available_slot'
         ],
         [
             'user_id' => 1, // Doctor ID
@@ -257,7 +257,7 @@ function snks_create_demo_booking_data() {
             'clinic' => 'Online',
             'attendance_type' => 'online',
             'order_id' => 0,
-            'settings' => 'demo_slot'
+            'settings' => 'ai_booking:available_slot'
         ]
     ];
     
@@ -269,5 +269,5 @@ function snks_create_demo_booking_data() {
         );
     }
     
-    error_log('Demo booking data created for user 85 using existing timetable system');
+    error_log('Demo booking data created for user 85 using existing timetable system with AI identifier');
 } 
