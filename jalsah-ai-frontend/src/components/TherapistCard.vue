@@ -360,12 +360,49 @@ export default {
 
     const loadEarliestSlot = async () => {
       try {
+        console.log('TherapistCard Debug: Loading earliest slot for therapist ID:', props.therapist.id)
+        console.log('TherapistCard Debug: Therapist earliest_slot field:', props.therapist.earliest_slot)
+        console.log('TherapistCard Debug: Therapist earliest_slot_data field:', props.therapist.earliest_slot_data)
+        
+        // First, try to use the earliest_slot_data from the therapist object
+        if (props.therapist.earliest_slot_data) {
+          earliestSlot.value = props.therapist.earliest_slot_data
+          console.log('TherapistCard Debug: Earliest slot loaded from therapist data:', earliestSlot.value)
+          return
+        }
+        
+        // Fallback to API call if earliest_slot_data is not available
         const response = await fetch(`/api/ai/therapists/${props.therapist.id}/earliest-slot`)
+        console.log('TherapistCard Debug: Earliest slot response status:', response.status)
         const data = await response.json()
-        if (data.success) {
+        console.log('TherapistCard Debug: Earliest slot response data:', data)
+        
+        if (data.success && data.data) {
           earliestSlot.value = data.data
+          console.log('TherapistCard Debug: Earliest slot loaded from API:', earliestSlot.value)
+          return
+        }
+        
+        // Final fallback to therapist.earliest_slot if no timetable slots found
+        if (props.therapist.earliest_slot) {
+          console.log('TherapistCard Debug: No timetable slots found, using fallback earliest_slot')
+          // Convert the earliest_slot value to a proper slot object
+          // The earliest_slot field contains minutes from now
+          const minutesFromNow = parseInt(props.therapist.earliest_slot)
+          const now = new Date()
+          const earliestTime = new Date(now.getTime() + minutesFromNow * 60000)
+          
+          earliestSlot.value = {
+            date: earliestTime.toISOString().split('T')[0],
+            time: earliestTime.toTimeString().split(' ')[0].substring(0, 5),
+            period: 45 // Default period for AI sessions
+          }
+          console.log('TherapistCard Debug: Earliest slot calculated from fallback data:', earliestSlot.value)
+        } else {
+          console.log('TherapistCard Debug: No earliest slot data available')
         }
       } catch (err) {
+        console.error('TherapistCard Debug: Earliest slot load error:', err)
         // Silently fail - earliest slot is not critical
       }
     }

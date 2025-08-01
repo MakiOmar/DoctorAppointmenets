@@ -61,8 +61,11 @@ class SNKS_AI_Integration {
 	 * Register AI endpoints
 	 */
 	public function register_ai_endpoints() {
-		// Add rewrite rules for API endpoints
-		add_rewrite_rule( '^api/ai/(.*?)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
+		// Add rewrite rules for API endpoints - more specific patterns first
+		add_rewrite_rule( '^api/ai/therapists/(\d+)/([^/]+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]/$matches[2]', 'top' );
+		add_rewrite_rule( '^api/ai/therapists/(\d+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/therapists/?$', 'index.php?ai_endpoint=therapists', 'top' );
+		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
 		// Add rewrite rule for v2 endpoints
 		add_rewrite_rule( '^api/ai/v2/(.*?)/?$', 'index.php?ai_endpoint=v2/$matches[1]', 'top' );
@@ -294,6 +297,7 @@ class SNKS_AI_Integration {
 	 */
 	public function flush_rewrite_rules() {
 		flush_rewrite_rules();
+		error_log("AI Integration Debug: Rewrite rules flushed");
 	}
 	
 	/**
@@ -326,12 +330,20 @@ class SNKS_AI_Integration {
 	 * Handle AI requests
 	 */
 	public function handle_ai_requests() {
+		// Debug logging
+		error_log("AI Integration Debug: handle_ai_requests called");
+		error_log("AI Integration Debug: REQUEST_URI: " . $_SERVER['REQUEST_URI']);
+		error_log("AI Integration Debug: ai_endpoint query var: " . get_query_var('ai_endpoint'));
+		
 		$endpoint = get_query_var( 'ai_endpoint' );
 		
 		// Check if this is an AI API request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) === false ) {
+			error_log("AI Integration Debug: Not an AI API request, returning");
 			return;
 		}
+		
+		error_log("AI Integration Debug: This is an AI API request, processing...");
 		
 		if ( ! $endpoint ) {
 			// If no endpoint is set, try to extract it from the URL
@@ -379,6 +391,13 @@ class SNKS_AI_Integration {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$path = explode( '/', $endpoint );
 		
+		// Debug logging for earliest slot specifically
+		if (strpos($endpoint, 'earliest-slot') !== false) {
+			error_log("AI Integration Debug: EARLIEST SLOT REQUEST DETECTED!");
+			error_log("AI Integration Debug: Full endpoint: " . $endpoint);
+			error_log("AI Integration Debug: Path array: " . print_r($path, true));
+		}
+		
 		// Check for v2 endpoints
 		if ($path[0] === 'v2') {
 			switch ($path[1]) {
@@ -408,6 +427,16 @@ class SNKS_AI_Integration {
 					'request_uri' => $_SERVER['REQUEST_URI'],
 					'query_vars' => $GLOBALS['wp_query']->query_vars,
 					'headers' => getallheaders()
+				) );
+				break;
+			case 'earliest-slot-test':
+				$this->send_success( array( 
+					'message' => 'Earliest slot test endpoint',
+					'endpoint' => $endpoint,
+					'method' => $method,
+					'path' => $path,
+					'request_uri' => $_SERVER['REQUEST_URI'],
+					'full_path' => $path
 				) );
 				break;
 			case 'ping':
@@ -463,12 +492,19 @@ class SNKS_AI_Integration {
 	 * Handle therapists endpoints
 	 */
 	private function handle_therapists_endpoint( $method, $path ) {
+		// Debug logging
+		error_log("Therapists Endpoint Debug: Method: " . $method . ", Path: " . print_r($path, true));
+		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
+					error_log("Therapists Endpoint Debug: Calling get_ai_therapists()");
 					$this->get_ai_therapists();
 				} elseif ( is_numeric( $path[1] ) ) {
+					error_log("Therapists Endpoint Debug: Therapist ID: " . $path[1] . ", Path[2]: " . ($path[2] ?? 'not set'));
+					
 					if ( isset( $path[2] ) && $path[2] === 'details' ) {
+						error_log("Therapists Endpoint Debug: Calling therapist details");
 						// Call the therapist details REST API function
 						$request = new WP_REST_Request('GET', '/jalsah-ai/v1/therapists/' . $path[1] . '/details');
 						$request->set_param('id', $path[1]);
@@ -481,16 +517,21 @@ class SNKS_AI_Integration {
 							$this->send_success($response['data']);
 						}
 					} elseif ( isset( $path[2] ) && $path[2] === 'earliest-slot' ) {
+						error_log("Therapists Endpoint Debug: Calling earliest slot for therapist ID: " . $path[1]);
 						$this->get_ai_therapist_earliest_slot( $path[1] );
 					} elseif ( isset( $path[2] ) && $path[2] === 'available-dates' ) {
+						error_log("Therapists Endpoint Debug: Calling available dates for therapist ID: " . $path[1]);
 						$this->get_ai_therapist_available_dates( $path[1] );
 					} elseif ( isset( $path[2] ) && $path[2] === 'time-slots' ) {
 						$date = $_GET['date'] ?? '';
+						error_log("Therapists Endpoint Debug: Calling time slots for therapist ID: " . $path[1] . ", date: " . $date);
 						$this->get_ai_therapist_time_slots( $path[1], $date );
 					} else {
+						error_log("Therapists Endpoint Debug: Calling get_ai_therapist for therapist ID: " . $path[1]);
 						$this->get_ai_therapist( $path[1] );
 					}
 				} elseif ( $path[1] === 'by-diagnosis' && is_numeric( $path[2] ) ) {
+					error_log("Therapists Endpoint Debug: Calling therapists by diagnosis: " . $path[2]);
 					$this->get_ai_therapists_by_diagnosis( $path[2] );
 				}
 				break;
@@ -835,6 +876,9 @@ class SNKS_AI_Integration {
 		
 		error_log("AI Integration Debug: Final certificates data: " . print_r($certificates_data, true));
 		
+		// Get the actual earliest slot from timetable
+		$earliest_slot_data = $this->get_earliest_slot_from_timetable($application->user_id);
+		
 		$result = array(
 			'id' => $application->user_id,
 			'name' => $name,
@@ -849,6 +893,7 @@ class SNKS_AI_Integration {
 			'public_bio_ar' => $application->ai_bio,
 			'certifications' => $application->ai_certifications,
 			'earliest_slot' => $application->ai_earliest_slot,
+			'earliest_slot_data' => $earliest_slot_data,
 			'rating' => floatval( $application->rating ),
 			'total_ratings' => intval( $application->total_ratings ),
 			'price' => $this->get_therapist_ai_price( $application->user_id ),
@@ -1963,21 +2008,83 @@ class SNKS_AI_Integration {
 	}
 
 	/**
+	 * Get earliest slot from timetable for a therapist
+	 */
+	private function get_earliest_slot_from_timetable($therapist_id) {
+		global $wpdb;
+		
+		// Get the earliest slot regardless of settings - prioritize by date/time
+		$earliest_slot = $wpdb->get_row($wpdb->prepare(
+			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
+			 FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d AND session_status = 'waiting' 
+			 AND date_time >= NOW()
+			 ORDER BY date_time ASC 
+			 LIMIT 1",
+			$therapist_id
+		));
+		
+		if ($earliest_slot) {
+			$date = new DateTime($earliest_slot->date_time);
+			return [
+				'id' => $earliest_slot->ID,
+				'date' => $date->format('Y-m-d'),
+				'time' => $earliest_slot->starts,
+				'end_time' => $earliest_slot->ends,
+				'period' => $earliest_slot->period,
+				'clinic' => $earliest_slot->clinic,
+				'attendance_type' => $earliest_slot->attendance_type
+			];
+		}
+		
+		return null;
+	}
+
+	/**
 	 * Get therapist's earliest available slot
 	 */
 	private function get_ai_therapist_earliest_slot($therapist_id) {
 		global $wpdb;
 		
+		// Debug logging
+		error_log("Earliest Slot Debug: Requested therapist ID: " . $therapist_id);
+		
+		// First, let's check what session statuses exist for this therapist
+		$statuses = $wpdb->get_results($wpdb->prepare(
+			"SELECT DISTINCT session_status FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d",
+			$therapist_id
+		));
+		error_log("Earliest Slot Debug: Available session statuses: " . print_r($statuses, true));
+		
+		// Get the earliest slot regardless of settings - prioritize by date/time
 		$earliest_slot = $wpdb->get_row($wpdb->prepare(
-			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
+			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
-			 AND settings LIKE '%ai_booking%'
 			 ORDER BY date_time ASC 
 			 LIMIT 1",
 			$therapist_id
 		));
+		
+		error_log("Earliest Slot Debug: Query result for earliest slot: " . print_r($earliest_slot, true));
+		
+		// If no 'waiting' slots, try 'open' status
+		if (!$earliest_slot) {
+			error_log("Earliest Slot Debug: No 'waiting' slots found, trying 'open' status");
+			$earliest_slot = $wpdb->get_row($wpdb->prepare(
+				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
+				 FROM {$wpdb->prefix}snks_provider_timetable 
+				 WHERE user_id = %d AND session_status = 'open' 
+				 AND date_time >= NOW()
+				 AND (settings LIKE '%ai_booking%' OR settings = '')
+				 ORDER BY date_time ASC 
+				 LIMIT 1",
+				$therapist_id
+			));
+			error_log("Earliest Slot Debug: Query with 'open' status result: " . print_r($earliest_slot, true));
+		}
 		
 		if ($earliest_slot) {
 			$date = new DateTime($earliest_slot->date_time);
@@ -2006,7 +2113,7 @@ class SNKS_AI_Integration {
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= CURDATE()
-			 AND settings LIKE '%ai_booking%'
+			 AND (settings LIKE '%ai_booking%' OR settings = '')
 			 ORDER BY date ASC",
 			$therapist_id
 		));
