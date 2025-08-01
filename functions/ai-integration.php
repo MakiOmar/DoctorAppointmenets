@@ -2285,6 +2285,22 @@ function snks_process_ai_order_status_change($order_id, $old_status, $new_status
 add_filter('woocommerce_checkout_fields', 'snks_customize_ai_checkout_fields');
 add_action('woocommerce_checkout_order_processed', 'snks_handle_ai_checkout_order', 10, 3);
 
+/**
+ * Redirect AI orders to appointments page after payment completion
+ */
+add_action('woocommerce_thankyou', 'snks_ai_order_thankyou_redirect', 10, 1);
+
+function snks_ai_order_thankyou_redirect($order_id) {
+	$order = wc_get_order($order_id);
+	
+	if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
+		// Redirect AI orders to the frontend appointments page
+		$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
+		wp_safe_redirect($frontend_url . '/appointments');
+		exit;
+	}
+}
+
 function snks_customize_ai_checkout_fields($fields) {
 	// Check if current order is from Jalsah AI
 	$order_id = get_query_var('order-pay');

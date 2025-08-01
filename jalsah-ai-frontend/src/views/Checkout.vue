@@ -226,10 +226,9 @@ const processPayment = async () => {
   
   const result = await cartStore.checkout(userId.value)
   if (result.success) {
-    // Redirect to success page or show success message
-    console.log('Payment successful!', result.appointmentIds)
-    // You can redirect to a success page here
-    router.push('/appointments')
+    // The cart store checkout function handles the redirect to payment URL
+    // No need to redirect here as it will redirect to auto_login_url
+    console.log('Redirecting to payment...', result.auto_login_url)
   } else {
     console.error('Payment failed:', result.message)
   }
