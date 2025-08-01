@@ -1630,10 +1630,10 @@ class SNKS_AI_Integration {
 			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
 		}
 		
-		// Check if already in cart (check for AI booking marker)
+		// Check if slot is already in user's cart
 		$in_cart = $wpdb->get_var($wpdb->prepare(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable 
-			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking%'",
+			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking:in_cart%'",
 			$slot_id, $user_id
 		));
 		
