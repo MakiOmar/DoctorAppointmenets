@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Load cart after successful login
       const cartStore = useCartStore()
-      cartStore.loadCart()
+      cartStore.loadCart(userData.id)
       
       toast.success('Login successful!')
       return true
@@ -84,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Load cart after successful registration
       const cartStore = useCartStore()
-      cartStore.loadCart()
+      cartStore.loadCart(newUser.id)
       
       toast.success('Registration successful!')
       return true
@@ -122,7 +122,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (user.value) {
         // Load cart when user is loaded
         const cartStore = useCartStore()
-        cartStore.loadCart()
+        cartStore.loadCart(user.value.id)
         return true
       }
       

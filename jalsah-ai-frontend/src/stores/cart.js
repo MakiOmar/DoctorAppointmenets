@@ -22,14 +22,19 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      const response = await api.get('/api/ai/get-user-cart', {
-        params: { user_id: userId }
-      })
+      // Use the custom API endpoint that matches the booking system
+      const response = await api.get(`/api/ai/cart/${userId}`)
       
-      cartItems.value = response.data.cart_items || []
+      // The response format is different for the custom API
+      if (response.data.success) {
+        cartItems.value = response.data.data || []
+      } else {
+        cartItems.value = []
+      }
     } catch (err) {
       error.value = 'Failed to load cart'
       console.error('Error loading cart:', err)
+      cartItems.value = []
     } finally {
       loading.value = false
     }
