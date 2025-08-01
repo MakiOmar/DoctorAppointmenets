@@ -132,7 +132,7 @@ export default {
       
       try {
         const response = await api.get(`/api/ai/therapists/${props.therapistId}/details`)
-        details.value = response.data
+        details.value = response.data.data
       } catch (err) {
         error.value = err.response?.data?.message || t('therapistDetails.loadError')
         console.error('Error loading therapist details:', err)

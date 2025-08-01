@@ -468,7 +468,28 @@ class SNKS_AI_Integration {
 				if ( count( $path ) === 1 ) {
 					$this->get_ai_therapists();
 				} elseif ( is_numeric( $path[1] ) ) {
-					$this->get_ai_therapist( $path[1] );
+					if ( isset( $path[2] ) && $path[2] === 'details' ) {
+						// Call the therapist details REST API function
+						$request = new WP_REST_Request('GET', '/jalsah-ai/v1/therapists/' . $path[1] . '/details');
+						$request->set_param('id', $path[1]);
+						$response = snks_get_therapist_details_rest($request);
+						
+						if (is_wp_error($response)) {
+							$this->send_error($response->get_error_message(), $response->get_error_data()['status'] ?? 400);
+						} else {
+							// Return the data directly without double-wrapping
+							$this->send_success($response['data']);
+						}
+					} elseif ( isset( $path[2] ) && $path[2] === 'earliest-slot' ) {
+						$this->get_ai_therapist_earliest_slot( $path[1] );
+					} elseif ( isset( $path[2] ) && $path[2] === 'available-dates' ) {
+						$this->get_ai_therapist_available_dates( $path[1] );
+					} elseif ( isset( $path[2] ) && $path[2] === 'time-slots' ) {
+						$date = $_GET['date'] ?? '';
+						$this->get_ai_therapist_time_slots( $path[1], $date );
+					} else {
+						$this->get_ai_therapist( $path[1] );
+					}
 				} elseif ( $path[1] === 'by-diagnosis' && is_numeric( $path[2] ) ) {
 					$this->get_ai_therapists_by_diagnosis( $path[2] );
 				}
@@ -571,11 +592,7 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 		
-		// Debug: Log user roles
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'AI Login Debug - User ID: ' . $user->ID );
-			error_log( 'AI Login Debug - User Roles: ' . print_r( $user->roles, true ) );
-		}
+
 		
 		// Check if user is a patient (customer) or doctor
 		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
@@ -1038,13 +1055,42 @@ class SNKS_AI_Integration {
 		$user_id = $this->verify_jwt_token();
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
-		if ( ! isset( $data['slot_id'] ) ) {
-			$this->send_error( 'Slot ID required', 400 );
-		}
-		
-		$slot = snks_get_timetable_by( 'ID', intval( $data['slot_id'] ) );
-		if ( ! $slot || $slot->session_status !== 'waiting' ) {
-			$this->send_error( 'Slot not available', 400 );
+		// Support both old format (slot_id) and new format (therapist_id, date, time)
+		if ( isset( $data['slot_id'] ) ) {
+			// Old format
+			$slot = snks_get_timetable_by( 'ID', intval( $data['slot_id'] ) );
+			if ( ! $slot || $slot->session_status !== 'waiting' ) {
+				$this->send_error( 'Slot not available', 400 );
+			}
+			
+			$slot_id = $slot->ID;
+			$therapist_id = $slot->user_id;
+			$date_time = $slot->date_time;
+		} else {
+			// New format from TherapistCard
+			if ( ! isset( $data['therapist_id'] ) || ! isset( $data['date'] ) || ! isset( $data['time'] ) ) {
+				$this->send_error( 'Therapist ID, date, and time required', 400 );
+			}
+			
+			global $wpdb;
+			
+			// Find the slot by therapist_id, date, and time
+			$slot = $wpdb->get_row($wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+				 WHERE user_id = %d AND DATE(date_time) = %s AND starts = %s 
+				 AND session_status = 'waiting' AND settings LIKE '%ai_booking%'",
+				$data['therapist_id'],
+				$data['date'],
+				$data['time']
+			));
+			
+			if ( ! $slot ) {
+				$this->send_error( 'Slot not available', 400 );
+			}
+			
+			$slot_id = $slot->ID;
+			$therapist_id = $slot->user_id;
+			$date_time = $slot->date_time;
 		}
 		
 		$cart = get_user_meta( $user_id, 'ai_cart', true );
@@ -1052,11 +1098,18 @@ class SNKS_AI_Integration {
 			$cart = array();
 		}
 		
+		// Check if slot is already in cart
+		foreach ( $cart as $item ) {
+			if ( $item['slot_id'] == $slot_id ) {
+				$this->send_error( 'Slot already in cart', 400 );
+			}
+		}
+		
 		$cart[] = array(
-			'slot_id' => $slot->ID,
-			'therapist_id' => $slot->user_id,
-			'date_time' => $slot->date_time,
-			'price' => $this->get_therapist_ai_price( $slot->user_id ),
+			'slot_id' => $slot_id,
+			'therapist_id' => $therapist_id,
+			'date_time' => $date_time,
+			'price' => $this->get_therapist_ai_price( $therapist_id ),
 		);
 		
 		update_user_meta( $user_id, 'ai_cart', $cart );
@@ -1781,6 +1834,106 @@ class SNKS_AI_Integration {
 		} else {
 			$this->send_error('Method not allowed or not implemented (v2)', 405);
 		}
+	}
+
+	/**
+	 * Get therapist's earliest available slot
+	 */
+	private function get_ai_therapist_earliest_slot($therapist_id) {
+		global $wpdb;
+		
+		$earliest_slot = $wpdb->get_row($wpdb->prepare(
+			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
+			 FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d AND session_status = 'waiting' 
+			 AND date_time >= NOW()
+			 AND settings LIKE '%ai_booking%'
+			 ORDER BY date_time ASC 
+			 LIMIT 1",
+			$therapist_id
+		));
+		
+		if ($earliest_slot) {
+			$date = new DateTime($earliest_slot->date_time);
+			$this->send_success([
+				'id' => $earliest_slot->ID,
+				'date' => $date->format('Y-m-d'),
+				'time' => $earliest_slot->starts,
+				'end_time' => $earliest_slot->ends,
+				'period' => $earliest_slot->period,
+				'clinic' => $earliest_slot->clinic,
+				'attendance_type' => $earliest_slot->attendance_type
+			]);
+		} else {
+			$this->send_success(null);
+		}
+	}
+
+	/**
+	 * Get therapist's available dates
+	 */
+	private function get_ai_therapist_available_dates($therapist_id) {
+		global $wpdb;
+		
+		$available_dates = $wpdb->get_results($wpdb->prepare(
+			"SELECT DISTINCT DATE(date_time) as date
+			 FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d AND session_status = 'waiting' 
+			 AND date_time >= CURDATE()
+			 AND settings LIKE '%ai_booking%'
+			 ORDER BY date ASC",
+			$therapist_id
+		));
+		
+		$dates = [];
+		foreach ($available_dates as $date) {
+			$dates[] = [
+				'date' => $date->date,
+				'day' => date('D', strtotime($date->date)),
+				'formatted' => date('M j', strtotime($date->date))
+			];
+		}
+		
+		$this->send_success($dates);
+	}
+
+	/**
+	 * Get therapist's time slots for a specific date
+	 */
+	private function get_ai_therapist_time_slots($therapist_id, $date) {
+		global $wpdb;
+		
+		if (empty($date)) {
+			$this->send_error('Date parameter is required', 400);
+			return;
+		}
+		
+		$time_slots = $wpdb->get_results($wpdb->prepare(
+			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
+			 FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d AND session_status = 'waiting' 
+			 AND DATE(date_time) = %s
+			 AND settings LIKE '%ai_booking%'
+			 ORDER BY starts ASC",
+			$therapist_id,
+			$date
+		));
+		
+		$slots = [];
+		foreach ($time_slots as $slot) {
+			$slots[] = [
+				'id' => $slot->ID,
+				'value' => $slot->starts,
+				'time' => $slot->starts,
+				'end_time' => $slot->ends,
+				'period' => $slot->period,
+				'clinic' => $slot->clinic,
+				'attendance_type' => $slot->attendance_type,
+				'date_time' => $slot->date_time
+			];
+		}
+		
+		$this->send_success($slots);
 	}
 }
 

@@ -253,6 +253,8 @@
 <script>
 import { computed, ref, watch, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
+import { useToast } from 'vue-toastification'
 import StarRating from './StarRating.vue'
 
 export default {
@@ -273,6 +275,8 @@ export default {
   emits: ['click', 'book'],
   setup(props) {
     const { t, locale } = useI18n()
+    const authStore = useAuthStore()
+    const toast = useToast()
     
     const showDetails = ref(false)
     const loading = ref(false)
@@ -393,12 +397,18 @@ export default {
     }
 
     const addToCart = async (slot) => {
+      // Check if user is authenticated
+      if (!authStore.isAuthenticated) {
+        toast.error(t('common.pleaseLogin'))
+        return
+      }
+      
       try {
         const response = await fetch('/api/ai/cart/add', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${authStore.token}`
           },
           body: JSON.stringify({
             therapist_id: props.therapist.id,
@@ -411,16 +421,26 @@ export default {
         const data = await response.json()
         if (data.success) {
           slot.inCart = true
+          toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else {
+          toast.error(data.error || t('common.error'))
         }
       } catch (err) {
-        // Handle error
+        console.error('Error adding to cart:', err)
+        toast.error(t('common.error'))
       }
     }
 
     const bookEarliestSlot = async () => {
       if (!earliestSlot.value) return
+      
+      // Check if user is authenticated
+      if (!authStore.isAuthenticated) {
+        toast.error(t('common.pleaseLogin'))
+        return
+      }
       
       bookingLoading.value = true
       try {
@@ -428,7 +448,7 @@ export default {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${authStore.token}`
           },
           body: JSON.stringify({
             therapist_id: props.therapist.id,
@@ -440,11 +460,15 @@ export default {
         
         const data = await response.json()
         if (data.success) {
+          toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else {
+          toast.error(data.error || t('common.error'))
         }
       } catch (err) {
-        // Handle error
+        console.error('Error booking earliest slot:', err)
+        toast.error(t('common.error'))
       } finally {
         bookingLoading.value = false
       }

@@ -60,7 +60,9 @@ function snks_get_therapist_details_rest($request) {
 
     foreach ($certificates as $cert_id) {
         $attachment = get_post($cert_id);
-        if (!$attachment) continue;
+        if (!$attachment) {
+            continue;
+        }
 
         $file_url = wp_get_attachment_url($cert_id);
         $file_type = get_post_mime_type($cert_id);
@@ -72,13 +74,14 @@ function snks_get_therapist_details_rest($request) {
         $is_image = wp_attachment_is_image($cert_id);
         
         // Get file size
-        $file_size = filesize(get_attached_file($cert_id));
+        $attached_file = get_attached_file($cert_id);
+        $file_size = filesize($attached_file);
         $file_size_formatted = size_format($file_size, 2);
         
         // Get upload date
         $upload_date = get_the_date('Y-m-d', $cert_id);
         
-        $certificates_data[] = [
+        $cert_data = [
             'id' => $cert_id,
             'name' => $attachment->post_title ?: basename($file_url),
             'description' => $attachment->post_content ?: '',
@@ -91,6 +94,8 @@ function snks_get_therapist_details_rest($request) {
             'upload_date' => $upload_date,
             'alt_text' => get_post_meta($cert_id, '_wp_attachment_image_alt', true) ?: ''
         ];
+        
+        $certificates_data[] = $cert_data;
     }
 
     // Sort certificates by upload date (newest first)
@@ -115,8 +120,6 @@ function snks_get_therapist_details_rest($request) {
         'application_date' => date('Y-m-d', strtotime($application->created_at)),
         'approval_date' => date('Y-m-d', strtotime($application->updated_at))
     ];
-    
-    error_log('SNKS Debug REST - Final therapist details: ' . print_r($therapist_details, true));
 
     return [
         'success' => true,

@@ -26,6 +26,8 @@ export default {
     retry: 'إعادة المحاولة',
     refresh: 'تحديث',
     hide: 'إخفاء',
+    viewDetails: 'عرض التفاصيل',
+    added: 'تمت الإضافة',
     download: 'تحميل',
     upload: 'رفع',
     select: 'اختيار',
@@ -35,7 +37,8 @@ export default {
     optional: 'اختياري',
     unknown: 'غير معروف',
     na: 'غير متوفر',
-    contact: 'تواصل'
+    contact: 'تواصل',
+    pleaseLogin: 'يرجى تسجيل الدخول أولاً'
   },
 
   // Navigation
@@ -533,6 +536,7 @@ export default {
     loading: 'جاري تحميل التفاصيل...',
     error: 'خطأ في تحميل التفاصيل',
     loadError: 'فشل في تحميل التفاصيل. يرجى المحاولة مرة أخرى.',
+    bio: 'السيرة الذاتية',
     noCertificates: 'لا توجد شهادات متاحة',
     noCertificatesMessage: 'لم يقم هذا المعالج برفع أي شهادات بعد.',
     noDescription: 'لا يوجد وصف متاح',
@@ -549,7 +553,16 @@ export default {
     approvalDate: 'تاريخ الموافقة',
     certificatesCount: 'الشهادات',
     certificates: 'الشهادات',
-    downloadFile: 'تحميل الملف'
+    downloadFile: 'تحميل الملف',
+    bookAppointment: 'حجز موعد',
+    earliestAvailable: 'أقرب موعد متاح',
+    bookThis: 'احجز هذا',
+    bookAnother: 'احجز موعد آخر',
+    loadingDates: 'جاري تحميل التواريخ المتاحة...',
+    availableTimes: 'الأوقات المتاحة',
+    noTimeSlots: 'لا توجد أوقات متاحة لهذا التاريخ',
+    noAvailableDates: 'لا توجد تواريخ متاحة',
+    appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح'
   },
 
   // Certificates
@@ -574,6 +587,7 @@ export default {
   dateTime: {
     am: 'ص',
     pm: 'م',
+    at: 'في',
     months: {
       january: 'يناير',
       february: 'فبراير',

@@ -26,6 +26,8 @@ export default {
     retry: 'Retry',
     refresh: 'Refresh',
     hide: 'Hide',
+    viewDetails: 'View Details',
+    added: 'Added',
     download: 'Download',
     upload: 'Upload',
     select: 'Select',
@@ -34,7 +36,9 @@ export default {
     required: 'Required',
     optional: 'Optional',
     unknown: 'Unknown',
-    na: 'N/A'
+    na: 'N/A',
+    contact: 'Contact',
+    pleaseLogin: 'Please login first'
   },
 
   // Navigation
@@ -331,6 +335,7 @@ export default {
   dateTime: {
     am: 'AM',
     pm: 'PM',
+    at: 'at',
     months: {
       january: 'January',
       february: 'February',
@@ -582,6 +587,7 @@ export default {
     loading: 'Loading details...',
     error: 'Error loading details',
     loadError: 'Failed to load details. Please try again.',
+    bio: 'Biography',
     noCertificates: 'No certificates available',
     noCertificatesMessage: 'This therapist has not uploaded any certificates yet.',
     noDescription: 'No description available',
@@ -598,7 +604,16 @@ export default {
     approvalDate: 'Approval Date',
     certificatesCount: 'Certificates',
     certificates: 'Certificates',
-    downloadFile: 'Download File'
+    downloadFile: 'Download File',
+    bookAppointment: 'Book Appointment',
+    earliestAvailable: 'Earliest Available',
+    bookThis: 'Book This',
+    bookAnother: 'Book Another Appointment',
+    loadingDates: 'Loading available dates...',
+    availableTimes: 'Available Times',
+    noTimeSlots: 'No time slots available for this date',
+    noAvailableDates: 'No available dates found',
+    appointmentAdded: 'Appointment added to cart successfully'
   },
 
   // Certificates
