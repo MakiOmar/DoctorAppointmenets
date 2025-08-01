@@ -7,8 +7,25 @@
 // Include WordPress
 require_once('../../../wp-load.php');
 
-// Check if demo data already exists
+// Clean up any incorrect demo data first
 global $wpdb;
+echo "<h2>Cleaning up incorrect demo data...</h2>";
+
+// Remove any existing demo data with incorrect structure
+$deleted_incorrect = $wpdb->query("DELETE FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 1 AND client_id = 85 AND settings LIKE '%ai_booking%'");
+if ($deleted_incorrect > 0) {
+    echo "Removed {$deleted_incorrect} incorrect demo records (user_id=1, client_id=85).<br>";
+}
+
+// Remove any existing demo data for doctor 85 to start fresh
+$deleted_existing = $wpdb->query("DELETE FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND settings LIKE '%ai_booking%'");
+if ($deleted_existing > 0) {
+    echo "Removed {$deleted_existing} existing demo records for doctor 85.<br>";
+}
+
+echo "<hr>";
+
+// Check if demo data already exists
 $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND settings LIKE '%ai_booking%'");
 
 if ($existing_appointments > 0) {
