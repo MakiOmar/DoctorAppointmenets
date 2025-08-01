@@ -34,7 +34,6 @@ class SNKS_AI_Products {
 	public static function create_ai_session_product() {
 		// Check if WooCommerce is active
 		if ( ! class_exists( 'WooCommerce' ) ) {
-			error_log( 'WooCommerce is not active. Cannot create AI session product.' );
 			return false;
 		}
 		
@@ -59,10 +58,6 @@ class SNKS_AI_Products {
 			// Add AI-specific meta
 			update_post_meta( $product_id, '_is_ai_session_product', 'yes' );
 			update_post_meta( $product_id, '_ai_session_duration', 45 );
-			
-			error_log( "AI session product created with ID: {$product_id}" );
-		} else {
-			error_log( 'Failed to create AI session product' );
 		}
 		
 		return $product_id;

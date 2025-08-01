@@ -87,8 +87,6 @@ class SNKS_AI_Orders {
 		
 		$order->save();
 		
-		error_log( "AI order created with ID: {$order->get_id()}" );
-		
 		return $order;
 	}
 	
@@ -102,7 +100,7 @@ class SNKS_AI_Orders {
 			return false;
 		}
 		
-		error_log( "Processing AI order payment for order ID: {$order_id}" );
+
 		
 		// Create appointments from order items
 		foreach ( $order->get_items() as $item ) {
@@ -127,8 +125,6 @@ class SNKS_AI_Orders {
 		// Send notifications
 		self::send_ai_order_notifications( $order_id );
 		
-		error_log( "AI order payment processed successfully for order ID: {$order_id}" );
-		
 		return true;
 	}
 	
@@ -150,11 +146,7 @@ class SNKS_AI_Orders {
 			[ '%d' ]
 		);
 		
-		if ( $result === false ) {
-			error_log( "Failed to book appointment slot: {$slot_id}" );
-		} else {
-			error_log( "Appointment slot booked successfully: {$slot_id}" );
-		}
+
 		
 		return $result;
 	}
@@ -212,7 +204,5 @@ class SNKS_AI_Orders {
 		);
 		
 		wp_mail( $admin_email, $admin_subject, $admin_message );
-		
-		error_log( "Notifications sent for AI order: {$order_id}" );
 	}
 } 

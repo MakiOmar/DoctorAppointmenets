@@ -1733,13 +1733,9 @@ class SNKS_AI_Integration {
 		$user_id = $request->get_param('user_id');
 		$slot_id = $request->get_param('slot_id');
 		
-		// Debug logging
-		error_log("=== ADD TO CART DEBUG ===");
-		error_log("Slot ID: " . $slot_id);
-		error_log("User ID: " . $user_id);
+
 		
 		if (!$user_id || !$slot_id) {
-			error_log("ERROR: Missing user_id or slot_id");
 			return new WP_REST_Response(['error' => 'Missing user_id or slot_id'], 400);
 		}
 		
@@ -1752,10 +1748,7 @@ class SNKS_AI_Integration {
 			$slot_id
 		));
 		
-		error_log("Slot data: " . print_r($slot, true));
-		
 		if (!$slot) {
-			error_log("ERROR: Time slot is no longer available");
 			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
 		}
 		
@@ -1765,19 +1758,14 @@ class SNKS_AI_Integration {
 			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking:in_cart%'",
 			$slot_id, $user_id
 		);
-		error_log("Cart check query: " . $cart_check_query);
 		
 		$in_cart = $wpdb->get_var($cart_check_query);
-		error_log("In cart result: " . $in_cart);
 		
 		if ($in_cart) {
-			error_log("ERROR: Appointment already in cart");
 			return new WP_REST_Response(['error' => 'Appointment already in cart'], 400);
 		}
 		
 		// Add to cart by updating the slot with AI identifier
-		error_log("Attempting to update slot with user_id: {$user_id}, settings: ai_booking:in_cart");
-		
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
@@ -1790,11 +1778,7 @@ class SNKS_AI_Integration {
 			['%d']
 		);
 		
-		error_log("Update result: " . $result);
-		error_log("Last SQL error: " . $wpdb->last_error);
-		
 		if ($result === false) {
-			error_log("ERROR: Failed to add to cart");
 			return new WP_REST_Response(['error' => 'Failed to add to cart'], 500);
 		}
 		
@@ -1811,12 +1795,9 @@ class SNKS_AI_Integration {
 	public function get_user_cart($request) {
 		$user_id = $request->get_param('user_id');
 		
-		// Debug logging
-		error_log("=== GET USER CART DEBUG ===");
-		error_log("User ID: " . $user_id);
+
 		
 		if (!$user_id) {
-			error_log("ERROR: Missing user_id");
 			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
 		}
 		
@@ -1831,11 +1812,8 @@ class SNKS_AI_Integration {
 			 ORDER BY t.date_time ASC",
 			$user_id
 		);
-		error_log("Cart query: " . $cart_query);
 		
 		$cart_items = $wpdb->get_results($cart_query);
-		error_log("Cart items count: " . count($cart_items));
-		error_log("Cart items: " . print_r($cart_items, true));
 		
 		$total_price = 0;
 		foreach ($cart_items as $item) {
@@ -1970,11 +1948,9 @@ class SNKS_AI_Integration {
 	public function get_user_appointments($request) {
 		$user_id = $request->get_param('user_id');
 		
-		// Debug logging
-		error_log("Appointments Debug: Requested user ID: " . $user_id);
+
 		
 		if (!$user_id) {
-			error_log("Appointments Debug: Missing user_id parameter");
 			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
 		}
 		
@@ -1990,18 +1966,7 @@ class SNKS_AI_Integration {
 			$user_id
 		);
 		
-		error_log("Appointments Debug: User ID being searched: " . $user_id);
-		error_log("Appointments Debug: Checking if user exists: " . (get_user_by('ID', $user_id) ? 'Yes' : 'No'));
-		
-		error_log("Appointments Debug: SQL Query: " . $query);
-		
 		$appointments = $wpdb->get_results($query);
-		
-		error_log("Appointments Debug: Found " . count($appointments) . " appointments");
-		
-		// Debug: Check all appointments in the table
-		$all_appointments = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE session_status = 'open' LIMIT 5");
-		error_log("Appointments Debug: Sample appointments in table: " . print_r($all_appointments, true));
 		
 		foreach ($appointments as $appointment) {
 			if ($appointment->profile_image) {
@@ -2122,7 +2087,6 @@ class SNKS_AI_Integration {
 		
 		// If no 'waiting' slots, try 'open' status
 		if (!$earliest_slot) {
-			error_log("Earliest Slot Debug: No 'waiting' slots found, trying 'open' status");
 			$earliest_slot = $wpdb->get_row($wpdb->prepare(
 				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
 				 FROM {$wpdb->prefix}snks_provider_timetable 
@@ -2133,7 +2097,6 @@ class SNKS_AI_Integration {
 				 LIMIT 1",
 				$therapist_id
 			));
-			error_log("Earliest Slot Debug: Query with 'open' status result: " . print_r($earliest_slot, true));
 		}
 		
 		if ($earliest_slot) {
@@ -2226,21 +2189,15 @@ class SNKS_AI_Integration {
 		$user_id = $request->get_param('user_id');
 		$cart_items = $request->get_param('cart_items');
 		
-		// Debug logging
-		error_log("=== CREATE WOOCOMMERCE ORDER DEBUG ===");
-		error_log("User ID: " . $user_id);
-		error_log("Cart items count: " . count($cart_items));
+
 		
 		if (!$user_id || !$cart_items) {
-			error_log("ERROR: Missing user_id or cart_items");
 			return new WP_REST_Response(['error' => 'Missing user_id or cart_items'], 400);
 		}
 		
 		try {
 			// Create WooCommerce order from existing cart
 			$order = SNKS_AI_Orders::create_order_from_existing_cart($user_id, $cart_items);
-			
-			error_log("Order created successfully with ID: " . $order->get_id());
 			
 			return new WP_REST_Response([
 				'success' => true,
@@ -2251,7 +2208,6 @@ class SNKS_AI_Integration {
 			]);
 			
 		} catch (Exception $e) {
-			error_log("ERROR creating WooCommerce order: " . $e->getMessage());
 			return new WP_REST_Response(['error' => $e->getMessage()], 500);
 		}
 	}
