@@ -256,6 +256,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useToast } from 'vue-toastification'
+import { useRouter } from 'vue-router'
 import StarRating from './StarRating.vue'
 
 export default {
@@ -279,6 +280,7 @@ export default {
     const authStore = useAuthStore()
     const cartStore = useCartStore()
     const toast = useToast()
+    const router = useRouter()
     
     const showDetails = ref(false)
     const loading = ref(false)
@@ -454,6 +456,9 @@ export default {
           toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
+          
+          // Redirect directly to checkout page
+          router.push('/checkout')
         } else {
           // Check if it's a token expiration error
           if (result.message && result.message.includes('Please login again')) {
