@@ -134,16 +134,18 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
+import { useAuthStore } from '../stores/auth'
 import { formatPrice } from '../utils/currency'
 
 const { t } = useI18n()
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 
-// Demo user ID for testing
-const userId = 85
+// Get the authenticated user's ID
+const userId = computed(() => authStore.user?.id)
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''
@@ -165,14 +167,16 @@ const formatTime = (time) => {
 }
 
 const removeItem = async (slotId) => {
-  const result = await cartStore.removeFromCart(slotId, userId)
+  if (!userId.value) return
+  const result = await cartStore.removeFromCart(slotId, userId.value)
   if (!result.success) {
     console.error('Failed to remove item:', result.message)
   }
 }
 
 const proceedToCheckout = async () => {
-  const result = await cartStore.checkout(userId)
+  if (!userId.value) return
+  const result = await cartStore.checkout(userId.value)
   if (result.success) {
     // Redirect to success page or show success message
     console.log('Checkout successful!', result.appointmentIds)
@@ -183,6 +187,8 @@ const proceedToCheckout = async () => {
 }
 
 onMounted(() => {
-  cartStore.loadCart(userId)
+  if (userId.value) {
+    cartStore.loadCart(userId.value)
+  }
 })
 </script> 
