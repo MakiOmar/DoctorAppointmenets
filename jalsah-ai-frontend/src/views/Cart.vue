@@ -211,5 +211,12 @@ onMounted(() => {
   if (userId.value) {
     cartStore.loadCart(userId.value)
   }
+  
+  // Debug translation
+  console.log('=== Translation Debug ===')
+  console.log('Current locale:', locale.value)
+  console.log('Appointments translation:', t('appointments'))
+  console.log('All translations available:', Object.keys(t('appointments')))
+  console.log('========================')
 })
 </script> 
