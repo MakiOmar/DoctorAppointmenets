@@ -442,23 +442,36 @@ export default {
         return
       }
       
+      // Debug logging
+      console.log('Auth store token:', authStore.token)
+      console.log('Auth store user:', authStore.user)
+      console.log('Is authenticated:', authStore.isAuthenticated)
+      
       bookingLoading.value = true
       try {
+        const requestBody = {
+          therapist_id: props.therapist.id,
+          date: earliestSlot.value.date,
+          time: earliestSlot.value.time,
+          duration: 30
+        }
+        
+        console.log('Request body:', requestBody)
+        console.log('Authorization header:', `Bearer ${authStore.token}`)
+        
         const response = await fetch('/api/ai/cart/add', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authStore.token}`
           },
-          body: JSON.stringify({
-            therapist_id: props.therapist.id,
-            date: earliestSlot.value.date,
-            time: earliestSlot.value.time,
-            duration: 30
-          })
+          body: JSON.stringify(requestBody)
         })
         
+        console.log('Response status:', response.status)
         const data = await response.json()
+        console.log('Response data:', data)
+        
         if (data.success) {
           toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
@@ -648,6 +661,15 @@ export default {
     // Load earliest slot when component is mounted
     onMounted(() => {
       loadEarliestSlot()
+      
+      // Debug authentication status
+      console.log('=== Authentication Debug ===')
+      console.log('Auth store token:', authStore.token)
+      console.log('Auth store user:', authStore.user)
+      console.log('Is authenticated:', authStore.isAuthenticated)
+      console.log('localStorage jalsah_token:', localStorage.getItem('jalsah_token'))
+      console.log('localStorage jalsah_user:', localStorage.getItem('jalsah_user'))
+      console.log('============================')
     })
 
     return {
