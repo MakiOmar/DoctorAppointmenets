@@ -9,6 +9,10 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  define: {
+    'import.meta.env.VITE_API_TARGET': JSON.stringify(process.env.VITE_API_TARGET || 'http://localhost/shrinks'),
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || '/api'),
+  },
   server: {
     port: 3000,
     proxy: {
