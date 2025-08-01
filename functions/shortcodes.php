@@ -852,7 +852,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 					</svg>
 				</div>
 				<?php
-				[$converted_price, $currency_label] = acrsw_currency( ( $form_data['_jalsah_commistion'] + $form_data['_paymob'] ) );
+				[$converted_price, $currency_label] = acrsw_currency( ( floatval($form_data['_jalsah_commistion']) + floatval($form_data['_paymob']) ) );
 				?>
 				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 			</div>
@@ -860,7 +860,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 				<div class="amount-section">
 					<p>رسوم موقع جلسة</p>
 					<?php
-					[$converted_price, $currency_label] = acrsw_currency( $form_data['_jalsah_commistion'] );
+					[$converted_price, $currency_label] = acrsw_currency( floatval($form_data['_jalsah_commistion']) );
 					?>
 					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 				</div>
@@ -868,7 +868,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 				<div class="amount-section">
 					<p>رسوم  إدارية</p>
 					<?php
-					[$converted_price, $currency_label] = acrsw_currency( $form_data['_paymob'] );
+					[$converted_price, $currency_label] = acrsw_currency( floatval($form_data['_paymob']) );
 					?>
 					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 				</div>
@@ -886,7 +886,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<div class="total">
 			<p>الإجمالي</p>
 			<?php
-			[$converted_price, $currency_label] = acrsw_currency( $form_data['_total_price'] );
+			[$converted_price, $currency_label] = acrsw_currency( floatval($form_data['_total_price']) );
 			?>
 			<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 		</div>
@@ -1070,7 +1070,7 @@ function ai_session_pricing_table_shortcode( $form_data = false ) {
 				<p>رسوم الجلسة</p>
 				<?php
 				// Use dynamic total from form data or default price
-				$session_price = isset( $form_data['_total_price'] ) ? $form_data['_total_price'] : SNKS_AI_Products::get_default_session_price();
+				$session_price = isset( $form_data['_total_price'] ) ? floatval($form_data['_total_price']) : SNKS_AI_Products::get_default_session_price();
 				[$converted_price, $currency_label] = acrsw_currency( $session_price );
 				?>
 				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
