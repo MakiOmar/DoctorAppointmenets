@@ -3,27 +3,28 @@ import { useToast } from 'vue-toastification'
 
 // Determine the base URL based on environment
 const getBaseURL = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL
-  }
-  
-  // In development, use relative paths for proxy
+  // In development, always use empty string for proxy
   if (import.meta.env.DEV) {
     return ''
   }
   
-  // In production, use the current domain
+  // In production, use the configured base URL or current domain
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  
   return window.location.origin
 }
 
-// Debug logging for API configuration
-console.log('API Configuration:', {
-  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-  VITE_API_TARGET: import.meta.env.VITE_API_TARGET,
-  DEV: import.meta.env.DEV,
-  baseURL: getBaseURL(),
-  allEnv: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_'))
-})
+// Debug logging for API configuration (only in development)
+if (import.meta.env.DEV) {
+  console.log('API Configuration:', {
+    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+    VITE_API_TARGET: import.meta.env.VITE_API_TARGET,
+    DEV: import.meta.env.DEV,
+    baseURL: getBaseURL()
+  })
+}
 
 const api = axios.create({
   baseURL: getBaseURL(),
