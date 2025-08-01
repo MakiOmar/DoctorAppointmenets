@@ -16,6 +16,14 @@ const getBaseURL = () => {
   return window.location.origin
 }
 
+// Debug logging for API configuration
+console.log('API Configuration:', {
+  VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+  VITE_API_TARGET: import.meta.env.VITE_API_TARGET,
+  DEV: import.meta.env.DEV,
+  baseURL: getBaseURL()
+})
+
 const api = axios.create({
   baseURL: getBaseURL(),
   timeout: 15000, // Increased timeout

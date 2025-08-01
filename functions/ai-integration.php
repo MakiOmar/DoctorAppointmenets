@@ -1449,6 +1449,11 @@ class SNKS_AI_Integration {
 	 * Verify JWT Token
 	 */
 	private function verify_jwt_token() {
+		// Debug logging
+		error_log( 'JWT Debug - Request URI: ' . $_SERVER['REQUEST_URI'] );
+		error_log( 'JWT Debug - Request Method: ' . $_SERVER['REQUEST_METHOD'] );
+		error_log( 'JWT Debug - All Headers: ' . print_r( getallheaders(), true ) );
+		
 		$headers = getallheaders();
 		$auth_header = isset( $headers['Authorization'] ) ? $headers['Authorization'] : '';
 		
@@ -1457,17 +1462,23 @@ class SNKS_AI_Integration {
 			$auth_header = $_SERVER['HTTP_AUTHORIZATION'];
 		}
 		
+		error_log( 'JWT Debug - Auth Header: ' . $auth_header );
+		
 		if ( ! preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
+			error_log( 'JWT Debug - No token found in header' );
 			$this->send_error( 'No token provided', 401 );
 		}
 		
 		$token = $matches[1];
+		error_log( 'JWT Debug - Token: ' . substr( $token, 0, 20 ) . '...' );
 		
 		try {
 			$decoded = JWT::decode( $token, new Key( $this->jwt_secret, $this->jwt_algorithm ) );
+			error_log( 'JWT Debug - Token decoded successfully, user_id: ' . $decoded->user_id );
 			return $decoded->user_id;
 		} catch ( Exception $e ) {
-			$this->send_error( 'Invalid token', 401 );
+			error_log( 'JWT Debug - Token decode error: ' . $e->getMessage() );
+			$this->send_error( 'Invalid token: ' . $e->getMessage(), 401 );
 		}
 	}
 	
