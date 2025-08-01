@@ -21,6 +21,9 @@ define( 'WHYSMS_SENDER_ID', 'Jalsah' );
 define( 'WHYSMS_TOKEN', '299|dXuaaScFgVVEUu1FcRa8ApgmE5p0uY6dmsUfp6gR2d0970da' );
 define( 'CANCELL_AFTER', 15 );
 
+// JWT Secret for AI Integration
+define( 'JWT_SECRET', 'jalsah-ai-secret-key-2024-v1' );
+
 // Ensure the vendor autoload file is required.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
