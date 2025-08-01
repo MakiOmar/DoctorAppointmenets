@@ -22,8 +22,10 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      // Use the custom API endpoint that matches the booking system
-      const response = await api.get(`/api/ai/cart/${userId}`)
+      // Use the WordPress REST API endpoint
+      const response = await api.get(`/wp-json/jalsah-ai/v1/get-user-cart`, {
+        params: { user_id: userId }
+      })
       
       // The response format is different for the custom API
       if (response.data.success) {
@@ -45,7 +47,7 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      const response = await api.post('/api/ai/add-appointment-to-cart', appointmentData)
+      const response = await api.post('/wp-json/jalsah-ai/v1/add-appointment-to-cart', appointmentData)
       
       if (response.data.success) {
         // Reload cart to get updated data
@@ -69,7 +71,7 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      const response = await api.post('/api/ai/remove-from-cart', {
+      const response = await api.post('/wp-json/jalsah-ai/v1/remove-from-cart', {
         slot_id: slotId,
         user_id: userId
       })
@@ -96,7 +98,7 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      const response = await api.post('/api/ai/book-appointments-from-cart', {
+      const response = await api.post('/wp-json/jalsah-ai/v1/book-appointments-from-cart', {
         user_id: userId
       })
       
