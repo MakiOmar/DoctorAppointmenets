@@ -30,6 +30,12 @@ add_action( 'woocommerce_payment_complete', 'snks_woocommerce_payment_complete_a
  */
 function snks_woocommerce_payment_complete_action( $order_id ) {
 	$order       = wc_get_order( $order_id );
+	
+	// Skip processing if this is an AI order (handled separately)
+	if ( $order->get_meta( 'from_jalsah_ai' ) === 'true' ) {
+		return;
+	}
+	
 	$customer_id = $order->get_customer_id();
 	$booking_id  = $order->get_meta( 'booking_id', true );
 	if ( ! empty( $booking_id ) ) {
