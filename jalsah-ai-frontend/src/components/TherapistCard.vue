@@ -323,8 +323,6 @@ export default {
 
     const showTherapistDetails = () => {
       showDetails.value = !showDetails.value
-      console.log('TherapistCard Debug: Therapist certificates:', props.therapist.certificates)
-      console.log('TherapistCard Debug: Details certificates:', details.value?.certificates)
       if (showDetails.value && !details.value) {
         loadTherapistDetails()
       }
@@ -335,24 +333,18 @@ export default {
       error.value = null
       
       try {
-        console.log('TherapistCard Debug: Loading details for therapist ID:', props.therapist.id)
         const response = await fetch(`/api/ai/therapists/${props.therapist.id}/details`)
-        console.log('TherapistCard Debug: Details response status:', response.status)
         const data = await response.json()
-        console.log('TherapistCard Debug: Details response data:', data)
         
         if (data.success) {
           details.value = data.data
-          console.log('TherapistCard Debug: Details loaded successfully:', details.value)
           // Load earliest slot
           loadEarliestSlot()
         } else {
           error.value = data.message || t('therapistDetails.loadError')
-          console.log('TherapistCard Debug: Details load failed:', error.value)
         }
       } catch (err) {
         error.value = t('therapistDetails.error')
-        console.log('TherapistCard Debug: Details load error:', err)
       } finally {
         loading.value = false
       }
@@ -360,35 +352,23 @@ export default {
 
     const loadEarliestSlot = async () => {
       try {
-        console.log('TherapistCard Debug: Loading earliest slot for therapist ID:', props.therapist.id)
-        console.log('TherapistCard Debug: Therapist earliest_slot field:', props.therapist.earliest_slot)
-        console.log('TherapistCard Debug: Therapist earliest_slot_data field:', props.therapist.earliest_slot_data)
-        
         // First, try to use the earliest_slot_data from the therapist object
         if (props.therapist.earliest_slot_data) {
-          console.log('TherapistCard Debug: Found earliest_slot_data in therapist:', props.therapist.earliest_slot_data)
           earliestSlot.value = props.therapist.earliest_slot_data
-          console.log('TherapistCard Debug: Earliest slot loaded from therapist data:', earliestSlot.value)
           return
-        } else {
-          console.log('TherapistCard Debug: No earliest_slot_data found in therapist object')
         }
         
         // Fallback to API call if earliest_slot_data is not available
         const response = await fetch(`/api/ai/therapists/${props.therapist.id}/earliest-slot`)
-        console.log('TherapistCard Debug: Earliest slot response status:', response.status)
         const data = await response.json()
-        console.log('TherapistCard Debug: Earliest slot response data:', data)
         
         if (data.success && data.data) {
           earliestSlot.value = data.data
-          console.log('TherapistCard Debug: Earliest slot loaded from API:', earliestSlot.value)
           return
         }
         
         // Final fallback to therapist.earliest_slot if no timetable slots found
         if (props.therapist.earliest_slot) {
-          console.log('TherapistCard Debug: No timetable slots found, using fallback earliest_slot')
           // Convert the earliest_slot value to a proper slot object
           // The earliest_slot field contains minutes from now
           const minutesFromNow = parseInt(props.therapist.earliest_slot)
@@ -400,12 +380,8 @@ export default {
             time: earliestTime.toTimeString().split(' ')[0].substring(0, 5),
             period: 45 // Default period for AI sessions
           }
-          console.log('TherapistCard Debug: Earliest slot calculated from fallback data:', earliestSlot.value)
-        } else {
-          console.log('TherapistCard Debug: No earliest slot data available')
         }
       } catch (err) {
-        console.error('TherapistCard Debug: Earliest slot load error:', err)
         // Silently fail - earliest slot is not critical
       }
     }
@@ -413,12 +389,8 @@ export default {
     const loadAvailableDates = async () => {
       loadingDates.value = true
       try {
-        console.log('loadAvailableDates Debug: Loading dates for therapist ID:', props.therapist.id)
-        
         // Use the actual available dates from the therapist data
         if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
-          console.log('loadAvailableDates Debug: Using available_dates from therapist:', props.therapist.available_dates)
-          
           availableDates.value = props.therapist.available_dates.map(dateInfo => {
             const dateObj = new Date(dateInfo.date)
             return {
@@ -429,11 +401,7 @@ export default {
               slot_count: dateInfo.slot_count
             }
           })
-          
-          console.log('loadAvailableDates Debug: Processed availableDates:', availableDates.value)
         } else {
-          console.log('loadAvailableDates Debug: No available_dates found, using earliest_slot_data as fallback')
-          
           // Fallback to generating dates from earliest_slot_data
           if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
             const baseDate = new Date(props.therapist.earliest_slot_data.date)
@@ -453,12 +421,10 @@ export default {
             
             availableDates.value = dates
           } else {
-            console.log('loadAvailableDates Debug: No data available, setting empty array')
             availableDates.value = []
           }
         }
       } catch (err) {
-        console.error('loadAvailableDates Debug: Error:', err)
         availableDates.value = []
       } finally {
         loadingDates.value = false
@@ -469,18 +435,10 @@ export default {
       selectedDate.value = date
       loadingDates.value = true
       try {
-        console.log('selectDate Debug: Selected date object:', date)
-        console.log('selectDate Debug: Selected date.value:', date.value)
-        console.log('selectDate Debug: Selected date type:', typeof date.value)
-        
         // Since the time-slots endpoint has routing issues, let's generate time slots
         // based on the available_dates data we already have
         if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
-          console.log('selectDate Debug: Available dates from therapist:', props.therapist.available_dates)
-          console.log('selectDate Debug: Looking for date:', date.value)
-          
           const selectedDateInfo = props.therapist.available_dates.find(d => d.date === date.value)
-          console.log('selectDate Debug: Found date info:', selectedDateInfo)
           
           if (selectedDateInfo) {
             // Create a time slot based on the earliest_time for this date
@@ -495,14 +453,10 @@ export default {
               date_time: `${date.value} ${selectedDateInfo.earliest_time}`,
               inCart: false
             }]
-            console.log('selectDate Debug: Generated time slots:', timeSlots.value)
           } else {
-            console.log('selectDate Debug: No date info found for selected date')
             timeSlots.value = []
           }
         } else {
-          console.log('selectDate Debug: No available_dates data, trying API call')
-          
           // Fallback to API call
           const response = await fetch(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
           const data = await response.json()
@@ -516,7 +470,6 @@ export default {
           }
         }
       } catch (err) {
-        console.error('selectDate Debug: Error:', err)
         timeSlots.value = []
       } finally {
         loadingDates.value = false
@@ -546,7 +499,6 @@ export default {
           toast.error(result.message || t('common.error'))
         }
       } catch (err) {
-        console.error('Error adding to cart:', err)
         toast.error(t('common.error'))
       }
     }
@@ -560,11 +512,6 @@ export default {
         return
       }
       
-      // Debug logging
-      console.log('Auth store token:', authStore.token)
-      console.log('Auth store user:', authStore.user)
-      console.log('Is authenticated:', authStore.isAuthenticated)
-      
       bookingLoading.value = true
       try {
         // Use the cart store with new REST API
@@ -572,8 +519,6 @@ export default {
           slot_id: earliestSlot.value.id,
           user_id: authStore.user.id
         })
-        
-        console.log('Cart store result:', result)
         
         if (result.success) {
           toast.success(t('therapistDetails.appointmentAdded'))
@@ -595,7 +540,6 @@ export default {
           }
         }
       } catch (err) {
-        console.error('Error booking earliest slot:', err)
         toast.error(t('common.error'))
       } finally {
         bookingLoading.value = false
@@ -785,15 +729,6 @@ export default {
     // Load earliest slot when component is mounted
     onMounted(() => {
       loadEarliestSlot()
-      
-      // Debug authentication status
-      console.log('=== Authentication Debug ===')
-      console.log('Auth store token:', authStore.token)
-      console.log('Auth store user:', authStore.user)
-      console.log('Is authenticated:', authStore.isAuthenticated)
-      console.log('localStorage jalsah_token:', localStorage.getItem('jalsah_token'))
-      console.log('localStorage jalsah_user:', localStorage.getItem('jalsah_user'))
-      console.log('============================')
     })
 
     return {
