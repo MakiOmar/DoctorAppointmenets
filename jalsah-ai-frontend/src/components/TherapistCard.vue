@@ -816,6 +816,7 @@ export default {
       selectedDate,
       timeSlots,
       bookingLoading,
+      cartLoading,
       earliestSlot,
       selectDate,
       addToCart,
