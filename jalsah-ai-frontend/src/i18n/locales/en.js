@@ -470,6 +470,7 @@ export default {
     apply: 'Apply',
     promoApplied: 'Promo code applied: {code} (-${discount})',
     proceedToCheckout: 'Proceed to Checkout',
+    proceedToPayment: 'Proceed to Payment',
     processing: 'Processing...',
     continueShopping: 'Continue Shopping',
     importantInfo: 'Important Information',
@@ -494,6 +495,7 @@ export default {
   orderSummary: 'Order Summary',
   total: 'Total',
   proceedToCheckout: 'Proceed to Checkout',
+  proceedToPayment: 'Proceed to Payment',
   remove: 'Remove',
   duration: 'Duration',
 

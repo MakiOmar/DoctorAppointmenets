@@ -190,6 +190,13 @@ function plugin_activation_hook() {
 	do_action( 'snks_add_enhanced_ai_meta_fields' );
 	do_action( 'snks_add_enhanced_ai_user_meta_fields' );
 	do_action( 'snks_create_rochtah_doctor_role' );
+	
+	// Create AI session product for WooCommerce
+	if ( class_exists( 'WooCommerce' ) ) {
+		// Include AI helper classes
+		require_once SNKS_DIR . 'functions/helpers/ai-products.php';
+		SNKS_AI_Products::create_ai_session_product();
+	}
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 

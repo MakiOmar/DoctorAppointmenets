@@ -14,6 +14,10 @@ require_once SNKS_DIR . 'vendor/autoload.php';
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
+// Include AI helper classes
+require_once SNKS_DIR . 'functions/helpers/ai-products.php';
+require_once SNKS_DIR . 'functions/helpers/ai-orders.php';
+
 /**
  * AI Integration Class
  */
@@ -129,6 +133,13 @@ class SNKS_AI_Integration {
 		register_rest_route( 'jalsah-ai/v1', '/get-user-appointments', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_user_appointments' ),
+			'permission_callback' => '__return_true',
+		) );
+
+		// WooCommerce order creation endpoint
+		register_rest_route( 'jalsah-ai/v1', '/create-woocommerce-order', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'create_woocommerce_order_from_cart' ),
 			'permission_callback' => '__return_true',
 		) );
 	}
@@ -2207,7 +2218,117 @@ class SNKS_AI_Integration {
 		
 		$this->send_success($slots);
 	}
+
+	/**
+	 * Create WooCommerce order from existing cart
+	 */
+	public function create_woocommerce_order_from_cart($request) {
+		$user_id = $request->get_param('user_id');
+		$cart_items = $request->get_param('cart_items');
+		
+		// Debug logging
+		error_log("=== CREATE WOOCOMMERCE ORDER DEBUG ===");
+		error_log("User ID: " . $user_id);
+		error_log("Cart items count: " . count($cart_items));
+		
+		if (!$user_id || !$cart_items) {
+			error_log("ERROR: Missing user_id or cart_items");
+			return new WP_REST_Response(['error' => 'Missing user_id or cart_items'], 400);
+		}
+		
+		try {
+			// Create WooCommerce order from existing cart
+			$order = SNKS_AI_Orders::create_order_from_existing_cart($user_id, $cart_items);
+			
+			error_log("Order created successfully with ID: " . $order->get_id());
+			
+			return new WP_REST_Response([
+				'success' => true,
+				'order_id' => $order->get_id(),
+				'checkout_url' => $order->get_checkout_payment_url(),
+				'total' => $order->get_total(),
+				'appointments_count' => count($cart_items)
+			]);
+			
+		} catch (Exception $e) {
+			error_log("ERROR creating WooCommerce order: " . $e->getMessage());
+			return new WP_REST_Response(['error' => $e->getMessage()], 500);
+		}
+	}
 }
 
 // Initialize AI Integration
-new SNKS_AI_Integration(); 
+$ai_integration = new SNKS_AI_Integration();
+
+// WooCommerce Hooks Integration
+add_action('woocommerce_payment_complete', 'snks_process_ai_order_payment');
+add_action('woocommerce_order_status_changed', 'snks_process_ai_order_status_change', 10, 3);
+
+/**
+ * Process AI orders on payment completion
+ */
+function snks_process_ai_order_payment($order_id) {
+	$order = wc_get_order($order_id);
+	
+	if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
+		SNKS_AI_Orders::process_ai_order_payment($order_id);
+	}
+}
+
+/**
+ * Process AI orders on status change
+ */
+function snks_process_ai_order_status_change($order_id, $old_status, $new_status) {
+	if (in_array($new_status, ['completed', 'processing'])) {
+		$order = wc_get_order($order_id);
+		
+		if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
+			SNKS_AI_Orders::process_ai_order_payment($order_id);
+		}
+	}
+}
+
+/**
+ * Customize WooCommerce checkout for AI orders
+ */
+add_filter('woocommerce_checkout_fields', 'snks_customize_ai_checkout_fields');
+add_action('woocommerce_checkout_order_processed', 'snks_handle_ai_checkout_order', 10, 3);
+
+function snks_customize_ai_checkout_fields($fields) {
+	// Check if current order is from Jalsah AI
+	$order_id = get_query_var('order-pay');
+	if ($order_id) {
+		$order = wc_get_order($order_id);
+		if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
+			// Customize fields for AI orders
+			$fields['billing']['billing_email']['required'] = true;
+			$fields['billing']['billing_phone']['required'] = true;
+			
+			// Add AI-specific fields if needed
+			$fields['billing']['ai_user_id'] = [
+				'type' => 'hidden',
+				'default' => get_current_user_id()
+			];
+		}
+	}
+	
+	return $fields;
+}
+
+function snks_handle_ai_checkout_order($order_id, $posted_data, $order) {
+	// Check if order contains AI sessions
+	$has_ai_sessions = false;
+	foreach ($order->get_items() as $item) {
+		if ($item->get_meta('is_ai_session') === 'true') {
+			$has_ai_sessions = true;
+			break;
+		}
+	}
+	
+	if ($has_ai_sessions) {
+		// Mark order as AI order
+		$order->update_meta_data('from_jalsah_ai', true);
+		$order->update_meta_data('ai_user_id', get_current_user_id());
+		$order->save();
+	}
+} 

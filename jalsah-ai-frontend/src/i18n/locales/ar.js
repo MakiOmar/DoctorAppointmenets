@@ -426,6 +426,7 @@ export default {
     apply: 'تطبيق',
     promoApplied: 'تم تطبيق كود الخصم: {code} (-${discount})',
     proceedToCheckout: 'المتابعة للدفع',
+    proceedToPayment: 'المتابعة للدفع',
     processing: 'جاري المعالجة...',
     continueShopping: 'مواصلة التسوق',
     importantInfo: 'معلومات مهمة',
@@ -450,6 +451,7 @@ export default {
   orderSummary: 'ملخص الطلب',
   total: 'المجموع',
   proceedToCheckout: 'المتابعة للدفع',
+  proceedToPayment: 'المتابعة للدفع',
   remove: 'إزالة',
   duration: 'المدة',
 

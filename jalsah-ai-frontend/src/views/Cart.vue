@@ -119,12 +119,12 @@
             </div>
 
             <button
-              @click="proceedToCheckout"
+              @click="proceedToPayment"
               :disabled="cartStore.loading || cartStore.itemCount === 0"
               class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.loading">{{ $t('processing') }}...</span>
-              <span v-else>{{ $t('proceedToCheckout') }}</span>
+              <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(cartStore.totalPrice) }}</span>
             </button>
           </div>
         </div>
@@ -195,15 +195,14 @@ const removeItem = async (slotId) => {
   }
 }
 
-const proceedToCheckout = async () => {
+const proceedToPayment = async () => {
   if (!userId.value) return
   const result = await cartStore.checkout(userId.value)
   if (result.success) {
-    // Redirect to success page or show success message
-    console.log('Checkout successful!', result.appointmentIds)
-    // You can redirect to a success page here
+    // Redirect happens automatically in the store
+    console.log('Payment initiated!', result.checkout_url)
   } else {
-    console.error('Checkout failed:', result.message)
+    console.error('Payment failed:', result.message)
   }
 }
 

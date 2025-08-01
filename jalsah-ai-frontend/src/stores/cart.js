@@ -95,20 +95,23 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      const response = await api.post('/wp-json/jalsah-ai/v1/book-appointments-from-cart', {
-        user_id: userId
+      // Create WooCommerce order from existing cart
+      const response = await api.post('/wp-json/jalsah-ai/v1/create-woocommerce-order', {
+        user_id: userId,
+        cart_items: cartItems.value
       })
       
       if (response.data.success) {
-        // Clear cart after successful checkout
-        cartItems.value = []
-        return { success: true, appointmentIds: response.data.appointment_ids }
+        // Redirect to WooCommerce checkout
+        window.location.href = response.data.checkout_url
+        return { success: true, checkout_url: response.data.checkout_url }
       } else {
-        error.value = response.data.error || 'Failed to checkout'
+        error.value = response.data.error || 'Failed to create order'
         return { success: false, message: error.value }
       }
     } catch (err) {
       error.value = 'Failed to checkout'
+      console.error('Error during checkout:', err)
       return { success: false, message: error.value }
     } finally {
       loading.value = false
