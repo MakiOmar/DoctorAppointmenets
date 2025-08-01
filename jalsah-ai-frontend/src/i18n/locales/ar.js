@@ -447,6 +447,12 @@ export default {
   emptyCartDescription: 'لم تقم بإضافة أي مواعيد إلى سلتك بعد',
   subtotal: 'المجموع الفرعي',
   minutes: 'دقائق',
+  appointments: 'المواعيد',
+  orderSummary: 'ملخص الطلب',
+  total: 'المجموع',
+  proceedToCheckout: 'المتابعة للدفع',
+  remove: 'إزالة',
+  duration: 'المدة',
 
   // Appointments
   appointments: {

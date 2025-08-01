@@ -491,6 +491,12 @@ export default {
   emptyCartDescription: 'You haven\'t added any appointments to your cart yet',
   subtotal: 'Subtotal',
   minutes: 'minutes',
+  appointments: 'Appointments',
+  orderSummary: 'Order Summary',
+  total: 'Total',
+  proceedToCheckout: 'Proceed to Checkout',
+  remove: 'Remove',
+  duration: 'Duration',
 
   // Appointments
   appointments: {
