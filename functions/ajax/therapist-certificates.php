@@ -124,24 +124,50 @@ add_action('rest_api_init', 'snks_register_therapist_certificates_rest_route');
 function snks_get_therapist_certificates_rest($request) {
     $therapist_id = intval($request['id']);
     
+    // Debug logging
+    error_log("Certificates Debug: Requested therapist ID: " . $therapist_id);
+    
     // Check if therapist exists and has doctor role
     $therapist = get_user_by('ID', $therapist_id);
+    error_log("Certificates Debug: Therapist user object: " . print_r($therapist, true));
+    if ($therapist) {
+        error_log("Certificates Debug: Therapist roles: " . print_r($therapist->roles, true));
+    }
     if (!$therapist || !in_array('doctor', $therapist->roles)) {
+        error_log("Certificates Debug: Therapist not found or not a doctor. User: " . print_r($therapist, true));
         return new WP_Error('therapist_not_found', 'Therapist not found', ['status' => 404]);
     }
-
-    // Get certificates from user meta
-    $certificates = get_user_meta($therapist_id, 'certificates', true);
     
-    // If certificates is a string (serialized), unserialize it
-    if (is_string($certificates)) {
-        $certificates = maybe_unserialize($certificates);
+    error_log("Certificates Debug: Therapist found: " . $therapist->display_name);
+
+    // Get certificates from therapist_applications table
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'therapist_applications';
+    
+    $application = $wpdb->get_row($wpdb->prepare(
+        "SELECT certificates FROM $table_name WHERE user_id = %d AND status = 'approved'",
+        $therapist_id
+    ));
+    
+    error_log("Certificates Debug: Application query result: " . print_r($application, true));
+    
+    if (!$application) {
+        error_log("Certificates Debug: No approved application found for therapist ID: " . $therapist_id);
+        $certificates = [];
+    } else {
+        // Parse certificates from JSON
+        $certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];
+        error_log("Certificates Debug: Raw certificates from application: " . print_r($application->certificates, true));
+        error_log("Certificates Debug: After JSON decode: " . print_r($certificates, true));
     }
     
     // Ensure certificates is an array
     if (!is_array($certificates)) {
         $certificates = [];
+        error_log("Certificates Debug: Certificates is not an array, setting to empty array");
     }
+    
+    error_log("Certificates Debug: Final certificates array: " . print_r($certificates, true));
 
     $certificates_data = [];
 

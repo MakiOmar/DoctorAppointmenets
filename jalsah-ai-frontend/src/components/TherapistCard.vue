@@ -101,7 +101,7 @@
         </div>
 
         <!-- Certificates Carousel -->
-        <div v-if="details.certificates && details.certificates.length > 0" class="bg-gray-50 rounded-lg p-4">
+        <div v-if="(details.certificates && details.certificates.length > 0) || (therapist.certificates && therapist.certificates.length > 0)" class="bg-gray-50 rounded-lg p-4">
           <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
           
           <!-- Carousel Container -->
@@ -109,7 +109,7 @@
             <!-- Carousel Track -->
             <div class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide" ref="carouselTrack">
               <div 
-                v-for="(cert, index) in details.certificates" 
+                v-for="(cert, index) in (details.certificates || therapist.certificates || [])" 
                 :key="cert.id"
                 class="flex-shrink-0 w-48"
               >
@@ -323,6 +323,8 @@ export default {
 
     const showTherapistDetails = () => {
       showDetails.value = !showDetails.value
+      console.log('TherapistCard Debug: Therapist certificates:', props.therapist.certificates)
+      console.log('TherapistCard Debug: Details certificates:', details.value?.certificates)
       if (showDetails.value && !details.value) {
         loadTherapistDetails()
       }
@@ -333,18 +335,24 @@ export default {
       error.value = null
       
       try {
+        console.log('TherapistCard Debug: Loading details for therapist ID:', props.therapist.id)
         const response = await fetch(`/api/ai/therapists/${props.therapist.id}/details`)
+        console.log('TherapistCard Debug: Details response status:', response.status)
         const data = await response.json()
+        console.log('TherapistCard Debug: Details response data:', data)
         
         if (data.success) {
           details.value = data.data
+          console.log('TherapistCard Debug: Details loaded successfully:', details.value)
           // Load earliest slot
           loadEarliestSlot()
         } else {
           error.value = data.message || t('therapistDetails.loadError')
+          console.log('TherapistCard Debug: Details load failed:', error.value)
         }
       } catch (err) {
         error.value = t('therapistDetails.error')
+        console.log('TherapistCard Debug: Details load error:', err)
       } finally {
         loading.value = false
       }

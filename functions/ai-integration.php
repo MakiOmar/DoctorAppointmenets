@@ -784,6 +784,57 @@ class SNKS_AI_Integration {
 			}
 		}
 		
+		// Get certificates
+		$certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];
+		
+		// Debug logging
+		error_log("AI Integration Debug: Raw certificates from application: " . print_r($application->certificates, true));
+		error_log("AI Integration Debug: After JSON decode: " . print_r($certificates, true));
+		
+		$certificates_data = [];
+		
+		foreach ($certificates as $cert_id) {
+			$attachment = get_post($cert_id);
+			if (!$attachment) continue;
+			
+			$file_url = wp_get_attachment_url($cert_id);
+			$file_type = get_post_mime_type($cert_id);
+			
+			// Get file extension
+			$file_extension = pathinfo($file_url, PATHINFO_EXTENSION);
+			
+			// Determine if it's an image or document
+			$is_image = wp_attachment_is_image($cert_id);
+			
+			// Get file size
+			$file_size = filesize(get_attached_file($cert_id));
+			$file_size_formatted = size_format($file_size, 2);
+			
+			// Get upload date
+			$upload_date = get_the_date('Y-m-d', $cert_id);
+			
+			$certificates_data[] = [
+				'id' => $cert_id,
+				'name' => $attachment->post_title ?: basename($file_url),
+				'description' => $attachment->post_content ?: '',
+				'url' => $file_url,
+				'thumbnail_url' => $is_image ? wp_get_attachment_image_url($cert_id, 'thumbnail') : '',
+				'is_image' => $is_image,
+				'file_type' => $file_type,
+				'file_extension' => strtoupper($file_extension),
+				'file_size' => $file_size_formatted,
+				'upload_date' => $upload_date,
+				'alt_text' => get_post_meta($cert_id, '_wp_attachment_image_alt', true) ?: ''
+			];
+		}
+		
+		// Sort certificates by upload date (newest first)
+		usort($certificates_data, function($a, $b) {
+			return strtotime($b['upload_date']) - strtotime($a['upload_date']);
+		});
+		
+		error_log("AI Integration Debug: Final certificates data: " . print_r($certificates_data, true));
+		
 		$result = array(
 			'id' => $application->user_id,
 			'name' => $name,
@@ -802,6 +853,7 @@ class SNKS_AI_Integration {
 			'total_ratings' => intval( $application->total_ratings ),
 			'price' => $this->get_therapist_ai_price( $application->user_id ),
 			'diagnoses' => $diagnoses,
+			'certificates' => $certificates_data,
 		);
 		
 		// Debug logging
@@ -1858,13 +1910,17 @@ class SNKS_AI_Integration {
 	public function get_user_appointments($request) {
 		$user_id = $request->get_param('user_id');
 		
+		// Debug logging
+		error_log("Appointments Debug: Requested user ID: " . $user_id);
+		
 		if (!$user_id) {
+			error_log("Appointments Debug: Missing user_id parameter");
 			return new WP_REST_Response(['error' => 'Missing user_id'], 400);
 		}
 		
 		global $wpdb;
 		
-		$appointments = $wpdb->get_results($wpdb->prepare(
+		$query = $wpdb->prepare(
 			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
 			 FROM {$wpdb->prefix}snks_provider_timetable t
 			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
@@ -1872,7 +1928,20 @@ class SNKS_AI_Integration {
 			 AND t.settings LIKE '%ai_booking%'
 			 ORDER BY t.date_time ASC",
 			$user_id
-		));
+		);
+		
+		error_log("Appointments Debug: User ID being searched: " . $user_id);
+		error_log("Appointments Debug: Checking if user exists: " . (get_user_by('ID', $user_id) ? 'Yes' : 'No'));
+		
+		error_log("Appointments Debug: SQL Query: " . $query);
+		
+		$appointments = $wpdb->get_results($query);
+		
+		error_log("Appointments Debug: Found " . count($appointments) . " appointments");
+		
+		// Debug: Check all appointments in the table
+		$all_appointments = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE session_status = 'open' LIMIT 5");
+		error_log("Appointments Debug: Sample appointments in table: " . print_r($all_appointments, true));
 		
 		foreach ($appointments as $appointment) {
 			if ($appointment->profile_image) {

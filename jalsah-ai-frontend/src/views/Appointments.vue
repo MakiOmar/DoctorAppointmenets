@@ -261,11 +261,14 @@ export default {
     const loadAppointments = async () => {
       loading.value = true
       try {
+        console.log('Appointments Debug: Loading appointments')
         const response = await api.get('/api/ai/appointments')
+        console.log('Appointments Debug: Appointments response:', response)
         appointments.value = response.data.data || []
+        console.log('Appointments Debug: Appointments loaded:', appointments.value)
       } catch (error) {
         toast.error('Failed to load appointments')
-        console.error('Error loading appointments:', error)
+        console.error('Appointments Debug: Error loading appointments:', error)
       } finally {
         loading.value = false
       }
