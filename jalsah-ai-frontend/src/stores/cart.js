@@ -5,6 +5,7 @@ import api from '../services/api'
 export const useCartStore = defineStore('cart', () => {
   const cartItems = ref([])
   const loading = ref(false)
+  const redirecting = ref(false)
   const error = ref(null)
 
   // Computed properties
@@ -92,6 +93,7 @@ export const useCartStore = defineStore('cart', () => {
 
   const checkout = async (userId) => {
     loading.value = true
+    redirecting.value = false
     error.value = null
     
     try {
@@ -102,8 +104,16 @@ export const useCartStore = defineStore('cart', () => {
       })
       
       if (response.data.success) {
-        // Redirect to auto-login URL for main website
-        window.location.href = response.data.auto_login_url
+        // Set redirecting state to true before redirecting
+        loading.value = false
+        redirecting.value = true
+        
+        // Small delay to show redirect message
+        setTimeout(() => {
+          // Redirect to auto-login URL for main website
+          window.location.href = response.data.auto_login_url
+        }, 1500)
+        
         return { success: true, auto_login_url: response.data.auto_login_url }
       } else {
         error.value = response.data.error || 'Failed to create order'
@@ -127,6 +137,7 @@ export const useCartStore = defineStore('cart', () => {
     // State
     cartItems,
     loading,
+    redirecting,
     error,
     
     // Computed

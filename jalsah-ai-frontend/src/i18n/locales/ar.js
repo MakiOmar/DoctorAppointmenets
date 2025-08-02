@@ -460,6 +460,8 @@ export default {
   completeYourBooking: 'أكمل عملية الحجز الخاصة بك',
   loadingCheckout: 'جاري تحميل صفحة الدفع...',
   errorLoadingCheckout: 'خطأ في تحميل صفحة الدفع',
+  orderCreated: 'تم إنشاء الطلب بنجاح!',
+  redirectingToPayment: 'جاري توجيهك إلى صفحة الدفع...',
   paymentMethod: 'طريقة الدفع',
   cashPayment: 'الدفع نقداً',
   cardPayment: 'الدفع بالبطاقة',

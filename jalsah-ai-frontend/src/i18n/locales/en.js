@@ -504,6 +504,8 @@ export default {
   completeYourBooking: 'Complete your booking',
   loadingCheckout: 'Loading checkout...',
   errorLoadingCheckout: 'Error loading checkout',
+  orderCreated: 'Order Created Successfully!',
+  redirectingToPayment: 'Redirecting you to the payment page...',
   paymentMethod: 'Payment Method',
   cashPayment: 'Cash Payment',
   cardPayment: 'Card Payment',

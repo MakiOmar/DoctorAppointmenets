@@ -13,6 +13,22 @@
         <p class="mt-4 text-gray-600">{{ $t('loadingCheckout') }}</p>
       </div>
 
+      <!-- Redirecting State -->
+      <div v-else-if="cartStore.redirecting" class="text-center py-12">
+        <div class="animate-pulse">
+          <div class="mx-auto h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">{{ $t('orderCreated') }}</h3>
+        <p class="mt-2 text-gray-600">{{ $t('redirectingToPayment') }}</p>
+        <div class="mt-4">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+        </div>
+      </div>
+
       <!-- Error State -->
       <div v-else-if="cartStore.error" class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
         <div class="flex">
