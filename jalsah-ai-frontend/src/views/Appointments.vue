@@ -263,9 +263,14 @@ export default {
       try {
         console.log('Appointments Debug: Loading appointments')
         const response = await api.get('/api/ai/appointments')
-        console.log('Appointments Debug: Appointments response:', response)
+        console.log('Appointments Debug: Full response:', response)
+        console.log('Appointments Debug: response.data:', response.data)
+        console.log('Appointments Debug: response.data.data:', response.data.data)
         appointments.value = response.data.data || []
-        console.log('Appointments Debug: Appointments loaded:', appointments.value)
+        console.log('Appointments Debug: Final appointments.value:', appointments.value)
+        console.log('Appointments Debug: appointments.value.length:', appointments.value.length)
+        console.log('Appointments Debug: appointments.value type:', typeof appointments.value)
+        console.log('Appointments Debug: Is appointments.value array?', Array.isArray(appointments.value))
       } catch (error) {
         toast.error('Failed to load appointments')
         console.error('Appointments Debug: Error loading appointments:', error)

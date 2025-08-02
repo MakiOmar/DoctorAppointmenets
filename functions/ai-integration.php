@@ -1145,11 +1145,20 @@ class SNKS_AI_Integration {
 				error_log('AI Appointments Debug: Order found, from_jalsah_ai meta: ' . $is_ai_order);
 				
 				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+					// Map database status to frontend status
+					$status_mapping = array(
+						'open' => 'confirmed',
+						'waiting' => 'pending',
+						'completed' => 'completed',
+						'cancelled' => 'cancelled'
+					);
+					$frontend_status = isset($status_mapping[$appointment->session_status]) ? $status_mapping[$appointment->session_status] : $appointment->session_status;
+					
 					$ai_appointments[] = array(
 						'id' => $appointment->ID,
 						'date' => $appointment->date_time,
 						'time' => $appointment->starts,
-						'status' => $appointment->session_status,
+						'status' => $frontend_status,
 						'session_type' => $appointment->period ?: 60,
 						'therapist' => array(
 							'name' => $appointment->therapist_name ?: 'Unknown Therapist',
