@@ -197,11 +197,8 @@ export default {
       error.value = null
       
       try {
-        console.log('CertificatesCarousel Debug: Loading certificates for therapist ID:', props.therapistId)
         const response = await api.get(`/api/ai/therapists/${props.therapistId}/certificates`)
-        console.log('CertificatesCarousel Debug: Certificates response:', response)
         certificates.value = response.data.data || []
-        console.log('CertificatesCarousel Debug: Certificates loaded:', certificates.value)
         currentIndex.value = 0
       } catch (err) {
         error.value = err.response?.data?.message || t('therapistDetails.loadError')

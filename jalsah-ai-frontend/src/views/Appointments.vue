@@ -273,8 +273,8 @@ export default {
 
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A'
-      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
-      return new Date(dateString).toLocaleDateString(currentLocale, {
+      // Force Gregorian calendar by using 'en-US' locale for date formatting
+      return new Date(dateString).toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',

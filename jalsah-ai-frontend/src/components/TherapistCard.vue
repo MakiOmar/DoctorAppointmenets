@@ -423,8 +423,8 @@ export default {
             const dateObj = new Date(dateInfo.date)
             return {
               value: dateInfo.date,
-              day: dateObj.toLocaleDateString(locale.value, { weekday: 'short' }),
-              date: dateObj.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' }),
+                      day: dateObj.toLocaleDateString('en-US', { weekday: 'short' }),
+        date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
               earliest_time: dateInfo.earliest_time,
               slot_count: dateInfo.slot_count
             }
@@ -442,8 +442,8 @@ export default {
               
               dates.push({
                 value: date.toISOString().split('T')[0],
-                day: date.toLocaleDateString(locale.value, { weekday: 'short' }),
-                date: date.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
+                        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               })
             }
             
@@ -640,7 +640,7 @@ export default {
       const minutes = parseInt(timeParts[1]) // Parse minutes as integer
       
       if (isNaN(hours) || isNaN(minutes)) {
-        console.log('Invalid time format in formatTimeSlot:', time)
+        // Invalid time format
         return time // Return original time if parsing fails
       }
       
@@ -695,7 +695,7 @@ export default {
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedTime = `${displayHours}:${minutes} ${period}`
       
-      const dateStr = date.toLocaleDateString(locale.value, { 
+      const dateStr = date.toLocaleDateString('en-US', { 
         weekday: 'short', 
         month: 'short', 
         day: 'numeric' 
@@ -765,7 +765,7 @@ export default {
           })
         } else {
           return t('therapists.availableOn', { 
-            date: slotDate.toLocaleDateString(currentLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
+            date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
             time: formattedTime
           })
         }

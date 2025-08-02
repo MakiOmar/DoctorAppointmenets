@@ -229,10 +229,7 @@ export default {
         therapists.value = response.data.data || []
         
         // Debug logging
-        console.log('Therapists loaded:', therapists.value)
-        therapists.value.forEach(therapist => {
-          console.log(`Therapist ${therapist.id}: rating=${therapist.rating}, total_ratings=${therapist.total_ratings}`)
-        })
+        // Therapists loaded successfully
       } catch (error) {
         toast.error('Failed to load therapists')
         console.error('Error loading therapists:', error)

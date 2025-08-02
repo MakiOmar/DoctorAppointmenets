@@ -187,7 +187,7 @@ const openBookingModal = () => {
 }
 
 const handleAppointmentAdded = (appointment) => {
-  console.log('Appointment added:', appointment)
+          // Appointment added successfully
   // You can show a success message or redirect to cart
 }
 

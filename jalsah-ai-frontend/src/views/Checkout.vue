@@ -199,42 +199,23 @@ const paymentMethod = ref('cash')
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''
-  try {
-    const currentLocale = locale?.value === 'ar' ? 'ar-SA' : 'en-US'
-    return new Date(dateTime).toLocaleDateString(currentLocale, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  } catch (error) {
-    // Fallback to English if there's any error
-    return new Date(dateTime).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
+  // Force Gregorian calendar by using 'en-US' locale for date formatting
+  return new Date(dateTime).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
 const formatTime = (time) => {
   if (!time) return ''
-  try {
-    const currentLocale = locale?.value === 'ar' ? 'ar-SA' : 'en-US'
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString(currentLocale, {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  } catch (error) {
-    // Fallback to English if there's any error
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
+  // Force Gregorian calendar by using 'en-US' locale for time formatting
+  return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 
 const processPayment = async () => {
@@ -244,7 +225,7 @@ const processPayment = async () => {
   if (result.success) {
     // The cart store checkout function handles the redirect to payment URL
     // No need to redirect here as it will redirect to auto_login_url
-    console.log('Redirecting to payment...', result.auto_login_url)
+            // Redirecting to payment
   } else {
     console.error('Payment failed:', result.message)
   }

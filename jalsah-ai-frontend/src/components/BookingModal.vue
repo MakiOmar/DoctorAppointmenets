@@ -175,7 +175,8 @@ const addingToCart = ref(false)
 // Computed
 const formatSelectedDate = computed(() => {
   if (!selectedDate.value) return ''
-  return new Date(selectedDate.value).toLocaleDateString('en-US', {
+      // Force Gregorian calendar by using 'en-US' locale for date formatting
+    return new Date(selectedDate.value).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',

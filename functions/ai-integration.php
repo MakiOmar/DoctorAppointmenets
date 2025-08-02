@@ -308,7 +308,7 @@ class SNKS_AI_Integration {
 	 */
 	public function flush_rewrite_rules() {
 		flush_rewrite_rules();
-		error_log("AI Integration Debug: Rewrite rules flushed");
+		// Rewrite rules flushed
 	}
 	
 	/**
@@ -341,20 +341,12 @@ class SNKS_AI_Integration {
 	 * Handle AI requests
 	 */
 	public function handle_ai_requests() {
-		// Debug logging
-		error_log("AI Integration Debug: handle_ai_requests called");
-		error_log("AI Integration Debug: REQUEST_URI: " . $_SERVER['REQUEST_URI']);
-		error_log("AI Integration Debug: ai_endpoint query var: " . get_query_var('ai_endpoint'));
-		
 		$endpoint = get_query_var( 'ai_endpoint' );
 		
 		// Check if this is an AI API request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) === false ) {
-			error_log("AI Integration Debug: Not an AI API request, returning");
 			return;
 		}
-		
-		error_log("AI Integration Debug: This is an AI API request, processing...");
 		
 		if ( ! $endpoint ) {
 			// If no endpoint is set, try to extract it from the URL
@@ -402,12 +394,7 @@ class SNKS_AI_Integration {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$path = explode( '/', $endpoint );
 		
-		// Debug logging for earliest slot specifically
-		if (strpos($endpoint, 'earliest-slot') !== false) {
-			error_log("AI Integration Debug: EARLIEST SLOT REQUEST DETECTED!");
-			error_log("AI Integration Debug: Full endpoint: " . $endpoint);
-			error_log("AI Integration Debug: Path array: " . print_r($path, true));
-		}
+		// Route the request
 		
 		// Check for v2 endpoints
 		if ($path[0] === 'v2') {

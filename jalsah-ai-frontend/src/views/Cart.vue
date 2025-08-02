@@ -149,42 +149,23 @@ const userId = computed(() => authStore.user?.id)
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''
-  try {
-    const currentLocale = locale?.value === 'ar' ? 'ar-SA' : 'en-US'
-    return new Date(dateTime).toLocaleDateString(currentLocale, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  } catch (error) {
-    // Fallback to English if there's any error
-    return new Date(dateTime).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
+  // Force Gregorian calendar by using 'en-US' locale for date formatting
+  return new Date(dateTime).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
 const formatTime = (time) => {
   if (!time) return ''
-  try {
-    const currentLocale = locale?.value === 'ar' ? 'ar-SA' : 'en-US'
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString(currentLocale, {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  } catch (error) {
-    // Fallback to English if there's any error
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    })
-  }
+  // Force Gregorian calendar by using 'en-US' locale for time formatting
+  return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 
 const removeItem = async (slotId) => {
@@ -200,7 +181,7 @@ const proceedToPayment = async () => {
   const result = await cartStore.checkout(userId.value)
   if (result.success) {
     // Redirect happens automatically in the store
-    console.log('Payment initiated!', result.checkout_url)
+            // Payment initiated successfully
   } else {
     console.error('Payment failed:', result.message)
   }
@@ -212,10 +193,6 @@ onMounted(() => {
   }
   
   // Debug translation
-  console.log('=== Translation Debug ===')
-  console.log('Current locale:', locale.value)
-  console.log('Appointments translation:', t('appointments'))
-  console.log('All translations available:', Object.keys(t('appointments')))
-  console.log('========================')
+          // Translation debug removed
 })
 </script> 

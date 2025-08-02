@@ -246,19 +246,12 @@ export default {
       loading.value = true
       error.value = null
       
-      console.log('Loading therapist details for ID:', props.therapist.id)
-      
       try {
         const response = await fetch(`/api/ai/therapists/${props.therapist.id}/details`)
         const data = await response.json()
         
-        console.log('API Response:', data)
-        
         if (data.success) {
           details.value = data.data
-          console.log('Therapist details loaded:', details.value)
-          console.log('Certificates count:', details.value?.certificates?.length || 0)
-          console.log('Certificates data:', details.value?.certificates)
         } else {
           console.error('API Error:', data.message)
           error.value = data.message || t('therapistDetails.loadError')
@@ -327,7 +320,7 @@ export default {
           })
         } else {
           return t('therapists.availableOn', { 
-            date: slotDate.toLocaleDateString(currentLocale, { weekday: 'short', month: 'short', day: 'numeric' }),
+            date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
             time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true })
           })
         }
