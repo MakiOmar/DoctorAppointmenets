@@ -1141,7 +1141,7 @@ class SNKS_AI_Integration {
 			}
 		}
 		
-		$this->send_success( array( 'data' => $ai_appointments ) );
+		$this->send_success( $ai_appointments );
 	}
 	
 	/**

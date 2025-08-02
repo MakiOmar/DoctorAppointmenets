@@ -264,7 +264,7 @@ export default {
         console.log('Appointments Debug: Loading appointments')
         const response = await api.get('/api/ai/appointments')
         console.log('Appointments Debug: Appointments response:', response)
-        appointments.value = response.data.data || []
+        appointments.value = response.data || []
         console.log('Appointments Debug: Appointments loaded:', appointments.value)
       } catch (error) {
         toast.error('Failed to load appointments')
