@@ -2255,17 +2255,35 @@ $ai_integration = new SNKS_AI_Integration();
 add_action('woocommerce_payment_complete', 'snks_process_ai_order_payment');
 add_action('woocommerce_order_status_changed', 'snks_process_ai_order_status_change', 10, 3);
 
+// Debug: Add logging to see if hooks are being called
+add_action('woocommerce_payment_complete', function($order_id) {
+	error_log('AI Integration Debug: woocommerce_payment_complete hook called for order: ' . $order_id);
+}, 1);
+
+add_action('woocommerce_order_status_changed', function($order_id, $old_status, $new_status) {
+	error_log('AI Integration Debug: woocommerce_order_status_changed hook called for order: ' . $order_id . ' from ' . $old_status . ' to ' . $new_status);
+}, 1, 3);
+
 /**
  * Process AI orders on payment completion
  */
 function snks_process_ai_order_payment($order_id) {
+	error_log('AI Integration Debug: snks_process_ai_order_payment called for order: ' . $order_id);
+	
 	$order = wc_get_order($order_id);
 	
 	if ($order) {
 		$is_ai_order = $order->get_meta('from_jalsah_ai');
+		error_log('AI Integration Debug: from_jalsah_ai meta value: ' . $is_ai_order);
+		
 		if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
+			error_log('AI Integration Debug: Calling SNKS_AI_Orders::process_ai_order_payment');
 			SNKS_AI_Orders::process_ai_order_payment($order_id);
+		} else {
+			error_log('AI Integration Debug: Not an AI order, skipping processing');
 		}
+	} else {
+		error_log('AI Integration Debug: Order not found for ID: ' . $order_id);
 	}
 }
 
@@ -2273,15 +2291,26 @@ function snks_process_ai_order_payment($order_id) {
  * Process AI orders on status change
  */
 function snks_process_ai_order_status_change($order_id, $old_status, $new_status) {
+	error_log('AI Integration Debug: snks_process_ai_order_status_change called for order: ' . $order_id . ' from ' . $old_status . ' to ' . $new_status);
+	
 	if (in_array($new_status, ['completed', 'processing'])) {
 		$order = wc_get_order($order_id);
 		
 		if ($order) {
 			$is_ai_order = $order->get_meta('from_jalsah_ai');
+			error_log('AI Integration Debug: from_jalsah_ai meta value: ' . $is_ai_order);
+			
 			if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
+				error_log('AI Integration Debug: Calling SNKS_AI_Orders::process_ai_order_payment from status change');
 				SNKS_AI_Orders::process_ai_order_payment($order_id);
+			} else {
+				error_log('AI Integration Debug: Not an AI order, skipping processing from status change');
 			}
+		} else {
+			error_log('AI Integration Debug: Order not found for ID: ' . $order_id);
 		}
+	} else {
+		error_log('AI Integration Debug: Status change not to completed/processing, skipping');
 	}
 }
 
