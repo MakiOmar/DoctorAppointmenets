@@ -320,7 +320,7 @@ export default {
           })
         } else {
           return t('therapists.availableOn', { 
-            date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            date: formatShortDateWithDay(slotDate),
             time: slotDate.toLocaleTimeString(currentLocale, { hour: '2-digit', minute: '2-digit', hour12: true })
           })
         }
@@ -328,6 +328,28 @@ export default {
         // If there's any error in date formatting, return the fallback message
         console.warn('Error formatting date:', error)
         return t('therapists.noSlotsAvailable')
+      }
+    }
+
+    const formatShortDateWithDay = (date) => {
+      const isArabic = locale.value === 'ar'
+      
+      if (isArabic) {
+        const arabicShortDays = ['أحد', 'إثن', 'ثل', 'أرب', 'خمي', 'جمع', 'سبت']
+        const arabicShortMonths = [
+          'ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون',
+          'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس'
+        ]
+        const dayName = arabicShortDays[date.getDay()]
+        const monthName = arabicShortMonths[date.getMonth()]
+        const day = date.getDate()
+        return `${dayName}، ${day} ${monthName}`
+      } else {
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric' 
+        })
       }
     }
 

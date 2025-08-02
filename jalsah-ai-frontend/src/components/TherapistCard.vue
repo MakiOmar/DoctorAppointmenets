@@ -423,8 +423,8 @@ export default {
             const dateObj = new Date(dateInfo.date)
             return {
               value: dateInfo.date,
-                      day: dateObj.toLocaleDateString('en-US', { weekday: 'short' }),
-        date: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                      day: formatShortDay(dateObj),
+        date: formatShortDate(dateObj),
               earliest_time: dateInfo.earliest_time,
               slot_count: dateInfo.slot_count
             }
@@ -442,8 +442,8 @@ export default {
               
               dates.push({
                 value: date.toISOString().split('T')[0],
-                        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        day: formatShortDay(date),
+        date: formatShortDate(date)
               })
             }
             
@@ -649,6 +649,55 @@ export default {
       return `${displayHours}:${minutes} ${period}`
     }
 
+    const formatShortDay = (date) => {
+      const isArabic = locale.value === 'ar'
+      
+      if (isArabic) {
+        const arabicShortDays = ['أحد', 'إثن', 'ثل', 'أرب', 'خمي', 'جمع', 'سبت']
+        return arabicShortDays[date.getDay()]
+      } else {
+        return date.toLocaleDateString('en-US', { weekday: 'short' })
+      }
+    }
+
+    const formatShortDate = (date) => {
+      const isArabic = locale.value === 'ar'
+      
+      if (isArabic) {
+        const arabicShortMonths = [
+          'ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون',
+          'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس'
+        ]
+        const monthName = arabicShortMonths[date.getMonth()]
+        const day = date.getDate()
+        return `${day} ${monthName}`
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }
+    }
+
+    const formatShortDateWithDay = (date) => {
+      const isArabic = locale.value === 'ar'
+      
+      if (isArabic) {
+        const arabicShortDays = ['أحد', 'إثن', 'ثل', 'أرب', 'خمي', 'جمع', 'سبت']
+        const arabicShortMonths = [
+          'ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون',
+          'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس'
+        ]
+        const dayName = arabicShortDays[date.getDay()]
+        const monthName = arabicShortMonths[date.getMonth()]
+        const day = date.getDate()
+        return `${dayName}، ${day} ${monthName}`
+      } else {
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric' 
+        })
+      }
+    }
+
     const calculateEndTime = (startTime, durationMinutes) => {
       const [hours, minutes] = startTime.split(':').map(Number)
       const startDate = new Date()
@@ -695,11 +744,7 @@ export default {
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedTime = `${displayHours}:${minutes} ${period}`
       
-      const dateStr = date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
-      })
+      const dateStr = formatShortDateWithDay(date)
       
       return `${dateStr} ${t('dateTime.at')} ${formattedTime}`
     }
@@ -765,7 +810,7 @@ export default {
           })
         } else {
           return t('therapists.availableOn', { 
-            date: slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            date: formatShortDateWithDay(slotDate),
             time: formattedTime
           })
         }
