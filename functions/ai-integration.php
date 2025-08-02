@@ -564,6 +564,7 @@ class SNKS_AI_Integration {
 				} elseif ( count( $path ) === 1 ) {
 					// GET /api/ai/appointments - get current user's appointments
 					$user_id = $this->verify_jwt_token();
+					error_log('AI Appointments Debug: JWT token user_id: ' . $user_id);
 					$this->get_ai_user_appointments( $user_id );
 				} else {
 					$this->send_error( 'Invalid appointments endpoint', 404 );
@@ -1107,6 +1108,9 @@ class SNKS_AI_Integration {
 		
 		global $wpdb;
 		
+		// Debug logging
+		error_log('AI Appointments Debug: Looking for appointments for user_id: ' . $user_id);
+		
 		// Get AI appointments for the specific user from the timetable
 		$query = $wpdb->prepare(
 			"SELECT t.*, u.display_name as therapist_name 
@@ -1119,28 +1123,45 @@ class SNKS_AI_Integration {
 			$user_id
 		);
 		
+		error_log('AI Appointments Debug: SQL Query: ' . $query);
+		
 		$appointments = $wpdb->get_results($query);
+		error_log('AI Appointments Debug: Raw appointments found: ' . count($appointments));
+		
 		$ai_appointments = array();
 		
 		foreach ( $appointments as $appointment ) {
+			error_log('AI Appointments Debug: Processing appointment ID: ' . $appointment->ID . ', order_id: ' . $appointment->order_id);
+			
 			$order = wc_get_order( $appointment->order_id );
-			if ( $order && $order->get_meta( 'from_jalsah_ai' ) ) {
-				$ai_appointments[] = array(
-					'id' => $appointment->ID,
-					'date' => $appointment->date_time,
-					'time' => $appointment->starts,
-					'status' => $appointment->session_status,
-					'session_type' => $appointment->session_duration ?: 60,
-					'therapist' => array(
-						'name' => $appointment->therapist_name ?: 'Unknown Therapist',
-						'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )
-					),
-					'notes' => $appointment->notes ?: '',
-					'session_link' => $appointment->session_link ?: null
-				);
+			if ( $order ) {
+				$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+				error_log('AI Appointments Debug: Order found, from_jalsah_ai meta: ' . $is_ai_order);
+				
+				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+					$ai_appointments[] = array(
+						'id' => $appointment->ID,
+						'date' => $appointment->date_time,
+						'time' => $appointment->starts,
+						'status' => $appointment->session_status,
+						'session_type' => $appointment->session_duration ?: 60,
+						'therapist' => array(
+							'name' => $appointment->therapist_name ?: 'Unknown Therapist',
+							'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )
+						),
+						'notes' => $appointment->notes ?: '',
+						'session_link' => $appointment->session_link ?: null
+					);
+					error_log('AI Appointments Debug: Added AI appointment to results');
+				} else {
+					error_log('AI Appointments Debug: Not an AI order, skipping');
+				}
+			} else {
+				error_log('AI Appointments Debug: Order not found for order_id: ' . $appointment->order_id);
 			}
 		}
 		
+		error_log('AI Appointments Debug: Final AI appointments count: ' . count($ai_appointments));
 		$this->send_success( $ai_appointments );
 	}
 	
