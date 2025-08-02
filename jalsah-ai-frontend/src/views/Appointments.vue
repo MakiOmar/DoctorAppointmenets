@@ -75,7 +75,7 @@
                     <span class="font-medium">{{ $t('appointmentsPage.time') }}:</span> {{ formatTime(appointment.time) }}
                   </div>
                   <div>
-                    <span class="font-medium">{{ $t('appointmentsPage.duration') }}:</span> {{ appointment.session_type }} minutes
+                    <span class="font-medium">{{ $t('appointmentsPage.duration') }}:</span> {{ appointment.session_type }} {{ $t('appointmentsPage.minutes') }}
                   </div>
                   <div>
                     <span class="font-medium">{{ $t('appointmentsPage.status') }}:</span> 
@@ -261,19 +261,11 @@ export default {
     const loadAppointments = async () => {
       loading.value = true
       try {
-        console.log('Appointments Debug: Loading appointments')
         const response = await api.get('/api/ai/appointments')
-        console.log('Appointments Debug: Full response:', response)
-        console.log('Appointments Debug: response.data:', response.data)
-        console.log('Appointments Debug: response.data.data:', response.data.data)
         appointments.value = response.data.data || []
-        console.log('Appointments Debug: Final appointments.value:', appointments.value)
-        console.log('Appointments Debug: appointments.value.length:', appointments.value.length)
-        console.log('Appointments Debug: appointments.value type:', typeof appointments.value)
-        console.log('Appointments Debug: Is appointments.value array?', Array.isArray(appointments.value))
       } catch (error) {
         toast.error('Failed to load appointments')
-        console.error('Appointments Debug: Error loading appointments:', error)
+        console.error('Error loading appointments:', error)
       } finally {
         loading.value = false
       }
@@ -301,11 +293,11 @@ export default {
 
     const getStatusText = (status) => {
       const statusMap = {
-        'pending': 'Pending',
-        'confirmed': 'Confirmed',
-        'completed': 'Completed',
-        'cancelled': 'Cancelled',
-        'no_show': 'No Show'
+        'pending': $t('appointmentsPage.statusPending'),
+        'confirmed': $t('appointmentsPage.statusConfirmed'),
+        'completed': $t('appointmentsPage.statusCompleted'),
+        'cancelled': $t('appointmentsPage.statusCancelled'),
+        'no_show': $t('appointmentsPage.statusNoShow')
       }
       return statusMap[status] || status
     }

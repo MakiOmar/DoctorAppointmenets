@@ -499,7 +499,15 @@ export default {
     cancelMessage: 'هل أنت متأكد من أنك تريد إلغاء هذا الموعد؟ لا يمكن التراجع عن هذا الإجراء.',
     cancelling: 'جاري الإلغاء...',
     yesCancel: 'نعم، إلغاء',
-    noKeep: 'لا، احتفظ'
+    noKeep: 'لا، احتفظ',
+    // Status values
+    statusConfirmed: 'مؤكد',
+    statusPending: 'في الانتظار',
+    statusCompleted: 'مكتمل',
+    statusCancelled: 'ملغي',
+    statusNoShow: 'لم يحضر',
+    // Time units
+    minutes: 'دقائق'
   },
 
   // Profile

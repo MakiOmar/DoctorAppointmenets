@@ -543,7 +543,15 @@ export default {
     cancelMessage: 'Are you sure you want to cancel this appointment? This action cannot be undone.',
     cancelling: 'Cancelling...',
     yesCancel: 'Yes, Cancel',
-    noKeep: 'No, Keep'
+    noKeep: 'No, Keep',
+    // Status values
+    statusConfirmed: 'Confirmed',
+    statusPending: 'Pending',
+    statusCompleted: 'Completed',
+    statusCancelled: 'Cancelled',
+    statusNoShow: 'No Show',
+    // Time units
+    minutes: 'minutes'
   },
 
   // Profile

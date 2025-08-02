@@ -555,24 +555,17 @@ class SNKS_AI_Integration {
 	 * Handle appointments endpoints
 	 */
 	private function handle_appointments_endpoint( $method, $path ) {
-		error_log('AI Appointments Debug: handle_appointments_endpoint called with method: ' . $method . ', path: ' . print_r($path, true));
-		
 		switch ( $method ) {
 			case 'GET':
 				if ( isset( $path[1] ) && $path[1] === 'available' ) {
-					error_log('AI Appointments Debug: Calling get_ai_available_appointments');
 					$this->get_ai_available_appointments();
 				} elseif ( isset( $path[1] ) && $path[1] === 'user' && isset( $path[2] ) && is_numeric( $path[2] ) ) {
-					error_log('AI Appointments Debug: Calling get_ai_user_appointments with user_id: ' . $path[2]);
 					$this->get_ai_user_appointments( $path[2] );
 				} elseif ( count( $path ) === 1 ) {
 					// GET /api/ai/appointments - get current user's appointments
-					error_log('AI Appointments Debug: Getting current user appointments');
 					$user_id = $this->verify_jwt_token();
-					error_log('AI Appointments Debug: JWT user_id: ' . $user_id);
 					$this->get_ai_user_appointments( $user_id );
 				} else {
-					error_log('AI Appointments Debug: Invalid appointments endpoint');
 					$this->send_error( 'Invalid appointments endpoint', 404 );
 				}
 				break;
@@ -1106,12 +1099,9 @@ class SNKS_AI_Integration {
 	 * Get AI User Appointments
 	 */
 	private function get_ai_user_appointments( $user_id ) {
-		error_log('AI Appointments Debug: get_ai_user_appointments called with user_id: ' . $user_id);
-		
 		// Verify JWT token
 		$token_user_id = $this->verify_jwt_token();
 		if ( $token_user_id != $user_id ) {
-			error_log('AI Appointments Debug: Unauthorized - token_user_id: ' . $token_user_id . ', user_id: ' . $user_id);
 			$this->send_error( 'Unauthorized', 401 );
 		}
 		
@@ -1129,20 +1119,13 @@ class SNKS_AI_Integration {
 			$user_id
 		);
 		
-		error_log('AI Appointments Debug: SQL Query: ' . $query);
-		
 		$appointments = $wpdb->get_results($query);
-		error_log('AI Appointments Debug: Raw appointments found: ' . count($appointments));
-		
 		$ai_appointments = array();
 		
 		foreach ( $appointments as $appointment ) {
-			error_log('AI Appointments Debug: Processing appointment ID: ' . $appointment->ID . ', order_id: ' . $appointment->order_id);
-			
 			$order = wc_get_order( $appointment->order_id );
 			if ( $order ) {
 				$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-				error_log('AI Appointments Debug: Order found, from_jalsah_ai meta: ' . $is_ai_order);
 				
 				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 					// Map database status to frontend status
@@ -1167,16 +1150,10 @@ class SNKS_AI_Integration {
 						'notes' => '', // No notes column in the database
 						'session_link' => null // No session_link column in the database
 					);
-					error_log('AI Appointments Debug: Added AI appointment to results');
-				} else {
-					error_log('AI Appointments Debug: Not an AI order, skipping');
 				}
-			} else {
-				error_log('AI Appointments Debug: Order not found for order_id: ' . $appointment->order_id);
 			}
 		}
 		
-		error_log('AI Appointments Debug: Final AI appointments count: ' . count($ai_appointments));
 		$this->send_success( $ai_appointments );
 	}
 	
