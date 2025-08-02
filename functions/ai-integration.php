@@ -2305,16 +2305,40 @@ function snks_ai_order_thankyou_redirect($order_id) {
 function snks_ai_order_template_redirect() {
 	// Check if we're on the order received page
 	if (is_wc_endpoint_url('order-received')) {
+		// Try multiple ways to get the order ID
 		$order_id = get_query_var('order-received');
+		
+		// If not found in query var, try to extract from URL
+		if (!$order_id && isset($_SERVER['REQUEST_URI'])) {
+			if (preg_match('/order-received\/(\d+)/', $_SERVER['REQUEST_URI'], $matches)) {
+				$order_id = $matches[1];
+			}
+		}
+		
+		// Debug logging
+		error_log('AI Integration Debug: template_redirect called for order-received');
+		error_log('AI Integration Debug: order_id from query var: ' . $order_id);
+		error_log('AI Integration Debug: REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
+		
 		if ($order_id) {
 			$order = wc_get_order($order_id);
 			
-			if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
-				// Redirect AI orders to the frontend appointments page
-				$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
-				wp_safe_redirect($frontend_url . '/appointments');
-				exit;
+			if ($order) {
+				$is_ai_order = $order->get_meta('from_jalsah_ai');
+				error_log('AI Integration Debug: Order found, from_jalsah_ai meta: ' . $is_ai_order);
+				
+				if ($is_ai_order === 'true') {
+					// Redirect AI orders to the frontend appointments page
+					$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
+					error_log('AI Integration Debug: Redirecting to: ' . $frontend_url . '/appointments');
+					wp_safe_redirect($frontend_url . '/appointments');
+					exit;
+				}
+			} else {
+				error_log('AI Integration Debug: Order not found for ID: ' . $order_id);
 			}
+		} else {
+			error_log('AI Integration Debug: No order ID found');
 		}
 	}
 }
