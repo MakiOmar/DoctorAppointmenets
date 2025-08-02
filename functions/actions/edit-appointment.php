@@ -334,7 +334,8 @@ add_action(
 		$order      = wc_get_order( $order_id );
 		
 		// Skip processing if this is an AI order (handled separately)
-		if ( $order->get_meta( 'from_jalsah_ai' ) === 'true' ) {
+		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 			return;
 		}
 		

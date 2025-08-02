@@ -2261,8 +2261,11 @@ add_action('woocommerce_order_status_changed', 'snks_process_ai_order_status_cha
 function snks_process_ai_order_payment($order_id) {
 	$order = wc_get_order($order_id);
 	
-	if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
-		SNKS_AI_Orders::process_ai_order_payment($order_id);
+	if ($order) {
+		$is_ai_order = $order->get_meta('from_jalsah_ai');
+		if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
+			SNKS_AI_Orders::process_ai_order_payment($order_id);
+		}
 	}
 }
 
@@ -2273,8 +2276,11 @@ function snks_process_ai_order_status_change($order_id, $old_status, $new_status
 	if (in_array($new_status, ['completed', 'processing'])) {
 		$order = wc_get_order($order_id);
 		
-		if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
-			SNKS_AI_Orders::process_ai_order_payment($order_id);
+		if ($order) {
+			$is_ai_order = $order->get_meta('from_jalsah_ai');
+			if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
+				SNKS_AI_Orders::process_ai_order_payment($order_id);
+			}
 		}
 	}
 }
@@ -2294,11 +2300,14 @@ add_action('template_redirect', 'snks_ai_order_template_redirect', 5);
 function snks_ai_order_thankyou_redirect($order_id) {
 	$order = wc_get_order($order_id);
 	
-	if ($order && $order->get_meta('from_jalsah_ai') === 'true') {
-		// Redirect AI orders to the frontend appointments page
-		$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
-		wp_safe_redirect($frontend_url . '/appointments');
-		exit;
+	if ($order) {
+		$is_ai_order = $order->get_meta('from_jalsah_ai');
+		if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
+			// Redirect AI orders to the frontend appointments page
+			$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
+			wp_safe_redirect($frontend_url . '/appointments');
+			exit;
+		}
 	}
 }
 
@@ -2327,7 +2336,7 @@ function snks_ai_order_template_redirect() {
 				$is_ai_order = $order->get_meta('from_jalsah_ai');
 				error_log('AI Integration Debug: Order found, from_jalsah_ai meta: ' . $is_ai_order);
 				
-				if ($is_ai_order === 'true') {
+				if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
 					// Redirect AI orders to the frontend appointments page
 					$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
 					error_log('AI Integration Debug: Redirecting to: ' . $frontend_url . '/appointments');
