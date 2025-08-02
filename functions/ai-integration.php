@@ -561,6 +561,10 @@ class SNKS_AI_Integration {
 					$this->get_ai_available_appointments();
 				} elseif ( isset( $path[1] ) && $path[1] === 'user' && isset( $path[2] ) && is_numeric( $path[2] ) ) {
 					$this->get_ai_user_appointments( $path[2] );
+				} elseif ( count( $path ) === 1 ) {
+					// GET /api/ai/appointments - get current user's appointments
+					$user_id = $this->verify_jwt_token();
+					$this->get_ai_user_appointments( $user_id );
 				} else {
 					$this->send_error( 'Invalid appointments endpoint', 404 );
 				}
@@ -1101,7 +1105,21 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Unauthorized', 401 );
 		}
 		
-		$appointments = snks_get_patient_sessions( 'all' );
+		global $wpdb;
+		
+		// Get AI appointments for the specific user from the timetable
+		$query = $wpdb->prepare(
+			"SELECT t.*, u.display_name as therapist_name 
+			FROM {$wpdb->prefix}snks_provider_timetable t
+			LEFT JOIN {$wpdb->users} u ON t.user_id = u.ID
+			WHERE t.client_id = %d 
+			AND t.order_id IS NOT NULL 
+			AND t.order_id != 0
+			ORDER BY t.date_time DESC",
+			$user_id
+		);
+		
+		$appointments = $wpdb->get_results($query);
 		$ai_appointments = array();
 		
 		foreach ( $appointments as $appointment ) {
@@ -1110,13 +1128,20 @@ class SNKS_AI_Integration {
 				$ai_appointments[] = array(
 					'id' => $appointment->ID,
 					'date' => $appointment->date_time,
+					'time' => $appointment->starts,
 					'status' => $appointment->session_status,
-					'therapist_name' => get_user_meta( $appointment->user_id, 'billing_first_name', true ) . ' ' . get_user_meta( $appointment->user_id, 'billing_last_name', true ),
+					'session_type' => $appointment->session_duration ?: 60,
+					'therapist' => array(
+						'name' => $appointment->therapist_name ?: 'Unknown Therapist',
+						'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )
+					),
+					'notes' => $appointment->notes ?: '',
+					'session_link' => $appointment->session_link ?: null
 				);
 			}
 		}
 		
-		$this->send_success( $ai_appointments );
+		$this->send_success( array( 'data' => $ai_appointments ) );
 	}
 	
 	/**

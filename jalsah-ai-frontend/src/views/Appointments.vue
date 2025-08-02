@@ -69,16 +69,16 @@
                 </h3>
                 <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
-                    <span class="font-medium">{{ $t('appointments.date') }}:</span> {{ formatDate(appointment.date) }}
+                    <span class="font-medium">{{ $t('appointmentsPage.date') }}:</span> {{ formatDate(appointment.date) }}
                   </div>
                   <div>
-                    <span class="font-medium">{{ $t('appointments.time') }}:</span> {{ formatTime(appointment.time) }}
+                    <span class="font-medium">{{ $t('appointmentsPage.time') }}:</span> {{ formatTime(appointment.time) }}
                   </div>
                   <div>
-                    <span class="font-medium">{{ $t('appointments.duration') }}:</span> {{ appointment.session_type }} minutes
+                    <span class="font-medium">{{ $t('appointmentsPage.duration') }}:</span> {{ appointment.session_type }} minutes
                   </div>
                   <div>
-                    <span class="font-medium">{{ $t('appointments.status') }}:</span> 
+                    <span class="font-medium">{{ $t('appointmentsPage.status') }}:</span> 
                     <span :class="getStatusClass(appointment.status)">
                       {{ getStatusText(appointment.status) }}
                     </span>
@@ -87,7 +87,7 @@
                 
                 <!-- Notes -->
                 <div v-if="appointment.notes" class="mt-3">
-                  <span class="font-medium text-gray-900">{{ $t('appointments.notes') }}:</span>
+                  <span class="font-medium text-gray-900">{{ $t('appointmentsPage.notes') }}:</span>
                   <p class="text-gray-600 text-sm mt-1">{{ appointment.notes }}</p>
                 </div>
               </div>
@@ -101,7 +101,7 @@
                 @click="joinSession(appointment.id)"
                 class="btn-primary text-sm"
               >
-                {{ $t('appointments.joinSession') }}
+                {{ $t('appointmentsPage.joinSession') }}
               </button>
 
               <!-- Reschedule Button -->
@@ -110,7 +110,7 @@
                 @click="rescheduleAppointment(appointment.id)"
                 class="btn-outline text-sm"
               >
-                {{ $t('appointments.reschedule') }}
+                {{ $t('appointmentsPage.reschedule') }}
               </button>
 
               <!-- Cancel Button -->
@@ -119,7 +119,7 @@
                 @click="cancelAppointment(appointment.id)"
                 class="btn-outline text-sm text-red-600 hover:text-red-700"
               >
-                {{ $t('appointments.cancel') }}
+                {{ $t('appointmentsPage.cancel') }}
               </button>
 
               <!-- View Details -->
@@ -127,7 +127,7 @@
                 @click="viewAppointmentDetails(appointment.id)"
                 class="btn-outline text-sm"
               >
-                {{ $t('appointments.viewDetails') }}
+                {{ $t('appointmentsPage.viewDetails') }}
               </button>
             </div>
           </div>
@@ -136,15 +136,15 @@
           <div v-if="appointment.session_link" class="mt-4 p-3 bg-blue-50 rounded-lg">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-blue-900">{{ $t('appointments.sessionLinkAvailable') }}</p>
-                <p class="text-xs text-blue-700">{{ $t('appointments.sessionLinkMessage') }}</p>
+                <p class="text-sm font-medium text-blue-900">{{ $t('appointmentsPage.sessionLinkAvailable') }}</p>
+                <p class="text-xs text-blue-700">{{ $t('appointmentsPage.sessionLinkMessage') }}</p>
               </div>
               <a 
                 :href="appointment.session_link" 
                 target="_blank"
                 class="btn-primary text-sm"
               >
-                {{ $t('appointments.joinNow') }}
+                {{ $t('appointmentsPage.joinNow') }}
               </a>
             </div>
           </div>
@@ -156,17 +156,17 @@
         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
         </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointments.noAppointments') }}</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointmentsPage.noAppointments') }}</h3>
         <p class="text-gray-600 mb-6">
-          {{ activeTab === 'upcoming' ? $t('appointments.noUpcoming') : 
-             activeTab === 'past' ? $t('appointments.noPast') : 
-             $t('appointments.noCancelled') }}
+          {{ activeTab === 'upcoming' ? $t('appointmentsPage.noUpcoming') : 
+             activeTab === 'past' ? $t('appointmentsPage.noPast') : 
+             $t('appointmentsPage.noCancelled') }}
         </p>
         <button 
           @click="$router.push('/therapists')"
           class="btn-primary"
         >
-          {{ $t('appointments.bookSession') }}
+          {{ $t('appointmentsPage.bookSession') }}
         </button>
       </div>
     </div>
@@ -175,9 +175,9 @@
     <div v-if="showCancelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3 text-center">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('appointments.cancelTitle') }}</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('appointmentsPage.cancelTitle') }}</h3>
           <p class="text-sm text-gray-600 mb-6">
-            {{ $t('appointments.cancelMessage') }}
+            {{ $t('appointmentsPage.cancelMessage') }}
           </p>
           <div class="flex justify-center space-x-4">
             <button 
@@ -190,15 +190,15 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {{ $t('appointments.cancelling') }}
+                {{ $t('appointmentsPage.cancelling') }}
               </span>
-              <span v-else>{{ $t('appointments.yesCancel') }}</span>
+              <span v-else>{{ $t('appointmentsPage.yesCancel') }}</span>
             </button>
             <button 
               @click="showCancelModal = false"
               class="btn-outline"
             >
-              {{ $t('appointments.noKeep') }}
+              {{ $t('appointmentsPage.noKeep') }}
             </button>
           </div>
         </div>
