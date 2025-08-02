@@ -557,15 +557,19 @@ class SNKS_AI_Integration {
 	private function handle_appointments_endpoint( $method, $path ) {
 		switch ( $method ) {
 			case 'GET':
-				if ( $path[1] === 'available' ) {
+				if ( isset( $path[1] ) && $path[1] === 'available' ) {
 					$this->get_ai_available_appointments();
-				} elseif ( $path[1] === 'user' && is_numeric( $path[2] ) ) {
+				} elseif ( isset( $path[1] ) && $path[1] === 'user' && isset( $path[2] ) && is_numeric( $path[2] ) ) {
 					$this->get_ai_user_appointments( $path[2] );
+				} else {
+					$this->send_error( 'Invalid appointments endpoint', 404 );
 				}
 				break;
 			case 'POST':
-				if ( $path[1] === 'book' ) {
+				if ( isset( $path[1] ) && $path[1] === 'book' ) {
 					$this->book_ai_appointment();
+				} else {
+					$this->send_error( 'Invalid appointments endpoint', 404 );
 				}
 				break;
 			default:
@@ -579,15 +583,19 @@ class SNKS_AI_Integration {
 	private function handle_cart_endpoint( $method, $path ) {
 		switch ( $method ) {
 			case 'GET':
-				if ( is_numeric( $path[1] ) ) {
+				if ( isset( $path[1] ) && is_numeric( $path[1] ) ) {
 					$this->get_ai_cart( $path[1] );
+				} else {
+					$this->send_error( 'Invalid cart endpoint', 404 );
 				}
 				break;
 			case 'POST':
-				if ( $path[1] === 'add' ) {
+				if ( isset( $path[1] ) && $path[1] === 'add' ) {
 					$this->add_to_ai_cart();
-				} elseif ( $path[1] === 'checkout' ) {
+				} elseif ( isset( $path[1] ) && $path[1] === 'checkout' ) {
 					$this->checkout_ai_cart();
+				} else {
+					$this->send_error( 'Invalid cart endpoint', 404 );
 				}
 				break;
 			default:
@@ -603,8 +611,10 @@ class SNKS_AI_Integration {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
 					$this->get_ai_diagnoses();
-				} elseif ( is_numeric( $path[1] ) ) {
+				} elseif ( isset( $path[1] ) && is_numeric( $path[1] ) ) {
 					$this->get_ai_diagnosis( $path[1] );
+				} else {
+					$this->send_error( 'Invalid diagnoses endpoint', 404 );
 				}
 				break;
 			default:
