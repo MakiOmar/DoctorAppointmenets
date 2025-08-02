@@ -117,24 +117,17 @@ class SNKS_AI_Orders {
 	 * Process AI order payment
 	 */
 	public static function process_ai_order_payment( $order_id ) {
-		error_log('AI Integration Debug: process_ai_order_payment called for order: ' . $order_id);
-		
 		$order = wc_get_order( $order_id );
 		
 		if ( ! $order ) {
-			error_log('AI Integration Debug: Order not found for ID: ' . $order_id);
 			return false;
 		}
 		
 		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-		error_log('AI Integration Debug: from_jalsah_ai meta value: ' . $is_ai_order);
 		
 		if ( $is_ai_order !== 'true' && $is_ai_order !== true && $is_ai_order !== '1' && $is_ai_order !== 1 ) {
-			error_log('AI Integration Debug: Not an AI order, skipping processing');
 			return false;
 		}
-		
-		error_log('AI Integration Debug: Processing AI order payment');
 		
 
 		
@@ -170,8 +163,6 @@ class SNKS_AI_Orders {
 	private static function book_appointment_slot( $slot_id, $order_id, $patient_id ) {
 		global $wpdb;
 		
-		error_log('AI Integration Debug: Booking appointment slot - Slot ID: ' . $slot_id . ', Order ID: ' . $order_id . ', Patient ID: ' . $patient_id);
-		
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
@@ -183,12 +174,6 @@ class SNKS_AI_Orders {
 			[ '%s', '%d', '%s' ],
 			[ '%d' ]
 		);
-		
-		if ($result === false) {
-			error_log('AI Integration Debug: Failed to update slot in database');
-		} else {
-			error_log('AI Integration Debug: Successfully updated slot in database');
-		}
 		
 		return $result;
 	}

@@ -810,7 +810,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 
 	// Define the base URL and image source.
 	$base_url  = home_url( '/' );
-	$user_link = $base_url . 'therapist/' . $current_user->nickname;
+	$user_link = $base_url . 'therapist/' . ( $current_user ? $current_user->nickname : 'unknown' );
 	?>
 	<input type="hidden" id="selected_doctor_url" value="<?php echo esc_url( $user_link ); ?>"/>
 	<div style="text-align:center">
