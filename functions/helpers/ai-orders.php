@@ -44,16 +44,16 @@ class SNKS_AI_Orders {
 				throw new Exception( 'Failed to get AI session product' );
 			}
 			
-			$session_price = $cart_item->price ?? SNKS_AI_Products::get_default_session_price();
+			$session_price = $cart_item['price'] ?? SNKS_AI_Products::get_default_session_price();
 			
 			// Create a custom order item with the correct price
 			$item = new WC_Order_Item_Product();
 			$item->set_props( [
 				'name' => sprintf(
 					'جلسة علاج نفسي - %s - %s %s',
-					get_the_title( $cart_item->user_id ),
-					$cart_item->date_time,
-					$cart_item->starts
+					get_the_title( $cart_item['user_id'] ),
+					$cart_item['date_time'],
+					$cart_item['starts']
 				),
 				'quantity' => 1,
 				'product_id' => $product_id
@@ -64,12 +64,12 @@ class SNKS_AI_Orders {
 			$item->set_subtotal( $session_price );
 			
 			// Add appointment metadata
-			$item->add_meta_data( 'therapist_id', $cart_item->user_id );
-			$item->add_meta_data( 'session_date', $cart_item->date_time );
-			$item->add_meta_data( 'session_time', $cart_item->starts );
+			$item->add_meta_data( 'therapist_id', $cart_item['user_id'] );
+			$item->add_meta_data( 'session_date', $cart_item['date_time'] );
+			$item->add_meta_data( 'session_time', $cart_item['starts'] );
 			$item->add_meta_data( 'session_duration', SNKS_AI_Products::get_session_duration() );
 			$item->add_meta_data( 'is_ai_session', true );
-			$item->add_meta_data( 'slot_id', $cart_item->ID );
+			$item->add_meta_data( 'slot_id', $cart_item['ID'] );
 			$item->add_meta_data( '_line_total', $session_price );
 			$item->add_meta_data( '_line_subtotal', $session_price );
 			
@@ -95,8 +95,8 @@ class SNKS_AI_Orders {
 		$form_data = [
 			'_is_ai_booking' => true,
 			'_total_price' => $order->get_total(),
-			'_session_date' => $cart_items[0]->date_time ?? '',
-			'_session_time' => $cart_items[0]->starts ?? '',
+			'_session_date' => $cart_items[0]['date_time'] ?? '',
+			'_session_time' => $cart_items[0]['starts'] ?? '',
 			'_session_duration' => SNKS_AI_Products::get_session_duration(),
 			'_coupon_code' => '' // Can be added later if needed
 		];
