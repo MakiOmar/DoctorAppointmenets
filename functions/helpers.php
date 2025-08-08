@@ -331,6 +331,9 @@ function snks_get_country_code( $set_cookie = true ) {
 			$country_code = sanitize_text_field( $data->countryCode );
 			//phpcs:enable
 			if ( $set_cookie ) {
+				if( IL_TO_EG && 'IL' === $country_code ) {
+					$country_code = 'EG';
+				}
 				// Store the country code in a cookie for 24 hours.
 				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
@@ -338,7 +341,14 @@ function snks_get_country_code( $set_cookie = true ) {
 				} else {
 					$stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
 				}
+				if( IL_TO_EG && 'IL' === $country_code ) {
+					$stored_currency = 'EGP';
+				}
 				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
+			}
+
+			if( IL_TO_EG && 'IL' === $country_code ) {
+				$country_code = 'EG';
 			}
 
 			return $country_code;

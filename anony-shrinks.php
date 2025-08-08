@@ -20,6 +20,7 @@ define( 'TRNS_TABLE_NAME', 'snks_booking_transactions' );
 define( 'WHYSMS_SENDER_ID', 'Jalsah' );
 define( 'WHYSMS_TOKEN', '299|dXuaaScFgVVEUu1FcRa8ApgmE5p0uY6dmsUfp6gR2d0970da' );
 define( 'CANCELL_AFTER', 15 );
+define( 'IL_TO_EG', true );
 
 // Ensure the vendor autoload file is required.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
