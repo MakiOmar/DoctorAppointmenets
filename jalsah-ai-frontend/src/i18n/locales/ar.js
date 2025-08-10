@@ -47,6 +47,7 @@ export default {
     home: 'الرئيسية',
     therapists: 'المعالجون',
     diagnosis: 'التشخيص',
+    appointments: 'المواعيد',
     profile: 'الملف الشخصي',
     cart: 'السلة',
     login: 'تسجيل الدخول',

@@ -47,6 +47,7 @@ export default {
     home: 'Home',
     therapists: 'Therapists',
     diagnosis: 'Diagnosis',
+    appointments: 'Appointments',
     profile: 'Profile',
     cart: 'Cart',
     login: 'Login',

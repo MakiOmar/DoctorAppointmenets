@@ -335,13 +335,13 @@ export default {
       const isArabic = locale.value === 'ar'
       
       if (isArabic) {
-        const arabicShortDays = ['أحد', 'إثن', 'ثل', 'أرب', 'خمي', 'جمع', 'سبت']
-        const arabicShortMonths = [
-          'ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون',
-          'يول', 'أغس', 'سبت', 'أكت', 'نوف', 'ديس'
+        const arabicFullDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+        const arabicFullMonths = [
+          'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+          'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
         ]
-        const dayName = arabicShortDays[date.getDay()]
-        const monthName = arabicShortMonths[date.getMonth()]
+        const dayName = arabicFullDays[date.getDay()]
+        const monthName = arabicFullMonths[date.getMonth()]
         const day = date.getDate()
         return `${dayName}، ${day} ${monthName}`
       } else {
