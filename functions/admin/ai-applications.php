@@ -84,9 +84,7 @@ function snks_enhanced_ai_applications_page() {
 					case 'edit':
 						snks_display_application_edit_form( $app_id );
 						return;
-					case 'manage_diagnoses':
-						snks_display_diagnosis_management( $app_id );
-						return;
+
 				}
 			}
 		}
@@ -102,19 +100,7 @@ function snks_enhanced_ai_applications_page() {
 		}
 	}
 	
-	// Handle form submission for diagnosis management
-	if ( isset( $_POST['save_diagnoses'] ) && isset( $_POST['application_id'] ) ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'save_diagnoses_' . $_POST['application_id'] ) ) {
-			$result = snks_save_diagnosis_assignments( $_POST['application_id'] );
-			if ( $result['success'] ) {
-				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
-			} else {
-				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
-			}
-		} else {
-			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
-		}
-	}
+
 	
 	// Get applications with filters
 	$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
@@ -272,10 +258,7 @@ function snks_enhanced_ai_applications_page() {
 									   class="button button-small">View</a>
 									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $app->id ) ); ?>" 
 									   class="button button-small">Edit Profile</a>
-									<?php if ( $app->status === 'approved' && $app->user_id ) : ?>
-										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=manage_diagnoses&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_manage_diagnoses_' . $app->id ) ); ?>" 
-										   class="button button-small button-secondary">Manage Diagnoses</a>
-									<?php endif; ?>
+
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -1151,244 +1134,4 @@ function snks_save_application_data( $application_id ) {
 	}
 }
 
-// Table creation handled in main plugin file
-
-/**
- * Display diagnosis management interface
- */
-function snks_display_diagnosis_management( $application_id ) {
-	global $wpdb;
-	$table_name = $wpdb->prefix . 'therapist_applications';
-	
-	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $application_id ) );
-	if ( !$application ) {
-		wp_die( 'Application not found.' );
-	}
-	
-	if ( !$application->user_id ) {
-		wp_die( 'This application does not have an associated user account.' );
-	}
-	
-	// Get all diagnoses
-	$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
-	$all_diagnoses = $wpdb->get_results( "SELECT * FROM $diagnoses_table ORDER BY name_en ASC" );
-	
-	// Get current therapist diagnoses
-	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
-	$current_diagnoses = $wpdb->get_results( $wpdb->prepare(
-		"SELECT * FROM $therapist_diagnoses_table WHERE therapist_id = %d ORDER BY display_order ASC",
-		$application->user_id
-	) );
-	
-	// Create lookup array for current diagnoses
-	$current_diagnoses_lookup = [];
-	foreach ( $current_diagnoses as $cd ) {
-		$current_diagnoses_lookup[$cd->diagnosis_id] = $cd;
-	}
-	
-	?>
-	<div class="wrap">
-		<h1>Manage Diagnoses for <?php echo esc_html( $application->name ?: $application->name_en ?: 'Unknown Therapist' ); ?></h1>
-		
-		<div class="card">
-			<h2>Diagnosis Assignments & Ordering</h2>
-			<p>Assign diagnoses to this therapist and set their display order. Each diagnosis can only have one therapist per order number.</p>
-			
-			<form method="post" action="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>">
-				<?php wp_nonce_field( 'save_diagnoses_' . $application_id ); ?>
-				<input type="hidden" name="application_id" value="<?php echo $application_id; ?>">
-				<input type="hidden" name="save_diagnoses" value="1">
-				
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th style="width: 50px;">Assign</th>
-							<th>Diagnosis</th>
-							<th style="width: 100px;">Rating (0-5)</th>
-							<th style="width: 100px;">Display Order</th>
-							<th>Suitability Message (English)</th>
-							<th>Suitability Message (Arabic)</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $all_diagnoses as $diagnosis ) : 
-							$current = isset( $current_diagnoses_lookup[$diagnosis->id] ) ? $current_diagnoses_lookup[$diagnosis->id] : null;
-							$is_assigned = $current !== null;
-						?>
-							<tr>
-								<td>
-									<input type="checkbox" name="diagnoses[]" value="<?php echo $diagnosis->id; ?>" 
-										   <?php checked( $is_assigned ); ?>>
-								</td>
-								<td>
-									<strong><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></strong>
-									<?php if ( $diagnosis->name_ar ) : ?>
-										<br><small><?php echo esc_html( $diagnosis->name_ar ); ?></small>
-									<?php endif; ?>
-								</td>
-								<td>
-									<input type="number" name="diagnosis_rating_<?php echo $diagnosis->id; ?>" 
-										   value="<?php echo $is_assigned ? esc_attr( $current->rating ) : '4.5'; ?>" 
-										   min="0" max="5" step="0.1" style="width: 60px;">
-								</td>
-								<td>
-									<input type="number" name="diagnosis_order_<?php echo $diagnosis->id; ?>" 
-										   value="<?php echo $is_assigned ? esc_attr( $current->display_order ) : '0'; ?>" 
-										   min="0" style="width: 60px;">
-								</td>
-								<td>
-									<textarea name="diagnosis_message_en_<?php echo $diagnosis->id; ?>" rows="2" style="width: 100%;"><?php 
-										echo $is_assigned ? esc_textarea( $current->suitability_message_en ) : 'This therapist specializes in treating this condition with evidence-based approaches.'; 
-									?></textarea>
-								</td>
-								<td>
-									<textarea name="diagnosis_message_ar_<?php echo $diagnosis->id; ?>" rows="2" style="width: 100%;"><?php 
-										echo $is_assigned ? esc_textarea( $current->suitability_message_ar ) : 'هذا المعالج متخصص في علاج هذه الحالة بأساليب قائمة على الأدلة العلمية.'; 
-									?></textarea>
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				
-				<p class="submit">
-					<input type="submit" class="button button-primary" value="Save Diagnosis Assignments">
-					<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button">Cancel</a>
-				</p>
-			</form>
-		</div>
-		
-		<div class="card">
-			<h3>Current Assignments</h3>
-			<?php if ( !empty( $current_diagnoses ) ) : ?>
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th>Order</th>
-							<th>Diagnosis</th>
-							<th>Rating</th>
-							<th>Message</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $current_diagnoses as $cd ) : 
-							$diagnosis = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $diagnoses_table WHERE id = %d", $cd->diagnosis_id ) );
-						?>
-							<tr>
-								<td><?php echo esc_html( $cd->display_order ); ?></td>
-								<td><?php echo esc_html( $diagnosis ? ( $diagnosis->name_en ?: $diagnosis->name ) : 'Unknown' ); ?></td>
-								<td><?php echo number_format( $cd->rating, 1 ); ?> / 5.0</td>
-								<td><?php echo esc_html( $cd->suitability_message_en ?: $cd->suitability_message_ar ?: 'No message' ); ?></td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-			<?php else : ?>
-				<p>No diagnoses assigned yet.</p>
-			<?php endif; ?>
-		</div>
-	</div>
-	<?php
-}
-
-/**
- * Save diagnosis assignments with order validation
- */
-function snks_save_diagnosis_assignments( $application_id ) {
-	global $wpdb;
-	$table_name = $wpdb->prefix . 'therapist_applications';
-	
-	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $application_id ) );
-	if ( !$application || !$application->user_id ) {
-		return array( 'success' => false, 'message' => 'Application not found or no user associated.' );
-	}
-	
-	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
-	$therapist_id = $application->user_id;
-	
-	// Get selected diagnoses from form
-	$selected_diagnoses = isset( $_POST['diagnoses'] ) ? array_map( 'intval', $_POST['diagnoses'] ) : [];
-	
-	// Validate order numbers for selected diagnoses
-	$order_conflicts = array();
-	$orders_to_check = array();
-	
-	foreach ( $selected_diagnoses as $diagnosis_id ) {
-		$order = isset( $_POST["diagnosis_order_$diagnosis_id"] ) ? intval( $_POST["diagnosis_order_$diagnosis_id"] ) : 0;
-		if ( $order > 0 ) {
-			$orders_to_check[] = array( 'diagnosis_id' => $diagnosis_id, 'order' => $order );
-		}
-	}
-	
-	// Check for order conflicts with other therapists
-	foreach ( $orders_to_check as $check ) {
-		$conflicting_therapist = $wpdb->get_var( $wpdb->prepare(
-			"SELECT therapist_id FROM $therapist_diagnoses_table 
-			 WHERE diagnosis_id = %d AND display_order = %d AND therapist_id != %d",
-			$check['diagnosis_id'], $check['order'], $therapist_id
-		) );
-		
-		if ( $conflicting_therapist ) {
-			$conflicting_therapist_name = $wpdb->get_var( $wpdb->prepare(
-				"SELECT name FROM $table_name WHERE user_id = %d",
-				$conflicting_therapist
-			) );
-			$diagnosis_name = $wpdb->get_var( $wpdb->prepare(
-				"SELECT name_en FROM {$wpdb->prefix}snks_diagnoses WHERE id = %d",
-				$check['diagnosis_id']
-			) );
-			$order_conflicts[] = sprintf(
-				'Order %d for "%s" is already assigned to therapist "%s"',
-				$check['order'], $diagnosis_name, $conflicting_therapist_name
-			);
-		}
-	}
-	
-	// If there are conflicts, return error
-	if ( !empty( $order_conflicts ) ) {
-		return array( 
-			'success' => false, 
-			'message' => 'Order conflicts detected: ' . implode( '; ', $order_conflicts ) 
-		);
-	}
-	
-	// Start transaction
-	$wpdb->query( 'START TRANSACTION' );
-	
-	try {
-		// Remove all current assignments for this therapist
-		$wpdb->delete( $therapist_diagnoses_table, array( 'therapist_id' => $therapist_id ) );
-		
-		// Add new assignments
-		foreach ( $selected_diagnoses as $diagnosis_id ) {
-			$rating = isset( $_POST["diagnosis_rating_$diagnosis_id"] ) ? floatval( $_POST["diagnosis_rating_$diagnosis_id"] ) : 0;
-			$message_en = isset( $_POST["diagnosis_message_en_$diagnosis_id"] ) ? sanitize_textarea_field( $_POST["diagnosis_message_en_$diagnosis_id"] ) : '';
-			$message_ar = isset( $_POST["diagnosis_message_ar_$diagnosis_id"] ) ? sanitize_textarea_field( $_POST["diagnosis_message_ar_$diagnosis_id"] ) : '';
-			$order = isset( $_POST["diagnosis_order_$diagnosis_id"] ) ? intval( $_POST["diagnosis_order_$diagnosis_id"] ) : 0;
-			
-			$wpdb->insert(
-				$therapist_diagnoses_table,
-				array(
-					'therapist_id' => $therapist_id,
-					'diagnosis_id' => $diagnosis_id,
-					'rating' => $rating,
-					'suitability_message_en' => $message_en,
-					'suitability_message_ar' => $message_ar,
-					'display_order' => $order
-				),
-				array( '%d', '%d', '%f', '%s', '%s', '%d' )
-			);
-		}
-		
-		$wpdb->query( 'COMMIT' );
-		
-		return array( 
-			'success' => true, 
-			'message' => sprintf( 'Successfully updated %d diagnosis assignments for %s', count( $selected_diagnoses ), $application->name ) 
-		);
-		
-	} catch ( Exception $e ) {
-		$wpdb->query( 'ROLLBACK' );
-		return array( 'success' => false, 'message' => 'Database error: ' . $e->getMessage() );
-	}
-} 
+ 
