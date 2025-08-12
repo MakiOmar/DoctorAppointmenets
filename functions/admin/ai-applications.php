@@ -526,7 +526,7 @@ function snks_display_application_details( $application_id ) {
 					<table class="wp-list-table widefat fixed striped">
 						<thead>
 							<tr>
-								<th style="width: 50px;">Order</th>
+								<th style="width: 50px;">Points</th>
 								<th>Diagnosis</th>
 								<th style="width: 100px;">Rating</th>
 								<th>Suitability Message (English)</th>
@@ -809,7 +809,7 @@ function snks_display_application_edit_form( $application_id ) {
 				<table class="wp-list-table widefat fixed striped" id="diagnoses-table">
 					<thead>
 						<tr>
-							<th style="width: 50px;">Order</th>
+															<th style="width: 50px;">Points</th>
 							<th style="width: 80px;">Active</th>
 							<th>Diagnosis</th>
 							<th style="width: 100px;">Rating</th>
