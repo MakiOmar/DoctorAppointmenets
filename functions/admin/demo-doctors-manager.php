@@ -422,7 +422,7 @@ function snks_create_demo_doctor( $data ) {
 		'email' => sanitize_email( $data['email'] ),
 		'phone' => sanitize_text_field( $data['phone'] ),
 		'whatsapp' => sanitize_text_field( $data['whatsapp'] ),
-		'country' => 'Saudi Arabia',
+		'doctor_specialty' => sanitize_text_field( $data['specialty'] ),
 		'bio' => sanitize_textarea_field( $data['bio'] ),
 		'bio_en' => sanitize_textarea_field( $data['bio'] ), // Use same bio for English
 		'ai_bio' => sanitize_textarea_field( $data['bio'] ),
@@ -531,7 +531,18 @@ function snks_create_bulk_demo_doctors( $count ) {
 		'مستشار نفسي مرخص', 'أخصائي اجتماعي', 'معالج بالفن', 'معالج سلوكي معرفي'
 	);
 	
-	$diagnoses = array( 'Anxiety Disorders', 'Depression', 'PTSD', 'OCD', 'Bipolar Disorder', 'Stress Management' );
+	// Get available diagnoses from the database
+	global $wpdb;
+	$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+	$available_diagnoses = $wpdb->get_results( "SELECT id FROM $diagnoses_table ORDER BY id ASC" );
+	
+	if ( empty( $available_diagnoses ) ) {
+		error_log('Demo Doctors: No diagnoses found in database');
+		$diagnoses = array( 1 ); // Default to first diagnosis if none exist
+	} else {
+		$diagnoses = array_column( $available_diagnoses, 'id' );
+		error_log('Demo Doctors: Found ' . count($diagnoses) . ' diagnoses: ' . implode(', ', $diagnoses));
+	}
 	
 	for ( $i = 0; $i < $count; $i++ ) {
 		error_log('Demo Doctors: Creating doctor ' . ($i + 1) . ' of ' . $count);
@@ -552,7 +563,7 @@ function snks_create_bulk_demo_doctors( $count ) {
 			'bio' => "{$specialty} ذو خبرة في علاج الصحة النفسية. ملتزم بتقديم رعاية متعاطفة ونهج علاجي قائم على الأدلة العلمية.",
 			'price' => $price,
 			'password' => 'demo123',
-			'diagnoses' => array( rand( 1, 6 ) ) // Random diagnosis
+			'diagnoses' => array( $diagnoses[ array_rand( $diagnoses ) ] ) // Random diagnosis from available ones
 		);
 		
 		$result = snks_create_demo_doctor( $data );
