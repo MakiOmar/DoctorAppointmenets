@@ -2753,8 +2753,8 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 		<?php endif; ?>
 		
 		<div class="card">
-			<h2>Therapist Ordering & Settings</h2>
-			<p>Manage the order and settings of therapists for this diagnosis. Each order number can only be assigned to one therapist per diagnosis.</p>
+			<h2>Therapist Points & Settings</h2>
+			<p>Manage the points and settings of therapists for this diagnosis. Each point value can only be assigned to one therapist per diagnosis.</p>
 			
 			<form method="post" action="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>">
 				<?php wp_nonce_field( 'save_therapists_' . $diagnosis_id ); ?>
@@ -2765,7 +2765,7 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 					<table class="wp-list-table widefat fixed striped">
 						<thead>
 							<tr>
-								<th style="width: 80px;">Order</th>
+								<th style="width: 80px;">Points</th>
 								<th>Therapist Name</th>
 								<th>Email</th>
 								<th>Phone</th>
@@ -2816,7 +2816,7 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 					</table>
 					
 					<p class="submit">
-						<input type="submit" class="button button-primary" value="Save Therapist Ordering">
+						<input type="submit" class="button button-primary" value="Save Therapist Points">
 						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button">Back to Diagnoses</a>
 					</p>
 				<?php else : ?>
@@ -2944,7 +2944,7 @@ function snks_save_diagnosis_therapists_ordering( $diagnosis_id ) {
 				$therapist_names[] = $name ?: "Therapist ID: $therapist_id";
 			}
 			$order_conflicts[] = sprintf(
-				'Order %d is assigned to multiple therapists: %s',
+				'Points %d is assigned to multiple therapists: %s',
 				$order, implode( ', ', $therapist_names )
 			);
 		}
@@ -2996,7 +2996,7 @@ function snks_save_diagnosis_therapists_ordering( $diagnosis_id ) {
 		
 		return array( 
 			'success' => true, 
-			'message' => sprintf( 'Successfully updated therapist ordering for "%s"', $diagnosis_name ?: 'Unknown Diagnosis' ) 
+			'message' => sprintf( 'Successfully updated therapist points for "%s"', $diagnosis_name ?: 'Unknown Diagnosis' ) 
 		);
 		
 	} catch ( Exception $e ) {
