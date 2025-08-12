@@ -916,6 +916,20 @@ function snks_enhanced_ai_diagnoses_page() {
 		}
 	}
 	
+	// Handle cleanup of orphaned entries
+	if ( isset( $_POST['cleanup_orphaned'] ) && isset( $_POST['diagnosis_id'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'cleanup_orphaned_entries_' . $_POST['diagnosis_id'] ) ) {
+			$result = snks_cleanup_orphaned_therapist_diagnoses( $_POST['diagnosis_id'] );
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
+		} else {
+			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
+		}
+	}
+	
 	$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
 	?>
 	<div class="wrap">
@@ -2706,11 +2720,11 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 		wp_die( 'Diagnosis not found.' );
 	}
 	
-	// Get all therapists assigned to this diagnosis
+	// Get all therapists assigned to this diagnosis (only those with application records)
 	$therapists = $wpdb->get_results( $wpdb->prepare(
 		"SELECT td.*, ta.name, ta.name_en, ta.email, ta.phone, ta.doctor_specialty 
 		 FROM $therapist_diagnoses_table td
-		 JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 INNER JOIN $applications_table ta ON td.therapist_id = ta.user_id
 		 WHERE td.diagnosis_id = %d AND ta.status = 'approved'
 		 ORDER BY td.display_order ASC, ta.name ASC",
 		$diagnosis_id
@@ -2818,6 +2832,21 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 							<p><strong>Matching applications:</strong> <?php echo count( $debug_applications ); ?></p>
 							<?php if ( !empty( $debug_applications ) ) : ?>
 								<p><strong>Application user IDs:</strong> <?php echo implode( ', ', array_column( $debug_applications, 'user_id' ) ); ?></p>
+							<?php endif; ?>
+							
+							<?php if ( count( $debug_therapists ) > count( $debug_applications ) ) : ?>
+								<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin-top: 10px; border-radius: 4px;">
+									<h4>⚠️ Orphaned Entries Detected</h4>
+									<p>There are <?php echo count( $debug_therapists ) - count( $debug_applications ); ?> therapist-diagnosis entries that don't have corresponding application records.</p>
+									<form method="post" style="margin-top: 10px;">
+										<?php wp_nonce_field( 'cleanup_orphaned_entries_' . $diagnosis_id ); ?>
+										<input type="hidden" name="diagnosis_id" value="<?php echo $diagnosis_id; ?>">
+										<input type="hidden" name="cleanup_orphaned" value="1">
+										<button type="submit" class="button button-secondary" onclick="return confirm('This will remove orphaned therapist-diagnosis entries that don\'t have application records. Continue?')">
+											🧹 Cleanup Orphaned Entries
+										</button>
+									</form>
+								</div>
 							<?php endif; ?>
 						<?php endif; ?>
 					</div>
@@ -2973,5 +3002,43 @@ function snks_save_diagnosis_therapists_ordering( $diagnosis_id ) {
 	} catch ( Exception $e ) {
 		$wpdb->query( 'ROLLBACK' );
 		return array( 'success' => false, 'message' => 'Database error: ' . $e->getMessage() );
+	}
+}
+
+/**
+ * Cleanup orphaned therapist-diagnosis entries
+ */
+function snks_cleanup_orphaned_therapist_diagnoses( $diagnosis_id ) {
+	global $wpdb;
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	
+	// Find orphaned entries (therapist-diagnosis entries without corresponding applications)
+	$orphaned_entries = $wpdb->get_results( $wpdb->prepare(
+		"SELECT td.* FROM $therapist_diagnoses_table td
+		 LEFT JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 WHERE td.diagnosis_id = %d AND ta.user_id IS NULL",
+		$diagnosis_id
+	) );
+	
+	if ( empty( $orphaned_entries ) ) {
+		return array( 'success' => true, 'message' => 'No orphaned entries found to clean up.' );
+	}
+	
+	// Delete orphaned entries
+	$deleted_count = $wpdb->query( $wpdb->prepare(
+		"DELETE td FROM $therapist_diagnoses_table td
+		 LEFT JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 WHERE td.diagnosis_id = %d AND ta.user_id IS NULL",
+		$diagnosis_id
+	) );
+	
+	if ( $deleted_count !== false ) {
+		return array( 
+			'success' => true, 
+			'message' => sprintf( 'Successfully cleaned up %d orphaned therapist-diagnosis entries.', $deleted_count ) 
+		);
+	} else {
+		return array( 'success' => false, 'message' => 'Failed to clean up orphaned entries.' );
 	}
 }
