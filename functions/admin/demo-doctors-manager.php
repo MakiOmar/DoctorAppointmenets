@@ -352,10 +352,13 @@ function snks_demo_doctors_manager_page() {
  * Create a single demo doctor
  */
 function snks_create_demo_doctor( $data ) {
+	error_log('Demo Doctors: Creating demo doctor: ' . $data['name']);
+	
 	// Validate required fields
 	$required_fields = array( 'name', 'name_en', 'email', 'phone', 'whatsapp', 'specialty', 'price', 'password' );
 	foreach ( $required_fields as $field ) {
 		if ( empty( $data[ $field ] ) ) {
+			error_log('Demo Doctors: Missing required field: ' . $field);
 			return array( 'success' => false, 'message' => "Missing required field: {$field}" );
 		}
 	}
@@ -490,6 +493,8 @@ function snks_create_demo_doctor( $data ) {
 	// Create default availability slots (45-minute sessions)
 	snks_create_demo_availability_slots( $user_id );
 	
+	error_log('Demo Doctors: Successfully created demo doctor: ' . $data['name'] . ' (ID: ' . $user_id . ')');
+	
 	return array( 
 		'success' => true, 
 		'message' => "Demo doctor '{$data['name']}' created successfully with 45-minute appointment slots." 
@@ -500,6 +505,7 @@ function snks_create_demo_doctor( $data ) {
  * Create bulk demo doctors
  */
 function snks_create_bulk_demo_doctors( $count ) {
+	error_log('Demo Doctors: Starting bulk creation for ' . $count . ' doctors');
 	$results = array();
 	$success_count = 0;
 	$error_count = 0;
@@ -528,6 +534,8 @@ function snks_create_bulk_demo_doctors( $count ) {
 	$diagnoses = array( 'Anxiety Disorders', 'Depression', 'PTSD', 'OCD', 'Bipolar Disorder', 'Stress Management' );
 	
 	for ( $i = 0; $i < $count; $i++ ) {
+		error_log('Demo Doctors: Creating doctor ' . ($i + 1) . ' of ' . $count);
+		
 		$name_ar = $demo_names_ar[ $i % count( $demo_names_ar ) ];
 		$name_en = $demo_names_en[ $i % count( $demo_names_en ) ];
 		$specialty = $specialties[ $i % count( $specialties ) ];
@@ -548,6 +556,7 @@ function snks_create_bulk_demo_doctors( $count ) {
 		);
 		
 		$result = snks_create_demo_doctor( $data );
+		error_log('Demo Doctors: Individual creation result: ' . print_r($result, true));
 		
 		if ( $result['success'] ) {
 			$success_count++;
@@ -885,21 +894,31 @@ function snks_clear_all_demo_doctors() {
  * Repopulate demo doctors with new application-based structure
  */
 function snks_repopulate_demo_doctors() {
+	// Add debugging
+	error_log('Demo Doctors: Starting repopulate process');
+	
 	// Clear existing demo doctors first
 	$clear_result = snks_clear_all_demo_doctors();
+	error_log('Demo Doctors: Clear result: ' . print_r($clear_result, true));
+	
 	if ( ! $clear_result['success'] && strpos( $clear_result['message'], 'No demo doctors found' ) === false ) {
+		error_log('Demo Doctors: Clear failed, returning error');
 		return $clear_result;
 	}
 	
 	// Create 10 new demo doctors
+	error_log('Demo Doctors: Starting bulk creation of 10 doctors');
 	$result = snks_create_bulk_demo_doctors( 10 );
+	error_log('Demo Doctors: Bulk creation result: ' . print_r($result, true));
 	
 	if ( $result['success'] ) {
+		error_log('Demo Doctors: Repopulate successful');
 		return array(
 			'success' => true,
 			'message' => "Successfully repopulated demo doctors. " . $result['message']
 		);
 	} else {
+		error_log('Demo Doctors: Repopulate failed');
 		return array(
 			'success' => false,
 			'message' => "Failed to repopulate demo doctors. " . $result['message']
