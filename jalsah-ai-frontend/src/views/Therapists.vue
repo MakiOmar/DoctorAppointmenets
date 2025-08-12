@@ -46,6 +46,7 @@
           <div>
             <label class="form-label">{{ $t('therapists.filters.sortBy') }}</label>
             <select v-model="filters.sortBy" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+              <option value="random">{{ $t('therapists.filters.random') }}</option>
               <option v-if="settingsStore && settingsStore.isRatingsEnabled" value="rating">{{ $t('therapists.filters.highestRated') }}</option>
               <option value="price_low">{{ $t('therapists.filters.lowestPrice') }}</option>
               <option value="price_high">{{ $t('therapists.filters.highestPrice') }}</option>
@@ -117,7 +118,7 @@ export default {
       specialization: '',
       priceRange: '',
       nearestAppointment: '',
-      sortBy: settingsStore && settingsStore.isRatingsEnabled ? 'rating' : 'nearest_appointment'
+      sortBy: 'random'
     })
 
     const filteredTherapists = computed(() => {
@@ -153,6 +154,11 @@ export default {
       // Sort therapists by main sortBy dropdown
       filtered.sort((a, b) => {
         switch (filters.sortBy) {
+          case 'random':
+            // Use a more random approach with therapist ID and current timestamp
+            const randomA = Math.sin(a.id + Date.now() / 1000) * 10000
+            const randomB = Math.sin(b.id + Date.now() / 1000) * 10000
+            return randomA - randomB
           case 'rating':
             return getAverageRating(b) - getAverageRating(a)
           case 'price_low':
@@ -226,8 +232,8 @@ export default {
     // Watch for changes in ratings enabled setting
     watch(() => settingsStore && settingsStore.isRatingsEnabled, (newValue) => {
       if (!newValue && filters.sortBy === 'rating') {
-        // If ratings are disabled and current sort is by rating, change to nearest appointment
-        filters.sortBy = 'nearest_appointment'
+        // If ratings are disabled and current sort is by rating, change to random
+        filters.sortBy = 'random'
       }
     })
 

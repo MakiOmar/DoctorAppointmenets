@@ -328,6 +328,7 @@ export default {
       closest: 'Closest',
       farthest: 'Farthest',
       sortBy: 'Sort By',
+      random: 'Random',
       highestRated: 'Highest Rated'
     }
   },

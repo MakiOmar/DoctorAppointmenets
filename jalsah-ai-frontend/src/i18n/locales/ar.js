@@ -337,6 +337,7 @@ export default {
       closest: 'الأقرب',
       farthest: 'الأبعد',
       sortBy: 'ترتيب حسب',
+      random: 'عشوائي',
       highestRated: 'الأعلى تقييماً'
     }
   },
