@@ -83,14 +83,28 @@ function snks_demo_doctors_manager_page() {
 			} else {
 				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
 			}
-		} elseif ( $_POST['action'] === 'migrate_demo_pricing' && wp_verify_nonce( $_POST['demo_pricing_nonce'], 'migrate_demo_pricing' ) ) {
-			$result = snks_migrate_demo_doctors_pricing();
-			if ( $result['success'] ) {
-				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
-			} else {
-				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
-			}
+			} elseif ( $_POST['action'] === 'migrate_demo_pricing' && wp_verify_nonce( $_POST['demo_pricing_nonce'], 'migrate_demo_pricing' ) ) {
+		$result = snks_migrate_demo_doctors_pricing();
+		if ( $result['success'] ) {
+			echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
 		}
+	} elseif ( $_POST['action'] === 'clear_demo_doctors' && wp_verify_nonce( $_POST['clear_demo_nonce'], 'clear_demo_doctors' ) ) {
+		$result = snks_clear_all_demo_doctors();
+		if ( $result['success'] ) {
+			echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		}
+	} elseif ( $_POST['action'] === 'repopulate_demo_doctors' && wp_verify_nonce( $_POST['repopulate_demo_nonce'], 'repopulate_demo_doctors' ) ) {
+		$result = snks_repopulate_demo_doctors();
+		if ( $result['success'] ) {
+			echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		}
+	}
 	}
 	
 	// Get existing demo doctors
@@ -300,6 +314,27 @@ function snks_demo_doctors_manager_page() {
 		
 		<!-- Reviews Information -->
 		<div class="card">
+			<h2>🔄 Demo Doctors Management</h2>
+			<p><strong>Important:</strong> Demo doctors are now created as applications in the therapist_applications table to be compatible with the AI frontend.</p>
+			
+			<form method="post" style="margin-top: 20px;">
+				<?php wp_nonce_field( 'clear_demo_doctors', 'clear_demo_nonce' ); ?>
+				<input type="hidden" name="action" value="clear_demo_doctors">
+				<button type="submit" class="button button-secondary" onclick="return confirm('Are you sure you want to delete all demo doctors? This action cannot be undone.')">
+					🗑️ Clear All Demo Doctors
+				</button>
+			</form>
+			
+			<form method="post" style="margin-top: 10px;">
+				<?php wp_nonce_field( 'repopulate_demo_doctors', 'repopulate_demo_nonce' ); ?>
+				<input type="hidden" name="action" value="repopulate_demo_doctors">
+				<button type="submit" class="button button-primary">
+					🔄 Repopulate Demo Doctors (Create 10)
+				</button>
+			</form>
+		</div>
+		
+		<div class="card">
 			<h2>📋 Reviews & Ratings Information</h2>
 			<p><strong>Where to find reviews in admin:</strong></p>
 			<ul>
@@ -366,21 +401,43 @@ function snks_create_demo_doctor( $data ) {
 	// Mark as demo doctor
 	update_user_meta( $user_id, 'is_demo_doctor', '1' );
 	
-	// Set AI-related meta fields
-	update_user_meta( $user_id, 'show_on_ai_site', '1' );
-	update_user_meta( $user_id, 'ai_display_name', sanitize_text_field( $first_name . ' ' . $last_name ) );
-	update_user_meta( $user_id, 'ai_bio', sanitize_textarea_field( $data['bio'] ) );
-	update_user_meta( $user_id, 'public_short_bio', sanitize_text_field( $data['specialty'] ) );
-	update_user_meta( $user_id, 'secretary_phone', sanitize_text_field( $data['phone'] ) );
-	update_user_meta( $user_id, 'ai_first_session_percentage', '15' );
-	update_user_meta( $user_id, 'ai_followup_session_percentage', '10' );
-		// Generate random future appointment time (within next 7 days)
-		$random_days = rand(0, 7);
-		$random_hours = rand(9, 17); // Between 9 AM and 5 PM
-		$random_minutes = rand(0, 3) * 15; // 0, 15, 30, or 45 minutes
-		
-		$future_date = date('Y-m-d H:i', strtotime("+{$random_days} days {$random_hours}:{$random_minutes}"));
-		update_user_meta( $user_id, 'ai_earliest_slot', $future_date );
+	// Create application in therapist_applications table
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	
+	// Generate random future appointment time (within next 7 days)
+	$random_days = rand(0, 7);
+	$random_hours = rand(9, 17); // Between 9 AM and 5 PM
+	$random_minutes = rand(0, 3) * 15; // 0, 15, 30, or 45 minutes
+	$future_date = date('Y-m-d H:i', strtotime("+{$random_days} days {$random_hours}:{$random_minutes}"));
+	
+	// Insert application record
+	$application_data = array(
+		'user_id' => $user_id,
+		'name' => sanitize_text_field( $data['name'] ),
+		'name_en' => sanitize_text_field( $data['name_en'] ),
+		'email' => sanitize_email( $data['email'] ),
+		'phone' => sanitize_text_field( $data['phone'] ),
+		'whatsapp' => sanitize_text_field( $data['whatsapp'] ),
+		'country' => 'Saudi Arabia',
+		'bio' => sanitize_textarea_field( $data['bio'] ),
+		'bio_en' => sanitize_textarea_field( $data['bio'] ), // Use same bio for English
+		'ai_bio' => sanitize_textarea_field( $data['bio'] ),
+		'ai_bio_en' => sanitize_textarea_field( $data['bio'] ),
+		'rating' => rand( 4, 5 ) + ( rand( 0, 9 ) / 10 ), // Random rating between 4.0-5.9
+		'total_ratings' => rand( 10, 50 ),
+		'status' => 'approved',
+		'show_on_ai_site' => 1,
+		'created_at' => current_time( 'mysql' ),
+		'updated_at' => current_time( 'mysql' )
+	);
+	
+	$result = $wpdb->insert( $table_name, $application_data );
+	if ( $result === false ) {
+		// If application creation fails, delete the user and return error
+		wp_delete_user( $user_id );
+		return array( 'success' => false, 'message' => 'Failed to create application record' );
+	}
 	
 	// Set price for 45-minute sessions
 	update_user_meta( $user_id, 'price_45_min', intval( $data['price'] ) );
@@ -416,9 +473,6 @@ function snks_create_demo_doctor( $data ) {
 	
 	// Assign diagnoses if selected
 	if ( ! empty( $data['diagnoses'] ) && is_array( $data['diagnoses'] ) ) {
-		global $wpdb;
-		$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
-		
 		foreach ( $data['diagnoses'] as $diagnosis_id ) {
 			$wpdb->insert(
 				$wpdb->prefix . 'snks_therapist_diagnoses',
@@ -759,4 +813,96 @@ function snks_migrate_demo_doctors_pricing() {
 			'message' => 'No demo doctors were migrated.'
 		);
 	}
-} 
+}
+
+/**
+ * Clear all demo doctors
+ */
+function snks_clear_all_demo_doctors() {
+	global $wpdb;
+	
+	// Get all demo doctors
+	$demo_doctors = get_users( array(
+		'meta_key' => 'is_demo_doctor',
+		'meta_value' => '1',
+		'role' => 'doctor'
+	) );
+	
+	if ( empty( $demo_doctors ) ) {
+		return array(
+			'success' => false,
+			'message' => 'No demo doctors found to delete.'
+		);
+	}
+	
+	$deleted_count = 0;
+	$errors = array();
+	
+	foreach ( $demo_doctors as $doctor ) {
+		$user_id = $doctor->ID;
+		
+		// Delete from therapist_applications table
+		$wpdb->delete(
+			$wpdb->prefix . 'therapist_applications',
+			array( 'user_id' => $user_id ),
+			array( '%d' )
+		);
+		
+		// Delete from therapist_diagnoses table
+		$wpdb->delete(
+			$wpdb->prefix . 'snks_therapist_diagnoses',
+			array( 'therapist_id' => $user_id ),
+			array( '%d' )
+		);
+		
+		// Delete the user
+		$result = wp_delete_user( $user_id );
+		if ( $result ) {
+			$deleted_count++;
+		} else {
+			$errors[] = "Failed to delete user ID: {$user_id}";
+		}
+	}
+	
+	if ( $deleted_count > 0 ) {
+		$message = "Successfully deleted {$deleted_count} demo doctors.";
+		if ( ! empty( $errors ) ) {
+			$message .= " Errors: " . implode( ', ', $errors );
+		}
+		return array(
+			'success' => true,
+			'message' => $message
+		);
+	} else {
+		return array(
+			'success' => false,
+			'message' => 'Failed to delete any demo doctors. Errors: ' . implode( ', ', $errors )
+		);
+	}
+}
+
+/**
+ * Repopulate demo doctors with new application-based structure
+ */
+function snks_repopulate_demo_doctors() {
+	// Clear existing demo doctors first
+	$clear_result = snks_clear_all_demo_doctors();
+	if ( ! $clear_result['success'] && strpos( $clear_result['message'], 'No demo doctors found' ) === false ) {
+		return $clear_result;
+	}
+	
+	// Create 10 new demo doctors
+	$result = snks_create_bulk_demo_doctors( 10 );
+	
+	if ( $result['success'] ) {
+		return array(
+			'success' => true,
+			'message' => "Successfully repopulated demo doctors. " . $result['message']
+		);
+	} else {
+		return array(
+			'success' => false,
+			'message' => "Failed to repopulate demo doctors. " . $result['message']
+		);
+	}
+}
