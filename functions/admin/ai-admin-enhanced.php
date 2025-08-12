@@ -2716,6 +2716,21 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 		$diagnosis_id
 	) );
 	
+	// Debug: Let's also check what's in the therapist_diagnoses table for this diagnosis
+	$debug_therapists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM $therapist_diagnoses_table WHERE diagnosis_id = %d",
+		$diagnosis_id
+	) );
+	
+	// Debug: Check if there are any applications with these therapist IDs
+	if ( !empty( $debug_therapists ) ) {
+		$therapist_ids = array_column( $debug_therapists, 'therapist_id' );
+		$debug_applications = $wpdb->get_results( $wpdb->prepare(
+			"SELECT * FROM $applications_table WHERE user_id IN (" . implode( ',', array_fill( 0, count( $therapist_ids ), '%d' ) ) . ")",
+			$therapist_ids
+		) );
+	}
+	
 	?>
 	<div class="wrap">
 		<h1>Manage Therapists for: <?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></h1>
@@ -2792,6 +2807,21 @@ function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
 					</p>
 				<?php else : ?>
 					<p>No therapists are currently assigned to this diagnosis.</p>
+					
+					<!-- Debug Information -->
+					<div class="card" style="background: #f9f9f9; border-left: 4px solid #0073aa;">
+						<h3>Debug Information</h3>
+						<p><strong>Diagnosis ID:</strong> <?php echo $diagnosis_id; ?></p>
+						<p><strong>Raw therapist_diagnoses entries:</strong> <?php echo count( $debug_therapists ); ?></p>
+						<?php if ( !empty( $debug_therapists ) ) : ?>
+							<p><strong>Therapist IDs found:</strong> <?php echo implode( ', ', array_column( $debug_therapists, 'therapist_id' ) ); ?></p>
+							<p><strong>Matching applications:</strong> <?php echo count( $debug_applications ); ?></p>
+							<?php if ( !empty( $debug_applications ) ) : ?>
+								<p><strong>Application user IDs:</strong> <?php echo implode( ', ', array_column( $debug_applications, 'user_id' ) ); ?></p>
+							<?php endif; ?>
+						<?php endif; ?>
+					</div>
+					
 					<p>
 						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button button-primary">Assign Therapists</a>
 						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button">Back to Diagnoses</a>
