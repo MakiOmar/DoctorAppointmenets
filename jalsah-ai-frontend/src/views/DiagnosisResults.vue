@@ -98,6 +98,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 import TherapistCard from '@/components/TherapistCard.vue'
@@ -113,6 +114,7 @@ export default {
     const route = useRoute()
     const toast = useToast()
     const { t } = useI18n()
+    const settingsStore = useSettingsStore()
     
     const loading = ref(true)
     const matchedTherapists = ref([])
@@ -204,14 +206,32 @@ export default {
         let response
         
         if (diagnosisId) {
-          // Load therapists by diagnosis
-          response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+          // Check if we should search by name or ID
+          if (settingsStore && settingsStore.isDiagnosisSearchByName) {
+            // Load all therapists and filter by diagnosis name on frontend
+            response = await api.get('/api/ai/therapists')
+            if (response.data.data) {
+              // Filter therapists by diagnosis name
+              const diagnosisName = diagnosisResult.value.title.toLowerCase()
+              matchedTherapists.value = response.data.data.filter(therapist => 
+                therapist.diagnoses?.some(diagnosis => 
+                  diagnosis.name?.toLowerCase().includes(diagnosisName) ||
+                  diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+                )
+              )
+            } else {
+              matchedTherapists.value = []
+            }
+          } else {
+            // Load therapists by diagnosis ID (default behavior)
+            response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+            matchedTherapists.value = response.data.data || []
+          }
         } else {
           // Load all therapists (for simulation)
           response = await api.get('/api/ai/therapists')
+          matchedTherapists.value = response.data.data || []
         }
-        
-        matchedTherapists.value = response.data.data || []
       } catch (error) {
         toast.error(t('diagnosisResults.errorLoadingTherapists'))
         console.error('Error loading matched therapists:', error)

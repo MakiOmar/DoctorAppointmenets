@@ -1446,6 +1446,7 @@ add_action('rest_api_init', function() {
             $settings['site_description'] = get_option('jalsah_site_description', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.');
             $settings['therapist_registration_password_mode'] = get_option('jalsah_therapist_registration_password_mode', 'auto');
             $settings['ratings_enabled'] = get_option('snks_ai_ratings_enabled', '1') === '1';
+            $settings['diagnosis_search_by_name'] = get_option('snks_ai_diagnosis_search_by_name', '0') === '1';
             return [ 'success' => true, 'data' => $settings ];
         },
         'permission_callback' => '__return_true',

@@ -9,6 +9,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const siteTitle = ref('جلسة الذكية - دعم الصحة النفسية')
   const siteDescription = ref('دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.')
   const ratingsEnabled = ref(true)
+  const diagnosisSearchByName = ref(false)
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const therapistRegistrationPasswordMode = ref('auto')
@@ -19,6 +20,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const getSiteTitle = computed(() => siteTitle.value)
   const getSiteDescription = computed(() => siteDescription.value)
   const isRatingsEnabled = computed(() => ratingsEnabled.value)
+  const isDiagnosisSearchByName = computed(() => diagnosisSearchByName.value)
   const getTherapistRegistrationPasswordMode = computed(() => therapistRegistrationPasswordMode.value)
 
   // Actions
@@ -35,6 +37,7 @@ export const useSettingsStore = defineStore('settings', () => {
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
         ratingsEnabled.value = settings.ratings_enabled ?? true
+        diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
 
       } catch (e) {
@@ -83,6 +86,7 @@ export const useSettingsStore = defineStore('settings', () => {
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
         ratingsEnabled.value = settings.ratings_enabled ?? true
+        diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         
         // Save to localStorage
@@ -126,6 +130,7 @@ export const useSettingsStore = defineStore('settings', () => {
     siteTitle,
     siteDescription,
     ratingsEnabled,
+    diagnosisSearchByName,
     isLoading,
     isInitialized,
     therapistRegistrationPasswordMode,
@@ -136,6 +141,7 @@ export const useSettingsStore = defineStore('settings', () => {
     getSiteTitle,
     getSiteDescription,
     isRatingsEnabled,
+    isDiagnosisSearchByName,
     shouldShowLanguageSwitcher,
     getTherapistRegistrationPasswordMode,
     

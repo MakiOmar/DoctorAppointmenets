@@ -2333,6 +2333,7 @@ function snks_enhanced_ai_settings_page() {
 			update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
 			update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
 			update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
+			update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
 			
 			echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 		}
@@ -2346,6 +2347,7 @@ function snks_enhanced_ai_settings_page() {
 	$site_description_ar = get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
 	$frontend_url = get_option( 'snks_ai_frontend_url', 'https://jalsah-ai.com' );
 	$ratings_enabled = get_option( 'snks_ai_ratings_enabled', '1' ); // Default to enabled
+	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -2412,6 +2414,12 @@ function snks_enhanced_ai_settings_page() {
 					<label for="ratings_enabled">Enable Ratings & Reviews</label>
 					<input type="checkbox" id="ratings_enabled" name="ratings_enabled" value="1" <?php checked( $ratings_enabled, '1' ); ?>>
 					<p class="description">Enable this to show star ratings, review counts, and allow rating-based filtering on the frontend. When disabled, ratings will be hidden from therapist cards and filtering options.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="diagnosis_search_by_name">Search Therapists by Diagnosis Name</label>
+					<input type="checkbox" id="diagnosis_search_by_name" name="diagnosis_search_by_name" value="1" <?php checked( $diagnosis_search_by_name, '1' ); ?>>
+					<p class="description">When enabled, the diagnosis results page will search for therapists by diagnosis name instead of diagnosis ID. This allows for more flexible matching based on diagnosis names rather than specific IDs.</p>
 				</div>
 				
 				<?php submit_button( 'Save Settings' ); ?>
