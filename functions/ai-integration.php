@@ -59,6 +59,10 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
+		
+		// Add AJAX endpoints for settings
+		add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
+		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
 	}
 	
 	/**
@@ -1672,6 +1676,7 @@ class SNKS_AI_Integration {
 			'default_language' => snks_get_default_language(),
 			'site_title' => snks_get_site_title( $current_language ),
 			'site_description' => snks_get_site_description( $current_language ),
+			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 		);
 		
 		wp_send_json_success( $settings );
@@ -1700,6 +1705,7 @@ class SNKS_AI_Integration {
 			'default_language' => snks_get_default_language(),
 			'site_title' => snks_get_site_title( $current_language ),
 			'site_description' => snks_get_site_description( $current_language ),
+			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 		);
 		
 		return new WP_REST_Response( array(

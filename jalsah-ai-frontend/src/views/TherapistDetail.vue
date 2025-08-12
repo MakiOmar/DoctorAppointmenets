@@ -46,7 +46,7 @@
             </h1>
             
             <!-- Rating -->
-            <div class="flex items-center mb-4">
+            <div v-if="settingsStore && settingsStore.isRatingsEnabled" class="flex items-center mb-4">
               <div class="flex items-center">
                 <span class="text-yellow-400 text-xl">★</span>
                 <span class="ml-2 text-lg font-medium text-gray-900">{{ therapist.rating || 5.0 }}</span>
@@ -140,12 +140,14 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '../stores/settings'
 import api from '../services/api'
 import { formatPrice } from '../utils/currency'
 import BookingModal from '../components/BookingModal.vue'
 
 const { t } = useI18n()
 const route = useRoute()
+const settingsStore = useSettingsStore()
 
 // Reactive data
 const therapist = ref(null)

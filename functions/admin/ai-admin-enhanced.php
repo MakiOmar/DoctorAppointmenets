@@ -2289,6 +2289,7 @@ function snks_enhanced_ai_settings_page() {
 			update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
 			update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
 			update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
+			update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
 			
 			echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 		}
@@ -2301,6 +2302,7 @@ function snks_enhanced_ai_settings_page() {
 	$site_description_en = get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
 	$site_description_ar = get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
 	$frontend_url = get_option( 'snks_ai_frontend_url', 'https://jalsah-ai.com' );
+	$ratings_enabled = get_option( 'snks_ai_ratings_enabled', '1' ); // Default to enabled
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -2359,6 +2361,14 @@ function snks_enhanced_ai_settings_page() {
 					<label for="frontend_url">Frontend URL</label>
 					<input type="url" id="frontend_url" name="frontend_url" value="<?php echo esc_attr( $frontend_url ); ?>" class="regular-text">
 					<p class="description">The URL of your Jalsah AI frontend application. Used for payment redirects after AI order completion. (e.g., https://jalsah-ai.com)</p>
+				</div>
+				
+				<h3>Frontend Features</h3>
+				
+				<div class="bilingual-field">
+					<label for="ratings_enabled">Enable Ratings & Reviews</label>
+					<input type="checkbox" id="ratings_enabled" name="ratings_enabled" value="1" <?php checked( $ratings_enabled, '1' ); ?>>
+					<p class="description">Enable this to show star ratings, review counts, and allow rating-based filtering on the frontend. When disabled, ratings will be hidden from therapist cards and filtering options.</p>
 				</div>
 				
 				<?php submit_button( 'Save Settings' ); ?>

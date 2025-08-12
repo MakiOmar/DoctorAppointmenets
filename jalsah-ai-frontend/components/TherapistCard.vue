@@ -24,7 +24,7 @@
           <div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ therapist.name }}</h3>
             
-            <div class="flex items-center gap-2">
+            <div v-if="settingsStore && settingsStore.isRatingsEnabled" class="flex items-center gap-2">
               <StarRating :rating="therapist.rating || 0" />
               <span class="text-sm text-gray-600">
                 {{ (therapist.rating || 0).toFixed(1) }} ({{ therapist.total_ratings || 0 }} {{$t('therapistDetail.reviews')}})
@@ -187,6 +187,7 @@
 <script>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '../src/stores/settings'
 import StarRating from './StarRating.vue'
 
 export default {
@@ -202,6 +203,11 @@ export default {
     diagnosisId: {
       type: [String, Number],
       default: null
+    },
+    settingsStore: {
+      type: Object,
+      required: false,
+      default: null
     }
   },
   emits: ['click', 'book'],
@@ -216,6 +222,9 @@ export default {
     const currentCertificateIndex = ref(0)
 
     const getAverageRating = (therapist) => {
+      if (!props.settingsStore || !props.settingsStore.isRatingsEnabled) {
+        return 0
+      }
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
         return 0
       }

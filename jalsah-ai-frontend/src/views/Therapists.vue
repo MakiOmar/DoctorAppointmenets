@@ -46,7 +46,7 @@
           <div>
             <label class="form-label">{{ $t('therapists.filters.sortBy') }}</label>
             <select v-model="filters.sortBy" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="rating">{{ $t('therapists.filters.highestRated') }}</option>
+              <option v-if="settingsStore && settingsStore.isRatingsEnabled" value="rating">{{ $t('therapists.filters.highestRated') }}</option>
               <option value="price_low">{{ $t('therapists.filters.lowestPrice') }}</option>
               <option value="price_high">{{ $t('therapists.filters.highestPrice') }}</option>
               <option value="nearest_appointment">{{ $t('therapists.filters.nearestAppointment') }}</option>
@@ -70,6 +70,7 @@
           v-for="therapist in filteredTherapists" 
           :key="therapist.id"
           :therapist="therapist"
+          :settings-store="settingsStore"
           @click="viewTherapist"
           @book="bookAppointment"
         />
@@ -88,10 +89,11 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 import TherapistCard from '@/components/TherapistCard.vue'
@@ -105,6 +107,7 @@ export default {
     const router = useRouter()
     const toast = useToast()
     const { t } = useI18n()
+    const settingsStore = useSettingsStore()
     
     const loading = ref(true)
     const therapists = ref([])
@@ -114,7 +117,7 @@ export default {
       specialization: '',
       priceRange: '',
       nearestAppointment: '',
-      sortBy: 'rating'
+      sortBy: settingsStore && settingsStore.isRatingsEnabled ? 'rating' : 'nearest_appointment'
     })
 
     const filteredTherapists = computed(() => {
@@ -177,6 +180,9 @@ export default {
     })
 
     const getAverageRating = (therapist) => {
+      if (!settingsStore.isRatingsEnabled) {
+        return 0
+      }
       if (!therapist.diagnoses || therapist.diagnoses.length === 0) {
         return 0
       }
@@ -216,6 +222,14 @@ export default {
       const slotDate = new Date(slotTime)
       return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
     }
+
+    // Watch for changes in ratings enabled setting
+    watch(() => settingsStore && settingsStore.isRatingsEnabled, (newValue) => {
+      if (!newValue && filters.sortBy === 'rating') {
+        // If ratings are disabled and current sort is by rating, change to nearest appointment
+        filters.sortBy = 'nearest_appointment'
+      }
+    })
 
     const loadTherapists = async () => {
       loading.value = true
@@ -267,6 +281,7 @@ export default {
       filters,
       filteredTherapists,
       diagnosesWithTherapists,
+      settingsStore,
       viewTherapist,
       bookAppointment
     }

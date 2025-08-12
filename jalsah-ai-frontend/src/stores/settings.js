@@ -8,6 +8,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const defaultLanguage = ref('ar')
   const siteTitle = ref('جلسة الذكية - دعم الصحة النفسية')
   const siteDescription = ref('دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.')
+  const ratingsEnabled = ref(true)
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const therapistRegistrationPasswordMode = ref('auto')
@@ -17,6 +18,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const getDefaultLanguage = computed(() => defaultLanguage.value)
   const getSiteTitle = computed(() => siteTitle.value)
   const getSiteDescription = computed(() => siteDescription.value)
+  const isRatingsEnabled = computed(() => ratingsEnabled.value)
   const getTherapistRegistrationPasswordMode = computed(() => therapistRegistrationPasswordMode.value)
 
   // Actions
@@ -32,11 +34,17 @@ export const useSettingsStore = defineStore('settings', () => {
         defaultLanguage.value = settings.default_language ?? 'ar'
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+        ratingsEnabled.value = settings.ratings_enabled ?? true
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
 
       } catch (e) {
         console.error('Failed to parse saved settings:', e)
+        // Use defaults if parsing fails
+        ratingsEnabled.value = true
       }
+    } else {
+      // No saved settings, use defaults
+      ratingsEnabled.value = true
     }
     
     isInitialized.value = true
@@ -47,45 +55,43 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const loadSettingsFromAPI = async () => {
     try {
-
-      
       // Try multiple endpoints
       let response = null
       
       // Try REST API first
       try {
         response = await api.get('/wp-json/jalsah-ai/v1/settings')
-
       } catch (e) {
-
+        console.log('REST API failed, trying AJAX...')
         
         // Try WordPress AJAX
         try {
           response = await api.get('/wp-admin/admin-ajax.php', {
             params: { action: 'get_ai_settings' }
           })
-
         } catch (e2) {
-
+          console.log('AJAX also failed, using defaults')
           return
         }
       }
       
       // Update settings if we got a valid response
-      if (response && response.data.success) {
+      if (response && response.data && response.data.success) {
         const settings = response.data.data
-        bilingualEnabled.value = settings.bilingual_enabled
-        defaultLanguage.value = settings.default_language
-        siteTitle.value = settings.site_title
-        siteDescription.value = settings.site_description
+        bilingualEnabled.value = settings.bilingual_enabled ?? true
+        defaultLanguage.value = settings.default_language ?? 'ar'
+        siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
+        siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+        ratingsEnabled.value = settings.ratings_enabled ?? true
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         
         // Save to localStorage
         localStorage.setItem('jalsah_settings', JSON.stringify(settings))
-
       }
     } catch (error) {
       console.error('Failed to load settings from API:', error)
+      // Use defaults if API fails
+      ratingsEnabled.value = true
     }
   }
 
@@ -106,6 +112,7 @@ export const useSettingsStore = defineStore('settings', () => {
     defaultLanguage.value = settings.default_language ?? 'ar'
     siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
     siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+    ratingsEnabled.value = settings.ratings_enabled ?? true
     therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
     
     // Save to localStorage
@@ -118,6 +125,7 @@ export const useSettingsStore = defineStore('settings', () => {
     defaultLanguage,
     siteTitle,
     siteDescription,
+    ratingsEnabled,
     isLoading,
     isInitialized,
     therapistRegistrationPasswordMode,
@@ -127,6 +135,7 @@ export const useSettingsStore = defineStore('settings', () => {
     getDefaultLanguage,
     getSiteTitle,
     getSiteDescription,
+    isRatingsEnabled,
     shouldShowLanguageSwitcher,
     getTherapistRegistrationPasswordMode,
     
