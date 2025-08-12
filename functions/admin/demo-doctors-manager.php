@@ -404,6 +404,9 @@ function snks_create_demo_doctor( $data ) {
 	// Mark as demo doctor
 	update_user_meta( $user_id, 'is_demo_doctor', '1' );
 	
+	// Set AI site visibility in user meta (for admin display)
+	update_user_meta( $user_id, 'show_on_ai_site', '1' );
+	
 	// Create application in therapist_applications table
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'therapist_applications';
@@ -874,6 +877,10 @@ function snks_clear_all_demo_doctors() {
 			array( 'therapist_id' => $user_id ),
 			array( '%d' )
 		);
+		
+		// Clear user meta
+		delete_user_meta( $user_id, 'is_demo_doctor' );
+		delete_user_meta( $user_id, 'show_on_ai_site' );
 		
 		// Delete the user
 		$result = wp_delete_user( $user_id );
