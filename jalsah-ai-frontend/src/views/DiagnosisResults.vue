@@ -149,27 +149,47 @@ export default {
 
     const loadDiagnosisDetails = async (diagnosisId) => {
       try {
-        const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
-        
-        if (response.data.success && response.data.data) {
-          const diagnosis = response.data.data
-          diagnosisResult.value = {
-            title: diagnosis.name,
-            description: diagnosis.description
+        // Check if diagnosisId is numeric (ID) or string (name)
+        if (/^\d+$/.test(diagnosisId)) {
+          // It's a numeric ID, try to load from API
+          const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
+          
+          if (response.data.success && response.data.data) {
+            const diagnosis = response.data.data
+            diagnosisResult.value = {
+              title: diagnosis.name,
+              description: diagnosis.description
+            }
+          } else {
+            // Fallback to default if API fails
+            diagnosisResult.value = {
+              title: t('diagnosisResults.default.title'),
+              description: t('diagnosisResults.default.description')
+            }
           }
         } else {
-          // Fallback to default if API fails
+          // It's a diagnosis name, use it directly
+          const decodedName = decodeURIComponent(diagnosisId)
           diagnosisResult.value = {
-            title: t('diagnosisResults.default.title'),
+            title: decodedName,
             description: t('diagnosisResults.default.description')
           }
         }
       } catch (error) {
         console.error('Error loading diagnosis details:', error)
-        // Fallback to default on error
-        diagnosisResult.value = {
-          title: t('diagnosisResults.default.title'),
-          description: t('diagnosisResults.default.description')
+        // If it's a name, use it directly; otherwise fallback to default
+        if (!/^\d+$/.test(diagnosisId)) {
+          const decodedName = decodeURIComponent(diagnosisId)
+          diagnosisResult.value = {
+            title: decodedName,
+            description: t('diagnosisResults.default.description')
+          }
+        } else {
+          // Fallback to default on error
+          diagnosisResult.value = {
+            title: t('diagnosisResults.default.title'),
+            description: t('diagnosisResults.default.description')
+          }
         }
       }
     }
@@ -211,21 +231,40 @@ export default {
             // Load all therapists and filter by diagnosis name on frontend
             response = await api.get('/api/ai/therapists')
             if (response.data.data) {
-              // Filter therapists by diagnosis name
-              const diagnosisName = diagnosisResult.value.title.toLowerCase()
-              matchedTherapists.value = response.data.data.filter(therapist => 
-                therapist.diagnoses?.some(diagnosis => 
-                  diagnosis.name?.toLowerCase().includes(diagnosisName) ||
-                  diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+              // Get diagnosis name from result or URL parameter
+              let diagnosisName = ''
+              if (diagnosisResult.value && diagnosisResult.value.title) {
+                diagnosisName = diagnosisResult.value.title.toLowerCase()
+              } else {
+                // Use URL parameter directly (decoded)
+                diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
+              }
+              
+              if (diagnosisName) {
+                // Filter therapists by diagnosis name
+                matchedTherapists.value = response.data.data.filter(therapist => 
+                  therapist.diagnoses?.some(diagnosis => 
+                    diagnosis.name?.toLowerCase().includes(diagnosisName) ||
+                    diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+                  )
                 )
-              )
+              } else {
+                matchedTherapists.value = []
+              }
             } else {
               matchedTherapists.value = []
             }
           } else {
-            // Load therapists by diagnosis ID (default behavior)
-            response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-            matchedTherapists.value = response.data.data || []
+            // Check if diagnosisId is numeric (ID) or string (name)
+            if (/^\d+$/.test(diagnosisId)) {
+              // Load therapists by diagnosis ID (default behavior)
+              response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+              matchedTherapists.value = response.data.data || []
+            } else {
+              // If it's a name but ID search is enabled, load all therapists
+              response = await api.get('/api/ai/therapists')
+              matchedTherapists.value = response.data.data || []
+            }
           }
         } else {
           // Load all therapists (for simulation)
