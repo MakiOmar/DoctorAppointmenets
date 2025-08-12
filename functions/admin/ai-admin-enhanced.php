@@ -889,6 +889,33 @@ function snks_enhanced_ai_diagnoses_page() {
 		}
 	}
 	
+	// Handle GET actions
+	if ( isset( $_GET['action'] ) && isset( $_GET['diagnosis_id'] ) && isset( $_GET['_wpnonce'] ) ) {
+		$action = $_GET['action'];
+		$diagnosis_id = intval( $_GET['diagnosis_id'] );
+		
+		if ( wp_verify_nonce( $_GET['_wpnonce'], 'manage_therapists_' . $diagnosis_id ) ) {
+			if ( $action === 'manage_therapists' ) {
+				snks_display_diagnosis_therapists_management( $diagnosis_id );
+				return;
+			}
+		}
+	}
+	
+	// Handle form submission for therapist management
+	if ( isset( $_POST['save_therapists'] ) && isset( $_POST['diagnosis_id'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'save_therapists_' . $_POST['diagnosis_id'] ) ) {
+			$result = snks_save_diagnosis_therapists_ordering( $_POST['diagnosis_id'] );
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
+		} else {
+			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
+		}
+	}
+	
 	$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
 	?>
 	<div class="wrap">
@@ -962,6 +989,8 @@ function snks_enhanced_ai_diagnoses_page() {
 								<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->description_ar ); ?></td>
 								<td><?php echo esc_html( $therapist_count ); ?> therapists</td>
 								<td>
+									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses&action=manage_therapists&diagnosis_id=' . $diagnosis->id . '&_wpnonce=' . wp_create_nonce( 'manage_therapists_' . $diagnosis->id ) ); ?>" 
+									   class="button button-small button-secondary">Manage Therapists</a>
 									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo addslashes( $diagnosis->name_en ?: $diagnosis->name ?: '' ); ?>', '<?php echo addslashes( $diagnosis->name_ar ?: '' ); ?>', '<?php echo addslashes( $diagnosis->description_en ?: $diagnosis->description ?: '' ); ?>', '<?php echo addslashes( $diagnosis->description_ar ?: '' ); ?>')">Edit</button>
 									<form method="post" style="display:inline;">
 										<?php wp_nonce_field( 'delete_diagnosis' ); ?>
@@ -2661,4 +2690,258 @@ function snks_ai_api_test_page() {
 		</div>
 	</div>
 	<?php
-} 
+}
+
+/**
+ * Display diagnosis therapists management interface
+ */
+function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
+	global $wpdb;
+	$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	
+	$diagnosis = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $diagnoses_table WHERE id = %d", $diagnosis_id ) );
+	if ( !$diagnosis ) {
+		wp_die( 'Diagnosis not found.' );
+	}
+	
+	// Get all therapists assigned to this diagnosis
+	$therapists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT td.*, ta.name, ta.name_en, ta.email, ta.phone, ta.doctor_specialty 
+		 FROM $therapist_diagnoses_table td
+		 JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 WHERE td.diagnosis_id = %d AND ta.status = 'approved'
+		 ORDER BY td.display_order ASC, ta.name ASC",
+		$diagnosis_id
+	) );
+	
+	?>
+	<div class="wrap">
+		<h1>Manage Therapists for: <?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></h1>
+		<?php if ( $diagnosis->name_ar ) : ?>
+			<h2 style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->name_ar ); ?></h2>
+		<?php endif; ?>
+		
+		<div class="card">
+			<h2>Therapist Ordering & Settings</h2>
+			<p>Manage the order and settings of therapists for this diagnosis. Each order number can only be assigned to one therapist per diagnosis.</p>
+			
+			<form method="post" action="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>">
+				<?php wp_nonce_field( 'save_therapists_' . $diagnosis_id ); ?>
+				<input type="hidden" name="diagnosis_id" value="<?php echo $diagnosis_id; ?>">
+				<input type="hidden" name="save_therapists" value="1">
+				
+				<?php if ( !empty( $therapists ) ) : ?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th style="width: 80px;">Order</th>
+								<th>Therapist Name</th>
+								<th>Email</th>
+								<th>Phone</th>
+								<th>Specialty</th>
+								<th style="width: 100px;">Rating</th>
+								<th>Suitability Message (English)</th>
+								<th>Suitability Message (Arabic)</th>
+								<th style="width: 100px;">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $therapists as $therapist ) : ?>
+								<tr>
+									<td>
+										<input type="number" name="therapist_order_<?php echo $therapist->therapist_id; ?>" 
+											   value="<?php echo esc_attr( $therapist->display_order ); ?>" 
+											   min="0" style="width: 60px;">
+									</td>
+									<td>
+										<strong><?php echo esc_html( $therapist->name_en ?: $therapist->name ); ?></strong>
+										<?php if ( $therapist->name_ar ) : ?>
+											<br><small><?php echo esc_html( $therapist->name_ar ); ?></small>
+										<?php endif; ?>
+									</td>
+									<td><?php echo esc_html( $therapist->email ); ?></td>
+									<td><?php echo esc_html( $therapist->phone ); ?></td>
+									<td><?php echo esc_html( $therapist->doctor_specialty ); ?></td>
+									<td>
+										<input type="number" name="therapist_rating_<?php echo $therapist->therapist_id; ?>" 
+											   value="<?php echo esc_attr( $therapist->rating ); ?>" 
+											   min="0" max="5" step="0.1" style="width: 60px;">
+									</td>
+									<td>
+										<textarea name="therapist_message_en_<?php echo $therapist->therapist_id; ?>" 
+												  rows="2" style="width: 100%;"><?php echo esc_textarea( $therapist->suitability_message_en ?: $therapist->suitability_message ); ?></textarea>
+									</td>
+									<td>
+										<textarea name="therapist_message_ar_<?php echo $therapist->therapist_id; ?>" 
+												  rows="2" style="width: 100%;"><?php echo esc_textarea( $therapist->suitability_message_ar ); ?></textarea>
+									</td>
+									<td>
+										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $therapist->therapist_id ); ?>" 
+										   class="button button-small">Edit Profile</a>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+					
+					<p class="submit">
+						<input type="submit" class="button button-primary" value="Save Therapist Ordering">
+						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button">Back to Diagnoses</a>
+					</p>
+				<?php else : ?>
+					<p>No therapists are currently assigned to this diagnosis.</p>
+					<p>
+						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button button-primary">Assign Therapists</a>
+						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button">Back to Diagnoses</a>
+					</p>
+				<?php endif; ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h3>Diagnosis Information</h3>
+			<table class="form-table">
+				<tr>
+					<th>Name (English)</th>
+					<td><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></td>
+				</tr>
+				<?php if ( $diagnosis->name_ar ) : ?>
+					<tr>
+						<th>Name (العربية)</th>
+						<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->name_ar ); ?></td>
+					</tr>
+				<?php endif; ?>
+				<tr>
+					<th>Description (English)</th>
+					<td><?php echo esc_html( $diagnosis->description_en ?: $diagnosis->description ); ?></td>
+				</tr>
+				<?php if ( $diagnosis->description_ar ) : ?>
+					<tr>
+						<th>Description (العربية)</th>
+						<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->description_ar ); ?></td>
+					</tr>
+				<?php endif; ?>
+				<tr>
+					<th>Total Therapists</th>
+					<td><?php echo count( $therapists ); ?> therapists assigned</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Save diagnosis therapists ordering with validation
+ */
+function snks_save_diagnosis_therapists_ordering( $diagnosis_id ) {
+	global $wpdb;
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	
+	// Get all therapists for this diagnosis
+	$therapists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT therapist_id FROM $therapist_diagnoses_table WHERE diagnosis_id = %d",
+		$diagnosis_id
+	) );
+	
+	if ( empty( $therapists ) ) {
+		return array( 'success' => false, 'message' => 'No therapists found for this diagnosis.' );
+	}
+	
+	// Validate order numbers
+	$order_conflicts = array();
+	$orders_to_check = array();
+	
+	foreach ( $therapists as $therapist ) {
+		$therapist_id = $therapist->therapist_id;
+		$order = isset( $_POST["therapist_order_$therapist_id"] ) ? intval( $_POST["therapist_order_$therapist_id"] ) : 0;
+		
+		if ( $order > 0 ) {
+			$orders_to_check[] = array( 'therapist_id' => $therapist_id, 'order' => $order );
+		}
+	}
+	
+	// Check for order conflicts within this diagnosis
+	$order_counts = array();
+	foreach ( $orders_to_check as $check ) {
+		$order = $check['order'];
+		if ( !isset( $order_counts[$order] ) ) {
+			$order_counts[$order] = array();
+		}
+		$order_counts[$order][] = $check['therapist_id'];
+	}
+	
+	// Find conflicts
+	foreach ( $order_counts as $order => $therapist_ids ) {
+		if ( count( $therapist_ids ) > 1 ) {
+			$therapist_names = array();
+			foreach ( $therapist_ids as $therapist_id ) {
+				$name = $wpdb->get_var( $wpdb->prepare(
+					"SELECT name FROM {$wpdb->prefix}therapist_applications WHERE user_id = %d",
+					$therapist_id
+				) );
+				$therapist_names[] = $name ?: "Therapist ID: $therapist_id";
+			}
+			$order_conflicts[] = sprintf(
+				'Order %d is assigned to multiple therapists: %s',
+				$order, implode( ', ', $therapist_names )
+			);
+		}
+	}
+	
+	// If there are conflicts, return error
+	if ( !empty( $order_conflicts ) ) {
+		return array( 
+			'success' => false, 
+			'message' => 'Order conflicts detected: ' . implode( '; ', $order_conflicts ) 
+		);
+	}
+	
+	// Start transaction
+	$wpdb->query( 'START TRANSACTION' );
+	
+	try {
+		// Update each therapist's settings
+		foreach ( $therapists as $therapist ) {
+			$therapist_id = $therapist->therapist_id;
+			$order = isset( $_POST["therapist_order_$therapist_id"] ) ? intval( $_POST["therapist_order_$therapist_id"] ) : 0;
+			$rating = isset( $_POST["therapist_rating_$therapist_id"] ) ? floatval( $_POST["therapist_rating_$therapist_id"] ) : 0;
+			$message_en = isset( $_POST["therapist_message_en_$therapist_id"] ) ? sanitize_textarea_field( $_POST["therapist_message_en_$therapist_id"] ) : '';
+			$message_ar = isset( $_POST["therapist_message_ar_$therapist_id"] ) ? sanitize_textarea_field( $_POST["therapist_message_ar_$therapist_id"] ) : '';
+			
+			$wpdb->update(
+				$therapist_diagnoses_table,
+				array(
+					'display_order' => $order,
+					'rating' => $rating,
+					'suitability_message_en' => $message_en,
+					'suitability_message_ar' => $message_ar
+				),
+				array(
+					'therapist_id' => $therapist_id,
+					'diagnosis_id' => $diagnosis_id
+				),
+				array( '%d', '%f', '%s', '%s' ),
+				array( '%d', '%d' )
+			);
+		}
+		
+		$wpdb->query( 'COMMIT' );
+		
+		$diagnosis_name = $wpdb->get_var( $wpdb->prepare(
+			"SELECT name_en FROM {$wpdb->prefix}snks_diagnoses WHERE id = %d",
+			$diagnosis_id
+		) );
+		
+		return array( 
+			'success' => true, 
+			'message' => sprintf( 'Successfully updated therapist ordering for "%s"', $diagnosis_name ?: 'Unknown Diagnosis' ) 
+		);
+		
+	} catch ( Exception $e ) {
+		$wpdb->query( 'ROLLBACK' );
+		return array( 'success' => false, 'message' => 'Database error: ' . $e->getMessage() );
+	}
+}
