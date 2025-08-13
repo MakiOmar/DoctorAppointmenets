@@ -347,27 +347,78 @@ class SNKS_AI_Integration {
 			}
 		}
 		
-		// Check for specific keywords in the current message
+		// Check for specific keywords in the current message and conversation history
+		$asked_questions = array();
+		foreach ( $conversation_history as $msg ) {
+			if ( $msg['role'] === 'assistant' ) {
+				$asked_questions[] = strtolower( $msg['content'] );
+			}
+		}
+		
 		if ( $is_arabic ) {
-			// Arabic keyword detection
+			// Arabic keyword detection with repetition avoidance
 			if ( strpos( $message_lower, 'أرق' ) !== false || strpos( $message_lower, 'نوم' ) !== false || strpos( $message_lower, 'سهر' ) !== false ) {
-				return "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
+				$sleep_question = "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
+				if ( ! $this->question_already_asked( $sleep_question, $asked_questions ) ) {
+					return $sleep_question;
+				}
 			}
 			
 			if ( strpos( $message_lower, 'حزن' ) !== false || strpos( $message_lower, 'اكتئاب' ) !== false || strpos( $message_lower, 'حزين' ) !== false ) {
-				return "أرى أنك تشعر بالحزن. هل يمكنك إخباري متى بدأت تشعر بهذا الحزن؟ وهل هناك سبب محدد لهذه المشاعر؟";
+				$sadness_question = "أرى أنك تشعر بالحزن. هل يمكنك إخباري متى بدأت تشعر بهذا الحزن؟ وهل هناك سبب محدد لهذه المشاعر؟";
+				if ( ! $this->question_already_asked( $sadness_question, $asked_questions ) ) {
+					return $sadness_question;
+				}
 			}
 			
 			if ( strpos( $message_lower, 'قلق' ) !== false || strpos( $message_lower, 'توتر' ) !== false || strpos( $message_lower, 'خوف' ) !== false ) {
-				return "أفهم أنك تشعر بالقلق. هل يمكنك إخباري أكثر عن ما يقلقك؟ وهل هناك مواقف معينة تزيد من هذا القلق؟";
+				$anxiety_question = "أفهم أنك تشعر بالقلق. هل يمكنك إخباري أكثر عن ما يقلقك؟ وهل هناك مواقف معينة تزيد من هذا القلق؟";
+				if ( ! $this->question_already_asked( $anxiety_question, $asked_questions ) ) {
+					return $anxiety_question;
+				}
 			}
 			
 			if ( strpos( $message_lower, 'عمل' ) !== false || strpos( $message_lower, 'وظيفة' ) !== false || strpos( $message_lower, 'مهنة' ) !== false ) {
-				return "أرى أن العمل يؤثر على صحتك النفسية. هل يمكنك إخباري أكثر عن طبيعة عملك والضغوط التي تواجهها؟";
+				$work_question = "أرى أن العمل يؤثر على صحتك النفسية. هل يمكنك إخباري أكثر عن طبيعة عملك والضغوط التي تواجهها؟";
+				if ( ! $this->question_already_asked( $work_question, $asked_questions ) ) {
+					return $work_question;
+				}
 			}
 			
-			// Default contextual response
-			return "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن تأثير هذه المشاعر على حياتك اليومية؟ وهل هناك أي أعراض أخرى تعاني منها؟";
+			// If user said "no" or "لا", ask about something different
+			if ( $message_lower === 'لا' || $message_lower === 'no' ) {
+				$different_questions = array(
+					"هل يمكنك إخباري عن علاقاتك مع العائلة والأصدقاء؟ هل تشعر بالدعم منهم؟",
+					"هل لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"هل تجد صعوبة في التركيز أو اتخاذ القرارات؟",
+					"هل تشعر بالتوتر أو القلق في مواقف معينة؟",
+					"هل هناك أنشطة كنت تستمتع بها سابقاً ولم تعد تستمتع بها الآن؟"
+				);
+				
+				foreach ( $different_questions as $question ) {
+					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
+						return $question;
+					}
+				}
+			}
+			
+			// Default contextual response - avoid repetition
+			$default_questions = array(
+				"هل يمكنك إخباري أكثر عن تأثير هذه المشاعر على حياتك اليومية؟",
+				"هل هناك أي أعراض أخرى تعاني منها؟",
+				"هل لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+				"هل تشعر أن هذه المشاعر تؤثر على علاقاتك مع الآخرين؟",
+				"هل هناك مواقف معينة تجعل هذه المشاعر أسوأ؟"
+			);
+			
+			foreach ( $default_questions as $question ) {
+				if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
+					return $question;
+				}
+			}
+			
+			// If all questions have been asked, provide a generic response
+			return "شكراً لك على مشاركة ذلك معي. هل هناك أي شيء آخر تود إخباري به عن وضعك الحالي؟";
 		} else {
 			// English keyword detection
 			if ( strpos( $message_lower, 'sleep' ) !== false || strpos( $message_lower, 'insomnia' ) !== false || strpos( $message_lower, 'awake' ) !== false ) {
@@ -445,6 +496,48 @@ class SNKS_AI_Integration {
 		
 		// Consider we have sufficient info if we have symptoms and at least 2 user messages
 		return $has_symptoms && $user_messages >= 2;
+	}
+	
+	/**
+	 * Check if a question has already been asked
+	 */
+	private function question_already_asked( $new_question, $asked_questions ) {
+		$new_question_lower = strtolower( $new_question );
+		
+		foreach ( $asked_questions as $asked ) {
+			$asked_lower = strtolower( $asked );
+			
+			// Check for exact match or high similarity
+			if ( $new_question_lower === $asked_lower ) {
+				return true;
+			}
+			
+			// Check for key phrases that indicate the same question
+			$key_phrases = array(
+				'تأثير هذه المشاعر على حياتك اليومية',
+				'أعراض أخرى تعاني منها',
+				'نمط نومك',
+				'كم ساعة تنام',
+				'متى بدأت تشعر',
+				'ما يقلقك',
+				'طبيعة عملك',
+				'impact of these feelings on your daily life',
+				'other symptoms you are experiencing',
+				'sleep pattern',
+				'how many hours do you sleep',
+				'when did you start feeling',
+				'what worries you',
+				'nature of your work'
+			);
+			
+			foreach ( $key_phrases as $phrase ) {
+				if ( strpos( $new_question_lower, $phrase ) !== false && strpos( $asked_lower, $phrase ) !== false ) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -1702,7 +1795,7 @@ class SNKS_AI_Integration {
 			$question_limit_instruction .= "You have asked enough questions. You can now provide a diagnosis if you have sufficient information.";
 		}
 		
-		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- Do NOT repeat the same questions - ask new, specific questions based on their responses\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions";
+		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
