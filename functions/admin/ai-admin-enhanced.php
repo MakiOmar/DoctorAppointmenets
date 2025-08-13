@@ -1704,7 +1704,7 @@ When engaging with patients:
 6. Remember that you are not a replacement for professional mental health care
 
 Focus on understanding the patient\'s symptoms, duration, impact on daily life, and any relevant background information to make an informed recommendation.' );
-	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 150 );
+	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
 	$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 	?>
 	<div class="wrap">
@@ -1791,7 +1791,7 @@ function snks_test_chatgpt_integration( $test_prompt ) {
 	$api_key = get_option( 'snks_ai_chatgpt_api_key' );
 	$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
 	$system_prompt = get_option( 'snks_ai_chatgpt_prompt' );
-	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 150 );
+	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
 	$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 	
 	if ( ! $api_key ) {
