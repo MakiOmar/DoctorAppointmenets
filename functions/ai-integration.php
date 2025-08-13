@@ -346,13 +346,32 @@ class SNKS_AI_Integration {
 		
 		// Check for specific keywords in the current message and conversation history
 		$asked_questions = array();
+		$ai_questions_count = 0;
 		foreach ( $conversation_history as $msg ) {
 			if ( $msg['role'] === 'assistant' ) {
 				$asked_questions[] = strtolower( $msg['content'] );
+				if ( $this->is_question( $msg['content'] ) ) {
+					$ai_questions_count++;
+				}
 			}
 		}
 		
 		if ( $is_arabic ) {
+			// For early questions (first or second), ask about country/region
+			if ( $ai_questions_count <= 1 ) {
+				$country_questions = array(
+					"أهلاً! أنا هنا لمساعدتك في التقييم النفسي المبدئي. هل يمكنك إخباري من أي بلد أنت؟ هذا سيساعدني في فهم سياقك الثقافي والتحدث معك باللغة المناسبة.",
+					"مرحباً! قبل أن نبدأ التقييم النفسي، هل يمكنك إخباري من أي منطقة أو بلد أنت؟ هذا سيساعدني في تقديم إرشادات أكثر ملاءمة لثقافتك.",
+					"أهلاً وسهلاً! أنا هنا لمساعدتك في العثور على المعالج المناسب. هل يمكنك إخباري من أي بلد أنت لنتمكن من التواصل بشكل أفضل؟"
+				);
+				
+				foreach ( $country_questions as $question ) {
+					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
+						return $question;
+					}
+				}
+			}
+			
 			// Arabic keyword detection with repetition avoidance
 			if ( strpos( $message_lower, 'أرق' ) !== false || strpos( $message_lower, 'نوم' ) !== false || strpos( $message_lower, 'سهر' ) !== false ) {
 				$sleep_question = "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
@@ -417,6 +436,21 @@ class SNKS_AI_Integration {
 			// If all questions have been asked, provide a generic response
 			return "شكراً لك على مشاركة ذلك معي. هل هناك أي شيء آخر تود إخباري به عن وضعك الحالي؟";
 		} else {
+			// For early questions (first or second), ask about country/region
+			if ( $ai_questions_count <= 1 ) {
+				$country_questions = array(
+					"Hello! I'm here to help you with a preliminary psychological assessment. Could you tell me which country you're from? This will help me understand your cultural context and speak with you in the appropriate language.",
+					"Hi there! Before we begin the psychological assessment, could you tell me which region or country you're from? This will help me provide guidance that's more suitable for your culture.",
+					"Welcome! I'm here to help you find the right therapist. Could you tell me which country you're from so we can communicate better?"
+				);
+				
+				foreach ( $country_questions as $question ) {
+					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
+						return $question;
+					}
+				}
+			}
+			
 			// English keyword detection
 			if ( strpos( $message_lower, 'sleep' ) !== false || strpos( $message_lower, 'insomnia' ) !== false || strpos( $message_lower, 'awake' ) !== false ) {
 				return "I understand you're having sleep issues. Can you tell me more about your sleep pattern? How many hours do you usually sleep? Do you wake up frequently during the night?";
@@ -518,13 +552,19 @@ class SNKS_AI_Integration {
 				'متى بدأت تشعر',
 				'ما يقلقك',
 				'طبيعة عملك',
+				'من أي بلد أنت',
+				'أي منطقة أو بلد',
+				'بلد أنت',
 				'impact of these feelings on your daily life',
 				'other symptoms you are experiencing',
 				'sleep pattern',
 				'how many hours do you sleep',
 				'when did you start feeling',
 				'what worries you',
-				'nature of your work'
+				'nature of your work',
+				'which country you\'re from',
+				'which region or country',
+				'country you\'re from'
 			);
 			
 			foreach ( $key_phrases as $phrase ) {
@@ -1919,7 +1959,7 @@ class SNKS_AI_Integration {
 			$question_limit_instruction .= "You have asked enough questions. You can now provide a diagnosis if you have sufficient information.";
 		}
 		
-		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new";
+		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- IMPORTANT: If this is the first or second question, ask the patient about their country/region to better understand their cultural context and speak in their local language\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new\n- For early questions, ask about their country/region to provide culturally appropriate responses";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
