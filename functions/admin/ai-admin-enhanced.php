@@ -1693,7 +1693,7 @@ function snks_enhanced_ai_chatgpt_page() {
 	
 	$api_key = get_option( 'snks_ai_chatgpt_api_key', '' );
 	$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
-	$prompt = get_option( 'snks_ai_chatgpt_prompt', 'You are a compassionate and professional mental health AI assistant. Your role is to help patients understand their mental health concerns and guide them toward appropriate therapeutic support. 
+		$prompt = get_option( 'snks_ai_chatgpt_prompt', 'You are a compassionate and professional mental health AI assistant. Your role is to help patients understand their mental health concerns and guide them toward appropriate therapeutic support.
 
 When engaging with patients:
 1. Listen empathetically to their concerns
@@ -1702,6 +1702,8 @@ When engaging with patients:
 4. When you have enough information to make a confident assessment, suggest the most appropriate diagnosis from the available list
 5. Always maintain a caring and professional tone
 6. Remember that you are not a replacement for professional mental health care
+7. Always return structured JSON responses as specified
+8. Only suggest diagnoses from the provided list
 
 Focus on understanding the patient\'s symptoms, duration, impact on daily life, and any relevant background information to make an informed recommendation.' );
 	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );

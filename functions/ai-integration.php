@@ -1497,8 +1497,8 @@ class SNKS_AI_Integration {
 		// Build conversation messages
 		$messages = array();
 		
-		// Add system prompt
-		$enhanced_system_prompt = $system_prompt . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: After analyzing the conversation, if you can confidently suggest a diagnosis, respond with 'DIAGNOSIS_COMPLETE:' followed by the diagnosis name and a brief explanation. Otherwise, continue the conversation to gather more information.";
+		// Add system prompt with forced JSON structure
+		$enhanced_system_prompt = $system_prompt . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must ALWAYS respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"brief explanation of why this diagnosis was chosen\",\n  \"status\": \"complete|incomplete\"\n}\n\n- Only choose diagnoses from the provided list\n- Never invent or suggest conditions outside the list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status when you can confidently suggest a diagnosis\n- Always return valid JSON, no additional text";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
@@ -1521,12 +1521,13 @@ class SNKS_AI_Integration {
 			'content' => $message
 		);
 		
-		// Call OpenAI API
+		// Call OpenAI API with forced JSON response format
 		$data = array(
 			'model' => $model,
 			'messages' => $messages,
 			'max_tokens' => intval( $max_tokens ),
-			'temperature' => floatval( $temperature )
+			'temperature' => floatval( $temperature ),
+			'response_format' => array( 'type' => 'json_object' )
 		);
 		
 		$response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
@@ -1551,53 +1552,76 @@ class SNKS_AI_Integration {
 		
 		$ai_response = $result['choices'][0]['message']['content'];
 		
-		// Check if diagnosis is complete
-		if ( strpos( $ai_response, 'DIAGNOSIS_COMPLETE:' ) === 0 ) {
-			// Extract diagnosis information
-			$diagnosis_text = substr( $ai_response, 19 ); // Remove 'DIAGNOSIS_COMPLETE:'
-			$parts = explode( ':', $diagnosis_text, 2 );
-			$diagnosis_name = trim( $parts[0] );
-			$explanation = isset( $parts[1] ) ? trim( $parts[1] ) : '';
-			
-			// Find matching diagnosis
-			$diagnosis_id = null;
+		// Parse the JSON response
+		$response_data = json_decode( $ai_response, true );
+		
+		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
+			// Fallback for invalid JSON
+			return array(
+				'message' => $ai_response,
+				'diagnosis' => array(
+					'completed' => false
+				)
+			);
+		}
+		
+		// Validate diagnosis is in our list
+		$diagnosis_id = null;
+		$diagnosis_name = '';
+		$diagnosis_description = '';
+		
+		if ( $response_data['status'] === 'complete' && ! empty( $response_data['diagnosis'] ) ) {
 			foreach ( $diagnoses as $diagnosis ) {
-				if ( stripos( $diagnosis->name, $diagnosis_name ) !== false || 
-					 stripos( $diagnosis->name_en, $diagnosis_name ) !== false ) {
+				if ( stripos( $diagnosis->name, $response_data['diagnosis'] ) !== false || 
+					 stripos( $diagnosis->name_en, $response_data['diagnosis'] ) !== false ) {
 					$diagnosis_id = $diagnosis->id;
 					$diagnosis_name = $diagnosis->name;
-					$explanation = $diagnosis->description;
+					$diagnosis_description = $diagnosis->description;
 					break;
 				}
 			}
-			
-			if ( $diagnosis_id ) {
-				return array(
-					'message' => "Based on our conversation, I believe you may be experiencing **{$diagnosis_name}**. {$explanation}\n\nI've completed the diagnosis and can now help you find therapists who specialize in this area.",
-					'diagnosis' => array(
-						'completed' => true,
-						'id' => $diagnosis_id,
-						'title' => $diagnosis_name,
-						'description' => $explanation
-					)
-				);
-			} else {
-				// Fallback: use the first diagnosis
-				$diagnosis = $diagnoses[0];
-				return array(
-					'message' => "Based on our conversation, I believe you may be experiencing **{$diagnosis->name}**. {$diagnosis->description}\n\nI've completed the diagnosis and can now help you find therapists who specialize in this area.",
-					'diagnosis' => array(
-						'completed' => true,
-						'id' => $diagnosis->id,
-						'title' => $diagnosis->name,
-						'description' => $diagnosis->description
-					)
-				);
+		}
+		
+		// Format response message
+		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
+			$confidence_text = '';
+			if ( isset( $response_data['confidence'] ) ) {
+				switch ( $response_data['confidence'] ) {
+					case 'high':
+						$confidence_text = ' (high confidence)';
+						break;
+					case 'medium':
+						$confidence_text = ' (medium confidence)';
+						break;
+					case 'low':
+						$confidence_text = ' (low confidence)';
+						break;
+				}
 			}
+			
+			$message = "Based on our conversation, I believe you may be experiencing **{$diagnosis_name}**{$confidence_text}.\n\n";
+			if ( isset( $response_data['reasoning'] ) ) {
+				$message .= "**Reasoning:** " . $response_data['reasoning'] . "\n\n";
+			}
+			$message .= "**Description:** " . $diagnosis_description . "\n\n";
+			$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
+			
+			return array(
+				'message' => $message,
+				'diagnosis' => array(
+					'completed' => true,
+					'id' => $diagnosis_id,
+					'title' => $diagnosis_name,
+					'description' => $diagnosis_description,
+					'confidence' => $response_data['confidence'] ?? 'medium',
+					'reasoning' => $response_data['reasoning'] ?? ''
+				)
+			);
 		} else {
 			// Continue conversation
+			$message = $response_data['reasoning'] ?? $ai_response;
 			return array(
-				'message' => $ai_response,
+				'message' => $message,
 				'diagnosis' => array(
 					'completed' => false
 				)

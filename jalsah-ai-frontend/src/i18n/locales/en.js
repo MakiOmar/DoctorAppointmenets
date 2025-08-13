@@ -286,6 +286,10 @@ export default {
     error: {
       message: 'Failed to get AI response',
       response: 'I\'m sorry, I\'m having trouble processing your message right now. Please try again in a moment.'
+    },
+    disclaimer: {
+      title: 'Medical Disclaimer',
+      text: 'This is not medical advice. Please consult a qualified healthcare provider for proper diagnosis and treatment.'
     }
   },
 
