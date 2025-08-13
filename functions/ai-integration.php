@@ -338,12 +338,9 @@ class SNKS_AI_Integration {
 			$has_sufficient_info = $this->has_sufficient_diagnostic_info( $conversation_history, $current_message );
 			
 			if ( $has_sufficient_info ) {
-				// If we have enough information and questions, provide a diagnosis response
-				if ( $is_arabic ) {
-					return "بناءً على المعلومات التي قدمتها، أعتقد أنني أملك معلومات كافية لتقديم تشخيص أولي. دعني أقوم بتحليل الأعراض التي ذكرتها.";
-				} else {
-					return "Based on the information you've provided, I believe I have sufficient information to provide an initial diagnosis. Let me analyze the symptoms you've mentioned.";
-				}
+				// If we have enough information and questions, provide an actual diagnosis
+				$diagnosis_result = $this->generate_fallback_diagnosis( $conversation_history, $current_message, $is_arabic );
+				return $diagnosis_result;
 			}
 		}
 		
@@ -538,6 +535,110 @@ class SNKS_AI_Integration {
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Generate fallback diagnosis when AI response fails
+	 */
+	private function generate_fallback_diagnosis( $conversation_history, $current_message, $is_arabic ) {
+		global $wpdb;
+		
+		// Get all available diagnoses
+		$diagnoses = $wpdb->get_results( "SELECT id, name, name_en, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+		
+		// Analyze conversation for symptoms
+		$symptoms = array();
+		$all_text = strtolower( $current_message );
+		
+		foreach ( $conversation_history as $msg ) {
+			if ( $msg['role'] === 'user' ) {
+				$all_text .= ' ' . strtolower( $msg['content'] );
+			}
+		}
+		
+		// Map symptoms to diagnoses
+		$symptom_mapping = array(
+			// Sleep disorders
+			'أرق' => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
+			'نوم' => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
+			'sleep' => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
+			'insomnia' => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
+			
+			// Depression
+			'حزن' => array( 'Depression', 'depression', 'sadness' ),
+			'اكتئاب' => array( 'Depression', 'depression', 'sadness' ),
+			'sad' => array( 'Depression', 'depression', 'sadness' ),
+			'depression' => array( 'Depression', 'depression', 'sadness' ),
+			
+			// Anxiety
+			'قلق' => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
+			'توتر' => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
+			'anxiety' => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
+			'worry' => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
+			
+			// Stress
+			'ضغط' => array( 'Stress Management', 'stress', 'pressure' ),
+			'stress' => array( 'Stress Management', 'stress', 'pressure' ),
+			'pressure' => array( 'Stress Management', 'stress', 'pressure' ),
+			
+			// Work issues
+			'عمل' => array( 'Work-Life Balance', 'work', 'job' ),
+			'وظيفة' => array( 'Work-Life Balance', 'work', 'job' ),
+			'work' => array( 'Work-Life Balance', 'work', 'job' ),
+			'job' => array( 'Work-Life Balance', 'work', 'job' ),
+		);
+		
+		// Find matching diagnosis
+		$matched_diagnosis = null;
+		foreach ( $symptom_mapping as $symptom => $diagnosis_info ) {
+			if ( strpos( $all_text, $symptom ) !== false ) {
+				$diagnosis_name = $diagnosis_info[0];
+				foreach ( $diagnoses as $diagnosis ) {
+					if ( stripos( $diagnosis->name, $diagnosis_name ) !== false || 
+						 stripos( $diagnosis->name_en, $diagnosis_name ) !== false ) {
+						$matched_diagnosis = $diagnosis;
+						break 2;
+					}
+				}
+			}
+		}
+		
+		// If no specific match, default to Stress Management
+		if ( ! $matched_diagnosis ) {
+			foreach ( $diagnoses as $diagnosis ) {
+				if ( stripos( $diagnosis->name, 'Stress Management' ) !== false || 
+					 stripos( $diagnosis->name_en, 'Stress Management' ) !== false ) {
+					$matched_diagnosis = $diagnosis;
+					break;
+				}
+			}
+		}
+		
+		// If still no match, use the first diagnosis
+		if ( ! $matched_diagnosis && ! empty( $diagnoses ) ) {
+			$matched_diagnosis = $diagnoses[0];
+		}
+		
+		if ( $matched_diagnosis ) {
+			if ( $is_arabic ) {
+				$message = "بناءً على المعلومات التي قدمتها، أعتقد أنك قد تعاني من **{$matched_diagnosis->name}**.\n\n";
+				$message .= "**الوصف:** " . $matched_diagnosis->description . "\n\n";
+				$message .= "لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.";
+			} else {
+				$message = "Based on the information you've provided, I believe you may be experiencing **{$matched_diagnosis->name}**.\n\n";
+				$message .= "**Description:** " . $matched_diagnosis->description . "\n\n";
+				$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
+			}
+			
+			return $message;
+		}
+		
+		// Fallback message if no diagnosis found
+		if ( $is_arabic ) {
+			return "بناءً على المعلومات التي قدمتها، أعتقد أنك قد تحتاج إلى استشارة متخصص في الصحة النفسية. يمكنني مساعدتك في العثور على معالجين متخصصين.";
+		} else {
+			return "Based on the information you've provided, I believe you may need to consult a mental health specialist. I can help you find specialized therapists.";
+		}
 	}
 	
 	/**
