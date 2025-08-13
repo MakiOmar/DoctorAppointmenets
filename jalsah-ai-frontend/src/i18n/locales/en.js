@@ -290,7 +290,8 @@ export default {
     disclaimer: {
       title: 'Medical Disclaimer',
       text: 'This is not medical advice. Please consult a qualified healthcare provider for proper diagnosis and treatment.'
-    }
+    },
+    questionCounter: 'Questions asked: {count}'
   },
 
   // Diagnosis Results

@@ -272,6 +272,51 @@ class SNKS_AI_Integration {
 	}
 	
 	/**
+	 * Detect language from text
+	 */
+	private function detect_language( $text ) {
+		// Simple Arabic character detection
+		$arabic_pattern = '/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{08A0}-\x{08FF}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u';
+		
+		if ( preg_match( $arabic_pattern, $text ) ) {
+			return 'arabic';
+		}
+		
+		return 'english';
+	}
+	
+	/**
+	 * Check if a message is a question
+	 */
+	private function is_question( $content ) {
+		// Remove JSON formatting and get the actual message content
+		$clean_content = $content;
+		
+		// Check for question marks
+		if ( strpos( $clean_content, '?' ) !== false ) {
+			return true;
+		}
+		
+		// Check for Arabic question words
+		$arabic_question_words = array( 'هل', 'متى', 'أين', 'كيف', 'لماذا', 'من', 'ما', 'أي' );
+		foreach ( $arabic_question_words as $word ) {
+			if ( strpos( $clean_content, $word ) !== false ) {
+				return true;
+			}
+		}
+		
+		// Check for English question words
+		$english_question_words = array( 'what', 'when', 'where', 'how', 'why', 'who', 'which', 'do', 'does', 'did', 'can', 'could', 'would', 'will' );
+		foreach ( $english_question_words as $word ) {
+			if ( stripos( $clean_content, $word ) !== false ) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
 	 * Test diagnosis endpoint via AJAX
 	 */
 	public function test_diagnosis_ajax() {
@@ -1481,6 +1526,8 @@ class SNKS_AI_Integration {
 		$system_prompt = get_option( 'snks_ai_chatgpt_prompt' );
 		$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
 		$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
+		$min_questions = get_option( 'snks_ai_chatgpt_min_questions', 5 );
+		$max_questions = get_option( 'snks_ai_chatgpt_max_questions', 10 );
 		
 		if ( ! $api_key ) {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
@@ -1494,11 +1541,35 @@ class SNKS_AI_Integration {
 			$diagnosis_list[] = $diagnosis->name . ' (ID: ' . $diagnosis->id . ')';
 		}
 		
+		// Determine conversation language based on user input and locale
+		$locale = sanitize_text_field( $_POST['locale'] ?? 'en' );
+		$conversation_language = $this->detect_language( $message );
+		$is_arabic = $conversation_language === 'arabic' || $locale === 'ar';
+		
+		// Count questions asked by AI so far
+		$ai_questions_count = 0;
+		foreach ( $conversation_history as $msg ) {
+			if ( $msg['role'] === 'assistant' && $this->is_question( $msg['content'] ) ) {
+				$ai_questions_count++;
+			}
+		}
+		
 		// Build conversation messages
 		$messages = array();
 		
-		// Add system prompt with forced JSON structure
-		$enhanced_system_prompt = $system_prompt . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must ALWAYS respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"brief explanation of why this diagnosis was chosen\",\n  \"status\": \"complete|incomplete\"\n}\n\n- Only choose diagnoses from the provided list\n- Never invent or suggest conditions outside the list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status when you can confidently suggest a diagnosis\n- Always return valid JSON, no additional text";
+		// Add system prompt with forced JSON structure and language/question limits
+		$language_instruction = $is_arabic ? 
+			"IMPORTANT: Respond in Arabic language. Use Arabic for all communication." : 
+			"IMPORTANT: Respond in English language. Use English for all communication.";
+		
+		$question_limit_instruction = "QUESTION LIMITS: You have asked {$ai_questions_count} questions so far. You must ask between {$min_questions} and {$max_questions} questions total. ";
+		if ( $ai_questions_count >= $max_questions ) {
+			$question_limit_instruction .= "You have reached the maximum questions limit. You must now provide a diagnosis.";
+		} elseif ( $ai_questions_count < $min_questions ) {
+			$question_limit_instruction .= "You need to ask at least " . ($min_questions - $ai_questions_count) . " more questions before providing a diagnosis.";
+		}
+		
+		$enhanced_system_prompt = $system_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must ALWAYS respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"brief explanation of why this diagnosis was chosen\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Never invent or suggest conditions outside the list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status when you can confidently suggest a diagnosis\n- Always return valid JSON, no additional text\n- Ask thoughtful, relevant questions to gather necessary information";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt

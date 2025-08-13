@@ -1676,8 +1676,10 @@ function snks_enhanced_ai_chatgpt_page() {
 			update_option( 'snks_ai_chatgpt_api_key', sanitize_text_field( $_POST['api_key'] ) );
 			update_option( 'snks_ai_chatgpt_model', sanitize_text_field( $_POST['model'] ) );
 			update_option( 'snks_ai_chatgpt_prompt', sanitize_textarea_field( $_POST['prompt'] ) );
-			update_option( 'snks_ai_chatgpt_max_tokens', intval( $_POST['max_tokens'] ) );
-			update_option( 'snks_ai_chatgpt_temperature', floatval( $_POST['temperature'] ) );
+					update_option( 'snks_ai_chatgpt_max_tokens', intval( $_POST['max_tokens'] ) );
+		update_option( 'snks_ai_chatgpt_temperature', floatval( $_POST['temperature'] ) );
+		update_option( 'snks_ai_chatgpt_min_questions', intval( $_POST['min_questions'] ) );
+		update_option( 'snks_ai_chatgpt_max_questions', intval( $_POST['max_questions'] ) );
 			
 			echo '<div class="notice notice-success"><p>ChatGPT settings updated successfully!</p></div>';
 		}
@@ -1744,6 +1746,14 @@ Focus on understanding the patient\'s symptoms, duration, impact on daily life, 
 					<tr>
 						<th><label for="temperature">Temperature</label></th>
 						<td><input type="number" id="temperature" name="temperature" value="<?php echo esc_attr( $temperature ); ?>" min="0" max="2" step="0.1" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="min_questions">Minimum Questions</label></th>
+						<td><input type="number" id="min_questions" name="min_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_min_questions', 5 ) ); ?>" min="3" max="15" step="1" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="max_questions">Maximum Questions</label></th>
+						<td><input type="number" id="max_questions" name="max_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_max_questions', 10 ) ); ?>" min="5" max="20" step="1" class="small-text"></td>
 					</tr>
 				</table>
 				

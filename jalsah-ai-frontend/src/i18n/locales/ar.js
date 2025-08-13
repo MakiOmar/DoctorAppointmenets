@@ -299,7 +299,8 @@ export default {
     disclaimer: {
       title: 'تنبيه طبي',
       text: 'هذا ليس استشارة طبية. يرجى استشارة مقدم رعاية صحية مؤهل للتشخيص والعلاج المناسب.'
-    }
+    },
+    questionCounter: 'الأسئلة المطروحة: {count}'
   },
 
   // Diagnosis Results
