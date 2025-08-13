@@ -1543,8 +1543,8 @@ class SNKS_AI_Integration {
 		$data = array(
 			'model' => $model,
 			'messages' => $messages,
-			'max_tokens' => $max_tokens,
-			'temperature' => $temperature
+			'max_tokens' => intval( $max_tokens ),
+			'temperature' => floatval( $temperature )
 		);
 		
 		error_log( 'OpenAI API request data: ' . json_encode( $data ) );
