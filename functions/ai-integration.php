@@ -322,7 +322,15 @@ class SNKS_AI_Integration {
 		
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
-		$conversation_history = json_decode( $_POST['conversation_history'] ?? '[]', true );
+		
+		// Handle escaped JSON from frontend
+		$conversation_history_raw = $_POST['conversation_history'] ?? '[]';
+		$conversation_history = json_decode( stripslashes( $conversation_history_raw ), true );
+		
+		// Ensure we have an array
+		if ( ! is_array( $conversation_history ) ) {
+			$conversation_history = array();
+		}
 		
 		error_log( 'Message: ' . $message );
 		error_log( 'Conversation history: ' . print_r( $conversation_history, true ) );
