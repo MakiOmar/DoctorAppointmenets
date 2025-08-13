@@ -320,15 +320,9 @@ class SNKS_AI_Integration {
 		error_log( 'Chat diagnosis AJAX called' );
 		error_log( 'POST data: ' . print_r( $_POST, true ) );
 		
-		// Check if this is a POST request
-		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
-			error_log( 'Method not allowed: ' . $_SERVER['REQUEST_METHOD'] );
-			wp_send_json_error( 'Method not allowed', 405 );
-		}
-		
-		// Get data from POST
+		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
-		$conversation_history = $this->parse_json_field( $_POST['conversation_history'] ?? '[]' );
+		$conversation_history = json_decode( $_POST['conversation_history'] ?? '[]', true );
 		
 		error_log( 'Message: ' . $message );
 		error_log( 'Conversation history: ' . print_r( $conversation_history, true ) );
