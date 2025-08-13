@@ -316,8 +316,13 @@ class SNKS_AI_Integration {
 	 * Chat diagnosis endpoint via AJAX
 	 */
 	public function chat_diagnosis_ajax() {
+		// Debug logging
+		error_log( 'Chat diagnosis AJAX called' );
+		error_log( 'POST data: ' . print_r( $_POST, true ) );
+		
 		// Check if this is a POST request
 		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
+			error_log( 'Method not allowed: ' . $_SERVER['REQUEST_METHOD'] );
 			wp_send_json_error( 'Method not allowed', 405 );
 		}
 		
@@ -325,8 +330,12 @@ class SNKS_AI_Integration {
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
 		$conversation_history = $this->parse_json_field( $_POST['conversation_history'] ?? '[]' );
 		
+		error_log( 'Message: ' . $message );
+		error_log( 'Conversation history: ' . print_r( $conversation_history, true ) );
+		
 		// Validate required fields
 		if ( empty( $message ) ) {
+			error_log( 'Message is empty' );
 			wp_send_json_error( 'Message is required', 400 );
 		}
 		
@@ -334,9 +343,11 @@ class SNKS_AI_Integration {
 		$result = $this->process_chat_diagnosis( $message, $conversation_history );
 		
 		if ( is_wp_error( $result ) ) {
+			error_log( 'Process chat diagnosis error: ' . $result->get_error_message() );
 			wp_send_json_error( $result->get_error_message(), 400 );
 		}
 		
+		error_log( 'Chat diagnosis result: ' . print_r( $result, true ) );
 		wp_send_json_success( $result );
 	}
 	
@@ -1472,6 +1483,8 @@ class SNKS_AI_Integration {
 	 * Process chat diagnosis using OpenAI
 	 */
 	private function process_chat_diagnosis( $message, $conversation_history ) {
+		error_log( 'Process chat diagnosis started' );
+		
 		// Get OpenAI settings
 		$api_key = get_option( 'snks_ai_chatgpt_api_key' );
 		$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
@@ -1479,7 +1492,13 @@ class SNKS_AI_Integration {
 		$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 500 );
 		$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 		
+		error_log( 'API Key: ' . ( $api_key ? 'Set' : 'Not set' ) );
+		error_log( 'Model: ' . $model );
+		error_log( 'Max tokens: ' . $max_tokens );
+		error_log( 'Temperature: ' . $temperature );
+		
 		if ( ! $api_key ) {
+			error_log( 'No API key configured' );
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
 		}
 		
@@ -1526,6 +1545,8 @@ class SNKS_AI_Integration {
 			'temperature' => $temperature
 		);
 		
+		error_log( 'OpenAI API request data: ' . json_encode( $data ) );
+		
 		$response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $api_key,
@@ -1536,13 +1557,17 @@ class SNKS_AI_Integration {
 		) );
 		
 		if ( is_wp_error( $response ) ) {
+			error_log( 'OpenAI API error: ' . $response->get_error_message() );
 			return new WP_Error( 'api_error', 'OpenAI API error: ' . $response->get_error_message() );
 		}
 		
 		$body = wp_remote_retrieve_body( $response );
 		$result = json_decode( $body, true );
 		
+		error_log( 'OpenAI API response: ' . $body );
+		
 		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
+			error_log( 'Invalid OpenAI response structure' );
 			return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
 		}
 		
