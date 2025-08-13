@@ -323,6 +323,18 @@ class SNKS_AI_Integration {
 		// Analyze the current message and conversation context
 		$message_lower = strtolower( $current_message );
 		
+		// Check if we have enough information to make a diagnosis
+		$has_sufficient_info = $this->has_sufficient_diagnostic_info( $conversation_history, $current_message );
+		
+		if ( $has_sufficient_info ) {
+			// If we have enough information, provide a diagnosis response
+			if ( $is_arabic ) {
+				return "بناءً على المعلومات التي قدمتها، أعتقد أنني أملك معلومات كافية لتقديم تشخيص أولي. دعني أقوم بتحليل الأعراض التي ذكرتها.";
+			} else {
+				return "Based on the information you've provided, I believe I have sufficient information to provide an initial diagnosis. Let me analyze the symptoms you've mentioned.";
+			}
+		}
+		
 		// Check for specific keywords in the current message
 		if ( $is_arabic ) {
 			// Arabic keyword detection
@@ -365,6 +377,62 @@ class SNKS_AI_Integration {
 			// Default contextual response
 			return "Thank you for sharing that with me. Can you tell me more about how these feelings are affecting your daily life? Are there any other symptoms you're experiencing?";
 		}
+	}
+	
+	/**
+	 * Check if we have sufficient information for diagnosis
+	 */
+	private function has_sufficient_diagnostic_info( $conversation_history, $current_message ) {
+		// Count user messages with substantial content
+		$user_messages = 0;
+		$has_symptoms = false;
+		$has_duration = false;
+		$has_impact = false;
+		
+		foreach ( $conversation_history as $msg ) {
+			if ( $msg['role'] === 'user' ) {
+				$content = strtolower( $msg['content'] );
+				$user_messages++;
+				
+				// Check for symptom keywords
+				if ( strpos( $content, 'أرق' ) !== false || strpos( $content, 'نوم' ) !== false || 
+					 strpos( $content, 'حزن' ) !== false || strpos( $content, 'اكتئاب' ) !== false ||
+					 strpos( $content, 'قلق' ) !== false || strpos( $content, 'توتر' ) !== false ||
+					 strpos( $content, 'sleep' ) !== false || strpos( $content, 'insomnia' ) !== false ||
+					 strpos( $content, 'sad' ) !== false || strpos( $content, 'depression' ) !== false ||
+					 strpos( $content, 'anxiety' ) !== false || strpos( $content, 'worry' ) !== false ) {
+					$has_symptoms = true;
+				}
+				
+				// Check for duration/time information
+				if ( strpos( $content, 'شهر' ) !== false || strpos( $content, 'أسبوع' ) !== false ||
+					 strpos( $content, 'يوم' ) !== false || strpos( $content, 'month' ) !== false ||
+					 strpos( $content, 'week' ) !== false || strpos( $content, 'day' ) !== false ) {
+					$has_duration = true;
+				}
+				
+				// Check for impact information
+				if ( strpos( $content, 'عمل' ) !== false || strpos( $content, 'حياة' ) !== false ||
+					 strpos( $content, 'يومي' ) !== false || strpos( $content, 'work' ) !== false ||
+					 strpos( $content, 'life' ) !== false || strpos( $content, 'daily' ) !== false ) {
+					$has_impact = true;
+				}
+			}
+		}
+		
+		// Also check current message
+		$current_lower = strtolower( $current_message );
+		if ( strpos( $current_lower, 'أرق' ) !== false || strpos( $current_lower, 'نوم' ) !== false || 
+			 strpos( $current_lower, 'حزن' ) !== false || strpos( $current_lower, 'اكتئاب' ) !== false ||
+			 strpos( $current_lower, 'قلق' ) !== false || strpos( $current_lower, 'توتر' ) !== false ||
+			 strpos( $current_lower, 'sleep' ) !== false || strpos( $current_lower, 'insomnia' ) !== false ||
+			 strpos( $current_lower, 'sad' ) !== false || strpos( $current_lower, 'depression' ) !== false ||
+			 strpos( $current_lower, 'anxiety' ) !== false || strpos( $current_lower, 'worry' ) !== false ) {
+			$has_symptoms = true;
+		}
+		
+		// Consider we have sufficient info if we have symptoms and at least 2 user messages
+		return $has_symptoms && $user_messages >= 2;
 	}
 	
 	/**
@@ -1613,16 +1681,16 @@ class SNKS_AI_Integration {
 			"IMPORTANT: Respond ONLY in Arabic language. Use Arabic for all communication, reasoning, and explanations. Never mix languages." : 
 			"IMPORTANT: Respond ONLY in English language. Use English for all communication, reasoning, and explanations. Never mix languages.";
 		
-		$question_limit_instruction = "QUESTION LIMITS: You have asked {$ai_questions_count} questions so far. You must ask between {$min_questions} and {$max_questions} questions total. ";
+		$question_limit_instruction = "QUESTION GUIDELINES: You have asked {$ai_questions_count} questions so far. ";
 		if ( $ai_questions_count >= $max_questions ) {
 			$question_limit_instruction .= "You have reached the maximum questions limit. You must now provide a diagnosis.";
 		} elseif ( $ai_questions_count < $min_questions ) {
-			$question_limit_instruction .= "You need to ask at least " . ($min_questions - $ai_questions_count) . " more questions before providing a diagnosis. DO NOT provide diagnosis yet.";
+			$question_limit_instruction .= "You should ask between {$min_questions} and {$max_questions} questions total. However, if you have sufficient information to make a confident diagnosis, you may provide it immediately without asking more questions.";
 		} else {
 			$question_limit_instruction .= "You can now provide a diagnosis if you have enough information, or ask more questions if needed.";
 		}
 		
-		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- Do NOT repeat the same questions - ask new, specific questions based on their responses\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status ONLY when you have asked enough questions AND can confidently suggest a diagnosis\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation";
+		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- Do NOT repeat the same questions - ask new, specific questions based on their responses\n- If you have enough information to make a diagnosis, provide it immediately\n- Do NOT ask questions just to reach the minimum count - if you have sufficient information, diagnose\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status when you have enough information to confidently suggest a diagnosis\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- If you have sufficient information, provide diagnosis immediately - do not ask unnecessary questions";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
