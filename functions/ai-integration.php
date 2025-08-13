@@ -1571,7 +1571,7 @@ class SNKS_AI_Integration {
 			$question_limit_instruction .= "You can now provide a diagnosis if you have enough information, or ask more questions if needed.";
 		}
 		
-		$enhanced_system_prompt = $system_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must ALWAYS respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"brief explanation of why this diagnosis was chosen\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Never invent or suggest conditions outside the list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND can confidently suggest a diagnosis\n- Always return valid JSON, no additional text\n- Ask thoughtful, relevant questions to gather necessary information\n- Follow the question limits strictly - do not diagnose too early";
+		$enhanced_system_prompt = "You are a mental health assistant helping patients understand their symptoms and find appropriate therapy. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status ONLY when you have asked enough questions AND can confidently suggest a diagnosis\n- The 'reasoning' field should contain your actual conversational response to the patient (questions, empathy, guidance)\n- Ask thoughtful, relevant questions to gather necessary information\n- Be conversational and empathetic in your responses";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
@@ -1720,21 +1720,16 @@ class SNKS_AI_Integration {
 				)
 			);
 		} else {
-			// Continue conversation - use reasoning if available, otherwise use the raw AI response
+			// Continue conversation - use reasoning if available, otherwise provide a helpful response
 			$message = '';
-			if ( isset( $response_data['reasoning'] ) && ! empty( $response_data['reasoning'] ) ) {
+			if ( isset( $response_data['reasoning'] ) && ! empty( trim( $response_data['reasoning'] ) ) ) {
 				$message = $response_data['reasoning'];
 			} else {
-				// If no reasoning provided, use the raw AI response
-				$message = $ai_response;
-			}
-			
-			// If still no message, provide a default response
-			if ( empty( $message ) ) {
+				// If reasoning is empty or just whitespace, provide a helpful follow-up question
 				if ( $is_arabic ) {
-					$message = "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن هذه المشاعر؟ متى بدأت تشعر بهذا الحزن؟";
+					$message = "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن هذه المشاعر؟ متى بدأت تشعر بهذا الحزن؟ وهل هناك أي أعراض أخرى تعاني منها؟";
 				} else {
-					$message = "Thank you for sharing that with me. Can you tell me more about these feelings? When did you start feeling this sadness?";
+					$message = "Thank you for sharing that with me. Can you tell me more about these feelings? When did you start feeling this sadness? Are there any other symptoms you're experiencing?";
 				}
 			}
 			
