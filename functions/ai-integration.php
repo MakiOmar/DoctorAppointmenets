@@ -55,8 +55,10 @@ class SNKS_AI_Integration {
 		// Add AJAX endpoints for testing
 		add_action( 'wp_ajax_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
 		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
-		add_action( 'wp_ajax_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
-		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
+			add_action( 'wp_ajax_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
+	add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
+	add_action( 'wp_ajax_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
+	add_action( 'wp_ajax_nopriv_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		
@@ -306,6 +308,34 @@ class SNKS_AI_Integration {
 		);
 		
 		wp_send_json_success( $response_data );
+	}
+
+	/**
+	 * Chat diagnosis endpoint via AJAX
+	 */
+	public function chat_diagnosis_ajax() {
+		// Check if this is a POST request
+		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
+			wp_send_json_error( 'Method not allowed', 405 );
+		}
+		
+		// Get data from POST
+		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
+		$conversation_history = $this->parse_json_field( $_POST['conversation_history'] ?? '[]' );
+		
+		// Validate required fields
+		if ( empty( $message ) ) {
+			wp_send_json_error( 'Message is required', 400 );
+		}
+		
+		// Process the chat diagnosis
+		$result = $this->process_chat_diagnosis( $message, $conversation_history );
+		
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message(), 400 );
+		}
+		
+		wp_send_json_success( $result );
 	}
 	
 	/**
@@ -1434,6 +1464,140 @@ class SNKS_AI_Integration {
 		$this->send_success( $response_data );
 	}
 	
+	/**
+	 * Process chat diagnosis using OpenAI
+	 */
+	private function process_chat_diagnosis( $message, $conversation_history ) {
+		// Get OpenAI settings
+		$api_key = get_option( 'snks_ai_chatgpt_api_key' );
+		$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
+		$system_prompt = get_option( 'snks_ai_chatgpt_prompt' );
+		$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 500 );
+		$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
+		
+		if ( ! $api_key ) {
+			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
+		}
+		
+		// Get available diagnoses
+		global $wpdb;
+		$diagnoses = $wpdb->get_results( "SELECT id, name, name_en, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+		$diagnosis_list = array();
+		foreach ( $diagnoses as $diagnosis ) {
+			$diagnosis_list[] = $diagnosis->name . ' (ID: ' . $diagnosis->id . ')';
+		}
+		
+		// Build conversation messages
+		$messages = array();
+		
+		// Add system prompt
+		$enhanced_system_prompt = $system_prompt . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: After analyzing the conversation, if you can confidently suggest a diagnosis, respond with 'DIAGNOSIS_COMPLETE:' followed by the diagnosis name and a brief explanation. Otherwise, continue the conversation to gather more information.";
+		$messages[] = array(
+			'role' => 'system',
+			'content' => $enhanced_system_prompt
+		);
+		
+		// Add conversation history (limit to last 10 messages to avoid token limits)
+		$recent_history = array_slice( $conversation_history, -10 );
+		foreach ( $recent_history as $msg ) {
+			if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
+				$messages[] = array(
+					'role' => $msg['role'],
+					'content' => $msg['content']
+				);
+			}
+		}
+		
+		// Add current message
+		$messages[] = array(
+			'role' => 'user',
+			'content' => $message
+		);
+		
+		// Call OpenAI API
+		$data = array(
+			'model' => $model,
+			'messages' => $messages,
+			'max_tokens' => $max_tokens,
+			'temperature' => $temperature
+		);
+		
+		$response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type' => 'application/json'
+			),
+			'body' => json_encode( $data ),
+			'timeout' => 30
+		) );
+		
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'api_error', 'OpenAI API error: ' . $response->get_error_message() );
+		}
+		
+		$body = wp_remote_retrieve_body( $response );
+		$result = json_decode( $body, true );
+		
+		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
+			return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+		}
+		
+		$ai_response = $result['choices'][0]['message']['content'];
+		
+		// Check if diagnosis is complete
+		if ( strpos( $ai_response, 'DIAGNOSIS_COMPLETE:' ) === 0 ) {
+			// Extract diagnosis information
+			$diagnosis_text = substr( $ai_response, 19 ); // Remove 'DIAGNOSIS_COMPLETE:'
+			$parts = explode( ':', $diagnosis_text, 2 );
+			$diagnosis_name = trim( $parts[0] );
+			$explanation = isset( $parts[1] ) ? trim( $parts[1] ) : '';
+			
+			// Find matching diagnosis
+			$diagnosis_id = null;
+			foreach ( $diagnoses as $diagnosis ) {
+				if ( stripos( $diagnosis->name, $diagnosis_name ) !== false || 
+					 stripos( $diagnosis->name_en, $diagnosis_name ) !== false ) {
+					$diagnosis_id = $diagnosis->id;
+					$diagnosis_name = $diagnosis->name;
+					$explanation = $diagnosis->description;
+					break;
+				}
+			}
+			
+			if ( $diagnosis_id ) {
+				return array(
+					'message' => "Based on our conversation, I believe you may be experiencing **{$diagnosis_name}**. {$explanation}\n\nI've completed the diagnosis and can now help you find therapists who specialize in this area.",
+					'diagnosis' => array(
+						'completed' => true,
+						'id' => $diagnosis_id,
+						'title' => $diagnosis_name,
+						'description' => $explanation
+					)
+				);
+			} else {
+				// Fallback: use the first diagnosis
+				$diagnosis = $diagnoses[0];
+				return array(
+					'message' => "Based on our conversation, I believe you may be experiencing **{$diagnosis->name}**. {$diagnosis->description}\n\nI've completed the diagnosis and can now help you find therapists who specialize in this area.",
+					'diagnosis' => array(
+						'completed' => true,
+						'id' => $diagnosis->id,
+						'title' => $diagnosis->name,
+						'description' => $diagnosis->description
+					)
+				);
+			}
+		} else {
+			// Continue conversation
+			return array(
+				'message' => $ai_response,
+				'diagnosis' => array(
+					'completed' => false
+				)
+			);
+		}
+	}
+
 	/**
 	 * Simulate AI diagnosis based on form data
 	 */
