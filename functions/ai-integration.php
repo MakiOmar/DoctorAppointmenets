@@ -1629,9 +1629,15 @@ class SNKS_AI_Integration {
 		$response_data = json_decode( $ai_response, true );
 		
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
-			// Fallback for invalid JSON
+			// Fallback for invalid JSON - provide a helpful response
+			if ( $is_arabic ) {
+				$fallback_message = "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن هذه المشاعر؟ متى بدأت تشعر بهذا الحزن؟";
+			} else {
+				$fallback_message = "Thank you for sharing that with me. Can you tell me more about these feelings? When did you start feeling this sadness?";
+			}
+			
 			return array(
-				'message' => $ai_response,
+				'message' => $fallback_message,
 				'diagnosis' => array(
 					'completed' => false
 				)
@@ -1714,11 +1720,28 @@ class SNKS_AI_Integration {
 				)
 			);
 		} else {
-			// Continue conversation
-			$message = $response_data['reasoning'] ?? $ai_response;
+			// Continue conversation - use reasoning if available, otherwise use the raw AI response
+			$message = '';
+			if ( isset( $response_data['reasoning'] ) && ! empty( $response_data['reasoning'] ) ) {
+				$message = $response_data['reasoning'];
+			} else {
+				// If no reasoning provided, use the raw AI response
+				$message = $ai_response;
+			}
+			
+			// If still no message, provide a default response
+			if ( empty( $message ) ) {
+				if ( $is_arabic ) {
+					$message = "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن هذه المشاعر؟ متى بدأت تشعر بهذا الحزن؟";
+				} else {
+					$message = "Thank you for sharing that with me. Can you tell me more about these feelings? When did you start feeling this sadness?";
+				}
+			}
+			
 			return array(
 				'message' => $message,
 				'diagnosis' => array(
+					'reasoning' => $response_data['reasoning'] ?? '',
 					'completed' => false
 				)
 			);
