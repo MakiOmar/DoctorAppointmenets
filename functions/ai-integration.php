@@ -630,15 +630,38 @@ class SNKS_AI_Integration {
 				$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
 			}
 			
-			return $message;
+			// Return the proper diagnosis completion structure
+			return array(
+				'message' => $message,
+				'diagnosis' => array(
+					'completed' => true,
+					'id' => $matched_diagnosis->id,
+					'title' => $matched_diagnosis->name,
+					'description' => $matched_diagnosis->description,
+					'confidence' => 'medium',
+					'reasoning' => 'Diagnosis generated based on conversation analysis'
+				)
+			);
 		}
 		
 		// Fallback message if no diagnosis found
 		if ( $is_arabic ) {
-			return "بناءً على المعلومات التي قدمتها، أعتقد أنك قد تحتاج إلى استشارة متخصص في الصحة النفسية. يمكنني مساعدتك في العثور على معالجين متخصصين.";
+			$message = "بناءً على المعلومات التي قدمتها، أعتقد أنك قد تحتاج إلى استشارة متخصص في الصحة النفسية. يمكنني مساعدتك في العثور على معالجين متخصصين.";
 		} else {
-			return "Based on the information you've provided, I believe you may need to consult a mental health specialist. I can help you find specialized therapists.";
+			$message = "Based on the information you've provided, I believe you may need to consult a mental health specialist. I can help you find specialized therapists.";
 		}
+		
+		return array(
+			'message' => $message,
+			'diagnosis' => array(
+				'completed' => true,
+				'id' => null,
+				'title' => 'General Consultation',
+				'description' => 'Recommendation for professional mental health consultation',
+				'confidence' => 'low',
+				'reasoning' => 'Insufficient information for specific diagnosis'
+			)
+		);
 	}
 	
 	/**
