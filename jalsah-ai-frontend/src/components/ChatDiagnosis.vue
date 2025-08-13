@@ -214,10 +214,10 @@ export default {
       
       await scrollToBottom()
 
-             try {
+                    try {
          // Send to backend
          const formData = new URLSearchParams()
-         formData.append('action', 'test_chat_simple')
+         formData.append('action', 'chat_diagnosis_ajax')
          formData.append('message', userMessage)
          formData.append('conversation_history', JSON.stringify(messages.value))
          
@@ -227,9 +227,9 @@ export default {
            }
          })
 
-                 if (response.data.success) {
-           // For test endpoint, just echo back the message
-           const assistantMessage = `Test successful! You said: "${userMessage}"\n\nResponse data: ${JSON.stringify(response.data.data, null, 2)}`
+         if (response.data.success) {
+           const assistantMessage = response.data.data.message
+           const diagnosis = response.data.data.diagnosis
            
            // Add assistant response
            messages.value.push({
@@ -237,6 +237,14 @@ export default {
              content: assistantMessage,
              timestamp: new Date()
            })
+
+           // If diagnosis is complete
+           if (diagnosis && diagnosis.completed) {
+             diagnosisResult.title = diagnosis.title
+             diagnosisResult.description = diagnosis.description
+             diagnosisResult.diagnosisId = diagnosis.id
+             diagnosisCompleted.value = true
+           }
          } else {
            throw new Error(response.data.data || 'Failed to get response')
          }

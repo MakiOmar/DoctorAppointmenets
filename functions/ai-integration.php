@@ -59,8 +59,6 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_nopriv_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
-		add_action( 'wp_ajax_test_chat_simple', array( $this, 'test_chat_simple_ajax' ) );
-		add_action( 'wp_ajax_nopriv_test_chat_simple', array( $this, 'test_chat_simple_ajax' ) );
 		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		
@@ -68,8 +66,7 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
 		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
 		
-		// Test AJAX registration
-		add_action( 'init', array( $this, 'test_chat_ajax_registration' ) );
+
 	}
 	
 	/**
@@ -319,13 +316,8 @@ class SNKS_AI_Integration {
 	 * Chat diagnosis endpoint via AJAX
 	 */
 	public function chat_diagnosis_ajax() {
-		// Debug logging
-		error_log( 'Chat diagnosis AJAX called' );
-		error_log( 'POST data: ' . print_r( $_POST, true ) );
-		
 		// Check if this is a POST request
 		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
-			error_log( 'Method not allowed: ' . $_SERVER['REQUEST_METHOD'] );
 			wp_send_json_error( 'Method not allowed', 405 );
 		}
 		
@@ -333,12 +325,8 @@ class SNKS_AI_Integration {
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
 		$conversation_history = $this->parse_json_field( $_POST['conversation_history'] ?? '[]' );
 		
-		error_log( 'Message: ' . $message );
-		error_log( 'Conversation history: ' . print_r( $conversation_history, true ) );
-		
 		// Validate required fields
 		if ( empty( $message ) ) {
-			error_log( 'Message is empty' );
 			wp_send_json_error( 'Message is required', 400 );
 		}
 		
@@ -346,11 +334,9 @@ class SNKS_AI_Integration {
 		$result = $this->process_chat_diagnosis( $message, $conversation_history );
 		
 		if ( is_wp_error( $result ) ) {
-			error_log( 'Process chat diagnosis error: ' . $result->get_error_message() );
 			wp_send_json_error( $result->get_error_message(), 400 );
 		}
 		
-		error_log( 'Chat diagnosis result: ' . print_r( $result, true ) );
 		wp_send_json_success( $result );
 	}
 	
@@ -380,28 +366,7 @@ class SNKS_AI_Integration {
 		}
 	}
 
-	/**
-	 * Test chat diagnosis AJAX registration
-	 */
-	public function test_chat_ajax_registration() {
-		error_log( 'Testing chat AJAX registration' );
-		error_log( 'Available actions: ' . print_r( $GLOBALS['wp_filter']['wp_ajax_chat_diagnosis_ajax'] ?? 'Not registered', true ) );
-		error_log( 'Available nopriv actions: ' . print_r( $GLOBALS['wp_filter']['wp_ajax_nopriv_chat_diagnosis_ajax'] ?? 'Not registered', true ) );
-	}
 
-	/**
-	 * Simple test AJAX endpoint for debugging
-	 */
-	public function test_chat_simple_ajax() {
-		error_log( 'Test chat simple AJAX called' );
-		error_log( 'POST data: ' . print_r( $_POST, true ) );
-		
-		wp_send_json_success( array(
-			'message' => 'Test successful',
-			'post_data' => $_POST,
-			'timestamp' => current_time( 'mysql' )
-		) );
-	}
 	
 	/**
 	 * Add AI query vars
