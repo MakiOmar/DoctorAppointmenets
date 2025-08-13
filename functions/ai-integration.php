@@ -59,6 +59,8 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_nopriv_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
+		add_action( 'wp_ajax_test_chat_simple', array( $this, 'test_chat_simple_ajax' ) );
+		add_action( 'wp_ajax_nopriv_test_chat_simple', array( $this, 'test_chat_simple_ajax' ) );
 		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		
@@ -385,6 +387,20 @@ class SNKS_AI_Integration {
 		error_log( 'Testing chat AJAX registration' );
 		error_log( 'Available actions: ' . print_r( $GLOBALS['wp_filter']['wp_ajax_chat_diagnosis_ajax'] ?? 'Not registered', true ) );
 		error_log( 'Available nopriv actions: ' . print_r( $GLOBALS['wp_filter']['wp_ajax_nopriv_chat_diagnosis_ajax'] ?? 'Not registered', true ) );
+	}
+
+	/**
+	 * Simple test AJAX endpoint for debugging
+	 */
+	public function test_chat_simple_ajax() {
+		error_log( 'Test chat simple AJAX called' );
+		error_log( 'POST data: ' . print_r( $_POST, true ) );
+		
+		wp_send_json_success( array(
+			'message' => 'Test successful',
+			'post_data' => $_POST,
+			'timestamp' => current_time( 'mysql' )
+		) );
 	}
 	
 	/**

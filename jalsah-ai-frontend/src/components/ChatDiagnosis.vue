@@ -214,40 +214,32 @@ export default {
       
       await scrollToBottom()
 
-      try {
-        // Send to backend
-        const formData = new URLSearchParams()
-        formData.append('action', 'chat_diagnosis_ajax')
-        formData.append('message', userMessage)
-        formData.append('conversation_history', JSON.stringify(messages.value))
-        
-        const response = await api.post('/wp-admin/admin-ajax.php', formData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        })
+             try {
+         // Send to backend
+         const formData = new URLSearchParams()
+         formData.append('action', 'test_chat_simple')
+         formData.append('message', userMessage)
+         formData.append('conversation_history', JSON.stringify(messages.value))
+         
+         const response = await api.post('/wp-admin/admin-ajax.php', formData, {
+           headers: {
+             'Content-Type': 'application/x-www-form-urlencoded'
+           }
+         })
 
-        if (response.data.success) {
-          const assistantMessage = response.data.data.message
-          const diagnosis = response.data.data.diagnosis
-          
-          // Add assistant response
-          messages.value.push({
-            role: 'assistant',
-            content: assistantMessage,
-            timestamp: new Date()
-          })
-
-          // If diagnosis is complete
-          if (diagnosis && diagnosis.completed) {
-            diagnosisResult.title = diagnosis.title
-            diagnosisResult.description = diagnosis.description
-            diagnosisResult.diagnosisId = diagnosis.id
-            diagnosisCompleted.value = true
-          }
-        } else {
-          throw new Error(response.data.data || 'Failed to get response')
-        }
+                 if (response.data.success) {
+           // For test endpoint, just echo back the message
+           const assistantMessage = `Test successful! You said: "${userMessage}"\n\nResponse data: ${JSON.stringify(response.data.data, null, 2)}`
+           
+           // Add assistant response
+           messages.value.push({
+             role: 'assistant',
+             content: assistantMessage,
+             timestamp: new Date()
+           })
+         } else {
+           throw new Error(response.data.data || 'Failed to get response')
+         }
       } catch (error) {
         console.error('Chat error:', error)
         toast.error($t('chatDiagnosis.error.message'))
