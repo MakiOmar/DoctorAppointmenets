@@ -1559,17 +1559,19 @@ class SNKS_AI_Integration {
 		
 		// Add system prompt with forced JSON structure and language/question limits
 		$language_instruction = $is_arabic ? 
-			"IMPORTANT: Respond in Arabic language. Use Arabic for all communication." : 
-			"IMPORTANT: Respond in English language. Use English for all communication.";
+			"IMPORTANT: Respond ONLY in Arabic language. Use Arabic for all communication, reasoning, and explanations. Never mix languages." : 
+			"IMPORTANT: Respond ONLY in English language. Use English for all communication, reasoning, and explanations. Never mix languages.";
 		
 		$question_limit_instruction = "QUESTION LIMITS: You have asked {$ai_questions_count} questions so far. You must ask between {$min_questions} and {$max_questions} questions total. ";
 		if ( $ai_questions_count >= $max_questions ) {
 			$question_limit_instruction .= "You have reached the maximum questions limit. You must now provide a diagnosis.";
 		} elseif ( $ai_questions_count < $min_questions ) {
-			$question_limit_instruction .= "You need to ask at least " . ($min_questions - $ai_questions_count) . " more questions before providing a diagnosis.";
+			$question_limit_instruction .= "You need to ask at least " . ($min_questions - $ai_questions_count) . " more questions before providing a diagnosis. DO NOT provide diagnosis yet.";
+		} else {
+			$question_limit_instruction .= "You can now provide a diagnosis if you have enough information, or ask more questions if needed.";
 		}
 		
-		$enhanced_system_prompt = $system_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must ALWAYS respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"brief explanation of why this diagnosis was chosen\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Never invent or suggest conditions outside the list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status when you can confidently suggest a diagnosis\n- Always return valid JSON, no additional text\n- Ask thoughtful, relevant questions to gather necessary information";
+		$enhanced_system_prompt = $system_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must ALWAYS respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"brief explanation of why this diagnosis was chosen\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Never invent or suggest conditions outside the list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND can confidently suggest a diagnosis\n- Always return valid JSON, no additional text\n- Ask thoughtful, relevant questions to gather necessary information\n- Follow the question limits strictly - do not diagnose too early";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
@@ -1657,25 +1659,48 @@ class SNKS_AI_Integration {
 		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
 			$confidence_text = '';
 			if ( isset( $response_data['confidence'] ) ) {
-				switch ( $response_data['confidence'] ) {
-					case 'high':
-						$confidence_text = ' (high confidence)';
-						break;
-					case 'medium':
-						$confidence_text = ' (medium confidence)';
-						break;
-					case 'low':
-						$confidence_text = ' (low confidence)';
-						break;
+				if ( $is_arabic ) {
+					switch ( $response_data['confidence'] ) {
+						case 'high':
+							$confidence_text = ' (ثقة عالية)';
+							break;
+						case 'medium':
+							$confidence_text = ' (ثقة متوسطة)';
+							break;
+						case 'low':
+							$confidence_text = ' (ثقة منخفضة)';
+							break;
+					}
+				} else {
+					switch ( $response_data['confidence'] ) {
+						case 'high':
+							$confidence_text = ' (high confidence)';
+							break;
+						case 'medium':
+							$confidence_text = ' (medium confidence)';
+							break;
+						case 'low':
+							$confidence_text = ' (low confidence)';
+							break;
+					}
 				}
 			}
 			
-			$message = "Based on our conversation, I believe you may be experiencing **{$diagnosis_name}**{$confidence_text}.\n\n";
-			if ( isset( $response_data['reasoning'] ) ) {
-				$message .= "**Reasoning:** " . $response_data['reasoning'] . "\n\n";
+			if ( $is_arabic ) {
+				$message = "بناءً على محادثتنا، أعتقد أنك قد تعاني من **{$diagnosis_name}**{$confidence_text}.\n\n";
+				if ( isset( $response_data['reasoning'] ) ) {
+					$message .= "**المنطق:** " . $response_data['reasoning'] . "\n\n";
+				}
+				$message .= "**الوصف:** " . $diagnosis_description . "\n\n";
+				$message .= "لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.";
+			} else {
+				$message = "Based on our conversation, I believe you may be experiencing **{$diagnosis_name}**{$confidence_text}.\n\n";
+				if ( isset( $response_data['reasoning'] ) ) {
+					$message .= "**Reasoning:** " . $response_data['reasoning'] . "\n\n";
+				}
+				$message .= "**Description:** " . $diagnosis_description . "\n\n";
+				$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
 			}
-			$message .= "**Description:** " . $diagnosis_description . "\n\n";
-			$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
 			
 			return array(
 				'message' => $message,
