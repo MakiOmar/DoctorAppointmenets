@@ -317,6 +317,57 @@ class SNKS_AI_Integration {
 	}
 	
 	/**
+	 * Generate contextual fallback response based on conversation history
+	 */
+	private function generate_contextual_fallback( $current_message, $conversation_history, $is_arabic ) {
+		// Analyze the current message and conversation context
+		$message_lower = strtolower( $current_message );
+		
+		// Check for specific keywords in the current message
+		if ( $is_arabic ) {
+			// Arabic keyword detection
+			if ( strpos( $message_lower, 'أرق' ) !== false || strpos( $message_lower, 'نوم' ) !== false || strpos( $message_lower, 'سهر' ) !== false ) {
+				return "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
+			}
+			
+			if ( strpos( $message_lower, 'حزن' ) !== false || strpos( $message_lower, 'اكتئاب' ) !== false || strpos( $message_lower, 'حزين' ) !== false ) {
+				return "أرى أنك تشعر بالحزن. هل يمكنك إخباري متى بدأت تشعر بهذا الحزن؟ وهل هناك سبب محدد لهذه المشاعر؟";
+			}
+			
+			if ( strpos( $message_lower, 'قلق' ) !== false || strpos( $message_lower, 'توتر' ) !== false || strpos( $message_lower, 'خوف' ) !== false ) {
+				return "أفهم أنك تشعر بالقلق. هل يمكنك إخباري أكثر عن ما يقلقك؟ وهل هناك مواقف معينة تزيد من هذا القلق؟";
+			}
+			
+			if ( strpos( $message_lower, 'عمل' ) !== false || strpos( $message_lower, 'وظيفة' ) !== false || strpos( $message_lower, 'مهنة' ) !== false ) {
+				return "أرى أن العمل يؤثر على صحتك النفسية. هل يمكنك إخباري أكثر عن طبيعة عملك والضغوط التي تواجهها؟";
+			}
+			
+			// Default contextual response
+			return "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن تأثير هذه المشاعر على حياتك اليومية؟ وهل هناك أي أعراض أخرى تعاني منها؟";
+		} else {
+			// English keyword detection
+			if ( strpos( $message_lower, 'sleep' ) !== false || strpos( $message_lower, 'insomnia' ) !== false || strpos( $message_lower, 'awake' ) !== false ) {
+				return "I understand you're having sleep issues. Can you tell me more about your sleep pattern? How many hours do you usually sleep? Do you wake up frequently during the night?";
+			}
+			
+			if ( strpos( $message_lower, 'sad' ) !== false || strpos( $message_lower, 'depression' ) !== false || strpos( $message_lower, 'hopeless' ) !== false ) {
+				return "I see you're feeling sad. Can you tell me when you started feeling this way? Is there a specific reason for these feelings?";
+			}
+			
+			if ( strpos( $message_lower, 'anxiety' ) !== false || strpos( $message_lower, 'worry' ) !== false || strpos( $message_lower, 'fear' ) !== false ) {
+				return "I understand you're feeling anxious. Can you tell me more about what's worrying you? Are there specific situations that increase this anxiety?";
+			}
+			
+			if ( strpos( $message_lower, 'work' ) !== false || strpos( $message_lower, 'job' ) !== false || strpos( $message_lower, 'career' ) !== false ) {
+				return "I see that work is affecting your mental health. Can you tell me more about your work environment and the pressures you're facing?";
+			}
+			
+			// Default contextual response
+			return "Thank you for sharing that with me. Can you tell me more about how these feelings are affecting your daily life? Are there any other symptoms you're experiencing?";
+		}
+	}
+	
+	/**
 	 * Test diagnosis endpoint via AJAX
 	 */
 	public function test_diagnosis_ajax() {
@@ -1571,7 +1622,7 @@ class SNKS_AI_Integration {
 			$question_limit_instruction .= "You can now provide a diagnosis if you have enough information, or ask more questions if needed.";
 		}
 		
-		$enhanced_system_prompt = "You are a mental health assistant helping patients understand their symptoms and find appropriate therapy. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nIMPORTANT: You must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status ONLY when you have asked enough questions AND can confidently suggest a diagnosis\n- The 'reasoning' field should contain your actual conversational response to the patient (questions, empathy, guidance)\n- Ask thoughtful, relevant questions to gather necessary information\n- Be conversational and empathetic in your responses";
+		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- Do NOT repeat the same questions - ask new, specific questions based on their responses\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information\n- Use 'complete' status ONLY when you have asked enough questions AND can confidently suggest a diagnosis\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation";
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
@@ -1629,12 +1680,8 @@ class SNKS_AI_Integration {
 		$response_data = json_decode( $ai_response, true );
 		
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
-			// Fallback for invalid JSON - provide a helpful response
-			if ( $is_arabic ) {
-				$fallback_message = "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن هذه المشاعر؟ متى بدأت تشعر بهذا الحزن؟";
-			} else {
-				$fallback_message = "Thank you for sharing that with me. Can you tell me more about these feelings? When did you start feeling this sadness?";
-			}
+			// Fallback for invalid JSON - provide a contextual response based on conversation
+			$fallback_message = $this->generate_contextual_fallback( $message, $conversation_history, $is_arabic );
 			
 			return array(
 				'message' => $fallback_message,
@@ -1720,17 +1767,13 @@ class SNKS_AI_Integration {
 				)
 			);
 		} else {
-			// Continue conversation - use reasoning if available, otherwise provide a helpful response
+			// Continue conversation - use reasoning if available, otherwise provide a contextual response
 			$message = '';
 			if ( isset( $response_data['reasoning'] ) && ! empty( trim( $response_data['reasoning'] ) ) ) {
 				$message = $response_data['reasoning'];
 			} else {
-				// If reasoning is empty or just whitespace, provide a helpful follow-up question
-				if ( $is_arabic ) {
-					$message = "شكراً لك على مشاركة ذلك معي. هل يمكنك إخباري أكثر عن هذه المشاعر؟ متى بدأت تشعر بهذا الحزن؟ وهل هناك أي أعراض أخرى تعاني منها؟";
-				} else {
-					$message = "Thank you for sharing that with me. Can you tell me more about these feelings? When did you start feeling this sadness? Are there any other symptoms you're experiencing?";
-				}
+				// If reasoning is empty or just whitespace, provide a contextual follow-up question
+				$message = $this->generate_contextual_fallback( $message, $conversation_history, $is_arabic );
 			}
 			
 			return array(
