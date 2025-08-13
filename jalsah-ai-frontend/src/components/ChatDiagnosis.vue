@@ -181,9 +181,9 @@ import api from '@/services/api'
 export default {
   name: 'ChatDiagnosis',
   setup() {
-    const router = useRouter()
-    const toast = useToast()
-    const { t: $t } = useI18n()
+         const router = useRouter()
+     const toast = useToast()
+     const { t: $t, locale } = useI18n()
     
     const messages = ref([])
     const newMessage = ref('')
@@ -262,7 +262,7 @@ export default {
           formData.append('action', 'chat_diagnosis_ajax')
           formData.append('message', userMessage)
           formData.append('conversation_history', JSON.stringify(messages.value))
-          formData.append('locale', $i18n.locale)
+          formData.append('locale', locale.value || 'en')
          
          const response = await api.post('/wp-admin/admin-ajax.php', formData, {
            headers: {
