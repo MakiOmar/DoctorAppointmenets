@@ -273,7 +273,7 @@ export default {
     welcome: {
       title: 'Welcome to AI Chat Diagnosis',
       description: 'I\'m here to help you understand your mental health and find the right support.',
-      message: 'Hello! I\'m your AI mental health assistant. I\'m here to help you understand what you\'re going through and suggest the best type of therapy for you. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you\'d like - I\'m here to listen and help.'
+      message: 'Hello! I\'m here to help you with a preliminary psychological assessment. Could you tell me which country you\'re from? This will help me understand your cultural context and speak with you in the appropriate language.'
     },
     input: {
       placeholder: 'Type your message here...'

@@ -372,6 +372,40 @@ class SNKS_AI_Integration {
 				}
 			}
 			
+			// Check if this is a response to country question (second question)
+			if ( $ai_questions_count === 1 ) {
+				// If user provided a country response, move to symptoms
+				$country_keywords = array('مصر', 'السعودية', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان', 'الأردن', 'لبنان', 'سوريا', 'العراق', 'فلسطين', 'اليمن', 'السودان', 'المغرب', 'الجزائر', 'تونس', 'ليبيا', 'موريتانيا', 'الصومال', 'جيبوتي', 'جزر القمر', 'موريشيوس', 'سيشل', 'جزر المالديف', 'تركيا', 'إيران', 'أفغانستان', 'باكستان', 'الهند', 'بنغلاديش', 'سريلانكا', 'نيبال', 'بوتان', 'ماليزيا', 'إندونيسيا', 'سنغافورة', 'تايلاند', 'فيتنام', 'كمبوديا', 'لاوس', 'ميانمار', 'الفلبين', 'بروناي', 'تيمور الشرقية', 'الصين', 'اليابان', 'كوريا', 'منغوليا', 'كازاخستان', 'أوزبكستان', 'تركمانستان', 'طاجيكستان', 'قيرغيزستان', 'أذربيجان', 'جورجيا', 'أرمينيا', 'روسيا', 'أوكرانيا', 'بيلاروسيا', 'مولدوفا', 'رومانيا', 'بلغاريا', 'صربيا', 'كرواتيا', 'سلوفينيا', 'البوسنة', 'الجبل الأسود', 'ألبانيا', 'مقدونيا', 'اليونان', 'تركيا', 'قبرص', 'مالطا', 'إيطاليا', 'إسبانيا', 'البرتغال', 'فرنسا', 'ألمانيا', 'النمسا', 'سويسرا', 'بلجيكا', 'هولندا', 'لوكسمبورغ', 'الدنمارك', 'السويد', 'النرويج', 'فنلندا', 'آيسلندا', 'إستونيا', 'لاتفيا', 'ليتوانيا', 'بولندا', 'التشيك', 'سلوفاكيا', 'المجر', 'أمريكا', 'كندا', 'المكسيك', 'البرازيل', 'الأرجنتين', 'تشيلي', 'بيرو', 'كولومبيا', 'فنزويلا', 'الإكوادور', 'بوليفيا', 'باراغواي', 'أوروغواي', 'غيانا', 'سورينام', 'غيانا الفرنسية', 'أستراليا', 'نيوزيلندا', 'فيجي', 'بابوا غينيا الجديدة', 'جزر سليمان', 'فانواتو', 'كاليدونيا الجديدة', 'بولينيزيا الفرنسية', 'ساموا', 'تونغا', 'كيريباتي', 'توفالو', 'ناورو', 'بالاو', 'ولايات ميكرونيزيا الموحدة', 'جزر مارشال', 'جنوب أفريقيا', 'نيجيريا', 'كينيا', 'إثيوبيا', 'أوغندا', 'تنزانيا', 'زامبيا', 'زيمبابوي', 'بوتسوانا', 'ناميبيا', 'أنغولا', 'موزمبيق', 'مدغشقر', 'موريشيوس', 'سيشل', 'جزر القمر', 'جيبوتي', 'إريتريا', 'الصومال', 'السودان', 'جنوب السودان', 'جمهورية أفريقيا الوسطى', 'تشاد', 'الكاميرون', 'الغابون', 'جمهورية الكونغو', 'جمهورية الكونغو الديمقراطية', 'رواندا', 'بوروندي', 'مالاوي', 'ليسوتو', 'إسواتيني', 'موريشيوس', 'سيشل', 'جزر القمر', 'جيبوتي', 'إريتريا', 'الصومال', 'السودان', 'جنوب السودان', 'جمهورية أفريقيا الوسطى', 'تشاد', 'الكاميرون', 'الغابون', 'جمهورية الكونغو', 'جمهورية الكونغو الديمقراطية', 'رواندا', 'بوروندي', 'مالاوي', 'ليسوتو', 'إسواتيني');
+				
+				$is_country_response = false;
+				foreach ( $country_keywords as $country ) {
+					if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+						$is_country_response = true;
+						break;
+					}
+				}
+				
+				if ( $is_country_response ) {
+					return "شكراً لك! الآن دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+				}
+				
+				// Check for general country response patterns
+				$country_patterns = array('من', 'أنا من', 'أقيم في', 'أسكن في', 'موطني', 'بلدي', 'وطني');
+				foreach ( $country_patterns as $pattern ) {
+					if ( strpos( $message_lower, $pattern ) !== false ) {
+						return "شكراً لك! الآن دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+					}
+				}
+				
+				// Check if user wants to skip country question or move to symptoms directly
+				$skip_patterns = array('لا يهم', 'لا أريد', 'تخطي', 'التالي', 'أريد التحدث عن مشاكلي', 'دعنا نبدأ', 'أريد مساعدة', 'مشاكل', 'أعراض', 'أشعر', 'أعاني');
+				foreach ( $skip_patterns as $pattern ) {
+					if ( strpos( $message_lower, $pattern ) !== false ) {
+						return "حسناً، دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+					}
+				}
+			}
+			
 			// Arabic keyword detection with repetition avoidance
 			if ( strpos( $message_lower, 'أرق' ) !== false || strpos( $message_lower, 'نوم' ) !== false || strpos( $message_lower, 'سهر' ) !== false ) {
 				$sleep_question = "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
@@ -447,6 +481,40 @@ class SNKS_AI_Integration {
 				foreach ( $country_questions as $question ) {
 					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
 						return $question;
+					}
+				}
+			}
+			
+			// Check if this is a response to country question (second question)
+			if ( $ai_questions_count === 1 ) {
+				// If user provided a country response, move to symptoms
+				$country_keywords = array('egypt', 'saudi arabia', 'united arab emirates', 'kuwait', 'qatar', 'bahrain', 'oman', 'jordan', 'lebanon', 'syria', 'iraq', 'palestine', 'yemen', 'sudan', 'morocco', 'algeria', 'tunisia', 'libya', 'mauritania', 'somalia', 'djibouti', 'comoros', 'mauritius', 'seychelles', 'maldives', 'turkey', 'iran', 'afghanistan', 'pakistan', 'india', 'bangladesh', 'sri lanka', 'nepal', 'bhutan', 'malaysia', 'indonesia', 'singapore', 'thailand', 'vietnam', 'cambodia', 'laos', 'myanmar', 'philippines', 'brunei', 'east timor', 'china', 'japan', 'korea', 'mongolia', 'kazakhstan', 'uzbekistan', 'turkmenistan', 'tajikistan', 'kyrgyzstan', 'azerbaijan', 'georgia', 'armenia', 'russia', 'ukraine', 'belarus', 'moldova', 'romania', 'bulgaria', 'serbia', 'croatia', 'slovenia', 'bosnia', 'montenegro', 'albania', 'macedonia', 'greece', 'cyprus', 'malta', 'italy', 'spain', 'portugal', 'france', 'germany', 'austria', 'switzerland', 'belgium', 'netherlands', 'luxembourg', 'denmark', 'sweden', 'norway', 'finland', 'iceland', 'estonia', 'latvia', 'lithuania', 'poland', 'czech republic', 'slovakia', 'hungary', 'usa', 'united states', 'america', 'canada', 'mexico', 'brazil', 'argentina', 'chile', 'peru', 'colombia', 'venezuela', 'ecuador', 'bolivia', 'paraguay', 'uruguay', 'guyana', 'suriname', 'french guiana', 'australia', 'new zealand', 'fiji', 'papua new guinea', 'solomon islands', 'vanuatu', 'new caledonia', 'french polynesia', 'samoa', 'tonga', 'kiribati', 'tuvalu', 'nauru', 'palau', 'micronesia', 'marshall islands', 'south africa', 'nigeria', 'kenya', 'ethiopia', 'uganda', 'tanzania', 'zambia', 'zimbabwe', 'botswana', 'namibia', 'angola', 'mozambique', 'madagascar', 'mauritius', 'seychelles', 'comoros', 'djibouti', 'eritrea', 'somalia', 'south sudan', 'central african republic', 'chad', 'cameroon', 'gabon', 'congo', 'democratic republic of congo', 'rwanda', 'burundi', 'malawi', 'lesotho', 'eswatini');
+				
+				$is_country_response = false;
+				foreach ( $country_keywords as $country ) {
+					if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+						$is_country_response = true;
+						break;
+					}
+				}
+				
+				if ( $is_country_response ) {
+					return "Thank you! Now let me help you understand what you're going through. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you'd like - I'm here to listen and help.";
+				}
+				
+				// Check for general country response patterns
+				$country_patterns = array('from', 'i\'m from', 'i am from', 'i live in', 'i reside in', 'my country', 'my homeland', 'my nationality');
+				foreach ( $country_patterns as $pattern ) {
+					if ( strpos( $message_lower, $pattern ) !== false ) {
+						return "Thank you! Now let me help you understand what you're going through. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you'd like - I'm here to listen and help.";
+					}
+				}
+				
+				// Check if user wants to skip country question or move to symptoms directly
+				$skip_patterns = array('doesn\'t matter', 'i don\'t want', 'skip', 'next', 'i want to talk about my problems', 'let\'s start', 'i need help', 'problems', 'symptoms', 'i feel', 'i suffer');
+				foreach ( $skip_patterns as $pattern ) {
+					if ( strpos( $message_lower, $pattern ) !== false ) {
+						return "Alright, let me help you understand what you're going through. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you'd like - I'm here to listen and help.";
 					}
 				}
 			}
