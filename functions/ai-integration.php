@@ -374,7 +374,10 @@ class SNKS_AI_Integration {
 			
 			// Check if this is a response to country question (second question)
 			if ( $ai_questions_count === 1 ) {
-				// If user provided a country response, move to symptoms
+				// Detect country and dialect
+				$dialect = $this->detect_country_and_dialect( $message );
+				
+				// If user provided a country response, move to symptoms with appropriate dialect
 				$country_keywords = array('مصر', 'السعودية', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان', 'الأردن', 'لبنان', 'سوريا', 'العراق', 'فلسطين', 'اليمن', 'السودان', 'المغرب', 'الجزائر', 'تونس', 'ليبيا', 'موريتانيا', 'الصومال', 'جيبوتي', 'جزر القمر', 'موريشيوس', 'سيشل', 'جزر المالديف', 'تركيا', 'إيران', 'أفغانستان', 'باكستان', 'الهند', 'بنغلاديش', 'سريلانكا', 'نيبال', 'بوتان', 'ماليزيا', 'إندونيسيا', 'سنغافورة', 'تايلاند', 'فيتنام', 'كمبوديا', 'لاوس', 'ميانمار', 'الفلبين', 'بروناي', 'تيمور الشرقية', 'الصين', 'اليابان', 'كوريا', 'منغوليا', 'كازاخستان', 'أوزبكستان', 'تركمانستان', 'طاجيكستان', 'قيرغيزستان', 'أذربيجان', 'جورجيا', 'أرمينيا', 'روسيا', 'أوكرانيا', 'بيلاروسيا', 'مولدوفا', 'رومانيا', 'بلغاريا', 'صربيا', 'كرواتيا', 'سلوفينيا', 'البوسنة', 'الجبل الأسود', 'ألبانيا', 'مقدونيا', 'اليونان', 'تركيا', 'قبرص', 'مالطا', 'إيطاليا', 'إسبانيا', 'البرتغال', 'فرنسا', 'ألمانيا', 'النمسا', 'سويسرا', 'بلجيكا', 'هولندا', 'لوكسمبورغ', 'الدنمارك', 'السويد', 'النرويج', 'فنلندا', 'آيسلندا', 'إستونيا', 'لاتفيا', 'ليتوانيا', 'بولندا', 'التشيك', 'سلوفاكيا', 'المجر', 'أمريكا', 'كندا', 'المكسيك', 'البرازيل', 'الأرجنتين', 'تشيلي', 'بيرو', 'كولومبيا', 'فنزويلا', 'الإكوادور', 'بوليفيا', 'باراغواي', 'أوروغواي', 'غيانا', 'سورينام', 'غيانا الفرنسية', 'أستراليا', 'نيوزيلندا', 'فيجي', 'بابوا غينيا الجديدة', 'جزر سليمان', 'فانواتو', 'كاليدونيا الجديدة', 'بولينيزيا الفرنسية', 'ساموا', 'تونغا', 'كيريباتي', 'توفالو', 'ناورو', 'بالاو', 'ولايات ميكرونيزيا الموحدة', 'جزر مارشال', 'جنوب أفريقيا', 'نيجيريا', 'كينيا', 'إثيوبيا', 'أوغندا', 'تنزانيا', 'زامبيا', 'زيمبابوي', 'بوتسوانا', 'ناميبيا', 'أنغولا', 'موزمبيق', 'مدغشقر', 'موريشيوس', 'سيشل', 'جزر القمر', 'جيبوتي', 'إريتريا', 'الصومال', 'السودان', 'جنوب السودان', 'جمهورية أفريقيا الوسطى', 'تشاد', 'الكاميرون', 'الغابون', 'جمهورية الكونغو', 'جمهورية الكونغو الديمقراطية', 'رواندا', 'بوروندي', 'مالاوي', 'ليسوتو', 'إسواتيني', 'موريشيوس', 'سيشل', 'جزر القمر', 'جيبوتي', 'إريتريا', 'الصومال', 'السودان', 'جنوب السودان', 'جمهورية أفريقيا الوسطى', 'تشاد', 'الكاميرون', 'الغابون', 'جمهورية الكونغو', 'جمهورية الكونغو الديمقراطية', 'رواندا', 'بوروندي', 'مالاوي', 'ليسوتو', 'إسواتيني');
 				
 				$is_country_response = false;
@@ -386,14 +389,14 @@ class SNKS_AI_Integration {
 				}
 				
 				if ( $is_country_response ) {
-					return "شكراً لك! الآن دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+					return $this->get_dialect_symptoms_question( $dialect );
 				}
 				
 				// Check for general country response patterns
 				$country_patterns = array('من', 'أنا من', 'أقيم في', 'أسكن في', 'موطني', 'بلدي', 'وطني');
 				foreach ( $country_patterns as $pattern ) {
 					if ( strpos( $message_lower, $pattern ) !== false ) {
-						return "شكراً لك! الآن دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+						return $this->get_dialect_symptoms_question( $dialect );
 					}
 				}
 				
@@ -401,35 +404,47 @@ class SNKS_AI_Integration {
 				$skip_patterns = array('لا يهم', 'لا أريد', 'تخطي', 'التالي', 'أريد التحدث عن مشاكلي', 'دعنا نبدأ', 'أريد مساعدة', 'مشاكل', 'أعراض', 'أشعر', 'أعاني');
 				foreach ( $skip_patterns as $pattern ) {
 					if ( strpos( $message_lower, $pattern ) !== false ) {
-						return "حسناً، دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+						return $this->get_dialect_symptoms_question( $dialect );
+					}
+				}
+			}
+			
+			// Detect dialect from conversation history
+			$dialect = 'egyptian'; // default
+			foreach ( $conversation_history as $msg ) {
+				if ( $msg['role'] === 'user' ) {
+					$detected_dialect = $this->detect_country_and_dialect( $msg['content'] );
+					if ( $detected_dialect !== 'egyptian' ) {
+						$dialect = $detected_dialect;
+						break;
 					}
 				}
 			}
 			
 			// Arabic keyword detection with repetition avoidance
 			if ( strpos( $message_lower, 'أرق' ) !== false || strpos( $message_lower, 'نوم' ) !== false || strpos( $message_lower, 'سهر' ) !== false ) {
-				$sleep_question = "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
+				$sleep_question = $this->get_dialect_sleep_question( $dialect );
 				if ( ! $this->question_already_asked( $sleep_question, $asked_questions ) ) {
 					return $sleep_question;
 				}
 			}
 			
 			if ( strpos( $message_lower, 'حزن' ) !== false || strpos( $message_lower, 'اكتئاب' ) !== false || strpos( $message_lower, 'حزين' ) !== false ) {
-				$sadness_question = "أرى أنك تشعر بالحزن. هل يمكنك إخباري متى بدأت تشعر بهذا الحزن؟ وهل هناك سبب محدد لهذه المشاعر؟";
+				$sadness_question = $this->get_dialect_sadness_question( $dialect );
 				if ( ! $this->question_already_asked( $sadness_question, $asked_questions ) ) {
 					return $sadness_question;
 				}
 			}
 			
 			if ( strpos( $message_lower, 'قلق' ) !== false || strpos( $message_lower, 'توتر' ) !== false || strpos( $message_lower, 'خوف' ) !== false ) {
-				$anxiety_question = "أفهم أنك تشعر بالقلق. هل يمكنك إخباري أكثر عن ما يقلقك؟ وهل هناك مواقف معينة تزيد من هذا القلق؟";
+				$anxiety_question = $this->get_dialect_anxiety_question( $dialect );
 				if ( ! $this->question_already_asked( $anxiety_question, $asked_questions ) ) {
 					return $anxiety_question;
 				}
 			}
 			
 			if ( strpos( $message_lower, 'عمل' ) !== false || strpos( $message_lower, 'وظيفة' ) !== false || strpos( $message_lower, 'مهنة' ) !== false ) {
-				$work_question = "أرى أن العمل يؤثر على صحتك النفسية. هل يمكنك إخباري أكثر عن طبيعة عملك والضغوط التي تواجهها؟";
+				$work_question = $this->get_dialect_work_question( $dialect );
 				if ( ! $this->question_already_asked( $work_question, $asked_questions ) ) {
 					return $work_question;
 				}
@@ -437,13 +452,7 @@ class SNKS_AI_Integration {
 			
 			// If user said "no" or "لا", ask about something different
 			if ( $message_lower === 'لا' || $message_lower === 'no' ) {
-				$different_questions = array(
-					"هل يمكنك إخباري عن علاقاتك مع العائلة والأصدقاء؟ هل تشعر بالدعم منهم؟",
-					"هل لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
-					"هل تجد صعوبة في التركيز أو اتخاذ القرارات؟",
-					"هل تشعر بالتوتر أو القلق في مواقف معينة؟",
-					"هل هناك أنشطة كنت تستمتع بها سابقاً ولم تعد تستمتع بها الآن؟"
-				);
+				$different_questions = $this->get_dialect_different_questions( $dialect );
 				
 				foreach ( $different_questions as $question ) {
 					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
@@ -453,13 +462,7 @@ class SNKS_AI_Integration {
 			}
 			
 			// Default contextual response - avoid repetition
-			$default_questions = array(
-				"هل يمكنك إخباري أكثر عن تأثير هذه المشاعر على حياتك اليومية؟",
-				"هل هناك أي أعراض أخرى تعاني منها؟",
-				"هل لاحظت أي تغييرات في سلوكك أو عاداتك؟",
-				"هل تشعر أن هذه المشاعر تؤثر على علاقاتك مع الآخرين؟",
-				"هل هناك مواقف معينة تجعل هذه المشاعر أسوأ؟"
-			);
+			$default_questions = $this->get_dialect_default_questions( $dialect );
 			
 			foreach ( $default_questions as $question ) {
 				if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
@@ -468,7 +471,7 @@ class SNKS_AI_Integration {
 			}
 			
 			// If all questions have been asked, provide a generic response
-			return "شكراً لك على مشاركة ذلك معي. هل هناك أي شيء آخر تود إخباري به عن وضعك الحالي؟";
+			return $this->get_dialect_final_response( $dialect );
 		} else {
 			// For early questions (first or second), ask about country/region
 			if ( $ai_questions_count <= 1 ) {
@@ -595,6 +598,562 @@ class SNKS_AI_Integration {
 		
 		// Consider we have sufficient info if we have symptoms and at least 2 user messages
 		return $has_symptoms && $user_messages >= 2;
+	}
+	
+	/**
+	 * Detect user's country from message and return appropriate dialect
+	 */
+	private function detect_country_and_dialect( $message ) {
+		$message_lower = strtolower( $message );
+		
+		// Egyptian dialect
+		$egyptian_countries = array('مصر', 'egypt', 'القاهرة', 'cairo', 'الإسكندرية', 'alexandria', 'الجيزة', 'giza');
+		foreach ( $egyptian_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'egyptian';
+			}
+		}
+		
+		// Saudi dialect
+		$saudi_countries = array('السعودية', 'saudi arabia', 'الرياض', 'riyadh', 'جدة', 'jeddah', 'الدمام', 'dammam');
+		foreach ( $saudi_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'saudi';
+			}
+		}
+		
+		// UAE dialect
+		$uae_countries = array('الإمارات', 'united arab emirates', 'دبي', 'dubai', 'أبو ظبي', 'abu dhabi', 'الشارقة', 'sharjah');
+		foreach ( $uae_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'uae';
+			}
+		}
+		
+		// Kuwait dialect
+		$kuwait_countries = array('الكويت', 'kuwait', 'مدينة الكويت', 'kuwait city');
+		foreach ( $kuwait_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'kuwait';
+			}
+		}
+		
+		// Qatar dialect
+		$qatar_countries = array('قطر', 'qatar', 'الدوحة', 'doha');
+		foreach ( $qatar_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'qatar';
+			}
+		}
+		
+		// Bahrain dialect
+		$bahrain_countries = array('البحرين', 'bahrain', 'المنامة', 'manama');
+		foreach ( $bahrain_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'bahrain';
+			}
+		}
+		
+		// Oman dialect
+		$oman_countries = array('عمان', 'oman', 'مسقط', 'muscat');
+		foreach ( $oman_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'oman';
+			}
+		}
+		
+		// Jordan dialect
+		$jordan_countries = array('الأردن', 'jordan', 'عمان', 'amman');
+		foreach ( $jordan_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'jordan';
+			}
+		}
+		
+		// Lebanon dialect
+		$lebanon_countries = array('لبنان', 'lebanon', 'بيروت', 'beirut');
+		foreach ( $lebanon_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'lebanon';
+			}
+		}
+		
+		// Syria dialect
+		$syria_countries = array('سوريا', 'syria', 'دمشق', 'damascus', 'حلب', 'aleppo');
+		foreach ( $syria_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'syria';
+			}
+		}
+		
+		// Iraq dialect
+		$iraq_countries = array('العراق', 'iraq', 'بغداد', 'baghdad');
+		foreach ( $iraq_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'iraq';
+			}
+		}
+		
+		// Palestine dialect
+		$palestine_countries = array('فلسطين', 'palestine', 'القدس', 'jerusalem', 'رام الله', 'ramallah');
+		foreach ( $palestine_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'palestine';
+			}
+		}
+		
+		// Yemen dialect
+		$yemen_countries = array('اليمن', 'yemen', 'صنعاء', 'sanaa');
+		foreach ( $yemen_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'yemen';
+			}
+		}
+		
+		// Sudan dialect
+		$sudan_countries = array('السودان', 'sudan', 'الخرطوم', 'khartoum');
+		foreach ( $sudan_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'sudan';
+			}
+		}
+		
+		// Morocco dialect
+		$morocco_countries = array('المغرب', 'morocco', 'الرباط', 'rabat', 'الدار البيضاء', 'casablanca');
+		foreach ( $morocco_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'morocco';
+			}
+		}
+		
+		// Algeria dialect
+		$algeria_countries = array('الجزائر', 'algeria', 'الجزائر العاصمة', 'algiers');
+		foreach ( $algeria_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'algeria';
+			}
+		}
+		
+		// Tunisia dialect
+		$tunisia_countries = array('تونس', 'tunisia', 'تونس العاصمة', 'tunis');
+		foreach ( $tunisia_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'tunisia';
+			}
+		}
+		
+		// Libya dialect
+		$libya_countries = array('ليبيا', 'libya', 'طرابلس', 'tripoli');
+		foreach ( $libya_countries as $country ) {
+			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
+				return 'libya';
+			}
+		}
+		
+		// Default to Egyptian if no specific country detected
+		return 'egyptian';
+	}
+	
+	/**
+	 * Get dialect-specific response for sleep questions
+	 */
+	private function get_dialect_sleep_question( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return "أفهم إنك بتعاني من مشاكل في النوم. ممكن تحكيلي أكتر عن نمط نومك؟ كام ساعة بتنام عادة؟ وهل بتيقظ كتير في الليل؟";
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return "أفهم إنك تعاني من مشاكل في النوم. ممكن تقولي أكتر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تيقظ كتير في الليل؟";
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return "أفهم إنك تعاني من مشاكل في النوم. ممكن تقولي أكتر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تيقظ كتير في الليل؟";
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return "أفهم إنك تعاني من مشاكل في النوم. ممكن تقولي ليا أكتر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تيقظ كتير في الليل؟";
+			
+			case 'sudan':
+			case 'libya':
+				return "أفهم إنك بتعاني من مشاكل في النوم. ممكن تحكيلي أكتر عن نمط نومك؟ كام ساعة بتنام عادة؟ وهل بتيقظ كتير في الليل؟";
+			
+			default:
+				return "أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟";
+		}
+	}
+	
+	/**
+	 * Get dialect-specific response for sadness questions
+	 */
+	private function get_dialect_sadness_question( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return "أرى إنك بتحس بالحزن. ممكن تحكيلي متى بدأت تحس بالحزن ده؟ وهل في سبب محدد للمشاعر دي؟";
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return "أرى إنك تحس بالحزن. ممكن تقولي متى بدأت تحس بالحزن هذا؟ وهل في سبب محدد للمشاعر هذه؟";
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return "أرى إنك تحس بالحزن. ممكن تقولي متى بدأت تحس بالحزن هذا؟ وهل في سبب محدد للمشاعر هذه؟";
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return "أرى إنك تحس بالحزن. ممكن تقولي ليا متى بدأت تحس بالحزن هذا؟ وهل في سبب محدد للمشاعر هذه؟";
+			
+			case 'sudan':
+			case 'libya':
+				return "أرى إنك بتحس بالحزن. ممكن تحكيلي متى بدأت تحس بالحزن ده؟ وهل في سبب محدد للمشاعر دي؟";
+			
+			default:
+				return "أرى أنك تشعر بالحزن. هل يمكنك إخباري متى بدأت تشعر بهذا الحزن؟ وهل هناك سبب محدد لهذه المشاعر؟";
+		}
+	}
+	
+	/**
+	 * Get dialect-specific response for anxiety questions
+	 */
+	private function get_dialect_anxiety_question( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return "أفهم إنك بتحس بالقلق. ممكن تحكيلي أكتر عن إيه اللي بيقلقك؟ وهل في مواقف معينة بتبقى القلق فيها أكتر؟";
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return "أفهم إنك تحس بالقلق. ممكن تقولي أكتر عن شو اللي يقلقك؟ وهل في مواقف معينة يصير القلق فيها أكتر؟";
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return "أفهم إنك تحس بالقلق. ممكن تقولي أكتر عن شو اللي يقلقك؟ وهل في مواقف معينة يصير القلق فيها أكتر؟";
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return "أفهم إنك تحس بالقلق. ممكن تقولي ليا أكتر عن شنو لي يقلقك؟ وهل في مواقف معينة يصير القلق فيها أكتر؟";
+			
+			case 'sudan':
+			case 'libya':
+				return "أفهم إنك بتحس بالقلق. ممكن تحكيلي أكتر عن إيه اللي بيقلقك؟ وهل في مواقف معينة بتبقى القلق فيها أكتر؟";
+			
+			default:
+				return "أفهم أنك تشعر بالقلق. هل يمكنك إخباري أكثر عن ما يقلقك؟ وهل هناك مواقف معينة تزيد من هذا القلق؟";
+		}
+	}
+	
+	/**
+	 * Get dialect-specific response for work questions
+	 */
+	private function get_dialect_work_question( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return "أرى إن العمل بيأثر على صحتك النفسية. ممكن تحكيلي أكتر عن طبيعة شغلك والضغوط اللي بتحس بيها؟";
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return "أرى إن العمل يؤثر على صحتك النفسية. ممكن تقولي أكتر عن طبيعة شغلك والضغوط اللي تحس فيها؟";
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return "أرى إن العمل يؤثر على صحتك النفسية. ممكن تقولي أكتر عن طبيعة شغلك والضغوط اللي تحس فيها؟";
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return "أرى إن العمل يؤثر على صحتك النفسية. ممكن تقولي ليا أكتر عن طبيعة شغلك والضغوط اللي تحس فيها؟";
+			
+			case 'sudan':
+			case 'libya':
+				return "أرى إن العمل بيأثر على صحتك النفسية. ممكن تحكيلي أكتر عن طبيعة شغلك والضغوط اللي بتحس بيها؟";
+			
+			default:
+				return "أرى أن العمل يؤثر على صحتك النفسية. هل يمكنك إخباري أكثر عن طبيعة عملك والضغوط التي تواجهها؟";
+		}
+	}
+	
+	/**
+	 * Get dialect-specific response for different questions when user says "no"
+	 */
+	private function get_dialect_different_questions( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return array(
+					"ممكن تحكيلي عن علاقاتك مع العيلة والأصحاب؟ بتحس بالدعم منهم؟",
+					"لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"بتلاقي صعوبة في التركيز أو اتخاذ القرارات؟",
+					"بتحس بالتوتر أو القلق في مواقف معينة؟",
+					"في أنشطة كنت بتحبها قبل كده ومش بتحبها دلوقتي؟"
+				);
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return array(
+					"ممكن تقولي عن علاقاتك مع العيلة والأصحاب؟ تحس بالدعم منهم؟",
+					"لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"تلاقي صعوبة في التركيز أو اتخاذ القرارات؟",
+					"تحس بالتوتر أو القلق في مواقف معينة؟",
+					"في أنشطة كنت تحبها قبل هذا وما تحبها الحين؟"
+				);
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return array(
+					"ممكن تقولي عن علاقاتك مع العيلة والأصحاب؟ تحس بالدعم منهم؟",
+					"لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"تلاقي صعوبة في التركيز أو اتخاذ القرارات؟",
+					"تحس بالتوتر أو القلق في مواقف معينة؟",
+					"في أنشطة كنت تحبها قبل هذا وما تحبها الحين؟"
+				);
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return array(
+					"ممكن تقولي ليا عن علاقاتك مع العيلة والأصحاب؟ تحس بالدعم منهم؟",
+					"لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"تلاقي صعوبة في التركيز أو اتخاذ القرارات؟",
+					"تحس بالتوتر أو القلق في مواقف معينة؟",
+					"في أنشطة كنت تحبها قبل هذا وما تحبها دابا؟"
+				);
+			
+			case 'sudan':
+			case 'libya':
+				return array(
+					"ممكن تحكيلي عن علاقاتك مع العيلة والأصحاب؟ بتحس بالدعم منهم؟",
+					"لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"بتلاقي صعوبة في التركيز أو اتخاذ القرارات؟",
+					"بتحس بالتوتر أو القلق في مواقف معينة؟",
+					"في أنشطة كنت بتحبها قبل كده ومش بتحبها دلوقتي؟"
+				);
+			
+			default:
+				return array(
+					"هل يمكنك إخباري عن علاقاتك مع العائلة والأصدقاء؟ هل تشعر بالدعم منهم؟",
+					"هل لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟",
+					"هل تجد صعوبة في التركيز أو اتخاذ القرارات؟",
+					"هل تشعر بالتوتر أو القلق في مواقف معينة؟",
+					"هل هناك أنشطة كنت تستمتع بها سابقاً ولم تعد تستمتع بها الآن؟"
+				);
+		}
+	}
+	
+	/**
+	 * Get dialect-specific response for default questions
+	 */
+	private function get_dialect_default_questions( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return array(
+					"ممكن تحكيلي أكتر عن تأثير المشاعر دي على حياتك اليومية؟",
+					"في أعراض تانية بتعاني منها؟",
+					"لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+					"بتحس إن المشاعر دي بتأثر على علاقاتك مع الناس؟",
+					"في مواقف معينة بتبقى المشاعر دي فيها أسوأ؟"
+				);
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return array(
+					"ممكن تقولي أكتر عن تأثير المشاعر هذه على حياتك اليومية؟",
+					"في أعراض ثانية تعاني منها؟",
+					"لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+					"تحس إن المشاعر هذه تؤثر على علاقاتك مع الناس؟",
+					"في مواقف معينة تصير المشاعر هذه فيها أسوأ؟"
+				);
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return array(
+					"ممكن تقولي أكتر عن تأثير المشاعر هذه على حياتك اليومية؟",
+					"في أعراض ثانية تعاني منها؟",
+					"لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+					"تحس إن المشاعر هذه تؤثر على علاقاتك مع الناس؟",
+					"في مواقف معينة تصير المشاعر هذه فيها أسوأ؟"
+				);
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return array(
+					"ممكن تقولي ليا أكتر عن تأثير المشاعر هذه على حياتك اليومية؟",
+					"في أعراض ثانية تعاني منها؟",
+					"لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+					"تحس إن المشاعر هذه تؤثر على علاقاتك مع الناس؟",
+					"في مواقف معينة تصير المشاعر هذه فيها أسوأ؟"
+				);
+			
+			case 'sudan':
+			case 'libya':
+				return array(
+					"ممكن تحكيلي أكتر عن تأثير المشاعر دي على حياتك اليومية؟",
+					"في أعراض تانية بتعاني منها؟",
+					"لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+					"بتحس إن المشاعر دي بتأثر على علاقاتك مع الناس؟",
+					"في مواقف معينة بتبقى المشاعر دي فيها أسوأ؟"
+				);
+			
+			default:
+				return array(
+					"هل يمكنك إخباري أكثر عن تأثير هذه المشاعر على حياتك اليومية؟",
+					"هل هناك أي أعراض أخرى تعاني منها؟",
+					"هل لاحظت أي تغييرات في سلوكك أو عاداتك؟",
+					"هل تشعر أن هذه المشاعر تؤثر على علاقاتك مع الآخرين؟",
+					"هل هناك مواقف معينة تجعل هذه المشاعر أسوأ؟"
+				);
+		}
+	}
+	
+	/**
+	 * Get dialect-specific final response
+	 */
+	private function get_dialect_final_response( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return "شكراً لك على مشاركة كده معايا. في حاجة تانية عايز تحكيها عن وضعك الحالي؟";
+			
+			case 'saudi':
+			case 'uae':
+			case 'kuwait':
+			case 'qatar':
+			case 'bahrain':
+			case 'oman':
+				return "شكراً لك على مشاركة هذا معي. في شيء ثاني تريد تقوله عن وضعك الحالي؟";
+			
+			case 'jordan':
+			case 'lebanon':
+			case 'syria':
+			case 'iraq':
+			case 'palestine':
+			case 'yemen':
+				return "شكراً لك على مشاركة هذا معي. في شيء ثاني تريد تقوله عن وضعك الحالي؟";
+			
+			case 'morocco':
+			case 'algeria':
+			case 'tunisia':
+				return "شكراً لك على مشاركة هذا معي. في شيء ثاني تريد تقولي ليا عن وضعك الحالي؟";
+			
+			case 'sudan':
+			case 'libya':
+				return "شكراً لك على مشاركة كده معايا. في حاجة تانية عايز تحكيها عن وضعك الحالي؟";
+			
+			default:
+				return "شكراً لك على مشاركة ذلك معي. هل هناك أي شيء آخر تود إخباري به عن وضعك الحالي؟";
+		}
+	}
+	
+	/**
+	 * Get dialect-specific response for symptoms question
+	 */
+	private function get_dialect_symptoms_question( $dialect ) {
+		switch ( $dialect ) {
+			case 'egyptian':
+				return "شكراً لك! دلوقتي خلينا نفهم إيه اللي مضايقك. ممكن تحكيلي إيه اللي بتحس بيه أو إيه المشاكل اللي بتواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'saudi':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'uae':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'kuwait':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'qatar':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'bahrain':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'oman':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'jordan':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'lebanon':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'syria':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'iraq':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'palestine':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'yemen':
+				return "شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'sudan':
+				return "شكراً لك! دلوقتي خلينا نفهم إيه اللي مضايقك. ممكن تحكيلي إيه اللي بتحس بيه أو إيه المشاكل اللي بتواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			case 'morocco':
+				return "شكراً لك! دابا خلينا نفهمو شنو لي مضايقك. ممكن تقولي ليا شنو لي كتحس فيه أو شنو المشاكل لي كتواجهها؟ تقدر تكون مفصل كيف ما تحب - أنا هنا نسمعك ونساعدك.";
+			
+			case 'algeria':
+				return "شكراً لك! دابا خلينا نفهمو شنو لي مضايقك. ممكن تقولي ليا شنو لي كتحس فيه أو شنو المشاكل لي كتواجهها؟ تقدر تكون مفصل كيف ما تحب - أنا هنا نسمعك ونساعدك.";
+			
+			case 'tunisia':
+				return "شكراً لك! دابا خلينا نفهمو شنو لي مضايقك. ممكن تقولي ليا شنو لي كتحس فيه أو شنو المشاكل لي كتواجهها؟ تقدر تكون مفصل كيف ما تحب - أنا هنا نسمعك ونساعدك.";
+			
+			case 'libya':
+				return "شكراً لك! دلوقتي خلينا نفهم إيه اللي مضايقك. ممكن تحكيلي إيه اللي بتحس بيه أو إيه المشاكل اللي بتواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.";
+			
+			default:
+				return "شكراً لك! الآن دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.";
+		}
 	}
 	
 	/**
