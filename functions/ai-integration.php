@@ -2717,6 +2717,10 @@ class SNKS_AI_Integration {
 				$arabic_match = stripos( $diagnosis->name, $response_data['diagnosis'] ) !== false;
 				$english_match = stripos( $diagnosis->name_en, $response_data['diagnosis'] ) !== false;
 				
+				// Debug: Log each diagnosis check
+				error_log("Checking - AI: '{$response_data['diagnosis']}' vs Arabic: '{$diagnosis->name}' vs English: '{$diagnosis->name_en}'");
+				error_log("Arabic match: " . ($arabic_match ? 'YES' : 'NO') . ", English match: " . ($english_match ? 'YES' : 'NO'));
+				
 				if ( $arabic_match || $english_match ) {
 					$diagnosis_id = $diagnosis->id;
 					// Use appropriate name based on language
@@ -2731,9 +2735,22 @@ class SNKS_AI_Integration {
 			
 			if ( ! $diagnosis_id ) {
 				error_log("NO MATCH FOUND for diagnosis: " . $response_data['diagnosis']);
+				error_log("Available diagnoses for comparison:");
+				foreach (array_slice($diagnoses, 0, 10) as $diagnosis) {
+					error_log("  - Arabic: '{$diagnosis->name}', English: '{$diagnosis->name_en}'");
+				}
 			}
 			error_log('=== END DIAGNOSIS MATCHING DEBUG ===');
 		}
+		
+		// Debug: Log the final result processing
+		error_log('=== FINAL RESULT PROCESSING DEBUG ===');
+		error_log('Response status: ' . ($response_data['status'] ?? 'NOT_SET'));
+		error_log('Diagnosis ID: ' . ($diagnosis_id ?? 'NOT_FOUND'));
+		error_log('Diagnosis name: ' . ($diagnosis_name ?? 'NOT_SET'));
+		error_log('Is Arabic: ' . ($is_arabic ? 'YES' : 'NO'));
+		error_log('Will show completed result: ' . (($response_data['status'] === 'complete' && $diagnosis_id) ? 'YES' : 'NO'));
+		error_log('=== END FINAL RESULT PROCESSING DEBUG ===');
 		
 		// Format response message
 		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
