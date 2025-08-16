@@ -2564,8 +2564,20 @@ class SNKS_AI_Integration {
 		$diagnoses = $wpdb->get_results( "SELECT id, name, name_en, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
 		$diagnosis_list = array();
 		foreach ( $diagnoses as $diagnosis ) {
-			$diagnosis_list[] = $diagnosis->name . ' (ID: ' . $diagnosis->id . ')';
+			// Use appropriate name based on language
+			$diagnosis_name = $is_arabic ? $diagnosis->name : $diagnosis->name_en;
+			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
 		}
+		
+		// Debug: Log diagnoses information
+		error_log('=== DIAGNOSES DEBUG ===');
+		error_log('Total diagnoses count: ' . count($diagnoses));
+		error_log('Is Arabic: ' . ($is_arabic ? 'YES' : 'NO'));
+		error_log('Sample diagnoses:');
+		foreach (array_slice($diagnoses, 0, 5) as $diagnosis) {
+			error_log("ID: {$diagnosis->id}, Arabic: {$diagnosis->name}, English: {$diagnosis->name_en}");
+		}
+		error_log('=== END DIAGNOSES DEBUG ===');
 		
 		// Determine conversation language based on user input and locale
 		$locale = sanitize_text_field( $_POST['locale'] ?? 'en' );
@@ -2696,15 +2708,31 @@ class SNKS_AI_Integration {
 		$diagnosis_description = '';
 		
 		if ( $response_data['status'] === 'complete' && ! empty( $response_data['diagnosis'] ) ) {
+			// Debug: Log diagnosis matching
+			error_log('=== DIAGNOSIS MATCHING DEBUG ===');
+			error_log('AI returned diagnosis: ' . $response_data['diagnosis']);
+			error_log('Is Arabic: ' . ($is_arabic ? 'YES' : 'NO'));
+			
 			foreach ( $diagnoses as $diagnosis ) {
-				if ( stripos( $diagnosis->name, $response_data['diagnosis'] ) !== false || 
-					 stripos( $diagnosis->name_en, $response_data['diagnosis'] ) !== false ) {
+				$arabic_match = stripos( $diagnosis->name, $response_data['diagnosis'] ) !== false;
+				$english_match = stripos( $diagnosis->name_en, $response_data['diagnosis'] ) !== false;
+				
+				if ( $arabic_match || $english_match ) {
 					$diagnosis_id = $diagnosis->id;
-					$diagnosis_name = $diagnosis->name;
+					// Use appropriate name based on language
+					$diagnosis_name = $is_arabic ? $diagnosis->name : $diagnosis->name_en;
 					$diagnosis_description = $diagnosis->description;
+					
+					error_log("MATCH FOUND - ID: {$diagnosis_id}, Arabic: {$diagnosis->name}, English: {$diagnosis->name_en}");
+					error_log("Selected name: {$diagnosis_name}");
 					break;
 				}
 			}
+			
+			if ( ! $diagnosis_id ) {
+				error_log("NO MATCH FOUND for diagnosis: " . $response_data['diagnosis']);
+			}
+			error_log('=== END DIAGNOSIS MATCHING DEBUG ===');
 		}
 		
 		// Format response message
