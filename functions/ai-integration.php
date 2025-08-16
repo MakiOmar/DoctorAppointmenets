@@ -2559,13 +2559,22 @@ class SNKS_AI_Integration {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
 		}
 		
-		// Get available diagnoses
+		// Determine conversation language based on user input and locale
+		$locale = sanitize_text_field( $_POST['locale'] ?? 'en' );
+		$conversation_language = $this->detect_language( $message );
+		$is_arabic = $conversation_language === 'arabic' || $locale === 'ar';
+		
+		// Get available diagnoses with proper language support
 		global $wpdb;
-		$diagnoses = $wpdb->get_results( "SELECT id, name, name_en, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+		$diagnoses = $wpdb->get_results( "SELECT id, name, name_en, name_ar, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
 		$diagnosis_list = array();
 		foreach ( $diagnoses as $diagnosis ) {
 			// Use appropriate name based on language
-			$diagnosis_name = $is_arabic ? $diagnosis->name : $diagnosis->name_en;
+			if ( $is_arabic ) {
+				$diagnosis_name = !empty($diagnosis->name_ar) ? $diagnosis->name_ar : $diagnosis->name;
+			} else {
+				$diagnosis_name = !empty($diagnosis->name_en) ? $diagnosis->name_en : $diagnosis->name;
+			}
 			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
 		}
 		
@@ -2575,14 +2584,11 @@ class SNKS_AI_Integration {
 		error_log('Is Arabic: ' . ($is_arabic ? 'YES' : 'NO'));
 		error_log('Sample diagnoses:');
 		foreach (array_slice($diagnoses, 0, 5) as $diagnosis) {
-			error_log("ID: {$diagnosis->id}, Arabic: {$diagnosis->name}, English: {$diagnosis->name_en}");
+			$arabic_name = !empty($diagnosis->name_ar) ? $diagnosis->name_ar : $diagnosis->name;
+			$english_name = !empty($diagnosis->name_en) ? $diagnosis->name_en : $diagnosis->name;
+			error_log("ID: {$diagnosis->id}, Arabic: '{$arabic_name}', English: '{$english_name}'");
 		}
 		error_log('=== END DIAGNOSES DEBUG ===');
-		
-		// Determine conversation language based on user input and locale
-		$locale = sanitize_text_field( $_POST['locale'] ?? 'en' );
-		$conversation_language = $this->detect_language( $message );
-		$is_arabic = $conversation_language === 'arabic' || $locale === 'ar';
 		
 		// Count questions asked by AI so far
 		$ai_questions_count = 0;
@@ -2714,21 +2720,28 @@ class SNKS_AI_Integration {
 			error_log('Is Arabic: ' . ($is_arabic ? 'YES' : 'NO'));
 			
 			foreach ( $diagnoses as $diagnosis ) {
-				$arabic_match = stripos( $diagnosis->name, $response_data['diagnosis'] ) !== false;
-				$english_match = stripos( $diagnosis->name_en, $response_data['diagnosis'] ) !== false;
+				$arabic_name = !empty($diagnosis->name_ar) ? $diagnosis->name_ar : $diagnosis->name;
+				$english_name = !empty($diagnosis->name_en) ? $diagnosis->name_en : $diagnosis->name;
+				
+				$arabic_match = stripos( $arabic_name, $response_data['diagnosis'] ) !== false;
+				$english_match = stripos( $english_name, $response_data['diagnosis'] ) !== false;
 				
 				// Debug: Log each diagnosis check
-				error_log("Checking - AI: '{$response_data['diagnosis']}' vs Arabic: '{$diagnosis->name}' vs English: '{$diagnosis->name_en}'");
+				error_log("Checking - AI: '{$response_data['diagnosis']}' vs Arabic: '{$arabic_name}' vs English: '{$english_name}'");
 				error_log("Arabic match: " . ($arabic_match ? 'YES' : 'NO') . ", English match: " . ($english_match ? 'YES' : 'NO'));
 				
 				if ( $arabic_match || $english_match ) {
 					$diagnosis_id = $diagnosis->id;
 					// Use appropriate name based on language
-					$diagnosis_name = $is_arabic ? $diagnosis->name : $diagnosis->name_en;
+					if ( $is_arabic ) {
+						$diagnosis_name = !empty($diagnosis->name_ar) ? $diagnosis->name_ar : $diagnosis->name;
+					} else {
+						$diagnosis_name = !empty($diagnosis->name_en) ? $diagnosis->name_en : $diagnosis->name;
+					}
 					$diagnosis_description = $diagnosis->description;
 					
-					error_log("MATCH FOUND - ID: {$diagnosis_id}, Arabic: {$diagnosis->name}, English: {$diagnosis->name_en}");
-					error_log("Selected name: {$diagnosis_name}");
+					error_log("MATCH FOUND - ID: {$diagnosis_id}, Arabic: '{$arabic_name}', English: '{$english_name}'");
+					error_log("Selected name: '{$diagnosis_name}'");
 					break;
 				}
 			}
@@ -2737,7 +2750,9 @@ class SNKS_AI_Integration {
 				error_log("NO MATCH FOUND for diagnosis: " . $response_data['diagnosis']);
 				error_log("Available diagnoses for comparison:");
 				foreach (array_slice($diagnoses, 0, 10) as $diagnosis) {
-					error_log("  - Arabic: '{$diagnosis->name}', English: '{$diagnosis->name_en}'");
+					$arabic_name = !empty($diagnosis->name_ar) ? $diagnosis->name_ar : $diagnosis->name;
+					$english_name = !empty($diagnosis->name_en) ? $diagnosis->name_en : $diagnosis->name;
+					error_log("  - Arabic: '{$arabic_name}', English: '{$english_name}'");
 				}
 			}
 			error_log('=== END DIAGNOSIS MATCHING DEBUG ===');
