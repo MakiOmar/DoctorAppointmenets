@@ -1376,6 +1376,11 @@ class SNKS_AI_Integration {
 	 * Chat diagnosis endpoint via AJAX
 	 */
 	public function chat_diagnosis_ajax() {
+		// Debug: Log AJAX entry
+		error_log('=== CHAT_DIAGNOSIS_AJAX CALLED ===');
+		error_log('POST data: ' . print_r($_POST, true));
+		error_log('=== END CHAT_DIAGNOSIS_AJAX CALLED ===');
+		
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
 		
@@ -2535,6 +2540,12 @@ class SNKS_AI_Integration {
 	 * Process chat diagnosis using OpenAI
 	 */
 	private function process_chat_diagnosis( $message, $conversation_history ) {
+		// Debug: Log function entry
+		error_log('=== PROCESS_CHAT_DIAGNOSIS CALLED ===');
+		error_log('Message: ' . $message);
+		error_log('Conversation history count: ' . count($conversation_history));
+		error_log('=== END PROCESS_CHAT_DIAGNOSIS CALLED ===');
+		
 		// Get OpenAI settings
 		$api_key = get_option( 'snks_ai_chatgpt_api_key' );
 		$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
@@ -2587,6 +2598,20 @@ class SNKS_AI_Integration {
 		}
 		
 		$enhanced_system_prompt = "You are a compassionate mental health assistant conducting a diagnostic conversation. " . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- IMPORTANT: If this is the first or second question, ask the patient about their country/region to better understand their cultural context and speak in their local language\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ($ai_questions_count + 1) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new\n- For early questions, ask about their country/region to provide culturally appropriate responses";
+		
+		// Debug: Log the prompt being sent to ChatGPT
+		error_log('=== CHATGPT PROMPT DEBUG ===');
+		error_log('Question count: ' . $ai_questions_count);
+		error_log('Min questions: ' . $min_questions);
+		error_log('Max questions: ' . $max_questions);
+		error_log('Is Arabic: ' . ($is_arabic ? 'YES' : 'NO'));
+		error_log('Language instruction: ' . $language_instruction);
+		error_log('Question limit instruction: ' . $question_limit_instruction);
+		error_log('Available diagnoses count: ' . count($diagnosis_list));
+		error_log('=== COMPLETE SYSTEM PROMPT ===');
+		error_log($enhanced_system_prompt);
+		error_log('=== END COMPLETE SYSTEM PROMPT ===');
+		error_log('=== END CHATGPT PROMPT DEBUG ===');
 		$messages[] = array(
 			'role' => 'system',
 			'content' => $enhanced_system_prompt
@@ -2640,8 +2665,18 @@ class SNKS_AI_Integration {
 		
 		$ai_response = $result['choices'][0]['message']['content'];
 		
+		// Debug: Log the AI response
+		error_log('=== CHATGPT RESPONSE DEBUG ===');
+		error_log('Raw AI response: ' . $ai_response);
+		error_log('=== END CHATGPT RESPONSE DEBUG ===');
+		
 		// Parse the JSON response
 		$response_data = json_decode( $ai_response, true );
+		
+		// Debug: Log the parsed JSON
+		error_log('=== PARSED JSON DEBUG ===');
+		error_log('Parsed JSON: ' . json_encode($response_data, JSON_PRETTY_PRINT));
+		error_log('=== END PARSED JSON DEBUG ===');
 		
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
 			// Fallback for invalid JSON - provide a contextual response based on conversation
