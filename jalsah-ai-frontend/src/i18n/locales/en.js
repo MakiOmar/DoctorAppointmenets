@@ -291,7 +291,12 @@ export default {
       title: 'Medical Disclaimer',
       text: 'This is not medical advice. Please consult a qualified healthcare provider for proper diagnosis and treatment.'
     },
-    questionCounter: 'Questions asked: {count}'
+    questionCounter: 'Questions asked: {count}',
+    completion: {
+      title: 'Diagnosis Complete!',
+      message: 'We have completed your diagnosis and are now redirecting you to choose a therapist.',
+      redirecting: 'Redirecting to therapist selection...'
+    }
   },
 
   // Diagnosis Results

@@ -78,6 +78,8 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/([^/]+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]/$matches[2]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/?$', 'index.php?ai_endpoint=therapists', 'top' );
+		add_rewrite_rule( '^api/ai/diagnoses/(\d+)/?$', 'index.php?ai_endpoint=diagnoses/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/diagnoses/?$', 'index.php?ai_endpoint=diagnoses', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
 		// Add rewrite rule for v2 endpoints

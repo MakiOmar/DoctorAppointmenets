@@ -131,39 +131,21 @@
         </div>
       </div>
 
-      <!-- Diagnosis Results -->
+      <!-- Diagnosis Completion Message -->
       <div v-if="diagnosisCompleted" class="mt-8">
         <div class="card">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('chatDiagnosis.results.title') }}</h2>
-          <div class="space-y-4">
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-                <div class="ml-3" :class="$i18n.locale === 'ar' ? 'mr-3' : 'ml-3'">
-                  <h3 class="text-sm font-medium text-green-800">{{ diagnosisResult.title }}</h3>
-                  <p class="text-sm text-green-700 mt-1">{{ diagnosisResult.description }}</p>
-                </div>
-              </div>
+          <div class="text-center py-8">
+            <div class="mb-4">
+              <svg class="mx-auto h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            
-            <div class="flex space-x-4" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-4'">
-              <button
-                @click="viewTherapists"
-                class="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ $t('chatDiagnosis.results.findTherapists') }}
-              </button>
-              <button
-                @click="startNewDiagnosis"
-                class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                {{ $t('chatDiagnosis.results.newDiagnosis') }}
-              </button>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">{{ $t('chatDiagnosis.completion.title') }}</h2>
+            <p class="text-lg text-gray-600 mb-6">{{ $t('chatDiagnosis.completion.message') }}</p>
+            <div class="flex justify-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             </div>
+            <p class="text-sm text-gray-500 mt-4">{{ $t('chatDiagnosis.completion.redirecting') }}</p>
           </div>
         </div>
       </div>
@@ -287,6 +269,15 @@ export default {
              diagnosisResult.description = diagnosis.description
              diagnosisResult.diagnosisId = diagnosis.id
              diagnosisCompleted.value = true
+             
+             // Auto-redirect to results page after a short delay
+             setTimeout(() => {
+               if (diagnosisResult.diagnosisId) {
+                 router.push(`/diagnosis-results/${diagnosisResult.diagnosisId}`)
+               } else {
+                 router.push('/therapists')
+               }
+             }, 3000) // 3 second delay to show completion message
            }
          } else {
            throw new Error(response.data.data || 'Failed to get response')
@@ -307,22 +298,7 @@ export default {
       }
     }
 
-    const viewTherapists = () => {
-      if (diagnosisResult.diagnosisId) {
-        router.push(`/diagnosis-results/${diagnosisResult.diagnosisId}`)
-      } else {
-        router.push('/therapists')
-      }
-    }
 
-    const startNewDiagnosis = () => {
-      messages.value = []
-      diagnosisCompleted.value = false
-      diagnosisResult.title = ''
-      diagnosisResult.description = ''
-      diagnosisResult.diagnosisId = null
-      addWelcomeMessage()
-    }
 
     onMounted(() => {
       addWelcomeMessage()
@@ -337,8 +313,6 @@ export default {
        chatContainer,
        aiQuestionsCount,
        sendMessage,
-       viewTherapists,
-       startNewDiagnosis,
        formatMessage,
        formatTime
      }

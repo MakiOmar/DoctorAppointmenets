@@ -113,7 +113,7 @@ export default {
     const router = useRouter()
     const route = useRoute()
     const toast = useToast()
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const settingsStore = useSettingsStore()
     
     const loading = ref(true)
@@ -134,37 +134,76 @@ export default {
       } else if (diagnosisData) {
         // Use stored diagnosis data for simulation
         const data = JSON.parse(diagnosisData)
-        diagnosisResult.value = {
-          title: t('diagnosisResults.simulatedResults.general.title'),
-          description: t('diagnosisResults.simulatedResults.general.description')
-        }
+        simulateDiagnosisResult(data)
       } else {
         // Fallback to default
         diagnosisResult.value = {
-          title: t('diagnosisResults.default.title'),
-          description: t('diagnosisResults.default.description')
+          title: t('diagnosisResults.defaultTitle'),
+          description: t('diagnosisResults.defaultDescription')
         }
       }
     }
 
     const loadDiagnosisDetails = async (diagnosisId) => {
       try {
+        console.log('Loading diagnosis details for ID:', diagnosisId)
+        
         // Check if diagnosisId is numeric (ID) or string (name)
         if (/^\d+$/.test(diagnosisId)) {
           // It's a numeric ID, try to load from API
+          console.log('Making API call to:', `/api/ai/diagnoses/${diagnosisId}`)
           const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
           
+          console.log('API response:', response.data)
+          
           if (response.data.success && response.data.data) {
-            const diagnosis = response.data.data
+            let diagnosis = response.data.data
+            console.log('API response data:', diagnosis)
+            
+            // Check if the response is an array (list of diagnoses) or a single diagnosis
+            if (Array.isArray(diagnosis)) {
+              // Find the specific diagnosis by ID
+              diagnosis = diagnosis.find(d => d.id == diagnosisId)
+              console.log('Found diagnosis in list:', diagnosis)
+              
+              if (!diagnosis) {
+                console.log('Diagnosis not found in list')
+                // Fallback to default
+                diagnosisResult.value = {
+                  title: t('diagnosisResults.defaultTitle'),
+                  description: t('diagnosisResults.defaultDescription')
+                }
+                return
+              }
+            }
+            
+            console.log('Diagnosis data:', diagnosis)
+            
+            // Use the localized name from the backend, with fallback to manual localization
+            let localizedName = diagnosis.name
+            let localizedDescription = diagnosis.description
+            
+            // If backend didn't provide localized name, handle it on frontend
+            if (diagnosis.name_en && diagnosis.name_ar) {
+              const currentLocale = locale.value || 'en'
+              console.log('Current locale:', currentLocale)
+              localizedName = currentLocale === 'ar' ? diagnosis.name_ar : diagnosis.name_en
+              localizedDescription = currentLocale === 'ar' ? (diagnosis.description_ar || diagnosis.description) : (diagnosis.description_en || diagnosis.description)
+            }
+            
+            console.log('Final localized name:', localizedName)
+            console.log('Final localized description:', localizedDescription)
+            
             diagnosisResult.value = {
-              title: diagnosis.name,
-              description: diagnosis.description
+              title: localizedName,
+              description: localizedDescription
             }
           } else {
+            console.log('API call failed or no data returned')
             // Fallback to default if API fails
             diagnosisResult.value = {
-              title: t('diagnosisResults.default.title'),
-              description: t('diagnosisResults.default.description')
+              title: t('diagnosisResults.defaultTitle'),
+              description: t('diagnosisResults.defaultDescription')
             }
           }
         } else {
@@ -172,23 +211,24 @@ export default {
           const decodedName = decodeURIComponent(diagnosisId)
           diagnosisResult.value = {
             title: decodedName,
-            description: t('diagnosisResults.default.description')
+            description: t('diagnosisResults.defaultDescription')
           }
         }
       } catch (error) {
         console.error('Error loading diagnosis details:', error)
+        console.error('Error details:', error.response?.data)
         // If it's a name, use it directly; otherwise fallback to default
         if (!/^\d+$/.test(diagnosisId)) {
           const decodedName = decodeURIComponent(diagnosisId)
           diagnosisResult.value = {
             title: decodedName,
-            description: t('diagnosisResults.default.description')
+            description: t('diagnosisResults.defaultDescription')
           }
         } else {
           // Fallback to default on error
           diagnosisResult.value = {
-            title: t('diagnosisResults.default.title'),
-            description: t('diagnosisResults.default.description')
+            title: t('diagnosisResults.defaultTitle'),
+            description: t('diagnosisResults.defaultDescription')
           }
         }
       }
