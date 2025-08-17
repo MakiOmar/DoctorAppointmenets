@@ -182,6 +182,7 @@ function snks_add_enhanced_ai_admin_menu() {
 	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
+add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
 
 /**
  * Load AI Admin Styles
