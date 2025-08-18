@@ -21,6 +21,10 @@
         >
           {{ therapist.display_order }}
         </div>
+        <!-- Debug info (remove after testing) -->
+        <div v-if="!therapist.display_order" class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+          No order
+        </div>
       </div>
 
       <!-- Therapist Info -->
@@ -323,6 +327,10 @@ export default {
     const cartStore = useCartStore()
     const toast = useToast()
     const router = useRouter()
+    
+    // Debug: Log therapist data
+    console.log('TherapistCard received therapist:', props.therapist)
+    console.log('Therapist display_order:', props.therapist.display_order)
     
     const showDetails = ref(false)
     const loading = ref(false)

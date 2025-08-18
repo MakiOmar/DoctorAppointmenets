@@ -300,10 +300,12 @@ export default {
               // Load therapists by diagnosis ID (default behavior)
               response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
               matchedTherapists.value = response.data.data || []
+              console.log('Therapists loaded by diagnosis ID:', matchedTherapists.value)
             } else {
               // If it's a name but ID search is enabled, load all therapists
               response = await api.get('/api/ai/therapists')
               matchedTherapists.value = response.data.data || []
+              console.log('Therapists loaded by name search:', matchedTherapists.value)
             }
           }
         } else {
