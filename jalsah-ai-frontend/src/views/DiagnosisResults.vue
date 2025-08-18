@@ -80,10 +80,11 @@
         <!-- Therapists List -->
         <div v-else class="space-y-6">
           <TherapistCard
-            v-for="therapist in matchedTherapists" 
+            v-for="(therapist, index) in sortedTherapists" 
             :key="therapist.id"
             :therapist="therapist"
             :diagnosis-id="route.params.diagnosisId"
+            :position="index + 1"
             @click="viewTherapist"
             @book="bookAppointment"
           />
@@ -121,6 +122,25 @@ export default {
     const diagnosisResult = ref({
       title: '',
       description: ''
+    })
+
+    // Computed property to sort therapists by display_order for current diagnosis
+    const sortedTherapists = computed(() => {
+      if (!matchedTherapists.value.length) return []
+      
+      const diagnosisId = route.params.diagnosisId
+      
+      return [...matchedTherapists.value].sort((a, b) => {
+        // Get display_order for current diagnosis for both therapists
+        const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        
+        const aOrder = parseInt(aDiagnosis?.display_order || '0')
+        const bOrder = parseInt(bDiagnosis?.display_order || '0')
+        
+        // Sort from lowest to highest
+        return aOrder - bOrder
+      })
     })
 
     const loadDiagnosisResult = () => {
@@ -348,6 +368,7 @@ export default {
     return {
       loading,
       matchedTherapists,
+      sortedTherapists,
       diagnosisResult,
       route,
       rediagnose,

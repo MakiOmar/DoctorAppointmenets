@@ -19,7 +19,7 @@
           class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
           :class="locale === 'ar' ? 'right-2 left-auto' : 'left-2 right-auto'"
         >
-          {{ currentDiagnosisDisplayOrder }}
+          {{ therapistPosition }}
         </div>
         <!-- Debug info (remove after testing) -->
         <div v-if="!currentDiagnosisDisplayOrder" class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
@@ -314,6 +314,10 @@ export default {
       type: [String, Number],
       default: null
     },
+    position: {
+      type: Number,
+      default: null
+    },
     settingsStore: {
       type: Object,
       required: false,
@@ -350,6 +354,11 @@ export default {
       console.log('Display order for current diagnosis:', currentDiagnosis?.display_order)
       
       return currentDiagnosis?.display_order || null
+    })
+
+    // Computed property to get therapist position (1, 2, 3, etc.)
+    const therapistPosition = computed(() => {
+      return props.position || null
     })
     const loading = ref(false)
     const error = ref(null)
@@ -888,6 +897,7 @@ export default {
       getAverageRating,
       suitabilityMessage,
       currentDiagnosisDisplayOrder,
+      therapistPosition,
       formatEarliestSlot,
       formatTimeSlot,
       locale,
