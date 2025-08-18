@@ -156,6 +156,11 @@ export default {
 
     // Computed property to get displayed therapists based on limit
     const displayedTherapists = computed(() => {
+      // If no therapists loaded yet, return empty array
+      if (!sortedTherapists.value || sortedTherapists.value.length === 0) {
+        return []
+      }
+      
       // Wait for settings to be initialized
       if (!settingsStore.isInitialized) {
         console.log('Settings not initialized yet, showing all therapists')
