@@ -15,14 +15,14 @@
         </div>
         <!-- Order Number Badge -->
         <div 
-          v-if="therapist.display_order" 
+          v-if="currentDiagnosisDisplayOrder" 
           class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
           :class="locale === 'ar' ? 'right-2 left-auto' : 'left-2 right-auto'"
         >
-          {{ therapist.display_order }}
+          {{ currentDiagnosisDisplayOrder }}
         </div>
         <!-- Debug info (remove after testing) -->
-        <div v-if="!therapist.display_order" class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+        <div v-if="!currentDiagnosisDisplayOrder" class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
           No order
         </div>
       </div>
@@ -331,8 +331,26 @@ export default {
     // Debug: Log therapist data
     console.log('TherapistCard received therapist:', props.therapist)
     console.log('Therapist display_order:', props.therapist.display_order)
+    console.log('Diagnosis ID from props:', props.diagnosisId)
     
     const showDetails = ref(false)
+    
+    // Computed property to get display_order for current diagnosis
+    const currentDiagnosisDisplayOrder = computed(() => {
+      if (!props.diagnosisId || !props.therapist.diagnoses) {
+        return null
+      }
+      
+      // Find the diagnosis that matches the current diagnosis ID
+      const currentDiagnosis = props.therapist.diagnoses.find(diagnosis => 
+        diagnosis.id.toString() === props.diagnosisId.toString()
+      )
+      
+      console.log('Current diagnosis found:', currentDiagnosis)
+      console.log('Display order for current diagnosis:', currentDiagnosis?.display_order)
+      
+      return currentDiagnosis?.display_order || null
+    })
     const loading = ref(false)
     const error = ref(null)
     const details = ref(null)
@@ -869,6 +887,7 @@ export default {
     return {
       getAverageRating,
       suitabilityMessage,
+      currentDiagnosisDisplayOrder,
       formatEarliestSlot,
       formatTimeSlot,
       locale,
