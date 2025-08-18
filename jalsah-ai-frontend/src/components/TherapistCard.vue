@@ -9,10 +9,7 @@
           class="w-32 h-32 rounded-lg"
           :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
         />
-        <!-- Price Badge -->
-        <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
-          {{ therapist.price?.others || $t('common.contact') }}
-        </div>
+        <!-- Price Badge (removed since price is now shown next to name) -->
         <!-- Order Number Badge -->
         <div 
           v-if="currentDiagnosisDisplayOrder" 
@@ -32,7 +29,12 @@
         <!-- Top Section: Name, Rating, Bio -->
         <div class="space-y-4">
           <div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ therapist.name }}</h3>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
+              <div class="text-lg font-semibold text-primary-600">
+                {{ formatPrice(therapist.price?.others) }}
+              </div>
+            </div>
             
             <div v-if="settingsStore && settingsStore.isRatingsEnabled" class="flex items-center gap-2">
               <StarRating :rating="therapist.rating || 0" />
@@ -360,6 +362,18 @@ export default {
     const therapistPosition = computed(() => {
       return props.position || null
     })
+
+    // Format price with currency symbol
+    const formatPrice = (price) => {
+      if (!price || price === 0) {
+        return locale.value === 'ar' ? 'اتصل للاستفسار' : 'Contact for pricing'
+      }
+      
+      // Use ج.م for Arabic, $ for English
+      const currencySymbol = locale.value === 'ar' ? 'ج.م' : '$'
+      return `${currencySymbol}${price}`
+    }
+
     const loading = ref(false)
     const error = ref(null)
     const details = ref(null)
@@ -898,6 +912,7 @@ export default {
       suitabilityMessage,
       currentDiagnosisDisplayOrder,
       therapistPosition,
+      formatPrice,
       formatEarliestSlot,
       formatTimeSlot,
       locale,
