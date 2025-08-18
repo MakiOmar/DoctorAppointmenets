@@ -133,7 +133,6 @@ export default {
       title: '',
       description: ''
     })
-    const displayedTherapists = ref([])
     const showAllTherapists = ref(false)
 
     // Computed property to sort therapists by display_order for current diagnosis
