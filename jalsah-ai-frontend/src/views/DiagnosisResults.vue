@@ -105,7 +105,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -156,6 +156,12 @@ export default {
 
     // Computed property to get displayed therapists based on limit
     const displayedTherapists = computed(() => {
+      // Wait for settings to be initialized
+      if (!settingsStore.isInitialized) {
+        console.log('Settings not initialized yet, showing all therapists')
+        return sortedTherapists.value
+      }
+      
       const limit = settingsStore.getDiagnosisResultsLimit
       console.log('Diagnosis results limit:', limit)
       console.log('Show all therapists:', showAllTherapists.value)
@@ -173,6 +179,11 @@ export default {
 
     // Computed property to check if there are more therapists to show
     const hasMoreTherapists = computed(() => {
+      // Wait for settings to be initialized
+      if (!settingsStore.isInitialized) {
+        return false
+      }
+      
       const limit = settingsStore.getDiagnosisResultsLimit
       if (limit === 0) return false
       return sortedTherapists.value.length > limit
@@ -410,6 +421,13 @@ export default {
       
       loadDiagnosisResult()
       loadMatchedTherapists()
+    })
+
+    // Watch for settings changes and reload if needed
+    watch(() => settingsStore.isInitialized, (newVal) => {
+      if (newVal) {
+        console.log('Settings initialized, current limit:', settingsStore.getDiagnosisResultsLimit)
+      }
     })
 
     return {
