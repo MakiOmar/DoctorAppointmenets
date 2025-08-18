@@ -1596,19 +1596,12 @@ class SNKS_AI_Integration {
 	 * Handle therapists endpoints
 	 */
 	private function handle_therapists_endpoint( $method, $path ) {
-		// Debug logging
-		error_log("Therapists Endpoint Debug: Method: " . $method . ", Path: " . print_r($path, true));
-		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
-					error_log("Therapists Endpoint Debug: Calling get_ai_therapists()");
 					$this->get_ai_therapists();
 				} elseif ( is_numeric( $path[1] ) ) {
-					error_log("Therapists Endpoint Debug: Therapist ID: " . $path[1] . ", Path[2]: " . ($path[2] ?? 'not set'));
-					
 					if ( isset( $path[2] ) && $path[2] === 'details' ) {
-						error_log("Therapists Endpoint Debug: Calling therapist details");
 						// Call the therapist details REST API function
 						$request = new WP_REST_Request('GET', '/jalsah-ai/v1/therapists/' . $path[1] . '/details');
 						$request->set_param('id', $path[1]);
@@ -1621,21 +1614,16 @@ class SNKS_AI_Integration {
 							$this->send_success($response['data']);
 						}
 					} elseif ( isset( $path[2] ) && $path[2] === 'earliest-slot' ) {
-						error_log("Therapists Endpoint Debug: Calling earliest slot for therapist ID: " . $path[1]);
 						$this->get_ai_therapist_earliest_slot( $path[1] );
 					} elseif ( isset( $path[2] ) && $path[2] === 'available-dates' ) {
-						error_log("Therapists Endpoint Debug: Calling available dates for therapist ID: " . $path[1]);
 						$this->get_ai_therapist_available_dates( $path[1] );
 					} elseif ( isset( $path[2] ) && $path[2] === 'time-slots' ) {
 						$date = $_GET['date'] ?? '';
-						error_log("Therapists Endpoint Debug: Calling time slots for therapist ID: " . $path[1] . ", date: " . $date);
 						$this->get_ai_therapist_time_slots( $path[1], $date );
 					} else {
-						error_log("Therapists Endpoint Debug: Calling get_ai_therapist for therapist ID: " . $path[1]);
 						$this->get_ai_therapist( $path[1] );
 					}
 				} elseif ( $path[1] === 'by-diagnosis' && is_numeric( $path[2] ) ) {
-					error_log("Therapists Endpoint Debug: Calling therapists by diagnosis: " . $path[2]);
 					$this->get_ai_therapists_by_diagnosis( $path[2] );
 				}
 				break;
@@ -1946,10 +1934,6 @@ class SNKS_AI_Integration {
 		// Get certificates
 		$certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];
 		
-		// Debug logging
-		error_log("AI Integration Debug: Raw certificates from application: " . print_r($application->certificates, true));
-		error_log("AI Integration Debug: After JSON decode: " . print_r($certificates, true));
-		
 		$certificates_data = [];
 		
 		foreach ($certificates as $cert_id) {
@@ -1991,8 +1975,6 @@ class SNKS_AI_Integration {
 		usort($certificates_data, function($a, $b) {
 			return strtotime($b['upload_date']) - strtotime($a['upload_date']);
 		});
-		
-		error_log("AI Integration Debug: Final certificates data: " . print_r($certificates_data, true));
 		
 		// Get the actual earliest slot from timetable
 		$earliest_slot_data = $this->get_earliest_slot_from_timetable($application->user_id);
@@ -2303,12 +2285,9 @@ class SNKS_AI_Integration {
 	 * Add to AI Cart
 	 */
 	private function add_to_ai_cart() {
-		error_log("=== OLD ADD TO AI CART DEBUG ===");
 		$user_id = $this->verify_jwt_token();
-		error_log("User ID from JWT: " . $user_id);
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
-		error_log("Request data: " . print_r($data, true));
 		
 		// Support both old format (slot_id) and new format (therapist_id, date, time)
 		if ( isset( $data['slot_id'] ) ) {
@@ -2353,13 +2332,9 @@ class SNKS_AI_Integration {
 			$cart = array();
 		}
 		
-		error_log("Current cart: " . print_r($cart, true));
-		error_log("Slot ID to add: " . $slot_id);
-		
 		// Check if slot is already in cart
 		foreach ( $cart as $item ) {
 			if ( $item['slot_id'] == $slot_id ) {
-				error_log("ERROR: Slot already in cart (old system)");
 				$this->send_error( 'Slot already in cart', 400 );
 			}
 		}
@@ -2949,11 +2924,6 @@ class SNKS_AI_Integration {
 	 * Verify JWT Token
 	 */
 	private function verify_jwt_token() {
-		// Debug logging
-		error_log( 'JWT Debug - Request URI: ' . $_SERVER['REQUEST_URI'] );
-		error_log( 'JWT Debug - Request Method: ' . $_SERVER['REQUEST_METHOD'] );
-		error_log( 'JWT Debug - All Headers: ' . print_r( getallheaders(), true ) );
-		
 		$headers = getallheaders();
 		$auth_header = isset( $headers['Authorization'] ) ? $headers['Authorization'] : '';
 		
@@ -2962,23 +2932,16 @@ class SNKS_AI_Integration {
 			$auth_header = $_SERVER['HTTP_AUTHORIZATION'];
 		}
 		
-		error_log( 'JWT Debug - Auth Header: ' . $auth_header );
-		
 		if ( ! preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
-			error_log( 'JWT Debug - No token found in header' );
 			$this->send_error( 'No token provided', 401 );
 		}
 		
 		$token = $matches[1];
-		error_log( 'JWT Debug - Token: ' . substr( $token, 0, 20 ) . '...' );
 		
 		try {
 			$decoded = JWT::decode( $token, new Key( $this->jwt_secret, $this->jwt_algorithm ) );
-			error_log( 'JWT Debug - Token decoded successfully, user_id: ' . $decoded->user_id );
 			return $decoded->user_id;
 		} catch ( Exception $e ) {
-			error_log( 'JWT Debug - Token decode error: ' . $e->getMessage() );
-			
 			// If it's a signature verification failure, suggest re-login
 			if ( strpos( $e->getMessage(), 'Signature verification failed' ) !== false ) {
 				$this->send_error( 'Token expired. Please login again.', 401 );
@@ -3449,17 +3412,6 @@ class SNKS_AI_Integration {
 	private function get_ai_therapist_earliest_slot($therapist_id) {
 		global $wpdb;
 		
-		// Debug logging
-		error_log("Earliest Slot Debug: Requested therapist ID: " . $therapist_id);
-		
-		// First, let's check what session statuses exist for this therapist
-		$statuses = $wpdb->get_results($wpdb->prepare(
-			"SELECT DISTINCT session_status FROM {$wpdb->prefix}snks_provider_timetable 
-			 WHERE user_id = %d",
-			$therapist_id
-		));
-		error_log("Earliest Slot Debug: Available session statuses: " . print_r($statuses, true));
-		
 		// Get the earliest slot regardless of settings - prioritize by date/time
 		$earliest_slot = $wpdb->get_row($wpdb->prepare(
 			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
@@ -3470,8 +3422,6 @@ class SNKS_AI_Integration {
 			 LIMIT 1",
 			$therapist_id
 		));
-		
-		error_log("Earliest Slot Debug: Query result for earliest slot: " . print_r($earliest_slot, true));
 		
 		// If no 'waiting' slots, try 'open' status
 		if (!$earliest_slot) {
