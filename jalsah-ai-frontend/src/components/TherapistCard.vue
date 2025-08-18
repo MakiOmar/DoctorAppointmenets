@@ -9,8 +9,17 @@
           class="w-32 h-32 rounded-lg"
           :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
         />
+        <!-- Price Badge -->
         <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
           {{ therapist.price?.others || $t('common.contact') }}
+        </div>
+        <!-- Order Number Badge -->
+        <div 
+          v-if="therapist.display_order" 
+          class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
+          :class="locale === 'ar' ? 'right-2 left-auto' : 'left-2 right-auto'"
+        >
+          {{ therapist.display_order }}
         </div>
       </div>
 

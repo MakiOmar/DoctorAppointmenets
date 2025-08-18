@@ -1892,10 +1892,10 @@ class SNKS_AI_Integration {
 		$table_name = $wpdb->prefix . 'therapist_applications';
 		
 		$applications = $wpdb->get_results( $wpdb->prepare(
-			"SELECT ta.* FROM $table_name ta
+			"SELECT ta.*, td.display_order FROM $table_name ta
 			JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON ta.user_id = td.therapist_id
 			WHERE td.diagnosis_id = %d AND ta.status = 'approved' AND ta.show_on_ai_site = 1
-			ORDER BY ta.name ASC",
+			ORDER BY td.display_order ASC, ta.name ASC",
 			$diagnosis_id
 		) );
 		
@@ -2019,6 +2019,7 @@ class SNKS_AI_Integration {
 			'price' => $this->get_therapist_ai_price( $application->user_id ),
 			'diagnoses' => $diagnoses,
 			'certificates' => $certificates_data,
+			'display_order' => intval( $application->display_order ),
 		);
 		
 		// Debug logging
@@ -2086,10 +2087,11 @@ class SNKS_AI_Integration {
 		$locale = snks_get_current_language();
 		
 		$diagnoses = $wpdb->get_results( $wpdb->prepare(
-			"SELECT d.*, td.rating, td.suitability_message_en, td.suitability_message_ar 
+			"SELECT d.*, td.rating, td.suitability_message_en, td.suitability_message_ar, td.display_order 
 			FROM {$wpdb->prefix}snks_diagnoses d
 			JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON d.id = td.diagnosis_id
-			WHERE td.therapist_id = %d",
+			WHERE td.therapist_id = %d
+			ORDER BY td.display_order ASC",
 			$therapist_id
 		) );
 		
