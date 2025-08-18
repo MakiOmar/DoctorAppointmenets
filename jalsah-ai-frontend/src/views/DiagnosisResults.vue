@@ -80,7 +80,7 @@
         <!-- Therapists List -->
         <div v-else class="space-y-6">
           <TherapistCard
-            v-for="(therapist, index) in sortedTherapists" 
+            v-for="(therapist, index) in displayedTherapists" 
             :key="therapist.id"
             :therapist="therapist"
             :diagnosis-id="route.params.diagnosisId"
@@ -88,6 +88,16 @@
             @click="viewTherapist"
             @book="bookAppointment"
           />
+          
+          <!-- Show More Button -->
+          <div v-if="hasMoreTherapists && !showAllTherapists" class="text-center pt-6">
+            <button
+              @click="showMoreTherapists"
+              class="btn-secondary"
+            >
+              {{ $t('diagnosisResults.showMore') }} ({{ sortedTherapists.length - displayedTherapists.length }} {{ $t('diagnosisResults.moreTherapists') }})
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -123,6 +133,8 @@ export default {
       title: '',
       description: ''
     })
+    const displayedTherapists = ref([])
+    const showAllTherapists = ref(false)
 
     // Computed property to sort therapists by display_order for current diagnosis
     const sortedTherapists = computed(() => {
@@ -141,6 +153,22 @@ export default {
         // Sort from lowest to highest
         return aOrder - bOrder
       })
+    })
+
+    // Computed property to get displayed therapists based on limit
+    const displayedTherapists = computed(() => {
+      const limit = settingsStore.getDiagnosisResultsLimit
+      if (limit === 0 || showAllTherapists.value) {
+        return sortedTherapists.value
+      }
+      return sortedTherapists.value.slice(0, limit)
+    })
+
+    // Computed property to check if there are more therapists to show
+    const hasMoreTherapists = computed(() => {
+      const limit = settingsStore.getDiagnosisResultsLimit
+      if (limit === 0) return false
+      return sortedTherapists.value.length > limit
     })
 
     const loadDiagnosisResult = () => {
@@ -360,6 +388,10 @@ export default {
       router.push(`/booking/${therapistId}`)
     }
 
+    const showMoreTherapists = () => {
+      showAllTherapists.value = true
+    }
+
     onMounted(() => {
       loadDiagnosisResult()
       loadMatchedTherapists()
@@ -369,12 +401,16 @@ export default {
       loading,
       matchedTherapists,
       sortedTherapists,
+      displayedTherapists,
+      hasMoreTherapists,
+      showAllTherapists,
       diagnosisResult,
       route,
       rediagnose,
       browseAllTherapists,
       viewTherapist,
-      bookAppointment
+      bookAppointment,
+      showMoreTherapists
     }
   }
 }

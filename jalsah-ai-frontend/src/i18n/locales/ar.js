@@ -322,6 +322,8 @@ export default {
     errorLoadingTherapists: 'فشل في تحميل المعالجين المطابقين',
     defaultTitle: 'الدعم العام للصحة النفسية',
     defaultDescription: 'بناءً على إجاباتك، قد تستفيد من الدعم العام للصحة النفسية والعلاج.',
+    showMore: 'عرض المزيد من المعالجين',
+    moreTherapists: 'المزيد',
     simulatedResults: {
       anxiety: {
         title: 'اضطراب القلق',

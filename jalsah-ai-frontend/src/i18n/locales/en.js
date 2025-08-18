@@ -313,6 +313,8 @@ export default {
     errorLoadingTherapists: 'Failed to load matched therapists',
     defaultTitle: 'General Mental Health Support',
     defaultDescription: 'Based on your responses, you may benefit from general mental health support and therapy.',
+    showMore: 'Show More Therapists',
+    moreTherapists: 'more',
     simulatedResults: {
       anxiety: {
         title: 'Anxiety Disorder',

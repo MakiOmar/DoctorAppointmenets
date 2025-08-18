@@ -2357,6 +2357,7 @@ function snks_enhanced_ai_settings_page() {
 			update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
 			update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
 			update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
+			update_option( 'snks_ai_diagnosis_results_limit', intval( $_POST['diagnosis_results_limit'] ) );
 			
 			echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 		}
@@ -2371,6 +2372,7 @@ function snks_enhanced_ai_settings_page() {
 	$frontend_url = get_option( 'snks_ai_frontend_url', 'https://jalsah-ai.com' );
 	$ratings_enabled = get_option( 'snks_ai_ratings_enabled', '1' ); // Default to enabled
 	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
+	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -2443,6 +2445,12 @@ function snks_enhanced_ai_settings_page() {
 					<label for="diagnosis_search_by_name">Search Therapists by Diagnosis Name</label>
 					<input type="checkbox" id="diagnosis_search_by_name" name="diagnosis_search_by_name" value="1" <?php checked( $diagnosis_search_by_name, '1' ); ?>>
 					<p class="description">When enabled, the diagnosis results page will search for therapists by diagnosis name instead of diagnosis ID. This allows for more flexible matching based on diagnosis names rather than specific IDs.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="diagnosis_results_limit">Diagnosis Results Limit</label>
+					<input type="number" id="diagnosis_results_limit" name="diagnosis_results_limit" value="<?php echo esc_attr( $diagnosis_results_limit ); ?>" min="1" max="50" class="small-text">
+					<p class="description">Maximum number of therapists to show on diagnosis results page. Set to 0 for unlimited results. Recommended: 10-20 for optimal user experience.</p>
 				</div>
 				
 				<?php submit_button( 'Save Settings' ); ?>
