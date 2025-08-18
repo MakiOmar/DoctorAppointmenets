@@ -2364,6 +2364,7 @@ function snks_enhanced_ai_settings_page() {
 				// Debug: Check if diagnosis_results_limit is set
 				$diagnosis_limit = isset( $_POST['diagnosis_results_limit'] ) ? intval( $_POST['diagnosis_results_limit'] ) : 10;
 				error_log('AI Settings Update - diagnosis_results_limit: ' . $diagnosis_limit);
+				error_log('AI Settings Update - POST diagnosis_results_limit raw: ' . (isset($_POST['diagnosis_results_limit']) ? $_POST['diagnosis_results_limit'] : 'NOT_SET'));
 				update_option( 'snks_ai_diagnosis_results_limit', $diagnosis_limit );
 				
 				// Debug: Verify the setting was saved

@@ -63,8 +63,10 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		
 		// Add AJAX endpoints for settings
-		add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
-		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
+			add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
+	add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
+	add_action( 'wp_ajax_test_diagnosis_limit', array( $this, 'test_diagnosis_limit_ajax' ) );
+	add_action( 'wp_ajax_nopriv_test_diagnosis_limit', array( $this, 'test_diagnosis_limit_ajax' ) );
 		
 
 	}
@@ -3032,6 +3034,23 @@ class SNKS_AI_Integration {
 		error_log('AI Settings API - Final settings: ' . print_r($settings, true));
 		
 		wp_send_json_success( $settings );
+	}
+	
+	/**
+	 * Test Diagnosis Limit AJAX Handler
+	 */
+	public function test_diagnosis_limit_ajax() {
+		// Manually set the option
+		update_option( 'snks_ai_diagnosis_results_limit', 5 );
+		
+		// Get the option
+		$limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
+		
+		wp_send_json_success( array(
+			'set_limit' => 5,
+			'retrieved_limit' => $limit,
+			'option_exists' => get_option( 'snks_ai_diagnosis_results_limit' ) !== false
+		) );
 	}
 	
 	/**
