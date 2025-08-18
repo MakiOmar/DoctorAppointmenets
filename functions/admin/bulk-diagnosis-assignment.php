@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_add_bulk_diagnosis_assignment_menu() {
 	add_submenu_page(
-		'jalsah-ai',
+		'jalsah-ai-management',
 		'Bulk Diagnosis Assignment',
 		'Bulk Assignment',
 		'manage_options',
