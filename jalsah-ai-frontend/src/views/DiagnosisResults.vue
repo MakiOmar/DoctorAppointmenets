@@ -157,10 +157,18 @@ export default {
     // Computed property to get displayed therapists based on limit
     const displayedTherapists = computed(() => {
       const limit = settingsStore.getDiagnosisResultsLimit
+      console.log('Diagnosis results limit:', limit)
+      console.log('Show all therapists:', showAllTherapists.value)
+      console.log('Total therapists:', sortedTherapists.value.length)
+      
       if (limit === 0 || showAllTherapists.value) {
+        console.log('Showing all therapists (limit 0 or show all)')
         return sortedTherapists.value
       }
-      return sortedTherapists.value.slice(0, limit)
+      
+      const limited = sortedTherapists.value.slice(0, limit)
+      console.log('Showing limited therapists:', limited.length)
+      return limited
     })
 
     // Computed property to check if there are more therapists to show
@@ -392,6 +400,14 @@ export default {
     }
 
     onMounted(() => {
+      console.log('Settings store initialized:', settingsStore.isInitialized)
+      console.log('Current diagnosis results limit:', settingsStore.getDiagnosisResultsLimit)
+      
+      // Ensure settings are loaded
+      if (!settingsStore.isInitialized) {
+        settingsStore.initializeSettings()
+      }
+      
       loadDiagnosisResult()
       loadMatchedTherapists()
     })
