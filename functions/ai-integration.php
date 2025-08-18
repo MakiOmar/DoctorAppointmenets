@@ -2023,9 +2023,6 @@ class SNKS_AI_Integration {
 			'certificates' => $certificates_data,
 		);
 		
-		// Debug logging
-		error_log( 'Therapist API Response for ID ' . $application->user_id . ': ' . print_r( $result, true ) );
-		
 		return $result;
 	}
 	
@@ -3015,10 +3012,6 @@ class SNKS_AI_Integration {
 	public function get_ai_settings_ajax() {
 		$current_language = snks_get_current_language();
 		
-		// Debug: Check what's in the database
-		$diagnosis_limit_from_db = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
-		error_log('AI Settings API - diagnosis_results_limit from DB: ' . $diagnosis_limit_from_db);
-		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
 			'default_language' => snks_get_default_language(),
@@ -3029,28 +3022,10 @@ class SNKS_AI_Integration {
 			'diagnosis_results_limit' => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
 		);
 		
-		// Debug: Log the final settings array
-		error_log('AI Settings API - Final settings: ' . print_r($settings, true));
-		
 		wp_send_json_success( $settings );
 	}
 	
-	/**
-	 * Test Diagnosis Limit AJAX Handler
-	 */
-	public function test_diagnosis_limit_ajax() {
-		// Manually set the option
-		update_option( 'snks_ai_diagnosis_results_limit', 5 );
-		
-		// Get the option
-		$limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
-		
-		wp_send_json_success( array(
-			'set_limit' => 5,
-			'retrieved_limit' => $limit,
-			'option_exists' => get_option( 'snks_ai_diagnosis_results_limit' ) !== false
-		) );
-	}
+
 	
 	/**
 	 * Test Connection AJAX Handler

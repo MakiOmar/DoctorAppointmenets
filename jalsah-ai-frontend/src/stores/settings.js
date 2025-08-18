@@ -70,15 +70,12 @@ export const useSettingsStore = defineStore('settings', () => {
       try {
         response = await api.get('/wp-json/jalsah-ai/v1/settings')
       } catch (e) {
-        console.log('REST API failed, trying AJAX...')
-        
         // Try WordPress AJAX
         try {
           response = await api.get('/wp-admin/admin-ajax.php', {
             params: { action: 'get_ai_settings' }
           })
         } catch (e2) {
-          console.log('AJAX also failed, using defaults')
           return
         }
       }

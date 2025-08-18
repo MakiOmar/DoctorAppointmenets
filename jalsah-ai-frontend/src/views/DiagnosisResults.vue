@@ -161,25 +161,19 @@ export default {
         return []
       }
       
-      // Wait for settings to be initialized
-      if (!settingsStore.isInitialized) {
-        console.log('Settings not initialized yet, showing all therapists')
-        return sortedTherapists.value
-      }
-      
-      const limit = settingsStore.getDiagnosisResultsLimit
-      console.log('Diagnosis results limit:', limit)
-      console.log('Show all therapists:', showAllTherapists.value)
-      console.log('Total therapists:', sortedTherapists.value.length)
-      
-      if (limit === 0 || showAllTherapists.value) {
-        console.log('Showing all therapists (limit 0 or show all)')
-        return sortedTherapists.value
-      }
-      
-      const limited = sortedTherapists.value.slice(0, limit)
-      console.log('Showing limited therapists:', limited.length)
-      return limited
+              // Wait for settings to be initialized
+        if (!settingsStore.isInitialized) {
+          return sortedTherapists.value
+        }
+        
+        const limit = settingsStore.getDiagnosisResultsLimit
+        
+        if (limit === 0 || showAllTherapists.value) {
+          return sortedTherapists.value
+        }
+        
+        const limited = sortedTherapists.value.slice(0, limit)
+        return limited
     })
 
     // Computed property to check if there are more therapists to show
@@ -222,23 +216,17 @@ export default {
         // Check if diagnosisId is numeric (ID) or string (name)
         if (/^\d+$/.test(diagnosisId)) {
           // It's a numeric ID, try to load from API
-          console.log('Making API call to:', `/api/ai/diagnoses/${diagnosisId}`)
           const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
-          
-          console.log('API response:', response.data)
           
           if (response.data.success && response.data.data) {
             let diagnosis = response.data.data
-            console.log('API response data:', diagnosis)
             
             // Check if the response is an array (list of diagnoses) or a single diagnosis
             if (Array.isArray(diagnosis)) {
               // Find the specific diagnosis by ID
               diagnosis = diagnosis.find(d => d.id == diagnosisId)
-              console.log('Found diagnosis in list:', diagnosis)
               
               if (!diagnosis) {
-                console.log('Diagnosis not found in list')
                 // Fallback to default
                 diagnosisResult.value = {
                   title: t('diagnosisResults.defaultTitle'),
@@ -248,8 +236,6 @@ export default {
               }
             }
             
-            console.log('Diagnosis data:', diagnosis)
-            
             // Use the localized name from the backend, with fallback to manual localization
             let localizedName = diagnosis.name
             let localizedDescription = diagnosis.description
@@ -257,20 +243,15 @@ export default {
             // If backend didn't provide localized name, handle it on frontend
             if (diagnosis.name_en && diagnosis.name_ar) {
               const currentLocale = locale.value || 'en'
-              console.log('Current locale:', currentLocale)
               localizedName = currentLocale === 'ar' ? diagnosis.name_ar : diagnosis.name_en
               localizedDescription = currentLocale === 'ar' ? (diagnosis.description_ar || diagnosis.description) : (diagnosis.description_en || diagnosis.description)
             }
-            
-            console.log('Final localized name:', localizedName)
-            console.log('Final localized description:', localizedDescription)
             
             diagnosisResult.value = {
               title: localizedName,
               description: localizedDescription
             }
           } else {
-            console.log('API call failed or no data returned')
             // Fallback to default if API fails
             diagnosisResult.value = {
               title: t('diagnosisResults.defaultTitle'),
@@ -371,12 +352,10 @@ export default {
               // Load therapists by diagnosis ID (default behavior)
               response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
               matchedTherapists.value = response.data.data || []
-              console.log('Therapists loaded by diagnosis ID:', matchedTherapists.value)
             } else {
               // If it's a name but ID search is enabled, load all therapists
               response = await api.get('/api/ai/therapists')
               matchedTherapists.value = response.data.data || []
-              console.log('Therapists loaded by name search:', matchedTherapists.value)
             }
           }
         } else {
@@ -416,9 +395,6 @@ export default {
     }
 
     onMounted(() => {
-      console.log('Settings store initialized:', settingsStore.isInitialized)
-      console.log('Current diagnosis results limit:', settingsStore.getDiagnosisResultsLimit)
-      
       // Ensure settings are loaded
       if (!settingsStore.isInitialized) {
         settingsStore.initializeSettings()
@@ -430,9 +406,7 @@ export default {
 
     // Watch for settings changes and reload if needed
     watch(() => settingsStore.isInitialized, (newVal) => {
-      if (newVal) {
-        console.log('Settings initialized, current limit:', settingsStore.getDiagnosisResultsLimit)
-      }
+      // Settings have been initialized
     })
 
     return {
