@@ -2345,23 +2345,34 @@ function snks_enhanced_ai_rochtah_page() {
 function snks_enhanced_ai_settings_page() {
 	snks_load_ai_admin_styles();
 	
-	// Handle settings updates
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_general_settings' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_general_settings' ) ) {
-			update_option( 'snks_ai_bilingual_enabled', isset( $_POST['bilingual_enabled'] ) ? '1' : '0' );
-			update_option( 'snks_ai_default_language', sanitize_text_field( $_POST['default_language'] ) );
-			update_option( 'snks_ai_site_title_en', sanitize_text_field( $_POST['site_title_en'] ) );
-			update_option( 'snks_ai_site_title_ar', sanitize_text_field( $_POST['site_title_ar'] ) );
-			update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
-			update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
-			update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
-			update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
-			update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
-			update_option( 'snks_ai_diagnosis_results_limit', intval( $_POST['diagnosis_results_limit'] ) );
-			
-			echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
+			// Handle settings updates
+		if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_general_settings' ) {
+			if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_general_settings' ) ) {
+				// Debug: Log the POST data
+				error_log('AI Settings Update - POST data: ' . print_r($_POST, true));
+				
+				update_option( 'snks_ai_bilingual_enabled', isset( $_POST['bilingual_enabled'] ) ? '1' : '0' );
+				update_option( 'snks_ai_default_language', sanitize_text_field( $_POST['default_language'] ) );
+				update_option( 'snks_ai_site_title_en', sanitize_text_field( $_POST['site_title_en'] ) );
+				update_option( 'snks_ai_site_title_ar', sanitize_text_field( $_POST['site_title_ar'] ) );
+				update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
+				update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
+				update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
+				update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
+				update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
+				
+				// Debug: Check if diagnosis_results_limit is set
+				$diagnosis_limit = isset( $_POST['diagnosis_results_limit'] ) ? intval( $_POST['diagnosis_results_limit'] ) : 10;
+				error_log('AI Settings Update - diagnosis_results_limit: ' . $diagnosis_limit);
+				update_option( 'snks_ai_diagnosis_results_limit', $diagnosis_limit );
+				
+				// Debug: Verify the setting was saved
+				$saved_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
+				error_log('AI Settings Update - saved diagnosis_results_limit: ' . $saved_limit);
+				
+				echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
+			}
 		}
-	}
 	
 	$bilingual_enabled = get_option( 'snks_ai_bilingual_enabled', '1' ); // Default to enabled
 	$default_language = get_option( 'snks_ai_default_language', 'ar' ); // Default to Arabic
