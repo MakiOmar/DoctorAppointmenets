@@ -2021,7 +2021,6 @@ class SNKS_AI_Integration {
 			'price' => $this->get_therapist_ai_price( $application->user_id ),
 			'diagnoses' => $diagnoses,
 			'certificates' => $certificates_data,
-			'display_order' => intval( $application->display_order ),
 		);
 		
 		// Debug logging
