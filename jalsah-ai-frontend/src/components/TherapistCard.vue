@@ -463,7 +463,8 @@ export default {
         }
         
         // Final fallback to therapist.earliest_slot if no timetable slots found
-        if (props.therapist.earliest_slot) {
+        // Only use this if the value is meaningful (not 0)
+        if (props.therapist.earliest_slot && parseInt(props.therapist.earliest_slot) > 0) {
           // Convert the earliest_slot value to a proper slot object
           // The earliest_slot field contains minutes from now
           const minutesFromNow = parseInt(props.therapist.earliest_slot)
@@ -836,13 +837,19 @@ export default {
       }
       
       // Fallback to therapist.earliest_slot if available
-      if (!slotData && therapist.earliest_slot) {
+      // Only use this if the value is meaningful (not 0)
+      if (!slotData && therapist.earliest_slot && parseInt(therapist.earliest_slot) > 0) {
         try {
-          slotDate = new Date(therapist.earliest_slot)
-          if (!isNaN(slotDate.getTime())) {
+          // Convert minutes from now to actual date/time
+          const minutesFromNow = parseInt(therapist.earliest_slot)
+          const now = new Date()
+          const earliestTime = new Date(now.getTime() + minutesFromNow * 60000)
+          
+          if (!isNaN(earliestTime.getTime())) {
+            slotDate = earliestTime
             slotData = {
-              date: slotDate.toISOString().split('T')[0],
-              time: slotDate.toTimeString().split(' ')[0].substring(0, 5)
+              date: earliestTime.toISOString().split('T')[0],
+              time: earliestTime.toTimeString().split(' ')[0].substring(0, 5)
             }
           }
         } catch (error) {
