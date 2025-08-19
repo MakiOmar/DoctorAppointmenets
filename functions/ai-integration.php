@@ -104,6 +104,8 @@ class SNKS_AI_Integration {
 	 * Register REST API routes
 	 */
 	public function register_rest_routes() {
+		error_log( 'AI Integration Debug - register_rest_routes called' );
+		
 		register_rest_route( 'jalsah-ai/v1', '/settings', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_ai_settings_rest' ),
@@ -3003,6 +3005,8 @@ class SNKS_AI_Integration {
 	 * Test Connection AJAX Handler
 	 */
 	public function test_connection_ajax() {
+		error_log( 'AI Test Connection AJAX Debug - Function called' );
+		
 		wp_send_json_success( array(
 			'message' => 'Connection successful',
 			'timestamp' => current_time( 'mysql' ),
