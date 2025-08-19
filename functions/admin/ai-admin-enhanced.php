@@ -3071,6 +3071,10 @@ function snks_save_diagnosis_therapists_ordering( $diagnosis_id ) {
 		
 		$wpdb->query( 'COMMIT' );
 		
+		// Trigger hook to recalculate frontend_order for this diagnosis
+		// Since multiple therapists might be updated, we'll recalculate for the entire diagnosis
+		do_action( 'snks_therapist_diagnosis_updated', 0, $diagnosis_id );
+		
 		$diagnosis_name = $wpdb->get_var( $wpdb->prepare(
 			"SELECT name_en FROM {$wpdb->prefix}snks_diagnoses WHERE id = %d",
 			$diagnosis_id

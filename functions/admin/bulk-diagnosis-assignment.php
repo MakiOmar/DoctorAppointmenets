@@ -416,6 +416,9 @@ function snks_bulk_assign_therapists_to_diagnosis( $data ) {
 	}
 	
 	if ( $success_count > 0 ) {
+		// Trigger hook to recalculate frontend_order for this diagnosis
+		do_action( 'snks_therapist_diagnosis_updated', 0, $diagnosis_id );
+		
 		$results['success'] = true;
 		$results['message'] = "Successfully assigned {$success_count} therapists to '" . ($diagnosis->name_en ? $diagnosis->name_en : $diagnosis->name) . "'. {$error_count} errors occurred.";
 	} else {
@@ -458,6 +461,9 @@ function snks_clear_diagnosis_assignments( $diagnosis_id ) {
 	);
 	
 	if ( $deleted !== false ) {
+		// Trigger hook to recalculate frontend_order for this diagnosis
+		do_action( 'snks_therapist_diagnosis_updated', 0, $diagnosis_id );
+		
 		return array( 
 			'success' => true, 
 			'message' => "Successfully cleared {$deleted} therapist assignments for '" . ($diagnosis->name_en ? $diagnosis->name_en : $diagnosis->name) . "'." 
