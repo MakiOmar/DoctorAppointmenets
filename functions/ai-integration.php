@@ -1886,9 +1886,16 @@ class SNKS_AI_Integration {
 		$show_more_enabled = snks_get_show_more_button_enabled();
 		$diagnosis_results_limit = snks_get_diagnosis_results_limit();
 		
+		// Debug logging
+		error_log("AI Debug - Show more enabled: " . ($show_more_enabled ? 'true' : 'false'));
+		error_log("AI Debug - Diagnosis results limit: " . $diagnosis_results_limit);
+		
 		// If show more button is disabled and limit is set, apply the limit
 		if ( ! $show_more_enabled && $diagnosis_results_limit > 0 ) {
 			$limit = $diagnosis_results_limit;
+			error_log("AI Debug - Applying limit: " . $limit);
+		} else {
+			error_log("AI Debug - No limit applied");
 		}
 		
 		$query = $wpdb->prepare(
@@ -1902,9 +1909,13 @@ class SNKS_AI_Integration {
 		// Add LIMIT clause if needed
 		if ( $limit !== null ) {
 			$query .= $wpdb->prepare( " LIMIT %d", $limit );
+			error_log("AI Debug - Final query with LIMIT: " . $query);
+		} else {
+			error_log("AI Debug - Final query without LIMIT: " . $query);
 		}
 		
 		$applications = $wpdb->get_results( $query );
+		error_log("AI Debug - Number of applications returned: " . count($applications));
 		
 		$result = array();
 		foreach ( $applications as $application ) {
