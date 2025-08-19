@@ -1010,18 +1010,23 @@ function snks_generate_demo_timetable_slots() {
 				
 				// Only create slots in the future
 				if ( strtotime( $slot_datetime ) > current_time( 'timestamp' ) ) {
+					// Get day name from date
+					$day_name = date( 'D', strtotime( $slot_datetime ) );
+					
 					$slot_data = array(
 						'user_id' => $user_id,
+						'client_id' => 0, // No client assigned yet
+						'session_status' => 'waiting',
+						'day' => $day_name,
+						'base_hour' => $slot_time,
+						'period' => 45,
 						'date_time' => $slot_datetime,
 						'starts' => $slot_time,
 						'ends' => $end_time,
-						'period' => 45,
 						'clinic' => 'online',
 						'attendance_type' => 'online',
-						'session_status' => 'waiting',
-						'settings' => 'ai_booking',
-						'created_at' => current_time( 'mysql' ),
-						'updated_at' => current_time( 'mysql' )
+						'order_id' => 0, // No order assigned yet
+						'settings' => 'ai_booking'
 					);
 					
 					$result = $wpdb->insert( $table_name, $slot_data );
