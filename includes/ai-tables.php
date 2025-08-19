@@ -289,8 +289,14 @@ function snks_calculate_frontend_order_for_diagnosis($diagnosis_id) {
     });
     
     // Update frontend_order for each therapist based on their sorted position
+    $total_therapists = count($therapists_for_sorting);
     foreach ($therapists_for_sorting as $index => $therapist) {
-        $frontend_order = $index + 1; // Position starts from 1
+        // If original display_order was 0, assign the highest frontend_order value
+        if ($therapist->original_display_order == 0) {
+            $frontend_order = 999999; // Use a very high number for display_order = 0
+        } else {
+            $frontend_order = $index + 1; // Normal sequential ordering for others
+        }
         
         $wpdb->update(
             $table_name,
