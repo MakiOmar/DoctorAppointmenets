@@ -2985,6 +2985,8 @@ class SNKS_AI_Integration {
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 		);
 		
+		error_log( 'AI Settings AJAX Debug - Final settings array: ' . print_r( $settings, true ) );
+		
 		wp_send_json_success( $settings );
 	}
 	
