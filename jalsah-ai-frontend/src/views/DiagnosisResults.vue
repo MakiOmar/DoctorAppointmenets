@@ -201,18 +201,31 @@ export default {
       
       const diagnosisId = route.params.diagnosisId
       
-      return matchedTherapists.value.map((therapist, originalIndex) => {
-        // Get the original position based on display_order
+      // First, get all therapists with their display_order values
+      const therapistsWithDisplayOrder = matchedTherapists.value.map((therapist, originalIndex) => {
         const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        const originalPosition = parseInt(diagnosis?.display_order || '0')
-        
-
+        const displayOrder = parseInt(diagnosis?.display_order || '0')
         
         return {
           ...therapist,
-          originalPosition: originalPosition || (originalIndex + 1) // Fallback to array index if no display_order
+          displayOrder: displayOrder || (originalIndex + 1) // Fallback to array index if no display_order
         }
       })
+      
+      // Sort by display_order to determine positions
+      const sortedByDisplayOrder = [...therapistsWithDisplayOrder].sort((a, b) => a.displayOrder - b.displayOrder)
+      
+      // Create a map of therapist ID to position (1, 2, 3...)
+      const positionMap = new Map()
+      sortedByDisplayOrder.forEach((therapist, index) => {
+        positionMap.set(therapist.id, index + 1)
+      })
+      
+      // Return therapists with their calculated positions
+      return therapistsWithDisplayOrder.map(therapist => ({
+        ...therapist,
+        originalPosition: positionMap.get(therapist.id) || 1 // Position based on display_order sorting
+      }))
     })
 
     // Computed property to sort therapists based on selected sorting criteria
@@ -226,9 +239,9 @@ export default {
         // Order sorting
         if (orderSort.value) {
           if (orderSort.value === 'asc') {
-            return a.originalPosition - b.originalPosition
+            return a.displayOrder - b.displayOrder
           } else if (orderSort.value === 'desc') {
-            return b.originalPosition - a.originalPosition
+            return b.displayOrder - a.displayOrder
           }
         }
         
@@ -287,7 +300,7 @@ export default {
         }
         
         // Default: sort by order ascending if no sorting criteria are selected
-        return a.originalPosition - b.originalPosition
+        return a.displayOrder - b.displayOrder
       })
     })
 
