@@ -48,7 +48,7 @@
             {{ $t('diagnosisResults.matchedTherapists') }}
           </h2>
           
-          <!-- Filter Controls -->
+          <!-- Sorting Controls -->
           <div v-if="matchedTherapists.length > 0" class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4" :class="$i18n.locale === 'ar' ? 'sm:space-x-reverse' : 'sm:space-x-4'">
             <!-- Order Sorting -->
             <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
@@ -194,7 +194,7 @@ export default {
     const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
     const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
 
-    // Computed property to sort therapists based on selected filters
+    // Computed property to sort therapists based on selected sorting criteria
     const sortedTherapists = computed(() => {
       if (!matchedTherapists.value.length) return []
       
@@ -202,7 +202,7 @@ export default {
       
       return [...matchedTherapists.value].sort((a, b) => {
         // Priority: Order > Price > Appointment
-        // If multiple sorts are selected, order takes precedence
+        // If multiple sorting criteria are selected, order takes precedence
         
         // Order sorting
         if (orderSort.value) {
@@ -243,7 +243,7 @@ export default {
           }
         }
         
-        // Default: sort by order ascending if no sorting is selected
+        // Default: sort by order ascending if no sorting criteria are selected
         const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
         const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
         
@@ -513,7 +513,7 @@ export default {
     }
 
     const updateSorting = () => {
-      // Reset show all therapists when sorting changes
+      // Reset show all therapists when sorting criteria change
       showAllTherapists.value = false
     }
 
