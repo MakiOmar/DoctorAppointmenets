@@ -485,7 +485,11 @@ export default {
             
             if (settingsStore && settingsStore.isDiagnosisSearchByName) {
               // Load all therapists and filter by diagnosis name on frontend
+              console.log('Frontend Debug: Using name-based search, calling /api/ai/therapists')
               response = await api.get('/api/ai/therapists')
+              console.log('Frontend Debug: All therapists response:', response.data)
+              console.log('Frontend Debug: Number of all therapists:', response.data.data?.length || 0)
+              
               if (response.data.data) {
                 // Get diagnosis name from result or URL parameter
                 let diagnosisName = ''
@@ -498,12 +502,23 @@ export default {
                 
                 if (diagnosisName) {
                   // Filter therapists by diagnosis name
-                  matchedTherapists.value = response.data.data.filter(therapist => 
+                  const allFilteredTherapists = response.data.data.filter(therapist => 
                     therapist.diagnoses?.some(diagnosis => 
                       diagnosis.name?.toLowerCase().includes(diagnosisName) ||
                       diagnosis.name_en?.toLowerCase().includes(diagnosisName)
                     )
                   )
+                  
+                  console.log('Frontend Debug: Filtered therapists by name:', allFilteredTherapists.length)
+                  
+                  // Apply limit if show more button is disabled
+                  if (!settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
+                    matchedTherapists.value = allFilteredTherapists.slice(0, settingsStore.getDiagnosisResultsLimit)
+                    console.log('Frontend Debug: Applied limit, showing only:', matchedTherapists.value.length)
+                  } else {
+                    matchedTherapists.value = allFilteredTherapists
+                    console.log('Frontend Debug: No limit applied, showing all filtered:', matchedTherapists.value.length)
+                  }
                 } else {
                   matchedTherapists.value = []
                 }
