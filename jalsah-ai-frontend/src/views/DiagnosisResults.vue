@@ -206,6 +206,11 @@ export default {
         const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
         const originalPosition = parseInt(diagnosis?.display_order || '0')
         
+        // Debug price values
+        if (therapist.price !== undefined) {
+          console.log('Therapist price debug:', therapist.name, 'Price:', therapist.price, 'Type:', typeof therapist.price)
+        }
+        
         return {
           ...therapist,
           originalPosition: originalPosition || (originalIndex + 1) // Fallback to array index if no display_order
@@ -232,8 +237,18 @@ export default {
         
         // Price sorting
         if (priceSort.value) {
-          const aPrice = parseFloat(a.price || 0)
-          const bPrice = parseFloat(b.price || 0)
+          // Clean and parse price values - remove any non-numeric characters except decimal point
+          const cleanPrice = (price) => {
+            if (!price) return 0
+            const cleaned = String(price).replace(/[^\d.]/g, '')
+            const parsed = parseFloat(cleaned)
+            return isNaN(parsed) ? 0 : parsed
+          }
+          
+          const aPrice = cleanPrice(a.price)
+          const bPrice = cleanPrice(b.price)
+          
+          console.log('Price sorting:', priceSort.value, 'A price:', aPrice, 'B price:', bPrice, 'A original:', a.price, 'B original:', b.price)
           
           if (priceSort.value === 'lowest') {
             return aPrice - bPrice
