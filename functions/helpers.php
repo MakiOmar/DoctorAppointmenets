@@ -822,3 +822,15 @@ function snks_get_site_description( $locale = null ) {
 	}
 }
 
+/**
+ * Get diagnosis results limit
+ *
+ * @return int
+ */
+function snks_get_diagnosis_results_limit() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
+	$limit = get_option( 'snks_ai_diagnosis_results_limit', 10 );
+	return intval( $limit );
+}
+

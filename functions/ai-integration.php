@@ -2975,16 +2975,6 @@ class SNKS_AI_Integration {
 	public function get_ai_settings_ajax() {
 		$current_language = snks_get_current_language();
 		
-		// Debug: Check what's actually in the database
-		$raw_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
-		error_log( 'AI Settings Debug - Raw diagnosis_results_limit from DB: ' . $raw_limit );
-		error_log( 'AI Settings Debug - Option exists: ' . ( get_option( 'snks_ai_diagnosis_results_limit' ) !== false ? 'YES' : 'NO' ) );
-		
-		// Force refresh the option cache
-		wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
-		$refreshed_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
-		error_log( 'AI Settings Debug - After cache refresh: ' . $refreshed_limit );
-		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
 			'default_language' => snks_get_default_language(),
@@ -2992,10 +2982,8 @@ class SNKS_AI_Integration {
 			'site_description' => snks_get_site_description( $current_language ),
 			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
-			'diagnosis_results_limit' => intval( $refreshed_limit ),
+			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 		);
-		
-		error_log( 'AI Settings Debug - Final settings array: ' . print_r( $settings, true ) );
 		
 		wp_send_json_success( $settings );
 	}
@@ -3020,10 +3008,6 @@ class SNKS_AI_Integration {
 	public function get_ai_settings_rest( $request ) {
 		$current_language = snks_get_current_language();
 		
-		// Force refresh the option cache
-		wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
-		$refreshed_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
-		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
 			'default_language' => snks_get_default_language(),
@@ -3031,7 +3015,7 @@ class SNKS_AI_Integration {
 			'site_description' => snks_get_site_description( $current_language ),
 			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
-			'diagnosis_results_limit' => intval( $refreshed_limit ),
+			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 		);
 		
 		return new WP_REST_Response( array(
