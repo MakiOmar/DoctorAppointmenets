@@ -1881,13 +1881,30 @@ class SNKS_AI_Integration {
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'therapist_applications';
 		
-		$applications = $wpdb->get_results( $wpdb->prepare(
+		// Check if limit should be applied (when show more button is disabled)
+		$limit = null;
+		$show_more_enabled = snks_get_show_more_button_enabled();
+		$diagnosis_results_limit = snks_get_diagnosis_results_limit();
+		
+		// If show more button is disabled and limit is set, apply the limit
+		if ( ! $show_more_enabled && $diagnosis_results_limit > 0 ) {
+			$limit = $diagnosis_results_limit;
+		}
+		
+		$query = $wpdb->prepare(
 			"SELECT ta.*, td.display_order FROM $table_name ta
 			JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON ta.user_id = td.therapist_id
 			WHERE td.diagnosis_id = %d AND ta.status = 'approved' AND ta.show_on_ai_site = 1
 			ORDER BY td.display_order ASC, ta.name ASC",
 			$diagnosis_id
-		) );
+		);
+		
+		// Add LIMIT clause if needed
+		if ( $limit !== null ) {
+			$query .= $wpdb->prepare( " LIMIT %d", $limit );
+		}
+		
+		$applications = $wpdb->get_results( $query );
 		
 		$result = array();
 		foreach ( $applications as $application ) {

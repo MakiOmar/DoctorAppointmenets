@@ -306,13 +306,19 @@ export default {
       const limit = settingsStore.getDiagnosisResultsLimit
       const showMoreEnabled = settingsStore.isShowMoreButtonEnabled
       
-      // Always respect the limit, regardless of show more button setting
+      // If show more button is disabled, the backend already limited the results
+      // So we should show all therapists that were returned from the API
+      if (!showMoreEnabled) {
+        return sortedTherapists.value
+      }
+      
+      // If show more button is enabled
       if (limit === 0) {
         return sortedTherapists.value
       }
       
-      // If show more button is enabled and user clicked "show all", show all therapists
-      if (showMoreEnabled && showAllTherapists.value) {
+      // If user clicked "show all", show all therapists
+      if (showAllTherapists.value) {
         return sortedTherapists.value
       }
       
