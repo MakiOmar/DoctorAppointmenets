@@ -730,6 +730,8 @@ function snks_auto_publish_appointments( $user_id ) {
  * @return bool
  */
 function snks_is_bilingual_enabled() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_bilingual_enabled', 'options' );
 	return get_option( 'snks_ai_bilingual_enabled', '1' ) === '1';
 }
 
@@ -739,6 +741,8 @@ function snks_is_bilingual_enabled() {
  * @return string 'ar' for Arabic, 'en' for English
  */
 function snks_get_default_language() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_default_language', 'options' );
 	return get_option( 'snks_ai_default_language', 'ar' );
 }
 
@@ -786,8 +790,12 @@ function snks_get_site_title( $locale = null ) {
 	}
 	
 	if ( $locale === 'ar' ) {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_title_ar', 'options' );
 		return get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
 	} else {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_title_en', 'options' );
 		return get_option( 'snks_ai_site_title_en', 'Jalsah AI - Mental Health Support' );
 	}
 }
@@ -804,8 +812,12 @@ function snks_get_site_description( $locale = null ) {
 	}
 	
 	if ( $locale === 'ar' ) {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_description_ar', 'options' );
 		return get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
 	} else {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_description_en', 'options' );
 		return get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
 	}
 }
