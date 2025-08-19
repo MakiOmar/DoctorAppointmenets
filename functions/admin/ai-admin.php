@@ -90,9 +90,6 @@ function snks_ai_admin_page() {
 function snks_ai_diagnoses_page() {
 	global $wpdb;
 	
-	// Test: Force output to verify file is loaded
-	echo '<!-- AI Admin File Loaded: ' . date('Y-m-d H:i:s') . ' -->';
-	
 	// Handle form submissions
 	if ( isset( $_POST['action'] ) ) {
 		if ( $_POST['action'] === 'add_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'add_diagnosis' ) ) {

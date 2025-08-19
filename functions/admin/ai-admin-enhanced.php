@@ -888,6 +888,19 @@ function snks_enhanced_ai_diagnoses_page() {
 			
 			echo '<div class="notice notice-success"><p>Diagnosis deleted successfully!</p></div>';
 		}
+		
+		if ( $_POST['action'] === 'recalculate_frontend_orders' && wp_verify_nonce( $_POST['_wpnonce'], 'recalculate_frontend_orders' ) ) {
+			if ( function_exists( 'snks_calculate_all_frontend_orders' ) ) {
+				$result = snks_calculate_all_frontend_orders();
+				if ( $result ) {
+					echo '<div class="notice notice-success"><p>Frontend orders recalculated successfully!</p></div>';
+				} else {
+					echo '<div class="notice notice-error"><p>Error recalculating frontend orders.</p></div>';
+				}
+			} else {
+				echo '<div class="notice notice-error"><p>Frontend order calculation function is not available.</p></div>';
+			}
+		}
 	}
 	
 	// Handle GET actions
@@ -935,6 +948,46 @@ function snks_enhanced_ai_diagnoses_page() {
 	?>
 	<div class="wrap">
 		<h1>AI Diagnoses Management</h1>
+		
+		<!-- Debug Information -->
+		<?php if (function_exists('snks_calculate_all_frontend_orders')): ?>
+			<div class="notice notice-info">
+				<p>✅ Frontend order calculation function is available.</p>
+			</div>
+		<?php else: ?>
+			<div class="notice notice-error">
+				<p>❌ Frontend order calculation function is NOT available.</p>
+			</div>
+		<?php endif; ?>
+		
+		<?php
+		// Check if frontend_order column exists
+		$table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
+		$columns = $wpdb->get_results("SHOW COLUMNS FROM $table_name");
+		$column_names = array_column($columns, 'Field');
+		$has_frontend_order = in_array('frontend_order', $column_names);
+		?>
+		
+		<?php if ($has_frontend_order): ?>
+			<div class="notice notice-info">
+				<p>✅ Frontend order column exists in database.</p>
+			</div>
+		<?php else: ?>
+			<div class="notice notice-error">
+				<p>❌ Frontend order column does NOT exist in database.</p>
+			</div>
+		<?php endif; ?>
+		
+		<!-- Recalculate Frontend Orders Button -->
+		<div class="card" style="max-width: 600px; margin-bottom: 20px;">
+			<h2>Frontend Order Management</h2>
+			<p>Recalculate the frontend order positions for all therapists based on their display_order values.</p>
+			<form method="post" style="margin-top: 10px;">
+				<?php wp_nonce_field( 'recalculate_frontend_orders' ); ?>
+				<input type="hidden" name="action" value="recalculate_frontend_orders">
+				<button type="submit" class="button button-primary">Recalculate All Frontend Orders</button>
+			</form>
+		</div>
 		
 		<div class="card">
 			<h2>Add New Diagnosis</h2>
