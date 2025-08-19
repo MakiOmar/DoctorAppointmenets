@@ -3011,7 +3011,10 @@ class SNKS_AI_Integration {
 	 * Get AI Settings REST API Handler
 	 */
 	public function get_ai_settings_rest( $request ) {
+		error_log( 'AI Settings REST Debug - Function called' );
+		
 		$current_language = snks_get_current_language();
+		error_log( 'AI Settings REST Debug - Current language: ' . $current_language );
 		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
@@ -3022,6 +3025,8 @@ class SNKS_AI_Integration {
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 		);
+		
+		error_log( 'AI Settings REST Debug - Final settings array: ' . print_r( $settings, true ) );
 		
 		return new WP_REST_Response( array(
 			'success' => true,
