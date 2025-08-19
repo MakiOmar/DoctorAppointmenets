@@ -238,11 +238,15 @@ export default {
             if (!therapist.price) return 0
             // For demo therapists, price is { others: number }
             // For regular therapists, price is { countries: [], others: number }
-            return parseInt(therapist.price.others || 0)
+            const price = parseInt(therapist.price.others || 0)
+            console.log(`Therapist ${therapist.name}: price = ${price}, price object:`, therapist.price)
+            return price
           }
           
           const aPrice = getPriceValue(a)
           const bPrice = getPriceValue(b)
+          
+          console.log(`Comparing prices: ${a.name} (${aPrice}) vs ${b.name} (${bPrice})`)
           
           if (priceSort.value === 'lowest') {
             return aPrice - bPrice
