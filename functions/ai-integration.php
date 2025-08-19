@@ -27,8 +27,6 @@ class SNKS_AI_Integration {
 	private $jwt_algorithm = 'HS256';
 	
 	public function __construct() {
-		error_log( 'AI Integration Debug - Constructor called' );
-		
 		$this->jwt_secret = defined( 'JWT_SECRET' ) ? JWT_SECRET : 'your-secret-key';
 		$this->jwt_algorithm = 'HS256';
 		
@@ -39,8 +37,6 @@ class SNKS_AI_Integration {
 	 * Initialize hooks
 	 */
 	private function init_hooks() {
-		error_log( 'AI Integration Debug - init_hooks called' );
-		
 		// Register AI endpoints
 		add_action( 'init', array( $this, 'register_ai_endpoints' ) );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
@@ -104,8 +100,6 @@ class SNKS_AI_Integration {
 	 * Register REST API routes
 	 */
 	public function register_rest_routes() {
-		error_log( 'AI Integration Debug - register_rest_routes called' );
-		
 		register_rest_route( 'jalsah-ai/v1', '/settings', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_ai_settings_rest' ),
@@ -2979,6 +2973,10 @@ class SNKS_AI_Integration {
 	 * Get AI Settings AJAX Handler
 	 */
 	public function get_ai_settings_ajax() {
+		// Clear all caches to force fresh response
+		wp_cache_flush();
+		wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
+		
 		error_log( 'AI Settings AJAX Debug - Function called' );
 		
 		$current_language = snks_get_current_language();
@@ -3019,6 +3017,15 @@ class SNKS_AI_Integration {
 	 * Get AI Settings REST API Handler
 	 */
 	public function get_ai_settings_rest( $request ) {
+		// Clear all caches to force fresh response
+		wp_cache_flush();
+		wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
+		
+		// Clear REST API cache
+		rest_get_server()->send_header( 'Cache-Control', 'no-cache, no-store, must-revalidate' );
+		rest_get_server()->send_header( 'Pragma', 'no-cache' );
+		rest_get_server()->send_header( 'Expires', '0' );
+		
 		error_log( 'AI Settings REST Debug - Function called' );
 		
 		$current_language = snks_get_current_language();
