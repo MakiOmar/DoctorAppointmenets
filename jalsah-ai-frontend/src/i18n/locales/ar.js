@@ -324,6 +324,10 @@ export default {
     defaultDescription: 'بناءً على إجاباتك، قد تستفيد من الدعم العام للصحة النفسية والعلاج.',
     showMore: 'عرض المزيد من المعالجين',
     moreTherapists: 'المزيد',
+    sortBy: 'ترتيب حسب',
+    sortByOrder: 'الترتيب الموصى به',
+    sortByPrice: 'أقل سعر',
+    sortByAppointment: 'أقرب موعد',
     simulatedResults: {
       anxiety: {
         title: 'اضطراب القلق',

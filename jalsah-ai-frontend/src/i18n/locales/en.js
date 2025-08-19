@@ -315,6 +315,10 @@ export default {
     defaultDescription: 'Based on your responses, you may benefit from general mental health support and therapy.',
     showMore: 'Show More Therapists',
     moreTherapists: 'more',
+    sortBy: 'Sort by',
+    sortByOrder: 'Recommended Order',
+    sortByPrice: 'Lowest Price',
+    sortByAppointment: 'Nearest Appointment',
     simulatedResults: {
       anxiety: {
         title: 'Anxiety Disorder',

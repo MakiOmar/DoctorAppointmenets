@@ -43,9 +43,28 @@
 
       <!-- Matched Therapists Section -->
       <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">
-          {{ $t('diagnosisResults.matchedTherapists') }}
-        </h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4 sm:mb-0">
+            {{ $t('diagnosisResults.matchedTherapists') }}
+          </h2>
+          
+          <!-- Filter Controls -->
+          <div v-if="matchedTherapists.length > 0" class="flex items-center space-x-4" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-4'">
+            <label for="sortFilter" class="text-sm font-medium text-gray-700">
+              {{ $t('diagnosisResults.sortBy') }}:
+            </label>
+            <select 
+              id="sortFilter" 
+              v-model="sortFilter" 
+              @change="updateSorting"
+              class="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+            >
+              <option value="order">{{ $t('diagnosisResults.sortByOrder') }}</option>
+              <option value="price">{{ $t('diagnosisResults.sortByPrice') }}</option>
+              <option value="appointment">{{ $t('diagnosisResults.sortByAppointment') }}</option>
+            </select>
+          </div>
+        </div>
         
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-12">
@@ -134,23 +153,41 @@ export default {
       description: ''
     })
     const showAllTherapists = ref(false)
+    const sortFilter = ref('order') // Default to order sorting
 
-    // Computed property to sort therapists by display_order for current diagnosis
+    // Computed property to sort therapists based on selected filter
     const sortedTherapists = computed(() => {
       if (!matchedTherapists.value.length) return []
       
       const diagnosisId = route.params.diagnosisId
       
       return [...matchedTherapists.value].sort((a, b) => {
-        // Get display_order for current diagnosis for both therapists
-        const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        
-        const aOrder = parseInt(aDiagnosis?.display_order || '0')
-        const bOrder = parseInt(bDiagnosis?.display_order || '0')
-        
-        // Sort from lowest to highest
-        return aOrder - bOrder
+        switch (sortFilter.value) {
+          case 'price':
+            // Sort by price (lowest first)
+            const aPrice = parseFloat(a.price || 0)
+            const bPrice = parseFloat(b.price || 0)
+            return aPrice - bPrice
+            
+          case 'appointment':
+            // Sort by nearest appointment (earliest first)
+            // earliest_slot is stored as minutes from now, so lower numbers = earlier appointments
+            const aMinutes = parseInt(a.earliest_slot) || 999999
+            const bMinutes = parseInt(b.earliest_slot) || 999999
+            return aMinutes - bMinutes
+            
+          case 'order':
+          default:
+            // Sort by display_order for current diagnosis (default)
+            const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+            const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+            
+            const aOrder = parseInt(aDiagnosis?.display_order || '0')
+            const bOrder = parseInt(bDiagnosis?.display_order || '0')
+            
+            // Sort from lowest to highest
+            return aOrder - bOrder
+        }
       })
     })
 
@@ -410,6 +447,11 @@ export default {
       showAllTherapists.value = true
     }
 
+    const updateSorting = () => {
+      // Reset show all therapists when sorting changes
+      showAllTherapists.value = false
+    }
+
     onMounted(() => {
       // Ensure settings are loaded
       if (!settingsStore.isInitialized) {
@@ -434,11 +476,13 @@ export default {
       showAllTherapists,
       diagnosisResult,
       route,
+      sortFilter,
       rediagnose,
       browseAllTherapists,
       viewTherapist,
       bookAppointment,
-      showMoreTherapists
+      showMoreTherapists,
+      updateSorting
     }
   }
 }
