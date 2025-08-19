@@ -316,14 +316,14 @@ export default {
       return sortedTherapists.value.length > limit
     })
 
-    const loadDiagnosisResult = () => {
+    const loadDiagnosisResult = async () => {
       // Get diagnosis data from localStorage or route params
       const diagnosisData = localStorage.getItem('diagnosis_data')
       const diagnosisId = route.params.diagnosisId
       
       if (diagnosisId) {
         // Try to load diagnosis details from API
-        loadDiagnosisDetails(diagnosisId)
+        await loadDiagnosisDetails(diagnosisId)
       } else if (diagnosisData) {
         // Use stored diagnosis data for simulation
         const data = JSON.parse(diagnosisData)
@@ -441,62 +441,79 @@ export default {
 
     const loadMatchedTherapists = async () => {
       loading.value = true
-      try {
-        const diagnosisId = route.params.diagnosisId
-        let response
-        
-        if (diagnosisId) {
-          // Check if we should search by name or ID
-          if (settingsStore && settingsStore.isDiagnosisSearchByName) {
-            // Load all therapists and filter by diagnosis name on frontend
-            response = await api.get('/api/ai/therapists')
-            if (response.data.data) {
-              // Get diagnosis name from result or URL parameter
-              let diagnosisName = ''
-              if (diagnosisResult.value && diagnosisResult.value.title) {
-                diagnosisName = diagnosisResult.value.title.toLowerCase()
-              } else {
-                // Use URL parameter directly (decoded)
-                diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
-              }
-              
-              if (diagnosisName) {
-                // Filter therapists by diagnosis name
-                matchedTherapists.value = response.data.data.filter(therapist => 
-                  therapist.diagnoses?.some(diagnosis => 
-                    diagnosis.name?.toLowerCase().includes(diagnosisName) ||
-                    diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+      let retryCount = 0
+      const maxRetries = 2
+      
+      while (retryCount <= maxRetries) {
+        try {
+          const diagnosisId = route.params.diagnosisId
+          let response
+          
+          if (diagnosisId) {
+            // Check if we should search by name or ID
+            if (settingsStore && settingsStore.isDiagnosisSearchByName) {
+              // Load all therapists and filter by diagnosis name on frontend
+              response = await api.get('/api/ai/therapists')
+              if (response.data.data) {
+                // Get diagnosis name from result or URL parameter
+                let diagnosisName = ''
+                if (diagnosisResult.value && diagnosisResult.value.title) {
+                  diagnosisName = diagnosisResult.value.title.toLowerCase()
+                } else {
+                  // Use URL parameter directly (decoded)
+                  diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
+                }
+                
+                if (diagnosisName) {
+                  // Filter therapists by diagnosis name
+                  matchedTherapists.value = response.data.data.filter(therapist => 
+                    therapist.diagnoses?.some(diagnosis => 
+                      diagnosis.name?.toLowerCase().includes(diagnosisName) ||
+                      diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+                    )
                   )
-                )
+                } else {
+                  matchedTherapists.value = []
+                }
               } else {
                 matchedTherapists.value = []
               }
             } else {
-              matchedTherapists.value = []
+              // Check if diagnosisId is numeric (ID) or string (name)
+              if (/^\d+$/.test(diagnosisId)) {
+                // Load therapists by diagnosis ID (default behavior)
+                response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+                matchedTherapists.value = response.data.data || []
+              } else {
+                // If it's a name but ID search is enabled, load all therapists
+                response = await api.get('/api/ai/therapists')
+                matchedTherapists.value = response.data.data || []
+              }
             }
           } else {
-            // Check if diagnosisId is numeric (ID) or string (name)
-            if (/^\d+$/.test(diagnosisId)) {
-              // Load therapists by diagnosis ID (default behavior)
-              response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-              matchedTherapists.value = response.data.data || []
-            } else {
-              // If it's a name but ID search is enabled, load all therapists
-              response = await api.get('/api/ai/therapists')
-              matchedTherapists.value = response.data.data || []
-            }
+            // Load all therapists (for simulation)
+            response = await api.get('/api/ai/therapists')
+            matchedTherapists.value = response.data.data || []
           }
-        } else {
-          // Load all therapists (for simulation)
-          response = await api.get('/api/ai/therapists')
-          matchedTherapists.value = response.data.data || []
+          
+          // If we get here, the request was successful
+          break
+          
+        } catch (error) {
+          retryCount++
+          console.error(`Error loading matched therapists (attempt ${retryCount}):`, error)
+          
+          if (retryCount > maxRetries) {
+            toast.error(t('diagnosisResults.errorLoadingTherapists'))
+            matchedTherapists.value = []
+          } else {
+            // Wait a bit before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
+          }
         }
-      } catch (error) {
-        toast.error(t('diagnosisResults.errorLoadingTherapists'))
-        console.error('Error loading matched therapists:', error)
-      } finally {
-        loading.value = false
       }
+      
+      loading.value = false
     }
 
     const rediagnose = () => {
@@ -527,14 +544,17 @@ export default {
       showAllTherapists.value = false
     }
 
-    onMounted(() => {
+    onMounted(async () => {
       // Ensure settings are loaded
       if (!settingsStore.isInitialized) {
         settingsStore.initializeSettings()
+        // Wait a bit for settings to be initialized
+        await new Promise(resolve => setTimeout(resolve, 500))
       }
       
-      loadDiagnosisResult()
-      loadMatchedTherapists()
+      // Load diagnosis details first, then therapists
+      await loadDiagnosisResult()
+      await loadMatchedTherapists()
     })
 
     // Watch for settings changes and reload if needed
