@@ -319,7 +319,7 @@ export default {
     sortByOrder: 'Order',
     sortByPrice: 'Price',
     sortByAppointment: 'Appointment',
-    clear: 'Clear',
+    any: 'Any',
     orderAsc: 'Ascending',
     orderDesc: 'Descending',
     priceLowest: 'Lowest',

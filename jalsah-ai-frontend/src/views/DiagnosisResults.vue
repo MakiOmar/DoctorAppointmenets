@@ -43,59 +43,60 @@
 
       <!-- Matched Therapists Section -->
       <div class="mb-8">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h2 class="text-2xl font-bold text-gray-900 mb-4 sm:mb-0">
-            {{ $t('diagnosisResults.matchedTherapists') }}
-          </h2>
-          
-          <!-- Sorting Controls -->
-          <div v-if="matchedTherapists.length > 0" class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4" :class="$i18n.locale === 'ar' ? 'sm:space-x-reverse' : 'sm:space-x-4'">
+        <!-- Section Heading -->
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          {{ $t('diagnosisResults.matchedTherapists') }}
+        </h2>
+        
+        <!-- Sorting Controls -->
+        <div v-if="matchedTherapists.length > 0" class="mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Order Sorting -->
-            <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
-              <label for="orderSort" class="text-sm font-medium text-gray-700 whitespace-nowrap">
-                {{ $t('diagnosisResults.sortByOrder') }}:
+            <div class="flex flex-col">
+              <label for="orderSort" class="text-sm font-medium text-gray-700 mb-2">
+                {{ $t('diagnosisResults.sortByOrder') }}
               </label>
               <select 
                 id="orderSort" 
                 v-model="orderSort" 
                 @change="updateSorting"
-                class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm min-w-[120px]"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
               >
-                <option value="">{{ $t('diagnosisResults.clear') }}</option>
+                <option value="">{{ $t('diagnosisResults.any') }}</option>
                 <option value="asc">{{ $t('diagnosisResults.orderAsc') }}</option>
                 <option value="desc">{{ $t('diagnosisResults.orderDesc') }}</option>
               </select>
             </div>
 
             <!-- Price Sorting -->
-            <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
-              <label for="priceSort" class="text-sm font-medium text-gray-700 whitespace-nowrap">
-                {{ $t('diagnosisResults.sortByPrice') }}:
+            <div class="flex flex-col">
+              <label for="priceSort" class="text-sm font-medium text-gray-700 mb-2">
+                {{ $t('diagnosisResults.sortByPrice') }}
               </label>
               <select 
                 id="priceSort" 
                 v-model="priceSort" 
                 @change="updateSorting"
-                class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm min-w-[120px]"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
               >
-                <option value="">{{ $t('diagnosisResults.clear') }}</option>
+                <option value="">{{ $t('diagnosisResults.any') }}</option>
                 <option value="lowest">{{ $t('diagnosisResults.priceLowest') }}</option>
                 <option value="highest">{{ $t('diagnosisResults.priceHighest') }}</option>
               </select>
             </div>
 
             <!-- Appointment Sorting -->
-            <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
-              <label for="appointmentSort" class="text-sm font-medium text-gray-700 whitespace-nowrap">
-                {{ $t('diagnosisResults.sortByAppointment') }}:
+            <div class="flex flex-col">
+              <label for="appointmentSort" class="text-sm font-medium text-gray-700 mb-2">
+                {{ $t('diagnosisResults.sortByAppointment') }}
               </label>
               <select 
                 id="appointmentSort" 
                 v-model="appointmentSort" 
                 @change="updateSorting"
-                class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm min-w-[120px]"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
               >
-                <option value="">{{ $t('diagnosisResults.clear') }}</option>
+                <option value="">{{ $t('diagnosisResults.any') }}</option>
                 <option value="nearest">{{ $t('diagnosisResults.appointmentNearest') }}</option>
                 <option value="farthest">{{ $t('diagnosisResults.appointmentFarthest') }}</option>
               </select>
