@@ -2973,7 +2973,10 @@ class SNKS_AI_Integration {
 	 * Get AI Settings AJAX Handler
 	 */
 	public function get_ai_settings_ajax() {
+		error_log( 'AI Settings AJAX Debug - Function called' );
+		
 		$current_language = snks_get_current_language();
+		error_log( 'AI Settings AJAX Debug - Current language: ' . $current_language );
 		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
