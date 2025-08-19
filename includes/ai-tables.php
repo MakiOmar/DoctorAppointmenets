@@ -37,6 +37,7 @@ function snks_create_ai_tables() {
 		suitability_message_en TEXT,
 		suitability_message_ar TEXT,
 		display_order INT(11) DEFAULT 0,
+		frontend_order INT(11) DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
@@ -155,6 +156,10 @@ function snks_add_missing_therapist_diagnoses_columns() {
     if (!in_array('suitability_message_en', $column_names)) {
         $wpdb->query("ALTER TABLE $table_name ADD COLUMN suitability_message_en TEXT AFTER display_order");
     }
+    
+    if (!in_array('frontend_order', $column_names)) {
+        $wpdb->query("ALTER TABLE $table_name ADD COLUMN frontend_order INT DEFAULT 0 AFTER display_order");
+    }
 }
 
 /**
@@ -243,4 +248,62 @@ function snks_create_demo_booking_data() {
     }
     
     error_log('Demo booking data created for doctor 85 using existing timetable system with AI identifier');
+} 
+
+/**
+ * Calculate and update frontend_order for all therapists for a specific diagnosis
+ * This function sorts therapists by display_order and assigns sequential position numbers (1, 2, 3...)
+ */
+function snks_calculate_frontend_order_for_diagnosis($diagnosis_id) {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
+    
+    // Get all therapists for this diagnosis, sorted by display_order
+    $therapists = $wpdb->get_results($wpdb->prepare(
+        "SELECT id, therapist_id, display_order 
+         FROM $table_name 
+         WHERE diagnosis_id = %d 
+         ORDER BY display_order ASC, therapist_id ASC",
+        $diagnosis_id
+    ));
+    
+    if (empty($therapists)) {
+        return false;
+    }
+    
+    // Update frontend_order for each therapist based on their position
+    foreach ($therapists as $index => $therapist) {
+        $frontend_order = $index + 1; // Position starts from 1
+        
+        $wpdb->update(
+            $table_name,
+            array('frontend_order' => $frontend_order),
+            array('id' => $therapist->id),
+            array('%d'),
+            array('%d')
+        );
+    }
+    
+    return true;
+}
+
+/**
+ * Calculate and update frontend_order for all diagnoses
+ * This function updates frontend_order for all therapist-diagnosis relationships
+ */
+function snks_calculate_all_frontend_orders() {
+    global $wpdb;
+    
+    $diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+    $therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+    
+    // Get all diagnoses
+    $diagnoses = $wpdb->get_results("SELECT id FROM $diagnoses_table");
+    
+    foreach ($diagnoses as $diagnosis) {
+        snks_calculate_frontend_order_for_diagnosis($diagnosis->id);
+    }
+    
+    return true;
 } 

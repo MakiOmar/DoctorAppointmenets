@@ -201,31 +201,17 @@ export default {
       
       const diagnosisId = route.params.diagnosisId
       
-      // First, get all therapists with their display_order values
-      const therapistsWithDisplayOrder = matchedTherapists.value.map((therapist, originalIndex) => {
+      return matchedTherapists.value.map((therapist) => {
+        // Get the frontend_order from the diagnosis data
         const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        const displayOrder = parseInt(diagnosis?.display_order || '0')
+        const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
         
         return {
           ...therapist,
-          displayOrder: displayOrder || (originalIndex + 1) // Fallback to array index if no display_order
+          originalPosition: frontendOrder || 1, // Use frontend_order from API, fallback to 1
+          displayOrder: parseInt(diagnosis?.display_order || '0') // Keep display_order for sorting
         }
       })
-      
-      // Sort by display_order to determine positions
-      const sortedByDisplayOrder = [...therapistsWithDisplayOrder].sort((a, b) => a.displayOrder - b.displayOrder)
-      
-      // Create a map of therapist ID to position (1, 2, 3...)
-      const positionMap = new Map()
-      sortedByDisplayOrder.forEach((therapist, index) => {
-        positionMap.set(therapist.id, index + 1)
-      })
-      
-      // Return therapists with their calculated positions
-      return therapistsWithDisplayOrder.map(therapist => ({
-        ...therapist,
-        originalPosition: positionMap.get(therapist.id) || 1 // Position based on display_order sorting
-      }))
     })
 
     // Computed property to sort therapists based on selected sorting criteria

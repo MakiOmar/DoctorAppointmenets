@@ -113,6 +113,16 @@ function snks_ai_diagnoses_page() {
 			$wpdb->delete( $wpdb->prefix . 'snks_diagnoses', array( 'id' => $diagnosis_id ), array( '%d' ) );
 			echo '<div class="notice notice-success"><p>Diagnosis deleted successfully!</p></div>';
 		}
+		
+		// Handle frontend order recalculation
+		if ( $_POST['action'] === 'recalculate_frontend_orders' && wp_verify_nonce( $_POST['_wpnonce'], 'recalculate_frontend_orders' ) ) {
+			$result = snks_calculate_all_frontend_orders();
+			if ( $result ) {
+				echo '<div class="notice notice-success"><p>Frontend orders recalculated successfully!</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>Error recalculating frontend orders.</p></div>';
+			}
+		}
 	}
 	
 	// Get diagnoses
@@ -120,6 +130,17 @@ function snks_ai_diagnoses_page() {
 	?>
 	<div class="wrap">
 		<h1>AI Diagnoses Management</h1>
+		
+		<!-- Recalculate Frontend Orders Button -->
+		<div class="card" style="max-width: 600px; margin-bottom: 20px;">
+			<h2>Frontend Order Management</h2>
+			<p>Recalculate the frontend order positions for all therapists based on their display_order values.</p>
+			<form method="post" style="margin-top: 10px;">
+				<?php wp_nonce_field( 'recalculate_frontend_orders' ); ?>
+				<input type="hidden" name="action" value="recalculate_frontend_orders">
+				<button type="submit" class="button button-primary">Recalculate All Frontend Orders</button>
+			</form>
+		</div>
 		
 		<div class="card">
 			<h2>Add New Diagnosis</h2>
@@ -440,3 +461,51 @@ function snks_load_therapist_ai_settings() {
 	wp_send_json_success( $data );
 }
 add_action( 'wp_ajax_load_therapist_ai_settings', 'snks_load_therapist_ai_settings' ); 
+
+/**
+ * Automatically recalculate frontend_order when therapist diagnosis assignment is updated
+ */
+function snks_auto_recalculate_frontend_order($therapist_id, $diagnosis_id) {
+	// Recalculate frontend_order for this specific diagnosis
+	snks_calculate_frontend_order_for_diagnosis($diagnosis_id);
+}
+
+/**
+ * Hook to recalculate frontend_order when therapist diagnosis assignment is updated
+ */
+add_action('snks_therapist_diagnosis_updated', 'snks_auto_recalculate_frontend_order', 10, 2);
+
+/**
+ * Hook to recalculate frontend_order when therapist diagnosis assignment is added
+ */
+add_action('snks_therapist_diagnosis_added', 'snks_auto_recalculate_frontend_order', 10, 2);
+
+/**
+ * Hook to recalculate frontend_order when therapist diagnosis assignment is deleted
+ */
+add_action('snks_therapist_diagnosis_deleted', 'snks_auto_recalculate_frontend_order', 10, 2); 
+
+/**
+ * Initialize frontend_order for existing data if not set
+ */
+function snks_initialize_frontend_orders() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
+	
+	// Check if frontend_order column exists and has data
+	$has_frontend_order = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE frontend_order > 0");
+	
+	if ($has_frontend_order == 0) {
+		// Initialize frontend_order for all existing data
+		snks_calculate_all_frontend_orders();
+		return true;
+	}
+	
+	return false;
+}
+
+/**
+ * Hook to initialize frontend_order on admin page load
+ */
+add_action('admin_init', 'snks_initialize_frontend_orders'); 
