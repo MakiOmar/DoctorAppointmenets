@@ -34,10 +34,7 @@ function snks_add_demo_doctors_manager_page() {
 		31
 	);
 	
-	// Debug: Log if function is called
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( 'Demo Doctors Manager: Menu registration completed' );
-	}
+
 }
 add_action( 'admin_menu', 'snks_add_demo_doctors_manager_page', 25 );
 

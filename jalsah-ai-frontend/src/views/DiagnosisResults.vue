@@ -161,19 +161,23 @@ export default {
         return []
       }
       
-              // Wait for settings to be initialized
-        if (!settingsStore.isInitialized) {
-          return sortedTherapists.value
-        }
-        
-        const limit = settingsStore.getDiagnosisResultsLimit
-        
-        if (limit === 0 || showAllTherapists.value) {
-          return sortedTherapists.value
-        }
-        
-        const limited = sortedTherapists.value.slice(0, limit)
-        return limited
+      // Wait for settings to be initialized
+      if (!settingsStore.isInitialized) {
+        console.log('Settings not initialized, showing all therapists')
+        return sortedTherapists.value
+      }
+      
+      const limit = settingsStore.getDiagnosisResultsLimit
+      console.log('Current limit:', limit, 'Show all:', showAllTherapists.value, 'Total therapists:', sortedTherapists.value.length)
+      
+      if (limit === 0 || showAllTherapists.value) {
+        console.log('Showing all therapists (limit 0 or show all)')
+        return sortedTherapists.value
+      }
+      
+      const limited = sortedTherapists.value.slice(0, limit)
+      console.log('Showing limited therapists:', limited.length)
+      return limited
     })
 
     // Computed property to check if there are more therapists to show

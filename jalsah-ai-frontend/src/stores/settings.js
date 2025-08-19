@@ -83,6 +83,7 @@ export const useSettingsStore = defineStore('settings', () => {
       // Update settings if we got a valid response
       if (response && response.data && response.data.success) {
         const settings = response.data.data
+        console.log('Settings loaded from API:', settings)
         
         bilingualEnabled.value = settings.bilingual_enabled ?? true
         defaultLanguage.value = settings.default_language ?? 'ar'
@@ -92,6 +93,8 @@ export const useSettingsStore = defineStore('settings', () => {
         diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
         diagnosisResultsLimit.value = settings.diagnosis_results_limit ?? 10
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
+        
+        console.log('Diagnosis results limit set to:', diagnosisResultsLimit.value)
         
         // Save to localStorage
         localStorage.setItem('jalsah_settings', JSON.stringify(settings))
