@@ -2348,6 +2348,9 @@ function snks_enhanced_ai_settings_page() {
 			// Handle settings updates
 		if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_general_settings' ) {
 			if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_general_settings' ) ) {
+				// Debug: Log the POST data
+				error_log( 'Admin Settings Debug - POST data: ' . print_r( $_POST, true ) );
+				
 				update_option( 'snks_ai_bilingual_enabled', isset( $_POST['bilingual_enabled'] ) ? '1' : '0' );
 				update_option( 'snks_ai_default_language', sanitize_text_field( $_POST['default_language'] ) );
 				update_option( 'snks_ai_site_title_en', sanitize_text_field( $_POST['site_title_en'] ) );
@@ -2359,7 +2362,12 @@ function snks_enhanced_ai_settings_page() {
 				update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
 				
 				$diagnosis_limit = isset( $_POST['diagnosis_results_limit'] ) ? intval( $_POST['diagnosis_results_limit'] ) : 10;
+				error_log( 'Admin Settings Debug - Setting diagnosis_results_limit to: ' . $diagnosis_limit );
 				update_option( 'snks_ai_diagnosis_results_limit', $diagnosis_limit );
+				
+				// Verify the setting was saved
+				$saved_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
+				error_log( 'Admin Settings Debug - Saved diagnosis_results_limit: ' . $saved_limit );
 				
 				echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 			}

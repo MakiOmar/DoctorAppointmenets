@@ -2975,6 +2975,11 @@ class SNKS_AI_Integration {
 	public function get_ai_settings_ajax() {
 		$current_language = snks_get_current_language();
 		
+		// Debug: Check what's actually in the database
+		$raw_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
+		error_log( 'AI Settings Debug - Raw diagnosis_results_limit from DB: ' . $raw_limit );
+		error_log( 'AI Settings Debug - Option exists: ' . ( get_option( 'snks_ai_diagnosis_results_limit' ) !== false ? 'YES' : 'NO' ) );
+		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
 			'default_language' => snks_get_default_language(),
@@ -2984,6 +2989,8 @@ class SNKS_AI_Integration {
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
 		);
+		
+		error_log( 'AI Settings Debug - Final settings array: ' . print_r( $settings, true ) );
 		
 		wp_send_json_success( $settings );
 	}
