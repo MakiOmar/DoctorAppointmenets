@@ -141,7 +141,7 @@
             :key="therapist.id"
             :therapist="therapist"
             :diagnosis-id="route.params.diagnosisId"
-            :position="index + 1"
+            :position="therapist.originalPosition"
             @click="viewTherapist"
             @book="bookAppointment"
           />
@@ -195,28 +195,38 @@ export default {
     const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
     const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
 
-    // Computed property to sort therapists based on selected sorting criteria
-    const sortedTherapists = computed(() => {
+    // Computed property to get therapists with their original system positions
+    const therapistsWithOriginalPositions = computed(() => {
       if (!matchedTherapists.value.length) return []
       
       const diagnosisId = route.params.diagnosisId
       
-      return [...matchedTherapists.value].sort((a, b) => {
+      return matchedTherapists.value.map((therapist, originalIndex) => {
+        // Get the original position based on display_order
+        const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        const originalPosition = parseInt(diagnosis?.display_order || '0')
+        
+        return {
+          ...therapist,
+          originalPosition: originalPosition || (originalIndex + 1) // Fallback to array index if no display_order
+        }
+      })
+    })
+
+    // Computed property to sort therapists based on selected sorting criteria
+    const sortedTherapists = computed(() => {
+      if (!therapistsWithOriginalPositions.value.length) return []
+      
+      return [...therapistsWithOriginalPositions.value].sort((a, b) => {
         // Priority: Order > Price > Appointment
         // If multiple sorting criteria are selected, order takes precedence
         
         // Order sorting
         if (orderSort.value) {
-          const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-          const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-          
-          const aOrder = parseInt(aDiagnosis?.display_order || '0')
-          const bOrder = parseInt(bDiagnosis?.display_order || '0')
-          
           if (orderSort.value === 'asc') {
-            return aOrder - bOrder
+            return a.originalPosition - b.originalPosition
           } else if (orderSort.value === 'desc') {
-            return bOrder - aOrder
+            return b.originalPosition - a.originalPosition
           }
         }
         
@@ -245,13 +255,7 @@ export default {
         }
         
         // Default: sort by order ascending if no sorting criteria are selected
-        const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        
-        const aOrder = parseInt(aDiagnosis?.display_order || '0')
-        const bOrder = parseInt(bDiagnosis?.display_order || '0')
-        
-        return aOrder - bOrder
+        return a.originalPosition - b.originalPosition
       })
     })
 
