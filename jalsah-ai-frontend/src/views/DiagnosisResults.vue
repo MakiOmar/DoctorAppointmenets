@@ -206,10 +206,7 @@ export default {
         const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
         const originalPosition = parseInt(diagnosis?.display_order || '0')
         
-        // Debug price values
-        if (therapist.price !== undefined) {
-          console.log('Therapist price debug:', therapist.name, 'Price:', therapist.price, 'Type:', typeof therapist.price)
-        }
+
         
         return {
           ...therapist,
@@ -237,18 +234,16 @@ export default {
         
         // Price sorting
         if (priceSort.value) {
-          // Clean and parse price values - remove any non-numeric characters except decimal point
-          const cleanPrice = (price) => {
-            if (!price) return 0
-            const cleaned = String(price).replace(/[^\d.]/g, '')
-            const parsed = parseFloat(cleaned)
-            return isNaN(parsed) ? 0 : parsed
+          // Get the actual price value from the price object structure
+          const getPriceValue = (therapist) => {
+            if (!therapist.price) return 0
+            // For demo therapists, price is { others: number }
+            // For regular therapists, price is { countries: [], others: number }
+            return parseInt(therapist.price.others || 0)
           }
           
-          const aPrice = cleanPrice(a.price)
-          const bPrice = cleanPrice(b.price)
-          
-          console.log('Price sorting:', priceSort.value, 'A price:', aPrice, 'B price:', bPrice, 'A original:', a.price, 'B original:', b.price)
+          const aPrice = getPriceValue(a)
+          const bPrice = getPriceValue(b)
           
           if (priceSort.value === 'lowest') {
             return aPrice - bPrice
@@ -283,29 +278,24 @@ export default {
       
       // Wait for settings to be initialized
       if (!settingsStore.isInitialized) {
-        console.log('Settings not initialized, showing all therapists')
         return sortedTherapists.value
       }
       
       const limit = settingsStore.getDiagnosisResultsLimit
       const showMoreEnabled = settingsStore.isShowMoreButtonEnabled
-      console.log('Current limit:', limit, 'Show more enabled:', showMoreEnabled, 'Show all:', showAllTherapists.value, 'Total therapists:', sortedTherapists.value.length)
       
       // Always respect the limit, regardless of show more button setting
       if (limit === 0) {
-        console.log('No limit set, showing all therapists')
         return sortedTherapists.value
       }
       
       // If show more button is enabled and user clicked "show all", show all therapists
       if (showMoreEnabled && showAllTherapists.value) {
-        console.log('Show more enabled and user clicked show all, showing all therapists')
         return sortedTherapists.value
       }
       
       // Otherwise, show limited therapists (respecting the limit)
       const limited = sortedTherapists.value.slice(0, limit)
-      console.log('Showing limited therapists:', limited.length, 'Limit:', limit, 'Show more enabled:', showMoreEnabled)
       return limited
     })
 
