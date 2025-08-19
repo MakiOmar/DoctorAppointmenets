@@ -334,11 +334,6 @@ export default {
     const toast = useToast()
     const router = useRouter()
     
-    // Debug: Log therapist data
-    console.log('TherapistCard received therapist:', props.therapist)
-    console.log('Therapist display_order:', props.therapist.display_order)
-    console.log('Diagnosis ID from props:', props.diagnosisId)
-    
     const showDetails = ref(false)
     
     // Computed property to get display_order for current diagnosis
@@ -351,9 +346,6 @@ export default {
       const currentDiagnosis = props.therapist.diagnoses.find(diagnosis => 
         diagnosis.id.toString() === props.diagnosisId.toString()
       )
-      
-      console.log('Current diagnosis found:', currentDiagnosis)
-      console.log('Display order for current diagnosis:', currentDiagnosis?.display_order)
       
       return currentDiagnosis?.display_order || null
     })
