@@ -272,20 +272,24 @@ function snks_calculate_frontend_order_for_diagnosis($diagnosis_id) {
         return false;
     }
     
-    // Process display_order values: if 0, treat as 999999 for sorting
+    // Create a copy for sorting with modified display_order values
+    $therapists_for_sorting = array();
     foreach ($therapists as $therapist) {
-        if ($therapist->display_order == 0) {
-            $therapist->display_order = 999999;
-        }
+        $therapists_for_sorting[] = (object) array(
+            'id' => $therapist->id,
+            'therapist_id' => $therapist->therapist_id,
+            'display_order' => ($therapist->display_order == 0) ? 999999 : $therapist->display_order,
+            'original_display_order' => $therapist->display_order
+        );
     }
     
     // Sort therapists by display_order (0 values now treated as 999999)
-    usort($therapists, function($a, $b) {
+    usort($therapists_for_sorting, function($a, $b) {
         return $a->display_order - $b->display_order;
     });
     
     // Update frontend_order for each therapist based on their sorted position
-    foreach ($therapists as $index => $therapist) {
+    foreach ($therapists_for_sorting as $index => $therapist) {
         $frontend_order = $index + 1; // Position starts from 1
         
         $wpdb->update(
