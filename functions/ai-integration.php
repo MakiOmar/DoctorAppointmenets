@@ -2983,6 +2983,7 @@ class SNKS_AI_Integration {
 			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
+			'show_more_button_enabled' => snks_get_show_more_button_enabled(),
 		);
 		
 		wp_send_json_success( $settings );
@@ -3018,6 +3019,7 @@ class SNKS_AI_Integration {
 			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
+			'show_more_button_enabled' => snks_get_show_more_button_enabled(),
 		);
 		
 		return new WP_REST_Response( array(

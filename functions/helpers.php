@@ -835,3 +835,16 @@ function snks_get_diagnosis_results_limit() {
 	return intval( $limit );
 }
 
+/**
+ * Get show more button enabled setting
+ *
+ * @return bool
+ */
+function snks_get_show_more_button_enabled() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_show_more_button_enabled', 'options' );
+	$enabled = get_option( 'snks_ai_show_more_button_enabled', '1' );
+	
+	return $enabled === '1';
+}
+

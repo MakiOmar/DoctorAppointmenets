@@ -2369,6 +2369,8 @@ function snks_enhanced_ai_settings_page() {
 				$saved_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
 				error_log( 'Admin Settings Debug - Saved diagnosis_results_limit: ' . $saved_limit );
 				
+				update_option( 'snks_ai_show_more_button_enabled', isset( $_POST['show_more_button_enabled'] ) ? '1' : '0' );
+				
 				echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 			}
 		}
@@ -2383,6 +2385,7 @@ function snks_enhanced_ai_settings_page() {
 	$ratings_enabled = get_option( 'snks_ai_ratings_enabled', '1' ); // Default to enabled
 	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
 	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
+	$show_more_button_enabled = get_option( 'snks_ai_show_more_button_enabled', '1' ); // Default to enabled
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -2461,6 +2464,12 @@ function snks_enhanced_ai_settings_page() {
 					<label for="diagnosis_results_limit">Diagnosis Results Limit</label>
 					<input type="number" id="diagnosis_results_limit" name="diagnosis_results_limit" value="<?php echo esc_attr( $diagnosis_results_limit ); ?>" min="1" max="50" class="small-text">
 					<p class="description">Maximum number of therapists to show on diagnosis results page. Set to 0 for unlimited results. Recommended: 10-20 for optimal user experience.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="show_more_button_enabled">Enable "Show More" Button</label>
+					<input type="checkbox" id="show_more_button_enabled" name="show_more_button_enabled" value="1" <?php checked( $show_more_button_enabled, '1' ); ?>>
+					<p class="description">When enabled, shows a "Show More" button on diagnosis results page when there are more therapists than the limit. When disabled, all therapists will be shown at once.</p>
 				</div>
 				
 				<?php submit_button( 'Save Settings' ); ?>

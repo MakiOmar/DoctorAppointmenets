@@ -168,7 +168,14 @@ export default {
       }
       
       const limit = settingsStore.getDiagnosisResultsLimit
-      console.log('Current limit:', limit, 'Show all:', showAllTherapists.value, 'Total therapists:', sortedTherapists.value.length)
+      const showMoreEnabled = settingsStore.isShowMoreButtonEnabled
+      console.log('Current limit:', limit, 'Show more enabled:', showMoreEnabled, 'Show all:', showAllTherapists.value, 'Total therapists:', sortedTherapists.value.length)
+      
+      // If show more button is disabled, show all therapists
+      if (!showMoreEnabled) {
+        console.log('Show more button disabled, showing all therapists')
+        return sortedTherapists.value
+      }
       
       if (limit === 0 || showAllTherapists.value) {
         console.log('Showing all therapists (limit 0 or show all)')
@@ -184,6 +191,11 @@ export default {
     const hasMoreTherapists = computed(() => {
       // Wait for settings to be initialized
       if (!settingsStore.isInitialized) {
+        return false
+      }
+      
+      // Check if show more button is enabled
+      if (!settingsStore.isShowMoreButtonEnabled) {
         return false
       }
       
