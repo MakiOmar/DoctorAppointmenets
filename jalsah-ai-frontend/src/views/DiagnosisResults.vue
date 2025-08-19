@@ -49,20 +49,57 @@
           </h2>
           
           <!-- Filter Controls -->
-          <div v-if="matchedTherapists.length > 0" class="flex items-center space-x-4" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-4'">
-            <label for="sortFilter" class="text-sm font-medium text-gray-700">
-              {{ $t('diagnosisResults.sortBy') }}:
-            </label>
-            <select 
-              id="sortFilter" 
-              v-model="sortFilter" 
-              @change="updateSorting"
-              class="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
-            >
-              <option value="order">{{ $t('diagnosisResults.sortByOrder') }}</option>
-              <option value="price">{{ $t('diagnosisResults.sortByPrice') }}</option>
-              <option value="appointment">{{ $t('diagnosisResults.sortByAppointment') }}</option>
-            </select>
+          <div v-if="matchedTherapists.length > 0" class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4" :class="$i18n.locale === 'ar' ? 'sm:space-x-reverse' : 'sm:space-x-4'">
+            <!-- Order Sorting -->
+            <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
+              <label for="orderSort" class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                {{ $t('diagnosisResults.sortByOrder') }}:
+              </label>
+              <select 
+                id="orderSort" 
+                v-model="orderSort" 
+                @change="updateSorting"
+                class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm min-w-[120px]"
+              >
+                <option value="">{{ $t('diagnosisResults.clear') }}</option>
+                <option value="asc">{{ $t('diagnosisResults.orderAsc') }}</option>
+                <option value="desc">{{ $t('diagnosisResults.orderDesc') }}</option>
+              </select>
+            </div>
+
+            <!-- Price Sorting -->
+            <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
+              <label for="priceSort" class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                {{ $t('diagnosisResults.sortByPrice') }}:
+              </label>
+              <select 
+                id="priceSort" 
+                v-model="priceSort" 
+                @change="updateSorting"
+                class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm min-w-[120px]"
+              >
+                <option value="">{{ $t('diagnosisResults.clear') }}</option>
+                <option value="lowest">{{ $t('diagnosisResults.priceLowest') }}</option>
+                <option value="highest">{{ $t('diagnosisResults.priceHighest') }}</option>
+              </select>
+            </div>
+
+            <!-- Appointment Sorting -->
+            <div class="flex items-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
+              <label for="appointmentSort" class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                {{ $t('diagnosisResults.sortByAppointment') }}:
+              </label>
+              <select 
+                id="appointmentSort" 
+                v-model="appointmentSort" 
+                @change="updateSorting"
+                class="block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm min-w-[120px]"
+              >
+                <option value="">{{ $t('diagnosisResults.clear') }}</option>
+                <option value="nearest">{{ $t('diagnosisResults.appointmentNearest') }}</option>
+                <option value="farthest">{{ $t('diagnosisResults.appointmentFarthest') }}</option>
+              </select>
+            </div>
           </div>
         </div>
         
@@ -153,41 +190,67 @@ export default {
       description: ''
     })
     const showAllTherapists = ref(false)
-    const sortFilter = ref('order') // Default to order sorting
+    const orderSort = ref('') // Order sorting: '', 'asc', 'desc'
+    const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
+    const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
 
-    // Computed property to sort therapists based on selected filter
+    // Computed property to sort therapists based on selected filters
     const sortedTherapists = computed(() => {
       if (!matchedTherapists.value.length) return []
       
       const diagnosisId = route.params.diagnosisId
       
       return [...matchedTherapists.value].sort((a, b) => {
-        switch (sortFilter.value) {
-          case 'price':
-            // Sort by price (lowest first)
-            const aPrice = parseFloat(a.price || 0)
-            const bPrice = parseFloat(b.price || 0)
-            return aPrice - bPrice
-            
-          case 'appointment':
-            // Sort by nearest appointment (earliest first)
-            // earliest_slot is stored as minutes from now, so lower numbers = earlier appointments
-            const aMinutes = parseInt(a.earliest_slot) || 999999
-            const bMinutes = parseInt(b.earliest_slot) || 999999
-            return aMinutes - bMinutes
-            
-          case 'order':
-          default:
-            // Sort by display_order for current diagnosis (default)
-            const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-            const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-            
-            const aOrder = parseInt(aDiagnosis?.display_order || '0')
-            const bOrder = parseInt(bDiagnosis?.display_order || '0')
-            
-            // Sort from lowest to highest
+        // Priority: Order > Price > Appointment
+        // If multiple sorts are selected, order takes precedence
+        
+        // Order sorting
+        if (orderSort.value) {
+          const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+          const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+          
+          const aOrder = parseInt(aDiagnosis?.display_order || '0')
+          const bOrder = parseInt(bDiagnosis?.display_order || '0')
+          
+          if (orderSort.value === 'asc') {
             return aOrder - bOrder
+          } else if (orderSort.value === 'desc') {
+            return bOrder - aOrder
+          }
         }
+        
+        // Price sorting
+        if (priceSort.value) {
+          const aPrice = parseFloat(a.price || 0)
+          const bPrice = parseFloat(b.price || 0)
+          
+          if (priceSort.value === 'lowest') {
+            return aPrice - bPrice
+          } else if (priceSort.value === 'highest') {
+            return bPrice - aPrice
+          }
+        }
+        
+        // Appointment sorting
+        if (appointmentSort.value) {
+          const aMinutes = parseInt(a.earliest_slot) || 999999
+          const bMinutes = parseInt(b.earliest_slot) || 999999
+          
+          if (appointmentSort.value === 'nearest') {
+            return aMinutes - bMinutes
+          } else if (appointmentSort.value === 'farthest') {
+            return bMinutes - aMinutes
+          }
+        }
+        
+        // Default: sort by order ascending if no sorting is selected
+        const aDiagnosis = a.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        const bDiagnosis = b.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        
+        const aOrder = parseInt(aDiagnosis?.display_order || '0')
+        const bOrder = parseInt(bDiagnosis?.display_order || '0')
+        
+        return aOrder - bOrder
       })
     })
 
@@ -478,7 +541,9 @@ export default {
       showAllTherapists,
       diagnosisResult,
       route,
-      sortFilter,
+      orderSort,
+      priceSort,
+      appointmentSort,
       rediagnose,
       browseAllTherapists,
       viewTherapist,
