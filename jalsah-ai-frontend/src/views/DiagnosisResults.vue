@@ -479,6 +479,10 @@ export default {
           
           if (diagnosisId) {
             // Check if we should search by name or ID
+            console.log('Frontend Debug: Settings - isDiagnosisSearchByName:', settingsStore?.isDiagnosisSearchByName)
+            console.log('Frontend Debug: Settings - getDiagnosisResultsLimit:', settingsStore?.getDiagnosisResultsLimit)
+            console.log('Frontend Debug: Settings - isShowMoreButtonEnabled:', settingsStore?.isShowMoreButtonEnabled)
+            
             if (settingsStore && settingsStore.isDiagnosisSearchByName) {
               // Load all therapists and filter by diagnosis name on frontend
               response = await api.get('/api/ai/therapists')
@@ -510,7 +514,10 @@ export default {
               // Check if diagnosisId is numeric (ID) or string (name)
               if (/^\d+$/.test(diagnosisId)) {
                 // Load therapists by diagnosis ID (default behavior)
+                console.log('Frontend Debug: Calling API endpoint:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
                 response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+                console.log('Frontend Debug: API response:', response.data)
+                console.log('Frontend Debug: Number of therapists returned:', response.data.data?.length || 0)
                 matchedTherapists.value = response.data.data || []
               } else {
                 // If it's a name but ID search is enabled, load all therapists
