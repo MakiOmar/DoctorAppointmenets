@@ -19,7 +19,7 @@ This feature adds a new setting to enable/disable ratings and their filtration i
 - Default value: `'1'` (enabled)
 
 #### API Endpoints Updated
-- **REST API**: `/wp-json/jalsah-ai/v1/settings`
+- **REST API**: `/wp-json/jalsah-ai/v1/ai-settings`
 - **AJAX Endpoint**: `get_ai_settings` (registered in AI integration)
 - Both endpoints now include `ratings_enabled` boolean field
 

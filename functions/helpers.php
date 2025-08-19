@@ -828,14 +828,9 @@ function snks_get_site_description( $locale = null ) {
  * @return int
  */
 function snks_get_diagnosis_results_limit() {
-	error_log( 'Helper Debug - snks_get_diagnosis_results_limit() called' );
-	
 	// Force refresh cache for this option
 	wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
 	$limit = get_option( 'snks_ai_diagnosis_results_limit', 10 );
-	
-	error_log( 'Helper Debug - Raw limit from DB: ' . $limit );
-	error_log( 'Helper Debug - Intval limit: ' . intval( $limit ) );
 	
 	return intval( $limit );
 }

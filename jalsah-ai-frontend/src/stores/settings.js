@@ -68,7 +68,7 @@ export const useSettingsStore = defineStore('settings', () => {
       
       // Try REST API first
       try {
-        response = await api.get('/wp-json/jalsah-ai/v1/settings')
+        			response = await api.get('/wp-json/jalsah-ai/v1/ai-settings')
       } catch (e) {
         // Try WordPress AJAX
         try {

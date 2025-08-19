@@ -100,7 +100,7 @@ class SNKS_AI_Integration {
 	 * Register REST API routes
 	 */
 	public function register_rest_routes() {
-		register_rest_route( 'jalsah-ai/v1', '/settings', array(
+		register_rest_route( 'jalsah-ai/v1', '/ai-settings', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_ai_settings_rest' ),
 			'permission_callback' => '__return_true',
@@ -2973,14 +2973,7 @@ class SNKS_AI_Integration {
 	 * Get AI Settings AJAX Handler
 	 */
 	public function get_ai_settings_ajax() {
-		// Clear all caches to force fresh response
-		wp_cache_flush();
-		wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
-		
-		error_log( 'AI Settings AJAX Debug - Function called' );
-		
 		$current_language = snks_get_current_language();
-		error_log( 'AI Settings AJAX Debug - Current language: ' . $current_language );
 		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
@@ -2991,8 +2984,6 @@ class SNKS_AI_Integration {
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 		);
-		
-		error_log( 'AI Settings AJAX Debug - Final settings array: ' . print_r( $settings, true ) );
 		
 		wp_send_json_success( $settings );
 	}
@@ -3017,19 +3008,7 @@ class SNKS_AI_Integration {
 	 * Get AI Settings REST API Handler
 	 */
 	public function get_ai_settings_rest( $request ) {
-		// Clear all caches to force fresh response
-		wp_cache_flush();
-		wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
-		
-		// Clear REST API cache
-		rest_get_server()->send_header( 'Cache-Control', 'no-cache, no-store, must-revalidate' );
-		rest_get_server()->send_header( 'Pragma', 'no-cache' );
-		rest_get_server()->send_header( 'Expires', '0' );
-		
-		error_log( 'AI Settings REST Debug - Function called' );
-		
 		$current_language = snks_get_current_language();
-		error_log( 'AI Settings REST Debug - Current language: ' . $current_language );
 		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
@@ -3041,8 +3020,6 @@ class SNKS_AI_Integration {
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 		);
 		
-		error_log( 'AI Settings REST Debug - Final settings array: ' . print_r( $settings, true ) );
-		
 		return new WP_REST_Response( array(
 			'success' => true,
 			'data' => $settings
@@ -3053,8 +3030,6 @@ class SNKS_AI_Integration {
 	 * Ping REST API Handler
 	 */
 	public function ping_rest( $request ) {
-		error_log( 'AI Ping REST Debug - Function called' );
-		
 		return new WP_REST_Response( array(
 			'success' => true,
 			'message' => 'Jalsah AI API is working',
