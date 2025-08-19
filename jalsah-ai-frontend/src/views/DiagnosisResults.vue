@@ -367,7 +367,6 @@ export default {
 
     const loadDiagnosisDetails = async (diagnosisId) => {
       try {
-        console.log('Loading diagnosis details for ID:', diagnosisId)
         
         // Check if diagnosisId is numeric (ID) or string (name)
         if (/^\d+$/.test(diagnosisId)) {
@@ -479,16 +478,9 @@ export default {
           
           if (diagnosisId) {
             // Check if we should search by name or ID
-            console.log('Frontend Debug: Settings - isDiagnosisSearchByName:', settingsStore?.isDiagnosisSearchByName)
-            console.log('Frontend Debug: Settings - getDiagnosisResultsLimit:', settingsStore?.getDiagnosisResultsLimit)
-            console.log('Frontend Debug: Settings - isShowMoreButtonEnabled:', settingsStore?.isShowMoreButtonEnabled)
-            
             if (settingsStore && settingsStore.isDiagnosisSearchByName) {
               // Load all therapists and filter by diagnosis name on frontend
-              console.log('Frontend Debug: Using name-based search, calling /api/ai/therapists')
               response = await api.get('/api/ai/therapists')
-              console.log('Frontend Debug: All therapists response:', response.data)
-              console.log('Frontend Debug: Number of all therapists:', response.data.data?.length || 0)
               
               if (response.data.data) {
                 // Get diagnosis name from result or URL parameter
@@ -509,15 +501,11 @@ export default {
                     )
                   )
                   
-                  console.log('Frontend Debug: Filtered therapists by name:', allFilteredTherapists.length)
-                  
                   // Apply limit if show more button is disabled
                   if (!settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
                     matchedTherapists.value = allFilteredTherapists.slice(0, settingsStore.getDiagnosisResultsLimit)
-                    console.log('Frontend Debug: Applied limit, showing only:', matchedTherapists.value.length)
                   } else {
                     matchedTherapists.value = allFilteredTherapists
-                    console.log('Frontend Debug: No limit applied, showing all filtered:', matchedTherapists.value.length)
                   }
                 } else {
                   matchedTherapists.value = []
@@ -529,10 +517,7 @@ export default {
               // Check if diagnosisId is numeric (ID) or string (name)
               if (/^\d+$/.test(diagnosisId)) {
                 // Load therapists by diagnosis ID (default behavior)
-                console.log('Frontend Debug: Calling API endpoint:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
                 response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-                console.log('Frontend Debug: API response:', response.data)
-                console.log('Frontend Debug: Number of therapists returned:', response.data.data?.length || 0)
                 matchedTherapists.value = response.data.data || []
               } else {
                 // If it's a name but ID search is enabled, load all therapists
