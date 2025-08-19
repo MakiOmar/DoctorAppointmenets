@@ -253,18 +253,18 @@ function snks_create_demo_booking_data() {
 /**
  * Calculate and update frontend_order for all therapists for a specific diagnosis
  * This function sorts therapists by display_order and assigns sequential position numbers (1, 2, 3...)
+ * If display_order is 0, it's treated as 999999 to push it to the end
  */
 function snks_calculate_frontend_order_for_diagnosis($diagnosis_id) {
     global $wpdb;
     
     $table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
     
-    // Get all therapists for this diagnosis, sorted by display_order
+    // Get all therapists for this diagnosis
     $therapists = $wpdb->get_results($wpdb->prepare(
         "SELECT id, therapist_id, display_order 
          FROM $table_name 
-         WHERE diagnosis_id = %d 
-         ORDER BY display_order ASC, therapist_id ASC",
+         WHERE diagnosis_id = %d",
         $diagnosis_id
     ));
     
@@ -272,7 +272,19 @@ function snks_calculate_frontend_order_for_diagnosis($diagnosis_id) {
         return false;
     }
     
-    // Update frontend_order for each therapist based on their position
+    // Process display_order values: if 0, treat as 999999 for sorting
+    foreach ($therapists as $therapist) {
+        if ($therapist->display_order == 0) {
+            $therapist->display_order = 999999;
+        }
+    }
+    
+    // Sort therapists by display_order (0 values now treated as 999999)
+    usort($therapists, function($a, $b) {
+        return $a->display_order - $b->display_order;
+    });
+    
+    // Update frontend_order for each therapist based on their sorted position
     foreach ($therapists as $index => $therapist) {
         $frontend_order = $index + 1; // Position starts from 1
         

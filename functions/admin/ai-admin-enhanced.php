@@ -949,35 +949,6 @@ function snks_enhanced_ai_diagnoses_page() {
 	<div class="wrap">
 		<h1>AI Diagnoses Management</h1>
 		
-		<!-- Debug Information -->
-		<?php if (function_exists('snks_calculate_all_frontend_orders')): ?>
-			<div class="notice notice-info">
-				<p>✅ Frontend order calculation function is available.</p>
-			</div>
-		<?php else: ?>
-			<div class="notice notice-error">
-				<p>❌ Frontend order calculation function is NOT available.</p>
-			</div>
-		<?php endif; ?>
-		
-		<?php
-		// Check if frontend_order column exists
-		$table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
-		$columns = $wpdb->get_results("SHOW COLUMNS FROM $table_name");
-		$column_names = array_column($columns, 'Field');
-		$has_frontend_order = in_array('frontend_order', $column_names);
-		?>
-		
-		<?php if ($has_frontend_order): ?>
-			<div class="notice notice-info">
-				<p>✅ Frontend order column exists in database.</p>
-			</div>
-		<?php else: ?>
-			<div class="notice notice-error">
-				<p>❌ Frontend order column does NOT exist in database.</p>
-			</div>
-		<?php endif; ?>
-		
 		<!-- Recalculate Frontend Orders Button -->
 		<div class="card" style="max-width: 600px; margin-bottom: 20px;">
 			<h2>Frontend Order Management</h2>
