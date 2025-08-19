@@ -208,19 +208,21 @@ export default {
       const showMoreEnabled = settingsStore.isShowMoreButtonEnabled
       console.log('Current limit:', limit, 'Show more enabled:', showMoreEnabled, 'Show all:', showAllTherapists.value, 'Total therapists:', sortedTherapists.value.length)
       
-      // If show more button is disabled, show all therapists
-      if (!showMoreEnabled) {
-        console.log('Show more button disabled, showing all therapists')
+      // Always respect the limit, regardless of show more button setting
+      if (limit === 0) {
+        console.log('No limit set, showing all therapists')
         return sortedTherapists.value
       }
       
-      if (limit === 0 || showAllTherapists.value) {
-        console.log('Showing all therapists (limit 0 or show all)')
+      // If show more button is enabled and user clicked "show all", show all therapists
+      if (showMoreEnabled && showAllTherapists.value) {
+        console.log('Show more enabled and user clicked show all, showing all therapists')
         return sortedTherapists.value
       }
       
+      // Otherwise, show limited therapists (respecting the limit)
       const limited = sortedTherapists.value.slice(0, limit)
-      console.log('Showing limited therapists:', limited.length)
+      console.log('Showing limited therapists:', limited.length, 'Limit:', limit, 'Show more enabled:', showMoreEnabled)
       return limited
     })
 
