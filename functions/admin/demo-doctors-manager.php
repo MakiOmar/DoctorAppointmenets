@@ -101,6 +101,13 @@ function snks_demo_doctors_manager_page() {
 		} else {
 			echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
 		}
+	} elseif ( $_POST['action'] === 'generate_demo_timetable' && wp_verify_nonce( $_POST['demo_timetable_nonce'], 'generate_demo_timetable' ) ) {
+		$result = snks_generate_demo_timetable_slots();
+		if ( $result['success'] ) {
+			echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+		}
 	}
 	}
 	
@@ -296,6 +303,17 @@ function snks_demo_doctors_manager_page() {
 				<input type="hidden" name="action" value="migrate_demo_pricing">
 				<p>Update existing demo doctors to have proper pricing structure for the AI system.</p>
 				<input type="submit" class="button button-primary" value="Migrate Demo Pricing">
+			</form>
+		</div>
+		
+		<!-- Generate Demo Timetable Slots -->
+		<div class="card">
+			<h2>Generate Demo Timetable Slots</h2>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'generate_demo_timetable', 'demo_timetable_nonce' ); ?>
+				<input type="hidden" name="action" value="generate_demo_timetable">
+				<p>Create demo timetable slots for demo therapists to test sorting by nearest appointment functionality. This will create 45-minute slots at different times over the next 7 days.</p>
+				<input type="submit" class="button button-primary" value="Generate Demo Timetable Slots">
 			</form>
 		</div>
 		
@@ -937,6 +955,99 @@ function snks_repopulate_demo_doctors() {
 		return array(
 			'success' => false,
 			'message' => "Failed to repopulate demo doctors. " . $result['message']
+		);
+	}
+}
+
+/**
+ * Generate demo timetable slots for demo therapists
+ */
+function snks_generate_demo_timetable_slots() {
+	global $wpdb;
+	
+	// Get all demo doctors
+	$demo_doctors = get_users( array(
+		'meta_key' => 'is_demo_doctor',
+		'meta_value' => '1',
+		'role' => 'doctor'
+	) );
+	
+	if ( empty( $demo_doctors ) ) {
+		return array(
+			'success' => false,
+			'message' => 'No demo doctors found. Please create demo doctors first.'
+		);
+	}
+	
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	$created_slots = 0;
+	$errors = array();
+	
+	// Clear existing demo slots first
+	$wpdb->query( "DELETE FROM {$table_name} WHERE user_id IN (" . implode( ',', wp_list_pluck( $demo_doctors, 'ID' ) ) . ")" );
+	
+	foreach ( $demo_doctors as $doctor ) {
+		$user_id = $doctor->ID;
+		
+		// Generate slots for the next 7 days
+		for ( $day = 0; $day < 7; $day++ ) {
+			// Generate 2-4 slots per day at different times
+			$slots_per_day = rand( 2, 4 );
+			
+			for ( $slot = 0; $slot < $slots_per_day; $slot++ ) {
+				// Random hour between 9 AM and 8 PM
+				$hour = rand( 9, 20 );
+				// Random minute (0, 15, 30, or 45)
+				$minute = rand( 0, 3 ) * 15;
+				
+				// Calculate slot date and time
+				$slot_date = date( 'Y-m-d', strtotime( "+{$day} days" ) );
+				$slot_time = sprintf( '%02d:%02d:00', $hour, $minute );
+				$slot_datetime = $slot_date . ' ' . $slot_time;
+				
+				// Calculate end time (45 minutes later)
+				$end_time = date( 'H:i:s', strtotime( $slot_time . ' +45 minutes' ) );
+				
+				// Only create slots in the future
+				if ( strtotime( $slot_datetime ) > current_time( 'timestamp' ) ) {
+					$slot_data = array(
+						'user_id' => $user_id,
+						'date_time' => $slot_datetime,
+						'starts' => $slot_time,
+						'ends' => $end_time,
+						'period' => 45,
+						'clinic' => 'online',
+						'attendance_type' => 'online',
+						'session_status' => 'waiting',
+						'settings' => 'ai_booking',
+						'created_at' => current_time( 'mysql' ),
+						'updated_at' => current_time( 'mysql' )
+					);
+					
+					$result = $wpdb->insert( $table_name, $slot_data );
+					if ( $result !== false ) {
+						$created_slots++;
+					} else {
+						$errors[] = "Failed to create slot for doctor ID {$user_id} at {$slot_datetime}";
+					}
+				}
+			}
+		}
+	}
+	
+	if ( $created_slots > 0 ) {
+		$message = "Successfully created {$created_slots} demo timetable slots for " . count( $demo_doctors ) . " demo doctors.";
+		if ( ! empty( $errors ) ) {
+			$message .= " Errors: " . implode( ', ', $errors );
+		}
+		return array(
+			'success' => true,
+			'message' => $message
+		);
+	} else {
+		return array(
+			'success' => false,
+			'message' => 'Failed to create any demo timetable slots. Errors: ' . implode( ', ', $errors )
 		);
 	}
 }
