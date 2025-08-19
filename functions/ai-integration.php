@@ -27,6 +27,8 @@ class SNKS_AI_Integration {
 	private $jwt_algorithm = 'HS256';
 	
 	public function __construct() {
+		error_log( 'AI Integration Debug - Constructor called' );
+		
 		$this->jwt_secret = defined( 'JWT_SECRET' ) ? JWT_SECRET : 'your-secret-key';
 		$this->jwt_algorithm = 'HS256';
 		
@@ -37,6 +39,8 @@ class SNKS_AI_Integration {
 	 * Initialize hooks
 	 */
 	private function init_hooks() {
+		error_log( 'AI Integration Debug - init_hooks called' );
+		
 		// Register AI endpoints
 		add_action( 'init', array( $this, 'register_ai_endpoints' ) );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
@@ -3038,6 +3042,8 @@ class SNKS_AI_Integration {
 	 * Ping REST API Handler
 	 */
 	public function ping_rest( $request ) {
+		error_log( 'AI Ping REST Debug - Function called' );
+		
 		return new WP_REST_Response( array(
 			'success' => true,
 			'message' => 'Jalsah AI API is working',
