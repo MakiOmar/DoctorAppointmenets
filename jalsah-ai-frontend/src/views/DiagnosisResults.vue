@@ -254,13 +254,35 @@ export default {
         
         // Appointment sorting
         if (appointmentSort.value) {
-          const aMinutes = parseInt(a.earliest_slot) || 999999
-          const bMinutes = parseInt(b.earliest_slot) || 999999
+          // Get the actual datetime from earliest_slot_data for proper sorting
+          const getEarliestDateTime = (therapist) => {
+            if (therapist.earliest_slot_data && therapist.earliest_slot_data.date && therapist.earliest_slot_data.time) {
+              try {
+                const dateTime = new Date(therapist.earliest_slot_data.date + ' ' + therapist.earliest_slot_data.time)
+                return isNaN(dateTime.getTime()) ? new Date('9999-12-31') : dateTime
+              } catch (error) {
+                return new Date('9999-12-31')
+              }
+            }
+            // Fallback to earliest_slot (minutes from now) if no real data
+            if (therapist.earliest_slot && parseInt(therapist.earliest_slot) > 0) {
+              try {
+                const minutesFromNow = parseInt(therapist.earliest_slot)
+                return new Date(Date.now() + minutesFromNow * 60000)
+              } catch (error) {
+                return new Date('9999-12-31')
+              }
+            }
+            return new Date('9999-12-31') // No slot available
+          }
+          
+          const aDateTime = getEarliestDateTime(a)
+          const bDateTime = getEarliestDateTime(b)
           
           if (appointmentSort.value === 'nearest') {
-            return aMinutes - bMinutes
+            return aDateTime - bDateTime
           } else if (appointmentSort.value === 'farthest') {
-            return bMinutes - aMinutes
+            return bDateTime - aDateTime
           }
         }
         
