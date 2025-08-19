@@ -238,15 +238,11 @@ export default {
             if (!therapist.price) return 0
             // For demo therapists, price is { others: number }
             // For regular therapists, price is { countries: [], others: number }
-            const price = parseInt(therapist.price.others || 0)
-            console.log(`Therapist ${therapist.name}: price = ${price}, price object:`, therapist.price)
-            return price
+            return parseInt(therapist.price.others || 0)
           }
           
           const aPrice = getPriceValue(a)
           const bPrice = getPriceValue(b)
-          
-          console.log(`Comparing prices: ${a.name} (${aPrice}) vs ${b.name} (${bPrice})`)
           
           if (priceSort.value === 'lowest') {
             return aPrice - bPrice
@@ -262,8 +258,10 @@ export default {
             if (therapist.earliest_slot_data && therapist.earliest_slot_data.date && therapist.earliest_slot_data.time) {
               try {
                 const dateTime = new Date(therapist.earliest_slot_data.date + ' ' + therapist.earliest_slot_data.time)
+                console.log(`Therapist ${therapist.name}: earliest_slot_data =`, therapist.earliest_slot_data, 'parsed datetime =', dateTime)
                 return isNaN(dateTime.getTime()) ? new Date('9999-12-31') : dateTime
               } catch (error) {
+                console.log(`Therapist ${therapist.name}: error parsing earliest_slot_data:`, error)
                 return new Date('9999-12-31')
               }
             }
@@ -271,16 +269,22 @@ export default {
             if (therapist.earliest_slot && parseInt(therapist.earliest_slot) > 0) {
               try {
                 const minutesFromNow = parseInt(therapist.earliest_slot)
-                return new Date(Date.now() + minutesFromNow * 60000)
+                const dateTime = new Date(Date.now() + minutesFromNow * 60000)
+                console.log(`Therapist ${therapist.name}: earliest_slot = ${therapist.earliest_slot} minutes, calculated datetime =`, dateTime)
+                return dateTime
               } catch (error) {
+                console.log(`Therapist ${therapist.name}: error parsing earliest_slot:`, error)
                 return new Date('9999-12-31')
               }
             }
+            console.log(`Therapist ${therapist.name}: no slot data available`)
             return new Date('9999-12-31') // No slot available
           }
           
           const aDateTime = getEarliestDateTime(a)
           const bDateTime = getEarliestDateTime(b)
+          
+          console.log(`Comparing appointments: ${a.name} (${aDateTime}) vs ${b.name} (${bDateTime})`)
           
           if (appointmentSort.value === 'nearest') {
             return aDateTime - bDateTime
