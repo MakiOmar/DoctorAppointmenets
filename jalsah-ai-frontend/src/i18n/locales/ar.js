@@ -328,7 +328,7 @@ export default {
     sortByOrder: 'الترتيب',
     sortByPrice: 'السعر',
     sortByAppointment: 'الموعد',
-    any: 'أي',
+    any: 'أي شيء',
     orderAsc: 'تصاعدي',
     orderDesc: 'تنازلي',
     priceLowest: 'الأقل',
