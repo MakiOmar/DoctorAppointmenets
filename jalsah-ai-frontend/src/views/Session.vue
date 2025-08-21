@@ -404,16 +404,16 @@ const formatTimeRemaining = computed(() => {
 })
 
 const canJoinSession = computed(() => {
-  if (!sessionData.value) return false
-  
-  // For AI sessions, treat 'open' as 'confirmed'
-  const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
-  if (!isConfirmed) return false
-  
-  // Check if current user is eligible (therapist or client)
-  const currentUserId = Number(authStore.user?.id)
-  const sessionTherapistId = Number(sessionData.value.user_id)
-  const sessionClientId = Number(sessionData.value.client_id)
+   if (!sessionData.value) return false
+   
+   // For AI sessions, treat 'open' as 'confirmed'
+   const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
+   if (!isConfirmed) return false
+   
+   // Check if current user is eligible (therapist or client)
+   const currentUserId = Number(authStore.user?.id)
+   const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
+   const sessionClientId = Number(sessionData.value.client_id)
   
   // Debug logging
   console.log('🔍 canJoinSession Debug:', {
@@ -450,10 +450,10 @@ const sessionNotAvailableReason = computed(() => {
     return t('session.reason.notConfirmed')
   }
   
-  // Check if current user is eligible (therapist or client)
-  const currentUserId = Number(authStore.user?.id)
-  const sessionTherapistId = Number(sessionData.value.user_id)
-  const sessionClientId = Number(sessionData.value.client_id)
+     // Check if current user is eligible (therapist or client)
+   const currentUserId = Number(authStore.user?.id)
+   const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
+   const sessionClientId = Number(sessionData.value.client_id)
   
   // Debug logging
   console.log('🔍 sessionNotAvailableReason Debug:', {
