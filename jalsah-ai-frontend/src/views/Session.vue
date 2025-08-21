@@ -300,6 +300,7 @@ const timer = ref(null)
 const jitsiLoaded = ref(false)
 const meetAPI = ref(null)
 const showManualButton = ref(false)
+const sessionRefreshTimer = ref(null)
 
 // Computed properties
 const sessionStatus = computed(() => {
@@ -443,7 +444,19 @@ const waitingForTherapist = computed(() => {
   
   // Show waiting state if session is confirmed/open but therapist hasn't joined yet
   const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
-  return isConfirmed && !sessionData.value.therapist_joined
+  const waiting = isConfirmed && !sessionData.value.therapist_joined
+  
+  // Debug logging
+  console.log('🔍 waitingForTherapist Debug:', {
+    sessionData: sessionData.value,
+    isConfirmed,
+    therapist_joined: sessionData.value.therapist_joined,
+    waiting,
+    isTherapist: isTherapist.value,
+    userRole: authStore.user?.role
+  })
+  
+  return waiting
 })
 
 const sessionNotAvailableReason = computed(() => {
@@ -522,16 +535,18 @@ const loadSession = async () => {
     
          if (response.data.success) {
        sessionData.value = response.data.data
-       console.log('✅ Session data loaded:', sessionData.value)
-       console.log('🔍 Session data details:', {
-         ID: sessionData.value.ID,
-         user_id: sessionData.value.user_id,
-         client_id: sessionData.value.client_id,
-         therapist_id: sessionData.value.therapist_id,
-         session_status: sessionData.value.session_status,
-         date_time: sessionData.value.date_time
-       })
-       startTimer()
+               console.log('✅ Session data loaded:', sessionData.value)
+        console.log('🔍 Session data details:', {
+          ID: sessionData.value.ID,
+          user_id: sessionData.value.user_id,
+          client_id: sessionData.value.client_id,
+          therapist_id: sessionData.value.therapist_id,
+          session_status: sessionData.value.session_status,
+          date_time: sessionData.value.date_time,
+          therapist_joined: sessionData.value.therapist_joined
+        })
+        startTimer()
+        startSessionRefresh() // Start refreshing session data
      } else {
       error.value = response.data.error || t('session.loadError')
       console.error('❌ Session load failed:', error.value)
@@ -561,6 +576,29 @@ const startTimer = () => {
    updateTimer()
    timer.value = setInterval(updateTimer, 1000)
  }
+
+const startSessionRefresh = () => {
+  if (!sessionData.value) return
+  
+  // Refresh session data every 5 seconds to check for therapist joined status
+  sessionRefreshTimer.value = setInterval(async () => {
+    try {
+      console.log('🔄 Refreshing session data...')
+      const response = await api.get(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}`)
+      
+      if (response.data.success) {
+        const newData = response.data.data
+        console.log('📋 New session data:', newData)
+        console.log('🔍 Therapist joined status:', newData.therapist_joined)
+        
+        // Update session data
+        sessionData.value = newData
+      }
+    } catch (err) {
+      console.error('❌ Error refreshing session data:', err)
+    }
+  }, 5000) // Refresh every 5 seconds
+}
 
 const joinSession = async () => {
   if (!canJoinSession.value) return
@@ -846,6 +884,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer.value) {
     clearInterval(timer.value)
+  }
+  if (sessionRefreshTimer.value) {
+    clearInterval(sessionRefreshTimer.value)
   }
 })
 </script>
