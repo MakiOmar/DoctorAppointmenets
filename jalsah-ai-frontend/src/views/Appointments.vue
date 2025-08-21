@@ -347,7 +347,8 @@ export default {
         status: appointment.status,
         date: appointment.date,
         time: appointment.time,
-        dateTime: `${appointment.date}T${appointment.time}`
+        dateTime: appointment.date_time,
+        starts: appointment.starts
       })
       
       // Allow joining for both 'open' and 'confirmed' statuses
@@ -356,7 +357,14 @@ export default {
         return false
       }
       
-      const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+      // Use the original date_time field if available, otherwise construct from date and time
+      let appointmentTime
+      if (appointment.date_time) {
+        appointmentTime = new Date(appointment.date_time)
+      } else {
+        appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+      }
+      
       const now = new Date()
       const timeDiff = appointmentTime - now
       

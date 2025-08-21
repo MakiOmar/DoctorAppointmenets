@@ -3364,7 +3364,7 @@ class SNKS_AI_Integration {
 			// Map session_status to status for frontend compatibility
 			$appointment->status = $appointment->session_status;
 			
-			// Format date and time for frontend
+			// Format date and time for frontend - extract only the date part
 			$appointment->date = date('Y-m-d', strtotime($appointment->date_time));
 			$appointment->time = $appointment->starts;
 		}
