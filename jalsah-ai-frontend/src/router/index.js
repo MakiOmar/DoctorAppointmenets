@@ -45,6 +45,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
+    path: '/therapist-appointment/:therapistId',
+    name: 'TherapistAppointment',
+    component: () => import('@/views/TherapistAppointment.vue'),
+    meta: { requiresAuth: true, roles: ['customer'] }
+  },
+  {
     path: '/booking/:therapistId',
     name: 'Booking',
     component: () => import('@/views/Booking.vue'),

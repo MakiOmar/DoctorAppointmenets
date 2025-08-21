@@ -559,6 +559,19 @@ export default {
     minutes: 'دقائق'
   },
 
+  // Therapist Appointment Page
+  therapistAppointment: {
+    title: 'حجز موعد',
+    subtitle: 'اختر موعداً لحجز جلستك',
+    bookSession: 'حجز الجلسة',
+    bookNow: 'احجز الآن',
+    booking: 'جاري الحجز...',
+    addedToCart: 'تم الإضافة إلى السلة بنجاح',
+    bookingError: 'خطأ في حجز الموعد',
+    loadError: 'خطأ في تحميل معلومات المعالج',
+    noSlotsAvailable: 'لا توجد مواعيد متاحة في الوقت الحالي'
+  },
+
   // Profile
   profile: {
     title: 'ملفي الشخصي',

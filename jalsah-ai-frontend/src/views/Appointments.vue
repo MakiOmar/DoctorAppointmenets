@@ -478,8 +478,8 @@ export default {
       const therapistId = appointment.therapist_id || appointment.user_id || appointment.therapist?.id
       console.log('🔍 Therapist ID found:', therapistId)
       
-      // Navigate to therapists page with the specific therapist pre-selected
-      router.push(`/therapists?therapist=${therapistId}`)
+      // Navigate to the new therapist appointment page
+      router.push(`/therapist-appointment/${therapistId}`)
     }
 
 

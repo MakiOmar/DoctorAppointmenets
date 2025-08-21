@@ -603,6 +603,19 @@ export default {
     minutes: 'minutes'
   },
 
+  // Therapist Appointment Page
+  therapistAppointment: {
+    title: 'Book Appointment',
+    subtitle: 'Select a time slot to book your session',
+    bookSession: 'Book Session',
+    bookNow: 'Book Now',
+    booking: 'Booking...',
+    addedToCart: 'Added to cart successfully',
+    bookingError: 'Error booking appointment',
+    loadError: 'Error loading therapist information',
+    noSlotsAvailable: 'No available time slots at the moment'
+  },
+
   // Profile
   profile: {
     title: 'My Profile',
