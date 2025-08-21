@@ -391,17 +391,18 @@ const formatSessionTime = computed(() => {
 })
 
 const formatTimeRemaining = computed(() => {
-  if (timeRemaining.value <= 0) return t('session.timeExpired')
-  
-  const hours = Math.floor(timeRemaining.value / 3600)
-  const minutes = Math.floor((timeRemaining.value % 3600) / 60)
-  const seconds = timeRemaining.value % 60
-  
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
-})
+   // Don't show "time expired" since we removed time restrictions
+   if (timeRemaining.value <= 0) return ''
+   
+   const hours = Math.floor(timeRemaining.value / 3600)
+   const minutes = Math.floor((timeRemaining.value % 3600) / 60)
+   const seconds = timeRemaining.value % 60
+   
+   if (hours > 0) {
+     return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+   }
+   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+ })
 
 const canJoinSession = computed(() => {
    if (!sessionData.value) return false
@@ -543,24 +544,22 @@ const loadSession = async () => {
 }
 
 const startTimer = () => {
-  if (!sessionData.value) return
-  
-  const updateTimer = () => {
-    const appointmentTime = new Date(sessionData.value.date_time)
-    const now = new Date()
-    const timeDiff = Math.floor((appointmentTime - now) / 1000)
-    
-    timeRemaining.value = timeDiff
-    
-    // Stop timer if session is more than 1 hour past
-    if (timeDiff < -3600) {
-      clearInterval(timer.value)
-    }
-  }
-  
-  updateTimer()
-  timer.value = setInterval(updateTimer, 1000)
-}
+   if (!sessionData.value) return
+   
+   const updateTimer = () => {
+     const appointmentTime = new Date(sessionData.value.date_time)
+     const now = new Date()
+     const timeDiff = Math.floor((appointmentTime - now) / 1000)
+     
+     timeRemaining.value = timeDiff
+     
+     // Keep timer running even after session time has passed
+     // since we removed time restrictions
+   }
+   
+   updateTimer()
+   timer.value = setInterval(updateTimer, 1000)
+ }
 
 const joinSession = async () => {
   if (!canJoinSession.value) return
