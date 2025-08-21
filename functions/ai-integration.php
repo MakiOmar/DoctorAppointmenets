@@ -3361,12 +3361,21 @@ class SNKS_AI_Integration {
 				$appointment->therapist_image_url = wp_get_attachment_image_url($appointment->profile_image, 'thumbnail');
 			}
 			
+			// Debug: Log the original appointment data
+			error_log('AI Appointments Debug - Original: ' . print_r($appointment, true));
+			
 			// Map session_status to status for frontend compatibility
 			$appointment->status = $appointment->session_status;
+			
+			// Keep the original date_time field for frontend
+			$appointment->date_time = $appointment->date_time;
 			
 			// Format date and time for frontend - extract only the date part
 			$appointment->date = date('Y-m-d', strtotime($appointment->date_time));
 			$appointment->time = $appointment->starts;
+			
+			// Debug: Log the processed appointment data
+			error_log('AI Appointments Debug - Processed: ' . print_r($appointment, true));
 		}
 		
 		return new WP_REST_Response(['success' => true, 'data' => $appointments], 200);
