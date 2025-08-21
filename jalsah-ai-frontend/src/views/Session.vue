@@ -178,7 +178,7 @@
              
              <!-- Set Therapist Joined Button (for testing) -->
              <button
-               v-if="isTherapist && sessionData && sessionData.therapist_id === authStore.user?.id"
+               v-if="isTherapist && sessionData && Number(sessionData.therapist_id) === Number(authStore.user?.id)"
                @click="setTherapistJoined"
                :disabled="settingJoined"
                class="btn-outline w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
@@ -197,8 +197,8 @@
                <p><strong>User Role:</strong> {{ authStore.user?.role }}</p>
                <p><strong>Is Therapist:</strong> {{ isTherapist }}</p>
                <p><strong>Session Therapist ID:</strong> {{ sessionData.therapist_id }}</p>
-               <p><strong>Match:</strong> {{ sessionData.therapist_id === authStore.user?.id }}</p>
-               <p><strong>Show Button:</strong> {{ isTherapist && sessionData && sessionData.therapist_id === authStore.user?.id }}</p>
+               <p><strong>Match:</strong> {{ Number(sessionData.therapist_id) === Number(authStore.user?.id) }}</p>
+               <p><strong>Show Button:</strong> {{ isTherapist && sessionData && Number(sessionData.therapist_id) === Number(authStore.user?.id) }}</p>
              </div>
              
              <!-- Simple Test Button (no auth required) -->
@@ -462,7 +462,7 @@ const canEndSession = computed(() => {
   if (!sessionData.value || !isTherapist.value) return false
   
   // Only the assigned therapist can end the session
-  return sessionData.value.therapist_id === authStore.user?.id
+  return Number(sessionData.value.therapist_id) === Number(authStore.user?.id)
 })
 
 // Methods
