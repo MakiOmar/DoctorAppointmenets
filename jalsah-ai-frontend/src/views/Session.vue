@@ -164,7 +164,7 @@
             </div>
 
             <!-- Session Not Available -->
-            <div v-else class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div v-else-if="sessionNotAvailableReason" class="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div class="flex items-center space-x-3 rtl:space-x-reverse">
                 <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -456,12 +456,12 @@ const sessionNotAvailableReason = computed(() => {
      return t('session.reason.cancelled')
    }
   
-     // Check if current user is eligible (therapist or client)
+   // Check if current user is eligible (therapist or client)
    const currentUserId = Number(authStore.user?.id)
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-     // Debug logging
+   // Debug logging
    console.log('🔍 sessionNotAvailableReason Debug:', {
      currentUserId,
      sessionTherapistId,
@@ -476,11 +476,13 @@ const sessionNotAvailableReason = computed(() => {
      notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
    })
   
-  if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
-    return t('session.reason.notAuthorized')
-  }
+   if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
+     return t('session.reason.notAuthorized')
+   }
   
-  return t('session.reason.unknown')
+   // If we reach here, the session is available and user is authorized
+   // Return empty string to indicate no reason (session is available)
+   return ''
 })
 
 const showTimer = computed(() => {
