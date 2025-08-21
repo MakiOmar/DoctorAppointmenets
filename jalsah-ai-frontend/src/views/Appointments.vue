@@ -262,7 +262,9 @@ export default {
       loading.value = true
       try {
         const response = await api.get('/api/ai/appointments')
+        console.log('📋 API Response:', response.data)
         appointments.value = response.data.data || []
+        console.log('📅 Appointments loaded:', appointments.value)
       } catch (error) {
         toast.error('Failed to load appointments')
         console.error('Error loading appointments:', error)
@@ -340,15 +342,36 @@ export default {
     }
 
     const canJoinSession = (appointment) => {
+      console.log('🔍 Debug canJoinSession:', {
+        appointment: appointment,
+        status: appointment.status,
+        date: appointment.date,
+        time: appointment.time,
+        dateTime: `${appointment.date}T${appointment.time}`
+      })
+      
       // Allow joining for both 'open' and 'confirmed' statuses
-      if (appointment.status !== 'confirmed' && appointment.status !== 'open') return false
+      if (appointment.status !== 'confirmed' && appointment.status !== 'open') {
+        console.log('❌ Status check failed:', appointment.status)
+        return false
+      }
       
       const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
       const now = new Date()
       const timeDiff = appointmentTime - now
       
+      console.log('⏰ Time check:', {
+        appointmentTime: appointmentTime,
+        now: now,
+        timeDiff: timeDiff,
+        timeDiffMinutes: timeDiff / (1000 * 60)
+      })
+      
       // Can join 5 minutes before and up to 15 minutes after
-      return timeDiff >= -5 * 60 * 1000 && timeDiff <= 15 * 60 * 1000
+      const canJoin = timeDiff >= -5 * 60 * 1000 && timeDiff <= 15 * 60 * 1000
+      console.log('✅ Can join session:', canJoin)
+      
+      return canJoin
     }
 
     const canReschedule = (appointment) => {
