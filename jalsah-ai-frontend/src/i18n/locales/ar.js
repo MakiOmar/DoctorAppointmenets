@@ -535,6 +535,7 @@ export default {
     reschedule: 'إعادة جدولة',
     cancel: 'إلغاء',
     viewDetails: 'عرض التفاصيل',
+    bookWithSameTherapist: 'حجز جلسة جديدة مع نفس المعالج',
     sessionLinkAvailable: 'رابط الجلسة متاح',
     sessionLinkMessage: 'انقر على الرابط أدناه للانضمام إلى جلستك',
     joinNow: 'انضم الآن',

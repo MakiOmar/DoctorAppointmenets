@@ -95,34 +95,46 @@
 
             <!-- Actions -->
             <div class="mt-4 md:mt-0 md:ml-6 flex flex-col space-y-2">
-              <!-- Join Session Button -->
-              <button 
-                v-if="canJoinSession(appointment)"
-                @click="joinSession(appointment.id)"
-                class="btn-primary text-sm"
-              >
-                {{ $t('appointmentsPage.joinSession') }}
-              </button>
+              <!-- For Upcoming Sessions -->
+              <template v-if="activeTab === 'upcoming'">
+                <!-- Join Session Button -->
+                <button 
+                  v-if="canJoinSession(appointment)"
+                  @click="joinSession(appointment.id)"
+                  class="btn-primary text-sm"
+                >
+                  {{ $t('appointmentsPage.joinSession') }}
+                </button>
 
-              <!-- Reschedule Button -->
-              <button 
-                v-if="canReschedule(appointment)"
-                @click="rescheduleAppointment(appointment.id)"
-                class="btn-outline text-sm"
-              >
-                {{ $t('appointmentsPage.reschedule') }}
-              </button>
+                <!-- Reschedule Button -->
+                <button 
+                  v-if="canReschedule(appointment)"
+                  @click="rescheduleAppointment(appointment.id)"
+                  class="btn-outline text-sm"
+                >
+                  {{ $t('appointmentsPage.reschedule') }}
+                </button>
 
-              <!-- Cancel Button -->
-              <button 
-                v-if="canCancel(appointment)"
-                @click="cancelAppointment(appointment.id)"
-                class="btn-outline text-sm text-red-600 hover:text-red-700"
-              >
-                {{ $t('appointmentsPage.cancel') }}
-              </button>
+                <!-- Cancel Button -->
+                <button 
+                  v-if="canCancel(appointment)"
+                  @click="cancelAppointment(appointment.id)"
+                  class="btn-outline text-sm text-red-600 hover:text-red-700"
+                >
+                  {{ $t('appointmentsPage.cancel') }}
+                </button>
+              </template>
 
-
+              <!-- For Past Sessions -->
+              <template v-if="activeTab === 'past'">
+                <!-- Book a new appointment with the same therapist -->
+                <button 
+                  @click="bookWithSameTherapist(appointment)"
+                  class="btn-primary text-sm"
+                >
+                  {{ $t('appointmentsPage.bookWithSameTherapist') }}
+                </button>
+              </template>
             </div>
           </div>
 
@@ -225,7 +237,7 @@ export default {
       { 
         id: 'upcoming', 
         name: $t('appointmentsPage.tabs.upcoming'), 
-        count: appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending').length 
+        count: appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending' || a.status === 'open').length 
       },
       { 
         id: 'past', 
@@ -240,13 +252,33 @@ export default {
     ])
 
     const filteredAppointments = computed(() => {
+      let filtered = []
+      
       switch (activeTab.value) {
         case 'upcoming':
-          return appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending')
+          filtered = appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending' || a.status === 'open')
+          // Sort upcoming sessions from nearest to farthest
+          return filtered.sort((a, b) => {
+            const dateA = new Date(a.date_time || a.date)
+            const dateB = new Date(b.date_time || b.date)
+            return dateA - dateB
+          })
         case 'past':
-          return appointments.value.filter(a => a.status === 'completed')
+          filtered = appointments.value.filter(a => a.status === 'completed')
+          // Sort past sessions from newest to oldest
+          return filtered.sort((a, b) => {
+            const dateA = new Date(a.date_time || a.date)
+            const dateB = new Date(b.date_time || b.date)
+            return dateB - dateA
+          })
         case 'cancelled':
-          return appointments.value.filter(a => a.status === 'cancelled')
+          filtered = appointments.value.filter(a => a.status === 'cancelled')
+          // Sort cancelled sessions from newest to oldest
+          return filtered.sort((a, b) => {
+            const dateA = new Date(a.date_time || a.date)
+            const dateB = new Date(b.date_time || b.date)
+            return dateB - dateA
+          })
         default:
           return appointments.value
       }
@@ -437,6 +469,11 @@ export default {
       }
     }
 
+    const bookWithSameTherapist = (appointment) => {
+      // Navigate to therapists page with the specific therapist pre-selected
+      router.push(`/therapists?therapist=${appointment.therapist_id || appointment.user_id}`)
+    }
+
 
 
     onMounted(() => {
@@ -461,7 +498,8 @@ export default {
       joinSession,
       rescheduleAppointment,
       cancelAppointment,
-      confirmCancel
+      confirmCancel,
+      bookWithSameTherapist
     }
   }
 }
