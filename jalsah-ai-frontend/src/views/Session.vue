@@ -394,11 +394,11 @@ const sessionNotAvailableReason = computed(() => {
   const now = new Date()
   const timeDiff = appointmentTime - now
   
-  if (timeDiff < -5 * 60 * 1000) {
+  if (timeDiff > 5 * 60 * 1000) {
     return t('session.reason.tooEarly')
   }
   
-  if (timeDiff > 15 * 60 * 1000) {
+  if (timeDiff < -15 * 60 * 1000) {
     return t('session.reason.tooLate')
   }
   
