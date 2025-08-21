@@ -122,13 +122,7 @@
                 {{ $t('appointmentsPage.cancel') }}
               </button>
 
-              <!-- View Details -->
-              <button 
-                @click="viewAppointmentDetails(appointment.id)"
-                class="btn-outline text-sm"
-              >
-                {{ $t('appointmentsPage.viewDetails') }}
-              </button>
+
             </div>
           </div>
 
@@ -443,9 +437,7 @@ export default {
       }
     }
 
-    const viewAppointmentDetails = (appointmentId) => {
-      router.push(`/appointments/${appointmentId}`)
-    }
+
 
     onMounted(() => {
       loadAppointments()
@@ -469,8 +461,7 @@ export default {
       joinSession,
       rescheduleAppointment,
       cancelAppointment,
-      confirmCancel,
-      viewAppointmentDetails
+      confirmCancel
     }
   }
 }
