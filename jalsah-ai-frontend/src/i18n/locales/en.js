@@ -760,6 +760,7 @@ export default {
       notConfirmed: 'Session is not confirmed yet',
       tooEarly: 'Session has not started yet',
       tooLate: 'Session time has passed',
+      notAuthorized: 'You are not authorized to join this session',
       unknown: 'Session is not available at this time'
     }
   },

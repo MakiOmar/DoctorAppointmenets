@@ -366,12 +366,12 @@ const canJoinSession = computed(() => {
   const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
   if (!isConfirmed) return false
   
-  const appointmentTime = new Date(sessionData.value.date_time)
-  const now = new Date()
-  const timeDiff = appointmentTime - now
+  // Check if current user is eligible (therapist or client)
+  const currentUserId = Number(authStore.user?.id)
+  const sessionTherapistId = Number(sessionData.value.user_id)
+  const sessionClientId = Number(sessionData.value.client_id)
   
-  // Can join 5 minutes before and up to 15 minutes after
-  return timeDiff >= -5 * 60 * 1000 && timeDiff <= 15 * 60 * 1000
+  return currentUserId === sessionTherapistId || currentUserId === sessionClientId
 })
 
 const waitingForTherapist = computed(() => {
@@ -390,16 +390,13 @@ const sessionNotAvailableReason = computed(() => {
     return t('session.reason.notConfirmed')
   }
   
-  const appointmentTime = new Date(sessionData.value.date_time)
-  const now = new Date()
-  const timeDiff = appointmentTime - now
+  // Check if current user is eligible (therapist or client)
+  const currentUserId = Number(authStore.user?.id)
+  const sessionTherapistId = Number(sessionData.value.user_id)
+  const sessionClientId = Number(sessionData.value.client_id)
   
-  if (timeDiff > 5 * 60 * 1000) {
-    return t('session.reason.tooEarly')
-  }
-  
-  if (timeDiff < -15 * 60 * 1000) {
-    return t('session.reason.tooLate')
+  if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
+    return t('session.reason.notAuthorized')
   }
   
   return t('session.reason.unknown')
