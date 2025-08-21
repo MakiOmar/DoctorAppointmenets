@@ -142,6 +142,7 @@
             :therapist="therapist"
             :diagnosis-id="route.params.diagnosisId"
             :position="therapist.originalPosition"
+            :show-order-badge="true"
             @click="viewTherapist"
             @book="bookAppointment"
           />

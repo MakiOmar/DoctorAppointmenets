@@ -10,9 +10,9 @@
           :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
         />
         <!-- Price Badge (removed since price is now shown next to name) -->
-        <!-- Order Number Badge -->
+        <!-- Order Number Badge (only show on diagnosis results) -->
         <div 
-          v-if="currentDiagnosisDisplayOrder" 
+          v-if="showOrderBadge && currentDiagnosisDisplayOrder" 
           class="absolute top-2 left-2 bg-yellow-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-lg"
           :class="locale === 'ar' ? 'right-2 left-auto' : 'left-2 right-auto'"
         >
@@ -306,6 +306,10 @@ export default {
       type: Object,
       required: false,
       default: null
+    },
+    showOrderBadge: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['click', 'book'],
