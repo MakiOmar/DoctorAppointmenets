@@ -35,54 +35,7 @@
            />
          </div>
         
-        <!-- Booking Section -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <h3 class="text-xl font-semibold text-gray-900 mb-6">
-            {{ $t('therapistAppointment.bookSession') }}
-          </h3>
-          
-          <!-- Available Slots -->
-          <div v-if="availableSlots.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <div 
-              v-for="slot in availableSlots" 
-              :key="slot.id"
-              @click="selectSlot(slot)"
-              :class="[
-                'p-4 border rounded-lg cursor-pointer transition-colors',
-                selectedSlot?.id === slot.id 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-200 hover:border-gray-300'
-              ]"
-            >
-              <div class="font-medium text-gray-900">
-                {{ formatDate(slot.date) }}
-              </div>
-              <div class="text-sm text-gray-600">
-                {{ slot.time }} - {{ slot.end_time }}
-              </div>
-              <div class="text-xs text-gray-500 mt-1">
-                {{ slot.attendance_type || $t('therapist.inPerson') }}
-              </div>
-            </div>
-          </div>
-          
-          <!-- No Slots Available -->
-          <div v-else class="text-center py-8 text-gray-500">
-            {{ $t('therapistAppointment.noSlotsAvailable') }}
-          </div>
-          
-          <!-- Book Button -->
-          <div v-if="selectedSlot" class="flex justify-center">
-            <button 
-              @click="bookAppointment"
-              :disabled="booking"
-              class="btn-primary px-8 py-3 text-lg"
-            >
-              <span v-if="booking" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>
-              {{ booking ? $t('therapistAppointment.booking') : $t('therapistAppointment.bookNow') }}
-            </button>
-          </div>
-        </div>
+        
       </div>
     </div>
 </template>
@@ -106,9 +59,6 @@ const toast = useToast()
 const loading = ref(true)
 const error = ref(null)
 const therapist = ref(null)
-const availableSlots = ref([])
-const selectedSlot = ref(null)
-const booking = ref(false)
 
 // Load therapist data
 const loadTherapist = async () => {
@@ -121,13 +71,10 @@ const loadTherapist = async () => {
     
     const response = await api.get(`/api/ai/therapists/${therapistId}`)
     
-    if (response.data.success) {
-      therapist.value = response.data.data
-      console.log('✅ Therapist loaded:', therapist.value)
-      
-      // Load available slots
-      await loadAvailableSlots()
-    } else {
+         if (response.data.success) {
+       therapist.value = response.data.data
+       console.log('✅ Therapist loaded:', therapist.value)
+     } else {
       error.value = response.data.error || t('therapistAppointment.loadError')
     }
   } catch (err) {
@@ -138,71 +85,13 @@ const loadTherapist = async () => {
   }
 }
 
-// Load available slots for the therapist
-const loadAvailableSlots = async () => {
-  try {
-    const therapistId = route.params.therapistId
-    const response = await api.get(`/api/ai/therapists/${therapistId}/available-dates`)
-    
-    if (response.data.success) {
-      availableSlots.value = response.data.data || []
-      console.log('✅ Available slots loaded:', availableSlots.value)
-    }
-  } catch (err) {
-    console.error('❌ Error loading available slots:', err)
-    // Don't show error for slots, just log it
-  }
-}
-
-// Select a time slot
-const selectSlot = (slot) => {
-  selectedSlot.value = slot
-  console.log('✅ Slot selected:', slot)
-}
-
-// Book the appointment
-const bookAppointment = async () => {
-  if (!selectedSlot.value) return
-  
-  try {
-    booking.value = true
-    
-    const response = await api.post('/api/ai/add-appointment-to-cart', {
-      slot_id: selectedSlot.value.id,
-      therapist_id: route.params.therapistId
-    })
-    
-    if (response.data.success) {
-      toast.success(t('therapistAppointment.addedToCart'))
-      // Redirect to cart
-      router.push('/cart')
-    } else {
-      toast.error(response.data.error || t('therapistAppointment.bookingError'))
-    }
-  } catch (err) {
-    console.error('❌ Error booking appointment:', err)
-    toast.error(t('therapistAppointment.bookingError'))
-  } finally {
-    booking.value = false
-  }
-}
-
 // Handle show details event from TherapistCard
 const handleShowDetails = (therapist) => {
   console.log('🔍 Show details for therapist:', therapist)
   // You can add any additional logic here if needed
 }
 
-// Format date
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ar-SA', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+
 
 // Load data on mount
 onMounted(() => {
