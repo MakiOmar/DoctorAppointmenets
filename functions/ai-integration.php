@@ -2255,6 +2255,7 @@ class SNKS_AI_Integration {
 						'time' => $appointment->starts,
 						'status' => $frontend_status,
 						'session_type' => $appointment->period ?: 60,
+						'therapist_id' => $appointment->user_id, // Add therapist ID
 						'therapist' => array(
 							'name' => $appointment->therapist_name ?: 'Unknown Therapist',
 							'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )
