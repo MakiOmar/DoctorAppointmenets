@@ -348,7 +348,9 @@ export default {
         date: appointment.date,
         time: appointment.time,
         dateTime: appointment.date_time,
-        starts: appointment.starts
+        starts: appointment.starts,
+        // Log all appointment properties
+        allProps: Object.keys(appointment).map(key => `${key}: ${appointment[key]}`)
       })
       
       // Allow joining for both 'open' and 'confirmed' statuses
@@ -359,10 +361,22 @@ export default {
       
       // Use the original date_time field if available, otherwise construct from date and time
       let appointmentTime
+      console.log('📅 Date parsing attempt:', {
+        hasDateTime: !!appointment.date_time,
+        dateTimeValue: appointment.date_time,
+        hasDate: !!appointment.date,
+        dateValue: appointment.date,
+        hasTime: !!appointment.time,
+        timeValue: appointment.time
+      })
+      
       if (appointment.date_time) {
         appointmentTime = new Date(appointment.date_time)
+        console.log('📅 Using date_time field:', appointment.date_time, '→', appointmentTime)
       } else {
-        appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+        const constructedDateTime = `${appointment.date}T${appointment.time}`
+        appointmentTime = new Date(constructedDateTime)
+        console.log('📅 Using constructed datetime:', constructedDateTime, '→', appointmentTime)
       }
       
       const now = new Date()
