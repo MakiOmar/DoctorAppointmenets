@@ -15,7 +15,7 @@
             </button>
             <div>
               <h1 class="text-xl font-semibold text-gray-900">{{ $t('session.title') }}</h1>
-              <p class="text-sm text-gray-600">{{ $t('session.with') }} {{ sessionData.therapist_name }}</p>
+              <p v-if="sessionData" class="text-sm text-gray-600">{{ $t('session.with') }} {{ sessionData.therapist_name }}</p>
             </div>
           </div>
           
@@ -87,7 +87,7 @@
             <!-- Therapist Info -->
             <div class="flex items-center space-x-4 rtl:space-x-reverse">
               <img
-                v-if="sessionData.therapist_image_url"
+                v-if="sessionData && sessionData.therapist_image_url"
                 :src="sessionData.therapist_image_url"
                 :alt="sessionData.therapist_name"
                 class="w-16 h-16 rounded-full object-cover"
@@ -98,7 +98,7 @@
                 </svg>
               </div>
               <div>
-                <h3 class="font-medium text-gray-900">{{ sessionData.therapist_name }}</h3>
+                <h3 class="font-medium text-gray-900">{{ sessionData ? sessionData.therapist_name : '' }}</h3>
                 <p class="text-sm text-gray-600">{{ $t('session.therapist') }}</p>
               </div>
             </div>
@@ -112,7 +112,7 @@
             <!-- Session Duration -->
             <div>
               <h4 class="font-medium text-gray-900">{{ $t('session.duration') }}</h4>
-              <p class="text-sm text-gray-600">{{ sessionData.period }} {{ $t('session.minutes') }}</p>
+              <p class="text-sm text-gray-600">{{ sessionData ? sessionData.period : '' }} {{ $t('session.minutes') }}</p>
             </div>
           </div>
         </div>
@@ -395,16 +395,21 @@ const loadSession = async () => {
   error.value = null
   
   try {
+    console.log('🔍 Loading session for ID:', route.params.id)
     const response = await api.get(`/wp-json/jalsah-ai/v1/session/${route.params.id}`)
+    
+    console.log('📋 Session API Response:', response.data)
     
     if (response.data.success) {
       sessionData.value = response.data.data
+      console.log('✅ Session data loaded:', sessionData.value)
       startTimer()
     } else {
       error.value = response.data.error || t('session.loadError')
+      console.error('❌ Session load failed:', error.value)
     }
   } catch (err) {
-    console.error('Error loading session:', err)
+    console.error('❌ Error loading session:', err)
     error.value = t('session.loadError')
   } finally {
     loading.value = false
