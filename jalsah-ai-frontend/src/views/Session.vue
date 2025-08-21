@@ -301,7 +301,7 @@ const formatSessionTime = computed(() => {
   if (!sessionData.value) return ''
   
   const date = new Date(sessionData.value.date_time)
-  return date.toLocaleDateString('ar-SA', {
+  return date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
