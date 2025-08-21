@@ -189,6 +189,31 @@
                </svg>
                <span>{{ settingJoined ? 'Setting...' : 'Set as Joined (Test)' }}</span>
              </button>
+             
+             <!-- Debug Info (temporary) -->
+             <div v-if="sessionData" class="bg-gray-100 p-4 rounded-lg text-sm">
+               <h4 class="font-medium mb-2">Debug Info:</h4>
+               <p><strong>User ID:</strong> {{ authStore.user?.id }}</p>
+               <p><strong>User Role:</strong> {{ authStore.user?.role }}</p>
+               <p><strong>Is Therapist:</strong> {{ isTherapist }}</p>
+               <p><strong>Session Therapist ID:</strong> {{ sessionData.therapist_id }}</p>
+               <p><strong>Match:</strong> {{ sessionData.therapist_id === authStore.user?.id }}</p>
+               <p><strong>Show Button:</strong> {{ isTherapist && sessionData && sessionData.therapist_id === authStore.user?.id }}</p>
+             </div>
+             
+             <!-- Simple Test Button (no auth required) -->
+             <button
+               v-if="sessionData"
+               @click="setTherapistJoinedSimple"
+               :disabled="settingJoined"
+               class="btn-outline w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse bg-yellow-100 border-yellow-300"
+             >
+               <span v-if="settingJoined" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
+               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+               </svg>
+               <span>{{ settingJoined ? 'Setting...' : 'Set as Joined (Simple Test)' }}</span>
+             </button>
           </div>
         </div>
       </div>
@@ -551,6 +576,32 @@ const setTherapistJoined = async () => {
     }
   } catch (err) {
     console.error('Error setting therapist joined:', err)
+    toast.error('Failed to set therapist joined status')
+  } finally {
+    settingJoined.value = false
+  }
+}
+
+const setTherapistJoinedSimple = async () => {
+  if (!sessionData.value) return
+  
+  settingJoined.value = true
+  
+  try {
+    // Use the PHP script approach - call it via fetch
+    const response = await fetch(`/test-set-therapist-joined.php`)
+    const result = await response.text()
+    
+    console.log('PHP Script Result:', result)
+    
+    if (result.includes('✅ Successfully set therapist joined status')) {
+      toast.success('Therapist joined status set successfully (via PHP script)')
+      await loadSession() // Reload session data to update therapist_joined status
+    } else {
+      toast.error('Failed to set therapist joined status via PHP script')
+    }
+  } catch (err) {
+    console.error('Error setting therapist joined via PHP script:', err)
     toast.error('Failed to set therapist joined status')
   } finally {
     settingJoined.value = false
