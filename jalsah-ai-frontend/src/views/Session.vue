@@ -261,6 +261,7 @@ const sessionStatus = computed(() => {
   const statusMap = {
     'pending': t('session.status.pending'),
     'confirmed': t('session.status.confirmed'),
+    'open': t('session.status.confirmed'), // Treat 'open' as 'confirmed' for AI sessions
     'completed': t('session.status.completed'),
     'cancelled': t('session.status.cancelled'),
     'no_show': t('session.status.noShow')
@@ -275,6 +276,7 @@ const statusColor = computed(() => {
   const colorMap = {
     'pending': 'bg-yellow-400',
     'confirmed': 'bg-green-400',
+    'open': 'bg-green-400', // Treat 'open' as 'confirmed' for AI sessions
     'completed': 'bg-blue-400',
     'cancelled': 'bg-red-400',
     'no_show': 'bg-gray-400'
@@ -289,6 +291,7 @@ const statusTextColor = computed(() => {
   const colorMap = {
     'pending': 'text-yellow-700',
     'confirmed': 'text-green-700',
+    'open': 'text-green-700', // Treat 'open' as 'confirmed' for AI sessions
     'completed': 'text-blue-700',
     'cancelled': 'text-red-700',
     'no_show': 'text-gray-700'
@@ -357,8 +360,9 @@ const formatTimeRemaining = computed(() => {
 const canJoinSession = computed(() => {
   if (!sessionData.value) return false
   
-  // Only confirmed sessions can be joined
-  if (sessionData.value.session_status !== 'confirmed') return false
+  // For AI sessions, treat 'open' as 'confirmed'
+  const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
+  if (!isConfirmed) return false
   
   const appointmentTime = new Date(sessionData.value.date_time)
   const now = new Date()
@@ -371,14 +375,16 @@ const canJoinSession = computed(() => {
 const waitingForTherapist = computed(() => {
   if (!sessionData.value) return false
   
-  // Show waiting state if session is confirmed but therapist hasn't joined yet
-  return sessionData.value.session_status === 'confirmed' && !sessionData.value.therapist_joined
+  // Show waiting state if session is confirmed/open but therapist hasn't joined yet
+  const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
+  return isConfirmed && !sessionData.value.therapist_joined
 })
 
 const sessionNotAvailableReason = computed(() => {
   if (!sessionData.value) return ''
   
-  if (sessionData.value.session_status !== 'confirmed') {
+  const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
+  if (!isConfirmed) {
     return t('session.reason.notConfirmed')
   }
   
