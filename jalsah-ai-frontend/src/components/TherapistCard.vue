@@ -18,10 +18,7 @@
         >
           {{ therapistPosition }}
         </div>
-        <!-- Debug info (remove after testing) -->
-        <div v-if="!currentDiagnosisDisplayOrder" class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
-          No order
-        </div>
+
       </div>
 
       <!-- Therapist Info -->
