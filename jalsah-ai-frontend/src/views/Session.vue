@@ -176,44 +176,7 @@
                <span>{{ endingSession ? $t('session.ending') : $t('session.end') }}</span>
              </button>
              
-             <!-- Set Therapist Joined Button (for testing) -->
-             <button
-               v-if="isTherapist && sessionData && Number(sessionData.therapist_id) === Number(authStore.user?.id)"
-               @click="setTherapistJoined"
-               :disabled="settingJoined"
-               class="btn-outline w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
-             >
-               <span v-if="settingJoined" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
-               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-               </svg>
-               <span>{{ settingJoined ? 'Setting...' : 'Set as Joined (Test)' }}</span>
-             </button>
-             
-             <!-- Debug Info (temporary) -->
-             <div v-if="sessionData" class="bg-gray-100 p-4 rounded-lg text-sm">
-               <h4 class="font-medium mb-2">Debug Info:</h4>
-               <p><strong>User ID:</strong> {{ authStore.user?.id }}</p>
-               <p><strong>User Role:</strong> {{ authStore.user?.role }}</p>
-               <p><strong>Is Therapist:</strong> {{ isTherapist }}</p>
-               <p><strong>Session Therapist ID:</strong> {{ sessionData.therapist_id }}</p>
-               <p><strong>Match:</strong> {{ Number(sessionData.therapist_id) === Number(authStore.user?.id) }}</p>
-               <p><strong>Show Button:</strong> {{ isTherapist && sessionData && Number(sessionData.therapist_id) === Number(authStore.user?.id) }}</p>
-             </div>
-             
-             <!-- Simple Test Button (no auth required) -->
-             <button
-               v-if="sessionData"
-               @click="setTherapistJoinedSimple"
-               :disabled="settingJoined"
-               class="btn-outline w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse bg-yellow-100 border-yellow-300"
-             >
-               <span v-if="settingJoined" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
-               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-               </svg>
-               <span>{{ settingJoined ? 'Setting...' : 'Set as Joined (Simple Test)' }}</span>
-             </button>
+
           </div>
         </div>
       </div>
@@ -289,7 +252,6 @@ const error = ref(null)
 const sessionData = ref(null)
 const joiningSession = ref(false)
 const endingSession = ref(false)
-const settingJoined = ref(false)
 const showMeetingRoom = ref(false)
 const timeRemaining = ref(0)
 const timer = ref(null)
@@ -560,53 +522,7 @@ const endSession = async () => {
   }
 }
 
-const setTherapistJoined = async () => {
-  if (!sessionData.value) return
-  
-  settingJoined.value = true
-  
-  try {
-    const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/therapist-join`)
-    
-    if (response.data.success) {
-      toast.success('Therapist joined status set successfully')
-      await loadSession() // Reload session data to update therapist_joined status
-    } else {
-      toast.error(response.data.error || 'Failed to set therapist joined status')
-    }
-  } catch (err) {
-    console.error('Error setting therapist joined:', err)
-    toast.error('Failed to set therapist joined status')
-  } finally {
-    settingJoined.value = false
-  }
-}
 
-const setTherapistJoinedSimple = async () => {
-  if (!sessionData.value) return
-  
-  settingJoined.value = true
-  
-  try {
-    // Use the PHP script approach - call it via fetch
-    const response = await fetch(`/test-set-therapist-joined.php`)
-    const result = await response.text()
-    
-    console.log('PHP Script Result:', result)
-    
-    if (result.includes('✅ Successfully set therapist joined status')) {
-      toast.success('Therapist joined status set successfully (via PHP script)')
-      await loadSession() // Reload session data to update therapist_joined status
-    } else {
-      toast.error('Failed to set therapist joined status via PHP script')
-    }
-  } catch (err) {
-    console.error('Error setting therapist joined via PHP script:', err)
-    toast.error('Failed to set therapist joined status')
-  } finally {
-    settingJoined.value = false
-  }
-}
 
 const closeMeetingRoom = () => {
   showMeetingRoom.value = false
