@@ -156,63 +156,7 @@
           <p class="text-gray-700 leading-relaxed">{{ details.bio }}</p>
         </div>
 
-        <!-- Certificates Carousel -->
-        <div v-if="(details.certificates && details.certificates.length > 0) || (therapist.certificates && therapist.certificates.length > 0)" class="bg-gray-50 rounded-lg p-4">
-          <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
-          
-          <!-- Carousel Container -->
-          <div class="relative">
-            <!-- Carousel Track -->
-            <div class="flex overflow-x-auto gap-4 pb-4 scrollbar-hide" ref="carouselTrack">
-              <div 
-                v-for="(cert, index) in (details.certificates || therapist.certificates || [])" 
-                :key="cert.id"
-                class="flex-shrink-0 w-48"
-              >
-                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                  <div class="aspect-square">
-                    <img 
-                      v-if="cert.is_image"
-                      :src="cert.thumbnail_url || cert.url" 
-                      :alt="cert.name"
-                      class="w-full h-full object-cover"
-                    />
-                    <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
-                      <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="p-3">
-                    <p class="text-sm text-gray-900 truncate">{{ cert.name }}</p>
-                    <p class="text-xs text-gray-500">{{ cert.file_size }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Carousel Navigation -->
-            <button 
-              v-if="canScrollLeft"
-              @click="scrollCarousel('left')"
-              class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50"
-            >
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </button>
-            
-            <button 
-              v-if="canScrollRight"
-              @click="scrollCarousel('right')"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50"
-            >
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
+
 
         <!-- Booking Section -->
         <div class="bg-gray-50 rounded-lg p-4">
