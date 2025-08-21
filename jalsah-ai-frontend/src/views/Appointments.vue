@@ -359,49 +359,10 @@ export default {
         return false
       }
       
-      // Use the original date_time field if available, otherwise construct from date and time
-      let appointmentTime
-      console.log('📅 Date parsing attempt:', {
-        hasDateTime: !!appointment.date_time,
-        dateTimeValue: appointment.date_time,
-        hasDate: !!appointment.date,
-        dateValue: appointment.date,
-        hasTime: !!appointment.time,
-        timeValue: appointment.time
-      })
+      // Always show the button for confirmed/open appointments
+      console.log('✅ Can join session: true (always show button)')
       
-      // The date field contains the full datetime, so we can use it directly
-      if (appointment.date && appointment.date.includes(' ')) {
-        // date field contains full datetime like '2025-08-11 11:00:00'
-        appointmentTime = new Date(appointment.date)
-        console.log('📅 Using date field as datetime:', appointment.date, '→', appointmentTime)
-      } else if (appointment.date_time) {
-        appointmentTime = new Date(appointment.date_time)
-        console.log('📅 Using date_time field:', appointment.date_time, '→', appointmentTime)
-      } else if (appointment.date && appointment.time) {
-        const constructedDateTime = `${appointment.date}T${appointment.time}`
-        appointmentTime = new Date(constructedDateTime)
-        console.log('📅 Using constructed datetime:', constructedDateTime, '→', appointmentTime)
-      } else {
-        console.error('❌ No valid date/time found for appointment:', appointment)
-        return false
-      }
-      
-      const now = new Date()
-      const timeDiff = appointmentTime - now
-      
-      console.log('⏰ Time check:', {
-        appointmentTime: appointmentTime,
-        now: now,
-        timeDiff: timeDiff,
-        timeDiffMinutes: timeDiff / (1000 * 60)
-      })
-      
-      // Can join 5 minutes before and up to 15 minutes after
-      const canJoin = timeDiff >= -5 * 60 * 1000 && timeDiff <= 15 * 60 * 1000
-      console.log('✅ Can join session:', canJoin)
-      
-      return canJoin
+      return true
     }
 
     const canReschedule = (appointment) => {
