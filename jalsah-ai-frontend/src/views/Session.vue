@@ -162,19 +162,33 @@
               </div>
             </div>
 
-            <!-- End Session Button (for therapists) -->
-            <button
-              v-if="isTherapist && canEndSession"
-              @click="endSession"
-              :disabled="endingSession"
-              class="btn-secondary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
-            >
-              <span v-if="endingSession" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
-              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
-              <span>{{ endingSession ? $t('session.ending') : $t('session.end') }}</span>
-            </button>
+                         <!-- End Session Button (for therapists) -->
+             <button
+               v-if="isTherapist && canEndSession"
+               @click="endSession"
+               :disabled="endingSession"
+               class="btn-secondary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
+             >
+               <span v-if="endingSession" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
+               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+               </svg>
+               <span>{{ endingSession ? $t('session.ending') : $t('session.end') }}</span>
+             </button>
+             
+             <!-- Set Therapist Joined Button (for testing) -->
+             <button
+               v-if="isTherapist && sessionData && sessionData.therapist_id === authStore.user?.id"
+               @click="setTherapistJoined"
+               :disabled="settingJoined"
+               class="btn-outline w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
+             >
+               <span v-if="settingJoined" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
+               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+               </svg>
+               <span>{{ settingJoined ? 'Setting...' : 'Set as Joined (Test)' }}</span>
+             </button>
           </div>
         </div>
       </div>
@@ -250,6 +264,7 @@ const error = ref(null)
 const sessionData = ref(null)
 const joiningSession = ref(false)
 const endingSession = ref(false)
+const settingJoined = ref(false)
 const showMeetingRoom = ref(false)
 const timeRemaining = ref(0)
 const timer = ref(null)
@@ -517,6 +532,28 @@ const endSession = async () => {
     toast.error(t('session.endError'))
   } finally {
     endingSession.value = false
+  }
+}
+
+const setTherapistJoined = async () => {
+  if (!sessionData.value) return
+  
+  settingJoined.value = true
+  
+  try {
+    const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/therapist-join`)
+    
+    if (response.data.success) {
+      toast.success('Therapist joined status set successfully')
+      await loadSession() // Reload session data to update therapist_joined status
+    } else {
+      toast.error(response.data.error || 'Failed to set therapist joined status')
+    }
+  } catch (err) {
+    console.error('Error setting therapist joined:', err)
+    toast.error('Failed to set therapist joined status')
+  } finally {
+    settingJoined.value = false
   }
 }
 

@@ -168,6 +168,12 @@ class SNKS_AI_Integration {
 			'callback' => array( $this, 'end_ai_session' ),
 			'permission_callback' => '__return_true',
 		) );
+		
+		register_rest_route( 'jalsah-ai/v1', '/session/(?P<id>\d+)/therapist-join', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'set_therapist_joined' ),
+			'permission_callback' => '__return_true',
+		) );
 	}
 	
 	/**
@@ -3665,6 +3671,51 @@ class SNKS_AI_Integration {
 		]);
 	}
 	
+	/**
+	 * Set therapist joined status for AI session
+	 */
+	public function set_therapist_joined($request) {
+		$session_id = $request->get_param('id');
+		$user_id = $this->verify_jwt_token();
+		
+		if (!$session_id || !$user_id) {
+			return new WP_REST_Response(['error' => 'Missing session ID or user authentication'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Get session details
+		$session = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND user_id = %d AND settings LIKE '%ai_booking%'",
+			$session_id, $user_id
+		));
+		
+		if (!$session) {
+			return new WP_REST_Response(['error' => 'Session not found or access denied'], 404);
+		}
+		
+		// Only the therapist can set their joined status
+		if ($session->user_id != $user_id) {
+			return new WP_REST_Response(['error' => 'Only the therapist can set joined status'], 403);
+		}
+		
+		// Set the transient to mark therapist as joined
+		$transient_key = "doctor_has_joined_{$session_id}_{$user_id}";
+		$result = set_transient($transient_key, '1', 3600); // Expires in 1 hour
+		
+		if ($result) {
+			return new WP_REST_Response([
+				'success' => true,
+				'message' => 'Therapist joined status set successfully',
+				'session_id' => $session_id,
+				'therapist_id' => $user_id
+			], 200);
+		} else {
+			return new WP_REST_Response(['error' => 'Failed to set therapist joined status'], 500);
+		}
+	}
+
 	/**
 	 * End AI session
 	 */
