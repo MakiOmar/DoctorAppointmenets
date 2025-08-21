@@ -480,6 +480,9 @@ const joinSession = async () => {
     // Redirect to the main site's meeting room
     const meetingUrl = `${import.meta.env.VITE_MAIN_SITE_URL}/meeting-room/?room_id=${sessionData.value.ID}`
     
+    console.log('🔗 Meeting URL:', meetingUrl)
+    console.log('📋 Session Data:', sessionData.value)
+    
     // Open in new tab
     window.open(meetingUrl, '_blank')
     
