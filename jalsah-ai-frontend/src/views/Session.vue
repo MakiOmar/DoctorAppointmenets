@@ -415,6 +415,19 @@ const canJoinSession = computed(() => {
   const sessionTherapistId = Number(sessionData.value.user_id)
   const sessionClientId = Number(sessionData.value.client_id)
   
+  // Debug logging
+  console.log('🔍 canJoinSession Debug:', {
+    currentUserId,
+    sessionTherapistId,
+    sessionClientId,
+    isTherapist: isTherapist.value,
+    userRole: authStore.user?.role,
+    sessionStatus: sessionData.value.session_status,
+    isConfirmed,
+    therapistMatch: currentUserId === sessionTherapistId,
+    clientMatch: currentUserId === sessionClientId
+  })
+  
   return currentUserId === sessionTherapistId || currentUserId === sessionClientId
 })
 
@@ -441,6 +454,20 @@ const sessionNotAvailableReason = computed(() => {
   const currentUserId = Number(authStore.user?.id)
   const sessionTherapistId = Number(sessionData.value.user_id)
   const sessionClientId = Number(sessionData.value.client_id)
+  
+  // Debug logging
+  console.log('🔍 sessionNotAvailableReason Debug:', {
+    currentUserId,
+    sessionTherapistId,
+    sessionClientId,
+    isTherapist: isTherapist.value,
+    userRole: authStore.user?.role,
+    sessionStatus: sessionData.value.session_status,
+    isConfirmed,
+    therapistMatch: currentUserId === sessionTherapistId,
+    clientMatch: currentUserId === sessionClientId,
+    notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
+  })
   
   if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
     return t('session.reason.notAuthorized')
