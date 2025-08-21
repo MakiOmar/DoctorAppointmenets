@@ -744,6 +744,8 @@ export default {
     notAvailable: 'Session not available',
     meetingRoom: 'Meeting Room',
     timeExpired: 'Session time has expired',
+    loadingMeeting: 'Loading meeting room...',
+    meetingError: 'Error loading meeting room',
     instructions: 'Session Instructions',
     instruction1: 'Ensure you have a stable internet connection',
     instruction2: 'Find a quiet, private space for your session',

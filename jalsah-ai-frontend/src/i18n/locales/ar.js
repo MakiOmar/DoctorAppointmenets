@@ -753,6 +753,8 @@ export default {
     notAvailable: 'الجلسة غير متاحة',
     meetingRoom: 'غرفة الاجتماع',
     timeExpired: 'انتهى وقت الجلسة',
+    loadingMeeting: 'جاري تحميل غرفة الاجتماع...',
+    meetingError: 'حدث خطأ في تحميل غرفة الاجتماع',
     instructions: 'تعليمات الجلسة',
     instruction1: 'تأكد من وجود اتصال إنترنت مستقر',
     instruction2: 'ابحث عن مكان هادئ وخاص لجلستك',

@@ -224,16 +224,24 @@
             </svg>
           </button>
         </div>
-        <div class="flex-1 p-4">
-          <div id="meeting" class="w-full h-full min-h-96"></div>
-        </div>
+                 <div class="flex-1 p-4">
+           <div id="meeting" class="w-full h-full min-h-96">
+             <!-- Loading state while Jitsi loads -->
+             <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full">
+               <div class="text-center">
+                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                 <p class="mt-4 text-gray-600">{{ $t('session.loadingMeeting') }}</p>
+               </div>
+             </div>
+           </div>
+         </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
@@ -255,6 +263,8 @@ const endingSession = ref(false)
 const showMeetingRoom = ref(false)
 const timeRemaining = ref(0)
 const timer = ref(null)
+const jitsiLoaded = ref(false)
+const meetAPI = ref(null)
 
 // Computed properties
 const sessionStatus = computed(() => {
@@ -477,16 +487,10 @@ const joinSession = async () => {
   joiningSession.value = true
   
   try {
-    // Redirect to the main site's meeting room
-    const meetingUrl = `${import.meta.env.VITE_MAIN_SITE_URL}/meeting-room/?room_id=${sessionData.value.ID}`
-    
-    console.log('🔗 Meeting URL:', meetingUrl)
+    console.log('🔗 Joining session:', sessionData.value.ID)
     console.log('📋 Session Data:', sessionData.value)
     
-    // Open in new tab
-    window.open(meetingUrl, '_blank')
-    
-    // Also show the meeting room modal
+    // Show the meeting room modal within our frontend
     showMeetingRoom.value = true
     
     toast.success(t('session.joined'))
@@ -526,11 +530,119 @@ const endSession = async () => {
 
 const closeMeetingRoom = () => {
   showMeetingRoom.value = false
+  // Clean up Jitsi meeting
+  if (meetAPI.value) {
+    meetAPI.value.dispose()
+    meetAPI.value = null
+  }
+  jitsiLoaded.value = false
+}
+
+const initializeJitsiMeeting = () => {
+  if (!sessionData.value || !showMeetingRoom.value) return
+  
+  // Load Jitsi external API script
+  const script = document.createElement('script')
+  script.src = 'https://s.jalsah.app/external_api.js'
+  script.onload = () => {
+    startJitsiMeeting()
+  }
+  document.head.appendChild(script)
+}
+
+const startJitsiMeeting = () => {
+  if (!sessionData.value) return
+  
+  const roomID = sessionData.value.ID
+  const userName = authStore.user?.name || authStore.user?.username || 'User'
+  const isTherapist = authStore.user?.role === 'doctor' || authStore.user?.role === 'therapist'
+  
+  const options = {
+    parentNode: document.querySelector('#meeting'),
+    roomName: `${roomID} جلسة`,
+    width: '100%',
+    height: '100%',
+    configOverwrite: {
+      prejoinPageEnabled: false,
+      participantsPane: {
+        enabled: true,
+        hideModeratorSettingsTab: false,
+        hideMoreActionsButton: false,
+        hideMuteAllButton: false
+      }
+    },
+    interfaceConfigOverwrite: {
+      prejoinPageEnabled: false,
+      APP_NAME: 'Jalsah',
+      DEFAULT_BACKGROUND: "#024059;",
+      SHOW_JITSI_WATERMARK: false,
+      HIDE_DEEP_LINKING_LOGO: true,
+      SHOW_BRAND_WATERMARK: true,
+      SHOW_WATERMARK_FOR_GUESTS: true,
+      SHOW_POWERED_BY: false,
+      DISPLAY_WELCOME_FOOTER: false,
+      JITSI_WATERMARK_LINK: 'https://jalsah.app',
+      PROVIDER_NAME: 'Jalsah',
+      DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+      DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+    }
+  }
+  
+  try {
+    meetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
+    meetAPI.value.executeCommand('displayName', userName)
+    
+    // Add event listeners
+    meetAPI.value.addListener('videoConferenceJoined', () => {
+      console.log('✅ Joined video conference')
+      jitsiLoaded.value = true
+      
+      // If therapist joined, notify the backend
+      if (isTherapist) {
+        notifyTherapistJoined(roomID)
+      }
+    })
+    
+    meetAPI.value.addListener('videoConferenceLeft', () => {
+      console.log('👋 Left video conference')
+      closeMeetingRoom()
+    })
+    
+    meetAPI.value.addListener('readyToClose', () => {
+      console.log('🚪 Ready to close meeting')
+      closeMeetingRoom()
+    })
+    
+  } catch (error) {
+    console.error('❌ Error initializing Jitsi meeting:', error)
+    toast.error(t('session.meetingError'))
+  }
+}
+
+const notifyTherapistJoined = async (roomID) => {
+  try {
+    const response = await api.post(`/wp-json/jalsah-ai/v1/session/${roomID}/therapist-join`)
+    if (response.data.success) {
+      console.log('✅ Therapist joined status updated')
+    }
+  } catch (error) {
+    console.error('❌ Error updating therapist joined status:', error)
+  }
 }
 
 const goBack = () => {
   router.back()
 }
+
+// Watchers
+watch(showMeetingRoom, (newValue) => {
+  if (newValue) {
+    // Initialize Jitsi meeting when modal opens
+    setTimeout(() => {
+      initializeJitsiMeeting()
+    }, 100)
+  }
+})
 
 // Lifecycle
 onMounted(() => {
