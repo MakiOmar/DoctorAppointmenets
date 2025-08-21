@@ -301,14 +301,44 @@ const formatSessionTime = computed(() => {
   if (!sessionData.value) return ''
   
   const date = new Date(sessionData.value.date_time)
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  
+  // Arabic month names
+  const arabicMonths = {
+    1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل',
+    5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
+    9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
+  }
+  
+  // Arabic day names
+  const arabicDays = {
+    0: 'الأحد', 1: 'الإثنين', 2: 'الثلاثاء', 3: 'الأربعاء',
+    4: 'الخميس', 5: 'الجمعة', 6: 'السبت'
+  }
+  
+  // Arabic time periods
+  const arabicTimePeriods = {
+    AM: 'ص', PM: 'م'
+  }
+  
+  const dayName = arabicDays[date.getDay()]
+  const day = date.getDate()
+  const monthName = arabicMonths[date.getMonth() + 1]
+  const year = date.getFullYear()
+  
+  // Format time in 12-hour format with Arabic AM/PM
+  let hours = date.getHours()
+  const minutes = date.getMinutes()
+  const period = hours >= 12 ? 'م' : 'ص'
+  
+  if (hours > 12) {
+    hours -= 12
+  } else if (hours === 0) {
+    hours = 12
+  }
+  
+  const timeString = `${hours}:${minutes.toString().padStart(2, '0')} ${period}`
+  
+  return `${dayName}، ${day} ${monthName} ${year} الساعة ${timeString}`
 })
 
 const formatTimeRemaining = computed(() => {
