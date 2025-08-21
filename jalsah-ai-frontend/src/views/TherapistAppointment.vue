@@ -25,44 +25,15 @@
           </p>
         </div>
         
-        <!-- Therapist Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div class="flex flex-col md:flex-row md:items-center md:space-x-6 rtl:space-x-reverse">
-            <!-- Therapist Image -->
-            <div class="flex-shrink-0 mb-4 md:mb-0">
-              <img 
-                :src="therapist.profile_image_url || '/default-therapist.svg'" 
-                :alt="therapist.name"
-                class="w-24 h-24 rounded-full object-cover bg-gray-100"
-              />
-            </div>
-            
-            <!-- Therapist Info -->
-            <div class="flex-1">
-              <h2 class="text-2xl font-semibold text-gray-900 mb-2">
-                {{ therapist.name }}
-              </h2>
-              <p v-if="therapist.specialization" class="text-gray-600 mb-3">
-                {{ therapist.specialization }}
-              </p>
-              
-              <!-- Rating -->
-              <div v-if="therapist.rating" class="flex items-center mb-3">
-                <StarRating :rating="therapist.rating" :show-count="true" />
-              </div>
-              
-              <!-- Price -->
-              <div class="flex items-center justify-between">
-                <div class="text-lg font-semibold text-green-600">
-                  {{ formatPrice(therapist.price) }}
-                </div>
-                <div class="text-sm text-gray-500">
-                  {{ $t('therapist.perSession') }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                 <!-- Therapist Card -->
+         <div class="mb-8">
+           <TherapistCard 
+             :therapist="therapist" 
+             :current-diagnosis-display-order="null"
+             :suitability-message="null"
+             @show-details="handleShowDetails"
+           />
+         </div>
         
         <!-- Booking Section -->
         <div class="bg-white rounded-lg shadow-md p-6">
@@ -122,7 +93,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { useToast } from 'vue-toastification'
-import StarRating from '../components/StarRating.vue'
+import TherapistCard from '../components/TherapistCard.vue'
 import api from '../services/api'
 
 const route = useRoute()
@@ -216,12 +187,10 @@ const bookAppointment = async () => {
   }
 }
 
-// Format price
-const formatPrice = (price) => {
-  if (!price) return t('common.priceNotAvailable')
-  
-  const currency = 'ج.م'
-  return `${price} ${currency}`
+// Handle show details event from TherapistCard
+const handleShowDetails = (therapist) => {
+  console.log('🔍 Show details for therapist:', therapist)
+  // You can add any additional logic here if needed
 }
 
 // Format date
