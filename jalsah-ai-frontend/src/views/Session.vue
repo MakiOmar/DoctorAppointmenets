@@ -235,14 +235,23 @@
        <!-- Meeting Container -->
        <div class="pt-16 h-full">
          <div id="meeting" class="w-full h-full" style="min-height: calc(100vh - 4rem);">
-           <!-- Loading state while Jitsi loads -->
-           <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full bg-gray-900">
-             <div class="text-center text-white">
-               <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-               <p class="text-lg font-medium">{{ $t('session.loadingMeeting') }}</p>
-               <p class="text-sm text-gray-400 mt-2">{{ $t('session.connecting') }}</p>
-             </div>
-           </div>
+                       <!-- Loading state while Jitsi loads -->
+            <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full bg-gray-900">
+              <div class="text-center text-white">
+                <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+                <p class="text-lg font-medium">{{ $t('session.loadingMeeting') }}</p>
+                <p class="text-sm text-gray-400 mt-2">{{ $t('session.connecting') }}</p>
+                
+                <!-- Manual show button after 5 seconds -->
+                <button 
+                  v-if="showManualButton"
+                  @click="forceShowMeeting"
+                  class="mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  {{ $t('session.showMeeting') }}
+                </button>
+              </div>
+            </div>
          </div>
        </div>
      </div>
@@ -274,6 +283,7 @@ const timeRemaining = ref(0)
 const timer = ref(null)
 const jitsiLoaded = ref(false)
 const meetAPI = ref(null)
+const showManualButton = ref(false)
 
 // Computed properties
 const sessionStatus = computed(() => {
@@ -545,16 +555,34 @@ const closeMeetingRoom = () => {
     meetAPI.value = null
   }
   jitsiLoaded.value = false
+  showManualButton.value = false
 }
 
 const initializeJitsiMeeting = () => {
   if (!sessionData.value || !showMeetingRoom.value) return
   
+  console.log('🚀 Initializing Jitsi meeting...')
+  
+  // Check if JitsiMeetExternalAPI is already available
+  if (typeof JitsiMeetExternalAPI !== 'undefined') {
+    console.log('✅ JitsiMeetExternalAPI already loaded')
+    startJitsiMeeting()
+    return
+  }
+  
   // Load Jitsi external API script
   const script = document.createElement('script')
   script.src = 'https://s.jalsah.app/external_api.js'
   script.onload = () => {
-    startJitsiMeeting()
+    console.log('✅ Jitsi script loaded successfully')
+    setTimeout(() => {
+      startJitsiMeeting()
+    }, 500) // Give it a moment to initialize
+  }
+  script.onerror = (error) => {
+    console.error('❌ Failed to load Jitsi script:', error)
+    toast.error(t('session.meetingError'))
+    jitsiLoaded.value = false
   }
   document.head.appendChild(script)
 }
@@ -575,6 +603,9 @@ const startJitsiMeeting = () => {
        prejoinPageEnabled: false,
        startWithAudioMuted: false,
        startWithVideoMuted: false,
+       disableAudioLevels: false,
+       enableClosePage: true,
+       enableWelcomePage: false,
        participantsPane: {
          enabled: true,
          hideModeratorSettingsTab: false,
@@ -594,26 +625,14 @@ const startJitsiMeeting = () => {
        DEFAULT_BACKGROUND: "#1a1a1a",
        SHOW_JITSI_WATERMARK: false,
        HIDE_DEEP_LINKING_LOGO: true,
-       SHOW_BRAND_WATERMARK: true,
-       SHOW_WATERMARK_FOR_GUESTS: true,
+       SHOW_BRAND_WATERMARK: false,
+       SHOW_WATERMARK_FOR_GUESTS: false,
        SHOW_POWERED_BY: false,
        DISPLAY_WELCOME_FOOTER: false,
        JITSI_WATERMARK_LINK: 'https://jalsah.app',
        PROVIDER_NAME: 'Jalsah',
        DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
        DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
-       TOOLBAR_BUTTONS: [
-         'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-         'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
-         'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
-         'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
-       ],
-       SHOW_POWERED_BY: false,
-       SHOW_JITSI_WATERMARK: false,
-       SHOW_WATERMARK_FOR_GUESTS: false,
-       SHOW_BRAND_WATERMARK: false,
-       HIDE_DEEP_LINKING_LOGO: true,
-       DISPLAY_WELCOME_FOOTER: false,
        TOOLBAR_ALWAYS_VISIBLE: true,
        TOOLBAR_BUTTONS: [
          'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
@@ -624,35 +643,70 @@ const startJitsiMeeting = () => {
      }
    }
   
-  try {
-    meetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
-    meetAPI.value.executeCommand('displayName', userName)
-    
-    // Add event listeners
-    meetAPI.value.addListener('videoConferenceJoined', () => {
-      console.log('✅ Joined video conference')
-      jitsiLoaded.value = true
-      
-      // If therapist joined, notify the backend
-      if (isTherapist) {
-        notifyTherapistJoined(roomID)
-      }
-    })
-    
-    meetAPI.value.addListener('videoConferenceLeft', () => {
-      console.log('👋 Left video conference')
-      closeMeetingRoom()
-    })
-    
-    meetAPI.value.addListener('readyToClose', () => {
-      console.log('🚪 Ready to close meeting')
-      closeMeetingRoom()
-    })
-    
-  } catch (error) {
-    console.error('❌ Error initializing Jitsi meeting:', error)
-    toast.error(t('session.meetingError'))
-  }
+     try {
+     console.log('🎯 Creating Jitsi meeting with options:', options)
+     
+     // Try the main Jitsi server first
+     try {
+       meetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
+     } catch (serverError) {
+       console.warn('⚠️ Main server failed, trying fallback:', serverError)
+       // Fallback to meet.jit.si if main server fails
+       meetAPI.value = new JitsiMeetExternalAPI("meet.jit.si", options)
+     }
+     meetAPI.value.executeCommand('displayName', userName)
+     
+     // Add event listeners
+     meetAPI.value.addListener('videoConferenceJoined', () => {
+       console.log('✅ Joined video conference')
+       jitsiLoaded.value = true
+       
+       // If therapist joined, notify the backend
+       if (isTherapist) {
+         notifyTherapistJoined(roomID)
+       }
+     })
+     
+     meetAPI.value.addListener('videoConferenceLeft', () => {
+       console.log('👋 Left video conference')
+       closeMeetingRoom()
+     })
+     
+     meetAPI.value.addListener('readyToClose', () => {
+       console.log('🚪 Ready to close meeting')
+       closeMeetingRoom()
+     })
+     
+     meetAPI.value.addListener('participantJoined', () => {
+       console.log('👤 Participant joined')
+     })
+     
+     meetAPI.value.addListener('participantLeft', () => {
+       console.log('👤 Participant left')
+     })
+     
+     // Show manual button after 5 seconds if still loading
+     setTimeout(() => {
+       if (!jitsiLoaded.value) {
+         console.log('⏰ Showing manual button')
+         showManualButton.value = true
+       }
+     }, 5000) // 5 seconds
+     
+     // Set a timeout to show the meeting even if not fully loaded
+     setTimeout(() => {
+       if (!jitsiLoaded.value) {
+         console.log('⏰ Timeout reached, showing meeting anyway')
+         jitsiLoaded.value = true
+         showManualButton.value = false
+       }
+     }, 15000) // 15 seconds timeout
+     
+   } catch (error) {
+     console.error('❌ Error initializing Jitsi meeting:', error)
+     toast.error(t('session.meetingError'))
+     jitsiLoaded.value = false
+   }
 }
 
 const notifyTherapistJoined = async (roomID) => {
@@ -664,6 +718,12 @@ const notifyTherapistJoined = async (roomID) => {
   } catch (error) {
     console.error('❌ Error updating therapist joined status:', error)
   }
+}
+
+const forceShowMeeting = () => {
+  console.log('🔧 Force showing meeting')
+  jitsiLoaded.value = true
+  showManualButton.value = false
 }
 
 const goBack = () => {

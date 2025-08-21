@@ -756,6 +756,7 @@ export default {
     loadingMeeting: 'جاري تحميل غرفة الاجتماع...',
     meetingError: 'حدث خطأ في تحميل غرفة الاجتماع',
     connecting: 'جاري الاتصال...',
+    showMeeting: 'عرض الاجتماع',
     instructions: 'تعليمات الجلسة',
     instruction1: 'تأكد من وجود اتصال إنترنت مستقر',
     instruction2: 'ابحث عن مكان هادئ وخاص لجلستك',
