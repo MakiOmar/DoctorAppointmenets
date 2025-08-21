@@ -370,13 +370,21 @@ export default {
         timeValue: appointment.time
       })
       
-      if (appointment.date_time) {
+      // The date field contains the full datetime, so we can use it directly
+      if (appointment.date && appointment.date.includes(' ')) {
+        // date field contains full datetime like '2025-08-11 11:00:00'
+        appointmentTime = new Date(appointment.date)
+        console.log('📅 Using date field as datetime:', appointment.date, '→', appointmentTime)
+      } else if (appointment.date_time) {
         appointmentTime = new Date(appointment.date_time)
         console.log('📅 Using date_time field:', appointment.date_time, '→', appointmentTime)
-      } else {
+      } else if (appointment.date && appointment.time) {
         const constructedDateTime = `${appointment.date}T${appointment.time}`
         appointmentTime = new Date(constructedDateTime)
         console.log('📅 Using constructed datetime:', constructedDateTime, '→', appointmentTime)
+      } else {
+        console.error('❌ No valid date/time found for appointment:', appointment)
+        return false
       }
       
       const now = new Date()
@@ -399,7 +407,17 @@ export default {
     const canReschedule = (appointment) => {
       if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') return false
       
-      const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+      let appointmentTime
+      if (appointment.date && appointment.date.includes(' ')) {
+        appointmentTime = new Date(appointment.date)
+      } else if (appointment.date_time) {
+        appointmentTime = new Date(appointment.date_time)
+      } else if (appointment.date && appointment.time) {
+        appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+      } else {
+        return false
+      }
+      
       const now = new Date()
       
       // Can reschedule up to 24 hours before
@@ -409,7 +427,17 @@ export default {
     const canCancel = (appointment) => {
       if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') return false
       
-      const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+      let appointmentTime
+      if (appointment.date && appointment.date.includes(' ')) {
+        appointmentTime = new Date(appointment.date)
+      } else if (appointment.date_time) {
+        appointmentTime = new Date(appointment.date_time)
+      } else if (appointment.date && appointment.time) {
+        appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
+      } else {
+        return false
+      }
+      
       const now = new Date()
       
       // Can cancel up to 24 hours before
