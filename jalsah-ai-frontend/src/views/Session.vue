@@ -238,7 +238,7 @@ import { useAuthStore } from '../stores/auth'
 import { useToast } from 'vue-toastification'
 import api from '../services/api'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -300,7 +300,7 @@ const statusTextColor = computed(() => {
 const formatSessionTime = computed(() => {
   if (!sessionData.value) return ''
   
-  const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
+  const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
   const date = new Date(sessionData.value.date_time)
   return date.toLocaleDateString(currentLocale, {
     weekday: 'long',
