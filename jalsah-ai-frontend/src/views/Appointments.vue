@@ -470,8 +470,13 @@ export default {
     }
 
     const bookWithSameTherapist = (appointment) => {
+      // Debug logging to see appointment structure
+      console.log('🔍 Appointment object for booking:', appointment)
+      console.log('🔍 Therapist ID (user_id):', appointment.user_id)
+      
       // Navigate to therapists page with the specific therapist pre-selected
-      router.push(`/therapists?therapist=${appointment.therapist_id || appointment.user_id}`)
+      // The therapist ID is stored in user_id field
+      router.push(`/therapists?therapist=${appointment.user_id}`)
     }
 
 
