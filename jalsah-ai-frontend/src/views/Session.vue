@@ -406,27 +406,29 @@ const formatTimeRemaining = computed(() => {
 const canJoinSession = computed(() => {
    if (!sessionData.value) return false
    
-   // For AI sessions, treat 'open' as 'confirmed'
-   const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
-   if (!isConfirmed) return false
+   // Don't allow joining if session is completed or cancelled
+   if (sessionData.value.session_status === 'completed' || sessionData.value.session_status === 'cancelled') {
+     return false
+   }
    
    // Check if current user is eligible (therapist or client)
    const currentUserId = Number(authStore.user?.id)
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-  // Debug logging
-  console.log('🔍 canJoinSession Debug:', {
-    currentUserId,
-    sessionTherapistId,
-    sessionClientId,
-    isTherapist: isTherapist.value,
-    userRole: authStore.user?.role,
-    sessionStatus: sessionData.value.session_status,
-    isConfirmed,
-    therapistMatch: currentUserId === sessionTherapistId,
-    clientMatch: currentUserId === sessionClientId
-  })
+     // Debug logging
+   console.log('🔍 canJoinSession Debug:', {
+     currentUserId,
+     sessionTherapistId,
+     sessionClientId,
+     isTherapist: isTherapist.value,
+     userRole: authStore.user?.role,
+     sessionStatus: sessionData.value.session_status,
+     isCompleted: sessionData.value.session_status === 'completed',
+     isCancelled: sessionData.value.session_status === 'cancelled',
+     therapistMatch: currentUserId === sessionTherapistId,
+     clientMatch: currentUserId === sessionClientId
+   })
   
   return currentUserId === sessionTherapistId || currentUserId === sessionClientId
 })
@@ -443,31 +445,36 @@ const waitingForTherapist = computed(() => {
 })
 
 const sessionNotAvailableReason = computed(() => {
-  if (!sessionData.value) return ''
-  
-  const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
-  if (!isConfirmed) {
-    return t('session.reason.notConfirmed')
-  }
+   if (!sessionData.value) return ''
+   
+   // Check if session is completed or cancelled
+   if (sessionData.value.session_status === 'completed') {
+     return t('session.reason.completed')
+   }
+   
+   if (sessionData.value.session_status === 'cancelled') {
+     return t('session.reason.cancelled')
+   }
   
      // Check if current user is eligible (therapist or client)
    const currentUserId = Number(authStore.user?.id)
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-  // Debug logging
-  console.log('🔍 sessionNotAvailableReason Debug:', {
-    currentUserId,
-    sessionTherapistId,
-    sessionClientId,
-    isTherapist: isTherapist.value,
-    userRole: authStore.user?.role,
-    sessionStatus: sessionData.value.session_status,
-    isConfirmed,
-    therapistMatch: currentUserId === sessionTherapistId,
-    clientMatch: currentUserId === sessionClientId,
-    notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
-  })
+     // Debug logging
+   console.log('🔍 sessionNotAvailableReason Debug:', {
+     currentUserId,
+     sessionTherapistId,
+     sessionClientId,
+     isTherapist: isTherapist.value,
+     userRole: authStore.user?.role,
+     sessionStatus: sessionData.value.session_status,
+     isCompleted: sessionData.value.session_status === 'completed',
+     isCancelled: sessionData.value.session_status === 'cancelled',
+     therapistMatch: currentUserId === sessionTherapistId,
+     clientMatch: currentUserId === sessionClientId,
+     notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
+   })
   
   if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
     return t('session.reason.notAuthorized')

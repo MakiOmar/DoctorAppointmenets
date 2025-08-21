@@ -769,6 +769,8 @@ export default {
       tooEarly: 'Session has not started yet',
       tooLate: 'Session time has passed',
       notAuthorized: 'You are not authorized to join this session',
+      completed: 'Session has ended',
+      cancelled: 'Session has been cancelled',
       unknown: 'Session is not available at this time'
     }
   },
