@@ -124,19 +124,33 @@
           <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('session.actions') }}</h3>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Join Session Button -->
-            <button
-              v-if="canJoinSession"
-              @click="joinSession"
-              :disabled="joiningSession"
-              class="btn-primary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
-            >
-              <span v-if="joiningSession" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-              </svg>
-              <span>{{ joiningSession ? $t('session.joining') : $t('session.join') }}</span>
-            </button>
+                         <!-- Join Session Button (for patients) -->
+             <button
+               v-if="canJoinSession && !isTherapist"
+               @click="joinSession"
+               :disabled="joiningSession"
+               class="btn-primary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
+             >
+               <span v-if="joiningSession" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+               </svg>
+               <span>{{ joiningSession ? $t('session.joining') : $t('session.join') }}</span>
+             </button>
+
+             <!-- Start Meeting Button (for therapists) -->
+             <button
+               v-if="canJoinSession && isTherapist"
+               @click="startMeeting"
+               :disabled="startingMeeting"
+               class="btn-primary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
+             >
+               <span v-if="startingMeeting" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+               </svg>
+               <span>{{ startingMeeting ? $t('session.starting') : $t('session.startMeeting') }}</span>
+             </button>
 
             <!-- Waiting for Therapist -->
             <div v-else-if="waitingForTherapist" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -278,6 +292,7 @@ const error = ref(null)
 const sessionData = ref(null)
 const joiningSession = ref(false)
 const endingSession = ref(false)
+const startingMeeting = ref(false)
 const showMeetingRoom = ref(false)
 const timeRemaining = ref(0)
 const timer = ref(null)
@@ -406,6 +421,9 @@ const canJoinSession = computed(() => {
 const waitingForTherapist = computed(() => {
   if (!sessionData.value) return false
   
+  // Only show waiting state for patients, not therapists
+  if (isTherapist.value) return false
+  
   // Show waiting state if session is confirmed/open but therapist hasn't joined yet
   const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
   return isConfirmed && !sessionData.value.therapist_joined
@@ -518,6 +536,30 @@ const joinSession = async () => {
     toast.error(t('session.joinError'))
   } finally {
     joiningSession.value = false
+  }
+}
+
+const startMeeting = async () => {
+  if (!canJoinSession.value || !isTherapist.value) return
+  
+  startingMeeting.value = true
+  
+  try {
+    console.log('🎬 Starting meeting as therapist:', sessionData.value.ID)
+    console.log('📋 Session Data:', sessionData.value)
+    
+    // Notify backend that therapist is starting the meeting
+    await notifyTherapistJoined(sessionData.value.ID)
+    
+    // Show the meeting room modal within our frontend
+    showMeetingRoom.value = true
+    
+    toast.success(t('session.meetingStarted'))
+  } catch (err) {
+    console.error('Error starting meeting:', err)
+    toast.error(t('session.startError'))
+  } finally {
+    startingMeeting.value = false
   }
 }
 
