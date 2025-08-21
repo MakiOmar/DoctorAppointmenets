@@ -300,9 +300,8 @@ const statusTextColor = computed(() => {
 const formatSessionTime = computed(() => {
   if (!sessionData.value) return ''
   
-  const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
   const date = new Date(sessionData.value.date_time)
-  return date.toLocaleDateString(currentLocale, {
+  return date.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
