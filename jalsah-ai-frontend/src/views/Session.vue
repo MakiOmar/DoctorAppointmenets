@@ -278,6 +278,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 import api from '../services/api'
 
 const { t, locale } = useI18n()
