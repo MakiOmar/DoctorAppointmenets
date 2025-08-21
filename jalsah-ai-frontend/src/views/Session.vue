@@ -607,28 +607,40 @@ const startMeeting = async () => {
 }
 
 const endSession = async () => {
-  if (!canEndSession.value) return
-  
-  if (!confirm(t('session.confirmEnd'))) return
-  
-  endingSession.value = true
-  
-  try {
-    const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`)
-    
-    if (response.data.success) {
-      toast.success(t('session.ended'))
-      await loadSession() // Reload session data
-    } else {
-      toast.error(response.data.error || t('session.endError'))
-    }
-  } catch (err) {
-    console.error('Error ending session:', err)
-    toast.error(t('session.endError'))
-  } finally {
-    endingSession.value = false
-  }
-}
+   if (!canEndSession.value) return
+   
+   // Use SweetAlert2 for confirmation
+   const result = await Swal.fire({
+     title: t('session.confirmEndTitle'),
+     text: t('session.confirmEnd'),
+     icon: 'warning',
+     showCancelButton: true,
+     confirmButtonColor: '#d33',
+     cancelButtonColor: '#3085d6',
+     confirmButtonText: t('session.confirmEndYes'),
+     cancelButtonText: t('session.confirmEndNo')
+   })
+   
+   if (!result.isConfirmed) return
+   
+   endingSession.value = true
+   
+   try {
+     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`)
+     
+     if (response.data.success) {
+       toast.success(t('session.ended'))
+       await loadSession() // Reload session data
+     } else {
+       toast.error(response.data.error || t('session.endError'))
+     }
+   } catch (err) {
+     console.error('Error ending session:', err)
+     toast.error(t('session.endError'))
+   } finally {
+     endingSession.value = false
+   }
+ }
 
 
 
