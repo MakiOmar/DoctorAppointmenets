@@ -207,36 +207,45 @@
       </div>
     </div>
 
-    <!-- Meeting Room Modal -->
-    <div
-      v-if="showMeetingRoom"
-      class="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center"
-    >
-      <div class="bg-white rounded-lg shadow-xl w-full h-full max-w-6xl mx-4">
-        <div class="flex items-center justify-between p-4 border-b">
-          <h3 class="text-lg font-medium text-gray-900">{{ $t('session.meetingRoom') }}</h3>
-          <button
-            @click="closeMeetingRoom"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-                 <div class="flex-1 p-4">
-           <div id="meeting" class="w-full h-full min-h-96">
-             <!-- Loading state while Jitsi loads -->
-             <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full">
-               <div class="text-center">
-                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                 <p class="mt-4 text-gray-600">{{ $t('session.loadingMeeting') }}</p>
-               </div>
+         <!-- Meeting Room Modal -->
+     <div
+       v-if="showMeetingRoom"
+       class="fixed inset-0 z-50 bg-black bg-opacity-90"
+     >
+       <!-- Header -->
+       <div class="absolute top-0 left-0 right-0 z-10 bg-white bg-opacity-95 backdrop-blur-sm border-b border-gray-200">
+         <div class="flex items-center justify-between p-4">
+           <div class="flex items-center space-x-3 rtl:space-x-reverse">
+             <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+             <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+             <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+           </div>
+           <h3 class="text-lg font-medium text-gray-900">{{ $t('session.meetingRoom') }}</h3>
+           <button
+             @click="closeMeetingRoom"
+             class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
+           >
+             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+             </svg>
+           </button>
+         </div>
+       </div>
+       
+       <!-- Meeting Container -->
+       <div class="pt-16 h-full">
+         <div id="meeting" class="w-full h-full" style="min-height: calc(100vh - 4rem);">
+           <!-- Loading state while Jitsi loads -->
+           <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full bg-gray-900">
+             <div class="text-center text-white">
+               <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+               <p class="text-lg font-medium">{{ $t('session.loadingMeeting') }}</p>
+               <p class="text-sm text-gray-400 mt-2">{{ $t('session.connecting') }}</p>
              </div>
            </div>
          </div>
-      </div>
-    </div>
+       </div>
+     </div>
   </div>
 </template>
 
@@ -557,36 +566,63 @@ const startJitsiMeeting = () => {
   const userName = authStore.user?.name || authStore.user?.username || 'User'
   const isTherapist = authStore.user?.role === 'doctor' || authStore.user?.role === 'therapist'
   
-  const options = {
-    parentNode: document.querySelector('#meeting'),
-    roomName: `${roomID} جلسة`,
-    width: '100%',
-    height: '100%',
-    configOverwrite: {
-      prejoinPageEnabled: false,
-      participantsPane: {
-        enabled: true,
-        hideModeratorSettingsTab: false,
-        hideMoreActionsButton: false,
-        hideMuteAllButton: false
-      }
-    },
-    interfaceConfigOverwrite: {
-      prejoinPageEnabled: false,
-      APP_NAME: 'Jalsah',
-      DEFAULT_BACKGROUND: "#024059;",
-      SHOW_JITSI_WATERMARK: false,
-      HIDE_DEEP_LINKING_LOGO: true,
-      SHOW_BRAND_WATERMARK: true,
-      SHOW_WATERMARK_FOR_GUESTS: true,
-      SHOW_POWERED_BY: false,
-      DISPLAY_WELCOME_FOOTER: false,
-      JITSI_WATERMARK_LINK: 'https://jalsah.app',
-      PROVIDER_NAME: 'Jalsah',
-      DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
-      DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
-    }
-  }
+     const options = {
+     parentNode: document.querySelector('#meeting'),
+     roomName: `${roomID} جلسة`,
+     width: '100%',
+     height: '100%',
+     configOverwrite: {
+       prejoinPageEnabled: false,
+       startWithAudioMuted: false,
+       startWithVideoMuted: false,
+       participantsPane: {
+         enabled: true,
+         hideModeratorSettingsTab: false,
+         hideMoreActionsButton: false,
+         hideMuteAllButton: false
+       },
+       toolbarButtons: [
+         'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+         'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+         'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+         'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+       ]
+     },
+     interfaceConfigOverwrite: {
+       prejoinPageEnabled: false,
+       APP_NAME: 'Jalsah',
+       DEFAULT_BACKGROUND: "#1a1a1a",
+       SHOW_JITSI_WATERMARK: false,
+       HIDE_DEEP_LINKING_LOGO: true,
+       SHOW_BRAND_WATERMARK: true,
+       SHOW_WATERMARK_FOR_GUESTS: true,
+       SHOW_POWERED_BY: false,
+       DISPLAY_WELCOME_FOOTER: false,
+       JITSI_WATERMARK_LINK: 'https://jalsah.app',
+       PROVIDER_NAME: 'Jalsah',
+       DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+       DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+       TOOLBAR_BUTTONS: [
+         'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+         'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+         'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+         'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+       ],
+       SHOW_POWERED_BY: false,
+       SHOW_JITSI_WATERMARK: false,
+       SHOW_WATERMARK_FOR_GUESTS: false,
+       SHOW_BRAND_WATERMARK: false,
+       HIDE_DEEP_LINKING_LOGO: true,
+       DISPLAY_WELCOME_FOOTER: false,
+       TOOLBAR_ALWAYS_VISIBLE: true,
+       TOOLBAR_BUTTONS: [
+         'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+         'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+         'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+         'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+       ]
+     }
+   }
   
   try {
     meetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
