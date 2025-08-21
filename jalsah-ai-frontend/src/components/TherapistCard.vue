@@ -70,6 +70,47 @@
           </div>
         </div>
 
+        <!-- Certificates Section (Always Visible) -->
+        <div v-if="therapist.certificates && therapist.certificates.length > 0" class="mt-6">
+          <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
+          
+          <!-- Certificates Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div 
+              v-for="cert in therapist.certificates.slice(0, 4)" 
+              :key="cert.id"
+              class="bg-white rounded-lg border border-gray-200 overflow-hidden"
+            >
+              <div class="aspect-square">
+                <img 
+                  v-if="cert.is_image"
+                  :src="cert.thumbnail_url || cert.url" 
+                  :alt="cert.name"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
+                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="p-2">
+                <p class="text-xs text-gray-900 truncate">{{ cert.name }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Show More Certificates Link -->
+          <div v-if="therapist.certificates.length > 4" class="mt-3 text-center">
+            <button 
+              @click.stop="showTherapistDetails"
+              class="text-sm text-primary-600 hover:text-primary-800"
+            >
+              {{ $t('therapistDetails.viewAllCertificates') }}
+            </button>
+          </div>
+        </div>
+
         <!-- Bottom Section: Availability and View Details Button -->
         <div class="flex items-center justify-between mt-6" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
           <!-- Next Available Slot -->
