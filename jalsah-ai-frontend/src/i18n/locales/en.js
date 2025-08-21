@@ -716,6 +716,54 @@ export default {
     noDescription: 'No description available'
   },
 
+  // Session Management
+  session: {
+    title: 'Session',
+    with: 'with',
+    loading: 'Loading session...',
+    error: 'Error loading session',
+    notFound: 'Session not found',
+    notFoundDescription: 'The session you are looking for does not exist or you do not have permission to access it.',
+    backToAppointments: 'Back to Appointments',
+    therapist: 'Therapist',
+    time: 'Session Time',
+    duration: 'Duration',
+    minutes: 'minutes',
+    actions: 'Session Actions',
+    join: 'Join Session',
+    joining: 'Joining...',
+    joinError: 'Failed to join session',
+    joined: 'Successfully joined session',
+    end: 'End Session',
+    ending: 'Ending...',
+    endError: 'Failed to end session',
+    ended: 'Session ended successfully',
+    confirmEnd: 'Are you sure you want to end this session?',
+    waitingForTherapist: 'Waiting for therapist...',
+    waitingDescription: 'Please wait for your therapist to join the session.',
+    notAvailable: 'Session not available',
+    meetingRoom: 'Meeting Room',
+    timeExpired: 'Session time has expired',
+    instructions: 'Session Instructions',
+    instruction1: 'Ensure you have a stable internet connection',
+    instruction2: 'Find a quiet, private space for your session',
+    instruction3: 'Have your camera and microphone ready',
+    loadError: 'Failed to load session details',
+    status: {
+      pending: 'Pending',
+      confirmed: 'Confirmed',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      noShow: 'No Show'
+    },
+    reason: {
+      notConfirmed: 'Session is not confirmed yet',
+      tooEarly: 'Session has not started yet',
+      tooLate: 'Session time has passed',
+      unknown: 'Session is not available at this time'
+    }
+  },
+
   // Not Found
   notFound: {
     title: 'Page Not Found',

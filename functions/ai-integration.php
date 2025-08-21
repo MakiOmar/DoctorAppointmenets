@@ -155,6 +155,19 @@ class SNKS_AI_Integration {
 			'callback' => array( $this, 'create_woocommerce_order_from_cart' ),
 			'permission_callback' => '__return_true',
 		) );
+
+		// Session management endpoints
+		register_rest_route( 'jalsah-ai/v1', '/session/(?P<id>\d+)', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_ai_session' ),
+			'permission_callback' => '__return_true',
+		) );
+		
+		register_rest_route( 'jalsah-ai/v1', '/session/(?P<id>\d+)/end', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'end_ai_session' ),
+			'permission_callback' => '__return_true',
+		) );
 	}
 	
 	/**
@@ -3578,6 +3591,127 @@ class SNKS_AI_Integration {
 		}
 	}
 	
+	/**
+	 * Get AI session details
+	 */
+	public function get_ai_session($request) {
+		$session_id = $request->get_param('id');
+		$user_id = $this->verify_jwt_token();
+		
+		if (!$session_id || !$user_id) {
+			return new WP_REST_Response(['error' => 'Missing session ID or user authentication'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Get session details
+		$session = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND (client_id = %d OR user_id = %d) AND settings LIKE '%ai_booking%'",
+			$session_id, $user_id, $user_id
+		));
+		
+		if (!$session) {
+			return new WP_REST_Response(['error' => 'Session not found or access denied'], 404);
+		}
+		
+		// Get therapist details
+		$therapist = get_userdata($session->user_id);
+		$therapist_name = get_user_meta($session->user_id, 'ai_display_name', true);
+		if (!$therapist_name) {
+			$therapist_name = get_user_meta($session->user_id, 'billing_first_name', true) . ' ' . get_user_meta($session->user_id, 'billing_last_name', true);
+		}
+		
+		// Get therapist image
+		$therapist_image_id = get_user_meta($session->user_id, 'ai_profile_image', true);
+		$therapist_image_url = '';
+		if ($therapist_image_id) {
+			$therapist_image_url = wp_get_attachment_image_url($therapist_image_id, 'thumbnail');
+		}
+		
+		// Check if therapist has joined
+		$therapist_joined = snks_doctor_has_joined($session_id, $session->user_id);
+		
+		$session_data = array(
+			'ID' => $session->ID,
+			'therapist_id' => $session->user_id,
+			'therapist_name' => $therapist_name,
+			'therapist_image_url' => $therapist_image_url,
+			'client_id' => $session->client_id,
+			'date_time' => $session->date_time,
+			'starts' => $session->starts,
+			'ends' => $session->ends,
+			'period' => $session->period,
+			'session_status' => $session->session_status,
+			'attendance_type' => $session->attendance_type,
+			'therapist_joined' => $therapist_joined,
+			'order_id' => $session->order_id,
+			'settings' => $session->settings
+		);
+		
+		return new WP_REST_Response([
+			'success' => true,
+			'data' => $session_data
+		]);
+	}
+	
+	/**
+	 * End AI session
+	 */
+	public function end_ai_session($request) {
+		$session_id = $request->get_param('id');
+		$user_id = $this->verify_jwt_token();
+		
+		if (!$session_id || !$user_id) {
+			return new WP_REST_Response(['error' => 'Missing session ID or user authentication'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Get session details
+		$session = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND user_id = %d AND settings LIKE '%ai_booking%'",
+			$session_id, $user_id
+		));
+		
+		if (!$session) {
+			return new WP_REST_Response(['error' => 'Session not found or access denied'], 404);
+		}
+		
+		// Only the therapist can end the session
+		if ($session->user_id != $user_id) {
+			return new WP_REST_Response(['error' => 'Only the therapist can end this session'], 403);
+		}
+		
+		// Update session status
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			[
+				'session_status' => 'completed',
+				'settings' => 'ai_booking:completed'
+			],
+			['ID' => $session_id],
+			['%s', '%s'],
+			['%d']
+		);
+		
+		if ($result === false) {
+			return new WP_REST_Response(['error' => 'Failed to end session'], 500);
+		}
+		
+		// Add session action record
+		snks_insert_session_actions($session_id, $session->client_id, 'yes');
+		
+		// Clear therapist joined transient
+		delete_transient("doctor_has_joined_{$session_id}_{$user_id}");
+		
+		return new WP_REST_Response([
+			'success' => true,
+			'message' => 'Session ended successfully'
+		]);
+	}
+
 	/**
 	 * Generate auto-login URL for main website
 	 */

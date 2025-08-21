@@ -369,9 +369,8 @@ export default {
     }
 
     const joinSession = (appointmentId) => {
-      // This would typically redirect to the video call platform
-      toast.info('Redirecting to session...')
-      // router.push(`/session/${appointmentId}`)
+      // Redirect to the session page
+      router.push(`/session/${appointmentId}`)
     }
 
     const rescheduleAppointment = (appointmentId) => {

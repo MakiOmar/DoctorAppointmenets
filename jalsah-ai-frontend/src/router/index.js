@@ -69,6 +69,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
+    path: '/session/:id',
+    name: 'Session',
+    component: () => import('@/views/Session.vue'),
+    meta: { requiresAuth: true, roles: ['customer', 'doctor', 'clinic_manager'] }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),

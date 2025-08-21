@@ -725,6 +725,54 @@ export default {
     }
   },
 
+  // Session Management
+  session: {
+    title: 'الجلسة',
+    with: 'مع',
+    loading: 'جاري تحميل الجلسة...',
+    error: 'خطأ في تحميل الجلسة',
+    notFound: 'الجلسة غير موجودة',
+    notFoundDescription: 'الجلسة التي تبحث عنها غير موجودة أو ليس لديك صلاحية للوصول إليها.',
+    backToAppointments: 'العودة للمواعيد',
+    therapist: 'المعالج',
+    time: 'وقت الجلسة',
+    duration: 'المدة',
+    minutes: 'دقائق',
+    actions: 'إجراءات الجلسة',
+    join: 'انضم للجلسة',
+    joining: 'جاري الانضمام...',
+    joinError: 'فشل في الانضمام للجلسة',
+    joined: 'تم الانضمام للجلسة بنجاح',
+    end: 'إنهاء الجلسة',
+    ending: 'جاري الإنهاء...',
+    endError: 'fشل في إنهاء الجلسة',
+    ended: 'تم إنهاء الجلسة بنجاح',
+    confirmEnd: 'هل أنت متأكد من إنهاء هذه الجلسة؟',
+    waitingForTherapist: 'في انتظار المعالج...',
+    waitingDescription: 'يرجى الانتظار حتى ينضم معالجك للجلسة.',
+    notAvailable: 'الجلسة غير متاحة',
+    meetingRoom: 'غرفة الاجتماع',
+    timeExpired: 'انتهى وقت الجلسة',
+    instructions: 'تعليمات الجلسة',
+    instruction1: 'تأكد من وجود اتصال إنترنت مستقر',
+    instruction2: 'ابحث عن مكان هادئ وخاص لجلستك',
+    instruction3: 'احضر الكاميرا والميكروفون',
+    loadError: 'فشل في تحميل تفاصيل الجلسة',
+    status: {
+      pending: 'في الانتظار',
+      confirmed: 'مؤكدة',
+      completed: 'مكتملة',
+      cancelled: 'ملغية',
+      noShow: 'لم يحضر'
+    },
+    reason: {
+      notConfirmed: 'الجلسة لم تؤكد بعد',
+      tooEarly: 'الجلسة لم تبدأ بعد',
+      tooLate: 'انتهى وقت الجلسة',
+      unknown: 'الجلسة غير متاحة في هذا الوقت'
+    }
+  },
+
   // Not Found
   notFound: {
     title: 'الصفحة غير موجودة',
