@@ -1,9 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <Header />
-    
-    <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8">
       <!-- Loading State -->
       <div v-if="loading" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -127,7 +123,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 import { useToast } from 'vue-toastification'
-import Header from '../components/Header.vue'
 import StarRating from '../components/StarRating.vue'
 import api from '../services/api'
 
