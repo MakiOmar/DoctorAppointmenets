@@ -509,11 +509,19 @@ const loadSession = async () => {
     
     console.log('📋 Session API Response:', response.data)
     
-    if (response.data.success) {
-      sessionData.value = response.data.data
-      console.log('✅ Session data loaded:', sessionData.value)
-      startTimer()
-    } else {
+         if (response.data.success) {
+       sessionData.value = response.data.data
+       console.log('✅ Session data loaded:', sessionData.value)
+       console.log('🔍 Session data details:', {
+         ID: sessionData.value.ID,
+         user_id: sessionData.value.user_id,
+         client_id: sessionData.value.client_id,
+         therapist_id: sessionData.value.therapist_id,
+         session_status: sessionData.value.session_status,
+         date_time: sessionData.value.date_time
+       })
+       startTimer()
+     } else {
       error.value = response.data.error || t('session.loadError')
       console.error('❌ Session load failed:', error.value)
     }
