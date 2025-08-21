@@ -319,6 +319,7 @@ export default {
       const statusMap = {
         'pending': $t('appointmentsPage.statusPending'),
         'confirmed': $t('appointmentsPage.statusConfirmed'),
+        'open': $t('appointmentsPage.statusConfirmed'), // Map 'open' to 'confirmed' for display
         'completed': $t('appointmentsPage.statusCompleted'),
         'cancelled': $t('appointmentsPage.statusCancelled'),
         'no_show': $t('appointmentsPage.statusNoShow')
@@ -330,6 +331,7 @@ export default {
       const classMap = {
         'pending': 'text-yellow-600 bg-yellow-100',
         'confirmed': 'text-green-600 bg-green-100',
+        'open': 'text-green-600 bg-green-100', // Map 'open' to 'confirmed' styling
         'completed': 'text-blue-600 bg-blue-100',
         'cancelled': 'text-red-600 bg-red-100',
         'no_show': 'text-gray-600 bg-gray-100'
@@ -338,7 +340,8 @@ export default {
     }
 
     const canJoinSession = (appointment) => {
-      if (appointment.status !== 'confirmed') return false
+      // Allow joining for both 'open' and 'confirmed' statuses
+      if (appointment.status !== 'confirmed' && appointment.status !== 'open') return false
       
       const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
       const now = new Date()
@@ -349,7 +352,7 @@ export default {
     }
 
     const canReschedule = (appointment) => {
-      if (appointment.status !== 'confirmed' && appointment.status !== 'pending') return false
+      if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') return false
       
       const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
       const now = new Date()
@@ -359,7 +362,7 @@ export default {
     }
 
     const canCancel = (appointment) => {
-      if (appointment.status !== 'confirmed' && appointment.status !== 'pending') return false
+      if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') return false
       
       const appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
       const now = new Date()

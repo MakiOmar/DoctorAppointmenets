@@ -3348,7 +3348,7 @@ class SNKS_AI_Integration {
 			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
 			 FROM {$wpdb->prefix}snks_provider_timetable t
 			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
-			 WHERE t.client_id = %d AND t.session_status = 'open' 
+			 WHERE t.client_id = %d AND (t.session_status = 'open' OR t.session_status = 'confirmed') 
 			 AND t.settings LIKE '%ai_booking%'
 			 ORDER BY t.date_time ASC",
 			$user_id
@@ -3360,9 +3360,16 @@ class SNKS_AI_Integration {
 			if ($appointment->profile_image) {
 				$appointment->therapist_image_url = wp_get_attachment_image_url($appointment->profile_image, 'thumbnail');
 			}
+			
+			// Map session_status to status for frontend compatibility
+			$appointment->status = $appointment->session_status;
+			
+			// Format date and time for frontend
+			$appointment->date = date('Y-m-d', strtotime($appointment->date_time));
+			$appointment->time = $appointment->starts;
 		}
 		
-		return new WP_REST_Response(['appointments' => $appointments], 200);
+		return new WP_REST_Response(['success' => true, 'data' => $appointments], 200);
 	}
 
 	// Placeholder for v2 therapists endpoint handler
