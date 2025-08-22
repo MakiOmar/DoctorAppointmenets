@@ -70,3 +70,81 @@ msgstr "معالجة الجلسات يدوياً"
 
 msgid "Pending Sessions for Processing"
 msgstr "الجلسات المعلقة للمعالجة"
+
+msgid "First Session Profit Percentage (%)"
+msgstr "نسبة الربح للجلسة الأولى (%)"
+
+msgid "Default profit percentage for the first session with each new patient"
+msgstr "النسبة الافتراضية للربح من الجلسة الأولى مع كل مريض جديد"
+
+msgid "Subsequent Sessions Profit Percentage (%)"
+msgstr "نسبة الربح للجلسات اللاحقة (%)"
+
+msgid "Default profit percentage for subsequent sessions with the same patient"
+msgstr "النسبة الافتراضية للربح من الجلسات اللاحقة مع نفس المريض"
+
+msgid "Therapist"
+msgstr "المعالج"
+
+msgid "All Therapists"
+msgstr "جميع المعالجين"
+
+msgid "Period"
+msgstr "الفترة"
+
+msgid "All Periods"
+msgstr "جميع الفترات"
+
+msgid "Today"
+msgstr "اليوم"
+
+msgid "This Week"
+msgstr "هذا الأسبوع"
+
+msgid "This Month"
+msgstr "هذا الشهر"
+
+msgid "Custom Period"
+msgstr "فترة مخصصة"
+
+msgid "From Date"
+msgstr "من تاريخ"
+
+msgid "To Date"
+msgstr "إلى تاريخ"
+
+msgid "Apply Filters"
+msgstr "تطبيق الفلاتر"
+
+msgid "Export CSV"
+msgstr "تصدير CSV"
+
+msgid "Session ID"
+msgstr "معرف الجلسة"
+
+msgid "Enter session ID"
+msgstr "أدخل معرف الجلسة"
+
+msgid "Enter the session ID to process it manually"
+msgstr "أدخل معرف الجلسة لمعالجتها يدوياً"
+
+msgid "Process Session"
+msgstr "معالجة الجلسة"
+
+msgid "No pending sessions for processing."
+msgstr "لا توجد جلسات معلقة للمعالجة."
+
+msgid "Patient"
+msgstr "المريض"
+
+msgid "Session Type"
+msgstr "نوع الجلسة"
+
+msgid "Session Date"
+msgstr "تاريخ الجلسة"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Actions"
+msgstr "الإجراءات"

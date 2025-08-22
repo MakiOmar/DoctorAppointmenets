@@ -62,7 +62,7 @@ function snks_profit_settings_page() {
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="default_first_percentage">نسبة الربح للجلسة الأولى (%)</label>
+							<label for="default_first_percentage"><?php echo __( 'First Session Profit Percentage (%)', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<input type="number" 
@@ -73,12 +73,12 @@ function snks_profit_settings_page() {
 								   min="0" 
 								   max="100" 
 								   class="regular-text" />
-							<p class="description">النسبة الافتراضية للربح من الجلسة الأولى مع كل مريض جديد</p>
+							<p class="description"><?php echo __( 'Default profit percentage for the first session with each new patient', 'anony-turn' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="default_subsequent_percentage">نسبة الربح للجلسات اللاحقة (%)</label>
+							<label for="default_subsequent_percentage"><?php echo __( 'Subsequent Sessions Profit Percentage (%)', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<input type="number" 
@@ -89,7 +89,7 @@ function snks_profit_settings_page() {
 								   min="0" 
 								   max="100" 
 								   class="regular-text" />
-							<p class="description">النسبة الافتراضية للربح من الجلسات اللاحقة مع نفس المريض</p>
+							<p class="description"><?php echo __( 'Default profit percentage for subsequent sessions with the same patient', 'anony-turn' ); ?></p>
 						</td>
 					</tr>
 				</table>

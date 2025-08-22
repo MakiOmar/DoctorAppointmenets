@@ -67,11 +67,11 @@ function snks_therapist_earnings_page() {
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="therapist_id">المعالج</label>
+							<label for="therapist_id"><?php echo __( 'Therapist', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<select name="therapist_id" id="therapist_id">
-								<option value="0">جميع المعالجين</option>
+								<option value="0"><?php echo __( 'All Therapists', 'anony-turn' ); ?></option>
 								<?php foreach ( $therapists as $therapist ) : ?>
 									<option value="<?php echo esc_attr( $therapist['ID'] ); ?>" <?php selected( $therapist_id, $therapist['ID'] ); ?>>
 										<?php echo esc_html( $therapist['display_name'] ); ?>
@@ -82,21 +82,21 @@ function snks_therapist_earnings_page() {
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="period">الفترة</label>
+							<label for="period"><?php echo __( 'Period', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<select name="period" id="period">
-								<option value="all" <?php selected( $period, 'all' ); ?>>جميع الفترات</option>
-								<option value="today" <?php selected( $period, 'today' ); ?>>اليوم</option>
-								<option value="week" <?php selected( $period, 'week' ); ?>>هذا الأسبوع</option>
-								<option value="month" <?php selected( $period, 'month' ); ?>>هذا الشهر</option>
-								<option value="custom" <?php selected( $period, 'custom' ); ?>>فترة مخصصة</option>
+								<option value="all" <?php selected( $period, 'all' ); ?>><?php echo __( 'All Periods', 'anony-turn' ); ?></option>
+								<option value="today" <?php selected( $period, 'today' ); ?>><?php echo __( 'Today', 'anony-turn' ); ?></option>
+								<option value="week" <?php selected( $period, 'week' ); ?>><?php echo __( 'This Week', 'anony-turn' ); ?></option>
+								<option value="month" <?php selected( $period, 'month' ); ?>><?php echo __( 'This Month', 'anony-turn' ); ?></option>
+								<option value="custom" <?php selected( $period, 'custom' ); ?>><?php echo __( 'Custom Period', 'anony-turn' ); ?></option>
 							</select>
 						</td>
 					</tr>
 					<tr class="custom-date-fields" style="<?php echo ( $period === 'custom' ) ? '' : 'display: none;'; ?>">
 						<th scope="row">
-							<label for="date_from">من تاريخ</label>
+							<label for="date_from"><?php echo __( 'From Date', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<input type="date" name="date_from" id="date_from" value="<?php echo esc_attr( $date_from ); ?>" />
@@ -104,7 +104,7 @@ function snks_therapist_earnings_page() {
 					</tr>
 					<tr class="custom-date-fields" style="<?php echo ( $period === 'custom' ) ? '' : 'display: none;'; ?>">
 						<th scope="row">
-							<label for="date_to">إلى تاريخ</label>
+							<label for="date_to"><?php echo __( 'To Date', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<input type="date" name="date_to" id="date_to" value="<?php echo esc_attr( $date_to ); ?>" />
@@ -113,8 +113,8 @@ function snks_therapist_earnings_page() {
 				</table>
 				
 				<p class="submit">
-					<input type="submit" class="button-primary" value="تطبيق الفلاتر" />
-					<a href="?page=therapist-earnings&export=csv&therapist_id=<?php echo $therapist_id; ?>&period=<?php echo $period; ?>&date_from=<?php echo $date_from; ?>&date_to=<?php echo $date_to; ?>" class="button">تصدير CSV</a>
+					<input type="submit" class="button-primary" value="<?php echo __( 'Apply Filters', 'anony-turn' ); ?>" />
+					<a href="?page=therapist-earnings&export=csv&therapist_id=<?php echo $therapist_id; ?>&period=<?php echo $period; ?>&date_from=<?php echo $date_from; ?>&date_to=<?php echo $date_to; ?>" class="button"><?php echo __( 'Export CSV', 'anony-turn' ); ?></a>
 				</p>
 			</form>
 		</div>

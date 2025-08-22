@@ -91,21 +91,21 @@ function snks_ai_transaction_processing_page() {
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="session_id">معرف الجلسة</label>
+							<label for="session_id"><?php echo __( 'Session ID', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<input type="text" 
 								   id="session_id" 
 								   name="session_id" 
 								   class="regular-text" 
-								   placeholder="أدخل معرف الجلسة" />
-							<p class="description">أدخل معرف الجلسة لمعالجتها يدوياً</p>
+								   placeholder="<?php echo __( 'Enter session ID', 'anony-turn' ); ?>" />
+							<p class="description"><?php echo __( 'Enter the session ID to process it manually', 'anony-turn' ); ?></p>
 						</td>
 					</tr>
 				</table>
 				
 				<p class="submit">
-					<input type="submit" name="process_session" class="button-primary" value="معالجة الجلسة" />
+					<input type="submit" name="process_session" class="button-primary" value="<?php echo __( 'Process Session', 'anony-turn' ); ?>" />
 				</p>
 			</form>
 		</div>
@@ -116,18 +116,18 @@ function snks_ai_transaction_processing_page() {
 			<?php
 			$pending_sessions = snks_get_pending_ai_sessions();
 			if ( empty( $pending_sessions ) ) : ?>
-				<p>لا توجد جلسات معلقة للمعالجة.</p>
+				<p><?php echo __( 'No pending sessions for processing.', 'anony-turn' ); ?></p>
 			<?php else : ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
-							<th scope="col">معرف الجلسة</th>
-							<th scope="col">المعالج</th>
-							<th scope="col">المريض</th>
-							<th scope="col">نوع الجلسة</th>
-							<th scope="col">تاريخ الجلسة</th>
-							<th scope="col">الحالة</th>
-							<th scope="col">الإجراءات</th>
+													<th scope="col"><?php echo __( 'Session ID', 'anony-turn' ); ?></th>
+						<th scope="col"><?php echo __( 'Therapist', 'anony-turn' ); ?></th>
+						<th scope="col"><?php echo __( 'Patient', 'anony-turn' ); ?></th>
+						<th scope="col"><?php echo __( 'Session Type', 'anony-turn' ); ?></th>
+						<th scope="col"><?php echo __( 'Session Date', 'anony-turn' ); ?></th>
+						<th scope="col"><?php echo __( 'Status', 'anony-turn' ); ?></th>
+						<th scope="col"><?php echo __( 'Actions', 'anony-turn' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
