@@ -3369,16 +3369,16 @@ function snks_ai_session_dashboard_widget_content() {
 		</div>
 		
 		<div class="today-stats" style="background: #f9f9f9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-			<h4 style="margin: 0 0 10px 0;">إحصائيات اليوم</h4>
+								<h4 style="margin: 0 0 10px 0;"><?php echo __( 'Today Statistics', 'anony-turn' ); ?></h4>
 			<div style="display: flex; justify-content: space-between;">
-				<span>الجلسات: <strong><?php echo number_format( $stats['today_sessions'] ); ?></strong></span>
-				<span>الأرباح: <strong><?php echo number_format( $stats['today_profit'], 2 ); ?> ج.م</strong></span>
+				<span><?php echo __( 'Sessions:', 'anony-turn' ); ?> <strong><?php echo number_format( $stats['today_sessions'] ); ?></strong></span>
+				<span><?php echo __( 'Earnings:', 'anony-turn' ); ?> <strong><?php echo number_format( $stats['today_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></strong></span>
 			</div>
 		</div>
 		
 		<div class="quick-actions" style="text-align: center;">
 			<a href="<?php echo admin_url( 'admin.php?page=therapist-earnings' ); ?>" class="button button-primary" style="margin-right: 10px;">
-				عرض أرباح المعالجين
+				<?php echo __( 'View Therapist Earnings', 'anony-turn' ); ?>
 			</a>
 			<a href="<?php echo admin_url( 'admin.php?page=profit-settings' ); ?>" class="button">
 				إعدادات الأرباح

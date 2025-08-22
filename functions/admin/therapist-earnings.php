@@ -136,7 +136,7 @@ function snks_therapist_earnings_page() {
 					</p>
 				</div>
 				<div class="stat-box" style="background: #fff8f0; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #ff8c00;">الجلسات الأولى</h3>
+					<h3 style="margin: 0 0 10px 0; color: #ff8c00;"><?php echo __( 'First Sessions', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #ff8c00;">
 						<?php echo $earnings_data['summary']['first_sessions']; ?>
 					</p>
@@ -154,7 +154,7 @@ function snks_therapist_earnings_page() {
 		<div class="card">
 			<h2><?php echo __( 'Earnings by Therapist', 'anony-turn' ); ?></h2>
 			<?php if ( empty( $earnings_data['by_therapist'] ) ) : ?>
-				<p>لا توجد بيانات أرباح للفترة المحددة.</p>
+				<p><?php echo __( 'No earnings data for the specified period.', 'anony-turn' ); ?></p>
 			<?php else : ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
@@ -209,12 +209,12 @@ function snks_therapist_earnings_page() {
 						<tr>
 							<th scope="col">التاريخ</th>
 							<th scope="col">المعالج</th>
-							<th scope="col">المريض</th>
-							<th scope="col">نوع الجلسة</th>
-							<th scope="col">مبلغ الجلسة</th>
-							<th scope="col">مبلغ الربح</th>
-							<th scope="col">معرف الجلسة</th>
-							<th scope="col">معرف الطلب</th>
+							<th scope="col"><?php echo __( 'Patient', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Session Type', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Session Amount', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Profit Amount', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Session ID', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Order ID', 'anony-turn' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>

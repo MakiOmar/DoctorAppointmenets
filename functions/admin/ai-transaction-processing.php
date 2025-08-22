@@ -229,11 +229,11 @@ function snks_ai_transaction_processing_page() {
 						<tr>
 							<th scope="col">التاريخ</th>
 							<th scope="col">المعالج</th>
-							<th scope="col">المريض</th>
-							<th scope="col">نوع الجلسة</th>
-							<th scope="col">المبلغ</th>
+							<th scope="col"><?php echo __( 'Patient', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Session Type', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Amount', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Session ID', 'anony-turn' ); ?></th>
-							<th scope="col">الحالة</th>
+							<th scope="col"><?php echo __( 'Status', 'anony-turn' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -333,7 +333,7 @@ function snks_handle_withdrawal_processing() {
 	$withdrawal_method = sanitize_text_field( $_POST['withdrawal_method'] );
 	
 	if ( empty( $therapist_id ) || empty( $amount ) ) {
-		echo '<div class="notice notice-error"><p>يرجى إدخال جميع البيانات المطلوبة.</p></div>';
+		echo '<div class="notice notice-error"><p>' . __( 'Please enter all required data.', 'anony-turn' ) . '</p></div>';
 		return;
 	}
 	
@@ -341,9 +341,9 @@ function snks_handle_withdrawal_processing() {
 	$result = snks_process_ai_session_withdrawal( $therapist_id, $amount, $withdrawal_method );
 	
 	if ( $result['success'] ) {
-		echo '<div class="notice notice-success"><p>تمت معالجة السحب بنجاح. المبلغ: ' . number_format( $amount, 2 ) . ' ج.م</p></div>';
+		echo '<div class="notice notice-success"><p>' . __( 'Withdrawal processed successfully. Amount:', 'anony-turn' ) . ' ' . number_format( $amount, 2 ) . ' ' . __( 'EGP', 'anony-turn' ) . '</p></div>';
 	} else {
-		echo '<div class="notice notice-error"><p>فشلت معالجة السحب: ' . esc_html( $result['message'] ) . '</p></div>';
+		echo '<div class="notice notice-error"><p>' . __( 'Withdrawal processing failed:', 'anony-turn' ) . ' ' . esc_html( $result['message'] ) . '</p></div>';
 	}
 }
 

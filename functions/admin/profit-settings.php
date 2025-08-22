@@ -132,8 +132,8 @@ function snks_profit_settings_page() {
 							<th scope="col"><?php echo __( 'Email', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'First Session Percentage (%)', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Subsequent Sessions Percentage (%)', 'anony-turn' ); ?></th>
-							<th scope="col">الحالة</th>
-							<th scope="col">آخر تحديث</th>
+							<th scope="col"><?php echo __( 'Status', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Last Updated', 'anony-turn' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>

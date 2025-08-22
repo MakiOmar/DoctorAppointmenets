@@ -208,3 +208,45 @@ msgstr "تمت معالجة الجلسة بنجاح. معرف المعاملة:"
 
 msgid "Session processing failed:"
 msgstr "فشلت معالجة الجلسة:"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Last Updated"
+msgstr "آخر تحديث"
+
+msgid "No earnings data for the specified period."
+msgstr "لا توجد بيانات أرباح للفترة المحددة."
+
+msgid "Session Amount"
+msgstr "مبلغ الجلسة"
+
+msgid "Profit Amount"
+msgstr "مبلغ الربح"
+
+msgid "Order ID"
+msgstr "معرف الطلب"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Please enter all required data."
+msgstr "يرجى إدخال جميع البيانات المطلوبة."
+
+msgid "Withdrawal processed successfully. Amount:"
+msgstr "تمت معالجة السحب بنجاح. المبلغ:"
+
+msgid "Withdrawal processing failed:"
+msgstr "فشلت معالجة السحب:"
+
+msgid "Today Statistics"
+msgstr "إحصائيات اليوم"
+
+msgid "Sessions:"
+msgstr "الجلسات:"
+
+msgid "Earnings:"
+msgstr "الأرباح:"
+
+msgid "View Therapist Earnings"
+msgstr "عرض أرباح المعالجين"
