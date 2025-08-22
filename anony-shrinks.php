@@ -171,6 +171,30 @@ add_action( 'snks_add_enhanced_ai_meta_fields', 'snks_add_enhanced_ai_meta_field
 add_action( 'snks_add_enhanced_ai_user_meta_fields', 'snks_add_enhanced_ai_user_meta_fields' );
 add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' );
 
+// Check for AI profit system updates on plugin load
+add_action( 'init', 'snks_check_ai_profit_system_updates' );
+
+/**
+ * Check for AI profit system updates and run upgrades if needed
+ */
+function snks_check_ai_profit_system_updates() {
+	$current_version = get_option( 'snks_ai_profit_system_version', '0.0.0' );
+	$plugin_version = '1.0.0'; // Current AI profit system version
+	
+	if ( version_compare( $current_version, $plugin_version, '<' ) ) {
+		// Run the upgrade function
+		if ( function_exists( 'snks_upgrade_ai_profit_database_schema' ) ) {
+			snks_upgrade_ai_profit_database_schema();
+		}
+		
+		// Update the version
+		update_option( 'snks_ai_profit_system_version', $plugin_version );
+		
+		// Log the upgrade
+		error_log( 'AI Profit System: Updated from version ' . $current_version . ' to ' . $plugin_version );
+	}
+}
+
 // Add missing columns to existing installations
 if ( function_exists( 'snks_add_missing_therapist_diagnoses_columns' ) ) {
 	snks_add_missing_therapist_diagnoses_columns();

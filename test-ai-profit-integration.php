@@ -19,6 +19,10 @@ echo "<h1>🧪 AI Profit Integration Test</h1>";
 
 // Test 1: Check if profit calculator functions exist
 echo "<h2>Test 1: Core Functions Availability</h2>";
+
+// Check AI profit system version
+$ai_profit_version = get_option( 'snks_ai_profit_system_version', 'Not installed' );
+echo "<p><strong>AI Profit System Version:</strong> {$ai_profit_version}</p>";
 $functions_to_test = array(
 	'snks_get_therapist_profit_settings',
 	'snks_calculate_session_profit',
