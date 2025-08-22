@@ -11,18 +11,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add test data populator page
+ * Note: Menu registration removed - page no longer accessible from admin menu
  */
 function snks_add_test_data_populator_page() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Populate Test Data',
-		'Populate Test Data',
-		'manage_options',
-		'ai-test-data-populator',
-		'snks_test_data_populator_page'
-	);
+	// Menu registration removed - page no longer accessible from admin menu
+	// add_submenu_page(
+	// 	'jalsah-ai-management',
+	// 	'Populate Test Data',
+	// 	'Populate Test Data',
+	// 	'manage_options',
+	// 	'ai-test-data-populator',
+	// 	'snks_test_data_populator_page'
+	// );
 }
-add_action( 'admin_menu', 'snks_add_test_data_populator_page' );
+// add_action( 'admin_menu', 'snks_add_test_data_populator_page' ); // Commented out
 
 /**
  * Test Data Populator Page
