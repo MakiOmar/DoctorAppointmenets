@@ -1277,26 +1277,6 @@ function snks_enhanced_ai_sessions_page() {
 	
 	$ai_orders = $wpdb->get_results( $ai_orders_query );
 	
-	// Debug: Let's also check what meta keys exist for orders
-	$all_meta_keys = $wpdb->get_results( "
-		SELECT DISTINCT meta_key, meta_value, COUNT(*) as count
-		FROM {$wpdb->postmeta} pm
-		INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-		WHERE p.post_type = 'shop_order'
-		AND (meta_key LIKE '%ai%' OR meta_key LIKE '%jalsah%' OR meta_key LIKE '%therapist%' OR meta_key LIKE '%session%' OR meta_key LIKE '%slot%' OR meta_key LIKE '%appointment%')
-		GROUP BY meta_key, meta_value
-		ORDER BY meta_key, meta_value
-	" );
-	
-	// Debug: Check recent orders
-	$recent_orders = $wpdb->get_results( "
-		SELECT p.ID, p.post_status as status, p.post_date as date_created
-		FROM {$wpdb->posts} p
-		WHERE p.post_type = 'shop_order'
-		ORDER BY p.post_date DESC
-		LIMIT 10
-	" );
-	
 	// Process AI sessions from orders
 	$ai_sessions = array();
 	foreach ( $ai_orders as $order ) {
@@ -1440,40 +1420,7 @@ function snks_enhanced_ai_sessions_page() {
 	<div class="wrap">
 		<h1>AI Sessions & Attendance</h1>
 		
-		<!-- Debug Information -->
-		<div class="card" style="background: #f0f0f0; margin-bottom: 20px;">
-			<h3>Debug Information</h3>
-			<p><strong>AI Orders Found:</strong> <?php echo count($ai_orders); ?></p>
-			<p><strong>AI Sessions Processed:</strong> <?php echo count($ai_sessions); ?></p>
-			<p><strong>Total AI Sessions Displayed:</strong> <?php echo count($sessions); ?></p>
-			
-			<h4>Recent Orders (Last 10):</h4>
-			<ul>
-				<?php foreach ( $recent_orders as $order ) : ?>
-					<li>Order #<?php echo $order->ID; ?> - Status: <?php echo $order->status; ?> - Date: <?php echo $order->date_created; ?></li>
-				<?php endforeach; ?>
-			</ul>
-			
-			<h4>AI-Related Meta Keys:</h4>
-			<?php if ( count($all_meta_keys) > 0 ) : ?>
-				<ul>
-					<?php foreach ( $all_meta_keys as $meta ) : ?>
-						<li><strong><?php echo $meta->meta_key; ?></strong> = "<?php echo $meta->meta_value; ?>" (<?php echo $meta->count; ?> times)</li>
-					<?php endforeach; ?>
-				</ul>
-			<?php else : ?>
-				<p>No AI-related meta keys found.</p>
-			<?php endif; ?>
-			
-			<?php if ( count($ai_orders) > 0 ) : ?>
-				<h4>AI Orders Found:</h4>
-				<ul>
-					<?php foreach ( array_slice($ai_orders, 0, 5) as $order ) : ?>
-						<li>Order #<?php echo $order->order_id; ?> - Status: <?php echo $order->order_status; ?> - Date: <?php echo $order->date_created; ?> - AI Flag: <?php echo $order->ai_flag_key; ?> = <?php echo $order->ai_flag_value; ?></li>
-					<?php endforeach; ?>
-				</ul>
-			<?php endif; ?>
-		</div>
+
 		
 		<div class="card">
 			<h2>Filters</h2>
