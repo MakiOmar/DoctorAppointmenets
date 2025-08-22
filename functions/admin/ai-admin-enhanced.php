@@ -242,9 +242,17 @@ function snks_load_ai_admin_styles() {
 		border: 1px solid #ddd;
 		border-radius: 8px;
 		width: 100% !important;
-		max-width: none !important;
+		max-width: auto !important;
 		box-sizing: border-box;
 		display: block !important;
+	}
+	
+	/* Force max-width auto for all admin pages .card */
+	.wp-admin .card,
+	.wp-admin .card *,
+	.wp-admin .wrap .card,
+	.wp-admin .wrap .card * {
+		max-width: auto !important;
 	}
 	
 	/* Force full width tables */
