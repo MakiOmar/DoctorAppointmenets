@@ -13,18 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add profit settings menu to admin
+ * Note: This function is now handled by the main tabbed interface
  */
 function snks_add_profit_settings_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'إعدادات الأرباح',
-		'إعدادات الأرباح',
-		'manage_options',
-		'profit-settings',
-		'snks_profit_settings_page'
-	);
+	// This function is now handled by the main tabbed interface
+	// No longer registering as a separate submenu page
 }
-add_action( 'admin_menu', 'snks_add_profit_settings_menu' );
+// add_action( 'admin_menu', 'snks_add_profit_settings_menu' ); // Commented out
 
 /**
  * Profit settings page content

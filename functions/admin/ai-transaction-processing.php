@@ -13,18 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add AI transaction processing menu to admin
+ * Note: This function is now handled by the main tabbed interface
  */
 function snks_add_ai_transaction_processing_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'معالجة المعاملات',
-		'معالجة المعاملات',
-		'manage_options',
-		'ai-transaction-processing',
-		'snks_ai_transaction_processing_page'
-	);
+	// This function is now handled by the main tabbed interface
+	// No longer registering as a separate submenu page
 }
-add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' );
+// add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' ); // Commented out
 
 /**
  * AI transaction processing page content

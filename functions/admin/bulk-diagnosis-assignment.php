@@ -12,16 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add bulk diagnosis assignment page to admin menu
+ * Note: This function is now handled by the main tabbed interface
  */
 function snks_add_bulk_diagnosis_assignment_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Bulk Diagnosis Assignment',
-		'Bulk Assignment',
-		'manage_options',
-		'bulk-diagnosis-assignment',
-		'snks_bulk_diagnosis_assignment_page'
-	);
+	// This function is now handled by the main tabbed interface
+	// No longer registering as a separate submenu page
 }
 
 /**

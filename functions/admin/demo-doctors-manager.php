@@ -11,19 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add demo doctors manager page
+ * Note: This function is now handled by the main tabbed interface
  */
 function snks_add_demo_doctors_manager_page() {
-	// Try to add as submenu first
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Demo Doctors Manager',
-		'Demo Doctors Manager',
-		'manage_options',
-		'demo-doctors-manager',
-		'snks_demo_doctors_manager_page'
-	);
+	// This function is now handled by the main tabbed interface
+	// No longer registering as a separate submenu page
 	
-	// Also add as standalone menu page for easier access
+	// Keep the standalone menu page for easier access
 	add_menu_page(
 		'Demo Doctors Manager',
 		'Demo Doctors',
@@ -33,8 +27,6 @@ function snks_add_demo_doctors_manager_page() {
 		'dashicons-businessperson',
 		31
 	);
-	
-
 }
 add_action( 'admin_menu', 'snks_add_demo_doctors_manager_page', 25 );
 
