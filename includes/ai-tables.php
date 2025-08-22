@@ -147,7 +147,7 @@ function snks_create_ai_profit_settings_table() {
 	
 	$sql = "CREATE TABLE IF NOT EXISTS $table_name (
 		id INT(11) NOT NULL AUTO_INCREMENT,
-		therapist_id INT(11) NOT NULL,
+		therapist_id BIGINT(20) UNSIGNED NOT NULL,
 		first_session_percentage DECIMAL(5,2) DEFAULT 70.00,
 		subsequent_session_percentage DECIMAL(5,2) DEFAULT 75.00,
 		is_active BOOLEAN DEFAULT TRUE,
@@ -193,7 +193,7 @@ function snks_add_ai_session_type_column() {
 	) );
 	
 	if ( empty( $therapist_column_exists ) ) {
-		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN therapist_id INT(11) DEFAULT NULL" );
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN therapist_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 	}
 	
 	$patient_column_exists = $wpdb->get_results( $wpdb->prepare(
@@ -205,7 +205,7 @@ function snks_add_ai_session_type_column() {
 	) );
 	
 	if ( empty( $patient_column_exists ) ) {
-		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN patient_id INT(11) DEFAULT NULL" );
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN patient_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 	}
 }
 
@@ -221,8 +221,8 @@ function snks_add_ai_transaction_metadata_columns() {
 	$columns_to_add = array(
 		'ai_session_id' => 'INT(11) DEFAULT NULL',
 		'ai_session_type' => "ENUM('first', 'subsequent') DEFAULT NULL",
-		'ai_patient_id' => 'INT(11) DEFAULT NULL',
-		'ai_order_id' => 'INT(11) DEFAULT NULL'
+		'ai_patient_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL',
+		'ai_order_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL'
 	);
 	
 	foreach ( $columns_to_add as $column_name => $column_definition ) {
