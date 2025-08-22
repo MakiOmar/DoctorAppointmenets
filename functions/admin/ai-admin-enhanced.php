@@ -1233,29 +1233,7 @@ function snks_enhanced_ai_sessions_page() {
 	$filter_therapist = isset( $_GET['therapist'] ) ? intval( $_GET['therapist'] ) : 0;
 	$filter_date = isset( $_GET['date'] ) ? sanitize_text_field( $_GET['date'] ) : '';
 	
-	// Build query
-	$where_conditions = array();
-	$where_values = array();
-	
-	if ( $filter_attendance ) {
-		$where_conditions[] = "sa.attendance = %s";
-		$where_values[] = $filter_attendance;
-	}
-	
-	if ( $filter_therapist ) {
-		$where_conditions[] = "t.user_id = %d";
-		$where_values[] = $filter_therapist;
-	}
-	
-	if ( $filter_date ) {
-		$where_conditions[] = "DATE(t.date_time) = %s";
-		$where_values[] = $filter_date;
-	}
-	
-	$where_clause = '';
-	if ( ! empty( $where_conditions ) ) {
-		$where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
-	}
+	// Filters will be applied after fetching AI sessions
 	
 	// First, let's get AI sessions from WordPress posts (WooCommerce orders)
 	$ai_orders_query = "
@@ -1370,45 +1348,94 @@ function snks_enhanced_ai_sessions_page() {
 		}
 	}
 	
-	// Only show AI sessions, no regular sessions
+		// Only show AI sessions, no regular sessions
 	$sessions = array();
-	
+
 	// Add AI sessions
 	foreach ( $ai_sessions as $ai_session ) {
 		$session_data = $ai_session['session_data'];
-		
+
 		// Get therapist and patient names
 		$therapist_name = 'Unknown';
 		$patient_name = 'Unknown';
-		
+		$therapist_id = null;
+
 		if ( isset($session_data['therapist_id']) && $session_data['therapist_id'] !== 'Unknown' ) {
+			$therapist_id = $session_data['therapist_id'];
 			$therapist_user = get_user_by( 'ID', $session_data['therapist_id'] );
 			if ( $therapist_user ) {
 				$therapist_name = $therapist_user->display_name;
 			}
 		}
-		
+
 		if ( isset($session_data['patient_id']) && $session_data['patient_id'] !== 'Unknown' ) {
 			$patient_user = get_user_by( 'ID', $session_data['patient_id'] );
 			if ( $patient_user ) {
 				$patient_name = $patient_user->display_name;
 			}
 		}
+
+		// Apply filters
+		$should_include = true;
+
+		// Filter by therapist
+		if ( $filter_therapist && $therapist_id != $filter_therapist ) {
+			$should_include = false;
+		}
+
+		// Filter by date
+		if ( $filter_date ) {
+			$session_date = isset($session_data['date_time']) ? date('Y-m-d', strtotime($session_data['date_time'])) : date('Y-m-d', strtotime($ai_session['date_created']));
+			if ( $session_date != $filter_date ) {
+				$should_include = false;
+			}
+		}
+
+		// Filter by attendance (we'll check this after getting attendance data)
+		$attendance = 'not_set';
+		if ( $filter_attendance ) {
+			// For now, we'll include all sessions and filter attendance later
+			// since attendance is stored separately
+		}
+
+		if ( $should_include ) {
+			$sessions[] = (object) array(
+				'ID' => 'AI-' . $ai_session['order_id'] . '-' . (isset($session_data['slot_id']) ? $session_data['slot_id'] : 'unknown'),
+				'date_time' => isset($session_data['date_time']) ? $session_data['date_time'] : $ai_session['date_created'],
+				'therapist_name' => $therapist_name,
+				'patient_name' => $patient_name,
+				'session_status' => $ai_session['order_status'],
+				'from_jalsah_ai' => true,
+				'attendance' => $attendance,
+				'case_id' => $ai_session['order_id'],
+				'order_id' => $ai_session['order_id'],
+				'session_duration' => isset($session_data['session_duration']) ? $session_data['session_duration'] : '45',
+				'appointments_count' => isset($session_data['appointments_count']) ? $session_data['appointments_count'] : '1',
+				'total_amount' => isset($session_data['total_amount']) ? $session_data['total_amount'] : 'Unknown',
+				'therapist_id' => $therapist_id
+			);
+		}
+	}
+
+	// Load attendance data for all sessions
+	foreach ( $sessions as $session ) {
+		$attendance_record = $wpdb->get_row( $wpdb->prepare(
+			"SELECT attendance FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
+			$session->ID
+		) );
 		
-		$sessions[] = (object) array(
-			'ID' => 'AI-' . $ai_session['order_id'] . '-' . (isset($session_data['slot_id']) ? $session_data['slot_id'] : 'unknown'),
-			'date_time' => isset($session_data['date_time']) ? $session_data['date_time'] : $ai_session['date_created'],
-			'therapist_name' => $therapist_name,
-			'patient_name' => $patient_name,
-			'session_status' => $ai_session['order_status'],
-			'from_jalsah_ai' => true,
-			'attendance' => 'not_set',
-			'case_id' => $ai_session['order_id'],
-			'order_id' => $ai_session['order_id'],
-			'session_duration' => isset($session_data['session_duration']) ? $session_data['session_duration'] : '45',
-			'appointments_count' => isset($session_data['appointments_count']) ? $session_data['appointments_count'] : '1',
-			'total_amount' => isset($session_data['total_amount']) ? $session_data['total_amount'] : 'Unknown'
-		);
+		$session->attendance = $attendance_record ? $attendance_record->attendance : 'not_set';
+	}
+
+	// Now apply attendance filter if needed
+	if ( $filter_attendance ) {
+		$filtered_sessions = array();
+		foreach ( $sessions as $session ) {
+			if ( $filter_attendance === $session->attendance || ( $filter_attendance === 'not_set' && empty($session->attendance) ) ) {
+				$filtered_sessions[] = $session;
+			}
+		}
+		$sessions = $filtered_sessions;
 	}
 	$therapists = get_users( array( 'role' => 'doctor' ) );
 	?>
