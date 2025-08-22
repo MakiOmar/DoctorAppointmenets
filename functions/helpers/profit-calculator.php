@@ -367,3 +367,315 @@ function snks_update_therapist_profit_settings( $therapist_id, $settings ) {
 		);
 	}
 }
+
+/**
+ * Process AI session completion and execute profit transfer
+ */
+function snks_process_ai_session_completion( $session_id ) {
+	global $wpdb;
+	
+	// Check if this is an AI session
+	if ( ! snks_is_ai_session( $session_id ) ) {
+		return array(
+			'success' => false,
+			'message' => 'Session is not an AI session'
+		);
+	}
+	
+	// Check if profit transfer already processed
+	$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+		"SELECT id FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE ai_session_id = %s AND transaction_type = 'add'",
+		$session_id
+	) );
+	
+	if ( $existing_transaction ) {
+		return array(
+			'success' => false,
+			'message' => 'Profit transfer already processed for this session'
+		);
+	}
+	
+	// Execute profit transfer
+	$result = snks_execute_ai_profit_transfer( $session_id );
+	
+	if ( $result['success'] ) {
+		// Log successful completion
+		error_log( "AI Session Completion Processed: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
+		
+		// Send notification
+		snks_ai_session_completion_notification( $session_id, $result );
+		
+		return $result;
+	} else {
+		// Log error
+		error_log( "AI Session Completion Failed: Session ID {$session_id}, Error: {$result['message']}" );
+		
+		return $result;
+	}
+}
+
+/**
+ * Get AI session balance for a therapist
+ */
+function snks_get_ai_session_balance( $therapist_id ) {
+	global $wpdb;
+	
+	$balance = $wpdb->get_var( $wpdb->prepare(
+		"SELECT SUM(amount) FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE user_id = %d AND ai_session_id IS NOT NULL AND transaction_type = 'add'",
+		$therapist_id
+	) );
+	
+	return $balance ?: 0;
+}
+
+/**
+ * Get AI session withdrawal balance (available for withdrawal)
+ */
+function snks_get_ai_session_withdrawal_balance( $therapist_id ) {
+	global $wpdb;
+	
+	$withdrawal_balance = $wpdb->get_var( $wpdb->prepare(
+		"SELECT SUM(amount) FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE user_id = %d AND ai_session_id IS NOT NULL AND transaction_type = 'add' 
+		 AND processed_for_withdrawal = 0",
+		$therapist_id
+	) );
+	
+	return $withdrawal_balance ?: 0;
+}
+
+/**
+ * Process AI session withdrawal for a therapist
+ */
+function snks_process_ai_session_withdrawal( $therapist_id, $amount, $withdrawal_method = 'wallet' ) {
+	global $wpdb;
+	
+	// Get available balance
+	$available_balance = snks_get_ai_session_withdrawal_balance( $therapist_id );
+	
+	if ( $amount > $available_balance ) {
+		return array(
+			'success' => false,
+			'message' => 'Insufficient balance for withdrawal'
+		);
+	}
+	
+	// Get therapist details
+	$therapist = get_user_by( 'ID', $therapist_id );
+	if ( ! $therapist ) {
+		return array(
+			'success' => false,
+			'message' => 'Therapist not found'
+		);
+	}
+	
+	// Process withdrawal using existing system
+	$withdrawal_result = process_user_withdrawal( $therapist_id, $amount, $withdrawal_method );
+	
+	if ( $withdrawal_result['success'] ) {
+		// Mark AI transactions as processed for withdrawal
+		$wpdb->query( $wpdb->prepare(
+			"UPDATE {$wpdb->prefix}snks_booking_transactions 
+			 SET processed_for_withdrawal = 1 
+			 WHERE user_id = %d AND ai_session_id IS NOT NULL 
+			 AND transaction_type = 'add' AND processed_for_withdrawal = 0
+			 LIMIT %d",
+			$therapist_id,
+			ceil( $amount / 100 ) // Approximate number of transactions to mark
+		) );
+		
+		// Log the withdrawal
+		snks_log_transaction( $therapist_id, 'withdrawal', $amount, "AI Session Withdrawal via {$withdrawal_method}" );
+		
+		return array(
+			'success' => true,
+			'message' => 'Withdrawal processed successfully',
+			'withdrawal_id' => $withdrawal_result['withdrawal_id'] ?? null,
+			'amount' => $amount,
+			'method' => $withdrawal_method
+		);
+	} else {
+		return array(
+			'success' => false,
+			'message' => 'Withdrawal failed: ' . ( $withdrawal_result['message'] ?? 'Unknown error' )
+		);
+	}
+}
+
+/**
+ * Get AI session transaction history for a therapist
+ */
+function snks_get_ai_session_transaction_history( $therapist_id, $limit = 50 ) {
+	global $wpdb;
+	
+	$transactions = $wpdb->get_results( $wpdb->prepare(
+		"SELECT t.*, 
+		        u.display_name as patient_name,
+		        u.user_email as patient_email
+		 FROM {$wpdb->prefix}snks_booking_transactions t
+		 LEFT JOIN {$wpdb->users} u ON t.ai_patient_id = u.ID
+		 WHERE t.user_id = %d AND t.ai_session_id IS NOT NULL
+		 ORDER BY t.transaction_time DESC
+		 LIMIT %d",
+		$therapist_id,
+		$limit
+	), ARRAY_A );
+	
+	return $transactions;
+}
+
+/**
+ * Get AI session statistics for a specific period
+ */
+function snks_get_ai_session_period_statistics( $therapist_id, $start_date, $end_date ) {
+	global $wpdb;
+	
+	$stats = $wpdb->get_row( $wpdb->prepare(
+		"SELECT 
+			COUNT(*) as total_sessions,
+			SUM(CASE WHEN ai_session_type = 'first' THEN 1 ELSE 0 END) as first_sessions,
+			SUM(CASE WHEN ai_session_type = 'subsequent' THEN 1 ELSE 0 END) as subsequent_sessions,
+			SUM(amount) as total_profit,
+			AVG(amount) as average_profit
+		 FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE user_id = %d 
+		 AND ai_session_id IS NOT NULL 
+		 AND transaction_type = 'add'
+		 AND DATE(transaction_time) BETWEEN %s AND %s",
+		$therapist_id,
+		$start_date,
+		$end_date
+	), ARRAY_A );
+	
+	return $stats ?: array(
+		'total_sessions' => 0,
+		'first_sessions' => 0,
+		'subsequent_sessions' => 0,
+		'total_profit' => 0,
+		'average_profit' => 0
+	);
+}
+
+/**
+ * Validate AI session data before processing
+ */
+function snks_validate_ai_session_data( $session_id ) {
+	global $wpdb;
+	
+	// Get session data
+	$session_data = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
+		$session_id
+	), ARRAY_A );
+	
+	if ( ! $session_data ) {
+		return array(
+			'valid' => false,
+			'message' => 'Session not found'
+		);
+	}
+	
+	// Check if session is completed
+	if ( $session_data['session_status'] !== 'completed' ) {
+		return array(
+			'valid' => false,
+			'message' => 'Session is not completed'
+		);
+	}
+	
+	// Check if therapist and patient IDs are set
+	if ( empty( $session_data['therapist_id'] ) || empty( $session_data['patient_id'] ) ) {
+		return array(
+			'valid' => false,
+			'message' => 'Missing therapist or patient ID'
+		);
+	}
+	
+	// Check if session type is set
+	if ( empty( $session_data['ai_session_type'] ) ) {
+		return array(
+			'valid' => false,
+			'message' => 'Missing session type'
+		);
+	}
+	
+	// Validate therapist exists
+	$therapist = get_user_by( 'ID', $session_data['therapist_id'] );
+	if ( ! $therapist ) {
+		return array(
+			'valid' => false,
+			'message' => 'Therapist not found'
+		);
+	}
+	
+	// Validate patient exists
+	$patient = get_user_by( 'ID', $session_data['patient_id'] );
+	if ( ! $patient ) {
+		return array(
+			'valid' => false,
+			'message' => 'Patient not found'
+		);
+	}
+	
+	return array(
+		'valid' => true,
+		'session_data' => $session_data,
+		'therapist' => $therapist,
+		'patient' => $patient
+	);
+}
+
+/**
+ * Get AI session completion rate for a therapist
+ */
+function snks_get_ai_session_completion_rate( $therapist_id, $period_days = 30 ) {
+	global $wpdb;
+	
+	$start_date = date( 'Y-m-d', strtotime( "-{$period_days} days" ) );
+	
+	$stats = $wpdb->get_row( $wpdb->prepare(
+		"SELECT 
+			COUNT(*) as total_sessions,
+			SUM(CASE WHEN session_status = 'completed' THEN 1 ELSE 0 END) as completed_sessions
+		 FROM {$wpdb->prefix}snks_sessions_actions 
+		 WHERE therapist_id = %d 
+		 AND ai_session_type IS NOT NULL
+		 AND DATE(created_at) >= %s",
+		$therapist_id,
+		$start_date
+	), ARRAY_A );
+	
+	if ( ! $stats || $stats['total_sessions'] == 0 ) {
+		return 0;
+	}
+	
+	return round( ( $stats['completed_sessions'] / $stats['total_sessions'] ) * 100, 2 );
+}
+
+/**
+ * Get AI session profit trends for a therapist
+ */
+function snks_get_ai_session_profit_trends( $therapist_id, $days = 30 ) {
+	global $wpdb;
+	
+	$trends = $wpdb->get_results( $wpdb->prepare(
+		"SELECT 
+			DATE(transaction_time) as date,
+			COUNT(*) as sessions,
+			SUM(amount) as daily_profit,
+			AVG(amount) as average_profit
+		 FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE user_id = %d 
+		 AND ai_session_id IS NOT NULL 
+		 AND transaction_type = 'add'
+		 AND DATE(transaction_time) >= DATE_SUB(CURDATE(), INTERVAL %d DAY)
+		 GROUP BY DATE(transaction_time)
+		 ORDER BY date DESC",
+		$therapist_id,
+		$days
+	), ARRAY_A );
+	
+	return $trends;
+}
