@@ -161,6 +161,34 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_arabic_diagnoses_page'
 	);
 	
+	// Add AI Profit System Pages
+	add_submenu_page(
+		'jalsah-ai-management',
+		'إعدادات الأرباح',
+		'إعدادات الأرباح',
+		'manage_options',
+		'profit-settings',
+		'snks_profit_settings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'أرباح المعالجين',
+		'أرباح المعالجين',
+		'manage_options',
+		'therapist-earnings',
+		'snks_therapist_earnings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'معالجة المعاملات',
+		'معالجة المعاملات',
+		'manage_options',
+		'ai-transaction-processing',
+		'snks_ai_transaction_processing_page'
+	);
+	
 	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
 	add_submenu_page(
 		'jalsah-ai-management',
