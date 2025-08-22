@@ -12,8 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Include bilingual migration
 require_once __DIR__ . '/bilingual-migration.php';
 
+
+
 /**
- * Add enhanced AI admin menu - Single menu with tabbed interface
+ * Add enhanced AI admin menu
  */
 function snks_add_enhanced_ai_admin_menu() {
 	add_menu_page(
@@ -25,199 +27,192 @@ function snks_add_enhanced_ai_admin_menu() {
 		'dashicons-brain',
 		30
 	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Dashboard',
+		'Dashboard',
+		'manage_options',
+		'jalsah-ai-management',
+		'snks_enhanced_ai_admin_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Diagnoses',
+		'Diagnoses',
+		'manage_options',
+		'jalsah-ai-diagnoses',
+		'snks_enhanced_ai_diagnoses_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Therapist Applications & Profiles',
+		'Applications & Profiles',
+		'manage_options',
+		'jalsah-ai-applications',
+		'snks_enhanced_ai_applications_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Sessions & Attendance',
+		'Sessions & Attendance',
+		'manage_options',
+		'jalsah-ai-sessions',
+		'snks_enhanced_ai_sessions_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Coupons',
+		'Coupons',
+		'manage_options',
+		'jalsah-ai-coupons',
+		'snks_enhanced_ai_coupons_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Analytics',
+		'Analytics',
+		'manage_options',
+		'jalsah-ai-analytics',
+		'snks_enhanced_ai_analytics_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'ChatGPT Integration',
+		'ChatGPT',
+		'manage_options',
+		'jalsah-ai-chatgpt',
+		'snks_enhanced_ai_chatgpt_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'WhatsApp Integration',
+		'WhatsApp',
+		'manage_options',
+		'jalsah-ai-whatsapp',
+		'snks_enhanced_ai_whatsapp_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'API Test',
+		'API Test',
+		'manage_options',
+		'jalsah-ai-api-test',
+		'snks_ai_api_test_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Rochtah Integration',
+		'Rochtah',
+		'manage_options',
+		'jalsah-ai-rochtah',
+		'snks_enhanced_ai_rochtah_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'General Settings',
+		'General Settings',
+		'manage_options',
+		'jalsah-ai-settings',
+		'snks_enhanced_ai_settings_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Email Settings',
+		'Email Settings',
+		'manage_options',
+		'jalsah-ai-email',
+		'snks_enhanced_ai_email_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Admin Tools',
+		'Admin Tools',
+		'manage_options',
+		'jalsah-ai-tools',
+		'snks_enhanced_ai_tools_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Bilingual Migration',
+		'Bilingual Migration',
+		'manage_options',
+		'jalsah-ai-bilingual-migration',
+		'snks_bilingual_migration_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Add Arabic Diagnoses',
+		'Add Arabic Diagnoses',
+		'manage_options',
+		'jalsah-ai-add-arabic-diagnoses',
+		'snks_arabic_diagnoses_page'
+	);
+	
+	// Add AI Profit System Pages
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Profit Settings', 'anony-turn' ),
+		__( 'Profit Settings', 'anony-turn' ),
+		'manage_options',
+		'profit-settings',
+		'snks_profit_settings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Therapist Earnings', 'anony-turn' ),
+		__( 'Therapist Earnings', 'anony-turn' ),
+		'manage_options',
+		'therapist-earnings',
+		'snks_therapist_earnings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Transaction Processing', 'anony-turn' ),
+		__( 'Transaction Processing', 'anony-turn' ),
+		'manage_options',
+		'ai-transaction-processing',
+		'snks_ai_transaction_processing_page'
+	);
+	
+	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Rochtah Doctor Dashboard',
+		'Rochtah Doctor',
+		'manage_rochtah',
+		'rochtah-doctor-dashboard',
+		'snks_rochtah_doctor_dashboard'
+	);
+	
+	// Add Rochtah Doctor Management (only for admins)
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Manage Rochtah Doctors',
+		'Manage Rochtah Doctors',
+		'manage_options',
+		'rochtah-doctor-management',
+		'snks_rochtah_doctor_management'
+	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
-
-/**
- * Add custom CSS for tabbed interface
- */
-add_action( 'admin_head', 'snks_ai_admin_menu_styles' );
-function snks_ai_admin_menu_styles() {
-	?>
-	<style>
-	/* Tabbed Interface Styles */
-	.jalsah-ai-admin {
-		max-width: none !important;
-	}
-	
-	/* Main Navigation Tabs */
-	.main-tabs {
-		margin-bottom: 20px;
-		border-bottom: 2px solid #0073aa;
-	}
-	
-	.main-tabs .nav-tab {
-		font-size: 14px;
-		font-weight: 600;
-		padding: 12px 20px;
-		margin-right: 5px;
-		border: 2px solid transparent;
-		border-bottom: none;
-		background: #f1f1f1;
-		color: #555;
-		text-decoration: none;
-		border-radius: 5px 5px 0 0;
-		transition: all 0.3s ease;
-	}
-	
-	.main-tabs .nav-tab:hover {
-		background: #e1e1e1;
-		color: #0073aa;
-	}
-	
-	.main-tabs .nav-tab-active {
-		background: #0073aa;
-		color: white;
-		border-color: #0073aa;
-	}
-	
-	/* Sub Navigation Tabs */
-	.sub-tabs {
-		margin-bottom: 20px;
-		border-bottom: 1px solid #ddd;
-	}
-	
-	.sub-tabs .nav-tab {
-		font-size: 13px;
-		padding: 8px 16px;
-		margin-right: 3px;
-		border: 1px solid #ddd;
-		border-bottom: none;
-		background: #f9f9f9;
-		color: #666;
-		text-decoration: none;
-		border-radius: 3px 3px 0 0;
-		transition: all 0.3s ease;
-	}
-	
-	.sub-tabs .nav-tab:hover {
-		background: #f1f1f1;
-		color: #0073aa;
-	}
-	
-	.sub-tabs .nav-tab-active {
-		background: white;
-		color: #0073aa;
-		border-color: #0073aa;
-		font-weight: 600;
-	}
-	
-	/* Content Area */
-	.tab-content {
-		background: white;
-		padding: 20px;
-		border: 1px solid #ddd;
-		border-top: none;
-		border-radius: 0 0 5px 5px;
-		min-height: 400px;
-	}
-	
-	/* Dashboard Content */
-	.dashboard-content .stats-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: 20px;
-		margin: 20px 0;
-	}
-	
-	.dashboard-content .stat-item {
-		background: #f8f9fa;
-		padding: 20px;
-		border-radius: 8px;
-		text-align: center;
-		border: 1px solid #e9ecef;
-	}
-	
-	.dashboard-content .stat-item h3 {
-		font-size: 2em;
-		margin: 0 0 10px 0;
-		color: #0073aa;
-	}
-	
-	.dashboard-content .stat-item p {
-		margin: 0;
-		color: #666;
-		font-weight: 600;
-	}
-	
-	.dashboard-content .quick-actions {
-		display: flex;
-		gap: 10px;
-		flex-wrap: wrap;
-		margin: 20px 0;
-	}
-	
-	/* Card Styles */
-	.card {
-		background: white;
-		padding: 20px;
-		margin: 20px 0;
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-	}
-	
-	.card h2 {
-		margin-top: 0;
-		color: #0073aa;
-		border-bottom: 2px solid #f1f1f1;
-		padding-bottom: 10px;
-	}
-	
-	/* Responsive Design */
-	@media (max-width: 768px) {
-		.main-tabs .nav-tab {
-			font-size: 12px;
-			padding: 8px 12px;
-		}
-		
-		.sub-tabs .nav-tab {
-			font-size: 11px;
-			padding: 6px 10px;
-		}
-		
-		.dashboard-content .stats-grid {
-			grid-template-columns: 1fr;
-		}
-		
-		.dashboard-content .quick-actions {
-			flex-direction: column;
-		}
-		
-		.dashboard-content .quick-actions .button {
-			width: 100%;
-			text-align: center;
-		}
-	}
-	
-	/* Animation for tab transitions */
-	.tab-content {
-		animation: fadeIn 0.3s ease-in;
-	}
-	
-	@keyframes fadeIn {
-		from { opacity: 0; transform: translateY(10px); }
-		to { opacity: 1; transform: translateY(0); }
-	}
-	
-	/* Highlight financial tabs */
-	.main-tabs .nav-tab[href*="financial"] {
-		background: linear-gradient(135deg, #0073aa, #005a87);
-		color: white;
-	}
-	
-	.main-tabs .nav-tab[href*="financial"]:hover {
-		background: linear-gradient(135deg, #005a87, #004466);
-	}
-	
-	.main-tabs .nav-tab-active[href*="financial"] {
-		background: linear-gradient(135deg, #0073aa, #005a87);
-		box-shadow: 0 2px 8px rgba(0,115,170,0.3);
-	}
-	</style>
-	<?php
-}
 
 /**
  * Load AI Admin Styles
@@ -273,21 +268,6 @@ function snks_load_ai_admin_styles() {
 	}
 	
 	/* Override any WordPress admin constraints */
-	
-	/* Ensure content is visible */
-	.wp-admin .wrap .card,
-	.wp-admin .wrap .form-table,
-	.wp-admin .wrap .wp-list-table {
-		display: block !important;
-		visibility: visible !important;
-		opacity: 1 !important;
-	}
-	
-	/* Force content to be visible */
-	.wp-admin .wrap > * {
-		display: block !important;
-		visibility: visible !important;
-	}
 	
 	/* Bilingual Form Styling */
 	.bilingual-field {
@@ -456,182 +436,9 @@ function snks_load_ai_admin_styles() {
 }
 
 /**
- * Enhanced AI Admin Dashboard with Tabbed Interface
+ * Enhanced AI Admin Dashboard
  */
 function snks_enhanced_ai_admin_page() {
-	// Get current tab
-	$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'dashboard';
-	$current_subtab = isset( $_GET['subtab'] ) ? sanitize_text_field( $_GET['subtab'] ) : '';
-	
-	// Set default subtab for financial tab
-	if ( $current_tab === 'financial' && empty( $current_subtab ) ) {
-		$current_subtab = 'profit-settings';
-	}
-	
-	// Set default subtab for core tab
-	if ( $current_tab === 'core' && empty( $current_subtab ) ) {
-		$current_subtab = 'diagnoses';
-	}
-	
-	// Set default subtab for rochtah tab
-	if ( $current_tab === 'rochtah' && empty( $current_subtab ) ) {
-		$current_subtab = 'doctor-dashboard';
-	}
-	
-	// Set default subtab for tools tab
-	if ( $current_tab === 'tools' && empty( $current_subtab ) ) {
-		$current_subtab = 'admin-tools';
-	}
-	
-	// Define main tabs
-	$main_tabs = array(
-		'dashboard' => array(
-			'name' => '📊 Dashboard',
-			'icon' => '📊',
-			'subtabs' => array()
-		),
-		'core' => array(
-			'name' => '📋 Core Management',
-			'icon' => '📋',
-			'subtabs' => array(
-				'diagnoses' => 'Diagnoses',
-				'applications' => 'Applications & Profiles',
-				'sessions' => 'Sessions & Attendance'
-			)
-		),
-		'financial' => array(
-			'name' => '💰 Financial Management',
-			'icon' => '💰',
-			'subtabs' => array(
-				'profit-settings' => 'إعدادات الأرباح',
-				'therapist-earnings' => 'أرباح المعالجين',
-				'transaction-processing' => 'معالجة المعاملات',
-				'coupons' => 'Coupons'
-			)
-		),
-		'analytics' => array(
-			'name' => '📈 Analytics & Reports',
-			'icon' => '📈',
-			'subtabs' => array(
-				'analytics' => 'Analytics Dashboard',
-				'reports' => 'Reports'
-			)
-		),
-		'integrations' => array(
-			'name' => '🔗 Integrations',
-			'icon' => '🔗',
-			'subtabs' => array(
-				'chatgpt' => 'ChatGPT Integration',
-				'whatsapp' => 'WhatsApp Integration',
-				'rochtah' => 'Rochtah Integration'
-			)
-		),
-		'settings' => array(
-			'name' => '⚙️ Settings',
-			'icon' => '⚙️',
-			'subtabs' => array(
-				'general' => 'General Settings',
-				'email' => 'Email Settings'
-			)
-		),
-		'tools' => array(
-			'name' => '🛠️ Admin Tools',
-			'icon' => '🛠️',
-			'subtabs' => array(
-				'api-test' => 'API Test',
-				'admin-tools' => 'Admin Tools',
-				'bilingual-migration' => 'Bilingual Migration',
-				'arabic-diagnoses' => 'Add Arabic Diagnoses'
-			)
-		),
-		'rochtah' => array(
-			'name' => '👨‍⚕️ Rochtah Management',
-			'icon' => '👨‍⚕️',
-			'subtabs' => array(
-				'doctor-dashboard' => 'Rochtah Doctor Dashboard',
-				'doctor-management' => 'Manage Rochtah Doctors'
-			)
-		)
-	);
-	
-	?>
-	<div class="wrap jalsah-ai-admin">
-		<h1>Jalsah AI Management</h1>
-		
-		<!-- Main Navigation Tabs -->
-		<nav class="nav-tab-wrapper main-tabs">
-			<?php foreach ( $main_tabs as $tab_key => $tab_data ) : ?>
-				<a href="?page=jalsah-ai-management&tab=<?php echo esc_attr( $tab_key ); ?>" 
-				   class="nav-tab <?php echo ( $current_tab === $tab_key ) ? 'nav-tab-active' : ''; ?>">
-					<?php echo $tab_data['icon']; ?> <?php echo esc_html( $tab_data['name'] ); ?>
-				</a>
-			<?php endforeach; ?>
-		</nav>
-		
-		<!-- Sub Navigation Tabs -->
-		<?php if ( ! empty( $main_tabs[$current_tab]['subtabs'] ) ) : ?>
-			<nav class="nav-tab-wrapper sub-tabs">
-				<?php foreach ( $main_tabs[$current_tab]['subtabs'] as $subtab_key => $subtab_name ) : ?>
-					<a href="?page=jalsah-ai-management&tab=<?php echo esc_attr( $current_tab ); ?>&subtab=<?php echo esc_attr( $subtab_key ); ?>" 
-					   class="nav-tab <?php echo ( $current_subtab === $subtab_key || ( empty( $current_subtab ) && $subtab_key === array_key_first( $main_tabs[$current_tab]['subtabs'] ) ) ) ? 'nav-tab-active' : ''; ?>">
-						<?php echo esc_html( $subtab_name ); ?>
-					</a>
-				<?php endforeach; ?>
-			</nav>
-		<?php endif; ?>
-		
-		<!-- Content Area -->
-		<div class="tab-content">
-			<?php
-			// Load appropriate content based on tab and subtab
-			switch ( $current_tab ) {
-				case 'dashboard':
-					snks_render_dashboard_tab();
-					break;
-					
-				case 'core':
-					snks_render_core_tab( $current_subtab );
-					break;
-					
-				case 'financial':
-					snks_render_financial_tab( $current_subtab );
-					break;
-					
-				case 'analytics':
-					snks_render_analytics_tab( $current_subtab );
-					break;
-					
-				case 'integrations':
-					snks_render_integrations_tab( $current_subtab );
-					break;
-					
-				case 'settings':
-					snks_render_settings_tab( $current_subtab );
-					break;
-					
-				case 'tools':
-					snks_render_tools_tab( $current_subtab );
-					break;
-					
-				case 'rochtah':
-					snks_render_rochtah_tab( $current_subtab );
-					break;
-					
-				default:
-					snks_render_dashboard_tab();
-					break;
-			}
-			?>
-		</div>
-	</div>
-	<?php
-	snks_load_ai_admin_styles();
-}
-
-/**
- * Render Dashboard Tab
- */
-function snks_render_dashboard_tab() {
 	global $wpdb;
 	
 	// Get statistics
@@ -652,7 +459,9 @@ function snks_render_dashboard_tab() {
 	) ) );
 	
 	?>
-	<div class="dashboard-content">
+	<div class="wrap">
+		<h1>Jalsah AI Management Dashboard</h1>
+		
 		<div class="card">
 			<h2>Quick Statistics</h2>
 			<div class="stats-grid">
@@ -682,10 +491,10 @@ function snks_render_dashboard_tab() {
 		<div class="card">
 			<h2>Quick Actions</h2>
 			<div class="quick-actions">
-				<a href="?page=jalsah-ai-management&tab=core&subtab=applications" class="button button-primary">Manage Therapist Profiles</a>
-				<a href="?page=jalsah-ai-management&tab=core&subtab=diagnoses" class="button button-secondary">Manage Diagnoses</a>
-				<a href="?page=jalsah-ai-management&tab=core&subtab=sessions" class="button button-secondary">View Sessions</a>
-				<a href="?page=jalsah-ai-management&tab=analytics&subtab=analytics" class="button button-secondary">View Analytics</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-therapists' ); ?>" class="button button-primary">Manage Therapist Profiles</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button button-secondary">Manage Diagnoses</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-sessions' ); ?>" class="button button-secondary">View Sessions</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-analytics' ); ?>" class="button button-secondary">View Analytics</a>
 			</div>
 		</div>
 
@@ -722,380 +531,7 @@ function snks_render_dashboard_tab() {
 		</div>
 	</div>
 	<?php
-}
-
-/**
- * Render Core Management Tab
- */
-function snks_render_core_tab( $subtab ) {
-	// Debug info
-	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
-	
-	switch ( $subtab ) {
-		case 'diagnoses':
-			// Include the diagnoses page content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'ai-admin.php' );
-			if ( function_exists( 'snks_ai_diagnoses_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading diagnoses page...</p></div>';
-				snks_ai_diagnoses_page();
-				echo '<div class="notice notice-success"><p>Diagnoses page loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Diagnoses Management</h2>';
-				echo '<p>Manage AI diagnoses and diagnostic criteria.</p>';
-				echo '<div class="notice notice-error"><p>Diagnoses function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'applications':
-			// Include the therapists page content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'ai-admin.php' );
-			if ( function_exists( 'snks_ai_therapists_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading therapists page...</p></div>';
-				snks_ai_therapists_page();
-				echo '<div class="notice notice-success"><p>Therapists page loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Applications & Profiles</h2>';
-				echo '<p>Manage therapist applications and profiles.</p>';
-				echo '<div class="notice notice-error"><p>Therapists function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'sessions':
-			// Include the sessions page content directly
-			if ( function_exists( 'snks_enhanced_ai_sessions_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading sessions page...</p></div>';
-				snks_enhanced_ai_sessions_page();
-				echo '<div class="notice notice-success"><p>Sessions page loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Sessions & Attendance</h2>';
-				echo '<p>View and manage AI therapy sessions.</p>';
-				echo '<div class="notice notice-error"><p>Sessions function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case '':
-		default:
-			echo '<div class="card"><h2>Core Management</h2>';
-			echo '<p>Please select a sub-tab to manage core features:</p>';
-			echo '<ul>';
-			echo '<li><strong>Diagnoses:</strong> Manage AI diagnoses and criteria</li>';
-			echo '<li><strong>Applications & Profiles:</strong> Handle therapist applications</li>';
-			echo '<li><strong>Sessions & Attendance:</strong> Monitor therapy sessions</li>';
-			echo '</ul>';
-			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
-			echo '</div>';
-			break;
-	}
-}
-
-/**
- * Render Financial Management Tab
- */
-function snks_render_financial_tab( $subtab ) {
-	// Debug info
-	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
-	
-	switch ( $subtab ) {
-		case 'profit-settings':
-			// Include the profit settings page content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'profit-settings.php' );
-			if ( function_exists( 'snks_profit_settings_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading profit settings page...</p></div>';
-				snks_profit_settings_page();
-				echo '<div class="notice notice-success"><p>Profit settings page loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>إعدادات الأرباح</h2>';
-				echo '<p>Manage AI session profit settings for therapists.</p>';
-				echo '<div class="notice notice-error"><p>Profit settings function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'therapist-earnings':
-			// Include the therapist earnings page content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'therapist-earnings.php' );
-			if ( function_exists( 'snks_therapist_earnings_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading therapist earnings page...</p></div>';
-				snks_therapist_earnings_page();
-				echo '<div class="notice notice-success"><p>Therapist earnings page loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>أرباح المعالجين</h2>';
-				echo '<p>View AI session earnings and transaction history for therapists.</p>';
-				echo '<div class="notice notice-error"><p>Therapist earnings function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'transaction-processing':
-			// Include the transaction processing page content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'ai-transaction-processing.php' );
-			if ( function_exists( 'snks_ai_transaction_processing_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading transaction processing page...</p></div>';
-				snks_ai_transaction_processing_page();
-				echo '<div class="notice notice-success"><p>Transaction processing page loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>معالجة المعاملات</h2>';
-				echo '<p>Manage AI session transaction processing and withdrawal management.</p>';
-				echo '<div class="notice notice-error"><p>Transaction processing function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'coupons':
-			echo '<div class="card"><h2>Coupons</h2>';
-			echo '<p>Manage discount coupons and promotional codes.</p>';
-			echo '<div class="notice notice-info"><p>Coupons management functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case '':
-		default:
-			echo '<div class="card"><h2>Financial Management</h2>';
-			echo '<p>Please select a sub-tab to manage financial features:</p>';
-			echo '<ul>';
-			echo '<li><strong>إعدادات الأرباح:</strong> Configure profit percentages for AI sessions</li>';
-			echo '<li><strong>أرباح المعالجين:</strong> View earnings and transaction history</li>';
-			echo '<li><strong>معالجة المعاملات:</strong> Process withdrawals and manage transactions</li>';
-			echo '<li><strong>Coupons:</strong> Manage discount codes and promotions</li>';
-			echo '</ul>';
-			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
-			echo '</div>';
-			break;
-	}
-}
-
-/**
- * Render Analytics Tab
- */
-function snks_render_analytics_tab( $subtab ) {
-	switch ( $subtab ) {
-		case 'analytics':
-			echo '<div class="card"><h2>Analytics Dashboard</h2>';
-			echo '<p>View comprehensive analytics and insights for AI sessions.</p>';
-			echo '<div class="notice notice-info"><p>Analytics functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case 'reports':
-			echo '<div class="card"><h2>Reports</h2>';
-			echo '<p>Generate and view detailed reports on AI session performance.</p>';
-			echo '<div class="notice notice-info"><p>Reports functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		default:
-			echo '<div class="card"><h2>Analytics & Reports</h2>';
-			echo '<p>Please select a sub-tab to view analytics and reports:</p>';
-			echo '<ul>';
-			echo '<li><strong>Analytics Dashboard:</strong> View comprehensive analytics and insights</li>';
-			echo '<li><strong>Reports:</strong> Generate detailed performance reports</li>';
-			echo '</ul>';
-			echo '</div>';
-			break;
-	}
-}
-
-/**
- * Render Integrations Tab
- */
-function snks_render_integrations_tab( $subtab ) {
-	switch ( $subtab ) {
-		case 'chatgpt':
-			echo '<div class="card"><h2>ChatGPT Integration</h2>';
-			echo '<p>Configure and manage ChatGPT AI integration settings.</p>';
-			echo '<div class="notice notice-info"><p>ChatGPT integration functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case 'whatsapp':
-			echo '<div class="card"><h2>WhatsApp Integration</h2>';
-			echo '<p>Set up WhatsApp messaging integration for notifications.</p>';
-			echo '<div class="notice notice-info"><p>WhatsApp integration functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case 'rochtah':
-			echo '<div class="card"><h2>Rochtah Integration</h2>';
-			echo '<p>Manage integration with Rochtah external platform.</p>';
-			echo '<div class="notice notice-info"><p>Rochtah integration functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		default:
-			echo '<div class="card"><h2>Integrations</h2>';
-			echo '<p>Please select a sub-tab to manage integrations:</p>';
-			echo '<ul>';
-			echo '<li><strong>ChatGPT Integration:</strong> Configure AI integration settings</li>';
-			echo '<li><strong>WhatsApp Integration:</strong> Set up messaging notifications</li>';
-			echo '<li><strong>Rochtah Integration:</strong> Manage external platform connection</li>';
-			echo '</ul>';
-			echo '</div>';
-			break;
-	}
-}
-
-/**
- * Render Settings Tab
- */
-function snks_render_settings_tab( $subtab ) {
-	switch ( $subtab ) {
-		case 'general':
-			echo '<div class="card"><h2>General Settings</h2>';
-			echo '<p>Configure general system settings and preferences.</p>';
-			echo '<div class="notice notice-info"><p>General settings functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case 'email':
-			echo '<div class="card"><h2>Email Settings</h2>';
-			echo '<p>Configure email notifications and templates.</p>';
-			echo '<div class="notice notice-info"><p>Email settings functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		default:
-			echo '<div class="card"><h2>Settings</h2>';
-			echo '<p>Please select a sub-tab to manage settings:</p>';
-			echo '<ul>';
-			echo '<li><strong>General Settings:</strong> Configure system preferences</li>';
-			echo '<li><strong>Email Settings:</strong> Manage email notifications</li>';
-			echo '</ul>';
-			echo '</div>';
-			break;
-	}
-}
-
-/**
- * Render Tools Tab
- */
-function snks_render_tools_tab( $subtab ) {
-	// Debug info
-	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
-	
-	switch ( $subtab ) {
-		case 'api-test':
-			echo '<div class="card"><h2>API Test</h2>';
-			echo '<p>Test API endpoints and integration functionality.</p>';
-			echo '<div class="notice notice-info"><p>API test functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case 'admin-tools':
-			// Include the test data populator content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'test-data-populator.php' );
-			if ( function_exists( 'snks_test_data_populator_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading test data populator...</p></div>';
-				snks_test_data_populator_page();
-				echo '<div class="notice notice-success"><p>Test data populator loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Admin Tools</h2>';
-				echo '<p>Access administrative tools and utilities.</p>';
-				echo '<div class="notice notice-error"><p>Test data populator function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'bilingual-migration':
-			// Include the bulk diagnosis assignment content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'bulk-diagnosis-assignment.php' );
-			if ( function_exists( 'snks_bulk_diagnosis_assignment_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading bulk diagnosis assignment...</p></div>';
-				snks_bulk_diagnosis_assignment_page();
-				echo '<div class="notice notice-success"><p>Bulk diagnosis assignment loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Bilingual Migration</h2>';
-				echo '<p>Migrate content between languages and manage translations.</p>';
-				echo '<div class="notice notice-error"><p>Bulk diagnosis assignment function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'arabic-diagnoses':
-			echo '<div class="card"><h2>Add Arabic Diagnoses</h2>';
-			echo '<p>Add and manage Arabic diagnostic content.</p>';
-			echo '<div class="notice notice-info"><p>Arabic diagnoses functionality will be available soon.</p></div>';
-			echo '</div>';
-			break;
-			
-		case '':
-		default:
-			echo '<div class="card"><h2>Admin Tools</h2>';
-			echo '<p>Please select a sub-tab to access admin tools:</p>';
-			echo '<ul>';
-			echo '<li><strong>API Test:</strong> Test API endpoints and integrations</li>';
-			echo '<li><strong>Admin Tools:</strong> Access administrative utilities</li>';
-			echo '<li><strong>Bilingual Migration:</strong> Manage language translations</li>';
-			echo '<li><strong>Add Arabic Diagnoses:</strong> Manage Arabic content</li>';
-			echo '</ul>';
-			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
-			echo '</div>';
-			break;
-	}
-}
-
-/**
- * Render Rochtah Tab
- */
-function snks_render_rochtah_tab( $subtab ) {
-	// Debug info
-	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
-	
-	switch ( $subtab ) {
-		case 'doctor-dashboard':
-			// Include the Rochtah dashboard content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'rochtah-doctor-dashboard.php' );
-			if ( function_exists( 'snks_rochtah_doctor_dashboard' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading Rochtah doctor dashboard...</p></div>';
-				snks_rochtah_doctor_dashboard();
-				echo '<div class="notice notice-success"><p>Rochtah doctor dashboard loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Rochtah Doctor Dashboard</h2>';
-				echo '<p>Access Rochtah doctor-specific dashboard and features.</p>';
-				echo '<div class="notice notice-error"><p>Rochtah dashboard function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case 'doctor-management':
-			// Include the demo doctors manager content directly
-			include_once( plugin_dir_path( __FILE__ ) . 'demo-doctors-manager.php' );
-			if ( function_exists( 'snks_demo_doctors_manager_page' ) ) {
-				// Add debug info
-				echo '<div class="notice notice-info"><p>Loading demo doctors manager...</p></div>';
-				snks_demo_doctors_manager_page();
-				echo '<div class="notice notice-success"><p>Demo doctors manager loaded successfully.</p></div>';
-			} else {
-				echo '<div class="card"><h2>Manage Rochtah Doctors</h2>';
-				echo '<p>Manage Rochtah doctor accounts and permissions.</p>';
-				echo '<div class="notice notice-error"><p>Demo doctors manager function not found!</p></div>';
-				echo '</div>';
-			}
-			break;
-			
-		case '':
-		default:
-			echo '<div class="card"><h2>Rochtah Management</h2>';
-			echo '<p>Please select a sub-tab to manage Rochtah features:</p>';
-			echo '<ul>';
-			echo '<li><strong>Rochtah Doctor Dashboard:</strong> Access doctor-specific features</li>';
-			echo '<li><strong>Manage Rochtah Doctors:</strong> Manage doctor accounts</li>';
-			echo '</ul>';
-			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
-			echo '</div>';
-			break;
-	}
+	snks_load_ai_admin_styles();
 }
 
 /**

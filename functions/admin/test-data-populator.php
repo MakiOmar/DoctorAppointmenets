@@ -11,11 +11,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add test data populator page
- * Note: This function is now handled by the main tabbed interface
+ * Note: Menu registration removed - page no longer accessible from admin menu
  */
 function snks_add_test_data_populator_page() {
-	// This function is now handled by the main tabbed interface
-	// No longer registering as a separate submenu page
+	// Menu registration removed - page no longer accessible from admin menu
+	// add_submenu_page(
+	// 	'jalsah-ai-management',
+	// 	'Populate Test Data',
+	// 	'Populate Test Data',
+	// 	'manage_options',
+	// 	'ai-test-data-populator',
+	// 	'snks_test_data_populator_page'
+	// );
 }
 // add_action( 'admin_menu', 'snks_add_test_data_populator_page' ); // Commented out
 

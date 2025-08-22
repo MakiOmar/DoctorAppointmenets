@@ -11,15 +11,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+
+
 /**
  * Add AI transaction processing menu to admin
- * Note: This function is now handled by the main tabbed interface
  */
 function snks_add_ai_transaction_processing_menu() {
-	// This function is now handled by the main tabbed interface
-	// No longer registering as a separate submenu page
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Transaction Processing', 'anony-turn' ),
+		__( 'Transaction Processing', 'anony-turn' ),
+		'manage_options',
+		'ai-transaction-processing',
+		'snks_ai_transaction_processing_page'
+	);
 }
-// add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' ); // Commented out
+add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' );
 
 /**
  * AI transaction processing page content
