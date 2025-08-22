@@ -139,6 +139,8 @@ require_once SNKS_DIR . 'functions/admin/test-data-populator.php';
 require_once SNKS_DIR . 'functions/admin/demo-doctors-manager.php';
 require_once SNKS_DIR . 'functions/admin/cleanup-demo-data.php';
 require_once SNKS_DIR . 'functions/admin/bulk-diagnosis-assignment.php';
+require_once SNKS_DIR . 'functions/admin/profit-settings.php';
+require_once SNKS_DIR . 'functions/admin/therapist-earnings.php';
 require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
 require_once SNKS_DIR . 'functions/ajax/therapist-certificates.php';
