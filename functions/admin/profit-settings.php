@@ -32,6 +32,11 @@ add_action( 'admin_menu', 'snks_add_profit_settings_menu' );
  * Profit settings page content
  */
 function snks_profit_settings_page() {
+	// Load AI admin styles
+	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
+		snks_load_ai_admin_styles();
+	}
+	
 	// Handle form submissions
 	if ( isset( $_POST['submit_profit_settings'] ) ) {
 		snks_handle_profit_settings_submission();

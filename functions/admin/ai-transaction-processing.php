@@ -32,6 +32,11 @@ add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' );
  * AI transaction processing page content
  */
 function snks_ai_transaction_processing_page() {
+	// Load AI admin styles
+	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
+		snks_load_ai_admin_styles();
+	}
+	
 	// Handle form submissions
 	if ( isset( $_POST['process_session'] ) ) {
 		snks_handle_session_processing();

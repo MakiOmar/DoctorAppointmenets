@@ -32,6 +32,11 @@ add_action( 'admin_menu', 'snks_add_therapist_earnings_menu' );
  * Therapist earnings page content
  */
 function snks_therapist_earnings_page() {
+	// Load AI admin styles
+	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
+		snks_load_ai_admin_styles();
+	}
+	
 	// Handle export requests
 	if ( isset( $_GET['export'] ) && $_GET['export'] === 'csv' ) {
 		snks_export_earnings_csv();
