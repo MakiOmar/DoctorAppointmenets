@@ -11,38 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-/**
- * Translation helper function for AI admin menu items
- * 
- * @param string $text The text to translate
- * @param string $context Optional context for translation
- * @return string Translated text
- */
-function snks_ai_admin_translate( $text, $context = '' ) {
-	// Check if we should use English (you can modify this logic based on your needs)
-	$use_english = apply_filters( 'snks_ai_admin_use_english', false );
-	
-	// Also check for a simple GET parameter for easy testing
-	if ( isset( $_GET['ai_english'] ) && $_GET['ai_english'] === '1' ) {
-		$use_english = true;
-	}
-	
-	if ( $use_english ) {
-		// English translations
-		$translations = array(
-			'إعدادات الأرباح' => 'Profit Settings',
-			'أرباح المعالجين' => 'Therapist Earnings',
-			'معالجة المعاملات' => 'Transaction Processing',
-			'عرض أرباح المعالجين' => 'View Therapist Earnings',
-			'إعدادات الأرباح' => 'Profit Settings'
-		);
-		
-		return isset( $translations[$text] ) ? $translations[$text] : $text;
-	}
-	
-	// Return original Arabic text
-	return $text;
-}
+
 
 /**
  * Add profit settings menu to admin
@@ -50,8 +19,8 @@ function snks_ai_admin_translate( $text, $context = '' ) {
 function snks_add_profit_settings_menu() {
 	add_submenu_page(
 		'jalsah-ai-management',
-		snks_ai_admin_translate( 'إعدادات الأرباح' ),
-		snks_ai_admin_translate( 'إعدادات الأرباح' ),
+		__( 'Profit Settings', 'anony-turn' ),
+		__( 'Profit Settings', 'anony-turn' ),
 		'manage_options',
 		'profit-settings',
 		'snks_profit_settings_page'
