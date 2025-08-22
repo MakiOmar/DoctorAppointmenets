@@ -1262,15 +1262,16 @@ function snks_enhanced_ai_sessions_page() {
 		$where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
 	}
 	
-	// First, let's get AI sessions from WooCommerce orders
+	// First, let's get AI sessions from WordPress posts (WooCommerce orders)
 	$ai_orders_query = "
-		SELECT o.ID as order_id, o.status as order_status, o.date_created,
-		       om.meta_value as ai_flag_value, om.meta_key as ai_flag_key
-		FROM {$wpdb->prefix}wc_orders o
-		INNER JOIN {$wpdb->prefix}wc_orders_meta om ON o.id = om.order_id
-		WHERE (om.meta_key = 'from_jalsah_ai' AND (om.meta_value = '1' OR om.meta_value = 'true' OR om.meta_value = 'yes'))
-		   OR (om.meta_key = 'is_ai_session' AND (om.meta_value = '1' OR om.meta_value = 'true' OR om.meta_value = 'yes'))
-		ORDER BY o.date_created DESC
+		SELECT p.ID as order_id, p.post_status as order_status, p.post_date as date_created,
+		       pm.meta_value as ai_flag_value, pm.meta_key as ai_flag_key
+		FROM {$wpdb->posts} p
+		INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		WHERE p.post_type = 'shop_order'
+		AND ((pm.meta_key = 'from_jalsah_ai' AND (pm.meta_value = '1' OR pm.meta_value = 'true' OR pm.meta_value = 'yes'))
+		   OR (pm.meta_key = 'is_ai_session' AND (pm.meta_value = '1' OR pm.meta_value = 'true' OR pm.meta_value = 'yes')))
+		ORDER BY p.post_date DESC
 		LIMIT 100
 	";
 	
@@ -1279,17 +1280,20 @@ function snks_enhanced_ai_sessions_page() {
 	// Debug: Let's also check what meta keys exist for orders
 	$all_meta_keys = $wpdb->get_results( "
 		SELECT DISTINCT meta_key, meta_value, COUNT(*) as count
-		FROM {$wpdb->prefix}wc_orders_meta 
-		WHERE meta_key LIKE '%ai%' OR meta_key LIKE '%jalsah%'
+		FROM {$wpdb->postmeta} pm
+		INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+		WHERE p.post_type = 'shop_order'
+		AND (meta_key LIKE '%ai%' OR meta_key LIKE '%jalsah%' OR meta_key LIKE '%therapist%' OR meta_key LIKE '%session%')
 		GROUP BY meta_key, meta_value
 		ORDER BY meta_key, meta_value
 	" );
 	
 	// Debug: Check recent orders
 	$recent_orders = $wpdb->get_results( "
-		SELECT o.ID, o.status, o.date_created
-		FROM {$wpdb->prefix}wc_orders o
-		ORDER BY o.date_created DESC
+		SELECT p.ID, p.post_status as status, p.post_date as date_created
+		FROM {$wpdb->posts} p
+		WHERE p.post_type = 'shop_order'
+		ORDER BY p.post_date DESC
 		LIMIT 10
 	" );
 	
@@ -1298,8 +1302,8 @@ function snks_enhanced_ai_sessions_page() {
 	foreach ( $ai_orders as $order ) {
 		// Try to get session data from different possible meta keys
 		$sessions_json = $wpdb->get_var( $wpdb->prepare(
-			"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
-			 WHERE order_id = %d AND meta_key = 'ai_sessions'",
+			"SELECT meta_value FROM {$wpdb->postmeta} 
+			 WHERE post_id = %d AND meta_key = 'ai_sessions'",
 			$order->order_id
 		) );
 		
@@ -1309,32 +1313,32 @@ function snks_enhanced_ai_sessions_page() {
 			
 			// Get individual session fields
 			$therapist_id = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
-				 WHERE order_id = %d AND meta_key = 'therapist_id'",
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'therapist_id'",
 				$order->order_id
 			) );
 			
 			$session_date = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
-				 WHERE order_id = %d AND meta_key = 'session_date'",
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'session_date'",
 				$order->order_id
 			) );
 			
 			$session_time = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
-				 WHERE order_id = %d AND meta_key = 'session_time'",
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'session_time'",
 				$order->order_id
 			) );
 			
 			$session_duration = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
-				 WHERE order_id = %d AND meta_key = 'session_duration'",
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'session_duration'",
 				$order->order_id
 			) );
 			
 			$slot_id = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
-				 WHERE order_id = %d AND meta_key = 'slot_id'",
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'slot_id'",
 				$order->order_id
 			) );
 			
