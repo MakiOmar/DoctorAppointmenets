@@ -1262,7 +1262,46 @@ function snks_enhanced_ai_sessions_page() {
 		$where_clause = 'WHERE ' . implode( ' AND ', $where_conditions );
 	}
 	
-	$query = "
+	// First, let's get AI sessions from WooCommerce orders
+	$ai_orders_query = "
+		SELECT o.ID as order_id, o.status as order_status, o.date_created,
+		       o.meta_value as ai_sessions_json
+		FROM {$wpdb->prefix}wc_orders o
+		INNER JOIN {$wpdb->prefix}wc_orders_meta om ON o.id = om.order_id
+		WHERE om.meta_key = 'from_jalsah_ai' AND om.meta_value = '1'
+		ORDER BY o.date_created DESC
+		LIMIT 100
+	";
+	
+	$ai_orders = $wpdb->get_results( $ai_orders_query );
+	
+	// Process AI sessions from orders
+	$ai_sessions = array();
+	foreach ( $ai_orders as $order ) {
+		$sessions_json = $wpdb->get_var( $wpdb->prepare(
+			"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
+			 WHERE order_id = %d AND meta_key = 'ai_sessions'",
+			$order->order_id
+		) );
+		
+		if ( $sessions_json ) {
+			$sessions_data = json_decode( $sessions_json, true );
+			if ( is_array( $sessions_data ) ) {
+				foreach ( $sessions_data as $session ) {
+					$ai_sessions[] = array(
+						'order_id' => $order->order_id,
+						'order_status' => $order->order_status,
+						'date_created' => $order->date_created,
+						'session_data' => $session,
+						'from_jalsah_ai' => true
+					);
+				}
+			}
+		}
+	}
+	
+	// Also get regular sessions from timetable
+	$regular_query = "
 		SELECT t.*, o.from_jalsah_ai, sa.attendance, sa.case_id,
 		       u.display_name as therapist_name,
 		       c.display_name as patient_name
@@ -1277,14 +1316,56 @@ function snks_enhanced_ai_sessions_page() {
 	";
 	
 	if ( ! empty( $where_values ) ) {
-		$query = $wpdb->prepare( $query, $where_values );
+		$regular_query = $wpdb->prepare( $regular_query, $where_values );
 	}
 	
-	$sessions = $wpdb->get_results( $query );
+	$regular_sessions = $wpdb->get_results( $regular_query );
+	
+	// Combine AI sessions and regular sessions
+	$sessions = array();
+	
+	// Add AI sessions
+	foreach ( $ai_sessions as $ai_session ) {
+		$session_data = $ai_session['session_data'];
+		$sessions[] = (object) array(
+			'ID' => 'AI-' . $ai_session['order_id'] . '-' . (isset($session_data['id']) ? $session_data['id'] : 'unknown'),
+			'date_time' => isset($session_data['date_time']) ? $session_data['date_time'] : $ai_session['date_created'],
+			'therapist_name' => isset($session_data['therapist_name']) ? $session_data['therapist_name'] : 'Unknown',
+			'patient_name' => isset($session_data['patient_name']) ? $session_data['patient_name'] : 'Unknown',
+			'session_status' => $ai_session['order_status'],
+			'from_jalsah_ai' => true,
+			'attendance' => 'not_set',
+			'case_id' => $ai_session['order_id'],
+			'order_id' => $ai_session['order_id']
+		);
+	}
+	
+	// Add regular sessions
+	foreach ( $regular_sessions as $regular_session ) {
+		$sessions[] = $regular_session;
+	}
 	$therapists = get_users( array( 'role' => 'doctor' ) );
 	?>
 	<div class="wrap">
 		<h1>AI Sessions & Attendance</h1>
+		
+		<!-- Debug Information -->
+		<div class="card" style="background: #f0f0f0; margin-bottom: 20px;">
+			<h3>Debug Information</h3>
+			<p><strong>AI Orders Found:</strong> <?php echo count($ai_orders); ?></p>
+			<p><strong>AI Sessions Processed:</strong> <?php echo count($ai_sessions); ?></p>
+			<p><strong>Regular Sessions Found:</strong> <?php echo count($regular_sessions); ?></p>
+			<p><strong>Total Sessions Displayed:</strong> <?php echo count($sessions); ?></p>
+			
+			<?php if ( count($ai_orders) > 0 ) : ?>
+				<h4>AI Orders:</h4>
+				<ul>
+					<?php foreach ( array_slice($ai_orders, 0, 5) as $order ) : ?>
+						<li>Order #<?php echo $order->order_id; ?> - Status: <?php echo $order->order_status; ?> - Date: <?php echo $order->date_created; ?></li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+		</div>
 		
 		<div class="card">
 			<h2>Filters</h2>
