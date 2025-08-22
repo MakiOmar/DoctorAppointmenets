@@ -45,13 +45,20 @@ CREATE TABLE snks_ai_profit_settings (
 
 #### **Enhanced Table: `snks_sessions_actions`**
 ```sql
--- Add new columns to existing table
+-- Add only the session type column to track first vs subsequent sessions
 ALTER TABLE snks_sessions_actions 
-ADD COLUMN profit_transferred BOOLEAN DEFAULT FALSE,
-ADD COLUMN profit_transfer_date TIMESTAMP NULL,
-ADD COLUMN profit_amount DECIMAL(10,2) DEFAULT 0.00,
 ADD COLUMN ai_session_type ENUM('first', 'subsequent') DEFAULT 'first';
 ```
+
+**Note:** We don't need to add profit tracking columns because:
+- **Profit amount** → Stored in `snks_booking_transactions.amount`
+- **Transfer date** → Stored in `snks_booking_transactions.transaction_time`
+- **Transfer status** → Tracked via `snks_booking_transactions.processed_for_withdrawal`
+
+**AI Sessions Don't Need Attendance Setting:**
+- AI sessions are **automatically completed** when session ends
+- **No manual attendance confirmation** required
+- **Direct profit calculation** and transfer on session completion
 
 #### **Integration with Existing `snks_booking_transactions` Table**
 The system will **integrate with the existing transaction system** instead of creating a separate table:
@@ -99,8 +106,7 @@ functions/
 
 #### **1.1 Database Setup**
 - Create `snks_ai_profit_settings` table
-- Create `snks_ai_profit_transactions` table
-- Enhance `snks_sessions_actions` table
+- Enhance `snks_sessions_actions` table (add only `ai_session_type` column)
 - Add default profit settings for existing therapists
 
 #### **1.2 Core Helper Functions**
@@ -168,9 +174,8 @@ function snks_therapist_earnings_page() {
 
 #### **3.1 Session Completion Triggers**
 **Integration Points:**
-- Session attendance confirmation
-- Session end via Jitsi
-- Manual session completion by admin
+- Session end via Jitsi (automatic completion)
+- Manual session completion by admin (if needed)
 
 **Hook Implementation:**
 ```php
@@ -180,7 +185,7 @@ add_action('snks_session_completed', 'snks_trigger_ai_profit_calculation', 10, 2
 function snks_trigger_ai_profit_calculation($session_id, $session_data) {
     // Check if it's an AI session
     if (snks_is_ai_session($session_id)) {
-        // Calculate profit
+        // Calculate profit automatically
         $profit_amount = snks_calculate_ai_session_profit($session_data);
         
         // Add transaction to existing system
@@ -207,8 +212,8 @@ function snks_trigger_ai_profit_calculation($session_id, $session_data) {
 **File**: `functions/helpers/profit-calculator.php`
 
 **Process Flow:**
-1. Session completion detected
-2. Profit calculation triggered
+1. AI session completion detected (automatic)
+2. Profit calculation triggered (automatic)
 3. **Add transaction to existing `snks_booking_transactions` table**
 4. **Use existing withdrawal system** for processing
 5. **Leverage existing balance management** (temp_wallet/wallet)
@@ -231,7 +236,7 @@ Patient Books Session → WooCommerce Order Created → Session Metadata Stored 
 
 ### **2. Session Completion Flow**
 ```
-AI Session Completed → Attendance Confirmed → Profit Calculated → Add to snks_booking_transactions → Use Existing Withdrawal System → Balance Updated
+AI Session Completed → Profit Calculated → Add to snks_booking_transactions → Use Existing Withdrawal System → Balance Updated
 ```
 
 ### **3. Profit Calculation Logic**
@@ -297,9 +302,8 @@ AI Session → snks_add_transaction() → snks_booking_transactions → Existing
 
 ### **Step 1: Database Setup**
 1. Create profit settings table
-2. Create transactions table
-3. Enhance sessions actions table
-4. Add default data
+2. Enhance sessions actions table (add ai_session_type column)
+3. Add default profit settings for existing therapists
 
 ### **Step 2: Core Functions**
 1. Implement profit calculation logic
