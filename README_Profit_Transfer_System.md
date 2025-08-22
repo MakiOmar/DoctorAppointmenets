@@ -420,4 +420,455 @@ AI Session → snks_add_transaction() → snks_booking_transactions → Existing
 
 ---
 
+## 🧪 **Testing Guide**
+
+### **Test Environment Setup**
+1. **Database Preparation**: Ensure all required tables exist
+2. **Test Data**: Create test therapists and patients
+3. **Admin Access**: Login as administrator with full permissions
+4. **Test Scripts**: Use provided test scripts for validation
+
+### **Test Scripts Available**
+- `test-ai-profit-integration.php` - Basic integration testing
+- `test-ai-profit-complete-system.php` - Comprehensive end-to-end testing
+
+---
+
+## 📋 **Test Steps & Expected Behavior**
+
+### **Phase 1: Database & Core Infrastructure Testing**
+
+#### **Test 1.1: Database Schema Validation**
+**Steps:**
+1. Run `test-ai-profit-integration.php`
+2. Check "Test 2: Database Tables" section
+
+**Expected Results:**
+```
+✅ wp_snks_ai_profit_settings - Exists
+✅ wp_snks_sessions_actions - Exists
+  ✅ Column ai_session_type - Exists
+  ✅ Column therapist_id - Exists
+  ✅ Column patient_id - Exists
+✅ wp_snks_booking_transactions - Exists
+  ✅ Column ai_session_id - Exists
+  ✅ Column ai_session_type - Exists
+  ✅ Column ai_patient_id - Exists
+  ✅ Column ai_order_id - Exists
+```
+
+**Stored Data Verification:**
+```sql
+-- Check profit settings table
+SELECT * FROM wp_snks_ai_profit_settings LIMIT 5;
+
+-- Check sessions actions table structure
+DESCRIBE wp_snks_sessions_actions;
+
+-- Check booking transactions table structure
+DESCRIBE wp_snks_booking_transactions;
+```
+
+#### **Test 1.2: Core Functions Availability**
+**Steps:**
+1. Run `test-ai-profit-integration.php`
+2. Check "Test 1: Core Functions Availability" section
+
+**Expected Results:**
+```
+✅ snks_get_therapist_profit_settings - Available
+✅ snks_calculate_session_profit - Available
+✅ snks_is_first_session - Available
+✅ snks_add_ai_session_transaction - Available
+✅ snks_execute_ai_profit_transfer - Available
+✅ snks_is_ai_session - Available
+✅ snks_get_ai_session_profit_stats - Available
+✅ snks_update_therapist_profit_settings - Available
+```
+
+### **Phase 2: Admin Interface Testing**
+
+#### **Test 2.1: Admin Pages Accessibility**
+**Steps:**
+1. Login to WordPress admin
+2. Navigate to "Jalsah AI" menu
+3. Check for submenu items
+
+**Expected Results:**
+```
+Jalsah AI
+├── إعدادات الأرباح (Profit Settings)
+├── أرباح المعالجين (Therapist Earnings)
+└── معالجة المعاملات (Transaction Processing)
+```
+
+**Admin Page URLs:**
+- `/wp-admin/admin.php?page=profit-settings`
+- `/wp-admin/admin.php?page=therapist-earnings`
+- `/wp-admin/admin.php?page=ai-transaction-processing`
+
+#### **Test 2.2: Profit Settings Page Functionality**
+**Steps:**
+1. Navigate to "إعدادات الأرباح" page
+2. Test global settings update
+3. Test individual therapist settings
+4. Test bulk update functionality
+
+**Expected Behavior:**
+- **Global Settings Section**: Update default percentages
+- **Individual Settings Table**: Modify per-therapist percentages
+- **Bulk Operations**: Select multiple therapists and update settings
+- **Settings Validation**: Prevent invalid percentage values
+
+**Stored Data Verification:**
+```sql
+-- Check global settings
+SELECT option_name, option_value FROM wp_options 
+WHERE option_name LIKE 'snks_ai_profit_%';
+
+-- Check individual therapist settings
+SELECT * FROM wp_snks_ai_profit_settings 
+WHERE therapist_id IN (SELECT ID FROM wp_users WHERE role = 'doctor');
+```
+
+#### **Test 2.3: Therapist Earnings Dashboard**
+**Steps:**
+1. Navigate to "أرباح المعالجين" page
+2. Test filtering by date range
+3. Test export functionality
+4. Check transaction history
+
+**Expected Behavior:**
+- **Earnings Overview**: Display total earnings per therapist
+- **Transaction History**: Show detailed transaction list
+- **Filtering**: Filter by date, therapist, session type
+- **Export**: Download CSV with transaction data
+
+**Stored Data Verification:**
+```sql
+-- Check AI session transactions
+SELECT t.*, u.display_name as therapist_name, p.display_name as patient_name
+FROM wp_snks_booking_transactions t
+LEFT JOIN wp_users u ON t.user_id = u.ID
+LEFT JOIN wp_users p ON t.ai_patient_id = p.ID
+WHERE t.ai_session_id IS NOT NULL
+ORDER BY t.transaction_time DESC;
+```
+
+#### **Test 2.4: Transaction Processing Page**
+**Steps:**
+1. Navigate to "معالجة المعاملات" page
+2. Check processing statistics
+3. Test manual session processing
+4. Test withdrawal management
+
+**Expected Behavior:**
+- **Processing Statistics**: Real-time overview of completed/pending sessions
+- **Manual Processing**: Process sessions by session ID
+- **Withdrawal Management**: Process withdrawals for therapists
+- **Recent Transactions**: View latest AI session transactions
+
+### **Phase 3: Integration & Triggers Testing**
+
+#### **Test 3.1: Session Completion Triggers**
+**Steps:**
+1. Create a test AI session
+2. Complete the session via frontend
+3. Check if profit calculation is triggered
+
+**Expected Behavior:**
+- **Automatic Trigger**: Profit calculation starts when session is completed
+- **Transaction Creation**: New transaction added to `snks_booking_transactions`
+- **Balance Update**: Therapist balance increases by profit amount
+
+**Stored Data Verification:**
+```sql
+-- Check session completion
+SELECT * FROM wp_snks_sessions_actions 
+WHERE ai_session_type IS NOT NULL 
+AND session_status = 'completed'
+ORDER BY created_at DESC;
+
+-- Check transaction creation
+SELECT * FROM wp_snks_booking_transactions 
+WHERE ai_session_id IS NOT NULL 
+AND transaction_type = 'add'
+ORDER BY transaction_time DESC;
+```
+
+#### **Test 3.2: WooCommerce Integration**
+**Steps:**
+1. Create WooCommerce order for AI session
+2. Update order status to 'completed'
+3. Check if profit calculation is triggered
+
+**Expected Behavior:**
+- **Order Metadata**: AI session metadata stored in order
+- **Status Change Trigger**: Profit calculation on order completion
+- **Transaction Recording**: AI session transaction created
+
+**Stored Data Verification:**
+```sql
+-- Check WooCommerce order metadata
+SELECT p.ID, pm.meta_key, pm.meta_value
+FROM wp_posts p
+JOIN wp_postmeta pm ON p.ID = pm.post_id
+WHERE p.post_type = 'shop_order'
+AND pm.meta_key LIKE '%ai_session%'
+ORDER BY p.ID DESC;
+```
+
+### **Phase 4: Transaction Processing Testing**
+
+#### **Test 4.1: Profit Calculation Accuracy**
+**Steps:**
+1. Create test sessions with known amounts
+2. Verify profit calculation matches expected percentages
+3. Test first vs subsequent session logic
+
+**Expected Behavior:**
+- **First Session**: 70% profit (default) or custom percentage
+- **Subsequent Sessions**: 75% profit (default) or custom percentage
+- **Custom Settings**: Individual therapist percentages override defaults
+
+**Test Data Example:**
+```php
+// Test scenario
+$session_amount = 1000; // 1000 ج.م
+$therapist_id = 123;
+$patient_id = 456;
+
+// First session (70% default)
+$profit_first = snks_calculate_session_profit($session_amount, $therapist_id, $patient_id);
+// Expected: 700 ج.م
+
+// Subsequent session (75% default)
+$profit_subsequent = snks_calculate_session_profit($session_amount, $therapist_id, $patient_id);
+// Expected: 750 ج.م
+```
+
+#### **Test 4.2: Balance Management**
+**Steps:**
+1. Complete multiple AI sessions for a therapist
+2. Check balance calculations
+3. Test withdrawal processing
+
+**Expected Behavior:**
+- **Balance Calculation**: Accurate total balance for AI sessions
+- **Withdrawal Balance**: Separate tracking for unprocessed transactions
+- **Withdrawal Processing**: Mark transactions as processed after withdrawal
+
+**Stored Data Verification:**
+```sql
+-- Check therapist balance
+SELECT 
+    user_id,
+    SUM(amount) as total_balance,
+    SUM(CASE WHEN processed_for_withdrawal = 0 THEN amount ELSE 0 END) as withdrawal_balance
+FROM wp_snks_booking_transactions 
+WHERE ai_session_id IS NOT NULL 
+AND transaction_type = 'add'
+GROUP BY user_id;
+```
+
+#### **Test 4.3: Withdrawal Processing**
+**Steps:**
+1. Process withdrawal for therapist with AI session earnings
+2. Verify transaction marking
+3. Check withdrawal integration
+
+**Expected Behavior:**
+- **Withdrawal Processing**: Use existing withdrawal system
+- **Transaction Marking**: Mark AI transactions as processed
+- **Balance Update**: Withdrawal balance decreases after processing
+
+**Stored Data Verification:**
+```sql
+-- Check processed transactions
+SELECT 
+    user_id,
+    COUNT(*) as total_transactions,
+    SUM(CASE WHEN processed_for_withdrawal = 1 THEN 1 ELSE 0 END) as processed_transactions
+FROM wp_snks_booking_transactions 
+WHERE ai_session_id IS NOT NULL 
+AND transaction_type = 'add'
+GROUP BY user_id;
+```
+
+### **Phase 5: End-to-End Testing**
+
+#### **Test 5.1: Complete AI Session Flow**
+**Steps:**
+1. Patient books AI session
+2. WooCommerce order created
+3. Session completed by therapist
+4. Profit automatically calculated and transferred
+5. Therapist can withdraw earnings
+
+**Expected Flow:**
+```
+1. ✅ AI Session Booking → WooCommerce Order Created
+2. ✅ Order Metadata → AI session details stored
+3. ✅ Session Completion → Automatic profit calculation
+4. ✅ Transaction Creation → Added to snks_booking_transactions
+5. ✅ Balance Update → Therapist balance increases
+6. ✅ Withdrawal Available → Therapist can withdraw earnings
+```
+
+**Stored Data Verification:**
+```sql
+-- Complete flow verification
+SELECT 
+    sa.action_session_id,
+    sa.ai_session_type,
+    sa.session_status,
+    sa.therapist_id,
+    sa.patient_id,
+    bt.amount as profit_amount,
+    bt.transaction_time,
+    bt.processed_for_withdrawal
+FROM wp_snks_sessions_actions sa
+LEFT JOIN wp_snks_booking_transactions bt ON sa.action_session_id = bt.ai_session_id
+WHERE sa.ai_session_type IS NOT NULL
+ORDER BY sa.created_at DESC;
+```
+
+#### **Test 5.2: Dashboard Widget Testing**
+**Steps:**
+1. Check WordPress admin dashboard
+2. Look for "إحصائيات جلسات الذكاء الاصطناعي" widget
+3. Verify statistics accuracy
+
+**Expected Behavior:**
+- **Widget Display**: Shows AI session statistics
+- **Real-time Data**: Statistics update automatically
+- **Quick Links**: Links to profit settings and earnings pages
+
+**Widget Statistics:**
+- Total AI Sessions
+- Completed Sessions
+- Total Profit
+- Today's Sessions
+- Today's Profit
+- Completion Rate
+
+### **Phase 6: Error Handling & Edge Cases**
+
+#### **Test 6.1: Invalid Session Processing**
+**Steps:**
+1. Try to process non-existent session ID
+2. Try to process already processed session
+3. Test with invalid therapist/patient IDs
+
+**Expected Behavior:**
+- **Error Messages**: Clear error messages for invalid operations
+- **Data Integrity**: No duplicate transactions created
+- **Validation**: Proper input validation and sanitization
+
+#### **Test 6.2: Database Error Handling**
+**Steps:**
+1. Simulate database connection issues
+2. Test with corrupted data
+3. Verify error logging
+
+**Expected Behavior:**
+- **Error Logging**: Errors logged to WordPress error log
+- **Graceful Degradation**: System continues to function
+- **User Notifications**: Clear error messages to users
+
+### **Phase 7: Performance Testing**
+
+#### **Test 7.1: Function Performance**
+**Steps:**
+1. Run performance test from `test-ai-profit-complete-system.php`
+2. Monitor execution times
+3. Test with large datasets
+
+**Expected Results:**
+- **Function Calls**: < 10ms per function call
+- **Database Queries**: Optimized queries with proper indexing
+- **Memory Usage**: Efficient memory usage
+
+#### **Test 7.2: Concurrent Processing**
+**Steps:**
+1. Complete multiple sessions simultaneously
+2. Test withdrawal processing under load
+3. Monitor system performance
+
+**Expected Behavior:**
+- **Concurrent Processing**: Handle multiple sessions without conflicts
+- **Data Consistency**: Maintain data integrity under load
+- **Performance**: Acceptable response times under load
+
+### **Phase 8: Security Testing**
+
+#### **Test 8.1: Admin Access Control**
+**Steps:**
+1. Test admin pages with different user roles
+2. Verify capability checks
+3. Test unauthorized access attempts
+
+**Expected Behavior:**
+- **Access Control**: Only administrators can access profit management
+- **Capability Checks**: Proper WordPress capability validation
+- **Security**: No unauthorized access to sensitive data
+
+#### **Test 8.2: Data Sanitization**
+**Steps:**
+1. Test with malicious input data
+2. Verify SQL injection protection
+3. Test XSS protection
+
+**Expected Behavior:**
+- **Input Sanitization**: All user inputs properly sanitized
+- **SQL Injection Protection**: Prepared statements used
+- **XSS Protection**: Output properly escaped
+
+### **Test Results Documentation**
+
+#### **Test Report Template:**
+```
+Test Date: [Date]
+Tester: [Name]
+Environment: [Development/Staging/Production]
+
+✅ Passed Tests:
+- [List of passed tests]
+
+❌ Failed Tests:
+- [List of failed tests with details]
+
+⚠️ Issues Found:
+- [List of issues and recommendations]
+
+📊 Performance Metrics:
+- [Performance test results]
+
+🔒 Security Validation:
+- [Security test results]
+
+📝 Notes:
+- [Additional observations]
+```
+
+#### **Expected Final Results:**
+```
+🎯 Complete System Test Summary
+✅ System Status: READY FOR PRODUCTION
+
+Key Features Verified:
+✅ Database schema and tables
+✅ Core profit calculation functions
+✅ Admin interface and management
+✅ Transaction processing
+✅ Withdrawal management
+✅ Statistics and reporting
+✅ Integration with existing systems
+✅ Error handling and validation
+✅ Security measures
+✅ Performance optimization
+```
+
+---
+
 *This document will be updated as implementation progresses and requirements evolve.*
