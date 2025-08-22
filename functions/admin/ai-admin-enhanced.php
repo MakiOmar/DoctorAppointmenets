@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/bilingual-migration.php';
 
 /**
- * Add enhanced AI admin menu
+ * Add enhanced AI admin menu - Single menu with tabbed interface
  */
 function snks_add_enhanced_ai_admin_menu() {
 	add_menu_page(
@@ -25,332 +25,195 @@ function snks_add_enhanced_ai_admin_menu() {
 		'dashicons-brain',
 		30
 	);
-
-	// ===== MAIN DASHBOARD =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Dashboard',
-		'Dashboard',
-		'manage_options',
-		'jalsah-ai-management',
-		'snks_enhanced_ai_admin_page'
-	);
-
-	// ===== CORE MANAGEMENT =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Diagnoses',
-		'Diagnoses',
-		'manage_options',
-		'jalsah-ai-diagnoses',
-		'snks_enhanced_ai_diagnoses_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Therapist Applications & Profiles',
-		'Applications & Profiles',
-		'manage_options',
-		'jalsah-ai-applications',
-		'snks_enhanced_ai_applications_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Sessions & Attendance',
-		'Sessions & Attendance',
-		'manage_options',
-		'jalsah-ai-sessions',
-		'snks_enhanced_ai_sessions_page'
-	);
-
-	// ===== FINANCIAL MANAGEMENT =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Coupons',
-		'Coupons',
-		'manage_options',
-		'jalsah-ai-coupons',
-		'snks_enhanced_ai_coupons_page'
-	);
-
-	// AI Profit Transfer System
-	add_submenu_page(
-		'jalsah-ai-management',
-		'إعدادات الأرباح',
-		'إعدادات الأرباح',
-		'manage_options',
-		'profit-settings',
-		'snks_profit_settings_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'أرباح المعالجين',
-		'أرباح المعالجين',
-		'manage_options',
-		'therapist-earnings',
-		'snks_therapist_earnings_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'معالجة المعاملات',
-		'معالجة المعاملات',
-		'manage_options',
-		'ai-transaction-processing',
-		'snks_ai_transaction_processing_page'
-	);
-
-	// ===== ANALYTICS & REPORTS =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Analytics',
-		'Analytics',
-		'manage_options',
-		'jalsah-ai-analytics',
-		'snks_enhanced_ai_analytics_page'
-	);
-
-	// ===== INTEGRATIONS =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'ChatGPT Integration',
-		'ChatGPT',
-		'manage_options',
-		'jalsah-ai-chatgpt',
-		'snks_enhanced_ai_chatgpt_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
-		'WhatsApp Integration',
-		'WhatsApp',
-		'manage_options',
-		'jalsah-ai-whatsapp',
-		'snks_enhanced_ai_whatsapp_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Rochtah Integration',
-		'Rochtah',
-		'manage_options',
-		'jalsah-ai-rochtah',
-		'snks_enhanced_ai_rochtah_page'
-	);
-
-	// ===== SETTINGS & CONFIGURATION =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'General Settings',
-		'General Settings',
-		'manage_options',
-		'jalsah-ai-settings',
-		'snks_enhanced_ai_settings_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Email Settings',
-		'Email Settings',
-		'manage_options',
-		'jalsah-ai-email',
-		'snks_enhanced_ai_email_page'
-	);
-
-	// ===== ADMIN TOOLS =====
-	add_submenu_page(
-		'jalsah-ai-management',
-		'API Test',
-		'API Test',
-		'manage_options',
-		'jalsah-ai-api-test',
-		'snks_ai_api_test_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Admin Tools',
-		'Admin Tools',
-		'manage_options',
-		'jalsah-ai-tools',
-		'snks_enhanced_ai_tools_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Bilingual Migration',
-		'Bilingual Migration',
-		'manage_options',
-		'jalsah-ai-bilingual-migration',
-		'snks_bilingual_migration_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Add Arabic Diagnoses',
-		'Add Arabic Diagnoses',
-		'manage_options',
-		'jalsah-ai-add-arabic-diagnoses',
-		'snks_arabic_diagnoses_page'
-	);
-	
-	// ===== ROCHTAH DOCTOR MANAGEMENT =====
-	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Rochtah Doctor Dashboard',
-		'Rochtah Doctor',
-		'manage_rochtah',
-		'rochtah-doctor-dashboard',
-		'snks_rochtah_doctor_dashboard'
-	);
-	
-	// Add Rochtah Doctor Management (only for admins)
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Manage Rochtah Doctors',
-		'Manage Rochtah Doctors',
-		'manage_options',
-		'rochtah-doctor-management',
-		'snks_rochtah_doctor_management'
-	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
 
 /**
- * Add custom CSS for menu organization
+ * Add custom CSS for tabbed interface
  */
 add_action( 'admin_head', 'snks_ai_admin_menu_styles' );
 function snks_ai_admin_menu_styles() {
 	?>
 	<style>
-	/* Menu organization styles */
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-management"] {
-		position: relative;
+	/* Tabbed Interface Styles */
+	.jalsah-ai-admin {
+		max-width: none !important;
 	}
 	
-	/* Add subtle separators between groups */
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-analytics"] {
-		border-bottom: 1px solid #e1e1e1;
-		margin-bottom: 5px;
-		padding-bottom: 8px;
+	/* Main Navigation Tabs */
+	.main-tabs {
+		margin-bottom: 20px;
+		border-bottom: 2px solid #0073aa;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-rochtah"] {
-		border-bottom: 1px solid #e1e1e1;
-		margin-bottom: 5px;
-		padding-bottom: 8px;
-	}
-	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-email"] {
-		border-bottom: 1px solid #e1e1e1;
-		margin-bottom: 5px;
-		padding-bottom: 8px;
-	}
-	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-tools"] {
-		border-bottom: 1px solid #e1e1e1;
-		margin-bottom: 5px;
-		padding-bottom: 8px;
-	}
-	
-	/* Highlight important sections */
-	#adminmenu .wp-submenu li a[href*="profit-settings"],
-	#adminmenu .wp-submenu li a[href*="therapist-earnings"],
-	#adminmenu .wp-submenu li a[href*="ai-transaction-processing"] {
+	.main-tabs .nav-tab {
+		font-size: 14px;
 		font-weight: 600;
+		padding: 12px 20px;
+		margin-right: 5px;
+		border: 2px solid transparent;
+		border-bottom: none;
+		background: #f1f1f1;
+		color: #555;
+		text-decoration: none;
+		border-radius: 5px 5px 0 0;
+		transition: all 0.3s ease;
+	}
+	
+	.main-tabs .nav-tab:hover {
+		background: #e1e1e1;
 		color: #0073aa;
 	}
 	
-	/* Add icons to menu items */
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-diagnoses"]::before {
-		content: "📋 ";
-		margin-right: 5px;
+	.main-tabs .nav-tab-active {
+		background: #0073aa;
+		color: white;
+		border-color: #0073aa;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-applications"]::before {
-		content: "👥 ";
-		margin-right: 5px;
+	/* Sub Navigation Tabs */
+	.sub-tabs {
+		margin-bottom: 20px;
+		border-bottom: 1px solid #ddd;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-sessions"]::before {
-		content: "📅 ";
-		margin-right: 5px;
+	.sub-tabs .nav-tab {
+		font-size: 13px;
+		padding: 8px 16px;
+		margin-right: 3px;
+		border: 1px solid #ddd;
+		border-bottom: none;
+		background: #f9f9f9;
+		color: #666;
+		text-decoration: none;
+		border-radius: 3px 3px 0 0;
+		transition: all 0.3s ease;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="profit-settings"]::before {
-		content: "💰 ";
-		margin-right: 5px;
+	.sub-tabs .nav-tab:hover {
+		background: #f1f1f1;
+		color: #0073aa;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="therapist-earnings"]::before {
-		content: "📊 ";
-		margin-right: 5px;
+	.sub-tabs .nav-tab-active {
+		background: white;
+		color: #0073aa;
+		border-color: #0073aa;
+		font-weight: 600;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="ai-transaction-processing"]::before {
-		content: "💳 ";
-		margin-right: 5px;
+	/* Content Area */
+	.tab-content {
+		background: white;
+		padding: 20px;
+		border: 1px solid #ddd;
+		border-top: none;
+		border-radius: 0 0 5px 5px;
+		min-height: 400px;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-analytics"]::before {
-		content: "📈 ";
-		margin-right: 5px;
+	/* Dashboard Content */
+	.dashboard-content .stats-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 20px;
+		margin: 20px 0;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-chatgpt"]::before {
-		content: "🤖 ";
-		margin-right: 5px;
+	.dashboard-content .stat-item {
+		background: #f8f9fa;
+		padding: 20px;
+		border-radius: 8px;
+		text-align: center;
+		border: 1px solid #e9ecef;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-whatsapp"]::before {
-		content: "📱 ";
-		margin-right: 5px;
+	.dashboard-content .stat-item h3 {
+		font-size: 2em;
+		margin: 0 0 10px 0;
+		color: #0073aa;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-rochtah"]::before {
-		content: "🏥 ";
-		margin-right: 5px;
+	.dashboard-content .stat-item p {
+		margin: 0;
+		color: #666;
+		font-weight: 600;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-settings"]::before {
-		content: "⚙️ ";
-		margin-right: 5px;
+	.dashboard-content .quick-actions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		margin: 20px 0;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-email"]::before {
-		content: "📧 ";
-		margin-right: 5px;
+	/* Card Styles */
+	.card {
+		background: white;
+		padding: 20px;
+		margin: 20px 0;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-api-test"]::before {
-		content: "🔧 ";
-		margin-right: 5px;
+	.card h2 {
+		margin-top: 0;
+		color: #0073aa;
+		border-bottom: 2px solid #f1f1f1;
+		padding-bottom: 10px;
 	}
 	
-	#adminmenu .wp-submenu li a[href*="jalsah-ai-tools"]::before {
-		content: "🛠️ ";
-		margin-right: 5px;
-	}
-	
-	#adminmenu .wp-submenu li a[href*="rochtah-doctor-dashboard"]::before {
-		content: "👨‍⚕️ ";
-		margin-right: 5px;
-	}
-	
-	#adminmenu .wp-submenu li a[href*="rochtah-doctor-management"]::before {
-		content: "👥 ";
-		margin-right: 5px;
-	}
-	
-	/* Responsive adjustments */
-	@media (max-width: 960px) {
-		#adminmenu .wp-submenu li a::before {
-			display: none;
+	/* Responsive Design */
+	@media (max-width: 768px) {
+		.main-tabs .nav-tab {
+			font-size: 12px;
+			padding: 8px 12px;
 		}
+		
+		.sub-tabs .nav-tab {
+			font-size: 11px;
+			padding: 6px 10px;
+		}
+		
+		.dashboard-content .stats-grid {
+			grid-template-columns: 1fr;
+		}
+		
+		.dashboard-content .quick-actions {
+			flex-direction: column;
+		}
+		
+		.dashboard-content .quick-actions .button {
+			width: 100%;
+			text-align: center;
+		}
+	}
+	
+	/* Animation for tab transitions */
+	.tab-content {
+		animation: fadeIn 0.3s ease-in;
+	}
+	
+	@keyframes fadeIn {
+		from { opacity: 0; transform: translateY(10px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+	
+	/* Highlight financial tabs */
+	.main-tabs .nav-tab[href*="financial"] {
+		background: linear-gradient(135deg, #0073aa, #005a87);
+		color: white;
+	}
+	
+	.main-tabs .nav-tab[href*="financial"]:hover {
+		background: linear-gradient(135deg, #005a87, #004466);
+	}
+	
+	.main-tabs .nav-tab-active[href*="financial"] {
+		background: linear-gradient(135deg, #0073aa, #005a87);
+		box-shadow: 0 2px 8px rgba(0,115,170,0.3);
 	}
 	</style>
 	<?php
@@ -578,9 +441,162 @@ function snks_load_ai_admin_styles() {
 }
 
 /**
- * Enhanced AI Admin Dashboard
+ * Enhanced AI Admin Dashboard with Tabbed Interface
  */
 function snks_enhanced_ai_admin_page() {
+	// Get current tab
+	$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'dashboard';
+	$current_subtab = isset( $_GET['subtab'] ) ? sanitize_text_field( $_GET['subtab'] ) : '';
+	
+	// Define main tabs
+	$main_tabs = array(
+		'dashboard' => array(
+			'name' => '📊 Dashboard',
+			'icon' => '📊',
+			'subtabs' => array()
+		),
+		'core' => array(
+			'name' => '📋 Core Management',
+			'icon' => '📋',
+			'subtabs' => array(
+				'diagnoses' => 'Diagnoses',
+				'applications' => 'Applications & Profiles',
+				'sessions' => 'Sessions & Attendance'
+			)
+		),
+		'financial' => array(
+			'name' => '💰 Financial Management',
+			'icon' => '💰',
+			'subtabs' => array(
+				'profit-settings' => 'إعدادات الأرباح',
+				'therapist-earnings' => 'أرباح المعالجين',
+				'transaction-processing' => 'معالجة المعاملات',
+				'coupons' => 'Coupons'
+			)
+		),
+		'analytics' => array(
+			'name' => '📈 Analytics & Reports',
+			'icon' => '📈',
+			'subtabs' => array(
+				'analytics' => 'Analytics Dashboard',
+				'reports' => 'Reports'
+			)
+		),
+		'integrations' => array(
+			'name' => '🔗 Integrations',
+			'icon' => '🔗',
+			'subtabs' => array(
+				'chatgpt' => 'ChatGPT Integration',
+				'whatsapp' => 'WhatsApp Integration',
+				'rochtah' => 'Rochtah Integration'
+			)
+		),
+		'settings' => array(
+			'name' => '⚙️ Settings',
+			'icon' => '⚙️',
+			'subtabs' => array(
+				'general' => 'General Settings',
+				'email' => 'Email Settings'
+			)
+		),
+		'tools' => array(
+			'name' => '🛠️ Admin Tools',
+			'icon' => '🛠️',
+			'subtabs' => array(
+				'api-test' => 'API Test',
+				'admin-tools' => 'Admin Tools',
+				'bilingual-migration' => 'Bilingual Migration',
+				'arabic-diagnoses' => 'Add Arabic Diagnoses'
+			)
+		),
+		'rochtah' => array(
+			'name' => '👨‍⚕️ Rochtah Management',
+			'icon' => '👨‍⚕️',
+			'subtabs' => array(
+				'doctor-dashboard' => 'Rochtah Doctor Dashboard',
+				'doctor-management' => 'Manage Rochtah Doctors'
+			)
+		)
+	);
+	
+	?>
+	<div class="wrap jalsah-ai-admin">
+		<h1>Jalsah AI Management</h1>
+		
+		<!-- Main Navigation Tabs -->
+		<nav class="nav-tab-wrapper main-tabs">
+			<?php foreach ( $main_tabs as $tab_key => $tab_data ) : ?>
+				<a href="?page=jalsah-ai-management&tab=<?php echo esc_attr( $tab_key ); ?>" 
+				   class="nav-tab <?php echo ( $current_tab === $tab_key ) ? 'nav-tab-active' : ''; ?>">
+					<?php echo $tab_data['icon']; ?> <?php echo esc_html( $tab_data['name'] ); ?>
+				</a>
+			<?php endforeach; ?>
+		</nav>
+		
+		<!-- Sub Navigation Tabs -->
+		<?php if ( ! empty( $main_tabs[$current_tab]['subtabs'] ) ) : ?>
+			<nav class="nav-tab-wrapper sub-tabs">
+				<?php foreach ( $main_tabs[$current_tab]['subtabs'] as $subtab_key => $subtab_name ) : ?>
+					<a href="?page=jalsah-ai-management&tab=<?php echo esc_attr( $current_tab ); ?>&subtab=<?php echo esc_attr( $subtab_key ); ?>" 
+					   class="nav-tab <?php echo ( $current_subtab === $subtab_key || ( empty( $current_subtab ) && $subtab_key === array_key_first( $main_tabs[$current_tab]['subtabs'] ) ) ) ? 'nav-tab-active' : ''; ?>">
+						<?php echo esc_html( $subtab_name ); ?>
+					</a>
+				<?php endforeach; ?>
+			</nav>
+		<?php endif; ?>
+		
+		<!-- Content Area -->
+		<div class="tab-content">
+			<?php
+			// Load appropriate content based on tab and subtab
+			switch ( $current_tab ) {
+				case 'dashboard':
+					snks_render_dashboard_tab();
+					break;
+					
+				case 'core':
+					snks_render_core_tab( $current_subtab );
+					break;
+					
+				case 'financial':
+					snks_render_financial_tab( $current_subtab );
+					break;
+					
+				case 'analytics':
+					snks_render_analytics_tab( $current_subtab );
+					break;
+					
+				case 'integrations':
+					snks_render_integrations_tab( $current_subtab );
+					break;
+					
+				case 'settings':
+					snks_render_settings_tab( $current_subtab );
+					break;
+					
+				case 'tools':
+					snks_render_tools_tab( $current_subtab );
+					break;
+					
+				case 'rochtah':
+					snks_render_rochtah_tab( $current_subtab );
+					break;
+					
+				default:
+					snks_render_dashboard_tab();
+					break;
+			}
+			?>
+		</div>
+	</div>
+	<?php
+	snks_load_ai_admin_styles();
+}
+
+/**
+ * Render Dashboard Tab
+ */
+function snks_render_dashboard_tab() {
 	global $wpdb;
 	
 	// Get statistics
@@ -601,9 +617,7 @@ function snks_enhanced_ai_admin_page() {
 	) ) );
 	
 	?>
-	<div class="wrap">
-		<h1>Jalsah AI Management Dashboard</h1>
-		
+	<div class="dashboard-content">
 		<div class="card">
 			<h2>Quick Statistics</h2>
 			<div class="stats-grid">
@@ -633,10 +647,10 @@ function snks_enhanced_ai_admin_page() {
 		<div class="card">
 			<h2>Quick Actions</h2>
 			<div class="quick-actions">
-				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-therapists' ); ?>" class="button button-primary">Manage Therapist Profiles</a>
-				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button button-secondary">Manage Diagnoses</a>
-				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-sessions' ); ?>" class="button button-secondary">View Sessions</a>
-				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-analytics' ); ?>" class="button button-secondary">View Analytics</a>
+				<a href="?page=jalsah-ai-management&tab=core&subtab=applications" class="button button-primary">Manage Therapist Profiles</a>
+				<a href="?page=jalsah-ai-management&tab=core&subtab=diagnoses" class="button button-secondary">Manage Diagnoses</a>
+				<a href="?page=jalsah-ai-management&tab=core&subtab=sessions" class="button button-secondary">View Sessions</a>
+				<a href="?page=jalsah-ai-management&tab=analytics&subtab=analytics" class="button button-secondary">View Analytics</a>
 			</div>
 		</div>
 
@@ -673,7 +687,239 @@ function snks_enhanced_ai_admin_page() {
 		</div>
 	</div>
 	<?php
-	snks_load_ai_admin_styles();
+}
+
+/**
+ * Render Core Management Tab
+ */
+function snks_render_core_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'diagnoses':
+			if ( function_exists( 'snks_enhanced_ai_diagnoses_page' ) ) {
+				snks_enhanced_ai_diagnoses_page();
+			} else {
+				echo '<div class="card"><h2>Diagnoses Management</h2><p>Diagnoses management functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'applications':
+			if ( function_exists( 'snks_enhanced_ai_applications_page' ) ) {
+				snks_enhanced_ai_applications_page();
+			} else {
+				echo '<div class="card"><h2>Applications & Profiles</h2><p>Applications management functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'sessions':
+			if ( function_exists( 'snks_enhanced_ai_sessions_page' ) ) {
+				snks_enhanced_ai_sessions_page();
+			} else {
+				echo '<div class="card"><h2>Sessions & Attendance</h2><p>Sessions management functionality is not available.</p></div>';
+			}
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Core Management</h2><p>Please select a sub-tab to manage core features.</p></div>';
+			break;
+	}
+}
+
+/**
+ * Render Financial Management Tab
+ */
+function snks_render_financial_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'profit-settings':
+			if ( function_exists( 'snks_profit_settings_page' ) ) {
+				snks_profit_settings_page();
+			} else {
+				echo '<div class="card"><h2>إعدادات الأرباح</h2><p>Profit settings functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'therapist-earnings':
+			if ( function_exists( 'snks_therapist_earnings_page' ) ) {
+				snks_therapist_earnings_page();
+			} else {
+				echo '<div class="card"><h2>أرباح المعالجين</h2><p>Therapist earnings functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'transaction-processing':
+			if ( function_exists( 'snks_ai_transaction_processing_page' ) ) {
+				snks_ai_transaction_processing_page();
+			} else {
+				echo '<div class="card"><h2>معالجة المعاملات</h2><p>Transaction processing functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'coupons':
+			if ( function_exists( 'snks_enhanced_ai_coupons_page' ) ) {
+				snks_enhanced_ai_coupons_page();
+			} else {
+				echo '<div class="card"><h2>Coupons</h2><p>Coupons management functionality is not available.</p></div>';
+			}
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Financial Management</h2><p>Please select a sub-tab to manage financial features.</p></div>';
+			break;
+	}
+}
+
+/**
+ * Render Analytics Tab
+ */
+function snks_render_analytics_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'analytics':
+			if ( function_exists( 'snks_enhanced_ai_analytics_page' ) ) {
+				snks_enhanced_ai_analytics_page();
+			} else {
+				echo '<div class="card"><h2>Analytics Dashboard</h2><p>Analytics functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'reports':
+			echo '<div class="card"><h2>Reports</h2><p>Reports functionality will be available soon.</p></div>';
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Analytics & Reports</h2><p>Please select a sub-tab to view analytics and reports.</p></div>';
+			break;
+	}
+}
+
+/**
+ * Render Integrations Tab
+ */
+function snks_render_integrations_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'chatgpt':
+			if ( function_exists( 'snks_enhanced_ai_chatgpt_page' ) ) {
+				snks_enhanced_ai_chatgpt_page();
+			} else {
+				echo '<div class="card"><h2>ChatGPT Integration</h2><p>ChatGPT integration functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'whatsapp':
+			if ( function_exists( 'snks_enhanced_ai_whatsapp_page' ) ) {
+				snks_enhanced_ai_whatsapp_page();
+			} else {
+				echo '<div class="card"><h2>WhatsApp Integration</h2><p>WhatsApp integration functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'rochtah':
+			if ( function_exists( 'snks_enhanced_ai_rochtah_page' ) ) {
+				snks_enhanced_ai_rochtah_page();
+			} else {
+				echo '<div class="card"><h2>Rochtah Integration</h2><p>Rochtah integration functionality is not available.</p></div>';
+			}
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Integrations</h2><p>Please select a sub-tab to manage integrations.</p></div>';
+			break;
+	}
+}
+
+/**
+ * Render Settings Tab
+ */
+function snks_render_settings_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'general':
+			if ( function_exists( 'snks_enhanced_ai_settings_page' ) ) {
+				snks_enhanced_ai_settings_page();
+			} else {
+				echo '<div class="card"><h2>General Settings</h2><p>General settings functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'email':
+			if ( function_exists( 'snks_enhanced_ai_email_page' ) ) {
+				snks_enhanced_ai_email_page();
+			} else {
+				echo '<div class="card"><h2>Email Settings</h2><p>Email settings functionality is not available.</p></div>';
+			}
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Settings</h2><p>Please select a sub-tab to manage settings.</p></div>';
+			break;
+	}
+}
+
+/**
+ * Render Tools Tab
+ */
+function snks_render_tools_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'api-test':
+			if ( function_exists( 'snks_ai_api_test_page' ) ) {
+				snks_ai_api_test_page();
+			} else {
+				echo '<div class="card"><h2>API Test</h2><p>API test functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'admin-tools':
+			if ( function_exists( 'snks_enhanced_ai_tools_page' ) ) {
+				snks_enhanced_ai_tools_page();
+			} else {
+				echo '<div class="card"><h2>Admin Tools</h2><p>Admin tools functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'bilingual-migration':
+			if ( function_exists( 'snks_bilingual_migration_page' ) ) {
+				snks_bilingual_migration_page();
+			} else {
+				echo '<div class="card"><h2>Bilingual Migration</h2><p>Bilingual migration functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'arabic-diagnoses':
+			if ( function_exists( 'snks_arabic_diagnoses_page' ) ) {
+				snks_arabic_diagnoses_page();
+			} else {
+				echo '<div class="card"><h2>Add Arabic Diagnoses</h2><p>Arabic diagnoses functionality is not available.</p></div>';
+			}
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Admin Tools</h2><p>Please select a sub-tab to access admin tools.</p></div>';
+			break;
+	}
+}
+
+/**
+ * Render Rochtah Tab
+ */
+function snks_render_rochtah_tab( $subtab ) {
+	switch ( $subtab ) {
+		case 'doctor-dashboard':
+			if ( function_exists( 'snks_rochtah_doctor_dashboard' ) ) {
+				snks_rochtah_doctor_dashboard();
+			} else {
+				echo '<div class="card"><h2>Rochtah Doctor Dashboard</h2><p>Rochtah doctor dashboard functionality is not available.</p></div>';
+			}
+			break;
+			
+		case 'doctor-management':
+			if ( function_exists( 'snks_rochtah_doctor_management' ) ) {
+				snks_rochtah_doctor_management();
+			} else {
+				echo '<div class="card"><h2>Manage Rochtah Doctors</h2><p>Rochtah doctor management functionality is not available.</p></div>';
+			}
+			break;
+			
+		default:
+			echo '<div class="card"><h2>Rochtah Management</h2><p>Please select a sub-tab to manage Rochtah features.</p></div>';
+			break;
+	}
 }
 
 /**
