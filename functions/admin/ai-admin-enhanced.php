@@ -13,6 +13,66 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/bilingual-migration.php';
 
 /**
+ * Translation helper function for AI admin menu items
+ * 
+ * @param string $text The text to translate
+ * @param string $context Optional context for translation
+ * @return string Translated text
+ */
+function snks_ai_admin_translate( $text, $context = '' ) {
+	// Check if we should use English (you can modify this logic based on your needs)
+	$use_english = apply_filters( 'snks_ai_admin_use_english', false );
+	
+	// Also check for a simple GET parameter for easy testing
+	if ( isset( $_GET['ai_english'] ) && $_GET['ai_english'] === '1' ) {
+		$use_english = true;
+	}
+	
+	if ( $use_english ) {
+		// English translations
+		$translations = array(
+			'إعدادات الأرباح' => 'Profit Settings',
+			'أرباح المعالجين' => 'Therapist Earnings',
+			'معالجة المعاملات' => 'Transaction Processing',
+			'عرض أرباح المعالجين' => 'View Therapist Earnings',
+			'إعدادات الأرباح' => 'Profit Settings'
+		);
+		
+		return isset( $translations[$text] ) ? $translations[$text] : $text;
+	}
+	
+	// Return original Arabic text
+	return $text;
+}
+
+/**
+ * Add admin notice for English translation toggle
+ */
+function snks_ai_admin_translation_notice() {
+	$screen = get_current_screen();
+	if ( $screen && strpos( $screen->id, 'jalsah-ai' ) !== false ) {
+		$current_url = add_query_arg( array(), admin_url( 'admin.php' ) );
+		$english_url = add_query_arg( 'ai_english', '1', $current_url );
+		$arabic_url = remove_query_arg( 'ai_english', $current_url );
+		
+		$is_english = isset( $_GET['ai_english'] ) && $_GET['ai_english'] === '1';
+		
+		echo '<div class="notice notice-info">';
+		echo '<p><strong>🌐 AI Admin Language:</strong> ';
+		if ( $is_english ) {
+			echo 'Currently showing <strong>English</strong> menu items. ';
+			echo '<a href="' . esc_url( $arabic_url ) . '" class="button button-small">Switch to Arabic</a>';
+		} else {
+			echo 'Currently showing <strong>Arabic</strong> menu items. ';
+			echo '<a href="' . esc_url( $english_url ) . '" class="button button-small">Switch to English</a>';
+		}
+		echo '</p>';
+		echo '</div>';
+	}
+}
+add_action( 'admin_notices', 'snks_ai_admin_translation_notice' );
+
+/**
  * Add enhanced AI admin menu
  */
 function snks_add_enhanced_ai_admin_menu() {
@@ -164,8 +224,8 @@ function snks_add_enhanced_ai_admin_menu() {
 	// Add AI Profit System Pages
 	add_submenu_page(
 		'jalsah-ai-management',
-		'إعدادات الأرباح',
-		'إعدادات الأرباح',
+		snks_ai_admin_translate( 'إعدادات الأرباح' ),
+		snks_ai_admin_translate( 'إعدادات الأرباح' ),
 		'manage_options',
 		'profit-settings',
 		'snks_profit_settings_page'
@@ -173,8 +233,8 @@ function snks_add_enhanced_ai_admin_menu() {
 	
 	add_submenu_page(
 		'jalsah-ai-management',
-		'أرباح المعالجين',
-		'أرباح المعالجين',
+		snks_ai_admin_translate( 'أرباح المعالجين' ),
+		snks_ai_admin_translate( 'أرباح المعالجين' ),
 		'manage_options',
 		'therapist-earnings',
 		'snks_therapist_earnings_page'
@@ -182,8 +242,8 @@ function snks_add_enhanced_ai_admin_menu() {
 	
 	add_submenu_page(
 		'jalsah-ai-management',
-		'معالجة المعاملات',
-		'معالجة المعاملات',
+		snks_ai_admin_translate( 'معالجة المعاملات' ),
+		snks_ai_admin_translate( 'معالجة المعاملات' ),
 		'manage_options',
 		'ai-transaction-processing',
 		'snks_ai_transaction_processing_page'
