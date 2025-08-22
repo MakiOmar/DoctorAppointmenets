@@ -138,7 +138,7 @@ function snks_ai_transaction_processing_page() {
 								<td><?php echo esc_html( $session['patient_name'] ); ?></td>
 								<td>
 									<span class="session-type-badge <?php echo $session['ai_session_type'] === 'first' ? 'first-session' : 'subsequent-session'; ?>">
-										<?php echo $session['ai_session_type'] === 'first' ? 'أولى' : 'لاحقة'; ?>
+										<?php echo $session['ai_session_type'] === 'first' ? __( 'First', 'anony-turn' ) : __( 'Subsequent', 'anony-turn' ); ?>
 									</span>
 								</td>
 								<td><?php echo esc_html( date( 'Y-m-d H:i', strtotime( $session['created_at'] ) ) ); ?></td>
@@ -146,7 +146,7 @@ function snks_ai_transaction_processing_page() {
 								<td>
 									<form method="post" action="" style="display: inline;">
 										<input type="hidden" name="session_id" value="<?php echo esc_attr( $session['action_session_id'] ); ?>" />
-										<input type="submit" name="process_session" class="button button-small" value="معالجة" />
+										<input type="submit" name="process_session" class="button button-small" value="<?php echo __( 'Process', 'anony-turn' ); ?>" />
 									</form>
 								</td>
 							</tr>
@@ -158,12 +158,12 @@ function snks_ai_transaction_processing_page() {
 		
 		<!-- Withdrawal Management -->
 		<div class="card">
-			<h2>إدارة السحوبات</h2>
+			<h2><?php echo __( 'Withdrawal Management', 'anony-turn' ); ?></h2>
 			<form method="post" action="">
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="therapist_id">المعالج</label>
+							<label for="therapist_id"><?php echo __( 'Therapist', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<select name="therapist_id" id="therapist_id">
@@ -185,7 +185,7 @@ function snks_ai_transaction_processing_page() {
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="withdrawal_amount">مبلغ السحب</label>
+							<label for="withdrawal_amount"><?php echo __( 'Withdrawal Amount', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<input type="number" 
@@ -198,31 +198,31 @@ function snks_ai_transaction_processing_page() {
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="withdrawal_method">طريقة السحب</label>
+							<label for="withdrawal_method"><?php echo __( 'Withdrawal Method', 'anony-turn' ); ?></label>
 						</th>
 						<td>
 							<select name="withdrawal_method" id="withdrawal_method">
-								<option value="wallet">محفظة</option>
-								<option value="bank">تحويل بنكي</option>
-								<option value="meza">ميزة</option>
+								<option value="wallet"><?php echo __( 'Wallet', 'anony-turn' ); ?></option>
+								<option value="bank"><?php echo __( 'Bank Transfer', 'anony-turn' ); ?></option>
+								<option value="meza"><?php echo __( 'Meza', 'anony-turn' ); ?></option>
 							</select>
 						</td>
 					</tr>
 				</table>
 				
 				<p class="submit">
-					<input type="submit" name="process_withdrawal" class="button-primary" value="معالجة السحب" />
+					<input type="submit" name="process_withdrawal" class="button-primary" value="<?php echo __( 'Process Withdrawal', 'anony-turn' ); ?>" />
 				</p>
 			</form>
 		</div>
 		
 		<!-- Recent Transactions -->
 		<div class="card">
-			<h2>آخر المعاملات</h2>
+			<h2><?php echo __( 'Recent Transactions', 'anony-turn' ); ?></h2>
 			<?php
 			$recent_transactions = snks_get_recent_ai_transactions( 20 );
 			if ( empty( $recent_transactions ) ) : ?>
-				<p>لا توجد معاملات حديثة.</p>
+				<p><?php echo __( 'No recent transactions.', 'anony-turn' ); ?></p>
 			<?php else : ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>

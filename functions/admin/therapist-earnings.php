@@ -200,15 +200,15 @@ function snks_therapist_earnings_page() {
 		
 		<!-- Transaction History -->
 		<div class="card">
-			<h2>سجل المعاملات</h2>
+			<h2><?php echo __( 'Transaction History', 'anony-turn' ); ?></h2>
 			<?php if ( empty( $earnings_data['transactions'] ) ) : ?>
-				<p>لا توجد معاملات للفترة المحددة.</p>
+				<p><?php echo __( 'No transactions for the specified period.', 'anony-turn' ); ?></p>
 			<?php else : ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
-							<th scope="col">التاريخ</th>
-							<th scope="col">المعالج</th>
+							<th scope="col"><?php echo __( 'Date', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Therapist', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Patient', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Session Type', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Session Amount', 'anony-turn' ); ?></th>
@@ -225,7 +225,7 @@ function snks_therapist_earnings_page() {
 								<td><?php echo esc_html( $transaction['patient_name'] ); ?></td>
 								<td>
 									<span class="session-type-badge <?php echo $transaction['session_type'] === 'first' ? 'first-session' : 'subsequent-session'; ?>">
-										<?php echo $transaction['session_type'] === 'first' ? 'أولى' : 'لاحقة'; ?>
+										<?php echo $transaction['session_type'] === 'first' ? __( 'First', 'anony-turn' ) : __( 'Subsequent', 'anony-turn' ); ?>
 									</span>
 								</td>
 								<td><?php echo number_format( $transaction['session_amount'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></td>
@@ -252,8 +252,8 @@ function snks_therapist_earnings_page() {
 							echo paginate_links( array(
 								'base' => add_query_arg( 'paged', '%#%' ),
 								'format' => '',
-								'prev_text' => '&laquo; السابق',
-								'next_text' => 'التالي &raquo;',
+											'prev_text' => '&laquo; ' . __( 'Previous', 'anony-turn' ),
+			'next_text' => __( 'Next', 'anony-turn' ) . ' &raquo;',
 								'total' => $total_pages,
 								'current' => $current_page
 							) );
@@ -433,7 +433,7 @@ function snks_get_all_therapists_for_earnings() {
  */
 function snks_export_earnings_csv() {
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'غير مصرح لك بالوصول إلى هذه الصفحة' );
+		wp_die( __( 'You are not authorized to access this page', 'anony-turn' ) );
 	}
 	
 	// Get filter parameters

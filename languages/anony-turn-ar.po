@@ -250,3 +250,81 @@ msgstr "الأرباح:"
 
 msgid "View Therapist Earnings"
 msgstr "عرض أرباح المعالجين"
+
+msgid "No therapists found"
+msgstr "لا يوجد معالجون"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Not updated"
+msgstr "لم يتم التحديث"
+
+msgid "Quick Statistics"
+msgstr "إحصائيات سريعة"
+
+msgid "Total Therapists"
+msgstr "إجمالي المعالجين"
+
+msgid "Active Therapists"
+msgstr "المعالجون النشطون"
+
+msgid "Therapists with Custom Settings"
+msgstr "المعالجون مع إعدادات مخصصة"
+
+msgid "Transaction History"
+msgstr "سجل المعاملات"
+
+msgid "No transactions for the specified period."
+msgstr "لا توجد معاملات للفترة المحددة."
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "First"
+msgstr "أولى"
+
+msgid "Subsequent"
+msgstr "لاحقة"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "You are not authorized to access this page"
+msgstr "غير مصرح لك بالوصول إلى هذه الصفحة"
+
+msgid "Process"
+msgstr "معالجة"
+
+msgid "Withdrawal Management"
+msgstr "إدارة السحوبات"
+
+msgid "Withdrawal Amount"
+msgstr "مبلغ السحب"
+
+msgid "Withdrawal Method"
+msgstr "طريقة السحب"
+
+msgid "Wallet"
+msgstr "محفظة"
+
+msgid "Bank Transfer"
+msgstr "تحويل بنكي"
+
+msgid "Meza"
+msgstr "ميزة"
+
+msgid "Process Withdrawal"
+msgstr "معالجة السحب"
+
+msgid "Recent Transactions"
+msgstr "آخر المعاملات"
+
+msgid "No recent transactions."
+msgstr "لا توجد معاملات حديثة."

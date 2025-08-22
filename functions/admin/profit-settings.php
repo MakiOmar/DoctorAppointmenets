@@ -139,7 +139,7 @@ function snks_profit_settings_page() {
 					<tbody>
 						<?php if ( empty( $therapists ) ) : ?>
 							<tr>
-								<td colspan="7">لا يوجد معالجون</td>
+								<td colspan="7"><?php echo __( 'No therapists found', 'anony-turn' ); ?></td>
 							</tr>
 						<?php else : ?>
 							<?php foreach ( $therapists as $therapist ) : ?>
@@ -172,11 +172,11 @@ function snks_profit_settings_page() {
 									</td>
 									<td>
 										<select name="is_active[<?php echo esc_attr( $therapist['therapist_id'] ); ?>]">
-											<option value="1" <?php selected( $therapist['is_active'], 1 ); ?>>نشط</option>
-											<option value="0" <?php selected( $therapist['is_active'], 0 ); ?>>غير نشط</option>
+																			<option value="1" <?php selected( $therapist['is_active'], 1 ); ?>><?php echo __( 'Active', 'anony-turn' ); ?></option>
+								<option value="0" <?php selected( $therapist['is_active'], 0 ); ?>><?php echo __( 'Inactive', 'anony-turn' ); ?></option>
 										</select>
 									</td>
-									<td><?php echo esc_html( $therapist['updated_at'] ? date( 'Y-m-d H:i', strtotime( $therapist['updated_at'] ) ) : 'لم يتم التحديث' ); ?></td>
+									<td><?php echo esc_html( $therapist['updated_at'] ? date( 'Y-m-d H:i', strtotime( $therapist['updated_at'] ) ) : __( 'Not updated', 'anony-turn' ) ); ?></td>
 								</tr>
 							<?php endforeach; ?>
 						<?php endif; ?>
@@ -191,21 +191,21 @@ function snks_profit_settings_page() {
 		
 		<!-- Statistics Section -->
 		<div class="card">
-			<h2>إحصائيات سريعة</h2>
+			<h2><?php echo __( 'Quick Statistics', 'anony-turn' ); ?></h2>
 			<?php
 			$stats = snks_get_profit_settings_statistics();
 			?>
 			<table class="form-table">
 				<tr>
-					<th scope="row">إجمالي المعالجين</th>
+											<th scope="row"><?php echo __( 'Total Therapists', 'anony-turn' ); ?></th>
 					<td><?php echo esc_html( $stats['total_therapists'] ); ?></td>
 				</tr>
 				<tr>
-					<th scope="row">المعالجون النشطون</th>
+					<th scope="row"><?php echo __( 'Active Therapists', 'anony-turn' ); ?></th>
 					<td><?php echo esc_html( $stats['active_therapists'] ); ?></td>
 				</tr>
 				<tr>
-					<th scope="row">المعالجون مع إعدادات مخصصة</th>
+					<th scope="row"><?php echo __( 'Therapists with Custom Settings', 'anony-turn' ); ?></th>
 					<td><?php echo esc_html( $stats['custom_settings'] ); ?></td>
 				</tr>
 				<tr>
