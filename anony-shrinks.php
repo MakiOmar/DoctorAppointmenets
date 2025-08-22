@@ -163,16 +163,38 @@ require_once SNKS_DIR . 'includes/transaction-table.php';
 require_once SNKS_DIR . 'includes/coupons-tables.php';
 require_once SNKS_DIR . 'includes/ai-tables.php';
 
-// Hook AI tables creation functions
-add_action( 'snks_create_ai_tables', 'snks_create_ai_tables' );
-add_action( 'snks_add_ai_meta_fields', 'snks_add_ai_meta_fields' );
-add_action( 'snks_create_enhanced_ai_tables', 'snks_create_enhanced_ai_tables' );
-add_action( 'snks_add_enhanced_ai_meta_fields', 'snks_add_enhanced_ai_meta_fields' );
-add_action( 'snks_add_enhanced_ai_user_meta_fields', 'snks_add_enhanced_ai_user_meta_fields' );
-add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' );
+// AI table creation hooks will be registered on init to ensure all functions are loaded
 
 // Check for AI profit system updates on plugin load
 add_action( 'init', 'snks_check_ai_profit_system_updates' );
+
+// Register AI table creation hooks on init to ensure all functions are loaded
+add_action( 'init', 'snks_register_ai_table_hooks' );
+
+/**
+ * Register AI table creation hooks
+ */
+function snks_register_ai_table_hooks() {
+	// Hook AI tables creation functions (with safety checks)
+	if ( function_exists( 'snks_create_ai_tables' ) ) {
+		add_action( 'snks_create_ai_tables', 'snks_create_ai_tables' );
+	}
+	if ( function_exists( 'snks_add_ai_meta_fields' ) ) {
+		add_action( 'snks_add_ai_meta_fields', 'snks_add_ai_meta_fields' );
+	}
+	if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+		add_action( 'snks_create_enhanced_ai_tables', 'snks_create_enhanced_ai_tables' );
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_meta_fields' ) ) {
+		add_action( 'snks_add_enhanced_ai_meta_fields', 'snks_add_enhanced_ai_meta_fields' );
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_user_meta_fields' ) ) {
+		add_action( 'snks_add_enhanced_ai_user_meta_fields', 'snks_add_enhanced_ai_user_meta_fields' );
+	}
+	if ( function_exists( 'snks_create_rochtah_doctor_role' ) ) {
+		add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' );
+	}
+}
 
 /**
  * Check for AI profit system updates and run upgrades if needed
@@ -226,6 +248,23 @@ function plugin_activation_hook() {
 	do_action( 'snks_add_enhanced_ai_meta_fields' );
 	do_action( 'snks_add_enhanced_ai_user_meta_fields' );
 	do_action( 'snks_create_rochtah_doctor_role' );
+	
+	// Fallback: Direct function calls if action hooks fail
+	if ( function_exists( 'snks_create_ai_tables' ) ) {
+		snks_create_ai_tables();
+	}
+	if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+		snks_create_enhanced_ai_tables();
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_meta_fields' ) ) {
+		snks_add_enhanced_ai_meta_fields();
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_user_meta_fields' ) ) {
+		snks_add_enhanced_ai_user_meta_fields();
+	}
+	if ( function_exists( 'snks_create_rochtah_doctor_role' ) ) {
+		snks_create_rochtah_doctor_role();
+	}
 	
 	// Create AI session product for WooCommerce
 	if ( class_exists( 'WooCommerce' ) ) {
