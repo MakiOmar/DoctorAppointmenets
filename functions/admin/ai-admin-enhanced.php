@@ -468,6 +468,21 @@ function snks_enhanced_ai_admin_page() {
 		$current_subtab = 'profit-settings';
 	}
 	
+	// Set default subtab for core tab
+	if ( $current_tab === 'core' && empty( $current_subtab ) ) {
+		$current_subtab = 'diagnoses';
+	}
+	
+	// Set default subtab for rochtah tab
+	if ( $current_tab === 'rochtah' && empty( $current_subtab ) ) {
+		$current_subtab = 'doctor-dashboard';
+	}
+	
+	// Set default subtab for tools tab
+	if ( $current_tab === 'tools' && empty( $current_subtab ) ) {
+		$current_subtab = 'admin-tools';
+	}
+	
 	// Define main tabs
 	$main_tabs = array(
 		'dashboard' => array(
@@ -713,28 +728,58 @@ function snks_render_dashboard_tab() {
  * Render Core Management Tab
  */
 function snks_render_core_tab( $subtab ) {
+	// Debug info
+	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
+	
 	switch ( $subtab ) {
 		case 'diagnoses':
-			echo '<div class="card"><h2>Diagnoses Management</h2>';
-			echo '<p>Manage AI diagnoses and diagnostic criteria.</p>';
-			echo '<div class="notice notice-info"><p>This feature will be available in the next update.</p></div>';
-			echo '</div>';
+			// Include the diagnoses page content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'ai-admin.php' );
+			if ( function_exists( 'snks_ai_diagnoses_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading diagnoses page...</p></div>';
+				snks_ai_diagnoses_page();
+				echo '<div class="notice notice-success"><p>Diagnoses page loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Diagnoses Management</h2>';
+				echo '<p>Manage AI diagnoses and diagnostic criteria.</p>';
+				echo '<div class="notice notice-error"><p>Diagnoses function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
 		case 'applications':
-			echo '<div class="card"><h2>Applications & Profiles</h2>';
-			echo '<p>Manage therapist applications and profiles.</p>';
-			echo '<div class="notice notice-info"><p>This feature will be available in the next update.</p></div>';
-			echo '</div>';
+			// Include the therapists page content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'ai-admin.php' );
+			if ( function_exists( 'snks_ai_therapists_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading therapists page...</p></div>';
+				snks_ai_therapists_page();
+				echo '<div class="notice notice-success"><p>Therapists page loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Applications & Profiles</h2>';
+				echo '<p>Manage therapist applications and profiles.</p>';
+				echo '<div class="notice notice-error"><p>Therapists function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
 		case 'sessions':
-			echo '<div class="card"><h2>Sessions & Attendance</h2>';
-			echo '<p>View and manage AI therapy sessions.</p>';
-			echo '<div class="notice notice-info"><p>This feature will be available in the next update.</p></div>';
-			echo '</div>';
+			// Include the sessions page content directly
+			if ( function_exists( 'snks_enhanced_ai_sessions_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading sessions page...</p></div>';
+				snks_enhanced_ai_sessions_page();
+				echo '<div class="notice notice-success"><p>Sessions page loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Sessions & Attendance</h2>';
+				echo '<p>View and manage AI therapy sessions.</p>';
+				echo '<div class="notice notice-error"><p>Sessions function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
+		case '':
 		default:
 			echo '<div class="card"><h2>Core Management</h2>';
 			echo '<p>Please select a sub-tab to manage core features:</p>';
@@ -743,6 +788,7 @@ function snks_render_core_tab( $subtab ) {
 			echo '<li><strong>Applications & Profiles:</strong> Handle therapist applications</li>';
 			echo '<li><strong>Sessions & Attendance:</strong> Monitor therapy sessions</li>';
 			echo '</ul>';
+			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
 			echo '</div>';
 			break;
 	}
@@ -932,6 +978,9 @@ function snks_render_settings_tab( $subtab ) {
  * Render Tools Tab
  */
 function snks_render_tools_tab( $subtab ) {
+	// Debug info
+	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
+	
 	switch ( $subtab ) {
 		case 'api-test':
 			echo '<div class="card"><h2>API Test</h2>';
@@ -941,17 +990,35 @@ function snks_render_tools_tab( $subtab ) {
 			break;
 			
 		case 'admin-tools':
-			echo '<div class="card"><h2>Admin Tools</h2>';
-			echo '<p>Access administrative tools and utilities.</p>';
-			echo '<div class="notice notice-info"><p>Admin tools functionality will be available soon.</p></div>';
-			echo '</div>';
+			// Include the test data populator content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'test-data-populator.php' );
+			if ( function_exists( 'snks_test_data_populator_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading test data populator...</p></div>';
+				snks_test_data_populator_page();
+				echo '<div class="notice notice-success"><p>Test data populator loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Admin Tools</h2>';
+				echo '<p>Access administrative tools and utilities.</p>';
+				echo '<div class="notice notice-error"><p>Test data populator function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
 		case 'bilingual-migration':
-			echo '<div class="card"><h2>Bilingual Migration</h2>';
-			echo '<p>Migrate content between languages and manage translations.</p>';
-			echo '<div class="notice notice-info"><p>Bilingual migration functionality will be available soon.</p></div>';
-			echo '</div>';
+			// Include the bulk diagnosis assignment content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'bulk-diagnosis-assignment.php' );
+			if ( function_exists( 'snks_bulk_diagnosis_assignment_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading bulk diagnosis assignment...</p></div>';
+				snks_bulk_diagnosis_assignment_page();
+				echo '<div class="notice notice-success"><p>Bulk diagnosis assignment loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Bilingual Migration</h2>';
+				echo '<p>Migrate content between languages and manage translations.</p>';
+				echo '<div class="notice notice-error"><p>Bulk diagnosis assignment function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
 		case 'arabic-diagnoses':
@@ -961,6 +1028,7 @@ function snks_render_tools_tab( $subtab ) {
 			echo '</div>';
 			break;
 			
+		case '':
 		default:
 			echo '<div class="card"><h2>Admin Tools</h2>';
 			echo '<p>Please select a sub-tab to access admin tools:</p>';
@@ -970,6 +1038,7 @@ function snks_render_tools_tab( $subtab ) {
 			echo '<li><strong>Bilingual Migration:</strong> Manage language translations</li>';
 			echo '<li><strong>Add Arabic Diagnoses:</strong> Manage Arabic content</li>';
 			echo '</ul>';
+			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
 			echo '</div>';
 			break;
 	}
@@ -979,21 +1048,43 @@ function snks_render_tools_tab( $subtab ) {
  * Render Rochtah Tab
  */
 function snks_render_rochtah_tab( $subtab ) {
+	// Debug info
+	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
+	
 	switch ( $subtab ) {
 		case 'doctor-dashboard':
-			echo '<div class="card"><h2>Rochtah Doctor Dashboard</h2>';
-			echo '<p>Access Rochtah doctor-specific dashboard and features.</p>';
-			echo '<div class="notice notice-info"><p>Rochtah doctor dashboard functionality will be available soon.</p></div>';
-			echo '</div>';
+			// Include the Rochtah dashboard content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'rochtah-doctor-dashboard.php' );
+			if ( function_exists( 'snks_rochtah_doctor_dashboard' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading Rochtah doctor dashboard...</p></div>';
+				snks_rochtah_doctor_dashboard();
+				echo '<div class="notice notice-success"><p>Rochtah doctor dashboard loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Rochtah Doctor Dashboard</h2>';
+				echo '<p>Access Rochtah doctor-specific dashboard and features.</p>';
+				echo '<div class="notice notice-error"><p>Rochtah dashboard function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
 		case 'doctor-management':
-			echo '<div class="card"><h2>Manage Rochtah Doctors</h2>';
-			echo '<p>Manage Rochtah doctor accounts and permissions.</p>';
-			echo '<div class="notice notice-info"><p>Rochtah doctor management functionality will be available soon.</p></div>';
-			echo '</div>';
+			// Include the demo doctors manager content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'demo-doctors-manager.php' );
+			if ( function_exists( 'snks_demo_doctors_manager_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading demo doctors manager...</p></div>';
+				snks_demo_doctors_manager_page();
+				echo '<div class="notice notice-success"><p>Demo doctors manager loaded successfully.</p></div>';
+			} else {
+				echo '<div class="card"><h2>Manage Rochtah Doctors</h2>';
+				echo '<p>Manage Rochtah doctor accounts and permissions.</p>';
+				echo '<div class="notice notice-error"><p>Demo doctors manager function not found!</p></div>';
+				echo '</div>';
+			}
 			break;
 			
+		case '':
 		default:
 			echo '<div class="card"><h2>Rochtah Management</h2>';
 			echo '<p>Please select a sub-tab to manage Rochtah features:</p>';
@@ -1001,6 +1092,7 @@ function snks_render_rochtah_tab( $subtab ) {
 			echo '<li><strong>Rochtah Doctor Dashboard:</strong> Access doctor-specific features</li>';
 			echo '<li><strong>Manage Rochtah Doctors:</strong> Manage doctor accounts</li>';
 			echo '</ul>';
+			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
 			echo '</div>';
 			break;
 	}
