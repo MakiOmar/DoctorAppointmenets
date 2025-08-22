@@ -274,6 +274,21 @@ function snks_load_ai_admin_styles() {
 	
 	/* Override any WordPress admin constraints */
 	
+	/* Ensure content is visible */
+	.wp-admin .wrap .card,
+	.wp-admin .wrap .form-table,
+	.wp-admin .wrap .wp-list-table {
+		display: block !important;
+		visibility: visible !important;
+		opacity: 1 !important;
+	}
+	
+	/* Force content to be visible */
+	.wp-admin .wrap > * {
+		display: block !important;
+		visibility: visible !important;
+	}
+	
 	/* Bilingual Form Styling */
 	.bilingual-field {
 		margin-bottom: 15px;
@@ -737,11 +752,14 @@ function snks_render_financial_tab( $subtab ) {
 			// Include the profit settings page content directly
 			include_once( plugin_dir_path( __FILE__ ) . 'profit-settings.php' );
 			if ( function_exists( 'snks_profit_settings_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading profit settings page...</p></div>';
 				snks_profit_settings_page();
+				echo '<div class="notice notice-success"><p>Profit settings page loaded successfully.</p></div>';
 			} else {
 				echo '<div class="card"><h2>إعدادات الأرباح</h2>';
 				echo '<p>Manage AI session profit settings for therapists.</p>';
-				echo '<div class="notice notice-info"><p>Profit settings functionality will be available soon.</p></div>';
+				echo '<div class="notice notice-error"><p>Profit settings function not found!</p></div>';
 				echo '</div>';
 			}
 			break;
@@ -750,11 +768,14 @@ function snks_render_financial_tab( $subtab ) {
 			// Include the therapist earnings page content directly
 			include_once( plugin_dir_path( __FILE__ ) . 'therapist-earnings.php' );
 			if ( function_exists( 'snks_therapist_earnings_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading therapist earnings page...</p></div>';
 				snks_therapist_earnings_page();
+				echo '<div class="notice notice-success"><p>Therapist earnings page loaded successfully.</p></div>';
 			} else {
 				echo '<div class="card"><h2>أرباح المعالجين</h2>';
 				echo '<p>View AI session earnings and transaction history for therapists.</p>';
-				echo '<div class="notice notice-info"><p>Therapist earnings functionality will be available soon.</p></div>';
+				echo '<div class="notice notice-error"><p>Therapist earnings function not found!</p></div>';
 				echo '</div>';
 			}
 			break;
@@ -763,11 +784,14 @@ function snks_render_financial_tab( $subtab ) {
 			// Include the transaction processing page content directly
 			include_once( plugin_dir_path( __FILE__ ) . 'ai-transaction-processing.php' );
 			if ( function_exists( 'snks_ai_transaction_processing_page' ) ) {
+				// Add debug info
+				echo '<div class="notice notice-info"><p>Loading transaction processing page...</p></div>';
 				snks_ai_transaction_processing_page();
+				echo '<div class="notice notice-success"><p>Transaction processing page loaded successfully.</p></div>';
 			} else {
 				echo '<div class="card"><h2>معالجة المعاملات</h2>';
 				echo '<p>Manage AI session transaction processing and withdrawal management.</p>';
-				echo '<div class="notice notice-info"><p>Transaction processing functionality will be available soon.</p></div>';
+				echo '<div class="notice notice-error"><p>Transaction processing function not found!</p></div>';
 				echo '</div>';
 			}
 			break;
