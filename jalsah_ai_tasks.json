@@ -9,13 +9,13 @@
     "title": "Create patient interface for doctor browsing",
     "description": "Provide interface for patients to browse doctors and choose appropriate therapist",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Set 45-minute online-only appointments",
     "description": "Available booking appointments are 45 minutes duration online only",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add therapist visibility toggle",
@@ -27,7 +27,7 @@
     "title": "Create main page with two patient options",
     "description": "Provide main page (after login) with two options to help patient choose therapist",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Integrate ChatGPT for diagnosis",
@@ -57,13 +57,13 @@
     "title": "Store sessions in same table with distinction",
     "description": "System will store sessions in same current sessions table but need to distinguish sessions booked through jalsah-ai.app for different handling",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add AI flag for jalsah-ai.app bookings",
     "description": "Any booking from jalsah-ai.app will be marked with flag like discount products - green circle with 'AI' text",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Create login/register interface for non-logged users",
@@ -105,19 +105,19 @@
     "title": "Create patient bookings history page",
     "description": "Page to display patient's previous and current bookings made only through jalsah-ai.app",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Define session completion criteria",
     "description": "Session becomes previous when therapist ends session or sets attendance status using snks_sessions_actions table",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Hide jalsah-ai.app sessions from main system",
     "description": "Ensure bookings in main system (A Shrinks plugin) don't display sessions booked through jalsah-ai.app",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Create page header with navigation",
@@ -183,43 +183,43 @@
     "title": "Add book nearest appointment option",
     "description": "Option to book nearest appointment with verification that appointment hasn't been booked by someone else",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Create browse other appointments interface",
     "description": "Browse other appointments option showing available dates/days first, then times for selected day (45-minute sessions only)",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Implement cart-based booking system",
     "description": "Booking system works like cart addition (not WooCommerce cart) - separate system allowing multiple appointment bookings",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add appointment to cart on click",
     "description": "Add to cart when clicking appointment (not day), clicking same appointment again removes from cart",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Make cart operations AJAX-based",
     "description": "Cart operations should not reload the page",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Handle different therapist cart conflicts",
     "description": "When adding appointment for different therapist, show message explaining and ask to empty cart for new booking",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Hide other therapist appointments when browsing",
     "description": "When browsing other appointments for different therapist, hide previous therapist's appointments",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Create browse all therapists page",
@@ -243,97 +243,97 @@
     "title": "Create cart page with appointment details",
     "description": "Cart page shows appointment data in separate tables with: therapist name, online session type, 45-minute duration, session date/day, session time",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add remove appointment from cart option",
     "description": "Allow patient to remove any appointment from cart",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Display appointment change terms",
     "description": "Show appointment change terms below cart",
     "priority": "low",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Create payment details section",
     "description": "Payment details section with: therapist fees, additional fees, total, coupon discount box",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Create temporary payment calculation",
     "description": "Create payment calculation with dummy data temporarily until real formula is provided",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Process WooCommerce order on booking confirmation",
     "description": "On confirm booking, create necessary WooCommerce orders - single order with all appointments, status pending until payment completion",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Store booking data in order meta",
     "description": "Store booking data appropriately in order using meta key with JSON value, mark bookings as from jalsah-ai.app",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Link patient to bookings after payment",
     "description": "Don't link patient to bookings until payment is completed",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Send payment link on order creation",
     "description": "On order creation (pending payment), return success and send payment link via email and display in cart page",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Implement 15-minute payment timeout",
     "description": "If payment not completed within 15 minutes, cancel order and return bookings to waiting status",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add 15-minute countdown timer",
     "description": "Show 15-minute countdown timer, redirect to main page when expired",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Clear cart after payment completion",
     "description": "Clear cart only after payment completion via webhook from jalsah.app notifying jalsah-ai.app of successful payment",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Handle incomplete payment timeout",
     "description": "If payment incomplete after 15 minutes, allow re-requesting appointments with verification (remove booked appointments and notify patient)",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add session attendance instructions",
     "description": "Add session attendance instructions to bookings page",
     "priority": "low",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Display upcoming and past bookings",
     "description": "Show upcoming and past bookings on bookings page",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Design booking card layout",
     "description": "Booking card contains: therapist image, therapist name, detailed session time, start session button, change session button, prescription button (therapist only)/view prescription button (patient)",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Implement session change rules",
@@ -351,43 +351,43 @@
     "title": "Create custom jalsah-ai.app session page",
     "description": "Create custom session page specific to jalsah-ai.app",
     "priority": "high",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Handle session exit redirects",
     "description": "On session exit: patient returns to bookings page, doctor returns to https://jalsah.app/account-setting/",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Implement doctor session end timing rule",
     "description": "Doctor can end session for no-show patient only after 15 minutes past session time",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Hide start session button after therapist ends",
     "description": "Hide start session button only if therapist ended the session",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Sort upcoming sessions by proximity",
     "description": "Sort upcoming sessions from nearest to farthest",
     "priority": "low",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Sort past sessions by recency",
     "description": "Sort past sessions from newest to oldest",
     "priority": "low",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Add book new session button to past sessions",
     "description": "Past sessions contain only button to book new session with same therapist",
     "priority": "medium",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "title": "Style AI bookings in green theme",
