@@ -1265,11 +1265,11 @@ function snks_enhanced_ai_sessions_page() {
 	// First, let's get AI sessions from WooCommerce orders
 	$ai_orders_query = "
 		SELECT o.ID as order_id, o.status as order_status, o.date_created,
-		       om.meta_value as from_jalsah_ai_value
+		       om.meta_value as ai_flag_value, om.meta_key as ai_flag_key
 		FROM {$wpdb->prefix}wc_orders o
 		INNER JOIN {$wpdb->prefix}wc_orders_meta om ON o.id = om.order_id
-		WHERE om.meta_key = 'from_jalsah_ai' 
-		AND (om.meta_value = '1' OR om.meta_value = 'true' OR om.meta_value = 'yes')
+		WHERE (om.meta_key = 'from_jalsah_ai' AND (om.meta_value = '1' OR om.meta_value = 'true' OR om.meta_value = 'yes'))
+		   OR (om.meta_key = 'is_ai_session' AND (om.meta_value = '1' OR om.meta_value = 'true' OR om.meta_value = 'yes'))
 		ORDER BY o.date_created DESC
 		LIMIT 100
 	";
@@ -1296,21 +1296,82 @@ function snks_enhanced_ai_sessions_page() {
 	// Process AI sessions from orders
 	$ai_sessions = array();
 	foreach ( $ai_orders as $order ) {
+		// Try to get session data from different possible meta keys
 		$sessions_json = $wpdb->get_var( $wpdb->prepare(
 			"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
 			 WHERE order_id = %d AND meta_key = 'ai_sessions'",
 			$order->order_id
 		) );
 		
-		if ( $sessions_json ) {
-			$sessions_data = json_decode( $sessions_json, true );
-			if ( is_array( $sessions_data ) ) {
-				foreach ( $sessions_data as $session ) {
+		// If no ai_sessions, try to get individual session data
+		if ( ! $sessions_json ) {
+			$session_data = array();
+			
+			// Get individual session fields
+			$therapist_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
+				 WHERE order_id = %d AND meta_key = 'therapist_id'",
+				$order->order_id
+			) );
+			
+			$session_date = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
+				 WHERE order_id = %d AND meta_key = 'session_date'",
+				$order->order_id
+			) );
+			
+			$session_time = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
+				 WHERE order_id = %d AND meta_key = 'session_time'",
+				$order->order_id
+			) );
+			
+			$session_duration = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
+				 WHERE order_id = %d AND meta_key = 'session_duration'",
+				$order->order_id
+			) );
+			
+			$slot_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->prefix}wc_orders_meta 
+				 WHERE order_id = %d AND meta_key = 'slot_id'",
+				$order->order_id
+			) );
+			
+			if ( $therapist_id || $session_date ) {
+				$session_data = array(
+					'therapist_id' => $therapist_id,
+					'session_date' => $session_date,
+					'session_time' => $session_time,
+					'session_duration' => $session_duration,
+					'slot_id' => $slot_id,
+					'date_time' => $session_date . ' ' . $session_time
+				);
+			}
+		} else {
+			$session_data = json_decode( $sessions_json, true );
+		}
+		
+		if ( $session_data ) {
+			if ( is_array( $session_data ) ) {
+				// If it's already an array of sessions
+				if ( isset( $session_data[0] ) && is_array( $session_data[0] ) ) {
+					foreach ( $session_data as $session ) {
+						$ai_sessions[] = array(
+							'order_id' => $order->order_id,
+							'order_status' => $order->order_status,
+							'date_created' => $order->date_created,
+							'session_data' => $session,
+							'from_jalsah_ai' => true
+						);
+					}
+				} else {
+					// Single session
 					$ai_sessions[] = array(
 						'order_id' => $order->order_id,
 						'order_status' => $order->order_status,
 						'date_created' => $order->date_created,
-						'session_data' => $session,
+						'session_data' => $session_data,
 						'from_jalsah_ai' => true
 					);
 				}
@@ -1397,7 +1458,7 @@ function snks_enhanced_ai_sessions_page() {
 				<h4>AI Orders Found:</h4>
 				<ul>
 					<?php foreach ( array_slice($ai_orders, 0, 5) as $order ) : ?>
-						<li>Order #<?php echo $order->order_id; ?> - Status: <?php echo $order->order_status; ?> - Date: <?php echo $order->date_created; ?> - AI Flag: <?php echo $order->from_jalsah_ai_value; ?></li>
+						<li>Order #<?php echo $order->order_id; ?> - Status: <?php echo $order->order_status; ?> - Date: <?php echo $order->date_created; ?> - AI Flag: <?php echo $order->ai_flag_key; ?> = <?php echo $order->ai_flag_value; ?></li>
 					<?php endforeach; ?>
 				</ul>
 			<?php endif; ?>
