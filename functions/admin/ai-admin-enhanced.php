@@ -695,31 +695,35 @@ function snks_render_dashboard_tab() {
 function snks_render_core_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'diagnoses':
-			if ( function_exists( 'snks_enhanced_ai_diagnoses_page' ) ) {
-				snks_enhanced_ai_diagnoses_page();
-			} else {
-				echo '<div class="card"><h2>Diagnoses Management</h2><p>Diagnoses management functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Diagnoses Management</h2>';
+			echo '<p>Manage AI diagnoses and diagnostic criteria.</p>';
+			echo '<div class="notice notice-info"><p>This feature will be available in the next update.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'applications':
-			if ( function_exists( 'snks_enhanced_ai_applications_page' ) ) {
-				snks_enhanced_ai_applications_page();
-			} else {
-				echo '<div class="card"><h2>Applications & Profiles</h2><p>Applications management functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Applications & Profiles</h2>';
+			echo '<p>Manage therapist applications and profiles.</p>';
+			echo '<div class="notice notice-info"><p>This feature will be available in the next update.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'sessions':
-			if ( function_exists( 'snks_enhanced_ai_sessions_page' ) ) {
-				snks_enhanced_ai_sessions_page();
-			} else {
-				echo '<div class="card"><h2>Sessions & Attendance</h2><p>Sessions management functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Sessions & Attendance</h2>';
+			echo '<p>View and manage AI therapy sessions.</p>';
+			echo '<div class="notice notice-info"><p>This feature will be available in the next update.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Core Management</h2><p>Please select a sub-tab to manage core features.</p></div>';
+			echo '<div class="card"><h2>Core Management</h2>';
+			echo '<p>Please select a sub-tab to manage core features:</p>';
+			echo '<ul>';
+			echo '<li><strong>Diagnoses:</strong> Manage AI diagnoses and criteria</li>';
+			echo '<li><strong>Applications & Profiles:</strong> Handle therapist applications</li>';
+			echo '<li><strong>Sessions & Attendance:</strong> Monitor therapy sessions</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
@@ -730,39 +734,61 @@ function snks_render_core_tab( $subtab ) {
 function snks_render_financial_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'profit-settings':
+			// Include the profit settings page content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'profit-settings.php' );
 			if ( function_exists( 'snks_profit_settings_page' ) ) {
 				snks_profit_settings_page();
 			} else {
-				echo '<div class="card"><h2>إعدادات الأرباح</h2><p>Profit settings functionality is not available.</p></div>';
+				echo '<div class="card"><h2>إعدادات الأرباح</h2>';
+				echo '<p>Manage AI session profit settings for therapists.</p>';
+				echo '<div class="notice notice-info"><p>Profit settings functionality will be available soon.</p></div>';
+				echo '</div>';
 			}
 			break;
 			
 		case 'therapist-earnings':
+			// Include the therapist earnings page content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'therapist-earnings.php' );
 			if ( function_exists( 'snks_therapist_earnings_page' ) ) {
 				snks_therapist_earnings_page();
 			} else {
-				echo '<div class="card"><h2>أرباح المعالجين</h2><p>Therapist earnings functionality is not available.</p></div>';
+				echo '<div class="card"><h2>أرباح المعالجين</h2>';
+				echo '<p>View AI session earnings and transaction history for therapists.</p>';
+				echo '<div class="notice notice-info"><p>Therapist earnings functionality will be available soon.</p></div>';
+				echo '</div>';
 			}
 			break;
 			
 		case 'transaction-processing':
+			// Include the transaction processing page content directly
+			include_once( plugin_dir_path( __FILE__ ) . 'ai-transaction-processing.php' );
 			if ( function_exists( 'snks_ai_transaction_processing_page' ) ) {
 				snks_ai_transaction_processing_page();
 			} else {
-				echo '<div class="card"><h2>معالجة المعاملات</h2><p>Transaction processing functionality is not available.</p></div>';
+				echo '<div class="card"><h2>معالجة المعاملات</h2>';
+				echo '<p>Manage AI session transaction processing and withdrawal management.</p>';
+				echo '<div class="notice notice-info"><p>Transaction processing functionality will be available soon.</p></div>';
+				echo '</div>';
 			}
 			break;
 			
 		case 'coupons':
-			if ( function_exists( 'snks_enhanced_ai_coupons_page' ) ) {
-				snks_enhanced_ai_coupons_page();
-			} else {
-				echo '<div class="card"><h2>Coupons</h2><p>Coupons management functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Coupons</h2>';
+			echo '<p>Manage discount coupons and promotional codes.</p>';
+			echo '<div class="notice notice-info"><p>Coupons management functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Financial Management</h2><p>Please select a sub-tab to manage financial features.</p></div>';
+			echo '<div class="card"><h2>Financial Management</h2>';
+			echo '<p>Please select a sub-tab to manage financial features:</p>';
+			echo '<ul>';
+			echo '<li><strong>إعدادات الأرباح:</strong> Configure profit percentages for AI sessions</li>';
+			echo '<li><strong>أرباح المعالجين:</strong> View earnings and transaction history</li>';
+			echo '<li><strong>معالجة المعاملات:</strong> Process withdrawals and manage transactions</li>';
+			echo '<li><strong>Coupons:</strong> Manage discount codes and promotions</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
@@ -773,19 +799,27 @@ function snks_render_financial_tab( $subtab ) {
 function snks_render_analytics_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'analytics':
-			if ( function_exists( 'snks_enhanced_ai_analytics_page' ) ) {
-				snks_enhanced_ai_analytics_page();
-			} else {
-				echo '<div class="card"><h2>Analytics Dashboard</h2><p>Analytics functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Analytics Dashboard</h2>';
+			echo '<p>View comprehensive analytics and insights for AI sessions.</p>';
+			echo '<div class="notice notice-info"><p>Analytics functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'reports':
-			echo '<div class="card"><h2>Reports</h2><p>Reports functionality will be available soon.</p></div>';
+			echo '<div class="card"><h2>Reports</h2>';
+			echo '<p>Generate and view detailed reports on AI session performance.</p>';
+			echo '<div class="notice notice-info"><p>Reports functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Analytics & Reports</h2><p>Please select a sub-tab to view analytics and reports.</p></div>';
+			echo '<div class="card"><h2>Analytics & Reports</h2>';
+			echo '<p>Please select a sub-tab to view analytics and reports:</p>';
+			echo '<ul>';
+			echo '<li><strong>Analytics Dashboard:</strong> View comprehensive analytics and insights</li>';
+			echo '<li><strong>Reports:</strong> Generate detailed performance reports</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
@@ -796,31 +830,35 @@ function snks_render_analytics_tab( $subtab ) {
 function snks_render_integrations_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'chatgpt':
-			if ( function_exists( 'snks_enhanced_ai_chatgpt_page' ) ) {
-				snks_enhanced_ai_chatgpt_page();
-			} else {
-				echo '<div class="card"><h2>ChatGPT Integration</h2><p>ChatGPT integration functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>ChatGPT Integration</h2>';
+			echo '<p>Configure and manage ChatGPT AI integration settings.</p>';
+			echo '<div class="notice notice-info"><p>ChatGPT integration functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'whatsapp':
-			if ( function_exists( 'snks_enhanced_ai_whatsapp_page' ) ) {
-				snks_enhanced_ai_whatsapp_page();
-			} else {
-				echo '<div class="card"><h2>WhatsApp Integration</h2><p>WhatsApp integration functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>WhatsApp Integration</h2>';
+			echo '<p>Set up WhatsApp messaging integration for notifications.</p>';
+			echo '<div class="notice notice-info"><p>WhatsApp integration functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'rochtah':
-			if ( function_exists( 'snks_enhanced_ai_rochtah_page' ) ) {
-				snks_enhanced_ai_rochtah_page();
-			} else {
-				echo '<div class="card"><h2>Rochtah Integration</h2><p>Rochtah integration functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Rochtah Integration</h2>';
+			echo '<p>Manage integration with Rochtah external platform.</p>';
+			echo '<div class="notice notice-info"><p>Rochtah integration functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Integrations</h2><p>Please select a sub-tab to manage integrations.</p></div>';
+			echo '<div class="card"><h2>Integrations</h2>';
+			echo '<p>Please select a sub-tab to manage integrations:</p>';
+			echo '<ul>';
+			echo '<li><strong>ChatGPT Integration:</strong> Configure AI integration settings</li>';
+			echo '<li><strong>WhatsApp Integration:</strong> Set up messaging notifications</li>';
+			echo '<li><strong>Rochtah Integration:</strong> Manage external platform connection</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
@@ -831,23 +869,27 @@ function snks_render_integrations_tab( $subtab ) {
 function snks_render_settings_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'general':
-			if ( function_exists( 'snks_enhanced_ai_settings_page' ) ) {
-				snks_enhanced_ai_settings_page();
-			} else {
-				echo '<div class="card"><h2>General Settings</h2><p>General settings functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>General Settings</h2>';
+			echo '<p>Configure general system settings and preferences.</p>';
+			echo '<div class="notice notice-info"><p>General settings functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'email':
-			if ( function_exists( 'snks_enhanced_ai_email_page' ) ) {
-				snks_enhanced_ai_email_page();
-			} else {
-				echo '<div class="card"><h2>Email Settings</h2><p>Email settings functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Email Settings</h2>';
+			echo '<p>Configure email notifications and templates.</p>';
+			echo '<div class="notice notice-info"><p>Email settings functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Settings</h2><p>Please select a sub-tab to manage settings.</p></div>';
+			echo '<div class="card"><h2>Settings</h2>';
+			echo '<p>Please select a sub-tab to manage settings:</p>';
+			echo '<ul>';
+			echo '<li><strong>General Settings:</strong> Configure system preferences</li>';
+			echo '<li><strong>Email Settings:</strong> Manage email notifications</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
@@ -858,39 +900,43 @@ function snks_render_settings_tab( $subtab ) {
 function snks_render_tools_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'api-test':
-			if ( function_exists( 'snks_ai_api_test_page' ) ) {
-				snks_ai_api_test_page();
-			} else {
-				echo '<div class="card"><h2>API Test</h2><p>API test functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>API Test</h2>';
+			echo '<p>Test API endpoints and integration functionality.</p>';
+			echo '<div class="notice notice-info"><p>API test functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'admin-tools':
-			if ( function_exists( 'snks_enhanced_ai_tools_page' ) ) {
-				snks_enhanced_ai_tools_page();
-			} else {
-				echo '<div class="card"><h2>Admin Tools</h2><p>Admin tools functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Admin Tools</h2>';
+			echo '<p>Access administrative tools and utilities.</p>';
+			echo '<div class="notice notice-info"><p>Admin tools functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'bilingual-migration':
-			if ( function_exists( 'snks_bilingual_migration_page' ) ) {
-				snks_bilingual_migration_page();
-			} else {
-				echo '<div class="card"><h2>Bilingual Migration</h2><p>Bilingual migration functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Bilingual Migration</h2>';
+			echo '<p>Migrate content between languages and manage translations.</p>';
+			echo '<div class="notice notice-info"><p>Bilingual migration functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'arabic-diagnoses':
-			if ( function_exists( 'snks_arabic_diagnoses_page' ) ) {
-				snks_arabic_diagnoses_page();
-			} else {
-				echo '<div class="card"><h2>Add Arabic Diagnoses</h2><p>Arabic diagnoses functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Add Arabic Diagnoses</h2>';
+			echo '<p>Add and manage Arabic diagnostic content.</p>';
+			echo '<div class="notice notice-info"><p>Arabic diagnoses functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Admin Tools</h2><p>Please select a sub-tab to access admin tools.</p></div>';
+			echo '<div class="card"><h2>Admin Tools</h2>';
+			echo '<p>Please select a sub-tab to access admin tools:</p>';
+			echo '<ul>';
+			echo '<li><strong>API Test:</strong> Test API endpoints and integrations</li>';
+			echo '<li><strong>Admin Tools:</strong> Access administrative utilities</li>';
+			echo '<li><strong>Bilingual Migration:</strong> Manage language translations</li>';
+			echo '<li><strong>Add Arabic Diagnoses:</strong> Manage Arabic content</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
@@ -901,23 +947,27 @@ function snks_render_tools_tab( $subtab ) {
 function snks_render_rochtah_tab( $subtab ) {
 	switch ( $subtab ) {
 		case 'doctor-dashboard':
-			if ( function_exists( 'snks_rochtah_doctor_dashboard' ) ) {
-				snks_rochtah_doctor_dashboard();
-			} else {
-				echo '<div class="card"><h2>Rochtah Doctor Dashboard</h2><p>Rochtah doctor dashboard functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Rochtah Doctor Dashboard</h2>';
+			echo '<p>Access Rochtah doctor-specific dashboard and features.</p>';
+			echo '<div class="notice notice-info"><p>Rochtah doctor dashboard functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		case 'doctor-management':
-			if ( function_exists( 'snks_rochtah_doctor_management' ) ) {
-				snks_rochtah_doctor_management();
-			} else {
-				echo '<div class="card"><h2>Manage Rochtah Doctors</h2><p>Rochtah doctor management functionality is not available.</p></div>';
-			}
+			echo '<div class="card"><h2>Manage Rochtah Doctors</h2>';
+			echo '<p>Manage Rochtah doctor accounts and permissions.</p>';
+			echo '<div class="notice notice-info"><p>Rochtah doctor management functionality will be available soon.</p></div>';
+			echo '</div>';
 			break;
 			
 		default:
-			echo '<div class="card"><h2>Rochtah Management</h2><p>Please select a sub-tab to manage Rochtah features.</p></div>';
+			echo '<div class="card"><h2>Rochtah Management</h2>';
+			echo '<p>Please select a sub-tab to manage Rochtah features:</p>';
+			echo '<ul>';
+			echo '<li><strong>Rochtah Doctor Dashboard:</strong> Access doctor-specific features</li>';
+			echo '<li><strong>Manage Rochtah Doctors:</strong> Manage doctor accounts</li>';
+			echo '</ul>';
+			echo '</div>';
 			break;
 	}
 }
