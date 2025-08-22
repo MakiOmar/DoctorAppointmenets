@@ -3281,3 +3281,71 @@ function snks_cleanup_orphaned_therapist_diagnoses( $diagnosis_id ) {
 		return array( 'success' => false, 'message' => 'Failed to clean up orphaned entries.' );
 	}
 }
+
+/**
+ * Add AI session statistics dashboard widget
+ */
+function snks_add_ai_session_dashboard_widget() {
+	wp_add_dashboard_widget(
+		'ai_session_statistics_widget',
+		'إحصائيات جلسات الذكاء الاصطناعي',
+		'snks_ai_session_dashboard_widget_content'
+	);
+}
+add_action( 'wp_dashboard_setup', 'snks_add_ai_session_dashboard_widget' );
+
+/**
+ * AI session statistics dashboard widget content
+ */
+function snks_ai_session_dashboard_widget_content() {
+	// Get AI session statistics
+	$stats = snks_get_ai_session_statistics();
+	
+	?>
+	<div class="ai-session-stats-widget">
+		<div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+			<div class="stat-box" style="background: #f0f8ff; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #0073aa;">إجمالي الجلسات</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #0073aa;">
+					<?php echo number_format( $stats['total_sessions'] ); ?>
+				</p>
+			</div>
+			<div class="stat-box" style="background: #f0fff0; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #46b450;">الجلسات المكتملة</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #46b450;">
+					<?php echo number_format( $stats['completed_sessions'] ); ?>
+				</p>
+			</div>
+			<div class="stat-box" style="background: #fff8f0; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #ff8c00;">إجمالي الأرباح</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #ff8c00;">
+					<?php echo number_format( $stats['total_profit'], 2 ); ?> ج.م
+				</p>
+			</div>
+			<div class="stat-box" style="background: #f8f0ff; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #9932cc;">معدل الإكمال</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #9932cc;">
+					<?php echo $stats['completion_rate']; ?>%
+				</p>
+			</div>
+		</div>
+		
+		<div class="today-stats" style="background: #f9f9f9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+			<h4 style="margin: 0 0 10px 0;">إحصائيات اليوم</h4>
+			<div style="display: flex; justify-content: space-between;">
+				<span>الجلسات: <strong><?php echo number_format( $stats['today_sessions'] ); ?></strong></span>
+				<span>الأرباح: <strong><?php echo number_format( $stats['today_profit'], 2 ); ?> ج.م</strong></span>
+			</div>
+		</div>
+		
+		<div class="quick-actions" style="text-align: center;">
+			<a href="<?php echo admin_url( 'admin.php?page=therapist-earnings' ); ?>" class="button button-primary" style="margin-right: 10px;">
+				عرض أرباح المعالجين
+			</a>
+			<a href="<?php echo admin_url( 'admin.php?page=profit-settings' ); ?>" class="button">
+				إعدادات الأرباح
+			</a>
+		</div>
+	</div>
+	<?php
+}

@@ -2436,6 +2436,20 @@ class SNKS_AI_Integration {
 		$order->set_total( $total );
 		$order->update_meta_data( 'from_jalsah_ai', true );
 		$order->update_meta_data( 'ai_sessions', json_encode( $session_data ) );
+		
+		// Add AI session metadata for profit calculation
+		if ( ! empty( $session_data ) ) {
+			foreach ( $session_data as $session ) {
+				$session_metadata = array(
+					'session_id' => $session['session_id'] ?? '',
+					'therapist_id' => $session['therapist_id'] ?? '',
+					'patient_id' => $user_id,
+					'session_type' => $session['session_type'] ?? 'first',
+					'session_amount' => $session['price'] ?? 0
+				);
+				snks_add_ai_session_metadata( $order->get_id(), $session_metadata );
+			}
+		}
 		$order->set_status( 'pending' );
 		$order->save();
 		
@@ -3768,6 +3782,29 @@ class SNKS_AI_Integration {
 		// Clear therapist joined transient
 		delete_transient("doctor_has_joined_{$session_id}_{$user_id}");
 		
+		// Check if this is an AI session and trigger profit calculation
+		if (snks_is_ai_session($session_id)) {
+			$profit_result = snks_execute_ai_profit_transfer($session_id);
+			
+			if ($profit_result['success']) {
+				// Send notification
+				snks_ai_session_completion_notification($session_id, $profit_result);
+				
+				return new WP_REST_Response([
+					'success' => true,
+					'message' => 'Session ended and profit transferred successfully',
+					'transaction_id' => $profit_result['transaction_id'],
+					'profit_amount' => $profit_result['profit_amount']
+				]);
+			} else {
+				return new WP_REST_Response([
+					'success' => true,
+					'message' => 'Session ended but profit transfer failed: ' . $profit_result['message'],
+					'profit_error' => $profit_result['message']
+				]);
+			}
+		}
+		
 		return new WP_REST_Response([
 			'success' => true,
 			'message' => 'Session ended successfully'
@@ -4056,3 +4093,263 @@ function snks_ai_auto_login_handler() {
 		wp_die('User not found');
 	}
 } 
+
+/**
+ * Hook into session completion for automatic profit calculation
+ */
+function snks_hook_ai_session_completion() {
+	// Hook into session status changes
+	add_action( 'wp_ajax_end_ai_session', 'snks_handle_ai_session_completion', 10, 1 );
+	add_action( 'wp_ajax_nopriv_end_ai_session', 'snks_handle_ai_session_completion', 10, 1 );
+	
+	// Hook into WooCommerce order status changes for AI orders
+	add_action( 'woocommerce_order_status_completed', 'snks_handle_ai_order_completion', 10, 1 );
+	add_action( 'woocommerce_order_status_processing', 'snks_handle_ai_order_completion', 10, 1 );
+	
+	// Hook into session actions table updates
+	add_action( 'snks_session_action_updated', 'snks_handle_session_action_update', 10, 2 );
+}
+add_action( 'init', 'snks_hook_ai_session_completion' );
+
+/**
+ * Handle AI session completion from frontend
+ */
+function snks_handle_ai_session_completion() {
+	// This function is called when a session is ended from the frontend
+	// The actual profit calculation is handled in the end_ai_session method
+	// This is just a hook to ensure we catch all completion events
+	
+	$session_id = isset( $_POST['session_id'] ) ? sanitize_text_field( $_POST['session_id'] ) : '';
+	
+	if ( ! empty( $session_id ) ) {
+		// Log the completion event
+		error_log( "AI Session Completion Hook: Session ID {$session_id}" );
+		
+		// Trigger profit calculation if not already processed
+		$result = snks_execute_ai_profit_transfer( $session_id );
+		
+		if ( $result['success'] ) {
+			error_log( "AI Profit Transfer Success: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
+		} else {
+			error_log( "AI Profit Transfer Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+		}
+	}
+}
+
+/**
+ * Handle AI order completion from WooCommerce
+ */
+function snks_handle_ai_order_completion( $order_id ) {
+	$order = wc_get_order( $order_id );
+	
+	if ( ! $order ) {
+		return;
+	}
+	
+	// Check if this is an AI order
+	if ( ! $order->get_meta( 'from_jalsah_ai' ) ) {
+		return;
+	}
+	
+	error_log( "AI Order Completion Hook: Order ID {$order_id}" );
+	
+	// Get session ID from order meta
+	$session_id = $order->get_meta( 'ai_session_id' );
+	
+	if ( ! empty( $session_id ) ) {
+		// Trigger profit calculation
+		$result = snks_execute_ai_profit_transfer( $session_id );
+		
+		if ( $result['success'] ) {
+			error_log( "AI Profit Transfer from Order: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
+		} else {
+			error_log( "AI Profit Transfer from Order Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+		}
+	}
+}
+
+/**
+ * Handle session action updates
+ */
+function snks_handle_session_action_update( $session_id, $action_data ) {
+	// Check if this is an AI session
+	if ( ! snks_is_ai_session( $session_id ) ) {
+		return;
+	}
+	
+	// Check if session status changed to completed
+	if ( isset( $action_data['session_status'] ) && $action_data['session_status'] === 'completed' ) {
+		error_log( "AI Session Status Update: Session ID {$session_id} marked as completed" );
+		
+		// Trigger profit calculation
+		$result = snks_execute_ai_profit_transfer( $session_id );
+		
+		if ( $result['success'] ) {
+			error_log( "AI Profit Transfer from Status Update: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
+		} else {
+			error_log( "AI Profit Transfer from Status Update Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+		}
+	}
+}
+
+/**
+ * Enhanced end_ai_session method with profit calculation
+ */
+function snks_enhanced_end_ai_session( $session_id ) {
+	global $wpdb;
+	
+	// First, update session status
+	$update_result = $wpdb->update(
+		$wpdb->prefix . 'snks_sessions_actions',
+		array( 'session_status' => 'completed' ),
+		array( 'action_session_id' => $session_id ),
+		array( '%s' ),
+		array( '%s' )
+	);
+	
+	if ( $update_result === false ) {
+		return array(
+			'success' => false,
+			'message' => 'Failed to update session status'
+		);
+	}
+	
+	// Check if this is an AI session and trigger profit calculation
+	if ( snks_is_ai_session( $session_id ) ) {
+		$profit_result = snks_execute_ai_profit_transfer( $session_id );
+		
+		if ( $profit_result['success'] ) {
+			return array(
+				'success' => true,
+				'message' => 'Session ended and profit transferred successfully',
+				'transaction_id' => $profit_result['transaction_id'],
+				'profit_amount' => $profit_result['profit_amount']
+			);
+		} else {
+			return array(
+				'success' => true,
+				'message' => 'Session ended but profit transfer failed: ' . $profit_result['message'],
+				'profit_error' => $profit_result['message']
+			);
+		}
+	}
+	
+	return array(
+		'success' => true,
+		'message' => 'Session ended successfully'
+	);
+}
+
+/**
+ * Add AI session metadata to WooCommerce orders
+ */
+function snks_add_ai_session_metadata( $order_id, $session_data ) {
+	$order = wc_get_order( $order_id );
+	
+	if ( ! $order ) {
+		return false;
+	}
+	
+	// Add AI session metadata
+	$order->update_meta_data( 'ai_session_id', $session_data['session_id'] ?? '' );
+	$order->update_meta_data( 'ai_therapist_id', $session_data['therapist_id'] ?? '' );
+	$order->update_meta_data( 'ai_user_id', $session_data['patient_id'] ?? '' );
+	$order->update_meta_data( 'ai_session_type', $session_data['session_type'] ?? 'first' );
+	$order->update_meta_data( 'ai_session_amount', $session_data['session_amount'] ?? 0 );
+	
+	$order->save();
+	
+	return true;
+}
+
+/**
+ * Get AI session statistics for admin dashboard
+ */
+function snks_get_ai_session_statistics() {
+	global $wpdb;
+	
+	$sessions_table = $wpdb->prefix . 'snks_sessions_actions';
+	$transactions_table = $wpdb->prefix . 'snks_booking_transactions';
+	
+	// Get total AI sessions
+	$total_sessions = $wpdb->get_var( "
+		SELECT COUNT(*) FROM $sessions_table 
+		WHERE ai_session_type IS NOT NULL
+	" );
+	
+	// Get completed AI sessions
+	$completed_sessions = $wpdb->get_var( "
+		SELECT COUNT(*) FROM $sessions_table 
+		WHERE ai_session_type IS NOT NULL AND session_status = 'completed'
+	" );
+	
+	// Get total profit transferred
+	$total_profit = $wpdb->get_var( "
+		SELECT SUM(amount) FROM $transactions_table 
+		WHERE ai_session_id IS NOT NULL AND transaction_type = 'add'
+	" );
+	
+	// Get today's AI sessions
+	$today_sessions = $wpdb->get_var( $wpdb->prepare( "
+		SELECT COUNT(*) FROM $sessions_table 
+		WHERE ai_session_type IS NOT NULL AND DATE(created_at) = %s
+	", current_time( 'Y-m-d' ) ) );
+	
+	// Get today's profit
+	$today_profit = $wpdb->get_var( $wpdb->prepare( "
+		SELECT SUM(amount) FROM $transactions_table 
+		WHERE ai_session_id IS NOT NULL AND transaction_type = 'add' 
+		AND DATE(transaction_time) = %s
+	", current_time( 'Y-m-d' ) ) );
+	
+	return array(
+		'total_sessions' => $total_sessions ?: 0,
+		'completed_sessions' => $completed_sessions ?: 0,
+		'total_profit' => $total_profit ?: 0,
+		'today_sessions' => $today_sessions ?: 0,
+		'today_profit' => $today_profit ?: 0,
+		'completion_rate' => $total_sessions > 0 ? round( ( $completed_sessions / $total_sessions ) * 100, 2 ) : 0
+	);
+}
+
+/**
+ * Add AI session completion notification
+ */
+function snks_ai_session_completion_notification( $session_id, $profit_result ) {
+	// Get session details
+	global $wpdb;
+	
+	$session_data = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
+		$session_id
+	), ARRAY_A );
+	
+	if ( ! $session_data ) {
+		return;
+	}
+	
+	// Get therapist and patient details
+	$therapist = get_user_by( 'ID', $session_data['therapist_id'] );
+	$patient = get_user_by( 'ID', $session_data['patient_id'] );
+	
+	// Send notification to therapist
+	if ( $therapist && $profit_result['success'] ) {
+		$notification_message = sprintf(
+			'تم إكمال جلسة الذكاء الاصطناعي بنجاح. تم تحويل ربح بقيمة %s ج.م إلى حسابك.',
+			number_format( $profit_result['profit_amount'], 2 )
+		);
+		
+		// You can implement your notification system here
+		// For example, using WordPress notifications or email
+		do_action( 'snks_ai_session_completed_notification', $therapist->ID, $notification_message, $session_id );
+	}
+	
+	// Log the completion
+	error_log( sprintf(
+		"AI Session Completed: Session ID %s, Therapist %s, Patient %s, Profit %s",
+		$session_id,
+		$therapist ? $therapist->display_name : 'Unknown',
+		$patient ? $patient->display_name : 'Unknown',
+		$profit_result['success'] ? number_format( $profit_result['profit_amount'], 2 ) . ' ج.م' : 'Failed'
+	) );
+}
