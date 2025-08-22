@@ -53,11 +53,11 @@ function snks_profit_settings_page() {
 	
 	?>
 	<div class="wrap">
-		<h1>إعدادات أرباح جلسات الذكاء الاصطناعي</h1>
+		<h1><?php echo __( 'AI Session Profit Settings', 'anony-turn' ); ?></h1>
 		
 		<!-- Global Settings Section -->
 		<div class="card">
-			<h2>الإعدادات العامة</h2>
+			<h2><?php echo __( 'Global Settings', 'anony-turn' ); ?></h2>
 			<form method="post" action="">
 				<table class="form-table">
 					<tr>
@@ -95,14 +95,14 @@ function snks_profit_settings_page() {
 				</table>
 				
 				<p class="submit">
-					<input type="submit" name="submit_profit_settings" class="button-primary" value="حفظ الإعدادات العامة" />
+					<input type="submit" name="submit_profit_settings" class="button-primary" value="<?php echo __( 'Save Global Settings', 'anony-turn' ); ?>" />
 				</p>
 			</form>
 		</div>
 		
 		<!-- Individual Therapist Settings -->
 		<div class="card">
-			<h2>إعدادات المعالجين الفردية</h2>
+			<h2><?php echo __( 'Individual Therapist Settings', 'anony-turn' ); ?></h2>
 			
 			<!-- Bulk Operations -->
 			<div class="bulk-operations" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
@@ -184,7 +184,7 @@ function snks_profit_settings_page() {
 				</table>
 				
 				<p class="submit">
-					<input type="submit" name="submit_therapist_settings" class="button-primary" value="حفظ إعدادات المعالجين" />
+					<input type="submit" name="submit_therapist_settings" class="button-primary" value="<?php echo __( 'Save Therapist Settings', 'anony-turn' ); ?>" />
 				</p>
 			</form>
 		</div>

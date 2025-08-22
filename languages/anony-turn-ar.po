@@ -19,3 +19,54 @@ msgstr "أرباح المعالجين"
 
 msgid "Transaction Processing"
 msgstr "معالجة المعاملات"
+
+msgid "AI Session Profit Settings"
+msgstr "إعدادات أرباح جلسات الذكاء الاصطناعي"
+
+msgid "Global Settings"
+msgstr "الإعدادات العامة"
+
+msgid "Save Global Settings"
+msgstr "حفظ الإعدادات العامة"
+
+msgid "Individual Therapist Settings"
+msgstr "إعدادات المعالجين الفردية"
+
+msgid "Save Therapist Settings"
+msgstr "حفظ إعدادات المعالجين"
+
+msgid "Therapist Earnings from AI Sessions"
+msgstr "أرباح المعالجين من جلسات الذكاء الاصطناعي"
+
+msgid "Search Filters"
+msgstr "فلاتر البحث"
+
+msgid "Summary Statistics"
+msgstr "ملخص الإحصائيات"
+
+msgid "Total Earnings"
+msgstr "إجمالي الأرباح"
+
+msgid "Total Sessions"
+msgstr "إجمالي الجلسات"
+
+msgid "AI Session Transaction Processing"
+msgstr "معالجة معاملات جلسات الذكاء الاصطناعي"
+
+msgid "Processing Statistics"
+msgstr "إحصائيات المعالجة"
+
+msgid "Completed Sessions"
+msgstr "الجلسات المكتملة"
+
+msgid "Processed Transactions"
+msgstr "المعاملات المعالجة"
+
+msgid "Pending Sessions"
+msgstr "الجلسات المعلقة"
+
+msgid "Manual Session Processing"
+msgstr "معالجة الجلسات يدوياً"
+
+msgid "Pending Sessions for Processing"
+msgstr "الجلسات المعلقة للمعالجة"

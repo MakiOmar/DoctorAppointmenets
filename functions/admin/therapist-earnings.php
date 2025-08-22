@@ -56,11 +56,11 @@ function snks_therapist_earnings_page() {
 	
 	?>
 	<div class="wrap">
-		<h1>أرباح المعالجين من جلسات الذكاء الاصطناعي</h1>
+		<h1><?php echo __( 'Therapist Earnings from AI Sessions', 'anony-turn' ); ?></h1>
 		
 		<!-- Filters Section -->
 		<div class="card">
-			<h2>فلاتر البحث</h2>
+			<h2><?php echo __( 'Search Filters', 'anony-turn' ); ?></h2>
 			<form method="get" action="">
 				<input type="hidden" name="page" value="therapist-earnings" />
 				
@@ -121,16 +121,16 @@ function snks_therapist_earnings_page() {
 		
 		<!-- Summary Statistics -->
 		<div class="card">
-			<h2>ملخص الإحصائيات</h2>
+			<h2><?php echo __( 'Summary Statistics', 'anony-turn' ); ?></h2>
 			<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
 				<div class="stat-box" style="background: #f0f8ff; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #0073aa;">إجمالي الأرباح</h3>
+					<h3 style="margin: 0 0 10px 0; color: #0073aa;"><?php echo __( 'Total Earnings', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #0073aa;">
 						<?php echo number_format( $earnings_data['summary']['total_profit'], 2 ); ?> ج.م
 					</p>
 				</div>
 				<div class="stat-box" style="background: #f0fff0; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #46b450;">إجمالي الجلسات</h3>
+					<h3 style="margin: 0 0 10px 0; color: #46b450;"><?php echo __( 'Total Sessions', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #46b450;">
 						<?php echo $earnings_data['summary']['total_sessions']; ?>
 					</p>

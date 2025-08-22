@@ -51,32 +51,32 @@ function snks_ai_transaction_processing_page() {
 	
 	?>
 	<div class="wrap">
-		<h1>معالجة معاملات جلسات الذكاء الاصطناعي</h1>
+		<h1><?php echo __( 'AI Session Transaction Processing', 'anony-turn' ); ?></h1>
 		
 		<!-- Processing Statistics -->
 		<div class="card">
-			<h2>إحصائيات المعالجة</h2>
+			<h2><?php echo __( 'Processing Statistics', 'anony-turn' ); ?></h2>
 			<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
 				<div class="stat-box" style="background: #f0f8ff; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #0073aa;">الجلسات المكتملة</h3>
+					<h3 style="margin: 0 0 10px 0; color: #0073aa;"><?php echo __( 'Completed Sessions', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #0073aa;">
 						<?php echo number_format( $stats['completed_sessions'] ); ?>
 					</p>
 				</div>
 				<div class="stat-box" style="background: #f0fff0; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #46b450;">المعاملات المعالجة</h3>
+					<h3 style="margin: 0 0 10px 0; color: #46b450;"><?php echo __( 'Processed Transactions', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #46b450;">
 						<?php echo number_format( $stats['processed_transactions'] ); ?>
 					</p>
 				</div>
 				<div class="stat-box" style="background: #fff8f0; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #ff8c00;">إجمالي الأرباح</h3>
+					<h3 style="margin: 0 0 10px 0; color: #ff8c00;"><?php echo __( 'Total Earnings', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #ff8c00;">
 						<?php echo number_format( $stats['total_profit'], 2 ); ?> ج.م
 					</p>
 				</div>
 				<div class="stat-box" style="background: #f8f0ff; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #9932cc;">الجلسات المعلقة</h3>
+					<h3 style="margin: 0 0 10px 0; color: #9932cc;"><?php echo __( 'Pending Sessions', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #9932cc;">
 						<?php echo number_format( $stats['pending_sessions'] ); ?>
 					</p>
@@ -86,7 +86,7 @@ function snks_ai_transaction_processing_page() {
 		
 		<!-- Manual Session Processing -->
 		<div class="card">
-			<h2>معالجة الجلسات يدوياً</h2>
+			<h2><?php echo __( 'Manual Session Processing', 'anony-turn' ); ?></h2>
 			<form method="post" action="">
 				<table class="form-table">
 					<tr>
@@ -112,7 +112,7 @@ function snks_ai_transaction_processing_page() {
 		
 		<!-- Pending Sessions -->
 		<div class="card">
-			<h2>الجلسات المعلقة للمعالجة</h2>
+			<h2><?php echo __( 'Pending Sessions for Processing', 'anony-turn' ); ?></h2>
 			<?php
 			$pending_sessions = snks_get_pending_ai_sessions();
 			if ( empty( $pending_sessions ) ) : ?>
