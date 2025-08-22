@@ -1283,7 +1283,7 @@ function snks_enhanced_ai_sessions_page() {
 		FROM {$wpdb->postmeta} pm
 		INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
 		WHERE p.post_type = 'shop_order'
-		AND (meta_key LIKE '%ai%' OR meta_key LIKE '%jalsah%' OR meta_key LIKE '%therapist%' OR meta_key LIKE '%session%')
+		AND (meta_key LIKE '%ai%' OR meta_key LIKE '%jalsah%' OR meta_key LIKE '%therapist%' OR meta_key LIKE '%session%' OR meta_key LIKE '%slot%' OR meta_key LIKE '%appointment%')
 		GROUP BY meta_key, meta_value
 		ORDER BY meta_key, meta_value
 	" );
@@ -1311,45 +1311,57 @@ function snks_enhanced_ai_sessions_page() {
 		if ( ! $sessions_json ) {
 			$session_data = array();
 			
-			// Get individual session fields
-			$therapist_id = $wpdb->get_var( $wpdb->prepare(
+			// Get AI order details
+			$ai_user_id = $wpdb->get_var( $wpdb->prepare(
 				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'therapist_id'",
+				 WHERE post_id = %d AND meta_key = 'ai_user_id'",
 				$order->order_id
 			) );
 			
-			$session_date = $wpdb->get_var( $wpdb->prepare(
+			$ai_appointments_count = $wpdb->get_var( $wpdb->prepare(
 				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'session_date'",
+				 WHERE post_id = %d AND meta_key = 'ai_appointments_count'",
 				$order->order_id
 			) );
 			
-			$session_time = $wpdb->get_var( $wpdb->prepare(
+			$ai_total_amount = $wpdb->get_var( $wpdb->prepare(
 				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'session_time'",
+				 WHERE post_id = %d AND meta_key = 'ai_total_amount'",
 				$order->order_id
 			) );
 			
-			$session_duration = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'session_duration'",
-				$order->order_id
-			) );
+			// Try to get session data from user's AI cart
+			if ( $ai_user_id ) {
+				$cart_data = get_user_meta( $ai_user_id, 'ai_cart', true );
+				if ( $cart_data && is_array( $cart_data ) ) {
+					foreach ( $cart_data as $cart_item ) {
+						$session_data = array(
+							'therapist_id' => $cart_item['therapist_id'] ?? 'Unknown',
+							'session_date' => $cart_item['date'] ?? 'Unknown',
+							'session_time' => $cart_item['time'] ?? 'Unknown',
+							'session_duration' => $cart_item['duration'] ?? '45',
+							'slot_id' => $cart_item['slot_id'] ?? 'Unknown',
+							'date_time' => ($cart_item['date'] ?? '') . ' ' . ($cart_item['time'] ?? ''),
+							'patient_id' => $ai_user_id,
+							'order_id' => $order->order_id
+						);
+					}
+				}
+			}
 			
-			$slot_id = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'slot_id'",
-				$order->order_id
-			) );
-			
-			if ( $therapist_id || $session_date ) {
+			// If still no session data, create a basic session from order info
+			if ( empty( $session_data ) ) {
 				$session_data = array(
-					'therapist_id' => $therapist_id,
-					'session_date' => $session_date,
-					'session_time' => $session_time,
-					'session_duration' => $session_duration,
-					'slot_id' => $slot_id,
-					'date_time' => $session_date . ' ' . $session_time
+					'therapist_id' => 'Unknown',
+					'session_date' => $order->date_created,
+					'session_time' => 'Unknown',
+					'session_duration' => '45',
+					'slot_id' => 'Unknown',
+					'date_time' => $order->date_created,
+					'patient_id' => $ai_user_id,
+					'order_id' => $order->order_id,
+					'appointments_count' => $ai_appointments_count,
+					'total_amount' => $ai_total_amount
 				);
 			}
 		} else {
@@ -1383,49 +1395,45 @@ function snks_enhanced_ai_sessions_page() {
 		}
 	}
 	
-	// Also get regular sessions from timetable
-	$regular_query = "
-		SELECT t.*, o.from_jalsah_ai, sa.attendance, sa.case_id,
-		       u.display_name as therapist_name,
-		       c.display_name as patient_name
-		FROM {$wpdb->prefix}snks_provider_timetable t
-		LEFT JOIN {$wpdb->prefix}wc_orders o ON t.order_id = o.id
-		LEFT JOIN {$wpdb->prefix}snks_sessions_actions sa ON t.ID = sa.action_session_id
-		LEFT JOIN {$wpdb->users} u ON t.user_id = u.ID
-		LEFT JOIN {$wpdb->users} c ON t.client_id = c.ID
-		{$where_clause}
-		ORDER BY t.date_time DESC
-		LIMIT 100
-	";
-	
-	if ( ! empty( $where_values ) ) {
-		$regular_query = $wpdb->prepare( $regular_query, $where_values );
-	}
-	
-	$regular_sessions = $wpdb->get_results( $regular_query );
-	
-	// Combine AI sessions and regular sessions
+	// Only show AI sessions, no regular sessions
 	$sessions = array();
 	
 	// Add AI sessions
 	foreach ( $ai_sessions as $ai_session ) {
 		$session_data = $ai_session['session_data'];
+		
+		// Get therapist and patient names
+		$therapist_name = 'Unknown';
+		$patient_name = 'Unknown';
+		
+		if ( isset($session_data['therapist_id']) && $session_data['therapist_id'] !== 'Unknown' ) {
+			$therapist_user = get_user_by( 'ID', $session_data['therapist_id'] );
+			if ( $therapist_user ) {
+				$therapist_name = $therapist_user->display_name;
+			}
+		}
+		
+		if ( isset($session_data['patient_id']) && $session_data['patient_id'] !== 'Unknown' ) {
+			$patient_user = get_user_by( 'ID', $session_data['patient_id'] );
+			if ( $patient_user ) {
+				$patient_name = $patient_user->display_name;
+			}
+		}
+		
 		$sessions[] = (object) array(
-			'ID' => 'AI-' . $ai_session['order_id'] . '-' . (isset($session_data['id']) ? $session_data['id'] : 'unknown'),
+			'ID' => 'AI-' . $ai_session['order_id'] . '-' . (isset($session_data['slot_id']) ? $session_data['slot_id'] : 'unknown'),
 			'date_time' => isset($session_data['date_time']) ? $session_data['date_time'] : $ai_session['date_created'],
-			'therapist_name' => isset($session_data['therapist_name']) ? $session_data['therapist_name'] : 'Unknown',
-			'patient_name' => isset($session_data['patient_name']) ? $session_data['patient_name'] : 'Unknown',
+			'therapist_name' => $therapist_name,
+			'patient_name' => $patient_name,
 			'session_status' => $ai_session['order_status'],
 			'from_jalsah_ai' => true,
 			'attendance' => 'not_set',
 			'case_id' => $ai_session['order_id'],
-			'order_id' => $ai_session['order_id']
+			'order_id' => $ai_session['order_id'],
+			'session_duration' => isset($session_data['session_duration']) ? $session_data['session_duration'] : '45',
+			'appointments_count' => isset($session_data['appointments_count']) ? $session_data['appointments_count'] : '1',
+			'total_amount' => isset($session_data['total_amount']) ? $session_data['total_amount'] : 'Unknown'
 		);
-	}
-	
-	// Add regular sessions
-	foreach ( $regular_sessions as $regular_session ) {
-		$sessions[] = $regular_session;
 	}
 	$therapists = get_users( array( 'role' => 'doctor' ) );
 	?>
@@ -1437,8 +1445,7 @@ function snks_enhanced_ai_sessions_page() {
 			<h3>Debug Information</h3>
 			<p><strong>AI Orders Found:</strong> <?php echo count($ai_orders); ?></p>
 			<p><strong>AI Sessions Processed:</strong> <?php echo count($ai_sessions); ?></p>
-			<p><strong>Regular Sessions Found:</strong> <?php echo count($regular_sessions); ?></p>
-			<p><strong>Total Sessions Displayed:</strong> <?php echo count($sessions); ?></p>
+			<p><strong>Total AI Sessions Displayed:</strong> <?php echo count($sessions); ?></p>
 			
 			<h4>Recent Orders (Last 10):</h4>
 			<ul>
