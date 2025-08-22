@@ -163,6 +163,14 @@ require_once SNKS_DIR . 'includes/transaction-table.php';
 require_once SNKS_DIR . 'includes/coupons-tables.php';
 require_once SNKS_DIR . 'includes/ai-tables.php';
 
+// Hook AI tables creation functions
+add_action( 'snks_create_ai_tables', 'snks_create_ai_tables' );
+add_action( 'snks_add_ai_meta_fields', 'snks_add_ai_meta_fields' );
+add_action( 'snks_create_enhanced_ai_tables', 'snks_create_enhanced_ai_tables' );
+add_action( 'snks_add_enhanced_ai_meta_fields', 'snks_add_enhanced_ai_meta_fields' );
+add_action( 'snks_add_enhanced_ai_user_meta_fields', 'snks_add_enhanced_ai_user_meta_fields' );
+add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' );
+
 // Add missing columns to existing installations
 if ( function_exists( 'snks_add_missing_therapist_diagnoses_columns' ) ) {
 	snks_add_missing_therapist_diagnoses_columns();
