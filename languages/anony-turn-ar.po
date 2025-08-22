@@ -148,3 +148,63 @@ msgstr "الحالة"
 
 msgid "Actions"
 msgstr "الإجراءات"
+
+msgid "Bulk Operations"
+msgstr "عمليات جماعية"
+
+msgid "First Session Percentage:"
+msgstr "نسبة الجلسة الأولى:"
+
+msgid "Subsequent Sessions Percentage:"
+msgstr "نسبة الجلسات اللاحقة:"
+
+msgid "Apply to Selected"
+msgstr "تطبيق على المحددين"
+
+msgid "Select All"
+msgstr "تحديد الكل"
+
+msgid "Deselect All"
+msgstr "إلغاء تحديد الكل"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "First Session Percentage (%)"
+msgstr "نسبة الجلسة الأولى (%)"
+
+msgid "Subsequent Sessions Percentage (%)"
+msgstr "نسبة الجلسات اللاحقة (%)"
+
+msgid "Subsequent Sessions"
+msgstr "الجلسات اللاحقة"
+
+msgid "Earnings by Therapist"
+msgstr "الأرباح حسب المعالج"
+
+msgid "First Sessions"
+msgstr "الجلسات الأولى"
+
+msgid "Average Profit per Session"
+msgstr "متوسط الربح للجلسة"
+
+msgid "Choose Therapist"
+msgstr "اختر المعالج"
+
+msgid "Balance:"
+msgstr "رصيد:"
+
+msgid "EGP"
+msgstr "ج.م"
+
+msgid "Please enter at least one percentage"
+msgstr "يرجى إدخال نسبة واحدة على الأقل"
+
+msgid "Please enter a session ID."
+msgstr "يرجى إدخال معرف الجلسة."
+
+msgid "Session processed successfully. Transaction ID:"
+msgstr "تمت معالجة الجلسة بنجاح. معرف المعاملة:"
+
+msgid "Session processing failed:"
+msgstr "فشلت معالجة الجلسة:"

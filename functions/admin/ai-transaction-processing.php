@@ -72,7 +72,7 @@ function snks_ai_transaction_processing_page() {
 				<div class="stat-box" style="background: #fff8f0; padding: 20px; border-radius: 8px; text-align: center;">
 					<h3 style="margin: 0 0 10px 0; color: #ff8c00;"><?php echo __( 'Total Earnings', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #ff8c00;">
-						<?php echo number_format( $stats['total_profit'], 2 ); ?> ج.م
+						<?php echo number_format( $stats['total_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 					</p>
 				</div>
 				<div class="stat-box" style="background: #f8f0ff; padding: 20px; border-radius: 8px; text-align: center;">
@@ -167,7 +167,7 @@ function snks_ai_transaction_processing_page() {
 						</th>
 						<td>
 							<select name="therapist_id" id="therapist_id">
-								<option value="">اختر المعالج</option>
+								<option value=""><?php echo __( 'Choose Therapist', 'anony-turn' ); ?></option>
 								<?php
 								$therapists = get_users( array( 'role' => 'doctor' ) );
 								foreach ( $therapists as $therapist ) {
@@ -175,7 +175,7 @@ function snks_ai_transaction_processing_page() {
 									if ( $balance > 0 ) {
 										echo '<option value="' . esc_attr( $therapist->ID ) . '">' . 
 											 esc_html( $therapist->display_name ) . 
-											 ' (رصيد: ' . number_format( $balance, 2 ) . ' ج.م)' . 
+											 							' (' . __( 'Balance:', 'anony-turn' ) . ' ' . number_format( $balance, 2 ) . ' ' . __( 'EGP', 'anony-turn' ) . ')' . 
 											 '</option>';
 									}
 								}
@@ -232,7 +232,7 @@ function snks_ai_transaction_processing_page() {
 							<th scope="col">المريض</th>
 							<th scope="col">نوع الجلسة</th>
 							<th scope="col">المبلغ</th>
-							<th scope="col">معرف الجلسة</th>
+							<th scope="col"><?php echo __( 'Session ID', 'anony-turn' ); ?></th>
 							<th scope="col">الحالة</th>
 						</tr>
 					</thead>
@@ -249,7 +249,7 @@ function snks_ai_transaction_processing_page() {
 								</td>
 								<td>
 									<strong style="color: #0073aa;">
-										<?php echo number_format( $transaction['amount'], 2 ); ?> ج.م
+										<?php echo number_format( $transaction['amount'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 									</strong>
 								</td>
 								<td><?php echo esc_html( $transaction['ai_session_id'] ); ?></td>
@@ -298,7 +298,7 @@ function snks_handle_session_processing() {
 	$session_id = sanitize_text_field( $_POST['session_id'] );
 	
 	if ( empty( $session_id ) ) {
-		echo '<div class="notice notice-error"><p>يرجى إدخال معرف الجلسة.</p></div>';
+		echo '<div class="notice notice-error"><p>' . __( 'Please enter a session ID.', 'anony-turn' ) . '</p></div>';
 		return;
 	}
 	
@@ -314,9 +314,9 @@ function snks_handle_session_processing() {
 	$result = snks_process_ai_session_completion( $session_id );
 	
 	if ( $result['success'] ) {
-		echo '<div class="notice notice-success"><p>تمت معالجة الجلسة بنجاح. معرف المعاملة: ' . esc_html( $result['transaction_id'] ) . '</p></div>';
+		echo '<div class="notice notice-success"><p>' . __( 'Session processed successfully. Transaction ID:', 'anony-turn' ) . ' ' . esc_html( $result['transaction_id'] ) . '</p></div>';
 	} else {
-		echo '<div class="notice notice-error"><p>فشلت معالجة الجلسة: ' . esc_html( $result['message'] ) . '</p></div>';
+		echo '<div class="notice notice-error"><p>' . __( 'Session processing failed:', 'anony-turn' ) . ' ' . esc_html( $result['message'] ) . '</p></div>';
 	}
 }
 

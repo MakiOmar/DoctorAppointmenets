@@ -106,17 +106,17 @@ function snks_profit_settings_page() {
 			
 			<!-- Bulk Operations -->
 			<div class="bulk-operations" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
-				<h3>عمليات جماعية</h3>
+				<h3><?php echo __( 'Bulk Operations', 'anony-turn' ); ?></h3>
 				<form method="post" action="" id="bulk-settings-form">
-					<label for="bulk_first_percentage">نسبة الجلسة الأولى:</label>
+					<label for="bulk_first_percentage"><?php echo __( 'First Session Percentage:', 'anony-turn' ); ?></label>
 					<input type="number" id="bulk_first_percentage" name="bulk_first_percentage" step="0.01" min="0" max="100" style="width: 100px;" />
 					
-					<label for="bulk_subsequent_percentage" style="margin-left: 20px;">نسبة الجلسات اللاحقة:</label>
+					<label for="bulk_subsequent_percentage" style="margin-left: 20px;"><?php echo __( 'Subsequent Sessions Percentage:', 'anony-turn' ); ?></label>
 					<input type="number" id="bulk_subsequent_percentage" name="bulk_subsequent_percentage" step="0.01" min="0" max="100" style="width: 100px;" />
 					
-					<button type="button" class="button" onclick="applyBulkSettings()">تطبيق على المحددين</button>
-					<button type="button" class="button" onclick="selectAllTherapists()">تحديد الكل</button>
-					<button type="button" class="button" onclick="deselectAllTherapists()">إلغاء تحديد الكل</button>
+					<button type="button" class="button" onclick="applyBulkSettings()"><?php echo __( 'Apply to Selected', 'anony-turn' ); ?></button>
+					<button type="button" class="button" onclick="selectAllTherapists()"><?php echo __( 'Select All', 'anony-turn' ); ?></button>
+					<button type="button" class="button" onclick="deselectAllTherapists()"><?php echo __( 'Deselect All', 'anony-turn' ); ?></button>
 				</form>
 			</div>
 			
@@ -128,10 +128,10 @@ function snks_profit_settings_page() {
 							<th scope="col" class="manage-column column-cb check-column">
 								<input type="checkbox" id="select-all-therapists" />
 							</th>
-							<th scope="col">المعالج</th>
-							<th scope="col">البريد الإلكتروني</th>
-							<th scope="col">نسبة الجلسة الأولى (%)</th>
-							<th scope="col">نسبة الجلسات اللاحقة (%)</th>
+							<th scope="col"><?php echo __( 'Therapist', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Email', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'First Session Percentage (%)', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Subsequent Sessions Percentage (%)', 'anony-turn' ); ?></th>
 							<th scope="col">الحالة</th>
 							<th scope="col">آخر تحديث</th>
 						</tr>
@@ -242,7 +242,7 @@ function snks_profit_settings_page() {
 		}
 		
 		if (!firstPercentage && !subsequentPercentage) {
-			alert('يرجى إدخال نسبة واحدة على الأقل');
+			alert('<?php echo __( 'Please enter at least one percentage', 'anony-turn' ); ?>');
 			return;
 		}
 		

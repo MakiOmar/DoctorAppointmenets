@@ -126,7 +126,7 @@ function snks_therapist_earnings_page() {
 				<div class="stat-box" style="background: #f0f8ff; padding: 20px; border-radius: 8px; text-align: center;">
 					<h3 style="margin: 0 0 10px 0; color: #0073aa;"><?php echo __( 'Total Earnings', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #0073aa;">
-						<?php echo number_format( $earnings_data['summary']['total_profit'], 2 ); ?> ج.م
+						<?php echo number_format( $earnings_data['summary']['total_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 					</p>
 				</div>
 				<div class="stat-box" style="background: #f0fff0; padding: 20px; border-radius: 8px; text-align: center;">
@@ -142,7 +142,7 @@ function snks_therapist_earnings_page() {
 					</p>
 				</div>
 				<div class="stat-box" style="background: #f8f0ff; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #9932cc;">الجلسات اللاحقة</h3>
+					<h3 style="margin: 0 0 10px 0; color: #9932cc;"><?php echo __( 'Subsequent Sessions', 'anony-turn' ); ?></h3>
 					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #9932cc;">
 						<?php echo $earnings_data['summary']['subsequent_sessions']; ?>
 					</p>
@@ -152,20 +152,20 @@ function snks_therapist_earnings_page() {
 		
 		<!-- Earnings by Therapist -->
 		<div class="card">
-			<h2>الأرباح حسب المعالج</h2>
+			<h2><?php echo __( 'Earnings by Therapist', 'anony-turn' ); ?></h2>
 			<?php if ( empty( $earnings_data['by_therapist'] ) ) : ?>
 				<p>لا توجد بيانات أرباح للفترة المحددة.</p>
 			<?php else : ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
-							<th scope="col">المعالج</th>
-							<th scope="col">البريد الإلكتروني</th>
-							<th scope="col">إجمالي الأرباح</th>
-							<th scope="col">الجلسات الأولى</th>
-							<th scope="col">الجلسات اللاحقة</th>
-							<th scope="col">إجمالي الجلسات</th>
-							<th scope="col">متوسط الربح للجلسة</th>
+							<th scope="col"><?php echo __( 'Therapist', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Email', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Total Earnings', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'First Sessions', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Subsequent Sessions', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Total Sessions', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Average Profit per Session', 'anony-turn' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -177,7 +177,7 @@ function snks_therapist_earnings_page() {
 								<td><?php echo esc_html( $therapist_earnings['therapist_email'] ); ?></td>
 								<td>
 									<strong style="color: #0073aa;">
-										<?php echo number_format( $therapist_earnings['total_profit'], 2 ); ?> ج.م
+										<?php echo number_format( $therapist_earnings['total_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 									</strong>
 								</td>
 								<td><?php echo $therapist_earnings['first_sessions']; ?></td>
@@ -188,7 +188,7 @@ function snks_therapist_earnings_page() {
 									$avg_profit = $therapist_earnings['total_sessions'] > 0 
 										? $therapist_earnings['total_profit'] / $therapist_earnings['total_sessions'] 
 										: 0;
-									echo number_format( $avg_profit, 2 ) . ' ج.م';
+									echo number_format( $avg_profit, 2 ) . ' ' . __( 'EGP', 'anony-turn' );
 									?>
 								</td>
 							</tr>
@@ -228,10 +228,10 @@ function snks_therapist_earnings_page() {
 										<?php echo $transaction['session_type'] === 'first' ? 'أولى' : 'لاحقة'; ?>
 									</span>
 								</td>
-								<td><?php echo number_format( $transaction['session_amount'], 2 ); ?> ج.م</td>
+								<td><?php echo number_format( $transaction['session_amount'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></td>
 								<td>
 									<strong style="color: #0073aa;">
-										<?php echo number_format( $transaction['profit_amount'], 2 ); ?> ج.م
+										<?php echo number_format( $transaction['profit_amount'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 									</strong>
 								</td>
 								<td><?php echo esc_html( $transaction['session_id'] ); ?></td>
