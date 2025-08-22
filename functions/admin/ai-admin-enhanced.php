@@ -463,6 +463,11 @@ function snks_enhanced_ai_admin_page() {
 	$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'dashboard';
 	$current_subtab = isset( $_GET['subtab'] ) ? sanitize_text_field( $_GET['subtab'] ) : '';
 	
+	// Set default subtab for financial tab
+	if ( $current_tab === 'financial' && empty( $current_subtab ) ) {
+		$current_subtab = 'profit-settings';
+	}
+	
 	// Define main tabs
 	$main_tabs = array(
 		'dashboard' => array(
@@ -747,6 +752,9 @@ function snks_render_core_tab( $subtab ) {
  * Render Financial Management Tab
  */
 function snks_render_financial_tab( $subtab ) {
+	// Debug info
+	echo '<div class="notice notice-info"><p>Debug: Current subtab is: <strong>' . esc_html($subtab) . '</strong></p></div>';
+	
 	switch ( $subtab ) {
 		case 'profit-settings':
 			// Include the profit settings page content directly
@@ -803,6 +811,7 @@ function snks_render_financial_tab( $subtab ) {
 			echo '</div>';
 			break;
 			
+		case '':
 		default:
 			echo '<div class="card"><h2>Financial Management</h2>';
 			echo '<p>Please select a sub-tab to manage financial features:</p>';
@@ -812,6 +821,7 @@ function snks_render_financial_tab( $subtab ) {
 			echo '<li><strong>معالجة المعاملات:</strong> Process withdrawals and manage transactions</li>';
 			echo '<li><strong>Coupons:</strong> Manage discount codes and promotions</li>';
 			echo '</ul>';
+			echo '<div class="notice notice-warning"><p>No subtab selected. Please click on one of the sub-tabs above.</p></div>';
 			echo '</div>';
 			break;
 	}
