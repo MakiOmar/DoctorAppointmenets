@@ -1265,15 +1265,33 @@ function snks_enhanced_ai_sessions_page() {
 	// First, let's get AI sessions from WooCommerce orders
 	$ai_orders_query = "
 		SELECT o.ID as order_id, o.status as order_status, o.date_created,
-		       o.meta_value as ai_sessions_json
+		       om.meta_value as from_jalsah_ai_value
 		FROM {$wpdb->prefix}wc_orders o
 		INNER JOIN {$wpdb->prefix}wc_orders_meta om ON o.id = om.order_id
-		WHERE om.meta_key = 'from_jalsah_ai' AND om.meta_value = '1'
+		WHERE om.meta_key = 'from_jalsah_ai' 
+		AND (om.meta_value = '1' OR om.meta_value = 'true' OR om.meta_value = 'yes')
 		ORDER BY o.date_created DESC
 		LIMIT 100
 	";
 	
 	$ai_orders = $wpdb->get_results( $ai_orders_query );
+	
+	// Debug: Let's also check what meta keys exist for orders
+	$all_meta_keys = $wpdb->get_results( "
+		SELECT DISTINCT meta_key, meta_value, COUNT(*) as count
+		FROM {$wpdb->prefix}wc_orders_meta 
+		WHERE meta_key LIKE '%ai%' OR meta_key LIKE '%jalsah%'
+		GROUP BY meta_key, meta_value
+		ORDER BY meta_key, meta_value
+	" );
+	
+	// Debug: Check recent orders
+	$recent_orders = $wpdb->get_results( "
+		SELECT o.ID, o.status, o.date_created
+		FROM {$wpdb->prefix}wc_orders o
+		ORDER BY o.date_created DESC
+		LIMIT 10
+	" );
 	
 	// Process AI sessions from orders
 	$ai_sessions = array();
@@ -1357,11 +1375,29 @@ function snks_enhanced_ai_sessions_page() {
 			<p><strong>Regular Sessions Found:</strong> <?php echo count($regular_sessions); ?></p>
 			<p><strong>Total Sessions Displayed:</strong> <?php echo count($sessions); ?></p>
 			
+			<h4>Recent Orders (Last 10):</h4>
+			<ul>
+				<?php foreach ( $recent_orders as $order ) : ?>
+					<li>Order #<?php echo $order->ID; ?> - Status: <?php echo $order->status; ?> - Date: <?php echo $order->date_created; ?></li>
+				<?php endforeach; ?>
+			</ul>
+			
+			<h4>AI-Related Meta Keys:</h4>
+			<?php if ( count($all_meta_keys) > 0 ) : ?>
+				<ul>
+					<?php foreach ( $all_meta_keys as $meta ) : ?>
+						<li><strong><?php echo $meta->meta_key; ?></strong> = "<?php echo $meta->meta_value; ?>" (<?php echo $meta->count; ?> times)</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php else : ?>
+				<p>No AI-related meta keys found.</p>
+			<?php endif; ?>
+			
 			<?php if ( count($ai_orders) > 0 ) : ?>
-				<h4>AI Orders:</h4>
+				<h4>AI Orders Found:</h4>
 				<ul>
 					<?php foreach ( array_slice($ai_orders, 0, 5) as $order ) : ?>
-						<li>Order #<?php echo $order->order_id; ?> - Status: <?php echo $order->order_status; ?> - Date: <?php echo $order->date_created; ?></li>
+						<li>Order #<?php echo $order->order_id; ?> - Status: <?php echo $order->order_status; ?> - Date: <?php echo $order->date_created; ?> - AI Flag: <?php echo $order->from_jalsah_ai_value; ?></li>
 					<?php endforeach; ?>
 				</ul>
 			<?php endif; ?>
