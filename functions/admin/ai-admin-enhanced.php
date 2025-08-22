@@ -26,6 +26,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		30
 	);
 
+	// ===== MAIN DASHBOARD =====
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Dashboard',
@@ -35,6 +36,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_admin_page'
 	);
 
+	// ===== CORE MANAGEMENT =====
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Diagnoses',
@@ -62,6 +64,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_sessions_page'
 	);
 
+	// ===== FINANCIAL MANAGEMENT =====
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Coupons',
@@ -71,6 +74,35 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_coupons_page'
 	);
 
+	// AI Profit Transfer System
+	add_submenu_page(
+		'jalsah-ai-management',
+		'إعدادات الأرباح',
+		'إعدادات الأرباح',
+		'manage_options',
+		'profit-settings',
+		'snks_profit_settings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'أرباح المعالجين',
+		'أرباح المعالجين',
+		'manage_options',
+		'therapist-earnings',
+		'snks_therapist_earnings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'معالجة المعاملات',
+		'معالجة المعاملات',
+		'manage_options',
+		'ai-transaction-processing',
+		'snks_ai_transaction_processing_page'
+	);
+
+	// ===== ANALYTICS & REPORTS =====
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Analytics',
@@ -80,6 +112,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_analytics_page'
 	);
 
+	// ===== INTEGRATIONS =====
 	add_submenu_page(
 		'jalsah-ai-management',
 		'ChatGPT Integration',
@@ -100,15 +133,6 @@ function snks_add_enhanced_ai_admin_menu() {
 	
 	add_submenu_page(
 		'jalsah-ai-management',
-		'API Test',
-		'API Test',
-		'manage_options',
-		'jalsah-ai-api-test',
-		'snks_ai_api_test_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
 		'Rochtah Integration',
 		'Rochtah',
 		'manage_options',
@@ -116,6 +140,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_rochtah_page'
 	);
 
+	// ===== SETTINGS & CONFIGURATION =====
 	add_submenu_page(
 		'jalsah-ai-management',
 		'General Settings',
@@ -132,6 +157,16 @@ function snks_add_enhanced_ai_admin_menu() {
 		'manage_options',
 		'jalsah-ai-email',
 		'snks_enhanced_ai_email_page'
+	);
+
+	// ===== ADMIN TOOLS =====
+	add_submenu_page(
+		'jalsah-ai-management',
+		'API Test',
+		'API Test',
+		'manage_options',
+		'jalsah-ai-api-test',
+		'snks_ai_api_test_page'
 	);
 
 	add_submenu_page(
@@ -161,6 +196,7 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_arabic_diagnoses_page'
 	);
 	
+	// ===== ROCHTAH DOCTOR MANAGEMENT =====
 	// Add Rochtah Doctor Dashboard (only for Rochtah doctors and admins)
 	add_submenu_page(
 		'jalsah-ai-management',
@@ -180,37 +216,145 @@ function snks_add_enhanced_ai_admin_menu() {
 		'rochtah-doctor-management',
 		'snks_rochtah_doctor_management'
 	);
-	
-	// Add AI Profit Transfer System pages
-	add_submenu_page(
-		'jalsah-ai-management',
-		'إعدادات الأرباح',
-		'إعدادات الأرباح',
-		'manage_options',
-		'profit-settings',
-		'snks_profit_settings_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'أرباح المعالجين',
-		'أرباح المعالجين',
-		'manage_options',
-		'therapist-earnings',
-		'snks_therapist_earnings_page'
-	);
-	
-	add_submenu_page(
-		'jalsah-ai-management',
-		'معالجة المعاملات',
-		'معالجة المعاملات',
-		'manage_options',
-		'ai-transaction-processing',
-		'snks_ai_transaction_processing_page'
-	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
+
+/**
+ * Add custom CSS for menu organization
+ */
+add_action( 'admin_head', 'snks_ai_admin_menu_styles' );
+function snks_ai_admin_menu_styles() {
+	?>
+	<style>
+	/* Menu organization styles */
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-management"] {
+		position: relative;
+	}
+	
+	/* Add subtle separators between groups */
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-analytics"] {
+		border-bottom: 1px solid #e1e1e1;
+		margin-bottom: 5px;
+		padding-bottom: 8px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-rochtah"] {
+		border-bottom: 1px solid #e1e1e1;
+		margin-bottom: 5px;
+		padding-bottom: 8px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-email"] {
+		border-bottom: 1px solid #e1e1e1;
+		margin-bottom: 5px;
+		padding-bottom: 8px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-tools"] {
+		border-bottom: 1px solid #e1e1e1;
+		margin-bottom: 5px;
+		padding-bottom: 8px;
+	}
+	
+	/* Highlight important sections */
+	#adminmenu .wp-submenu li a[href*="profit-settings"],
+	#adminmenu .wp-submenu li a[href*="therapist-earnings"],
+	#adminmenu .wp-submenu li a[href*="ai-transaction-processing"] {
+		font-weight: 600;
+		color: #0073aa;
+	}
+	
+	/* Add icons to menu items */
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-diagnoses"]::before {
+		content: "📋 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-applications"]::before {
+		content: "👥 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-sessions"]::before {
+		content: "📅 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="profit-settings"]::before {
+		content: "💰 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="therapist-earnings"]::before {
+		content: "📊 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="ai-transaction-processing"]::before {
+		content: "💳 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-analytics"]::before {
+		content: "📈 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-chatgpt"]::before {
+		content: "🤖 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-whatsapp"]::before {
+		content: "📱 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-rochtah"]::before {
+		content: "🏥 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-settings"]::before {
+		content: "⚙️ ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-email"]::before {
+		content: "📧 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-api-test"]::before {
+		content: "🔧 ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="jalsah-ai-tools"]::before {
+		content: "🛠️ ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="rochtah-doctor-dashboard"]::before {
+		content: "👨‍⚕️ ";
+		margin-right: 5px;
+	}
+	
+	#adminmenu .wp-submenu li a[href*="rochtah-doctor-management"]::before {
+		content: "👥 ";
+		margin-right: 5px;
+	}
+	
+	/* Responsive adjustments */
+	@media (max-width: 960px) {
+		#adminmenu .wp-submenu li a::before {
+			display: none;
+		}
+	}
+	</style>
+	<?php
+}
 
 /**
  * Load AI Admin Styles
