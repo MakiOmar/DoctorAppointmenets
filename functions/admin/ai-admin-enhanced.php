@@ -1229,7 +1229,6 @@ function snks_enhanced_ai_sessions_page() {
 	}
 	
 	// Get filter parameters
-	$filter_ai_only = isset( $_GET['ai_only'] ) ? $_GET['ai_only'] : '';
 	$filter_attendance = isset( $_GET['attendance'] ) ? $_GET['attendance'] : '';
 	$filter_therapist = isset( $_GET['therapist'] ) ? intval( $_GET['therapist'] ) : 0;
 	$filter_date = isset( $_GET['date'] ) ? sanitize_text_field( $_GET['date'] ) : '';
@@ -1237,10 +1236,6 @@ function snks_enhanced_ai_sessions_page() {
 	// Build query
 	$where_conditions = array();
 	$where_values = array();
-	
-	if ( $filter_ai_only ) {
-		$where_conditions[] = "o.from_jalsah_ai = 1";
-	}
 	
 	if ( $filter_attendance ) {
 		$where_conditions[] = "sa.attendance = %s";
@@ -1426,11 +1421,6 @@ function snks_enhanced_ai_sessions_page() {
 			<h2>Filters</h2>
 			<form method="get" class="filters-form">
 				<input type="hidden" name="page" value="jalsah-ai-sessions">
-				
-				<label>
-					<input type="checkbox" name="ai_only" value="1" <?php checked( $filter_ai_only, '1' ); ?>>
-					AI Sessions Only
-				</label>
 				
 				<label>
 					Attendance Status:
