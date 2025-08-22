@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_add_ai_transaction_processing_menu() {
 	add_submenu_page(
-		'jalsah-ai-admin',
+		'jalsah-ai-management',
 		'معالجة المعاملات',
 		'معالجة المعاملات',
 		'manage_options',

@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_add_profit_settings_menu() {
 	add_submenu_page(
-		'jalsah-ai-admin',
+		'jalsah-ai-management',
 		'إعدادات الأرباح',
 		'إعدادات الأرباح',
 		'manage_options',

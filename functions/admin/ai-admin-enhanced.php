@@ -180,6 +180,34 @@ function snks_add_enhanced_ai_admin_menu() {
 		'rochtah-doctor-management',
 		'snks_rochtah_doctor_management'
 	);
+	
+	// Add AI Profit Transfer System pages
+	add_submenu_page(
+		'jalsah-ai-management',
+		'إعدادات الأرباح',
+		'إعدادات الأرباح',
+		'manage_options',
+		'profit-settings',
+		'snks_profit_settings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'أرباح المعالجين',
+		'أرباح المعالجين',
+		'manage_options',
+		'therapist-earnings',
+		'snks_therapist_earnings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'معالجة المعاملات',
+		'معالجة المعاملات',
+		'manage_options',
+		'ai-transaction-processing',
+		'snks_ai_transaction_processing_page'
+	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
