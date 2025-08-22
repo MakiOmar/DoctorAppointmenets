@@ -51,6 +51,18 @@ function snks_create_ai_tables() {
 	
 	// Add some default diagnoses
 	snks_add_default_diagnoses();
+	
+	// Create AI profit settings table
+	snks_create_ai_profit_settings_table();
+	
+	// Add AI session type column to sessions_actions table
+	snks_add_ai_session_type_column();
+	
+	// Add AI session metadata columns to booking_transactions table
+	snks_add_ai_transaction_metadata_columns();
+	
+	// Add default profit settings for existing therapists
+	snks_add_default_profit_settings();
 }
 
 /**
@@ -121,6 +133,146 @@ function snks_add_ai_meta_fields() {
 	
 	if ( empty( $column_exists ) ) {
 		$wpdb->query( "ALTER TABLE $orders_table ADD COLUMN from_jalsah_ai TINYINT(1) DEFAULT 0" );
+	}
+}
+
+/**
+ * Create AI profit settings table
+ */
+function snks_create_ai_profit_settings_table() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'snks_ai_profit_settings';
+	$collate = $wpdb->get_charset_collate();
+	
+	$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+		id INT(11) NOT NULL AUTO_INCREMENT,
+		therapist_id INT(11) NOT NULL,
+		first_session_percentage DECIMAL(5,2) DEFAULT 70.00,
+		subsequent_session_percentage DECIMAL(5,2) DEFAULT 75.00,
+		is_active BOOLEAN DEFAULT TRUE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		UNIQUE KEY unique_therapist (therapist_id),
+		FOREIGN KEY (therapist_id) REFERENCES {$wpdb->users}(ID) ON DELETE CASCADE
+	) $collate";
+	
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	dbDelta( $sql );
+}
+
+/**
+ * Add AI session type column to sessions_actions table
+ */
+function snks_add_ai_session_type_column() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'snks_sessions_actions';
+	
+	// Check if column exists
+	$column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$table_name,
+		'ai_session_type',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN ai_session_type ENUM('first', 'subsequent') DEFAULT 'first'" );
+	}
+	
+	// Add therapist_id and patient_id columns if they don't exist
+	$therapist_column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$table_name,
+		'therapist_id',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $therapist_column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN therapist_id INT(11) DEFAULT NULL" );
+	}
+	
+	$patient_column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$table_name,
+		'patient_id',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $patient_column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN patient_id INT(11) DEFAULT NULL" );
+	}
+}
+
+/**
+ * Add AI session metadata columns to booking_transactions table
+ */
+function snks_add_ai_transaction_metadata_columns() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'snks_booking_transactions';
+	
+	// Add AI session metadata columns if they don't exist
+	$columns_to_add = array(
+		'ai_session_id' => 'INT(11) DEFAULT NULL',
+		'ai_session_type' => "ENUM('first', 'subsequent') DEFAULT NULL",
+		'ai_patient_id' => 'INT(11) DEFAULT NULL',
+		'ai_order_id' => 'INT(11) DEFAULT NULL'
+	);
+	
+	foreach ( $columns_to_add as $column_name => $column_definition ) {
+		$column_exists = $wpdb->get_results( $wpdb->prepare(
+			"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+			WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+			$table_name,
+			$column_name,
+			$wpdb->dbname
+		) );
+		
+		if ( empty( $column_exists ) ) {
+			$wpdb->query( "ALTER TABLE $table_name ADD COLUMN $column_name $column_definition" );
+		}
+	}
+}
+
+/**
+ * Add default profit settings for existing therapists
+ */
+function snks_add_default_profit_settings() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'snks_ai_profit_settings';
+	
+	// Get all users with doctor role
+	$doctors = get_users( array(
+		'role' => 'doctor',
+		'fields' => 'ID'
+	) );
+	
+	foreach ( $doctors as $doctor_id ) {
+		// Check if profit settings already exist for this therapist
+		$exists = $wpdb->get_var( $wpdb->prepare(
+			"SELECT id FROM $table_name WHERE therapist_id = %d",
+			$doctor_id
+		) );
+		
+		if ( ! $exists ) {
+			$wpdb->insert(
+				$table_name,
+				array(
+					'therapist_id' => $doctor_id,
+					'first_session_percentage' => 70.00,
+					'subsequent_session_percentage' => 75.00,
+					'is_active' => 1
+				),
+				array( '%d', '%f', '%f', '%d' )
+			);
+		}
 	}
 }
 
