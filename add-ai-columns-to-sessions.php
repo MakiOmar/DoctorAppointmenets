@@ -46,11 +46,8 @@ if ($table_exists) {
         echo "</ul>";
     }
     
-    // Define required AI columns
+    // Define required AI columns (only missing ones)
     $required_columns = array(
-        'therapist_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL',
-        'patient_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL',
-        'ai_session_type' => 'VARCHAR(20) DEFAULT NULL',
         'session_status' => 'VARCHAR(20) DEFAULT "open"',
         'created_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
         'updated_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'

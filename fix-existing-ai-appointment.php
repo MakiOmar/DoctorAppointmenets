@@ -212,17 +212,20 @@ if ($existing_session) {
         echo "</ul>";
     }
     
-    // Create basic session data with only existing columns
+    // Create session data with all available AI columns
     $session_data = array(
         'action_session_id' => $appointment_id,
         'case_id' => $order->order_id,
-        'attendance' => 'yes'
+        'attendance' => 'yes',
+        'ai_session_type' => 'first',
+        'therapist_id' => $therapist_id,
+        'patient_id' => $order->patient_id
     );
     
     $result = $wpdb->insert(
         $wpdb->prefix . 'snks_sessions_actions',
         $session_data,
-        array('%s', '%d', '%s')
+        array('%s', '%d', '%s', '%s', '%d', '%d')
     );
     
     if ($result) {
