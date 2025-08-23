@@ -52,7 +52,7 @@ $required_columns = [
     'patient_id'
 ];
 
-$table_name = $wpds_snks_sessions_actions;
+$table_name = 'wpds_snks_sessions_actions';
 foreach ($required_columns as $column) {
     $exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE '$column'") !== null;
     $class = $exists ? 'test-pass' : 'test-fail';
@@ -69,7 +69,7 @@ $required_columns = [
     'ai_order_id'
 ];
 
-$table_name = $wpds_snks_booking_transactions;
+$table_name = 'wpds_snks_booking_transactions';
 foreach ($required_columns as $column) {
     $exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE '$column'") !== null;
     $class = $exists ? 'test-pass' : 'test-fail';
