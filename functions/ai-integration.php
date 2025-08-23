@@ -4146,8 +4146,11 @@ function snks_handle_ai_order_completion( $order_id ) {
 		return;
 	}
 	
-	// Check if this is an AI order
-	if ( ! $order->get_meta( 'from_jalsah_ai' ) ) {
+	// Check if this is an AI order (support both meta keys)
+	$is_ai_session = $order->get_meta( 'is_ai_session' );
+	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	
+	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
 		return;
 	}
 	
@@ -4353,3 +4356,83 @@ function snks_ai_session_completion_notification( $session_id, $profit_result ) 
 		$profit_result['success'] ? number_format( $profit_result['profit_amount'], 2 ) . ' ج.م' : 'Failed'
 	) );
 }
+
+/**
+ * Create session action record for AI appointment
+ */
+function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_id, $patient_id ) {
+	global $wpdb;
+	
+	// Check if session action already exists
+	$existing = $wpdb->get_var( $wpdb->prepare(
+		"SELECT id FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
+		$appointment_id
+	) );
+	
+	if ( $existing ) {
+		error_log( "AI Session Action already exists for appointment ID: {$appointment_id}" );
+		return $existing;
+	}
+	
+	// Create session action record
+	$session_data = array(
+		'action_session_id' => $appointment_id,
+		'case_id' => $order_id,
+		'therapist_id' => $therapist_id,
+		'patient_id' => $patient_id,
+		'ai_session_type' => 'first', // Will be updated when profit is calculated
+		'session_status' => 'open',
+		'attendance' => 'pending',
+		'created_at' => current_time( 'mysql' )
+	);
+	
+	$result = $wpdb->insert(
+		$wpdb->prefix . 'snks_sessions_actions',
+		$session_data,
+		array( '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
+	);
+	
+	if ( $result ) {
+		error_log( "AI Session Action created: Appointment ID {$appointment_id}, Session Action ID {$wpdb->insert_id}" );
+		return $wpdb->insert_id;
+	} else {
+		error_log( "Failed to create AI Session Action for appointment ID: {$appointment_id}" );
+		return false;
+	}
+}
+
+/**
+ * Hook into appointment creation for AI sessions
+ */
+function snks_handle_ai_appointment_creation( $appointment_id, $appointment_data ) {
+	// Check if this is an AI appointment
+	if ( empty( $appointment_data['is_ai_session'] ) || ! $appointment_data['is_ai_session'] ) {
+		return;
+	}
+	
+	error_log( "AI Appointment Creation Hook: Appointment ID {$appointment_id}" );
+	
+	// Get order ID from appointment
+	$order_id = $appointment_data['order_id'] ?? 0;
+	$therapist_id = $appointment_data['therapist_id'] ?? 0;
+	$patient_id = $appointment_data['patient_id'] ?? 0;
+	
+	if ( $order_id && $therapist_id && $patient_id ) {
+		// Create session action record
+		$session_action_id = snks_create_ai_session_action( $appointment_id, $order_id, $therapist_id, $patient_id );
+		
+		if ( $session_action_id ) {
+			// Update order meta with session ID
+			$order = wc_get_order( $order_id );
+			if ( $order ) {
+				$order->update_meta_data( 'ai_session_id', $appointment_id );
+				$order->update_meta_data( 'ai_therapist_id', $therapist_id );
+				$order->update_meta_data( 'ai_user_id', $patient_id );
+				$order->save();
+			}
+		}
+	}
+}
+
+// Hook into appointment creation
+add_action( 'snks_appointment_created', 'snks_handle_ai_appointment_creation', 10, 2 );
