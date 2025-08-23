@@ -206,7 +206,7 @@ if ($existing_session) {
         'patient_id' => $order->patient_id,
         'ai_session_type' => 'first', // Will be updated when profit is calculated
         'session_status' => 'open',
-        'attendance' => 'pending',
+        'attendance' => 'yes', // Use shorter value to avoid VARCHAR(3) limit
         'created_at' => current_time('mysql')
     );
     
