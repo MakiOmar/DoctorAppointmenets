@@ -4140,47 +4140,31 @@ function snks_handle_ai_session_completion() {
  * Handle AI order completion from WooCommerce
  */
 function snks_handle_ai_order_completion( $order_id ) {
-	error_log( "🔍 AI Order Completion Debug: Hook triggered for order_id = {$order_id}" );
-	
 	$order = wc_get_order( $order_id );
 	
 	if ( ! $order ) {
-		error_log( "❌ AI Order Completion Debug: Order not found for order_id = {$order_id}" );
 		return;
 	}
-	
-	error_log( "🔍 AI Order Completion Debug: Order found, checking meta keys" );
 	
 	// Check if this is an AI order (support both meta keys)
 	$is_ai_session = $order->get_meta( 'is_ai_session' );
 	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
 	
-	error_log( "🔍 AI Order Completion Debug: Order meta - is_ai_session = " . ( $is_ai_session ? 'Yes' : 'No' ) . ", from_jalsah_ai = " . ( $from_jalsah_ai ? 'Yes' : 'No' ) );
-	
 	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
-		error_log( "❌ AI Order Completion Debug: Not an AI order, exiting" );
 		return;
 	}
 	
-	error_log( "✅ AI Order Completion Debug: Confirmed AI order, proceeding with profit transfer" );
-	
 	// Get session ID from order meta
 	$session_id = $order->get_meta( 'ai_session_id' );
-	error_log( "🔍 AI Order Completion Debug: Session ID from order meta = " . ( $session_id ?: 'Not set' ) );
 	
 	if ( ! empty( $session_id ) ) {
-		error_log( "🔍 AI Order Completion Debug: Calling snks_execute_ai_profit_transfer with session_id = {$session_id}" );
-		
 		// Trigger profit calculation
 		$result = snks_execute_ai_profit_transfer( $session_id );
 		
 		if ( $result['success'] ) {
-			error_log( "✅ AI Profit Transfer from Order: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
-		} else {
-			error_log( "❌ AI Profit Transfer from Order Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+			// Log successful profit transfer
+			error_log( "AI Profit Transfer: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
 		}
-	} else {
-		error_log( "❌ AI Order Completion Debug: No session ID found in order meta" );
 	}
 }
 
@@ -4195,15 +4179,11 @@ function snks_handle_session_action_update( $session_id, $action_data ) {
 	
 	// Check if session status changed to completed
 	if ( isset( $action_data['session_status'] ) && $action_data['session_status'] === 'completed' ) {
-		error_log( "AI Session Status Update: Session ID {$session_id} marked as completed" );
-		
 		// Trigger profit calculation
 		$result = snks_execute_ai_profit_transfer( $session_id );
 		
 		if ( $result['success'] ) {
-			error_log( "AI Profit Transfer from Status Update: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
-		} else {
-			error_log( "AI Profit Transfer from Status Update Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+			error_log( "AI Profit Transfer: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
 		}
 	}
 }
@@ -4420,8 +4400,6 @@ function snks_handle_ai_appointment_creation( $appointment_id, $appointment_data
 		return;
 	}
 	
-	error_log( "AI Appointment Creation Hook: Appointment ID {$appointment_id}" );
-	
 	// Get order ID from appointment
 	$order_id = $appointment_data['order_id'] ?? 0;
 	$therapist_id = $appointment_data['therapist_id'] ?? 0;
@@ -4432,31 +4410,14 @@ function snks_handle_ai_appointment_creation( $appointment_id, $appointment_data
 		$session_action_id = snks_create_ai_session_action( $appointment_id, $order_id, $therapist_id, $patient_id );
 		
 		if ( $session_action_id ) {
-			error_log( "AI Appointment Creation: Session action created with ID {$session_action_id}" );
-			
 			// Update order meta with session ID
 			$order = wc_get_order( $order_id );
 			if ( $order ) {
-				error_log( "AI Appointment Creation: Updating order meta for order {$order_id}" );
-				error_log( "AI Appointment Creation: Setting ai_session_id = {$appointment_id}" );
-				error_log( "AI Appointment Creation: Setting ai_therapist_id = {$therapist_id}" );
-				error_log( "AI Appointment Creation: Setting ai_user_id = {$patient_id}" );
-				
 				$order->update_meta_data( 'ai_session_id', $appointment_id );
 				$order->update_meta_data( 'ai_therapist_id', $therapist_id );
 				$order->update_meta_data( 'ai_user_id', $patient_id );
-				$save_result = $order->save();
-				
-				error_log( "AI Appointment Creation: Order save result = " . ($save_result ? 'Success' : 'Failed') );
-				
-				// Verify the meta was saved
-				$saved_session_id = $order->get_meta( 'ai_session_id' );
-				error_log( "AI Appointment Creation: Verified ai_session_id = " . ($saved_session_id ?: 'Not set') );
-			} else {
-				error_log( "AI Appointment Creation: Failed to get order {$order_id}" );
+				$order->save();
 			}
-		} else {
-			error_log( "AI Appointment Creation: Failed to create session action" );
 		}
 	}
 }
