@@ -51,31 +51,80 @@ global $wpdb;
 echo "<div class='result info'>";
 echo "<h3>Step 1: Finding the order...</h3>";
 
-$order_query = $wpdb->prepare(
+// First, try to find the specific order ID 2412
+$specific_order = $wpdb->get_row($wpdb->prepare(
     "SELECT p.ID as order_id, p.post_status, pm.meta_value as patient_id
      FROM {$wpdb->posts} p
      LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_customer_user'
-     WHERE p.post_type = 'shop_order'
-     AND EXISTS (
-         SELECT 1 FROM {$wpdb->postmeta} pm2 
-         WHERE pm2.post_id = p.ID 
-         AND pm2.meta_key = 'is_ai_session' 
-         AND pm2.meta_value = '1'
-     )
-     ORDER BY p.ID DESC
-     LIMIT 1"
-);
+     WHERE p.ID = %d AND p.post_type = 'shop_order'",
+    2412
+));
 
-$order = $wpdb->get_row($order_query);
-
-if ($order) {
-    echo "<p>✅ Found order: <strong>Order ID {$order->order_id}</strong></p>";
-    echo "<p>Order Status: <strong>{$order->post_status}</strong></p>";
-    echo "<p>Patient ID: <strong>{$order->patient_id}</strong></p>";
+if ($specific_order) {
+    echo "<p>✅ Found specific order: <strong>Order ID {$specific_order->order_id}</strong></p>";
+    echo "<p>Order Status: <strong>{$specific_order->post_status}</strong></p>";
+    echo "<p>Patient ID: <strong>{$specific_order->patient_id}</strong></p>";
+    
+    // Check if this order has AI session meta
+    $ai_meta = $wpdb->get_var($wpdb->prepare(
+        "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id = %d AND meta_key = 'is_ai_session'",
+        2412
+    ));
+    
+    if ($ai_meta) {
+        echo "<p>✅ Order has AI session meta: <strong>{$ai_meta}</strong></p>";
+    } else {
+        echo "<p>⚠️ Order doesn't have 'is_ai_session' meta, but we'll proceed anyway</p>";
+    }
+    
+    // Show all meta data for debugging
+    echo "<h4>All Order Meta Data:</h4>";
+    $all_meta = $wpdb->get_results($wpdb->prepare(
+        "SELECT meta_key, meta_value FROM {$wpdb->postmeta} WHERE post_id = %d ORDER BY meta_key",
+        2412
+    ));
+    
+    if ($all_meta) {
+        echo "<ul>";
+        foreach ($all_meta as $meta) {
+            echo "<li><strong>{$meta->meta_key}:</strong> {$meta->meta_value}</li>";
+        }
+        echo "</ul>";
+    } else {
+        echo "<p>No meta data found</p>";
+    }
+    
+    $order = $specific_order;
 } else {
-    echo "<p>❌ No AI order found</p>";
-    echo "</div>";
-    return;
+    // Fallback: search for any AI order
+    echo "<p>⚠️ Order ID 2412 not found, searching for any AI order...</p>";
+    
+    $order_query = $wpdb->prepare(
+        "SELECT p.ID as order_id, p.post_status, pm.meta_value as patient_id
+         FROM {$wpdb->posts} p
+         LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_customer_user'
+         WHERE p.post_type = 'shop_order'
+         AND EXISTS (
+             SELECT 1 FROM {$wpdb->postmeta} pm2 
+             WHERE pm2.post_id = p.ID 
+             AND pm2.meta_key = 'is_ai_session' 
+             AND pm2.meta_value = '1'
+         )
+         ORDER BY p.ID DESC
+         LIMIT 1"
+    );
+
+    $order = $wpdb->get_row($order_query);
+
+    if ($order) {
+        echo "<p>✅ Found AI order: <strong>Order ID {$order->order_id}</strong></p>";
+        echo "<p>Order Status: <strong>{$order->post_status}</strong></p>";
+        echo "<p>Patient ID: <strong>{$order->patient_id}</strong></p>";
+    } else {
+        echo "<p>❌ No AI order found</p>";
+        echo "</div>";
+        return;
+    }
 }
 echo "</div>";
 
