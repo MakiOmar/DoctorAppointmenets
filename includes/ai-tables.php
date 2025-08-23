@@ -276,6 +276,45 @@ function snks_add_ai_session_type_column() {
 	if ( empty( $patient_column_exists ) ) {
 		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN patient_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 	}
+	
+	// Add session_status column if it doesn't exist
+	$status_column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$table_name,
+		'session_status',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $status_column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN session_status VARCHAR(20) DEFAULT 'open'" );
+	}
+	
+	// Add created_at column if it doesn't exist
+	$created_at_column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$table_name,
+		'created_at',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $created_at_column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" );
+	}
+	
+	// Add updated_at column if it doesn't exist
+	$updated_at_column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$table_name,
+		'updated_at',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $updated_at_column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" );
+	}
 }
 
 /**
