@@ -4432,14 +4432,31 @@ function snks_handle_ai_appointment_creation( $appointment_id, $appointment_data
 		$session_action_id = snks_create_ai_session_action( $appointment_id, $order_id, $therapist_id, $patient_id );
 		
 		if ( $session_action_id ) {
+			error_log( "AI Appointment Creation: Session action created with ID {$session_action_id}" );
+			
 			// Update order meta with session ID
 			$order = wc_get_order( $order_id );
 			if ( $order ) {
+				error_log( "AI Appointment Creation: Updating order meta for order {$order_id}" );
+				error_log( "AI Appointment Creation: Setting ai_session_id = {$appointment_id}" );
+				error_log( "AI Appointment Creation: Setting ai_therapist_id = {$therapist_id}" );
+				error_log( "AI Appointment Creation: Setting ai_user_id = {$patient_id}" );
+				
 				$order->update_meta_data( 'ai_session_id', $appointment_id );
 				$order->update_meta_data( 'ai_therapist_id', $therapist_id );
 				$order->update_meta_data( 'ai_user_id', $patient_id );
-				$order->save();
+				$save_result = $order->save();
+				
+				error_log( "AI Appointment Creation: Order save result = " . ($save_result ? 'Success' : 'Failed') );
+				
+				// Verify the meta was saved
+				$saved_session_id = $order->get_meta( 'ai_session_id' );
+				error_log( "AI Appointment Creation: Verified ai_session_id = " . ($saved_session_id ?: 'Not set') );
+			} else {
+				error_log( "AI Appointment Creation: Failed to get order {$order_id}" );
 			}
+		} else {
+			error_log( "AI Appointment Creation: Failed to create session action" );
 		}
 	}
 }
