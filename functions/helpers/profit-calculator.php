@@ -679,3 +679,107 @@ function snks_get_ai_session_profit_trends( $therapist_id, $days = 30 ) {
 	
 	return $trends;
 }
+
+/**
+ * Get therapist earnings (alias for compatibility)
+ * 
+ * @param int $therapist_id The therapist user ID
+ * @param string $start_date Start date (Y-m-d format)
+ * @param string $end_date End date (Y-m-d format)
+ * @return array Earnings data
+ */
+function snks_get_therapist_earnings( $therapist_id, $start_date = null, $end_date = null ) {
+	global $wpdb;
+	
+	$date_filter = '';
+	if ( $start_date && $end_date ) {
+		$date_filter = $wpdb->prepare( "AND DATE(transaction_time) BETWEEN %s AND %s", $start_date, $end_date );
+	}
+	
+	$earnings = $wpdb->get_results( $wpdb->prepare(
+		"SELECT t.*, 
+		        u.display_name as patient_name,
+		        u.user_email as patient_email,
+		        s.ai_session_type,
+		        s.attendance
+		 FROM {$wpdb->prefix}snks_booking_transactions t
+		 LEFT JOIN {$wpdb->users} u ON t.ai_patient_id = u.ID
+		 LEFT JOIN {$wpdb->prefix}snks_sessions_actions s ON t.ai_session_id = s.action_session_id
+		 WHERE t.user_id = %d 
+		 AND t.ai_session_id IS NOT NULL 
+		 AND t.transaction_type = 'add'
+		 $date_filter
+		 ORDER BY t.transaction_time DESC",
+		$therapist_id
+	), ARRAY_A );
+	
+	// Calculate totals
+	$total_earnings = 0;
+	$first_sessions = 0;
+	$subsequent_sessions = 0;
+	
+	foreach ( $earnings as $earning ) {
+		$total_earnings += $earning['amount'];
+		if ( $earning['ai_session_type'] === 'first' ) {
+			$first_sessions++;
+		} else {
+			$subsequent_sessions++;
+		}
+	}
+	
+	return array(
+		'earnings' => $earnings,
+		'total_earnings' => $total_earnings,
+		'first_sessions' => $first_sessions,
+		'subsequent_sessions' => $subsequent_sessions,
+		'total_sessions' => count( $earnings )
+	);
+}
+
+/**
+ * Process AI session transaction (alias for compatibility)
+ * 
+ * @param string $session_id The session ID
+ * @return array Result array
+ */
+function snks_process_ai_session_transaction( $session_id ) {
+	return snks_process_ai_session_completion( $session_id );
+}
+
+/**
+ * Process therapist withdrawal (alias for compatibility)
+ * 
+ * @param int $therapist_id The therapist user ID
+ * @param float $amount The withdrawal amount
+ * @param string $method The withdrawal method
+ * @return array Result array
+ */
+function snks_process_therapist_withdrawal( $therapist_id, $amount, $method = 'wallet' ) {
+	return snks_process_ai_session_withdrawal( $therapist_id, $amount, $method );
+}
+
+/**
+ * Get recent AI transactions (alias for compatibility)
+ * 
+ * @param int $limit Number of transactions to return
+ * @return array Recent transactions
+ */
+function snks_get_recent_ai_transactions( $limit = 20 ) {
+	global $wpdb;
+	
+	$transactions = $wpdb->get_results( $wpdb->prepare(
+		"SELECT t.*, 
+		        u.display_name as therapist_name,
+		        p.display_name as patient_name
+		 FROM {$wpdb->prefix}snks_booking_transactions t
+		 LEFT JOIN {$wpdb->users} u ON t.user_id = u.ID
+		 LEFT JOIN {$wpdb->users} p ON t.ai_patient_id = p.ID
+		 WHERE t.ai_session_id IS NOT NULL 
+		 AND t.transaction_type = 'add'
+		 ORDER BY t.transaction_time DESC
+		 LIMIT %d",
+		$limit
+	), ARRAY_A );
+	
+	return $transactions;
+}
