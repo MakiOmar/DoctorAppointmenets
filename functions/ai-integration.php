@@ -4376,8 +4376,6 @@ function snks_ai_session_completion_notification( $session_id, $profit_result ) 
 function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_id, $patient_id ) {
 	global $wpdb;
 	
-	error_log( "🔍 AI Session Action Debug: Creating session action - appointment_id = {$appointment_id}, order_id = {$order_id}, therapist_id = {$therapist_id}, patient_id = {$patient_id}" );
-	
 	// Check if session action already exists
 	$existing = $wpdb->get_var( $wpdb->prepare(
 		"SELECT id FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
@@ -4385,7 +4383,6 @@ function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_i
 	) );
 	
 	if ( $existing ) {
-		error_log( "🔍 AI Session Action Debug: Session action already exists for appointment ID: {$appointment_id}" );
 		return $existing;
 	}
 	
@@ -4408,10 +4405,8 @@ function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_i
 	);
 	
 	if ( $result ) {
-		error_log( "✅ AI Session Action Debug: Session action created successfully - Appointment ID {$appointment_id}, Session Action ID {$wpdb->insert_id}" );
 		return $wpdb->insert_id;
 	} else {
-		error_log( "❌ AI Session Action Debug: Failed to create session action for appointment ID: {$appointment_id}" );
 		return false;
 	}
 }

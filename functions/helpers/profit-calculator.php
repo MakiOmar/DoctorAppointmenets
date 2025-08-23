@@ -49,8 +49,6 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 function snks_is_first_session( $therapist_id, $patient_id ) {
 	global $wpdb;
 	
-	error_log( "🔍 Session Type Debug: Checking if first session - therapist_id = {$therapist_id}, patient_id = {$patient_id}" );
-	
 	// Check if there are any previous AI sessions between this therapist and patient
 	$previous_sessions = $wpdb->get_var( $wpdb->prepare(
 		"SELECT COUNT(*) FROM {$wpdb->prefix}snks_sessions_actions 
@@ -60,7 +58,6 @@ function snks_is_first_session( $therapist_id, $patient_id ) {
 	) );
 	
 	$session_type = ( $previous_sessions > 0 ) ? 'subsequent' : 'first';
-	error_log( "🔍 Session Type Debug: Previous sessions count = {$previous_sessions}, determined type = {$session_type}" );
 	
 	return $session_type;
 }
@@ -74,28 +71,21 @@ function snks_is_first_session( $therapist_id, $patient_id ) {
  * @return float The calculated profit amount
  */
 function snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id ) {
-	error_log( "🔍 Profit Calculation Debug: Starting - session_amount = {$session_amount}, therapist_id = {$therapist_id}, patient_id = {$patient_id}" );
 	
 	// Get therapist profit settings
 	$settings = snks_get_therapist_profit_settings( $therapist_id );
-	error_log( "🔍 Profit Calculation Debug: Profit settings = " . print_r( $settings, true ) );
 	
 	// Determine if this is first or subsequent session
 	$session_type = snks_is_first_session( $therapist_id, $patient_id );
-	error_log( "🔍 Profit Calculation Debug: Session type = {$session_type}" );
 	
 	// Get the appropriate percentage
 	$percentage = ( $session_type === 'first' ) 
 		? $settings['first_session_percentage'] 
 		: $settings['subsequent_session_percentage'];
 	
-	error_log( "🔍 Profit Calculation Debug: Using percentage = {$percentage}%" );
-	
 	// Calculate profit
 	$profit_amount = ( $session_amount * $percentage ) / 100;
 	$rounded_profit = round( $profit_amount, 2 );
-	
-	error_log( "🔍 Profit Calculation Debug: Calculated profit = {$profit_amount}, rounded = {$rounded_profit}" );
 	
 	return $rounded_profit;
 }
@@ -111,11 +101,7 @@ function snks_calculate_session_profit( $session_amount, $therapist_id, $patient
 function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_amount ) {
 	global $wpdb;
 	
-	error_log( "🔍 AI Transaction Debug: Starting snks_add_ai_session_transaction - therapist_id = {$therapist_id}, profit_amount = {$profit_amount}" );
-	error_log( "🔍 AI Transaction Debug: Session data = " . print_r( $session_data, true ) );
-	
 	// Use existing transaction system
-	error_log( "🔍 AI Transaction Debug: Calling snks_add_transaction with therapist_id = {$therapist_id}, timetable_id = 0, transaction_type = 'add', amount = {$profit_amount}" );
 	
 	$transaction_id = snks_add_transaction( 
 		$therapist_id, 
@@ -124,10 +110,7 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 		$profit_amount 
 	);
 	
-	error_log( "🔍 AI Transaction Debug: snks_add_transaction result = " . ( $transaction_id ? $transaction_id : 'FAILED' ) );
-	
 	if ( $transaction_id ) {
-		error_log( "🔍 AI Transaction Debug: Transaction created successfully, adding AI metadata" );
 		
 		// Add AI session metadata to the transaction
 		$metadata = array(
@@ -137,8 +120,6 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			'ai_order_id' => $session_data['order_id'] ?? 0
 		);
 		
-		error_log( "🔍 AI Transaction Debug: Adding metadata = " . print_r( $metadata, true ) );
-		
 		$metadata_result = $wpdb->update(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
@@ -147,15 +128,9 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			array( '%d' )
 		);
 		
-		error_log( "🔍 AI Transaction Debug: Metadata update result = " . ( $metadata_result !== false ? 'SUCCESS' : 'FAILED' ) );
-		
 		// Log the transaction
-		error_log( "🔍 AI Transaction Debug: Calling snks_log_transaction" );
 		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
 		
-		error_log( "✅ AI Transaction Debug: Transaction completed successfully - ID = {$transaction_id}" );
-	} else {
-		error_log( "❌ AI Transaction Debug: Transaction creation failed" );
 	}
 	
 	return $transaction_id;
@@ -170,19 +145,13 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 function snks_execute_ai_profit_transfer( $session_id ) {
 	global $wpdb;
 	
-	// Debug log start
-	error_log( "🔍 AI Profit Transfer Debug: Starting for session_id = {$session_id}" );
-	
 	// Get session data
 	$session_data = $wpdb->get_row( $wpdb->prepare(
 		"SELECT * FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
 		$session_id
 	), ARRAY_A );
 	
-	error_log( "🔍 AI Profit Transfer Debug: Session data query result = " . print_r( $session_data, true ) );
-	
 	if ( ! $session_data ) {
-		error_log( "❌ AI Profit Transfer Debug: Session not found for session_id = {$session_id}" );
 		return array(
 			'success' => false,
 			'message' => 'Session not found'
@@ -190,10 +159,7 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	}
 	
 	// Check if profit already transferred (ai_session_type should be NULL initially)
-	error_log( "🔍 AI Profit Transfer Debug: Checking ai_session_type = " . ( $session_data['ai_session_type'] ?: 'NULL' ) );
-	
 	if ( ! empty( $session_data['ai_session_type'] ) ) {
-		error_log( "❌ AI Profit Transfer Debug: Profit already transferred, ai_session_type = {$session_data['ai_session_type']}" );
 		return array(
 			'success' => false,
 			'message' => 'Profit already transferred for this session'
@@ -202,12 +168,9 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	
 	// Get session details from AI order
 	$order_id = $session_data['case_id'];
-	error_log( "🔍 AI Profit Transfer Debug: Order ID = {$order_id}" );
-	
 	$order = wc_get_order( $order_id );
 	
 	if ( ! $order ) {
-		error_log( "❌ AI Profit Transfer Debug: Order not found for order_id = {$order_id}" );
 		return array(
 			'success' => false,
 			'message' => 'Order not found'
@@ -218,10 +181,7 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	$is_ai_session = $order->get_meta( 'is_ai_session' );
 	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
 	
-	error_log( "🔍 AI Profit Transfer Debug: Order meta - is_ai_session = " . ( $is_ai_session ? 'Yes' : 'No' ) . ", from_jalsah_ai = " . ( $from_jalsah_ai ? 'Yes' : 'No' ) );
-	
 	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
-		error_log( "❌ AI Profit Transfer Debug: Not an AI session - both meta keys are empty" );
 		return array(
 			'success' => false,
 			'message' => 'Not an AI session'
@@ -230,16 +190,12 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	
 	// Get session amount
 	$session_amount = $order->get_total();
-	error_log( "🔍 AI Profit Transfer Debug: Session amount = {$session_amount}" );
 	
 	// Get therapist and patient IDs
 	$therapist_id = $order->get_meta( 'ai_therapist_id' ) ?: $order->get_meta( 'therapist_id' );
 	$patient_id = $order->get_meta( 'ai_user_id' ) ?: $order->get_customer_id();
 	
-	error_log( "🔍 AI Profit Transfer Debug: Therapist ID = {$therapist_id}, Patient ID = {$patient_id}" );
-	
 	if ( ! $therapist_id || ! $patient_id ) {
-		error_log( "❌ AI Profit Transfer Debug: Missing therapist or patient information - therapist_id = {$therapist_id}, patient_id = {$patient_id}" );
 		return array(
 			'success' => false,
 			'message' => 'Missing therapist or patient information'
@@ -248,11 +204,9 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	
 	// Calculate profit
 	$profit_amount = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
-	error_log( "🔍 AI Profit Transfer Debug: Calculated profit amount = {$profit_amount}" );
 	
 	// Determine session type
 	$session_type = snks_is_first_session( $therapist_id, $patient_id );
-	error_log( "🔍 AI Profit Transfer Debug: Determined session type = {$session_type}" );
 	
 	// Prepare session data
 	$session_data_for_transaction = array(
@@ -264,13 +218,9 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	);
 	
 	// Add transaction
-	error_log( "🔍 AI Profit Transfer Debug: Calling snks_add_ai_session_transaction with therapist_id = {$therapist_id}, profit_amount = {$profit_amount}" );
 	$transaction_id = snks_add_ai_session_transaction( $therapist_id, $session_data_for_transaction, $profit_amount );
 	
-	error_log( "🔍 AI Profit Transfer Debug: Transaction creation result = " . ( $transaction_id ? $transaction_id : 'FAILED' ) );
-	
 	if ( ! $transaction_id ) {
-		error_log( "❌ AI Profit Transfer Debug: Failed to create transaction" );
 		return array(
 			'success' => false,
 			'message' => 'Failed to create transaction'
@@ -278,8 +228,6 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	}
 	
 	// Update session actions table
-	error_log( "🔍 AI Profit Transfer Debug: Updating session actions table with session_type = {$session_type}, therapist_id = {$therapist_id}, patient_id = {$patient_id}" );
-	
 	$update_result = $wpdb->update(
 		$wpdb->prefix . 'snks_sessions_actions',
 		array(
@@ -291,10 +239,6 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		array( '%s', '%d', '%d' ),
 		array( '%s' )
 	);
-	
-	error_log( "🔍 AI Profit Transfer Debug: Session actions update result = " . ( $update_result !== false ? 'SUCCESS' : 'FAILED' ) );
-	
-	error_log( "✅ AI Profit Transfer Debug: Profit transfer completed successfully - transaction_id = {$transaction_id}, profit_amount = {$profit_amount}, session_type = {$session_type}" );
 	
 	return array(
 		'success' => true,
@@ -471,16 +415,11 @@ function snks_process_ai_session_completion( $session_id ) {
 	
 	if ( $result['success'] ) {
 		// Log successful completion
-		error_log( "AI Session Completion Processed: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
-		
-		// Send notification
 		snks_ai_session_completion_notification( $session_id, $result );
 		
 		return $result;
 	} else {
 		// Log error
-		error_log( "AI Session Completion Failed: Session ID {$session_id}, Error: {$result['message']}" );
-		
 		return $result;
 	}
 }
