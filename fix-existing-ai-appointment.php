@@ -199,21 +199,30 @@ if ($existing_session) {
     echo "<div class='result info'>";
     echo "<h3>Step 3: Creating session action record...</h3>";
     
+    // First, let's check what columns actually exist in the table
+    echo "<h4>Checking table structure...</h4>";
+    $columns = $wpdb->get_results("DESCRIBE {$wpdb->prefix}snks_sessions_actions");
+    
+    if ($columns) {
+        echo "<p>Available columns:</p>";
+        echo "<ul>";
+        foreach ($columns as $column) {
+            echo "<li>{$column->Field} ({$column->Type})</li>";
+        }
+        echo "</ul>";
+    }
+    
+    // Create basic session data with only existing columns
     $session_data = array(
         'action_session_id' => $appointment_id,
         'case_id' => $order->order_id,
-        'therapist_id' => $therapist_id,
-        'patient_id' => $order->patient_id,
-        'ai_session_type' => 'first', // Will be updated when profit is calculated
-        'session_status' => 'open',
-        'attendance' => 'yes', // Use shorter value to avoid VARCHAR(3) limit
-        'created_at' => current_time('mysql')
+        'attendance' => 'yes'
     );
     
     $result = $wpdb->insert(
         $wpdb->prefix . 'snks_sessions_actions',
         $session_data,
-        array('%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s')
+        array('%s', '%d', '%s')
     );
     
     if ($result) {
