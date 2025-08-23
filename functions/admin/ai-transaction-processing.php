@@ -406,23 +406,4 @@ function snks_get_pending_ai_sessions( $limit = 50 ) {
 	return $sessions;
 }
 
-/**
- * Get recent AI transactions
- */
-function snks_get_recent_ai_transactions( $limit = 50 ) {
-	global $wpdb;
-	
-	$transactions = $wpdb->get_results( "
-		SELECT t.*, 
-		       u.display_name as therapist_name,
-		       p.display_name as patient_name
-		FROM {$wpdb->prefix}snks_booking_transactions t
-		LEFT JOIN {$wpdb->users} u ON t.user_id = u.ID
-		LEFT JOIN {$wpdb->users} p ON t.ai_patient_id = p.ID
-		WHERE t.ai_session_id IS NOT NULL
-		ORDER BY t.transaction_time DESC
-		LIMIT $limit
-	", ARRAY_A );
-	
-	return $transactions;
-}
+
