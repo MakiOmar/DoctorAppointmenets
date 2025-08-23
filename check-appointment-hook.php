@@ -56,24 +56,26 @@ global $wpdb;
 
 // Check for recent appointments
 $recent_appointments = $wpdb->get_results("
-    SELECT * FROM {$wpdb->prefix}snks_appointments 
-    ORDER BY created_at DESC 
+    SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+    WHERE client_id > 0 AND order_id > 0
+    ORDER BY date_time DESC 
     LIMIT 5
 ");
 
 if ($recent_appointments) {
     echo "<p class='success'>✅ Found recent appointments:</p>";
     echo "<table border='1' style='border-collapse: collapse; width: 100%;'>";
-    echo "<tr><th>ID</th><th>Order ID</th><th>Therapist ID</th><th>Patient ID</th><th>Is AI Session</th><th>Created At</th></tr>";
+    echo "<tr><th>ID</th><th>Order ID</th><th>Therapist ID</th><th>Patient ID</th><th>Session Status</th><th>Date Time</th><th>Settings</th></tr>";
     
     foreach ($recent_appointments as $appointment) {
         echo "<tr>";
-        echo "<td>{$appointment->id}</td>";
+        echo "<td>{$appointment->ID}</td>";
         echo "<td>{$appointment->order_id}</td>";
-        echo "<td>{$appointment->therapist_id}</td>";
-        echo "<td>{$appointment->patient_id}</td>";
-        echo "<td>" . ($appointment->is_ai_session ? 'Yes' : 'No') . "</td>";
-        echo "<td>{$appointment->created_at}</td>";
+        echo "<td>{$appointment->user_id}</td>";
+        echo "<td>{$appointment->client_id}</td>";
+        echo "<td>{$appointment->session_status}</td>";
+        echo "<td>{$appointment->date_time}</td>";
+        echo "<td>{$appointment->settings}</td>";
         echo "</tr>";
     }
     echo "</table>";

@@ -163,6 +163,16 @@ class SNKS_AI_Orders {
 	private static function book_appointment_slot( $slot_id, $order_id, $patient_id ) {
 		global $wpdb;
 		
+		// Get slot details before updating
+		$slot = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+			$slot_id
+		) );
+		
+		if ( ! $slot ) {
+			return false;
+		}
+		
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
@@ -174,6 +184,22 @@ class SNKS_AI_Orders {
 			[ '%s', '%d', '%s' ],
 			[ '%d' ]
 		);
+		
+		if ( $result ) {
+			// Trigger appointment creation hook
+			$appointment_data = array(
+				'is_ai_session' => true,
+				'order_id' => $order_id,
+				'therapist_id' => $slot->user_id,
+				'patient_id' => $patient_id,
+				'slot_id' => $slot_id,
+				'session_date' => $slot->date_time,
+				'session_status' => 'open',
+				'settings' => 'ai_booking:completed'
+			);
+			
+			do_action( 'snks_appointment_created', $slot_id, $appointment_data );
+		}
 		
 		return $result;
 	}
