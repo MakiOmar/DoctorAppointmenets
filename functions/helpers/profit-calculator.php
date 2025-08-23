@@ -121,13 +121,7 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 		);
 		
 		// Log the transaction
-		snks_log_transaction( $transaction_id, 'ai_session_profit', array(
-			'therapist_id' => $therapist_id,
-			'patient_id' => $session_data['patient_id'] ?? 0,
-			'session_amount' => $session_data['session_amount'] ?? 0,
-			'profit_amount' => $profit_amount,
-			'session_type' => $session_data['session_type'] ?? 'first'
-		) );
+		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
 	}
 	
 	return $transaction_id;
@@ -174,8 +168,11 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		);
 	}
 	
-	// Check if it's an AI session
-	if ( ! $order->get_meta( 'from_jalsah_ai' ) ) {
+	// Check if it's an AI session (support both meta keys)
+	$is_ai_session = $order->get_meta( 'is_ai_session' );
+	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	
+	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
 		return array(
 			'success' => false,
 			'message' => 'Not an AI session'
@@ -263,7 +260,15 @@ function snks_is_ai_session( $session_id ) {
 	
 	$order = wc_get_order( $session_data->case_id );
 	
-	return $order && $order->get_meta( 'from_jalsah_ai' );
+	if ( ! $order ) {
+		return false;
+	}
+	
+	// Check for both AI session meta keys
+	$is_ai_session = $order->get_meta( 'is_ai_session' );
+	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	
+	return $is_ai_session || $from_jalsah_ai;
 }
 
 /**
