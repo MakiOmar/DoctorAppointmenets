@@ -4140,34 +4140,47 @@ function snks_handle_ai_session_completion() {
  * Handle AI order completion from WooCommerce
  */
 function snks_handle_ai_order_completion( $order_id ) {
+	error_log( "🔍 AI Order Completion Debug: Hook triggered for order_id = {$order_id}" );
+	
 	$order = wc_get_order( $order_id );
 	
 	if ( ! $order ) {
+		error_log( "❌ AI Order Completion Debug: Order not found for order_id = {$order_id}" );
 		return;
 	}
+	
+	error_log( "🔍 AI Order Completion Debug: Order found, checking meta keys" );
 	
 	// Check if this is an AI order (support both meta keys)
 	$is_ai_session = $order->get_meta( 'is_ai_session' );
 	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
 	
+	error_log( "🔍 AI Order Completion Debug: Order meta - is_ai_session = " . ( $is_ai_session ? 'Yes' : 'No' ) . ", from_jalsah_ai = " . ( $from_jalsah_ai ? 'Yes' : 'No' ) );
+	
 	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
+		error_log( "❌ AI Order Completion Debug: Not an AI order, exiting" );
 		return;
 	}
 	
-	error_log( "AI Order Completion Hook: Order ID {$order_id}" );
+	error_log( "✅ AI Order Completion Debug: Confirmed AI order, proceeding with profit transfer" );
 	
 	// Get session ID from order meta
 	$session_id = $order->get_meta( 'ai_session_id' );
+	error_log( "🔍 AI Order Completion Debug: Session ID from order meta = " . ( $session_id ?: 'Not set' ) );
 	
 	if ( ! empty( $session_id ) ) {
+		error_log( "🔍 AI Order Completion Debug: Calling snks_execute_ai_profit_transfer with session_id = {$session_id}" );
+		
 		// Trigger profit calculation
 		$result = snks_execute_ai_profit_transfer( $session_id );
 		
 		if ( $result['success'] ) {
-			error_log( "AI Profit Transfer from Order: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
+			error_log( "✅ AI Profit Transfer from Order: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
 		} else {
-			error_log( "AI Profit Transfer from Order Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+			error_log( "❌ AI Profit Transfer from Order Failed: Session ID {$session_id}, Reason: {$result['message']}" );
 		}
+	} else {
+		error_log( "❌ AI Order Completion Debug: No session ID found in order meta" );
 	}
 }
 
@@ -4363,6 +4376,8 @@ function snks_ai_session_completion_notification( $session_id, $profit_result ) 
 function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_id, $patient_id ) {
 	global $wpdb;
 	
+	error_log( "🔍 AI Session Action Debug: Creating session action - appointment_id = {$appointment_id}, order_id = {$order_id}, therapist_id = {$therapist_id}, patient_id = {$patient_id}" );
+	
 	// Check if session action already exists
 	$existing = $wpdb->get_var( $wpdb->prepare(
 		"SELECT id FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
@@ -4370,7 +4385,7 @@ function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_i
 	) );
 	
 	if ( $existing ) {
-		error_log( "AI Session Action already exists for appointment ID: {$appointment_id}" );
+		error_log( "🔍 AI Session Action Debug: Session action already exists for appointment ID: {$appointment_id}" );
 		return $existing;
 	}
 	
@@ -4393,10 +4408,10 @@ function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_i
 	);
 	
 	if ( $result ) {
-		error_log( "AI Session Action created: Appointment ID {$appointment_id}, Session Action ID {$wpdb->insert_id}" );
+		error_log( "✅ AI Session Action Debug: Session action created successfully - Appointment ID {$appointment_id}, Session Action ID {$wpdb->insert_id}" );
 		return $wpdb->insert_id;
 	} else {
-		error_log( "Failed to create AI Session Action for appointment ID: {$appointment_id}" );
+		error_log( "❌ AI Session Action Debug: Failed to create session action for appointment ID: {$appointment_id}" );
 		return false;
 	}
 }
