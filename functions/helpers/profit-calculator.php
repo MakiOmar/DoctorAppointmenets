@@ -155,7 +155,7 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		);
 	}
 	
-	// Check if profit already transferred
+	// Check if profit already transferred (ai_session_type should be NULL initially)
 	if ( ! empty( $session_data['ai_session_type'] ) ) {
 		return array(
 			'success' => false,

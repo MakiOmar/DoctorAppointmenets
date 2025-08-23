@@ -4380,7 +4380,7 @@ function snks_create_ai_session_action( $appointment_id, $order_id, $therapist_i
 		'case_id' => $order_id,
 		'therapist_id' => $therapist_id,
 		'patient_id' => $patient_id,
-		'ai_session_type' => 'first', // Will be updated when profit is calculated
+		'ai_session_type' => NULL, // Will be calculated when profit is transferred
 		'session_status' => 'open',
 		'attendance' => 'yes', // Use shorter value to avoid VARCHAR(3) limit
 		'created_at' => current_time( 'mysql' )
