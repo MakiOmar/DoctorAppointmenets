@@ -282,6 +282,10 @@ echo "<div class='test-result test-warning'>";
 echo "<strong>⚠️ Recommendation: Add sample data for testing before production use.</strong>";
 echo "</div>";
 
+echo "<div class='test-result test-info'>";
+echo "<strong>💡 Note: Database structure is automatically maintained by the plugin activation hook.</strong>";
+echo "</div>";
+
 echo "</div>";
 
 echo "<div class='test-section'>";

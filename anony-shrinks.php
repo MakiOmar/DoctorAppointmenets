@@ -168,6 +168,10 @@ require_once SNKS_DIR . 'includes/ai-tables.php';
 // Check for AI profit system updates on plugin load
 add_action( 'init', 'snks_check_ai_profit_system_updates' );
 
+// Ensure database structure is up to date on every page load (for development)
+// Remove this in production after initial deployment
+add_action( 'init', 'snks_ensure_ai_profit_database_structure' );
+
 // Register AI table creation hooks on init to ensure all functions are loaded
 add_action( 'init', 'snks_register_ai_table_hooks' );
 
@@ -214,6 +218,64 @@ function snks_check_ai_profit_system_updates() {
 		
 		// Log the upgrade
 		error_log( 'AI Profit System: Updated from version ' . $current_version . ' to ' . $plugin_version );
+	}
+}
+
+/**
+ * Ensure AI profit database structure is always up to date
+ * This function runs on every page load during development
+ * Remove this function call in production after initial deployment
+ */
+function snks_ensure_ai_profit_database_structure() {
+	// Only run this in development environment
+	if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+		return;
+	}
+	
+	// Check if all required functions exist
+	if ( ! function_exists( 'snks_create_ai_profit_settings_table' ) ||
+		 ! function_exists( 'snks_add_ai_session_type_column' ) ||
+		 ! function_exists( 'snks_add_ai_transaction_metadata_columns' ) ||
+		 ! function_exists( 'snks_add_default_profit_settings' ) ) {
+		return;
+	}
+	
+	global $wpdb;
+	
+	// Check if AI profit settings table exists
+	$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->prefix}snks_ai_profit_settings'" );
+	if ( ! $table_exists ) {
+		snks_create_ai_profit_settings_table();
+	}
+	
+	// Check if required columns exist in sessions_actions table
+	$sessions_table = $wpdb->prefix . 'snks_sessions_actions';
+	$required_columns = ['ai_session_type', 'therapist_id', 'patient_id'];
+	
+	foreach ( $required_columns as $column ) {
+		$column_exists = $wpdb->get_var( "SHOW COLUMNS FROM $sessions_table LIKE '$column'" );
+		if ( ! $column_exists ) {
+			snks_add_ai_session_type_column();
+			break; // Function adds all columns, so we only need to call it once
+		}
+	}
+	
+	// Check if required columns exist in booking_transactions table
+	$transactions_table = $wpdb->prefix . 'snks_booking_transactions';
+	$required_columns = ['ai_session_id', 'ai_session_type', 'ai_patient_id', 'ai_order_id'];
+	
+	foreach ( $required_columns as $column ) {
+		$column_exists = $wpdb->get_var( "SHOW COLUMNS FROM $transactions_table LIKE '$column'" );
+		if ( ! $column_exists ) {
+			snks_add_ai_transaction_metadata_columns();
+			break; // Function adds all columns, so we only need to call it once
+		}
+	}
+	
+	// Check if we have default profit settings
+	$settings_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}snks_ai_profit_settings" );
+	if ( $settings_count == 0 ) {
+		snks_add_default_profit_settings();
 	}
 }
 
@@ -265,6 +327,23 @@ function plugin_activation_hook() {
 	if ( function_exists( 'snks_create_rochtah_doctor_role' ) ) {
 		snks_create_rochtah_doctor_role();
 	}
+	
+	// Ensure AI profit system database structure is complete
+	if ( function_exists( 'snks_create_ai_profit_settings_table' ) ) {
+		snks_create_ai_profit_settings_table();
+	}
+	if ( function_exists( 'snks_add_ai_session_type_column' ) ) {
+		snks_add_ai_session_type_column();
+	}
+	if ( function_exists( 'snks_add_ai_transaction_metadata_columns' ) ) {
+		snks_add_ai_transaction_metadata_columns();
+	}
+	if ( function_exists( 'snks_add_default_profit_settings' ) ) {
+		snks_add_default_profit_settings();
+	}
+	
+	// Set AI profit system version
+	update_option( 'snks_ai_profit_system_version', '1.0.0' );
 	
 	// Create AI session product for WooCommerce
 	if ( class_exists( 'WooCommerce' ) ) {
