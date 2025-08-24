@@ -364,6 +364,9 @@ register_activation_hook( __FILE__, 'plugin_activation_hook' );
 // Create therapist applications table on activation
 register_activation_hook( __FILE__, 'snks_create_therapist_applications_table' );
 
+// Hook to set up default pricing when therapist is activated
+add_action( 'update_user_meta', 'snks_check_therapist_activation', 10, 4 );
+
 /**
  * Create custom table for therapist applications
  */
@@ -439,6 +442,23 @@ function snks_add_missing_therapist_applications_columns() {
 		if ( empty( $column_exists ) ) {
 			$wpdb->query( $sql );
 			error_log( "Added missing column: $column_name to $table_name" );
+		}
+	}
+}
+
+/**
+ * Check if therapist is being activated and set up default pricing
+ */
+function snks_check_therapist_activation( $meta_id, $user_id, $meta_key, $meta_value ) {
+	// Check if this is the show_on_ai_site meta being set to 1 (activated)
+	if ( $meta_key === 'show_on_ai_site' && $meta_value === '1' ) {
+		// Check if user is a therapist (has doctor role or is in therapist_applications table)
+		$user = get_user_by( 'ID', $user_id );
+		if ( $user && in_array( 'doctor', $user->roles ) ) {
+			// Set up default pricing for the therapist
+			if ( class_exists( 'SNKS_AI_Integration' ) ) {
+				SNKS_AI_Integration::setup_therapist_default_pricing( $user_id );
+			}
 		}
 	}
 }

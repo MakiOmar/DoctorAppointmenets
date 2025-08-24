@@ -2175,8 +2175,105 @@ class SNKS_AI_Integration {
 		} else {
 			// For regular therapists, use the main pricing system
 			$pricing = snks_doctor_online_pricings( $therapist_id );
-			return isset( $pricing['45_minutes'] ) ? $pricing['45_minutes'] : array();
+			
+			// Check if 45_minutes pricing exists and has a valid 'others' value
+			if ( isset( $pricing['45_minutes'] ) && ! empty( $pricing['45_minutes']['others'] ) ) {
+				return $pricing['45_minutes'];
+			}
+			
+			// If no 45_minutes pricing, check for 60_minutes as fallback
+			if ( isset( $pricing['60_minutes'] ) && ! empty( $pricing['60_minutes']['others'] ) ) {
+				return $pricing['60_minutes'];
+			}
+			
+			// If no pricing is set up, check if therapist has any pricing fields set
+			$price_45_others = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+			if ( ! empty( $price_45_others ) ) {
+				return array(
+					'countries' => array(),
+					'others' => intval( $price_45_others )
+				);
+			}
+			
+			// Check for 60_minutes_pricing_others as fallback
+			$price_60_others = get_user_meta( $therapist_id, '60_minutes_pricing_others', true );
+			if ( ! empty( $price_60_others ) ) {
+				return array(
+					'countries' => array(),
+					'others' => intval( $price_60_others )
+				);
+			}
+			
+			// If no pricing is found at all, try to set up default pricing
+			$this->setup_default_therapist_pricing( $therapist_id );
+			
+			// Check again after setting up default pricing
+			$price_45_others = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+			if ( ! empty( $price_45_others ) ) {
+				return array(
+					'countries' => array(),
+					'others' => intval( $price_45_others )
+				);
+			}
+			
+			// If still no pricing is found, return empty array (will show "Contact for pricing")
+			return array();
 		}
+	}
+	
+	/**
+	 * Setup default pricing for therapist if none exists
+	 */
+	private function setup_default_therapist_pricing( $therapist_id ) {
+		// Check if pricing is already set up
+		$price_45_others = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+		$price_60_others = get_user_meta( $therapist_id, '60_minutes_pricing_others', true );
+		
+		if ( ! empty( $price_45_others ) || ! empty( $price_60_others ) ) {
+			return; // Pricing already exists
+		}
+		
+		// Set up default pricing structure
+		$default_price_45 = 150; // Default 45-minute session price
+		$default_price_60 = 200; // Default 60-minute session price
+		$default_price_90 = 300; // Default 90-minute session price
+		
+		// Set up 45-minute pricing
+		$pricing_45 = array(
+			'countries' => array(),
+			'others' => $default_price_45
+		);
+		update_user_meta( $therapist_id, '45_minutes_pricing', $pricing_45 );
+		update_user_meta( $therapist_id, '45_minutes_pricing_others', $default_price_45 );
+		
+		// Set up 60-minute pricing
+		$pricing_60 = array(
+			'countries' => array(),
+			'others' => $default_price_60
+		);
+		update_user_meta( $therapist_id, '60_minutes_pricing', $pricing_60 );
+		update_user_meta( $therapist_id, '60_minutes_pricing_others', $default_price_60 );
+		
+		// Set up 90-minute pricing
+		$pricing_90 = array(
+			'countries' => array(),
+			'others' => $default_price_90
+		);
+		update_user_meta( $therapist_id, '90_minutes_pricing', $pricing_90 );
+		update_user_meta( $therapist_id, '90_minutes_pricing_others', $default_price_90 );
+		
+		// Enable 45-minute sessions by default
+		update_user_meta( $therapist_id, '45_minutes', 'on' );
+		update_user_meta( $therapist_id, '60_minutes', 'on' );
+		update_user_meta( $therapist_id, '90_minutes', 'on' );
+	}
+	
+	/**
+	 * Setup default pricing for therapist when activated
+	 */
+	public static function setup_therapist_default_pricing( $therapist_id ) {
+		$instance = new self();
+		$instance->setup_default_therapist_pricing( $therapist_id );
 	}
 	
 	/**
