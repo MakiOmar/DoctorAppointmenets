@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staging API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Staging API Connection Test</h1>
+    <p>Testing connection to: <strong>https://staging.jalsah.app</strong></p>
+    
+    <button onclick="testAPI()">Test API Connection</button>
+    <button onclick="testAuth()">Test Auth Endpoint</button>
+    <button onclick="testWordPress()">Test WordPress</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const STAGING_URL = 'https://staging.jalsah.app';
+        
+        function addResult(message, type = 'loading') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            results.appendChild(div);
+        }
+        
+        async function testAPI() {
+            addResult('Testing API connection...', 'loading');
+            
+            try {
+                const response = await fetch(`${STAGING_URL}/api/ai/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ API Health Check: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    addResult(`❌ API Health Check Failed: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ API Connection Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAuth() {
+            addResult('Testing Auth endpoint...', 'loading');
+            
+            try {
+                const response = await fetch(`${STAGING_URL}/api/ai/auth`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'test123'
+                    })
+                });
+                
+                if (response.status === 401) {
+                    addResult('✅ Auth endpoint responding (401 expected for invalid credentials)', 'success');
+                } else if (response.ok) {
+                    addResult('⚠️ Auth endpoint responding (unexpected success)', 'loading');
+                } else {
+                    addResult(`❌ Auth endpoint error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ Auth endpoint error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testWordPress() {
+            addResult('Testing WordPress connection...', 'loading');
+            
+            try {
+                const response = await fetch(`${STAGING_URL}/wp-json/`, {
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`✅ WordPress API responding: ${data.name || 'WordPress site'}`, 'success');
+                } else {
+                    addResult(`❌ WordPress API error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`❌ WordPress connection error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
