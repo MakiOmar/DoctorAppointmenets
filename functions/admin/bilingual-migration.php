@@ -51,152 +51,177 @@ function snks_migrate_to_bilingual() {
 			$wpdb->query( "UPDATE {$therapist_diagnoses_table} SET suitability_message_en = suitability_message WHERE suitability_message_en IS NULL OR suitability_message_en = ''" );
 		}
 		
-		// 3. Add bilingual user meta fields
-		// This will be handled by the admin interface when users update their profiles
-		
-		// 4. Test the migration by checking if tables exist
-		if ( ! $wpdb->get_var( "SHOW TABLES LIKE '{$diagnoses_table}'" ) ) {
-			throw new Exception( 'Diagnoses table does not exist. Please ensure AI tables are created first.' );
-		}
-		
 		// Commit transaction
 		$wpdb->query( 'COMMIT' );
 		
-		return array(
-			'success' => true,
-			'message' => 'Bilingual migration completed successfully!'
-		);
+		return true;
 		
 	} catch ( Exception $e ) {
-		// Rollback transaction
+		// Rollback on error
 		$wpdb->query( 'ROLLBACK' );
-		
-		return array(
-			'success' => false,
-			'message' => 'Migration failed: ' . $e->getMessage()
-		);
+		error_log( 'Bilingual migration error: ' . $e->getMessage() );
+		return false;
 	}
 }
 
-// Migration page is now registered in the main AI admin menu
-
-function snks_bilingual_migration_page() {
-	// Load admin styles
-	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
-		snks_load_ai_admin_styles();
+/**
+ * Check if bilingual migration is needed
+ */
+function snks_check_bilingual_migration() {
+	global $wpdb;
+	
+	$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+	
+	// Check if columns exist
+	$columns = $wpdb->get_results( "SHOW COLUMNS FROM {$diagnoses_table}" );
+	$column_names = array_column( $columns, 'Field' );
+	
+	$missing_columns = array();
+	
+	if ( ! in_array( 'name_en', $column_names ) ) {
+		$missing_columns[] = 'name_en';
 	}
+	if ( ! in_array( 'name_ar', $column_names ) ) {
+		$missing_columns[] = 'name_ar';
+	}
+	if ( ! in_array( 'description_en', $column_names ) ) {
+		$missing_columns[] = 'description_en';
+	}
+	if ( ! in_array( 'description_ar', $column_names ) ) {
+		$missing_columns[] = 'description_ar';
+	}
+	
+	return $missing_columns;
+}
+
+/**
+ * Admin page to run migration
+ */
+function snks_bilingual_migration_page() {
+	global $wpdb;
+	
+	// Handle migration
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'run_migration' && wp_verify_nonce( $_POST['_wpnonce'], 'run_bilingual_migration' ) ) {
+		$result = snks_migrate_to_bilingual();
+		
+		if ( $result ) {
+			echo '<div class="notice notice-success"><p>Bilingual migration completed successfully!</p></div>';
+		} else {
+			echo '<div class="notice notice-error"><p>Migration failed. Please check the error logs.</p></div>';
+		}
+	}
+	
+	// Check current status
+	$missing_columns = snks_check_bilingual_migration();
+	$needs_migration = ! empty( $missing_columns );
+	
 	?>
 	<div class="wrap">
 		<h1>Bilingual Migration</h1>
 		
 		<div class="card">
-			<h2>Database Migration for Bilingual Support</h2>
-			<p>This migration will add bilingual support to your AI admin tables, allowing you to enter content in both English and Arabic.</p>
+			<h2>Database Status</h2>
 			
-			<div class="notice notice-warning">
-				<p><strong>Important:</strong> Please backup your database before running this migration!</p>
-			</div>
-			
-			<form method="post">
-				<?php wp_nonce_field( 'bilingual_migration' ); ?>
-				<input type="hidden" name="action" value="run_bilingual_migration">
+			<?php if ( $needs_migration ) : ?>
+				<div class="notice notice-warning">
+					<p><strong>Migration Required:</strong> The following columns are missing from the database:</p>
+					<ul>
+						<?php foreach ( $missing_columns as $column ) : ?>
+							<li><code><?php echo esc_html( $column ); ?></code></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
 				
-				<p>
-					<button type="submit" class="button button-primary" onclick="return confirm('Are you sure you want to run the bilingual migration? Please ensure you have a database backup.')">
-						Run Bilingual Migration
-					</button>
-				</p>
-			</form>
-		</div>
-		
-		<?php
-		// Handle migration
-		if ( isset( $_POST['action'] ) && $_POST['action'] === 'run_bilingual_migration' ) {
-			if ( wp_verify_nonce( $_POST['_wpnonce'], 'bilingual_migration' ) ) {
-				$result = snks_migrate_to_bilingual();
-				
-				if ( $result['success'] ) {
-					echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
-				} else {
-					echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
-				}
-			}
-		}
-		?>
-		
-		<div class="card">
-			<h2>Current Database Status</h2>
-			<?php
-			global $wpdb;
-			$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
-			$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
-			
-			$diagnoses_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$diagnoses_table}'" );
-			$therapist_diagnoses_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$therapist_diagnoses_table}'" );
-			
-			if ( $diagnoses_exists ) {
-				$diagnoses_columns = $wpdb->get_results( "SHOW COLUMNS FROM {$diagnoses_table}" );
-				$diagnoses_column_names = array_column( $diagnoses_columns, 'Field' );
-				$has_bilingual_diagnoses = in_array( 'name_en', $diagnoses_column_names );
-			} else {
-				$has_bilingual_diagnoses = false;
-			}
-			
-			if ( $therapist_diagnoses_exists ) {
-				$therapist_columns = $wpdb->get_results( "SHOW COLUMNS FROM {$therapist_diagnoses_table}" );
-				$therapist_column_names = array_column( $therapist_columns, 'Field' );
-				$has_bilingual_therapist = in_array( 'suitability_message_en', $therapist_column_names );
-			} else {
-				$has_bilingual_therapist = false;
-			}
-			?>
-			<ul>
-				<li><strong>Diagnoses Table:</strong> 
-					<?php if ( $diagnoses_exists ): ?>
-						✅ Exists
-						<?php if ( $has_bilingual_diagnoses ): ?>
-							✅ Bilingual columns present
-						<?php else: ?>
-							❌ Needs migration
-						<?php endif; ?>
-					<?php else: ?>
-						❌ Does not exist
-					<?php endif; ?>
-				</li>
-				<li><strong>Therapist Diagnoses Table:</strong> 
-					<?php if ( $therapist_diagnoses_exists ): ?>
-						✅ Exists
-						<?php if ( $has_bilingual_therapist ): ?>
-							✅ Bilingual columns present
-						<?php else: ?>
-							❌ Needs migration
-						<?php endif; ?>
-					<?php else: ?>
-						❌ Does not exist
-					<?php endif; ?>
-				</li>
-			</ul>
+				<form method="post">
+					<?php wp_nonce_field( 'run_bilingual_migration' ); ?>
+					<input type="hidden" name="action" value="run_migration">
+					<p class="description">
+						This will add the missing bilingual columns and migrate existing data. 
+						Existing English content will be copied to the new English columns.
+					</p>
+					<?php submit_button( 'Run Migration', 'primary', 'submit', false ); ?>
+				</form>
+			<?php else : ?>
+				<div class="notice notice-success">
+					<p><strong>✅ All bilingual columns are present!</strong> No migration is needed.</p>
+				</div>
+			<?php endif; ?>
 		</div>
 		
 		<div class="card">
 			<h2>What This Migration Does</h2>
 			<ul>
-				<li><strong>Diagnoses Table:</strong> Adds <code>name_en</code>, <code>name_ar</code>, <code>description_en</code>, <code>description_ar</code> columns</li>
-				<li><strong>Therapist Diagnoses Table:</strong> Adds <code>suitability_message_en</code>, <code>suitability_message_ar</code> columns</li>
-				<li><strong>User Meta:</strong> New bilingual fields will be created when therapists update their profiles</li>
-				<li><strong>Data Preservation:</strong> Existing data will be migrated to English fields</li>
+				<li><strong>Adds bilingual columns:</strong> <code>name_en</code>, <code>name_ar</code>, <code>description_en</code>, <code>description_ar</code></li>
+				<li><strong>Migrates existing data:</strong> Copies current English content to the new English columns</li>
+				<li><strong>Preserves existing data:</strong> No data will be lost during migration</li>
+				<li><strong>Updates therapist diagnoses:</strong> Adds bilingual suitability message columns</li>
 			</ul>
 		</div>
 		
 		<div class="card">
-			<h2>After Migration</h2>
-			<p>Once the migration is complete, you can:</p>
-			<ul>
-				<li>Edit diagnoses to add Arabic translations</li>
-				<li>Update therapist profiles with bilingual content</li>
-				<li>Add Arabic suitability messages for diagnosis assignments</li>
-			</ul>
+			<h2>Current Table Structure</h2>
+			<?php
+			$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+			$columns = $wpdb->get_results( "SHOW COLUMNS FROM {$diagnoses_table}" );
+			?>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th>Column</th>
+						<th>Type</th>
+						<th>Null</th>
+						<th>Key</th>
+						<th>Default</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $columns as $column ) : ?>
+						<tr>
+							<td><code><?php echo esc_html( $column->Field ); ?></code></td>
+							<td><?php echo esc_html( $column->Type ); ?></td>
+							<td><?php echo esc_html( $column->Null ); ?></td>
+							<td><?php echo esc_html( $column->Key ); ?></td>
+							<td><?php echo esc_html( $column->Default ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 		</div>
 	</div>
 	<?php
-} 
+}
+
+/**
+ * Add admin menu for migration
+ */
+function snks_add_bilingual_migration_menu() {
+	add_submenu_page(
+		'tools.php',
+		'Bilingual Migration',
+		'Bilingual Migration',
+		'manage_options',
+		'bilingual-migration',
+		'snks_bilingual_migration_page'
+	);
+}
+add_action( 'admin_menu', 'snks_add_bilingual_migration_menu' );
+
+/**
+ * Auto-run migration on plugin activation if needed
+ */
+function snks_auto_migrate_bilingual() {
+	$missing_columns = snks_check_bilingual_migration();
+	
+	if ( ! empty( $missing_columns ) ) {
+		$result = snks_migrate_to_bilingual();
+		
+		if ( $result ) {
+			error_log( 'Auto-migration: Bilingual columns added successfully' );
+		} else {
+			error_log( 'Auto-migration: Failed to add bilingual columns' );
+		}
+	}
+}
+
+// Run auto-migration on plugin load
+add_action( 'init', 'snks_auto_migrate_bilingual' ); 
