@@ -443,7 +443,7 @@ function jalsah_ai_export_diagnoses() {
     $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$diagnoses_table'") == $diagnoses_table;
     
     if ($table_exists) {
-        $diagnoses = $wpdb->get_results("SELECT * FROM $diagnoses_table ORDER BY id");
+        $diagnoses = $wpdb->get_results("SELECT * FROM $diagnoses_table ORDER BY name_en, name");
         return $diagnoses;
     }
     
