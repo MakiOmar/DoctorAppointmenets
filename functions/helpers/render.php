@@ -876,6 +876,12 @@ function snks_booking_item_template( $record ) {
 					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
+				<?php if ( snks_is_ai_session_booking( $record ) ) : ?>
+				<div class="ai-session-flag" style="position:absolute;top:calc(50% - 15px);right:-25%;display: flex;align-items: center;background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+					<span style="margin-right: 5px;">🤖</span>
+					<span>AI</span>
+				</div>
+				<?php endif; ?>
 			</div>
 
 			<div class="anony-grid-col anony-grid-col-<?php echo 'online' === $record->attendance_type ? '8' : '10 snks-offline-border-radius'; ?>">
@@ -953,6 +959,28 @@ function snks_booking_item_template( $record ) {
 	//phpcs:enable
 	return ob_get_clean();
 }
+/**
+ * Check if a session is an AI session
+ *
+ * @param object $record The Record.
+ * @return bool
+ */
+function snks_is_ai_session_booking( $record ) {
+	if ( ! $record || ! isset( $record->order_id ) || empty( $record->order_id ) ) {
+		return false;
+	}
+	
+	$order = wc_get_order( $record->order_id );
+	if ( ! $order ) {
+		return false;
+	}
+	
+	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	$is_ai_session = $order->get_meta( 'is_ai_session' );
+	
+	return $from_jalsah_ai || $is_ai_session;
+}
+
 /**
  * Template string replace
  *
