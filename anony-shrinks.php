@@ -347,10 +347,16 @@ function plugin_activation_hook() {
 	update_option( 'snks_ai_profit_system_version', '1.0.0' );
 	
 	// Create AI session product for WooCommerce
+	// Defer AI product creation to avoid WooCommerce conflicts during activation
 	if ( class_exists( 'WooCommerce' ) ) {
 		// Include AI helper classes
 		require_once SNKS_DIR . 'functions/helpers/ai-products.php';
-		SNKS_AI_Products::create_ai_session_product();
+		// Schedule product creation for next page load to avoid activation conflicts
+		add_action( 'init', function() {
+			if ( class_exists( 'WooCommerce' ) ) {
+				SNKS_AI_Products::create_ai_session_product();
+			}
+		}, 20 );
 	}
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
