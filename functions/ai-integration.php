@@ -2018,12 +2018,8 @@ class SNKS_AI_Integration {
 		// Get all available dates from timetable
 		$available_dates = $this->get_available_dates_from_timetable($application->user_id);
 		
-		// Debug: Log therapist formatting
-		error_log( "DEBUG: Formatting therapist from application - User ID: {$application->user_id}, Name: {$application->name}" );
-		
-		// Get pricing with debug
+		// Get pricing
 		$pricing = $this->get_therapist_ai_price( $application->user_id );
-		error_log( "DEBUG: Retrieved pricing for therapist {$application->user_id}: " . json_encode( $pricing ) );
 		
 		$result = array(
 			'id' => $application->user_id,
@@ -2165,12 +2161,8 @@ class SNKS_AI_Integration {
 	 * Get Therapist AI Price
 	 */
 	private function get_therapist_ai_price( $therapist_id ) {
-		// Debug: Log the therapist ID being processed
-		error_log( "DEBUG: Getting AI price for therapist ID: $therapist_id" );
-		
 		// Check if this is a demo therapist
 		$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
-		error_log( "DEBUG: Is demo doctor: " . ( $is_demo_doctor ? 'YES' : 'NO' ) );
 		
 		if ( $is_demo_doctor ) {
 			// For demo therapists, use the simple pricing fields
@@ -2178,60 +2170,45 @@ class SNKS_AI_Integration {
 			$price_60_min = get_user_meta( $therapist_id, 'price_60_min', true );
 			$price_90_min = get_user_meta( $therapist_id, 'price_90_min', true );
 			
-			error_log( "DEBUG: Demo doctor pricing - 45min: $price_45_min, 60min: $price_60_min, 90min: $price_90_min" );
-			
 			// Return pricing in the format expected by the frontend (45_minutes structure)
-			$result = array(
+			return array(
 				'countries' => array(),
 				'others' => intval( $price_45_min ) ?: 150 // Default to 150 if not set
 			);
-			error_log( "DEBUG: Demo doctor returning: " . json_encode( $result ) );
-			return $result;
 		} else {
 			// For regular therapists, use the main pricing system
 			$pricing = snks_doctor_online_pricings( $therapist_id );
-			error_log( "DEBUG: Main pricing system result: " . json_encode( $pricing ) );
 			
 			// Check if 45_minutes pricing exists and has a valid 'others' value
 			if ( isset( $pricing['45_minutes'] ) && ! empty( $pricing['45_minutes']['others'] ) ) {
-				error_log( "DEBUG: Found 45_minutes pricing: " . json_encode( $pricing['45_minutes'] ) );
 				return $pricing['45_minutes'];
 			}
 			
 			// If no 45_minutes pricing, check for 60_minutes as fallback
 			if ( isset( $pricing['60_minutes'] ) && ! empty( $pricing['60_minutes']['others'] ) ) {
-				error_log( "DEBUG: Found 60_minutes pricing as fallback: " . json_encode( $pricing['60_minutes'] ) );
 				return $pricing['60_minutes'];
 			}
 			
 			// If no pricing is set up, check if therapist has any pricing fields set
 			$price_45_others = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
 			$price_60_others = get_user_meta( $therapist_id, '60_minutes_pricing_others', true );
-			$price_90_others = get_user_meta( $therapist_id, '90_minutes_pricing_others', true );
-			
-			error_log( "DEBUG: Direct user meta pricing - 45min: '$price_45_others', 60min: '$price_60_others', 90min: '$price_90_others'" );
 			
 			if ( ! empty( $price_45_others ) ) {
-				$result = array(
+				return array(
 					'countries' => array(),
 					'others' => intval( $price_45_others )
 				);
-				error_log( "DEBUG: Using 45_minutes_pricing_others: " . json_encode( $result ) );
-				return $result;
 			}
 			
 			// Check for 60_minutes_pricing_others as fallback
 			if ( ! empty( $price_60_others ) ) {
-				$result = array(
+				return array(
 					'countries' => array(),
 					'others' => intval( $price_60_others )
 				);
-				error_log( "DEBUG: Using 60_minutes_pricing_others as fallback: " . json_encode( $result ) );
-				return $result;
 			}
 			
 			// If still no pricing is found, return empty array (will show "Contact for pricing")
-			error_log( "DEBUG: No pricing found, returning empty array" );
 			return array();
 		}
 	}
