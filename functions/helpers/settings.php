@@ -334,7 +334,11 @@ function snks_get_available_periods( $user_id = false, $attendance_type = 'both'
  * @return array
  */
 function snks_get_periods( $user_id = false ) {
-	$settings     = snks_doctor_settings( $user_id );
+	error_log( "DEBUG: snks_get_periods called for user ID: " . ( $user_id ? $user_id : 'false' ) );
+	
+	$settings = snks_doctor_settings( $user_id );
+	error_log( "DEBUG: Doctor settings for user $user_id: " . json_encode( $settings ) );
+	
 	$is_available = array();
 	if ( ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) ) {
 		$is_available[] = 60;
@@ -346,6 +350,8 @@ function snks_get_periods( $user_id = false ) {
 		$is_available[] = 30;
 	}
 	sort( $is_available );
+	
+	error_log( "DEBUG: Available periods for user $user_id: " . json_encode( $is_available ) );
 	return $is_available;
 }
 /**

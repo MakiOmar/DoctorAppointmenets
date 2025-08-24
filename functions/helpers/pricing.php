@@ -64,8 +64,12 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
  * @return array
  */
 function snks_doctor_pricings( $user_id, $attendance_type = 'online' ) {
+	error_log( "DEBUG: snks_doctor_pricings called for user ID: $user_id, attendance_type: $attendance_type" );
+	
 	$available_periods = snks_get_periods( $user_id );
-	$pricings          = array();
+	error_log( "DEBUG: Available periods for user $user_id: " . json_encode( $available_periods ) );
+	
+	$pricings = array();
 	
 	foreach ( $available_periods as $period ) {
 		if ( 'offline' === $attendance_type ) {
@@ -84,12 +88,19 @@ function snks_doctor_pricings( $user_id, $attendance_type = 'online' ) {
 			);
 		} else {
 			// Use online pricing fields (original fields)
+			$countries = get_user_meta( $user_id, $period . '_minutes_pricing', true );
+			$others = get_user_meta( $user_id, $period . '_minutes_pricing_others', true );
+			
+			error_log( "DEBUG: User $user_id, period $period - countries: " . json_encode( $countries ) . ", others: '$others'" );
+			
 			$pricings[ $period ] = array(
-				'countries' => get_user_meta( $user_id, $period . '_minutes_pricing', true ),
-				'others'    => get_user_meta( $user_id, $period . '_minutes_pricing_others', true ),
+				'countries' => $countries,
+				'others'    => $others,
 			);
 		}
 	}
+	
+	error_log( "DEBUG: Final pricings for user $user_id: " . json_encode( $pricings ) );
 	return $pricings;
 }
 
@@ -110,7 +121,10 @@ function snks_doctor_offline_pricings( $user_id ) {
  * @return array
  */
 function snks_doctor_online_pricings( $user_id ) {
-	return snks_doctor_pricings( $user_id, 'online' );
+	error_log( "DEBUG: snks_doctor_online_pricings called for user ID: $user_id" );
+	$result = snks_doctor_pricings( $user_id, 'online' );
+	error_log( "DEBUG: snks_doctor_online_pricings result for user $user_id: " . json_encode( $result ) );
+	return $result;
 }
 
 /**
