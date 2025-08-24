@@ -603,43 +603,43 @@ function snks_display_application_edit_form( $application_id ) {
 				<table class="form-table">
 					<tr>
 						<th><label for="name">Name (Arabic)</label></th>
-						<td><input type="text" id="name" name="name" value="<?php echo esc_attr( $application->name ); ?>" class="regular-text" /></td>
+						<td><input type="text" id="name" name="name" value="<?php echo esc_attr( $application->name ); ?>" class="regular-text" autocomplete="name" /></td>
 					</tr>
 					<tr>
 						<th><label for="name_en">Name (English)</label></th>
-						<td><input type="text" id="name_en" name="name_en" value="<?php echo esc_attr( $application->name_en ); ?>" class="regular-text" /></td>
+						<td><input type="text" id="name_en" name="name_en" value="<?php echo esc_attr( $application->name_en ); ?>" class="regular-text" autocomplete="name" /></td>
 					</tr>
 					<tr>
 						<th><label for="email">Email</label></th>
-						<td><input type="email" id="email" name="email" value="<?php echo esc_attr( $application->email ); ?>" class="regular-text" /></td>
+						<td><input type="email" id="email" name="email" value="<?php echo esc_attr( $application->email ); ?>" class="regular-text" autocomplete="email" /></td>
 					</tr>
 					<tr>
 						<th><label for="phone">Phone</label></th>
-						<td><input type="text" id="phone" name="phone" value="<?php echo esc_attr( $application->phone ); ?>" class="regular-text" /></td>
+						<td><input type="text" id="phone" name="phone" value="<?php echo esc_attr( $application->phone ); ?>" class="regular-text" autocomplete="tel" /></td>
 					</tr>
 					<tr>
 						<th><label for="whatsapp">WhatsApp</label></th>
-						<td><input type="text" id="whatsapp" name="whatsapp" value="<?php echo esc_attr( $application->whatsapp ); ?>" class="regular-text" /></td>
+						<td><input type="text" id="whatsapp" name="whatsapp" value="<?php echo esc_attr( $application->whatsapp ); ?>" class="regular-text" autocomplete="tel" /></td>
 					</tr>
 					<tr>
 						<th><label for="doctor_specialty">Specialty</label></th>
-						<td><input type="text" id="doctor_specialty" name="doctor_specialty" value="<?php echo esc_attr( $application->doctor_specialty ); ?>" class="regular-text" /></td>
+						<td><input type="text" id="doctor_specialty" name="doctor_specialty" value="<?php echo esc_attr( $application->doctor_specialty ); ?>" class="regular-text" autocomplete="on" /></td>
 					</tr>
 					<tr>
 						<th><label for="experience_years">Experience Years</label></th>
-						<td><input type="number" id="experience_years" name="experience_years" value="<?php echo esc_attr( $application->experience_years ); ?>" class="small-text" /></td>
+						<td><input type="number" id="experience_years" name="experience_years" value="<?php echo esc_attr( $application->experience_years ); ?>" class="small-text" autocomplete="on" /></td>
 					</tr>
 					<tr>
 						<th><label for="education">Education</label></th>
-						<td><textarea id="education" name="education" rows="3" class="large-text"><?php echo esc_textarea( $application->education ); ?></textarea></td>
+						<td><textarea id="education" name="education" rows="3" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->education ); ?></textarea></td>
 					</tr>
 					<tr>
 						<th><label for="bio">Bio (Arabic)</label></th>
-						<td><textarea id="bio" name="bio" rows="4" class="large-text"><?php echo esc_textarea( $application->bio ); ?></textarea></td>
+						<td><textarea id="bio" name="bio" rows="4" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->bio ); ?></textarea></td>
 					</tr>
 					<tr>
 						<th><label for="bio_en">Bio (English)</label></th>
-						<td><textarea id="bio_en" name="bio_en" rows="4" class="large-text"><?php echo esc_textarea( $application->bio_en ); ?></textarea></td>
+						<td><textarea id="bio_en" name="bio_en" rows="4" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->bio_en ); ?></textarea></td>
 					</tr>
 				</table>
 			</div>
@@ -671,17 +671,17 @@ function snks_display_application_edit_form( $application_id ) {
 					</tr>
 					<tr>
 						<th><label for="ai_bio">AI Bio (Arabic)</label></th>
-						<td><textarea id="ai_bio" name="ai_bio" rows="4" class="large-text"><?php echo esc_textarea( $application->ai_bio ); ?></textarea>
+						<td><textarea id="ai_bio" name="ai_bio" rows="4" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->ai_bio ); ?></textarea>
 						<p class="description">Bio specifically for AI platform display</p></td>
 					</tr>
 					<tr>
 						<th><label for="ai_bio_en">AI Bio (English)</label></th>
-						<td><textarea id="ai_bio_en" name="ai_bio_en" rows="4" class="large-text"><?php echo esc_textarea( $application->ai_bio_en ); ?></textarea>
+						<td><textarea id="ai_bio_en" name="ai_bio_en" rows="4" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->ai_bio_en ); ?></textarea>
 						<p class="description">Bio specifically for AI platform display</p></td>
 					</tr>
 					<tr>
 						<th><label for="ai_certifications">AI Certifications</label></th>
-						<td><textarea id="ai_certifications" name="ai_certifications" rows="3" class="large-text"><?php echo esc_textarea( $application->ai_certifications ); ?></textarea>
+						<td><textarea id="ai_certifications" name="ai_certifications" rows="3" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->ai_certifications ); ?></textarea>
 						<p class="description">Certifications to display on AI platform</p></td>
 					</tr>
 					<tr>

@@ -1024,11 +1024,11 @@ function snks_enhanced_ai_diagnoses_page() {
 						<td>
 							<div style="margin-bottom: 10px;">
 								<label for="name_en" style="font-weight: bold; color: #0073aa;">English:</label>
-								<input type="text" id="name_en" name="name_en" class="regular-text" placeholder="Enter diagnosis name in English" required>
+								<input type="text" id="name_en" name="name_en" class="regular-text" placeholder="Enter diagnosis name in English" required autocomplete="on">
 							</div>
 							<div>
 								<label for="name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
-								<input type="text" id="name_ar" name="name_ar" class="regular-text" placeholder="أدخل اسم التشخيص بالعربية" required style="direction: rtl; text-align: right;">
+								<input type="text" id="name_ar" name="name_ar" class="regular-text" placeholder="أدخل اسم التشخيص بالعربية" required style="direction: rtl; text-align: right;" autocomplete="on">
 							</div>
 						</td>
 					</tr>
@@ -1037,11 +1037,11 @@ function snks_enhanced_ai_diagnoses_page() {
 						<td>
 							<div style="margin-bottom: 10px;">
 								<label for="description_en" style="font-weight: bold; color: #0073aa;">English:</label>
-								<textarea id="description_en" name="description_en" rows="3" class="large-text" placeholder="Enter diagnosis description in English"></textarea>
+								<textarea id="description_en" name="description_en" rows="3" class="large-text" placeholder="Enter diagnosis description in English" autocomplete="on"></textarea>
 							</div>
 							<div>
 								<label for="description_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
-								<textarea id="description_ar" name="description_ar" rows="3" class="large-text" placeholder="أدخل وصف التشخيص بالعربية" style="direction: rtl; text-align: right;"></textarea>
+								<textarea id="description_ar" name="description_ar" rows="3" class="large-text" placeholder="أدخل وصف التشخيص بالعربية" style="direction: rtl; text-align: right;" autocomplete="on"></textarea>
 							</div>
 						</td>
 					</tr>

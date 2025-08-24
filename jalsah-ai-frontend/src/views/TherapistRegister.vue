@@ -14,23 +14,23 @@
           <div class="space-y-4">
             <div>
               <label class="form-label" for="name">{{ $t('therapistRegister.name') }}</label>
-              <input v-model="form.name" id="name" type="text" required class="input-field" />
+              <input v-model="form.name" id="name" type="text" required class="input-field" autocomplete="name" />
             </div>
             <div>
               <label class="form-label" for="name_en">{{ $t('therapistRegister.nameEn') }}</label>
-              <input v-model="form.name_en" id="name_en" type="text" required class="input-field" />
+              <input v-model="form.name_en" id="name_en" type="text" required class="input-field" autocomplete="name" />
             </div>
             <div>
               <label class="form-label" for="email">{{ $t('therapistRegister.email') }}</label>
-              <input v-model="form.email" id="email" type="email" required class="input-field" />
+              <input v-model="form.email" id="email" type="email" required class="input-field" autocomplete="email" />
             </div>
             <div>
               <label class="form-label" for="phone">{{ $t('therapistRegister.phone') }}</label>
-              <input v-model="form.phone" id="phone" type="text" required class="input-field" />
+              <input v-model="form.phone" id="phone" type="text" required class="input-field" autocomplete="tel" />
             </div>
             <div>
               <label class="form-label" for="whatsapp">{{ $t('therapistRegister.whatsapp') }}</label>
-              <input v-model="form.whatsapp" id="whatsapp" type="text" required class="input-field" />
+              <input v-model="form.whatsapp" id="whatsapp" type="text" required class="input-field" autocomplete="tel" />
             </div>
             <div>
               <label class="form-label" for="doctor_specialty">{{ $t('therapistRegister.specialty') }}</label>

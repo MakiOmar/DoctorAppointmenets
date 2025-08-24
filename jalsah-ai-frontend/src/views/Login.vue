@@ -30,6 +30,7 @@
               class="input-field"
               :placeholder="$t('auth.login.emailPlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="email"
             />
           </div>
 
@@ -43,6 +44,7 @@
               class="input-field"
               :placeholder="$t('auth.login.passwordPlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="current-password"
             />
           </div>
 

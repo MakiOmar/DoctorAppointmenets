@@ -32,6 +32,7 @@
                 class="input-field"
                 :placeholder="$t('auth.register.firstName')"
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="given-name"
               />
             </div>
             <div>
@@ -44,6 +45,7 @@
                 class="input-field"
                 :placeholder="$t('auth.register.lastName')"
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="family-name"
               />
             </div>
           </div>
@@ -61,6 +63,7 @@
               class="input-field"
               :placeholder="$t('auth.register.agePlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="on"
             />
           </div>
 
@@ -75,6 +78,7 @@
               class="input-field"
               :placeholder="$t('auth.register.emailPlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="email"
             />
           </div>
 
@@ -89,6 +93,7 @@
               class="input-field"
               :placeholder="$t('auth.register.phonePlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="tel"
             />
           </div>
 
@@ -103,6 +108,7 @@
               class="input-field"
               :placeholder="$t('auth.register.whatsappPlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="tel"
             />
           </div>
 
