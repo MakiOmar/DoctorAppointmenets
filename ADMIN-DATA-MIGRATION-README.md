@@ -51,7 +51,8 @@ Import data from a previously exported JSON file:
 - Site configurations
 
 ### ✅ Medical Data
-- Diagnoses and medical content
+- Diagnoses and medical content (from `snks_diagnoses` table)
+- Therapist-diagnosis relationships and ratings
 - Appointments and scheduling
 - Therapist profiles
 - AI session data
@@ -59,6 +60,7 @@ Import data from a previously exported JSON file:
 ### ✅ Custom Tables
 - Jalsah appointments table
 - Jalsah AI sessions table
+- Therapist-diagnosis relationships table
 - Cart and order data
 - Payment information
 

@@ -78,6 +78,7 @@ function jalsah_ai_export_data($type = 'all') {
                 'appointments' => jalsah_ai_export_appointments(),
                 'therapists' => jalsah_ai_export_therapists(),
                 'ai_sessions' => jalsah_ai_export_ai_sessions(),
+                'therapist_diagnoses' => jalsah_ai_export_therapist_diagnoses(),
                 'custom_tables' => jalsah_ai_export_custom_tables()
             ];
             break;
@@ -99,7 +100,8 @@ function jalsah_ai_export_data($type = 'all') {
                 'diagnoses' => jalsah_ai_export_diagnoses(),
                 'appointments' => jalsah_ai_export_appointments(),
                 'therapists' => jalsah_ai_export_therapists(),
-                'ai_sessions' => jalsah_ai_export_ai_sessions()
+                'ai_sessions' => jalsah_ai_export_ai_sessions(),
+                'therapist_diagnoses' => jalsah_ai_export_therapist_diagnoses()
             ];
             break;
             
@@ -216,6 +218,11 @@ function jalsah_ai_process_import($data) {
     // Import AI sessions
     if (isset($data['data']['ai_sessions'])) {
         $results[] = jalsah_ai_import_ai_sessions($data['data']['ai_sessions']);
+    }
+    
+    // Import therapist-diagnosis relationships
+    if (isset($data['data']['therapist_diagnoses'])) {
+        $results[] = jalsah_ai_import_therapist_diagnoses($data['data']['therapist_diagnoses']);
     }
     
     // Import custom tables
@@ -431,6 +438,16 @@ function jalsah_ai_export_term_meta($term_id) {
 function jalsah_ai_export_diagnoses() {
     global $wpdb;
     
+    // Export from snks_diagnoses table (AI system)
+    $diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$diagnoses_table'") == $diagnoses_table;
+    
+    if ($table_exists) {
+        $diagnoses = $wpdb->get_results("SELECT * FROM $diagnoses_table ORDER BY id");
+        return $diagnoses;
+    }
+    
+    // Fallback to WordPress posts if table doesn't exist
     $diagnoses = $wpdb->get_results("
         SELECT 
             ID,
@@ -512,6 +529,19 @@ function jalsah_ai_export_ai_sessions() {
     return [];
 }
 
+function jalsah_ai_export_therapist_diagnoses() {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
+    
+    if ($table_exists) {
+        return $wpdb->get_results("SELECT * FROM $table_name ORDER BY id");
+    }
+    
+    return [];
+}
+
 function jalsah_ai_export_custom_tables() {
     global $wpdb;
     
@@ -521,7 +551,8 @@ function jalsah_ai_export_custom_tables() {
         $wpdb->prefix . 'jalsah_ai_sessions',
         $wpdb->prefix . 'jalsah_cart',
         $wpdb->prefix . 'jalsah_orders',
-        $wpdb->prefix . 'jalsah_payments'
+        $wpdb->prefix . 'jalsah_payments',
+        $wpdb->prefix . 'snks_therapist_diagnoses' // Add therapist-diagnosis relationships
     ];
     
     foreach ($tables as $table) {
@@ -714,28 +745,68 @@ function jalsah_ai_import_diagnoses($diagnoses) {
     $imported = 0;
     $skipped = 0;
     
-    foreach ($diagnoses as $diagnosis_data) {
-        $existing_diagnosis = get_page_by_title($diagnosis_data['post_title'], OBJECT, 'diagnosis');
-        if ($existing_diagnosis) {
-            $skipped++;
-            continue;
-        }
-        
-        $diagnosis_id = wp_insert_post([
-            'post_title' => $diagnosis_data['post_title'],
-            'post_content' => $diagnosis_data['post_content'],
-            'post_status' => $diagnosis_data['post_status'],
-            'post_type' => 'diagnosis',
-            'post_name' => $diagnosis_data['post_name']
-        ]);
-        
-        if (!is_wp_error($diagnosis_id)) {
-            if (isset($diagnosis_data['meta'])) {
-                foreach ($diagnosis_data['meta'] as $meta_key => $meta_value) {
-                    update_post_meta($diagnosis_id, $meta_key, $meta_value);
-                }
+    // Check if snks_diagnoses table exists
+    $diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$diagnoses_table'") == $diagnoses_table;
+    
+    if ($table_exists) {
+        // Import to snks_diagnoses table (AI system)
+        foreach ($diagnoses as $diagnosis_data) {
+            // Check if diagnosis already exists by name
+            $existing_diagnosis = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $diagnoses_table WHERE name = %s OR name_en = %s",
+                $diagnosis_data['name'] ?? '',
+                $diagnosis_data['name_en'] ?? ''
+            ));
+            
+            if ($existing_diagnosis) {
+                $skipped++;
+                continue;
             }
-            $imported++;
+            
+            // Insert into snks_diagnoses table
+            $result = $wpdb->insert(
+                $diagnoses_table,
+                array(
+                    'name' => $diagnosis_data['name'] ?? '',
+                    'name_en' => $diagnosis_data['name_en'] ?? '',
+                    'name_ar' => $diagnosis_data['name_ar'] ?? '',
+                    'description' => $diagnosis_data['description'] ?? '',
+                    'description_en' => $diagnosis_data['description_en'] ?? '',
+                    'description_ar' => $diagnosis_data['description_ar'] ?? '',
+                ),
+                array('%s', '%s', '%s', '%s', '%s', '%s')
+            );
+            
+            if ($result !== false) {
+                $imported++;
+            }
+        }
+    } else {
+        // Fallback to WordPress posts if table doesn't exist
+        foreach ($diagnoses as $diagnosis_data) {
+            $existing_diagnosis = get_page_by_title($diagnosis_data['post_title'], OBJECT, 'diagnosis');
+            if ($existing_diagnosis) {
+                $skipped++;
+                continue;
+            }
+            
+            $diagnosis_id = wp_insert_post([
+                'post_title' => $diagnosis_data['post_title'],
+                'post_content' => $diagnosis_data['post_content'],
+                'post_status' => $diagnosis_data['post_status'],
+                'post_type' => 'diagnosis',
+                'post_name' => $diagnosis_data['post_name']
+            ]);
+            
+            if (!is_wp_error($diagnosis_id)) {
+                if (isset($diagnosis_data['meta'])) {
+                    foreach ($diagnosis_data['meta'] as $meta_key => $meta_value) {
+                        update_post_meta($diagnosis_id, $meta_key, $meta_value);
+                    }
+                }
+                $imported++;
+            }
         }
     }
     
@@ -840,6 +911,42 @@ function jalsah_ai_import_ai_sessions($sessions) {
     }
     
     return "AI Sessions: $imported imported, $skipped skipped";
+}
+
+function jalsah_ai_import_therapist_diagnoses($therapist_diagnoses) {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'snks_therapist_diagnoses';
+    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name;
+    
+    if (!$table_exists) {
+        return "Therapist Diagnoses: Table does not exist";
+    }
+    
+    $imported = 0;
+    $skipped = 0;
+    
+    foreach ($therapist_diagnoses as $relationship) {
+        // Check if relationship already exists
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table_name WHERE therapist_id = %d AND diagnosis_id = %d",
+            $relationship->therapist_id,
+            $relationship->diagnosis_id
+        ));
+        
+        if ($existing) {
+            $skipped++;
+            continue;
+        }
+        
+        // Insert relationship
+        $result = $wpdb->insert($table_name, (array) $relationship);
+        if ($result !== false) {
+            $imported++;
+        }
+    }
+    
+    return "Therapist Diagnoses: $imported imported, $skipped skipped";
 }
 
 function jalsah_ai_import_custom_tables($custom_tables) {
