@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { ENVIRONMENT_CONFIG } from './environment.js'
 
 export default defineConfig({
   plugins: [vue()],
@@ -10,14 +11,14 @@ export default defineConfig({
     },
   },
   define: {
-    'import.meta.env.VITE_API_TARGET': JSON.stringify(process.env.VITE_API_TARGET || 'http://localhost/shrinks'),
-    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || '/api'),
+    'import.meta.env.VITE_API_TARGET': JSON.stringify(ENVIRONMENT_CONFIG.API_TARGET),
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(ENVIRONMENT_CONFIG.API_BASE_URL),
   },
   server: {
     port: 3000,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_TARGET || 'http://localhost/shrinks',
+        target: ENVIRONMENT_CONFIG.API_TARGET,
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {
@@ -30,12 +31,12 @@ export default defineConfig({
         },
       },
       '/wp-admin': {
-        target: process.env.VITE_API_TARGET || 'http://localhost/shrinks',
+        target: ENVIRONMENT_CONFIG.API_TARGET,
         changeOrigin: true,
         secure: false,
       },
       '/wp-json': {
-        target: process.env.VITE_API_TARGET || 'http://localhost/shrinks',
+        target: ENVIRONMENT_CONFIG.API_TARGET,
         changeOrigin: true,
         secure: false,
       },

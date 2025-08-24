@@ -5,6 +5,12 @@
   "description": "Jalsah AI Platform Frontend",
   "scripts": {
     "dev": "vite",
+    "dev:local": "node switch-env.js local && vite",
+    "dev:staging": "node switch-env.js staging && vite",
+    "env:local": "node switch-env.js local",
+    "env:staging": "node switch-env.js staging",
+    "env:current": "node switch-env.js current",
+    "env:help": "node switch-env.js help",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
