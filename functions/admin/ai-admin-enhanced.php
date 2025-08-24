@@ -982,7 +982,21 @@ function snks_enhanced_ai_diagnoses_page() {
 		}
 	}
 	
-	$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+	// Pagination settings
+	$per_page = 20; // Number of diagnoses per page
+	$current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+	$offset = ($current_page - 1) * $per_page;
+	
+	// Get total count for pagination
+	$total_diagnoses = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_diagnoses");
+	$total_pages = ceil($total_diagnoses / $per_page);
+	
+	// Get diagnoses with pagination
+	$diagnoses = $wpdb->get_results($wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name LIMIT %d OFFSET %d",
+		$per_page,
+		$offset
+	));
 	?>
 	<div class="wrap">
 		<h1>AI Diagnoses Management</h1>
@@ -1038,7 +1052,7 @@ function snks_enhanced_ai_diagnoses_page() {
 		</div>
 		
 		<div class="card">
-			<h2>Existing Diagnoses</h2>
+			<h2>Existing Diagnoses (<?php echo $total_diagnoses; ?> total)</h2>
 			<?php if ( $diagnoses ) : ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
@@ -1080,6 +1094,28 @@ function snks_enhanced_ai_diagnoses_page() {
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				
+				<!-- Pagination -->
+				<?php if ( $total_pages > 1 ) : ?>
+					<div class="tablenav-pages">
+						<span class="displaying-num"><?php echo $total_diagnoses; ?> items</span>
+						<?php
+						$page_links = paginate_links( array(
+							'base' => add_query_arg( 'paged', '%#%' ),
+							'format' => '',
+							'prev_text' => __( '&laquo;' ),
+							'next_text' => __( '&raquo;' ),
+							'total' => $total_pages,
+							'current' => $current_page,
+							'type' => 'array'
+						) );
+						
+						if ( $page_links ) {
+							echo '<span class="pagination-links">' . join( "\n", $page_links ) . '</span>';
+						}
+						?>
+					</div>
+				<?php endif; ?>
 			<?php else : ?>
 				<p>No diagnoses found.</p>
 			<?php endif; ?>
