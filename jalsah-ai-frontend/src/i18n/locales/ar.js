@@ -192,6 +192,23 @@ export default {
     }
   },
 
+  // Verification
+  verification: {
+    title: 'تحقق من بريدك الإلكتروني',
+    subtitle: 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني',
+    emailSentTo: 'تم إرسال رمز التحقق إلى:',
+    code: 'رمز التحقق',
+    codePlaceholder: 'أدخل الرمز المكون من 6 أرقام',
+    codeHint: 'أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك الإلكتروني',
+    verify: 'تحقق من البريد الإلكتروني',
+    verifying: 'جاري التحقق...',
+    didntReceive: 'لم تستلم الرمز؟',
+    resendCode: 'إعادة إرسال الرمز',
+    resendIn: 'إعادة الإرسال خلال {seconds} ثانية',
+    sending: 'جاري الإرسال...',
+    backToLogin: 'العودة لتسجيل الدخول'
+  },
+
   // Diagnosis
   diagnosis: {
     title: 'التشخيص الذكي',

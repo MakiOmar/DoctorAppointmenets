@@ -295,7 +295,7 @@ export default {
         return
       }
 
-      const success = await authStore.register({
+      const result = await authStore.register({
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         age: parseInt(form.value.age),
@@ -306,7 +306,10 @@ export default {
         password: form.value.password
       })
       
-      if (success) {
+      if (result && result.requiresVerification) {
+        // Redirect to verification page
+        router.push(`/verify-email/${encodeURIComponent(form.value.email)}`)
+      } else if (result && !result.requiresVerification) {
         // Redirect to homepage after successful registration
         router.push('/')
       }

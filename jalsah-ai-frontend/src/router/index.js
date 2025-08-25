@@ -98,6 +98,11 @@ const routes = [
     name: 'TherapistRegister',
     component: () => import('@/views/TherapistRegister.vue')
   },
+  {
+    path: '/verify-email/:email?',
+    name: 'EmailVerification',
+    component: () => import('@/views/EmailVerification.vue')
+  },
   // Catch-all route for API endpoints that might be accessed as frontend routes
   {
     path: '/api/ai/:pathMatch(.*)*',

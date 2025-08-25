@@ -109,6 +109,17 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       const response = await api.post('/api/ai/auth/register', userData)
+      
+      // Check if verification is required
+      if (response.data.data.requires_verification) {
+        // Store email for verification page
+        localStorage.setItem('pending_verification_email', userData.email)
+        
+        toast.success('Registration successful! Please check your email for verification code.')
+        return { requiresVerification: true, email: userData.email }
+      }
+      
+      // If no verification required, proceed with login
       const { token: authToken, user: newUser } = response.data.data
       
       token.value = authToken
@@ -124,7 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
       cartStore.loadCart(newUser.id)
       
       toast.success('Registration successful!')
-      return true
+      return { requiresVerification: false }
     } catch (error) {
       const message = error.response?.data?.error || 'Registration failed'
       toast.error(message)
@@ -154,6 +165,45 @@ export const useAuthStore = defineStore('auth', () => {
     console.log('✅ === LOGOUT COMPLETED ===')
     
     toast.success('Logged out successfully')
+  }
+
+  const verifyEmail = async (verificationData) => {
+    loading.value = true
+    try {
+      const response = await api.post('/api/ai/auth/verify', verificationData)
+      const { token: authToken, user: newUser } = response.data.data
+      
+      token.value = authToken
+      user.value = newUser
+      localStorage.setItem('jalsah_token', authToken)
+      localStorage.setItem('jalsah_user', JSON.stringify(newUser))
+      
+      // Set token in API headers for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+      
+      // Load cart after successful verification
+      const cartStore = useCartStore()
+      cartStore.loadCart(newUser.id)
+      
+      return true
+    } catch (error) {
+      const message = error.response?.data?.error || 'Verification failed'
+      toast.error(message)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const resendVerification = async (email) => {
+    try {
+      const response = await api.post('/api/ai/auth/resend-verification', { email })
+      return true
+    } catch (error) {
+      const message = error.response?.data?.error || 'Failed to resend verification code'
+      toast.error(message)
+      return false
+    }
   }
 
   const loadUser = async () => {
@@ -217,6 +267,8 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    verifyEmail,
+    resendVerification,
     loadUser
   }
 }) 

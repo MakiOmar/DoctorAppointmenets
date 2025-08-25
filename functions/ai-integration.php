@@ -1604,6 +1604,8 @@ class SNKS_AI_Integration {
 					$this->ai_register();
 				} elseif ( $path[1] === 'verify' ) {
 					$this->ai_verify_email();
+				} elseif ( $path[1] === 'resend-verification' ) {
+					$this->ai_resend_verification();
 				}
 				break;
 			default:
@@ -1758,12 +1760,18 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 		
-
-		
 		// Check if user is a patient (customer) or doctor
 		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
 		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
 			$this->send_error( 'Access denied. Only patients and doctors can access this platform.', 403 );
+		}
+		
+		// Check if AI patient needs email verification
+		if ( self::is_ai_patient( $user->ID ) ) {
+			$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
+			if ( $is_verified !== '1' ) {
+				$this->send_error( 'Please verify your email address before logging in. Check your email for verification code.', 401 );
+			}
 		}
 		
 		$token = $this->generate_jwt_token( $user->ID );
@@ -1797,7 +1805,13 @@ class SNKS_AI_Integration {
 		// Check if user exists
 		$existing_user = get_user_by( 'email', sanitize_email( $data['email'] ) );
 		if ( $existing_user ) {
-			// Update missing fields
+			// Check if user is already verified
+			$is_verified = get_user_meta( $existing_user->ID, 'ai_email_verified', true );
+			if ( $is_verified === '1' ) {
+				$this->send_error( 'User already exists and is verified. Please login instead.', 400 );
+			}
+			
+			// Update existing user fields
 			$this->update_ai_user_fields( $existing_user->ID, $data );
 			$user = $existing_user;
 		} else {
@@ -1812,16 +1826,30 @@ class SNKS_AI_Integration {
 			$this->update_ai_user_fields( $user_id, $data );
 		}
 		
-		$token = $this->generate_jwt_token( $user->ID );
+		// Generate verification code
+		$verification_code = wp_generate_password( 6, false, false );
+		$verification_code = preg_replace( '/[^0-9]/', '', $verification_code ); // Ensure it's only numbers
+		if ( strlen( $verification_code ) < 6 ) {
+			$verification_code = str_pad( $verification_code, 6, '0', STR_PAD_LEFT );
+		}
+		
+		// Store verification code and expiry
+		update_user_meta( $user->ID, 'ai_verification_code', $verification_code );
+		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
+		update_user_meta( $user->ID, 'ai_email_verified', '0' );
+		
+		// Send verification email
+		$email_sent = $this->send_verification_email( $user->ID, $verification_code );
+		
+		if ( ! $email_sent ) {
+			$this->send_error( 'Failed to send verification email. Please try again.', 500 );
+		}
 		
 		$this->send_success( array(
-			'token' => $token,
-			'user' => array(
-				'id' => $user->ID,
-				'email' => $user->user_email,
-				'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
-				'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
-			)
+			'message' => 'Registration successful! Please check your email for verification code.',
+			'user_id' => $user->ID,
+			'email' => $user->user_email,
+			'requires_verification' => true
 		) );
 	}
 	
@@ -1865,6 +1893,47 @@ class SNKS_AI_Integration {
 	}
 	
 	/**
+	 * Send verification email
+	 */
+	private function send_verification_email( $user_id, $verification_code ) {
+		$user = get_user_by( 'ID', $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+		
+		$first_name = get_user_meta( $user_id, 'billing_first_name', true );
+		$site_name = get_bloginfo( 'name' );
+		$site_url = get_site_url();
+		
+		$subject = sprintf( '[%s] Verify Your Email Address', $site_name );
+		
+		$message = sprintf(
+			'Hello %s,
+
+Thank you for registering with %s!
+
+Your verification code is: %s
+
+This code will expire in 15 minutes.
+
+Please enter this code in the verification form to complete your registration.
+
+If you did not register for an account, please ignore this email.
+
+Best regards,
+%s Team',
+			$first_name,
+			$site_name,
+			$verification_code,
+			$site_name
+		);
+		
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+		
+		return wp_mail( $user->user_email, $subject, $message, $headers );
+	}
+	
+	/**
 	 * AI Verify Email
 	 */
 	private function ai_verify_email() {
@@ -1874,9 +1943,104 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Email and verification code required', 400 );
 		}
 		
-		// Implement email verification logic here
-		// For now, just return success
-		$this->send_success( array( 'message' => 'Email verified successfully' ) );
+		$email = sanitize_email( $data['email'] );
+		$code = sanitize_text_field( $data['code'] );
+		
+		// Find user by email
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			$this->send_error( 'User not found', 404 );
+		}
+		
+		// Check if user is already verified
+		$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
+		if ( $is_verified === '1' ) {
+			$this->send_error( 'Email is already verified', 400 );
+		}
+		
+		// Get stored verification code and expiry
+		$stored_code = get_user_meta( $user->ID, 'ai_verification_code', true );
+		$expires = get_user_meta( $user->ID, 'ai_verification_expires', true );
+		
+		// Check if code is expired
+		if ( time() > intval( $expires ) ) {
+			$this->send_error( 'Verification code has expired. Please request a new one.', 400 );
+		}
+		
+		// Check if code matches
+		if ( $code !== $stored_code ) {
+			$this->send_error( 'Invalid verification code', 400 );
+		}
+		
+		// Mark email as verified
+		update_user_meta( $user->ID, 'ai_email_verified', '1' );
+		
+		// Clear verification code
+		delete_user_meta( $user->ID, 'ai_verification_code' );
+		delete_user_meta( $user->ID, 'ai_verification_expires' );
+		
+		// Generate JWT token for auto-login
+		$token = $this->generate_jwt_token( $user->ID );
+		
+		$this->send_success( array(
+			'message' => 'Email verified successfully! You are now logged in.',
+			'token' => $token,
+			'user' => array(
+				'id' => $user->ID,
+				'email' => $user->user_email,
+				'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
+				'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
+			)
+		) );
+	}
+	
+	/**
+	 * AI Resend Verification
+	 */
+	private function ai_resend_verification() {
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		if ( ! isset( $data['email'] ) ) {
+			$this->send_error( 'Email is required', 400 );
+		}
+		
+		$email = sanitize_email( $data['email'] );
+		
+		// Find user by email
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			$this->send_error( 'User not found', 404 );
+		}
+		
+		// Check if user is already verified
+		$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
+		if ( $is_verified === '1' ) {
+			$this->send_error( 'Email is already verified', 400 );
+		}
+		
+		// Generate new verification code
+		$verification_code = wp_generate_password( 6, false, false );
+		$verification_code = preg_replace( '/[^0-9]/', '', $verification_code ); // Ensure it's only numbers
+		if ( strlen( $verification_code ) < 6 ) {
+			$verification_code = str_pad( $verification_code, 6, '0', STR_PAD_LEFT );
+		}
+		
+		// Store new verification code and expiry
+		update_user_meta( $user->ID, 'ai_verification_code', $verification_code );
+		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
+		
+		// Send verification email
+		$email_sent = $this->send_verification_email( $user->ID, $verification_code );
+		
+		if ( ! $email_sent ) {
+			$this->send_error( 'Failed to send verification email. Please try again.', 500 );
+		}
+		
+		$this->send_success( array(
+			'message' => 'Verification code sent successfully! Please check your email.',
+			'user_id' => $user->ID,
+			'email' => $user->user_email
+		) );
 	}
 	
 	/**

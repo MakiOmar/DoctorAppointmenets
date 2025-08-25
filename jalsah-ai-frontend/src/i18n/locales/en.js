@@ -183,6 +183,23 @@ export default {
     }
   },
 
+  // Verification
+  verification: {
+    title: 'Verify Your Email',
+    subtitle: 'Enter the verification code sent to your email',
+    emailSentTo: 'Verification code sent to:',
+    code: 'Verification Code',
+    codePlaceholder: 'Enter 6-digit code',
+    codeHint: 'Enter the 6-digit code sent to your email',
+    verify: 'Verify Email',
+    verifying: 'Verifying...',
+    didntReceive: "Didn't receive the code?",
+    resendCode: 'Resend Code',
+    resendIn: 'Resend in {seconds} seconds',
+    sending: 'Sending...',
+    backToLogin: 'Back to Login'
+  },
+
   // Diagnosis
   diagnosis: {
     title: 'AI-Powered Diagnosis',
