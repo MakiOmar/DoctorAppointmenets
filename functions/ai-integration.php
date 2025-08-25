@@ -46,6 +46,10 @@ class SNKS_AI_Integration {
 		add_action( 'send_headers', array( $this, 'handle_very_early_cors' ) );
 		add_action( 'parse_request', array( $this, 'handle_early_api_requests' ) );
 		
+		// Add nonce generation endpoint
+		add_action( 'wp_ajax_get_ai_nonce', array( $this, 'get_ai_nonce' ) );
+		add_action( 'wp_ajax_nopriv_get_ai_nonce', array( $this, 'get_ai_nonce' ) );
+		
 		// Flush rewrite rules on activation
 		register_activation_hook( __FILE__, array( $this, 'flush_rewrite_rules' ) );
 		
@@ -156,6 +160,13 @@ class SNKS_AI_Integration {
 			'permission_callback' => '__return_true',
 		) );
 
+		// Nonce generation endpoint
+		register_rest_route( 'jalsah-ai/v1', '/nonce', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_ai_nonce_rest' ),
+			'permission_callback' => '__return_true',
+		) );
+		
 		// Session management endpoints
 		register_rest_route( 'jalsah-ai/v1', '/session/(?P<id>\d+)', array(
 			'methods' => 'GET',
@@ -241,6 +252,39 @@ class SNKS_AI_Integration {
 		}
 	}
 
+	/**
+	 * Get AI nonce for frontend (AJAX)
+	 */
+	public function get_ai_nonce() {
+		$action = sanitize_text_field( $_GET['action'] ?? 'ai_api_nonce' );
+		
+		// Generate nonce for the requested action
+		$nonce = wp_create_nonce( $action );
+		
+		wp_send_json_success( array(
+			'nonce' => $nonce,
+			'action' => $action
+		) );
+	}
+	
+	/**
+	 * Get AI nonce for frontend (REST API)
+	 */
+	public function get_ai_nonce_rest( $request ) {
+		$action = sanitize_text_field( $request->get_param( 'action' ) ?? 'ai_api_nonce' );
+		
+		// Generate nonce for the requested action
+		$nonce = wp_create_nonce( $action );
+		
+		return array(
+			'success' => true,
+			'data' => array(
+				'nonce' => $nonce,
+				'action' => $action
+			)
+		);
+	}
+	
 	/**
 	 * Test AI endpoint
 	 */
@@ -1550,6 +1594,9 @@ class SNKS_AI_Integration {
 			case 'test':
 				$this->send_success( array( 'message' => 'AI endpoint is working!', 'endpoint' => $endpoint ) );
 				break;
+			case 'nonce':
+				$this->handle_nonce_endpoint( $method, $path );
+				break;
 			case 'debug':
 				$this->send_success( array( 
 					'message' => 'Debug endpoint',
@@ -1598,6 +1645,25 @@ class SNKS_AI_Integration {
 				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
+		}
+	}
+	
+	/**
+	 * Handle nonce endpoints
+	 */
+	private function handle_nonce_endpoint( $method, $path ) {
+		switch ( $method ) {
+			case 'GET':
+				$action = sanitize_text_field( $_GET['action'] ?? 'ai_api_nonce' );
+				$nonce = wp_create_nonce( $action );
+				
+				$this->send_success( array(
+					'nonce' => $nonce,
+					'action' => $action
+				) );
+				break;
+			default:
+				$this->send_error( 'Method not allowed', 405 );
 		}
 	}
 	

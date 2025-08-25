@@ -7,22 +7,35 @@ import { useCartStore } from './cart'
 // Helper function to get nonce from WordPress
 const getNonce = async (action) => {
   try {
-    // Try to get nonce from WordPress REST API
-    const response = await fetch(`${import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks'}/wp-json/wp/v2/users/me`, {
+    // Try AJAX endpoint first
+    const ajaxResponse = await fetch(`${import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks'}/wp-admin/admin-ajax.php?action=get_ai_nonce&action=${action}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     })
     
-    // Extract nonce from response headers
-    const nonce = response.headers.get('X-WP-Nonce')
-    if (nonce) {
-      return nonce
+    const ajaxData = await ajaxResponse.json()
+    if (ajaxData.success && ajaxData.data.nonce) {
+      console.log('🔐 Nonce generated successfully via AJAX for action:', action)
+      return ajaxData.data.nonce
     }
     
-    // Fallback: generate a simple nonce-like string
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    // Try REST API endpoint as fallback
+    const restResponse = await fetch(`${import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks'}/wp-json/jalsah-ai/v1/nonce?action=${action}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    const restData = await restResponse.json()
+    if (restData.success && restData.data.nonce) {
+      console.log('🔐 Nonce generated successfully via REST API for action:', action)
+      return restData.data.nonce
+    }
+    
+    throw new Error('Failed to get nonce from both AJAX and REST endpoints')
   } catch (error) {
     console.warn('Could not get nonce from WordPress, using fallback:', error)
     // Fallback: generate a simple nonce-like string
