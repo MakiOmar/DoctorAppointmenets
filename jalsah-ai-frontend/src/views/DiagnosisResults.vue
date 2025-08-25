@@ -479,7 +479,7 @@ export default {
       let retryCount = 0
       const maxRetries = 2
       
-      console.log('🔍 Loading matched therapists for diagnosis ID:', route.params.diagnosisId)
+
       
       while (retryCount <= maxRetries) {
         try {
@@ -488,24 +488,16 @@ export default {
           
           if (diagnosisId) {
             // Check if diagnosisId is numeric (ID) or string (name)
-            console.log('🔍 Settings store:', settingsStore)
-            console.log('🔍 isDiagnosisSearchByName:', settingsStore?.isDiagnosisSearchByName)
-            console.log('🔍 diagnosisId:', diagnosisId, 'type:', typeof diagnosisId)
             
             // If diagnosisId is numeric, always use ID-based search regardless of settings
             if (/^\d+$/.test(diagnosisId)) {
-              console.log('🔍 Using ID-based search path (numeric ID detected)')
               // Load therapists by diagnosis ID
-              console.log('🔍 Making API call to:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
               response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-              console.log('🔍 API Response:', response.data)
               matchedTherapists.value = response.data.data || []
-              console.log('🔍 Matched therapists count:', matchedTherapists.value.length)
             } else {
               // For non-numeric IDs, check if we should search by name
               if (settingsStore && settingsStore.isDiagnosisSearchByName) {
                 // Load all therapists and filter by diagnosis name on frontend
-                console.log('🔍 Using name-based search path')
                 response = await api.get('/api/ai/therapists')
                 
                 if (response.data.data) {
@@ -541,7 +533,6 @@ export default {
                 }
               } else {
                 // If it's a name but ID search is enabled, load all therapists
-                console.log('🔍 Using fallback search path')
                 response = await api.get('/api/ai/therapists')
                 matchedTherapists.value = response.data.data || []
               }
@@ -558,8 +549,6 @@ export default {
         } catch (error) {
           retryCount++
           console.error(`Error loading matched therapists (attempt ${retryCount}):`, error)
-          console.error('🔍 Error details:', error.response?.data)
-          console.error('🔍 Error status:', error.response?.status)
           
           if (retryCount > maxRetries) {
             toast.error(t('diagnosisResults.errorLoadingTherapists'))

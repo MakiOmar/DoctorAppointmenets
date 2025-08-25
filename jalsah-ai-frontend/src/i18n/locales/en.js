@@ -396,6 +396,7 @@ export default {
     subtitle: 'Browse our qualified therapists and find the perfect match for your needs',
     loading: 'Loading therapists...',
     bioDefault: 'Professional therapist with expertise in mental health and well-being.',
+    whyBestForDiagnosis: 'Why is this therapist the best for your diagnosis?',
     bookSession: 'Book Session',
     viewProfile: 'View Profile',
     viewDetails: 'View Details',

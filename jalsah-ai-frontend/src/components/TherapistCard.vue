@@ -61,6 +61,7 @@
 
           <!-- Suitability Message (only show if provided) -->
           <div v-if="suitabilityMessage" class="bg-primary-50 border border-primary-200 rounded-lg p-3">
+            <h4 class="text-sm font-semibold text-primary-900 mb-2">{{ $t('therapists.whyBestForDiagnosis') }}</h4>
             <p class="text-sm text-primary-800">
               {{ suitabilityMessage }}
             </p>
