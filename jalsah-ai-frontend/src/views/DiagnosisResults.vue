@@ -259,10 +259,10 @@ export default {
             if (therapist.earliest_slot_data && therapist.earliest_slot_data.date && therapist.earliest_slot_data.time) {
               try {
                 const dateTime = new Date(therapist.earliest_slot_data.date + ' ' + therapist.earliest_slot_data.time)
-                console.log(`Therapist ${therapist.name}: earliest_slot_data =`, therapist.earliest_slot_data, 'parsed datetime =', dateTime)
+        
                 return isNaN(dateTime.getTime()) ? new Date('9999-12-31') : dateTime
               } catch (error) {
-                console.log(`Therapist ${therapist.name}: error parsing earliest_slot_data:`, error)
+                
                 return new Date('9999-12-31')
               }
             }
@@ -271,21 +271,21 @@ export default {
               try {
                 const minutesFromNow = parseInt(therapist.earliest_slot)
                 const dateTime = new Date(Date.now() + minutesFromNow * 60000)
-                console.log(`Therapist ${therapist.name}: earliest_slot = ${therapist.earliest_slot} minutes, calculated datetime =`, dateTime)
+
                 return dateTime
               } catch (error) {
-                console.log(`Therapist ${therapist.name}: error parsing earliest_slot:`, error)
+                
                 return new Date('9999-12-31')
               }
             }
-            console.log(`Therapist ${therapist.name}: no slot data available`)
+            
             return new Date('9999-12-31') // No slot available
           }
           
           const aDateTime = getEarliestDateTime(a)
           const bDateTime = getEarliestDateTime(b)
           
-          console.log(`Comparing appointments: ${a.name} (${aDateTime}) vs ${b.name} (${bDateTime})`)
+          
           
           if (appointmentSort.value === 'nearest') {
             return aDateTime - bDateTime

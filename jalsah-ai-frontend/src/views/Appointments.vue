@@ -288,9 +288,9 @@ export default {
       loading.value = true
       try {
         const response = await api.get('/api/ai/appointments')
-        console.log('📋 API Response:', response.data)
+
         appointments.value = response.data.data || []
-        console.log('📅 Appointments loaded:', appointments.value)
+
       } catch (error) {
         toast.error('Failed to load appointments')
         console.error('Error loading appointments:', error)
@@ -368,7 +368,7 @@ export default {
     }
 
     const canJoinSession = (appointment) => {
-      console.log('🔍 Debug canJoinSession:', {
+  
         appointment: appointment,
         status: appointment.status,
         date: appointment.date,
@@ -381,12 +381,12 @@ export default {
       
       // Allow joining for both 'open' and 'confirmed' statuses
       if (appointment.status !== 'confirmed' && appointment.status !== 'open') {
-        console.log('❌ Status check failed:', appointment.status)
+  
         return false
       }
       
       // Always show the button for confirmed/open appointments
-      console.log('✅ Can join session: true (always show button)')
+      
       
       return true
     }
@@ -471,12 +471,11 @@ export default {
 
     const bookWithSameTherapist = (appointment) => {
       // Debug logging to see appointment structure
-      console.log('🔍 Appointment object for booking:', appointment)
-      console.log('🔍 All appointment fields:', Object.keys(appointment))
+      
       
       // Try to find the therapist ID from various possible fields
       const therapistId = appointment.therapist_id || appointment.user_id || appointment.therapist?.id
-      console.log('🔍 Therapist ID found:', therapistId)
+      
       
       // Navigate to the new therapist appointment page
       router.push(`/therapist-appointment/${therapistId}`)

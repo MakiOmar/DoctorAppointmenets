@@ -67,13 +67,13 @@ const loadTherapist = async () => {
     error.value = null
     
     const therapistId = route.params.therapistId
-    console.log('🔍 Loading therapist:', therapistId)
+
     
     const response = await api.get(`/api/ai/therapists/${therapistId}`)
     
          if (response.data.success) {
        therapist.value = response.data.data
-       console.log('✅ Therapist loaded:', therapist.value)
+ 
      } else {
       error.value = response.data.error || t('therapistAppointment.loadError')
     }
@@ -87,7 +87,7 @@ const loadTherapist = async () => {
 
 // Handle show details event from TherapistCard
 const handleShowDetails = (therapist) => {
-  console.log('🔍 Show details for therapist:', therapist)
+  
   // You can add any additional logic here if needed
 }
 

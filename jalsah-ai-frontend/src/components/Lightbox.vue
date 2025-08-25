@@ -151,7 +151,7 @@ export default {
     watch(() => props.isOpen, (newValue) => {
       if (newValue) {
         imageLoaded.value = false
-        console.log('Lightbox opened with images:', props.images.length)
+
       }
     })
     

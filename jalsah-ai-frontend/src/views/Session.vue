@@ -420,7 +420,7 @@ const canJoinSession = computed(() => {
    const sessionClientId = Number(sessionData.value.client_id)
   
      // Debug logging
-   console.log('🔍 canJoinSession Debug:', {
+   
      currentUserId,
      sessionTherapistId,
      sessionClientId,
@@ -447,7 +447,7 @@ const waitingForTherapist = computed(() => {
   const waiting = isConfirmed && !sessionData.value.therapist_joined
   
   // Debug logging
-  console.log('🔍 waitingForTherapist Debug:', {
+  
     sessionData: sessionData.value,
     isConfirmed,
     therapist_joined: sessionData.value.therapist_joined,
@@ -477,7 +477,7 @@ const sessionNotAvailableReason = computed(() => {
    const sessionClientId = Number(sessionData.value.client_id)
   
    // Debug logging
-   console.log('🔍 sessionNotAvailableReason Debug:', {
+   
      currentUserId,
      sessionTherapistId,
      sessionClientId,
@@ -528,15 +528,14 @@ const loadSession = async () => {
   error.value = null
   
   try {
-    console.log('🔍 Loading session for ID:', route.params.id)
+    
     const response = await api.get(`/wp-json/jalsah-ai/v1/session/${route.params.id}`)
     
-    console.log('📋 Session API Response:', response.data)
+    
     
          if (response.data.success) {
        sessionData.value = response.data.data
-               console.log('✅ Session data loaded:', sessionData.value)
-        console.log('🔍 Session data details:', {
+       
           ID: sessionData.value.ID,
           user_id: sessionData.value.user_id,
           client_id: sessionData.value.client_id,
@@ -583,13 +582,12 @@ const startSessionRefresh = () => {
   // Refresh session data every 5 seconds to check for therapist joined status
   sessionRefreshTimer.value = setInterval(async () => {
     try {
-      console.log('🔄 Refreshing session data...')
+
       const response = await api.get(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}`)
       
       if (response.data.success) {
         const newData = response.data.data
-        console.log('📋 New session data:', newData)
-        console.log('🔍 Therapist joined status:', newData.therapist_joined)
+
         
         // Update session data
         sessionData.value = newData
@@ -606,8 +604,7 @@ const joinSession = async () => {
   joiningSession.value = true
   
   try {
-    console.log('🔗 Joining session:', sessionData.value.ID)
-    console.log('📋 Session Data:', sessionData.value)
+    
     
     // Show the meeting room modal within our frontend
     showMeetingRoom.value = true
@@ -627,8 +624,7 @@ const startMeeting = async () => {
   startingMeeting.value = true
   
   try {
-    console.log('🎬 Starting meeting as therapist:', sessionData.value.ID)
-    console.log('📋 Session Data:', sessionData.value)
+    
     
     // Notify backend that therapist is starting the meeting
     await notifyTherapistJoined(sessionData.value.ID)
@@ -697,11 +693,11 @@ const closeMeetingRoom = () => {
 const initializeJitsiMeeting = () => {
   if (!sessionData.value || !showMeetingRoom.value) return
   
-  console.log('🚀 Initializing Jitsi meeting...')
+  
   
   // Check if JitsiMeetExternalAPI is already available
   if (typeof JitsiMeetExternalAPI !== 'undefined') {
-    console.log('✅ JitsiMeetExternalAPI already loaded')
+    
     startJitsiMeeting()
     return
   }
@@ -710,7 +706,7 @@ const initializeJitsiMeeting = () => {
   const script = document.createElement('script')
   script.src = 'https://s.jalsah.app/external_api.js'
   script.onload = () => {
-    console.log('✅ Jitsi script loaded successfully')
+    
     setTimeout(() => {
       startJitsiMeeting()
     }, 500) // Give it a moment to initialize
@@ -780,7 +776,7 @@ const startJitsiMeeting = () => {
    }
   
      try {
-     console.log('🎯 Creating Jitsi meeting with options:', options)
+ 
      
      // Try the main Jitsi server first
      try {
@@ -794,7 +790,7 @@ const startJitsiMeeting = () => {
      
      // Add event listeners
      meetAPI.value.addListener('videoConferenceJoined', () => {
-       console.log('✅ Joined video conference')
+       
        jitsiLoaded.value = true
        
        // If therapist joined, notify the backend
@@ -804,27 +800,27 @@ const startJitsiMeeting = () => {
      })
      
      meetAPI.value.addListener('videoConferenceLeft', () => {
-       console.log('👋 Left video conference')
+       
        closeMeetingRoom()
      })
      
      meetAPI.value.addListener('readyToClose', () => {
-       console.log('🚪 Ready to close meeting')
+       
        closeMeetingRoom()
      })
      
      meetAPI.value.addListener('participantJoined', () => {
-       console.log('👤 Participant joined')
+       
      })
      
      meetAPI.value.addListener('participantLeft', () => {
-       console.log('👤 Participant left')
+       
      })
      
      // Show manual button after 5 seconds if still loading
      setTimeout(() => {
        if (!jitsiLoaded.value) {
-         console.log('⏰ Showing manual button')
+ 
          showManualButton.value = true
        }
      }, 5000) // 5 seconds
@@ -832,7 +828,7 @@ const startJitsiMeeting = () => {
      // Set a timeout to show the meeting even if not fully loaded
      setTimeout(() => {
        if (!jitsiLoaded.value) {
-         console.log('⏰ Timeout reached, showing meeting anyway')
+ 
          jitsiLoaded.value = true
          showManualButton.value = false
        }
@@ -849,7 +845,7 @@ const notifyTherapistJoined = async (roomID) => {
   try {
     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${roomID}/therapist-join`)
     if (response.data.success) {
-      console.log('✅ Therapist joined status updated')
+      
     }
   } catch (error) {
     console.error('❌ Error updating therapist joined status:', error)
@@ -857,7 +853,7 @@ const notifyTherapistJoined = async (roomID) => {
 }
 
 const forceShowMeeting = () => {
-  console.log('🔧 Force showing meeting')
+  
   jitsiLoaded.value = true
   showManualButton.value = false
 }
