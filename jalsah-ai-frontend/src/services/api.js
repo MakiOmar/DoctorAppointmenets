@@ -34,7 +34,7 @@ api.interceptors.request.use(
     const token = localStorage.getItem('jalsah_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-
+    }
     
     // Add locale parameter to all requests
     const locale = localStorage.getItem('jalsah_locale') || 'en'
