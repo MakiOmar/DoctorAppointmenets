@@ -1466,18 +1466,18 @@ class SNKS_AI_Integration {
 	 * Handle AI requests
 	 */
 	public function handle_ai_requests() {
-		// Debug logging
-		error_log( 'AI Request Debug - Function called' );
-		error_log( 'AI Request Debug - REQUEST_URI: ' . $_SERVER['REQUEST_URI'] );
-		error_log( 'AI Request Debug - REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD'] );
-		
-		$endpoint = get_query_var( 'ai_endpoint' );
-		error_log( 'AI Request Debug - Query var ai_endpoint: ' . $endpoint );
-		
 		// Check if this is an AI API request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) === false ) {
-			error_log( 'AI Request Debug - Not an AI API request, returning' );
 			return;
+		}
+		
+		$endpoint = get_query_var( 'ai_endpoint' );
+		
+		// Only log for auth-related requests
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/auth' ) !== false ) {
+			error_log( 'AI Auth Request Debug - REQUEST_URI: ' . $_SERVER['REQUEST_URI'] );
+			error_log( 'AI Auth Request Debug - REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD'] );
+			error_log( 'AI Auth Request Debug - Query var ai_endpoint: ' . $endpoint );
 		}
 		
 		if ( ! $endpoint ) {
@@ -1487,8 +1487,10 @@ class SNKS_AI_Integration {
 			
 			// Find the 'ai' part and get what comes after it
 			$ai_index = array_search( 'ai', $path_parts );
-			if ( $ai_index !== false && isset( $path_parts[ $ai_index + 1 ] ) ) {
-				$endpoint = $path_parts[ $ai_index + 1 ];
+			if ( $ai_index !== false ) {
+				// Get all parts after 'ai' to handle nested endpoints like 'auth/register'
+				$endpoint_parts = array_slice( $path_parts, $ai_index + 1 );
+				$endpoint = implode( '/', $endpoint_parts );
 			}
 		}
 		
@@ -1603,7 +1605,6 @@ class SNKS_AI_Integration {
 	 * Handle auth endpoints
 	 */
 	private function handle_auth_endpoint( $method, $path ) {
-		// Debug logging
 		error_log( 'AI Auth Endpoint Debug - Method: ' . $method . ', Path: ' . print_r( $path, true ) );
 		
 		switch ( $method ) {
@@ -1664,13 +1665,11 @@ class SNKS_AI_Integration {
 		// If no nonce provided, allow the request (for backward compatibility)
 		// In production, you might want to require nonces for all requests
 		if ( ! $nonce ) {
-			error_log( 'AI API Debug - No nonce provided, allowing request for backward compatibility' );
 			return true;
 		}
 		
 		// Verify the nonce
 		if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
-			error_log( 'AI API Debug - Invalid nonce provided' );
 			return false;
 		}
 		
@@ -1813,6 +1812,9 @@ class SNKS_AI_Integration {
 	 * AI Login
 	 */
 	private function ai_login() {
+		error_log( 'AI Login Debug - Function called' );
+		error_log( 'AI Login Debug - Raw input: ' . file_get_contents( 'php://input' ) );
+		
 		// Verify nonce for security
 		if ( ! $this->verify_api_nonce( 'nonce', 'ai_login_nonce' ) ) {
 			error_log( 'AI Login Debug - Nonce verification failed' );
@@ -1820,31 +1822,49 @@ class SNKS_AI_Integration {
 		}
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
+		error_log( 'AI Login Debug - Decoded data: ' . print_r( $data, true ) );
 		
 		if ( ! isset( $data['email'] ) || ! isset( $data['password'] ) ) {
+			error_log( 'AI Login Debug - Missing email or password' );
 			$this->send_error( 'Email and password required', 400 );
 		}
 		
 		$user = get_user_by( 'email', sanitize_email( $data['email'] ) );
-		if ( ! $user || ! wp_check_password( $data['password'], $user->user_pass ) ) {
+		if ( ! $user ) {
+			error_log( 'AI Login Debug - User not found for email: ' . $data['email'] );
 			$this->send_error( 'Invalid credentials', 401 );
 		}
+		
+		if ( ! wp_check_password( $data['password'], $user->user_pass ) ) {
+			error_log( 'AI Login Debug - Invalid password for user ID: ' . $user->ID );
+			$this->send_error( 'Invalid credentials', 401 );
+		}
+		
+		error_log( 'AI Login Debug - User authenticated successfully, ID: ' . $user->ID );
 		
 		// Check if user is a patient (customer) or doctor
 		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
 		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
+			error_log( 'AI Login Debug - User role not allowed: ' . implode( ', ', $user->roles ) );
 			$this->send_error( 'Access denied. Only patients and doctors can access this platform.', 403 );
 		}
+		
+		error_log( 'AI Login Debug - User role check passed' );
 		
 		// Check if AI patient needs email verification
 		if ( self::is_ai_patient( $user->ID ) ) {
 			$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
 			if ( $is_verified !== '1' ) {
+				error_log( 'AI Login Debug - AI patient email not verified for user ID: ' . $user->ID );
 				$this->send_error( 'Please verify your email address before logging in. Check your email for verification code.', 401 );
 			}
+			error_log( 'AI Login Debug - AI patient email verified' );
 		}
 		
 		$token = $this->generate_jwt_token( $user->ID );
+		error_log( 'AI Login Debug - JWT token generated for user ID: ' . $user->ID );
+		
+		error_log( 'AI Login Debug - Login completed successfully for user ID: ' . $user->ID );
 		
 		$this->send_success( array(
 			'token' => $token,
@@ -1863,7 +1883,6 @@ class SNKS_AI_Integration {
 	 * AI Register
 	 */
 	private function ai_register() {
-		// Debug logging
 		error_log( 'AI Register Debug - Function called' );
 		error_log( 'AI Register Debug - Raw input: ' . file_get_contents( 'php://input' ) );
 		
@@ -1889,25 +1908,33 @@ class SNKS_AI_Integration {
 			}
 		}
 		
+		error_log( 'AI Register Debug - All required fields present' );
+		
 		// Check if user exists
 		$existing_user = get_user_by( 'email', sanitize_email( $data['email'] ) );
 		if ( $existing_user ) {
+			error_log( 'AI Register Debug - User already exists with ID: ' . $existing_user->ID );
 			// Check if user is already verified
 			$is_verified = get_user_meta( $existing_user->ID, 'ai_email_verified', true );
 			if ( $is_verified === '1' ) {
+				error_log( 'AI Register Debug - User is already verified' );
 				$this->send_error( 'User already exists and is verified. Please login instead.', 400 );
 			}
 			
+			error_log( 'AI Register Debug - Updating existing user fields' );
 			// Update existing user fields
 			$this->update_ai_user_fields( $existing_user->ID, $data );
 			$user = $existing_user;
 		} else {
+			error_log( 'AI Register Debug - Creating new user' );
 			// Create new user
 			$user_id = wp_create_user( $data['email'], $data['password'], $data['email'] );
 			if ( is_wp_error( $user_id ) ) {
+				error_log( 'AI Register Debug - User creation failed: ' . $user_id->get_error_message() );
 				$this->send_error( $user_id->get_error_message(), 400 );
 			}
 			
+			error_log( 'AI Register Debug - User created successfully with ID: ' . $user_id );
 			$user = get_user_by( 'ID', $user_id );
 			$user->set_role( 'customer' );
 			$this->update_ai_user_fields( $user_id, $data );
@@ -1920,17 +1947,26 @@ class SNKS_AI_Integration {
 			$verification_code = str_pad( $verification_code, 6, '0', STR_PAD_LEFT );
 		}
 		
+		error_log( 'AI Register Debug - Generated verification code: ' . $verification_code );
+		
 		// Store verification code and expiry
 		update_user_meta( $user->ID, 'ai_verification_code', $verification_code );
 		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
 		update_user_meta( $user->ID, 'ai_email_verified', '0' );
 		
+		error_log( 'AI Register Debug - Verification code stored for user ID: ' . $user->ID );
+		
 		// Send verification email
 		$email_sent = $this->send_verification_email( $user->ID, $verification_code );
 		
 		if ( ! $email_sent ) {
+			error_log( 'AI Register Debug - Failed to send verification email' );
 			$this->send_error( 'Failed to send verification email. Please try again.', 500 );
 		}
+		
+		error_log( 'AI Register Debug - Verification email sent successfully' );
+		
+		error_log( 'AI Register Debug - Registration completed successfully for user ID: ' . $user->ID );
 		
 		$this->send_success( array(
 			'message' => 'Registration successful! Please check your email for verification code.',
