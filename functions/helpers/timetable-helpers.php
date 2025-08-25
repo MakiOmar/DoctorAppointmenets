@@ -865,14 +865,29 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 		)
 	);
 	//phpcs:enable
-	$temp = array();
-	if ( $results && is_array( $results ) ) {
+	
+	// Filter out AI sessions for patients
+	if ( $results && is_array( $results ) && ! snks_is_doctor() ) {
+		$filtered_results = array();
 		foreach ( $results as $result ) {
-			$result->date = gmdate( 'Y-m-d', strtotime( $result->date_time ) );
-			$temp[]       = $result;
+			// Check if this session is an AI session
+			if ( ! snks_is_ai_session( $result->ID ) ) {
+				$result->date = gmdate( 'Y-m-d', strtotime( $result->date_time ) );
+				$filtered_results[] = $result;
+			}
 		}
-		$results = $temp;
+		$results = $filtered_results;
+	} else {
+		$temp = array();
+		if ( $results && is_array( $results ) ) {
+			foreach ( $results as $result ) {
+				$result->date = gmdate( 'Y-m-d', strtotime( $result->date_time ) );
+				$temp[]       = $result;
+			}
+			$results = $temp;
+		}
 	}
+	
 	return $results;
 }
 
@@ -935,6 +950,19 @@ function snks_get_patient_sessions( $tense ) {
 		)
 	);
 	//phpcs:enable
+	
+	// Filter out AI sessions for patients
+	if ( $results && is_array( $results ) ) {
+		$filtered_results = array();
+		foreach ( $results as $result ) {
+			// Check if this session is an AI session
+			if ( ! snks_is_ai_session( $result->ID ) ) {
+				$filtered_results[] = $result;
+			}
+		}
+		$results = $filtered_results;
+	}
+	
 	return $results;
 }
 
