@@ -209,6 +209,33 @@ export default {
     backToLogin: 'العودة لتسجيل الدخول'
   },
 
+  // Toast Messages
+  toast: {
+    auth: {
+      loginSuccess: 'تم تسجيل الدخول بنجاح!',
+      loginFailed: 'فشل تسجيل الدخول',
+      registerSuccess: 'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على رمز التحقق.',
+      registerFailed: 'فشل إنشاء الحساب',
+      userExistsVerified: 'المستخدم موجود ومتحقق بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.',
+      emailVerified: 'تم التحقق من البريد الإلكتروني بنجاح!',
+      verificationFailed: 'فشل التحقق من البريد الإلكتروني',
+      verificationSent: 'تم إرسال رمز التحقق بنجاح!',
+      logoutSuccess: 'تم تسجيل الخروج بنجاح',
+      sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى',
+      invalidCredentials: 'بيانات الدخول غير صحيحة',
+      emailRequired: 'البريد الإلكتروني مطلوب',
+      passwordRequired: 'كلمة المرور مطلوبة',
+      verificationRequired: 'يرجى التحقق من عنوان بريدك الإلكتروني قبل تسجيل الدخول. تحقق من بريدك الإلكتروني للحصول على رمز التحقق.'
+    },
+    general: {
+      error: 'حدث خطأ',
+      success: 'تم بنجاح',
+      loading: 'جاري التحميل...',
+      networkError: 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
+      serverError: 'خطأ في الخادم. يرجى المحاولة مرة أخرى.'
+    }
+  },
+
   // Diagnosis
   diagnosis: {
     title: 'التشخيص الذكي',

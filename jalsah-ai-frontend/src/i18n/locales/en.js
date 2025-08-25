@@ -200,6 +200,33 @@ export default {
     backToLogin: 'Back to Login'
   },
 
+  // Toast Messages
+  toast: {
+    auth: {
+      loginSuccess: 'Login successful!',
+      loginFailed: 'Login failed',
+      registerSuccess: 'Registration successful! Please check your email for verification code.',
+      registerFailed: 'Registration failed',
+      userExistsVerified: 'User already exists and is verified. Please login instead.',
+      emailVerified: 'Email verified successfully!',
+      verificationFailed: 'Email verification failed',
+      verificationSent: 'Verification code sent successfully!',
+      logoutSuccess: 'Logged out successfully',
+      sessionExpired: 'Session expired. Please login again.',
+      invalidCredentials: 'Invalid credentials',
+      emailRequired: 'Email is required',
+      passwordRequired: 'Password is required',
+      verificationRequired: 'Please verify your email address before logging in. Check your email for verification code.'
+    },
+    general: {
+      error: 'An error occurred',
+      success: 'Success',
+      loading: 'Loading...',
+      networkError: 'Network error. Please try again.',
+      serverError: 'Server error. Please try again.'
+    }
+  },
+
   // Diagnosis
   diagnosis: {
     title: 'AI-Powered Diagnosis',

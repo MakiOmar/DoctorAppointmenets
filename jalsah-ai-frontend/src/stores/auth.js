@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useCartStore } from './cart'
 
@@ -48,6 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('jalsah_token'))
   const loading = ref(false)
   const toast = useToast()
+  const { t } = useI18n()
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -118,7 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
       cartStore.loadCart(userData.id)
       
       console.log('✅ === LOGIN PROCESS COMPLETED SUCCESSFULLY ===')
-      toast.success('Login successful!')
+      toast.success(t('toast.auth.loginSuccess'))
       return true
     } catch (error) {
       console.error('❌ === LOGIN PROCESS FAILED ===')
@@ -135,16 +137,24 @@ export const useAuthStore = defineStore('auth', () => {
       if (error.response?.status === 302 || error.response?.status === 301) {
         // Redirect response - this shouldn't happen with API calls
         console.error('🔄 Received redirect response from API:', error.response)
-        toast.error('Unexpected redirect response from server')
+        toast.error(t('toast.general.serverError'))
       } else if (error.response?.data?.error) {
         console.error('📝 Server error message:', error.response.data.error)
-        toast.error(error.response.data.error)
+        // Check for specific error messages and translate them
+        const errorMessage = error.response.data.error
+        if (errorMessage.includes('User already exists and is verified')) {
+          toast.error(t('toast.auth.userExistsVerified'))
+        } else if (errorMessage.includes('Please verify your email address')) {
+          toast.error(t('toast.auth.verificationRequired'))
+        } else {
+          toast.error(errorMessage)
+        }
       } else if (error.message) {
         console.error('💬 Error message:', error.message)
         toast.error(error.message)
       } else {
         console.error('❓ Unknown error occurred')
-        toast.error('Login failed')
+        toast.error(t('toast.auth.loginFailed'))
       }
       
       return false
@@ -171,8 +181,10 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.data.data.requires_verification) {
         // Store email for verification page
         localStorage.setItem('pending_verification_email', userData.email)
+        // Store registration timestamp for countdown
+        localStorage.setItem('registration_timestamp', Date.now().toString())
         
-        toast.success('Registration successful! Please check your email for verification code.')
+        toast.success(t('toast.auth.registerSuccess'))
         return { requiresVerification: true, email: userData.email }
       }
       
@@ -191,11 +203,16 @@ export const useAuthStore = defineStore('auth', () => {
       const cartStore = useCartStore()
       cartStore.loadCart(newUser.id)
       
-      toast.success('Registration successful!')
+      toast.success(t('toast.auth.registerSuccess'))
       return { requiresVerification: false }
     } catch (error) {
-      const message = error.response?.data?.error || 'Registration failed'
-      toast.error(message)
+      const message = error.response?.data?.error || t('toast.auth.registerFailed')
+      // Check for specific error messages and translate them
+      if (message.includes('User already exists and is verified')) {
+        toast.error(t('toast.auth.userExistsVerified'))
+      } else {
+        toast.error(message)
+      }
       return false
     } finally {
       loading.value = false
@@ -221,7 +238,7 @@ export const useAuthStore = defineStore('auth', () => {
     console.log('🛒 Cart cleared')
     console.log('✅ === LOGOUT COMPLETED ===')
     
-    toast.success('Logged out successfully')
+    toast.success(t('toast.auth.logoutSuccess'))
   }
 
   const verifyEmail = async (verificationData) => {
@@ -253,7 +270,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       return true
     } catch (error) {
-      const message = error.response?.data?.error || 'Verification failed'
+      const message = error.response?.data?.error || t('toast.auth.verificationFailed')
       toast.error(message)
       return false
     } finally {
@@ -275,7 +292,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await api.post('/api/ai/auth/resend-verification', requestData)
       return true
     } catch (error) {
-      const message = error.response?.data?.error || 'Failed to resend verification code'
+      const message = error.response?.data?.error || t('toast.auth.verificationFailed')
       toast.error(message)
       return false
     }

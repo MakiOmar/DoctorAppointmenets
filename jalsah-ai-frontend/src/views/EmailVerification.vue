@@ -122,6 +122,28 @@ export default {
         router.push('/register')
         return
       }
+      
+      // Start countdown if user just registered (to prevent immediate resend)
+      // Check if we have a recent registration timestamp
+      const registrationTime = localStorage.getItem('registration_timestamp')
+      if (registrationTime) {
+        const timeSinceRegistration = Date.now() - parseInt(registrationTime)
+        const timeToWait = 60000 - timeSinceRegistration // 60 seconds - time elapsed
+        
+        if (timeToWait > 0) {
+          // Start countdown from remaining time
+          resendCooldown.value = Math.ceil(timeToWait / 1000)
+          countdownInterval.value = setInterval(() => {
+            resendCooldown.value--
+            if (resendCooldown.value <= 0) {
+              clearInterval(countdownInterval.value)
+            }
+          }, 1000)
+        }
+        
+        // Clear the timestamp after using it
+        localStorage.removeItem('registration_timestamp')
+      }
     })
 
     // Cleanup interval on unmount
@@ -157,7 +179,7 @@ export default {
           // Clear pending verification email
           localStorage.removeItem('pending_verification_email')
           
-          toast.success('Email verified successfully!')
+          toast.success($t('toast.auth.emailVerified'))
           
           // Redirect to homepage
           router.push('/')
@@ -175,7 +197,7 @@ export default {
         const response = await authStore.resendVerification(email.value)
         
         if (response) {
-          toast.success('Verification code sent successfully!')
+          toast.success($t('toast.auth.verificationSent'))
           startResendCooldown()
         }
       } catch (error) {
