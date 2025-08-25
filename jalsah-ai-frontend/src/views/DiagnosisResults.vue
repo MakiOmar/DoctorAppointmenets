@@ -487,59 +487,61 @@ export default {
           let response
           
           if (diagnosisId) {
-            // Check if we should search by name or ID
+            // Check if diagnosisId is numeric (ID) or string (name)
             console.log('🔍 Settings store:', settingsStore)
             console.log('🔍 isDiagnosisSearchByName:', settingsStore?.isDiagnosisSearchByName)
             console.log('🔍 diagnosisId:', diagnosisId, 'type:', typeof diagnosisId)
             
-            if (settingsStore && settingsStore.isDiagnosisSearchByName) {
-              // Load all therapists and filter by diagnosis name on frontend
-              console.log('🔍 Using name-based search path')
-              response = await api.get('/api/ai/therapists')
-              
-              if (response.data.data) {
-                // Get diagnosis name from result or URL parameter
-                let diagnosisName = ''
-                if (diagnosisResult.value && diagnosisResult.value.title) {
-                  diagnosisName = diagnosisResult.value.title.toLowerCase()
-                } else {
-                  // Use URL parameter directly (decoded)
-                  diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
-                }
+            // If diagnosisId is numeric, always use ID-based search regardless of settings
+            if (/^\d+$/.test(diagnosisId)) {
+              console.log('🔍 Using ID-based search path (numeric ID detected)')
+              // Load therapists by diagnosis ID
+              console.log('🔍 Making API call to:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+              response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+              console.log('🔍 API Response:', response.data)
+              matchedTherapists.value = response.data.data || []
+              console.log('🔍 Matched therapists count:', matchedTherapists.value.length)
+            } else {
+              // For non-numeric IDs, check if we should search by name
+              if (settingsStore && settingsStore.isDiagnosisSearchByName) {
+                // Load all therapists and filter by diagnosis name on frontend
+                console.log('🔍 Using name-based search path')
+                response = await api.get('/api/ai/therapists')
                 
-                if (diagnosisName) {
-                  // Filter therapists by diagnosis name
-                  const allFilteredTherapists = response.data.data.filter(therapist => 
-                    therapist.diagnoses?.some(diagnosis => 
-                      diagnosis.name?.toLowerCase().includes(diagnosisName) ||
-                      diagnosis.name_en?.toLowerCase().includes(diagnosisName)
-                    )
-                  )
-                  
-                  // Apply limit if show more button is disabled
-                  if (!settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
-                    matchedTherapists.value = allFilteredTherapists.slice(0, settingsStore.getDiagnosisResultsLimit)
+                if (response.data.data) {
+                  // Get diagnosis name from result or URL parameter
+                  let diagnosisName = ''
+                  if (diagnosisResult.value && diagnosisResult.value.title) {
+                    diagnosisName = diagnosisResult.value.title.toLowerCase()
                   } else {
-                    matchedTherapists.value = allFilteredTherapists
+                    // Use URL parameter directly (decoded)
+                    diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
+                  }
+                  
+                  if (diagnosisName) {
+                    // Filter therapists by diagnosis name
+                    const allFilteredTherapists = response.data.data.filter(therapist => 
+                      therapist.diagnoses?.some(diagnosis => 
+                        diagnosis.name?.toLowerCase().includes(diagnosisName) ||
+                        diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+                      )
+                    )
+                    
+                    // Apply limit if show more button is disabled
+                    if (!settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
+                      matchedTherapists.value = allFilteredTherapists.slice(0, settingsStore.getDiagnosisResultsLimit)
+                    } else {
+                      matchedTherapists.value = allFilteredTherapists
+                    }
+                  } else {
+                    matchedTherapists.value = []
                   }
                 } else {
                   matchedTherapists.value = []
                 }
               } else {
-                matchedTherapists.value = []
-              }
-            } else {
-              // Check if diagnosisId is numeric (ID) or string (name)
-              console.log('🔍 Using ID-based search path')
-              if (/^\d+$/.test(diagnosisId)) {
-                // Load therapists by diagnosis ID (default behavior)
-                console.log('🔍 Making API call to:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-                response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-                console.log('🔍 API Response:', response.data)
-                matchedTherapists.value = response.data.data || []
-                console.log('🔍 Matched therapists count:', matchedTherapists.value.length)
-              } else {
                 // If it's a name but ID search is enabled, load all therapists
+                console.log('🔍 Using fallback search path')
                 response = await api.get('/api/ai/therapists')
                 matchedTherapists.value = response.data.data || []
               }
