@@ -568,11 +568,9 @@ export default {
       if (matchedTherapists.value.length > 0) {
         nextTick(() => {
           setTimeout(() => {
-            if (firstTherapistCard.value && firstTherapistCard.value[0] && firstTherapistCard.value[0].$el) {
-              const viewDetailsButton = firstTherapistCard.value[0].$el.querySelector('[data-action="view-details"]')
-              if (viewDetailsButton) {
-                viewDetailsButton.click()
-              }
+            if (firstTherapistCard.value && firstTherapistCard.value[0]) {
+              // Directly call the showTherapistDetails method instead of clicking
+              firstTherapistCard.value[0].showTherapistDetails()
             }
           }, 1000)
         })
@@ -631,11 +629,9 @@ export default {
         // Wait for DOM to be ready, then auto-click first therapist
         nextTick(() => {
           setTimeout(() => {
-            if (firstTherapistCard.value && firstTherapistCard.value[0] && firstTherapistCard.value[0].$el) {
-              const viewDetailsButton = firstTherapistCard.value[0].$el.querySelector('[data-action="view-details"]')
-              if (viewDetailsButton) {
-                viewDetailsButton.click()
-              }
+            if (firstTherapistCard.value && firstTherapistCard.value[0]) {
+              // Directly call the showTherapistDetails method instead of clicking
+              firstTherapistCard.value[0].showTherapistDetails()
             }
           }, 500)
         })
