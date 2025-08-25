@@ -2041,8 +2041,14 @@ class SNKS_AI_Integration {
 		
 		error_log( 'AI Register Debug - Registration completed successfully for user ID: ' . $user->ID );
 		
+		// Get locale for response message
+		$locale = $this->get_request_locale();
+		$success_message = $locale === 'ar' 
+			? 'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على رمز التحقق.'
+			: 'Registration successful! Please check your email for verification code.';
+		
 		$this->send_success( array(
-			'message' => 'Registration successful! Please check your email for verification code.',
+			'message' => $success_message,
 			'user_id' => $user->ID,
 			'email' => $user->user_email,
 			'requires_verification' => true
@@ -2101,10 +2107,37 @@ class SNKS_AI_Integration {
 		$site_name = get_bloginfo( 'name' );
 		$site_url = get_site_url();
 		
-		$subject = sprintf( '[%s] Verify Your Email Address', $site_name );
+		// Get locale from request or user preference
+		$locale = $this->get_request_locale();
 		
-		$message = sprintf(
-			'Hello %s,
+		// Email content based on locale
+		if ( $locale === 'ar' ) {
+			$subject = sprintf( '[%s] تحقق من عنوان بريدك الإلكتروني', $site_name );
+			$message = sprintf(
+				'مرحباً %s،
+
+شكراً لك على التسجيل في %s!
+
+رمز التحقق الخاص بك هو: %s
+
+سينتهي هذا الرمز خلال 15 دقيقة.
+
+يرجى إدخال هذا الرمز في نموذج التحقق لإكمال تسجيلك.
+
+إذا لم تقم بالتسجيل للحصول على حساب، يرجى تجاهل هذا البريد الإلكتروني.
+
+مع أطيب التحيات،
+فريق %s',
+				$first_name,
+				$site_name,
+				$verification_code,
+				$site_name
+			);
+		} else {
+			// Default to English
+			$subject = sprintf( '[%s] Verify Your Email Address', $site_name );
+			$message = sprintf(
+				'Hello %s,
 
 Thank you for registering with %s!
 
@@ -2118,17 +2151,49 @@ If you did not register for an account, please ignore this email.
 
 Best regards,
 %s Team',
-			$first_name,
-			$site_name,
-			$verification_code,
-			$site_name
-		);
+				$first_name,
+				$site_name,
+				$verification_code,
+				$site_name
+			);
+		}
 		
 		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 		
 		return wp_mail( $user->user_email, $subject, $message, $headers );
 	}
 	
+	/**
+	 * Get locale from request
+	 */
+	private function get_request_locale() {
+		// Check for locale in request headers or query parameters
+		$locale = null;
+		
+		// Check Accept-Language header
+		if ( isset( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ) {
+			$accept_language = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+			if ( strpos( $accept_language, 'ar' ) !== false ) {
+				$locale = 'ar';
+			}
+		}
+		
+		// Check for locale in query parameters
+		if ( isset( $_GET['locale'] ) ) {
+			$locale = sanitize_text_field( $_GET['locale'] );
+		}
+		
+		// Check for locale in request body
+		$input = file_get_contents( 'php://input' );
+		$data = json_decode( $input, true );
+		if ( $data && isset( $data['locale'] ) ) {
+			$locale = sanitize_text_field( $data['locale'] );
+		}
+		
+		// Default to English if no locale detected
+		return $locale === 'ar' ? 'ar' : 'en';
+	}
+
 	/**
 	 * AI Verify Email
 	 */
@@ -2164,14 +2229,23 @@ Best regards,
 		$stored_code = get_user_meta( $user->ID, 'ai_verification_code', true );
 		$expires = get_user_meta( $user->ID, 'ai_verification_expires', true );
 		
+		// Get locale for error messages
+		$locale = $this->get_request_locale();
+		
 		// Check if code is expired
 		if ( time() > intval( $expires ) ) {
-			$this->send_error( 'Verification code has expired. Please request a new one.', 400 );
+			$error_message = $locale === 'ar' 
+				? 'انتهت صلاحية رمز التحقق. يرجى طلب رمز جديد.'
+				: 'Verification code has expired. Please request a new one.';
+			$this->send_error( $error_message, 400 );
 		}
 		
 		// Check if code matches
 		if ( $code !== $stored_code ) {
-			$this->send_error( 'Invalid verification code', 400 );
+			$error_message = $locale === 'ar' 
+				? 'رمز التحقق غير صحيح'
+				: 'Invalid verification code';
+			$this->send_error( $error_message, 400 );
 		}
 		
 		// Mark email as verified
@@ -2184,8 +2258,14 @@ Best regards,
 		// Generate JWT token for auto-login
 		$token = $this->generate_jwt_token( $user->ID );
 		
+		// Get locale for response message
+		$locale = $this->get_request_locale();
+		$success_message = $locale === 'ar' 
+			? 'تم التحقق من البريد الإلكتروني بنجاح! تم تسجيل دخولك الآن.'
+			: 'Email verified successfully! You are now logged in.';
+		
 		$this->send_success( array(
-			'message' => 'Email verified successfully! You are now logged in.',
+			'message' => $success_message,
 			'token' => $token,
 			'user' => array(
 				'id' => $user->ID,

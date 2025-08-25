@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('jalsah_token'))
   const loading = ref(false)
   const toast = useToast()
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -77,7 +77,8 @@ export const useAuthStore = defineStore('auth', () => {
       
       const requestData = {
         ...credentials,
-        nonce: nonce
+        nonce: nonce,
+        locale: locale.value
       }
       
       const response = await api.post('/api/ai/auth', requestData)
@@ -250,7 +251,8 @@ export const useAuthStore = defineStore('auth', () => {
       
       const requestData = {
         ...verificationData,
-        nonce: nonce
+        nonce: nonce,
+        locale: locale.value
       }
       
       const response = await api.post('/api/ai/auth/verify', requestData)
@@ -286,7 +288,8 @@ export const useAuthStore = defineStore('auth', () => {
       
       const requestData = {
         email: email,
-        nonce: nonce
+        nonce: nonce,
+        locale: locale.value
       }
       
       const response = await api.post('/api/ai/auth/resend-verification', requestData)
