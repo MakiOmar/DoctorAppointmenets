@@ -60,7 +60,8 @@ registration_data='{
     "phone": "+1234567890",
     "whatsapp": "+1234567890",
     "country": "Egypt",
-    "password": "testpassword123"
+    "password": "testpassword123",
+    "nonce": "'$(openssl rand -hex 16)'"
 }'
 test_endpoint "POST" "/auth/register" "$registration_data"
 
@@ -68,7 +69,8 @@ test_endpoint "POST" "/auth/register" "$registration_data"
 echo "4️⃣ Testing Login Endpoint"
 login_data='{
     "email": "test@example.com",
-    "password": "testpassword123"
+    "password": "testpassword123",
+    "nonce": "'$(openssl rand -hex 16)'"
 }'
 test_endpoint "POST" "/auth" "$login_data"
 

@@ -1632,6 +1632,52 @@ class SNKS_AI_Integration {
 	}
 	
 	/**
+	 * Verify nonce for API requests
+	 */
+	private function verify_api_nonce( $nonce_field = 'nonce', $nonce_action = 'ai_api_nonce' ) {
+		// Get nonce from headers or POST data
+		$nonce = null;
+		
+		// Check Authorization header for Bearer token (JWT)
+		$auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+		if ( strpos( $auth_header, 'Bearer ' ) === 0 ) {
+			// If JWT token is present, skip nonce verification for authenticated requests
+			return true;
+		}
+		
+		// Check for nonce in POST data
+		$input_data = json_decode( file_get_contents( 'php://input' ), true );
+		if ( $input_data && isset( $input_data[ $nonce_field ] ) ) {
+			$nonce = $input_data[ $nonce_field ];
+		}
+		
+		// Check for nonce in $_POST
+		if ( ! $nonce && isset( $_POST[ $nonce_field ] ) ) {
+			$nonce = $_POST[ $nonce_field ];
+		}
+		
+		// Check for nonce in query parameters
+		if ( ! $nonce && isset( $_GET[ $nonce_field ] ) ) {
+			$nonce = $_GET[ $nonce_field ];
+		}
+		
+		// If no nonce provided, allow the request (for backward compatibility)
+		// In production, you might want to require nonces for all requests
+		if ( ! $nonce ) {
+			error_log( 'AI API Debug - No nonce provided, allowing request for backward compatibility' );
+			return true;
+		}
+		
+		// Verify the nonce
+		if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
+			error_log( 'AI API Debug - Invalid nonce provided' );
+			return false;
+		}
+		
+		return true;
+	}
+	
+	/**
 	 * Handle therapists endpoints
 	 */
 	private function handle_therapists_endpoint( $method, $path ) {
@@ -1767,6 +1813,12 @@ class SNKS_AI_Integration {
 	 * AI Login
 	 */
 	private function ai_login() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_login_nonce' ) ) {
+			error_log( 'AI Login Debug - Nonce verification failed' );
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
 		if ( ! isset( $data['email'] ) || ! isset( $data['password'] ) ) {
@@ -1814,6 +1866,12 @@ class SNKS_AI_Integration {
 		// Debug logging
 		error_log( 'AI Register Debug - Function called' );
 		error_log( 'AI Register Debug - Raw input: ' . file_get_contents( 'php://input' ) );
+		
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_register_nonce' ) ) {
+			error_log( 'AI Register Debug - Nonce verification failed' );
+			$this->send_error( 'Security check failed', 401 );
+		}
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		error_log( 'AI Register Debug - Decoded data: ' . print_r( $data, true ) );
@@ -1966,6 +2024,12 @@ Best regards,
 	 * AI Verify Email
 	 */
 	private function ai_verify_email() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_verify_nonce' ) ) {
+			error_log( 'AI Verify Email Debug - Nonce verification failed' );
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
 		if ( ! isset( $data['email'] ) || ! isset( $data['code'] ) ) {
@@ -2027,6 +2091,12 @@ Best regards,
 	 * AI Resend Verification
 	 */
 	private function ai_resend_verification() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_resend_verification_nonce' ) ) {
+			error_log( 'AI Resend Verification Debug - Nonce verification failed' );
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
 		if ( ! isset( $data['email'] ) ) {

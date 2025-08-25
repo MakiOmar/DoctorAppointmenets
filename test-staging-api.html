@@ -287,7 +287,8 @@
                 phone: '+1234567890',
                 whatsapp: '+1234567890',
                 country: 'Egypt',
-                password: 'testpassword123'
+                password: 'testpassword123',
+                nonce: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
             };
 
             const response = await makeRequest(`${config.stagingUrl}${config.apiBaseUrl}/auth/register`, {
@@ -320,7 +321,8 @@
             
             const testData = {
                 email: 'test@example.com',
-                password: 'testpassword123'
+                password: 'testpassword123',
+                nonce: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
             };
 
             const response = await makeRequest(`${config.stagingUrl}${config.apiBaseUrl}/auth`, {

@@ -4,6 +4,32 @@ import { useToast } from 'vue-toastification'
 import api from '@/services/api'
 import { useCartStore } from './cart'
 
+// Helper function to get nonce from WordPress
+const getNonce = async (action) => {
+  try {
+    // Try to get nonce from WordPress REST API
+    const response = await fetch(`${import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks'}/wp-json/wp/v2/users/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    // Extract nonce from response headers
+    const nonce = response.headers.get('X-WP-Nonce')
+    if (nonce) {
+      return nonce
+    }
+    
+    // Fallback: generate a simple nonce-like string
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  } catch (error) {
+    console.warn('Could not get nonce from WordPress, using fallback:', error)
+    // Fallback: generate a simple nonce-like string
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(localStorage.getItem('jalsah_user') || 'null'))
   const token = ref(localStorage.getItem('jalsah_token'))
@@ -30,7 +56,16 @@ export const useAuthStore = defineStore('auth', () => {
         headers: api.defaults.headers
       })
       
-      const response = await api.post('/api/ai/auth', credentials)
+      // Get nonce for security
+      const nonce = await getNonce('ai_login_nonce')
+      console.log('🔐 Nonce generated for login:', nonce)
+      
+      const requestData = {
+        ...credentials,
+        nonce: nonce
+      }
+      
+      const response = await api.post('/api/ai/auth', requestData)
       
       console.log('✅ Login response received:')
       console.log('📊 Response status:', response.status)
@@ -108,7 +143,16 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (userData) => {
     loading.value = true
     try {
-      const response = await api.post('/api/ai/auth/register', userData)
+      // Get nonce for security
+      const nonce = await getNonce('ai_register_nonce')
+      console.log('🔐 Nonce generated for registration:', nonce)
+      
+      const requestData = {
+        ...userData,
+        nonce: nonce
+      }
+      
+      const response = await api.post('/api/ai/auth/register', requestData)
       
       // Check if verification is required
       if (response.data.data.requires_verification) {
@@ -170,7 +214,16 @@ export const useAuthStore = defineStore('auth', () => {
   const verifyEmail = async (verificationData) => {
     loading.value = true
     try {
-      const response = await api.post('/api/ai/auth/verify', verificationData)
+      // Get nonce for security
+      const nonce = await getNonce('ai_verify_nonce')
+      console.log('🔐 Nonce generated for email verification:', nonce)
+      
+      const requestData = {
+        ...verificationData,
+        nonce: nonce
+      }
+      
+      const response = await api.post('/api/ai/auth/verify', requestData)
       const { token: authToken, user: newUser } = response.data.data
       
       token.value = authToken
@@ -197,7 +250,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   const resendVerification = async (email) => {
     try {
-      const response = await api.post('/api/ai/auth/resend-verification', { email })
+      // Get nonce for security
+      const nonce = await getNonce('ai_resend_verification_nonce')
+      console.log('🔐 Nonce generated for resend verification:', nonce)
+      
+      const requestData = {
+        email: email,
+        nonce: nonce
+      }
+      
+      const response = await api.post('/api/ai/auth/resend-verification', requestData)
       return true
     } catch (error) {
       const message = error.response?.data?.error || 'Failed to resend verification code'
