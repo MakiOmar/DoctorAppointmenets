@@ -488,8 +488,13 @@ export default {
           
           if (diagnosisId) {
             // Check if we should search by name or ID
+            console.log('🔍 Settings store:', settingsStore)
+            console.log('🔍 isDiagnosisSearchByName:', settingsStore?.isDiagnosisSearchByName)
+            console.log('🔍 diagnosisId:', diagnosisId, 'type:', typeof diagnosisId)
+            
             if (settingsStore && settingsStore.isDiagnosisSearchByName) {
               // Load all therapists and filter by diagnosis name on frontend
+              console.log('🔍 Using name-based search path')
               response = await api.get('/api/ai/therapists')
               
               if (response.data.data) {
@@ -525,6 +530,7 @@ export default {
               }
             } else {
               // Check if diagnosisId is numeric (ID) or string (name)
+              console.log('🔍 Using ID-based search path')
               if (/^\d+$/.test(diagnosisId)) {
                 // Load therapists by diagnosis ID (default behavior)
                 console.log('🔍 Making API call to:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
