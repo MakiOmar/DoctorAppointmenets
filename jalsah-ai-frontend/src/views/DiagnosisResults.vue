@@ -164,7 +164,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -604,23 +604,29 @@ export default {
       // Load diagnosis details first, then therapists
       await loadDiagnosisResult()
       await loadMatchedTherapists()
-      
-      // Auto-click the first therapist's "View Details" button after a short delay
-      setTimeout(() => {
-        if (firstTherapistCard.value) {
-          // Find the "View Details" button in the first therapist card and click it
-          const viewDetailsButton = firstTherapistCard.value.$el.querySelector('[data-action="view-details"]')
-          if (viewDetailsButton) {
-            viewDetailsButton.click()
-          }
-        }
-      }, 1000)
     })
 
     // Watch for settings changes and reload if needed
     watch(() => settingsStore.isInitialized, (newVal) => {
       // Settings have been initialized
     })
+
+    // Watch for when therapists are loaded to auto-click first therapist
+    watch(displayedTherapists, (newTherapists) => {
+      if (newTherapists.length > 0) {
+        // Wait for DOM to be ready, then auto-click first therapist
+        nextTick(() => {
+          setTimeout(() => {
+            if (firstTherapistCard.value && firstTherapistCard.value.$el) {
+              const viewDetailsButton = firstTherapistCard.value.$el.querySelector('[data-action="view-details"]')
+              if (viewDetailsButton) {
+                viewDetailsButton.click()
+              }
+            }
+          }, 500)
+        })
+      }
+    }, { immediate: false })
 
     return {
       loading,
