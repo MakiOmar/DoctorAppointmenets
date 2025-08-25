@@ -74,7 +74,7 @@
           <!-- Certificates Grid -->
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div 
-              v-for="cert in therapist.certificates.slice(0, 4)" 
+              v-for="(cert, index) in therapist.certificates.slice(0, 4)" 
               :key="cert.id"
               class="bg-white rounded-lg border border-gray-200 overflow-hidden"
             >
@@ -83,7 +83,8 @@
                   v-if="cert.is_image"
                   :src="cert.thumbnail_url || cert.url" 
                   :alt="cert.name"
-                  class="w-full h-full object-cover"
+                  class="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                  @click="openLightbox(index)"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
                   <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,6 +272,14 @@
         </div>
       </div>
     </div>
+    
+    <!-- Lightbox Component -->
+    <Lightbox
+      :is-open="lightboxOpen"
+      :images="certificateImages"
+      :initial-index="lightboxIndex"
+      @close="closeLightbox"
+    />
   </div>
 </template>
 
@@ -283,11 +292,13 @@ import { useSettingsStore } from '@/stores/settings'
 import { useToast } from 'vue-toastification'
 import { useRouter } from 'vue-router'
 import StarRating from './StarRating.vue'
+import Lightbox from './Lightbox.vue'
 
 export default {
   name: 'TherapistCard',
   components: {
-    StarRating
+    StarRating,
+    Lightbox
   },
   props: {
     therapist: {
@@ -370,6 +381,10 @@ export default {
     const bookingLoading = ref(false)
     const cartLoading = ref({}) // Track loading state for each slot
     const earliestSlot = ref(null)
+    
+    // Lightbox state
+    const lightboxOpen = ref(false)
+    const lightboxIndex = ref(0)
 
     const getAverageRating = (therapist) => {
       if (!props.settingsStore || !props.settingsStore.isRatingsEnabled) {
@@ -892,6 +907,29 @@ export default {
       loadEarliestSlot()
     })
 
+    // Lightbox functions
+    const openLightbox = (index) => {
+      lightboxIndex.value = index
+      lightboxOpen.value = true
+    }
+
+    const closeLightbox = () => {
+      lightboxOpen.value = false
+    }
+
+    // Get certificate images for lightbox
+    const certificateImages = computed(() => {
+      if (!props.therapist.certificates) return []
+      
+      return props.therapist.certificates
+        .filter(cert => cert.is_image)
+        .map(cert => ({
+          url: cert.url,
+          name: cert.name,
+          alt: cert.name
+        }))
+    })
+
     return {
       getAverageRating,
       suitabilityMessage,
@@ -923,7 +961,13 @@ export default {
       removeFromCart,
       bookEarliestSlot,
       formatSlot,
-      loadTherapistDetails
+      loadTherapistDetails,
+      // Lightbox
+      lightboxOpen,
+      lightboxIndex,
+      openLightbox,
+      closeLightbox,
+      certificateImages
     }
   }
 }
