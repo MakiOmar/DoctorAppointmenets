@@ -15,6 +15,20 @@
           {{ $t('auth.register.signInToExisting') }}
         </router-link>
       </p>
+      
+      <!-- Dummy Data Button -->
+      <div class="mt-4 text-center">
+        <button
+          type="button"
+          @click="fillDummyData"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Fill Dummy Data
+        </button>
+      </div>
     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -290,6 +304,21 @@ export default {
              form.value.password.length >= 8
     })
 
+    const fillDummyData = () => {
+      form.value = {
+        first_name: 'Maki',
+        last_name: 'Omar',
+        age: '25',
+        email: 'maki3omar@gmail.com',
+        phone: '+201234567890',
+        whatsapp: '+201234567890',
+        country: 'Egypt',
+        password: 'TestPassword123!',
+        confirm_password: 'TestPassword123!',
+        agreeToTerms: true
+      }
+    }
+
     const handleRegister = async () => {
       if (!isFormValid.value) {
         return
@@ -319,7 +348,8 @@ export default {
       form,
       loading,
       isFormValid,
-      handleRegister
+      handleRegister,
+      fillDummyData
     }
   }
 }
