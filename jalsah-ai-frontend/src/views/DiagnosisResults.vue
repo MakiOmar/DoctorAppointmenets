@@ -569,8 +569,8 @@ export default {
         console.log('🔍 Therapists loaded, attempting auto-click')
         nextTick(() => {
           setTimeout(() => {
-            if (firstTherapistCard.value && firstTherapistCard.value.$el) {
-              const viewDetailsButton = firstTherapistCard.value.$el.querySelector('[data-action="view-details"]')
+            if (firstTherapistCard.value && firstTherapistCard.value[0] && firstTherapistCard.value[0].$el) {
+              const viewDetailsButton = firstTherapistCard.value[0].$el.querySelector('[data-action="view-details"]')
               console.log('🔍 View Details button found in loadMatchedTherapists:', viewDetailsButton)
               if (viewDetailsButton) {
                 viewDetailsButton.click()
@@ -639,8 +639,8 @@ export default {
             console.log('🔍 firstTherapistCard.value:', firstTherapistCard.value)
             console.log('🔍 firstTherapistCard.value.$el:', firstTherapistCard.value?.$el)
             
-            if (firstTherapistCard.value && firstTherapistCard.value.$el) {
-              const viewDetailsButton = firstTherapistCard.value.$el.querySelector('[data-action="view-details"]')
+            if (firstTherapistCard.value && firstTherapistCard.value[0] && firstTherapistCard.value[0].$el) {
+              const viewDetailsButton = firstTherapistCard.value[0].$el.querySelector('[data-action="view-details"]')
               console.log('🔍 View Details button found:', viewDetailsButton)
               if (viewDetailsButton) {
                 viewDetailsButton.click()
