@@ -139,6 +139,7 @@
           <TherapistCard
             v-for="(therapist, index) in displayedTherapists" 
             :key="therapist.id"
+            :ref="index === 0 ? 'firstTherapistCard' : null"
             :therapist="therapist"
             :diagnosis-id="route.params.diagnosisId"
             :position="therapist.originalPosition"
@@ -192,6 +193,7 @@ export default {
       description: ''
     })
     const showAllTherapists = ref(false)
+    const firstTherapistCard = ref(null)
     const orderSort = ref('') // Order sorting: '', 'asc', 'desc'
     const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
     const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
@@ -602,6 +604,13 @@ export default {
       // Load diagnosis details first, then therapists
       await loadDiagnosisResult()
       await loadMatchedTherapists()
+      
+      // Auto-click the first therapist's "View Details" button after a short delay
+      setTimeout(() => {
+        if (firstTherapistCard.value) {
+          firstTherapistCard.value.showTherapistDetails()
+        }
+      }, 1000)
     })
 
     // Watch for settings changes and reload if needed
@@ -621,6 +630,7 @@ export default {
       orderSort,
       priceSort,
       appointmentSort,
+      firstTherapistCard,
       rediagnose,
       browseAllTherapists,
       viewTherapist,
