@@ -90,6 +90,7 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from 'vue-toastification'
 
@@ -98,6 +99,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const { t } = useI18n()
     const authStore = useAuthStore()
     const toast = useToast()
     
@@ -179,7 +181,7 @@ export default {
           // Clear pending verification email
           localStorage.removeItem('pending_verification_email')
           
-          toast.success($t('toast.auth.emailVerified'))
+          toast.success(t('toast.auth.emailVerified'))
           
           // Redirect to homepage
           router.push('/')
@@ -197,7 +199,7 @@ export default {
         const response = await authStore.resendVerification(email.value)
         
         if (response) {
-          toast.success($t('toast.auth.verificationSent'))
+          toast.success(t('toast.auth.verificationSent'))
           startResendCooldown()
         }
       } catch (error) {
