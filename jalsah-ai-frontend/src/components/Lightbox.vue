@@ -18,39 +18,39 @@
         
         <!-- Lightbox Content -->
         <div class="relative z-10 max-w-4xl max-h-[90vh] mx-4" @click.stop>
-          <!-- Close Button -->
-          <button
-            @click="closeLightbox"
-            class="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
-            :aria-label="$t('common.close')"
-          >
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+                     <!-- Close Button -->
+           <button
+             @click="closeLightbox"
+             class="absolute -top-8 right-0 text-white hover:text-gray-300 transition-colors"
+             :aria-label="$t('common.close')"
+           >
+             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+             </svg>
+           </button>
           
-          <!-- Navigation Buttons -->
-          <button
-            v-if="images.length > 1"
-            @click="previousImage"
-            class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-2"
-            :aria-label="$t('common.previous')"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-            </svg>
-          </button>
-          
-          <button
-            v-if="images.length > 1"
-            @click="nextImage"
-            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-2"
-            :aria-label="$t('common.next')"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-          </button>
+                     <!-- Navigation Buttons -->
+           <button
+             @click="previousImage"
+             :disabled="images.length <= 1"
+             class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
+             :aria-label="$t('common.previous')"
+           >
+             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+             </svg>
+           </button>
+           
+           <button
+             @click="nextImage"
+             :disabled="images.length <= 1"
+             class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
+             :aria-label="$t('common.next')"
+           >
+             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+             </svg>
+           </button>
           
           <!-- Image Container -->
           <div class="relative">
@@ -73,10 +73,10 @@
             <h3 class="text-lg font-semibold">{{ currentImage.name }}</h3>
           </div>
           
-          <!-- Image Counter -->
-          <div v-if="images.length > 1" class="mt-2 text-center text-white text-sm">
-            {{ currentIndex + 1 }} / {{ images.length }}
-          </div>
+                     <!-- Image Counter -->
+           <div class="mt-2 text-center text-white text-sm">
+             {{ currentIndex + 1 }} / {{ images.length }}
+           </div>
         </div>
       </div>
     </Transition>
@@ -151,6 +151,7 @@ export default {
     watch(() => props.isOpen, (newValue) => {
       if (newValue) {
         imageLoaded.value = false
+        console.log('Lightbox opened with images:', props.images.length)
       }
     })
     
