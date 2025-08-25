@@ -2272,6 +2272,8 @@ Best regards,
 				'email' => $user->user_email,
 				'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
 				'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
+				'role' => $user->roles[0], // Primary role
+				'roles' => $user->roles,   // All roles
 			)
 		) );
 	}

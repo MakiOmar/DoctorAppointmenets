@@ -155,7 +155,7 @@ router.beforeEach((to, from, next) => {
   // Check if user is already authenticated and trying to access guest pages
   if (to.meta.guest && authStore.isAuthenticated) {
     // Redirect based on user role
-    const userRole = authStore.user?.role
+    const userRole = authStore.user?.role || 'customer' // Default to customer if role is undefined
     if (userRole === 'doctor' || userRole === 'clinic_manager') {
       next('/doctor')
     } else {
@@ -169,15 +169,19 @@ router.beforeEach((to, from, next) => {
     const userRole = authStore.user?.role
     const userRoles = authStore.user?.roles || []
     
+    // If user role is undefined, assume they are a customer (default role)
+    const effectiveUserRole = userRole || 'customer'
+    
     // Check if user has any of the required roles
     const hasRequiredRole = to.meta.roles.some(role => 
-      userRoles.includes(role) || userRole === role
+      userRoles.includes(role) || effectiveUserRole === role
     )
     
     if (!hasRequiredRole) {
-
+      console.log('🚫 Access denied - User role:', effectiveUserRole, 'Required roles:', to.meta.roles)
+      
       // Redirect to appropriate dashboard based on role
-      if (userRole === 'doctor' || userRole === 'clinic_manager') {
+      if (effectiveUserRole === 'doctor' || effectiveUserRole === 'clinic_manager') {
         next('/doctor')
       } else {
         next('/therapists')
