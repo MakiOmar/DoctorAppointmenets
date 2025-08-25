@@ -7,8 +7,22 @@ import { useCartStore } from './cart'
 // Helper function to get nonce from WordPress
 const getNonce = async (action) => {
   try {
-    // Try AJAX endpoint first
-    const ajaxResponse = await fetch(`${import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks'}/wp-admin/admin-ajax.php?action=get_ai_nonce&action=${action}`, {
+    // Try AI API nonce endpoint first (uses proxy)
+    const response = await fetch(`/api/ai/nonce?action=${action}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    const data = await response.json()
+    if (data.success && data.data.nonce) {
+      console.log('🔐 Nonce generated successfully via AI API for action:', action)
+      return data.data.nonce
+    }
+    
+    // Fallback to admin-ajax endpoint
+    const ajaxResponse = await fetch(`/wp-admin/admin-ajax.php?action=get_ai_nonce&action=${action}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -17,25 +31,11 @@ const getNonce = async (action) => {
     
     const ajaxData = await ajaxResponse.json()
     if (ajaxData.success && ajaxData.data.nonce) {
-      console.log('🔐 Nonce generated successfully via AJAX for action:', action)
+      console.log('🔐 Nonce generated successfully via admin-ajax for action:', action)
       return ajaxData.data.nonce
     }
     
-    // Try REST API endpoint as fallback
-    const restResponse = await fetch(`${import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks'}/wp-json/jalsah-ai/v1/nonce?action=${action}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-    
-    const restData = await restResponse.json()
-    if (restData.success && restData.data.nonce) {
-      console.log('🔐 Nonce generated successfully via REST API for action:', action)
-      return restData.data.nonce
-    }
-    
-    throw new Error('Failed to get nonce from both AJAX and REST endpoints')
+    throw new Error('Failed to get nonce from server')
   } catch (error) {
     console.warn('Could not get nonce from WordPress, using fallback:', error)
     // Fallback: generate a simple nonce-like string

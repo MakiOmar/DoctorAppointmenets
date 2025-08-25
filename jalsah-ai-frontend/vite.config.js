@@ -35,6 +35,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/wp-admin/admin-ajax.php': {
+        target: ENVIRONMENT_CONFIG.API_TARGET,
+        changeOrigin: true,
+        secure: false,
+      },
       '/wp-json': {
         target: ENVIRONMENT_CONFIG.API_TARGET,
         changeOrigin: true,

@@ -1597,6 +1597,13 @@ class SNKS_AI_Integration {
 			case 'nonce':
 				$this->handle_nonce_endpoint( $method, $path );
 				break;
+			case 'ping':
+				$this->send_success( array( 
+					'message' => 'Pong!',
+					'timestamp' => current_time( 'mysql' ),
+					'endpoint' => $endpoint
+				) );
+				break;
 			case 'debug':
 				$this->send_success( array( 
 					'message' => 'Debug endpoint',
