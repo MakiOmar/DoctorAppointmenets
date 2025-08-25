@@ -1466,10 +1466,17 @@ class SNKS_AI_Integration {
 	 * Handle AI requests
 	 */
 	public function handle_ai_requests() {
+		// Debug logging
+		error_log( 'AI Request Debug - Function called' );
+		error_log( 'AI Request Debug - REQUEST_URI: ' . $_SERVER['REQUEST_URI'] );
+		error_log( 'AI Request Debug - REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD'] );
+		
 		$endpoint = get_query_var( 'ai_endpoint' );
+		error_log( 'AI Request Debug - Query var ai_endpoint: ' . $endpoint );
 		
 		// Check if this is an AI API request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) === false ) {
+			error_log( 'AI Request Debug - Not an AI API request, returning' );
 			return;
 		}
 		
@@ -1596,19 +1603,30 @@ class SNKS_AI_Integration {
 	 * Handle auth endpoints
 	 */
 	private function handle_auth_endpoint( $method, $path ) {
+		// Debug logging
+		error_log( 'AI Auth Endpoint Debug - Method: ' . $method . ', Path: ' . print_r( $path, true ) );
+		
 		switch ( $method ) {
 			case 'POST':
 				if ( count( $path ) === 1 ) {
+					error_log( 'AI Auth Endpoint Debug - Calling ai_login' );
 					$this->ai_login();
 				} elseif ( $path[1] === 'register' ) {
+					error_log( 'AI Auth Endpoint Debug - Calling ai_register' );
 					$this->ai_register();
 				} elseif ( $path[1] === 'verify' ) {
+					error_log( 'AI Auth Endpoint Debug - Calling ai_verify_email' );
 					$this->ai_verify_email();
 				} elseif ( $path[1] === 'resend-verification' ) {
+					error_log( 'AI Auth Endpoint Debug - Calling ai_resend_verification' );
 					$this->ai_resend_verification();
+				} else {
+					error_log( 'AI Auth Endpoint Debug - Unknown auth endpoint: ' . $path[1] );
+					$this->send_error( 'Auth endpoint not found', 404 );
 				}
 				break;
 			default:
+				error_log( 'AI Auth Endpoint Debug - Method not allowed: ' . $method );
 				$this->send_error( 'Method not allowed', 405 );
 		}
 	}
@@ -1793,11 +1811,22 @@ class SNKS_AI_Integration {
 	 * AI Register
 	 */
 	private function ai_register() {
+		// Debug logging
+		error_log( 'AI Register Debug - Function called' );
+		error_log( 'AI Register Debug - Raw input: ' . file_get_contents( 'php://input' ) );
+		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
+		error_log( 'AI Register Debug - Decoded data: ' . print_r( $data, true ) );
+		
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			error_log( 'AI Register Debug - JSON decode error: ' . json_last_error_msg() );
+			$this->send_error( 'Invalid JSON data', 400 );
+		}
 		
 		$required_fields = array( 'first_name', 'last_name', 'age', 'email', 'phone', 'whatsapp', 'country', 'password' );
 		foreach ( $required_fields as $field ) {
 			if ( ! isset( $data[ $field ] ) || empty( $data[ $field ] ) ) {
+				error_log( 'AI Register Debug - Missing field: ' . $field );
 				$this->send_error( "Field {$field} is required", 400 );
 			}
 		}
