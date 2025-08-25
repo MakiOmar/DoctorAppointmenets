@@ -566,15 +566,12 @@ export default {
       
       // Auto-click first therapist after loading
       if (matchedTherapists.value.length > 0) {
-        console.log('🔍 Therapists loaded, attempting auto-click')
         nextTick(() => {
           setTimeout(() => {
             if (firstTherapistCard.value && firstTherapistCard.value[0] && firstTherapistCard.value[0].$el) {
               const viewDetailsButton = firstTherapistCard.value[0].$el.querySelector('[data-action="view-details"]')
-              console.log('🔍 View Details button found in loadMatchedTherapists:', viewDetailsButton)
               if (viewDetailsButton) {
                 viewDetailsButton.click()
-                console.log('🔍 Auto-click executed from loadMatchedTherapists')
               }
             }
           }, 1000)
@@ -630,21 +627,14 @@ export default {
 
     // Watch for when therapists are loaded to auto-click first therapist
     watch(displayedTherapists, (newTherapists) => {
-      console.log('🔍 Watcher triggered - Therapists count:', newTherapists.length)
       if (newTherapists.length > 0) {
         // Wait for DOM to be ready, then auto-click first therapist
         nextTick(() => {
           setTimeout(() => {
-            console.log('🔍 Attempting to auto-click first therapist')
-            console.log('🔍 firstTherapistCard.value:', firstTherapistCard.value)
-            console.log('🔍 firstTherapistCard.value.$el:', firstTherapistCard.value?.$el)
-            
             if (firstTherapistCard.value && firstTherapistCard.value[0] && firstTherapistCard.value[0].$el) {
               const viewDetailsButton = firstTherapistCard.value[0].$el.querySelector('[data-action="view-details"]')
-              console.log('🔍 View Details button found:', viewDetailsButton)
               if (viewDetailsButton) {
                 viewDetailsButton.click()
-                console.log('🔍 Auto-click executed successfully')
               }
             }
           }, 500)
