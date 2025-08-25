@@ -479,6 +479,8 @@ export default {
       let retryCount = 0
       const maxRetries = 2
       
+      console.log('🔍 Loading matched therapists for diagnosis ID:', route.params.diagnosisId)
+      
       while (retryCount <= maxRetries) {
         try {
           const diagnosisId = route.params.diagnosisId
@@ -525,8 +527,11 @@ export default {
               // Check if diagnosisId is numeric (ID) or string (name)
               if (/^\d+$/.test(diagnosisId)) {
                 // Load therapists by diagnosis ID (default behavior)
+                console.log('🔍 Making API call to:', `/api/ai/therapists/by-diagnosis/${diagnosisId}`)
                 response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+                console.log('🔍 API Response:', response.data)
                 matchedTherapists.value = response.data.data || []
+                console.log('🔍 Matched therapists count:', matchedTherapists.value.length)
               } else {
                 // If it's a name but ID search is enabled, load all therapists
                 response = await api.get('/api/ai/therapists')
@@ -545,6 +550,8 @@ export default {
         } catch (error) {
           retryCount++
           console.error(`Error loading matched therapists (attempt ${retryCount}):`, error)
+          console.error('🔍 Error details:', error.response?.data)
+          console.error('🔍 Error status:', error.response?.status)
           
           if (retryCount > maxRetries) {
             toast.error(t('diagnosisResults.errorLoadingTherapists'))

@@ -2381,6 +2381,9 @@ Best regards,
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'therapist_applications';
 		
+		// Debug logging
+		error_log("🔍 get_ai_therapists_by_diagnosis called with diagnosis_id: " . $diagnosis_id);
+		
 		// Check if limit should be applied (when show more button is disabled)
 		$limit = null;
 		$show_more_enabled = snks_get_show_more_button_enabled();
@@ -2406,11 +2409,16 @@ Best regards,
 		
 		$applications = $wpdb->get_results( $query );
 		
+		// Debug logging
+		error_log("🔍 Query executed: " . $query);
+		error_log("🔍 Found " . count($applications) . " applications for diagnosis_id: " . $diagnosis_id);
+		
 		$result = array();
 		foreach ( $applications as $application ) {
 			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
 		
+		error_log("🔍 Returning " . count($result) . " formatted therapists");
 		$this->send_success( $result );
 	}
 	
