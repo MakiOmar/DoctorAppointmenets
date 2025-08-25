@@ -568,9 +568,32 @@ export default {
       if (matchedTherapists.value.length > 0) {
         nextTick(() => {
           setTimeout(() => {
+            console.log('🔍 Attempting to auto-show first therapist')
+            console.log('🔍 firstTherapistCard.value:', firstTherapistCard.value)
+            console.log('🔍 firstTherapistCard.value[0]:', firstTherapistCard.value?.[0])
+            
             if (firstTherapistCard.value && firstTherapistCard.value[0]) {
-              // Directly call the showTherapistDetails method instead of clicking
-              firstTherapistCard.value[0].showTherapistDetails()
+              console.log('🔍 Available methods:', Object.keys(firstTherapistCard.value[0]))
+              
+              // Try direct method call first
+              if (firstTherapistCard.value[0].showTherapistDetails) {
+                firstTherapistCard.value[0].showTherapistDetails()
+                console.log('🔍 showTherapistDetails method called')
+              } else {
+                console.log('🔍 showTherapistDetails method not found, trying direct state manipulation')
+                
+                // Try to directly access and set the showDetails ref
+                if (firstTherapistCard.value[0].showDetails !== undefined) {
+                  firstTherapistCard.value[0].showDetails = true
+                  console.log('🔍 Directly set showDetails to true')
+                  
+                  // Also try to trigger loadTherapistDetails if available
+                  if (firstTherapistCard.value[0].loadTherapistDetails) {
+                    firstTherapistCard.value[0].loadTherapistDetails()
+                    console.log('🔍 loadTherapistDetails method called')
+                  }
+                }
+              }
             }
           }, 1000)
         })
