@@ -29,23 +29,12 @@ const api = axios.create({
 // Request interceptor to add auth token and locale
 api.interceptors.request.use(
   (config) => {
-    console.log('🌐 === API REQUEST INTERCEPTOR ===')
-    console.log('📤 Request URL:', config.url)
-    console.log('🔧 Request method:', config.method)
-    console.log('🏠 API Base URL:', config.baseURL || '(empty - using proxy)')
-    console.log('🎯 Full URL:', config.baseURL + config.url)
-    console.log('🌍 Environment:', import.meta.env.MODE)
-    console.log('🔧 Development mode:', import.meta.env.DEV)
-    console.log('🎯 Proxy target:', import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks')
-    console.log('🔗 Actual request will go to:', (import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks') + config.url)
+    
     
     const token = localStorage.getItem('jalsah_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-      console.log('🔑 Authorization token added to request')
-    } else {
-      console.log('⚠️ No authorization token found')
-    }
+
     
     // Add locale parameter to all requests
     const locale = localStorage.getItem('jalsah_locale') || 'en'
@@ -54,10 +43,7 @@ api.interceptors.request.use(
     } else {
       config.params = { locale }
     }
-    console.log('🌍 Locale parameter added:', locale)
-    
-    console.log('📋 Request headers:', config.headers)
-    console.log('📦 Request data:', config.data)
+
     
     return config
   },
@@ -70,12 +56,6 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ === API RESPONSE INTERCEPTOR ===')
-    console.log('📥 Response status:', response.status)
-    console.log('📄 Response URL:', response.config.url)
-    console.log('🏠 Response base URL:', response.config.baseURL || '(empty - using proxy)')
-    console.log('🔗 Full response URL:', response.config.baseURL + response.config.url)
-    console.log('📊 Response data:', response.data)
     return response
   },
   (error) => {

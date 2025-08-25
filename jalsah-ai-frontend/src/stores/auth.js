@@ -18,7 +18,7 @@ const getNonce = async (action) => {
     
     const data = await response.json()
     if (data.success && data.data.nonce) {
-      console.log('🔐 Nonce generated successfully via AI API for action:', action)
+
       return data.data.nonce
     }
     
@@ -32,7 +32,7 @@ const getNonce = async (action) => {
     
     const ajaxData = await ajaxResponse.json()
     if (ajaxData.success && ajaxData.data.nonce) {
-      console.log('🔐 Nonce generated successfully via admin-ajax for action:', action)
+
       return ajaxData.data.nonce
     }
     
@@ -56,24 +56,8 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (credentials) => {
     loading.value = true
     try {
-      console.log('🔐 === LOGIN PROCESS STARTED ===')
-      console.log('📧 Login credentials:', { email: credentials.email })
-      console.log('🌐 Current API base URL:', api.defaults.baseURL || '(empty - using proxy)')
-      console.log('🎯 Target API endpoint:', '/api/ai/auth')
-      console.log('🔗 Full request URL will be:', api.defaults.baseURL + '/api/ai/auth')
-      console.log('🌍 Environment:', import.meta.env.MODE)
-      console.log('🔧 Development mode:', import.meta.env.DEV)
-      console.log('🎯 Proxy target:', import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks')
-      console.log('🔗 Actual request will go to:', (import.meta.env.VITE_API_TARGET || 'http://localhost/shrinks') + '/api/ai/auth')
-      console.log('📋 API defaults:', {
-        baseURL: api.defaults.baseURL,
-        timeout: api.defaults.timeout,
-        headers: api.defaults.headers
-      })
-      
       // Get nonce for security
       const nonce = await getNonce('ai_login_nonce')
-      console.log('🔐 Nonce generated for login:', nonce)
       
       const requestData = {
         ...credentials,
@@ -83,30 +67,20 @@ export const useAuthStore = defineStore('auth', () => {
       
       const response = await api.post('/api/ai/auth', requestData)
       
-      console.log('✅ Login response received:')
-      console.log('📊 Response status:', response.status)
-      console.log('📄 Response data:', response.data)
-      
       // Check if response has the expected structure
-      console.log('🔍 Validating response structure...')
       if (!response.data.success || !response.data.data) {
         console.error('❌ Invalid response format:', response.data)
         throw new Error('Invalid response format from server')
       }
       
       const { token: authToken, user: userData } = response.data.data
-      console.log('👤 User data extracted:', { 
-        userId: userData?.id, 
-        userEmail: userData?.email,
-        userRole: userData?.role 
-      })
       
       if (!authToken || !userData) {
         console.error('❌ Missing token or user data')
         throw new Error('Missing token or user data in response')
       }
       
-      console.log('💾 Storing authentication data...')
+      
       token.value = authToken
       user.value = userData
       localStorage.setItem('jalsah_token', authToken)
@@ -114,13 +88,13 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
-      console.log('🔑 Authorization header set for future requests')
+      
       
       // Load cart after successful login
       const cartStore = useCartStore()
       cartStore.loadCart(userData.id)
       
-      console.log('✅ === LOGIN PROCESS COMPLETED SUCCESSFULLY ===')
+      
       toast.success(t('toast.auth.loginSuccess'))
       return true
     } catch (error) {
@@ -169,7 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       // Get nonce for security
       const nonce = await getNonce('ai_register_nonce')
-      console.log('🔐 Nonce generated for registration:', nonce)
+
       
       const requestData = {
         ...userData,
@@ -221,8 +195,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = () => {
-    console.log('🚪 === LOGOUT PROCESS ===')
-    console.log('🧹 Clearing authentication data...')
+
     
     user.value = null
     token.value = null
@@ -230,14 +203,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('jalsah_user')
     delete api.defaults.headers.common['Authorization']
     
-    console.log('✅ Authentication data cleared')
+
     
     // Clear cart on logout
     const cartStore = useCartStore()
     cartStore.clearCart()
     
-    console.log('🛒 Cart cleared')
-    console.log('✅ === LOGOUT COMPLETED ===')
+
     
     toast.success(t('toast.auth.logoutSuccess'))
   }
@@ -247,7 +219,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       // Get nonce for security
       const nonce = await getNonce('ai_verify_nonce')
-      console.log('🔐 Nonce generated for email verification:', nonce)
+
       
       const requestData = {
         ...verificationData,
@@ -284,7 +256,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       // Get nonce for security
       const nonce = await getNonce('ai_resend_verification_nonce')
-      console.log('🔐 Nonce generated for resend verification:', nonce)
+
       
       const requestData = {
         email: email,
@@ -302,36 +274,27 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const loadUser = async () => {
-    console.log('🔄 === LOADING USER FROM CACHE ===')
-    console.log('🔑 Token exists:', !!token.value)
-    console.log('👤 User data exists:', !!user.value)
+
     
     if (!token.value) {
-      console.log('❌ No token found, cannot load user')
+
       return false
     }
     
     try {
       // Set token in API headers
       api.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
-      console.log('🔑 Authorization header set from cached token')
+
       
       // If we have user data in localStorage, use it
       if (user.value) {
-        console.log('✅ Using cached user data:', {
-          userId: user.value?.id,
-          userEmail: user.value?.email,
-          userRole: user.value?.role
-        })
-        
         // Load cart when user is loaded
         const cartStore = useCartStore()
         cartStore.loadCart(user.value.id)
-        console.log('🛒 Cart loaded for cached user')
         return true
       }
       
-      console.log('⚠️ Token exists but no user data, will validate token later')
+
       // You might want to add an endpoint to get current user data
       // For now, we'll just check if the token is valid
       return true
@@ -343,15 +306,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Initialize auth state
-  console.log('🚀 === AUTH STORE INITIALIZATION ===')
-  console.log('🔑 Cached token exists:', !!token.value)
-  console.log('👤 Cached user exists:', !!user.value)
+  
   
   if (token.value && user.value) {
-    console.log('✅ Loading user from cache on initialization')
+    
     loadUser()
   } else {
-    console.log('❌ No cached authentication found, user will need to login')
+    
   }
 
   return {

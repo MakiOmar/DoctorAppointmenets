@@ -109,7 +109,7 @@ const routes = [
     name: 'APIRedirect',
     beforeEnter: (to, from, next) => {
       // Redirect API calls to the appropriate frontend route
-      console.log('API route accessed as frontend route:', to.path)
+
       
       // Extract locale from query parameters if present
       const locale = to.query.locale
@@ -178,7 +178,7 @@ router.beforeEach((to, from, next) => {
     )
     
     if (!hasRequiredRole) {
-      console.log('🚫 Access denied - User role:', effectiveUserRole, 'Required roles:', to.meta.roles)
+      
       
       // Redirect to appropriate dashboard based on role
       if (effectiveUserRole === 'doctor' || effectiveUserRole === 'clinic_manager') {
