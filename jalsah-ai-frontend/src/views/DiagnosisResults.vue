@@ -608,7 +608,11 @@ export default {
       // Auto-click the first therapist's "View Details" button after a short delay
       setTimeout(() => {
         if (firstTherapistCard.value) {
-          firstTherapistCard.value.showTherapistDetails()
+          // Find the "View Details" button in the first therapist card and click it
+          const viewDetailsButton = firstTherapistCard.value.$el.querySelector('[data-action="view-details"]')
+          if (viewDetailsButton) {
+            viewDetailsButton.click()
+          }
         }
       }, 1000)
     })

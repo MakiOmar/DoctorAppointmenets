@@ -124,6 +124,7 @@
           <button
             @click.stop="showTherapistDetails"
             class="btn-primary px-6 py-2"
+            data-action="view-details"
           >
             {{ showDetails ? $t('common.hide') : $t('common.viewDetails') }}
           </button>
