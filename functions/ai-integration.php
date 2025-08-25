@@ -1835,6 +1835,33 @@ class SNKS_AI_Integration {
 		update_user_meta( $user_id, 'billing_phone', sanitize_text_field( $data['phone'] ) );
 		update_user_meta( $user_id, 'whatsapp', sanitize_text_field( $data['whatsapp'] ) );
 		update_user_meta( $user_id, 'billing_country', sanitize_text_field( $data['country'] ) );
+		
+		// Mark user as AI patient
+		update_user_meta( $user_id, 'registered_from_jalsah_ai', '1' );
+		update_user_meta( $user_id, 'ai_registration_date', current_time( 'mysql' ) );
+	}
+	
+	/**
+	 * Check if user is an AI patient
+	 *
+	 * @param int $user_id User ID to check
+	 * @return bool True if user registered from Jalsah AI
+	 */
+	public static function is_ai_patient( $user_id ) {
+		return get_user_meta( $user_id, 'registered_from_jalsah_ai', true ) === '1';
+	}
+	
+	/**
+	 * Get AI registration date
+	 *
+	 * @param int $user_id User ID
+	 * @return string|false Registration date or false if not AI patient
+	 */
+	public static function get_ai_registration_date( $user_id ) {
+		if ( ! self::is_ai_patient( $user_id ) ) {
+			return false;
+		}
+		return get_user_meta( $user_id, 'ai_registration_date', true );
 	}
 	
 	/**
@@ -4513,3 +4540,23 @@ function snks_handle_ai_appointment_creation( $appointment_id, $appointment_data
 
 // Hook into appointment creation
 add_action( 'snks_appointment_created', 'snks_handle_ai_appointment_creation', 10, 2 );
+
+/**
+ * Global helper function to check if user is an AI patient
+ *
+ * @param int $user_id User ID to check
+ * @return bool True if user registered from Jalsah AI
+ */
+function snks_is_ai_patient( $user_id ) {
+	return SNKS_AI_Integration::is_ai_patient( $user_id );
+}
+
+/**
+ * Global helper function to get AI registration date
+ *
+ * @param int $user_id User ID
+ * @return string|false Registration date or false if not AI patient
+ */
+function snks_get_ai_registration_date( $user_id ) {
+	return SNKS_AI_Integration::get_ai_registration_date( $user_id );
+}
