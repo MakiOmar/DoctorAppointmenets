@@ -4125,21 +4125,26 @@ Best regards,
 	 */
 	private function cancel_ai_appointment($appointment_id) {
 		// Ensure helper functions are available
-		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
+		if ( ! function_exists( 'snks_can_edit_ai_appointment' ) ) {
 			require_once SNKS_DIR . 'functions/helpers.php';
 		}
 		
 		// Fallback function if still not available
-		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
-			function snks_can_modify_appointment( $appointment ) {
+		if ( ! function_exists( 'snks_can_edit_ai_appointment' ) ) {
+			function snks_can_edit_ai_appointment( $appointment ) {
 				if ( ! $appointment || ! isset( $appointment->date_time ) ) {
 					return false;
+				}
+				
+				// Check if this is an AI booking
+				if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
+					return true; // Not an AI booking, use regular validation
 				}
 				
 				$appointment_time = strtotime( $appointment->date_time );
 				$current_time = current_time( 'timestamp' );
 				
-				// Can modify up to 24 hours before (86400 seconds = 24 hours)
+				// AI appointments can be edited up to 24 hours before (86400 seconds = 24 hours)
 				return ( $appointment_time - $current_time ) > 86400;
 			}
 		}
@@ -4177,7 +4182,7 @@ Best regards,
 		}
 		
 		// Check if appointment can be cancelled (24 hours before)
-		if (!snks_can_modify_appointment($appointment)) {
+		if (!snks_can_edit_ai_appointment($appointment)) {
 			$time_remaining = snks_get_appointment_time_remaining($appointment);
 			$hours_remaining = round($time_remaining / 3600, 1);
 			
@@ -4214,15 +4219,20 @@ Best regards,
 	 */
 	private function reschedule_ai_appointment($appointment_id) {
 		// Ensure helper functions are available
-		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
+		if ( ! function_exists( 'snks_can_edit_ai_appointment' ) ) {
 			require_once SNKS_DIR . 'functions/helpers.php';
 		}
 		
 		// Fallback function if still not available
-		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
-			function snks_can_modify_appointment( $appointment ) {
+		if ( ! function_exists( 'snks_can_edit_ai_appointment' ) ) {
+			function snks_can_edit_ai_appointment( $appointment ) {
 				if ( ! $appointment || ! isset( $appointment->date_time ) ) {
 					return false;
+				}
+				
+				// Check if this is an AI booking
+				if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
+					return true; // Not an AI booking, use regular validation
 				}
 				
 				$appointment_time = strtotime( $appointment->date_time );
@@ -4274,7 +4284,7 @@ Best regards,
 		}
 		
 		// Check if appointment can be rescheduled (24 hours before)
-		if (!snks_can_modify_appointment($current_appointment)) {
+		if (!snks_can_edit_ai_appointment($current_appointment)) {
 			$time_remaining = snks_get_appointment_time_remaining($current_appointment);
 			$hours_remaining = round($time_remaining / 3600, 1);
 			

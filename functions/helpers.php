@@ -905,3 +905,49 @@ function snks_get_appointment_time_remaining( $appointment ) {
 	return $appointment_time - $current_time;
 }
 
+/**
+ * Check if AI appointment can be edited (24 hours before)
+ *
+ * @param object $appointment Appointment object
+ * @return bool
+ */
+function snks_can_edit_ai_appointment( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return false;
+	}
+	
+	// Check if this is an AI booking
+	if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
+		return true; // Not an AI booking, use regular validation
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	// AI appointments can be edited up to 24 hours before (86400 seconds = 24 hours)
+	return ( $appointment_time - $current_time ) > 86400;
+}
+
+/**
+ * Get AI appointment edit time remaining (in seconds)
+ *
+ * @param object $appointment Appointment object
+ * @return int Seconds remaining until edit deadline, negative if past deadline
+ */
+function snks_get_ai_appointment_edit_time_remaining( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return 0;
+	}
+	
+	// Check if this is an AI booking
+	if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
+		return 0; // Not an AI booking, use regular validation
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	// Return time remaining until 24 hours before appointment
+	return ( $appointment_time - $current_time ) - 86400;
+}
+

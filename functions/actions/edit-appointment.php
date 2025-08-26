@@ -398,24 +398,22 @@ add_action(
 			$order            = wc_get_order( $order_id );
 			$edited_before    = $order->get_meta( 'booking-edited', true );
 			
-			// Check 24-hour restriction for AI bookings
-			if ( strpos( $booking->settings, 'ai_booking' ) !== false ) {
-				$appointment_time = strtotime( $booking->date_time );
-				$current_time = current_time( 'timestamp' );
-				$hours_until_appointment = ( $appointment_time - $current_time ) / 3600;
-				
-				if ( $hours_until_appointment < 24 ) {
-					wp_safe_redirect(
-						add_query_arg(
-							array(
-								'edit-booking' => $_request['edit-booking-id'],
-								'error'        => 'ai-24-hour-limit',
-							),
-							$_doctor_url
-						)
-					);
-					exit;
-				}
+			// Check 24-hour restriction for AI bookings using dedicated function
+			if ( ! function_exists( 'snks_can_edit_ai_appointment' ) ) {
+				require_once SNKS_DIR . 'functions/helpers.php';
+			}
+			
+			if ( ! snks_can_edit_ai_appointment( $booking ) ) {
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'edit-booking' => $_request['edit-booking-id'],
+							'error'        => 'ai-24-hour-limit',
+						),
+						$_doctor_url
+					)
+				);
+				exit;
 			}
 			
 			// If not postponed then check for edit time.
