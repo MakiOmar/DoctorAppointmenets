@@ -1815,6 +1815,25 @@ class SNKS_AI_Integration {
 					$this->send_error( 'Invalid appointments endpoint', 404 );
 				}
 				break;
+			case 'PUT':
+				if ( isset( $path[1] ) && is_numeric( $path[1] ) && isset( $path[2] ) ) {
+					$appointment_id = intval( $path[1] );
+					$action = $path[2];
+					
+					switch ( $action ) {
+						case 'cancel':
+							$this->cancel_ai_appointment( $appointment_id );
+							break;
+						case 'reschedule':
+							$this->reschedule_ai_appointment( $appointment_id );
+							break;
+						default:
+							$this->send_error( 'Invalid appointment action', 404 );
+					}
+				} else {
+					$this->send_error( 'Invalid appointments endpoint', 404 );
+				}
+				break;
 			default:
 				$this->send_error( 'Method not allowed', 405 );
 		}
@@ -4098,6 +4117,232 @@ Best regards,
 			$this->send_success(['message' => 'v2 therapists endpoint placeholder']);
 		} else {
 			$this->send_error('Method not allowed or not implemented (v2)', 405);
+		}
+	}
+
+	/**
+	 * Cancel AI appointment with 24-hour validation
+	 */
+	private function cancel_ai_appointment($appointment_id) {
+		// Ensure helper functions are available
+		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
+			require_once SNKS_DIR . 'functions/helpers.php';
+		}
+		
+		// Fallback function if still not available
+		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
+			function snks_can_modify_appointment( $appointment ) {
+				if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+					return false;
+				}
+				
+				$appointment_time = strtotime( $appointment->date_time );
+				$current_time = current_time( 'timestamp' );
+				
+				// Can modify up to 24 hours before (86400 seconds = 24 hours)
+				return ( $appointment_time - $current_time ) > 86400;
+			}
+		}
+		
+		if ( ! function_exists( 'snks_get_appointment_time_remaining' ) ) {
+			function snks_get_appointment_time_remaining( $appointment ) {
+				if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+					return 0;
+				}
+				
+				$appointment_time = strtotime( $appointment->date_time );
+				$current_time = current_time( 'timestamp' );
+				
+				return $appointment_time - $current_time;
+			}
+		}
+		
+		$user_id = $this->verify_jwt_token();
+		
+		if (!$user_id) {
+			$this->send_error('Authentication required', 401);
+		}
+		
+		global $wpdb;
+		
+		// Get the appointment
+		$appointment = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND client_id = %d AND settings LIKE '%ai_booking%'",
+			$appointment_id, $user_id
+		));
+		
+		if (!$appointment) {
+			$this->send_error('Appointment not found or access denied', 404);
+		}
+		
+		// Check if appointment can be cancelled (24 hours before)
+		if (!snks_can_modify_appointment($appointment)) {
+			$time_remaining = snks_get_appointment_time_remaining($appointment);
+			$hours_remaining = round($time_remaining / 3600, 1);
+			
+			$this->send_error(
+				sprintf(
+					'Appointment cannot be cancelled. It is less than 24 hours away (%.1f hours remaining).',
+					$hours_remaining
+				),
+				400
+			);
+		}
+		
+		// Cancel the appointment
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			['session_status' => 'cancelled'],
+			['ID' => $appointment_id],
+			['%s'],
+			['%d']
+		);
+		
+		if ($result === false) {
+			$this->send_error('Failed to cancel appointment', 500);
+		}
+		
+		$this->send_success([
+			'message' => 'Appointment cancelled successfully',
+			'appointment_id' => $appointment_id
+		]);
+	}
+	
+	/**
+	 * Reschedule AI appointment with 24-hour validation
+	 */
+	private function reschedule_ai_appointment($appointment_id) {
+		// Ensure helper functions are available
+		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
+			require_once SNKS_DIR . 'functions/helpers.php';
+		}
+		
+		// Fallback function if still not available
+		if ( ! function_exists( 'snks_can_modify_appointment' ) ) {
+			function snks_can_modify_appointment( $appointment ) {
+				if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+					return false;
+				}
+				
+				$appointment_time = strtotime( $appointment->date_time );
+				$current_time = current_time( 'timestamp' );
+				
+				// Can modify up to 24 hours before (86400 seconds = 24 hours)
+				return ( $appointment_time - $current_time ) > 86400;
+			}
+		}
+		
+		if ( ! function_exists( 'snks_get_appointment_time_remaining' ) ) {
+			function snks_get_appointment_time_remaining( $appointment ) {
+				if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+					return 0;
+				}
+				
+				$appointment_time = strtotime( $appointment->date_time );
+				$current_time = current_time( 'timestamp' );
+				
+				return $appointment_time - $current_time;
+			}
+		}
+		
+		$user_id = $this->verify_jwt_token();
+		
+		if (!$user_id) {
+			$this->send_error('Authentication required', 401);
+		}
+		
+		// Get request data
+		$input = json_decode(file_get_contents('php://input'), true);
+		$new_appointment_id = intval($input['new_appointment_id'] ?? 0);
+		
+		if (!$new_appointment_id) {
+			$this->send_error('New appointment ID is required', 400);
+		}
+		
+		global $wpdb;
+		
+		// Get the current appointment
+		$current_appointment = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND client_id = %d AND settings LIKE '%ai_booking%'",
+			$appointment_id, $user_id
+		));
+		
+		if (!$current_appointment) {
+			$this->send_error('Current appointment not found or access denied', 404);
+		}
+		
+		// Check if appointment can be rescheduled (24 hours before)
+		if (!snks_can_modify_appointment($current_appointment)) {
+			$time_remaining = snks_get_appointment_time_remaining($current_appointment);
+			$hours_remaining = round($time_remaining / 3600, 1);
+			
+			$this->send_error(
+				sprintf(
+					'Appointment cannot be rescheduled. It is less than 24 hours away (%.1f hours remaining).',
+					$hours_remaining
+				),
+				400
+			);
+		}
+		
+		// Get the new appointment slot
+		$new_appointment = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND session_status = 'waiting'",
+			$new_appointment_id
+		));
+		
+		if (!$new_appointment) {
+			$this->send_error('New appointment slot not found or not available', 404);
+		}
+		
+		$wpdb->query('START TRANSACTION');
+		
+		try {
+			// Cancel the current appointment
+			$cancel_result = $wpdb->update(
+				$wpdb->prefix . 'snks_provider_timetable',
+				['session_status' => 'cancelled'],
+				['ID' => $appointment_id],
+				['%s'],
+				['%d']
+			);
+			
+			if ($cancel_result === false) {
+				throw new Exception('Failed to cancel current appointment');
+			}
+			
+			// Book the new appointment
+			$book_result = $wpdb->update(
+				$wpdb->prefix . 'snks_provider_timetable',
+				[
+					'session_status' => 'open',
+					'client_id' => $user_id,
+					'order_id' => $current_appointment->order_id,
+					'settings' => 'ai_booking:rescheduled'
+				],
+				['ID' => $new_appointment_id],
+				['%s', '%d', '%d', '%s'],
+				['%d']
+			);
+			
+			if ($book_result === false) {
+				throw new Exception('Failed to book new appointment');
+			}
+			
+			$wpdb->query('COMMIT');
+			
+			$this->send_success([
+				'message' => 'Appointment rescheduled successfully',
+				'old_appointment_id' => $appointment_id,
+				'new_appointment_id' => $new_appointment_id
+			]);
+			
+		} catch (Exception $e) {
+			$wpdb->query('ROLLBACK');
+			$this->send_error('Failed to reschedule appointment: ' . $e->getMessage(), 500);
 		}
 	}
 

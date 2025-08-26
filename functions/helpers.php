@@ -870,3 +870,38 @@ function snks_get_appointment_change_terms( $locale = null ) {
 	}
 }
 
+/**
+ * Check if appointment can be rescheduled or cancelled (24 hours before)
+ *
+ * @param object $appointment Appointment object
+ * @return bool
+ */
+function snks_can_modify_appointment( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return false;
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	// Can modify up to 24 hours before (86400 seconds = 24 hours)
+	return ( $appointment_time - $current_time ) > 86400;
+}
+
+/**
+ * Get time remaining until appointment (in seconds)
+ *
+ * @param object $appointment Appointment object
+ * @return int Seconds remaining, negative if appointment has passed
+ */
+function snks_get_appointment_time_remaining( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return 0;
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	return $appointment_time - $current_time;
+}
+
