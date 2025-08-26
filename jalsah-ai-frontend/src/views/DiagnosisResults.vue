@@ -574,11 +574,18 @@ export default {
             
             if (firstTherapistCard.value && firstTherapistCard.value[0]) {
               console.log('🔍 Available methods:', Object.keys(firstTherapistCard.value[0]))
+              console.log('🔍 Current showDetails value:', firstTherapistCard.value[0].showDetails)
               
               // Try direct method call first
               if (firstTherapistCard.value[0].showTherapistDetails) {
                 firstTherapistCard.value[0].showTherapistDetails()
                 console.log('🔍 showTherapistDetails method called')
+                
+                // Also try to directly set showDetails to true as a backup
+                if (firstTherapistCard.value[0].showDetails !== undefined) {
+                  firstTherapistCard.value[0].showDetails = true
+                  console.log('🔍 Also directly set showDetails to true')
+                }
               } else {
                 console.log('🔍 showTherapistDetails method not found, trying direct state manipulation')
                 
