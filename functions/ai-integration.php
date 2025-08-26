@@ -124,6 +124,12 @@ class SNKS_AI_Integration {
 			'permission_callback' => '__return_true',
 		) );
 
+		register_rest_route( 'jalsah-ai/v1', '/therapist-available-dates', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'get_ai_therapist_available_dates_rest' ),
+			'permission_callback' => '__return_true',
+		) );
+
 		register_rest_route( 'jalsah-ai/v1', '/add-appointment-to-cart', array(
 			'methods' => 'POST',
 			'callback' => array( $this, 'add_appointment_to_cart' ),
@@ -1652,6 +1658,9 @@ class SNKS_AI_Integration {
 			case 'therapist-availability':
 				$this->handle_therapist_availability_endpoint( $method, $path );
 				break;
+			case 'therapist-available-dates':
+				$this->handle_therapist_available_dates_endpoint( $method, $path );
+				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
 		}
@@ -1908,6 +1917,26 @@ class SNKS_AI_Integration {
 		}
 	}
 	
+	/**
+	 * Handle therapist available dates endpoint
+	 */
+	private function handle_therapist_available_dates_endpoint( $method, $path ) {
+		switch ( $method ) {
+			case 'GET':
+				if ( count( $path ) === 1 ) {
+					// Create a proper WP_REST_Request object with GET parameters
+					$request = new WP_REST_Request( 'GET' );
+					$request->set_param( 'therapist_id', $_GET['therapist_id'] ?? null );
+					$this->get_ai_therapist_available_dates_rest( $request );
+				} else {
+					$this->send_error( 'Invalid endpoint', 404 );
+				}
+				break;
+			default:
+				$this->send_error( 'Method not allowed', 405 );
+		}
+	}
+
 	/**
 	 * Handle therapist availability endpoint
 	 */
@@ -3833,6 +3862,47 @@ Best regards,
 			'message' => 'Jalsah AI API is working',
 			'timestamp' => current_time( 'mysql' )
 		), 200 );
+	}
+
+	/**
+	 * Get available dates for a therapist (REST API endpoint)
+	 */
+	public function get_ai_therapist_available_dates_rest($request) {
+		$therapist_id = $request->get_param('therapist_id');
+		
+		if (!$therapist_id) {
+			return new WP_REST_Response(['error' => 'Missing therapist_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Query for dates that have available slots in the next 30 days
+		$available_dates = $wpdb->get_results($wpdb->prepare(
+			"SELECT DISTINCT DATE(date_time) as date
+			 FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE user_id = %d 
+			 AND DATE(date_time) >= CURDATE()
+			 AND DATE(date_time) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+			 AND session_status = 'waiting' 
+			 AND order_id = 0
+			 AND attendance_type = 'online'
+			 ORDER BY DATE(date_time) ASC",
+			$therapist_id
+		));
+		
+		$formatted_dates = [];
+		foreach ($available_dates as $date_row) {
+			$formatted_dates[] = [
+				'date' => $date_row->date,
+				'isAvailable' => true,
+				'isSelected' => false
+			];
+		}
+		
+		return new WP_REST_Response([
+			'available_dates' => $formatted_dates,
+			'therapist_id' => $therapist_id
+		], 200);
 	}
 
 	/**

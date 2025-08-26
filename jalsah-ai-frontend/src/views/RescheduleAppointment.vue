@@ -201,8 +201,8 @@ const loadAppointment = async () => {
     const therapistResponse = await api.get(`/api/ai/therapists/${therapistId}`)
     therapist.value = therapistResponse.data.data
     
-    // Generate available dates (next 30 days)
-    generateAvailableDates()
+    // Load available dates from backend
+    await loadAvailableDates()
     
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load appointment'
@@ -212,25 +212,30 @@ const loadAppointment = async () => {
   }
 }
 
-// Generate available dates
-const generateAvailableDates = () => {
-  const dates = []
-  const today = new Date()
+// Load available dates from backend
+const loadAvailableDates = async () => {
+  if (!therapist.value) return
   
-  for (let i = 1; i <= 30; i++) {
-    const date = new Date(today)
-    date.setDate(today.getDate() + i)
-    
-    const dateStr = date.toISOString().split('T')[0]
-    
-    dates.push({
-      date: dateStr,
-      isAvailable: true,
-      isSelected: false
-    })
+  // Get therapist ID from various possible fields - access the nested data structure
+  const therapistId = therapist.value.user_id || therapist.value.id || appointment.value?.data?.therapist_id || appointment.value?.data?.user_id
+  
+  if (!therapistId) {
+    console.error('Therapist ID not found')
+    return
   }
   
-  availableDates.value = dates
+  try {
+    const response = await api.get('/api/ai/therapist-available-dates', {
+      params: {
+        therapist_id: therapistId
+      }
+    })
+    
+    availableDates.value = response.data.available_dates || []
+  } catch (err) {
+    console.error('Error loading available dates:', err)
+    availableDates.value = []
+  }
 }
 
 // Select date
