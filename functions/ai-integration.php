@@ -2615,8 +2615,8 @@ Best regards,
 			$description_ar = $diagnosis->description_ar ?: '';
 			
 			// Select appropriate language based on locale
-			$diagnosis->name = $locale === 'ar' ? $name_ar : $name_en;
-			$diagnosis->description = $locale === 'ar' ? $description_ar : $description_en;
+			$diagnosis->name = $locale === 'ar' ? ($name_ar ?: $name_en) : $name_en;
+			$diagnosis->description = $locale === 'ar' ? ($description_ar ?: $description_en) : $description_en;
 			
 			// Add bilingual fields
 			$diagnosis->name_en = $name_en;
@@ -3061,8 +3061,8 @@ Best regards,
 			$description_ar = $diagnosis->description_ar ?: '';
 			
 			// Select appropriate language based on locale
-			$diagnosis->name = $locale === 'ar' ? $name_ar : $name_en;
-			$diagnosis->description = $locale === 'ar' ? $description_ar : $description_en;
+			$diagnosis->name = $locale === 'ar' ? ($name_ar ?: $name_en) : $name_en;
+			$diagnosis->description = $locale === 'ar' ? ($description_ar ?: $description_en) : $description_en;
 			
 			// Add bilingual fields
 			$diagnosis->name_en = $name_en;
@@ -3099,8 +3099,8 @@ Best regards,
 		$description_ar = $diagnosis->description_ar ?: '';
 		
 		// Select appropriate language based on locale
-		$diagnosis->name = $locale === 'ar' ? $name_ar : $name_en;
-		$diagnosis->description = $locale === 'ar' ? $description_ar : $description_en;
+		$diagnosis->name = $locale === 'ar' ? ($name_ar ?: $name_en) : $name_en;
+		$diagnosis->description = $locale === 'ar' ? ($description_ar ?: $description_en) : $description_en;
 		
 		// Add bilingual fields
 		$diagnosis->name_en = $name_en;
