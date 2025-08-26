@@ -1109,6 +1109,11 @@ function snks_save_application_data( $application_id ) {
 				"DELETE FROM $therapist_diagnoses_table WHERE therapist_id = %d AND diagnosis_id IN (" . implode( ',', array_fill( 0, count( $diagnoses_to_remove ), '%d' ) ) . ")",
 				array_merge( [$application->user_id], $diagnoses_to_remove )
 			) );
+			
+			// Trigger hooks to recalculate frontend_order for removed diagnoses
+			foreach ( $diagnoses_to_remove as $diagnosis_id ) {
+				do_action( 'snks_therapist_diagnosis_deleted', $application->user_id, $diagnosis_id );
+			}
 		}
 		
 		// Add or update selected diagnoses
@@ -1118,7 +1123,7 @@ function snks_save_application_data( $application_id ) {
 			$message_ar = isset( $_POST["diagnosis_message_ar_$diagnosis_id"] ) ? sanitize_textarea_field( $_POST["diagnosis_message_ar_$diagnosis_id"] ) : '';
 			$order = isset( $_POST["diagnosis_order_$diagnosis_id"] ) ? intval( $_POST["diagnosis_order_$diagnosis_id"] ) : 0;
 			
-			$wpdb->replace(
+			$result = $wpdb->replace(
 				$therapist_diagnoses_table,
 				[
 					'therapist_id' => $application->user_id,
@@ -1130,6 +1135,11 @@ function snks_save_application_data( $application_id ) {
 				],
 				['%d', '%d', '%f', '%s', '%s', '%d']
 			);
+			
+			// Trigger hook to recalculate frontend_order
+			if ( $result !== false ) {
+				do_action( 'snks_therapist_diagnosis_updated', $application->user_id, $diagnosis_id );
+			}
 		}
 	}
 }
