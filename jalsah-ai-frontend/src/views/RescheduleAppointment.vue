@@ -178,8 +178,19 @@ const loadAppointment = async () => {
     const response = await api.get(`/api/ai/appointments/${route.params.appointmentId}`)
     appointment.value = response.data.data
     
+    console.log('Appointment data:', appointment.value) // Debug log
+    
+    // Get therapist ID from various possible fields
+    const therapistId = appointment.value.therapist_id || appointment.value.user_id || appointment.value.therapist?.id
+    
+    if (!therapistId) {
+      throw new Error('Therapist ID not found in appointment data')
+    }
+    
+    console.log('Therapist ID:', therapistId) // Debug log
+    
     // Load therapist data
-    const therapistResponse = await api.get(`/api/ai/therapists/${appointment.value.therapist_id}`)
+    const therapistResponse = await api.get(`/api/ai/therapists/${therapistId}`)
     therapist.value = therapistResponse.data.data
     
     // Generate available dates (next 30 days)
@@ -226,7 +237,15 @@ const selectDate = (date) => {
 
 // Load time slots for selected date
 const loadTimeSlots = async () => {
-  if (!selectedDate.value || !therapist.value?.user_id) return
+  if (!selectedDate.value || !therapist.value) return
+  
+  // Get therapist ID from various possible fields
+  const therapistId = therapist.value.user_id || therapist.value.id || appointment.value?.therapist_id || appointment.value?.user_id
+  
+  if (!therapistId) {
+    console.error('Therapist ID not found')
+    return
+  }
   
   loadingSlots.value = true
   availableSlots.value = []
@@ -234,7 +253,7 @@ const loadTimeSlots = async () => {
   try {
     const response = await api.get('/api/ai/therapist-availability', {
       params: {
-        therapist_id: therapist.value.user_id,
+        therapist_id: therapistId,
         date: selectedDate.value
       }
     })
