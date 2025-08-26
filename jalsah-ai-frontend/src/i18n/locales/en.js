@@ -39,7 +39,8 @@ export default {
     na: 'N/A',
     contact: 'Contact',
     pleaseLogin: 'Please login first',
-    sessionExpired: 'Session expired. Please login again'
+    sessionExpired: 'Session expired. Please login again',
+    minutes: 'minutes'
   },
 
   // Navigation

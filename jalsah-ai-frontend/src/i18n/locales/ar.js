@@ -39,7 +39,8 @@ export default {
     na: 'غير متوفر',
     contact: 'تواصل',
     pleaseLogin: 'يرجى تسجيل الدخول أولاً',
-    sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى'
+    sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى',
+    minutes: 'دقائق'
   },
 
   // Navigation

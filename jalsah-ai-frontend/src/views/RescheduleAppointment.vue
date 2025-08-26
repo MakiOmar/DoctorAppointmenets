@@ -154,7 +154,7 @@ import api from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 
 // Reactive data
@@ -309,11 +309,12 @@ const rescheduleAppointment = async () => {
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  const isArabic = (locale?.value || 'en') === 'ar'
+  return date.toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', {
+    weekday: isArabic ? 'long' : 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   })
 }
 
@@ -321,10 +322,11 @@ const formatDate = (dateStr) => {
 const formatDateShort = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', { 
-    weekday: 'short', 
-    month: 'short', 
-    day: 'numeric' 
+  const isArabic = (locale?.value || 'en') === 'ar'
+  return date.toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
   })
 }
 
