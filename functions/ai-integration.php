@@ -2398,8 +2398,7 @@ Best regards,
 		
 		// Add search condition for therapist names
 		$search_condition = $wpdb->prepare(
-			'(ta.name LIKE %s OR ta.name_en LIKE %s OR ta.name_ar LIKE %s)',
-			'%' . $wpdb->esc_like( $search_query ) . '%',
+			'(ta.name LIKE %s OR ta.name_en LIKE %s)',
 			'%' . $wpdb->esc_like( $search_query ) . '%',
 			'%' . $wpdb->esc_like( $search_query ) . '%'
 		);
