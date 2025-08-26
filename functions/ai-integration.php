@@ -3682,6 +3682,11 @@ Best regards,
 	public function get_ai_settings_ajax() {
 		$current_language = snks_get_current_language();
 		
+		// Ensure helper functions are available
+		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
+			require_once SNKS_DIR . 'functions/helpers.php';
+		}
+		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
 			'default_language' => snks_get_default_language(),
@@ -3718,6 +3723,11 @@ Best regards,
 	 */
 	public function get_ai_settings_rest( $request ) {
 		$current_language = snks_get_current_language();
+		
+		// Ensure helper functions are available
+		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
+			require_once SNKS_DIR . 'functions/helpers.php';
+		}
 		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
