@@ -430,7 +430,24 @@ export default {
       sortBy: 'ترتيب حسب',
       random: 'عشوائي',
       highestRated: 'الأعلى تقييماً'
-    }
+    },
+    sorting: {
+      title: 'خيارات الترتيب',
+      order: 'الترتيب',
+      defaultOrder: 'الترتيب الافتراضي',
+      lowestFirst: 'الأقل أولاً',
+      highestFirst: 'الأعلى أولاً',
+      price: 'السعر',
+      anyPrice: 'أي سعر',
+      lowestPrice: 'أقل سعر',
+      highestPrice: 'أعلى سعر',
+      appointment: 'الموعد',
+      anyTime: 'أي وقت',
+      nearest: 'الأقرب',
+      farthest: 'الأبعد'
+    },
+    showMore: 'عرض المزيد',
+    moreTherapists: 'معالجين آخرين'
   },
 
   // Therapist Detail

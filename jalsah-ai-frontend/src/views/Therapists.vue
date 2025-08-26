@@ -12,45 +12,52 @@
         </p>
       </div>
 
-      <!-- Filters -->
+      <!-- Diagnosis Filter -->
       <div class="card mb-8">
-        <div class="grid md:grid-cols-4 gap-4">
+        <div class="mb-4">
+          <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
+          <select 
+            :value="selectedDiagnosis" 
+            @change="onDiagnosisChange" 
+            class="input-field w-full" 
+            :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+          >
+            <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
+            <option v-for="diagnosis in diagnosesWithTherapists" :key="diagnosis.id" :value="diagnosis.id">
+              {{ diagnosis.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sorting Controls (only show if diagnosis is selected) -->
+      <div v-if="selectedDiagnosis" class="card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapists.sorting.title') }}</h3>
+        <div class="grid md:grid-cols-3 gap-4">
           <div>
-            <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
-            <select v-model="filters.specialization" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
-              <option v-for="diagnosis in diagnosesWithTherapists" :key="diagnosis.id" :value="diagnosis.id">
-                {{ diagnosis.name }}
-              </option>
+            <label class="form-label">{{ $t('therapists.sorting.order') }}</label>
+            <select v-model="orderSort" @change="updateSorting" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+              <option value="">{{ $t('therapists.sorting.defaultOrder') }}</option>
+              <option value="asc">{{ $t('therapists.sorting.lowestFirst') }}</option>
+              <option value="desc">{{ $t('therapists.sorting.highestFirst') }}</option>
             </select>
           </div>
           
           <div>
-            <label class="form-label">{{ $t('therapists.filters.priceRange') }}</label>
-            <select v-model="filters.priceRange" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="">{{ $t('therapists.filters.anyPrice') }}</option>
-              <option value="lowest">{{ $t('therapists.filters.lowestPrice') }}</option>
-              <option value="highest">{{ $t('therapists.filters.highestPrice') }}</option>
+            <label class="form-label">{{ $t('therapists.sorting.price') }}</label>
+            <select v-model="priceSort" @change="updateSorting" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+              <option value="">{{ $t('therapists.sorting.anyPrice') }}</option>
+              <option value="lowest">{{ $t('therapists.sorting.lowestPrice') }}</option>
+              <option value="highest">{{ $t('therapists.sorting.highestPrice') }}</option>
             </select>
           </div>
           
           <div>
-            <label class="form-label">{{ $t('therapists.filters.nearestAppointment') }}</label>
-            <select v-model="filters.nearestAppointment" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="">{{ $t('therapists.filters.anyTime') }}</option>
-              <option value="closest">{{ $t('therapists.filters.closest') }}</option>
-              <option value="farthest">{{ $t('therapists.filters.farthest') }}</option>
-            </select>
-          </div>
-          
-          <div>
-            <label class="form-label">{{ $t('therapists.filters.sortBy') }}</label>
-            <select v-model="filters.sortBy" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="random">{{ $t('therapists.filters.random') }}</option>
-              <option v-if="settingsStore && settingsStore.isRatingsEnabled" value="rating">{{ $t('therapists.filters.highestRated') }}</option>
-              <option value="price_low">{{ $t('therapists.filters.lowestPrice') }}</option>
-              <option value="price_high">{{ $t('therapists.filters.highestPrice') }}</option>
-              <option value="nearest_appointment">{{ $t('therapists.filters.nearestAppointment') }}</option>
+            <label class="form-label">{{ $t('therapists.sorting.appointment') }}</label>
+            <select v-model="appointmentSort" @change="updateSorting" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+              <option value="">{{ $t('therapists.sorting.anyTime') }}</option>
+              <option value="nearest">{{ $t('therapists.sorting.nearest') }}</option>
+              <option value="farthest">{{ $t('therapists.sorting.farthest') }}</option>
             </select>
           </div>
         </div>
@@ -66,15 +73,28 @@
       </div>
 
       <!-- Therapists List -->
-      <div v-else-if="filteredTherapists.length > 0" class="space-y-6">
+      <div v-else-if="displayedTherapists.length > 0" class="space-y-6">
         <TherapistCard
-          v-for="therapist in filteredTherapists" 
+          v-for="(therapist, index) in displayedTherapists" 
           :key="therapist.id"
           :therapist="therapist"
+          :diagnosis-id="selectedDiagnosis"
+          :position="therapist.originalPosition"
+          :show-order-badge="!!selectedDiagnosis"
           :settings-store="settingsStore"
           @click="viewTherapist"
           @book="bookAppointment"
         />
+        
+        <!-- Show More Button -->
+        <div v-if="hasMoreTherapists && !showAllTherapists" class="text-center pt-6">
+          <button
+            @click="showMoreTherapists"
+            class="btn-secondary"
+          >
+            {{ $t('therapists.showMore') }} ({{ sortedTherapists.length - displayedTherapists.length }} {{ $t('therapists.moreTherapists') }})
+          </button>
+        </div>
       </div>
 
       <!-- Empty State -->
@@ -90,14 +110,15 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 import TherapistCard from '@/components/TherapistCard.vue'
+
 export default {
   name: 'Therapists',
   components: {
@@ -106,6 +127,7 @@ export default {
   },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const toast = useToast()
     const { t } = useI18n()
     const settingsStore = useSettingsStore()
@@ -113,66 +135,120 @@ export default {
     const loading = ref(true)
     const therapists = ref([])
     const diagnoses = ref([])
+    const showAllTherapists = ref(false)
     
-    const filters = reactive({
-      specialization: '',
-      priceRange: '',
-      nearestAppointment: '',
-      sortBy: 'random'
+    // Sorting controls (similar to diagnosis results page)
+    const orderSort = ref('') // Order sorting: '', 'asc', 'desc'
+    const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
+    const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
+
+    // Get selected diagnosis from URL query parameter
+    const selectedDiagnosis = computed(() => {
+      return route.query.diagnosis || ''
     })
 
-    const filteredTherapists = computed(() => {
-      let filtered = [...therapists.value]
-
-      // Filter by specialization (diagnosis)
-      if (filters.specialization) {
-        filtered = filtered.filter(therapist =>
-          therapist.diagnoses?.some(d => d.id.toString() === filters.specialization)
-        )
+    // Computed property to get therapists with their original system positions
+    const therapistsWithOriginalPositions = computed(() => {
+      if (!therapists.value.length) return []
+      
+      const diagnosisId = selectedDiagnosis.value
+      
+      if (!diagnosisId) {
+        // If no diagnosis selected, return all therapists without position data
+        return therapists.value.map(therapist => ({
+          ...therapist,
+          originalPosition: 0,
+          displayOrder: 0,
+          frontendOrder: 0
+        }))
       }
-
-      // Sort by price range
-      if (filters.priceRange) {
-        if (filters.priceRange === 'lowest') {
-          filtered.sort((a, b) => (a.price?.others || 0) - (b.price?.others || 0))
-        } else if (filters.priceRange === 'highest') {
-          filtered.sort((a, b) => (b.price?.others || 0) - (a.price?.others || 0))
-        }
-      }
-
-      // Sort by nearest appointment if selected
-      if (filters.nearestAppointment) {
-        if (filters.nearestAppointment === 'closest') {
-          // Sort by soonest slot (ascending), therapists with no slot at the end
-          filtered.sort((a, b) => getEarliestSlotTime(a) - getEarliestSlotTime(b))
-        } else if (filters.nearestAppointment === 'farthest') {
-          // Sort by latest slot (descending), therapists with no slot at the end
-          filtered.sort((a, b) => getEarliestSlotTime(b) - getEarliestSlotTime(a))
-        }
-      }
-
-      // Sort therapists by main sortBy dropdown
-      filtered.sort((a, b) => {
-        switch (filters.sortBy) {
-          case 'random':
-            // Use a more random approach with therapist ID and current timestamp
-            const randomA = Math.sin(a.id + Date.now() / 1000) * 10000
-            const randomB = Math.sin(b.id + Date.now() / 1000) * 10000
-            return randomA - randomB
-          case 'rating':
-            return getAverageRating(b) - getAverageRating(a)
-          case 'price_low':
-            return (a.price?.others || 0) - (b.price?.others || 0)
-          case 'price_high':
-            return (b.price?.others || 0) - (a.price?.others || 0)
-          case 'nearest_appointment':
-            return getEarliestSlotTime(a) - getEarliestSlotTime(b)
-          default:
-            return 0
+      
+      return therapists.value.map((therapist) => {
+        // Get the frontend_order from the diagnosis data
+        const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
+        
+        return {
+          ...therapist,
+          originalPosition: frontendOrder || 1, // Use frontend_order from API, fallback to 1
+          displayOrder: parseInt(diagnosis?.display_order || '0'), // Keep display_order for sorting
+          frontendOrder: frontendOrder || 1 // Add frontendOrder property for sorting
         }
       })
+    })
 
-      return filtered
+    // Computed property to sort therapists based on selected sorting criteria
+    const sortedTherapists = computed(() => {
+      let sorted = [...therapistsWithOriginalPositions.value]
+
+      // Apply order sorting (frontend_order)
+      if (orderSort.value) {
+        sorted.sort((a, b) => {
+          if (orderSort.value === 'asc') {
+            return a.frontendOrder - b.frontendOrder
+          } else if (orderSort.value === 'desc') {
+            return b.frontendOrder - a.frontendOrder
+          }
+          return 0
+        })
+      }
+
+      // Apply price sorting
+      if (priceSort.value) {
+        sorted.sort((a, b) => {
+          const priceA = a.price?.others || 0
+          const priceB = b.price?.others || 0
+          
+          if (priceSort.value === 'lowest') {
+            return priceA - priceB
+          } else if (priceSort.value === 'highest') {
+            return priceB - priceA
+          }
+          return 0
+        })
+      }
+
+      // Apply appointment sorting
+      if (appointmentSort.value) {
+        sorted.sort((a, b) => {
+          const timeA = getEarliestSlotTime(a)
+          const timeB = getEarliestSlotTime(b)
+          
+          if (appointmentSort.value === 'nearest') {
+            return timeA - timeB
+          } else if (appointmentSort.value === 'farthest') {
+            return timeB - timeA
+          }
+          return 0
+        })
+      }
+
+      return sorted
+    })
+
+    // Computed property for displayed therapists (with show more functionality)
+    const displayedTherapists = computed(() => {
+      if (showAllTherapists.value) {
+        return sortedTherapists.value
+      }
+      
+      // If no diagnosis selected, show all therapists
+      if (!selectedDiagnosis.value) {
+        return sortedTherapists.value
+      }
+      
+      // If diagnosis selected, apply limit from settings
+      if (settingsStore && !settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
+        return sortedTherapists.value.slice(0, settingsStore.getDiagnosisResultsLimit)
+      }
+      
+      return sortedTherapists.value
+    })
+
+    // Computed property to check if there are more therapists to show
+    const hasMoreTherapists = computed(() => {
+      if (!selectedDiagnosis.value) return false
+      return sortedTherapists.value.length > displayedTherapists.value.length
     })
 
     const diagnosesWithTherapists = computed(() => {
@@ -229,27 +305,50 @@ export default {
       return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
     }
 
-    // Watch for changes in ratings enabled setting
-    watch(() => settingsStore && settingsStore.isRatingsEnabled, (newValue) => {
-      if (!newValue && filters.sortBy === 'rating') {
-        // If ratings are disabled and current sort is by rating, change to random
-        filters.sortBy = 'random'
+    // Handle diagnosis filter change
+    const onDiagnosisChange = (event) => {
+      const diagnosisId = event.target.value
+      
+      // Update URL with query parameter
+      if (diagnosisId) {
+        router.push({
+          path: '/therapists',
+          query: { diagnosis: diagnosisId }
+        })
+      } else {
+        router.push('/therapists')
       }
-    })
+    }
+
+    // Update sorting (reset show all when sorting changes)
+    const updateSorting = () => {
+      showAllTherapists.value = false
+    }
+
+    // Show more therapists
+    const showMoreTherapists = () => {
+      showAllTherapists.value = true
+    }
 
     const loadTherapists = async () => {
       loading.value = true
       try {
-        // Add cache busting parameter
-        const response = await api.get('/api/ai/therapists', {
-          params: {
-            _t: Date.now() // Cache busting
-          }
-        })
+        let response
+        
+        // If diagnosis is selected, load therapists by diagnosis
+        if (selectedDiagnosis.value) {
+          response = await api.get(`/api/ai/therapists/by-diagnosis/${selectedDiagnosis.value}`)
+        } else {
+          // Load all therapists
+          response = await api.get('/api/ai/therapists', {
+            params: {
+              _t: Date.now() // Cache busting
+            }
+          })
+        }
+        
         therapists.value = response.data.data || []
         
-        // Debug logging
-        // Therapists loaded successfully
       } catch (error) {
         toast.error('Failed to load therapists')
         console.error('Error loading therapists:', error)
@@ -275,6 +374,11 @@ export default {
       router.push(`/booking/${therapistId}`)
     }
 
+    // Watch for route changes to reload therapists when diagnosis changes
+    watch(() => route.query.diagnosis, () => {
+      loadTherapists()
+    })
+
     onMounted(() => {
       loadTherapists()
       loadDiagnoses()
@@ -284,10 +388,19 @@ export default {
       loading,
       therapists,
       diagnoses,
-      filters,
-      filteredTherapists,
+      selectedDiagnosis,
+      orderSort,
+      priceSort,
+      appointmentSort,
+      sortedTherapists,
+      displayedTherapists,
+      hasMoreTherapists,
+      showAllTherapists,
       diagnosesWithTherapists,
       settingsStore,
+      onDiagnosisChange,
+      updateSorting,
+      showMoreTherapists,
       viewTherapist,
       bookAppointment
     }
