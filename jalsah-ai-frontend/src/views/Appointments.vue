@@ -368,26 +368,12 @@ export default {
     }
 
     const canJoinSession = (appointment) => {
-  
-        appointment: appointment,
-        status: appointment.status,
-        date: appointment.date,
-        time: appointment.time,
-        dateTime: appointment.date_time,
-        starts: appointment.starts,
-        // Log all appointment properties
-        allProps: Object.keys(appointment).map(key => `${key}: ${appointment[key]}`)
-      })
-      
       // Allow joining for both 'open' and 'confirmed' statuses
       if (appointment.status !== 'confirmed' && appointment.status !== 'open') {
-  
         return false
       }
       
       // Always show the button for confirmed/open appointments
-      
-      
       return true
     }
 
