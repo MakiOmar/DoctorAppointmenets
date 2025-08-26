@@ -442,16 +442,9 @@ export default {
       const currentTherapistId = props.therapist.id.toString()
       const newOpenIdStr = newOpenId?.toString()
       
-      console.log('🔍 Watcher triggered')
-      console.log('🔍 Current therapist ID:', currentTherapistId)
-      console.log('🔍 New openTherapistId:', newOpenIdStr)
-      console.log('🔍 Current showDetails:', showDetails.value)
-      
       if (newOpenIdStr === currentTherapistId) {
         // This therapist should be open
-        console.log('🔍 This therapist should be open - ID:', currentTherapistId, 'Name:', props.therapist.name)
         if (!showDetails.value) {
-          console.log('🔍 Setting showDetails to true for:', props.therapist.name)
           showDetails.value = true
           if (!details.value) {
             loadTherapistDetails()
@@ -459,9 +452,7 @@ export default {
         }
       } else {
         // This therapist should be closed
-        console.log('🔍 This therapist should be closed')
         if (showDetails.value) {
-          console.log('🔍 Setting showDetails to false')
           showDetails.value = false
         }
       }

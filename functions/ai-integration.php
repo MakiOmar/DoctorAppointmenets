@@ -2599,8 +2599,7 @@ Best regards,
 			$therapist_id
 		) );
 		
-		// Debug: Log the raw database results for therapist diagnoses
-		error_log( "🔍 API Debug - Therapist {$therapist_id} diagnoses from DB: " . print_r( $diagnoses, true ) );
+
 		
 
 		
@@ -2639,8 +2638,7 @@ Best regards,
 			// Add frontend_order to the diagnosis object
 			$diagnosis->frontend_order = isset( $diagnosis->frontend_order ) ? intval( $diagnosis->frontend_order ) : 0;
 			
-			// Debug: Log the processed diagnosis object
-			error_log( "🔍 API Debug - Processed diagnosis for therapist {$therapist_id}: " . print_r( $diagnosis, true ) );
+
 		}
 		
 

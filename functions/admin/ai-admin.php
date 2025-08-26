@@ -283,6 +283,8 @@ function snks_ai_therapists_page() {
 					
 					if ( $result !== false ) {
 						$assigned_count++;
+						// Trigger hook to recalculate frontend_order
+						do_action( 'snks_therapist_diagnosis_updated', $therapist_id, $diagnosis->id );
 					}
 				} else {
 					// Remove assignment
@@ -295,7 +297,10 @@ function snks_ai_therapists_page() {
 						array( '%d', '%d' )
 					);
 					
-
+					// Trigger hook to recalculate frontend_order
+					if ( $delete_result !== false ) {
+						do_action( 'snks_therapist_diagnosis_deleted', $therapist_id, $diagnosis->id );
+					}
 				}
 			}
 			

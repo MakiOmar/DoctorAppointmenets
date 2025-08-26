@@ -505,7 +505,7 @@ export default {
             if (/^\d+$/.test(diagnosisId)) {
                         // Load therapists by diagnosis ID
           response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-          console.log('🔍 API Response for therapists:', response.data.data)
+
           matchedTherapists.value = response.data.data || []
             } else {
               // For non-numeric IDs, check if we should search by name
@@ -579,21 +579,8 @@ export default {
       if (matchedTherapists.value.length > 0) {
         nextTick(() => {
           setTimeout(() => {
-            console.log('🔍 Attempting to auto-show first therapist')
-            console.log('🔍 firstTherapistCard.value:', firstTherapistCard.value)
-            console.log('🔍 firstTherapistCard.value[0]:', firstTherapistCard.value?.[0])
-            
             if (displayedTherapists.value.length > 0) {
-              console.log('🔍 Auto-setting first therapist as open')
-              console.log('🔍 All displayed therapists:', displayedTherapists.value.map(t => ({ 
-                id: t.id, 
-                name: t.name, 
-                frontendOrder: t.frontendOrder,
-                displayOrder: t.displayOrder 
-              })))
-              console.log('🔍 First displayed therapist:', displayedTherapists.value[0])
               openTherapistId.value = displayedTherapists.value[0].id
-              console.log('🔍 Set openTherapistId to:', openTherapistId.value)
             }
           }, 1000)
         })

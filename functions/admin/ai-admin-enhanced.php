@@ -579,7 +579,7 @@ function snks_enhanced_ai_therapists_page() {
 					$message_en = sanitize_textarea_field( $_POST[ $message_key . '_en' ] );
 					$message_ar = sanitize_textarea_field( $_POST[ $message_key . '_ar' ] );
 					
-					$wpdb->replace(
+					$result = $wpdb->replace(
 						$wpdb->prefix . 'snks_therapist_diagnoses',
 						array(
 							'therapist_id' => $therapist_id,
@@ -590,8 +590,13 @@ function snks_enhanced_ai_therapists_page() {
 						),
 						array( '%d', '%d', '%f', '%s', '%s' )
 					);
+					
+					// Trigger hook to recalculate frontend_order
+					if ( $result !== false ) {
+						do_action( 'snks_therapist_diagnosis_updated', $therapist_id, $diagnosis->id );
+					}
 				} else {
-					$wpdb->delete(
+					$result = $wpdb->delete(
 						$wpdb->prefix . 'snks_therapist_diagnoses',
 						array(
 							'therapist_id' => $therapist_id,
@@ -599,6 +604,11 @@ function snks_enhanced_ai_therapists_page() {
 						),
 						array( '%d', '%d' )
 					);
+					
+					// Trigger hook to recalculate frontend_order
+					if ( $result !== false ) {
+						do_action( 'snks_therapist_diagnosis_deleted', $therapist_id, $diagnosis->id );
+					}
 				}
 			}
 			
