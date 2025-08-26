@@ -449,9 +449,9 @@ export default {
       
       if (newOpenIdStr === currentTherapistId) {
         // This therapist should be open
-        console.log('🔍 This therapist should be open')
+        console.log('🔍 This therapist should be open - ID:', currentTherapistId, 'Name:', props.therapist.name)
         if (!showDetails.value) {
-          console.log('🔍 Setting showDetails to true')
+          console.log('🔍 Setting showDetails to true for:', props.therapist.name)
           showDetails.value = true
           if (!details.value) {
             loadTherapistDetails()

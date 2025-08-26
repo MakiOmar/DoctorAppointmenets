@@ -213,10 +213,16 @@ export default {
         const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
         const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
         
+        console.log('🔍 Therapist:', therapist.name, 'ID:', therapist.id)
+        console.log('🔍 Diagnosis data:', diagnosis)
+        console.log('🔍 Frontend order from API:', diagnosis?.frontend_order)
+        console.log('🔍 Parsed frontend order:', frontendOrder)
+        
         return {
           ...therapist,
           originalPosition: frontendOrder || 1, // Use frontend_order from API, fallback to 1
-          displayOrder: parseInt(diagnosis?.display_order || '0') // Keep display_order for sorting
+          displayOrder: parseInt(diagnosis?.display_order || '0'), // Keep display_order for sorting
+          frontendOrder: frontendOrder || 1 // Add frontendOrder property for sorting
         }
       })
     })
@@ -300,8 +306,8 @@ export default {
           }
         }
         
-        // Default: sort by order ascending if no sorting criteria are selected
-        return a.displayOrder - b.displayOrder
+        // Default: sort by frontend_order ascending if no sorting criteria are selected
+        return a.frontendOrder - b.frontendOrder
       })
     })
 
@@ -497,9 +503,10 @@ export default {
             
             // If diagnosisId is numeric, always use ID-based search regardless of settings
             if (/^\d+$/.test(diagnosisId)) {
-              // Load therapists by diagnosis ID
-              response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
-              matchedTherapists.value = response.data.data || []
+                        // Load therapists by diagnosis ID
+          response = await api.get(`/api/ai/therapists/by-diagnosis/${diagnosisId}`)
+          console.log('🔍 API Response for therapists:', response.data.data)
+          matchedTherapists.value = response.data.data || []
             } else {
               // For non-numeric IDs, check if we should search by name
               if (settingsStore && settingsStore.isDiagnosisSearchByName) {
@@ -576,9 +583,16 @@ export default {
             console.log('🔍 firstTherapistCard.value:', firstTherapistCard.value)
             console.log('🔍 firstTherapistCard.value[0]:', firstTherapistCard.value?.[0])
             
-            if (matchedTherapists.value.length > 0) {
+            if (displayedTherapists.value.length > 0) {
               console.log('🔍 Auto-setting first therapist as open')
-              openTherapistId.value = matchedTherapists.value[0].id
+              console.log('🔍 All displayed therapists:', displayedTherapists.value.map(t => ({ 
+                id: t.id, 
+                name: t.name, 
+                frontendOrder: t.frontendOrder,
+                displayOrder: t.displayOrder 
+              })))
+              console.log('🔍 First displayed therapist:', displayedTherapists.value[0])
+              openTherapistId.value = displayedTherapists.value[0].id
               console.log('🔍 Set openTherapistId to:', openTherapistId.value)
             }
           }, 1000)
