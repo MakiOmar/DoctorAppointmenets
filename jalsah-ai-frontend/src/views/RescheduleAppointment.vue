@@ -179,11 +179,19 @@ const loadAppointment = async () => {
     appointment.value = response.data.data
     
     console.log('Appointment data:', appointment.value) // Debug log
+    console.log('Appointment data keys:', Object.keys(appointment.value)) // Debug log to see available fields
     
     // Get therapist ID from various possible fields
     const therapistId = appointment.value.therapist_id || appointment.value.user_id || appointment.value.therapist?.id
     
     if (!therapistId) {
+      // Log all available fields to help debug
+      console.log('Available fields in appointment:', {
+        therapist_id: appointment.value.therapist_id,
+        user_id: appointment.value.user_id,
+        therapist: appointment.value.therapist,
+        allKeys: Object.keys(appointment.value)
+      })
       throw new Error('Therapist ID not found in appointment data')
     }
     
