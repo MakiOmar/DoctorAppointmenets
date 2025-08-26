@@ -410,6 +410,8 @@ export default {
     filters: {
       specialization: 'Specialization',
       allSpecializations: 'All Specializations',
+      search: 'Search',
+      searchPlaceholder: 'Search by therapist name...',
       priceRange: 'Price Range',
       anyPrice: 'Any Price',
       lowestPrice: 'Lowest Price',

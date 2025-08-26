@@ -419,6 +419,8 @@ export default {
     filters: {
       specialization: 'التخصص',
       allSpecializations: 'جميع التخصصات',
+      search: 'البحث',
+      searchPlaceholder: 'البحث باسم المعالج...',
       priceRange: 'نطاق السعر',
       anyPrice: 'أي سعر',
       lowestPrice: 'أقل سعر',

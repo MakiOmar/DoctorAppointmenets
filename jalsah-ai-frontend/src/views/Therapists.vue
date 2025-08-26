@@ -14,19 +14,39 @@
 
       <!-- Diagnosis Filter -->
       <div class="card mb-8">
-        <div class="mb-4">
-          <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
-          <select 
-            :value="selectedDiagnosis" 
-            @change="onDiagnosisChange" 
-            class="input-field w-full" 
-            :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-          >
-            <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
-            <option v-for="diagnosis in diagnosesWithTherapists" :key="diagnosis.id" :value="diagnosis.id">
-              {{ diagnosis.name }}
-            </option>
-          </select>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
+            <select 
+              :value="selectedDiagnosis" 
+              @change="onDiagnosisChange" 
+              class="input-field w-full" 
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+            >
+              <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
+              <option v-for="diagnosis in diagnosesWithTherapists" :key="diagnosis.id" :value="diagnosis.id">
+                {{ diagnosis.name }}
+              </option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="form-label">{{ $t('therapists.filters.search') }}</label>
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="$t('therapists.filters.searchPlaceholder')"
+                class="input-field w-full pr-10"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" :class="$i18n.locale === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3'">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -142,6 +162,9 @@ export default {
     const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
     const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
 
+    // Search query for therapist names
+    const searchQuery = ref('')
+
     // Get selected diagnosis from URL query parameter
     const selectedDiagnosis = computed(() => {
       return route.query.diagnosis || ''
@@ -177,13 +200,25 @@ export default {
       })
     })
 
-    // Computed property to sort therapists based on selected sorting criteria
+    // Computed property to filter and sort therapists
     const sortedTherapists = computed(() => {
-      let sorted = [...therapistsWithOriginalPositions.value]
+      let filtered = [...therapistsWithOriginalPositions.value]
+
+      // Apply search filter
+      if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim()
+        filtered = filtered.filter(therapist => {
+          const name = therapist.name?.toLowerCase() || ''
+          const nameEn = therapist.name_en?.toLowerCase() || ''
+          const nameAr = therapist.name_ar?.toLowerCase() || ''
+          
+          return name.includes(query) || nameEn.includes(query) || nameAr.includes(query)
+        })
+      }
 
       // Apply order sorting (frontend_order)
       if (orderSort.value) {
-        sorted.sort((a, b) => {
+        filtered.sort((a, b) => {
           if (orderSort.value === 'asc') {
             return a.frontendOrder - b.frontendOrder
           } else if (orderSort.value === 'desc') {
@@ -195,7 +230,7 @@ export default {
 
       // Apply price sorting
       if (priceSort.value) {
-        sorted.sort((a, b) => {
+        filtered.sort((a, b) => {
           const priceA = a.price?.others || 0
           const priceB = b.price?.others || 0
           
@@ -210,7 +245,7 @@ export default {
 
       // Apply appointment sorting
       if (appointmentSort.value) {
-        sorted.sort((a, b) => {
+        filtered.sort((a, b) => {
           const timeA = getEarliestSlotTime(a)
           const timeB = getEarliestSlotTime(b)
           
@@ -223,7 +258,7 @@ export default {
         })
       }
 
-      return sorted
+      return filtered
     })
 
     // Computed property for displayed therapists (with show more functionality)
@@ -389,6 +424,7 @@ export default {
       therapists,
       diagnoses,
       selectedDiagnosis,
+      searchQuery,
       orderSort,
       priceSort,
       appointmentSort,
