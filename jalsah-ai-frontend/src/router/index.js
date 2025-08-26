@@ -57,6 +57,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
+    path: '/booking/reschedule/:appointmentId',
+    name: 'RescheduleAppointment',
+    component: () => import('@/views/RescheduleAppointment.vue'),
+    meta: { requiresAuth: true, roles: ['customer'] }
+  },
+  {
     path: '/cart',
     name: 'Cart',
     component: () => import('@/views/Cart.vue'),

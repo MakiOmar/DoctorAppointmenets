@@ -682,6 +682,25 @@ export default {
     noSlotsAvailable: 'No available time slots at the moment'
   },
 
+  // Reschedule Page
+  reschedule: {
+    title: 'Reschedule Appointment',
+    subtitle: 'Select a new date and time for your appointment',
+    currentAppointment: 'Current Appointment',
+    therapist: 'Therapist',
+    currentDate: 'Current Date',
+    currentTime: 'Current Time',
+    duration: 'Duration',
+    selectNewTime: 'Select New Time',
+    selectDate: 'Select Date',
+    selectTime: 'Select Time',
+    noSlotsAvailable: 'No available time slots for this date',
+    confirmReschedule: 'Confirm Reschedule',
+    rescheduling: 'Rescheduling...',
+    success: 'Appointment rescheduled successfully',
+    error: 'Failed to reschedule appointment'
+  },
+
   // Profile
   profile: {
     title: 'My Profile',

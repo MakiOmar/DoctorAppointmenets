@@ -1800,6 +1800,10 @@ class SNKS_AI_Integration {
 					$this->get_ai_available_appointments();
 				} elseif ( isset( $path[1] ) && $path[1] === 'user' && isset( $path[2] ) && is_numeric( $path[2] ) ) {
 					$this->get_ai_user_appointments( $path[2] );
+				} elseif ( isset( $path[1] ) && is_numeric( $path[1] ) && count( $path ) === 2 ) {
+					// GET /api/ai/appointments/{id} - get single appointment
+					$appointment_id = intval( $path[1] );
+					$this->get_ai_single_appointment( $appointment_id );
 				} elseif ( count( $path ) === 1 ) {
 					// GET /api/ai/appointments - get current user's appointments
 					$user_id = $this->verify_jwt_token();
@@ -4354,6 +4358,49 @@ Best regards,
 			$wpdb->query('ROLLBACK');
 			$this->send_error('Failed to reschedule appointment: ' . $e->getMessage(), 500);
 		}
+	}
+
+	/**
+	 * Get single AI appointment
+	 */
+	private function get_ai_single_appointment($appointment_id) {
+		$user_id = $this->verify_jwt_token();
+		
+		if (!$user_id) {
+			$this->send_error('Authentication required', 401);
+		}
+		
+		global $wpdb;
+		
+		// Get the appointment
+		$appointment = $wpdb->get_row($wpdb->prepare(
+			"SELECT t.*, t.user_id as therapist_id, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
+			 FROM {$wpdb->prefix}snks_provider_timetable t
+			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
+			 WHERE t.ID = %d AND t.client_id = %d AND t.settings LIKE '%ai_booking%'",
+			$appointment_id, $user_id
+		));
+		
+		if (!$appointment) {
+			$this->send_error('Appointment not found or access denied', 404);
+		}
+		
+		// Format the appointment data
+		if ($appointment->profile_image) {
+			$appointment->therapist_image_url = wp_get_attachment_image_url($appointment->profile_image, 'thumbnail');
+		}
+		
+		// Map session_status to status for frontend compatibility
+		$appointment->status = $appointment->session_status;
+		
+		// Keep the original date_time field for frontend
+		$appointment->date_time = $appointment->date_time;
+		
+		// Format date and time for frontend
+		$appointment->date = date('Y-m-d', strtotime($appointment->date_time));
+		$appointment->time = $appointment->starts;
+		
+		$this->send_success(['data' => $appointment]);
 	}
 
 	/**

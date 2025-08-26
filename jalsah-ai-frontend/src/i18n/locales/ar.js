@@ -638,6 +638,25 @@ export default {
     noSlotsAvailable: 'لا توجد مواعيد متاحة في الوقت الحالي'
   },
 
+  // Reschedule Page
+  reschedule: {
+    title: 'إعادة جدولة الموعد',
+    subtitle: 'اختر تاريخ ووقت جديدين لموعدك',
+    currentAppointment: 'الموعد الحالي',
+    therapist: 'المعالج',
+    currentDate: 'التاريخ الحالي',
+    currentTime: 'الوقت الحالي',
+    duration: 'المدة',
+    selectNewTime: 'اختر وقت جديد',
+    selectDate: 'اختر التاريخ',
+    selectTime: 'اختر الوقت',
+    noSlotsAvailable: 'لا توجد أوقات متاحة لهذا التاريخ',
+    confirmReschedule: 'تأكيد إعادة الجدولة',
+    rescheduling: 'جاري إعادة الجدولة...',
+    success: 'تمت إعادة جدولة الموعد بنجاح',
+    error: 'فشل في إعادة جدولة الموعد'
+  },
+
   // Profile
   profile: {
     title: 'ملفي الشخصي',
