@@ -865,5 +865,8 @@ export default {
     message: 'The page you are looking for doesn\'t exist or has been moved.',
     goHome: 'Go to Home',
     goBack: 'Go Back'
-  }
+  },
+
+  // Appointment Change Terms
+  appointmentChangeTerms: 'Appointment Change Terms'
 } 

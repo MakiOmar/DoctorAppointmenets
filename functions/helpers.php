@@ -848,3 +848,25 @@ function snks_get_show_more_button_enabled() {
 	return $enabled === '1';
 }
 
+/**
+ * Get bilingual appointment change terms
+ *
+ * @param string $locale Optional locale, defaults to current language
+ * @return string
+ */
+function snks_get_appointment_change_terms( $locale = null ) {
+	if ( ! $locale ) {
+		$locale = snks_get_current_language();
+	}
+	
+	if ( $locale === 'ar' ) {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_appointment_change_terms_ar', 'options' );
+		return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+	} else {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_appointment_change_terms_en', 'options' );
+		return get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
+	}
+}
+

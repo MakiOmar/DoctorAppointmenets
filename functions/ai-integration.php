@@ -3691,6 +3691,7 @@ Best regards,
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 			'show_more_button_enabled' => snks_get_show_more_button_enabled(),
+			'appointment_change_terms' => snks_get_appointment_change_terms( $current_language ),
 		);
 		
 		wp_send_json_success( $settings );
@@ -3727,6 +3728,7 @@ Best regards,
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
 			'show_more_button_enabled' => snks_get_show_more_button_enabled(),
+			'appointment_change_terms' => snks_get_appointment_change_terms( $current_language ),
 		);
 		
 		return new WP_REST_Response( array(

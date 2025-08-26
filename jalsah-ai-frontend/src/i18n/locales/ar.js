@@ -874,5 +874,8 @@ export default {
     message: 'الصفحة التي تبحث عنها غير موجودة أو تم نقلها.',
     goHome: 'الذهاب للرئيسية',
     goBack: 'العودة'
-  }
+  },
+
+  // Appointment Change Terms
+  appointmentChangeTerms: 'شروط تغيير الموعد'
 } 

@@ -439,7 +439,7 @@
     "phase_7": {
       "name": "Mobile App Integration",
       "status": "planned",
-      "priority": "high",
+    "priority": "high",
       "estimated_duration": "2-4 weeks",
       "tasks": [
         {
@@ -465,7 +465,7 @@
     "phase_8": {
       "name": "Advanced Analytics & Reporting",
       "status": "planned",
-      "priority": "high",
+    "priority": "high",
       "estimated_duration": "3-4 weeks",
       "tasks": [
         {

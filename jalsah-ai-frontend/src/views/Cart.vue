@@ -126,6 +126,12 @@
               <span v-if="cartStore.loading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(cartStore.totalPrice) }}</span>
             </button>
+            
+            <!-- Appointment Change Terms -->
+            <div v-if="settingsStore.getAppointmentChangeTerms" class="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 class="text-sm font-medium text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
+              <p class="text-sm text-gray-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -138,11 +144,13 @@ import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
+import { useSettingsStore } from '../stores/settings'
 import { formatPrice } from '../utils/currency'
 
 const { t, locale } = useI18n()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 
 // Get the authenticated user's ID
 const userId = computed(() => authStore.user?.id)

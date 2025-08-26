@@ -12,6 +12,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const diagnosisSearchByName = ref(false)
   const diagnosisResultsLimit = ref(10)
   const showMoreButtonEnabled = ref(true)
+  const appointmentChangeTerms = ref('')
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const therapistRegistrationPasswordMode = ref('auto')
@@ -25,6 +26,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const isDiagnosisSearchByName = computed(() => diagnosisSearchByName.value)
   const getDiagnosisResultsLimit = computed(() => diagnosisResultsLimit.value)
   const isShowMoreButtonEnabled = computed(() => showMoreButtonEnabled.value)
+  const getAppointmentChangeTerms = computed(() => appointmentChangeTerms.value)
   const getTherapistRegistrationPasswordMode = computed(() => therapistRegistrationPasswordMode.value)
 
   // Actions
@@ -44,6 +46,7 @@ export const useSettingsStore = defineStore('settings', () => {
         diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
         diagnosisResultsLimit.value = settings.diagnosis_results_limit ?? 10
         showMoreButtonEnabled.value = settings.show_more_button_enabled ?? true
+        appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
 
       } catch (e) {
@@ -97,6 +100,7 @@ export const useSettingsStore = defineStore('settings', () => {
         diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
         diagnosisResultsLimit.value = settings.diagnosis_results_limit ?? 10
         showMoreButtonEnabled.value = settings.show_more_button_enabled ?? true
+        appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         
         // Save to localStorage
@@ -131,6 +135,7 @@ export const useSettingsStore = defineStore('settings', () => {
     diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
     diagnosisResultsLimit.value = settings.diagnosis_results_limit ?? 10
     showMoreButtonEnabled.value = settings.show_more_button_enabled ?? true
+    appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
     therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
     
     // Save to localStorage
@@ -147,6 +152,7 @@ export const useSettingsStore = defineStore('settings', () => {
     diagnosisSearchByName,
     diagnosisResultsLimit,
     showMoreButtonEnabled,
+    appointmentChangeTerms,
     isLoading,
     isInitialized,
     therapistRegistrationPasswordMode,
@@ -160,6 +166,7 @@ export const useSettingsStore = defineStore('settings', () => {
     isDiagnosisSearchByName,
     getDiagnosisResultsLimit,
     isShowMoreButtonEnabled,
+    getAppointmentChangeTerms,
     shouldShowLanguageSwitcher,
     getTherapistRegistrationPasswordMode,
     

@@ -2632,6 +2632,10 @@ function snks_enhanced_ai_settings_page() {
 				
 				update_option( 'snks_ai_show_more_button_enabled', isset( $_POST['show_more_button_enabled'] ) ? '1' : '0' );
 				
+				// Appointment Change Terms Settings
+				update_option( 'snks_ai_appointment_change_terms_en', sanitize_textarea_field( $_POST['appointment_change_terms_en'] ) );
+				update_option( 'snks_ai_appointment_change_terms_ar', sanitize_textarea_field( $_POST['appointment_change_terms_ar'] ) );
+				
 				echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 			}
 		}
@@ -2647,6 +2651,10 @@ function snks_enhanced_ai_settings_page() {
 	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
 	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
 	$show_more_button_enabled = get_option( 'snks_ai_show_more_button_enabled', '1' ); // Default to enabled
+	
+	// Appointment Change Terms Settings
+	$appointment_change_terms_en = get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
+	$appointment_change_terms_ar = get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -2731,6 +2739,20 @@ function snks_enhanced_ai_settings_page() {
 					<label for="show_more_button_enabled">Enable "Show More" Button</label>
 					<input type="checkbox" id="show_more_button_enabled" name="show_more_button_enabled" value="1" <?php checked( $show_more_button_enabled, '1' ); ?>>
 					<p class="description">When enabled, shows a "Show More" button on diagnosis results page when there are more therapists than the limit. When disabled, all therapists will be shown at once.</p>
+				</div>
+				
+				<h3>Appointment Change Terms</h3>
+				
+				<div class="bilingual-field">
+					<label for="appointment_change_terms_en">Appointment Change Terms (English)</label>
+					<textarea id="appointment_change_terms_en" name="appointment_change_terms_en" rows="3" class="large-text"><?php echo esc_textarea( $appointment_change_terms_en ); ?></textarea>
+					<p class="description">Terms and conditions for changing appointments. This will be displayed under cart items.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="appointment_change_terms_ar">Appointment Change Terms (Arabic)</label>
+					<textarea id="appointment_change_terms_ar" name="appointment_change_terms_ar" rows="3" class="large-text" dir="rtl"><?php echo esc_textarea( $appointment_change_terms_ar ); ?></textarea>
+					<p class="description">Terms and conditions for changing appointments in Arabic. This will be displayed under cart items.</p>
 				</div>
 				
 				<?php submit_button( 'Save Settings' ); ?>
