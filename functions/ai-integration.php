@@ -4610,6 +4610,10 @@ Best regards,
 		}
 		
 		error_log("AI Therapist Available Dates - Returning " . count($formatted_dates) . " formatted dates");
+		error_log("AI Therapist Available Dates - Response data: " . json_encode([
+			'available_dates' => $formatted_dates,
+			'therapist_id' => $therapist_id
+		]));
 		
 		$this->send_success([
 			'available_dates' => $formatted_dates,
