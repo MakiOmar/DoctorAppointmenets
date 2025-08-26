@@ -164,6 +164,7 @@ export default {
 
     // Search query for therapist names
     const searchQuery = ref('')
+    const searchTimeout = ref(null)
 
     // Get selected diagnosis from URL query parameter
     const selectedDiagnosis = computed(() => {
@@ -200,25 +201,13 @@ export default {
       })
     })
 
-    // Computed property to filter and sort therapists
+    // Computed property to sort therapists (search is now handled by API)
     const sortedTherapists = computed(() => {
-      let filtered = [...therapistsWithOriginalPositions.value]
-
-      // Apply search filter
-      if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase().trim()
-        filtered = filtered.filter(therapist => {
-          const name = therapist.name?.toLowerCase() || ''
-          const nameEn = therapist.name_en?.toLowerCase() || ''
-          const nameAr = therapist.name_ar?.toLowerCase() || ''
-          
-          return name.includes(query) || nameEn.includes(query) || nameAr.includes(query)
-        })
-      }
+      let sorted = [...therapistsWithOriginalPositions.value]
 
       // Apply order sorting (frontend_order)
       if (orderSort.value) {
-        filtered.sort((a, b) => {
+        sorted.sort((a, b) => {
           if (orderSort.value === 'asc') {
             return a.frontendOrder - b.frontendOrder
           } else if (orderSort.value === 'desc') {
@@ -230,7 +219,7 @@ export default {
 
       // Apply price sorting
       if (priceSort.value) {
-        filtered.sort((a, b) => {
+        sorted.sort((a, b) => {
           const priceA = a.price?.others || 0
           const priceB = b.price?.others || 0
           
@@ -245,7 +234,7 @@ export default {
 
       // Apply appointment sorting
       if (appointmentSort.value) {
-        filtered.sort((a, b) => {
+        sorted.sort((a, b) => {
           const timeA = getEarliestSlotTime(a)
           const timeB = getEarliestSlotTime(b)
           
@@ -258,7 +247,7 @@ export default {
         })
       }
 
-      return filtered
+      return sorted
     })
 
     // Computed property for displayed therapists (with show more functionality)
@@ -370,8 +359,21 @@ export default {
       try {
         let response
         
+        // If search query exists, use search API
+        if (searchQuery.value.trim()) {
+          const params = {
+            q: searchQuery.value.trim()
+          }
+          
+          // Add diagnosis filter if selected
+          if (selectedDiagnosis.value) {
+            params.diagnosis = selectedDiagnosis.value
+          }
+          
+          response = await api.get('/api/ai/therapists/search', { params })
+        }
         // If diagnosis is selected, load therapists by diagnosis
-        if (selectedDiagnosis.value) {
+        else if (selectedDiagnosis.value) {
           response = await api.get(`/api/ai/therapists/by-diagnosis/${selectedDiagnosis.value}`)
         } else {
           // Load all therapists
@@ -414,6 +416,19 @@ export default {
       loadTherapists()
     })
 
+    // Watch for search query changes with debouncing
+    watch(searchQuery, (newQuery) => {
+      // Clear existing timeout
+      if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value)
+      }
+      
+      // Set new timeout for debounced search
+      searchTimeout.value = setTimeout(() => {
+        loadTherapists()
+      }, 500) // 500ms delay
+    })
+
     onMounted(() => {
       loadTherapists()
       loadDiagnoses()
@@ -425,6 +440,7 @@ export default {
       diagnoses,
       selectedDiagnosis,
       searchQuery,
+      searchTimeout,
       orderSort,
       priceSort,
       appointmentSort,

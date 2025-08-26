@@ -80,6 +80,7 @@ class SNKS_AI_Integration {
 	 */
 	public function register_ai_endpoints() {
 		// Add rewrite rules for API endpoints - more specific patterns first
+		add_rewrite_rule( '^api/ai/therapists/search/?$', 'index.php?ai_endpoint=therapists/search', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/by-diagnosis/(\d+)/?$', 'index.php?ai_endpoint=therapists/by-diagnosis/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/([^/]+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]/$matches[2]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]', 'top' );
@@ -1755,6 +1756,8 @@ class SNKS_AI_Integration {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
 					$this->get_ai_therapists();
+				} elseif ( $path[1] === 'search' ) {
+					$this->get_ai_therapists_search();
 				} elseif ( is_numeric( $path[1] ) ) {
 					if ( isset( $path[2] ) && $path[2] === 'details' ) {
 						// Call the therapist details REST API function
@@ -2370,6 +2373,68 @@ Best regards,
 		$this->send_success( $this->format_ai_therapist_from_application( $application ) );
 	}
 	
+	/**
+	 * Get AI Therapists Search
+	 */
+	private function get_ai_therapists_search() {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'therapist_applications';
+		
+		// Get search query from GET parameters
+		$search_query = sanitize_text_field( $_GET['q'] ?? '' );
+		$diagnosis_id = intval( $_GET['diagnosis'] ?? 0 );
+		
+		if ( empty( $search_query ) ) {
+			$this->send_error( 'Search query is required', 400 );
+		}
+		
+		// Build the base query
+		$where_conditions = array( 'ta.status = "approved"', 'ta.show_on_ai_site = 1' );
+		$query_params = array();
+		
+		// Add search condition for therapist names
+		$search_condition = $wpdb->prepare(
+			'(ta.name LIKE %s OR ta.name_en LIKE %s OR ta.name_ar LIKE %s)',
+			'%' . $wpdb->esc_like( $search_query ) . '%',
+			'%' . $wpdb->esc_like( $search_query ) . '%',
+			'%' . $wpdb->esc_like( $search_query ) . '%'
+		);
+		$where_conditions[] = $search_condition;
+		
+		// Add diagnosis filter if provided
+		if ( $diagnosis_id > 0 ) {
+			$where_conditions[] = 'td.diagnosis_id = %d';
+			$query_params[] = $diagnosis_id;
+		}
+		
+		// Build the complete query
+		$where_clause = implode( ' AND ', $where_conditions );
+		
+		if ( $diagnosis_id > 0 ) {
+			// Join with therapist diagnoses table when filtering by diagnosis
+			$query = $wpdb->prepare(
+				"SELECT ta.*, td.display_order, td.frontend_order 
+				FROM $table_name ta
+				JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON ta.user_id = td.therapist_id
+				WHERE $where_clause
+				ORDER BY td.frontend_order ASC, td.display_order ASC, ta.name ASC",
+				...$query_params
+			);
+		} else {
+			// Simple search without diagnosis filter
+			$query = "SELECT ta.* FROM $table_name ta WHERE $where_clause ORDER BY ta.name ASC";
+		}
+		
+		$applications = $wpdb->get_results( $query );
+		
+		$result = array();
+		foreach ( $applications as $application ) {
+			$result[] = $this->format_ai_therapist_from_application( $application );
+		}
+		
+		$this->send_success( $result );
+	}
+
 	/**
 	 * Get AI Therapists by Diagnosis
 	 */
