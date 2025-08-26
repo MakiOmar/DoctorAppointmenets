@@ -181,16 +181,16 @@ const loadAppointment = async () => {
     console.log('Appointment data:', appointment.value) // Debug log
     console.log('Appointment data keys:', Object.keys(appointment.value)) // Debug log to see available fields
     
-    // Get therapist ID from various possible fields
-    const therapistId = appointment.value.therapist_id || appointment.value.user_id || appointment.value.therapist?.id
+    // Get therapist ID from various possible fields - access the nested data structure
+    const therapistId = appointment.value.data?.therapist_id || appointment.value.data?.user_id || appointment.value.data?.therapist?.id
     
     if (!therapistId) {
       // Log all available fields to help debug
       console.log('Available fields in appointment:', {
-        therapist_id: appointment.value.therapist_id,
-        user_id: appointment.value.user_id,
-        therapist: appointment.value.therapist,
-        allKeys: Object.keys(appointment.value)
+        therapist_id: appointment.value.data?.therapist_id,
+        user_id: appointment.value.data?.user_id,
+        therapist: appointment.value.data?.therapist,
+        allKeys: Object.keys(appointment.value.data || {})
       })
       throw new Error('Therapist ID not found in appointment data')
     }
@@ -247,8 +247,8 @@ const selectDate = (date) => {
 const loadTimeSlots = async () => {
   if (!selectedDate.value || !therapist.value) return
   
-  // Get therapist ID from various possible fields
-  const therapistId = therapist.value.user_id || therapist.value.id || appointment.value?.therapist_id || appointment.value?.user_id
+  // Get therapist ID from various possible fields - access the nested data structure
+  const therapistId = therapist.value.user_id || therapist.value.id || appointment.value?.data?.therapist_id || appointment.value?.data?.user_id
   
   if (!therapistId) {
     console.error('Therapist ID not found')
