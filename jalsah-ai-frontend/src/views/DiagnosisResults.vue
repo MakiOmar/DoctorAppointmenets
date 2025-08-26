@@ -144,8 +144,11 @@
             :diagnosis-id="route.params.diagnosisId"
             :position="therapist.originalPosition"
             :show-order-badge="true"
+            :open-therapist-id="openTherapistId"
             @click="viewTherapist"
             @book="bookAppointment"
+            @show-details="handleShowDetails(therapist.id)"
+            @hide-details="handleHideDetails()"
           />
           
           <!-- Show More Button -->
@@ -194,6 +197,7 @@ export default {
     })
     const showAllTherapists = ref(false)
     const firstTherapistCard = ref(null)
+    const openTherapistId = ref(null) // Track which therapist's details are currently open
     const orderSort = ref('') // Order sorting: '', 'asc', 'desc'
     const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
     const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
@@ -572,35 +576,10 @@ export default {
             console.log('🔍 firstTherapistCard.value:', firstTherapistCard.value)
             console.log('🔍 firstTherapistCard.value[0]:', firstTherapistCard.value?.[0])
             
-            if (firstTherapistCard.value && firstTherapistCard.value[0]) {
-              console.log('🔍 Available methods:', Object.keys(firstTherapistCard.value[0]))
-              console.log('🔍 Current showDetails value:', firstTherapistCard.value[0].showDetails)
-              
-              // Try direct method call first
-              if (firstTherapistCard.value[0].showTherapistDetails) {
-                firstTherapistCard.value[0].showTherapistDetails()
-                console.log('🔍 showTherapistDetails method called')
-                
-                // Also try to directly set showDetails to true as a backup
-                if (firstTherapistCard.value[0].showDetails !== undefined) {
-                  firstTherapistCard.value[0].showDetails = true
-                  console.log('🔍 Also directly set showDetails to true')
-                }
-              } else {
-                console.log('🔍 showTherapistDetails method not found, trying direct state manipulation')
-                
-                // Try to directly access and set the showDetails ref
-                if (firstTherapistCard.value[0].showDetails !== undefined) {
-                  firstTherapistCard.value[0].showDetails = true
-                  console.log('🔍 Directly set showDetails to true')
-                  
-                  // Also try to trigger loadTherapistDetails if available
-                  if (firstTherapistCard.value[0].loadTherapistDetails) {
-                    firstTherapistCard.value[0].loadTherapistDetails()
-                    console.log('🔍 loadTherapistDetails method called')
-                  }
-                }
-              }
+            if (matchedTherapists.value.length > 0) {
+              console.log('🔍 Auto-setting first therapist as open')
+              openTherapistId.value = matchedTherapists.value[0].id
+              console.log('🔍 Set openTherapistId to:', openTherapistId.value)
             }
           }, 1000)
         })
@@ -628,6 +607,20 @@ export default {
 
     const showMoreTherapists = () => {
       showAllTherapists.value = true
+    }
+
+    const handleShowDetails = (therapistId) => {
+      console.log('🔍 handleShowDetails called with therapistId:', therapistId)
+      console.log('🔍 Previous openTherapistId:', openTherapistId.value)
+      openTherapistId.value = therapistId
+      console.log('🔍 New openTherapistId:', openTherapistId.value)
+    }
+
+    const handleHideDetails = () => {
+      console.log('🔍 handleHideDetails called')
+      console.log('🔍 Previous openTherapistId:', openTherapistId.value)
+      openTherapistId.value = null
+      console.log('🔍 New openTherapistId:', openTherapistId.value)
     }
 
     const updateSorting = () => {
@@ -660,8 +653,12 @@ export default {
         nextTick(() => {
           setTimeout(() => {
             if (firstTherapistCard.value && firstTherapistCard.value[0]) {
-              // Directly call the showTherapistDetails method instead of clicking
-              firstTherapistCard.value[0].showTherapistDetails()
+              // Set the first therapist as the open therapist
+              if (matchedTherapists.value.length > 0) {
+                console.log('🔍 Auto-setting first therapist as open')
+                openTherapistId.value = matchedTherapists.value[0].id
+                console.log('🔍 Set openTherapistId to:', openTherapistId.value)
+              }
             }
           }, 500)
         })
@@ -681,12 +678,15 @@ export default {
       priceSort,
       appointmentSort,
       firstTherapistCard,
+      openTherapistId,
       rediagnose,
       browseAllTherapists,
       viewTherapist,
       bookAppointment,
       showMoreTherapists,
-      updateSorting
+      updateSorting,
+      handleShowDetails,
+      handleHideDetails
     }
   }
 }

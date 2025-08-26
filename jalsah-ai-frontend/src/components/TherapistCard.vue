@@ -323,10 +323,14 @@ export default {
     showOrderBadge: {
       type: Boolean,
       default: false
+    },
+    openTherapistId: {
+      type: [String, Number],
+      default: null
     }
   },
-  emits: ['click', 'book'],
-  setup(props) {
+  emits: ['click', 'book', 'show-details', 'hide-details'],
+  setup(props, { emit }) {
     const { t, locale } = useI18n()
     const authStore = useAuthStore()
     const cartStore = useCartStore()
@@ -412,11 +416,56 @@ export default {
     })
 
     const showTherapistDetails = () => {
-      showDetails.value = !showDetails.value
-      if (showDetails.value && !details.value) {
-        loadTherapistDetails()
+      console.log('🔍 showTherapistDetails called')
+      console.log('🔍 Current showDetails:', showDetails.value)
+      console.log('🔍 Current therapist ID:', props.therapist.id)
+      console.log('🔍 Current openTherapistId:', props.openTherapistId)
+      
+      if (showDetails.value) {
+        // If details are currently shown, hide them
+        console.log('🔍 Hiding details')
+        showDetails.value = false
+        emit('hide-details')
+      } else {
+        // If details are hidden, show them
+        console.log('🔍 Showing details')
+        showDetails.value = true
+        emit('show-details')
+        if (!details.value) {
+          loadTherapistDetails()
+        }
       }
     }
+
+    // Watch for changes in openTherapistId to sync the showDetails state
+    watch(() => props.openTherapistId, (newOpenId) => {
+      const currentTherapistId = props.therapist.id.toString()
+      const newOpenIdStr = newOpenId?.toString()
+      
+      console.log('🔍 Watcher triggered')
+      console.log('🔍 Current therapist ID:', currentTherapistId)
+      console.log('🔍 New openTherapistId:', newOpenIdStr)
+      console.log('🔍 Current showDetails:', showDetails.value)
+      
+      if (newOpenIdStr === currentTherapistId) {
+        // This therapist should be open
+        console.log('🔍 This therapist should be open')
+        if (!showDetails.value) {
+          console.log('🔍 Setting showDetails to true')
+          showDetails.value = true
+          if (!details.value) {
+            loadTherapistDetails()
+          }
+        }
+      } else {
+        // This therapist should be closed
+        console.log('🔍 This therapist should be closed')
+        if (showDetails.value) {
+          console.log('🔍 Setting showDetails to false')
+          showDetails.value = false
+        }
+      }
+    }, { immediate: true })
 
     const loadTherapistDetails = async () => {
       loading.value = true
