@@ -3687,6 +3687,21 @@ Best regards,
 			require_once SNKS_DIR . 'functions/helpers.php';
 		}
 		
+		// Fallback function if still not available
+		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
+			function snks_get_appointment_change_terms( $locale = null ) {
+				if ( ! $locale ) {
+					$locale = snks_get_current_language();
+				}
+				
+				if ( $locale === 'ar' ) {
+					return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+				} else {
+					return get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
+				}
+			}
+		}
+		
 		$settings = array(
 			'bilingual_enabled' => snks_is_bilingual_enabled(),
 			'default_language' => snks_get_default_language(),
@@ -3727,6 +3742,21 @@ Best regards,
 		// Ensure helper functions are available
 		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
 			require_once SNKS_DIR . 'functions/helpers.php';
+		}
+		
+		// Fallback function if still not available
+		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
+			function snks_get_appointment_change_terms( $locale = null ) {
+				if ( ! $locale ) {
+					$locale = snks_get_current_language();
+				}
+				
+				if ( $locale === 'ar' ) {
+					return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+				} else {
+					return get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
+				}
+			}
 		}
 		
 		$settings = array(
