@@ -224,6 +224,8 @@ const loadAvailableDates = async () => {
     return
   }
   
+  console.log('Loading available dates for therapist ID:', therapistId)
+  
   try {
     const response = await api.get('/api/ai/therapist-available-dates', {
       params: {
@@ -231,7 +233,9 @@ const loadAvailableDates = async () => {
       }
     })
     
+    console.log('Available dates response:', response.data)
     availableDates.value = response.data.available_dates || []
+    console.log('Available dates set:', availableDates.value)
   } catch (err) {
     console.error('Error loading available dates:', err)
     availableDates.value = []

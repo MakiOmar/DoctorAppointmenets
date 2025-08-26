@@ -3876,8 +3876,11 @@ Best regards,
 		
 		global $wpdb;
 		
+		// Debug logging
+		error_log("AI Therapist Available Dates - Therapist ID: $therapist_id");
+		
 		// Query for dates that have available slots in the next 30 days
-		$available_dates = $wpdb->get_results($wpdb->prepare(
+		$query = $wpdb->prepare(
 			"SELECT DISTINCT DATE(date_time) as date
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d 
@@ -3888,7 +3891,13 @@ Best regards,
 			 AND attendance_type = 'online'
 			 ORDER BY DATE(date_time) ASC",
 			$therapist_id
-		));
+		);
+		
+		error_log("AI Therapist Available Dates - Query: $query");
+		
+		$available_dates = $wpdb->get_results($query);
+		
+		error_log("AI Therapist Available Dates - Found " . count($available_dates) . " dates");
 		
 		$formatted_dates = [];
 		foreach ($available_dates as $date_row) {
@@ -3898,6 +3907,8 @@ Best regards,
 				'isSelected' => false
 			];
 		}
+		
+		error_log("AI Therapist Available Dates - Returning " . count($formatted_dates) . " formatted dates");
 		
 		return new WP_REST_Response([
 			'available_dates' => $formatted_dates,
