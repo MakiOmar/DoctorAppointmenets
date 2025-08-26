@@ -1649,6 +1649,9 @@ class SNKS_AI_Integration {
 			case 'diagnosis':
 				$this->handle_diagnosis_endpoint( $method, $path );
 				break;
+			case 'therapist-availability':
+				$this->handle_therapist_availability_endpoint( $method, $path );
+				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
 		}
@@ -1905,6 +1908,27 @@ class SNKS_AI_Integration {
 		}
 	}
 	
+	/**
+	 * Handle therapist availability endpoint
+	 */
+	private function handle_therapist_availability_endpoint( $method, $path ) {
+		switch ( $method ) {
+			case 'GET':
+				if ( count( $path ) === 1 ) {
+					// Create a proper WP_REST_Request object with GET parameters
+					$request = new WP_REST_Request( 'GET' );
+					$request->set_param( 'therapist_id', $_GET['therapist_id'] ?? null );
+					$request->set_param( 'date', $_GET['date'] ?? null );
+					$this->get_ai_therapist_availability( $request );
+				} else {
+					$this->send_error( 'Invalid endpoint', 404 );
+				}
+				break;
+			default:
+				$this->send_error( 'Method not allowed', 405 );
+		}
+	}
+
 	/**
 	 * AI Login
 	 */
