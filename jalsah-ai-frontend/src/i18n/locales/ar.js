@@ -449,7 +449,9 @@ export default {
       farthest: 'الأبعد'
     },
     showMore: 'عرض المزيد',
-    moreTherapists: 'معالجين آخرين'
+    moreTherapists: 'معالجين آخرين',
+    noResults: 'لم يتم العثور على معالجين',
+    noResultsMessage: 'جرب تعديل معايير البحث أو تصفح جميع المعالجين'
   },
 
   // Therapist Detail

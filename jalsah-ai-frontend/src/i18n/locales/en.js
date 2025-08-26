@@ -440,7 +440,9 @@ export default {
       farthest: 'Farthest'
     },
     showMore: 'Show More',
-    moreTherapists: 'more therapists'
+    moreTherapists: 'more therapists',
+    noResults: 'No therapists found',
+    noResultsMessage: 'Try adjusting your search criteria or browse all therapists'
   },
 
   // Date and Time

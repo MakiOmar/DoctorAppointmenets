@@ -2388,6 +2388,10 @@ Best regards,
 			$this->send_error( 'Search query is required', 400 );
 		}
 		
+		// Debug logging
+		error_log("🔍 Search query: " . $search_query);
+		error_log("🔍 Diagnosis ID: " . $diagnosis_id);
+		
 		// Build the base query
 		$where_conditions = array( 'ta.status = "approved"', 'ta.show_on_ai_site = 1' );
 		$query_params = array();
@@ -2425,13 +2429,20 @@ Best regards,
 			$query = "SELECT ta.* FROM $table_name ta WHERE $where_clause ORDER BY ta.name ASC";
 		}
 		
+		// Debug logging
+		error_log("🔍 Final query: " . $query);
+		
 		$applications = $wpdb->get_results( $query );
+		
+		// Debug logging
+		error_log("🔍 Found " . count($applications) . " applications");
 		
 		$result = array();
 		foreach ( $applications as $application ) {
 			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
 		
+		error_log("🔍 Returning " . count($result) . " formatted therapists");
 		$this->send_success( $result );
 	}
 
