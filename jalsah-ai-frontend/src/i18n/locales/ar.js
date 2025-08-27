@@ -655,7 +655,11 @@ export default {
     confirmReschedule: 'تأكيد إعادة الجدولة',
     rescheduling: 'جاري إعادة الجدولة...',
     success: 'تمت إعادة جدولة الموعد بنجاح',
-    error: 'فشل في إعادة جدولة الموعد'
+    error: 'فشل في إعادة جدولة الموعد',
+    alreadyRescheduled: 'تمت إعادة جدولة هذا الموعد مرة واحدة بالفعل',
+    alreadyRescheduledTitle: 'تمت إعادة الجدولة مسبقاً',
+    alreadyRescheduledMessage: 'تمت إعادة جدولة هذا الموعد مرة واحدة بالفعل. لا يُسمح بإعادة الجدولة المتعددة.',
+    cannotReschedule: 'لا يمكن إعادة الجدولة'
   },
 
   // Profile

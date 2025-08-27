@@ -380,6 +380,11 @@ export default {
     const canReschedule = (appointment) => {
       if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') return false
       
+      // Check if appointment has already been rescheduled
+      if (appointment.settings && appointment.settings.includes('ai_booking:rescheduled')) {
+        return false
+      }
+      
       let appointmentTime
       if (appointment.date && appointment.date.includes(' ')) {
         appointmentTime = new Date(appointment.date)

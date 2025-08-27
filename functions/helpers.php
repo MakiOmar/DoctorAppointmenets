@@ -951,3 +951,44 @@ function snks_get_ai_appointment_edit_time_remaining( $appointment ) {
 	return ( $appointment_time - $current_time ) - 86400;
 }
 
+/**
+ * Validate 15-minute rule for marking patient absence
+ * 
+ * @param string $session_date_time Session date and time
+ * @param string $attendance Attendance status ('yes' or 'no')
+ * @return array Validation result with success status and error message
+ */
+function snks_validate_absence_15_minute_rule($session_date_time, $attendance = 'yes') {
+	// If marking as attended, no validation needed
+	if ($attendance === 'yes') {
+		return array(
+			'success' => true,
+			'message' => ''
+		);
+	}
+	
+	// Check if 15 minutes have passed since the session start time
+	$session_start_time = strtotime($session_date_time);
+	$current_time = current_time('timestamp');
+	$minutes_passed = ($current_time - $session_start_time) / 60;
+	
+	if ($minutes_passed < 15) {
+		$remaining_minutes = ceil(15 - $minutes_passed);
+		return array(
+			'success' => false,
+			'message' => sprintf(
+				'Cannot mark patient as absent yet. Please wait %d more minute(s) before ending the session due to patient absence.',
+				$remaining_minutes
+			),
+			'minutes_passed' => round($minutes_passed, 1),
+			'required_minutes' => 15,
+			'remaining_minutes' => $remaining_minutes
+		);
+	}
+	
+	return array(
+		'success' => true,
+		'message' => ''
+	);
+}
+

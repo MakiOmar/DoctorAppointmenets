@@ -699,7 +699,11 @@ export default {
     confirmReschedule: 'Confirm Reschedule',
     rescheduling: 'Rescheduling...',
     success: 'Appointment rescheduled successfully',
-    error: 'Failed to reschedule appointment'
+    error: 'Failed to reschedule appointment',
+    alreadyRescheduled: 'This appointment has already been rescheduled once',
+    alreadyRescheduledTitle: 'Already Rescheduled',
+    alreadyRescheduledMessage: 'This appointment has already been rescheduled once. Multiple reschedules are not allowed.',
+    cannotReschedule: 'Cannot Reschedule'
   },
 
   // Profile

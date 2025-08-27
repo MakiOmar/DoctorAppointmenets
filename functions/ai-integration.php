@@ -4364,6 +4364,14 @@ Best regards,
 			);
 		}
 		
+		// Check if this appointment has already been rescheduled (prevent multiple reschedules)
+		if (strpos($current_appointment->settings, 'ai_booking:rescheduled') !== false) {
+			$this->send_error(
+				'This appointment has already been rescheduled once. Multiple reschedules are not allowed.',
+				400
+			);
+		}
+		
 		// Get the new appointment slot
 		$new_appointment = $wpdb->get_row($wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
@@ -4851,24 +4859,15 @@ Best regards,
 		$input = json_decode(file_get_contents('php://input'), true);
 		$attendance = $input['attendance'] ?? 'yes'; // Default to 'yes' for backward compatibility
 		
-		if ($attendance === 'no') {
-			// Check if 15 minutes have passed since the session start time
-			$session_start_time = strtotime($session->date_time);
-			$current_time = current_time('timestamp');
-			$minutes_passed = ($current_time - $session_start_time) / 60;
-			
-			if ($minutes_passed < 15) {
-				$remaining_minutes = ceil(15 - $minutes_passed);
-				return new WP_REST_Response([
-					'error' => sprintf(
-						'Cannot mark patient as absent yet. Please wait %d more minute(s) before ending the session due to patient absence.',
-						$remaining_minutes
-					),
-					'minutes_passed' => round($minutes_passed, 1),
-					'required_minutes' => 15,
-					'remaining_minutes' => $remaining_minutes
-				], 400);
-			}
+		// Validate 15-minute rule for absence
+		$validation = snks_validate_absence_15_minute_rule($session->date_time, $attendance);
+		if (!$validation['success']) {
+			return new WP_REST_Response([
+				'error' => $validation['message'],
+				'minutes_passed' => $validation['minutes_passed'] ?? 0,
+				'required_minutes' => $validation['required_minutes'] ?? 15,
+				'remaining_minutes' => $validation['remaining_minutes'] ?? 0
+			], 400);
 		}
 		
 		// Update session status
