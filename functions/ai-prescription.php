@@ -29,9 +29,19 @@ function snks_add_ai_prescription_button( $session_id, $session_data ) {
 		return '';
 	}
 	
-	// Check if prescription already requested
+	// Check if prescription already requested - multiple validation points
 	$prescription_requested = get_post_meta( $session_data->order_id, '_ai_prescription_requested', true );
-	if ( $prescription_requested ) {
+	
+	// Also check if there's already a Rochtah booking for this specific session
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE session_id = %d AND status IN ('pending', 'confirmed')",
+		$session_data->ID
+	) );
+	
+	if ( $prescription_requested || $existing_booking ) {
 		return '<button class="snks-button snks-prescription-requested" disabled>' . __( 'Prescription Requested', 'shrinks' ) . '</button>';
 	}
 	
@@ -86,9 +96,23 @@ function snks_handle_ai_prescription_request() {
 		wp_send_json_error( __( 'Session must be completed before requesting prescription', 'shrinks' ) );
 	}
 	
-	// Check if prescription already requested
+	// Check if prescription already requested - multiple validation points
 	$order = wc_get_order( $session->order_id );
+	
+	// Check order meta
 	if ( $order && $order->get_meta( '_ai_prescription_requested' ) ) {
+		wp_send_json_error( __( 'Prescription already requested for this session', 'shrinks' ) );
+	}
+	
+	// Check if there's already a Rochtah booking for this specific session
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE session_id = %d AND status IN ('pending', 'confirmed')",
+		$session_id
+	) );
+	
+	if ( $existing_booking ) {
 		wp_send_json_error( __( 'Prescription already requested for this session', 'shrinks' ) );
 	}
 	
@@ -107,6 +131,7 @@ function snks_handle_ai_prescription_request() {
 		array(
 			'patient_id' => $session->client_id,
 			'therapist_id' => $current_user->ID,
+			'session_id' => $session_id, // Link to specific session
 			'diagnosis_id' => 0, // Will be set by Rochtah doctor
 			'initial_diagnosis' => $preliminary_diagnosis,
 			'symptoms' => $symptoms,
@@ -115,7 +140,7 @@ function snks_handle_ai_prescription_request() {
 			'status' => 'pending',
 			'created_at' => current_time( 'mysql' )
 		),
-		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+		array( '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 	);
 	
 	if ( $booking_id ) {
@@ -390,9 +415,15 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 	
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	$pending_requests = $wpdb->get_results( $wpdb->prepare(
-		"SELECT * FROM $rochtah_bookings_table 
-		WHERE patient_id = %d AND status = 'pending'
-		ORDER BY created_at DESC",
+		"SELECT rb.*, 
+		        t.display_name as therapist_name,
+		        s.date_time as session_date,
+		        s.period as session_duration
+		FROM $rochtah_bookings_table rb
+		LEFT JOIN {$wpdb->users} t ON rb.therapist_id = t.ID
+		LEFT JOIN {$wpdb->prefix}snks_provider_timetable s ON rb.session_id = s.ID
+		WHERE rb.patient_id = %d AND rb.status = 'pending'
+		ORDER BY rb.created_at DESC",
 		$patient_id
 	) );
 	
@@ -634,8 +665,32 @@ function snks_create_rochtah_tables() {
 		KEY status (status)
 	) $charset_collate;";
 	
+	// Rochtah bookings table (if it doesn't exist)
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$sql_bookings = "CREATE TABLE $rochtah_bookings_table (
+		id bigint(20) NOT NULL AUTO_INCREMENT,
+		patient_id bigint(20) NOT NULL,
+		therapist_id bigint(20) NOT NULL,
+		session_id bigint(20) NOT NULL,
+		diagnosis_id bigint(20) DEFAULT 0,
+		initial_diagnosis text,
+		symptoms text,
+		booking_date date NOT NULL,
+		booking_time time NOT NULL,
+		status varchar(20) NOT NULL DEFAULT 'pending',
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY patient_id (patient_id),
+		KEY therapist_id (therapist_id),
+		KEY session_id (session_id),
+		KEY status (status),
+		UNIQUE KEY unique_session_request (session_id)
+	) $charset_collate;";
+	
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql_appointments );
+	dbDelta( $sql_bookings );
 	
 	// Insert default Rochtah schedule if table is empty
 	$existing_slots = $wpdb->get_var( "SELECT COUNT(*) FROM $rochtah_appointments_table" );
