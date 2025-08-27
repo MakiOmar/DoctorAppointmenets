@@ -35,6 +35,30 @@
         </div>
       </div>
 
+      <!-- Prescription Requests Section -->
+      <div v-if="prescriptionRequests.length > 0" class="mb-8">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-blue-900 mb-4">{{ $t('prescription.prescriptionServices') }}</h3>
+          
+          <div v-for="request in prescriptionRequests" :key="request.id" class="mb-4 last:mb-0">
+            <div class="bg-white rounded-lg p-4 border border-blue-100">
+              <div class="mb-3">
+                <p class="text-blue-800 text-sm">{{ $t('prescription.prescriptionRequested') }}</p>
+              </div>
+              
+              <div class="flex justify-end">
+                <button 
+                  @click="showRochtahBookingModal(request.id)"
+                  class="btn-primary text-sm"
+                >
+                  {{ $t('prescription.bookFreeAppointment') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
         <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -210,6 +234,115 @@
         </div>
       </div>
     </div>
+
+    <!-- Rochtah Booking Modal -->
+    <div v-if="showRochtahModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">{{ $t('prescription.bookFreeAppointment') }}</h3>
+          <button @click="closeRochtahModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loadingSlots" class="text-center py-8">
+          <svg class="animate-spin h-8 w-8 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-gray-600">{{ $t('appointmentsPage.loading') }}</p>
+        </div>
+
+        <!-- Available Slots -->
+        <div v-else-if="availableSlots.length > 0" class="max-h-96 overflow-y-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div 
+              v-for="slot in availableSlots" 
+              :key="`${slot.date}-${slot.time}`"
+              @click="selectSlot(slot)"
+              :class="[
+                'p-3 border rounded-lg cursor-pointer transition-colors',
+                selectedSlot && selectedSlot.date === slot.date && selectedSlot.time === slot.time
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
+              ]"
+            >
+              <div class="font-medium text-gray-900">{{ formatDate(slot.date) }}</div>
+              <div class="text-sm text-gray-600">{{ slot.formatted_time }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Slots Available -->
+        <div v-else class="text-center py-8">
+          <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <p class="text-gray-600">{{ $t('prescription.noAvailableSlots') }}</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div v-if="availableSlots.length > 0" class="flex justify-end space-x-3 mt-6 pt-4 border-t">
+          <button 
+            @click="closeRochtahModal"
+            class="btn-outline"
+          >
+            {{ $t('common.cancel') }}
+          </button>
+          <button 
+            @click="bookRochtahAppointment"
+            :disabled="!selectedSlot || bookingRochtah"
+            class="btn-primary"
+          >
+            <span v-if="bookingRochtah" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ $t('appointmentsPage.booking') }}
+            </span>
+            <span v-else>{{ $t('prescription.bookAppointment') }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Confirmation Modal -->
+    <div v-if="showBookingConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('prescription.confirmBooking') }}</h3>
+          <p class="text-sm text-gray-600 mb-6">
+            {{ $t('prescription.confirmBookingMessage') }}
+          </p>
+          <div class="flex justify-center space-x-4">
+            <button 
+              @click="confirmRochtahBooking"
+              :disabled="bookingRochtah"
+              class="btn-primary"
+            >
+              <span v-if="bookingRochtah" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ $t('appointmentsPage.booking') }}
+              </span>
+              <span v-else>{{ $t('common.yes') }}</span>
+            </button>
+            <button 
+              @click="showBookingConfirmModal = false"
+              class="btn-outline"
+            >
+              {{ $t('common.no') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -232,6 +365,16 @@ export default {
     const appointments = ref([])
     const activeTab = ref('upcoming')
     const appointmentToCancel = ref(null)
+    
+    // Rochtah booking related refs
+    const prescriptionRequests = ref([])
+    const showRochtahModal = ref(false)
+    const showBookingConfirmModal = ref(false)
+    const loadingSlots = ref(false)
+    const bookingRochtah = ref(false)
+    const availableSlots = ref([])
+    const selectedSlot = ref(null)
+    const currentRequestId = ref(null)
 
     const tabs = computed(() => [
       { 
@@ -472,10 +615,106 @@ export default {
       router.push(`/therapist-appointment/${therapistId}`)
     }
 
+    // Load prescription requests
+    const loadPrescriptionRequests = async () => {
+      try {
+        const response = await api.post('/wp-admin/admin-ajax.php', {
+          action: 'get_prescription_requests'
+        })
+        prescriptionRequests.value = response.data.data || []
+      } catch (error) {
+        console.error('Error loading prescription requests:', error)
+      }
+    }
+
+    // Show Rochtah booking modal
+    const showRochtahBookingModal = async (requestId) => {
+      currentRequestId.value = requestId
+      showRochtahModal.value = true
+      loadingSlots.value = true
+      selectedSlot.value = null
+      
+      try {
+        const response = await api.post('/wp-admin/admin-ajax.php', {
+          action: 'get_rochtah_available_slots',
+          nonce: window.snks_ai_prescription.rochtah_nonce
+        })
+        
+        if (response.data.success) {
+          availableSlots.value = response.data.data || []
+        } else {
+          toast.error(response.data.message || 'Failed to load available slots')
+        }
+      } catch (error) {
+        toast.error('Failed to load available slots')
+        console.error('Error loading Rochtah slots:', error)
+      } finally {
+        loadingSlots.value = false
+      }
+    }
+
+    // Close Rochtah modal
+    const closeRochtahModal = () => {
+      showRochtahModal.value = false
+      selectedSlot.value = null
+      availableSlots.value = []
+      currentRequestId.value = null
+    }
+
+    // Select a time slot
+    const selectSlot = (slot) => {
+      selectedSlot.value = slot
+    }
+
+    // Show booking confirmation
+    const bookRochtahAppointment = () => {
+      if (!selectedSlot.value) return
+      showBookingConfirmModal.value = true
+    }
+
+    // Confirm and book Rochtah appointment
+    const confirmRochtahBooking = async () => {
+      if (!selectedSlot.value || !currentRequestId.value) return
+      
+      bookingRochtah.value = true
+      
+      try {
+        const response = await api.post('/wp-admin/admin-ajax.php', {
+          action: 'book_rochtah_appointment',
+          request_id: currentRequestId.value,
+          selected_date: selectedSlot.value.date,
+          selected_time: selectedSlot.value.time,
+          nonce: window.snks_ai_prescription.rochtah_nonce
+        })
+        
+        if (response.data.success) {
+          toast.success(response.data.data.message || 'Appointment booked successfully')
+          
+          // Close modals
+          showBookingConfirmModal.value = false
+          closeRochtahModal()
+          
+          // Reload prescription requests
+          await loadPrescriptionRequests()
+          
+          // Reload appointments to show the new Rochtah appointment
+          await loadAppointments()
+        } else {
+          toast.error(response.data.message || 'Failed to book appointment')
+        }
+      } catch (error) {
+        toast.error('Failed to book appointment')
+        console.error('Error booking Rochtah appointment:', error)
+      } finally {
+        bookingRochtah.value = false
+      }
+    }
+
 
 
     onMounted(() => {
       loadAppointments()
+      loadPrescriptionRequests()
     })
 
     return {
@@ -497,7 +736,20 @@ export default {
       rescheduleAppointment,
       cancelAppointment,
       confirmCancel,
-      bookWithSameTherapist
+      bookWithSameTherapist,
+      // Rochtah booking related
+      prescriptionRequests,
+      showRochtahModal,
+      showBookingConfirmModal,
+      loadingSlots,
+      bookingRochtah,
+      availableSlots,
+      selectedSlot,
+      showRochtahBookingModal,
+      closeRochtahModal,
+      selectSlot,
+      bookRochtahAppointment,
+      confirmRochtahBooking
     }
   }
 }

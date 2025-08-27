@@ -304,6 +304,7 @@ function snks_enqueue_ai_prescription_assets() {
 		wp_localize_script( 'snks-ai-prescription', 'snks_ai_prescription', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce' => wp_create_nonce( 'ai_prescription_request' ),
+			'rochtah_nonce' => wp_create_nonce( 'rochtah_booking' ),
 			'strings' => array(
 				'confirm_medication' => __( 'Do you think the client needs medication and would you like to refer them to a psychiatrist (free of charge) to prescribe medication alongside your sessions?', 'shrinks' ),
 				'preliminary_diagnosis' => __( 'Preliminary diagnosis of the client according to your observation', 'shrinks' ),
@@ -376,3 +377,294 @@ function snks_get_rochtah_referral_reason_ajax() {
 	}
 }
 add_action( 'wp_ajax_get_rochtah_referral_reason', 'snks_get_rochtah_referral_reason_ajax' );
+
+/**
+ * Check if patient has pending prescription requests
+ */
+function snks_get_patient_prescription_requests( $patient_id = null ) {
+	if ( ! $patient_id ) {
+		$patient_id = get_current_user_id();
+	}
+	
+	global $wpdb;
+	
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$pending_requests = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE patient_id = %d AND status = 'pending'
+		ORDER BY created_at DESC",
+		$patient_id
+	) );
+	
+	return $pending_requests;
+}
+
+/**
+ * Display prescription request section for patients
+ */
+function snks_display_patient_prescription_requests( $patient_id = null ) {
+	if ( ! $patient_id ) {
+		$patient_id = get_current_user_id();
+	}
+	
+	$prescription_requests = snks_get_patient_prescription_requests( $patient_id );
+	
+	if ( empty( $prescription_requests ) ) {
+		return '';
+	}
+	
+	$output = '<div class="rochtah-prescription-requests">';
+	$output .= '<h3>' . __( 'Prescription Services', 'shrinks' ) . '</h3>';
+	
+	foreach ( $prescription_requests as $request ) {
+		$output .= '<div class="rochtah-request-item">';
+		$output .= '<div class="rochtah-request-message">';
+		$output .= '<p>' . __( 'A Roshta service request has been submitted by your therapist. You can now book a free 15-minute consultation with a psychiatrist to prescribe suitable medication. Please note that your therapist has already provided the reason for this referral.', 'shrinks' ) . '</p>';
+		$output .= '</div>';
+		
+		$output .= '<div class="rochtah-request-actions">';
+		$output .= '<button class="snks-button snks-book-rochtah-button" data-request-id="' . esc_attr( $request->id ) . '">';
+		$output .= __( 'Book Free Appointment', 'shrinks' );
+		$output .= '</button>';
+		$output .= '</div>';
+		$output .= '</div>';
+	}
+	
+	$output .= '</div>';
+	
+	return $output;
+}
+
+/**
+ * Get available Rochtah time slots for patient booking
+ */
+function snks_get_rochtah_available_slots_for_patient() {
+	global $wpdb;
+	
+	// Get Rochtah available days
+	$available_days = get_option( 'snks_rochtah_available_days', array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ) );
+	
+	$available_slots = array();
+	
+	// Look for available slots in the next 14 days
+	for ( $i = 1; $i <= 14; $i++ ) {
+		$check_date = date( 'Y-m-d', strtotime( "+$i days" ) );
+		$day_of_week = date( 'l', strtotime( $check_date ) );
+		
+		if ( in_array( $day_of_week, $available_days ) ) {
+			// Get available time slots for this day
+			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+			$day_slots = $wpdb->get_results( $wpdb->prepare(
+				"SELECT * FROM $rochtah_appointments_table 
+				WHERE day_of_week = %s AND status = 'active'
+				ORDER BY start_time ASC",
+				$day_of_week
+			) );
+			
+			foreach ( $day_slots as $slot ) {
+				// Generate 15-minute intervals
+				$start_time = $slot->start_time;
+				$end_time = $slot->end_time;
+				
+				$current_time = strtotime( $start_time );
+				$end_timestamp = strtotime( $end_time );
+				
+				while ( $current_time < $end_timestamp ) {
+					$interval_time = date( 'H:i:s', $current_time );
+					
+					// Check if this specific time is available
+					$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+					$existing_booking = $wpdb->get_row( $wpdb->prepare(
+						"SELECT * FROM $rochtah_bookings_table 
+						WHERE booking_date = %s 
+						AND booking_time = %s 
+						AND status IN ('pending', 'confirmed')",
+						$check_date,
+						$interval_time
+					) );
+					
+					if ( ! $existing_booking ) {
+						$available_slots[] = array(
+							'date' => $check_date,
+							'time' => $interval_time,
+							'formatted_time' => date( 'g:i A', strtotime( $interval_time ) ),
+							'day_of_week' => $day_of_week
+						);
+					}
+					
+					$current_time = strtotime( '+15 minutes', $current_time );
+				}
+			}
+		}
+	}
+	
+	return $available_slots;
+}
+
+/**
+ * AJAX handler for getting available Rochtah slots
+ */
+function snks_get_rochtah_available_slots_ajax() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_booking' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	$available_slots = snks_get_rochtah_available_slots_for_patient();
+	
+	if ( $available_slots ) {
+		wp_send_json_success( $available_slots );
+	} else {
+		wp_send_json_error( __( 'No available slots at the moment', 'shrinks' ) );
+	}
+}
+add_action( 'wp_ajax_get_rochtah_available_slots', 'snks_get_rochtah_available_slots_ajax' );
+
+/**
+ * AJAX handler for booking Rochtah appointment
+ */
+function snks_book_rochtah_appointment() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_booking' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in to book an appointment', 'shrinks' ) );
+	}
+	
+	$request_id = intval( $_POST['request_id'] );
+	$selected_date = sanitize_text_field( $_POST['selected_date'] );
+	$selected_time = sanitize_text_field( $_POST['selected_time'] );
+	
+	if ( ! $request_id || ! $selected_date || ! $selected_time ) {
+		wp_send_json_error( __( 'Missing required information', 'shrinks' ) );
+	}
+	
+	global $wpdb;
+	$current_user = wp_get_current_user();
+	
+	// Verify the request belongs to the current user
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d AND status = 'pending'",
+		$request_id, $current_user->ID
+	) );
+	
+	if ( ! $request ) {
+		wp_send_json_error( __( 'Prescription request not found or already booked', 'shrinks' ) );
+	}
+	
+	// Check if slot is still available
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE booking_date = %s 
+		AND booking_time = %s 
+		AND status IN ('pending', 'confirmed')
+		AND id != %d",
+		$selected_date,
+		$selected_time,
+		$request_id
+	) );
+	
+	if ( $existing_booking ) {
+		wp_send_json_error( __( 'This time slot is no longer available', 'shrinks' ) );
+	}
+	
+	// Update the booking with the selected date and time
+	$result = $wpdb->update(
+		$rochtah_bookings_table,
+		array(
+			'booking_date' => $selected_date,
+			'booking_time' => $selected_time,
+			'status' => 'confirmed'
+		),
+		array( 'id' => $request_id ),
+		array( '%s', '%s', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $result !== false ) {
+		// Send notification to Rochtah doctors
+		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
+		foreach ( $rochtah_doctors as $doctor ) {
+			snks_create_ai_notification(
+				$doctor->ID,
+				'rochtah_appointment_booked',
+				__( 'Rochtah Appointment Booked', 'shrinks' ),
+				sprintf( 
+					__( 'Patient %s has booked a Rochtah consultation for %s at %s', 'shrinks' ),
+					$current_user->display_name,
+					$selected_date,
+					$selected_time
+				)
+			);
+		}
+		
+		wp_send_json_success( array(
+			'message' => __( 'Appointment booked successfully.', 'shrinks' ),
+			'booking_id' => $request_id,
+			'date' => $selected_date,
+			'time' => $selected_time
+		) );
+	} else {
+		wp_send_json_error( __( 'Failed to book appointment. Please try again.', 'shrinks' ) );
+	}
+}
+add_action( 'wp_ajax_book_rochtah_appointment', 'snks_book_rochtah_appointment' );
+
+/**
+ * Create Rochtah database tables
+ */
+function snks_create_rochtah_tables() {
+	global $wpdb;
+	
+	$charset_collate = $wpdb->get_charset_collate();
+	
+	// Rochtah appointments table
+	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+	$sql_appointments = "CREATE TABLE $rochtah_appointments_table (
+		id bigint(20) NOT NULL AUTO_INCREMENT,
+		day_of_week varchar(20) NOT NULL,
+		start_time time NOT NULL,
+		end_time time NOT NULL,
+		status varchar(20) NOT NULL DEFAULT 'active',
+		created_at datetime DEFAULT CURRENT_TIMESTAMP,
+		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY day_of_week (day_of_week),
+		KEY status (status)
+	) $charset_collate;";
+	
+	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	dbDelta( $sql_appointments );
+	
+	// Insert default Rochtah schedule if table is empty
+	$existing_slots = $wpdb->get_var( "SELECT COUNT(*) FROM $rochtah_appointments_table" );
+	
+	if ( $existing_slots == 0 ) {
+		$default_days = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' );
+		$default_times = array(
+			array( '09:00:00', '17:00:00' ), // 9 AM to 5 PM
+		);
+		
+		foreach ( $default_days as $day ) {
+			foreach ( $default_times as $time ) {
+				$wpdb->insert(
+					$rochtah_appointments_table,
+					array(
+						'day_of_week' => $day,
+						'start_time' => $time[0],
+						'end_time' => $time[1],
+						'status' => 'active'
+					),
+					array( '%s', '%s', '%s', '%s' )
+				);
+			}
+		}
+	}
+}
+
+// Create tables on plugin activation
+register_activation_hook( __FILE__, 'snks_create_rochtah_tables' );
+
+// Also create tables if they don't exist (for existing installations)
+add_action( 'init', 'snks_create_rochtah_tables' );

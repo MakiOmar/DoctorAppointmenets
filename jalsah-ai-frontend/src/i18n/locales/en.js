@@ -632,6 +632,7 @@ export default {
   appointmentsPage: {
     title: 'My Appointments',
     loading: 'Loading appointments...',
+    booking: 'Booking...',
     tabs: {
       upcoming: 'Upcoming',
       past: 'Past',
@@ -711,6 +712,11 @@ export default {
     prescription: 'Prescription',
     prescriptionRequested: 'Prescription Requested',
     prescriptionServices: 'Prescription Services',
+    bookFreeAppointment: 'Book Free Appointment',
+    bookAppointment: 'Book Appointment',
+    confirmBooking: 'Confirm Booking',
+    confirmBookingMessage: 'Are you sure you want to book this appointment?',
+    noAvailableSlots: 'No available slots at the moment',
     confirmMedication: 'Do you think the client needs medication and would you like to refer them to a psychiatrist (free of charge) to prescribe medication alongside your sessions?',
     preliminaryDiagnosis: 'Preliminary diagnosis of the client according to your observation',
     symptoms: 'Symptoms that you believe require medication',

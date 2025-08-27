@@ -588,6 +588,7 @@ export default {
   appointmentsPage: {
     title: 'مواعيدي',
     loading: 'جاري تحميل المواعيد...',
+    booking: 'جاري الحجز...',
     tabs: {
       upcoming: 'القادمة',
       past: 'السابقة',
@@ -667,6 +668,11 @@ export default {
     prescription: 'روشتة',
     prescriptionRequested: 'تم طلب الروشتة',
     prescriptionServices: 'خدمات الروشتة',
+    bookFreeAppointment: 'احجز موعد مجاني',
+    bookAppointment: 'احجز موعد',
+    confirmBooking: 'تأكيد الحجز',
+    confirmBookingMessage: 'هل أنت متأكد من أنك تريد حجز هذا الموعد؟',
+    noAvailableSlots: 'لا توجد مواعيد متاحة حالياً',
     confirmMedication: 'هل تعتقد أن المريض يحتاج إلى دواء وتريد إحالته إلى طبيب نفسي (مجاناً) لوصف الدواء مع جلساتك؟',
     preliminaryDiagnosis: 'التشخيص الأولي للمريض حسب ملاحظتك',
     symptoms: 'الأعراض التي تعتقد أنها تحتاج إلى دواء',

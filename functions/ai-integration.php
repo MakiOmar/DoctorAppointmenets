@@ -73,6 +73,8 @@ class SNKS_AI_Integration {
 	add_action( 'wp_ajax_nopriv_test_diagnosis_limit', array( $this, 'test_diagnosis_limit_ajax' ) );
 		
 
+		
+
 	}
 	
 	/**
@@ -5554,3 +5556,132 @@ function snks_is_ai_patient( $user_id ) {
 function snks_get_ai_registration_date( $user_id ) {
 	return SNKS_AI_Integration::get_ai_registration_date( $user_id );
 }
+
+/**
+ * Get prescription requests for current user via AJAX
+ */
+function snks_get_prescription_requests_ajax() {
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in to view prescription requests', 'shrinks' ) );
+	}
+	
+	$current_user = wp_get_current_user();
+	$prescription_requests = snks_get_patient_prescription_requests( $current_user->ID );
+	
+	wp_send_json_success( $prescription_requests );
+}
+add_action( 'wp_ajax_get_prescription_requests', 'snks_get_prescription_requests_ajax' );
+
+/**
+ * Get available Rochtah slots via AJAX
+ */
+function snks_get_rochtah_available_slots_ajax() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_booking' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in to view available slots', 'shrinks' ) );
+	}
+	
+	$available_slots = snks_get_rochtah_available_slots_for_patient();
+	
+	if ( $available_slots ) {
+		wp_send_json_success( $available_slots );
+	} else {
+		wp_send_json_error( __( 'No available slots at the moment', 'shrinks' ) );
+	}
+}
+add_action( 'wp_ajax_get_rochtah_available_slots', 'snks_get_rochtah_available_slots_ajax' );
+
+/**
+ * Book Rochtah appointment via AJAX
+ */
+function snks_book_rochtah_appointment_ajax() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_booking' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in to book an appointment', 'shrinks' ) );
+	}
+	
+	$request_id = intval( $_POST['request_id'] );
+	$selected_date = sanitize_text_field( $_POST['selected_date'] );
+	$selected_time = sanitize_text_field( $_POST['selected_time'] );
+	
+	if ( ! $request_id || ! $selected_date || ! $selected_time ) {
+		wp_send_json_error( __( 'Missing required information', 'shrinks' ) );
+	}
+	
+	global $wpdb;
+	$current_user = wp_get_current_user();
+	
+	// Verify the request belongs to the current user
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d AND status = 'pending'",
+		$request_id, $current_user->ID
+	) );
+	
+	if ( ! $request ) {
+		wp_send_json_error( __( 'Prescription request not found or already booked', 'shrinks' ) );
+	}
+	
+	// Check if slot is still available
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE booking_date = %s 
+		AND booking_time = %s 
+		AND status IN ('pending', 'confirmed')
+		AND id != %d",
+		$selected_date,
+		$selected_time,
+		$request_id
+	) );
+	
+	if ( $existing_booking ) {
+		wp_send_json_error( __( 'This time slot is no longer available', 'shrinks' ) );
+	}
+	
+	// Update the booking with the selected date and time
+	$result = $wpdb->update(
+		$rochtah_bookings_table,
+		array(
+			'booking_date' => $selected_date,
+			'booking_time' => $selected_time,
+			'status' => 'confirmed'
+		),
+		array( 'id' => $request_id ),
+		array( '%s', '%s', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $result !== false ) {
+		// Send notification to Rochtah doctors
+		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
+		foreach ( $rochtah_doctors as $doctor ) {
+			snks_create_ai_notification(
+				$doctor->ID,
+				'rochtah_appointment_booked',
+				__( 'Rochtah Appointment Booked', 'shrinks' ),
+				sprintf( 
+					__( 'Patient %s has booked a Rochtah consultation for %s at %s', 'shrinks' ),
+					$current_user->display_name,
+					$selected_date,
+					$selected_time
+				)
+			);
+		}
+		
+		wp_send_json_success( array(
+			'message' => __( 'Appointment booked successfully.', 'shrinks' ),
+			'booking_id' => $request_id,
+			'date' => $selected_date,
+			'time' => $selected_time
+		) );
+	} else {
+		wp_send_json_error( __( 'Failed to book appointment. Please try again.', 'shrinks' ) );
+	}
+}
+add_action( 'wp_ajax_book_rochtah_appointment', 'snks_book_rochtah_appointment_ajax' );
