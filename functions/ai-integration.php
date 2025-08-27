@@ -3872,13 +3872,17 @@ Best regards,
 		$date = $request->get_param('date');
 		
 		if (!$therapist_id || !$date) {
-			return new WP_REST_Response(['error' => 'Missing therapist_id or date'], 400);
+			$this->send_error('Missing therapist_id or date', 400);
 		}
 		
 		global $wpdb;
 		
+		// Debug logging
+		error_log("AI Therapist Availability - Therapist ID: " . $therapist_id);
+		error_log("AI Therapist Availability - Date: " . $date);
+		
 		// Query the existing timetable system for available slots
-		$available_slots = $wpdb->get_results($wpdb->prepare(
+		$query = $wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d 
 			 AND DATE(date_time) = %s 
@@ -3887,10 +3891,17 @@ Best regards,
 			 AND attendance_type = 'online'
 			 ORDER BY starts ASC",
 			$therapist_id, $date
-		));
+		);
+		
+		error_log("AI Therapist Availability - Query: " . $query);
+		
+		$available_slots = $wpdb->get_results($query);
+		
+		error_log("AI Therapist Availability - Found " . count($available_slots) . " slots");
 		
 		$formatted_slots = [];
 		foreach ($available_slots as $slot) {
+			error_log("AI Therapist Availability - Slot: ID=" . $slot->ID . ", starts=" . $slot->starts . ", ends=" . $slot->ends);
 			$formatted_slots[] = [
 				'time' => $slot->starts,
 				'formatted_time' => date('g:i A', strtotime($slot->starts)),
@@ -3899,11 +3910,13 @@ Best regards,
 			];
 		}
 		
-		return new WP_REST_Response([
+		error_log("AI Therapist Availability - Returning " . count($formatted_slots) . " formatted slots");
+		
+		$this->send_success([
 			'available_slots' => $formatted_slots,
 			'therapist_id' => $therapist_id,
 			'date' => $date
-		], 200);
+		]);
 	}
 
 	/**
