@@ -3890,6 +3890,7 @@ Best regards,
 			 AND attendance_type = 'online'
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 ORDER BY starts ASC",
 			$therapist_id, $date
 		);
@@ -4377,20 +4378,25 @@ Best regards,
 		$wpdb->query('START TRANSACTION');
 		
 		try {
-			// Cancel the current appointment
-			$cancel_result = $wpdb->update(
+			// Make the old slot available again by clearing client_id and order_id
+			$free_old_slot_result = $wpdb->update(
 				$wpdb->prefix . 'snks_provider_timetable',
-				['session_status' => 'cancelled'],
+				[
+					'client_id' => 0,
+					'order_id' => 0,
+					'session_status' => 'waiting',
+					'settings' => 'ai_booking:rescheduled_old_slot'
+				],
 				['ID' => $appointment_id],
-				['%s'],
+				['%d', '%d', '%s', '%s'],
 				['%d']
 			);
 			
-			if ($cancel_result === false) {
-				throw new Exception('Failed to cancel current appointment');
+			if ($free_old_slot_result === false) {
+				throw new Exception('Failed to free old appointment slot');
 			}
 			
-			// Book the new appointment
+			// Book the new appointment with the transferred order data
 			$book_result = $wpdb->update(
 				$wpdb->prefix . 'snks_provider_timetable',
 				[
@@ -4602,6 +4608,7 @@ Best regards,
 			 AND attendance_type = 'online'
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 ORDER BY DATE(date_time) ASC",
 			$therapist_id
 		);
