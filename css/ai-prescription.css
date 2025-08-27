@@ -1,0 +1,317 @@
+/**
+ * AI Prescription System Styles
+ */
+
+/* Modal Overlay */
+.snks-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Modal */
+.snks-modal {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.snks-modal-large {
+    max-width: 600px;
+}
+
+/* Modal Header */
+.snks-modal-header {
+    padding: 20px 20px 0;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.snks-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.snks-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.snks-modal-close:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* Modal Body */
+.snks-modal-body {
+    padding: 20px;
+}
+
+/* Prescription Options */
+.snks-prescription-options {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.snks-prescription-options .snks-button {
+    min-width: 100px;
+}
+
+/* Form Styles */
+.snks-form-group {
+    margin-bottom: 20px;
+}
+
+.snks-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+}
+
+.snks-form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.snks-form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Form Actions */
+.snks-form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Button Styles */
+.snks-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.snks-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.snks-button-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.snks-button-primary:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.snks-button-secondary {
+    background-color: #6b7280;
+    color: white;
+}
+
+.snks-button-secondary:hover:not(:disabled) {
+    background-color: #4b5563;
+}
+
+/* Prescription Button Specific Styles */
+.snks-prescription-button {
+    background-color: #10b981;
+    color: white;
+    margin-top: 10px;
+}
+
+.snks-prescription-button:hover {
+    background-color: #059669;
+}
+
+.snks-prescription-requested {
+    background-color: #6b7280;
+    color: white;
+    cursor: not-allowed;
+}
+
+.snks-prescription-requested:hover {
+    background-color: #6b7280;
+}
+
+/* Referral Reason Button */
+.snks-referral-reason-button {
+    background-color: #8b5cf6;
+    color: white;
+    margin-top: 10px;
+}
+
+.snks-referral-reason-button:hover {
+    background-color: #7c3aed;
+}
+
+/* Referral Reason Content */
+.snks-referral-reason {
+    margin-top: 16px;
+}
+
+.snks-reason-content {
+    background-color: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    margin-top: 8px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* Loading State */
+.snks-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+    font-size: 16px;
+}
+
+/* Success Message */
+.snks-success-message {
+    color: #059669;
+    font-size: 16px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Error Message */
+.snks-error-message {
+    color: #dc2626;
+    font-size: 16px;
+    text-align: center;
+    padding: 20px;
+}
+
+/* AI Prescription Section */
+.ai-prescription-section {
+    margin-top: 20px;
+    padding: 16px;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+}
+
+.ai-prescription-section h4 {
+    margin: 0 0 12px 0;
+    color: #0369a1;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .snks-modal {
+        margin: 10px;
+        max-width: none;
+    }
+    
+    .snks-prescription-options {
+        flex-direction: column;
+    }
+    
+    .snks-form-actions {
+        flex-direction: column;
+    }
+    
+    .snks-button {
+        width: 100%;
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .snks-modal-header {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .snks-prescription-options {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .snks-form-actions {
+    flex-direction: row-reverse;
+}
+
+/* Animation */
+.snks-modal-overlay {
+    animation: fadeIn 0.2s ease-out;
+}
+
+.snks-modal {
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

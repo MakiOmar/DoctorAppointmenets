@@ -663,7 +663,21 @@ export default {
     leaveMeetingTitle: 'مغادرة الجلسة؟',
     leaveMeetingMessage: 'هل أنت متأكد من أنك تريد مغادرة الجلسة؟ سيتم توجيهك إلى مواعيدك.',
     leaveMeeting: 'مغادرة الجلسة',
-    stayInMeeting: 'البقاء في الجلسة'
+    stayInMeeting: 'البقاء في الجلسة',
+    prescription: 'روشتة',
+    prescriptionRequested: 'تم طلب الروشتة',
+    prescriptionServices: 'خدمات الروشتة',
+    confirmMedication: 'هل تعتقد أن المريض يحتاج إلى دواء وتريد إحالته إلى طبيب نفسي (مجاناً) لوصف الدواء مع جلساتك؟',
+    preliminaryDiagnosis: 'التشخيص الأولي للمريض حسب ملاحظتك',
+    symptoms: 'الأعراض التي تعتقد أنها تحتاج إلى دواء',
+    request: 'طلب',
+    cancel: 'إلغاء',
+    yes: 'نعم',
+    no: 'لا',
+    close: 'إغلاق',
+    successMessage: 'تم تقديم طلب خدمة الروشتة بنجاح.',
+    errorMessage: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+    reasonForReferral: 'سبب الإحالة'
   },
 
   // Profile

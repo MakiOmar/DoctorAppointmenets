@@ -15,6 +15,11 @@
 // plugin textdomain.
 define( 'SNKS_DOMAIN', 'anony-turn' );
 
+// Load text domain for translations
+add_action( 'init', function() {
+	load_plugin_textdomain( 'shrinks', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+});
+
 define( 'TIMETABLE_TABLE_NAME', 'snks_provider_timetable' );
 define( 'TRNS_TABLE_NAME', 'snks_booking_transactions' );
 define( 'WHYSMS_SENDER_ID', 'Jalsah' );
@@ -147,6 +152,7 @@ require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
 require_once SNKS_DIR . 'functions/ajax/therapist-certificates.php';
 require_once SNKS_DIR . 'functions/ajax/therapist-details.php';
+require_once SNKS_DIR . 'functions/ai-prescription.php';
 	},
 	20
 );

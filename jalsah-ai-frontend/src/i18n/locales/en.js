@@ -707,7 +707,21 @@ export default {
     leaveMeetingTitle: 'Leave Meeting?',
     leaveMeetingMessage: 'Are you sure you want to leave the session? You will be redirected to your appointments.',
     leaveMeeting: 'Leave Meeting',
-    stayInMeeting: 'Stay in Meeting'
+    stayInMeeting: 'Stay in Meeting',
+    prescription: 'Prescription',
+    prescriptionRequested: 'Prescription Requested',
+    prescriptionServices: 'Prescription Services',
+    confirmMedication: 'Do you think the client needs medication and would you like to refer them to a psychiatrist (free of charge) to prescribe medication alongside your sessions?',
+    preliminaryDiagnosis: 'Preliminary diagnosis of the client according to your observation',
+    symptoms: 'Symptoms that you believe require medication',
+    request: 'Request',
+    cancel: 'Cancel',
+    yes: 'Yes',
+    no: 'No',
+    close: 'Close',
+    successMessage: 'Prescription service request submitted successfully.',
+    errorMessage: 'An error occurred. Please try again.',
+    reasonForReferral: 'Reason for Referral'
   },
 
   // Profile

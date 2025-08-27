@@ -1510,6 +1510,18 @@ function snks_render_sessions_listing( $tense ) {
 				array( $edit, $start ),
 				snks_booking_details( $session_details, false )
 			);
+			
+			// Add prescription button for AI sessions
+			if ( function_exists( 'snks_add_ai_prescription_button' ) ) {
+				$prescription_button = snks_add_ai_prescription_button( $session->ID, $session );
+				if ( $prescription_button ) {
+					$output .= '<div class="ai-prescription-section">';
+					$output .= '<h4>' . __( 'Prescription Services', 'shrinks' ) . '</h4>';
+					$output .= $prescription_button;
+					$output .= '</div>';
+				}
+			}
+			
 			$output .= '</div>';
 
 		}

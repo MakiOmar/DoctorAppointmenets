@@ -161,6 +161,10 @@ function snks_rochtah_doctor_dashboard() {
 										</button>
 									<?php endif; ?>
 									
+									<?php if ( function_exists( 'snks_add_rochtah_referral_reason_button' ) ) : ?>
+										<?php echo snks_add_rochtah_referral_reason_button( $booking ); ?>
+									<?php endif; ?>
+									
 									<button class="button button-small" 
 											onclick="openStatusModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->status ); ?>')">
 										Update Status
@@ -309,6 +313,79 @@ function snks_rochtah_doctor_dashboard() {
 	function viewPrescription(bookingId) {
 		// This would open a modal to view the prescription
 		alert('View prescription for booking ' + bookingId);
+	}
+	
+	function showReferralReason(bookingId) {
+		// Show loading state
+		showModal('Referral Reason', '<div style="text-align: center; padding: 40px;">Loading...</div>');
+		
+		// Fetch referral reason data
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'get_rochtah_referral_reason',
+				booking_id: bookingId,
+				nonce: '<?php echo wp_create_nonce( 'rochtah_referral_reason' ); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					const data = response.data;
+					const content = `
+						<div style="margin-top: 16px;">
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Preliminary Diagnosis:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.preliminary_diagnosis}</div>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Symptoms:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.symptoms}</div>
+							</div>
+						</div>
+					`;
+					showModal('Reason for Referral', content);
+				} else {
+					showModal('Error', 'Failed to load referral reason');
+				}
+			},
+			error: function() {
+				showModal('Error', 'Failed to load referral reason');
+			}
+		});
+	}
+	
+	function showModal(title, content) {
+		// Create modal HTML
+		const modalHtml = `
+			<div id="referralModal" class="modal" style="display: block;">
+				<div class="modal-content">
+					<span class="close">&times;</span>
+					<h2>${title}</h2>
+					<div>${content}</div>
+				</div>
+			</div>
+		`;
+		
+		// Remove existing modal if any
+		const existingModal = document.getElementById('referralModal');
+		if (existingModal) {
+			existingModal.remove();
+		}
+		
+		// Add new modal
+		document.body.insertAdjacentHTML('beforeend', modalHtml);
+		
+		// Add event listener for close button
+		document.querySelector('#referralModal .close').onclick = function() {
+			document.getElementById('referralModal').style.display = 'none';
+		};
+		
+		// Add event listener for clicking outside modal
+		document.getElementById('referralModal').onclick = function(event) {
+			if (event.target == this) {
+				this.style.display = 'none';
+			}
+		};
 	}
 	
 	// Close modals when clicking X or outside
