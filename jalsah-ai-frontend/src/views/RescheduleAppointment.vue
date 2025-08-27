@@ -178,24 +178,14 @@ const loadAppointment = async () => {
     const response = await api.get(`/api/ai/appointments/${route.params.appointmentId}`)
     appointment.value = response.data.data
     
-    console.log('Appointment data:', appointment.value) // Debug log
-    console.log('Appointment data keys:', Object.keys(appointment.value)) // Debug log to see available fields
+    
     
     // Get therapist ID from various possible fields - access the nested data structure
     const therapistId = appointment.value.data?.therapist_id || appointment.value.data?.user_id || appointment.value.data?.therapist?.id
     
-    if (!therapistId) {
-      // Log all available fields to help debug
-      console.log('Available fields in appointment:', {
-        therapist_id: appointment.value.data?.therapist_id,
-        user_id: appointment.value.data?.user_id,
-        therapist: appointment.value.data?.therapist,
-        allKeys: Object.keys(appointment.value.data || {})
-      })
-      throw new Error('Therapist ID not found in appointment data')
-    }
-    
-    console.log('Therapist ID:', therapistId) // Debug log
+         if (!therapistId) {
+       throw new Error('Therapist ID not found in appointment data')
+     }
     
     // Load therapist data
     const therapistResponse = await api.get(`/api/ai/therapists/${therapistId}`)
@@ -224,7 +214,7 @@ const loadAvailableDates = async () => {
     return
   }
   
-  console.log('Loading available dates for therapist ID:', therapistId)
+  
   
   try {
     const response = await api.get('/api/ai/therapist-available-dates', {
@@ -233,11 +223,7 @@ const loadAvailableDates = async () => {
       }
     })
     
-    console.log('Available dates response:', response.data)
-    console.log('Response data keys:', Object.keys(response.data))
-    console.log('Available dates in response:', response.data.data?.available_dates)
-    availableDates.value = response.data.data?.available_dates || []
-    console.log('Available dates set:', availableDates.value)
+         availableDates.value = response.data.data?.available_dates || []
   } catch (err) {
     console.error('Error loading available dates:', err)
     availableDates.value = []

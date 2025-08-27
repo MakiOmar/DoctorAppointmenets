@@ -3877,9 +3877,7 @@ Best regards,
 		
 		global $wpdb;
 		
-		// Debug logging
-		error_log("AI Therapist Availability - Therapist ID: " . $therapist_id);
-		error_log("AI Therapist Availability - Date: " . $date);
+
 		
 		// Query the existing timetable system for available slots
 		$query = $wpdb->prepare(
@@ -3893,15 +3891,10 @@ Best regards,
 			$therapist_id, $date
 		);
 		
-		error_log("AI Therapist Availability - Query: " . $query);
-		
 		$available_slots = $wpdb->get_results($query);
-		
-		error_log("AI Therapist Availability - Found " . count($available_slots) . " slots");
 		
 		$formatted_slots = [];
 		foreach ($available_slots as $slot) {
-			error_log("AI Therapist Availability - Slot: ID=" . $slot->ID . ", starts=" . $slot->starts . ", ends=" . $slot->ends);
 			$formatted_slots[] = [
 				'time' => $slot->starts,
 				'formatted_time' => date('g:i A', strtotime($slot->starts)),
@@ -3910,7 +3903,7 @@ Best regards,
 			];
 		}
 		
-		error_log("AI Therapist Availability - Returning " . count($formatted_slots) . " formatted slots");
+
 		
 		$this->send_success([
 			'available_slots' => $formatted_slots,
@@ -4623,10 +4616,6 @@ Best regards,
 		}
 		
 		error_log("AI Therapist Available Dates - Returning " . count($formatted_dates) . " formatted dates");
-		error_log("AI Therapist Available Dates - Response data: " . json_encode([
-			'available_dates' => $formatted_dates,
-			'therapist_id' => $therapist_id
-		]));
 		
 		$this->send_success([
 			'available_dates' => $formatted_dates,
