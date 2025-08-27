@@ -235,8 +235,8 @@ const loadAvailableDates = async () => {
     
     console.log('Available dates response:', response.data)
     console.log('Response data keys:', Object.keys(response.data))
-    console.log('Available dates in response:', response.data.available_dates)
-    availableDates.value = response.data.available_dates || []
+    console.log('Available dates in response:', response.data.data?.available_dates)
+    availableDates.value = response.data.data?.available_dates || []
     console.log('Available dates set:', availableDates.value)
   } catch (err) {
     console.error('Error loading available dates:', err)
@@ -277,7 +277,7 @@ const loadTimeSlots = async () => {
       }
     })
     
-    availableSlots.value = response.data.available_slots || []
+    availableSlots.value = response.data.data?.available_slots || []
   } catch (err) {
     console.error('Error loading time slots:', err)
     availableSlots.value = []
