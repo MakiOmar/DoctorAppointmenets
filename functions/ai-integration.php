@@ -3880,6 +3880,7 @@ Best regards,
 
 		
 		// Query the existing timetable system for available slots
+		// Only include slots that are actually available (not booked)
 		$query = $wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d 
@@ -3887,6 +3888,8 @@ Best regards,
 			 AND session_status = 'waiting' 
 			 AND order_id = 0
 			 AND attendance_type = 'online'
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 ORDER BY starts ASC",
 			$therapist_id, $date
 		);
@@ -4587,6 +4590,7 @@ Best regards,
 
 		
 		// Query for dates that have available slots in the next 30 days
+		// Only include dates where there are actually available slots (not booked)
 		$query = $wpdb->prepare(
 			"SELECT DISTINCT DATE(date_time) as date
 			 FROM {$wpdb->prefix}snks_provider_timetable 
@@ -4596,6 +4600,8 @@ Best regards,
 			 AND session_status = 'waiting' 
 			 AND order_id = 0
 			 AND attendance_type = 'online'
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 ORDER BY DATE(date_time) ASC",
 			$therapist_id
 		);
