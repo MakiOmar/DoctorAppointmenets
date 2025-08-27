@@ -4584,7 +4584,7 @@ Best regards,
 		global $wpdb;
 		
 		// Debug logging
-		error_log("AI Therapist Available Dates - Therapist ID: $therapist_id");
+
 		
 		// Query for dates that have available slots in the next 30 days
 		$query = $wpdb->prepare(
@@ -4600,11 +4600,11 @@ Best regards,
 			$therapist_id
 		);
 		
-		error_log("AI Therapist Available Dates - Query: $query");
+
 		
 		$available_dates = $wpdb->get_results($query);
 		
-		error_log("AI Therapist Available Dates - Found " . count($available_dates) . " dates");
+
 		
 		$formatted_dates = [];
 		foreach ($available_dates as $date_row) {
@@ -4615,7 +4615,7 @@ Best regards,
 			];
 		}
 		
-		error_log("AI Therapist Available Dates - Returning " . count($formatted_dates) . " formatted dates");
+
 		
 		$this->send_success([
 			'available_dates' => $formatted_dates,
