@@ -176,19 +176,59 @@
               </div>
             </div>
 
-                         <!-- End Session Button (for therapists) -->
-             <button
-               v-if="isTherapist && canEndSession"
-               @click="endSession"
-               :disabled="endingSession"
-               class="btn-secondary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
-             >
-               <span v-if="endingSession" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
-               <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-               </svg>
-               <span>{{ endingSession ? $t('session.ending') : $t('session.end') }}</span>
-             </button>
+                         <!-- End Session Section (for therapists) -->
+             <div v-if="isTherapist && canEndSession" class="space-y-4">
+               <h4 class="font-medium text-gray-900">{{ $t('session.endSessionTitle') }}</h4>
+               
+               <!-- Attendance Selection -->
+               <div class="space-y-3">
+                 <label class="flex items-center space-x-3 rtl:space-x-reverse cursor-pointer">
+                   <input 
+                     type="radio" 
+                     v-model="selectedAttendance" 
+                     value="yes" 
+                     class="text-blue-600 focus:ring-blue-500"
+                   >
+                   <span class="text-sm text-gray-700">{{ $t('session.patientAttended') }}</span>
+                 </label>
+                 
+                 <label class="flex items-center space-x-3 rtl:space-x-reverse cursor-pointer">
+                   <input 
+                     type="radio" 
+                     v-model="selectedAttendance" 
+                     value="no" 
+                     class="text-blue-600 focus:ring-blue-500"
+                   >
+                   <span class="text-sm text-gray-700">{{ $t('session.patientAbsent') }}</span>
+                 </label>
+               </div>
+               
+               <!-- 15-minute warning for absence -->
+               <div v-if="selectedAttendance === 'no' && !canMarkAbsent" class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                 <div class="flex items-start space-x-2 rtl:space-x-reverse">
+                   <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                   </svg>
+                   <div>
+                     <p class="text-sm font-medium text-yellow-800">{{ $t('session.absenceWarning') }}</p>
+                     <p class="text-sm text-yellow-700">{{ $t('session.wait15Minutes') }}</p>
+                   </div>
+                 </div>
+               </div>
+               
+               <!-- End Session Button -->
+               <button
+                 @click="endSession"
+                 :disabled="endingSession || (selectedAttendance === 'no' && !canMarkAbsent)"
+                 class="btn-secondary w-full py-3 flex items-center justify-center space-x-2 rtl:space-x-reverse"
+               >
+                 <span v-if="endingSession" class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600"></span>
+                 <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                 </svg>
+                 <span>{{ endingSession ? $t('session.ending') : $t('session.end') }}</span>
+               </button>
+             </div>
              
 
           </div>
@@ -301,6 +341,7 @@ const jitsiLoaded = ref(false)
 const meetAPI = ref(null)
 const showManualButton = ref(false)
 const sessionRefreshTimer = ref(null)
+const selectedAttendance = ref('yes') // Default to 'yes' (patient attended)
 
 // Computed properties
 const sessionStatus = computed(() => {
@@ -522,6 +563,17 @@ const canEndSession = computed(() => {
   return Number(sessionData.value.therapist_id) === Number(authStore.user?.id)
 })
 
+const canMarkAbsent = computed(() => {
+  if (!sessionData.value) return false
+  
+  // Check if 15 minutes have passed since session start time
+  const sessionStartTime = new Date(sessionData.value.date_time).getTime()
+  const currentTime = Date.now()
+  const minutesPassed = (currentTime - sessionStartTime) / (1000 * 60)
+  
+  return minutesPassed >= 15
+})
+
 // Methods
 const loadSession = async () => {
   loading.value = true
@@ -644,10 +696,16 @@ const startMeeting = async () => {
 const endSession = async () => {
    if (!canEndSession.value) return
    
+   // Check if trying to mark as absent but 15 minutes haven't passed
+   if (selectedAttendance.value === 'no' && !canMarkAbsent.value) {
+     toast.error(t('session.wait15Minutes'))
+     return
+   }
+   
    // Use SweetAlert2 for confirmation
    const result = await Swal.fire({
      title: t('session.confirmEndTitle'),
-     text: t('session.confirmEnd'),
+     text: selectedAttendance.value === 'no' ? t('session.confirmEndAbsent') : t('session.confirmEnd'),
      icon: 'warning',
      showCancelButton: true,
      confirmButtonColor: '#d33',
@@ -661,7 +719,9 @@ const endSession = async () => {
    endingSession.value = true
    
    try {
-     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`)
+     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`, {
+       attendance: selectedAttendance.value
+     })
      
      if (response.data.success) {
        toast.success(t('session.ended'))
@@ -671,7 +731,11 @@ const endSession = async () => {
      }
    } catch (err) {
      console.error('Error ending session:', err)
-     toast.error(t('session.endError'))
+     if (err.response?.data?.error) {
+       toast.error(err.response.data.error)
+     } else {
+       toast.error(t('session.endError'))
+     }
    } finally {
      endingSession.value = false
    }

@@ -4847,6 +4847,30 @@ Best regards,
 			return new WP_REST_Response(['error' => 'Only the therapist can end this session'], 403);
 		}
 		
+		// Check if this is an absence case and validate 15-minute rule
+		$input = json_decode(file_get_contents('php://input'), true);
+		$attendance = $input['attendance'] ?? 'yes'; // Default to 'yes' for backward compatibility
+		
+		if ($attendance === 'no') {
+			// Check if 15 minutes have passed since the session start time
+			$session_start_time = strtotime($session->date_time);
+			$current_time = current_time('timestamp');
+			$minutes_passed = ($current_time - $session_start_time) / 60;
+			
+			if ($minutes_passed < 15) {
+				$remaining_minutes = ceil(15 - $minutes_passed);
+				return new WP_REST_Response([
+					'error' => sprintf(
+						'Cannot mark patient as absent yet. Please wait %d more minute(s) before ending the session due to patient absence.',
+						$remaining_minutes
+					),
+					'minutes_passed' => round($minutes_passed, 1),
+					'required_minutes' => 15,
+					'remaining_minutes' => $remaining_minutes
+				], 400);
+			}
+		}
+		
 		// Update session status
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
@@ -4863,8 +4887,8 @@ Best regards,
 			return new WP_REST_Response(['error' => 'Failed to end session'], 500);
 		}
 		
-		// Add session action record
-		snks_insert_session_actions($session_id, $session->client_id, 'yes');
+		// Add session action record with the specified attendance
+		snks_insert_session_actions($session_id, $session->client_id, $attendance);
 		
 		// Clear therapist joined transient
 		delete_transient("doctor_has_joined_{$session_id}_{$user_id}");
