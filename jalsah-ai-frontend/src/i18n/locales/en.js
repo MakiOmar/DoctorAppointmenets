@@ -703,7 +703,11 @@ export default {
     alreadyRescheduled: 'This appointment has already been rescheduled once',
     alreadyRescheduledTitle: 'Already Rescheduled',
     alreadyRescheduledMessage: 'This appointment has already been rescheduled once. Multiple reschedules are not allowed.',
-    cannotReschedule: 'Cannot Reschedule'
+    cannotReschedule: 'Cannot Reschedule',
+    leaveMeetingTitle: 'Leave Meeting?',
+    leaveMeetingMessage: 'Are you sure you want to leave the session? You will be redirected to your appointments.',
+    leaveMeeting: 'Leave Meeting',
+    stayInMeeting: 'Stay in Meeting'
   },
 
   // Profile

@@ -743,7 +743,7 @@ const endSession = async () => {
 
 
 
-const closeMeetingRoom = () => {
+const closeMeetingRoomAutomatic = () => {
   showMeetingRoom.value = false
   // Clean up Jitsi meeting
   if (meetAPI.value) {
@@ -752,6 +752,51 @@ const closeMeetingRoom = () => {
   }
   jitsiLoaded.value = false
   showManualButton.value = false
+  
+  // Redirect patients back to appointments page when they exit the meeting
+  if (!isTherapist.value) {
+    // Add a small delay to ensure the modal closes properly
+    setTimeout(() => {
+      router.push('/appointments')
+    }, 300)
+  }
+}
+
+const closeMeetingRoom = async () => {
+  // For patients, show confirmation before leaving
+  if (!isTherapist.value) {
+    const result = await Swal.fire({
+      title: t('session.leaveMeetingTitle'),
+      text: t('session.leaveMeetingMessage'),
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: t('session.leaveMeeting'),
+      cancelButtonText: t('session.stayInMeeting')
+    })
+    
+    if (!result.isConfirmed) {
+      return // User chose to stay in the meeting
+    }
+  }
+  
+  showMeetingRoom.value = false
+  // Clean up Jitsi meeting
+  if (meetAPI.value) {
+    meetAPI.value.dispose()
+    meetAPI.value = null
+  }
+  jitsiLoaded.value = false
+  showManualButton.value = false
+  
+  // Redirect patients back to appointments page when they exit the meeting
+  if (!isTherapist.value) {
+    // Add a small delay to ensure the modal closes properly
+    setTimeout(() => {
+      router.push('/appointments')
+    }, 300)
+  }
 }
 
 const initializeJitsiMeeting = () => {
@@ -865,12 +910,12 @@ const startJitsiMeeting = () => {
      
      meetAPI.value.addListener('videoConferenceLeft', () => {
        
-       closeMeetingRoom()
+       closeMeetingRoomAutomatic()
      })
      
      meetAPI.value.addListener('readyToClose', () => {
        
-       closeMeetingRoom()
+       closeMeetingRoomAutomatic()
      })
      
      meetAPI.value.addListener('participantJoined', () => {

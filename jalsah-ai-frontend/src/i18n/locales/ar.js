@@ -659,7 +659,11 @@ export default {
     alreadyRescheduled: 'تمت إعادة جدولة هذا الموعد مرة واحدة بالفعل',
     alreadyRescheduledTitle: 'تمت إعادة الجدولة مسبقاً',
     alreadyRescheduledMessage: 'تمت إعادة جدولة هذا الموعد مرة واحدة بالفعل. لا يُسمح بإعادة الجدولة المتعددة.',
-    cannotReschedule: 'لا يمكن إعادة الجدولة'
+    cannotReschedule: 'لا يمكن إعادة الجدولة',
+    leaveMeetingTitle: 'مغادرة الجلسة؟',
+    leaveMeetingMessage: 'هل أنت متأكد من أنك تريد مغادرة الجلسة؟ سيتم توجيهك إلى مواعيدك.',
+    leaveMeeting: 'مغادرة الجلسة',
+    stayInMeeting: 'البقاء في الجلسة'
   },
 
   // Profile
