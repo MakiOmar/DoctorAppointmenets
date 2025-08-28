@@ -1374,12 +1374,65 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 	return ob_get_clean();
 }
 /**
+ * Check if current doctor is an AI therapist
+ *
+ * @return bool
+ */
+function snks_is_current_doctor_ai_therapist() {
+	if ( ! snks_is_doctor() ) {
+		return false;
+	}
+	
+	$current_user_id = get_current_user_id();
+	$show_on_ai_site = get_user_meta( $current_user_id, 'show_on_ai_site', true );
+	
+	return $show_on_ai_site === '1';
+}
+
+/**
+ * Get AI therapist completed sessions
+ *
+ * @return array
+ */
+function snks_get_ai_therapist_completed_sessions() {
+	if ( ! snks_is_current_doctor_ai_therapist() ) {
+		return array();
+	}
+	
+	$current_user_id = get_current_user_id();
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Get completed AI sessions for this therapist
+	$sessions = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM {$table_name} 
+		 WHERE user_id = %d 
+		 AND session_status = 'completed'
+		 AND settings LIKE '%ai_booking%'
+		 ORDER BY date_time DESC",
+		$current_user_id
+	) );
+	
+	return $sessions ?: array();
+}
+
+/**
  * Generate bookings
  *
  * @return string
  */
 function snks_generate_bookings() {
-	$past               = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
+	// Check if current doctor is an AI therapist
+	if ( snks_is_current_doctor_ai_therapist() ) {
+		// For AI therapists, use completed sessions instead of past sessions
+		$completed_sessions = snks_get_ai_therapist_completed_sessions();
+		$past = snks_render_bookings( $completed_sessions, 'past' );
+	} else {
+		// For normal therapists, use the original past sessions functionality
+		$past = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
+	}
+	
 	$current_timetables = snks_render_bookings( snks_get_doctor_sessions( 'future', 'open', true ), 'future' );
 	return snks_generate_the_bookings( $past, $current_timetables );
 }
