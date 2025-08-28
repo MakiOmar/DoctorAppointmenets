@@ -166,6 +166,13 @@ class SNKS_AI_Integration {
 		) );
 
 		// Nonce generation endpoint
+		
+		// Prescription requests endpoint
+		register_rest_route( 'jalsah-ai/v1', '/prescription-requests', array(
+			'methods' => 'GET',
+			'callback' => 'snks_get_prescription_requests_rest',
+			'permission_callback' => '__return_true',
+		) );
 		register_rest_route( 'jalsah-ai/v1', '/nonce', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_ai_nonce_rest' ),
@@ -5557,5 +5564,27 @@ function snks_get_ai_registration_date( $user_id ) {
 	return SNKS_AI_Integration::get_ai_registration_date( $user_id );
 }
 
-
-
+/**
+ * Get prescription requests via REST API
+ */
+function snks_get_prescription_requests_rest( $request ) {
+	$user_id = $request->get_param( 'user_id' );
+	$locale = $request->get_param( 'locale' ) ?: 'en';
+	
+	if ( ! $user_id ) {
+		return new WP_Error( 'missing_user_id', 'User ID is required', array( 'status' => 400 ) );
+	}
+	
+	// Check if function exists (it should be in ai-prescription.php)
+	if ( ! function_exists( 'snks_get_patient_prescription_requests' ) ) {
+		return new WP_Error( 'function_not_found', 'Prescription function not available', array( 'status' => 500 ) );
+	}
+	
+	$prescription_requests = snks_get_patient_prescription_requests( $user_id );
+	
+	// Use the same response format as other endpoints
+	return array(
+		'success' => true,
+		'data' => $prescription_requests
+	);
+}

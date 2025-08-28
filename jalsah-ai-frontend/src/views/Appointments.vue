@@ -618,8 +618,11 @@ export default {
     // Load prescription requests
     const loadPrescriptionRequests = async () => {
       try {
-        const response = await api.post('/wp-admin/admin-ajax.php', {
-          action: 'get_prescription_requests'
+        const response = await api.get('/wp-json/jalsah-ai/v1/prescription-requests', {
+          params: {
+            user_id: authStore.user?.id,
+            locale: i18n.global.locale.value
+          }
         })
         prescriptionRequests.value = response.data.data || []
       } catch (error) {
