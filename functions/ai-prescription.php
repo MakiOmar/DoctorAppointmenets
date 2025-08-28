@@ -646,16 +646,32 @@ add_action( 'wp_ajax_book_rochtah_appointment', 'snks_book_rochtah_appointment' 
  * Get prescription requests for current user via AJAX
  */
 function snks_get_prescription_requests_ajax() {
+	// Debug logging
+	error_log( 'AJAX handler called: get_prescription_requests' );
+	
 	if ( ! is_user_logged_in() ) {
+		error_log( 'User not logged in' );
 		wp_send_json_error( __( 'You must be logged in to view prescription requests', 'shrinks' ) );
 	}
 	
 	$current_user = wp_get_current_user();
+	error_log( 'Current user ID: ' . $current_user->ID );
+	
 	$prescription_requests = snks_get_patient_prescription_requests( $current_user->ID );
+	error_log( 'Prescription requests found: ' . count( $prescription_requests ) );
 	
 	wp_send_json_success( $prescription_requests );
 }
 add_action( 'wp_ajax_get_prescription_requests', 'snks_get_prescription_requests_ajax' );
+
+/**
+ * Debug AJAX handler to test if AJAX is working
+ */
+function snks_debug_ajax_test() {
+	error_log( 'Debug AJAX test called' );
+	wp_send_json_success( array( 'message' => 'AJAX is working' ) );
+}
+add_action( 'wp_ajax_debug_test', 'snks_debug_ajax_test' );
 
 /**
  * Create Rochtah database tables
