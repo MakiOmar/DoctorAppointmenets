@@ -351,6 +351,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 export default {
   name: 'Appointments',
@@ -358,6 +359,7 @@ export default {
     const router = useRouter()
     const toast = useToast()
     const { t: $t, locale } = useI18n()
+    const authStore = useAuthStore()
     
     const loading = ref(true)
     const cancelling = ref(false)
