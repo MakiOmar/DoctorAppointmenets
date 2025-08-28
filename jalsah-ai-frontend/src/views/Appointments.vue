@@ -623,7 +623,7 @@ export default {
         const response = await api.get('/wp-json/jalsah-ai/v1/prescription-requests', {
           params: {
             user_id: authStore.user?.id,
-            locale: i18n.global.locale.value
+            locale: locale.value
           }
         })
         prescriptionRequests.value = response.data.data || []
