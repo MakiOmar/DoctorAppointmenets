@@ -384,21 +384,7 @@ add_action(
 					'.doctor_actions .snks-button',
 					function (e) {
 						e.preventDefault();
-						Swal.fire({
-							title: 'هل أنت متأكد؟',
-							text: "لا يمكنك التراجع بعد ذلك!",
-							icon: 'warning',
-							showCancelButton: true,
-							confirmButtonColor: '#3085d6',
-							cancelButtonColor: '#d33',
-							confirmButtonText: 'نعم، أنا متأكد',
-							cancelButtonText: 'إلغاء'
-						}).then((result) => {
-							if (!result.isConfirmed) {
-								return;
-							}
-						});
-
+						
 						// Get the parent form of the clicked button
 						var form = $(this).closest('form');
 						// Serialize the form data
@@ -407,16 +393,52 @@ add_action(
 						var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
 						doctorActions.push({ name: 'nonce', value: nonce });
 						doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
-						// Send AJAX request.
-						$.ajax({
-							type: 'POST',
-							url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', // Replace with your actual endpoint.
-							data: doctorActions,
-							success: function(response) {
-								location.reload();
-							},
-							error: function(xhr, status, error) {
-								console.error('Error:', error);
+						
+						Swal.fire({
+							title: 'هل أنت متأكد من تحديد الجلسة كمكتملة؟',
+							text: "لا يمكنك التراجع بعد ذلك!",
+							icon: 'question',
+							showCancelButton: true,
+							confirmButtonColor: '#3085d6',
+							cancelButtonColor: '#6b7280',
+							confirmButtonText: 'نعم، حدد كمكتملة',
+							cancelButtonText: 'إلغاء'
+						}).then((result) => {
+							if (result.isConfirmed) {
+								// Send AJAX request only if user confirms
+								$.ajax({
+									type: 'POST',
+									url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+									data: doctorActions,
+									success: function(response) {
+										if (response.success) {
+											Swal.fire({
+												title: 'تم بنجاح!',
+												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+												icon: 'success',
+												confirmButtonText: 'حسناً'
+											}).then(() => {
+												location.reload();
+											});
+										} else {
+											Swal.fire({
+												title: 'خطأ!',
+												text: response.data || 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
+												icon: 'error',
+												confirmButtonText: 'حسناً'
+											});
+										}
+									},
+									error: function(xhr, status, error) {
+										console.error('Error:', error);
+										Swal.fire({
+											title: 'خطأ!',
+											text: 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
+											icon: 'error',
+											confirmButtonText: 'حسناً'
+										});
+									}
+								});
 							}
 						});
 					}
