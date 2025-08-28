@@ -5557,18 +5557,5 @@ function snks_get_ai_registration_date( $user_id ) {
 	return SNKS_AI_Integration::get_ai_registration_date( $user_id );
 }
 
-/**
- * Get prescription requests for current user via AJAX
- */
-function snks_get_prescription_requests_ajax() {
-	if ( ! is_user_logged_in() ) {
-		wp_send_json_error( __( 'You must be logged in to view prescription requests', 'shrinks' ) );
-	}
-	
-	$current_user = wp_get_current_user();
-	$prescription_requests = snks_get_patient_prescription_requests( $current_user->ID );
-	
-	wp_send_json_success( $prescription_requests );
-}
-add_action( 'wp_ajax_get_prescription_requests', 'snks_get_prescription_requests_ajax' );
+
 
