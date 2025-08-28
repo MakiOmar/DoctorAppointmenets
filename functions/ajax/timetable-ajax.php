@@ -314,3 +314,94 @@ function snks_create_custom_timetable() {
 }
 add_action( 'wp_ajax_create_custom_timetable', 'snks_create_custom_timetable' );
 add_action( 'wp_ajax_nopriv_create_custom_timetable', 'snks_create_custom_timetable' );
+
+/**
+ * Handle doctor actions form submission (mark session as completed)
+ */
+add_action( 'wp_ajax_session_doctor_actions', 'snks_handle_session_doctor_actions' );
+
+function snks_handle_session_doctor_actions() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'doctor_actions_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is a doctor
+	if ( ! snks_is_doctor() ) {
+		wp_send_json_error( 'Access denied. Only doctors can perform this action.' );
+	}
+	
+	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
+	$attendees = isset( $_POST['attendees'] ) ? sanitize_text_field( $_POST['attendees'] ) : '';
+	
+	if ( ! $session_id || ! $attendees ) {
+		wp_send_json_error( 'Missing required data.' );
+	}
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Get session details
+	$session = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$table_name} WHERE ID = %d",
+		$session_id
+	) );
+	
+	if ( ! $session ) {
+		wp_send_json_error( 'Session not found.' );
+	}
+	
+	// Check if the current user is the doctor assigned to this session
+	if ( $session->user_id != get_current_user_id() ) {
+		wp_send_json_error( 'Access denied. You can only mark your own sessions as completed.' );
+	}
+	
+	// Update session status to completed
+	$update_result = $wpdb->update(
+		$table_name,
+		array(
+			'session_status' => 'completed',
+		),
+		array(
+			'ID' => $session_id,
+		),
+		array( '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $update_result === false ) {
+		wp_send_json_error( 'Failed to update session status.' );
+	}
+	
+	// Add session action records for all attendees (default to 'yes' attendance)
+	$attendee_ids = explode( ',', $attendees );
+	foreach ( $attendee_ids as $attendee_id ) {
+		$attendee_id = absint( $attendee_id );
+		if ( $attendee_id > 0 ) {
+			snks_insert_session_actions( $session_id, $attendee_id, 'yes' );
+		}
+	}
+	
+	// Check if this is an AI session and trigger profit calculation
+	if ( snks_is_ai_session( $session_id ) ) {
+		$profit_result = snks_execute_ai_profit_transfer( $session_id );
+		
+		if ( $profit_result['success'] ) {
+			// Send notification
+			snks_ai_session_completion_notification( $session_id, $profit_result );
+			
+			wp_send_json_success( array(
+				'message' => 'Session marked as completed and profit transferred successfully.',
+				'transaction_id' => $profit_result['transaction_id'],
+				'profit_amount' => $profit_result['profit_amount']
+			) );
+		} else {
+			wp_send_json_success( array(
+				'message' => 'Session marked as completed but profit transfer failed: ' . $profit_result['message'],
+				'profit_error' => $profit_result['message']
+			) );
+		}
+	}
+	
+	wp_send_json_success( array( 'message' => 'Session marked as completed successfully.' ) );
+}

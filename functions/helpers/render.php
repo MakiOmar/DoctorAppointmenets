@@ -1398,37 +1398,19 @@ function snks_doctor_actions( $session ) {
 	$attendees = explode( ',', $session->client_id );
 	$output    = '';
 	if ( ! empty( $attendees ) ) {
-		$output .= '<table class="doctor-actions">';
+		$output .= '<div class="doctor-actions">';
 		$output .= '<form class="doctor_actions" method="post" action="">';
-		$output .= '<thead><tr><th>المريض</th><th>حضر</th><th>لم يحضر</th></tr></thead>';
-		$output .= '<tbody>';
+		$output .= '<div class="patient-info">';
 		foreach ( $attendees as $index => $client ) {
-			$session_action = snks_get_session_actions( $session->ID, absint( $client ) );
-			$yes_checked    = '';
-			$no_checked     = '';
-			if ( $session_action ) {
-				$yes_checked = checked( 'yes', $session_action->attendance, false );
-				$no_checked  = checked( 'no', $session_action->attendance, false );
-			}
-
-			$output .= '<tr>';
-			$output .= '<td>' . get_user_meta( absint( $client ), 'nickname', true ) . '</td>';
-			$output .= '<td>';
-			$output .= '<input id="has-attended-' . $index . '" type="radio" name="has_attended_' . $client . '" value="yes" ' . $yes_checked . '/>';
-			$output .= '</td>';
-			$output .= '<td>';
-			$output .= '<input id="has-attended--' . $index . '" type="radio" name="has_attended_' . $client . '" value="no" ' . $no_checked . '/>';
-			$output .= '</label>';
-			$output .= '</tr>';
+			$patient_name = get_user_meta( absint( $client ), 'nickname', true );
+			$output .= '<p><strong>المريض:</strong> ' . $patient_name . '</p>';
 		}
-		$output .= '</tbody>';
-		$output .= '<tfoot>';
-		$output .= '<tr><td colspan="3"><input type="hidden" name="attendees" value="' . $session->client_id . '">';
-		$output .= '<tr><td colspan="3"><input type="hidden" name="session_id" value="' . $session->ID . '">';
-		$output .= '<input class="snks-button table-form-button" type="submit" name="doctor-actions" value="إرسال"></td></tr>';
-		$output .= '</tfoot>';
+		$output .= '</div>';
+		$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
+		$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
+		$output .= '<input class="snks-button table-form-button" type="submit" name="doctor-actions" value="تحديد كمكتملة">';
 		$output .= '</form>';
-		$output .= '</table>';
+		$output .= '</div>';
 	}
 	if ( 'cancelled' !== $session->session_status && 'completed' !== $session->session_status ) {
 		$output .= '<a href="#" class="snks-button snks-cancel-appointment" data-id="' . $session->ID . '">إلغاء</a>';
