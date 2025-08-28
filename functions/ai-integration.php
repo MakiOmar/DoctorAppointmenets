@@ -4864,20 +4864,9 @@ Best regards,
 			return new WP_REST_Response(['error' => 'Only the therapist can end this session'], 403);
 		}
 		
-		// Check if this is an absence case and validate 15-minute rule
+		// Get attendance from request (default to 'yes' since we're not tracking attendance)
 		$input = json_decode(file_get_contents('php://input'), true);
-		$attendance = $input['attendance'] ?? 'yes'; // Default to 'yes' for backward compatibility
-		
-		// Validate 15-minute rule for absence
-		$validation = snks_validate_absence_15_minute_rule($session->date_time, $attendance);
-		if (!$validation['success']) {
-			return new WP_REST_Response([
-				'error' => $validation['message'],
-				'minutes_passed' => $validation['minutes_passed'] ?? 0,
-				'required_minutes' => $validation['required_minutes'] ?? 15,
-				'remaining_minutes' => $validation['remaining_minutes'] ?? 0
-			], 400);
-		}
+		$attendance = $input['attendance'] ?? 'yes'; // Default to 'yes' for simplicity
 		
 		// Update session status
 		$result = $wpdb->update(
