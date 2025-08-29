@@ -768,18 +768,20 @@ add_action( 'init', 'snks_create_rochtah_tables' );
 
 /**
  * Add Rochtah slots management to admin menu
+ * Note: Menu registration moved to ai-admin-enhanced.php to avoid conflicts
  */
 function snks_add_rochtah_admin_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		__( 'Rochtah Slots', 'shrinks' ),
-		__( 'Rochtah Slots', 'shrinks' ),
-		'manage_options',
-		'jalsah-ai-rochtah-slots',
-		'snks_rochtah_slots_admin_page'
-	);
+	// Menu registration moved to ai-admin-enhanced.php to avoid conflicts
+	// add_submenu_page(
+	// 	'jalsah-ai-management',
+	// 	__( 'Rochtah Slots', 'shrinks' ),
+	// 	__( 'Rochtah Slots', 'shrinks' ),
+	// 	'manage_options',
+	// 	'jalsah-ai-rochtah-slots',
+	// 	'snks_rochtah_slots_admin_page'
+	// );
 }
-add_action( 'admin_menu', 'snks_add_rochtah_admin_menu' );
+// add_action( 'admin_menu', 'snks_add_rochtah_admin_menu', 25 ); // Commented out to avoid conflicts
 
 /**
  * Admin page for managing Rochtah slots

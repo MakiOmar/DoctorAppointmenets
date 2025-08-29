@@ -210,6 +210,16 @@ function snks_add_enhanced_ai_admin_menu() {
 		'rochtah-doctor-management',
 		'snks_rochtah_doctor_management'
 	);
+	
+	// Add Rochtah Slots Management
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Rochtah Slots', 'shrinks' ),
+		__( 'Rochtah Slots', 'shrinks' ),
+		'manage_options',
+		'jalsah-ai-rochtah-slots',
+		'snks_rochtah_slots_admin_page'
+	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
