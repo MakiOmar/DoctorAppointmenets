@@ -463,9 +463,15 @@ function snks_handle_session_rochtah_request() {
 	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
 	$client_id = isset( $_POST['client_id'] ) ? absint( $_POST['client_id'] ) : 0;
 	$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+	$initial_diagnosis = isset( $_POST['initial_diagnosis'] ) ? sanitize_textarea_field( $_POST['initial_diagnosis'] ) : '';
+	$symptoms = isset( $_POST['symptoms'] ) ? sanitize_textarea_field( $_POST['symptoms'] ) : '';
 	
 	if ( ! $session_id || ! $client_id || ! $order_id ) {
 		wp_send_json_error( 'Missing required data.' );
+	}
+	
+	if ( empty( $initial_diagnosis ) || empty( $symptoms ) ) {
+		wp_send_json_error( 'Initial diagnosis and symptoms are required.' );
 	}
 	
 	global $wpdb;
@@ -505,12 +511,14 @@ function snks_handle_session_rochtah_request() {
 			'session_id' => $session_id,
 			'patient_id' => $client_id,
 			'therapist_id' => get_current_user_id(),
+			'initial_diagnosis' => $initial_diagnosis,
+			'symptoms' => $symptoms,
 			'booking_date' => current_time( 'Y-m-d' ),
 			'booking_time' => current_time( 'H:i:s' ),
 			'status' => 'pending',
 			'created_at' => current_time( 'mysql' )
 		),
-		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 	);
 	
 	if ( $insert_result === false ) {

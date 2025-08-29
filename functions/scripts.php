@@ -436,19 +436,63 @@ add_action(
 													console.log('isConfirmed:', rochtahResult.isConfirmed);
 													
 													if (rochtahResult.isConfirmed) {
-														console.log('=== DEBUG: User confirmed Roshta, sending request ===');
-														// Send Roshta request
-														var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
-														$.ajax({
-															type: 'POST',
-															url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-															data: {
-																action: 'request_rochtah',
-																session_id: response.data.session_id,
-																client_id: response.data.client_id,
-																order_id: response.data.order_id,
-																nonce: rochtahNonce
-															},
+														console.log('=== DEBUG: User confirmed Roshta, showing diagnosis form ===');
+														// Show diagnosis and symptoms form
+														Swal.fire({
+															title: 'معلومات التشخيص والأعراض',
+															html: `
+																<div style="text-align: right; direction: rtl;">
+																	<div style="margin-bottom: 15px;">
+																		<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">التشخيص الأولي:</label>
+																		<textarea id="initial_diagnosis" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب التشخيص الأولي للمريض..."></textarea>
+																	</div>
+																	<div style="margin-bottom: 15px;">
+																		<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الأعراض:</label>
+																		<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
+																	</div>
+																</div>
+															`,
+															showCancelButton: true,
+															confirmButtonText: 'إرسال طلب روشتا',
+															cancelButtonText: 'إلغاء',
+															confirmButtonColor: '#3085d6',
+															cancelButtonColor: '#6b7280',
+															preConfirm: () => {
+																const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
+																const symptoms = document.getElementById('symptoms').value.trim();
+																
+																if (!initialDiagnosis) {
+																	Swal.showValidationMessage('يرجى إدخال التشخيص الأولي');
+																	return false;
+																}
+																
+																if (!symptoms) {
+																	Swal.showValidationMessage('يرجى إدخال الأعراض');
+																	return false;
+																}
+																
+																return {
+																	initial_diagnosis: initialDiagnosis,
+																	symptoms: symptoms
+																};
+															}
+														}).then((formResult) => {
+															if (formResult.isConfirmed) {
+																console.log('=== DEBUG: Form submitted, sending Roshta request ===');
+																// Send Roshta request with diagnosis data
+																var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
+																$.ajax({
+																	type: 'POST',
+																	url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+																	data: {
+																		action: 'request_rochtah',
+																		session_id: response.data.session_id,
+																		client_id: response.data.client_id,
+																		order_id: response.data.order_id,
+																		initial_diagnosis: formResult.value.initial_diagnosis,
+																		symptoms: formResult.value.symptoms,
+																		nonce: rochtahNonce
+																	},
 															success: function(rochtahResponse) {
 																console.log('=== DEBUG: Roshta request response ===');
 																console.log('RochtahResponse:', rochtahResponse);
