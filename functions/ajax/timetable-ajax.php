@@ -503,13 +503,14 @@ function snks_handle_session_rochtah_request() {
 		$rochtah_bookings_table,
 		array(
 			'session_id' => $session_id,
-			'client_id' => $client_id,
+			'patient_id' => $client_id,
 			'therapist_id' => get_current_user_id(),
-			'order_id' => $order_id,
+			'booking_date' => current_time( 'Y-m-d' ),
+			'booking_time' => current_time( 'H:i:s' ),
 			'status' => 'pending',
 			'created_at' => current_time( 'mysql' )
 		),
-		array( '%d', '%d', '%d', '%d', '%s', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
 	);
 	
 	if ( $insert_result === false ) {
@@ -554,7 +555,7 @@ function snks_get_session_rochtah_available_dates() {
 	
 	// Get the Roshta request
 	$request = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND client_id = %d",
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d",
 		$request_id, get_current_user_id()
 	) );
 	
@@ -636,7 +637,7 @@ function snks_get_session_rochtah_time_slots() {
 	
 	// Get the Roshta request
 	$request = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND client_id = %d",
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d",
 		$request_id, get_current_user_id()
 	) );
 	
@@ -713,7 +714,7 @@ function snks_book_session_rochtah_appointment() {
 	
 	// Get the Roshta request
 	$request = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND client_id = %d AND status = 'pending'",
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d AND status = 'pending'",
 		$request_id, get_current_user_id()
 	) );
 	
@@ -733,7 +734,7 @@ function snks_book_session_rochtah_appointment() {
 	
 	// Check if user already has a Roshta appointment
 	$existing_appointment = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM $rochtah_bookings_table WHERE client_id = %d AND status = 'confirmed'",
+		"SELECT * FROM $rochtah_bookings_table WHERE patient_id = %d AND status = 'confirmed'",
 		get_current_user_id()
 	) );
 	
