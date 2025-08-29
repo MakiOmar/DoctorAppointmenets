@@ -499,9 +499,9 @@ function snks_handle_session_rochtah_request() {
 /**
  * Get available dates for Roshta doctor
  */
-add_action( 'wp_ajax_get_rochtah_available_dates', 'snks_get_rochtah_available_dates' );
+add_action( 'wp_ajax_get_rochtah_available_dates', 'snks_get_session_rochtah_available_dates' );
 
-function snks_get_rochtah_available_dates() {
+function snks_get_session_rochtah_available_dates() {
 	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_dates_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
@@ -580,9 +580,9 @@ function snks_get_rochtah_available_dates() {
 /**
  * Get available time slots for Roshta doctor on specific date
  */
-add_action( 'wp_ajax_get_rochtah_time_slots', 'snks_get_rochtah_time_slots' );
+add_action( 'wp_ajax_get_rochtah_time_slots', 'snks_get_session_rochtah_time_slots' );
 
-function snks_get_rochtah_time_slots() {
+function snks_get_session_rochtah_time_slots() {
 	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_slots_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
@@ -655,9 +655,9 @@ function snks_get_rochtah_time_slots() {
 /**
  * Book Roshta appointment
  */
-add_action( 'wp_ajax_book_rochtah_appointment', 'snks_book_rochtah_appointment' );
+add_action( 'wp_ajax_book_rochtah_appointment', 'snks_book_session_rochtah_appointment' );
 
-function snks_book_rochtah_appointment() {
+function snks_book_session_rochtah_appointment() {
 	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_booking_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
