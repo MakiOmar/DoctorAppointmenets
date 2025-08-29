@@ -76,6 +76,7 @@
 
 <script>
 import { formatDate, formatTime } from '@/utils/dateUtils'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'PrescriptionCard',
@@ -86,9 +87,21 @@ export default {
     }
   },
   emits: ['book-appointment', 'view-appointment'],
-  methods: {
-    formatDate,
-    formatTime
+  setup() {
+    const { locale } = useI18n()
+    
+    const formatDateWithLocale = (dateString) => {
+      return formatDate(dateString, locale.value)
+    }
+    
+    const formatTimeWithLocale = (timeString) => {
+      return formatTime(timeString, locale.value)
+    }
+    
+    return {
+      formatDate: formatDateWithLocale,
+      formatTime: formatTimeWithLocale
+    }
   }
 }
 </script>
