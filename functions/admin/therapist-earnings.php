@@ -15,18 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add therapist earnings menu to admin
+ * Note: Menu registration moved to ai-admin-enhanced.php to avoid duplicates
  */
 function snks_add_therapist_earnings_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		__( 'Therapist Earnings', 'anony-turn' ),
-		__( 'Therapist Earnings', 'anony-turn' ),
-		'manage_options',
-		'therapist-earnings',
-		'snks_therapist_earnings_page'
-	);
+	// Menu registration moved to ai-admin-enhanced.php to avoid duplicates
+	// add_submenu_page(
+	// 	'jalsah-ai-management',
+	// 	__( 'Therapist Earnings', 'anony-turn' ),
+	// 	__( 'Therapist Earnings', 'anony-turn' ),
+	// 	'manage_options',
+	// 	'therapist-earnings',
+	// 	'snks_therapist_earnings_page'
+	// );
 }
-add_action( 'admin_menu', 'snks_add_therapist_earnings_menu' );
+// add_action( 'admin_menu', 'snks_add_therapist_earnings_menu' ); // Commented out to avoid duplicates
 
 /**
  * Therapist earnings page content

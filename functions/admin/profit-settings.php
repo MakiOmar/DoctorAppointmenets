@@ -15,18 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add profit settings menu to admin
+ * Note: Menu registration moved to ai-admin-enhanced.php to avoid duplicates
  */
 function snks_add_profit_settings_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		__( 'Profit Settings', 'anony-turn' ),
-		__( 'Profit Settings', 'anony-turn' ),
-		'manage_options',
-		'profit-settings',
-		'snks_profit_settings_page'
-	);
+	// Menu registration moved to ai-admin-enhanced.php to avoid duplicates
+	// add_submenu_page(
+	// 	'jalsah-ai-management',
+	// 	__( 'Profit Settings', 'anony-turn' ),
+	// 	__( 'Profit Settings', 'anony-turn' ),
+	// 	'manage_options',
+	// 	'profit-settings',
+	// 	'snks_profit_settings_page'
+	// );
 }
-add_action( 'admin_menu', 'snks_add_profit_settings_menu' );
+// add_action( 'admin_menu', 'snks_add_profit_settings_menu' ); // Commented out to avoid duplicates
 
 /**
  * Profit settings page content

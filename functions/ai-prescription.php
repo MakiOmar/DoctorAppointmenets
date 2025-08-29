@@ -771,7 +771,7 @@ add_action( 'init', 'snks_create_rochtah_tables' );
  */
 function snks_add_rochtah_admin_menu() {
 	add_submenu_page(
-		'jalsah-ai-settings',
+		'jalsah-ai-management',
 		__( 'Rochtah Slots', 'shrinks' ),
 		__( 'Rochtah Slots', 'shrinks' ),
 		'manage_options',

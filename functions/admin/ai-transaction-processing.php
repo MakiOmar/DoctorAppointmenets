@@ -15,18 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Add AI transaction processing menu to admin
+ * Note: Menu registration moved to ai-admin-enhanced.php to avoid duplicates
  */
 function snks_add_ai_transaction_processing_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		__( 'Transaction Processing', 'anony-turn' ),
-		__( 'Transaction Processing', 'anony-turn' ),
-		'manage_options',
-		'ai-transaction-processing',
-		'snks_ai_transaction_processing_page'
-	);
+	// Menu registration moved to ai-admin-enhanced.php to avoid duplicates
+	// add_submenu_page(
+	// 	'jalsah-ai-management',
+	// 	__( 'Transaction Processing', 'anony-turn' ),
+	// 	__( 'Transaction Processing', 'anony-turn' ),
+	// 	'manage_options',
+	// 	'ai-transaction-processing',
+	// 	'snks_ai_transaction_processing_page'
+	// );
 }
-add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' );
+// add_action( 'admin_menu', 'snks_add_ai_transaction_processing_menu' ); // Commented out to avoid duplicates
 
 /**
  * AI transaction processing page content
