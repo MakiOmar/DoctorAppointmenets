@@ -390,26 +390,36 @@ function snks_handle_session_doctor_actions() {
 			// Send notification
 			snks_ai_session_completion_notification( $session_id, $profit_result );
 			
+			// For AI sessions, don't return a success message - go straight to Roshta prompt
 			wp_send_json_success( array(
-				'message' => 'Session marked as completed and profit transferred successfully.',
+				'session_id' => $session_id,
+				'client_id' => $session->client_id,
+				'order_id' => $session->order_id,
+				'is_ai_session' => true,
+				'profit_transferred' => true,
 				'transaction_id' => $profit_result['transaction_id'],
 				'profit_amount' => $profit_result['profit_amount']
 			) );
 		} else {
+			// For AI sessions with profit transfer failure, still go to Roshta prompt
 			wp_send_json_success( array(
-				'message' => 'Session marked as completed but profit transfer failed: ' . $profit_result['message'],
+				'session_id' => $session_id,
+				'client_id' => $session->client_id,
+				'order_id' => $session->order_id,
+				'is_ai_session' => true,
+				'profit_transferred' => false,
 				'profit_error' => $profit_result['message']
 			) );
 		}
 	}
 	
-	// Return success with session info for potential Roshta prompt
+	// Return success with session info for non-AI sessions
 	wp_send_json_success( array( 
 		'message' => 'Session marked as completed successfully.',
 		'session_id' => $session_id,
 		'client_id' => $session->client_id,
 		'order_id' => $session->order_id,
-		'is_ai_session' => snks_is_ai_session( $session_id )
+		'is_ai_session' => false
 	) );
 }
 
