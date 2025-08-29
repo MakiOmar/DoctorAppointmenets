@@ -466,8 +466,8 @@ function snks_get_rochtah_available_slots_for_patient() {
 	$slot_count = 0;
 	$max_slots = 50; // Limit to 50 slots maximum
 	
-	// Look for available slots in the next 7 days only
-	for ( $i = 1; $i <= 7; $i++ ) {
+	// Look for available slots in the next 30 days (increased from 7 days to show more future slots)
+	for ( $i = 1; $i <= 30; $i++ ) {
 		$check_date = date( 'Y-m-d', strtotime( "+$i days" ) );
 		$day_of_week = date( 'l', strtotime( $check_date ) );
 		
