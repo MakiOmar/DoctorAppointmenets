@@ -66,6 +66,13 @@
               >
                 {{ t('prescription.viewAppointment') }}
               </button>
+              <button 
+                v-if="request.status === 'confirmed'"
+                @click="$emit('join-meeting', request.id)"
+                class="btn-success text-sm px-4 py-2"
+              >
+                {{ t('prescription.joinMeeting') || 'Join Meeting' }}
+              </button>
             </div>
           </div>
         </div>
@@ -86,7 +93,7 @@ export default {
       default: () => []
     }
   },
-  emits: ['book-appointment', 'view-appointment'],
+  emits: ['book-appointment', 'view-appointment', 'join-meeting'],
   setup() {
     const { t, locale } = useI18n()
     
@@ -114,5 +121,9 @@ export default {
 
 .btn-secondary {
   @apply bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors;
 }
 </style>

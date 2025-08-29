@@ -700,6 +700,10 @@ export default {
     bookAppointment: 'احجز موعد',
     confirmBooking: 'تأكيد الحجز',
     confirmBookingMessage: 'هل أنت متأكد من أنك تريد حجز هذا الموعد؟',
+    joinMeeting: 'انضم للجلسة',
+    rochtahSession: 'جلسة رشتة',
+    roomName: 'اسم الغرفة',
+    startMeeting: 'ابدأ الجلسة',
     pending: 'قيد الانتظار',
     confirmed: 'مؤكد',
     viewAppointment: 'عرض الموعد'

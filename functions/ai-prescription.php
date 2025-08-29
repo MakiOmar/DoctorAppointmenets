@@ -649,6 +649,93 @@ function snks_get_prescription_requests_ajax() {
 add_action( 'wp_ajax_get_prescription_requests', 'snks_get_prescription_requests_ajax' );
 
 /**
+ * Generate Jitsi meeting link for Rochtah appointment
+ */
+function snks_generate_rochtah_meeting_link( $booking_id ) {
+	// Generate a unique room name for the Rochtah session
+	$room_name = 'rochtah_' . $booking_id . '_' . time();
+	
+	// Create the Jitsi meeting URL
+	$meeting_url = 'https://s.jalsah.app/' . $room_name;
+	
+	return array(
+		'room_name' => $room_name,
+		'meeting_url' => $meeting_url,
+		'booking_id' => $booking_id
+	);
+}
+
+/**
+ * Get Rochtah meeting details for a booking
+ */
+function snks_get_rochtah_meeting_details( $booking_id ) {
+	global $wpdb;
+	
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d",
+		$booking_id
+	) );
+	
+	if ( ! $booking ) {
+		return false;
+	}
+	
+	// Generate meeting link if not already generated
+	$meeting_link = get_post_meta( $booking_id, '_rochtah_meeting_link', true );
+	if ( ! $meeting_link ) {
+		$meeting_details = snks_generate_rochtah_meeting_link( $booking_id );
+		$meeting_link = $meeting_details['meeting_url'];
+		update_post_meta( $booking_id, '_rochtah_meeting_link', $meeting_link );
+		update_post_meta( $booking_id, '_rochtah_room_name', $meeting_details['room_name'] );
+	}
+	
+	$room_name = get_post_meta( $booking_id, '_rochtah_room_name', true );
+	
+	return array(
+		'booking_id' => $booking_id,
+		'room_name' => $room_name,
+		'meeting_url' => $meeting_link,
+		'booking_date' => $booking->booking_date,
+		'booking_time' => $booking->time,
+		'status' => $booking->status,
+		'patient_id' => $booking->patient_id,
+		'therapist_id' => $booking->therapist_id
+	);
+}
+
+/**
+ * AJAX handler for getting Rochtah meeting details
+ */
+function snks_get_rochtah_meeting_details_ajax() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_meeting' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in to access meeting details', 'shrinks' ) );
+	}
+	
+	$booking_id = intval( $_POST['booking_id'] );
+	$current_user_id = get_current_user_id();
+	
+	// Get meeting details
+	$meeting_details = snks_get_rochtah_meeting_details( $booking_id );
+	
+	if ( ! $meeting_details ) {
+		wp_send_json_error( __( 'Booking not found', 'shrinks' ) );
+	}
+	
+	// Check if user has access to this booking
+	if ( $meeting_details['patient_id'] != $current_user_id && $meeting_details['therapist_id'] != $current_user_id ) {
+		wp_send_json_error( __( 'Access denied', 'shrinks' ) );
+	}
+	
+	wp_send_json_success( $meeting_details );
+}
+add_action( 'wp_ajax_get_rochtah_meeting_details', 'snks_get_rochtah_meeting_details_ajax' );
+
+/**
  * Debug AJAX handler to test if AJAX is working
  */
 function snks_debug_ajax_test() {

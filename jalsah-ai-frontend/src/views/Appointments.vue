@@ -40,6 +40,7 @@
         :prescription-requests="prescriptionRequests"
         @book-appointment="showRochtahBookingModal"
         @view-appointment="viewRochtahAppointment"
+        @join-meeting="joinRochtahMeeting"
       />
 
       <!-- Loading State -->
@@ -326,6 +327,64 @@
         </div>
       </div>
     </div>
+
+    <!-- Rochtah Session Modal -->
+    <div v-if="showRochtahSessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-medium text-gray-900">{{ $t('prescription.rochtahSession') || 'Rochtah Session' }}</h3>
+          <button 
+            @click="showRochtahSessionModal = false"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div v-if="rochtahMeetingDetails" class="space-y-4">
+          <!-- Session Info -->
+          <div class="bg-blue-50 p-4 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span class="font-medium text-gray-700">{{ $t('appointmentsPage.date') }}:</span>
+                <span class="text-gray-900">{{ formatDate(rochtahMeetingDetails.booking_date) }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700">{{ $t('appointmentsPage.time') }}:</span>
+                <span class="text-gray-900">{{ formatTime(rochtahMeetingDetails.booking_time) }}</span>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700">{{ $t('prescription.roomName') || 'Room' }}:</span>
+                <span class="text-gray-900">{{ rochtahMeetingDetails.room_name }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Meeting Room -->
+          <div class="bg-gray-900 rounded-lg overflow-hidden" style="height: 600px;">
+            <div id="rochtah-meeting" class="w-full h-full"></div>
+          </div>
+          
+          <!-- Meeting Controls -->
+          <div class="flex justify-center space-x-4">
+            <button 
+              @click="startRochtahMeeting"
+              class="btn-primary px-6 py-3"
+            >
+              {{ $t('prescription.startMeeting') || 'Start Meeting' }}
+            </button>
+            <button 
+              @click="showRochtahSessionModal = false"
+              class="btn-outline px-6 py-3"
+            >
+              {{ $t('common.close') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -364,6 +423,10 @@ export default {
     const availableSlots = ref([])
     const selectedSlot = ref(null)
     const currentRequestId = ref(null)
+    
+    // Rochtah session related refs
+    const showRochtahSessionModal = ref(false)
+    const rochtahMeetingDetails = ref(null)
 
     const tabs = computed(() => [
       { 
@@ -710,6 +773,136 @@ export default {
       }
     }
 
+    // Join Rochtah meeting
+    const joinRochtahMeeting = async (requestId) => {
+      try {
+        // Get the prescription request to find the booking ID
+        const request = prescriptionRequests.value.find(r => r.id === requestId)
+        if (!request || !request.booking_id) {
+          toast.error('No booking found for this appointment')
+          return
+        }
+
+        // Get meeting details
+        const response = await api.get('/wp-json/jalsah-ai/v1/rochtah-meeting-details', {
+          params: {
+            booking_id: request.booking_id
+          }
+        })
+
+        if (response.data.success) {
+          const meetingDetails = response.data.data
+          
+          // Store meeting details for the session modal
+          rochtahMeetingDetails.value = meetingDetails
+          showRochtahSessionModal.value = true
+        } else {
+          toast.error(response.data.message || 'Failed to get meeting details')
+        }
+      } catch (error) {
+        toast.error('Failed to join meeting')
+        console.error('Error joining Rochtah meeting:', error)
+      }
+    }
+
+    // Start Rochtah meeting
+    const startRochtahMeeting = () => {
+      if (!rochtahMeetingDetails.value) return
+      
+      // Check if JitsiMeetExternalAPI is already available
+      if (typeof JitsiMeetExternalAPI !== 'undefined') {
+        initializeRochtahJitsiMeeting()
+        return
+      }
+      
+      // Load Jitsi external API script
+      const script = document.createElement('script')
+      script.src = 'https://s.jalsah.app/external_api.js'
+      script.onload = () => {
+        setTimeout(() => {
+          initializeRochtahJitsiMeeting()
+        }, 500) // Give it a moment to initialize
+      }
+      script.onerror = (error) => {
+        console.error('❌ Failed to load Jitsi script:', error)
+        toast.error('Failed to load meeting interface')
+      }
+      document.head.appendChild(script)
+    }
+
+    // Initialize Rochtah Jitsi meeting
+    const initializeRochtahJitsiMeeting = () => {
+      if (!rochtahMeetingDetails.value) return
+      
+      const roomName = rochtahMeetingDetails.value.room_name
+      const userName = authStore.user?.name || authStore.user?.username || 'User'
+      
+      const options = {
+        parentNode: document.querySelector('#rochtah-meeting'),
+        roomName: roomName,
+        width: '100%',
+        height: '100%',
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableAudioLevels: false,
+          enableClosePage: true,
+          enableWelcomePage: false,
+          participantsPane: {
+            enabled: true,
+            hideModeratorSettingsTab: false,
+            hideMoreActionsButton: false,
+            hideMuteAllButton: false
+          },
+          toolbarButtons: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+            'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+          ]
+        },
+        interfaceConfigOverwrite: {
+          prejoinPageEnabled: false,
+          APP_NAME: 'Jalsah Rochtah',
+          DEFAULT_BACKGROUND: "#1a1a1a",
+          SHOW_JITSI_WATERMARK: false,
+          HIDE_DEEP_LINKING_LOGO: true,
+          SHOW_BRAND_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          SHOW_POWERED_BY: false,
+          DISPLAY_WELCOME_FOOTER: false,
+          JITSI_WATERMARK_LINK: 'https://jalsah.app',
+          PROVIDER_NAME: 'Jalsah',
+          DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+          DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+          TOOLBAR_ALWAYS_VISIBLE: true,
+          TOOLBAR_BUTTONS: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+            'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+          ]
+        }
+      }
+      
+      try {
+        // Try the main Jitsi server first
+        try {
+          const meetAPI = new JitsiMeetExternalAPI("s.jalsah.app", options)
+        } catch (serverError) {
+          console.warn('⚠️ Main server failed, trying fallback:', serverError)
+          // Fallback to meet.jit.si if main server fails
+          const meetAPI = new JitsiMeetExternalAPI("meet.jit.si", options)
+        }
+        
+        toast.success('Meeting started successfully')
+      } catch (error) {
+        console.error('❌ Error initializing Rochtah Jitsi meeting:', error)
+        toast.error('Failed to start meeting')
+      }
+    }
+
 
 
     onMounted(() => {
@@ -747,6 +940,10 @@ export default {
       selectedSlot,
       showRochtahBookingModal,
       closeRochtahModal,
+      joinRochtahMeeting,
+      startRochtahMeeting,
+      showRochtahSessionModal,
+      rochtahMeetingDetails,
       selectSlot,
       bookRochtahAppointment,
       confirmRochtahBooking,

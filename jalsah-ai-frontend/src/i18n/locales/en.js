@@ -744,6 +744,10 @@ export default {
     bookAppointment: 'Book Appointment',
     confirmBooking: 'Confirm Booking',
     confirmBookingMessage: 'Are you sure you want to book this appointment?',
+    joinMeeting: 'Join Meeting',
+    rochtahSession: 'Rochtah Session',
+    roomName: 'Room Name',
+    startMeeting: 'Start Meeting',
     pending: 'Pending',
     confirmed: 'Confirmed',
     viewAppointment: 'View Appointment'

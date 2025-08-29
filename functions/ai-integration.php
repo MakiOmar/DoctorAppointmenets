@@ -187,6 +187,13 @@ class SNKS_AI_Integration {
 			'callback' => 'snks_book_rochtah_appointment_rest',
 			'permission_callback' => '__return_true',
 		) );
+		
+		// Rochtah meeting details endpoint
+		register_rest_route( 'jalsah-ai/v1', '/rochtah-meeting-details', array(
+			'methods' => 'GET',
+			'callback' => 'snks_get_rochtah_meeting_details_rest',
+			'permission_callback' => '__return_true',
+		) );
 		register_rest_route( 'jalsah-ai/v1', '/nonce', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_ai_nonce_rest' ),
@@ -5838,4 +5845,56 @@ function snks_book_rochtah_appointment_rest( $request ) {
 	}
 	
 	error_log( '=== ROCHTAH BOOKING DEBUG END ===' );
+}
+
+/**
+ * Get Rochtah meeting details via REST API
+ */
+function snks_get_rochtah_meeting_details_rest( $request ) {
+	$booking_id = $request->get_param( 'booking_id' );
+	
+	if ( ! $booking_id ) {
+		return new WP_Error( 'missing_booking_id', 'Booking ID is required', array( 'status' => 400 ) );
+	}
+	
+	// Check authentication - try both WordPress session and Bearer token
+	$user_id = null;
+	
+	// First try WordPress session authentication
+	if ( is_user_logged_in() ) {
+		$user_id = get_current_user_id();
+	} else {
+		// Try Bearer token authentication
+		$auth_header = $request->get_header( 'Authorization' );
+		if ( $auth_header && strpos( $auth_header, 'Bearer ' ) === 0 ) {
+			$token = substr( $auth_header, 7 ); // Remove 'Bearer ' prefix
+			$user_id = snks_validate_jalsah_token( $token );
+		}
+	}
+	
+	if ( ! $user_id ) {
+		return new WP_Error( 'not_logged_in', 'You must be logged in to access meeting details', array( 'status' => 401 ) );
+	}
+	
+	// Check if function exists (it should be in ai-prescription.php)
+	if ( ! function_exists( 'snks_get_rochtah_meeting_details' ) ) {
+		return new WP_Error( 'function_not_found', 'Rochtah meeting function not available', array( 'status' => 500 ) );
+	}
+	
+	// Get meeting details
+	$meeting_details = snks_get_rochtah_meeting_details( $booking_id );
+	
+	if ( ! $meeting_details ) {
+		return new WP_Error( 'booking_not_found', 'Booking not found', array( 'status' => 404 ) );
+	}
+	
+	// Check if user has access to this booking
+	if ( $meeting_details['patient_id'] != $user_id && $meeting_details['therapist_id'] != $user_id ) {
+		return new WP_Error( 'access_denied', 'Access denied', array( 'status' => 403 ) );
+	}
+	
+	return array(
+		'success' => true,
+		'data' => $meeting_details
+	);
 }
