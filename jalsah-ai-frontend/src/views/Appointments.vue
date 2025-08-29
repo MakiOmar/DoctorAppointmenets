@@ -627,9 +627,10 @@ export default {
       selectedSlot.value = null
       
       try {
-        const response = await api.post('/wp-admin/admin-ajax.php', {
-          action: 'get_rochtah_available_slots',
-          nonce: window.snks_ai_prescription.rochtah_nonce
+        const response = await api.get('/wp-json/jalsah-ai/v1/rochtah-available-slots', {
+          params: {
+            request_id: requestId
+          }
         })
         
         if (response.data.success) {
@@ -680,12 +681,10 @@ export default {
       bookingRochtah.value = true
       
       try {
-        const response = await api.post('/wp-admin/admin-ajax.php', {
-          action: 'book_rochtah_appointment',
+        const response = await api.post('/wp-json/jalsah-ai/v1/rochtah-book-appointment', {
           request_id: currentRequestId.value,
           selected_date: selectedSlot.value.date,
-          selected_time: selectedSlot.value.time,
-          nonce: window.snks_ai_prescription.rochtah_nonce
+          selected_time: selectedSlot.value.time
         })
         
         if (response.data.success) {

@@ -173,6 +173,20 @@ class SNKS_AI_Integration {
 			'callback' => 'snks_get_prescription_requests_rest',
 			'permission_callback' => '__return_true',
 		) );
+		
+		// Rochtah available slots endpoint
+		register_rest_route( 'jalsah-ai/v1', '/rochtah-available-slots', array(
+			'methods' => 'GET',
+			'callback' => 'snks_get_rochtah_available_slots_rest',
+			'permission_callback' => '__return_true',
+		) );
+		
+		// Rochtah book appointment endpoint
+		register_rest_route( 'jalsah-ai/v1', '/rochtah-book-appointment', array(
+			'methods' => 'POST',
+			'callback' => 'snks_book_rochtah_appointment_rest',
+			'permission_callback' => '__return_true',
+		) );
 		register_rest_route( 'jalsah-ai/v1', '/nonce', array(
 			'methods' => 'GET',
 			'callback' => array( $this, 'get_ai_nonce_rest' ),
@@ -5576,4 +5590,68 @@ function snks_get_prescription_requests_rest( $request ) {
 		'success' => true,
 		'data' => $prescription_requests
 	);
+}
+
+/**
+ * Get Rochtah available slots via REST API
+ */
+function snks_get_rochtah_available_slots_rest( $request ) {
+	$request_id = $request->get_param( 'request_id' );
+	
+	if ( ! $request_id ) {
+		return new WP_Error( 'missing_request_id', 'Request ID is required', array( 'status' => 400 ) );
+	}
+	
+	// Check if function exists (it should be in ai-prescription.php)
+	if ( ! function_exists( 'snks_get_rochtah_available_slots_for_patient' ) ) {
+		return new WP_Error( 'function_not_found', 'Rochtah function not available', array( 'status' => 500 ) );
+	}
+	
+	$available_slots = snks_get_rochtah_available_slots_for_patient();
+	
+	return array(
+		'success' => true,
+		'data' => $available_slots
+	);
+}
+
+/**
+ * Book Rochtah appointment via REST API
+ */
+function snks_book_rochtah_appointment_rest( $request ) {
+	$request_id = $request->get_param( 'request_id' );
+	$selected_date = $request->get_param( 'selected_date' );
+	$selected_time = $request->get_param( 'selected_time' );
+	
+	if ( ! $request_id || ! $selected_date || ! $selected_time ) {
+		return new WP_Error( 'missing_parameters', 'Request ID, date, and time are required', array( 'status' => 400 ) );
+	}
+	
+	// Check if function exists (it should be in ai-prescription.php)
+	if ( ! function_exists( 'snks_book_rochtah_appointment' ) ) {
+		return new WP_Error( 'function_not_found', 'Rochtah booking function not available', array( 'status' => 500 ) );
+	}
+	
+	// Simulate the AJAX request parameters
+	$_POST['request_id'] = $request_id;
+	$_POST['selected_date'] = $selected_date;
+	$_POST['selected_time'] = $selected_time;
+	$_POST['nonce'] = 'rochtah_booking_nonce'; // We'll bypass nonce check for REST API
+	
+	// Call the existing function
+	ob_start();
+	snks_book_rochtah_appointment();
+	$output = ob_get_clean();
+	
+	// Parse the JSON response
+	$response = json_decode( $output, true );
+	
+	if ( $response ) {
+		return $response;
+	} else {
+		return array(
+			'success' => false,
+			'data' => 'Failed to book appointment'
+		);
+	}
 }
