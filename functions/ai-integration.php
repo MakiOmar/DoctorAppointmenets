@@ -5627,31 +5627,81 @@ function snks_book_rochtah_appointment_rest( $request ) {
 		return new WP_Error( 'missing_parameters', 'Request ID, date, and time are required', array( 'status' => 400 ) );
 	}
 	
-	// Check if function exists (it should be in ai-prescription.php)
-	if ( ! function_exists( 'snks_book_rochtah_appointment' ) ) {
-		return new WP_Error( 'function_not_found', 'Rochtah booking function not available', array( 'status' => 500 ) );
+	// Check if user is logged in (REST API authentication)
+	if ( ! is_user_logged_in() ) {
+		return new WP_Error( 'not_logged_in', 'You must be logged in to book an appointment', array( 'status' => 401 ) );
 	}
 	
-	// Simulate the AJAX request parameters
-	$_POST['request_id'] = $request_id;
-	$_POST['selected_date'] = $selected_date;
-	$_POST['selected_time'] = $selected_time;
-	$_POST['nonce'] = 'rochtah_booking_nonce'; // We'll bypass nonce check for REST API
+	global $wpdb;
+	$current_user = wp_get_current_user();
 	
-	// Call the existing function
-	ob_start();
-	snks_book_rochtah_appointment();
-	$output = ob_get_clean();
+	// Verify the request belongs to the current user
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d AND status = 'pending'",
+		$request_id, $current_user->ID
+	) );
 	
-	// Parse the JSON response
-	$response = json_decode( $output, true );
+	if ( ! $request ) {
+		return new WP_Error( 'request_not_found', 'Prescription request not found or already booked', array( 'status' => 404 ) );
+	}
 	
-	if ( $response ) {
-		return $response;
-	} else {
+	// Check if slot is still available
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE booking_date = %s 
+		AND booking_time = %s 
+		AND status IN ('pending', 'confirmed')
+		AND id != %d",
+		$selected_date,
+		$selected_time,
+		$request_id
+	) );
+	
+	if ( $existing_booking ) {
+		return new WP_Error( 'slot_unavailable', 'This time slot is no longer available', array( 'status' => 409 ) );
+	}
+	
+	// Update the booking with the selected date and time
+	$result = $wpdb->update(
+		$rochtah_bookings_table,
+		array(
+			'booking_date' => $selected_date,
+			'booking_time' => $selected_time,
+			'status' => 'confirmed'
+		),
+		array( 'id' => $request_id ),
+		array( '%s', '%s', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $result !== false ) {
+		// Send notification to Rochtah doctors
+		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
+		foreach ( $rochtah_doctors as $doctor ) {
+			snks_create_ai_notification(
+				$doctor->ID,
+				'rochtah_appointment_booked',
+				__( 'Rochtah Appointment Booked', 'shrinks' ),
+				sprintf( 
+					__( 'Patient %s has booked a Rochtah consultation for %s at %s', 'shrinks' ),
+					$current_user->display_name,
+					$selected_date,
+					$selected_time
+				)
+			);
+		}
+		
 		return array(
-			'success' => false,
-			'data' => 'Failed to book appointment'
+			'success' => true,
+			'data' => array(
+				'message' => __( 'Appointment booked successfully.', 'shrinks' ),
+				'booking_id' => $request_id,
+				'date' => $selected_date,
+				'time' => $selected_time
+			)
 		);
+	} else {
+		return new WP_Error( 'booking_failed', 'Failed to book appointment. Please try again.', array( 'status' => 500 ) );
 	}
 }
