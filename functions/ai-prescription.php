@@ -710,54 +710,8 @@ function snks_create_rochtah_tables() {
 	dbDelta( $sql_appointments );
 	dbDelta( $sql_bookings );
 	
-	// Insert default Rochtah schedule if table is empty - now creates explicit 15-minute slots
-	$existing_slots = $wpdb->get_var( "SELECT COUNT(*) FROM $rochtah_appointments_table" );
-	
-	if ( $existing_slots == 0 ) {
-		$default_days = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' );
-		$sort_order = 0;
-		
-		foreach ( $default_days as $day ) {
-			// Create 15-minute slots from 9:00 AM to 5:00 PM
-			$start_hour = 9;
-			$end_hour = 17;
-			
-			for ( $hour = $start_hour; $hour < $end_hour; $hour++ ) {
-				for ( $minute = 0; $minute < 60; $minute += 15 ) {
-					$start_time = sprintf( '%02d:%02d:00', $hour, $minute );
-					$end_minute = $minute + 15;
-					$end_hour_slot = $hour;
-					
-					if ( $end_minute >= 60 ) {
-						$end_minute = 0;
-						$end_hour_slot = $hour + 1;
-					}
-					
-					$end_time = sprintf( '%02d:%02d:00', $end_hour_slot, $end_minute );
-					
-					// Skip lunch break (12:00-13:00)
-					if ( $hour == 12 ) {
-						continue;
-					}
-					
-					$slot_name = sprintf( '%s %s-%s', $day, date( 'g:i A', strtotime( $start_time ) ), date( 'g:i A', strtotime( $end_time ) ) );
-					
-					$wpdb->insert(
-						$rochtah_appointments_table,
-						array(
-							'day_of_week' => $day,
-							'start_time' => $start_time,
-							'end_time' => $end_time,
-							'slot_name' => $slot_name,
-							'status' => 'active',
-							'sort_order' => $sort_order++
-						),
-						array( '%s', '%s', '%s', '%s', '%s', '%d' )
-					);
-				}
-			}
-		}
-	}
+	// Note: Rochtah slots are now managed manually through the admin interface
+	// No automatic slot creation - admins must add slots manually
 }
 
 // Create tables on plugin activation
