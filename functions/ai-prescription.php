@@ -477,9 +477,11 @@ function snks_get_rochtah_available_slots_for_patient() {
 	$available_days = get_option( 'snks_rochtah_available_days', array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ) );
 	
 	$available_slots = array();
+	$slot_count = 0;
+	$max_slots = 50; // Limit to 50 slots maximum
 	
-	// Look for available slots in the next 14 days
-	for ( $i = 1; $i <= 14; $i++ ) {
+	// Look for available slots in the next 7 days only
+	for ( $i = 1; $i <= 7; $i++ ) {
 		$check_date = date( 'Y-m-d', strtotime( "+$i days" ) );
 		$day_of_week = date( 'l', strtotime( $check_date ) );
 		
@@ -515,16 +517,22 @@ function snks_get_rochtah_available_slots_for_patient() {
 						$interval_time
 					) );
 					
-					if ( ! $existing_booking ) {
+					if ( ! $existing_booking && $slot_count < $max_slots ) {
 						$available_slots[] = array(
 							'date' => $check_date,
 							'time' => $interval_time,
 							'formatted_time' => date( 'g:i A', strtotime( $interval_time ) ),
 							'day_of_week' => $day_of_week
 						);
+						$slot_count++;
 					}
 					
-					$current_time = strtotime( '+15 minutes', $current_time );
+					// Break if we've reached the maximum slots
+					if ( $slot_count >= $max_slots ) {
+						break 2; // Break out of both loops
+					}
+					
+					$current_time = strtotime( '+30 minutes', $current_time );
 				}
 			}
 		}
