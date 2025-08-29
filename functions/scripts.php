@@ -412,13 +412,76 @@ add_action(
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
+											// Show completion success message
 											Swal.fire({
 												title: 'تم بنجاح!',
 												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
 												icon: 'success',
 												confirmButtonText: 'حسناً'
 											}).then(() => {
-												location.reload();
+												// Ask about Roshta if this is an AI session
+												if (response.data.is_ai_session) {
+													Swal.fire({
+														title: 'هل تريد إرسال المريض لاستشارة روشتا؟',
+														text: 'هل تعتقد أن المريض يحتاج لاستشارة مع طبيب نفسي لوصف دواء؟',
+														icon: 'question',
+														showCancelButton: true,
+														confirmButtonColor: '#3085d6',
+														cancelButtonColor: '#6b7280',
+														confirmButtonText: 'نعم، أرسل لروشتا',
+														cancelButtonText: 'لا، شكراً'
+													}).then((rochtahResult) => {
+														if (rochtahResult.isConfirmed) {
+															// Send Roshta request
+															var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
+															$.ajax({
+																type: 'POST',
+																url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+																data: {
+																	action: 'request_rochtah',
+																	session_id: response.data.session_id,
+																	client_id: response.data.client_id,
+																	order_id: response.data.order_id,
+																	nonce: rochtahNonce
+																},
+																success: function(rochtahResponse) {
+																	if (rochtahResponse.success) {
+																		Swal.fire({
+																			title: 'تم إرسال طلب روشتا!',
+																			text: 'سيتم إعلام المريض بطلب روشتا',
+																			icon: 'success',
+																			confirmButtonText: 'حسناً'
+																		}).then(() => {
+																			location.reload();
+																		});
+																	} else {
+																		Swal.fire({
+																			title: 'خطأ!',
+																			text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
+																			icon: 'error',
+																			confirmButtonText: 'حسناً'
+																		});
+																	}
+																},
+																error: function(xhr, status, error) {
+																	console.error('Error:', error);
+																	Swal.fire({
+																		title: 'خطأ!',
+																		text: 'حدث خطأ أثناء إرسال طلب روشتا',
+																		icon: 'error',
+																		confirmButtonText: 'حسناً'
+																	});
+																}
+															});
+														} else {
+															// User declined Roshta, just reload
+															location.reload();
+														}
+													});
+												} else {
+													// Not an AI session, just reload
+													location.reload();
+												}
 											});
 										} else {
 											Swal.fire({
@@ -443,6 +506,193 @@ add_action(
 						});
 					}
 				);
+				
+				// Handle Roshta booking button clicks
+				$(document).on('click', '.book-rochtah-btn', function(e) {
+					e.preventDefault();
+					var requestId = $(this).data('request-id');
+					
+					// Show calendar for available dates
+					showRochtahCalendar(requestId);
+				});
+				
+				// Function to show Roshta calendar
+				function showRochtahCalendar(requestId) {
+					// Get available dates for Roshta doctor
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+						data: {
+							action: 'get_rochtah_available_dates',
+							request_id: requestId,
+							nonce: '<?php echo esc_html( wp_create_nonce( 'rochtah_dates_nonce' ) ); ?>'
+						},
+						success: function(response) {
+							if (response.success && response.data.available_dates) {
+								showRochtahDatePicker(response.data.available_dates, requestId);
+							} else {
+								Swal.fire({
+									title: 'لا توجد مواعيد متاحة',
+									text: 'عذراً، لا توجد مواعيد متاحة حالياً لطبيب روشتا',
+									icon: 'info',
+									confirmButtonText: 'حسناً'
+								});
+							}
+						},
+						error: function() {
+							Swal.fire({
+								title: 'خطأ!',
+								text: 'حدث خطأ أثناء جلب المواعيد المتاحة',
+								icon: 'error',
+								confirmButtonText: 'حسناً'
+							});
+						}
+					});
+				}
+				
+				// Function to show date picker
+				function showRochtahDatePicker(availableDates, requestId) {
+					var dateOptions = availableDates.map(function(date) {
+						return {
+							text: date.formatted_date,
+							value: date.date
+						};
+					});
+					
+					Swal.fire({
+						title: 'اختر التاريخ',
+						input: 'select',
+						inputOptions: dateOptions.reduce(function(acc, option) {
+							acc[option.value] = option.text;
+							return acc;
+						}, {}),
+						showCancelButton: true,
+						confirmButtonText: 'التالي',
+						cancelButtonText: 'إلغاء',
+						inputValidator: function(value) {
+							if (!value) {
+								return 'يجب اختيار تاريخ';
+							}
+						}
+					}).then((result) => {
+						if (result.isConfirmed) {
+							showRochtahTimeSlots(result.value, requestId);
+						}
+					});
+				}
+				
+				// Function to show time slots
+				function showRochtahTimeSlots(selectedDate, requestId) {
+					$.ajax({
+						type: 'POST',
+						url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+						data: {
+							action: 'get_rochtah_time_slots',
+							request_id: requestId,
+							date: selectedDate,
+							nonce: '<?php echo esc_html( wp_create_nonce( 'rochtah_slots_nonce' ) ); ?>'
+						},
+						success: function(response) {
+							if (response.success && response.data.available_slots) {
+								var slotOptions = response.data.available_slots.map(function(slot) {
+									return {
+										text: slot.time,
+										value: slot.slot_id
+									};
+								});
+								
+								Swal.fire({
+									title: 'اختر الوقت',
+									input: 'select',
+									inputOptions: slotOptions.reduce(function(acc, option) {
+										acc[option.value] = option.text;
+										return acc;
+									}, {}),
+									showCancelButton: true,
+									confirmButtonText: 'حجز الموعد',
+									cancelButtonText: 'إلغاء',
+									inputValidator: function(value) {
+										if (!value) {
+											return 'يجب اختيار وقت';
+										}
+									}
+								}).then((result) => {
+									if (result.isConfirmed) {
+										bookRochtahAppointment(requestId, selectedDate, result.value);
+									}
+								});
+							} else {
+								Swal.fire({
+									title: 'لا توجد أوقات متاحة',
+									text: 'عذراً، لا توجد أوقات متاحة في هذا التاريخ',
+									icon: 'info',
+									confirmButtonText: 'حسناً'
+								});
+							}
+						},
+						error: function() {
+							Swal.fire({
+								title: 'خطأ!',
+								text: 'حدث خطأ أثناء جلب الأوقات المتاحة',
+								icon: 'error',
+								confirmButtonText: 'حسناً'
+							});
+						}
+					});
+				}
+				
+				// Function to book Roshta appointment
+				function bookRochtahAppointment(requestId, date, slotId) {
+					Swal.fire({
+						title: 'تأكيد الحجز',
+						text: 'هل أنت متأكد من حجز هذا الموعد؟',
+						icon: 'question',
+						showCancelButton: true,
+						confirmButtonText: 'نعم، احجز',
+						cancelButtonText: 'إلغاء'
+					}).then((result) => {
+						if (result.isConfirmed) {
+							$.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+								data: {
+									action: 'book_rochtah_appointment',
+									request_id: requestId,
+									date: date,
+									slot_id: slotId,
+									nonce: '<?php echo esc_html( wp_create_nonce( 'rochtah_booking_nonce' ) ); ?>'
+								},
+								success: function(response) {
+									if (response.success) {
+										Swal.fire({
+											title: 'تم الحجز بنجاح!',
+											text: response.data.message,
+											icon: 'success',
+											confirmButtonText: 'حسناً'
+										}).then(() => {
+											location.reload();
+										});
+									} else {
+										Swal.fire({
+											title: 'خطأ!',
+											text: response.data || 'حدث خطأ أثناء الحجز',
+											icon: 'error',
+											confirmButtonText: 'حسناً'
+										});
+									}
+								},
+								error: function() {
+									Swal.fire({
+										title: 'خطأ!',
+										text: 'حدث خطأ أثناء الحجز',
+										icon: 'error',
+										confirmButtonText: 'حسناً'
+									});
+								}
+							});
+						}
+					});
+				}
 				$( document ).on(
 					'click',
 					'.snks-cancel-appointment',

@@ -403,5 +403,354 @@ function snks_handle_session_doctor_actions() {
 		}
 	}
 	
-	wp_send_json_success( array( 'message' => 'Session marked as completed successfully.' ) );
+	// Return success with session info for potential Roshta prompt
+	wp_send_json_success( array( 
+		'message' => 'Session marked as completed successfully.',
+		'session_id' => $session_id,
+		'client_id' => $session->client_id,
+		'order_id' => $session->order_id,
+		'is_ai_session' => snks_is_ai_session( $session_id )
+	) );
+}
+
+/**
+ * Handle Roshta request after session completion
+ */
+add_action( 'wp_ajax_request_rochtah', 'snks_handle_rochtah_request' );
+
+function snks_handle_rochtah_request() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_request_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is a doctor
+	if ( ! snks_is_doctor() ) {
+		wp_send_json_error( 'Access denied. Only doctors can perform this action.' );
+	}
+	
+	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
+	$client_id = isset( $_POST['client_id'] ) ? absint( $_POST['client_id'] ) : 0;
+	$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+	
+	if ( ! $session_id || ! $client_id || ! $order_id ) {
+		wp_send_json_error( 'Missing required data.' );
+	}
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Get session details
+	$session = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$table_name} WHERE ID = %d AND user_id = %d",
+		$session_id, get_current_user_id()
+	) );
+	
+	if ( ! $session ) {
+		wp_send_json_error( 'Session not found or access denied.' );
+	}
+	
+	// Check if session is completed
+	if ( $session->session_status !== 'completed' ) {
+		wp_send_json_error( 'Session must be completed before requesting Roshta.' );
+	}
+	
+	// Check if Roshta already requested for this session
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table 
+		WHERE session_id = %d AND status IN ('pending', 'confirmed')",
+		$session_id
+	) );
+	
+	if ( $existing_booking ) {
+		wp_send_json_error( 'Roshta already requested for this session.' );
+	}
+	
+	// Create Roshta booking record
+	$insert_result = $wpdb->insert(
+		$rochtah_bookings_table,
+		array(
+			'session_id' => $session_id,
+			'client_id' => $client_id,
+			'therapist_id' => get_current_user_id(),
+			'order_id' => $order_id,
+			'status' => 'pending',
+			'created_at' => current_time( 'mysql' )
+		),
+		array( '%d', '%d', '%d', '%d', '%s', '%s' )
+	);
+	
+	if ( $insert_result === false ) {
+		wp_send_json_error( 'Failed to create Roshta request.' );
+	}
+	
+	$rochtah_booking_id = $wpdb->insert_id;
+	
+	// Mark order as having Roshta requested
+	update_post_meta( $order_id, '_ai_prescription_requested', 'true' );
+	
+	wp_send_json_success( array(
+		'message' => 'Roshta request created successfully.',
+		'rochtah_booking_id' => $rochtah_booking_id
+	) );
+}
+
+/**
+ * Get available dates for Roshta doctor
+ */
+add_action( 'wp_ajax_get_rochtah_available_dates', 'snks_get_rochtah_available_dates' );
+
+function snks_get_rochtah_available_dates() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_dates_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is logged in
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( 'User not logged in.' );
+	}
+	
+	$request_id = isset( $_POST['request_id'] ) ? absint( $_POST['request_id'] ) : 0;
+	
+	if ( ! $request_id ) {
+		wp_send_json_error( 'Missing request ID.' );
+	}
+	
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	// Get the Roshta request
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND client_id = %d",
+		$request_id, get_current_user_id()
+	) );
+	
+	if ( ! $request ) {
+		wp_send_json_error( 'Request not found or access denied.' );
+	}
+	
+	// Get Roshta doctor (user with role 'rochtah_doctor')
+	$rochtah_doctors = get_users( array(
+		'role' => 'rochtah_doctor',
+		'number' => 1
+	) );
+	
+	if ( empty( $rochtah_doctors ) ) {
+		wp_send_json_error( 'No Roshta doctor available.' );
+	}
+	
+	$rochtah_doctor = $rochtah_doctors[0];
+	
+	// Get available dates for the next 30 days
+	$available_dates = array();
+	$current_date = current_time( 'Y-m-d' );
+	
+	for ( $i = 1; $i <= 30; $i++ ) {
+		$check_date = date( 'Y-m-d', strtotime( $current_date . ' +' . $i . ' days' ) );
+		
+		// Check if the doctor has any available slots on this date
+		$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+		$slots = $wpdb->get_results( $wpdb->prepare(
+			"SELECT * FROM $table_name 
+			 WHERE user_id = %d 
+			 AND DATE(date_time) = %s 
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND session_status = 'open'
+			 AND settings NOT LIKE '%ai_booking:booked%'
+			 AND settings NOT LIKE '%ai_booking:rescheduled_old_slot%'
+			 ORDER BY starts ASC",
+			$rochtah_doctor->ID, $check_date
+		) );
+		
+		if ( ! empty( $slots ) ) {
+			$available_dates[] = array(
+				'date' => $check_date,
+				'formatted_date' => date( 'l, F j, Y', strtotime( $check_date ) )
+			);
+		}
+	}
+	
+	wp_send_json_success( array(
+		'available_dates' => $available_dates
+	) );
+}
+
+/**
+ * Get available time slots for Roshta doctor on specific date
+ */
+add_action( 'wp_ajax_get_rochtah_time_slots', 'snks_get_rochtah_time_slots' );
+
+function snks_get_rochtah_time_slots() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_slots_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is logged in
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( 'User not logged in.' );
+	}
+	
+	$request_id = isset( $_POST['request_id'] ) ? absint( $_POST['request_id'] ) : 0;
+	$date = isset( $_POST['date'] ) ? sanitize_text_field( $_POST['date'] ) : '';
+	
+	if ( ! $request_id || ! $date ) {
+		wp_send_json_error( 'Missing required data.' );
+	}
+	
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	// Get the Roshta request
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND client_id = %d",
+		$request_id, get_current_user_id()
+	) );
+	
+	if ( ! $request ) {
+		wp_send_json_error( 'Request not found or access denied.' );
+	}
+	
+	// Get Roshta doctor
+	$rochtah_doctors = get_users( array(
+		'role' => 'rochtah_doctor',
+		'number' => 1
+	) );
+	
+	if ( empty( $rochtah_doctors ) ) {
+		wp_send_json_error( 'No Roshta doctor available.' );
+	}
+	
+	$rochtah_doctor = $rochtah_doctors[0];
+	
+	// Get available slots for the selected date
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	$slots = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM $table_name 
+		 WHERE user_id = %d 
+		 AND DATE(date_time) = %s 
+		 AND (client_id = 0 OR client_id IS NULL)
+		 AND session_status = 'open'
+		 AND settings NOT LIKE '%ai_booking:booked%'
+		 AND settings NOT LIKE '%ai_booking:rescheduled_old_slot%'
+		 ORDER BY starts ASC",
+		$rochtah_doctor->ID, $date
+	) );
+	
+	$available_slots = array();
+	foreach ( $slots as $slot ) {
+		$available_slots[] = array(
+			'slot_id' => $slot->ID,
+			'time' => gmdate( 'h:i a', strtotime( $slot->starts ) ) . ' - ' . gmdate( 'h:i a', strtotime( $slot->ends ) )
+		);
+	}
+	
+	wp_send_json_success( array(
+		'available_slots' => $available_slots
+	) );
+}
+
+/**
+ * Book Roshta appointment
+ */
+add_action( 'wp_ajax_book_rochtah_appointment', 'snks_book_rochtah_appointment' );
+
+function snks_book_rochtah_appointment() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_booking_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is logged in
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( 'User not logged in.' );
+	}
+	
+	$request_id = isset( $_POST['request_id'] ) ? absint( $_POST['request_id'] ) : 0;
+	$date = isset( $_POST['date'] ) ? sanitize_text_field( $_POST['date'] ) : '';
+	$slot_id = isset( $_POST['slot_id'] ) ? absint( $_POST['slot_id'] ) : 0;
+	
+	if ( ! $request_id || ! $date || ! $slot_id ) {
+		wp_send_json_error( 'Missing required data.' );
+	}
+	
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Get the Roshta request
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND client_id = %d AND status = 'pending'",
+		$request_id, get_current_user_id()
+	) );
+	
+	if ( ! $request ) {
+		wp_send_json_error( 'Request not found or access denied.' );
+	}
+	
+	// Get the slot
+	$slot = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $table_name WHERE ID = %d AND (client_id = 0 OR client_id IS NULL)",
+		$slot_id
+	) );
+	
+	if ( ! $slot ) {
+		wp_send_json_error( 'Slot not available.' );
+	}
+	
+	// Check if user already has a Roshta appointment
+	$existing_appointment = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE client_id = %d AND status = 'confirmed'",
+		get_current_user_id()
+	) );
+	
+	if ( $existing_appointment ) {
+		wp_send_json_error( 'You already have a Roshta appointment booked.' );
+	}
+	
+	// Book the slot
+	$update_result = $wpdb->update(
+		$table_name,
+		array(
+			'client_id' => get_current_user_id(),
+			'settings' => $slot->settings . 'ai_booking:booked'
+		),
+		array(
+			'ID' => $slot_id
+		),
+		array( '%d', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $update_result === false ) {
+		wp_send_json_error( 'Failed to book appointment.' );
+	}
+	
+	// Update Roshta request status
+	$update_request = $wpdb->update(
+		$rochtah_bookings_table,
+		array(
+			'status' => 'confirmed',
+			'appointment_id' => $slot_id,
+			'updated_at' => current_time( 'mysql' )
+		),
+		array(
+			'id' => $request_id
+		),
+		array( '%s', '%d', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $update_request === false ) {
+		wp_send_json_error( 'Failed to update request status.' );
+	}
+	
+	wp_send_json_success( array(
+		'message' => 'تم حجز موعد روشتا بنجاح! سيتم إعلامك بموعد الجلسة.',
+		'appointment_id' => $slot_id,
+		'appointment_date' => $date,
+		'appointment_time' => gmdate( 'h:i a', strtotime( $slot->starts ) )
+	) );
 }

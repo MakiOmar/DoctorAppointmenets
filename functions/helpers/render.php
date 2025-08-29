@@ -1348,6 +1348,14 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 	//phpcs:disable
 	ob_start();
 	echo do_shortcode( '[notification_box]' );
+	
+	// Add Roshta section for patients
+	$rochtah_section = '';
+	if ( snks_is_patient() ) {
+		$current_user_id = get_current_user_id();
+		$rochtah_requests = snks_get_patient_rochtah_requests( $current_user_id );
+		$rochtah_section = snks_render_rochtah_section( $rochtah_requests );
+	}
 	?>
 	<div class="snks-tabs">
 		<ul class="snks-tabs-nav">
@@ -1363,6 +1371,11 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 			</div>
 		</div>
 	</div>
+	
+	<?php if ( ! empty( $rochtah_section ) ) { ?>
+		<?php echo $rochtah_section; ?>
+	<?php } ?>
+	
 	<?php if( snks_is_patient() ) { ?>
 		<div class="anony-center-text">
 			<p>هل لديك مشاكل تقنية؟ اضغط هنا</p>
@@ -1418,6 +1431,67 @@ function snks_get_ai_therapist_completed_sessions() {
 }
 
 /**
+ * Get patient Roshta requests
+ *
+ * @param int $patient_id Patient ID
+ * @return array
+ */
+function snks_get_patient_rochtah_requests( $patient_id ) {
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	$requests = $wpdb->get_results( $wpdb->prepare(
+		"SELECT rb.*, pt.date_time, pt.starts, pt.ends, pt.user_id as therapist_id
+		 FROM {$rochtah_bookings_table} rb
+		 LEFT JOIN {$wpdb->prefix}snks_provider_timetable pt ON rb.session_id = pt.ID
+		 WHERE rb.client_id = %d 
+		 AND rb.status IN ('pending', 'confirmed')
+		 ORDER BY rb.created_at DESC",
+		$patient_id
+	) );
+	
+	return $requests ?: array();
+}
+
+/**
+ * Render Roshta section for patient appointments
+ *
+ * @param array $rochtah_requests Array of Roshta requests
+ * @return string
+ */
+function snks_render_rochtah_section( $rochtah_requests ) {
+	if ( empty( $rochtah_requests ) ) {
+		return '';
+	}
+	
+	$output = '<div class="rochtah-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007cba;">';
+	$output .= '<h3 style="margin: 0 0 10px 0; color: #007cba;">طلب روشتا (وصف دواء)</h3>';
+	
+	foreach ( $rochtah_requests as $request ) {
+		$therapist_name = get_user_meta( $request->therapist_id, 'nickname', true );
+		$session_date = gmdate( 'Y-m-d', strtotime( $request->date_time ) );
+		$session_time = gmdate( 'h:i a', strtotime( $request->starts ) );
+		
+		$output .= '<div class="rochtah-request" style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">';
+		$output .= '<p style="margin: 0 0 8px 0;"><strong>الجلسة:</strong> ' . $session_date . ' - ' . $session_time . '</p>';
+		$output .= '<p style="margin: 0 0 8px 0;"><strong>المعالج:</strong> ' . $therapist_name . '</p>';
+		$output .= '<p style="margin: 0 0 15px 0; color: #666;">تم إرسال طلب روشتا من معالجك. يمكنك الآن حجز استشارة مجانية لمدة 15 دقيقة مع طبيب نفسي لوصف الدواء المناسب.</p>';
+		
+		if ( $request->status === 'pending' ) {
+			$output .= '<button class="snks-button book-rochtah-btn" data-request-id="' . $request->id . '" style="background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">حجز موعد مجاني</button>';
+		} elseif ( $request->status === 'confirmed' ) {
+			$output .= '<p style="margin: 0; color: #28a745;"><strong>تم حجز الموعد بنجاح!</strong></p>';
+		}
+		
+		$output .= '</div>';
+	}
+	
+	$output .= '</div>';
+	
+	return $output;
+}
+
+/**
  * Generate bookings
  *
  * @return string
@@ -1454,17 +1528,11 @@ function snks_doctor_actions( $session ) {
 	if ( ! empty( $attendees ) ) {
 		$output .= '<div class="doctor-actions">';
 		$output .= '<form class="doctor_actions" method="post" action="">';
-		$output .= '<div class="patient-info">';
-
-		$output .= '</div>';
 		$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
 		$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
 		$output .= '<input class="snks-button table-form-button" type="submit" name="doctor-actions" value="تحديد كمكتملة">';
 		$output .= '</form>';
 		$output .= '</div>';
-	}
-	if ( 'cancelled' !== $session->session_status && 'completed' !== $session->session_status ) {
-		$output .= '<a href="#" class="snks-button snks-cancel-appointment" data-id="' . $session->ID . '">إلغاء</a>';
 	}
 	return $output;
 }
