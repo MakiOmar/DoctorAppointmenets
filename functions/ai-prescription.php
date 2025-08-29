@@ -417,12 +417,13 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 	$pending_requests = $wpdb->get_results( $wpdb->prepare(
 		"SELECT rb.*, 
 		        t.display_name as therapist_name,
-		        s.date_time as session_date,
-		        s.period as session_duration
+		        s.date_time,
+		        s.starts,
+		        s.ends
 		FROM $rochtah_bookings_table rb
 		LEFT JOIN {$wpdb->users} t ON rb.therapist_id = t.ID
 		LEFT JOIN {$wpdb->prefix}snks_provider_timetable s ON rb.session_id = s.ID
-		WHERE rb.patient_id = %d AND rb.status = 'pending'
+		WHERE rb.patient_id = %d AND rb.status IN ('pending', 'confirmed')
 		ORDER BY rb.created_at DESC",
 		$patient_id
 	) );
