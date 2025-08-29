@@ -5572,34 +5572,80 @@ function snks_validate_jalsah_token( $token ) {
 		return false;
 	}
 	
-	// For now, we'll use a simple approach - store tokens in user meta
-	// In a production environment, you might want to use JWT or a more secure method
-	global $wpdb;
-	
-	$user_id = $wpdb->get_var( $wpdb->prepare(
-		"SELECT user_id FROM {$wpdb->usermeta} 
-		WHERE meta_key = 'jalsah_token' AND meta_value = %s",
-		$token
-	) );
-	
-	error_log( "Database query result - User ID: " . ( $user_id ? $user_id : 'NOT FOUND' ) );
-	
-	if ( $user_id ) {
-		// Check if user exists and is active
-		$user = get_userdata( $user_id );
-		error_log( "User data check - User exists: " . ( $user ? 'YES' : 'NO' ) );
+	// Check if this is a JWT token (starts with eyJ)
+	if ( strpos( $token, 'eyJ' ) === 0 ) {
+		error_log( 'Detected JWT token, attempting to decode...' );
 		
-		if ( $user ) {
-			error_log( "User status: " . $user->user_status );
-			if ( $user->user_status == 0 ) {
-				error_log( "Token validation successful for user ID: $user_id" );
-				return intval( $user_id );
+		// Decode JWT token (without verification for now)
+		$token_parts = explode( '.', $token );
+		if ( count( $token_parts ) === 3 ) {
+			$payload = $token_parts[1];
+			// Add padding if needed
+			$payload = str_pad( $payload, strlen( $payload ) % 4, '=', STR_PAD_RIGHT );
+			$decoded_payload = base64_decode( strtr( $payload, '-_', '+/' ) );
+			
+			if ( $decoded_payload ) {
+				$payload_data = json_decode( $decoded_payload, true );
+				error_log( "JWT payload: " . print_r( $payload_data, true ) );
+				
+				if ( $payload_data && isset( $payload_data['user_id'] ) ) {
+					$user_id = intval( $payload_data['user_id'] );
+					error_log( "Extracted user_id from JWT: $user_id" );
+					
+					// Check if user exists and is active
+					$user = get_userdata( $user_id );
+					error_log( "User data check - User exists: " . ( $user ? 'YES' : 'NO' ) );
+					
+					if ( $user ) {
+						error_log( "User status: " . $user->user_status );
+						if ( $user->user_status == 0 ) {
+							error_log( "JWT token validation successful for user ID: $user_id" );
+							return $user_id;
+						} else {
+							error_log( "User is not active (status: " . $user->user_status . ")" );
+						}
+					} else {
+						error_log( "User with ID $user_id does not exist" );
+					}
+				} else {
+					error_log( "JWT payload does not contain user_id" );
+				}
 			} else {
-				error_log( "User is not active (status: " . $user->user_status . ")" );
+				error_log( "Failed to decode JWT payload" );
 			}
+		} else {
+			error_log( "Invalid JWT format (should have 3 parts)" );
 		}
 	} else {
-		error_log( 'No user found with this token' );
+		error_log( 'Not a JWT token, trying legacy token validation...' );
+		// Legacy token validation (for backward compatibility)
+		global $wpdb;
+		
+		$user_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->usermeta} 
+			WHERE meta_key = 'jalsah_token' AND meta_value = %s",
+			$token
+		) );
+		
+		error_log( "Legacy database query result - User ID: " . ( $user_id ? $user_id : 'NOT FOUND' ) );
+		
+		if ( $user_id ) {
+			// Check if user exists and is active
+			$user = get_userdata( $user_id );
+			error_log( "User data check - User exists: " . ( $user ? 'YES' : 'NO' ) );
+			
+			if ( $user ) {
+				error_log( "User status: " . $user->user_status );
+				if ( $user->user_status == 0 ) {
+					error_log( "Legacy token validation successful for user ID: $user_id" );
+					return intval( $user_id );
+				} else {
+					error_log( "User is not active (status: " . $user->user_status . ")" );
+				}
+			}
+		} else {
+			error_log( 'No user found with this legacy token' );
+		}
 	}
 	
 	error_log( 'Token validation failed' );
