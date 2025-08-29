@@ -443,17 +443,17 @@ add_action(
 															html: `
 																<div style="text-align: right; direction: rtl;">
 																	<div style="margin-bottom: 15px;">
-																		<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">التشخيص الأولي:</label>
+																		<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">تشخيص المريض المبدئي حسب رؤيتك:</label>
 																		<textarea id="initial_diagnosis" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب التشخيص الأولي للمريض..."></textarea>
 																	</div>
 																	<div style="margin-bottom: 15px;">
-																		<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الأعراض:</label>
+																		<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الاعراض التي تعتقد انها بحاجه لادوية:</label>
 																		<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
 																	</div>
 																</div>
 															`,
 															showCancelButton: true,
-															confirmButtonText: 'إرسال طلب روشتا',
+															confirmButtonText: 'طلب',
 															cancelButtonText: 'إلغاء',
 															confirmButtonColor: '#3085d6',
 															cancelButtonColor: '#6b7280',
@@ -493,47 +493,49 @@ add_action(
 																		symptoms: formResult.value.symptoms,
 																		nonce: rochtahNonce
 																	},
-															success: function(rochtahResponse) {
-																console.log('=== DEBUG: Roshta request response ===');
-																console.log('RochtahResponse:', rochtahResponse);
-																
-																if (rochtahResponse.success) {
-																	console.log('=== DEBUG: Roshta request successful, showing success message ===');
-																	Swal.fire({
-																		title: 'تم إرسال طلب روشتا!',
-																		text: 'سيتم إعلام المريض بطلب روشتا',
-																		icon: 'success',
-																		confirmButtonText: 'حسناً'
-																	}).then(() => {
-																		console.log('=== DEBUG: Roshta success message confirmed, would reload here ===');
-																		// location.reload();
-																	});
-																} else {
-																	console.log('=== DEBUG: Roshta request failed, showing error message ===');
-																	Swal.fire({
-																		title: 'خطأ!',
-																		text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
-																		icon: 'error',
-																		confirmButtonText: 'حسناً'
-																	}).then(() => {
-																		console.log('=== DEBUG: Roshta error message confirmed, would reload here ===');
-																		// location.reload();
-																	});
-																}
-															},
-															error: function(xhr, status, error) {
-																console.error('=== DEBUG: Roshta request AJAX error ===');
-																console.error('Error:', error);
-																console.error('Status:', status);
-																console.error('XHR:', xhr);
-																Swal.fire({
-																	title: 'خطأ!',
-																	text: 'حدث خطأ أثناء إرسال طلب روشتا',
-																	icon: 'error',
-																	confirmButtonText: 'حسناً'
-																}).then(() => {
-																	console.log('=== DEBUG: Roshta AJAX error message confirmed, would reload here ===');
-																	// location.reload();
+																	success: function(rochtahResponse) {
+																		console.log('=== DEBUG: Roshta request response ===');
+																		console.log('RochtahResponse:', rochtahResponse);
+																		
+																		if (rochtahResponse.success) {
+																			console.log('=== DEBUG: Roshta request successful, showing success message ===');
+																			Swal.fire({
+																				title: 'تم إرسال طلب روشتا!',
+																				text: 'سيتم إعلام المريض بطلب روشتا',
+																				icon: 'success',
+																				confirmButtonText: 'حسناً'
+																			}).then(() => {
+																				console.log('=== DEBUG: Roshta success message confirmed, would reload here ===');
+																				// location.reload();
+																			});
+																		} else {
+																			console.log('=== DEBUG: Roshta request failed, showing error message ===');
+																			Swal.fire({
+																				title: 'خطأ!',
+																				text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
+																				icon: 'error',
+																				confirmButtonText: 'حسناً'
+																			}).then(() => {
+																				console.log('=== DEBUG: Roshta error message confirmed, would reload here ===');
+																				// location.reload();
+																			});
+																		}
+																	},
+																	error: function(xhr, status, error) {
+																		console.error('=== DEBUG: Roshta request AJAX error ===');
+																		console.error('Error:', error);
+																		console.error('Status:', status);
+																		console.error('XHR:', xhr);
+																		Swal.fire({
+																			title: 'خطأ!',
+																			text: 'حدث خطأ أثناء إرسال طلب روشتا',
+																			icon: 'error',
+																			confirmButtonText: 'حسناً'
+																		}).then(() => {
+																			console.log('=== DEBUG: Roshta AJAX error message confirmed, would reload here ===');
+																			// location.reload();
+																		});
+																	}
 																});
 															}
 														});
