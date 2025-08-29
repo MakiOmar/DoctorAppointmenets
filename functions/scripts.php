@@ -537,7 +537,6 @@ add_action(
 																});
 															}
 														});
-													});
 													} else {
 														console.log('=== DEBUG: User declined Roshta, showing completion message ===');
 														Swal.fire({
