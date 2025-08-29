@@ -5,7 +5,7 @@
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        {{ t('prescription.prescriptionServices') }}
+        {{ t('prescription.prescriptionServices') || 'Prescription Services' }}
       </h3>
       
       <div class="space-y-4">
@@ -18,7 +18,7 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
               <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-              <span class="text-blue-800 text-sm font-medium">{{ t('prescription.prescriptionRequested') }}</span>
+                              <span class="text-blue-800 text-sm font-medium">{{ t('prescription.prescriptionRequested') || 'Prescription Requested' }}</span>
             </div>
             <div class="text-xs text-gray-500">
               {{ formatDate(request.created_at) }}
@@ -41,7 +41,7 @@
           <div class="flex items-center justify-between">
             <div class="text-sm">
               <span v-if="request.status === 'pending'" class="text-orange-600 font-medium">
-                {{ t('prescription.pending') }}
+                {{ t('prescription.pending') || 'Pending' }}
               </span>
               <span v-else-if="request.status === 'confirmed'" class="text-green-600 font-medium">
                 {{ t('prescription.confirmed') }}
@@ -57,7 +57,7 @@
                 @click="$emit('book-appointment', request.id)"
                 class="btn-primary text-sm px-4 py-2"
               >
-                {{ t('prescription.bookFreeAppointment') }}
+                {{ t('prescription.bookFreeAppointment') || 'Book Free Appointment' }}
               </button>
               <button 
                 v-else-if="request.status === 'confirmed'"
@@ -89,6 +89,11 @@ export default {
   emits: ['book-appointment', 'view-appointment'],
   setup() {
     const { t, locale } = useI18n()
+    
+    // Debug: Check if translation function is working
+    console.log('PrescriptionCard setup - locale:', locale.value)
+    console.log('PrescriptionCard setup - t function:', typeof t)
+    console.log('Test translation:', t('prescription.prescriptionServices'))
     
     const formatDateWithLocale = (dateString) => {
       return formatDate(dateString, locale.value)
