@@ -411,9 +411,16 @@ add_action(
 									url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
 									data: doctorActions,
 									success: function(response) {
+										console.log('=== DEBUG: Session completion response ===');
+										console.log('Response:', response);
+										console.log('Response.data:', response.data);
+										console.log('is_ai_session:', response.data.is_ai_session);
+										console.log('message:', response.data.message);
+										
 										if (response.success) {
 											// Ask about Roshta if this is an AI session
 											if (response.data.is_ai_session) {
+												console.log('=== DEBUG: Showing Roshta prompt for AI session ===');
 												Swal.fire({
 													title: 'هل تريد إرسال المريض لاستشارة روشتا؟',
 													text: 'هل تعتقد أن المريض يحتاج لاستشارة مع طبيب نفسي لوصف دواء؟',
@@ -424,7 +431,12 @@ add_action(
 													confirmButtonText: 'نعم، أرسل لروشتا',
 													cancelButtonText: 'لا، شكراً'
 												}).then((rochtahResult) => {
+													console.log('=== DEBUG: Roshta prompt result ===');
+													console.log('Result:', rochtahResult);
+													console.log('isConfirmed:', rochtahResult.isConfirmed);
+													
 													if (rochtahResult.isConfirmed) {
+														console.log('=== DEBUG: User confirmed Roshta, sending request ===');
 														// Send Roshta request
 														var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
 														$.ajax({
@@ -438,62 +450,77 @@ add_action(
 																nonce: rochtahNonce
 															},
 															success: function(rochtahResponse) {
+																console.log('=== DEBUG: Roshta request response ===');
+																console.log('RochtahResponse:', rochtahResponse);
+																
 																if (rochtahResponse.success) {
+																	console.log('=== DEBUG: Roshta request successful, showing success message ===');
 																	Swal.fire({
 																		title: 'تم إرسال طلب روشتا!',
 																		text: 'سيتم إعلام المريض بطلب روشتا',
 																		icon: 'success',
 																		confirmButtonText: 'حسناً'
 																	}).then(() => {
-																		location.reload();
+																		console.log('=== DEBUG: Roshta success message confirmed, would reload here ===');
+																		// location.reload();
 																	});
 																} else {
+																	console.log('=== DEBUG: Roshta request failed, showing error message ===');
 																	Swal.fire({
 																		title: 'خطأ!',
 																		text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
 																		icon: 'error',
 																		confirmButtonText: 'حسناً'
 																	}).then(() => {
-																		location.reload();
+																		console.log('=== DEBUG: Roshta error message confirmed, would reload here ===');
+																		// location.reload();
 																	});
 																}
 															},
 															error: function(xhr, status, error) {
+																console.error('=== DEBUG: Roshta request AJAX error ===');
 																console.error('Error:', error);
+																console.error('Status:', status);
+																console.error('XHR:', xhr);
 																Swal.fire({
 																	title: 'خطأ!',
 																	text: 'حدث خطأ أثناء إرسال طلب روشتا',
 																	icon: 'error',
 																	confirmButtonText: 'حسناً'
 																}).then(() => {
-																	location.reload();
+																	console.log('=== DEBUG: Roshta AJAX error message confirmed, would reload here ===');
+																	// location.reload();
 																});
 															}
 														});
 													} else {
-														// User declined Roshta, show completion message and reload
+														console.log('=== DEBUG: User declined Roshta, showing completion message ===');
 														Swal.fire({
 															title: 'تم بنجاح!',
 															text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
 															icon: 'success',
 															confirmButtonText: 'حسناً'
 														}).then(() => {
-															location.reload();
+															console.log('=== DEBUG: Completion message confirmed after declining Roshta, would reload here ===');
+															// location.reload();
 														});
 													}
 												});
 											} else {
-												// Not an AI session, show completion message and reload
+												console.log('=== DEBUG: Not an AI session, showing completion message ===');
 												Swal.fire({
 													title: 'تم بنجاح!',
 													text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
 													icon: 'success',
 													confirmButtonText: 'حسناً'
 												}).then(() => {
-													location.reload();
+													console.log('=== DEBUG: Non-AI session completion message confirmed, would reload here ===');
+													// location.reload();
 												});
 											}
 										} else {
+											console.log('=== DEBUG: Session completion failed ===');
+											console.log('Error response:', response);
 											Swal.fire({
 												title: 'خطأ!',
 												text: response.data || 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
