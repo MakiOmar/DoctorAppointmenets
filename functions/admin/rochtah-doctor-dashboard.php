@@ -154,6 +154,12 @@ function snks_rochtah_doctor_dashboard() {
 												onclick="openPrescriptionModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->patient_name ); ?>')">
 											Write Prescription
 										</button>
+										<br><br>
+										<button class="button button-secondary button-small" 
+												onclick="joinRochtahMeeting(<?php echo $booking->id; ?>)"
+												style="background-color: #28a745; border-color: #28a745; color: white;">
+											🎥 Join Meeting
+										</button>
 									<?php elseif ( $booking->status === 'prescribed' ) : ?>
 										<button class="button button-secondary button-small" 
 												onclick="viewPrescription(<?php echo $booking->id; ?>)">
@@ -253,6 +259,28 @@ function snks_rochtah_doctor_dashboard() {
 				
 				<?php submit_button( 'Update Status' ); ?>
 			</form>
+		</div>
+	</div>
+	
+	<!-- Rochtah Meeting Modal -->
+	<div id="rochtahMeetingModal" class="modal" style="display: none;">
+		<div class="modal-content" style="width: 95%; max-width: 1200px; height: 85vh;">
+			<span class="close">&times;</span>
+			<h2>Rochtah Session - Join Meeting</h2>
+			<div id="meetingDetails" style="margin-bottom: 20px; padding: 15px; background-color: #f0f6ff; border-radius: 6px;">
+				<div id="sessionInfo"></div>
+			</div>
+			<div id="rochtah-meeting-container" style="width: 100%; height: 70vh; background-color: #1a1a1a; border-radius: 8px; overflow: hidden;">
+				<div id="rochtah-doctor-meeting" style="width: 100%; height: 100%;"></div>
+			</div>
+			<div style="margin-top: 15px; text-align: center;">
+				<button id="startMeetingBtn" class="button button-primary" onclick="startRochtahDoctorMeeting()">
+					Start Meeting
+				</button>
+				<button class="button" onclick="closeMeetingModal()">
+					Close
+				</button>
+			</div>
 		</div>
 	</div>
 	
@@ -386,6 +414,189 @@ function snks_rochtah_doctor_dashboard() {
 				this.style.display = 'none';
 			}
 		};
+	}
+
+	// Rochtah Meeting Variables
+	let currentMeetingDetails = null;
+	let doctorMeetingAPI = null;
+
+	function joinRochtahMeeting(bookingId) {
+		// Show loading state
+		document.getElementById('sessionInfo').innerHTML = '<div style="text-align: center;">Loading meeting details...</div>';
+		document.getElementById('rochtahMeetingModal').style.display = 'block';
+		
+		// Fetch meeting details
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'get_rochtah_meeting_details_doctor',
+				booking_id: bookingId,
+				nonce: '<?php echo wp_create_nonce( 'rochtah_meeting_doctor' ); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					currentMeetingDetails = response.data;
+					displayMeetingDetails(currentMeetingDetails);
+				} else {
+					document.getElementById('sessionInfo').innerHTML = '<div style="color: #dc3545;">Failed to load meeting details: ' + (response.data || 'Unknown error') + '</div>';
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error loading meeting details:', error);
+				document.getElementById('sessionInfo').innerHTML = '<div style="color: #dc3545;">Failed to load meeting details. Please try again.</div>';
+			}
+		});
+	}
+
+	function displayMeetingDetails(details) {
+		const sessionInfo = document.getElementById('sessionInfo');
+		sessionInfo.innerHTML = `
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+				<div>
+					<strong>📅 Date:</strong><br>
+					${details.booking_date}
+				</div>
+				<div>
+					<strong>🕐 Time:</strong><br>
+					${details.booking_time}
+				</div>
+				<div>
+					<strong>🏠 Room:</strong><br>
+					${details.room_name}
+				</div>
+				<div>
+					<strong>👤 Patient:</strong><br>
+					${details.patient_name || 'N/A'}
+				</div>
+			</div>
+		`;
+	}
+
+	function startRochtahDoctorMeeting() {
+		if (!currentMeetingDetails) {
+			alert('No meeting details available');
+			return;
+		}
+		
+		// Check if JitsiMeetExternalAPI is already available
+		if (typeof JitsiMeetExternalAPI !== 'undefined') {
+			initializeRochtahDoctorJitsiMeeting();
+			return;
+		}
+		
+		// Load Jitsi external API script
+		const script = document.createElement('script');
+		script.src = 'https://s.jalsah.app/external_api.js';
+		script.onload = () => {
+			setTimeout(() => {
+				initializeRochtahDoctorJitsiMeeting();
+			}, 500); // Give it a moment to initialize
+		};
+		script.onerror = (error) => {
+			console.error('Failed to load Jitsi script:', error);
+			alert('Failed to load meeting interface');
+		};
+		document.head.appendChild(script);
+	}
+
+	function initializeRochtahDoctorJitsiMeeting() {
+		if (!currentMeetingDetails) return;
+		
+		const roomName = currentMeetingDetails.room_name;
+		const userName = '<?php echo esc_js( $current_user->display_name ); ?>' || 'Doctor';
+		
+		const options = {
+			parentNode: document.querySelector('#rochtah-doctor-meeting'),
+			roomName: roomName,
+			width: '100%',
+			height: '100%',
+			configOverwrite: {
+				prejoinPageEnabled: false,
+				startWithAudioMuted: false,
+				startWithVideoMuted: false,
+				disableAudioLevels: false,
+				enableClosePage: true,
+				enableWelcomePage: false,
+				participantsPane: {
+					enabled: true,
+					hideModeratorSettingsTab: false,
+					hideMoreActionsButton: false,
+					hideMuteAllButton: false
+				},
+				toolbarButtons: [
+					'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+					'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+					'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+					'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+				]
+			},
+			interfaceConfigOverwrite: {
+				prejoinPageEnabled: false,
+				APP_NAME: 'Jalsah Rochtah Doctor',
+				DEFAULT_BACKGROUND: "#1a1a1a",
+				SHOW_JITSI_WATERMARK: false,
+				HIDE_DEEP_LINKING_LOGO: true,
+				SHOW_BRAND_WATERMARK: false,
+				SHOW_WATERMARK_FOR_GUESTS: false,
+				SHOW_POWERED_BY: false,
+				DISPLAY_WELCOME_FOOTER: false,
+				JITSI_WATERMARK_LINK: 'https://jalsah.app',
+				PROVIDER_NAME: 'Jalsah',
+				DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+				DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+				TOOLBAR_ALWAYS_VISIBLE: true,
+				TOOLBAR_BUTTONS: [
+					'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+					'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+					'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+					'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+				]
+			}
+		};
+		
+		try {
+			// Try the main Jitsi server first
+			try {
+				doctorMeetingAPI = new JitsiMeetExternalAPI("s.jalsah.app", options);
+			} catch (serverError) {
+				console.warn('Main server failed, trying fallback:', serverError);
+				// Fallback to meet.jit.si if main server fails
+				doctorMeetingAPI = new JitsiMeetExternalAPI("meet.jit.si", options);
+			}
+			
+			doctorMeetingAPI.executeCommand('displayName', userName);
+			
+			// Add event listeners
+			doctorMeetingAPI.addListener('videoConferenceJoined', () => {
+				console.log('Doctor joined Rochtah meeting');
+				document.getElementById('startMeetingBtn').style.display = 'none';
+			});
+			
+			doctorMeetingAPI.addListener('videoConferenceLeft', () => {
+				console.log('Doctor left Rochtah meeting');
+				closeMeetingModal();
+			});
+			
+		} catch (error) {
+			console.error('Error initializing Rochtah doctor Jitsi meeting:', error);
+			alert('Failed to start meeting');
+		}
+	}
+
+	function closeMeetingModal() {
+		// Clean up Jitsi meeting
+		if (doctorMeetingAPI) {
+			doctorMeetingAPI.dispose();
+			doctorMeetingAPI = null;
+		}
+		
+		// Reset variables
+		currentMeetingDetails = null;
+		document.getElementById('startMeetingBtn').style.display = 'inline-block';
+		
+		// Hide modal
+		document.getElementById('rochtahMeetingModal').style.display = 'none';
 	}
 	
 	// Close modals when clicking X or outside

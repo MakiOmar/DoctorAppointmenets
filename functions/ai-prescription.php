@@ -736,6 +736,51 @@ function snks_get_rochtah_meeting_details_ajax() {
 add_action( 'wp_ajax_get_rochtah_meeting_details', 'snks_get_rochtah_meeting_details_ajax' );
 
 /**
+ * AJAX handler for getting Rochtah meeting details for doctors
+ */
+function snks_get_rochtah_meeting_details_doctor_ajax() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_meeting_doctor' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in to access meeting details', 'shrinks' ) );
+	}
+	
+	// Check if user has permission to access Rochtah doctor features
+	if ( ! current_user_can( 'manage_rochtah' ) ) {
+		wp_send_json_error( __( 'You do not have permission to access this feature', 'shrinks' ) );
+	}
+	
+	$booking_id = intval( $_POST['booking_id'] );
+	
+	// Get meeting details
+	$meeting_details = snks_get_rochtah_meeting_details( $booking_id );
+	
+	if ( ! $meeting_details ) {
+		wp_send_json_error( __( 'Booking not found', 'shrinks' ) );
+	}
+	
+	// Get additional patient information for doctor dashboard
+	global $wpdb;
+	$booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT rb.*, u.display_name as patient_name, u.user_email as patient_email
+		FROM {$wpdb->prefix}snks_rochtah_bookings rb
+		LEFT JOIN {$wpdb->users} u ON rb.patient_id = u.ID
+		WHERE rb.id = %d",
+		$booking_id
+	) );
+	
+	if ( $booking ) {
+		$meeting_details['patient_name'] = $booking->patient_name;
+		$meeting_details['patient_email'] = $booking->patient_email;
+	}
+	
+	wp_send_json_success( $meeting_details );
+}
+add_action( 'wp_ajax_get_rochtah_meeting_details_doctor', 'snks_get_rochtah_meeting_details_doctor_ajax' );
+
+/**
  * Debug AJAX handler to test if AJAX is working
  */
 function snks_debug_ajax_test() {
