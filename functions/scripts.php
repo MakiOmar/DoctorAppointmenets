@@ -423,7 +423,7 @@ add_action(
 												console.log('=== DEBUG: Showing Roshta prompt for AI session ===');
 												Swal.fire({
 													title: 'هل تريد إرسال المريض لاستشارة روشتا؟',
-													text: 'هل تعتقد أن المريض يحتاج لاستشارة مع طبيب نفسي لوصف دواء؟',
+													text: 'هل تعتقد ان العميل بحاجه لادويه وتريد عرضه على اخصائي طب نفسي مجانا لوصف أدوية له بجانب جلساتك ؟',
 													icon: 'question',
 													showCancelButton: true,
 													confirmButtonColor: '#3085d6',
