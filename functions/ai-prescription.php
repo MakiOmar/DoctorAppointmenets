@@ -751,21 +751,46 @@ function snks_rochtah_slots_admin_page() {
 			$end_time = sanitize_text_field( $_POST['end_time'] );
 			$slot_name = sanitize_text_field( $_POST['slot_name'] );
 			
+			// Check if slot already exists for this day and start time
 			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
-			$wpdb->insert(
-				$rochtah_appointments_table,
-				array(
-					'day_of_week' => $day_of_week,
-					'start_time' => $start_time,
-					'end_time' => $end_time,
-					'slot_name' => $slot_name,
-					'status' => 'active',
-					'sort_order' => 0
-				),
-				array( '%s', '%s', '%s', '%s', '%s', '%d' )
-			);
+			$existing_slot = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM $rochtah_appointments_table 
+				WHERE day_of_week = %s AND start_time = %s AND status = 'active'",
+				$day_of_week, $start_time
+			) );
 			
-			echo '<div class="notice notice-success"><p>' . __( 'Slot added successfully!', 'shrinks' ) . '</p></div>';
+			if ( $existing_slot ) {
+				echo '<div class="notice notice-error"><p>' . __( 'A slot with this start time already exists for this day!', 'shrinks' ) . '</p></div>';
+			} else {
+				// Generate slots for the next 30 occurrences of this day
+				$slots_created = 0;
+				$current_date = current_time( 'Y-m-d' );
+				
+				for ( $i = 0; $i < 30; $i++ ) {
+					// Find the next occurrence of this day
+					$target_date = date( 'Y-m-d', strtotime( "+$i days", strtotime( $current_date ) ) );
+					$target_day = date( 'l', strtotime( $target_date ) );
+					
+					// If this is the target day, create the slot
+					if ( $target_day === $day_of_week ) {
+						$wpdb->insert(
+							$rochtah_appointments_table,
+							array(
+								'day_of_week' => $day_of_week,
+								'start_time' => $start_time,
+								'end_time' => $end_time,
+								'slot_name' => $slot_name,
+								'status' => 'active',
+								'sort_order' => 0
+							),
+							array( '%s', '%s', '%s', '%s', '%s', '%d' )
+						);
+						$slots_created++;
+					}
+				}
+				
+				echo '<div class="notice notice-success"><p>' . sprintf( __( '%d slots created successfully for the next 30 occurrences of %s!', 'shrinks' ), $slots_created, $day_of_week ) . '</p></div>';
+			}
 		} elseif ( $_POST['action'] === 'delete_slot' ) {
 			$slot_id = intval( $_POST['slot_id'] );
 			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
