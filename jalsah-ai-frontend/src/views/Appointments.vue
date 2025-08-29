@@ -750,7 +750,8 @@ export default {
       closeRochtahModal,
       selectSlot,
       bookRochtahAppointment,
-      confirmRochtahBooking
+      confirmRochtahBooking,
+      viewRochtahAppointment
     }
   }
 }
