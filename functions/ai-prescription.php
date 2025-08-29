@@ -808,13 +808,37 @@ function snks_rochtah_slots_admin_page() {
 					<tr>
 						<th scope="row"><?php _e( 'Start Time', 'shrinks' ); ?></th>
 						<td>
-							<input type="time" name="start_time" required>
+							<select name="start_time" required>
+								<option value=""><?php _e( 'Select Start Time', 'shrinks' ); ?></option>
+								<?php
+								// Generate 15-minute intervals from 00:00 to 23:45
+								for ( $hour = 0; $hour < 24; $hour++ ) {
+									for ( $minute = 0; $minute < 60; $minute += 15 ) {
+										$time = sprintf( '%02d:%02d:00', $hour, $minute );
+										$display_time = date( 'g:i A', strtotime( $time ) );
+										echo '<option value="' . esc_attr( $time ) . '">' . esc_html( $display_time ) . '</option>';
+									}
+								}
+								?>
+							</select>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><?php _e( 'End Time', 'shrinks' ); ?></th>
 						<td>
-							<input type="time" name="end_time" required>
+							<select name="end_time" required>
+								<option value=""><?php _e( 'Select End Time', 'shrinks' ); ?></option>
+								<?php
+								// Generate 15-minute intervals from 00:00 to 23:45
+								for ( $hour = 0; $hour < 24; $hour++ ) {
+									for ( $minute = 0; $minute < 60; $minute += 15 ) {
+										$time = sprintf( '%02d:%02d:00', $hour, $minute );
+										$display_time = date( 'g:i A', strtotime( $time ) );
+										echo '<option value="' . esc_attr( $time ) . '">' . esc_html( $display_time ) . '</option>';
+									}
+								}
+								?>
+							</select>
 						</td>
 					</tr>
 					<tr>
