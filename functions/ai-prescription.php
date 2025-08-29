@@ -184,7 +184,7 @@ function snks_handle_ai_prescription_request() {
 add_action( 'wp_ajax_ai_prescription_request', 'snks_handle_ai_prescription_request' );
 
 /**
- * Get next available Rochtah slot (15-minute intervals)
+ * Get next available Rochtah slot (explicit slots)
  */
 function snks_get_next_rochtah_slot() {
 	global $wpdb;
@@ -202,47 +202,33 @@ function snks_get_next_rochtah_slot() {
 		$day_of_week = date( 'l', strtotime( $check_date ) );
 		
 		if ( in_array( $day_of_week, $available_days ) ) {
-			// Get available time slots for this day
+			// Get explicit time slots for this day
 			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
 			$available_slots = $wpdb->get_results( $wpdb->prepare(
 				"SELECT * FROM $rochtah_appointments_table 
 				WHERE day_of_week = %s AND status = 'active'
-				ORDER BY start_time ASC",
+				ORDER BY sort_order ASC, start_time ASC",
 				$day_of_week
 			) );
 			
 			foreach ( $available_slots as $slot ) {
-				// Check if this slot is available (15-minute intervals)
-				$start_time = $slot->start_time;
-				$end_time = $slot->end_time;
+				// Check if this specific slot is available
+				$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+				$existing_booking = $wpdb->get_row( $wpdb->prepare(
+					"SELECT * FROM $rochtah_bookings_table 
+					WHERE booking_date = %s 
+					AND booking_time = %s 
+					AND status IN ('pending', 'confirmed')",
+					$check_date,
+					$slot->start_time
+				) );
 				
-				// Generate 15-minute intervals
-				$current_time = strtotime( $start_time );
-				$end_timestamp = strtotime( $end_time );
-				
-				while ( $current_time < $end_timestamp ) {
-					$interval_time = date( 'H:i:s', $current_time );
-					
-					// Check if this specific time is available
-					$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
-					$existing_booking = $wpdb->get_row( $wpdb->prepare(
-						"SELECT * FROM $rochtah_bookings_table 
-						WHERE booking_date = %s 
-						AND booking_time = %s 
-						AND status IN ('pending', 'confirmed')",
-						$check_date,
-						$interval_time
-					) );
-					
-					if ( ! $existing_booking ) {
-						return array(
-							'date' => $check_date,
-							'time' => $interval_time,
-							'day_of_week' => $day_of_week
-						);
-					}
-					
-					$current_time = strtotime( '+15 minutes', $current_time );
+				if ( ! $existing_booking ) {
+					return array(
+						'date' => $check_date,
+						'time' => $slot->start_time,
+						'day_of_week' => $day_of_week
+					);
 				}
 			}
 		}
@@ -486,53 +472,42 @@ function snks_get_rochtah_available_slots_for_patient() {
 		$day_of_week = date( 'l', strtotime( $check_date ) );
 		
 		if ( in_array( $day_of_week, $available_days ) ) {
-			// Get available time slots for this day
+			// Get explicit time slots for this day
 			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
 			$day_slots = $wpdb->get_results( $wpdb->prepare(
 				"SELECT * FROM $rochtah_appointments_table 
 				WHERE day_of_week = %s AND status = 'active'
-				ORDER BY start_time ASC",
+				ORDER BY sort_order ASC, start_time ASC",
 				$day_of_week
 			) );
 			
 			foreach ( $day_slots as $slot ) {
-				// Generate 15-minute intervals
-				$start_time = $slot->start_time;
-				$end_time = $slot->end_time;
+				// Check if this specific slot is available
+				$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+				$existing_booking = $wpdb->get_row( $wpdb->prepare(
+					"SELECT * FROM $rochtah_bookings_table 
+					WHERE booking_date = %s 
+					AND booking_time = %s 
+					AND status IN ('pending', 'confirmed')",
+					$check_date,
+					$slot->start_time
+				) );
 				
-				$current_time = strtotime( $start_time );
-				$end_timestamp = strtotime( $end_time );
+				if ( ! $existing_booking && $slot_count < $max_slots ) {
+					$available_slots[] = array(
+						'date' => $check_date,
+						'time' => $slot->start_time,
+						'end_time' => $slot->end_time,
+						'formatted_time' => date( 'g:i A', strtotime( $slot->start_time ) ) . ' - ' . date( 'g:i A', strtotime( $slot->end_time ) ),
+						'day_of_week' => $day_of_week,
+						'slot_name' => $slot->slot_name
+					);
+					$slot_count++;
+				}
 				
-				while ( $current_time < $end_timestamp ) {
-					$interval_time = date( 'H:i:s', $current_time );
-					
-					// Check if this specific time is available
-					$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
-					$existing_booking = $wpdb->get_row( $wpdb->prepare(
-						"SELECT * FROM $rochtah_bookings_table 
-						WHERE booking_date = %s 
-						AND booking_time = %s 
-						AND status IN ('pending', 'confirmed')",
-						$check_date,
-						$interval_time
-					) );
-					
-					if ( ! $existing_booking && $slot_count < $max_slots ) {
-						$available_slots[] = array(
-							'date' => $check_date,
-							'time' => $interval_time,
-							'formatted_time' => date( 'g:i A', strtotime( $interval_time ) ),
-							'day_of_week' => $day_of_week
-						);
-						$slot_count++;
-					}
-					
-					// Break if we've reached the maximum slots
-					if ( $slot_count >= $max_slots ) {
-						break 2; // Break out of both loops
-					}
-					
-					$current_time = strtotime( '+30 minutes', $current_time );
+				// Break if we've reached the maximum slots
+				if ( $slot_count >= $max_slots ) {
+					break 2; // Break out of both loops
 				}
 			}
 		}
@@ -690,19 +665,22 @@ function snks_create_rochtah_tables() {
 	
 	$charset_collate = $wpdb->get_charset_collate();
 	
-	// Rochtah appointments table
+	// Rochtah appointments table - now stores explicit slots
 	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
 	$sql_appointments = "CREATE TABLE $rochtah_appointments_table (
 		id bigint(20) NOT NULL AUTO_INCREMENT,
 		day_of_week varchar(20) NOT NULL,
 		start_time time NOT NULL,
 		end_time time NOT NULL,
+		slot_name varchar(100) DEFAULT NULL,
 		status varchar(20) NOT NULL DEFAULT 'active',
+		sort_order int(11) DEFAULT 0,
 		created_at datetime DEFAULT CURRENT_TIMESTAMP,
 		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY day_of_week (day_of_week),
-		KEY status (status)
+		KEY status (status),
+		KEY sort_order (sort_order)
 	) $charset_collate;";
 	
 	// Rochtah bookings table (if it doesn't exist)
@@ -732,27 +710,51 @@ function snks_create_rochtah_tables() {
 	dbDelta( $sql_appointments );
 	dbDelta( $sql_bookings );
 	
-	// Insert default Rochtah schedule if table is empty
+	// Insert default Rochtah schedule if table is empty - now creates explicit 15-minute slots
 	$existing_slots = $wpdb->get_var( "SELECT COUNT(*) FROM $rochtah_appointments_table" );
 	
 	if ( $existing_slots == 0 ) {
 		$default_days = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' );
-		$default_times = array(
-			array( '09:00:00', '17:00:00' ), // 9 AM to 5 PM
-		);
+		$sort_order = 0;
 		
 		foreach ( $default_days as $day ) {
-			foreach ( $default_times as $time ) {
-				$wpdb->insert(
-					$rochtah_appointments_table,
-					array(
-						'day_of_week' => $day,
-						'start_time' => $time[0],
-						'end_time' => $time[1],
-						'status' => 'active'
-					),
-					array( '%s', '%s', '%s', '%s' )
-				);
+			// Create 15-minute slots from 9:00 AM to 5:00 PM
+			$start_hour = 9;
+			$end_hour = 17;
+			
+			for ( $hour = $start_hour; $hour < $end_hour; $hour++ ) {
+				for ( $minute = 0; $minute < 60; $minute += 15 ) {
+					$start_time = sprintf( '%02d:%02d:00', $hour, $minute );
+					$end_minute = $minute + 15;
+					$end_hour_slot = $hour;
+					
+					if ( $end_minute >= 60 ) {
+						$end_minute = 0;
+						$end_hour_slot = $hour + 1;
+					}
+					
+					$end_time = sprintf( '%02d:%02d:00', $end_hour_slot, $end_minute );
+					
+					// Skip lunch break (12:00-13:00)
+					if ( $hour == 12 ) {
+						continue;
+					}
+					
+					$slot_name = sprintf( '%s %s-%s', $day, date( 'g:i A', strtotime( $start_time ) ), date( 'g:i A', strtotime( $end_time ) ) );
+					
+					$wpdb->insert(
+						$rochtah_appointments_table,
+						array(
+							'day_of_week' => $day,
+							'start_time' => $start_time,
+							'end_time' => $end_time,
+							'slot_name' => $slot_name,
+							'status' => 'active',
+							'sort_order' => $sort_order++
+						),
+						array( '%s', '%s', '%s', '%s', '%s', '%d' )
+					);
+				}
 			}
 		}
 	}
@@ -763,3 +765,160 @@ register_activation_hook( __FILE__, 'snks_create_rochtah_tables' );
 
 // Also create tables if they don't exist (for existing installations)
 add_action( 'init', 'snks_create_rochtah_tables' );
+
+/**
+ * Add Rochtah slots management to admin menu
+ */
+function snks_add_rochtah_admin_menu() {
+	add_submenu_page(
+		'jalsah-ai-settings',
+		__( 'Rochtah Slots', 'shrinks' ),
+		__( 'Rochtah Slots', 'shrinks' ),
+		'manage_options',
+		'jalsah-ai-rochtah-slots',
+		'snks_rochtah_slots_admin_page'
+	);
+}
+add_action( 'admin_menu', 'snks_add_rochtah_admin_menu' );
+
+/**
+ * Admin page for managing Rochtah slots
+ */
+function snks_rochtah_slots_admin_page() {
+	global $wpdb;
+	
+	// Handle form submissions
+	if ( isset( $_POST['action'] ) && wp_verify_nonce( $_POST['rochtah_slots_nonce'], 'rochtah_slots_action' ) ) {
+		if ( $_POST['action'] === 'add_slot' ) {
+			$day_of_week = sanitize_text_field( $_POST['day_of_week'] );
+			$start_time = sanitize_text_field( $_POST['start_time'] );
+			$end_time = sanitize_text_field( $_POST['end_time'] );
+			$slot_name = sanitize_text_field( $_POST['slot_name'] );
+			
+			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+			$wpdb->insert(
+				$rochtah_appointments_table,
+				array(
+					'day_of_week' => $day_of_week,
+					'start_time' => $start_time,
+					'end_time' => $end_time,
+					'slot_name' => $slot_name,
+					'status' => 'active',
+					'sort_order' => 0
+				),
+				array( '%s', '%s', '%s', '%s', '%s', '%d' )
+			);
+			
+			echo '<div class="notice notice-success"><p>' . __( 'Slot added successfully!', 'shrinks' ) . '</p></div>';
+		} elseif ( $_POST['action'] === 'delete_slot' ) {
+			$slot_id = intval( $_POST['slot_id'] );
+			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+			$wpdb->delete( $rochtah_appointments_table, array( 'id' => $slot_id ), array( '%d' ) );
+			
+			echo '<div class="notice notice-success"><p>' . __( 'Slot deleted successfully!', 'shrinks' ) . '</p></div>';
+		}
+	}
+	
+	// Get existing slots
+	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+	$slots = $wpdb->get_results( "SELECT * FROM $rochtah_appointments_table ORDER BY day_of_week, sort_order, start_time" );
+	
+	?>
+	<div class="wrap">
+		<h1><?php _e( 'Rochtah Slots Management', 'shrinks' ); ?></h1>
+		
+		<div class="card">
+			<h2><?php _e( 'Add New Slot', 'shrinks' ); ?></h2>
+			<form method="post" action="">
+				<?php wp_nonce_field( 'rochtah_slots_action', 'rochtah_slots_nonce' ); ?>
+				<input type="hidden" name="action" value="add_slot">
+				
+				<table class="form-table">
+					<tr>
+						<th scope="row"><?php _e( 'Day of Week', 'shrinks' ); ?></th>
+						<td>
+							<select name="day_of_week" required>
+								<option value=""><?php _e( 'Select Day', 'shrinks' ); ?></option>
+								<option value="Monday"><?php _e( 'Monday', 'shrinks' ); ?></option>
+								<option value="Tuesday"><?php _e( 'Tuesday', 'shrinks' ); ?></option>
+								<option value="Wednesday"><?php _e( 'Wednesday', 'shrinks' ); ?></option>
+								<option value="Thursday"><?php _e( 'Thursday', 'shrinks' ); ?></option>
+								<option value="Friday"><?php _e( 'Friday', 'shrinks' ); ?></option>
+								<option value="Saturday"><?php _e( 'Saturday', 'shrinks' ); ?></option>
+								<option value="Sunday"><?php _e( 'Sunday', 'shrinks' ); ?></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e( 'Start Time', 'shrinks' ); ?></th>
+						<td>
+							<input type="time" name="start_time" required>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e( 'End Time', 'shrinks' ); ?></th>
+						<td>
+							<input type="time" name="end_time" required>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e( 'Slot Name (Optional)', 'shrinks' ); ?></th>
+						<td>
+							<input type="text" name="slot_name" placeholder="<?php _e( 'e.g., Morning Session, Afternoon Break', 'shrinks' ); ?>">
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( __( 'Add Slot', 'shrinks' ) ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2><?php _e( 'Existing Slots', 'shrinks' ); ?></h2>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th><?php _e( 'Day', 'shrinks' ); ?></th>
+						<th><?php _e( 'Start Time', 'shrinks' ); ?></th>
+						<th><?php _e( 'End Time', 'shrinks' ); ?></th>
+						<th><?php _e( 'Slot Name', 'shrinks' ); ?></th>
+						<th><?php _e( 'Status', 'shrinks' ); ?></th>
+						<th><?php _e( 'Actions', 'shrinks' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if ( $slots ): ?>
+						<?php foreach ( $slots as $slot ): ?>
+							<tr>
+								<td><?php echo esc_html( $slot->day_of_week ); ?></td>
+								<td><?php echo esc_html( date( 'g:i A', strtotime( $slot->start_time ) ) ); ?></td>
+								<td><?php echo esc_html( date( 'g:i A', strtotime( $slot->end_time ) ) ); ?></td>
+								<td><?php echo esc_html( $slot->slot_name ?: '-' ); ?></td>
+								<td>
+									<span class="status-<?php echo esc_attr( $slot->status ); ?>">
+										<?php echo esc_html( ucfirst( $slot->status ) ); ?>
+									</span>
+								</td>
+								<td>
+									<form method="post" action="" style="display: inline;">
+										<?php wp_nonce_field( 'rochtah_slots_action', 'rochtah_slots_nonce' ); ?>
+										<input type="hidden" name="action" value="delete_slot">
+										<input type="hidden" name="slot_id" value="<?php echo esc_attr( $slot->id ); ?>">
+										<button type="submit" class="button button-small" onclick="return confirm('<?php _e( 'Are you sure you want to delete this slot?', 'shrinks' ); ?>')">
+											<?php _e( 'Delete', 'shrinks' ); ?>
+										</button>
+									</form>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					<?php else: ?>
+						<tr>
+							<td colspan="6"><?php _e( 'No slots found. Add some slots above.', 'shrinks' ); ?></td>
+						</tr>
+					<?php endif; ?>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<?php
+}
