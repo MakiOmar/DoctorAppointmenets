@@ -668,7 +668,10 @@ export default {
     statusCancelled: 'Cancelled',
     statusNoShow: 'No Show',
     // Time units
-    minutes: 'minutes'
+    minutes: 'minutes',
+    // Additional fields
+    therapist: 'Therapist',
+    session: 'Session'
   },
 
   // Therapist Appointment Page

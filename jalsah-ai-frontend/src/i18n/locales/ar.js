@@ -624,7 +624,10 @@ export default {
     statusCancelled: 'ملغي',
     statusNoShow: 'لم يحضر',
     // Time units
-    minutes: 'دقائق'
+    minutes: 'دقائق',
+    // Additional fields
+    therapist: 'المعالج',
+    session: 'الجلسة'
   },
 
   // Therapist Appointment Page
