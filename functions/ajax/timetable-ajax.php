@@ -413,13 +413,34 @@ function snks_handle_session_doctor_actions() {
 		}
 	}
 	
-	// Return success with session info for non-AI sessions
+	// Check if this is an AI session using multiple methods
+	$is_ai_session = false;
+	
+	// Method 1: Check session settings for ai_booking
+	if ( strpos( $session->settings, 'ai_booking' ) !== false ) {
+		$is_ai_session = true;
+	}
+	
+	// Method 2: Check order meta
+	if ( ! $is_ai_session && $session->order_id ) {
+		$order = wc_get_order( $session->order_id );
+		if ( $order ) {
+			$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+			$is_ai_session_meta = $order->get_meta( 'is_ai_session' );
+			if ( $from_jalsah_ai || $is_ai_session_meta ) {
+				$is_ai_session = true;
+			}
+		}
+	}
+	
+	// Return success with session info
 	wp_send_json_success( array( 
 		'message' => 'Session marked as completed successfully.',
 		'session_id' => $session_id,
 		'client_id' => $session->client_id,
 		'order_id' => $session->order_id,
-		'is_ai_session' => false
+		'is_ai_session' => $is_ai_session,
+		'session_settings' => $session->settings // For debugging
 	) );
 }
 
