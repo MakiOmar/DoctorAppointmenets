@@ -18,8 +18,8 @@ function snks_rochtah_doctor_dashboard() {
 	global $wpdb;
 	$current_user = wp_get_current_user();
 	
-	// Check if user has Rochtah doctor capabilities
-	if ( ! current_user_can( 'manage_rochtah' ) ) {
+	// Check if user has Rochtah doctor capabilities or is admin
+	if ( ! current_user_can( 'manage_rochtah' ) && ! current_user_can( 'manage_options' ) ) {
 		wp_die( 'You do not have permission to access this page.' );
 	}
 	
