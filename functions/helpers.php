@@ -41,7 +41,13 @@ function snks_count_date( $date, $timetables ) {
 function snks_group_objects_by( $objects, $member_name ) {
 	$grouped = array();
 	foreach ( $objects as $object ) {
-		$key = $object->$member_name;
+		// Check if the property exists before accessing it
+		if ( ! isset( $object->$member_name ) ) {
+			// If property doesn't exist, use a default key
+			$key = 'unknown';
+		} else {
+			$key = $object->$member_name;
+		}
 		if ( ! isset( $grouped[ $key ] ) ) {
 			$grouped[ $key ] = array();
 		}
