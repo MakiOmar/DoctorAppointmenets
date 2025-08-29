@@ -5558,6 +5558,38 @@ function snks_is_ai_patient( $user_id ) {
 }
 
 /**
+ * Validate Jalsah token and return user ID
+ *
+ * @param string $token The Jalsah token
+ * @return int|false User ID if valid, false otherwise
+ */
+function snks_validate_jalsah_token( $token ) {
+	if ( ! $token ) {
+		return false;
+	}
+	
+	// For now, we'll use a simple approach - store tokens in user meta
+	// In a production environment, you might want to use JWT or a more secure method
+	global $wpdb;
+	
+	$user_id = $wpdb->get_var( $wpdb->prepare(
+		"SELECT user_id FROM {$wpdb->usermeta} 
+		WHERE meta_key = 'jalsah_token' AND meta_value = %s",
+		$token
+	) );
+	
+	if ( $user_id ) {
+		// Check if user exists and is active
+		$user = get_userdata( $user_id );
+		if ( $user && $user->user_status == 0 ) {
+			return intval( $user_id );
+		}
+	}
+	
+	return false;
+}
+
+/**
  * Global helper function to get AI registration date
  *
  * @param int $user_id User ID
@@ -5627,19 +5659,35 @@ function snks_book_rochtah_appointment_rest( $request ) {
 		return new WP_Error( 'missing_parameters', 'Request ID, date, and time are required', array( 'status' => 400 ) );
 	}
 	
-	// Check if user is logged in (REST API authentication)
-	if ( ! is_user_logged_in() ) {
+	// Check authentication - try both WordPress session and Bearer token
+	$user_id = null;
+	
+	// First try WordPress session authentication
+	if ( is_user_logged_in() ) {
+		$user_id = get_current_user_id();
+	} else {
+		// Try Bearer token authentication
+		$auth_header = $request->get_header( 'Authorization' );
+		if ( $auth_header && strpos( $auth_header, 'Bearer ' ) === 0 ) {
+			$token = substr( $auth_header, 7 ); // Remove 'Bearer ' prefix
+			
+			// Validate the token and get user ID
+			$user_id = snks_validate_jalsah_token( $token );
+		}
+	}
+	
+	if ( ! $user_id ) {
 		return new WP_Error( 'not_logged_in', 'You must be logged in to book an appointment', array( 'status' => 401 ) );
 	}
 	
 	global $wpdb;
-	$current_user = wp_get_current_user();
+	$current_user = get_userdata( $user_id );
 	
 	// Verify the request belongs to the current user
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	$request = $wpdb->get_row( $wpdb->prepare(
 		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d AND status = 'pending'",
-		$request_id, $current_user->ID
+		$request_id, $user_id
 	) );
 	
 	if ( ! $request ) {
