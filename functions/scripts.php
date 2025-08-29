@@ -460,6 +460,8 @@ add_action(
 																			text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
 																			icon: 'error',
 																			confirmButtonText: 'حسناً'
+																		}).then(() => {
+																			location.reload();
 																		});
 																	}
 																},
@@ -470,6 +472,8 @@ add_action(
 																		text: 'حدث خطأ أثناء إرسال طلب روشتا',
 																		icon: 'error',
 																		confirmButtonText: 'حسناً'
+																	}).then(() => {
+																		location.reload();
 																	});
 																}
 															});
