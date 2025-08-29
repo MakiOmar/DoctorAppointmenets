@@ -5564,7 +5564,11 @@ function snks_is_ai_patient( $user_id ) {
  * @return int|false User ID if valid, false otherwise
  */
 function snks_validate_jalsah_token( $token ) {
+	error_log( '=== TOKEN VALIDATION DEBUG ===' );
+	error_log( "Token received: " . ( $token ? substr( $token, 0, 10 ) . '...' : 'NULL' ) );
+	
 	if ( ! $token ) {
+		error_log( 'Token is empty or null' );
 		return false;
 	}
 	
@@ -5578,14 +5582,27 @@ function snks_validate_jalsah_token( $token ) {
 		$token
 	) );
 	
+	error_log( "Database query result - User ID: " . ( $user_id ? $user_id : 'NOT FOUND' ) );
+	
 	if ( $user_id ) {
 		// Check if user exists and is active
 		$user = get_userdata( $user_id );
-		if ( $user && $user->user_status == 0 ) {
-			return intval( $user_id );
+		error_log( "User data check - User exists: " . ( $user ? 'YES' : 'NO' ) );
+		
+		if ( $user ) {
+			error_log( "User status: " . $user->user_status );
+			if ( $user->user_status == 0 ) {
+				error_log( "Token validation successful for user ID: $user_id" );
+				return intval( $user_id );
+			} else {
+				error_log( "User is not active (status: " . $user->user_status . ")" );
+			}
 		}
+	} else {
+		error_log( 'No user found with this token' );
 	}
 	
+	error_log( 'Token validation failed' );
 	return false;
 }
 
@@ -5651,34 +5668,53 @@ function snks_get_rochtah_available_slots_rest( $request ) {
  * Book Rochtah appointment via REST API
  */
 function snks_book_rochtah_appointment_rest( $request ) {
+	// Debug logging
+	error_log( '=== ROCHTAH BOOKING DEBUG START ===' );
+	error_log( 'Request parameters: ' . print_r( $request->get_params(), true ) );
+	
 	$request_id = $request->get_param( 'request_id' );
 	$selected_date = $request->get_param( 'selected_date' );
 	$selected_time = $request->get_param( 'selected_time' );
 	
+	error_log( "Request ID: $request_id, Date: $selected_date, Time: $selected_time" );
+	
 	if ( ! $request_id || ! $selected_date || ! $selected_time ) {
+		error_log( 'Missing parameters detected' );
 		return new WP_Error( 'missing_parameters', 'Request ID, date, and time are required', array( 'status' => 400 ) );
 	}
 	
 	// Check authentication - try both WordPress session and Bearer token
 	$user_id = null;
 	
+	error_log( 'Checking WordPress session authentication...' );
 	// First try WordPress session authentication
 	if ( is_user_logged_in() ) {
 		$user_id = get_current_user_id();
+		error_log( "WordPress session auth successful. User ID: $user_id" );
 	} else {
+		error_log( 'WordPress session auth failed, trying Bearer token...' );
 		// Try Bearer token authentication
 		$auth_header = $request->get_header( 'Authorization' );
+		error_log( "Authorization header: " . ( $auth_header ? $auth_header : 'NOT SET' ) );
+		
 		if ( $auth_header && strpos( $auth_header, 'Bearer ' ) === 0 ) {
 			$token = substr( $auth_header, 7 ); // Remove 'Bearer ' prefix
+			error_log( "Extracted token: " . substr( $token, 0, 10 ) . '...' );
 			
 			// Validate the token and get user ID
 			$user_id = snks_validate_jalsah_token( $token );
+			error_log( "Token validation result - User ID: " . ( $user_id ? $user_id : 'FAILED' ) );
+		} else {
+			error_log( 'No valid Authorization header found' );
 		}
 	}
 	
 	if ( ! $user_id ) {
+		error_log( 'Authentication failed - no valid user ID found' );
 		return new WP_Error( 'not_logged_in', 'You must be logged in to book an appointment', array( 'status' => 401 ) );
 	}
+	
+	error_log( "Authentication successful. Proceeding with user ID: $user_id" );
 	
 	global $wpdb;
 	$current_user = get_userdata( $user_id );
@@ -5740,6 +5776,7 @@ function snks_book_rochtah_appointment_rest( $request ) {
 			);
 		}
 		
+		error_log( 'Booking update successful' );
 		return array(
 			'success' => true,
 			'data' => array(
@@ -5750,6 +5787,9 @@ function snks_book_rochtah_appointment_rest( $request ) {
 			)
 		);
 	} else {
+		error_log( 'Booking update failed' );
 		return new WP_Error( 'booking_failed', 'Failed to book appointment. Please try again.', array( 'status' => 500 ) );
 	}
+	
+	error_log( '=== ROCHTAH BOOKING DEBUG END ===' );
 }
