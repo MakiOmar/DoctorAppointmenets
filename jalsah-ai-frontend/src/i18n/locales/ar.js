@@ -697,6 +697,7 @@ export default {
     prescriptionServices: 'خدمات الروشتة',
     prescriptionRequested: 'تم طلب الروشتة',
     bookFreeAppointment: 'احجز موعد مجاني',
+    bookAppointment: 'احجز موعد',
     pending: 'قيد الانتظار',
     confirmed: 'مؤكد',
     viewAppointment: 'عرض الموعد'

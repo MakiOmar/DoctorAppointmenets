@@ -741,6 +741,7 @@ export default {
     prescriptionServices: 'Prescription Services',
     prescriptionRequested: 'Prescription Requested',
     bookFreeAppointment: 'Book Free Appointment',
+    bookAppointment: 'Book Appointment',
     pending: 'Pending',
     confirmed: 'Confirmed',
     viewAppointment: 'View Appointment'
