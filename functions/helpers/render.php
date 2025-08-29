@@ -1455,10 +1455,7 @@ function snks_doctor_actions( $session ) {
 		$output .= '<div class="doctor-actions">';
 		$output .= '<form class="doctor_actions" method="post" action="">';
 		$output .= '<div class="patient-info">';
-		foreach ( $attendees as $index => $client ) {
-			$patient_name = get_user_meta( absint( $client ), 'nickname', true );
-			$output .= '<p><strong>المريض:</strong> ' . $patient_name . '</p>';
-		}
+
 		$output .= '</div>';
 		$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
 		$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
