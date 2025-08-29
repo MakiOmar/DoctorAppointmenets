@@ -727,7 +727,10 @@ export default {
     close: 'Close',
     successMessage: 'Prescription service request submitted successfully.',
     errorMessage: 'An error occurred. Please try again.',
-    reasonForReferral: 'Reason for Referral'
+    reasonForReferral: 'Reason for Referral',
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    viewAppointment: 'View Appointment'
   },
 
   // Profile

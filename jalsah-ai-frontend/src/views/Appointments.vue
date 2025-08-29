@@ -36,28 +36,11 @@
       </div>
 
       <!-- Prescription Requests Section -->
-      <div v-if="prescriptionRequests.length > 0" class="mb-8">
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 class="text-lg font-semibold text-blue-900 mb-4">{{ $t('prescription.prescriptionServices') }}</h3>
-          
-          <div v-for="request in prescriptionRequests" :key="request.id" class="mb-4 last:mb-0">
-            <div class="bg-white rounded-lg p-4 border border-blue-100">
-              <div class="mb-3">
-                <p class="text-blue-800 text-sm">{{ $t('prescription.prescriptionRequested') }}</p>
-              </div>
-              
-              <div class="flex justify-end">
-                <button 
-                  @click="showRochtahBookingModal(request.id)"
-                  class="btn-primary text-sm"
-                >
-                  {{ $t('prescription.bookFreeAppointment') }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PrescriptionCard 
+        :prescription-requests="prescriptionRequests"
+        @book-appointment="showRochtahBookingModal"
+        @view-appointment="viewRochtahAppointment"
+      />
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
@@ -353,8 +336,12 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import PrescriptionCard from '@/components/PrescriptionCard.vue'
 export default {
   name: 'Appointments',
+  components: {
+    PrescriptionCard
+  },
   setup() {
     const router = useRouter()
     const toast = useToast()
@@ -675,6 +662,15 @@ export default {
     const bookRochtahAppointment = () => {
       if (!selectedSlot.value) return
       showBookingConfirmModal.value = true
+    }
+
+    // View Rochtah appointment details
+    const viewRochtahAppointment = (requestId) => {
+      // Find the request
+      const request = prescriptionRequests.value.find(r => r.id === requestId)
+      if (request) {
+        toast.info(`Appointment scheduled for ${formatDate(request.booking_date)} at ${formatTime(request.booking_time)}`)
+      }
     }
 
     // Confirm and book Rochtah appointment

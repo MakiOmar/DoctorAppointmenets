@@ -683,7 +683,10 @@ export default {
     close: 'إغلاق',
     successMessage: 'تم تقديم طلب خدمة الروشتة بنجاح.',
     errorMessage: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
-    reasonForReferral: 'سبب الإحالة'
+    reasonForReferral: 'سبب الإحالة',
+    pending: 'قيد الانتظار',
+    confirmed: 'مؤكد',
+    viewAppointment: 'عرض الموعد'
   },
 
   // Profile
