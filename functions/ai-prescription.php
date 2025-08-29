@@ -363,7 +363,8 @@ function snks_get_rochtah_referral_reason( $booking_id ) {
 	if ( $booking ) {
 		return array(
 			'preliminary_diagnosis' => $booking->initial_diagnosis,
-			'symptoms' => $booking->symptoms
+			'symptoms' => $booking->symptoms,
+			'reason_for_referral' => $booking->reason_for_referral
 		);
 	}
 	

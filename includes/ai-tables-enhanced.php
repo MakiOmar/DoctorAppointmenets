@@ -42,6 +42,7 @@ function snks_create_enhanced_ai_tables() {
 		diagnosis_id INT(11) NOT NULL,
 		initial_diagnosis TEXT,
 		symptoms TEXT,
+		reason_for_referral TEXT,
 		booking_date DATE NOT NULL,
 		booking_time TIME NOT NULL,
 		status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'prescribed') DEFAULT 'pending',
@@ -122,6 +123,12 @@ function snks_create_enhanced_ai_tables() {
 	dbDelta( $rochtah_appointments_sql );
 	dbDelta( $analytics_sql );
 	dbDelta( $notifications_sql );
+	
+	// Add reason_for_referral column if it doesn't exist (for existing installations)
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $rochtah_bookings_table LIKE 'reason_for_referral'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD COLUMN reason_for_referral TEXT AFTER symptoms" );
+	}
 	
 	// Add AI meta fields to existing tables
 	snks_add_enhanced_ai_meta_fields();

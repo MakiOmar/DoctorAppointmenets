@@ -363,11 +363,15 @@ function snks_rochtah_doctor_dashboard() {
 						<div style="margin-top: 16px;">
 							<div style="margin-bottom: 20px;">
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Preliminary Diagnosis:</label>
-								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.preliminary_diagnosis}</div>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.preliminary_diagnosis || 'N/A'}</div>
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Symptoms:</label>
-								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.symptoms}</div>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.symptoms || 'N/A'}</div>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Reason for Referral:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb; margin-top: 8px; line-height: 1.6; white-space: pre-wrap;">${data.reason_for_referral || 'N/A'}</div>
 							</div>
 						</div>
 					`;
