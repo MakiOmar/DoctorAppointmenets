@@ -416,9 +416,9 @@ function snks_handle_session_doctor_actions() {
 /**
  * Handle Roshta request after session completion
  */
-add_action( 'wp_ajax_request_rochtah', 'snks_handle_rochtah_request' );
+add_action( 'wp_ajax_request_rochtah', 'snks_handle_session_rochtah_request' );
 
-function snks_handle_rochtah_request() {
+function snks_handle_session_rochtah_request() {
 	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_request_nonce' ) ) {
 		wp_send_json_error( 'Invalid nonce.' );
