@@ -754,6 +754,15 @@ function snks_rochtah_slots_admin_page() {
 			$end_time = sanitize_text_field( $_POST['end_time'] );
 			$slot_name = sanitize_text_field( $_POST['slot_name'] );
 			
+			// Validate that the time difference is exactly 15 minutes
+			$start_timestamp = strtotime( $start_time );
+			$end_timestamp = strtotime( $end_time );
+			$time_diff_minutes = ( $end_timestamp - $start_timestamp ) / 60;
+			
+			if ( $time_diff_minutes !== 15 ) {
+				echo '<div class="notice notice-error"><p>' . __( 'Error: The difference between start time and end time must be exactly 15 minutes!', 'shrinks' ) . '</p></div>';
+			} else {
+			
 			// Check if slot already exists for this day and start time
 			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
 			$existing_slot = $wpdb->get_row( $wpdb->prepare(
@@ -803,6 +812,7 @@ function snks_rochtah_slots_admin_page() {
 				echo '<div class="notice notice-success"><p>' . sprintf( __( '%d slots created successfully for the next 30 occurrences of %s!', 'shrinks' ), $slots_created, $day_of_week ) . '</p></div>';
 			} else {
 				echo '<div class="notice notice-warning"><p>' . __( 'No new slots were created. All slots for this day and time already exist.', 'shrinks' ) . '</p></div>';
+			}
 			}
 		} elseif ( $_POST['action'] === 'delete_slot' ) {
 			$slot_id = intval( $_POST['slot_id'] );
@@ -889,6 +899,40 @@ function snks_rochtah_slots_admin_page() {
 				
 				<?php submit_button( __( 'Add Slot', 'shrinks' ) ); ?>
 			</form>
+			
+			<script>
+			jQuery(document).ready(function($) {
+				// Validate time difference on form submission
+				$('form').on('submit', function(e) {
+					var startTime = $('select[name="start_time"]').val();
+					var endTime = $('select[name="end_time"]').val();
+					
+					if (startTime && endTime) {
+						var startTimestamp = new Date('2000-01-01 ' + startTime);
+						var endTimestamp = new Date('2000-01-01 ' + endTime);
+						var timeDiffMinutes = (endTimestamp - startTimestamp) / (1000 * 60);
+						
+						if (timeDiffMinutes !== 15) {
+							e.preventDefault();
+							alert('<?php _e( 'Error: The difference between start time and end time must be exactly 15 minutes!', 'shrinks' ); ?>');
+							return false;
+						}
+					}
+				});
+				
+				// Auto-select end time when start time is selected
+				$('select[name="start_time"]').on('change', function() {
+					var startTime = $(this).val();
+					if (startTime) {
+						var startTimestamp = new Date('2000-01-01 ' + startTime);
+						var endTimestamp = new Date(startTimestamp.getTime() + (15 * 60 * 1000)); // Add 15 minutes
+						var endTime = endTimestamp.toTimeString().slice(0, 8);
+						
+						$('select[name="end_time"]').val(endTime);
+					}
+				});
+			});
+			</script>
 		</div>
 		
 		<div class="card">
