@@ -742,6 +742,8 @@ export default {
     prescriptionRequested: 'Prescription Requested',
     bookFreeAppointment: 'Book Free Appointment',
     bookAppointment: 'Book Appointment',
+    confirmBooking: 'Confirm Booking',
+    confirmBookingMessage: 'Are you sure you want to book this appointment?',
     pending: 'Pending',
     confirmed: 'Confirmed',
     viewAppointment: 'View Appointment'

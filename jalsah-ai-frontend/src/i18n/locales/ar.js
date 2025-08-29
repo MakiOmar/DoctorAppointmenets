@@ -698,6 +698,8 @@ export default {
     prescriptionRequested: 'تم طلب الروشتة',
     bookFreeAppointment: 'احجز موعد مجاني',
     bookAppointment: 'احجز موعد',
+    confirmBooking: 'تأكيد الحجز',
+    confirmBookingMessage: 'هل أنت متأكد من أنك تريد حجز هذا الموعد؟',
     pending: 'قيد الانتظار',
     confirmed: 'مؤكد',
     viewAppointment: 'عرض الموعد'
