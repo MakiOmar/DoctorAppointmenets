@@ -736,6 +736,16 @@ export default {
     viewAppointment: 'View Appointment'
   },
 
+  // Prescription
+  prescription: {
+    prescriptionServices: 'Prescription Services',
+    prescriptionRequested: 'Prescription Requested',
+    bookFreeAppointment: 'Book Free Appointment',
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    viewAppointment: 'View Appointment'
+  },
+
   // Profile
   profile: {
     title: 'My Profile',

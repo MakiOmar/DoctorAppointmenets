@@ -90,11 +90,6 @@ export default {
   setup() {
     const { t, locale } = useI18n()
     
-    // Debug: Check if translation function is working
-    console.log('PrescriptionCard setup - locale:', locale.value)
-    console.log('PrescriptionCard setup - t function:', typeof t)
-    console.log('Test translation:', t('prescription.prescriptionServices'))
-    
     const formatDateWithLocale = (dateString) => {
       return formatDate(dateString, locale.value)
     }

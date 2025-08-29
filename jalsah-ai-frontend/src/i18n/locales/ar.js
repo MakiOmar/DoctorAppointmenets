@@ -692,6 +692,16 @@ export default {
     viewAppointment: 'عرض الموعد'
   },
 
+  // Prescription
+  prescription: {
+    prescriptionServices: 'خدمات الروشتة',
+    prescriptionRequested: 'تم طلب الروشتة',
+    bookFreeAppointment: 'احجز موعد مجاني',
+    pending: 'قيد الانتظار',
+    confirmed: 'مؤكد',
+    viewAppointment: 'عرض الموعد'
+  },
+
   // Profile
   profile: {
     title: 'ملفي الشخصي',
