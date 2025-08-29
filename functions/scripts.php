@@ -412,81 +412,87 @@ add_action(
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
-											// Show completion success message
-											Swal.fire({
-												title: 'تم بنجاح!',
-												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
-												icon: 'success',
-												confirmButtonText: 'حسناً'
-											}).then(() => {
-												// Ask about Roshta if this is an AI session
-												if (response.data.is_ai_session) {
-													Swal.fire({
-														title: 'هل تريد إرسال المريض لاستشارة روشتا؟',
-														text: 'هل تعتقد أن المريض يحتاج لاستشارة مع طبيب نفسي لوصف دواء؟',
-														icon: 'question',
-														showCancelButton: true,
-														confirmButtonColor: '#3085d6',
-														cancelButtonColor: '#6b7280',
-														confirmButtonText: 'نعم، أرسل لروشتا',
-														cancelButtonText: 'لا، شكراً'
-													}).then((rochtahResult) => {
-														if (rochtahResult.isConfirmed) {
-															// Send Roshta request
-															var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
-															$.ajax({
-																type: 'POST',
-																url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-																data: {
-																	action: 'request_rochtah',
-																	session_id: response.data.session_id,
-																	client_id: response.data.client_id,
-																	order_id: response.data.order_id,
-																	nonce: rochtahNonce
-																},
-																success: function(rochtahResponse) {
-																	if (rochtahResponse.success) {
-																		Swal.fire({
-																			title: 'تم إرسال طلب روشتا!',
-																			text: 'سيتم إعلام المريض بطلب روشتا',
-																			icon: 'success',
-																			confirmButtonText: 'حسناً'
-																		}).then(() => {
-																			location.reload();
-																		});
-																	} else {
-																		Swal.fire({
-																			title: 'خطأ!',
-																			text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
-																			icon: 'error',
-																			confirmButtonText: 'حسناً'
-																		}).then(() => {
-																			location.reload();
-																		});
-																	}
-																},
-																error: function(xhr, status, error) {
-																	console.error('Error:', error);
+											// Ask about Roshta if this is an AI session
+											if (response.data.is_ai_session) {
+												Swal.fire({
+													title: 'هل تريد إرسال المريض لاستشارة روشتا؟',
+													text: 'هل تعتقد أن المريض يحتاج لاستشارة مع طبيب نفسي لوصف دواء؟',
+													icon: 'question',
+													showCancelButton: true,
+													confirmButtonColor: '#3085d6',
+													cancelButtonColor: '#6b7280',
+													confirmButtonText: 'نعم، أرسل لروشتا',
+													cancelButtonText: 'لا، شكراً'
+												}).then((rochtahResult) => {
+													if (rochtahResult.isConfirmed) {
+														// Send Roshta request
+														var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
+														$.ajax({
+															type: 'POST',
+															url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+															data: {
+																action: 'request_rochtah',
+																session_id: response.data.session_id,
+																client_id: response.data.client_id,
+																order_id: response.data.order_id,
+																nonce: rochtahNonce
+															},
+															success: function(rochtahResponse) {
+																if (rochtahResponse.success) {
+																	Swal.fire({
+																		title: 'تم إرسال طلب روشتا!',
+																		text: 'سيتم إعلام المريض بطلب روشتا',
+																		icon: 'success',
+																		confirmButtonText: 'حسناً'
+																	}).then(() => {
+																		location.reload();
+																	});
+																} else {
 																	Swal.fire({
 																		title: 'خطأ!',
-																		text: 'حدث خطأ أثناء إرسال طلب روشتا',
+																		text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
 																		icon: 'error',
 																		confirmButtonText: 'حسناً'
 																	}).then(() => {
 																		location.reload();
 																	});
 																}
-															});
-														} else {
-															// User declined Roshta, just reload
+															},
+															error: function(xhr, status, error) {
+																console.error('Error:', error);
+																Swal.fire({
+																	title: 'خطأ!',
+																	text: 'حدث خطأ أثناء إرسال طلب روشتا',
+																	icon: 'error',
+																	confirmButtonText: 'حسناً'
+																}).then(() => {
+																	location.reload();
+																});
+															}
+														});
+													} else {
+														// User declined Roshta, show completion message and reload
+														Swal.fire({
+															title: 'تم بنجاح!',
+															text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+															icon: 'success',
+															confirmButtonText: 'حسناً'
+														}).then(() => {
 															location.reload();
-														}
-													});
-												} else {
-													// Not an AI session, just reload
+														});
+													}
+												});
+											} else {
+												// Not an AI session, show completion message and reload
+												Swal.fire({
+													title: 'تم بنجاح!',
+													text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+													icon: 'success',
+													confirmButtonText: 'حسناً'
+												}).then(() => {
 													location.reload();
-												}
-											});
+												});
+											}
 										} else {
 											Swal.fire({
 												title: 'خطأ!',
