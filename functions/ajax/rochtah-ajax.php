@@ -31,11 +31,12 @@ function snks_handle_rochtah_request() {
 	$diagnosis_id = intval( $_POST['diagnosis_id'] );
 	$initial_diagnosis = sanitize_textarea_field( $_POST['initial_diagnosis'] );
 	$symptoms = sanitize_textarea_field( $_POST['symptoms'] );
+	$reason_for_referral = sanitize_textarea_field( $_POST['reason_for_referral'] );
 	$preferred_date = sanitize_text_field( $_POST['preferred_date'] );
 	$preferred_time = sanitize_text_field( $_POST['preferred_time'] );
 	
 	// Validate required fields
-	if ( ! $therapist_id || ! $diagnosis_id || ! $initial_diagnosis || ! $symptoms ) {
+	if ( ! $therapist_id || ! $diagnosis_id || ! $initial_diagnosis || ! $symptoms || ! $reason_for_referral ) {
 		wp_send_json_error( 'All fields are required' );
 	}
 	
@@ -93,11 +94,12 @@ function snks_handle_rochtah_request() {
 			'diagnosis_id' => $diagnosis_id,
 			'initial_diagnosis' => $initial_diagnosis,
 			'symptoms' => $symptoms,
+			'reason_for_referral' => $reason_for_referral,
 			'booking_date' => $preferred_date,
 			'booking_time' => $preferred_time,
 			'status' => 'pending'
 		),
-		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 	);
 	
 	if ( $booking_id ) {

@@ -465,13 +465,14 @@ function snks_handle_session_rochtah_request() {
 	$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 	$initial_diagnosis = isset( $_POST['initial_diagnosis'] ) ? sanitize_textarea_field( $_POST['initial_diagnosis'] ) : '';
 	$symptoms = isset( $_POST['symptoms'] ) ? sanitize_textarea_field( $_POST['symptoms'] ) : '';
+	$reason_for_referral = isset( $_POST['reason_for_referral'] ) ? sanitize_textarea_field( $_POST['reason_for_referral'] ) : '';
 	
 	if ( ! $session_id || ! $client_id || ! $order_id ) {
 		wp_send_json_error( 'Missing required data.' );
 	}
 	
-	if ( empty( $initial_diagnosis ) || empty( $symptoms ) ) {
-		wp_send_json_error( 'Initial diagnosis and symptoms are required.' );
+	if ( empty( $initial_diagnosis ) || empty( $symptoms ) || empty( $reason_for_referral ) ) {
+		wp_send_json_error( 'Initial diagnosis, symptoms, and reason for referral are required.' );
 	}
 	
 	global $wpdb;
@@ -513,12 +514,13 @@ function snks_handle_session_rochtah_request() {
 			'therapist_id' => get_current_user_id(),
 			'initial_diagnosis' => $initial_diagnosis,
 			'symptoms' => $symptoms,
+			'reason_for_referral' => $reason_for_referral,
 			'booking_date' => current_time( 'Y-m-d' ),
 			'booking_time' => current_time( 'H:i:s' ),
 			'status' => 'pending',
 			'created_at' => current_time( 'mysql' )
 		),
-		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
 	);
 	
 	if ( $insert_result === false ) {

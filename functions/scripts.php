@@ -450,6 +450,10 @@ add_action(
 																		<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الاعراض التي تعتقد انها بحاجه لادوية:</label>
 																		<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
 																	</div>
+																	<div style="margin-bottom: 15px;">
+																		<label for="reason_for_referral" style="display: block; margin-bottom: 5px; font-weight: bold;">سبب الإحالة للطبيب النفسي:</label>
+																		<textarea id="reason_for_referral" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اشرح لماذا يحتاج المريض إلى استشارة طبيب نفسي..."></textarea>
+																	</div>
 																</div>
 															`,
 															showCancelButton: true,
@@ -460,6 +464,7 @@ add_action(
 															preConfirm: () => {
 																const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
 																const symptoms = document.getElementById('symptoms').value.trim();
+																const reasonForReferral = document.getElementById('reason_for_referral').value.trim();
 																
 																if (!initialDiagnosis) {
 																	Swal.showValidationMessage('يرجى إدخال التشخيص الأولي');
@@ -471,9 +476,15 @@ add_action(
 																	return false;
 																}
 																
+																if (!reasonForReferral) {
+																	Swal.showValidationMessage('يرجى إدخال سبب الإحالة');
+																	return false;
+																}
+																
 																return {
 																	initial_diagnosis: initialDiagnosis,
-																	symptoms: symptoms
+																	symptoms: symptoms,
+																	reason_for_referral: reasonForReferral
 																};
 															}
 														}).then((formResult) => {
@@ -491,6 +502,7 @@ add_action(
 																		order_id: response.data.order_id,
 																		initial_diagnosis: formResult.value.initial_diagnosis,
 																		symptoms: formResult.value.symptoms,
+																		reason_for_referral: formResult.value.reason_for_referral,
 																		nonce: rochtahNonce
 																	},
 																	success: function(rochtahResponse) {
