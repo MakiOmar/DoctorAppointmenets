@@ -738,8 +738,15 @@ function snks_get_rochtah_meeting_details_ajax() {
 		wp_send_json_error( __( 'Booking not found', 'shrinks' ) );
 	}
 	
-	// Check if user has access to this booking
-	if ( $meeting_details['patient_id'] != $current_user_id && $meeting_details['therapist_id'] != $current_user_id ) {
+	// Check if user has access to this booking (patient, therapist, or admin)
+	$has_access = (
+		$meeting_details['patient_id'] == $current_user_id || 
+		$meeting_details['therapist_id'] == $current_user_id ||
+		current_user_can( 'manage_options' ) ||
+		current_user_can( 'manage_rochtah' )
+	);
+	
+	if ( ! $has_access ) {
 		wp_send_json_error( __( 'Access denied', 'shrinks' ) );
 	}
 	
@@ -760,7 +767,7 @@ function snks_get_rochtah_meeting_details_doctor_ajax() {
 	}
 	
 	// Check if user has permission to access Rochtah doctor features
-	if ( ! current_user_can( 'manage_rochtah' ) ) {
+	if ( ! current_user_can( 'manage_rochtah' ) && ! current_user_can( 'manage_options' ) ) {
 		wp_send_json_error( __( 'You do not have permission to access this feature', 'shrinks' ) );
 	}
 	

@@ -5888,8 +5888,15 @@ function snks_get_rochtah_meeting_details_rest( $request ) {
 		return new WP_Error( 'booking_not_found', 'Booking not found', array( 'status' => 404 ) );
 	}
 	
-	// Check if user has access to this booking
-	if ( $meeting_details['patient_id'] != $user_id && $meeting_details['therapist_id'] != $user_id ) {
+	// Check if user has access to this booking (patient, therapist, or admin)
+	$has_access = (
+		$meeting_details['patient_id'] == $user_id || 
+		$meeting_details['therapist_id'] == $user_id ||
+		user_can( $user_id, 'manage_options' ) ||
+		user_can( $user_id, 'manage_rochtah' )
+	);
+	
+	if ( ! $has_access ) {
 		return new WP_Error( 'access_denied', 'Access denied', array( 'status' => 403 ) );
 	}
 	
