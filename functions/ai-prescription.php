@@ -709,7 +709,7 @@ function snks_get_rochtah_meeting_details( $booking_id ) {
 		'room_name' => $room_name,
 		'meeting_url' => $meeting_link,
 		'booking_date' => $booking->booking_date,
-		'booking_time' => $booking->time,
+		'booking_time' => $booking->booking_time,
 		'status' => $booking->status,
 		'patient_id' => $booking->patient_id,
 		'therapist_id' => $booking->therapist_id
