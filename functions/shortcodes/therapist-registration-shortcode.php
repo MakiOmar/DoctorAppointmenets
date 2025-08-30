@@ -283,8 +283,14 @@ function snks_therapist_registration_shortcode( $atts ) {
 				contentType: false,
 				success: function(response) {
 					if (response.success) {
-						messagesDiv.html('<div class="alert alert-success">' + response.data.message + '</div>');
-						$('#therapist-registration-form')[0].reset();
+						if (response.data.step === 'otp_verification') {
+							// Show OTP verification step
+							showOtpVerification(response.data);
+						} else {
+							// Direct success
+							messagesDiv.html('<div class="alert alert-success">' + response.data.message + '</div>');
+							$('#therapist-registration-form')[0].reset();
+						}
 					} else {
 						messagesDiv.html('<div class="alert alert-error">' + (response.data.message || 'Registration failed. Please try again.') + '</div>');
 					}
@@ -308,6 +314,87 @@ function snks_therapist_registration_shortcode( $atts ) {
 			$('#phone_country').val($(this).val());
 		});
 		<?php endif; ?>
+		
+		// Show OTP verification step
+		function showOtpVerification(data) {
+			const messagesDiv = $('#form-messages');
+			messagesDiv.html('<div class="alert alert-success">' + data.message + '</div>');
+			
+			// Hide main form and show OTP verification form
+			$('#therapist-registration-form').hide();
+			
+			const otpFormHtml = `
+				<div id="otp-verification-form" class="therapist-reg-form">
+					<h3>تحقق من رمز التأكيد</h3>
+					<p class="text-info">تم إرسال رمز التحقق إلى: ${data.contact_method}</p>
+					<div class="form-group">
+						<label for="otp_code">رمز التحقق (6 أرقام):</label>
+						<input type="text" id="otp_code" name="otp_code" maxlength="6" pattern="[0-9]{6}" 
+							placeholder="أدخل الرمز المكون من 6 أرقام" class="form-control" style="text-align: center; font-size: 18px; letter-spacing: 2px;" autocomplete="one-time-code">
+					</div>
+					<button type="button" id="verify-otp-btn" class="submit-btn" style="background: #10b981;">تحقق من الرمز</button>
+					<button type="button" id="cancel-otp-btn" class="submit-btn" style="background: #6b7280; margin-top: 10px;">إلغاء والعودة للنموذج</button>
+					<input type="hidden" id="session_key" value="${data.session_key}">
+				</div>
+			`;
+			
+			$('#therapist-registration-form').after(otpFormHtml);
+			
+			// OTP input handler (numbers only)
+			$('#otp_code').on('input', function() {
+				this.value = this.value.replace(/\D/g, '');
+			});
+			
+			// Verify OTP button handler
+			$('#verify-otp-btn').on('click', function() {
+				const otpCode = $('#otp_code').val();
+				const sessionKey = $('#session_key').val();
+				
+				if (!otpCode || otpCode.length !== 6) {
+					messagesDiv.html('<div class="alert alert-error">يرجى إدخال رمز التحقق المكون من 6 أرقام</div>');
+					return;
+				}
+				
+				// Disable button and show loading
+				$(this).prop('disabled', true).text('جاري التحقق...');
+				
+				// Send verification request
+				$.ajax({
+					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+					type: 'POST',
+					data: {
+						action: 'register_therapist_shortcode',
+						step: 'verify_otp',
+						session_key: sessionKey,
+						otp_code: otpCode,
+						nonce: '<?php echo wp_create_nonce( 'therapist_registration_shortcode' ); ?>'
+					},
+					success: function(response) {
+						if (response.success) {
+							messagesDiv.html('<div class="alert alert-success">' + response.data.message + '</div>');
+							$('#otp-verification-form').remove();
+							$('#therapist-registration-form')[0].reset();
+							$('#therapist-registration-form').show();
+						} else {
+							messagesDiv.html('<div class="alert alert-error">' + (response.data.message || 'فشل في التحقق من الرمز') + '</div>');
+						}
+					},
+					error: function() {
+						messagesDiv.html('<div class="alert alert-error">حدث خطأ أثناء التحقق. حاول مرة أخرى.</div>');
+					},
+					complete: function() {
+						$('#verify-otp-btn').prop('disabled', false).text('تحقق من الرمز');
+					}
+				});
+			});
+			
+			// Cancel OTP button handler
+			$('#cancel-otp-btn').on('click', function() {
+				$('#otp-verification-form').remove();
+				$('#therapist-registration-form').show();
+				messagesDiv.empty();
+			});
+		}
 	});
 	</script>
 	<?php
@@ -327,6 +414,12 @@ function snks_handle_therapist_registration_shortcode() {
 	
 	// Get settings
 	$settings = snks_get_therapist_registration_settings();
+	
+	// Check if this is OTP verification step
+	if ( isset( $_POST['step'] ) && $_POST['step'] === 'verify_otp' ) {
+		snks_handle_therapist_registration_otp_verification();
+		return;
+	}
 	
 	// Validate required fields
 	$required_fields = array( 'name', 'name_en', 'phone', 'whatsapp', 'doctor_specialty' );
@@ -365,36 +458,153 @@ function snks_handle_therapist_registration_shortcode() {
 		}
 	}
 	
-	// Handle file uploads
-	$uploaded_files = array();
-	$file_fields = array( 'profile_image', 'identity_front', 'identity_back' );
+	// Generate and send OTP based on method
+	$otp_code = rand( 100000, 999999 );
+	$otp_success = false;
+	$contact_method = '';
 	
-	foreach ( $file_fields as $field ) {
-		if ( ! empty( $_FILES[ $field ]['name'] ) ) {
-			$attachment_id = media_handle_upload( $field, 0 );
-			if ( ! is_wp_error( $attachment_id ) ) {
-				$uploaded_files[ $field ] = $attachment_id;
-			}
+	if ( $settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp ) ) {
+		$contact_method = $whatsapp;
+		$message = sprintf( 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s', $otp_code );
+		
+		// Use existing WhySMS function
+		$sms_result = send_sms_via_whysms( $whatsapp, $message );
+		
+		if ( ! is_wp_error( $sms_result ) ) {
+			$otp_success = true;
+		}
+	} elseif ( $settings['otp_method'] === 'email' && ! empty( $_POST['email'] ) ) {
+		$contact_method = $_POST['email'];
+		$subject = 'رمز التحقق - تسجيل المعالج في جلسة';
+		$message = sprintf( 'رمز التحقق الخاص بك: %s\n\nهذا الرمز صالح لمدة 10 دقائق.', $otp_code );
+		$headers = array(
+			'Content-Type: text/html; charset=UTF-8',
+			'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
+		);
+		
+		if ( wp_mail( $contact_method, $subject, $message, $headers ) ) {
+			$otp_success = true;
 		}
 	}
 	
-	// Handle certificates (multiple files)
-	$certificates = array();
-	if ( ! empty( $_FILES['certificates'] ) ) {
-		$files = $_FILES['certificates'];
-		for ( $i = 0; $i < count( $files['name'] ); $i++ ) {
-			if ( ! empty( $files['name'][ $i ] ) ) {
-				$_FILES['certificate_' . $i] = array(
-					'name' => $files['name'][ $i ],
-					'type' => $files['type'][ $i ],
-					'tmp_name' => $files['tmp_name'][ $i ],
-					'error' => $files['error'][ $i ],
-					'size' => $files['size'][ $i ]
+	if ( $otp_success ) {
+		// Store OTP and form data temporarily
+		$session_key = md5( $contact_method . time() );
+		set_transient( 'therapist_reg_otp_' . $session_key, $otp_code, 10 * MINUTE_IN_SECONDS );
+		set_transient( 'therapist_reg_data_' . $session_key, $_POST, 10 * MINUTE_IN_SECONDS );
+		set_transient( 'therapist_reg_files_' . $session_key, $_FILES, 10 * MINUTE_IN_SECONDS );
+		
+		$otp_message = $settings['otp_method'] === 'whatsapp' 
+			? 'تم إرسال رمز التحقق إلى واتساب.' 
+			: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني.';
+			
+		wp_send_json_success( array( 
+			'message' => $otp_message . ' يرجى إدخال الرمز للمتابعة.',
+			'step' => 'otp_verification',
+			'session_key' => $session_key,
+			'contact_method' => $contact_method
+		) );
+	} else {
+		$error_message = $settings['otp_method'] === 'whatsapp' 
+			? 'فشل في إرسال رمز التحقق عبر واتساب.' 
+			: 'فشل في إرسال رمز التحقق عبر البريد الإلكتروني.';
+			
+		wp_send_json_error( array( 'message' => $error_message . ' حاول مرة أخرى.' ) );
+	}
+	
+}
+
+/**
+ * Handle OTP verification for therapist registration
+ */
+function snks_handle_therapist_registration_otp_verification() {
+	$session_key = sanitize_text_field( $_POST['session_key'] ?? '' );
+	$entered_otp = sanitize_text_field( $_POST['otp_code'] ?? '' );
+	
+	if ( empty( $session_key ) || empty( $entered_otp ) ) {
+		wp_send_json_error( array( 'message' => 'Missing verification data' ) );
+	}
+	
+	// Retrieve stored OTP and form data
+	$stored_otp = get_transient( 'therapist_reg_otp_' . $session_key );
+	$form_data = get_transient( 'therapist_reg_data_' . $session_key );
+	$files_data = get_transient( 'therapist_reg_files_' . $session_key );
+	
+	if ( ! $stored_otp || ! $form_data ) {
+		wp_send_json_error( array( 'message' => 'Verification code expired. Please try again.' ) );
+	}
+	
+	if ( $entered_otp !== $stored_otp ) {
+		wp_send_json_error( array( 'message' => 'Invalid verification code. Please try again.' ) );
+	}
+	
+	// OTP verified, process the registration
+	$settings = snks_get_therapist_registration_settings();
+	
+	// Process phone numbers with country codes (recreate from stored data)
+	$phone = $form_data['phone'];
+	$whatsapp = $form_data['whatsapp'];
+	
+	if ( $settings['country_dial_required'] ) {
+		$country_codes = snks_get_country_dial_codes();
+		$phone_country = $form_data['phone_country'] ?? $settings['default_country'];
+		$whatsapp_country = $form_data['whatsapp_country'] ?? $settings['default_country'];
+		
+		if ( isset( $country_codes[ $phone_country ] ) ) {
+			$phone = $country_codes[ $phone_country ]['code'] . $phone;
+		}
+		
+		if ( isset( $country_codes[ $whatsapp_country ] ) ) {
+			$whatsapp = $country_codes[ $whatsapp_country ]['code'] . $whatsapp;
+		}
+	}
+	
+	// Handle file uploads using the stored $_FILES data
+	$uploaded_files = array();
+	$file_fields = array( 'profile_image', 'identity_front', 'identity_back' );
+	
+	// Restore $_FILES from stored data for processing
+	if ( $files_data ) {
+		foreach ( $file_fields as $field ) {
+			if ( ! empty( $files_data[ $field ]['name'] ) ) {
+				// Create a temporary file upload array
+				$file_array = array(
+					'name'     => $files_data[ $field ]['name'],
+					'type'     => $files_data[ $field ]['type'],
+					'tmp_name' => $files_data[ $field ]['tmp_name'],
+					'error'    => $files_data[ $field ]['error'],
+					'size'     => $files_data[ $field ]['size']
 				);
 				
-				$attachment_id = media_handle_upload( 'certificate_' . $i, 0 );
-				if ( ! is_wp_error( $attachment_id ) ) {
-					$certificates[] = $attachment_id;
+				// Only process if the temporary file still exists
+				if ( file_exists( $file_array['tmp_name'] ) ) {
+					$_FILES[ $field ] = $file_array;
+					$attachment_id = media_handle_upload( $field, 0 );
+					if ( ! is_wp_error( $attachment_id ) ) {
+						$uploaded_files[ $field ] = $attachment_id;
+					}
+				}
+			}
+		}
+		
+		// Handle certificates (multiple files)
+		$certificates = array();
+		if ( ! empty( $files_data['certificates'] ) ) {
+			$files = $files_data['certificates'];
+			for ( $i = 0; $i < count( $files['name'] ); $i++ ) {
+				if ( ! empty( $files['name'][ $i ] ) && file_exists( $files['tmp_name'][ $i ] ) ) {
+					$_FILES['certificate_' . $i] = array(
+						'name' => $files['name'][ $i ],
+						'type' => $files['type'][ $i ],
+						'tmp_name' => $files['tmp_name'][ $i ],
+						'error' => $files['error'][ $i ],
+						'size' => $files['size'][ $i ]
+					);
+					
+					$attachment_id = media_handle_upload( 'certificate_' . $i, 0 );
+					if ( ! is_wp_error( $attachment_id ) ) {
+						$certificates[] = $attachment_id;
+					}
 				}
 			}
 		}
@@ -407,12 +617,12 @@ function snks_handle_therapist_registration_shortcode() {
 	$result = $wpdb->insert(
 		$table_name,
 		array(
-			'name' => sanitize_text_field( $_POST['name'] ),
-			'name_en' => sanitize_text_field( $_POST['name_en'] ),
-			'email' => sanitize_email( $_POST['email'] ?? '' ),
+			'name' => sanitize_text_field( $form_data['name'] ),
+			'name_en' => sanitize_text_field( $form_data['name_en'] ),
+			'email' => sanitize_email( $form_data['email'] ?? '' ),
 			'phone' => sanitize_text_field( $phone ),
 			'whatsapp' => sanitize_text_field( $whatsapp ),
-			'doctor_specialty' => sanitize_text_field( $_POST['doctor_specialty'] ),
+			'doctor_specialty' => sanitize_text_field( $form_data['doctor_specialty'] ),
 			'profile_image' => $uploaded_files['profile_image'] ?? null,
 			'identity_front' => $uploaded_files['identity_front'] ?? null,
 			'identity_back' => $uploaded_files['identity_back'] ?? null,
@@ -425,30 +635,29 @@ function snks_handle_therapist_registration_shortcode() {
 	);
 	
 	if ( $result ) {
+		// Clean up transients
+		delete_transient( 'therapist_reg_otp_' . $session_key );
+		delete_transient( 'therapist_reg_data_' . $session_key );
+		delete_transient( 'therapist_reg_files_' . $session_key );
+		
 		// Send notification email to admin
 		$admin_email = get_option( 'admin_email' );
 		$subject = 'New Therapist Registration Application';
 		$message = sprintf(
 			"A new therapist has submitted a registration application.\n\nName: %s\nEmail: %s\nPhone: %s\nSpecialty: %s\n\nPlease review the application in the admin dashboard.",
-			$_POST['name'],
-			$_POST['email'] ?? 'Not provided',
+			$form_data['name'],
+			$form_data['email'] ?? 'Not provided',
 			$phone,
-			$_POST['doctor_specialty']
+			$form_data['doctor_specialty']
 		);
 		
 		wp_mail( $admin_email, $subject, $message );
 		
-		// Success message based on OTP method
-		if ( $settings['otp_method'] === 'email' && ! empty( $_POST['email'] ) ) {
-			$success_message = 'Application submitted successfully! Please check your email for further instructions.';
-		} else {
-			$success_message = 'Application submitted successfully! You will be contacted via WhatsApp for verification.';
-		}
-		
-		wp_send_json_success( array( 'message' => $success_message ) );
+		wp_send_json_success( array( 'message' => 'تم التحقق بنجاح! تم إرسال طلبك وسيتم مراجعته قريباً.' ) );
 	} else {
-		wp_send_json_error( array( 'message' => 'Failed to submit application. Please try again.' ) );
+		wp_send_json_error( array( 'message' => 'حدث خطأ أثناء حفظ الطلب. حاول مرة أخرى.' ) );
 	}
 }
+
 add_action( 'wp_ajax_register_therapist_shortcode', 'snks_handle_therapist_registration_shortcode' );
 add_action( 'wp_ajax_nopriv_register_therapist_shortcode', 'snks_handle_therapist_registration_shortcode' );

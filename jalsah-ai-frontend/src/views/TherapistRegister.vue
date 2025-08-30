@@ -103,7 +103,47 @@
             </div>
             <div v-if="error" class="text-red-600 text-sm">{{ error }}</div>
             <div v-if="success" class="text-green-600 text-sm">{{ success }}</div>
-            <button type="submit" class="btn btn-primary w-full" :disabled="loading">
+            
+            <!-- OTP Verification Step -->
+            <div v-if="showOtpStep" class="otp-verification-section border-t pt-4 mt-4">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">تحقق من رمز التأكيد</h3>
+              <p class="text-sm text-gray-600 mb-4">
+                تم إرسال رمز التحقق إلى: {{ contactMethod }}
+              </p>
+              <div class="mb-4">
+                <label class="form-label" for="otp_code">رمز التحقق (6 أرقام)</label>
+                <input 
+                  v-model="otpCode" 
+                  id="otp_code" 
+                  type="text" 
+                  maxlength="6" 
+                  pattern="[0-9]{6}"
+                  placeholder="أدخل الرمز المكون من 6 أرقام"
+                  class="input-field text-center text-lg tracking-widest" 
+                  autocomplete="one-time-code"
+                  @input="otpCode = otpCode.replace(/\D/g, '')"
+                />
+              </div>
+              <button 
+                @click="verifyOtp" 
+                type="button" 
+                class="btn btn-success w-full mb-2" 
+                :disabled="loading || otpCode.length !== 6"
+              >
+                <span v-if="loading">جاري التحقق...</span>
+                <span v-else>تحقق من الرمز</span>
+              </button>
+              <button 
+                @click="showOtpStep = false; resetForm()" 
+                type="button" 
+                class="btn btn-secondary w-full text-sm"
+              >
+                إلغاء والعودة للنموذج
+              </button>
+            </div>
+            
+            <!-- Regular Submit Button (hidden during OTP step) -->
+            <button v-if="!showOtpStep" type="submit" class="btn btn-primary w-full" :disabled="loading">
               <span v-if="loading">{{ $t('therapistRegister.submitting') }}</span>
               <span v-else>{{ $t('therapistRegister.submit') }}</span>
             </button>
@@ -150,6 +190,12 @@ const loading = ref(false)
 const error = ref('')
 const success = ref('')
 
+// OTP verification state
+const showOtpStep = ref(false)
+const otpCode = ref('')
+const sessionKey = ref('')
+const contactMethod = ref('')
+
 function onFileChange(event, field, multiple = false) {
   if (multiple) {
     form.value[field] = Array.from(event.target.files)
@@ -162,8 +208,13 @@ async function onSubmit() {
   error.value = ''
   success.value = ''
   loading.value = true
+  
   try {
     const data = new FormData()
+    
+    // Add nonce for security
+    data.append('nonce', window.ajaxData?.nonce || '')
+    
     for (const key in form.value) {
       if (key === 'certificates' && Array.isArray(form.value.certificates)) {
         form.value.certificates.forEach((file, idx) => {
@@ -175,14 +226,22 @@ async function onSubmit() {
         data.append(key, form.value[key])
       }
     }
-    data.append('action', 'register_therapist')
+    
+    data.append('action', 'register_therapist_shortcode')
+    
     const response = await axios.post('/wp-admin/admin-ajax.php', data)
+    
     if (response.data.success) {
-      success.value = t('therapistRegister.applicationSubmitted')
-      form.value = {
-        name: '', name_en: '', email: '', phone: '', whatsapp: '', doctor_specialty: '',
-        profile_image: null, identity_front: null, identity_back: null, certificates: [],
-        password: '', password_confirm: '', accept_terms: false
+      if (response.data.data.step === 'otp_verification') {
+        // Show OTP verification step
+        showOtpStep.value = true
+        sessionKey.value = response.data.data.session_key
+        contactMethod.value = response.data.data.contact_method
+        success.value = response.data.data.message
+      } else {
+        // Direct success (shouldn't happen with current setup)
+        success.value = response.data.data.message
+        resetForm()
       }
     } else {
       error.value = response.data.data?.message || t('therapistRegister.error')
@@ -192,6 +251,51 @@ async function onSubmit() {
   } finally {
     loading.value = false
   }
+}
+
+async function verifyOtp() {
+  if (!otpCode.value || otpCode.value.length !== 6) {
+    error.value = 'يرجى إدخال رمز التحقق المكون من 6 أرقام'
+    return
+  }
+  
+  error.value = ''
+  loading.value = true
+  
+  try {
+    const data = new FormData()
+    data.append('nonce', window.ajaxData?.nonce || '')
+    data.append('action', 'register_therapist_shortcode')
+    data.append('step', 'verify_otp')
+    data.append('session_key', sessionKey.value)
+    data.append('otp_code', otpCode.value)
+    
+    const response = await axios.post('/wp-admin/admin-ajax.php', data)
+    
+    if (response.data.success) {
+      success.value = response.data.data.message
+      showOtpStep.value = false
+      resetForm()
+    } else {
+      error.value = response.data.data?.message || 'فشل في التحقق من الرمز'
+    }
+  } catch (e) {
+    error.value = e.response?.data?.data?.message || 'حدث خطأ أثناء التحقق'
+  } finally {
+    loading.value = false
+  }
+}
+
+function resetForm() {
+  form.value = {
+    name: '', name_en: '', email: '', phone: '', whatsapp: '', doctor_specialty: '',
+    profile_image: null, identity_front: null, identity_back: null, certificates: [],
+    password: '', password_confirm: '', accept_terms: false,
+    phone_country: 'EG', whatsapp_country: 'EG'
+  }
+  otpCode.value = ''
+  sessionKey.value = ''
+  contactMethod.value = ''
 }
 
 onMounted(() => {
@@ -229,6 +333,37 @@ onMounted(() => {
 .btn-primary:disabled {
   background: #a5b4fc;
   cursor: not-allowed;
+}
+.btn-success {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-success:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: #6b7280;
+  color: #fff;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: #4b5563;
+}
+.otp-verification-section {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
 }
 .phone-input-group {
   display: flex;
