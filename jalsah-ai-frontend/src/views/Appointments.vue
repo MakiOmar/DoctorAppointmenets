@@ -38,9 +38,11 @@
       <!-- Prescription Requests Section -->
       <PrescriptionCard 
         :prescription-requests="prescriptionRequests"
+        :completed-prescriptions="completedPrescriptions"
         @book-appointment="showRochtahBookingModal"
         @view-appointment="viewRochtahAppointment"
         @join-meeting="joinRochtahMeeting"
+        @view-prescription="viewPrescriptionDetails"
       />
 
       <!-- Loading State -->
@@ -385,6 +387,92 @@
         </div>
       </div>
     </div>
+
+    <!-- Prescription Details Modal -->
+    <div v-if="showPrescriptionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <!-- Modal Header -->
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-gray-900">
+              {{ $t('prescription.prescriptionDetails') }}
+            </h3>
+            <button 
+              @click="closePrescriptionModal"
+              class="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+
+          <div v-if="selectedPrescription" class="space-y-4">
+            <!-- Basic Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg">
+              <div>
+                <span class="font-medium text-gray-700">{{ $t('prescription.prescribedBy') }}:</span>
+                <div class="text-gray-900">{{ selectedPrescription.prescribed_by_name }}</div>
+              </div>
+              <div>
+                <span class="font-medium text-gray-700">{{ $t('prescription.prescribedAt') }}:</span>
+                <div class="text-gray-900">{{ formatDate(selectedPrescription.prescribed_at) }}</div>
+              </div>
+            </div>
+
+            <!-- Prescription Text -->
+            <div v-if="selectedPrescription.prescription_text" class="p-4 bg-gray-50 rounded-lg">
+              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.prescriptionText') }}:</h4>
+              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.prescription_text }}</div>
+            </div>
+
+            <!-- Medications -->
+            <div v-if="selectedPrescription.medications" class="p-4 bg-green-50 rounded-lg">
+              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.medications') }}:</h4>
+              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.medications }}</div>
+            </div>
+
+            <!-- Dosage Instructions -->
+            <div v-if="selectedPrescription.dosage_instructions" class="p-4 bg-yellow-50 rounded-lg">
+              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.dosageInstructions') }}:</h4>
+              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.dosage_instructions }}</div>
+            </div>
+
+            <!-- Doctor Notes -->
+            <div v-if="selectedPrescription.doctor_notes" class="p-4 bg-purple-50 rounded-lg">
+              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.doctorNotes') }}:</h4>
+              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.doctor_notes }}</div>
+            </div>
+
+            <!-- Initial Diagnosis & Symptoms -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div v-if="selectedPrescription.initial_diagnosis" class="p-4 bg-orange-50 rounded-lg">
+                <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.initialDiagnosis') }}:</h4>
+                <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.initial_diagnosis }}</div>
+              </div>
+              <div v-if="selectedPrescription.symptoms" class="p-4 bg-red-50 rounded-lg">
+                <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.symptoms') }}:</h4>
+                <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.symptoms }}</div>
+              </div>
+            </div>
+
+            <!-- Reason for Referral -->
+            <div v-if="selectedPrescription.reason_for_referral" class="p-4 bg-teal-50 rounded-lg">
+              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.reasonForReferral') }}:</h4>
+              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.reason_for_referral }}</div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="flex justify-end pt-6 border-t">
+            <button 
+              @click="closePrescriptionModal"
+              class="btn-outline px-6 py-2"
+            >
+              {{ $t('common.close') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -416,6 +504,7 @@ export default {
     
     // Rochtah booking related refs
     const prescriptionRequests = ref([])
+    const completedPrescriptions = ref([])
     const showRochtahModal = ref(false)
     const showBookingConfirmModal = ref(false)
     const loadingSlots = ref(false)
@@ -427,6 +516,10 @@ export default {
     // Rochtah session related refs
     const showRochtahSessionModal = ref(false)
     const rochtahMeetingDetails = ref(null)
+
+    // Prescription viewing related refs
+    const showPrescriptionModal = ref(false)
+    const selectedPrescription = ref(null)
 
     const tabs = computed(() => [
       { 
@@ -682,6 +775,21 @@ export default {
       }
     }
 
+    // Load completed prescriptions
+    const loadCompletedPrescriptions = async () => {
+      try {
+        const response = await api.get('/wp-json/jalsah-ai/v1/completed-prescriptions', {
+          params: {
+            user_id: authStore.user?.id,
+            locale: locale.value
+          }
+        })
+        completedPrescriptions.value = response.data.data || []
+      } catch (error) {
+        console.error('Error loading completed prescriptions:', error)
+      }
+    }
+
     // Show Rochtah booking modal
     const showRochtahBookingModal = async (requestId) => {
       currentRequestId.value = requestId
@@ -903,11 +1011,23 @@ export default {
       }
     }
 
+    // View prescription details
+    const viewPrescriptionDetails = (prescription) => {
+      selectedPrescription.value = prescription
+      showPrescriptionModal.value = true
+    }
+
+    // Close prescription modal
+    const closePrescriptionModal = () => {
+      showPrescriptionModal.value = false
+      selectedPrescription.value = null
+    }
 
 
     onMounted(() => {
       loadAppointments()
       loadPrescriptionRequests()
+      loadCompletedPrescriptions()
     })
 
     return {
@@ -932,6 +1052,8 @@ export default {
       bookWithSameTherapist,
       // Rochtah booking related
       prescriptionRequests,
+      completedPrescriptions,
+      loadCompletedPrescriptions,
       showRochtahModal,
       showBookingConfirmModal,
       loadingSlots,
@@ -945,6 +1067,10 @@ export default {
       showRochtahSessionModal,
       rochtahMeetingDetails,
       selectSlot,
+      viewPrescriptionDetails,
+      closePrescriptionModal,
+      showPrescriptionModal,
+      selectedPrescription,
       bookRochtahAppointment,
       confirmRochtahBooking,
       viewRochtahAppointment

@@ -173,6 +173,13 @@ class SNKS_AI_Integration {
 			'callback' => 'snks_get_prescription_requests_rest',
 			'permission_callback' => '__return_true',
 		) );
+
+		// Completed prescriptions endpoint
+		register_rest_route( 'jalsah-ai/v1', '/completed-prescriptions', array(
+			'methods' => 'GET',
+			'callback' => 'snks_get_completed_prescriptions_rest',
+			'permission_callback' => '__return_true',
+		) );
 		
 		// Rochtah available slots endpoint
 		register_rest_route( 'jalsah-ai/v1', '/rochtah-available-slots', array(
@@ -5691,6 +5698,51 @@ function snks_get_prescription_requests_rest( $request ) {
 	return array(
 		'success' => true,
 		'data' => $prescription_requests
+	);
+}
+
+/**
+ * Get completed prescriptions via REST API
+ */
+function snks_get_completed_prescriptions_rest( $request ) {
+	$user_id = $request->get_param( 'user_id' );
+	$locale = $request->get_param( 'locale' ) ?: 'en';
+	
+	if ( ! $user_id ) {
+		return new WP_Error( 'missing_user_id', 'User ID is required', array( 'status' => 400 ) );
+	}
+	
+	// Check if function exists (it should be in ai-prescription.php)
+	if ( ! function_exists( 'snks_get_patient_completed_prescriptions' ) ) {
+		return new WP_Error( 'function_not_found', 'Prescription function not available', array( 'status' => 500 ) );
+	}
+	
+	$completed_prescriptions = snks_get_patient_completed_prescriptions( $user_id );
+	
+	// Format the prescription data for frontend consumption
+	$formatted_prescriptions = array();
+	foreach ( $completed_prescriptions as $prescription ) {
+		$formatted_prescriptions[] = array(
+			'id' => $prescription->id,
+			'booking_date' => $prescription->booking_date,
+			'booking_time' => $prescription->booking_time,
+			'prescribed_at' => $prescription->prescribed_at,
+			'prescribed_by_name' => $prescription->prescribed_by_name,
+			'therapist_name' => $prescription->therapist_name,
+			'prescription_text' => $prescription->prescription_text,
+			'medications' => $prescription->medications,
+			'dosage_instructions' => $prescription->dosage_instructions,
+			'doctor_notes' => $prescription->doctor_notes,
+			'initial_diagnosis' => $prescription->initial_diagnosis,
+			'symptoms' => $prescription->symptoms,
+			'reason_for_referral' => $prescription->reason_for_referral,
+			'status' => $prescription->status
+		);
+	}
+	
+	return array(
+		'success' => true,
+		'data' => $formatted_prescriptions
 	);
 }
 

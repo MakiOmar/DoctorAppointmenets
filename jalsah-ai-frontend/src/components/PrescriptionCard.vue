@@ -1,5 +1,5 @@
 <template>
-  <div v-if="prescriptionRequests.length > 0" class="mb-8">
+  <div v-if="prescriptionRequests.length > 0 || completedPrescriptions.length > 0" class="mb-8">
     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
       <h3 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,6 +76,57 @@
             </div>
           </div>
         </div>
+        
+        <!-- Completed Prescriptions Section -->
+        <div v-if="completedPrescriptions.length > 0" class="mt-6">
+          <h4 class="text-md font-semibold text-blue-900 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {{ t('prescription.completedPrescriptions') || 'My Prescriptions' }}
+          </h4>
+          
+          <div class="space-y-3">
+            <div 
+              v-for="prescription in completedPrescriptions" 
+              :key="prescription.id"
+              class="bg-green-50 rounded-lg p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <!-- Prescription Header -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center">
+                  <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                  <span class="text-green-800 text-sm font-medium">{{ t('prescription.viewPrescription') || 'Prescription Ready' }}</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ formatDate(prescription.prescribed_at) }}
+                </div>
+              </div>
+              
+              <!-- Prescription Details -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-sm">
+                <div>
+                  <span class="font-medium text-gray-700">{{ t('prescription.prescribedBy') }}:</span>
+                  <span class="text-gray-900">{{ prescription.prescribed_by_name }}</span>
+                </div>
+                <div>
+                  <span class="font-medium text-gray-700">{{ t('prescription.prescribedAt') }}:</span>
+                  <span class="text-gray-900">{{ formatDate(prescription.booking_date) }} - {{ prescription.booking_time }}</span>
+                </div>
+              </div>
+              
+              <!-- Action Button -->
+              <div class="flex justify-end">
+                <button 
+                  @click="$emit('view-prescription', prescription)"
+                  class="btn-primary text-sm px-4 py-2"
+                >
+                  {{ t('prescription.viewPrescription') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -91,9 +142,13 @@ export default {
     prescriptionRequests: {
       type: Array,
       default: () => []
+    },
+    completedPrescriptions: {
+      type: Array,
+      default: () => []
     }
   },
-  emits: ['book-appointment', 'view-appointment', 'join-meeting'],
+  emits: ['book-appointment', 'view-appointment', 'join-meeting', 'view-prescription'],
   setup() {
     const { t, locale } = useI18n()
     

@@ -661,6 +661,36 @@ function snks_get_prescription_requests_ajax() {
 add_action( 'wp_ajax_get_prescription_requests', 'snks_get_prescription_requests_ajax' );
 
 /**
+ * Get patient's completed prescriptions
+ */
+function snks_get_patient_completed_prescriptions( $patient_id = null ) {
+	if ( ! $patient_id ) {
+		$patient_id = get_current_user_id();
+	}
+	
+	global $wpdb;
+	
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$completed_prescriptions = $wpdb->get_results( $wpdb->prepare(
+		"SELECT rb.*, 
+		        t.display_name as therapist_name,
+		        prescriber.display_name as prescribed_by_name,
+		        s.date_time,
+		        s.starts,
+		        s.ends
+		FROM $rochtah_bookings_table rb
+		LEFT JOIN {$wpdb->users} t ON rb.therapist_id = t.ID
+		LEFT JOIN {$wpdb->users} prescriber ON rb.prescribed_by = prescriber.ID
+		LEFT JOIN {$wpdb->prefix}snks_provider_timetable s ON rb.session_id = s.ID
+		WHERE rb.patient_id = %d AND rb.status = 'prescribed'
+		ORDER BY rb.prescribed_at DESC",
+		$patient_id
+	) );
+	
+	return $completed_prescriptions;
+}
+
+/**
  * Generate Jitsi meeting link for Rochtah appointment
  */
 function snks_generate_rochtah_meeting_link( $booking_id ) {

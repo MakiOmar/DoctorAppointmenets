@@ -740,6 +740,7 @@ export default {
   prescription: {
     prescriptionServices: 'Prescription Services',
     prescriptionRequested: 'Prescription Requested',
+    completedPrescriptions: 'My Prescriptions',
     bookFreeAppointment: 'Book Free Appointment',
     bookAppointment: 'Book Appointment',
     confirmBooking: 'Confirm Booking',
@@ -750,7 +751,20 @@ export default {
     startMeeting: 'Start Meeting',
     pending: 'Pending',
     confirmed: 'Confirmed',
-    viewAppointment: 'View Appointment'
+    viewAppointment: 'View Appointment',
+    viewPrescription: 'View Prescription',
+    prescriptionDetails: 'Prescription Details',
+    prescribedBy: 'Prescribed by',
+    prescribedAt: 'Prescribed on',
+    medications: 'Medications',
+    dosageInstructions: 'Dosage Instructions',
+    doctorNotes: 'Doctor Notes',
+    initialDiagnosis: 'Initial Diagnosis',
+    symptoms: 'Symptoms',
+    reasonForReferral: 'Reason for Referral',
+    prescriptionText: 'Prescription',
+    noPrescriptions: 'No prescriptions available',
+    loadingPrescriptions: 'Loading prescriptions...'
   },
 
   // Profile

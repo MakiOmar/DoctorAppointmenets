@@ -696,6 +696,7 @@ export default {
   prescription: {
     prescriptionServices: 'خدمات الروشتة',
     prescriptionRequested: 'تم طلب الروشتة',
+    completedPrescriptions: 'الروشتات الخاصة بي',
     bookFreeAppointment: 'احجز موعد مجاني',
     bookAppointment: 'احجز موعد',
     confirmBooking: 'تأكيد الحجز',
@@ -706,7 +707,20 @@ export default {
     startMeeting: 'ابدأ الجلسة',
     pending: 'قيد الانتظار',
     confirmed: 'مؤكد',
-    viewAppointment: 'عرض الموعد'
+    viewAppointment: 'عرض الموعد',
+    viewPrescription: 'عرض الروشتة',
+    prescriptionDetails: 'تفاصيل الروشتة',
+    prescribedBy: 'وصفت من قبل',
+    prescribedAt: 'تاريخ الوصف',
+    medications: 'الأدوية',
+    dosageInstructions: 'تعليمات الجرعة',
+    doctorNotes: 'ملاحظات الطبيب',
+    initialDiagnosis: 'التشخيص الأولي',
+    symptoms: 'الأعراض',
+    reasonForReferral: 'سبب الإحالة',
+    prescriptionText: 'الروشتة',
+    noPrescriptions: 'لا توجد روشتات متاحة',
+    loadingPrescriptions: 'جاري تحميل الروشتات...'
   },
 
   // Profile
