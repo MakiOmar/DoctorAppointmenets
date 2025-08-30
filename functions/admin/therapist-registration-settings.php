@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function snks_add_therapist_registration_settings_page() {
 	add_submenu_page(
-		'jalsah-ai',
+		'jalsah-ai-management',
 		'Therapist Registration Settings',
 		'Registration Settings',
 		'manage_options',
@@ -22,7 +22,7 @@ function snks_add_therapist_registration_settings_page() {
 		'snks_therapist_registration_settings_page'
 	);
 }
-add_action( 'admin_menu', 'snks_add_therapist_registration_settings_page', 15 );
+add_action( 'admin_menu', 'snks_add_therapist_registration_settings_page', 25 );
 
 /**
  * Therapist Registration Settings Page
