@@ -325,6 +325,9 @@ function plugin_activation_hook() {
 	if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
 		snks_create_enhanced_ai_tables();
 	}
+	if ( function_exists( 'snks_create_rochtah_tables' ) ) {
+		snks_create_rochtah_tables();
+	}
 	if ( function_exists( 'snks_add_enhanced_ai_meta_fields' ) ) {
 		snks_add_enhanced_ai_meta_fields();
 	}

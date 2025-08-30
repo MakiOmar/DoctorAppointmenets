@@ -830,50 +830,14 @@ function snks_create_rochtah_tables() {
 		UNIQUE KEY unique_slot (slot_date, start_time)
 	) $charset_collate;";
 	
-	// Rochtah bookings table (if it doesn't exist)
-	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
-	$sql_bookings = "CREATE TABLE $rochtah_bookings_table (
-		id bigint(20) NOT NULL AUTO_INCREMENT,
-		patient_id bigint(20) NOT NULL,
-		therapist_id bigint(20) NOT NULL,
-		session_id bigint(20) NOT NULL,
-		diagnosis_id bigint(20) DEFAULT 0,
-		initial_diagnosis text,
-		symptoms text,
-		reason_for_referral text,
-		booking_date date NOT NULL,
-		booking_time time NOT NULL,
-		status varchar(20) NOT NULL DEFAULT 'pending',
-		prescription_text text,
-		medications text,
-		dosage_instructions text,
-		doctor_notes text,
-		prescribed_by bigint(20) NULL,
-		prescribed_at datetime NULL,
-		prescription_file varchar(255),
-		created_at datetime DEFAULT CURRENT_TIMESTAMP,
-		updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-		PRIMARY KEY (id),
-		KEY patient_id (patient_id),
-		KEY therapist_id (therapist_id),
-		KEY session_id (session_id),
-		KEY status (status),
-		UNIQUE KEY unique_session_request (session_id)
-	) $charset_collate;";
-	
 	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql_appointments );
-	dbDelta( $sql_bookings );
+	
+	// Note: snks_rochtah_bookings table is created in snks_create_enhanced_ai_tables()
 	
 	// Note: Rochtah slots are now managed manually through the admin interface
 	// No automatic slot creation - admins must add slots manually
 }
-
-// Create tables on plugin activation
-register_activation_hook( __FILE__, 'snks_create_rochtah_tables' );
-
-// Also create tables if they don't exist (for existing installations)
-add_action( 'init', 'snks_create_rochtah_tables' );
 
 /**
  * Add Rochtah slots management to admin menu

@@ -39,7 +39,8 @@ function snks_create_enhanced_ai_tables() {
 		id INT(11) NOT NULL AUTO_INCREMENT,
 		patient_id INT(11) NOT NULL,
 		therapist_id INT(11) NOT NULL,
-		diagnosis_id INT(11) NOT NULL,
+		session_id BIGINT(20) NOT NULL,
+		diagnosis_id INT(11) DEFAULT 0,
 		initial_diagnosis TEXT,
 		symptoms TEXT,
 		reason_for_referral TEXT,
@@ -58,9 +59,11 @@ function snks_create_enhanced_ai_tables() {
 		PRIMARY KEY (id),
 		KEY patient_id (patient_id),
 		KEY therapist_id (therapist_id),
+		KEY session_id (session_id),
 		KEY diagnosis_id (diagnosis_id),
 		KEY booking_date (booking_date),
-		KEY status (status)
+		KEY status (status),
+		UNIQUE KEY unique_session_request (session_id)
 	) " . $wpdb->get_charset_collate();
 	
 	// Create Rochtah appointments table
