@@ -124,12 +124,6 @@ function snks_create_enhanced_ai_tables() {
 	dbDelta( $analytics_sql );
 	dbDelta( $notifications_sql );
 	
-	// Add reason_for_referral column if it doesn't exist (for existing installations)
-	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $rochtah_bookings_table LIKE 'reason_for_referral'" );
-	if ( empty( $column_exists ) ) {
-		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD COLUMN reason_for_referral TEXT AFTER symptoms" );
-	}
-	
 	// Add AI meta fields to existing tables
 	snks_add_enhanced_ai_meta_fields();
 }
