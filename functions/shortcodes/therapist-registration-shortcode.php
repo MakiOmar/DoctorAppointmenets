@@ -78,18 +78,135 @@ function snks_therapist_registration_shortcode( $atts ) {
 			flex: 1;
 		}
 		.file-upload-group {
+			position: relative;
 			border: 2px dashed #ddd;
-			padding: 20px;
+			padding: 30px 20px;
 			text-align: center;
-			border-radius: 4px;
+			border-radius: 8px;
 			background: #fafafa;
+			transition: all 0.3s ease;
+			cursor: pointer;
 		}
-		.file-upload-group:hover {
+		.file-upload-group:hover, .file-upload-group.dragover {
 			border-color: #2271b1;
 			background: #f0f6ff;
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(34, 113, 177, 0.1);
 		}
 		.file-upload-group input[type="file"] {
-			margin: 10px 0;
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			opacity: 0;
+			cursor: pointer;
+		}
+		.upload-icon {
+			font-size: 48px;
+			color: #2271b1;
+			margin-bottom: 15px;
+			display: block;
+		}
+		.upload-text {
+			font-size: 16px;
+			color: #333;
+			margin-bottom: 8px;
+			font-weight: 600;
+		}
+		.upload-hint {
+			font-size: 14px;
+			color: #666;
+			margin-bottom: 15px;
+		}
+		.file-preview {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 15px;
+			margin-top: 20px;
+			justify-content: center;
+		}
+		.preview-item {
+			position: relative;
+			width: 120px;
+			height: 120px;
+			border-radius: 8px;
+			overflow: hidden;
+			border: 2px solid #e0e0e0;
+			background: #fff;
+		}
+		.preview-image {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.preview-file {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 10px;
+			height: 100%;
+			text-align: center;
+		}
+		.file-icon {
+			font-size: 24px;
+			color: #2271b1;
+			margin-bottom: 8px;
+		}
+		.file-name {
+			font-size: 12px;
+			color: #333;
+			word-break: break-all;
+			line-height: 1.2;
+		}
+		.remove-file {
+			position: absolute;
+			top: 5px;
+			right: 5px;
+			width: 24px;
+			height: 24px;
+			background: #ff4757;
+			color: white;
+			border: none;
+			border-radius: 50%;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 14px;
+			z-index: 10;
+		}
+		.remove-file:hover {
+			background: #ff3838;
+		}
+		.upload-progress {
+			width: 100%;
+			height: 6px;
+			background: #e0e0e0;
+			border-radius: 3px;
+			margin-top: 10px;
+			overflow: hidden;
+		}
+		.progress-bar {
+			height: 100%;
+			background: linear-gradient(90deg, #2271b1, #4fc3f7);
+			transition: width 0.3s ease;
+			border-radius: 3px;
+		}
+		.file-size {
+			font-size: 11px;
+			color: #888;
+			margin-top: 4px;
+		}
+		.max-files-notice {
+			background: #fff3cd;
+			color: #856404;
+			padding: 12px;
+			border-radius: 6px;
+			margin-top: 15px;
+			border: 1px solid #ffeaa7;
+			font-size: 14px;
 		}
 		.submit-btn {
 			background: #2271b1;
@@ -210,33 +327,48 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<div class="form-group">
 				<label for="profile_image"><?php echo __( 'Profile Image', 'shrinks' ); ?></label>
-				<div class="file-upload-group">
-					<p><?php echo __( 'Upload your professional profile photo', 'shrinks' ); ?></p>
-					<input type="file" id="profile_image" name="profile_image" accept="image/*">
+				<div class="file-upload-group" data-field="profile_image">
+					<span class="upload-icon">📷</span>
+					<div class="upload-text"><?php echo __( 'Upload Profile Photo', 'shrinks' ); ?></div>
+					<div class="upload-hint"><?php echo __( 'Click or drag image here (JPG, PNG, max 5MB)', 'shrinks' ); ?></div>
+					<input type="file" id="profile_image" name="profile_image" accept="image/*" data-max-size="5242880">
+					<div class="file-preview" id="preview_profile_image"></div>
 				</div>
 			</div>
 			
 			<div class="form-group">
 				<label for="identity_front"><?php echo __( 'Identity Document (Front)', 'shrinks' ); ?></label>
-				<div class="file-upload-group">
-					<p><?php echo __( 'Upload front side of your ID/passport', 'shrinks' ); ?></p>
-					<input type="file" id="identity_front" name="identity_front" accept="image/*">
+				<div class="file-upload-group" data-field="identity_front">
+					<span class="upload-icon">🪪</span>
+					<div class="upload-text"><?php echo __( 'Upload ID Front Side', 'shrinks' ); ?></div>
+					<div class="upload-hint"><?php echo __( 'Click or drag image here (ID front, max 5MB)', 'shrinks' ); ?></div>
+					<input type="file" id="identity_front" name="identity_front" accept="image/*" data-max-size="5242880">
+					<div class="file-preview" id="preview_identity_front"></div>
 				</div>
 			</div>
 			
 			<div class="form-group">
 				<label for="identity_back"><?php echo __( 'Identity Document (Back)', 'shrinks' ); ?></label>
-				<div class="file-upload-group">
-					<p><?php echo __( 'Upload back side of your ID/passport', 'shrinks' ); ?></p>
-					<input type="file" id="identity_back" name="identity_back" accept="image/*">
+				<div class="file-upload-group" data-field="identity_back">
+					<span class="upload-icon">🆔</span>
+					<div class="upload-text"><?php echo __( 'Upload ID Back Side', 'shrinks' ); ?></div>
+					<div class="upload-hint"><?php echo __( 'Click or drag image here (ID back, max 5MB)', 'shrinks' ); ?></div>
+					<input type="file" id="identity_back" name="identity_back" accept="image/*" data-max-size="5242880">
+					<div class="file-preview" id="preview_identity_back"></div>
 				</div>
 			</div>
 			
 			<div class="form-group">
 				<label for="certificates"><?php echo __( 'Certificates & Qualifications', 'shrinks' ); ?></label>
-				<div class="file-upload-group">
-					<p><?php echo __( 'Upload your certificates, diplomas, and qualifications (multiple files allowed)', 'shrinks' ); ?></p>
-					<input type="file" id="certificates" name="certificates[]" accept=".pdf,image/*" multiple>
+				<div class="file-upload-group" data-field="certificates" data-multiple="true">
+					<span class="upload-icon">📜</span>
+					<div class="upload-text"><?php echo __( 'Upload Certificates', 'shrinks' ); ?></div>
+					<div class="upload-hint"><?php echo __( 'Click or drag files here (PDF, JPG, PNG - multiple files, max 10MB each)', 'shrinks' ); ?></div>
+					<input type="file" id="certificates" name="certificates[]" accept=".pdf,image/*" multiple data-max-size="10485760">
+					<div class="file-preview" id="preview_certificates"></div>
+					<div class="max-files-notice" style="display: none;">
+						<?php echo __( 'Maximum 10 files allowed. Please remove some files before adding more.', 'shrinks' ); ?>
+					</div>
 				</div>
 			</div>
 			
@@ -255,6 +387,165 @@ function snks_therapist_registration_shortcode( $atts ) {
 	
 	<script>
 	jQuery(document).ready(function($) {
+		
+		// Fancy File Upload Functionality
+		function initFancyUploads() {
+			$('.file-upload-group').each(function() {
+				const $uploadGroup = $(this);
+				const $input = $uploadGroup.find('input[type="file"]');
+				const $preview = $uploadGroup.find('.file-preview');
+				const fieldName = $uploadGroup.data('field');
+				const isMultiple = $uploadGroup.data('multiple') === true;
+				const maxSize = parseInt($input.data('max-size')) || 5242880; // Default 5MB
+				const maxFiles = 10;
+				
+				let selectedFiles = [];
+				
+				// Drag and drop events
+				$uploadGroup.on('dragover dragenter', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					$(this).addClass('dragover');
+				});
+				
+				$uploadGroup.on('dragleave dragend', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					$(this).removeClass('dragover');
+				});
+				
+				$uploadGroup.on('drop', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					$(this).removeClass('dragover');
+					
+					const files = e.originalEvent.dataTransfer.files;
+					handleFiles(files);
+				});
+				
+				// Click to upload
+				$input.on('change', function() {
+					handleFiles(this.files);
+				});
+				
+				function handleFiles(files) {
+					for (let i = 0; i < files.length; i++) {
+						const file = files[i];
+						
+						// Check file size
+						if (file.size > maxSize) {
+							const sizeMB = (maxSize / 1024 / 1024).toFixed(1);
+							alert('File "' + file.name + '" is too large. Maximum size is ' + sizeMB + 'MB');
+							continue;
+						}
+						
+						// Check max files for multiple uploads
+						if (isMultiple && selectedFiles.length >= maxFiles) {
+							$uploadGroup.find('.max-files-notice').show();
+							break;
+						}
+						
+						// For single file uploads, replace existing
+						if (!isMultiple) {
+							selectedFiles = [];
+							$preview.empty();
+						}
+						
+						selectedFiles.push(file);
+						addFilePreview(file);
+					}
+					
+					updateFileInput();
+				}
+				
+				function addFilePreview(file) {
+					const fileId = 'file_' + Math.random().toString(36).substr(2, 9);
+					const isImage = file.type.startsWith('image/');
+					const isPDF = file.type === 'application/pdf';
+					
+					let previewHtml = `
+						<div class="preview-item" data-file-id="${fileId}">
+							<button type="button" class="remove-file" onclick="removeFile('${fieldName}', '${fileId}')">&times;</button>
+					`;
+					
+					if (isImage) {
+						const reader = new FileReader();
+						reader.onload = function(e) {
+							$(`[data-file-id="${fileId}"] .preview-content`).html(`
+								<img src="${e.target.result}" alt="${file.name}" class="preview-image">
+							`);
+						};
+						reader.readAsDataURL(file);
+						
+						previewHtml += `
+							<div class="preview-content">
+								<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">
+									<span>Loading...</span>
+								</div>
+							</div>
+						`;
+					} else {
+						let icon = '📄';
+						if (isPDF) icon = '📋';
+						
+						previewHtml += `
+							<div class="preview-file">
+								<div class="file-icon">${icon}</div>
+								<div class="file-name">${file.name}</div>
+								<div class="file-size">${formatFileSize(file.size)}</div>
+							</div>
+						`;
+					}
+					
+					previewHtml += '</div>';
+					$preview.append(previewHtml);
+					
+					// Store file reference
+					$(`[data-file-id="${fileId}"]`).data('file', file);
+				}
+				
+				function formatFileSize(bytes) {
+					if (bytes === 0) return '0 Bytes';
+					const k = 1024;
+					const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+					const i = Math.floor(Math.log(bytes) / Math.log(k));
+					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+				}
+				
+				// Global function to remove files
+				window.removeFile = function(fieldName, fileId) {
+					const $uploadGroup = $(`.file-upload-group[data-field="${fieldName}"]`);
+					const $preview = $uploadGroup.find('.file-preview');
+					const $item = $preview.find(`[data-file-id="${fileId}"]`);
+					
+					// Remove from selectedFiles array
+					const fileIndex = selectedFiles.findIndex(f => 
+						$item.data('file') && $item.data('file').name === f.name
+					);
+					if (fileIndex > -1) {
+						selectedFiles.splice(fileIndex, 1);
+					}
+					
+					$item.remove();
+					updateFileInput();
+					
+					// Hide max files notice if under limit
+					if (selectedFiles.length < maxFiles) {
+						$uploadGroup.find('.max-files-notice').hide();
+					}
+				};
+				
+				function updateFileInput() {
+					// Create a new DataTransfer object to update the input
+					const dt = new DataTransfer();
+					selectedFiles.forEach(file => dt.items.add(file));
+					$input[0].files = dt.files;
+				}
+			});
+		}
+		
+		// Initialize fancy uploads
+		initFancyUploads();
 		// Form submission handler
 		$('#therapist-registration-form').on('submit', function(e) {
 			e.preventDefault();
