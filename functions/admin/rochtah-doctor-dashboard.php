@@ -127,7 +127,6 @@ function snks_rochtah_doctor_dashboard() {
 							<th>Patient</th>
 							<th>Email</th>
 							<th>Referring Therapist</th>
-							<th>Diagnosis</th>
 							<th>Status</th>
 							<th>Actions</th>
 						</tr>
@@ -142,39 +141,53 @@ function snks_rochtah_doctor_dashboard() {
 								<td><?php echo esc_html( $booking->patient_name ); ?></td>
 								<td><?php echo esc_html( $booking->patient_email ); ?></td>
 								<td><?php echo esc_html( $booking->therapist_name ); ?></td>
-								<td><?php echo esc_html( $booking->diagnosis_name ); ?></td>
 								<td>
 									<span class="status-<?php echo esc_attr( $booking->status ); ?>">
 										<?php echo esc_html( ucfirst( $booking->status ) ); ?>
 									</span>
 								</td>
 								<td>
-									<?php if ( $booking->status === 'confirmed' ) : ?>
-										<button class="button button-primary button-small" 
-												onclick="openPrescriptionModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->patient_name ); ?>')">
-											Write Prescription
-										</button>
-										<br><br>
-										<button class="button button-secondary button-small" 
-												onclick="joinRochtahMeeting(<?php echo $booking->id; ?>)"
-												style="background-color: #28a745; border-color: #28a745; color: white;">
-											🎥 Join Meeting
-										</button>
-									<?php elseif ( $booking->status === 'prescribed' ) : ?>
-										<button class="button button-secondary button-small" 
-												onclick="viewPrescription(<?php echo $booking->id; ?>)">
-											View Prescription
-										</button>
-									<?php endif; ?>
-									
-									<?php if ( function_exists( 'snks_add_rochtah_referral_reason_button' ) ) : ?>
-										<?php echo snks_add_rochtah_referral_reason_button( $booking ); ?>
-									<?php endif; ?>
-									
-									<button class="button button-small" 
-											onclick="openStatusModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->status ); ?>')">
-										Update Status
+									<button class="button button-small toggle-actions" 
+											onclick="toggleActions(<?php echo $booking->id; ?>)"
+											id="toggle-btn-<?php echo $booking->id; ?>">
+										⚙️ Actions
 									</button>
+									
+									<div class="actions-container" id="actions-<?php echo $booking->id; ?>" style="display: none; margin-top: 10px;">
+										<?php if ( $booking->status === 'confirmed' ) : ?>
+											<button class="button button-primary button-small" 
+													onclick="openPrescriptionModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->patient_name ); ?>')"
+													style="margin: 2px;">
+												Write Prescription
+											</button>
+											<br>
+											<button class="button button-secondary button-small" 
+													onclick="joinRochtahMeeting(<?php echo $booking->id; ?>)"
+													style="background-color: #28a745; border-color: #28a745; color: white; margin: 2px;">
+												🎥 Join Meeting
+											</button>
+											<br>
+										<?php elseif ( $booking->status === 'prescribed' ) : ?>
+											<button class="button button-secondary button-small" 
+													onclick="viewPrescription(<?php echo $booking->id; ?>)"
+													style="margin: 2px;">
+												View Prescription
+											</button>
+											<br>
+										<?php endif; ?>
+										
+										<?php if ( function_exists( 'snks_add_rochtah_referral_reason_button' ) ) : ?>
+											<div style="margin: 2px;">
+												<?php echo snks_add_rochtah_referral_reason_button( $booking ); ?>
+											</div>
+										<?php endif; ?>
+										
+										<button class="button button-small" 
+												onclick="openStatusModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->status ); ?>')"
+												style="margin: 2px;">
+											Update Status
+										</button>
+									</div>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -323,6 +336,24 @@ function snks_rochtah_doctor_dashboard() {
 	.status-completed { color: #28a745; font-weight: bold; }
 	.status-cancelled { color: #dc3545; font-weight: bold; }
 	.status-prescribed { color: #6f42c1; font-weight: bold; }
+	
+	.actions-container {
+		background-color: #f8f9fa;
+		border: 1px solid #dee2e6;
+		border-radius: 4px;
+		padding: 10px;
+		margin-top: 5px;
+	}
+	
+	.toggle-actions {
+		transition: all 0.3s ease;
+	}
+	
+	.toggle-actions:hover {
+		background-color: #0073aa !important;
+		border-color: #0073aa !important;
+		color: white !important;
+	}
 	</style>
 	
 	<script>
@@ -597,6 +628,26 @@ function snks_rochtah_doctor_dashboard() {
 		
 		// Hide modal
 		document.getElementById('rochtahMeetingModal').style.display = 'none';
+	}
+
+	// Toggle actions visibility
+	function toggleActions(bookingId) {
+		const actionsContainer = document.getElementById('actions-' + bookingId);
+		const toggleBtn = document.getElementById('toggle-btn-' + bookingId);
+		
+		if (actionsContainer.style.display === 'none' || actionsContainer.style.display === '') {
+			actionsContainer.style.display = 'block';
+			toggleBtn.textContent = '📤 Hide Actions';
+			toggleBtn.style.backgroundColor = '#dc3545';
+			toggleBtn.style.borderColor = '#dc3545';
+			toggleBtn.style.color = 'white';
+		} else {
+			actionsContainer.style.display = 'none';
+			toggleBtn.textContent = '⚙️ Actions';
+			toggleBtn.style.backgroundColor = '';
+			toggleBtn.style.borderColor = '';
+			toggleBtn.style.color = '';
+		}
 	}
 	
 	// Close modals when clicking X or outside
