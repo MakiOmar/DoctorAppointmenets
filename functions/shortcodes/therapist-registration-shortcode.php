@@ -987,13 +987,13 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
 	}
 	
-	// Format phone number (remove + if present)
+	// Format phone number (ensure it has proper format without + prefix for API)
 	$phone_number = ltrim( $phone_number, '+' );
 	
-	// Prepare API endpoint
+	// Prepare API endpoint - updated to match Meta's format
 	$endpoint = rtrim( $api_url, '/' ) . '/' . $phone_number_id . '/messages';
 	
-	// Prepare request body
+	// Prepare request body - using text message format for OTP
 	$body = array(
 		'messaging_product' => 'whatsapp',
 		'to' => $phone_number,
@@ -1003,17 +1003,18 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		)
 	);
 	
-	// Prepare headers
+	// Prepare headers - exactly matching Meta's format
 	$headers = array(
 		'Authorization' => 'Bearer ' . $access_token,
 		'Content-Type' => 'application/json',
 	);
 	
-	// Make API request
+	// Make API request with exact Meta specifications
 	$response = wp_remote_post( $endpoint, array(
 		'headers' => $headers,
 		'body' => wp_json_encode( $body ),
 		'timeout' => 30,
+		'sslverify' => true, // Ensure SSL verification for Meta API
 	) );
 	
 	// Check for errors
@@ -1021,20 +1022,32 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		return $response;
 	}
 	
-	// Get response body
+	// Get response body and code
 	$response_body = wp_remote_retrieve_body( $response );
 	$response_code = wp_remote_retrieve_response_code( $response );
 	
-	// Check response code
+	// Log for debugging (remove in production)
+	error_log( 'WhatsApp API Response Code: ' . $response_code );
+	error_log( 'WhatsApp API Response Body: ' . $response_body );
+	
+	// Check response code - Meta typically returns 200 for success
 	if ( $response_code !== 200 ) {
 		$error_data = json_decode( $response_body, true );
-		$error_message = isset( $error_data['error']['message'] ) 
-			? $error_data['error']['message'] 
-			: 'WhatsApp API request failed';
+		$error_message = 'WhatsApp API request failed';
 		
-		return new WP_Error( 'api_error', $error_message, array( 'response_code' => $response_code ) );
+		// Extract detailed error message from Meta's response format
+		if ( isset( $error_data['error']['message'] ) ) {
+			$error_message = $error_data['error']['message'];
+		} elseif ( isset( $error_data['error']['error_user_msg'] ) ) {
+			$error_message = $error_data['error']['error_user_msg'];
+		}
+		
+		return new WP_Error( 'api_error', $error_message, array( 
+			'response_code' => $response_code,
+			'response_body' => $response_body 
+		) );
 	}
 	
-	// Return success
+	// Return success response
 	return json_decode( $response_body, true );
 }

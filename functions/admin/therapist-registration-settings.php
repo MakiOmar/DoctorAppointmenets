@@ -106,8 +106,8 @@ function snks_therapist_registration_settings_page() {
 							<label for="whatsapp_api_url">WhatsApp API URL</label>
 						</th>
 						<td>
-							<input type="url" name="whatsapp_api_url" id="whatsapp_api_url" value="<?php echo esc_attr( $whatsapp_api_url ); ?>" class="regular-text" placeholder="https://graph.facebook.com/v17.0/">
-							<p class="description">Base URL for WhatsApp Business API (e.g., https://graph.facebook.com/v17.0/)</p>
+							<input type="url" name="whatsapp_api_url" id="whatsapp_api_url" value="<?php echo esc_attr( $whatsapp_api_url ); ?>" class="regular-text" placeholder="https://graph.facebook.com/v22.0">
+							<p class="description">Base URL for WhatsApp Business API (e.g., https://graph.facebook.com/v22.0)</p>
 						</td>
 					</tr>
 					<tr>
@@ -124,8 +124,8 @@ function snks_therapist_registration_settings_page() {
 							<label for="whatsapp_phone_number_id">Phone Number ID</label>
 						</th>
 						<td>
-							<input type="text" name="whatsapp_phone_number_id" id="whatsapp_phone_number_id" value="<?php echo esc_attr( $whatsapp_phone_number_id ); ?>" class="regular-text">
-							<p class="description">WhatsApp Business phone number ID from your WhatsApp Business account.</p>
+							<input type="text" name="whatsapp_phone_number_id" id="whatsapp_phone_number_id" value="<?php echo esc_attr( $whatsapp_phone_number_id ); ?>" class="regular-text" placeholder="701585759714485">
+							<p class="description">WhatsApp Business phone number ID from your Meta Developer Dashboard (e.g., 701585759714485).</p>
 						</td>
 					</tr>
 				</table>
