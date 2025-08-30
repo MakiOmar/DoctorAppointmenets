@@ -339,13 +339,11 @@ add_action( 'wp_enqueue_scripts', 'snks_enqueue_ai_prescription_assets' );
  * Add "Reason for Referral" button to Rochtah bookings
  */
 function snks_add_rochtah_referral_reason_button( $booking ) {
-	if ( $booking->initial_diagnosis || $booking->symptoms ) {
-		$button_html = '<button class="snks-button snks-referral-reason-button" data-booking-id="' . esc_attr( $booking->id ) . '">';
-		$button_html .= __( 'Reason for Referral', 'shrinks' );
-		$button_html .= '</button>';
-		return $button_html;
-	}
-	return '';
+	// Always show the button for debugging - we can add conditions back later
+	$button_html = '<button class="button button-small" onclick="showReferralReason(' . esc_attr( $booking->id ) . ')">';
+	$button_html .= __( 'Reason for Referral', 'shrinks' );
+	$button_html .= '</button>';
+	return $button_html;
 }
 
 /**
@@ -355,19 +353,26 @@ function snks_get_rochtah_referral_reason( $booking_id ) {
 	global $wpdb;
 	
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	error_log( 'DEBUG: Querying table: ' . $rochtah_bookings_table . ' for booking ID: ' . $booking_id );
+	
 	$booking = $wpdb->get_row( $wpdb->prepare(
 		"SELECT * FROM $rochtah_bookings_table WHERE id = %d",
 		$booking_id
 	) );
 	
+	error_log( 'DEBUG: Raw booking data: ' . print_r( $booking, true ) );
+	
 	if ( $booking ) {
-		return array(
+		$result = array(
 			'preliminary_diagnosis' => $booking->initial_diagnosis,
 			'symptoms' => $booking->symptoms,
 			'reason_for_referral' => $booking->reason_for_referral
 		);
+		error_log( 'DEBUG: Formatted result: ' . print_r( $result, true ) );
+		return $result;
 	}
 	
+	error_log( 'DEBUG: No booking found for ID: ' . $booking_id );
 	return false;
 }
 
@@ -375,12 +380,18 @@ function snks_get_rochtah_referral_reason( $booking_id ) {
  * AJAX handler for getting referral reason
  */
 function snks_get_rochtah_referral_reason_ajax() {
+	error_log( 'DEBUG: get_rochtah_referral_reason_ajax called' );
+	
 	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_referral_reason' ) ) {
+		error_log( 'DEBUG: Nonce verification failed' );
 		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
 	}
 	
 	$booking_id = intval( $_POST['booking_id'] );
+	error_log( 'DEBUG: Looking for booking ID: ' . $booking_id );
+	
 	$referral_reason = snks_get_rochtah_referral_reason( $booking_id );
+	error_log( 'DEBUG: Referral reason data: ' . print_r( $referral_reason, true ) );
 	
 	if ( $referral_reason ) {
 		wp_send_json_success( $referral_reason );
