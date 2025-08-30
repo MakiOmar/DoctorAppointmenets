@@ -1110,9 +1110,12 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	$response_body = wp_remote_retrieve_body( $response );
 	$response_code = wp_remote_retrieve_response_code( $response );
 	
-	// Log for debugging (remove in production)
-	error_log( 'WhatsApp API Response Code: ' . $response_code );
-	error_log( 'WhatsApp API Response Body: ' . $response_body );
+	// Enhanced logging for debugging
+	error_log( 'WhatsApp API Debug - Endpoint: ' . $endpoint );
+	error_log( 'WhatsApp API Debug - Phone Number: ' . $phone_number );
+	error_log( 'WhatsApp API Debug - Message: ' . $message );
+	error_log( 'WhatsApp API Debug - Response Code: ' . $response_code );
+	error_log( 'WhatsApp API Debug - Response Body: ' . $response_body );
 	
 	// Check response code - Meta typically returns 200 for success
 	if ( $response_code !== 200 ) {
@@ -1132,6 +1135,16 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		) );
 	}
 	
+	// Parse response data
+	$response_data = json_decode( $response_body, true );
+	
+	// Check if the response contains message ID (indicates successful delivery to WhatsApp)
+	if ( isset( $response_data['messages'][0]['id'] ) ) {
+		error_log( 'WhatsApp API Success - Message ID: ' . $response_data['messages'][0]['id'] );
+	} else {
+		error_log( 'WhatsApp API Warning - No message ID in response: ' . print_r( $response_data, true ) );
+	}
+	
 	// Return success response
-	return json_decode( $response_body, true );
+	return $response_data;
 }

@@ -70,7 +70,13 @@ function snks_test_whatsapp_api_ajax() {
 	} else {
 		wp_send_json_success( array( 
 			'message' => 'WhatsApp API test message sent successfully!',
-			'response' => $result
+			'response' => $result,
+			'debug_info' => array(
+				'api_url' => $settings['whatsapp_api_url'],
+				'phone_number_id' => $settings['whatsapp_phone_number_id'],
+				'test_phone' => $test_phone,
+				'language' => $settings['whatsapp_message_language']
+			)
 		) );
 	}
 }
@@ -211,6 +217,16 @@ function snks_therapist_registration_settings_page() {
 							<button type="button" id="test_whatsapp_button" class="button button-secondary">Send Test Message</button>
 							<div id="test_whatsapp_result" style="margin-top: 10px;"></div>
 							<p class="description">Enter a phone number (with country code, no +) to test the WhatsApp API configuration. A test OTP message will be sent.</p>
+							<div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+								<strong>Troubleshooting:</strong>
+								<ul style="margin: 5px 0; padding-left: 20px;">
+									<li>Ensure the phone number is verified in your Meta Business account</li>
+									<li>Check that the phone number is in the correct format (e.g., 201026795795)</li>
+									<li>Verify your WhatsApp Business account is properly set up and approved</li>
+									<li>Check the error logs for detailed API responses</li>
+									<li>Template messages may require pre-approval from Meta</li>
+								</ul>
+							</div>
 						</td>
 					</tr>
 				</table>
@@ -347,7 +363,22 @@ function snks_therapist_registration_settings_page() {
 		.then(response => response.json())
 		.then(data => {
 			if (data.success) {
-				resultDiv.innerHTML = '<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ Success:</strong> ' + data.data.message + '</div>';
+				let debugInfo = '';
+				if (data.data.debug_info) {
+					debugInfo = '<br><small><strong>Debug Info:</strong><br>' +
+						'API URL: ' + data.data.debug_info.api_url + '<br>' +
+						'Phone Number ID: ' + data.data.debug_info.phone_number_id + '<br>' +
+						'Test Phone: ' + data.data.debug_info.test_phone + '<br>' +
+						'Language: ' + data.data.debug_info.language + '</small>';
+				}
+				
+				let responseInfo = '';
+				if (data.data.response) {
+					responseInfo = '<br><small><strong>API Response:</strong><br>' +
+						'<code>' + JSON.stringify(data.data.response, null, 2) + '</code></small>';
+				}
+				
+				resultDiv.innerHTML = '<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ Success:</strong> ' + data.data.message + debugInfo + responseInfo + '</div>';
 			} else {
 				resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ Error:</strong> ' + data.data.message + '</div>';
 			}
