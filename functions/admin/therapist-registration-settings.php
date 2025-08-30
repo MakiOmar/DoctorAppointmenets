@@ -1,0 +1,269 @@
+<?php
+/**
+ * Therapist Registration Settings
+ *
+ * @package Shrinks
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
+}
+
+/**
+ * Register therapist registration settings page
+ */
+function snks_add_therapist_registration_settings_page() {
+	add_submenu_page(
+		'jalsah-ai',
+		'Therapist Registration Settings',
+		'Registration Settings',
+		'manage_options',
+		'therapist-registration-settings',
+		'snks_therapist_registration_settings_page'
+	);
+}
+add_action( 'admin_menu', 'snks_add_therapist_registration_settings_page', 15 );
+
+/**
+ * Therapist Registration Settings Page
+ */
+function snks_therapist_registration_settings_page() {
+	// Handle form submission
+	if ( isset( $_POST['submit_registration_settings'] ) ) {
+		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'therapist_registration_settings' ) ) {
+			wp_die( 'Security check failed' );
+		}
+		
+		// Save OTP method setting
+		update_option( 'snks_therapist_otp_method', sanitize_text_field( $_POST['otp_method'] ) );
+		
+		// Save other settings
+		update_option( 'snks_therapist_require_email', isset( $_POST['require_email'] ) ? 1 : 0 );
+		update_option( 'snks_therapist_country_dial_required', isset( $_POST['country_dial_required'] ) ? 1 : 0 );
+		update_option( 'snks_therapist_default_country', sanitize_text_field( $_POST['default_country'] ) );
+		
+		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
+	}
+	
+	// Get current settings
+	$otp_method = get_option( 'snks_therapist_otp_method', 'email' );
+	$require_email = get_option( 'snks_therapist_require_email', 1 );
+	$country_dial_required = get_option( 'snks_therapist_country_dial_required', 1 );
+	$default_country = get_option( 'snks_therapist_default_country', 'EG' );
+	
+	?>
+	<div class="wrap">
+		<h1>Therapist Registration Settings</h1>
+		
+		<form method="post" action="">
+			<?php wp_nonce_field( 'therapist_registration_settings' ); ?>
+			
+			<div class="card">
+				<h2>OTP Verification Settings</h2>
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="otp_method">OTP Method</label>
+						</th>
+						<td>
+							<select name="otp_method" id="otp_method" onchange="toggleEmailRequirement()">
+								<option value="email" <?php selected( $otp_method, 'email' ); ?>>Email</option>
+								<option value="whatsapp" <?php selected( $otp_method, 'whatsapp' ); ?>>WhatsApp</option>
+							</select>
+							<p class="description">Choose the method for sending OTP verification codes to new therapist registrants.</p>
+						</td>
+					</tr>
+					<tr id="email_requirement_row">
+						<th scope="row">
+							<label for="require_email">Require Email Field</label>
+						</th>
+						<td>
+							<input type="checkbox" name="require_email" id="require_email" value="1" <?php checked( $require_email, 1 ); ?> />
+							<label for="require_email">Show email field in registration form</label>
+							<p class="description">When OTP method is Email, this should be checked. When WhatsApp is used, you can optionally hide the email field.</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card">
+				<h2>Phone Number Settings</h2>
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="country_dial_required">Country Dial Code Selector</label>
+						</th>
+						<td>
+							<input type="checkbox" name="country_dial_required" id="country_dial_required" value="1" <?php checked( $country_dial_required, 1 ); ?> />
+							<label for="country_dial_required">Show country dial code selector for phone and WhatsApp fields</label>
+							<p class="description">Enables a dropdown to select country code before entering phone numbers.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="default_country">Default Country</label>
+						</th>
+						<td>
+							<select name="default_country" id="default_country">
+								<option value="EG" <?php selected( $default_country, 'EG' ); ?>>Egypt (+20)</option>
+								<option value="SA" <?php selected( $default_country, 'SA' ); ?>>Saudi Arabia (+966)</option>
+								<option value="AE" <?php selected( $default_country, 'AE' ); ?>>UAE (+971)</option>
+								<option value="KW" <?php selected( $default_country, 'KW' ); ?>>Kuwait (+965)</option>
+								<option value="QA" <?php selected( $default_country, 'QA' ); ?>>Qatar (+974)</option>
+								<option value="BH" <?php selected( $default_country, 'BH' ); ?>>Bahrain (+973)</option>
+								<option value="OM" <?php selected( $default_country, 'OM' ); ?>>Oman (+968)</option>
+								<option value="JO" <?php selected( $default_country, 'JO' ); ?>>Jordan (+962)</option>
+								<option value="LB" <?php selected( $default_country, 'LB' ); ?>>Lebanon (+961)</option>
+								<option value="SY" <?php selected( $default_country, 'SY' ); ?>>Syria (+963)</option>
+								<option value="IQ" <?php selected( $default_country, 'IQ' ); ?>>Iraq (+964)</option>
+								<option value="YE" <?php selected( $default_country, 'YE' ); ?>>Yemen (+967)</option>
+								<option value="PS" <?php selected( $default_country, 'PS' ); ?>>Palestine (+970)</option>
+								<option value="MA" <?php selected( $default_country, 'MA' ); ?>>Morocco (+212)</option>
+								<option value="TN" <?php selected( $default_country, 'TN' ); ?>>Tunisia (+216)</option>
+								<option value="DZ" <?php selected( $default_country, 'DZ' ); ?>>Algeria (+213)</option>
+								<option value="LY" <?php selected( $default_country, 'LY' ); ?>>Libya (+218)</option>
+								<option value="SD" <?php selected( $default_country, 'SD' ); ?>>Sudan (+249)</option>
+							</select>
+							<p class="description">Default country to pre-select in the country dial code dropdown.</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card">
+				<h2>Registration Form Preview</h2>
+				<p><strong>Shortcode for WordPress pages:</strong></p>
+				<code>[therapist_registration_form]</code>
+				<p class="description">Use this shortcode to embed the therapist registration form on any WordPress page or post.</p>
+				
+				<div style="margin-top: 20px;">
+					<h4>Current Form Configuration:</h4>
+					<ul style="margin-left: 20px;">
+						<li><strong>OTP Method:</strong> <span id="preview_otp_method"><?php echo ucfirst( $otp_method ); ?></span></li>
+						<li><strong>Email Field:</strong> <span id="preview_email_field"><?php echo $require_email ? 'Shown' : 'Hidden'; ?></span></li>
+						<li><strong>Country Dial Codes:</strong> <?php echo $country_dial_required ? 'Enabled' : 'Disabled'; ?></li>
+						<li><strong>Default Country:</strong> <?php echo $default_country; ?></li>
+					</ul>
+				</div>
+			</div>
+			
+			<?php submit_button( 'Save Settings', 'primary', 'submit_registration_settings' ); ?>
+		</form>
+	</div>
+	
+	<script>
+	function toggleEmailRequirement() {
+		const otpMethod = document.getElementById('otp_method').value;
+		const emailRow = document.getElementById('email_requirement_row');
+		const emailCheckbox = document.getElementById('require_email');
+		const previewOtp = document.getElementById('preview_otp_method');
+		const previewEmail = document.getElementById('preview_email_field');
+		
+		if (otpMethod === 'email') {
+			emailCheckbox.checked = true;
+			emailCheckbox.disabled = true;
+			previewEmail.textContent = 'Shown (Required)';
+		} else {
+			emailCheckbox.disabled = false;
+			previewEmail.textContent = emailCheckbox.checked ? 'Shown' : 'Hidden';
+		}
+		
+		previewOtp.textContent = otpMethod.charAt(0).toUpperCase() + otpMethod.slice(1);
+	}
+	
+	// Initialize on page load
+	document.addEventListener('DOMContentLoaded', function() {
+		toggleEmailRequirement();
+		
+		// Update preview when email checkbox changes
+		document.getElementById('require_email').addEventListener('change', function() {
+			const previewEmail = document.getElementById('preview_email_field');
+			previewEmail.textContent = this.checked ? 'Shown' : 'Hidden';
+		});
+	});
+	</script>
+	
+	<style>
+	.card {
+		background: #fff;
+		border: 1px solid #ccd0d4;
+		border-radius: 4px;
+		margin: 20px 0;
+		padding: 20px;
+		box-shadow: 0 1px 1px rgba(0,0,0,.04);
+	}
+	.card h2 {
+		margin-top: 0;
+		margin-bottom: 15px;
+		padding-bottom: 10px;
+		border-bottom: 1px solid #eee;
+	}
+	code {
+		background: #f1f1f1;
+		padding: 8px 12px;
+		border-radius: 3px;
+		font-family: Consolas, Monaco, monospace;
+		font-size: 14px;
+	}
+	</style>
+	
+	<?php
+}
+
+/**
+ * Get country dial codes
+ */
+function snks_get_country_dial_codes() {
+	return array(
+		'EG' => array( 'name' => 'Egypt', 'code' => '+20' ),
+		'SA' => array( 'name' => 'Saudi Arabia', 'code' => '+966' ),
+		'AE' => array( 'name' => 'UAE', 'code' => '+971' ),
+		'KW' => array( 'name' => 'Kuwait', 'code' => '+965' ),
+		'QA' => array( 'name' => 'Qatar', 'code' => '+974' ),
+		'BH' => array( 'name' => 'Bahrain', 'code' => '+973' ),
+		'OM' => array( 'name' => 'Oman', 'code' => '+968' ),
+		'JO' => array( 'name' => 'Jordan', 'code' => '+962' ),
+		'LB' => array( 'name' => 'Lebanon', 'code' => '+961' ),
+		'SY' => array( 'name' => 'Syria', 'code' => '+963' ),
+		'IQ' => array( 'name' => 'Iraq', 'code' => '+964' ),
+		'YE' => array( 'name' => 'Yemen', 'code' => '+967' ),
+		'PS' => array( 'name' => 'Palestine', 'code' => '+970' ),
+		'MA' => array( 'name' => 'Morocco', 'code' => '+212' ),
+		'TN' => array( 'name' => 'Tunisia', 'code' => '+216' ),
+		'DZ' => array( 'name' => 'Algeria', 'code' => '+213' ),
+		'LY' => array( 'name' => 'Libya', 'code' => '+218' ),
+		'SD' => array( 'name' => 'Sudan', 'code' => '+249' )
+	);
+}
+
+/**
+ * Get therapist registration settings for frontend
+ */
+function snks_get_therapist_registration_settings() {
+	return array(
+		'otp_method' => get_option( 'snks_therapist_otp_method', 'email' ),
+		'require_email' => get_option( 'snks_therapist_require_email', 1 ),
+		'country_dial_required' => get_option( 'snks_therapist_country_dial_required', 1 ),
+		'default_country' => get_option( 'snks_therapist_default_country', 'EG' ),
+		'country_codes' => snks_get_country_dial_codes()
+	);
+}
+
+/**
+ * REST API endpoint for therapist registration settings
+ */
+function snks_get_therapist_registration_settings_rest( $request ) {
+	return array(
+		'success' => true,
+		'data' => snks_get_therapist_registration_settings()
+	);
+}
+
+// Register REST endpoint
+add_action( 'rest_api_init', function() {
+	register_rest_route( 'jalsah-ai/v1', '/therapist-registration-settings', array(
+		'methods' => 'GET',
+		'callback' => 'snks_get_therapist_registration_settings_rest',
+		'permission_callback' => '__return_true',
+	) );
+} );

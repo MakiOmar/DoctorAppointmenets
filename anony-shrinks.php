@@ -140,6 +140,8 @@ require_once SNKS_DIR . 'functions/admin/ai-applications.php';
 require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
 require_once SNKS_DIR . 'functions/admin/add-arabic-diagnoses.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
+require_once SNKS_DIR . 'functions/admin/therapist-registration-settings.php';
+require_once SNKS_DIR . 'functions/shortcodes/therapist-registration-shortcode.php';
 require_once SNKS_DIR . 'functions/admin/test-data-populator.php';
 require_once SNKS_DIR . 'functions/admin/demo-doctors-manager.php';
 require_once SNKS_DIR . 'functions/admin/cleanup-demo-data.php';
@@ -437,7 +439,9 @@ function snks_add_missing_therapist_applications_columns() {
 		'ai_bio_en' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_bio_en text',
 		'ai_certifications' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_certifications text',
 		'ai_earliest_slot' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_earliest_slot int(11) DEFAULT 0',
-		'show_on_ai_site' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN show_on_ai_site tinyint(1) DEFAULT 0'
+		'show_on_ai_site' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN show_on_ai_site tinyint(1) DEFAULT 0',
+		'otp_method' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN otp_method varchar(20) DEFAULT "email"',
+		'submitted_at' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN submitted_at datetime DEFAULT CURRENT_TIMESTAMP'
 	];
 	
 	foreach ( $columns_to_add as $column_name => $sql ) {

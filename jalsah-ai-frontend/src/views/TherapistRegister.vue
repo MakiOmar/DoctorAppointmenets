@@ -20,17 +20,33 @@
               <label class="form-label" for="name_en">{{ $t('therapistRegister.nameEn') }}</label>
               <input v-model="form.name_en" id="name_en" type="text" required class="input-field" autocomplete="name" />
             </div>
-            <div>
+            <div v-if="registrationStore.shouldShowEmail">
               <label class="form-label" for="email">{{ $t('therapistRegister.email') }}</label>
-              <input v-model="form.email" id="email" type="email" required class="input-field" autocomplete="email" />
+              <input v-model="form.email" id="email" type="email" :required="registrationStore.shouldShowEmail" class="input-field" autocomplete="email" />
             </div>
             <div>
               <label class="form-label" for="phone">{{ $t('therapistRegister.phone') }}</label>
-              <input v-model="form.phone" id="phone" type="text" required class="input-field" autocomplete="tel" />
+              <div v-if="registrationStore.shouldShowCountryDialCodes" class="phone-input-group">
+                <select v-model="form.phone_country" class="country-code-select">
+                  <option v-for="(country, code) in registrationStore.countryCodes" :key="code" :value="code">
+                    {{ country.name }} {{ country.code }}
+                  </option>
+                </select>
+                <input v-model="form.phone" id="phone" type="tel" required class="phone-number-input" autocomplete="tel" placeholder="123456789" />
+              </div>
+              <input v-else v-model="form.phone" id="phone" type="tel" required class="input-field" autocomplete="tel" />
             </div>
             <div>
               <label class="form-label" for="whatsapp">{{ $t('therapistRegister.whatsapp') }}</label>
-              <input v-model="form.whatsapp" id="whatsapp" type="text" required class="input-field" autocomplete="tel" />
+              <div v-if="registrationStore.shouldShowCountryDialCodes" class="phone-input-group">
+                <select v-model="form.whatsapp_country" class="country-code-select">
+                  <option v-for="(country, code) in registrationStore.countryCodes" :key="code" :value="code">
+                    {{ country.name }} {{ country.code }}
+                  </option>
+                </select>
+                <input v-model="form.whatsapp" id="whatsapp" type="tel" required class="phone-number-input" autocomplete="tel" placeholder="123456789" />
+              </div>
+              <input v-else v-model="form.whatsapp" id="whatsapp" type="tel" required class="input-field" autocomplete="tel" />
             </div>
             <div>
               <label class="form-label" for="doctor_specialty">{{ $t('therapistRegister.specialty') }}</label>
@@ -99,15 +115,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
+import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
 import FancyUpload from '@/components/FancyUpload.vue'
 
 const { t } = useI18n()
 const settingsStore = useSettingsStore()
+const registrationStore = useTherapistRegistrationStore()
 settingsStore.loadSettings()
+registrationStore.loadSettings()
 const passwordMode = computed(() => settingsStore.getTherapistRegistrationPasswordMode)
 
 const form = ref({
@@ -115,7 +134,9 @@ const form = ref({
   name_en: '',
   email: '',
   phone: '',
+  phone_country: 'EG',
   whatsapp: '',
+  whatsapp_country: 'EG',
   doctor_specialty: '',
   profile_image: null,
   identity_front: null,
@@ -172,6 +193,14 @@ async function onSubmit() {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  // Set default country when settings load
+  registrationStore.loadSettings().then(() => {
+    form.value.phone_country = registrationStore.defaultCountry
+    form.value.whatsapp_country = registrationStore.defaultCountry
+  })
+})
 </script>
 
 <style scoped>
@@ -200,5 +229,26 @@ async function onSubmit() {
 .btn-primary:disabled {
   background: #a5b4fc;
   cursor: not-allowed;
+}
+.phone-input-group {
+  display: flex;
+  gap: 10px;
+}
+.country-code-select {
+  flex: 0 0 150px;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+}
+.phone-number-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+}
+/* RTL Support */
+[dir="rtl"] .phone-input-group {
+  direction: ltr;
 }
 </style> 
