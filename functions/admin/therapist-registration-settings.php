@@ -42,6 +42,11 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_therapist_country_dial_required', isset( $_POST['country_dial_required'] ) ? 1 : 0 );
 		update_option( 'snks_therapist_default_country', sanitize_text_field( $_POST['default_country'] ) );
 		
+		// WhatsApp API settings
+		update_option( 'snks_whatsapp_api_url', sanitize_url( $_POST['whatsapp_api_url'] ?? '' ) );
+		update_option( 'snks_whatsapp_api_token', sanitize_text_field( $_POST['whatsapp_api_token'] ?? '' ) );
+		update_option( 'snks_whatsapp_phone_number_id', sanitize_text_field( $_POST['whatsapp_phone_number_id'] ?? '' ) );
+		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
 	}
 	
@@ -50,6 +55,11 @@ function snks_therapist_registration_settings_page() {
 	$require_email = get_option( 'snks_therapist_require_email', 1 );
 	$country_dial_required = get_option( 'snks_therapist_country_dial_required', 1 );
 	$default_country = get_option( 'snks_therapist_default_country', 'EG' );
+	
+	// WhatsApp API settings
+	$whatsapp_api_url = get_option( 'snks_whatsapp_api_url', '' );
+	$whatsapp_api_token = get_option( 'snks_whatsapp_api_token', '' );
+	$whatsapp_phone_number_id = get_option( 'snks_whatsapp_phone_number_id', '' );
 	
 	?>
 	<div class="wrap">
@@ -66,9 +76,10 @@ function snks_therapist_registration_settings_page() {
 							<label for="otp_method">OTP Method</label>
 						</th>
 						<td>
-							<select name="otp_method" id="otp_method" onchange="toggleEmailRequirement()">
+							<select name="otp_method" id="otp_method" onchange="toggleOtpSettings()">
 								<option value="email" <?php selected( $otp_method, 'email' ); ?>>Email</option>
-								<option value="whatsapp" <?php selected( $otp_method, 'whatsapp' ); ?>>WhatsApp</option>
+								<option value="sms" <?php selected( $otp_method, 'sms' ); ?>>SMS (WhySMS Service)</option>
+								<option value="whatsapp" <?php selected( $otp_method, 'whatsapp' ); ?>>WhatsApp API</option>
 							</select>
 							<p class="description">Choose the method for sending OTP verification codes to new therapist registrants.</p>
 						</td>
@@ -80,7 +91,41 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="checkbox" name="require_email" id="require_email" value="1" <?php checked( $require_email, 1 ); ?> />
 							<label for="require_email">Show email field in registration form</label>
-							<p class="description">When OTP method is Email, this should be checked. When WhatsApp is used, you can optionally hide the email field.</p>
+							<p class="description">When OTP method is Email, this should be checked. When SMS or WhatsApp is used, you can optionally hide the email field.</p>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card" id="whatsapp_api_settings" style="display: none;">
+				<h2>WhatsApp API Settings</h2>
+				<p class="description">Configure WhatsApp Business API settings for sending OTP messages via WhatsApp.</p>
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_api_url">WhatsApp API URL</label>
+						</th>
+						<td>
+							<input type="url" name="whatsapp_api_url" id="whatsapp_api_url" value="<?php echo esc_attr( $whatsapp_api_url ); ?>" class="regular-text" placeholder="https://graph.facebook.com/v17.0/">
+							<p class="description">Base URL for WhatsApp Business API (e.g., https://graph.facebook.com/v17.0/)</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_api_token">Access Token</label>
+						</th>
+						<td>
+							<input type="password" name="whatsapp_api_token" id="whatsapp_api_token" value="<?php echo esc_attr( $whatsapp_api_token ); ?>" class="regular-text">
+							<p class="description">WhatsApp Business API access token from Facebook Developer Console.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_phone_number_id">Phone Number ID</label>
+						</th>
+						<td>
+							<input type="text" name="whatsapp_phone_number_id" id="whatsapp_phone_number_id" value="<?php echo esc_attr( $whatsapp_phone_number_id ); ?>" class="regular-text">
+							<p class="description">WhatsApp Business phone number ID from your WhatsApp Business account.</p>
 						</td>
 					</tr>
 				</table>
@@ -152,13 +197,22 @@ function snks_therapist_registration_settings_page() {
 	</div>
 	
 	<script>
-	function toggleEmailRequirement() {
+	function toggleOtpSettings() {
 		const otpMethod = document.getElementById('otp_method').value;
 		const emailRow = document.getElementById('email_requirement_row');
 		const emailCheckbox = document.getElementById('require_email');
+		const whatsappSettings = document.getElementById('whatsapp_api_settings');
 		const previewOtp = document.getElementById('preview_otp_method');
 		const previewEmail = document.getElementById('preview_email_field');
 		
+		// Show/hide WhatsApp API settings
+		if (otpMethod === 'whatsapp') {
+			whatsappSettings.style.display = 'block';
+		} else {
+			whatsappSettings.style.display = 'none';
+		}
+		
+		// Handle email field requirements
 		if (otpMethod === 'email') {
 			emailCheckbox.checked = true;
 			emailCheckbox.disabled = true;
@@ -168,12 +222,19 @@ function snks_therapist_registration_settings_page() {
 			previewEmail.textContent = emailCheckbox.checked ? 'Shown' : 'Hidden';
 		}
 		
-		previewOtp.textContent = otpMethod.charAt(0).toUpperCase() + otpMethod.slice(1);
+		// Update preview text
+		let methodText = otpMethod.charAt(0).toUpperCase() + otpMethod.slice(1);
+		if (otpMethod === 'sms') {
+			methodText = 'SMS (WhySMS)';
+		} else if (otpMethod === 'whatsapp') {
+			methodText = 'WhatsApp API';
+		}
+		previewOtp.textContent = methodText;
 	}
 	
 	// Initialize on page load
 	document.addEventListener('DOMContentLoaded', function() {
-		toggleEmailRequirement();
+		toggleOtpSettings();
 		
 		// Update preview when email checkbox changes
 		document.getElementById('require_email').addEventListener('change', function() {
@@ -244,6 +305,9 @@ function snks_get_therapist_registration_settings() {
 		'otp_method' => get_option( 'snks_therapist_otp_method', 'email' ),
 		'require_email' => get_option( 'snks_therapist_require_email', 1 ),
 		'country_dial_required' => get_option( 'snks_therapist_country_dial_required', 1 ),
+		'whatsapp_api_url' => get_option( 'snks_whatsapp_api_url', '' ),
+		'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
+		'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
 		'default_country' => get_option( 'snks_therapist_default_country', 'EG' ),
 		'country_codes' => snks_get_country_dial_codes()
 	);

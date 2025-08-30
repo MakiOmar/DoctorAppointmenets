@@ -754,14 +754,24 @@ function snks_handle_therapist_registration_shortcode() {
 	$otp_success = false;
 	$contact_method = '';
 	
-	if ( $settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp ) ) {
+	if ( $settings['otp_method'] === 'sms' && ! empty( $whatsapp ) ) {
 		$contact_method = $whatsapp;
 		$message = sprintf( 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s', $otp_code );
 		
-		// Use existing WhySMS function
+		// Use existing WhySMS SMS service
 		$sms_result = send_sms_via_whysms( $whatsapp, $message );
 		
 		if ( ! is_wp_error( $sms_result ) ) {
+			$otp_success = true;
+		}
+	} elseif ( $settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp ) ) {
+		$contact_method = $whatsapp;
+		$message = sprintf( 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s', $otp_code );
+		
+		// Use WhatsApp Business API
+		$whatsapp_result = snks_send_whatsapp_message( $whatsapp, $message, $settings );
+		
+		if ( $whatsapp_result && ! is_wp_error( $whatsapp_result ) ) {
 			$otp_success = true;
 		}
 	} elseif ( $settings['otp_method'] === 'email' && ! empty( $_POST['email'] ) ) {
@@ -785,9 +795,14 @@ function snks_handle_therapist_registration_shortcode() {
 		set_transient( 'therapist_reg_data_' . $session_key, $_POST, 10 * MINUTE_IN_SECONDS );
 		set_transient( 'therapist_reg_files_' . $session_key, $_FILES, 10 * MINUTE_IN_SECONDS );
 		
-		$otp_message = $settings['otp_method'] === 'whatsapp' 
-			? 'تم إرسال رمز التحقق إلى واتساب.' 
-			: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني.';
+		$otp_message = '';
+		if ( $settings['otp_method'] === 'sms' ) {
+			$otp_message = 'تم إرسال رمز التحقق عبر الرسائل القصيرة.';
+		} elseif ( $settings['otp_method'] === 'whatsapp' ) {
+			$otp_message = 'تم إرسال رمز التحقق إلى واتساب.';
+		} else {
+			$otp_message = 'تم إرسال رمز التحقق إلى بريدك الإلكتروني.';
+		}
 			
 		wp_send_json_success( array( 
 			'message' => $otp_message . ' يرجى إدخال الرمز للمتابعة.',
@@ -796,9 +811,14 @@ function snks_handle_therapist_registration_shortcode() {
 			'contact_method' => $contact_method
 		) );
 	} else {
-		$error_message = $settings['otp_method'] === 'whatsapp' 
-			? 'فشل في إرسال رمز التحقق عبر واتساب.' 
-			: 'فشل في إرسال رمز التحقق عبر البريد الإلكتروني.';
+		$error_message = '';
+		if ( $settings['otp_method'] === 'sms' ) {
+			$error_message = 'فشل في إرسال رمز التحقق عبر الرسائل القصيرة.';
+		} elseif ( $settings['otp_method'] === 'whatsapp' ) {
+			$error_message = 'فشل في إرسال رمز التحقق عبر واتساب.';
+		} else {
+			$error_message = 'فشل في إرسال رمز التحقق عبر البريد الإلكتروني.';
+		}
 			
 		wp_send_json_error( array( 'message' => $error_message . ' حاول مرة أخرى.' ) );
 	}
@@ -952,3 +972,69 @@ function snks_handle_therapist_registration_otp_verification() {
 
 add_action( 'wp_ajax_register_therapist_shortcode', 'snks_handle_therapist_registration_shortcode' );
 add_action( 'wp_ajax_nopriv_register_therapist_shortcode', 'snks_handle_therapist_registration_shortcode' );
+
+/**
+ * Send WhatsApp message using WhatsApp Business API
+ */
+function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
+	// Get WhatsApp API settings
+	$api_url = $settings['whatsapp_api_url'];
+	$access_token = $settings['whatsapp_api_token'];
+	$phone_number_id = $settings['whatsapp_phone_number_id'];
+	
+	// Check if all required settings are available
+	if ( empty( $api_url ) || empty( $access_token ) || empty( $phone_number_id ) ) {
+		return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
+	}
+	
+	// Format phone number (remove + if present)
+	$phone_number = ltrim( $phone_number, '+' );
+	
+	// Prepare API endpoint
+	$endpoint = rtrim( $api_url, '/' ) . '/' . $phone_number_id . '/messages';
+	
+	// Prepare request body
+	$body = array(
+		'messaging_product' => 'whatsapp',
+		'to' => $phone_number,
+		'type' => 'text',
+		'text' => array(
+			'body' => $message
+		)
+	);
+	
+	// Prepare headers
+	$headers = array(
+		'Authorization' => 'Bearer ' . $access_token,
+		'Content-Type' => 'application/json',
+	);
+	
+	// Make API request
+	$response = wp_remote_post( $endpoint, array(
+		'headers' => $headers,
+		'body' => wp_json_encode( $body ),
+		'timeout' => 30,
+	) );
+	
+	// Check for errors
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+	
+	// Get response body
+	$response_body = wp_remote_retrieve_body( $response );
+	$response_code = wp_remote_retrieve_response_code( $response );
+	
+	// Check response code
+	if ( $response_code !== 200 ) {
+		$error_data = json_decode( $response_body, true );
+		$error_message = isset( $error_data['error']['message'] ) 
+			? $error_data['error']['message'] 
+			: 'WhatsApp API request failed';
+		
+		return new WP_Error( 'api_error', $error_message, array( 'response_code' => $response_code ) );
+	}
+	
+	// Return success
+	return json_decode( $response_body, true );
+}
