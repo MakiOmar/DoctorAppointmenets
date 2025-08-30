@@ -355,54 +355,62 @@ function snks_rochtah_doctor_dashboard() {
 		color: white !important;
 	}
 	
-	.prescription-modal .modal-content {
-		width: 90%;
-		max-width: 700px;
-		height: 80vh;
-		max-height: 600px;
-		margin: 2% auto;
-		display: flex;
-		flex-direction: column;
+	.prescription-modal .modal-content,
+	#prescriptionModal .modal-content {
+		width: 90% !important;
+		max-width: 700px !important;
+		height: 80vh !important;
+		max-height: 600px !important;
+		margin: 2% auto !important;
+		display: flex !important;
+		flex-direction: column !important;
 	}
 	
-	.prescription-modal-header {
-		flex-shrink: 0;
-		padding-bottom: 15px;
-		border-bottom: 1px solid #e5e7eb;
-		margin-bottom: 20px;
+	.prescription-modal-header,
+	#prescriptionModal .prescription-modal-header {
+		flex-shrink: 0 !important;
+		padding-bottom: 15px !important;
+		border-bottom: 1px solid #e5e7eb !important;
+		margin-bottom: 20px !important;
 	}
 	
-	.prescription-modal-body {
-		flex: 1;
-		overflow-y: auto;
-		padding-right: 10px;
-		margin-right: -10px;
+	.prescription-modal-body,
+	#prescriptionModal .prescription-modal-body {
+		flex: 1 !important;
+		overflow-y: auto !important;
+		padding-right: 10px !important;
+		margin-right: -10px !important;
 	}
 	
-	.prescription-modal-footer {
-		flex-shrink: 0;
-		padding-top: 20px;
-		border-top: 1px solid #e5e7eb;
-		margin-top: 20px;
-		text-align: center;
+	.prescription-modal-footer,
+	#prescriptionModal .prescription-modal-footer {
+		flex-shrink: 0 !important;
+		padding-top: 20px !important;
+		border-top: 1px solid #e5e7eb !important;
+		margin-top: 20px !important;
+		text-align: center !important;
 	}
 	
 	/* Custom scrollbar for the modal body */
-	.prescription-modal-body::-webkit-scrollbar {
+	.prescription-modal-body::-webkit-scrollbar,
+	#prescriptionModal .prescription-modal-body::-webkit-scrollbar {
 		width: 8px;
 	}
 	
-	.prescription-modal-body::-webkit-scrollbar-track {
+	.prescription-modal-body::-webkit-scrollbar-track,
+	#prescriptionModal .prescription-modal-body::-webkit-scrollbar-track {
 		background: #f1f1f1;
 		border-radius: 4px;
 	}
 	
-	.prescription-modal-body::-webkit-scrollbar-thumb {
+	.prescription-modal-body::-webkit-scrollbar-thumb,
+	#prescriptionModal .prescription-modal-body::-webkit-scrollbar-thumb {
 		background: #c1c1c1;
 		border-radius: 4px;
 	}
 	
-	.prescription-modal-body::-webkit-scrollbar-thumb:hover {
+	.prescription-modal-body::-webkit-scrollbar-thumb:hover,
+	#prescriptionModal .prescription-modal-body::-webkit-scrollbar-thumb:hover {
 		background: #a8a8a8;
 	}
 	</style>
@@ -562,19 +570,21 @@ function snks_rochtah_doctor_dashboard() {
 		if (!modal) {
 			modal = document.createElement('div');
 			modal.id = 'prescriptionModal';
-			modal.className = 'modal prescription-modal';
 			document.body.appendChild(modal);
 		}
 		
+		// Ensure correct classes are applied
+		modal.className = 'modal prescription-modal';
+		
 		modal.innerHTML = `
-			<div class="modal-content">
-				<div class="prescription-modal-header">
+			<div class="modal-content" style="width: 90%; max-width: 700px; height: 80vh; max-height: 600px; margin: 2% auto; display: flex; flex-direction: column;">
+				<div class="prescription-modal-header" style="flex-shrink: 0; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px;">
 					${header}
 				</div>
-				<div class="prescription-modal-body">
+				<div class="prescription-modal-body" style="flex: 1; overflow-y: auto; padding-right: 10px; margin-right: -10px;">
 					${body}
 				</div>
-				${footer ? `<div class="prescription-modal-footer">${footer}</div>` : ''}
+				${footer ? `<div class="prescription-modal-footer" style="flex-shrink: 0; padding-top: 20px; border-top: 1px solid #e5e7eb; margin-top: 20px; text-align: center;">${footer}</div>` : ''}
 			</div>
 		`;
 		
