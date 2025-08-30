@@ -756,7 +756,7 @@ function snks_handle_therapist_registration_shortcode() {
 	
 	if ( $settings['otp_method'] === 'sms' && ! empty( $whatsapp ) ) {
 		$contact_method = $whatsapp;
-		$message = sprintf( 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s', $otp_code );
+		$message = snks_get_multilingual_otp_message( $otp_code, $settings['whatsapp_message_language'] ?? 'ar' );
 		
 		// Use existing WhySMS SMS service
 		$sms_result = send_sms_via_whysms( $whatsapp, $message );
@@ -766,7 +766,7 @@ function snks_handle_therapist_registration_shortcode() {
 		}
 	} elseif ( $settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp ) ) {
 		$contact_method = $whatsapp;
-		$message = sprintf( 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s', $otp_code );
+		$message = snks_get_multilingual_otp_message( $otp_code, $settings['whatsapp_message_language'] ?? 'ar' );
 		
 		// Use WhatsApp Business API
 		$whatsapp_result = snks_send_whatsapp_message( $whatsapp, $message, $settings );
@@ -776,14 +776,13 @@ function snks_handle_therapist_registration_shortcode() {
 		}
 	} elseif ( $settings['otp_method'] === 'email' && ! empty( $_POST['email'] ) ) {
 		$contact_method = $_POST['email'];
-		$subject = 'رمز التحقق - تسجيل المعالج في جلسة';
-		$message = sprintf( 'رمز التحقق الخاص بك: %s\n\nهذا الرمز صالح لمدة 10 دقائق.', $otp_code );
+		$email_content = snks_get_multilingual_email_otp_message( $otp_code, $settings['whatsapp_message_language'] ?? 'ar' );
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
 		);
 		
-		if ( wp_mail( $contact_method, $subject, $message, $headers ) ) {
+		if ( wp_mail( $contact_method, $email_content['subject'], $email_content['body'], $headers ) ) {
 			$otp_success = true;
 		}
 	}
@@ -972,6 +971,91 @@ function snks_handle_therapist_registration_otp_verification() {
 
 add_action( 'wp_ajax_register_therapist_shortcode', 'snks_handle_therapist_registration_shortcode' );
 add_action( 'wp_ajax_nopriv_register_therapist_shortcode', 'snks_handle_therapist_registration_shortcode' );
+
+/**
+ * Get multilingual OTP message for therapist registration
+ */
+function snks_get_multilingual_otp_message( $otp_code, $language = 'ar' ) {
+	$messages = array(
+		'ar' => 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s',
+		'en' => 'Your verification code for Jalsah therapist registration: %s',
+		'fr' => 'Votre code de vérification pour l\'inscription de thérapeute Jalsah: %s',
+		'es' => 'Su código de verificación para el registro de terapeuta Jalsah: %s',
+		'de' => 'Ihr Bestätigungscode für die Jalsah-Therapeutenregistrierung: %s',
+		'it' => 'Il tuo codice di verifica per la registrazione del terapeuta Jalsah: %s',
+		'tr' => 'Jalsah terapist kaydı için doğrulama kodunuz: %s',
+		'ur' => 'جلسہ تھراپسٹ رجسٹریشن کے لیے آپ کا تصدیقی کوڈ: %s'
+	);
+	
+	// Fallback to Arabic if language not found
+	$template = isset( $messages[ $language ] ) ? $messages[ $language ] : $messages['ar'];
+	
+	return sprintf( $template, $otp_code );
+}
+
+/**
+ * Get multilingual email OTP message for therapist registration
+ */
+function snks_get_multilingual_email_otp_message( $otp_code, $language = 'ar' ) {
+	$messages = array(
+		'ar' => array(
+			'subject' => 'رمز التحقق - تسجيل المعالج في جلسة',
+			'body' => 'رمز التحقق الخاص بك: %s
+
+هذا الرمز صالح لمدة 10 دقائق.'
+		),
+		'en' => array(
+			'subject' => 'Verification Code - Jalsah Therapist Registration',
+			'body' => 'Your verification code: %s
+
+This code is valid for 10 minutes.'
+		),
+		'fr' => array(
+			'subject' => 'Code de vérification - Inscription thérapeute Jalsah',
+			'body' => 'Votre code de vérification: %s
+
+Ce code est valide pendant 10 minutes.'
+		),
+		'es' => array(
+			'subject' => 'Código de verificación - Registro de terapeuta Jalsah',
+			'body' => 'Su código de verificación: %s
+
+Este código es válido por 10 minutos.'
+		),
+		'de' => array(
+			'subject' => 'Bestätigungscode - Jalsah Therapeutenregistrierung',
+			'body' => 'Ihr Bestätigungscode: %s
+
+Dieser Code ist 10 Minuten gültig.'
+		),
+		'it' => array(
+			'subject' => 'Codice di verifica - Registrazione terapeuta Jalsah',
+			'body' => 'Il tuo codice di verifica: %s
+
+Questo codice è valido per 10 minuti.'
+		),
+		'tr' => array(
+			'subject' => 'Doğrulama Kodu - Jalsah Terapist Kaydı',
+			'body' => 'Doğrulama kodunuz: %s
+
+Bu kod 10 dakika geçerlidir.'
+		),
+		'ur' => array(
+			'subject' => 'تصدیقی کوڈ - جلسہ تھراپسٹ رجسٹریشن',
+			'body' => 'آپ کا تصدیقی کوڈ: %s
+
+یہ کوڈ 10 منٹ کے لیے درست ہے۔'
+		)
+	);
+	
+	// Fallback to Arabic if language not found
+	$template = isset( $messages[ $language ] ) ? $messages[ $language ] : $messages['ar'];
+	
+	return array(
+		'subject' => $template['subject'],
+		'body' => sprintf( $template['body'], $otp_code )
+	);
+}
 
 /**
  * Send WhatsApp message using WhatsApp Business API

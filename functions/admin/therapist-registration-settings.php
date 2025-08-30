@@ -25,6 +25,59 @@ function snks_add_therapist_registration_settings_page() {
 add_action( 'admin_menu', 'snks_add_therapist_registration_settings_page', 25 );
 
 /**
+ * Handle WhatsApp API test request
+ */
+function snks_test_whatsapp_api_ajax() {
+	// Check nonce and permissions
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'test_whatsapp_api_nonce' ) ) {
+		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+	}
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$test_phone = sanitize_text_field( $_POST['test_phone'] ?? '' );
+	if ( empty( $test_phone ) ) {
+		wp_send_json_error( array( 'message' => 'Please provide a test phone number' ) );
+	}
+	
+	// Get WhatsApp API settings
+	$settings = array(
+		'whatsapp_api_url' => get_option( 'snks_whatsapp_api_url', '' ),
+		'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
+		'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
+		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' )
+	);
+	
+	if ( empty( $settings['whatsapp_api_url'] ) || empty( $settings['whatsapp_api_token'] ) || empty( $settings['whatsapp_phone_number_id'] ) ) {
+		wp_send_json_error( array( 'message' => 'WhatsApp API configuration is incomplete. Please fill all required fields.' ) );
+	}
+	
+	// Generate test message
+	require_once plugin_dir_path( dirname( __FILE__ ) ) . 'shortcodes/therapist-registration-shortcode.php';
+	$test_message = snks_get_multilingual_otp_message( '123456', $settings['whatsapp_message_language'] );
+	$test_message .= ' (TEST MESSAGE)';
+	
+	// Send test message
+	$result = snks_send_whatsapp_message( $test_phone, $test_message, $settings );
+	
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( array( 
+			'message' => 'WhatsApp API test failed: ' . $result->get_error_message(),
+			'error_code' => $result->get_error_code()
+		) );
+	} else {
+		wp_send_json_success( array( 
+			'message' => 'WhatsApp API test message sent successfully!',
+			'response' => $result
+		) );
+	}
+}
+
+add_action( 'wp_ajax_test_whatsapp_api', 'snks_test_whatsapp_api_ajax' );
+
+/**
  * Therapist Registration Settings Page
  */
 function snks_therapist_registration_settings_page() {
@@ -46,6 +99,7 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_whatsapp_api_url', sanitize_url( $_POST['whatsapp_api_url'] ?? '' ) );
 		update_option( 'snks_whatsapp_api_token', sanitize_text_field( $_POST['whatsapp_api_token'] ?? '' ) );
 		update_option( 'snks_whatsapp_phone_number_id', sanitize_text_field( $_POST['whatsapp_phone_number_id'] ?? '' ) );
+		update_option( 'snks_whatsapp_message_language', sanitize_text_field( $_POST['whatsapp_message_language'] ?? 'ar' ) );
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
 	}
@@ -60,6 +114,7 @@ function snks_therapist_registration_settings_page() {
 	$whatsapp_api_url = get_option( 'snks_whatsapp_api_url', '' );
 	$whatsapp_api_token = get_option( 'snks_whatsapp_api_token', '' );
 	$whatsapp_phone_number_id = get_option( 'snks_whatsapp_phone_number_id', '' );
+	$whatsapp_message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
 	
 	?>
 	<div class="wrap">
@@ -126,6 +181,36 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="whatsapp_phone_number_id" id="whatsapp_phone_number_id" value="<?php echo esc_attr( $whatsapp_phone_number_id ); ?>" class="regular-text" placeholder="701585759714485">
 							<p class="description">WhatsApp Business phone number ID from your Meta Developer Dashboard (e.g., 701585759714485).</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_message_language">Message Language</label>
+						</th>
+						<td>
+							<select name="whatsapp_message_language" id="whatsapp_message_language">
+								<option value="ar" <?php selected( $whatsapp_message_language, 'ar' ); ?>>العربية (Arabic)</option>
+								<option value="en" <?php selected( $whatsapp_message_language, 'en' ); ?>>English</option>
+								<option value="fr" <?php selected( $whatsapp_message_language, 'fr' ); ?>>Français (French)</option>
+								<option value="es" <?php selected( $whatsapp_message_language, 'es' ); ?>>Español (Spanish)</option>
+								<option value="de" <?php selected( $whatsapp_message_language, 'de' ); ?>>Deutsch (German)</option>
+								<option value="it" <?php selected( $whatsapp_message_language, 'it' ); ?>>Italiano (Italian)</option>
+								<option value="tr" <?php selected( $whatsapp_message_language, 'tr' ); ?>>Türkçe (Turkish)</option>
+								<option value="ur" <?php selected( $whatsapp_message_language, 'ur' ); ?>>اردو (Urdu)</option>
+							</select>
+							<p class="description">Choose the language for WhatsApp OTP messages. This affects both SMS and WhatsApp API methods.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="test_whatsapp_phone">Test WhatsApp API</label>
+						</th>
+						<td>
+							<input type="text" id="test_whatsapp_phone" placeholder="201026795795" class="regular-text" style="margin-bottom: 10px;">
+							<br>
+							<button type="button" id="test_whatsapp_button" class="button button-secondary">Send Test Message</button>
+							<div id="test_whatsapp_result" style="margin-top: 10px;"></div>
+							<p class="description">Enter a phone number (with country code, no +) to test the WhatsApp API configuration. A test OTP message will be sent.</p>
 						</td>
 					</tr>
 				</table>
@@ -232,6 +317,52 @@ function snks_therapist_registration_settings_page() {
 		previewOtp.textContent = methodText;
 	}
 	
+	function testWhatsAppAPI() {
+		const phoneInput = document.getElementById('test_whatsapp_phone');
+		const button = document.getElementById('test_whatsapp_button');
+		const resultDiv = document.getElementById('test_whatsapp_result');
+		
+		const phone = phoneInput.value.trim();
+		if (!phone) {
+			resultDiv.innerHTML = '<div style="color: red;">Please enter a phone number</div>';
+			return;
+		}
+		
+		// Disable button and show loading
+		button.disabled = true;
+		button.textContent = 'Sending...';
+		resultDiv.innerHTML = '<div style="color: blue;">Sending test message...</div>';
+		
+		// Prepare AJAX data
+		const formData = new FormData();
+		formData.append('action', 'test_whatsapp_api');
+		formData.append('test_phone', phone);
+		formData.append('nonce', '<?php echo wp_create_nonce( 'test_whatsapp_api_nonce' ); ?>');
+		
+		// Send AJAX request
+		fetch('<?php echo admin_url( 'admin-ajax.php' ); ?>', {
+			method: 'POST',
+			body: formData
+		})
+		.then(response => response.json())
+		.then(data => {
+			if (data.success) {
+				resultDiv.innerHTML = '<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ Success:</strong> ' + data.data.message + '</div>';
+			} else {
+				resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ Error:</strong> ' + data.data.message + '</div>';
+			}
+		})
+		.catch(error => {
+			resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ Error:</strong> Network error occurred</div>';
+			console.error('Error:', error);
+		})
+		.finally(() => {
+			// Re-enable button
+			button.disabled = false;
+			button.textContent = 'Send Test Message';
+		});
+	}
+	
 	// Initialize on page load
 	document.addEventListener('DOMContentLoaded', function() {
 		toggleOtpSettings();
@@ -241,6 +372,12 @@ function snks_therapist_registration_settings_page() {
 			const previewEmail = document.getElementById('preview_email_field');
 			previewEmail.textContent = this.checked ? 'Shown' : 'Hidden';
 		});
+		
+		// Add test WhatsApp button event listener
+		const testButton = document.getElementById('test_whatsapp_button');
+		if (testButton) {
+			testButton.addEventListener('click', testWhatsAppAPI);
+		}
 	});
 	</script>
 	
@@ -308,6 +445,7 @@ function snks_get_therapist_registration_settings() {
 		'whatsapp_api_url' => get_option( 'snks_whatsapp_api_url', '' ),
 		'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
 		'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
+		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' ),
 		'default_country' => get_option( 'snks_therapist_default_country', 'EG' ),
 		'country_codes' => snks_get_country_dial_codes()
 	);
