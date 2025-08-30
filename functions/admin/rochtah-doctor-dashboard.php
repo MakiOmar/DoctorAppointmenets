@@ -354,6 +354,57 @@ function snks_rochtah_doctor_dashboard() {
 		border-color: #0073aa !important;
 		color: white !important;
 	}
+	
+	.prescription-modal .modal-content {
+		width: 90%;
+		max-width: 700px;
+		height: 80vh;
+		max-height: 600px;
+		margin: 2% auto;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.prescription-modal-header {
+		flex-shrink: 0;
+		padding-bottom: 15px;
+		border-bottom: 1px solid #e5e7eb;
+		margin-bottom: 20px;
+	}
+	
+	.prescription-modal-body {
+		flex: 1;
+		overflow-y: auto;
+		padding-right: 10px;
+		margin-right: -10px;
+	}
+	
+	.prescription-modal-footer {
+		flex-shrink: 0;
+		padding-top: 20px;
+		border-top: 1px solid #e5e7eb;
+		margin-top: 20px;
+		text-align: center;
+	}
+	
+	/* Custom scrollbar for the modal body */
+	.prescription-modal-body::-webkit-scrollbar {
+		width: 8px;
+	}
+	
+	.prescription-modal-body::-webkit-scrollbar-track {
+		background: #f1f1f1;
+		border-radius: 4px;
+	}
+	
+	.prescription-modal-body::-webkit-scrollbar-thumb {
+		background: #c1c1c1;
+		border-radius: 4px;
+	}
+	
+	.prescription-modal-body::-webkit-scrollbar-thumb:hover {
+		background: #a8a8a8;
+	}
 	</style>
 	
 	<script>
@@ -371,7 +422,7 @@ function snks_rochtah_doctor_dashboard() {
 	
 	function viewPrescription(bookingId) {
 		// Show loading state
-		showModal('View/Edit Prescription', '<div style="text-align: center; padding: 40px;">Loading prescription...</div>');
+		showPrescriptionModal('View/Edit Prescription', '<div style="text-align: center; padding: 40px;">Loading prescription...</div>');
 		
 		// Fetch prescription data
 		jQuery.ajax({
@@ -385,8 +436,13 @@ function snks_rochtah_doctor_dashboard() {
 			success: function(response) {
 				if (response.success) {
 					const data = response.data;
-					const content = `
-						<form id="editPrescriptionForm" style="max-width: 600px;">
+					const header = `
+						<h2>View/Edit Prescription</h2>
+						<span class="close" onclick="closePrescriptionModal()">&times;</span>
+					`;
+					
+					const body = `
+						<form id="editPrescriptionForm">
 							<div style="margin-bottom: 20px;">
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Patient:</label>
 								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.patient_name}</div>
@@ -397,19 +453,19 @@ function snks_rochtah_doctor_dashboard() {
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label for="edit_prescription_text" style="font-weight: bold; display: block; margin-bottom: 8px;">Prescription Text:</label>
-								<textarea id="edit_prescription_text" name="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;" required>${data.prescription_text || ''}</textarea>
+								<textarea id="edit_prescription_text" name="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;" required>${data.prescription_text || ''}</textarea>
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label for="edit_medications" style="font-weight: bold; display: block; margin-bottom: 8px;">Medications:</label>
-								<textarea id="edit_medications" name="medications" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;">${data.medications || ''}</textarea>
+								<textarea id="edit_medications" name="medications" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;">${data.medications || ''}</textarea>
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label for="edit_dosage_instructions" style="font-weight: bold; display: block; margin-bottom: 8px;">Dosage Instructions:</label>
-								<textarea id="edit_dosage_instructions" name="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;">${data.dosage_instructions || ''}</textarea>
+								<textarea id="edit_dosage_instructions" name="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;">${data.dosage_instructions || ''}</textarea>
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label for="edit_doctor_notes" style="font-weight: bold; display: block; margin-bottom: 8px;">Doctor Notes:</label>
-								<textarea id="edit_doctor_notes" name="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;">${data.doctor_notes || ''}</textarea>
+								<textarea id="edit_doctor_notes" name="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;">${data.doctor_notes || ''}</textarea>
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Prescribed By:</label>
@@ -419,17 +475,19 @@ function snks_rochtah_doctor_dashboard() {
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Prescribed At:</label>
 								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.prescribed_at || 'Not prescribed yet'}</div>
 							</div>
-							<div style="text-align: center; margin-top: 30px;">
-								<button type="button" onclick="updatePrescription(${bookingId})" class="button button-primary" style="margin-right: 10px;">
-									Update Prescription
-								</button>
-								<button type="button" onclick="closeModal()" class="button">
-									Cancel
-								</button>
-							</div>
 						</form>
 					`;
-					showModal('View/Edit Prescription', content);
+					
+					const footer = `
+						<button type="button" onclick="updatePrescription(${bookingId})" class="button button-primary" style="margin-right: 10px;">
+							Update Prescription
+						</button>
+						<button type="button" onclick="closePrescriptionModal()" class="button">
+							Cancel
+						</button>
+					`;
+					
+					showPrescriptionModal(header, body, footer);
 				} else {
 					showModal('Error', `<p>Error loading prescription: ${response.data}</p>`);
 				}
@@ -454,7 +512,10 @@ function snks_rochtah_doctor_dashboard() {
 		}
 		
 		// Show saving state
-		showModal('Updating Prescription', '<div style="text-align: center; padding: 40px;">Saving prescription...</div>');
+		showPrescriptionModal(
+			'<h2>Updating Prescription</h2><span class="close" onclick="closePrescriptionModal()">&times;</span>',
+			'<div style="text-align: center; padding: 40px;">Saving prescription...</div>'
+		);
 		
 		// Send update request
 		jQuery.ajax({
@@ -471,15 +532,68 @@ function snks_rochtah_doctor_dashboard() {
 			},
 			success: function(response) {
 				if (response.success) {
-					showModal('Success', '<p>Prescription updated successfully!</p><div style="text-align: center; margin-top: 20px;"><button onclick="closeModal(); location.reload();" class="button button-primary">OK</button></div>');
+					showPrescriptionModal(
+						'<h2>Success</h2><span class="close" onclick="closePrescriptionModal()">&times;</span>',
+						'<p>Prescription updated successfully!</p>',
+						'<button onclick="closePrescriptionModal(); location.reload();" class="button button-primary">OK</button>'
+					);
 				} else {
-					showModal('Error', `<p>Error updating prescription: ${response.data}</p>`);
+					showPrescriptionModal(
+						'<h2>Error</h2><span class="close" onclick="closePrescriptionModal()">&times;</span>',
+						`<p>Error updating prescription: ${response.data}</p>`,
+						'<button onclick="closePrescriptionModal();" class="button">Close</button>'
+					);
 				}
 			},
 			error: function() {
-				showModal('Error', '<p>Failed to update prescription.</p>');
+				showPrescriptionModal(
+					'<h2>Error</h2><span class="close" onclick="closePrescriptionModal()">&times;</span>',
+					'<p>Failed to update prescription.</p>',
+					'<button onclick="closePrescriptionModal();" class="button">Close</button>'
+				);
 			}
 		});
+	}
+
+	// Show prescription modal with fixed height and scrollbar
+	function showPrescriptionModal(header, body, footer = '') {
+		// Create or update the prescription modal
+		let modal = document.getElementById('prescriptionModal');
+		if (!modal) {
+			modal = document.createElement('div');
+			modal.id = 'prescriptionModal';
+			modal.className = 'modal prescription-modal';
+			document.body.appendChild(modal);
+		}
+		
+		modal.innerHTML = `
+			<div class="modal-content">
+				<div class="prescription-modal-header">
+					${header}
+				</div>
+				<div class="prescription-modal-body">
+					${body}
+				</div>
+				${footer ? `<div class="prescription-modal-footer">${footer}</div>` : ''}
+			</div>
+		`;
+		
+		modal.style.display = 'block';
+		
+		// Close modal when clicking outside of it
+		modal.onclick = function(event) {
+			if (event.target === modal) {
+				closePrescriptionModal();
+			}
+		};
+	}
+
+	// Close prescription modal
+	function closePrescriptionModal() {
+		const modal = document.getElementById('prescriptionModal');
+		if (modal) {
+			modal.style.display = 'none';
+		}
 	}
 	
 	function showReferralReason(bookingId) {
