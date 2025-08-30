@@ -388,4 +388,116 @@ function snks_ajax_register_therapist() {
     $application_id = $wpdb->insert_id;
     error_log('Therapist application: success');
     wp_send_json_success(['message' => 'Application submitted and pending approval.']);
-} 
+}
+
+/**
+ * Get prescription data for viewing/editing
+ */
+function snks_get_rochtah_prescription() {
+	// Verify nonce
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'rochtah_prescription' ) ) {
+		wp_send_json_error( 'Security check failed' );
+	}
+	
+	// Check if user has Rochtah doctor capabilities
+	if ( ! current_user_can( 'manage_rochtah' ) && ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( 'Insufficient permissions' );
+	}
+	
+	$booking_id = intval( $_POST['booking_id'] );
+	
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	// Get booking with prescription data and related info
+	$booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT rb.*, 
+		        u.display_name as patient_name, 
+		        u.user_email as patient_email,
+		        prescriber.display_name as prescribed_by_name
+		FROM $rochtah_bookings_table rb
+		LEFT JOIN {$wpdb->users} u ON rb.patient_id = u.ID
+		LEFT JOIN {$wpdb->users} prescriber ON rb.prescribed_by = prescriber.ID
+		WHERE rb.id = %d",
+		$booking_id
+	) );
+	
+	if ( ! $booking ) {
+		wp_send_json_error( 'Booking not found' );
+	}
+	
+	wp_send_json_success( array(
+		'patient_name' => $booking->patient_name,
+		'patient_email' => $booking->patient_email,
+		'booking_date' => $booking->booking_date,
+		'booking_time' => date( 'g:i A', strtotime( $booking->booking_time ) ),
+		'prescription_text' => $booking->prescription_text,
+		'medications' => $booking->medications,
+		'dosage_instructions' => $booking->dosage_instructions,
+		'doctor_notes' => $booking->doctor_notes,
+		'prescribed_by_name' => $booking->prescribed_by_name,
+		'prescribed_at' => $booking->prescribed_at ? date( 'Y-m-d H:i:s', strtotime( $booking->prescribed_at ) ) : null,
+		'status' => $booking->status
+	) );
+}
+add_action( 'wp_ajax_get_rochtah_prescription', 'snks_get_rochtah_prescription' );
+
+/**
+ * Update existing prescription
+ */
+function snks_update_rochtah_prescription() {
+	// Verify nonce
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'save_prescription' ) ) {
+		wp_send_json_error( 'Security check failed' );
+	}
+	
+	// Check if user has Rochtah doctor capabilities
+	if ( ! current_user_can( 'manage_rochtah' ) && ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( 'Insufficient permissions' );
+	}
+	
+	$booking_id = intval( $_POST['booking_id'] );
+	$prescription_text = sanitize_textarea_field( $_POST['prescription_text'] );
+	$medications = sanitize_textarea_field( $_POST['medications'] );
+	$dosage_instructions = sanitize_textarea_field( $_POST['dosage_instructions'] );
+	$doctor_notes = sanitize_textarea_field( $_POST['doctor_notes'] );
+	
+	global $wpdb;
+	$current_user = wp_get_current_user();
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	// Update prescription (don't change prescribed_by and prescribed_at if already set)
+	$existing_booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT prescribed_by, prescribed_at FROM $rochtah_bookings_table WHERE id = %d",
+		$booking_id
+	) );
+	
+	$update_data = array(
+		'prescription_text' => $prescription_text,
+		'medications' => $medications,
+		'dosage_instructions' => $dosage_instructions,
+		'doctor_notes' => $doctor_notes,
+		'status' => 'prescribed'
+	);
+	
+	// Only update prescribed_by and prescribed_at if not already set
+	if ( ! $existing_booking->prescribed_by ) {
+		$update_data['prescribed_by'] = $current_user->ID;
+		$update_data['prescribed_at'] = current_time( 'mysql' );
+	}
+	
+	$updated = $wpdb->update(
+		$rochtah_bookings_table,
+		$update_data,
+		array( 'id' => $booking_id ),
+		array( '%s', '%s', '%s', '%s', '%s', '%d', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $updated !== false ) {
+		wp_send_json_success( 'Prescription updated successfully' );
+	} else {
+		wp_send_json_error( 'Failed to update prescription' );
+	}
+}
+add_action( 'wp_ajax_update_rochtah_prescription', 'snks_update_rochtah_prescription' ); 

@@ -154,12 +154,12 @@ function snks_rochtah_doctor_dashboard() {
 									</button>
 									
 									<div class="actions-container" id="actions-<?php echo $booking->id; ?>" style="display: none; margin-top: 10px;">
-										<?php if ( $booking->status === 'confirmed' ) : ?>
-											<button class="button button-primary button-small" 
+									<?php if ( $booking->status === 'confirmed' ) : ?>
+										<button class="button button-primary button-small" 
 													onclick="openPrescriptionModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->patient_name ); ?>')"
 													style="margin: 2px;">
-												Write Prescription
-											</button>
+											Write Prescription
+										</button>
 											<br>
 											<button class="button button-secondary button-small" 
 													onclick="joinRochtahMeeting(<?php echo $booking->id; ?>)"
@@ -167,12 +167,12 @@ function snks_rochtah_doctor_dashboard() {
 												🎥 Join Meeting
 											</button>
 											<br>
-										<?php elseif ( $booking->status === 'prescribed' ) : ?>
-											<button class="button button-secondary button-small" 
+									<?php elseif ( $booking->status === 'prescribed' ) : ?>
+										<button class="button button-secondary button-small" 
 													onclick="viewPrescription(<?php echo $booking->id; ?>)"
 													style="margin: 2px;">
-												View Prescription
-											</button>
+											View Prescription
+										</button>
 											<br>
 										<?php endif; ?>
 										
@@ -180,13 +180,13 @@ function snks_rochtah_doctor_dashboard() {
 											<div style="margin: 2px;">
 												<?php echo snks_add_rochtah_referral_reason_button( $booking ); ?>
 											</div>
-										<?php endif; ?>
-										
-										<button class="button button-small" 
+									<?php endif; ?>
+									
+									<button class="button button-small" 
 												onclick="openStatusModal(<?php echo $booking->id; ?>, '<?php echo esc_js( $booking->status ); ?>')"
 												style="margin: 2px;">
-											Update Status
-										</button>
+										Update Status
+									</button>
 									</div>
 								</td>
 							</tr>
@@ -370,8 +370,116 @@ function snks_rochtah_doctor_dashboard() {
 	}
 	
 	function viewPrescription(bookingId) {
-		// This would open a modal to view the prescription
-		alert('View prescription for booking ' + bookingId);
+		// Show loading state
+		showModal('View/Edit Prescription', '<div style="text-align: center; padding: 40px;">Loading prescription...</div>');
+		
+		// Fetch prescription data
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'get_rochtah_prescription',
+				booking_id: bookingId,
+				nonce: '<?php echo wp_create_nonce( 'rochtah_prescription' ); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					const data = response.data;
+					const content = `
+						<form id="editPrescriptionForm" style="max-width: 600px;">
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Patient:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.patient_name}</div>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Booking Date:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.booking_date} at ${data.booking_time}</div>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="edit_prescription_text" style="font-weight: bold; display: block; margin-bottom: 8px;">Prescription Text:</label>
+								<textarea id="edit_prescription_text" name="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;" required>${data.prescription_text || ''}</textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="edit_medications" style="font-weight: bold; display: block; margin-bottom: 8px;">Medications:</label>
+								<textarea id="edit_medications" name="medications" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;">${data.medications || ''}</textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="edit_dosage_instructions" style="font-weight: bold; display: block; margin-bottom: 8px;">Dosage Instructions:</label>
+								<textarea id="edit_dosage_instructions" name="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;">${data.dosage_instructions || ''}</textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="edit_doctor_notes" style="font-weight: bold; display: block; margin-bottom: 8px;">Doctor Notes:</label>
+								<textarea id="edit_doctor_notes" name="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px;">${data.doctor_notes || ''}</textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Prescribed By:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.prescribed_by_name || 'Not prescribed yet'}</div>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Prescribed At:</label>
+								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.prescribed_at || 'Not prescribed yet'}</div>
+							</div>
+							<div style="text-align: center; margin-top: 30px;">
+								<button type="button" onclick="updatePrescription(${bookingId})" class="button button-primary" style="margin-right: 10px;">
+									Update Prescription
+								</button>
+								<button type="button" onclick="closeModal()" class="button">
+									Cancel
+								</button>
+							</div>
+						</form>
+					`;
+					showModal('View/Edit Prescription', content);
+				} else {
+					showModal('Error', `<p>Error loading prescription: ${response.data}</p>`);
+				}
+			},
+			error: function() {
+				showModal('Error', '<p>Failed to load prescription data.</p>');
+			}
+		});
+	}
+
+	function updatePrescription(bookingId) {
+		// Get form data
+		const prescriptionText = document.getElementById('edit_prescription_text').value;
+		const medications = document.getElementById('edit_medications').value;
+		const dosageInstructions = document.getElementById('edit_dosage_instructions').value;
+		const doctorNotes = document.getElementById('edit_doctor_notes').value;
+		
+		// Validate required field
+		if (!prescriptionText.trim()) {
+			alert('Prescription text is required.');
+			return;
+		}
+		
+		// Show saving state
+		showModal('Updating Prescription', '<div style="text-align: center; padding: 40px;">Saving prescription...</div>');
+		
+		// Send update request
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'update_rochtah_prescription',
+				booking_id: bookingId,
+				prescription_text: prescriptionText,
+				medications: medications,
+				dosage_instructions: dosageInstructions,
+				doctor_notes: doctorNotes,
+				nonce: '<?php echo wp_create_nonce( 'save_prescription' ); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					showModal('Success', '<p>Prescription updated successfully!</p><div style="text-align: center; margin-top: 20px;"><button onclick="closeModal(); location.reload();" class="button button-primary">OK</button></div>');
+				} else {
+					showModal('Error', `<p>Error updating prescription: ${response.data}</p>`);
+				}
+			},
+			error: function() {
+				showModal('Error', '<p>Failed to update prescription.</p>');
+			}
+		});
 	}
 	
 	function showReferralReason(bookingId) {
