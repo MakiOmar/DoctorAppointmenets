@@ -47,7 +47,9 @@ function snks_test_whatsapp_api_ajax() {
 		'whatsapp_api_url' => get_option( 'snks_whatsapp_api_url', '' ),
 		'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
 		'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
-		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' )
+		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' ),
+		'whatsapp_template_name' => get_option( 'snks_whatsapp_template_name', 'hello_world' ),
+		'whatsapp_use_template' => get_option( 'snks_whatsapp_use_template', 1 )
 	);
 	
 	if ( empty( $settings['whatsapp_api_url'] ) || empty( $settings['whatsapp_api_token'] ) || empty( $settings['whatsapp_phone_number_id'] ) ) {
@@ -75,7 +77,9 @@ function snks_test_whatsapp_api_ajax() {
 				'api_url' => $settings['whatsapp_api_url'],
 				'phone_number_id' => $settings['whatsapp_phone_number_id'],
 				'test_phone' => $test_phone,
-				'language' => $settings['whatsapp_message_language']
+				'language' => $settings['whatsapp_message_language'],
+				'use_template' => $settings['whatsapp_use_template'] ? 'Yes' : 'No',
+				'template_name' => $settings['whatsapp_template_name']
 			)
 		) );
 	}
@@ -106,6 +110,8 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_whatsapp_api_token', sanitize_text_field( $_POST['whatsapp_api_token'] ?? '' ) );
 		update_option( 'snks_whatsapp_phone_number_id', sanitize_text_field( $_POST['whatsapp_phone_number_id'] ?? '' ) );
 		update_option( 'snks_whatsapp_message_language', sanitize_text_field( $_POST['whatsapp_message_language'] ?? 'ar' ) );
+		update_option( 'snks_whatsapp_template_name', sanitize_text_field( $_POST['whatsapp_template_name'] ?? 'hello_world' ) );
+		update_option( 'snks_whatsapp_use_template', isset( $_POST['whatsapp_use_template'] ) ? 1 : 0 );
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
 	}
@@ -121,6 +127,8 @@ function snks_therapist_registration_settings_page() {
 	$whatsapp_api_token = get_option( 'snks_whatsapp_api_token', '' );
 	$whatsapp_phone_number_id = get_option( 'snks_whatsapp_phone_number_id', '' );
 	$whatsapp_message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
+	$whatsapp_template_name = get_option( 'snks_whatsapp_template_name', 'hello_world' );
+	$whatsapp_use_template = get_option( 'snks_whatsapp_use_template', 1 );
 	
 	?>
 	<div class="wrap">
@@ -205,6 +213,25 @@ function snks_therapist_registration_settings_page() {
 								<option value="ur" <?php selected( $whatsapp_message_language, 'ur' ); ?>>اردو (Urdu)</option>
 							</select>
 							<p class="description">Choose the language for WhatsApp OTP messages. This affects both SMS and WhatsApp API methods.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_use_template">Use Message Templates</label>
+						</th>
+						<td>
+							<input type="checkbox" name="whatsapp_use_template" id="whatsapp_use_template" value="1" <?php checked( $whatsapp_use_template, 1 ); ?> />
+							<label for="whatsapp_use_template">Use pre-approved WhatsApp message templates</label>
+							<p class="description"><strong>Recommended:</strong> Templates ensure message delivery. Uncheck only if you have an active conversation window.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_template_name">Template Name</label>
+						</th>
+						<td>
+							<input type="text" name="whatsapp_template_name" id="whatsapp_template_name" value="<?php echo esc_attr( $whatsapp_template_name ); ?>" class="regular-text" placeholder="hello_world">
+							<p class="description">Name of your approved WhatsApp message template. Default: "hello_world" (for testing only).</p>
 						</td>
 					</tr>
 					<tr>
@@ -369,7 +396,9 @@ function snks_therapist_registration_settings_page() {
 						'API URL: ' + data.data.debug_info.api_url + '<br>' +
 						'Phone Number ID: ' + data.data.debug_info.phone_number_id + '<br>' +
 						'Test Phone: ' + data.data.debug_info.test_phone + '<br>' +
-						'Language: ' + data.data.debug_info.language + '</small>';
+						'Language: ' + data.data.debug_info.language + '<br>' +
+						'Use Template: ' + data.data.debug_info.use_template + '<br>' +
+						'Template Name: ' + data.data.debug_info.template_name + '</small>';
 				}
 				
 				let responseInfo = '';
@@ -477,6 +506,8 @@ function snks_get_therapist_registration_settings() {
 		'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
 		'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
 		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' ),
+		'whatsapp_template_name' => get_option( 'snks_whatsapp_template_name', 'hello_world' ),
+		'whatsapp_use_template' => get_option( 'snks_whatsapp_use_template', 1 ),
 		'default_country' => get_option( 'snks_therapist_default_country', 'EG' ),
 		'country_codes' => snks_get_country_dial_codes()
 	);

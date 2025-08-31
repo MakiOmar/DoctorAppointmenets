@@ -1077,15 +1077,36 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	// Prepare API endpoint - updated to match Meta's format
 	$endpoint = rtrim( $api_url, '/' ) . '/' . $phone_number_id . '/messages';
 	
-	// Prepare request body - using text message format for OTP
-	$body = array(
-		'messaging_product' => 'whatsapp',
-		'to' => $phone_number,
-		'type' => 'text',
-		'text' => array(
-			'body' => $message
-		)
-	);
+	// Prepare request body - conditional template or text message
+	$use_template = isset( $settings['whatsapp_use_template'] ) ? $settings['whatsapp_use_template'] : 1;
+	
+	if ( $use_template ) {
+		// Use template message format for guaranteed delivery
+		$template_name = isset( $settings['whatsapp_template_name'] ) ? $settings['whatsapp_template_name'] : 'hello_world';
+		$template_language = $settings['whatsapp_message_language'] === 'ar' ? 'ar' : 'en_US';
+		
+		$body = array(
+			'messaging_product' => 'whatsapp',
+			'to' => $phone_number,
+			'type' => 'template',
+			'template' => array(
+				'name' => $template_name,
+				'language' => array(
+					'code' => $template_language
+				)
+			)
+		);
+	} else {
+		// Use text message format (requires active conversation)
+		$body = array(
+			'messaging_product' => 'whatsapp',
+			'to' => $phone_number,
+			'type' => 'text',
+			'text' => array(
+				'body' => $message
+			)
+		);
+	}
 	
 	// Prepare headers - exactly matching Meta's format
 	$headers = array(
