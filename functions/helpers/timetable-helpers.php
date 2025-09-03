@@ -496,24 +496,31 @@ function snks_get_open_timetable_by( $column, $value ) {
  * @return mixed
  */
 function snks_insert_timetable( $data, $user_id = false ) {
-	if ( ! $user_id ) {
-		$user_id = snks_get_settings_doctor_id();
-	}
-	$exists = snks_timetable_exists( $user_id, $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
-	if ( ! empty( $exists ) ) {
-		return false;
-	}
-	global $wpdb;
-	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
-	// Insert the data into the table.
-	$wpdb->insert( $table_name, $data );
+    if ( ! $user_id ) {
+        $user_id = snks_get_settings_doctor_id();
+    }
 
-	// Check if the insertion was successful.
-	if ( $wpdb->last_error ) {
-		return false; // Return false if there was an error.
-	} else {
-		return $wpdb->insert_id; // Return the inserted record ID.
-	}
+    // Convert date_time from 12-hour format to 24-hour format.
+    if ( isset( $data['date_time'] ) ) {
+        $data['date_time'] = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+    }
+
+    $exists = snks_timetable_exists( $user_id, $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
+    if ( ! empty( $exists ) ) {
+        return false;
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+    // Insert the data into the table.
+    $wpdb->insert( $table_name, $data );
+
+    // Check if the insertion was successful.
+    if ( $wpdb->last_error ) {
+        return false; // Return false if there was an error.
+    } else {
+        return $wpdb->insert_id; // Return the inserted record ID.
+    }
 }
 
 /**
