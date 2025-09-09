@@ -294,74 +294,104 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * the code in a cookie for 24 hours. It uses WordPress functions for making HTTP requests and handling responses.
  *
  * @param bool $set_cookie Weather to set cookie or not.
+ * @param string $custom_ip Optional IP address to use instead of detecting from headers.
  * @return string
  */
-function snks_get_country_code( $set_cookie = true ) {
-	//phpcs:disable
-	// Get the user's IP address, validating it for security.
-	$ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP );
-	//phpcs:enable
-	// If the IP address is not valid, return early.
-	if ( ! $ip ) {
-		return 'Unknown';
-	}
+function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
+    // Use custom IP if provided, otherwise get the real client IP even behind proxies or Cloudflare
+    if ( $custom_ip ) {
+        $ip = filter_var( $custom_ip, FILTER_VALIDATE_IP );
+    } else {
+        $ip_keys = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',  // Proxies, Load balancers
+            'HTTP_X_REAL_IP',        // Some reverse proxies
+            'HTTP_CLIENT_IP',        // Generic
+            'REMOTE_ADDR'            // Default fallback
+        ];
 
-	// API key and URL for IP lookup.
-	$api_key = 'yBZHxURnxnHhONq'; // Replace with your actual API key.
-	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
+        $ip = 'Unknown';
+        foreach ( $ip_keys as $key ) {
+            if ( ! empty( $_SERVER[ $key ] ) ) {
+                $ip_list = explode( ',', $_SERVER[ $key ] ); // In case of multiple IPs
+                $ip      = filter_var( trim( $ip_list[0] ), FILTER_VALIDATE_IP );
+                if ( $ip ) {
+                    break;
+                }
+            }
+        }
+    }
 
-	// Send request to the IP API using wp_remote_get.
-	$response = wp_remote_get( $api_url );
+    error_log( '🌍 My Country Detection - Detected IP: ' . $ip );
 
-	// Check for errors and validate the response.
-	if ( is_wp_error( $response ) ) {
-		return 'Unknown'; // Early return if there's an error in the response.
-	}
-	$country_codes = json_decode( COUNTRY_CURRENCIES, true );
-	$country_code  = 'Unknown';
-	// Retrieve the response body.
-	$body                 = wp_remote_retrieve_body( $response );
-	$europe_country_codes = array( // phpcs:disable
-			'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR',
-			'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GE', 'DE', 'GR', 'HU',
-			'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT', 'LU', 'MT',
-			'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU',
-			'SM', 'RS', 'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
-		);
-		// phpcs:enable
-	// Check if the body is not empty and contains serialized data.
-	if ( ! empty( $body ) ) {
-		$data = json_decode( $body ); // Using @ to suppress potential warnings.
-		// Check if the country code is present.
-		if ( $data && isset( $data->countryCode ) ) { //phpcs:disable
-			$country_code = sanitize_text_field( $data->countryCode );
-			//phpcs:enable
-			if ( $set_cookie ) {
-				if( IL_TO_EG && 'IL' === $country_code ) {
-					$country_code = 'EG';
-				}
-				// Store the country code in a cookie for 24 hours.
-				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
-				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
-					$stored_currency = $country_codes[ $country_code ];
-				} else {
-					$stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
-				}
-				if( IL_TO_EG && 'IL' === $country_code ) {
-					$stored_currency = 'EGP';
-				}
-				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
-			}
+    // If no valid IP found, return Unknown
+    if ( ! $ip ) {
+        return 'Unknown';
+    }
 
-			if( IL_TO_EG && 'IL' === $country_code ) {
-				$country_code = 'EG';
-			}
+    // API key and URL for IP lookup
+    $api_key = 'yBZHxURnxnHhONq';
+    $api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
 
-			return $country_code;
-		}
-	}
-	return $country_code;
+    // Send request to the IP API using wp_remote_get
+    $response = wp_remote_get( $api_url );
+
+    if ( is_wp_error( $response ) ) {
+        return 'Unknown';
+    }
+
+    $country_codes = json_decode( COUNTRY_CURRENCIES, true );
+    $country_code  = 'Unknown';
+
+    // Retrieve the response body
+    $body = wp_remote_retrieve_body( $response );
+
+    $europe_country_codes = [
+        'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+        'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+        'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+        'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+    ];
+
+    if ( ! empty( $body ) ) {
+        $data = json_decode( $body );
+
+        if ( $data && isset( $data->countryCode ) ) {
+            $country_code = sanitize_text_field( $data->countryCode );
+
+            if ( $set_cookie ) {
+                if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
+                    $country_code = 'EG';
+                }
+
+                // Store the country code in a cookie for 24 hours
+                setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' );
+
+                // Determine stored currency
+                if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
+                    $stored_currency = $country_codes[ $country_code ];
+                } else {
+                    $stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
+                }
+
+                if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
+                    $stored_currency = 'EGP';
+                }
+
+                setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' );
+            }
+
+            if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
+                $country_code = 'EG';
+            }
+
+            return $country_code;
+        }
+    }
+
+    return $country_code;
 }
+
 
 /**
  * Get country code

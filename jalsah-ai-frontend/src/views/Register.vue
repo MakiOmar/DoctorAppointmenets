@@ -447,18 +447,46 @@ export default {
       }
     }
     
+    // Get client IP from external service
+    const getClientIP = async () => {
+      try {
+        console.log('🌐 Fetching client IP from external service...')
+        const res = await fetch('https://api.ipify.org?format=json')
+        const data = await res.json()
+        console.log('🌐 Client IP from ipify:', data.ip)
+        return data.ip
+      } catch (error) {
+        console.warn('⚠️ Could not fetch client IP:', error)
+        return null
+      }
+    }
+
     // Auto-detect user country
     const detectUserCountry = async () => {
       try {
         console.log('🌍 Detecting user country from API...')
-        // Add cache-busting parameter to force fresh detection
+        
+        // First, get the client IP from external service
+        const clientIP = await getClientIP()
+        
+        // Add cache-busting parameter and IP parameter
         const timestamp = Date.now()
-        const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?t=${timestamp}`)
+        const params = new URLSearchParams({
+          t: timestamp.toString()
+        })
+        
+        if (clientIP) {
+          params.append('ip', clientIP)
+          console.log('📤 Sending client IP to backend:', clientIP)
+        }
+        
+        const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?${params.toString()}`)
         console.log('📍 User country API response:', response.data)
         
         // Log debug information if available
         if (response.data.debug_info) {
           console.log('🔍 Debug Info:', response.data.debug_info)
+          console.log('🌐 Custom IP:', response.data.debug_info.custom_ip)
           console.log('🌐 Detected IP:', response.data.debug_info.detected_ip)
           console.log('🖥️ Remote Addr:', response.data.debug_info.remote_addr)
           console.log('🔧 Raw Country Code:', response.data.debug_info.raw_country_code)
@@ -619,6 +647,7 @@ Check console for full details.`)
       selectCountry,
       getSelectedCountryFlag,
       getSelectedCountryDial,
+      getClientIP,
       detectUserCountry,
       testIpDetection
     }

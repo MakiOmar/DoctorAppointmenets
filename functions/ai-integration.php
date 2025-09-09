@@ -5854,15 +5854,17 @@ function snks_get_completed_prescriptions_rest( $request ) {
  * Get user country based on IP address via REST API
  */
 function snks_get_user_country_rest( $request ) {
-	// Get REMOTE_ADDR for debugging
-	$detected_ip = $_SERVER['REMOTE_ADDR'] ?? 'Not Set';
+	// Get IP from request parameter or use REMOTE_ADDR
+	$custom_ip = $request->get_param( 'ip' );
+	$detected_ip = $custom_ip ?: ( $_SERVER['REMOTE_ADDR'] ?? 'Not Set' );
 	
 	// Log IP detection details
-	error_log( '🌍 User Country Detection - REMOTE_ADDR: ' . $detected_ip );
+	error_log( '🌍 User Country Detection - Custom IP: ' . ( $custom_ip ?: 'Not provided' ) );
+	error_log( '🌍 User Country Detection - Detected IP: ' . $detected_ip );
 	error_log( '🌍 User Country Detection - User Agent: ' . ( $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ) );
 	
-	// Call the helper function directly (force fresh detection by not using cookie cache)
-	$country_code = snks_get_country_code( false );
+	// Call the helper function with custom IP (force fresh detection by not using cookie cache)
+	$country_code = snks_get_country_code( false, $custom_ip );
 	
 	// Log the detection process
 	error_log( '🌍 User Country Detection - Raw country code: ' . $country_code );
@@ -5875,6 +5877,7 @@ function snks_get_user_country_rest( $request ) {
 		'success' => true,
 		'country_code' => $final_country_code,
 		'debug_info' => array(
+			'custom_ip' => $custom_ip,
 			'detected_ip' => $detected_ip,
 			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set',
@@ -5896,7 +5899,12 @@ function snks_test_ip_detection_rest( $request ) {
 	
 	// Call the helper function directly (force fresh detection by not using cookie cache)
 	$country_code = snks_get_country_code( false );
-	
+	return rest_ensure_response( array(
+		'success' => true,
+		'data' => array(
+			'country_code' => $country_code,
+		)
+	) );
 	// Test the IP API directly for comparison
 	$api_key = 'yBZHxURnxnHhONq';
 	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $detected_ip, esc_attr( $api_key ) );
