@@ -119,7 +119,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     </span>
-                    <span v-else class="text-lg mr-1 emoji-flag" :class="`flag-${selectedCountryCode.toLowerCase()}`">{{ getSelectedCountryFlag() }}</span>
+                    <span v-else class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
                     <span class="text-xs">{{ getSelectedCountryDial() }}</span>
                   </span>
                   <svg v-if="!isDetectingCountry" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@
                       class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                       :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
                     >
-                      <span class="text-lg mr-3 emoji-flag" :class="`flag-${country.code.toLowerCase()}`">{{ country.flag }}</span>
+                      <span class="text-lg mr-3 emoji-flag">{{ country.flag }}</span>
                       <span class="flex-1">{{ country.name }}</span>
                       <span class="text-gray-500 text-xs">{{ country.dial }}</span>
                     </button>
@@ -314,62 +314,8 @@ export default {
     const showCountryDropdown = ref(false)
     const countrySearch = ref('')
     const isDetectingCountry = ref(false)
-    
-    // Country codes with flags - Egypt first, then Arab countries, then alphabetical
-    const countryCodesWithFlags = ref([
-      // Egypt first
-      { code: 'EG', name: 'Egypt', dial: '+20', flag: '🇪🇬' },
-      // Arab countries
-      { code: 'SA', name: 'Saudi Arabia', dial: '+966', flag: '🇸🇦' },
-      { code: 'AE', name: 'UAE', dial: '+971', flag: '🇦🇪' },
-      { code: 'KW', name: 'Kuwait', dial: '+965', flag: '🇰🇼' },
-      { code: 'QA', name: 'Qatar', dial: '+974', flag: '🇶🇦' },
-      { code: 'BH', name: 'Bahrain', dial: '+973', flag: '🇧🇭' },
-      { code: 'OM', name: 'Oman', dial: '+968', flag: '🇴🇲' },
-      { code: 'JO', name: 'Jordan', dial: '+962', flag: '🇯🇴' },
-      { code: 'LB', name: 'Lebanon', dial: '+961', flag: '🇱🇧' },
-      { code: 'SY', name: 'Syria', dial: '+963', flag: '🇸🇾' },
-      { code: 'IQ', name: 'Iraq', dial: '+964', flag: '🇮🇶' },
-      { code: 'YE', name: 'Yemen', dial: '+967', flag: '🇾🇪' },
-      { code: 'PS', name: 'Palestine', dial: '+970', flag: '🇵🇸' },
-      { code: 'MA', name: 'Morocco', dial: '+212', flag: '🇲🇦' },
-      { code: 'TN', name: 'Tunisia', dial: '+216', flag: '🇹🇳' },
-      { code: 'DZ', name: 'Algeria', dial: '+213', flag: '🇩🇿' },
-      { code: 'LY', name: 'Libya', dial: '+218', flag: '🇱🇾' },
-      { code: 'SD', name: 'Sudan', dial: '+249', flag: '🇸🇩' },
-      // Other countries alphabetically
-      { code: 'AF', name: 'Afghanistan', dial: '+93', flag: '🇦🇫' },
-      { code: 'AL', name: 'Albania', dial: '+355', flag: '🇦🇱' },
-      { code: 'AR', name: 'Argentina', dial: '+54', flag: '🇦🇷' },
-      { code: 'AU', name: 'Australia', dial: '+61', flag: '🇦🇺' },
-      { code: 'AT', name: 'Austria', dial: '+43', flag: '🇦🇹' },
-      { code: 'BD', name: 'Bangladesh', dial: '+880', flag: '🇧🇩' },
-      { code: 'BE', name: 'Belgium', dial: '+32', flag: '🇧🇪' },
-      { code: 'BR', name: 'Brazil', dial: '+55', flag: '🇧🇷' },
-      { code: 'CA', name: 'Canada', dial: '+1', flag: '🇨🇦' },
-      { code: 'CN', name: 'China', dial: '+86', flag: '🇨🇳' },
-      { code: 'FR', name: 'France', dial: '+33', flag: '🇫🇷' },
-      { code: 'DE', name: 'Germany', dial: '+49', flag: '🇩🇪' },
-      { code: 'IN', name: 'India', dial: '+91', flag: '🇮🇳' },
-      { code: 'ID', name: 'Indonesia', dial: '+62', flag: '🇮🇩' },
-      { code: 'IR', name: 'Iran', dial: '+98', flag: '🇮🇷' },
-      { code: 'IT', name: 'Italy', dial: '+39', flag: '🇮🇹' },
-      { code: 'JP', name: 'Japan', dial: '+81', flag: '🇯🇵' },
-      { code: 'MY', name: 'Malaysia', dial: '+60', flag: '🇲🇾' },
-      { code: 'MX', name: 'Mexico', dial: '+52', flag: '🇲🇽' },
-      { code: 'NL', name: 'Netherlands', dial: '+31', flag: '🇳🇱' },
-      { code: 'PK', name: 'Pakistan', dial: '+92', flag: '🇵🇰' },
-      { code: 'RU', name: 'Russia', dial: '+7', flag: '🇷🇺' },
-      { code: 'SG', name: 'Singapore', dial: '+65', flag: '🇸🇬' },
-      { code: 'ZA', name: 'South Africa', dial: '+27', flag: '🇿🇦' },
-      { code: 'KR', name: 'South Korea', dial: '+82', flag: '🇰🇷' },
-      { code: 'ES', name: 'Spain', dial: '+34', flag: '🇪🇸' },
-      { code: 'TH', name: 'Thailand', dial: '+66', flag: '🇹🇭' },
-      { code: 'TR', name: 'Turkey', dial: '+90', flag: '🇹🇷' },
-      { code: 'GB', name: 'United Kingdom', dial: '+44', flag: '🇬🇧' },
-      { code: 'US', name: 'United States', dial: '+1', flag: '🇺🇸' },
-      { code: 'VN', name: 'Vietnam', dial: '+84', flag: '🇻🇳' }
-    ])
+    const countries = ref([])
+    const isLoadingCountries = ref(false)
 
     const loading = computed(() => authStore.loading)
     
@@ -385,9 +331,11 @@ export default {
     // Localized country names
     const localizedCountries = computed(() => {
       const isArabic = locale.value === 'ar'
-      return countryCodesWithFlags.value.map(country => ({
+      return countries.value.map(country => ({
         ...country,
-        name: isArabic ? getArabicCountryName(country.code) : country.name
+        name: isArabic ? country.name_ar : country.name_en,
+        code: country.country_code,
+        dial: country.dial_code
       }))
     })
 
@@ -447,6 +395,73 @@ export default {
         shouldShowEmailField.value = true
       }
     }
+
+    // Fetch countries from JSON API (same as phone_input_cb function)
+    const loadCountries = async () => {
+      try {
+        isLoadingCountries.value = true
+        const response = await fetch('https://jalsah.app/wp-content/uploads/2024/09/countires-codes-and-flags.json')
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch countries')
+        }
+        
+        const countriesData = await response.json()
+        
+        if (!Array.isArray(countriesData)) {
+          throw new Error('Invalid countries data format')
+        }
+        
+        // Sort by Arabic name (same as phone_input_cb function)
+        const keyValues = countriesData.map(country => country.name_ar)
+        countriesData.sort((a, b) => {
+          const indexA = keyValues.indexOf(a.name_ar)
+          const indexB = keyValues.indexOf(b.name_ar)
+          return a.name_ar.localeCompare(b.name_ar)
+        })
+        
+        // Reorder to put Egypt first, then Arab countries, then others
+        const egyptIndex = countriesData.findIndex(c => c.country_code === 'EG')
+        if (egyptIndex > 0) {
+          const egypt = countriesData.splice(egyptIndex, 1)[0]
+          countriesData.unshift(egypt)
+        }
+        
+        // Add Arab countries after Egypt
+        const arabCountries = ['SA', 'AE', 'KW', 'QA', 'BH', 'OM', 'JO', 'LB', 'SY', 'IQ', 'YE', 'PS', 'MA', 'TN', 'DZ', 'LY', 'SD']
+        const reorderedCountries = [countriesData[0]] // Start with Egypt
+        
+        // Add Arab countries in order
+        arabCountries.forEach(code => {
+          const index = countriesData.findIndex(c => c.country_code === code)
+          if (index > 0) {
+            reorderedCountries.push(countriesData[index])
+          }
+        })
+        
+        // Add remaining countries
+        countriesData.forEach(country => {
+          if (!reorderedCountries.includes(country)) {
+            reorderedCountries.push(country)
+          }
+        })
+        
+        countries.value = reorderedCountries
+        
+      } catch (error) {
+        console.error('Error loading countries:', error)
+        // Fallback to basic countries if API fails
+        countries.value = [
+          { country_code: 'EG', name_ar: 'مصر', name_en: 'Egypt', dial_code: '+20', flag: '🇪🇬' },
+          { country_code: 'SA', name_ar: 'السعودية', name_en: 'Saudi Arabia', dial_code: '+966', flag: '🇸🇦' },
+          { country_code: 'AE', name_ar: 'الإمارات', name_en: 'UAE', dial_code: '+971', flag: '🇦🇪' },
+          { country_code: 'US', name_ar: 'الولايات المتحدة', name_en: 'United States', dial_code: '+1', flag: '🇺🇸' },
+          { country_code: 'GB', name_ar: 'بريطانيا', name_en: 'United Kingdom', dial_code: '+44', flag: '🇬🇧' }
+        ]
+      } finally {
+        isLoadingCountries.value = false
+      }
+    }
     
     // Get client IP from external service
     const getClientIP = async () => {
@@ -482,7 +497,7 @@ export default {
         if (response.data && response.data.country_code) {
           const detectedCountry = response.data.country_code.toUpperCase()
           
-          const countryExists = countryCodesWithFlags.value.find(c => c.code === detectedCountry)
+          const countryExists = countries.value.find(c => c.country_code === detectedCountry)
           if (countryExists) {
             selectedCountryCode.value = detectedCountry
             userCountryCode.value = detectedCountry
@@ -502,8 +517,8 @@ export default {
       }
       
       // Get selected country info
-      const selectedCountry = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
-      const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial + form.value.whatsapp : form.value.whatsapp
+      const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
 
       const registrationData = {
         first_name: form.value.first_name,
@@ -520,7 +535,7 @@ export default {
       
       // Add country name for backend compatibility
       if (selectedCountry) {
-        registrationData.country = selectedCountry.name
+        registrationData.country = selectedCountry.name_en
       }
 
       const result = await authStore.register(registrationData)
@@ -549,114 +564,15 @@ export default {
       countrySearch.value = ''
     }
     
-    // Get Arabic country names
-    const getArabicCountryName = (code) => {
-      const arabicNames = {
-        'EG': 'مصر',
-        'SA': 'السعودية',
-        'AE': 'الإمارات',
-        'KW': 'الكويت',
-        'QA': 'قطر',
-        'BH': 'البحرين',
-        'OM': 'عمان',
-        'JO': 'الأردن',
-        'LB': 'لبنان',
-        'SY': 'سوريا',
-        'IQ': 'العراق',
-        'YE': 'اليمن',
-        'LY': 'ليبيا',
-        'TN': 'تونس',
-        'DZ': 'الجزائر',
-        'MA': 'المغرب',
-        'SD': 'السودان',
-        'US': 'الولايات المتحدة',
-        'GB': 'بريطانيا',
-        'CA': 'كندا',
-        'FR': 'فرنسا',
-        'DE': 'ألمانيا',
-        'IT': 'إيطاليا',
-        'ES': 'إسبانيا',
-        'NL': 'هولندا',
-        'BE': 'بلجيكا',
-        'CH': 'سويسرا',
-        'AT': 'النمسا',
-        'SE': 'السويد',
-        'NO': 'النرويج',
-        'DK': 'الدنمارك',
-        'FI': 'فنلندا',
-        'PL': 'بولندا',
-        'CZ': 'التشيك',
-        'HU': 'المجر',
-        'RO': 'رومانيا',
-        'BG': 'بلغاريا',
-        'GR': 'اليونان',
-        'TR': 'تركيا',
-        'RU': 'روسيا',
-        'CN': 'الصين',
-        'JP': 'اليابان',
-        'KR': 'كوريا الجنوبية',
-        'IN': 'الهند',
-        'BR': 'البرازيل',
-        'AR': 'الأرجنتين',
-        'MX': 'المكسيك',
-        'AU': 'أستراليا',
-        'NZ': 'نيوزيلندا',
-        'ZA': 'جنوب أفريقيا',
-        'NG': 'نيجيريا',
-        'KE': 'كينيا',
-        'GH': 'غانا',
-        'ET': 'إثيوبيا',
-        'UG': 'أوغندا',
-        'TZ': 'تنزانيا',
-        'ZW': 'زيمبابوي',
-        'BW': 'بوتسوانا',
-        'NA': 'ناميبيا',
-        'ZM': 'زامبيا',
-        'MW': 'ملاوي',
-        'MZ': 'موزمبيق',
-        'MG': 'مدغشقر',
-        'MU': 'موريشيوس',
-        'SC': 'سيشل',
-        'KM': 'جزر القمر',
-        'DJ': 'جيبوتي',
-        'SO': 'الصومال',
-        'ER': 'إريتريا',
-        'SS': 'جنوب السودان',
-        'CF': 'جمهورية أفريقيا الوسطى',
-        'TD': 'تشاد',
-        'NE': 'النيجر',
-        'ML': 'مالي',
-        'BF': 'بوركينا فاسو',
-        'CI': 'ساحل العاج',
-        'LR': 'ليبيريا',
-        'SL': 'سيراليون',
-        'GN': 'غينيا',
-        'GW': 'غينيا بيساو',
-        'GM': 'غامبيا',
-        'SN': 'السنغال',
-        'MR': 'موريتانيا',
-        'CV': 'الرأس الأخضر',
-        'ST': 'ساو تومي وبرينسيبي',
-        'GQ': 'غينيا الاستوائية',
-        'GA': 'الغابون',
-        'CG': 'الكونغو',
-        'CD': 'جمهورية الكونغو الديمقراطية',
-        'AO': 'أنغولا',
-        'CM': 'الكاميرون',
-        'BI': 'بوروندي',
-        'RW': 'رواندا'
-      }
-      return arabicNames[code] || code
-    }
 
     const getSelectedCountryFlag = () => {
-      const country = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
+      const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
       return country ? country.flag : '🇪🇬'
     }
     
     const getSelectedCountryDial = () => {
-      const country = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
-      return country ? country.dial : '+20'
+      const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      return country ? country.dial_code : '+20'
     }
     
     // Close dropdown when clicking outside
@@ -670,6 +586,7 @@ export default {
     onMounted(async () => {
       await Promise.all([
         loadSettings(),
+        loadCountries(),
         detectUserCountry()
       ])
       
@@ -689,13 +606,14 @@ export default {
       handleRegister,
       fillDummyData,
       selectedCountryCode,
-      countryCodesWithFlags,
+      countries,
       shouldShowEmailField,
       passwordMismatchError,
       showCountryDropdown,
       countrySearch,
       filteredCountries,
       isDetectingCountry,
+      isLoadingCountries,
       toggleCountryDropdown,
       selectCountry,
       getSelectedCountryFlag,
@@ -717,86 +635,8 @@ export default {
   font-variant-emoji: emoji;
   -webkit-font-feature-settings: "liga";
   font-feature-settings: "liga";
-}
-
-/* Fallback for systems that don't support flag emojis */
-@supports not (font-variant-emoji: emoji) {
-  .emoji-flag {
-    font-family: 'Twemoji', 'Noto Color Emoji', 'Apple Color Emoji', sans-serif;
-    font-size: 1.1em;
-  }
-}
-
-/* Additional fallback using CSS content for specific flags */
-.flag-eg::before { content: "🇪🇬"; }
-.flag-sa::before { content: "🇸🇦"; }
-.flag-ae::before { content: "🇦🇪"; }
-.flag-kw::before { content: "🇰🇼"; }
-.flag-qa::before { content: "🇶🇦"; }
-.flag-bh::before { content: "🇧🇭"; }
-.flag-om::before { content: "🇴🇲"; }
-.flag-jo::before { content: "🇯🇴"; }
-.flag-lb::before { content: "🇱🇧"; }
-.flag-sy::before { content: "🇸🇾"; }
-.flag-iq::before { content: "🇮🇶"; }
-.flag-ye::before { content: "🇾🇪"; }
-.flag-ps::before { content: "🇵🇸"; }
-.flag-ma::before { content: "🇲🇦"; }
-.flag-tn::before { content: "🇹🇳"; }
-.flag-dz::before { content: "🇩🇿"; }
-.flag-ly::before { content: "🇱🇾"; }
-.flag-sd::before { content: "🇸🇩"; }
-.flag-gb::before { content: "🇬🇧"; }
-.flag-us::before { content: "🇺🇸"; }
-.flag-ca::before { content: "🇨🇦"; }
-.flag-fr::before { content: "🇫🇷"; }
-.flag-de::before { content: "🇩🇪"; }
-.flag-it::before { content: "🇮🇹"; }
-.flag-es::before { content: "🇪🇸"; }
-.flag-nl::before { content: "🇳🇱"; }
-.flag-be::before { content: "🇧🇪"; }
-.flag-ch::before { content: "🇨🇭"; }
-.flag-at::before { content: "🇦🇹"; }
-.flag-se::before { content: "🇸🇪"; }
-.flag-no::before { content: "🇳🇴"; }
-.flag-dk::before { content: "🇩🇰"; }
-.flag-fi::before { content: "🇫🇮"; }
-.flag-pl::before { content: "🇵🇱"; }
-.flag-cz::before { content: "🇨🇿"; }
-.flag-hu::before { content: "🇭🇺"; }
-.flag-ro::before { content: "🇷🇴"; }
-.flag-bg::before { content: "🇧🇬"; }
-.flag-gr::before { content: "🇬🇷"; }
-.flag-tr::before { content: "🇹🇷"; }
-.flag-ru::before { content: "🇷🇺"; }
-.flag-cn::before { content: "🇨🇳"; }
-.flag-jp::before { content: "🇯🇵"; }
-.flag-kr::before { content: "🇰🇷"; }
-.flag-in::before { content: "🇮🇳"; }
-.flag-br::before { content: "🇧🇷"; }
-.flag-ar::before { content: "🇦🇷"; }
-.flag-mx::before { content: "🇲🇽"; }
-.flag-au::before { content: "🇦🇺"; }
-.flag-nz::before { content: "🇳🇿"; }
-.flag-za::before { content: "🇿🇦"; }
-
-/* Force emoji rendering with additional properties */
-.emoji-flag {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/* Alternative approach using background images for flags */
-.flag-fallback {
-  display: inline-block;
-  width: 20px;
-  height: 15px;
-  background-size: cover;
-  background-position: center;
-  border-radius: 2px;
-  margin-right: 8px;
-}
-
-.flag-fallback.eg { background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAyMCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjE1IiBmaWxsPSIjQ0UxMTI0MiIvPgo8cmVjdCB5PSI1IiB3aWR0aD0iMjAiIGhlaWdodD0iNSIgZmlsbD0iI0ZGRkZGRiIvPgo8cmVjdCB5PSIxMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjUiIGZpbGw9IiMwMDAwMDAiLz4KPC9zdmc+'); }
 </style> 
