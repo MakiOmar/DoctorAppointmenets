@@ -112,7 +112,7 @@
                   style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
                 >
                   <span class="flex items-center">
-                    <span class="text-lg mr-1">{{ getSelectedCountryFlag() }}</span>
+                    <span class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
                     <span class="text-xs">{{ getSelectedCountryDial() }}</span>
                   </span>
                   <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +143,7 @@
                       class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                       :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
                     >
-                      <span class="text-lg mr-3">{{ country.flag }}</span>
+                      <span class="text-lg mr-3 emoji-flag">{{ country.flag }}</span>
                       <span class="flex-1">{{ country.name }}</span>
                       <span class="text-gray-500 text-xs">{{ country.dial }}</span>
                     </button>
@@ -372,11 +372,20 @@ export default {
     })
     
     // Filtered countries based on search
+    // Localized country names
+    const localizedCountries = computed(() => {
+      const isArabic = $i18n.locale === 'ar'
+      return countryCodesWithFlags.value.map(country => ({
+        ...country,
+        name: isArabic ? getArabicCountryName(country.code) : country.name
+      }))
+    })
+
     const filteredCountries = computed(() => {
       if (!countrySearch.value) {
-        return countryCodesWithFlags.value
+        return localizedCountries.value
       }
-      return countryCodesWithFlags.value.filter(country => 
+      return localizedCountries.value.filter(country => 
         country.name.toLowerCase().includes(countrySearch.value.toLowerCase()) ||
         country.dial.includes(countrySearch.value) ||
         country.code.toLowerCase().includes(countrySearch.value.toLowerCase())
@@ -526,6 +535,106 @@ export default {
       countrySearch.value = ''
     }
     
+    // Get Arabic country names
+    const getArabicCountryName = (code) => {
+      const arabicNames = {
+        'EG': 'مصر',
+        'SA': 'السعودية',
+        'AE': 'الإمارات',
+        'KW': 'الكويت',
+        'QA': 'قطر',
+        'BH': 'البحرين',
+        'OM': 'عمان',
+        'JO': 'الأردن',
+        'LB': 'لبنان',
+        'SY': 'سوريا',
+        'IQ': 'العراق',
+        'YE': 'اليمن',
+        'LY': 'ليبيا',
+        'TN': 'تونس',
+        'DZ': 'الجزائر',
+        'MA': 'المغرب',
+        'SD': 'السودان',
+        'US': 'الولايات المتحدة',
+        'GB': 'بريطانيا',
+        'CA': 'كندا',
+        'FR': 'فرنسا',
+        'DE': 'ألمانيا',
+        'IT': 'إيطاليا',
+        'ES': 'إسبانيا',
+        'NL': 'هولندا',
+        'BE': 'بلجيكا',
+        'CH': 'سويسرا',
+        'AT': 'النمسا',
+        'SE': 'السويد',
+        'NO': 'النرويج',
+        'DK': 'الدنمارك',
+        'FI': 'فنلندا',
+        'PL': 'بولندا',
+        'CZ': 'التشيك',
+        'HU': 'المجر',
+        'RO': 'رومانيا',
+        'BG': 'بلغاريا',
+        'GR': 'اليونان',
+        'TR': 'تركيا',
+        'RU': 'روسيا',
+        'CN': 'الصين',
+        'JP': 'اليابان',
+        'KR': 'كوريا الجنوبية',
+        'IN': 'الهند',
+        'BR': 'البرازيل',
+        'AR': 'الأرجنتين',
+        'MX': 'المكسيك',
+        'AU': 'أستراليا',
+        'NZ': 'نيوزيلندا',
+        'ZA': 'جنوب أفريقيا',
+        'NG': 'نيجيريا',
+        'KE': 'كينيا',
+        'GH': 'غانا',
+        'ET': 'إثيوبيا',
+        'UG': 'أوغندا',
+        'TZ': 'تنزانيا',
+        'ZW': 'زيمبابوي',
+        'BW': 'بوتسوانا',
+        'NA': 'ناميبيا',
+        'ZM': 'زامبيا',
+        'MW': 'ملاوي',
+        'MZ': 'موزمبيق',
+        'MG': 'مدغشقر',
+        'MU': 'موريشيوس',
+        'SC': 'سيشل',
+        'KM': 'جزر القمر',
+        'DJ': 'جيبوتي',
+        'SO': 'الصومال',
+        'ER': 'إريتريا',
+        'SS': 'جنوب السودان',
+        'CF': 'جمهورية أفريقيا الوسطى',
+        'TD': 'تشاد',
+        'NE': 'النيجر',
+        'ML': 'مالي',
+        'BF': 'بوركينا فاسو',
+        'CI': 'ساحل العاج',
+        'LR': 'ليبيريا',
+        'SL': 'سيراليون',
+        'GN': 'غينيا',
+        'GW': 'غينيا بيساو',
+        'GM': 'غامبيا',
+        'SN': 'السنغال',
+        'MR': 'موريتانيا',
+        'CV': 'الرأس الأخضر',
+        'ST': 'ساو تومي وبرينسيبي',
+        'GQ': 'غينيا الاستوائية',
+        'GA': 'الغابون',
+        'CG': 'الكونغو',
+        'CD': 'جمهورية الكونغو الديمقراطية',
+        'AO': 'أنغولا',
+        'CM': 'الكاميرون',
+        'BI': 'بوروندي',
+        'RW': 'رواندا'
+      }
+      return arabicNames[code] || code
+    }
+
     const getSelectedCountryFlag = () => {
       const country = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
       return country ? country.flag : '🇪🇬'
@@ -581,4 +690,14 @@ export default {
     }
   }
 }
-</script> 
+</script>
+
+<style scoped>
+.emoji-flag {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Twemoji', 'EmojiOne', sans-serif;
+  font-size: 1.2em;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+}
+</style> 
