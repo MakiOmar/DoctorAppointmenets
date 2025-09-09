@@ -210,6 +210,7 @@ export default {
       loginSuccess: 'Login successful!',
       loginFailed: 'Login failed',
       registerSuccess: 'Registration successful! Please check your email for verification code.',
+      whatsappSentTo: 'Verification code sent to WhatsApp: {contact}',
       registerFailed: 'Registration failed',
       userExistsVerified: 'User already exists and is verified. Please login instead.',
       emailVerified: 'Email verified successfully!',
