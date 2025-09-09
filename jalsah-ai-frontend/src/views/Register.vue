@@ -335,7 +335,8 @@ export default {
         ...country,
         name: isArabic ? country.name_ar : country.name_en,
         code: country.country_code,
-        dial: country.dial_code
+        dial: country.dial_code,
+        flag: country.flag // Explicitly preserve the flag
       }))
     })
 
@@ -447,6 +448,10 @@ export default {
         })
         
         countries.value = reorderedCountries
+        
+        // Debug: Log first few countries to verify data
+        console.log('Countries loaded:', countries.value.slice(0, 3))
+        console.log('First country flag:', countries.value[0]?.flag)
         
       } catch (error) {
         console.error('Error loading countries:', error)
@@ -567,6 +572,8 @@ export default {
 
     const getSelectedCountryFlag = () => {
       const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      console.log('Selected country:', country)
+      console.log('Selected country flag:', country?.flag)
       return country ? country.flag : '🇪🇬'
     }
     
