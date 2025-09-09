@@ -26,7 +26,7 @@ export default {
     retry: 'إعادة المحاولة',
     refresh: 'تحديث',
     hide: 'إخفاء',
-    viewDetails: 'عرض التفاصيل',
+    viewDetails: 'تصفح المواعيد الآخرى',
     added: 'تمت الإضافة',
     download: 'تحميل',
     upload: 'رفع',

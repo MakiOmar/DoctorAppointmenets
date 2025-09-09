@@ -26,7 +26,7 @@ export default {
     retry: 'Retry',
     refresh: 'Refresh',
     hide: 'Hide',
-    viewDetails: 'View Details',
+    viewDetails: 'Browse Other Appointments',
     added: 'Added',
     download: 'Download',
     upload: 'Upload',
