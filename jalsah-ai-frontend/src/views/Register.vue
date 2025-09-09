@@ -310,7 +310,7 @@ export default {
     })
     
     const selectedCountryCode = ref('EG')
-    const shouldShowEmailField = ref(true)
+    const shouldShowEmailField = ref(false)
     const userCountryCode = ref('EG')
     const showCountryDropdown = ref(false)
     const countrySearch = ref('')
@@ -390,11 +390,11 @@ export default {
       try {
         const response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
         if (response.data.success) {
-          shouldShowEmailField.value = response.data.data.require_email || false
+          shouldShowEmailField.value = response.data.data.require_email === 1 || response.data.data.require_email === true
         }
       } catch (error) {
         console.warn('Could not load registration settings, using defaults')
-        shouldShowEmailField.value = true
+        shouldShowEmailField.value = false
       }
     }
 
