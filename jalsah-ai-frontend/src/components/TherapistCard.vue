@@ -353,7 +353,7 @@ export default {
     const toast = useToast()
     const router = useRouter()
     
-    const showDetails = ref(false)
+    const showDetails = ref(true)
     
     // Computed property to get display_order for current diagnosis
     const currentDiagnosisDisplayOrder = computed(() => {
@@ -1085,9 +1085,10 @@ export default {
       }
     })
 
-    // Load earliest slot when component is mounted
+    // Load earliest slot and therapist details when component is mounted
     onMounted(() => {
       loadEarliestSlot()
+      loadTherapistDetails() // Load details since booking form is shown by default
       
       // Listen for cart updates to refresh slot cart status
       const handleCartUpdate = () => {
