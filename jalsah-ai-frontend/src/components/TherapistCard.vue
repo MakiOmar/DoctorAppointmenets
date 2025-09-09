@@ -169,17 +169,32 @@
                 <p class="text-sm text-gray-600">{{ $t('therapistDetails.earliestAvailable') }}</p>
                 <p class="font-medium text-gray-900">{{ formatSlot(earliestSlot) }}</p>
               </div>
-              <button 
-                @click="bookEarliestSlot"
-                class="btn-primary px-4 py-2 text-sm"
-                :disabled="bookingLoading"
-              >
-                <span v-if="bookingLoading" class="flex items-center">
-                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {{ $t('common.loading') }}
-                </span>
-                <span v-else>{{ $t('therapistDetails.bookThis') }}</span>
-              </button>
+              
+              <!-- Show different buttons based on cart status -->
+              <div v-if="!earliestSlot.inCart">
+                <button 
+                  @click="bookEarliestSlot"
+                  class="btn-primary px-4 py-2 text-sm"
+                  :disabled="bookingLoading"
+                >
+                  <span v-if="bookingLoading" class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {{ $t('common.loading') }}
+                  </span>
+                  <span v-else>{{ $t('therapistDetails.bookThis') }}</span>
+                </button>
+              </div>
+              
+              <div v-else class="flex items-center space-x-2">
+                <span class="text-sm text-green-600 font-medium">{{ $t('therapistDetails.inCart') }}</span>
+                <button 
+                  @click="removeEarliestSlotFromCart"
+                  class="text-red-600 hover:text-red-800 text-sm font-medium"
+                  :disabled="bookingLoading"
+                >
+                  {{ $t('common.remove') }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -286,7 +301,7 @@
 </template>
 
 <script>
-import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
@@ -485,6 +500,10 @@ export default {
         // First, try to use the earliest_slot_data from the therapist object
         if (props.therapist.earliest_slot_data) {
           earliestSlot.value = props.therapist.earliest_slot_data
+          // Check if this slot is in cart
+          if (earliestSlot.value.id) {
+            await checkSlotCartStatus(earliestSlot.value)
+          }
           return
         }
         
@@ -573,7 +592,7 @@ export default {
           
           if (selectedDateInfo) {
             // Create a time slot using the real slot data from the database
-            timeSlots.value = [{
+            const timeSlot = {
               id: selectedDateInfo.slot_id, // Use the real database slot ID
               value: selectedDateInfo.time,
               time: selectedDateInfo.time,
@@ -583,7 +602,11 @@ export default {
               attendance_type: selectedDateInfo.attendance_type,
               date_time: `${date.value} ${selectedDateInfo.time}`,
               inCart: false
-            }]
+            }
+            
+            // Check if this slot is in the user's cart
+            await checkSlotCartStatus(timeSlot)
+            timeSlots.value = [timeSlot]
           } else {
             timeSlots.value = []
           }
@@ -592,10 +615,14 @@ export default {
           const response = await fetch(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
           const data = await response.json()
           if (data.success && Array.isArray(data.data)) {
-            timeSlots.value = data.data.map(slot => ({
+            const slots = data.data.map(slot => ({
               ...slot,
               inCart: false
             }))
+            
+            // Check cart status for all slots
+            await checkSlotsCartStatus(slots)
+            timeSlots.value = slots
           } else {
             timeSlots.value = []
           }
@@ -604,6 +631,61 @@ export default {
         timeSlots.value = []
       } finally {
         loadingDates.value = false
+      }
+    }
+
+    // Check if a single slot is in the user's cart
+    const checkSlotCartStatus = async (slot) => {
+      if (!authStore.isAuthenticated) {
+        slot.inCart = false
+        return
+      }
+      
+      try {
+        // Check if this slot is in the user's cart by calling the cart API
+        const response = await api.get('/wp-json/jalsah-ai/v1/get-user-cart', {
+          params: { user_id: authStore.user.id }
+        })
+        
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const cartItems = response.data.data
+          slot.inCart = cartItems.some(item => item.ID === slot.id)
+        } else {
+          slot.inCart = false
+        }
+      } catch (err) {
+        console.error('Error checking cart status:', err)
+        slot.inCart = false
+      }
+    }
+    
+    // Check cart status for multiple slots
+    const checkSlotsCartStatus = async (slots) => {
+      if (!authStore.isAuthenticated || slots.length === 0) {
+        slots.forEach(slot => slot.inCart = false)
+        return
+      }
+      
+      try {
+        // Get user's cart once
+        const response = await api.get('/wp-json/jalsah-ai/v1/get-user-cart', {
+          params: { user_id: authStore.user.id }
+        })
+        
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const cartItems = response.data.data
+          const cartSlotIds = new Set(cartItems.map(item => item.ID))
+          
+          // Update each slot's cart status
+          slots.forEach(slot => {
+            slot.inCart = cartSlotIds.has(slot.id)
+          })
+        } else {
+          slots.forEach(slot => slot.inCart = false)
+        }
+      } catch (err) {
+        console.error('Error checking cart status:', err)
+        slots.forEach(slot => slot.inCart = false)
       }
     }
 
@@ -705,6 +787,35 @@ export default {
           } else {
             toast.error(result.message || t('common.error'))
           }
+        }
+      } catch (err) {
+        toast.error(t('common.error'))
+      } finally {
+        bookingLoading.value = false
+      }
+    }
+
+    const removeEarliestSlotFromCart = async () => {
+      if (!earliestSlot.value || !earliestSlot.value.id) return
+      
+      // Check if user is authenticated
+      if (!authStore.isAuthenticated) {
+        toast.error(t('common.pleaseLogin'))
+        return
+      }
+      
+      bookingLoading.value = true
+      try {
+        // Use the cart store to remove from cart
+        const result = await cartStore.removeFromCart(earliestSlot.value.id, authStore.user.id)
+        
+        if (result.success) {
+          earliestSlot.value.inCart = false
+          toast.success(t('therapistDetails.appointmentRemoved'))
+          // Emit event to update cart
+          window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else {
+          toast.error(result.message || t('common.error'))
         }
       } catch (err) {
         toast.error(t('common.error'))
@@ -947,6 +1058,20 @@ export default {
     // Load earliest slot when component is mounted
     onMounted(() => {
       loadEarliestSlot()
+      
+      // Listen for cart updates to refresh slot cart status
+      const handleCartUpdate = () => {
+        if (timeSlots.value.length > 0) {
+          checkSlotsCartStatus(timeSlots.value)
+        }
+      }
+      
+      window.addEventListener('cart-updated', handleCartUpdate)
+      
+      // Cleanup listener on unmount
+      onUnmounted(() => {
+        window.removeEventListener('cart-updated', handleCartUpdate)
+      })
     })
 
     // Lightbox functions
@@ -1002,6 +1127,7 @@ export default {
       addToCart,
       removeFromCart,
       bookEarliestSlot,
+      removeEarliestSlotFromCart,
       formatSlot,
       loadTherapistDetails,
       // Lightbox

@@ -873,6 +873,7 @@ export default {
     noAvailableDates: 'No available dates found',
     appointmentAdded: 'Appointment added to cart successfully',
     appointmentRemoved: 'Appointment removed from cart successfully',
+    inCart: 'In Cart',
     viewAllCertificates: 'View all certificates'
   },
 

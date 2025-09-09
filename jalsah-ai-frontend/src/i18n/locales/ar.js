@@ -821,6 +821,7 @@ export default {
     noAvailableDates: 'لا توجد تواريخ متاحة',
     appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح',
     appointmentRemoved: 'تم إزالة الموعد من السلة بنجاح',
+    inCart: 'في السلة',
     viewAllCertificates: 'عرض جميع الشهادات'
   },
 
