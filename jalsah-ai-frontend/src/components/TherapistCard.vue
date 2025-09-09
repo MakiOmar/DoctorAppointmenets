@@ -27,7 +27,10 @@
         <div class="space-y-4">
           <div>
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
+              <div>
+                <h3 class="text-xl font-semibold text-gray-900">{{ therapist.name }}</h3>
+                <p v-if="therapist.doctor_specialty" class="text-sm text-gray-600 mt-1">{{ therapist.doctor_specialty }}</p>
+              </div>
               <div class="text-lg font-semibold text-primary-600">
                 {{ formatPrice(therapist.price?.others) }}
               </div>
