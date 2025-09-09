@@ -132,6 +132,42 @@
       </div>
     </div>
 
+    <!-- Soonest Available Appointment - Always Visible -->
+    <div v-if="earliestSlot" class="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">{{ $t('therapistDetails.earliestAvailable') }}</p>
+          <p class="font-medium text-gray-900">{{ formatSlot(earliestSlot) }}</p>
+        </div>
+        
+        <!-- Show different buttons based on cart status -->
+        <div v-if="!earliestSlot.inCart">
+          <button 
+            @click="bookEarliestSlot"
+            class="btn-primary px-4 py-2 text-sm"
+            :disabled="bookingLoading"
+          >
+            <span v-if="bookingLoading" class="flex items-center">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              {{ $t('common.loading') }}
+            </span>
+            <span v-else>{{ $t('therapistDetails.bookThis') }}</span>
+          </button>
+        </div>
+        
+        <div v-else class="flex items-center space-x-2">
+          <span class="text-sm text-green-600 font-medium">{{ $t('therapistDetails.inCart') }}</span>
+          <button 
+            @click="removeEarliestSlotFromCart"
+            class="text-red-600 hover:text-red-800 text-sm font-medium"
+            :disabled="bookingLoading"
+          >
+            {{ $t('common.remove') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Expanded Details Section -->
     <div v-if="showDetails" class="mt-6 border-t border-gray-200 pt-6">
       <!-- Loading State -->
@@ -154,41 +190,6 @@
         <div class="bg-gray-50 rounded-lg p-4">
           <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.bookAppointment') }}</h4>
           
-          <!-- Soonest Available Appointment -->
-          <div v-if="earliestSlot" class="mb-4 p-3 bg-white rounded-lg border border-gray-200">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-gray-600">{{ $t('therapistDetails.earliestAvailable') }}</p>
-                <p class="font-medium text-gray-900">{{ formatSlot(earliestSlot) }}</p>
-              </div>
-              
-              <!-- Show different buttons based on cart status -->
-              <div v-if="!earliestSlot.inCart">
-                <button 
-                  @click="bookEarliestSlot"
-                  class="btn-primary px-4 py-2 text-sm"
-                  :disabled="bookingLoading"
-                >
-                  <span v-if="bookingLoading" class="flex items-center">
-                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {{ $t('common.loading') }}
-                  </span>
-                  <span v-else>{{ $t('therapistDetails.bookThis') }}</span>
-                </button>
-              </div>
-              
-              <div v-else class="flex items-center space-x-2">
-                <span class="text-sm text-green-600 font-medium">{{ $t('therapistDetails.inCart') }}</span>
-                <button 
-                  @click="removeEarliestSlotFromCart"
-                  class="text-red-600 hover:text-red-800 text-sm font-medium"
-                  :disabled="bookingLoading"
-                >
-                  {{ $t('common.remove') }}
-                </button>
-              </div>
-            </div>
-          </div>
 
           <!-- Book Another Appointment Button -->
           <button 
@@ -351,7 +352,7 @@ export default {
     const toast = useToast()
     const router = useRouter()
     
-    const showDetails = ref(true)
+    const showDetails = ref(false)
     
     // Computed property to get display_order for current diagnosis
     const currentDiagnosisDisplayOrder = computed(() => {
