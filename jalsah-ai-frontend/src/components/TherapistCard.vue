@@ -112,13 +112,13 @@
           <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
           
           <!-- Certificates Grid -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
             <div 
-              v-for="(cert, index) in therapist.certificates.slice(0, 4)" 
+              v-for="(cert, index) in therapist.certificates.slice(0, 8)" 
               :key="cert.id"
               class="bg-white rounded-lg border border-gray-200 overflow-hidden"
             >
-              <div class="aspect-square">
+              <div class="w-full h-24">
                 <img 
                   v-if="cert.is_image"
                   :src="cert.thumbnail_url || cert.url" 
@@ -127,19 +127,16 @@
                   @click="openLightbox(index)"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center bg-gray-100">
-                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                   </svg>
                 </div>
-              </div>
-              <div class="p-2">
-                <p class="text-xs text-gray-900 truncate">{{ cert.name }}</p>
               </div>
             </div>
           </div>
           
           <!-- Show More Certificates Link -->
-          <div v-if="therapist.certificates.length > 4" class="mt-3 text-center">
+          <div v-if="therapist.certificates.length > 8" class="mt-3 text-center">
             <button 
               @click.stop="showTherapistDetails"
               class="text-sm text-primary-600 hover:text-primary-800"
