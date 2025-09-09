@@ -303,6 +303,7 @@ import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import StarRating from './StarRating.vue'
 import Lightbox from './Lightbox.vue'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'TherapistCard',
@@ -861,6 +862,7 @@ export default {
 
     // Show confirmation dialog for different therapist
     const showDifferentTherapistConfirmation = async (message) => {
+      console.log('🔔 Showing confirmation dialog:', message)
       // Use SweetAlert2 for confirmation dialog
       const result = await Swal.fire({
         title: t('therapistDetails.differentTherapistTitle'),
@@ -873,6 +875,7 @@ export default {
         cancelButtonColor: '#d33'
       })
       
+      console.log('🔔 Confirmation result:', result.isConfirmed)
       return result.isConfirmed
     }
 
