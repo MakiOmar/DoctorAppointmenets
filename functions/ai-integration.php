@@ -2189,9 +2189,15 @@ class SNKS_AI_Integration {
 			$message = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
 			
 			// Debug patient registration WhatsApp
-			error_log( 'Patient Registration WhatsApp Debug - Phone Number: ' . $data['whatsapp'] );
-			error_log( 'Patient Registration WhatsApp Debug - Message: ' . $message );
-			error_log( 'Patient Registration WhatsApp Debug - Settings: ' . print_r( $registration_settings, true ) );
+			error_log( '=== PATIENT REGISTRATION WHATSAPP DEBUG ===' );
+			error_log( 'Phone Number Received: ' . $data['whatsapp'] );
+			error_log( 'Phone Number Length: ' . strlen( $data['whatsapp'] ) );
+			error_log( 'Message: ' . $message );
+			error_log( 'API URL: ' . ( $registration_settings['whatsapp_api_url'] ?? 'NOT SET' ) );
+			error_log( 'Phone Number ID: ' . ( $registration_settings['whatsapp_phone_number_id'] ?? 'NOT SET' ) );
+			error_log( 'Use Template: ' . ( $registration_settings['whatsapp_use_template'] ?? 'NOT SET' ) );
+			error_log( 'Template Name: ' . ( $registration_settings['whatsapp_template_name'] ?? 'NOT SET' ) );
+			error_log( '===========================================' );
 			
 			// Use WhatsApp Business API
 			$whatsapp_result = snks_send_whatsapp_message( $data['whatsapp'], $message, $registration_settings );

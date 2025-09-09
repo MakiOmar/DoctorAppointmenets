@@ -526,6 +526,15 @@ export default {
       const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
       const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
 
+      // Debug: Log the phone number being sent
+      console.log('📱 Frontend Debug - Phone Number:', {
+        selectedCountry: selectedCountry,
+        dialCode: selectedCountry?.dial_code,
+        userInput: form.value.whatsapp,
+        fullNumber: fullWhatsAppNumber,
+        otpMethod: otpMethod.value
+      })
+
       const registrationData = {
         first_name: form.value.first_name,
         last_name: form.value.last_name,

@@ -1132,16 +1132,19 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	$response_code = wp_remote_retrieve_response_code( $response );
 	
 	// Enhanced logging for debugging
-	error_log( 'WhatsApp API Debug - Endpoint: ' . $endpoint );
-	error_log( 'WhatsApp API Debug - Original Phone Number: ' . $phone_number );
-	error_log( 'WhatsApp API Debug - Formatted Phone Number: ' . $phone_number );
-	error_log( 'WhatsApp API Debug - Phone Number ID: ' . $phone_number_id );
-	error_log( 'WhatsApp API Debug - Access Token: ' . substr( $access_token, 0, 20 ) . '...' );
-	error_log( 'WhatsApp API Debug - Use Template: ' . ( $use_template ? 'Yes' : 'No' ) );
-	error_log( 'WhatsApp API Debug - Message: ' . $message );
-	error_log( 'WhatsApp API Debug - Request Body: ' . wp_json_encode( $body ) );
-	error_log( 'WhatsApp API Debug - Response Code: ' . $response_code );
-	error_log( 'WhatsApp API Debug - Response Body: ' . $response_body );
+	error_log( '=== WHATSAPP API DEBUG ===' );
+	error_log( 'Endpoint: ' . $endpoint );
+	error_log( 'Original Phone Number: ' . $phone_number );
+	error_log( 'Phone Number Length: ' . strlen( $phone_number ) );
+	error_log( 'Phone Number ID: ' . $phone_number_id );
+	error_log( 'Access Token (first 20 chars): ' . substr( $access_token, 0, 20 ) . '...' );
+	error_log( 'Use Template: ' . ( $use_template ? 'Yes' : 'No' ) );
+	error_log( 'Template Name: ' . ( $template_name ?? 'N/A' ) );
+	error_log( 'Message: ' . $message );
+	error_log( 'Request Body: ' . wp_json_encode( $body ) );
+	error_log( 'Response Code: ' . $response_code );
+	error_log( 'Response Body: ' . $response_body );
+	error_log( '=========================' );
 	
 	// Check response code - Meta typically returns 200 for success
 	if ( $response_code !== 200 ) {
