@@ -46,6 +46,10 @@ class SNKS_AI_Integration {
 		add_action( 'send_headers', array( $this, 'handle_very_early_cors' ) );
 		add_action( 'parse_request', array( $this, 'handle_early_api_requests' ) );
 		
+		// Schedule cart cleanup cron job
+		add_action( 'init', array( $this, 'schedule_cart_cleanup' ) );
+		add_action( 'jalsah_ai_cleanup_expired_cart', array( $this, 'cleanup_expired_cart_items' ) );
+		
 		// Add nonce generation endpoint
 		add_action( 'wp_ajax_get_ai_nonce', array( $this, 'get_ai_nonce' ) );
 		add_action( 'wp_ajax_nopriv_get_ai_nonce', array( $this, 'get_ai_nonce' ) );
@@ -4106,13 +4110,14 @@ Best regards,
 			return new WP_REST_Response(['error' => 'Appointment already in cart'], 400);
 		}
 		
-		// Add to cart by updating the slot with AI identifier
+		// Add to cart by updating the slot with AI identifier and timestamp
+		$cart_timestamp = current_time('mysql');
 		$result = $wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			[
 				'client_id' => $user_id,
 				'session_status' => 'waiting', // Keep as waiting until checkout
-				'settings' => 'ai_booking:in_cart' // Mark as AI booking
+				'settings' => 'ai_booking:in_cart:' . $cart_timestamp // Mark as AI booking with timestamp
 			],
 			['ID' => $slot_id],
 			['%d', '%s', '%s'],
@@ -4125,8 +4130,9 @@ Best regards,
 		
 		return new WP_REST_Response([
 			'success' => true,
-			'message' => 'Appointment added to cart',
-			'slot_id' => $slot_id
+			'message' => 'Appointment added to cart. It will be automatically removed after 30 minutes if not booked.',
+			'slot_id' => $slot_id,
+			'expires_at' => date('Y-m-d H:i:s', strtotime($cart_timestamp . ' +30 minutes'))
 		], 200);
 	}
 
@@ -4149,15 +4155,49 @@ Best regards,
 			 FROM {$wpdb->prefix}snks_provider_timetable t
 			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
 			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
-			 AND t.settings LIKE '%ai_booking%'
+			 AND t.settings LIKE '%ai_booking:in_cart%'
 			 ORDER BY t.date_time ASC",
 			$user_id
 		);
 		
 		$cart_items = $wpdb->get_results($cart_query);
 		
-		$total_price = 0;
+		// Filter out expired cart items (older than 30 minutes)
+		$current_time = current_time('mysql');
+		$expired_slot_ids = array();
+		$valid_cart_items = array();
+		
 		foreach ($cart_items as $item) {
+			// Extract timestamp from settings field
+			if (preg_match('/ai_booking:in_cart:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $item->settings, $matches)) {
+				$cart_timestamp = $matches[1];
+				$cart_time = strtotime($cart_timestamp);
+				$current_time_stamp = strtotime($current_time);
+				
+				// Check if item is older than 30 minutes (1800 seconds)
+				if (($current_time_stamp - $cart_time) > 1800) {
+					$expired_slot_ids[] = $item->ID;
+					continue; // Skip this expired item
+				}
+			}
+			
+			$valid_cart_items[] = $item;
+		}
+		
+		// Clean up expired items from database
+		if (!empty($expired_slot_ids)) {
+			$placeholders = implode(',', array_fill(0, count($expired_slot_ids), '%d'));
+			$cleanup_query = $wpdb->prepare(
+				"UPDATE {$wpdb->prefix}snks_provider_timetable 
+				 SET client_id = 0, settings = '' 
+				 WHERE ID IN ($placeholders) AND settings LIKE '%ai_booking:in_cart%'",
+				$expired_slot_ids
+			);
+			$wpdb->query($cleanup_query);
+		}
+		
+		$total_price = 0;
+		foreach ($valid_cart_items as $item) {
 			$total_price += 200.00; // Default price
 			// Add therapist image URL
 			if ($item->profile_image) {
@@ -4167,9 +4207,9 @@ Best regards,
 		
 		return new WP_REST_Response([
 			'success' => true,
-			'data' => $cart_items,
+			'data' => $valid_cart_items,
 			'total_price' => $total_price,
-			'item_count' => count($cart_items)
+			'item_count' => count($valid_cart_items)
 		], 200);
 	}
 
@@ -5130,6 +5170,53 @@ function snks_process_ai_order_status_change($order_id, $old_status, $new_status
 			if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
 				SNKS_AI_Orders::process_ai_order_payment($order_id);
 			}
+		}
+	}
+	
+	/**
+	 * Schedule cart cleanup cron job
+	 */
+	public function schedule_cart_cleanup() {
+		if ( ! wp_next_scheduled( 'jalsah_ai_cleanup_expired_cart' ) ) {
+			wp_schedule_event( time(), 'hourly', 'jalsah_ai_cleanup_expired_cart' );
+		}
+	}
+	
+	/**
+	 * Clean up expired cart items (older than 30 minutes)
+	 */
+	public function cleanup_expired_cart_items() {
+		global $wpdb;
+		
+		$current_time = current_time('mysql');
+		$expired_time = date('Y-m-d H:i:s', strtotime($current_time . ' -30 minutes'));
+		
+		// Find expired cart items
+		$expired_query = $wpdb->prepare(
+			"SELECT ID FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE settings LIKE %s AND settings LIKE %s",
+			'%ai_booking:in_cart%',
+			'%' . $expired_time . '%'
+		);
+		
+		$expired_items = $wpdb->get_results($expired_query);
+		
+		if (!empty($expired_items)) {
+			$expired_ids = array_map(function($item) { return $item->ID; }, $expired_items);
+			$placeholders = implode(',', array_fill(0, count($expired_ids), '%d'));
+			
+			// Clean up expired items
+			$cleanup_query = $wpdb->prepare(
+				"UPDATE {$wpdb->prefix}snks_provider_timetable 
+				 SET client_id = 0, settings = '' 
+				 WHERE ID IN ($placeholders) AND settings LIKE '%ai_booking:in_cart%'",
+				$expired_ids
+			);
+			
+			$result = $wpdb->query($cleanup_query);
+			
+			// Log cleanup activity
+			error_log("Jalsah AI: Cleaned up " . count($expired_ids) . " expired cart items");
 		}
 	}
 }
