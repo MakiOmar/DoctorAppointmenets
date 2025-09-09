@@ -4127,7 +4127,7 @@ Best regards,
 		
 		return new WP_REST_Response([
 			'success' => true,
-			'message' => 'Appointment added to cart. It will be automatically removed after 30 minutes if not booked.',
+			'message' => 'Appointment added to cart successfully. The appointment will be automatically removed after half an hour if payment not completed.',
 			'slot_id' => $slot_id,
 			'expires_at' => date('Y-m-d H:i:s', strtotime($cart_timestamp . ' +30 minutes'))
 		], 200);
