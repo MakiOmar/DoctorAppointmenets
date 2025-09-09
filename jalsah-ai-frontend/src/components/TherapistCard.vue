@@ -728,6 +728,8 @@ export default {
           user_id: authStore.user.id
         })
         
+        console.log('🎯 Cart result:', result)
+        
         if (result.success) {
           slot.inCart = true
           toast.success(t('therapistDetails.appointmentAdded'))
