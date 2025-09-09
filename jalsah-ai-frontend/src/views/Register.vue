@@ -119,7 +119,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     </span>
-                    <span v-else class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
+                    <span v-else class="text-lg mr-1 emoji-flag" :class="`flag-${selectedCountryCode.toLowerCase()}`">{{ getSelectedCountryFlag() }}</span>
                     <span class="text-xs">{{ getSelectedCountryDial() }}</span>
                   </span>
                   <svg v-if="!isDetectingCountry" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@
                       class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                       :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
                     >
-                      <span class="text-lg mr-3 emoji-flag">{{ country.flag }}</span>
+                      <span class="text-lg mr-3 emoji-flag" :class="`flag-${country.code.toLowerCase()}`">{{ country.flag }}</span>
                       <span class="flex-1">{{ country.name }}</span>
                       <span class="text-gray-500 text-xs">{{ country.dial }}</span>
                     </button>
@@ -709,10 +709,94 @@ export default {
 
 <style scoped>
 .emoji-flag {
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Twemoji', 'EmojiOne', sans-serif;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Twemoji', 'EmojiOne', 'Segoe UI Symbol', sans-serif;
   font-size: 1.2em;
   line-height: 1;
   display: inline-block;
   vertical-align: middle;
+  font-variant-emoji: emoji;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
 }
+
+/* Fallback for systems that don't support flag emojis */
+@supports not (font-variant-emoji: emoji) {
+  .emoji-flag {
+    font-family: 'Twemoji', 'Noto Color Emoji', 'Apple Color Emoji', sans-serif;
+    font-size: 1.1em;
+  }
+}
+
+/* Additional fallback using CSS content for specific flags */
+.flag-eg::before { content: "🇪🇬"; }
+.flag-sa::before { content: "🇸🇦"; }
+.flag-ae::before { content: "🇦🇪"; }
+.flag-kw::before { content: "🇰🇼"; }
+.flag-qa::before { content: "🇶🇦"; }
+.flag-bh::before { content: "🇧🇭"; }
+.flag-om::before { content: "🇴🇲"; }
+.flag-jo::before { content: "🇯🇴"; }
+.flag-lb::before { content: "🇱🇧"; }
+.flag-sy::before { content: "🇸🇾"; }
+.flag-iq::before { content: "🇮🇶"; }
+.flag-ye::before { content: "🇾🇪"; }
+.flag-ps::before { content: "🇵🇸"; }
+.flag-ma::before { content: "🇲🇦"; }
+.flag-tn::before { content: "🇹🇳"; }
+.flag-dz::before { content: "🇩🇿"; }
+.flag-ly::before { content: "🇱🇾"; }
+.flag-sd::before { content: "🇸🇩"; }
+.flag-gb::before { content: "🇬🇧"; }
+.flag-us::before { content: "🇺🇸"; }
+.flag-ca::before { content: "🇨🇦"; }
+.flag-fr::before { content: "🇫🇷"; }
+.flag-de::before { content: "🇩🇪"; }
+.flag-it::before { content: "🇮🇹"; }
+.flag-es::before { content: "🇪🇸"; }
+.flag-nl::before { content: "🇳🇱"; }
+.flag-be::before { content: "🇧🇪"; }
+.flag-ch::before { content: "🇨🇭"; }
+.flag-at::before { content: "🇦🇹"; }
+.flag-se::before { content: "🇸🇪"; }
+.flag-no::before { content: "🇳🇴"; }
+.flag-dk::before { content: "🇩🇰"; }
+.flag-fi::before { content: "🇫🇮"; }
+.flag-pl::before { content: "🇵🇱"; }
+.flag-cz::before { content: "🇨🇿"; }
+.flag-hu::before { content: "🇭🇺"; }
+.flag-ro::before { content: "🇷🇴"; }
+.flag-bg::before { content: "🇧🇬"; }
+.flag-gr::before { content: "🇬🇷"; }
+.flag-tr::before { content: "🇹🇷"; }
+.flag-ru::before { content: "🇷🇺"; }
+.flag-cn::before { content: "🇨🇳"; }
+.flag-jp::before { content: "🇯🇵"; }
+.flag-kr::before { content: "🇰🇷"; }
+.flag-in::before { content: "🇮🇳"; }
+.flag-br::before { content: "🇧🇷"; }
+.flag-ar::before { content: "🇦🇷"; }
+.flag-mx::before { content: "🇲🇽"; }
+.flag-au::before { content: "🇦🇺"; }
+.flag-nz::before { content: "🇳🇿"; }
+.flag-za::before { content: "🇿🇦"; }
+
+/* Force emoji rendering with additional properties */
+.emoji-flag {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Alternative approach using background images for flags */
+.flag-fallback {
+  display: inline-block;
+  width: 20px;
+  height: 15px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 2px;
+  margin-right: 8px;
+}
+
+.flag-fallback.eg { background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAyMCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjE1IiBmaWxsPSIjQ0UxMTI0MiIvPgo8cmVjdCB5PSI1IiB3aWR0aD0iMjAiIGhlaWdodD0iNSIgZmlsbD0iI0ZGRkZGRiIvPgo8cmVjdCB5PSIxMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjUiIGZpbGw9IiMwMDAwMDAiLz4KPC9zdmc+'); }
 </style> 
