@@ -1,6 +1,6 @@
 <?php
 /**
- * AI Integration for Jalsah AI Platform
+ * AI Integration for Jalsah AI Platform.
  *
  * @package Shrinks
  */

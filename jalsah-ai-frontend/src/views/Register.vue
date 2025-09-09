@@ -101,14 +101,54 @@
           <div>
             <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
             <div class="flex">
-              <select
-                v-model="selectedCountryCode"
-                class="flex-shrink-0 w-24 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option v-for="country in countryCodesWithFlags" :key="country.code" :value="country.code">
-                  {{ country.flag }} {{ country.dial }}
-                </option>
-              </select>
+              <!-- Custom Country Selector -->
+              <div class="relative flex-shrink-0">
+                <button
+                  type="button"
+                  @click="toggleCountryDropdown"
+                  class="w-32 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between"
+                  style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
+                >
+                  <span class="flex items-center">
+                    <span class="text-lg mr-1">{{ getSelectedCountryFlag() }}</span>
+                    <span class="text-xs">{{ getSelectedCountryDial() }}</span>
+                  </span>
+                  <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div
+                  v-if="showCountryDropdown"
+                  class="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                  style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
+                >
+                  <div class="p-2">
+                    <input
+                      v-model="countrySearch"
+                      type="text"
+                      placeholder="Search countries..."
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div class="max-h-48 overflow-y-auto">
+                    <button
+                      v-for="country in filteredCountries"
+                      :key="country.code"
+                      type="button"
+                      @click="selectCountry(country.code)"
+                      class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                      :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
+                    >
+                      <span class="text-lg mr-3">{{ country.flag }}</span>
+                      <span class="flex-1">{{ country.name }}</span>
+                      <span class="text-gray-500 text-xs">{{ country.dial }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
               <input
                 id="whatsapp"
                 v-model="form.whatsapp"
@@ -116,8 +156,9 @@
                 required
                 class="flex-1 input-field rounded-l-none border-l-0"
                 :placeholder="$t('auth.register.whatsappPlaceholder')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                dir="ltr"
                 autocomplete="tel"
+                style="text-align: left; direction: ltr;"
               />
             </div>
           </div>
@@ -232,7 +273,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
@@ -259,6 +300,8 @@ export default {
     const selectedCountryCode = ref('EG')
     const shouldShowEmailField = ref(true)
     const userCountryCode = ref('EG')
+    const showCountryDropdown = ref(false)
+    const countrySearch = ref('')
     
     // Country codes with flags - Egypt first, then Arab countries, then alphabetical
     const countryCodesWithFlags = ref([
@@ -324,6 +367,18 @@ export default {
              form.value.confirm_password &&
              form.value.password.length === form.value.confirm_password.length &&
              form.value.password !== form.value.confirm_password
+    })
+    
+    // Filtered countries based on search
+    const filteredCountries = computed(() => {
+      if (!countrySearch.value) {
+        return countryCodesWithFlags.value
+      }
+      return countryCodesWithFlags.value.filter(country => 
+        country.name.toLowerCase().includes(countrySearch.value.toLowerCase()) ||
+        country.dial.includes(countrySearch.value) ||
+        country.code.toLowerCase().includes(countrySearch.value.toLowerCase())
+      )
     })
 
     const isFormValid = computed(() => {
@@ -429,12 +484,51 @@ export default {
       }
     }
     
+    // Country dropdown methods
+    const toggleCountryDropdown = () => {
+      showCountryDropdown.value = !showCountryDropdown.value
+      if (showCountryDropdown.value) {
+        countrySearch.value = ''
+      }
+    }
+    
+    const selectCountry = (countryCode) => {
+      selectedCountryCode.value = countryCode
+      showCountryDropdown.value = false
+      countrySearch.value = ''
+    }
+    
+    const getSelectedCountryFlag = () => {
+      const country = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
+      return country ? country.flag : '🇪🇬'
+    }
+    
+    const getSelectedCountryDial = () => {
+      const country = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
+      return country ? country.dial : '+20'
+    }
+    
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.relative')) {
+        showCountryDropdown.value = false
+      }
+    }
+    
     // Initialize on mount
     onMounted(async () => {
       await Promise.all([
         loadSettings(),
         detectUserCountry()
       ])
+      
+      // Add click outside listener
+      document.addEventListener('click', handleClickOutside)
+    })
+    
+    // Cleanup on unmount
+    onUnmounted(() => {
+      document.removeEventListener('click', handleClickOutside)
     })
 
     return {
@@ -446,7 +540,14 @@ export default {
       selectedCountryCode,
       countryCodesWithFlags,
       shouldShowEmailField,
-      passwordMismatchError
+      passwordMismatchError,
+      showCountryDropdown,
+      countrySearch,
+      filteredCountries,
+      toggleCountryDropdown,
+      selectCountry,
+      getSelectedCountryFlag,
+      getSelectedCountryDial
     }
   }
 }
