@@ -297,16 +297,16 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * @return string
  */
 function snks_get_country_code( $set_cookie = true ) {
-	// Get all possible IP headers to check for VPN/proxy
+	// Use REMOTE_ADDR first, then check other headers as fallback
 	$ip_headers = array(
+		'REMOTE_ADDR',               // Standard - use this first
 		'HTTP_CF_CONNECTING_IP',     // Cloudflare
 		'HTTP_CLIENT_IP',            // Proxy
 		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
 		'HTTP_X_FORWARDED',          // Proxy
 		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
 		'HTTP_FORWARDED_FOR',        // Proxy
-		'HTTP_FORWARDED',            // Proxy
-		'REMOTE_ADDR'                // Standard
+		'HTTP_FORWARDED'             // Proxy
 	);
 	
 	$ip = 'Unknown';

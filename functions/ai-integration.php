@@ -5854,16 +5854,16 @@ function snks_get_completed_prescriptions_rest( $request ) {
  * Get user country based on IP address via REST API
  */
 function snks_get_user_country_rest( $request ) {
-	// Get all possible IP headers to check for VPN/proxy
+	// Use REMOTE_ADDR first, then check other headers as fallback
 	$ip_headers = array(
+		'REMOTE_ADDR',               // Standard - use this first
 		'HTTP_CF_CONNECTING_IP',     // Cloudflare
 		'HTTP_CLIENT_IP',            // Proxy
 		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
 		'HTTP_X_FORWARDED',          // Proxy
 		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
 		'HTTP_FORWARDED_FOR',        // Proxy
-		'HTTP_FORWARDED',            // Proxy
-		'REMOTE_ADDR'                // Standard
+		'HTTP_FORWARDED'             // Proxy
 	);
 	
 	$detected_ip = 'Unknown';
@@ -5917,16 +5917,16 @@ function snks_get_user_country_rest( $request ) {
  * Test IP detection without any caching
  */
 function snks_test_ip_detection_rest( $request ) {
-	// Get all possible IP headers
+	// Use REMOTE_ADDR first, then check other headers as fallback
 	$ip_headers = array(
+		'REMOTE_ADDR',               // Standard - use this first
 		'HTTP_CF_CONNECTING_IP',     // Cloudflare
 		'HTTP_CLIENT_IP',            // Proxy
 		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
 		'HTTP_X_FORWARDED',          // Proxy
 		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
 		'HTTP_FORWARDED_FOR',        // Proxy
-		'HTTP_FORWARDED',            // Proxy
-		'REMOTE_ADDR'                // Standard
+		'HTTP_FORWARDED'             // Proxy
 	);
 	
 	$detected_ip = 'Unknown';
