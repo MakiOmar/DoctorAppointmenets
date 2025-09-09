@@ -5854,47 +5854,23 @@ function snks_get_completed_prescriptions_rest( $request ) {
  * Get user country based on IP address via REST API
  */
 function snks_get_user_country_rest( $request ) {
-	// Use REMOTE_ADDR first, then check other headers as fallback
-	$ip_headers = array(
-		'REMOTE_ADDR',               // Standard - use this first
-		'HTTP_CF_CONNECTING_IP',     // Cloudflare
-		'HTTP_CLIENT_IP',            // Proxy
-		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
-		'HTTP_X_FORWARDED',          // Proxy
-		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
-		'HTTP_FORWARDED_FOR',        // Proxy
-		'HTTP_FORWARDED'             // Proxy
-	);
+	// Get REMOTE_ADDR for debugging
+	$detected_ip = $_SERVER['REMOTE_ADDR'] ?? 'Not Set';
 	
-	$detected_ip = 'Unknown';
-	foreach ( $ip_headers as $header ) {
-		if ( ! empty( $_SERVER[ $header ] ) ) {
-			$detected_ip = $_SERVER[ $header ];
-			break;
-		}
-	}
+	// Log IP detection details
+	error_log( '🌍 User Country Detection - REMOTE_ADDR: ' . $detected_ip );
+	error_log( '🌍 User Country Detection - User Agent: ' . ( $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ) );
 	
-	// Log all IP detection details
-	error_log( '🌍 User Country Detection - All IP Headers: ' . print_r( array_map( function( $header ) {
-		return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
-	}, $ip_headers ), true ) );
-	
-	error_log( '🌍 User Country Detection - Detected IP: ' . $detected_ip );
-	error_log( '🌍 User Country Detection - REMOTE_ADDR: ' . ( $_SERVER['REMOTE_ADDR'] ?? 'Not Set' ) );
-	error_log( '🌍 User Country Detection - HTTP_X_FORWARDED_FOR: ' . ( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'Not Set' ) );
-	error_log( '🌍 User Country Detection - HTTP_CF_CONNECTING_IP: ' . ( $_SERVER['HTTP_CF_CONNECTING_IP'] ?? 'Not Set' ) );
-	
-	// Force fresh detection by not using cookie cache
-	$country_code = snsk_ip_api_country( false );
+	// Call the helper function directly (force fresh detection by not using cookie cache)
+	$country_code = snks_get_country_code( false );
 	
 	// Log the detection process
 	error_log( '🌍 User Country Detection - Raw country code: ' . $country_code );
-	error_log( '🌍 User Country Detection - User Agent: ' . ( $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ) );
 	
 	$final_country_code = $country_code !== 'Unknown' ? $country_code : 'EG';
 	error_log( '🌍 User Country Detection - Final country code: ' . $final_country_code );
 	
-	// Return the country code with additional debug info
+	// Return the country code with debug info
 	return rest_ensure_response( array(
 		'success' => true,
 		'country_code' => $final_country_code,
@@ -5902,10 +5878,7 @@ function snks_get_user_country_rest( $request ) {
 			'detected_ip' => $detected_ip,
 			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set',
-			'raw_country_code' => $country_code,
-			'all_headers' => array_map( function( $header ) {
-				return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
-			}, $ip_headers )
+			'raw_country_code' => $country_code
 		),
 		'data' => array(
 			'country_code' => $final_country_code
@@ -5917,44 +5890,25 @@ function snks_get_user_country_rest( $request ) {
  * Test IP detection without any caching
  */
 function snks_test_ip_detection_rest( $request ) {
-	// Use REMOTE_ADDR first, then check other headers as fallback
-	$ip_headers = array(
-		'REMOTE_ADDR',               // Standard - use this first
-		'HTTP_CF_CONNECTING_IP',     // Cloudflare
-		'HTTP_CLIENT_IP',            // Proxy
-		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
-		'HTTP_X_FORWARDED',          // Proxy
-		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
-		'HTTP_FORWARDED_FOR',        // Proxy
-		'HTTP_FORWARDED'             // Proxy
-	);
+	// Get REMOTE_ADDR for debugging
+	$detected_ip = $_SERVER['REMOTE_ADDR'] ?? 'Not Set';
+	$ip_source = 'REMOTE_ADDR';
 	
-	$detected_ip = 'Unknown';
-	$ip_source = 'None';
+	// Call the helper function directly (force fresh detection by not using cookie cache)
+	$country_code = snks_get_country_code( false );
 	
-	foreach ( $ip_headers as $header ) {
-		if ( ! empty( $_SERVER[ $header ] ) ) {
-			$candidate_ip = filter_var( $_SERVER[ $header ], FILTER_VALIDATE_IP );
-			if ( $candidate_ip ) {
-				$detected_ip = $candidate_ip;
-				$ip_source = $header;
-				break;
-			}
-		}
-	}
-	
-	// Test the IP API directly
+	// Test the IP API directly for comparison
 	$api_key = 'yBZHxURnxnHhONq';
 	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $detected_ip, esc_attr( $api_key ) );
 	
 	$response = wp_remote_get( $api_url );
-	$country_code = 'Unknown';
+	$direct_api_country = 'Unknown';
 	
 	if ( ! is_wp_error( $response ) ) {
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 		if ( isset( $data['countryCode'] ) ) {
-			$country_code = $data['countryCode'];
+			$direct_api_country = $data['countryCode'];
 		}
 	}
 	
@@ -5964,10 +5918,10 @@ function snks_test_ip_detection_rest( $request ) {
 			'detected_ip' => $detected_ip,
 			'ip_source' => $ip_source,
 			'country_code' => $country_code,
+			'direct_api_country' => $direct_api_country,
 			'api_url' => $api_url,
-			'all_headers' => array_map( function( $header ) {
-				return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
-			}, $ip_headers )
+			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
+			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set'
 		)
 	) );
 }

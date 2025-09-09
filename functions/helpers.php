@@ -297,40 +297,12 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * @return string
  */
 function snks_get_country_code( $set_cookie = true ) {
-	// Use REMOTE_ADDR first, then check other headers as fallback
-	$ip_headers = array(
-		'REMOTE_ADDR',               // Standard - use this first
-		'HTTP_CF_CONNECTING_IP',     // Cloudflare
-		'HTTP_CLIENT_IP',            // Proxy
-		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
-		'HTTP_X_FORWARDED',          // Proxy
-		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
-		'HTTP_FORWARDED_FOR',        // Proxy
-		'HTTP_FORWARDED'             // Proxy
-	);
-	
-	$ip = 'Unknown';
-	foreach ( $ip_headers as $header ) {
-		if ( ! empty( $_SERVER[ $header ] ) ) {
-			$candidate_ip = filter_var( $_SERVER[ $header ], FILTER_VALIDATE_IP );
-			if ( $candidate_ip ) {
-				$ip = $candidate_ip;
-				error_log( '🌍 Country Detection - Found IP in header ' . $header . ': ' . $ip );
-				break;
-			}
-		}
-	}
-	
-	error_log( '🌍 Country Detection - Final IP Address: ' . $ip );
-	
-	// Log all available IP headers for debugging
-	error_log( '🌍 Country Detection - All IP Headers: ' . print_r( array_map( function( $header ) {
-		return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
-	}, $ip_headers ), true ) );
-	
+	//phpcs:disable
+	// Get the user's IP address, validating it for security.
+	$ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP );
+	//phpcs:enable
 	// If the IP address is not valid, return early.
-	if ( $ip === 'Unknown' ) {
-		error_log( '🌍 Country Detection - No valid IP address found' );
+	if ( ! $ip ) {
 		return 'Unknown';
 	}
 
@@ -338,22 +310,17 @@ function snks_get_country_code( $set_cookie = true ) {
 	$api_key = 'yBZHxURnxnHhONq'; // Replace with your actual API key.
 	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
 
-	error_log( '🌍 Country Detection - API URL: ' . $api_url );
-
 	// Send request to the IP API using wp_remote_get.
 	$response = wp_remote_get( $api_url );
 
 	// Check for errors and validate the response.
 	if ( is_wp_error( $response ) ) {
-		error_log( '🌍 Country Detection - API Error: ' . $response->get_error_message() );
 		return 'Unknown'; // Early return if there's an error in the response.
 	}
 	$country_codes = json_decode( COUNTRY_CURRENCIES, true );
 	$country_code  = 'Unknown';
 	// Retrieve the response body.
 	$body                 = wp_remote_retrieve_body( $response );
-	error_log( '🌍 Country Detection - API Response Body: ' . $body );
-	
 	$europe_country_codes = array( // phpcs:disable
 			'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR',
 			'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GE', 'DE', 'GR', 'HU',
@@ -365,15 +332,14 @@ function snks_get_country_code( $set_cookie = true ) {
 	// Check if the body is not empty and contains serialized data.
 	if ( ! empty( $body ) ) {
 		$data = json_decode( $body ); // Using @ to suppress potential warnings.
-		error_log( '🌍 Country Detection - Parsed JSON Data: ' . print_r( $data, true ) );
-		
 		// Check if the country code is present.
 		if ( $data && isset( $data->countryCode ) ) { //phpcs:disable
 			$country_code = sanitize_text_field( $data->countryCode );
 			//phpcs:enable
-			error_log( '🌍 Country Detection - Extracted Country Code: ' . $country_code );
-			
 			if ( $set_cookie ) {
+				if( IL_TO_EG && 'IL' === $country_code ) {
+					$country_code = 'EG';
+				}
 				// Store the country code in a cookie for 24 hours.
 				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
@@ -381,19 +347,19 @@ function snks_get_country_code( $set_cookie = true ) {
 				} else {
 					$stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
 				}
+				if( IL_TO_EG && 'IL' === $country_code ) {
+					$stored_currency = 'EGP';
+				}
 				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 			}
 
-			error_log( '🌍 Country Detection - Final Result: ' . $country_code );
+			if( IL_TO_EG && 'IL' === $country_code ) {
+				$country_code = 'EG';
+			}
+
 			return $country_code;
-		} else {
-			error_log( '🌍 Country Detection - No countryCode in response data' );
 		}
-	} else {
-		error_log( '🌍 Country Detection - Empty response body' );
 	}
-	
-	error_log( '🌍 Country Detection - Returning Unknown' );
 	return $country_code;
 }
 
