@@ -12,76 +12,27 @@
         </p>
       </div>
 
-      <!-- Diagnosis Filter -->
+      <!-- Search Filter -->
       <div class="card mb-8">
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label">{{ $t('therapists.filters.specialization') }}</label>
-            <select 
-              :value="selectedDiagnosis" 
-              @change="onDiagnosisChange" 
-              class="input-field w-full" 
+        <div>
+          <label class="form-label">{{ $t('therapists.filters.search') }}</label>
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="$t('therapists.filters.searchPlaceholder')"
+              class="input-field w-full pr-10"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-            >
-              <option value="">{{ $t('therapists.filters.allSpecializations') }}</option>
-              <option v-for="diagnosis in diagnosesWithTherapists" :key="diagnosis.id" :value="diagnosis.id">
-                {{ diagnosis.name }}
-              </option>
-            </select>
-          </div>
-          
-          <div>
-            <label class="form-label">{{ $t('therapists.filters.search') }}</label>
-            <div class="relative">
-              <input
-                v-model="searchQuery"
-                type="text"
-                :placeholder="$t('therapists.filters.searchPlaceholder')"
-                class="input-field w-full pr-10"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-              />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" :class="$i18n.locale === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3'">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-              </div>
+            />
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" :class="$i18n.locale === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3'">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Sorting Controls (only show if diagnosis is selected) -->
-      <div v-if="selectedDiagnosis" class="card mb-8">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapists.sorting.title') }}</h3>
-        <div class="grid md:grid-cols-3 gap-4">
-          <div>
-            <label class="form-label">{{ $t('therapists.sorting.order') }}</label>
-            <select v-model="orderSort" @change="updateSorting" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="">{{ $t('therapists.sorting.defaultOrder') }}</option>
-              <option value="asc">{{ $t('therapists.sorting.lowestFirst') }}</option>
-              <option value="desc">{{ $t('therapists.sorting.highestFirst') }}</option>
-            </select>
-          </div>
-          
-          <div>
-            <label class="form-label">{{ $t('therapists.sorting.price') }}</label>
-            <select v-model="priceSort" @change="updateSorting" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="">{{ $t('therapists.sorting.anyPrice') }}</option>
-              <option value="lowest">{{ $t('therapists.sorting.lowestPrice') }}</option>
-              <option value="highest">{{ $t('therapists.sorting.highestPrice') }}</option>
-            </select>
-          </div>
-          
-          <div>
-            <label class="form-label">{{ $t('therapists.sorting.appointment') }}</label>
-            <select v-model="appointmentSort" @change="updateSorting" class="input-field" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-              <option value="">{{ $t('therapists.sorting.anyTime') }}</option>
-              <option value="nearest">{{ $t('therapists.sorting.nearest') }}</option>
-              <option value="farthest">{{ $t('therapists.sorting.farthest') }}</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
@@ -98,9 +49,8 @@
           v-for="(therapist, index) in displayedTherapists" 
           :key="therapist.id"
           :therapist="therapist"
-          :diagnosis-id="selectedDiagnosis"
           :position="therapist.originalPosition"
-          :show-order-badge="!!selectedDiagnosis"
+          :show-order-badge="false"
           :settings-store="settingsStore"
           @click="viewTherapist"
           @book="bookAppointment"
@@ -166,39 +116,18 @@ export default {
     const searchQuery = ref('')
     const searchTimeout = ref(null)
 
-    // Get selected diagnosis from URL query parameter
-    const selectedDiagnosis = computed(() => {
-      return route.query.diagnosis || ''
-    })
 
     // Computed property to get therapists with their original system positions
     const therapistsWithOriginalPositions = computed(() => {
       if (!therapists.value.length) return []
       
-      const diagnosisId = selectedDiagnosis.value
-      
-      if (!diagnosisId) {
-        // If no diagnosis selected, return all therapists without position data
-        return therapists.value.map(therapist => ({
-          ...therapist,
-          originalPosition: 0,
-          displayOrder: 0,
-          frontendOrder: 0
-        }))
-      }
-      
-      return therapists.value.map((therapist) => {
-        // Get the frontend_order from the diagnosis data
-        const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
-        const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
-        
-        return {
-          ...therapist,
-          originalPosition: frontendOrder || 1, // Use frontend_order from API, fallback to 1
-          displayOrder: parseInt(diagnosis?.display_order || '0'), // Keep display_order for sorting
-          frontendOrder: frontendOrder || 1 // Add frontendOrder property for sorting
-        }
-      })
+      // Return all therapists without position data since we removed diagnosis filtering
+      return therapists.value.map(therapist => ({
+        ...therapist,
+        originalPosition: 0,
+        displayOrder: 0,
+        frontendOrder: 0
+      }))
     })
 
     // Computed property to sort therapists (search is now handled by API)
@@ -256,34 +185,16 @@ export default {
         return sortedTherapists.value
       }
       
-      // If no diagnosis selected, show all therapists
-      if (!selectedDiagnosis.value) {
-        return sortedTherapists.value
-      }
-      
-      // If diagnosis selected, apply limit from settings
-      if (settingsStore && !settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
-        return sortedTherapists.value.slice(0, settingsStore.getDiagnosisResultsLimit)
-      }
-      
+      // Show all therapists since we removed diagnosis filtering
       return sortedTherapists.value
     })
 
     // Computed property to check if there are more therapists to show
     const hasMoreTherapists = computed(() => {
-      if (!selectedDiagnosis.value) return false
-      return sortedTherapists.value.length > displayedTherapists.value.length
+      // No more therapists to show since we removed diagnosis filtering
+      return false
     })
 
-    const diagnosesWithTherapists = computed(() => {
-      // Build a set of diagnosis IDs that are assigned to at least one therapist
-      const assignedIds = new Set()
-      therapists.value.forEach(therapist => {
-        therapist.diagnoses?.forEach(d => assignedIds.add(d.id))
-      })
-      // Return only diagnoses that are assigned
-      return diagnoses.value.filter(d => assignedIds.has(d.id))
-    })
 
     const getAverageRating = (therapist) => {
       if (!settingsStore.isRatingsEnabled) {
@@ -329,20 +240,6 @@ export default {
       return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
     }
 
-    // Handle diagnosis filter change
-    const onDiagnosisChange = (event) => {
-      const diagnosisId = event.target.value
-      
-      // Update URL with query parameter
-      if (diagnosisId) {
-        router.push({
-          path: '/therapists',
-          query: { diagnosis: diagnosisId }
-        })
-      } else {
-        router.push('/therapists')
-      }
-    }
 
     // Update sorting (reset show all when sorting changes)
     const updateSorting = () => {
@@ -365,16 +262,7 @@ export default {
             q: searchQuery.value.trim()
           }
           
-          // Add diagnosis filter if selected
-          if (selectedDiagnosis.value) {
-            params.diagnosis = selectedDiagnosis.value
-          }
-          
           response = await api.get('/api/ai/therapists/search', { params })
-        }
-        // If diagnosis is selected, load therapists by diagnosis
-        else if (selectedDiagnosis.value) {
-          response = await api.get(`/api/ai/therapists/by-diagnosis/${selectedDiagnosis.value}`)
         } else {
           // Load all therapists
           response = await api.get('/api/ai/therapists', {
@@ -438,7 +326,6 @@ export default {
       loading,
       therapists,
       diagnoses,
-      selectedDiagnosis,
       searchQuery,
       searchTimeout,
       orderSort,
@@ -448,9 +335,7 @@ export default {
       displayedTherapists,
       hasMoreTherapists,
       showAllTherapists,
-      diagnosesWithTherapists,
       settingsStore,
-      onDiagnosisChange,
       updateSorting,
       showMoreTherapists,
       viewTherapist,

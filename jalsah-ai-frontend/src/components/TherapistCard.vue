@@ -33,6 +33,7 @@
               </div>
               <div class="text-lg font-semibold text-primary-600">
                 {{ formatPrice(therapist.price?.others) }}
+                <span class="text-sm text-gray-500 font-normal">- 45 {{ $t('common.minutes') }}</span>
               </div>
             </div>
             
