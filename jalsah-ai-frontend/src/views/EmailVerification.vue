@@ -17,10 +17,12 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="card">
         <form @submit.prevent="handleVerification" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-          <!-- Email Display -->
+          <!-- Contact Display -->
           <div class="text-center">
-            <p class="text-sm text-gray-600">{{ $t('verification.emailSentTo') }}</p>
-            <p class="text-lg font-medium text-gray-900">{{ email }}</p>
+            <p class="text-sm text-gray-600">
+              {{ verificationMethod === 'whatsapp' ? $t('verification.whatsappSentTo') : $t('verification.emailSentTo') }}
+            </p>
+            <p class="text-lg font-medium text-gray-900">{{ contact }}</p>
           </div>
 
           <!-- Verification Code -->
@@ -110,17 +112,19 @@ export default {
     const loading = ref(false)
     const resendLoading = ref(false)
     const resendCooldown = ref(0)
-    const email = ref('')
+    const contact = ref('')
+    const verificationMethod = ref('email')
     const countdownInterval = ref(null)
 
     const isFormValid = computed(() => {
       return form.value.verification_code.length === 6
     })
 
-    // Get email from route params or localStorage
+    // Get contact info from route params or localStorage
     onMounted(() => {
-      email.value = route.params.email || localStorage.getItem('pending_verification_email') || ''
-      if (!email.value) {
+      contact.value = route.params.contact || localStorage.getItem('pending_verification_contact') || ''
+      verificationMethod.value = route.query.method || 'email'
+      if (!contact.value) {
         router.push('/register')
         return
       }
@@ -173,15 +177,18 @@ export default {
       loading.value = true
       try {
         const response = await authStore.verifyEmail({
-          email: email.value,
+          email: contact.value,
           code: form.value.verification_code
         })
         
         if (response) {
-          // Clear pending verification email
-          localStorage.removeItem('pending_verification_email')
+          // Clear pending verification contact
+          localStorage.removeItem('pending_verification_contact')
           
-          toast.success(t('toast.auth.emailVerified'))
+          const successMessage = verificationMethod.value === 'whatsapp' 
+            ? t('toast.auth.whatsappVerified') 
+            : t('toast.auth.emailVerified')
+          toast.success(successMessage)
           
           // Redirect to homepage
           router.push('/')
@@ -196,7 +203,7 @@ export default {
     const resendCode = async () => {
       resendLoading.value = true
       try {
-        const response = await authStore.resendVerification(email.value)
+        const response = await authStore.resendVerification(contact.value)
         
         if (response) {
           toast.success(t('toast.auth.verificationSent'))
@@ -214,7 +221,8 @@ export default {
       loading,
       resendLoading,
       resendCooldown,
-      email,
+      contact,
+      verificationMethod,
       isFormValid,
       handleVerification,
       resendCode

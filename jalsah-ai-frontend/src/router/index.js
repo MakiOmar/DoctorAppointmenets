@@ -105,8 +105,13 @@ const routes = [
     component: () => import('@/views/TherapistRegister.vue')
   },
   {
-    path: '/verify-email/:email?',
+    path: '/verify-email/:contact?',
     name: 'EmailVerification',
+    component: () => import('@/views/EmailVerification.vue')
+  },
+  {
+    path: '/verify-whatsapp/:contact?',
+    name: 'WhatsAppVerification',
     component: () => import('@/views/EmailVerification.vue')
   },
   // Catch-all route for API endpoints that might be accessed as frontend routes

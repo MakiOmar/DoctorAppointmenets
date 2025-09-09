@@ -312,6 +312,7 @@ export default {
     
     const selectedCountryCode = ref('EG')
     const shouldShowEmailField = ref(false)
+    const otpMethod = ref('email')
     const userCountryCode = ref('EG')
     const showCountryDropdown = ref(false)
     const countrySearch = ref('')
@@ -392,10 +393,12 @@ export default {
         const response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
         if (response.data.success) {
           shouldShowEmailField.value = response.data.data.require_email === 1 || response.data.data.require_email === true
+          otpMethod.value = response.data.data.otp_method || 'email'
         }
       } catch (error) {
         console.warn('Could not load registration settings, using defaults')
         shouldShowEmailField.value = false
+        otpMethod.value = 'email'
       }
     }
 
@@ -545,8 +548,13 @@ export default {
       
       if (result && result.requiresVerification) {
         // Redirect to verification page
-        const email = form.value.email || fullWhatsAppNumber
-        router.push(`/verify-email/${encodeURIComponent(email)}`)
+        const contact = form.value.email || fullWhatsAppNumber
+        const routeName = otpMethod.value === 'whatsapp' ? 'WhatsAppVerification' : 'EmailVerification'
+        router.push({
+          name: routeName,
+          params: { contact: encodeURIComponent(contact) },
+          query: { method: otpMethod.value }
+        })
       } else if (result && !result.requiresVerification) {
         // Redirect to homepage after successful registration
         router.push('/')
@@ -611,6 +619,7 @@ export default {
       selectedCountryCode,
       countries,
       shouldShowEmailField,
+      otpMethod,
       passwordMismatchError,
       showCountryDropdown,
       countrySearch,
