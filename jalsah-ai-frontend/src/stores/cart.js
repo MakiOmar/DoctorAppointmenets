@@ -52,7 +52,7 @@ export const useCartStore = defineStore('cart', () => {
       if (response.data.success) {
         // Reload cart to get updated data
         await loadCart(appointmentData.user_id)
-        return { success: true }
+        return { success: true, message: response.data.message }
       } else {
         error.value = response.data.error || 'Failed to add to cart'
         return { success: false, message: error.value }

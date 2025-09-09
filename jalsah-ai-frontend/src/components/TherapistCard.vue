@@ -738,7 +738,7 @@ export default {
         
         if (result.success) {
           slot.inCart = true
-          toast.success(t('therapistDetails.appointmentAdded'))
+          toast.success(result.message || t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
         } else {
@@ -800,7 +800,7 @@ export default {
         })
         
         if (result.success) {
-          toast.success(t('therapistDetails.appointmentAdded'))
+          toast.success(result.message || t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
           
