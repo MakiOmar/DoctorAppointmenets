@@ -108,14 +108,21 @@
                 <button
                   type="button"
                   @click="toggleCountryDropdown"
-                  class="w-32 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between"
+                  :disabled="isDetectingCountry"
+                  class="w-32 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                   style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
                 >
                   <span class="flex items-center">
-                    <span class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
+                    <span v-if="isDetectingCountry" class="text-lg mr-1">
+                      <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                    <span v-else class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
                     <span class="text-xs">{{ getSelectedCountryDial() }}</span>
                   </span>
-                  <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="!isDetectingCountry" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                   </svg>
                 </button>
@@ -306,6 +313,7 @@ export default {
     const userCountryCode = ref('EG')
     const showCountryDropdown = ref(false)
     const countrySearch = ref('')
+    const isDetectingCountry = ref(false)
     
     // Country codes with flags - Egypt first, then Arab countries, then alphabetical
     const countryCodesWithFlags = ref([
@@ -454,6 +462,8 @@ export default {
     // Auto-detect user country
     const detectUserCountry = async () => {
       try {
+        isDetectingCountry.value = true
+        
         // First, get the client IP from external service
         const clientIP = await getClientIP()
         
@@ -480,6 +490,8 @@ export default {
         }
       } catch (error) {
         // Silent fallback to default
+      } finally {
+        isDetectingCountry.value = false
       }
     }
     
@@ -683,6 +695,7 @@ export default {
       showCountryDropdown,
       countrySearch,
       filteredCountries,
+      isDetectingCountry,
       toggleCountryDropdown,
       selectCountry,
       getSelectedCountryFlag,
