@@ -277,6 +277,7 @@
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
 import api from '@/services/api'
@@ -285,6 +286,7 @@ export default {
   name: 'Register',
   setup() {
     const router = useRouter()
+    const { locale } = useI18n()
     const authStore = useAuthStore()
     const therapistRegStore = useTherapistRegistrationStore()
     
@@ -374,7 +376,7 @@ export default {
     // Filtered countries based on search
     // Localized country names
     const localizedCountries = computed(() => {
-      const isArabic = $i18n.locale === 'ar'
+      const isArabic = locale.value === 'ar'
       return countryCodesWithFlags.value.map(country => ({
         ...country,
         name: isArabic ? getArabicCountryName(country.code) : country.name
