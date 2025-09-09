@@ -146,17 +146,8 @@
           </div>
         </div>
 
-        <!-- Bottom Section: Availability and View Details Button -->
-        <div class="flex items-center justify-between mt-6" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
-          <!-- Next Available Slot -->
-          <div class="flex items-center gap-2 text-sm text-gray-600">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>{{ formatEarliestSlot(therapist) }}</span>
-          </div>
-
-          <!-- View Details Button -->
+        <!-- View Details Button -->
+        <div class="flex justify-end mt-6">
           <button
             @click.stop="showTherapistDetails"
             class="btn-primary px-6 py-2"
