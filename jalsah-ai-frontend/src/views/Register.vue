@@ -618,7 +618,9 @@ Check console for full details.`)
       toggleCountryDropdown,
       selectCountry,
       getSelectedCountryFlag,
-      getSelectedCountryDial
+      getSelectedCountryDial,
+      detectUserCountry,
+      testIpDetection
     }
   }
 }
