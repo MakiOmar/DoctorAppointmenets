@@ -651,9 +651,17 @@ export default {
   unicode-range: U+1F1E6-1F1FF; /* Flag emoji range */
 }
 
-/* Force emoji rendering on all browsers */
-.emoji-flag::before {
+/* Force emoji rendering on all browsers - hide original text when using ::before */
+.emoji-flag[data-emoji] {
+  font-size: 0; /* Hide the original text */
+}
+
+.emoji-flag[data-emoji]::before {
   content: attr(data-emoji);
   font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  font-size: 1.2em; /* Restore the size for the pseudo-element */
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
 }
 </style> 
