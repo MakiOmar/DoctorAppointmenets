@@ -177,6 +177,7 @@ export default {
       haveAccount: 'Already have an account?',
       signIn: 'Sign in',
       passwordMismatch: 'Passwords do not match',
+      whatsappPlaceholder: '1234567890',
       errors: {
         passwordMismatch: 'Passwords do not match',
         emailExists: 'Email already exists',

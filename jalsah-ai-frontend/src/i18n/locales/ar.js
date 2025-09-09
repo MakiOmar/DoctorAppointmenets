@@ -184,7 +184,7 @@ export default {
       phone: 'رقم الهاتف',
       phonePlaceholder: '+1234567890',
       whatsapp: 'رقم الواتساب',
-      whatsappPlaceholder: '+1234567890',
+      whatsappPlaceholder: '1234567890',
       passwordMismatch: 'كلمات المرور غير متطابقة',
       errors: {
         passwordMismatch: 'كلمات المرور غير متطابقة',
