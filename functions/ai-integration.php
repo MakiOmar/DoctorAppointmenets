@@ -181,6 +181,13 @@ class SNKS_AI_Integration {
 			'permission_callback' => '__return_true',
 		) );
 		
+		// User country detection endpoint
+		register_rest_route( 'jalsah-ai/v1', '/user-country', array(
+			'methods' => 'GET',
+			'callback' => 'snks_get_user_country_rest',
+			'permission_callback' => '__return_true',
+		) );
+		
 		// Rochtah available slots endpoint
 		register_rest_route( 'jalsah-ai/v1', '/rochtah-available-slots', array(
 			'methods' => 'GET',
@@ -2083,7 +2090,17 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Invalid JSON data', 400 );
 		}
 		
-		$required_fields = array( 'first_name', 'last_name', 'age', 'email', 'phone', 'whatsapp', 'country', 'password' );
+		// Get therapist registration settings to check email requirement
+		$registration_settings = snks_get_therapist_registration_settings();
+		
+		// Base required fields (no phone field, conditional email)
+		$required_fields = array( 'first_name', 'last_name', 'age', 'whatsapp', 'password' );
+		
+		// Add email to required fields if it's required in settings
+		if ( $registration_settings['require_email'] ) {
+			$required_fields[] = 'email';
+		}
+		
 		foreach ( $required_fields as $field ) {
 			if ( ! isset( $data[ $field ] ) || empty( $data[ $field ] ) ) {
 		
@@ -2093,31 +2110,46 @@ class SNKS_AI_Integration {
 		
 
 		
-		// Check if user exists
-		$existing_user = get_user_by( 'email', sanitize_email( $data['email'] ) );
+		// Check if user exists (by email if provided, otherwise by WhatsApp)
+		$existing_user = null;
+		$user_identifier = '';
+		
+		if ( ! empty( $data['email'] ) ) {
+			$existing_user = get_user_by( 'email', sanitize_email( $data['email'] ) );
+			$user_identifier = sanitize_email( $data['email'] );
+		} else {
+			// If no email, check by WhatsApp number in user meta
+			$users = get_users( array(
+				'meta_key' => 'billing_whatsapp',
+				'meta_value' => sanitize_text_field( $data['whatsapp'] ),
+				'number' => 1
+			) );
+			if ( ! empty( $users ) ) {
+				$existing_user = $users[0];
+			}
+			$user_identifier = sanitize_text_field( $data['whatsapp'] );
+		}
+		
 		if ( $existing_user ) {
-	
 			// Check if user is already verified
 			$is_verified = get_user_meta( $existing_user->ID, 'ai_email_verified', true );
 			if ( $is_verified === '1' ) {
-		
 				$this->send_error( 'User already exists and is verified. Please login instead.', 400 );
 			}
 			
-	
 			// Update existing user fields
 			$this->update_ai_user_fields( $existing_user->ID, $data );
 			$user = $existing_user;
 		} else {
-	
-			// Create new user
-			$user_id = wp_create_user( $data['email'], $data['password'], $data['email'] );
+			// Create new user - use email if provided, otherwise use WhatsApp as username
+			$username = ! empty( $data['email'] ) ? sanitize_email( $data['email'] ) : sanitize_text_field( $data['whatsapp'] );
+			$email = ! empty( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
+			
+			$user_id = wp_create_user( $username, $data['password'], $email );
 			if ( is_wp_error( $user_id ) ) {
-		
 				$this->send_error( $user_id->get_error_message(), 400 );
 			}
 			
-	
 			$user = get_user_by( 'ID', $user_id );
 			$user->set_role( 'customer' );
 			$this->update_ai_user_fields( $user_id, $data );
@@ -2137,30 +2169,81 @@ class SNKS_AI_Integration {
 		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
 		update_user_meta( $user->ID, 'ai_email_verified', '0' );
 		
-
+		// Send verification code based on OTP method settings
+		$otp_success = false;
+		$contact_method = '';
 		
-		// Send verification email
-		$email_sent = $this->send_verification_email( $user->ID, $verification_code );
-		
-		if ( ! $email_sent ) {
-	
-			$this->send_error( 'Failed to send verification email. Please try again.', 500 );
+		if ( $registration_settings['otp_method'] === 'sms' && ! empty( $data['whatsapp'] ) ) {
+			$contact_method = $data['whatsapp'];
+			$message = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
+			
+			// Use existing WhySMS SMS service
+			$sms_result = send_sms_via_whysms( $data['whatsapp'], $message );
+			
+			if ( ! is_wp_error( $sms_result ) ) {
+				$otp_success = true;
+			}
+		} elseif ( $registration_settings['otp_method'] === 'whatsapp' && ! empty( $data['whatsapp'] ) ) {
+			$contact_method = $data['whatsapp'];
+			$message = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
+			
+			// Use WhatsApp Business API
+			$whatsapp_result = snks_send_whatsapp_message( $data['whatsapp'], $message, $registration_settings );
+			
+			if ( $whatsapp_result && ! is_wp_error( $whatsapp_result ) ) {
+				$otp_success = true;
+			}
+		} elseif ( $registration_settings['otp_method'] === 'email' && ! empty( $data['email'] ) ) {
+			$contact_method = $data['email'];
+			
+			// Send verification email using existing method
+			$otp_success = $this->send_verification_email( $user->ID, $verification_code );
+		} else {
+			// Fallback to email if no method matches or email is available
+			if ( ! empty( $data['email'] ) ) {
+				$contact_method = $data['email'];
+				$otp_success = $this->send_verification_email( $user->ID, $verification_code );
+			}
 		}
 		
-
-		
-
+		if ( ! $otp_success ) {
+			$error_message = '';
+			if ( $registration_settings['otp_method'] === 'sms' ) {
+				$error_message = 'Failed to send verification code via SMS. Please try again.';
+			} elseif ( $registration_settings['otp_method'] === 'whatsapp' ) {
+				$error_message = 'Failed to send verification code via WhatsApp. Please try again.';
+			} else {
+				$error_message = 'Failed to send verification email. Please try again.';
+			}
+			
+			$this->send_error( $error_message, 500 );
+		}
 		
 		// Get locale for response message
 		$locale = $this->get_request_locale();
-		$success_message = $locale === 'ar' 
-			? 'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على رمز التحقق.'
-			: 'Registration successful! Please check your email for verification code.';
+		
+		// Dynamic success message based on OTP method
+		$success_message = '';
+		if ( $registration_settings['otp_method'] === 'sms' ) {
+			$success_message = $locale === 'ar' 
+				? 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق عبر الرسائل القصيرة.'
+				: 'Registration successful! Verification code sent via SMS.';
+		} elseif ( $registration_settings['otp_method'] === 'whatsapp' ) {
+			$success_message = $locale === 'ar' 
+				? 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق إلى واتساب.'
+				: 'Registration successful! Verification code sent via WhatsApp.';
+		} else {
+			$success_message = $locale === 'ar' 
+				? 'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على رمز التحقق.'
+				: 'Registration successful! Please check your email for verification code.';
+		}
 		
 		$this->send_success( array(
 			'message' => $success_message,
 			'user_id' => $user->ID,
 			'email' => $user->user_email,
+			'contact_method' => $contact_method,
+			'otp_method' => $registration_settings['otp_method'],
 			'requires_verification' => true
 		) );
 	}
@@ -2172,9 +2255,23 @@ class SNKS_AI_Integration {
 		update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $data['first_name'] ) );
 		update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $data['last_name'] ) );
 		update_user_meta( $user_id, 'age', intval( $data['age'] ) );
-		update_user_meta( $user_id, 'billing_phone', sanitize_text_field( $data['phone'] ) );
+		
+		// WhatsApp is always provided, also store as billing_whatsapp for consistency
 		update_user_meta( $user_id, 'whatsapp', sanitize_text_field( $data['whatsapp'] ) );
-		update_user_meta( $user_id, 'billing_country', sanitize_text_field( $data['country'] ) );
+		update_user_meta( $user_id, 'billing_whatsapp', sanitize_text_field( $data['whatsapp'] ) );
+		
+		// Optional fields
+		if ( ! empty( $data['phone'] ) ) {
+			update_user_meta( $user_id, 'billing_phone', sanitize_text_field( $data['phone'] ) );
+		}
+		
+		if ( ! empty( $data['country'] ) ) {
+			update_user_meta( $user_id, 'billing_country', sanitize_text_field( $data['country'] ) );
+		}
+		
+		if ( ! empty( $data['email'] ) ) {
+			update_user_meta( $user_id, 'billing_email', sanitize_email( $data['email'] ) );
+		}
 		
 		// Mark user as AI patient
 		update_user_meta( $user_id, 'registered_from_jalsah_ai', '1' );
@@ -5744,6 +5841,23 @@ function snks_get_completed_prescriptions_rest( $request ) {
 		'success' => true,
 		'data' => $formatted_prescriptions
 	);
+}
+
+/**
+ * Get user country based on IP address via REST API
+ */
+function snks_get_user_country_rest( $request ) {
+	// Get country code using existing function
+	$country_code = snsk_ip_api_country( false );
+	
+	// Return the country code
+	return rest_ensure_response( array(
+		'success' => true,
+		'country_code' => $country_code !== 'Unknown' ? $country_code : 'EG', // Default to Egypt if unknown
+		'data' => array(
+			'country_code' => $country_code !== 'Unknown' ? $country_code : 'EG'
+		)
+	) );
 }
 
 /**

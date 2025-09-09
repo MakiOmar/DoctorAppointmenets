@@ -37,19 +37,6 @@
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }}</label>
-              <input
-                id="first_name"
-                v-model="form.first_name"
-                type="text"
-                required
-                class="input-field"
-                :placeholder="$t('auth.register.firstName')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                autocomplete="given-name"
-              />
-            </div>
-            <div>
               <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }}</label>
               <input
                 id="last_name"
@@ -60,6 +47,19 @@
                 :placeholder="$t('auth.register.lastName')"
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
                 autocomplete="family-name"
+              />
+            </div>
+            <div>
+              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }}</label>
+              <input
+                id="first_name"
+                v-model="form.first_name"
+                type="text"
+                required
+                class="input-field"
+                :placeholder="$t('auth.register.firstName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="given-name"
               />
             </div>
           </div>
@@ -81,14 +81,14 @@
             />
           </div>
 
-          <!-- Email -->
-          <div>
+          <!-- Email (conditional based on settings) -->
+          <div v-if="shouldShowEmailField">
             <label for="email" class="form-label">{{ $t('auth.register.email') }}</label>
             <input
               id="email"
               v-model="form.email"
               type="email"
-              required
+              :required="shouldShowEmailField"
               class="input-field"
               :placeholder="$t('auth.register.emailPlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
@@ -96,67 +96,32 @@
             />
           </div>
 
-          <!-- Phone -->
-          <div>
-            <label for="phone" class="form-label">{{ $t('auth.register.phone') }}</label>
-            <input
-              id="phone"
-              v-model="form.phone"
-              type="tel"
-              required
-              class="input-field"
-              :placeholder="$t('auth.register.phonePlaceholder')"
-              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-              autocomplete="tel"
-            />
-          </div>
 
-          <!-- WhatsApp -->
+          <!-- WhatsApp with International Prefix -->
           <div>
             <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
-            <input
-              id="whatsapp"
-              v-model="form.whatsapp"
-              type="tel"
-              required
-              class="input-field"
-              :placeholder="$t('auth.register.whatsappPlaceholder')"
-              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-              autocomplete="tel"
-            />
+            <div class="flex">
+              <select
+                v-model="selectedCountryCode"
+                class="flex-shrink-0 w-24 px-3 py-2 border border-gray-300 rounded-l-md bg-gray-50 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option v-for="country in countryCodesWithFlags" :key="country.code" :value="country.code">
+                  {{ country.flag }} {{ country.dial }}
+                </option>
+              </select>
+              <input
+                id="whatsapp"
+                v-model="form.whatsapp"
+                type="tel"
+                required
+                class="flex-1 input-field rounded-l-none border-l-0"
+                :placeholder="$t('auth.register.whatsappPlaceholder')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="tel"
+              />
+            </div>
           </div>
 
-          <!-- Country -->
-          <div>
-            <label for="country" class="form-label">{{ $t('auth.register.country') }}</label>
-            <select
-              id="country"
-              v-model="form.country"
-              required
-              class="input-field"
-            >
-              <option value="">{{ $t('auth.register.selectCountry') }}</option>
-              <option value="Saudi Arabia">{{ $t('auth.register.countries.saudiArabia') }}</option>
-              <option value="United Arab Emirates">{{ $t('auth.register.countries.uae') }}</option>
-              <option value="Kuwait">{{ $t('auth.register.countries.kuwait') }}</option>
-              <option value="Qatar">{{ $t('auth.register.countries.qatar') }}</option>
-              <option value="Bahrain">{{ $t('auth.register.countries.bahrain') }}</option>
-              <option value="Oman">{{ $t('auth.register.countries.oman') }}</option>
-              <option value="Jordan">{{ $t('auth.register.countries.jordan') }}</option>
-              <option value="Lebanon">{{ $t('auth.register.countries.lebanon') }}</option>
-              <option value="Egypt">{{ $t('auth.register.countries.egypt') }}</option>
-              <option value="Morocco">{{ $t('auth.register.countries.morocco') }}</option>
-              <option value="Tunisia">{{ $t('auth.register.countries.tunisia') }}</option>
-              <option value="Algeria">{{ $t('auth.register.countries.algeria') }}</option>
-              <option value="Libya">{{ $t('auth.register.countries.libya') }}</option>
-              <option value="Sudan">{{ $t('auth.register.countries.sudan') }}</option>
-              <option value="Iraq">{{ $t('auth.register.countries.iraq') }}</option>
-              <option value="Syria">{{ $t('auth.register.countries.syria') }}</option>
-              <option value="Palestine">{{ $t('auth.register.countries.palestine') }}</option>
-              <option value="Yemen">{{ $t('auth.register.countries.yemen') }}</option>
-              <option value="Other">{{ $t('auth.register.countries.other') }}</option>
-            </select>
-          </div>
 
           <!-- Password -->
           <div>
@@ -186,6 +151,9 @@
               class="input-field"
               :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
             />
+            <div v-if="passwordMismatchError" class="mt-1 text-sm text-red-600">
+              {{ $t('auth.register.passwordMismatch') }}
+            </div>
           </div>
 
           <!-- Terms -->
@@ -264,44 +232,117 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
+import api from '@/services/api'
 
 export default {
   name: 'Register',
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    const therapistRegStore = useTherapistRegistrationStore()
     
     const form = ref({
       first_name: '',
       last_name: '',
       age: '',
       email: '',
-      phone: '',
       whatsapp: '',
-      country: '',
       password: '',
       confirm_password: '',
       agreeToTerms: false
     })
+    
+    const selectedCountryCode = ref('EG')
+    const shouldShowEmailField = ref(true)
+    const userCountryCode = ref('EG')
+    
+    // Country codes with flags - Egypt first, then Arab countries, then alphabetical
+    const countryCodesWithFlags = ref([
+      // Egypt first
+      { code: 'EG', name: 'Egypt', dial: '+20', flag: '🇪🇬' },
+      // Arab countries
+      { code: 'SA', name: 'Saudi Arabia', dial: '+966', flag: '🇸🇦' },
+      { code: 'AE', name: 'UAE', dial: '+971', flag: '🇦🇪' },
+      { code: 'KW', name: 'Kuwait', dial: '+965', flag: '🇰🇼' },
+      { code: 'QA', name: 'Qatar', dial: '+974', flag: '🇶🇦' },
+      { code: 'BH', name: 'Bahrain', dial: '+973', flag: '🇧🇭' },
+      { code: 'OM', name: 'Oman', dial: '+968', flag: '🇴🇲' },
+      { code: 'JO', name: 'Jordan', dial: '+962', flag: '🇯🇴' },
+      { code: 'LB', name: 'Lebanon', dial: '+961', flag: '🇱🇧' },
+      { code: 'SY', name: 'Syria', dial: '+963', flag: '🇸🇾' },
+      { code: 'IQ', name: 'Iraq', dial: '+964', flag: '🇮🇶' },
+      { code: 'YE', name: 'Yemen', dial: '+967', flag: '🇾🇪' },
+      { code: 'PS', name: 'Palestine', dial: '+970', flag: '🇵🇸' },
+      { code: 'MA', name: 'Morocco', dial: '+212', flag: '🇲🇦' },
+      { code: 'TN', name: 'Tunisia', dial: '+216', flag: '🇹🇳' },
+      { code: 'DZ', name: 'Algeria', dial: '+213', flag: '🇩🇿' },
+      { code: 'LY', name: 'Libya', dial: '+218', flag: '🇱🇾' },
+      { code: 'SD', name: 'Sudan', dial: '+249', flag: '🇸🇩' },
+      // Other countries alphabetically
+      { code: 'AF', name: 'Afghanistan', dial: '+93', flag: '🇦🇫' },
+      { code: 'AL', name: 'Albania', dial: '+355', flag: '🇦🇱' },
+      { code: 'AR', name: 'Argentina', dial: '+54', flag: '🇦🇷' },
+      { code: 'AU', name: 'Australia', dial: '+61', flag: '🇦🇺' },
+      { code: 'AT', name: 'Austria', dial: '+43', flag: '🇦🇹' },
+      { code: 'BD', name: 'Bangladesh', dial: '+880', flag: '🇧🇩' },
+      { code: 'BE', name: 'Belgium', dial: '+32', flag: '🇧🇪' },
+      { code: 'BR', name: 'Brazil', dial: '+55', flag: '🇧🇷' },
+      { code: 'CA', name: 'Canada', dial: '+1', flag: '🇨🇦' },
+      { code: 'CN', name: 'China', dial: '+86', flag: '🇨🇳' },
+      { code: 'FR', name: 'France', dial: '+33', flag: '🇫🇷' },
+      { code: 'DE', name: 'Germany', dial: '+49', flag: '🇩🇪' },
+      { code: 'IN', name: 'India', dial: '+91', flag: '🇮🇳' },
+      { code: 'ID', name: 'Indonesia', dial: '+62', flag: '🇮🇩' },
+      { code: 'IR', name: 'Iran', dial: '+98', flag: '🇮🇷' },
+      { code: 'IT', name: 'Italy', dial: '+39', flag: '🇮🇹' },
+      { code: 'JP', name: 'Japan', dial: '+81', flag: '🇯🇵' },
+      { code: 'MY', name: 'Malaysia', dial: '+60', flag: '🇲🇾' },
+      { code: 'MX', name: 'Mexico', dial: '+52', flag: '🇲🇽' },
+      { code: 'NL', name: 'Netherlands', dial: '+31', flag: '🇳🇱' },
+      { code: 'PK', name: 'Pakistan', dial: '+92', flag: '🇵🇰' },
+      { code: 'RU', name: 'Russia', dial: '+7', flag: '🇷🇺' },
+      { code: 'SG', name: 'Singapore', dial: '+65', flag: '🇸🇬' },
+      { code: 'ZA', name: 'South Africa', dial: '+27', flag: '🇿🇦' },
+      { code: 'KR', name: 'South Korea', dial: '+82', flag: '🇰🇷' },
+      { code: 'ES', name: 'Spain', dial: '+34', flag: '🇪🇸' },
+      { code: 'TH', name: 'Thailand', dial: '+66', flag: '🇹🇭' },
+      { code: 'TR', name: 'Turkey', dial: '+90', flag: '🇹🇷' },
+      { code: 'GB', name: 'United Kingdom', dial: '+44', flag: '🇬🇧' },
+      { code: 'US', name: 'United States', dial: '+1', flag: '🇺🇸' },
+      { code: 'VN', name: 'Vietnam', dial: '+84', flag: '🇻🇳' }
+    ])
 
     const loading = computed(() => authStore.loading)
+    
+    // Password mismatch error - only show when passwords have same length but don't match
+    const passwordMismatchError = computed(() => {
+      return form.value.password &&
+             form.value.confirm_password &&
+             form.value.password.length === form.value.confirm_password.length &&
+             form.value.password !== form.value.confirm_password
+    })
 
     const isFormValid = computed(() => {
-      return form.value.first_name &&
-             form.value.last_name &&
-             form.value.age &&
-             form.value.email &&
-             form.value.phone &&
-             form.value.whatsapp &&
-             form.value.country &&
-             form.value.password &&
-             form.value.confirm_password &&
-             form.value.agreeToTerms &&
-             form.value.password === form.value.confirm_password &&
-             form.value.password.length >= 8
+      const baseValidation = form.value.first_name &&
+                           form.value.last_name &&
+                           form.value.age &&
+                           form.value.whatsapp &&
+                           form.value.password &&
+                           form.value.confirm_password &&
+                           form.value.agreeToTerms &&
+                           form.value.password === form.value.confirm_password &&
+                           form.value.password.length >= 8
+      
+      // Add email validation if email field is required
+      if (shouldShowEmailField.value) {
+        return baseValidation && form.value.email
+      }
+      
+      return baseValidation
     })
 
     const fillDummyData = () => {
@@ -310,12 +351,42 @@ export default {
         last_name: 'Omar',
         age: '25',
         email: 'maki3omar@gmail.com',
-        phone: '+201234567890',
-        whatsapp: '+201234567890',
-        country: 'Egypt',
+        whatsapp: '1234567890',
         password: 'TestPassword123!',
         confirm_password: 'TestPassword123!',
         agreeToTerms: true
+      }
+      selectedCountryCode.value = 'EG'
+    }
+    
+    // Load therapist registration settings to check email requirements
+    const loadSettings = async () => {
+      try {
+        const response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
+        if (response.data.success) {
+          shouldShowEmailField.value = response.data.data.require_email || false
+        }
+      } catch (error) {
+        console.warn('Could not load registration settings, using defaults')
+        shouldShowEmailField.value = true
+      }
+    }
+    
+    // Auto-detect user country
+    const detectUserCountry = async () => {
+      try {
+        // Try to get user's country from IP
+        const response = await api.get('/wp-json/jalsah-ai/v1/user-country')
+        if (response.data && response.data.country_code) {
+          const detectedCountry = response.data.country_code.toUpperCase()
+          const countryExists = countryCodesWithFlags.value.find(c => c.code === detectedCountry)
+          if (countryExists) {
+            selectedCountryCode.value = detectedCountry
+            userCountryCode.value = detectedCountry
+          }
+        }
+      } catch (error) {
+        console.warn('Could not detect user country, using default (Egypt)')
       }
     }
 
@@ -323,33 +394,59 @@ export default {
       if (!isFormValid.value) {
         return
       }
+      
+      // Get selected country info
+      const selectedCountry = countryCodesWithFlags.value.find(c => c.code === selectedCountryCode.value)
+      const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial + form.value.whatsapp : form.value.whatsapp
 
-      const result = await authStore.register({
+      const registrationData = {
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         age: parseInt(form.value.age),
-        email: form.value.email,
-        phone: form.value.phone,
-        whatsapp: form.value.whatsapp,
-        country: form.value.country,
+        whatsapp: fullWhatsAppNumber,
         password: form.value.password
-      })
+      }
+      
+      // Add email only if required
+      if (shouldShowEmailField.value && form.value.email) {
+        registrationData.email = form.value.email
+      }
+      
+      // Add country name for backend compatibility
+      if (selectedCountry) {
+        registrationData.country = selectedCountry.name
+      }
+
+      const result = await authStore.register(registrationData)
       
       if (result && result.requiresVerification) {
         // Redirect to verification page
-        router.push(`/verify-email/${encodeURIComponent(form.value.email)}`)
+        const email = form.value.email || fullWhatsAppNumber
+        router.push(`/verify-email/${encodeURIComponent(email)}`)
       } else if (result && !result.requiresVerification) {
         // Redirect to homepage after successful registration
         router.push('/')
       }
     }
+    
+    // Initialize on mount
+    onMounted(async () => {
+      await Promise.all([
+        loadSettings(),
+        detectUserCountry()
+      ])
+    })
 
     return {
       form,
       loading,
       isFormValid,
       handleRegister,
-      fillDummyData
+      fillDummyData,
+      selectedCountryCode,
+      countryCodesWithFlags,
+      shouldShowEmailField,
+      passwordMismatchError
     }
   }
 }

@@ -176,6 +176,7 @@ export default {
       facebook: 'Facebook',
       haveAccount: 'Already have an account?',
       signIn: 'Sign in',
+      passwordMismatch: 'Passwords do not match',
       errors: {
         passwordMismatch: 'Passwords do not match',
         emailExists: 'Email already exists',
@@ -186,13 +187,13 @@ export default {
 
   // Verification
   verification: {
-    title: 'Verify Your Email',
-    subtitle: 'Enter the verification code sent to your email',
+    title: 'Verify Your Code',
+    subtitle: 'Enter the verification code sent to you',
     emailSentTo: 'Verification code sent to:',
     code: 'Verification Code',
     codePlaceholder: 'Enter 6-digit code',
-    codeHint: 'Enter the 6-digit code sent to your email',
-    verify: 'Verify Email',
+    codeHint: 'Enter the 6-digit code sent to you',
+    verify: 'Verify Code',
     verifying: 'Verifying...',
     didntReceive: "Didn't receive the code?",
     resendCode: 'Resend Code',

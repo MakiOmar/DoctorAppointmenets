@@ -185,6 +185,7 @@ export default {
       phonePlaceholder: '+1234567890',
       whatsapp: 'رقم الواتساب',
       whatsappPlaceholder: '+1234567890',
+      passwordMismatch: 'كلمات المرور غير متطابقة',
       errors: {
         passwordMismatch: 'كلمات المرور غير متطابقة',
         emailExists: 'البريد الإلكتروني مستخدم بالفعل',
@@ -195,13 +196,13 @@ export default {
 
   // Verification
   verification: {
-    title: 'تحقق من بريدك الإلكتروني',
-    subtitle: 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني',
+    title: 'تحقق من رمز التأكيد',
+    subtitle: 'أدخل رمز التحقق المرسل إليك',
     emailSentTo: 'تم إرسال رمز التحقق إلى:',
     code: 'رمز التحقق',
     codePlaceholder: 'أدخل الرمز المكون من 6 أرقام',
-    codeHint: 'أدخل الرمز المكون من 6 أرقام المرسل إلى بريدك الإلكتروني',
-    verify: 'تحقق من البريد الإلكتروني',
+    codeHint: 'أدخل الرمز المكون من 6 أرقام المرسل إليك',
+    verify: 'تحقق من الرمز',
     verifying: 'جاري التحقق...',
     didntReceive: 'لم تستلم الرمز؟',
     resendCode: 'إعادة إرسال الرمز',
