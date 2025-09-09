@@ -299,10 +299,6 @@ export default {
       router.push(`/booking/${therapistId}`)
     }
 
-    // Watch for route changes to reload therapists when diagnosis changes
-    watch(() => route.query.diagnosis, () => {
-      loadTherapists()
-    })
 
     // Watch for search query changes with debouncing
     watch(searchQuery, (newQuery) => {
