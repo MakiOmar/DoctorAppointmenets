@@ -119,7 +119,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     </span>
-                    <span v-else-if="!isLoadingCountries" class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
+                    <span v-else-if="!isLoadingCountries" class="text-lg mr-1 emoji-flag" :data-emoji="getSelectedCountryFlag()">{{ getSelectedCountryFlag() }}</span>
                     <span v-else class="text-lg mr-1">🇪🇬</span>
                     <span class="text-xs">{{ getSelectedCountryDial() }}</span>
                   </span>
@@ -151,7 +151,7 @@
                       class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
                       :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
                     >
-                      <span class="text-lg mr-3 emoji-flag">{{ country.flag }}</span>
+                      <span class="text-lg mr-3 emoji-flag" :data-emoji="country.flag">{{ country.flag }}</span>
                       <span class="flex-1">{{ country.name }}</span>
                       <span class="text-gray-500 text-xs">{{ country.dial }}</span>
                     </button>
@@ -628,8 +628,11 @@ export default {
 </script>
 
 <style scoped>
+/* Import Twemoji font for better emoji support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
 .emoji-flag {
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Twemoji', 'EmojiOne', 'Segoe UI Symbol', sans-serif;
+  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Twemoji', 'EmojiOne', 'Segoe UI Symbol', sans-serif;
   font-size: 1.2em;
   line-height: 1;
   display: inline-block;
@@ -640,5 +643,17 @@ export default {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Additional emoji font fallbacks */
+.emoji-flag {
+  font-display: swap;
+  unicode-range: U+1F1E6-1F1FF; /* Flag emoji range */
+}
+
+/* Force emoji rendering on all browsers */
+.emoji-flag::before {
+  content: attr(data-emoji);
+  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
 }
 </style> 
