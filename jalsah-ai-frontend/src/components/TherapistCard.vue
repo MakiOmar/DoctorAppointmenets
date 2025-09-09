@@ -148,16 +148,8 @@
         </button>
       </div>
       
-      <!-- Details Content -->
-      <div v-else-if="details" class="space-y-6">
-        <!-- Bio Section -->
-        <div v-if="details.bio" class="bg-gray-50 rounded-lg p-4">
-          <h4 class="text-lg font-semibold text-gray-900 mb-3">{{ $t('therapistDetails.bio') }}</h4>
-          <p class="text-gray-700 leading-relaxed">{{ details.bio }}</p>
-        </div>
-
-
-
+      <!-- Booking Section - Always show -->
+      <div class="space-y-6">
         <!-- Booking Section -->
         <div class="bg-gray-50 rounded-lg p-4">
           <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.bookAppointment') }}</h4>
@@ -287,6 +279,12 @@
             </div>
           </div>
         </div>
+      </div>
+      
+      <!-- Bio Section - Only show when details are loaded -->
+      <div v-if="details && details.bio" class="bg-gray-50 rounded-lg p-4">
+        <h4 class="text-lg font-semibold text-gray-900 mb-3">{{ $t('therapistDetails.bio') }}</h4>
+        <p class="text-gray-700 leading-relaxed">{{ details.bio }}</p>
       </div>
     </div>
     
