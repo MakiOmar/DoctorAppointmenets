@@ -2163,6 +2163,12 @@ class SNKS_AI_Integration {
 			$verification_code = str_pad( $verification_code, 6, '0', STR_PAD_LEFT );
 		}
 		
+		// Debug OTP generation
+		error_log( '=== OTP GENERATION DEBUG ===' );
+		error_log( 'Generated OTP: ' . $verification_code );
+		error_log( 'OTP Length: ' . strlen( $verification_code ) );
+		error_log( '============================' );
+		
 
 		
 		// Store verification code and expiry

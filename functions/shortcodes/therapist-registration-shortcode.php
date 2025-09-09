@@ -1140,10 +1140,15 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	error_log( 'Access Token (first 20 chars): ' . substr( $access_token, 0, 20 ) . '...' );
 	error_log( 'Use Template: ' . ( $use_template ? 'Yes' : 'No' ) );
 	error_log( 'Template Name: ' . ( $template_name ?? 'N/A' ) );
+	error_log( 'Message Length: ' . strlen( $message ) );
 	error_log( 'Message: ' . $message );
 	error_log( 'Request Body: ' . wp_json_encode( $body ) );
 	error_log( 'Response Code: ' . $response_code );
 	error_log( 'Response Body: ' . $response_body );
+	
+	// Check if this is a registration vs test message
+	$is_registration = strpos( $message, 'رمز التحقق' ) !== false || strpos( $message, 'verification' ) !== false;
+	error_log( 'Message Type: ' . ( $is_registration ? 'REGISTRATION OTP' : 'TEST MESSAGE' ) );
 	error_log( '=========================' );
 	
 	// Check response code - Meta typically returns 200 for success
