@@ -301,8 +301,12 @@ function snks_get_country_code( $set_cookie = true ) {
 	// Get the user's IP address, validating it for security.
 	$ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP );
 	//phpcs:enable
+	
+	error_log( '🌍 Country Detection - IP Address: ' . $ip );
+	
 	// If the IP address is not valid, return early.
 	if ( ! $ip ) {
+		error_log( '🌍 Country Detection - Invalid IP address' );
 		return 'Unknown';
 	}
 
@@ -310,17 +314,22 @@ function snks_get_country_code( $set_cookie = true ) {
 	$api_key = 'yBZHxURnxnHhONq'; // Replace with your actual API key.
 	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
 
+	error_log( '🌍 Country Detection - API URL: ' . $api_url );
+
 	// Send request to the IP API using wp_remote_get.
 	$response = wp_remote_get( $api_url );
 
 	// Check for errors and validate the response.
 	if ( is_wp_error( $response ) ) {
+		error_log( '🌍 Country Detection - API Error: ' . $response->get_error_message() );
 		return 'Unknown'; // Early return if there's an error in the response.
 	}
 	$country_codes = json_decode( COUNTRY_CURRENCIES, true );
 	$country_code  = 'Unknown';
 	// Retrieve the response body.
 	$body                 = wp_remote_retrieve_body( $response );
+	error_log( '🌍 Country Detection - API Response Body: ' . $body );
+	
 	$europe_country_codes = array( // phpcs:disable
 			'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR',
 			'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GE', 'DE', 'GR', 'HU',
@@ -332,10 +341,14 @@ function snks_get_country_code( $set_cookie = true ) {
 	// Check if the body is not empty and contains serialized data.
 	if ( ! empty( $body ) ) {
 		$data = json_decode( $body ); // Using @ to suppress potential warnings.
+		error_log( '🌍 Country Detection - Parsed JSON Data: ' . print_r( $data, true ) );
+		
 		// Check if the country code is present.
 		if ( $data && isset( $data->countryCode ) ) { //phpcs:disable
 			$country_code = sanitize_text_field( $data->countryCode );
 			//phpcs:enable
+			error_log( '🌍 Country Detection - Extracted Country Code: ' . $country_code );
+			
 			if ( $set_cookie ) {
 				// Store the country code in a cookie for 24 hours.
 				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
@@ -347,9 +360,16 @@ function snks_get_country_code( $set_cookie = true ) {
 				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
 			}
 
+			error_log( '🌍 Country Detection - Final Result: ' . $country_code );
 			return $country_code;
+		} else {
+			error_log( '🌍 Country Detection - No countryCode in response data' );
 		}
+	} else {
+		error_log( '🌍 Country Detection - Empty response body' );
 	}
+	
+	error_log( '🌍 Country Detection - Returning Unknown' );
 	return $country_code;
 }
 

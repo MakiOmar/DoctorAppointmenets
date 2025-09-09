@@ -5850,12 +5850,20 @@ function snks_get_user_country_rest( $request ) {
 	// Get country code using existing function
 	$country_code = snsk_ip_api_country( false );
 	
+	// Log the detection process
+	error_log( '🌍 User Country Detection - Raw country code: ' . $country_code );
+	error_log( '🌍 User Country Detection - IP Address: ' . ( $_SERVER['REMOTE_ADDR'] ?? 'Unknown' ) );
+	error_log( '🌍 User Country Detection - User Agent: ' . ( $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ) );
+	
+	$final_country_code = $country_code !== 'Unknown' ? $country_code : 'EG';
+	error_log( '🌍 User Country Detection - Final country code: ' . $final_country_code );
+	
 	// Return the country code
 	return rest_ensure_response( array(
 		'success' => true,
-		'country_code' => $country_code !== 'Unknown' ? $country_code : 'EG', // Default to Egypt if unknown
+		'country_code' => $final_country_code,
 		'data' => array(
-			'country_code' => $country_code !== 'Unknown' ? $country_code : 'EG'
+			'country_code' => $final_country_code
 		)
 	) );
 }

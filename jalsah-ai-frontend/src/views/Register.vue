@@ -430,18 +430,29 @@ export default {
     // Auto-detect user country
     const detectUserCountry = async () => {
       try {
+        console.log('🌍 Detecting user country from API...')
         // Try to get user's country from IP
         const response = await api.get('/wp-json/jalsah-ai/v1/user-country')
+        console.log('📍 User country API response:', response.data)
+        
         if (response.data && response.data.country_code) {
           const detectedCountry = response.data.country_code.toUpperCase()
+          console.log('🎯 Detected country code:', detectedCountry)
+          
           const countryExists = countryCodesWithFlags.value.find(c => c.code === detectedCountry)
           if (countryExists) {
+            console.log('✅ Country found in list:', countryExists)
             selectedCountryCode.value = detectedCountry
             userCountryCode.value = detectedCountry
+            console.log('🔄 Updated selected country to:', detectedCountry)
+          } else {
+            console.log('❌ Country not found in list, using default (Egypt)')
           }
+        } else {
+          console.log('❌ No country code in response, using default (Egypt)')
         }
       } catch (error) {
-        console.warn('Could not detect user country, using default (Egypt)')
+        console.warn('⚠️ Could not detect user country, using default (Egypt):', error)
       }
     }
 
