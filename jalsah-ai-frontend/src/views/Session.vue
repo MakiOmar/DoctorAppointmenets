@@ -424,8 +424,8 @@ const canJoinSession = computed(() => {
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-     // Debug logging
-   
+   // Debug logging
+   console.log('Session eligibility check:', {
      currentUserId,
      sessionTherapistId,
      sessionClientId,
