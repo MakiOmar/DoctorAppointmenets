@@ -46,9 +46,6 @@ class SNKS_AI_Integration {
 		add_action( 'send_headers', array( $this, 'handle_very_early_cors' ) );
 		add_action( 'parse_request', array( $this, 'handle_early_api_requests' ) );
 		
-		// Schedule cart cleanup cron job
-		add_action( 'init', array( $this, 'schedule_cart_cleanup' ) );
-		add_action( 'jalsah_ai_cleanup_expired_cart', array( $this, 'cleanup_expired_cart_items' ) );
 		
 		// Add nonce generation endpoint
 		add_action( 'wp_ajax_get_ai_nonce', array( $this, 'get_ai_nonce' ) );
@@ -5172,54 +5169,59 @@ function snks_process_ai_order_status_change($order_id, $old_status, $new_status
 			}
 		}
 	}
-	
-	/**
-	 * Schedule cart cleanup cron job
-	 */
-	public function schedule_cart_cleanup() {
-		if ( ! wp_next_scheduled( 'jalsah_ai_cleanup_expired_cart' ) ) {
-			wp_schedule_event( time(), 'hourly', 'jalsah_ai_cleanup_expired_cart' );
-		}
-	}
-	
-	/**
-	 * Clean up expired cart items (older than 30 minutes)
-	 */
-	public function cleanup_expired_cart_items() {
-		global $wpdb;
-		
-		$current_time = current_time('mysql');
-		$expired_time = date('Y-m-d H:i:s', strtotime($current_time . ' -30 minutes'));
-		
-		// Find expired cart items
-		$expired_query = $wpdb->prepare(
-			"SELECT ID FROM {$wpdb->prefix}snks_provider_timetable 
-			 WHERE settings LIKE %s AND settings LIKE %s",
-			'%ai_booking:in_cart%',
-			'%' . $expired_time . '%'
-		);
-		
-		$expired_items = $wpdb->get_results($expired_query);
-		
-		if (!empty($expired_items)) {
-			$expired_ids = array_map(function($item) { return $item->ID; }, $expired_items);
-			$placeholders = implode(',', array_fill(0, count($expired_ids), '%d'));
-			
-			// Clean up expired items
-			$cleanup_query = $wpdb->prepare(
-				"UPDATE {$wpdb->prefix}snks_provider_timetable 
-				 SET client_id = 0, settings = '' 
-				 WHERE ID IN ($placeholders) AND settings LIKE '%ai_booking:in_cart%'",
-				$expired_ids
-			);
-			
-			$result = $wpdb->query($cleanup_query);
-			
-			// Log cleanup activity
-			error_log("Jalsah AI: Cleaned up " . count($expired_ids) . " expired cart items");
-		}
+}
+
+/**
+ * Schedule cart cleanup cron job
+ */
+function snks_schedule_cart_cleanup() {
+	if ( ! wp_next_scheduled( 'jalsah_ai_cleanup_expired_cart' ) ) {
+		wp_schedule_event( time(), 'hourly', 'jalsah_ai_cleanup_expired_cart' );
 	}
 }
+
+/**
+ * Clean up expired cart items (older than 30 minutes)
+ */
+function snks_cleanup_expired_cart_items() {
+	global $wpdb;
+	
+	$current_time = current_time('mysql');
+	$expired_time = date('Y-m-d H:i:s', strtotime($current_time . ' -30 minutes'));
+	
+	// Find expired cart items
+	$expired_query = $wpdb->prepare(
+		"SELECT ID FROM {$wpdb->prefix}snks_provider_timetable 
+		 WHERE settings LIKE %s AND settings LIKE %s",
+		'%ai_booking:in_cart%',
+		'%' . $expired_time . '%'
+	);
+	
+	$expired_items = $wpdb->get_results($expired_query);
+	
+	if (!empty($expired_items)) {
+		$expired_ids = array_map(function($item) { return $item->ID; }, $expired_items);
+		$placeholders = implode(',', array_fill(0, count($expired_ids), '%d'));
+		
+		// Clean up expired items
+		$cleanup_query = $wpdb->prepare(
+			"UPDATE {$wpdb->prefix}snks_provider_timetable 
+			 SET client_id = 0, settings = '' 
+			 WHERE ID IN ($placeholders) AND settings LIKE '%ai_booking:in_cart%'",
+			$expired_ids
+		);
+		
+		$result = $wpdb->query($cleanup_query);
+		
+		// Log cleanup activity
+		error_log("Jalsah AI: Cleaned up " . count($expired_ids) . " expired cart items");
+	}
+}
+
+// Hook the functions
+add_action( 'init', 'snks_schedule_cart_cleanup' );
+add_action( 'jalsah_ai_cleanup_expired_cart', 'snks_cleanup_expired_cart_items' );
+
 
 /**
  * Customize WooCommerce checkout for AI orders
