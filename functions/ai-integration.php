@@ -4128,7 +4128,7 @@ Best regards,
 			return new WP_REST_Response([
 				'success' => false,
 				'requires_confirmation' => true,
-				'message' => 'You have appointments from another therapist in your cart. Adding this appointment will clear your cart to book with a different therapist.'
+				'message' => 'different_therapist_confirmation'
 			], 200);
 		}
 		

@@ -822,6 +822,7 @@ export default {
     appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح. سيتم إزالة الموعد تلقائياً بعد نصف ساعة إذا لم يتم إتمام الدفع.',
     appointmentRemoved: 'تم إزالة الموعد من السلة بنجاح',
     differentTherapistTitle: 'معالج مختلف',
+    differentTherapistMessage: 'لديك مواعيد من معالج آخر في السلة. إضافة هذا الموعد سيقوم بتفريغ السلة للحجز مع معالج مختلف.',
     inCart: 'في السلة',
     viewAllCertificates: 'عرض جميع الشهادات'
   },

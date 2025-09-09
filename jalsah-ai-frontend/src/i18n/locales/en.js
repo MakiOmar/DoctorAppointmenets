@@ -874,6 +874,7 @@ export default {
     appointmentAdded: 'Appointment added to cart successfully. The appointment will be automatically removed after half an hour if payment not completed.',
     appointmentRemoved: 'Appointment removed from cart successfully',
     differentTherapistTitle: 'Different Therapist',
+    differentTherapistMessage: 'You have appointments from another therapist in your cart. Adding this appointment will clear your cart to book with a different therapist.',
     inCart: 'In Cart',
     viewAllCertificates: 'View all certificates'
   },

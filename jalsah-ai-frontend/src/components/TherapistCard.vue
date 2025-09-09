@@ -738,7 +738,7 @@ export default {
           window.dispatchEvent(new CustomEvent('cart-updated'))
         } else if (result.requiresConfirmation) {
           // Show confirmation dialog for different therapist
-          const confirmed = await showDifferentTherapistConfirmation(result.message)
+          const confirmed = await showDifferentTherapistConfirmation(t('therapistDetails.differentTherapistMessage'))
           if (confirmed) {
             // User confirmed, add to cart with confirmation
             const confirmResult = await cartStore.addToCartWithConfirmation({
@@ -822,7 +822,7 @@ export default {
           router.push('/checkout')
         } else if (result.requiresConfirmation) {
           // Show confirmation dialog for different therapist
-          const confirmed = await showDifferentTherapistConfirmation(result.message)
+          const confirmed = await showDifferentTherapistConfirmation(t('therapistDetails.differentTherapistMessage'))
           if (confirmed) {
             // User confirmed, add to cart with confirmation
             const confirmResult = await cartStore.addToCartWithConfirmation({
