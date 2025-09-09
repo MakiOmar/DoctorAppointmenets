@@ -147,7 +147,7 @@
         </div>
 
         <!-- View Details Button -->
-        <div class="flex justify-end mt-6">
+        <div class="flex mt-6">
           <button
             @click.stop="showTherapistDetails"
             class="btn-primary px-6 py-2"
