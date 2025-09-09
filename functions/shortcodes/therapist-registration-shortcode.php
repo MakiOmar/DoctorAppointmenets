@@ -1133,8 +1133,13 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	
 	// Enhanced logging for debugging
 	error_log( 'WhatsApp API Debug - Endpoint: ' . $endpoint );
-	error_log( 'WhatsApp API Debug - Phone Number: ' . $phone_number );
+	error_log( 'WhatsApp API Debug - Original Phone Number: ' . $phone_number );
+	error_log( 'WhatsApp API Debug - Formatted Phone Number: ' . $phone_number );
+	error_log( 'WhatsApp API Debug - Phone Number ID: ' . $phone_number_id );
+	error_log( 'WhatsApp API Debug - Access Token: ' . substr( $access_token, 0, 20 ) . '...' );
+	error_log( 'WhatsApp API Debug - Use Template: ' . ( $use_template ? 'Yes' : 'No' ) );
 	error_log( 'WhatsApp API Debug - Message: ' . $message );
+	error_log( 'WhatsApp API Debug - Request Body: ' . wp_json_encode( $body ) );
 	error_log( 'WhatsApp API Debug - Response Code: ' . $response_code );
 	error_log( 'WhatsApp API Debug - Response Body: ' . $response_body );
 	

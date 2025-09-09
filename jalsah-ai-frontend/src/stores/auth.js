@@ -138,7 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const register = async (userData) => {
+  const register = async (userData, otpMethod = 'email') => {
     loading.value = true
     try {
       // Get nonce for security
@@ -159,7 +159,11 @@ export const useAuthStore = defineStore('auth', () => {
         // Store registration timestamp for countdown
         localStorage.setItem('registration_timestamp', Date.now().toString())
         
-        toast.success(t('toast.auth.registerSuccess'))
+        // Dynamic success message based on OTP method
+        const successMessage = otpMethod === 'whatsapp' 
+          ? t('toast.auth.whatsappSentTo', { contact: userData.whatsapp_number })
+          : t('toast.auth.registerSuccess')
+        toast.success(successMessage)
         return { requiresVerification: true, email: userData.email }
       }
       

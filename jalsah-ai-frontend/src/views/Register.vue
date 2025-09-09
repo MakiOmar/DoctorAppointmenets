@@ -544,7 +544,7 @@ export default {
         registrationData.country = selectedCountry.name_en
       }
 
-      const result = await authStore.register(registrationData)
+      const result = await authStore.register(registrationData, otpMethod.value)
       
       if (result && result.requiresVerification) {
         // Redirect to verification page

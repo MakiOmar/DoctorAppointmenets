@@ -2188,6 +2188,11 @@ class SNKS_AI_Integration {
 			$contact_method = $data['whatsapp'];
 			$message = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
 			
+			// Debug patient registration WhatsApp
+			error_log( 'Patient Registration WhatsApp Debug - Phone Number: ' . $data['whatsapp'] );
+			error_log( 'Patient Registration WhatsApp Debug - Message: ' . $message );
+			error_log( 'Patient Registration WhatsApp Debug - Settings: ' . print_r( $registration_settings, true ) );
+			
 			// Use WhatsApp Business API
 			$whatsapp_result = snks_send_whatsapp_message( $data['whatsapp'], $message, $registration_settings );
 			
