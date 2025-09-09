@@ -733,6 +733,25 @@ export default {
           toast.success(t('therapistDetails.appointmentAdded'))
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else if (result.requiresConfirmation) {
+          // Show confirmation dialog for different therapist
+          const confirmed = await showDifferentTherapistConfirmation(result.message)
+          if (confirmed) {
+            // User confirmed, add to cart with confirmation
+            const confirmResult = await cartStore.addToCartWithConfirmation({
+              slot_id: slot.id,
+              user_id: authStore.user.id
+            })
+            
+            if (confirmResult.success) {
+              slot.inCart = true
+              toast.success(t('therapistDetails.appointmentAdded'))
+              // Emit event to update cart
+              window.dispatchEvent(new CustomEvent('cart-updated'))
+            } else {
+              toast.error(confirmResult.message || t('common.error'))
+            }
+          }
         } else {
           toast.error(result.message || t('common.error'))
         }
@@ -798,6 +817,27 @@ export default {
           
           // Redirect directly to checkout page
           router.push('/checkout')
+        } else if (result.requiresConfirmation) {
+          // Show confirmation dialog for different therapist
+          const confirmed = await showDifferentTherapistConfirmation(result.message)
+          if (confirmed) {
+            // User confirmed, add to cart with confirmation
+            const confirmResult = await cartStore.addToCartWithConfirmation({
+              slot_id: earliestSlot.value.id,
+              user_id: authStore.user.id
+            })
+            
+            if (confirmResult.success) {
+              toast.success(t('therapistDetails.appointmentAdded'))
+              // Emit event to update cart
+              window.dispatchEvent(new CustomEvent('cart-updated'))
+              
+              // Redirect directly to checkout page
+              router.push('/checkout')
+            } else {
+              toast.error(confirmResult.message || t('common.error'))
+            }
+          }
         } else {
           // Check if it's a token expiration error
           if (result.message && result.message.includes('Please login again')) {
@@ -815,6 +855,23 @@ export default {
       } finally {
         bookingLoading.value = false
       }
+    }
+
+    // Show confirmation dialog for different therapist
+    const showDifferentTherapistConfirmation = async (message) => {
+      // Use SweetAlert2 for confirmation dialog
+      const result = await Swal.fire({
+        title: t('therapistDetails.differentTherapistTitle'),
+        text: message,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: t('common.yes'),
+        cancelButtonText: t('common.cancel'),
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33'
+      })
+      
+      return result.isConfirmed
     }
 
     const removeEarliestSlotFromCart = async () => {

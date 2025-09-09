@@ -134,6 +134,12 @@ class SNKS_AI_Integration {
 			'callback' => array( $this, 'add_appointment_to_cart' ),
 			'permission_callback' => '__return_true',
 		) );
+		
+		register_rest_route( 'jalsah-ai/v1', '/add-appointment-to-cart-with-confirmation', array(
+			'methods' => 'POST',
+			'callback' => array( $this, 'add_appointment_to_cart_with_confirmation' ),
+			'permission_callback' => '__return_true',
+		) );
 
 		register_rest_route( 'jalsah-ai/v1', '/get-user-cart', array(
 			'methods' => 'GET',
@@ -4093,6 +4099,107 @@ Best regards,
 		
 		if (!$slot) {
 			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
+		}
+		
+		// Check if slot is already in user's cart
+		$cart_check_query = $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking:in_cart%'",
+			$slot_id, $user_id
+		);
+		
+		$in_cart = $wpdb->get_var($cart_check_query);
+		
+		if ($in_cart) {
+			return new WP_REST_Response(['error' => 'Appointment already in cart'], 400);
+		}
+		
+		// Check if user has appointments from different therapists in cart
+		$existing_cart_query = $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE client_id = %d AND session_status = 'waiting' AND settings LIKE '%ai_booking:in_cart%' 
+			 AND user_id != %d LIMIT 1",
+			$user_id, $slot->user_id
+		);
+		
+		$different_therapist = $wpdb->get_var($existing_cart_query);
+		
+		if ($different_therapist) {
+			return new WP_REST_Response([
+				'error' => 'different_therapist',
+				'message' => 'You have appointments from another therapist in your cart. Adding this appointment will clear your cart to book with a different therapist.',
+				'requires_confirmation' => true
+			], 200);
+		}
+		
+		// Add to cart by updating the slot with AI identifier and timestamp
+		$cart_timestamp = current_time('mysql');
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			[
+				'client_id' => $user_id,
+				'session_status' => 'waiting', // Keep as waiting until checkout
+				'settings' => 'ai_booking:in_cart:' . $cart_timestamp // Mark as AI booking with timestamp
+			],
+			['ID' => $slot_id],
+			['%d', '%s', '%s'],
+			['%d']
+		);
+		
+		if ($result === false) {
+			return new WP_REST_Response(['error' => 'Failed to add to cart'], 500);
+		}
+		
+		return new WP_REST_Response([
+			'success' => true,
+			'message' => 'Appointment added to cart successfully. The appointment will be automatically removed after half an hour if payment not completed.',
+			'slot_id' => $slot_id,
+			'expires_at' => date('Y-m-d H:i:s', strtotime($cart_timestamp . ' +30 minutes'))
+		], 200);
+	}
+
+	/**
+	 * Add appointment to cart with confirmation for different therapist
+	 */
+	public function add_appointment_to_cart_with_confirmation($request) {
+		$user_id = $request->get_param('user_id');
+		$slot_id = $request->get_param('slot_id');
+		$confirm = $request->get_param('confirm');
+		
+		if (!$user_id || !$slot_id) {
+			return new WP_REST_Response(['error' => 'Missing user_id or slot_id'], 400);
+		}
+		
+		global $wpdb;
+		
+		// Check if slot is still available
+		$slot = $wpdb->get_row($wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND session_status = 'waiting' AND order_id = 0",
+			$slot_id
+		));
+		
+		if (!$slot) {
+			return new WP_REST_Response(['error' => 'Time slot is no longer available'], 400);
+		}
+		
+		// If user confirmed, clear existing cart first
+		if ($confirm === 'true') {
+			// Clear existing cart items
+			$wpdb->update(
+				$wpdb->prefix . 'snks_provider_timetable',
+				[
+					'client_id' => 0,
+					'session_status' => 'waiting',
+					'settings' => ''
+				],
+				[
+					'client_id' => $user_id,
+					'session_status' => 'waiting'
+				],
+				['%d', '%s', '%s'],
+				['%d', '%s']
+			);
 		}
 		
 		// Check if slot is already in user's cart

@@ -821,6 +821,7 @@ export default {
     noAvailableDates: 'لا توجد تواريخ متاحة',
     appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح. سيتم إزالة الموعد تلقائياً بعد نصف ساعة إذا لم يتم إتمام الدفع.',
     appointmentRemoved: 'تم إزالة الموعد من السلة بنجاح',
+    differentTherapistTitle: 'معالج مختلف',
     inCart: 'في السلة',
     viewAllCertificates: 'عرض جميع الشهادات'
   },

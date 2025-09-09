@@ -873,6 +873,7 @@ export default {
     noAvailableDates: 'No available dates found',
     appointmentAdded: 'Appointment added to cart successfully. The appointment will be automatically removed after half an hour if payment not completed.',
     appointmentRemoved: 'Appointment removed from cart successfully',
+    differentTherapistTitle: 'Different Therapist',
     inCart: 'In Cart',
     viewAllCertificates: 'View all certificates'
   },

@@ -53,6 +53,39 @@ export const useCartStore = defineStore('cart', () => {
         // Reload cart to get updated data
         await loadCart(appointmentData.user_id)
         return { success: true, message: response.data.message }
+      } else if (response.data.error === 'different_therapist') {
+        // Return special response for different therapist confirmation
+        return { 
+          success: false, 
+          requiresConfirmation: true, 
+          message: response.data.message 
+        }
+      } else {
+        error.value = response.data.error || 'Failed to add to cart'
+        return { success: false, message: error.value }
+      }
+    } catch (err) {
+      error.value = 'Failed to add to cart'
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const addToCartWithConfirmation = async (appointmentData) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await api.post('/wp-json/jalsah-ai/v1/add-appointment-to-cart-with-confirmation', {
+        ...appointmentData,
+        confirm: 'true'
+      })
+      
+      if (response.data.success) {
+        // Reload cart to get updated data
+        await loadCart(appointmentData.user_id)
+        return { success: true, message: response.data.message }
       } else {
         error.value = response.data.error || 'Failed to add to cart'
         return { success: false, message: error.value }
@@ -147,6 +180,7 @@ export const useCartStore = defineStore('cart', () => {
     // Actions
     loadCart,
     addToCart,
+    addToCartWithConfirmation,
     removeFromCart,
     checkout,
     clearCart
