@@ -297,16 +297,40 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * @return string
  */
 function snks_get_country_code( $set_cookie = true ) {
-	//phpcs:disable
-	// Get the user's IP address, validating it for security.
-	$ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP );
-	//phpcs:enable
+	// Get all possible IP headers to check for VPN/proxy
+	$ip_headers = array(
+		'HTTP_CF_CONNECTING_IP',     // Cloudflare
+		'HTTP_CLIENT_IP',            // Proxy
+		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
+		'HTTP_X_FORWARDED',          // Proxy
+		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
+		'HTTP_FORWARDED_FOR',        // Proxy
+		'HTTP_FORWARDED',            // Proxy
+		'REMOTE_ADDR'                // Standard
+	);
 	
-	error_log( '🌍 Country Detection - IP Address: ' . $ip );
+	$ip = 'Unknown';
+	foreach ( $ip_headers as $header ) {
+		if ( ! empty( $_SERVER[ $header ] ) ) {
+			$candidate_ip = filter_var( $_SERVER[ $header ], FILTER_VALIDATE_IP );
+			if ( $candidate_ip ) {
+				$ip = $candidate_ip;
+				error_log( '🌍 Country Detection - Found IP in header ' . $header . ': ' . $ip );
+				break;
+			}
+		}
+	}
+	
+	error_log( '🌍 Country Detection - Final IP Address: ' . $ip );
+	
+	// Log all available IP headers for debugging
+	error_log( '🌍 Country Detection - All IP Headers: ' . print_r( array_map( function( $header ) {
+		return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
+	}, $ip_headers ), true ) );
 	
 	// If the IP address is not valid, return early.
-	if ( ! $ip ) {
-		error_log( '🌍 Country Detection - Invalid IP address' );
+	if ( $ip === 'Unknown' ) {
+		error_log( '🌍 Country Detection - No valid IP address found' );
 		return 'Unknown';
 	}
 

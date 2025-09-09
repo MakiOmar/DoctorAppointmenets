@@ -5878,7 +5878,7 @@ function snks_get_user_country_rest( $request ) {
 	error_log( '🌍 User Country Detection - HTTP_CF_CONNECTING_IP: ' . ( $_SERVER['HTTP_CF_CONNECTING_IP'] ?? 'Not Set' ) );
 	
 	// Force fresh detection by not using cookie cache
-	$country_code = snks_get_country_code( false );
+	$country_code = snsk_ip_api_country( false );
 	
 	// Log the detection process
 	error_log( '🌍 User Country Detection - Raw country code: ' . $country_code );
