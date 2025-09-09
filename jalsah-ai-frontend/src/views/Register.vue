@@ -99,16 +99,8 @@
 
           <!-- WhatsApp with International Prefix -->
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="mb-2">
               <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
-              <button
-                type="button"
-                @click="detectUserCountry"
-                class="text-xs text-primary-600 hover:text-primary-500 underline"
-                title="Refresh country detection"
-              >
-                🔄 Refresh Country
-              </button>
             </div>
             <div class="flex" style="direction: ltr;">
               <!-- Custom Country Selector -->
