@@ -322,7 +322,6 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
         }
     }
 
-    error_log( '🌍 My Country Detection - Detected IP: ' . $ip );
 
     // If no valid IP found, return Unknown
     if ( ! $ip ) {

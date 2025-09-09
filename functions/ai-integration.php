@@ -188,12 +188,6 @@ class SNKS_AI_Integration {
 			'permission_callback' => '__return_true',
 		) );
 		
-		// Test endpoint to check IP detection
-		register_rest_route( 'jalsah-ai/v1', '/test-ip', array(
-			'methods' => 'GET',
-			'callback' => 'snks_test_ip_detection_rest',
-			'permission_callback' => '__return_true',
-		) );
 		
 		// Rochtah available slots endpoint
 		register_rest_route( 'jalsah-ai/v1', '/rochtah-available-slots', array(
@@ -5858,81 +5852,21 @@ function snks_get_user_country_rest( $request ) {
 	$custom_ip = $request->get_param( 'ip' );
 	$detected_ip = $custom_ip ?: ( $_SERVER['REMOTE_ADDR'] ?? 'Not Set' );
 	
-	// Log IP detection details
-	error_log( '🌍 User Country Detection - Custom IP: ' . ( $custom_ip ?: 'Not provided' ) );
-	error_log( '🌍 User Country Detection - Detected IP: ' . $detected_ip );
-	error_log( '🌍 User Country Detection - User Agent: ' . ( $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ) );
-	
 	// Call the helper function with custom IP (force fresh detection by not using cookie cache)
 	$country_code = snks_get_country_code( false, $custom_ip );
 	
-	// Log the detection process
-	error_log( '🌍 User Country Detection - Raw country code: ' . $country_code );
-	
 	$final_country_code = $country_code !== 'Unknown' ? $country_code : 'EG';
-	error_log( '🌍 User Country Detection - Final country code: ' . $final_country_code );
 	
-	// Return the country code with debug info
+	// Return the country code
 	return rest_ensure_response( array(
 		'success' => true,
 		'country_code' => $final_country_code,
-		'debug_info' => array(
-			'custom_ip' => $custom_ip,
-			'detected_ip' => $detected_ip,
-			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
-			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set',
-			'raw_country_code' => $country_code
-		),
 		'data' => array(
 			'country_code' => $final_country_code
 		)
 	) );
 }
 
-/**
- * Test IP detection without any caching
- */
-function snks_test_ip_detection_rest( $request ) {
-	// Get REMOTE_ADDR for debugging
-	$detected_ip = $_SERVER['REMOTE_ADDR'] ?? 'Not Set';
-	$ip_source = 'REMOTE_ADDR';
-	
-	// Call the helper function directly (force fresh detection by not using cookie cache)
-	$country_code = snks_get_country_code( false );
-	return rest_ensure_response( array(
-		'success' => true,
-		'data' => array(
-			'country_code' => $country_code,
-		)
-	) );
-	// Test the IP API directly for comparison
-	$api_key = 'yBZHxURnxnHhONq';
-	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $detected_ip, esc_attr( $api_key ) );
-	
-	$response = wp_remote_get( $api_url );
-	$direct_api_country = 'Unknown';
-	
-	if ( ! is_wp_error( $response ) ) {
-		$body = wp_remote_retrieve_body( $response );
-		$data = json_decode( $body, true );
-		if ( isset( $data['countryCode'] ) ) {
-			$direct_api_country = $data['countryCode'];
-		}
-	}
-	
-	return rest_ensure_response( array(
-		'success' => true,
-		'data' => array(
-			'detected_ip' => $detected_ip,
-			'ip_source' => $ip_source,
-			'country_code' => $country_code,
-			'direct_api_country' => $direct_api_country,
-			'api_url' => $api_url,
-			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
-			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set'
-		)
-	) );
-}
 
 /**
  * Get Rochtah available slots via REST API

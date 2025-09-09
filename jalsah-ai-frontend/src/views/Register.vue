@@ -101,24 +101,14 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  @click="detectUserCountry"
-                  class="text-xs text-primary-600 hover:text-primary-500 underline"
-                  title="Refresh country detection"
-                >
-                  🔄 Refresh Country
-                </button>
-                <button
-                  type="button"
-                  @click="testIpDetection"
-                  class="text-xs text-blue-600 hover:text-blue-500 underline"
-                  title="Test IP detection"
-                >
-                  🧪 Test IP
-                </button>
-              </div>
+              <button
+                type="button"
+                @click="detectUserCountry"
+                class="text-xs text-primary-600 hover:text-primary-500 underline"
+                title="Refresh country detection"
+              >
+                🔄 Refresh Country
+              </button>
             </div>
             <div class="flex" style="direction: ltr;">
               <!-- Custom Country Selector -->
@@ -450,13 +440,10 @@ export default {
     // Get client IP from external service
     const getClientIP = async () => {
       try {
-        console.log('🌐 Fetching client IP from external service...')
         const res = await fetch('https://api.ipify.org?format=json')
         const data = await res.json()
-        console.log('🌐 Client IP from ipify:', data.ip)
         return data.ip
       } catch (error) {
-        console.warn('⚠️ Could not fetch client IP:', error)
         return null
       }
     }
@@ -464,8 +451,6 @@ export default {
     // Auto-detect user country
     const detectUserCountry = async () => {
       try {
-        console.log('🌍 Detecting user country from API...')
-        
         // First, get the client IP from external service
         const clientIP = await getClientIP()
         
@@ -477,72 +462,24 @@ export default {
         
         if (clientIP) {
           params.append('ip', clientIP)
-          console.log('📤 Sending client IP to backend:', clientIP)
         }
         
         const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?${params.toString()}`)
-        console.log('📍 User country API response:', response.data)
-        
-        // Log debug information if available
-        if (response.data.debug_info) {
-          console.log('🔍 Debug Info:', response.data.debug_info)
-          console.log('🌐 Custom IP:', response.data.debug_info.custom_ip)
-          console.log('🌐 Detected IP:', response.data.debug_info.detected_ip)
-          console.log('🖥️ Remote Addr:', response.data.debug_info.remote_addr)
-          console.log('🔧 Raw Country Code:', response.data.debug_info.raw_country_code)
-        }
         
         if (response.data && response.data.country_code) {
           const detectedCountry = response.data.country_code.toUpperCase()
-          console.log('🎯 Detected country code:', detectedCountry)
           
           const countryExists = countryCodesWithFlags.value.find(c => c.code === detectedCountry)
           if (countryExists) {
-            console.log('✅ Country found in list:', countryExists)
             selectedCountryCode.value = detectedCountry
             userCountryCode.value = detectedCountry
-            console.log('🔄 Updated selected country to:', detectedCountry)
-          } else {
-            console.log('❌ Country not found in list, using default (Egypt)')
           }
-        } else {
-          console.log('❌ No country code in response, using default (Egypt)')
         }
       } catch (error) {
-        console.warn('⚠️ Could not detect user country, using default (Egypt):', error)
+        // Silent fallback to default
       }
     }
     
-    // Test IP detection function
-    const testIpDetection = async () => {
-      try {
-        console.log('🧪 Testing IP detection...')
-        const response = await api.get('/wp-json/jalsah-ai/v1/test-ip')
-        console.log('🧪 IP Test Response:', response.data)
-        
-        if (response.data && response.data.data) {
-          const data = response.data.data
-          console.log('🌐 Detected IP:', data.detected_ip)
-          console.log('📍 IP Source:', data.ip_source)
-          console.log('🏳️ Country Code:', data.country_code)
-          console.log('🔗 API URL:', data.api_url)
-          console.log('📋 All Headers:', data.all_headers)
-          
-          // Show alert with results
-          alert(`IP Detection Test Results:
-          
-Detected IP: ${data.detected_ip}
-IP Source: ${data.ip_source}
-Country Code: ${data.country_code}
-API URL: ${data.api_url}
-
-Check console for full details.`)
-        }
-      } catch (error) {
-        console.error('🧪 IP Test Error:', error)
-        alert('IP Test failed. Check console for details.')
-      }
-    }
     
     const handleRegister = async () => {
       if (!isFormValid.value) {
@@ -648,8 +585,7 @@ Check console for full details.`)
       getSelectedCountryFlag,
       getSelectedCountryDial,
       getClientIP,
-      detectUserCountry,
-      testIpDetection
+      detectUserCountry
     }
   }
 }
