@@ -188,6 +188,13 @@ class SNKS_AI_Integration {
 			'permission_callback' => '__return_true',
 		) );
 		
+		// Test endpoint to check IP detection
+		register_rest_route( 'jalsah-ai/v1', '/test-ip', array(
+			'methods' => 'GET',
+			'callback' => 'snks_test_ip_detection_rest',
+			'permission_callback' => '__return_true',
+		) );
+		
 		// Rochtah available slots endpoint
 		register_rest_route( 'jalsah-ai/v1', '/rochtah-available-slots', array(
 			'methods' => 'GET',
@@ -5895,10 +5902,72 @@ function snks_get_user_country_rest( $request ) {
 			'detected_ip' => $detected_ip,
 			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
 			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set',
-			'raw_country_code' => $country_code
+			'raw_country_code' => $country_code,
+			'all_headers' => array_map( function( $header ) {
+				return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
+			}, $ip_headers )
 		),
 		'data' => array(
 			'country_code' => $final_country_code
+		)
+	) );
+}
+
+/**
+ * Test IP detection without any caching
+ */
+function snks_test_ip_detection_rest( $request ) {
+	// Get all possible IP headers
+	$ip_headers = array(
+		'HTTP_CF_CONNECTING_IP',     // Cloudflare
+		'HTTP_CLIENT_IP',            // Proxy
+		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
+		'HTTP_X_FORWARDED',          // Proxy
+		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
+		'HTTP_FORWARDED_FOR',        // Proxy
+		'HTTP_FORWARDED',            // Proxy
+		'REMOTE_ADDR'                // Standard
+	);
+	
+	$detected_ip = 'Unknown';
+	$ip_source = 'None';
+	
+	foreach ( $ip_headers as $header ) {
+		if ( ! empty( $_SERVER[ $header ] ) ) {
+			$candidate_ip = filter_var( $_SERVER[ $header ], FILTER_VALIDATE_IP );
+			if ( $candidate_ip ) {
+				$detected_ip = $candidate_ip;
+				$ip_source = $header;
+				break;
+			}
+		}
+	}
+	
+	// Test the IP API directly
+	$api_key = 'yBZHxURnxnHhONq';
+	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $detected_ip, esc_attr( $api_key ) );
+	
+	$response = wp_remote_get( $api_url );
+	$country_code = 'Unknown';
+	
+	if ( ! is_wp_error( $response ) ) {
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+		if ( isset( $data['countryCode'] ) ) {
+			$country_code = $data['countryCode'];
+		}
+	}
+	
+	return rest_ensure_response( array(
+		'success' => true,
+		'data' => array(
+			'detected_ip' => $detected_ip,
+			'ip_source' => $ip_source,
+			'country_code' => $country_code,
+			'api_url' => $api_url,
+			'all_headers' => array_map( function( $header ) {
+				return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
+			}, $ip_headers )
 		)
 	) );
 }

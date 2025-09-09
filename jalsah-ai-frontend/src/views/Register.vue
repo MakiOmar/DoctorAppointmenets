@@ -101,14 +101,24 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
-              <button
-                type="button"
-                @click="detectUserCountry"
-                class="text-xs text-primary-600 hover:text-primary-500 underline"
-                title="Refresh country detection"
-              >
-                🔄 Refresh Country
-              </button>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  @click="detectUserCountry"
+                  class="text-xs text-primary-600 hover:text-primary-500 underline"
+                  title="Refresh country detection"
+                >
+                  🔄 Refresh Country
+                </button>
+                <button
+                  type="button"
+                  @click="testIpDetection"
+                  class="text-xs text-blue-600 hover:text-blue-500 underline"
+                  title="Test IP detection"
+                >
+                  🧪 Test IP
+                </button>
+              </div>
             </div>
             <div class="flex" style="direction: ltr;">
               <!-- Custom Country Selector -->
@@ -474,7 +484,38 @@ export default {
         console.warn('⚠️ Could not detect user country, using default (Egypt):', error)
       }
     }
+    
+    // Test IP detection function
+    const testIpDetection = async () => {
+      try {
+        console.log('🧪 Testing IP detection...')
+        const response = await api.get('/wp-json/jalsah-ai/v1/test-ip')
+        console.log('🧪 IP Test Response:', response.data)
+        
+        if (response.data && response.data.data) {
+          const data = response.data.data
+          console.log('🌐 Detected IP:', data.detected_ip)
+          console.log('📍 IP Source:', data.ip_source)
+          console.log('🏳️ Country Code:', data.country_code)
+          console.log('🔗 API URL:', data.api_url)
+          console.log('📋 All Headers:', data.all_headers)
+          
+          // Show alert with results
+          alert(`IP Detection Test Results:
+          
+Detected IP: ${data.detected_ip}
+IP Source: ${data.ip_source}
+Country Code: ${data.country_code}
+API URL: ${data.api_url}
 
+Check console for full details.`)
+        }
+      } catch (error) {
+        console.error('🧪 IP Test Error:', error)
+        alert('IP Test failed. Check console for details.')
+      }
+    }
+    
     const handleRegister = async () => {
       if (!isFormValid.value) {
         return
