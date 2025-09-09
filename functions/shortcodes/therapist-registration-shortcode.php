@@ -977,14 +977,14 @@ add_action( 'wp_ajax_nopriv_register_therapist_shortcode', 'snks_handle_therapis
  */
 function snks_get_multilingual_otp_message( $otp_code, $language = 'ar' ) {
 	$messages = array(
-		'ar' => 'رمز التحقق الخاص بك لتسجيل المعالج في جلسة: %s',
-		'en' => 'Your verification code for Jalsah therapist registration: %s',
-		'fr' => 'Votre code de vérification pour l\'inscription de thérapeute Jalsah: %s',
-		'es' => 'Su código de verificación para el registro de terapeuta Jalsah: %s',
-		'de' => 'Ihr Bestätigungscode für die Jalsah-Therapeutenregistrierung: %s',
-		'it' => 'Il tuo codice di verifica per la registrazione del terapeuta Jalsah: %s',
-		'tr' => 'Jalsah terapist kaydı için doğrulama kodunuz: %s',
-		'ur' => 'جلسہ تھراپسٹ رجسٹریشن کے لیے آپ کا تصدیقی کوڈ: %s'
+		'ar' => 'رمز التحقق: %s',
+		'en' => 'Verification code: %s',
+		'fr' => 'Code de vérification: %s',
+		'es' => 'Código de verificación: %s',
+		'de' => 'Bestätigungscode: %s',
+		'it' => 'Codice di verifica: %s',
+		'tr' => 'Doğrulama kodu: %s',
+		'ur' => 'تصدیقی کوڈ: %s'
 	);
 	
 	// Fallback to Arabic if language not found

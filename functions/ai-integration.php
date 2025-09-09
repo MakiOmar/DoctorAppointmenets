@@ -2156,11 +2156,10 @@ class SNKS_AI_Integration {
 			$this->update_ai_user_fields( $user_id, $data );
 		}
 		
-		// Generate verification code
-		$verification_code = wp_generate_password( 6, false, false );
-		$verification_code = preg_replace( '/[^0-9]/', '', $verification_code ); // Ensure it's only numbers
-		if ( strlen( $verification_code ) < 6 ) {
-			$verification_code = str_pad( $verification_code, 6, '0', STR_PAD_LEFT );
+		// Generate verification code - use random numbers only
+		$verification_code = '';
+		for ( $i = 0; $i < 6; $i++ ) {
+			$verification_code .= rand( 0, 9 );
 		}
 		
 		// Debug OTP generation
