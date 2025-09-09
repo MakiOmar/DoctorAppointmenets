@@ -5847,21 +5847,56 @@ function snks_get_completed_prescriptions_rest( $request ) {
  * Get user country based on IP address via REST API
  */
 function snks_get_user_country_rest( $request ) {
-	// Get country code using existing function
-	$country_code = snsk_ip_api_country( false );
+	// Get all possible IP headers to check for VPN/proxy
+	$ip_headers = array(
+		'HTTP_CF_CONNECTING_IP',     // Cloudflare
+		'HTTP_CLIENT_IP',            // Proxy
+		'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
+		'HTTP_X_FORWARDED',          // Proxy
+		'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
+		'HTTP_FORWARDED_FOR',        // Proxy
+		'HTTP_FORWARDED',            // Proxy
+		'REMOTE_ADDR'                // Standard
+	);
+	
+	$detected_ip = 'Unknown';
+	foreach ( $ip_headers as $header ) {
+		if ( ! empty( $_SERVER[ $header ] ) ) {
+			$detected_ip = $_SERVER[ $header ];
+			break;
+		}
+	}
+	
+	// Log all IP detection details
+	error_log( '🌍 User Country Detection - All IP Headers: ' . print_r( array_map( function( $header ) {
+		return $header . ': ' . ( $_SERVER[ $header ] ?? 'Not Set' );
+	}, $ip_headers ), true ) );
+	
+	error_log( '🌍 User Country Detection - Detected IP: ' . $detected_ip );
+	error_log( '🌍 User Country Detection - REMOTE_ADDR: ' . ( $_SERVER['REMOTE_ADDR'] ?? 'Not Set' ) );
+	error_log( '🌍 User Country Detection - HTTP_X_FORWARDED_FOR: ' . ( $_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'Not Set' ) );
+	error_log( '🌍 User Country Detection - HTTP_CF_CONNECTING_IP: ' . ( $_SERVER['HTTP_CF_CONNECTING_IP'] ?? 'Not Set' ) );
+	
+	// Force fresh detection by not using cookie cache
+	$country_code = snks_get_country_code( false );
 	
 	// Log the detection process
 	error_log( '🌍 User Country Detection - Raw country code: ' . $country_code );
-	error_log( '🌍 User Country Detection - IP Address: ' . ( $_SERVER['REMOTE_ADDR'] ?? 'Unknown' ) );
 	error_log( '🌍 User Country Detection - User Agent: ' . ( $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ) );
 	
 	$final_country_code = $country_code !== 'Unknown' ? $country_code : 'EG';
 	error_log( '🌍 User Country Detection - Final country code: ' . $final_country_code );
 	
-	// Return the country code
+	// Return the country code with additional debug info
 	return rest_ensure_response( array(
 		'success' => true,
 		'country_code' => $final_country_code,
+		'debug_info' => array(
+			'detected_ip' => $detected_ip,
+			'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'Not Set',
+			'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Not Set',
+			'raw_country_code' => $country_code
+		),
 		'data' => array(
 			'country_code' => $final_country_code
 		)

@@ -99,8 +99,18 @@
 
           <!-- WhatsApp with International Prefix -->
           <div>
-            <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
-            <div class="flex">
+            <div class="flex items-center justify-between mb-2">
+              <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
+              <button
+                type="button"
+                @click="detectUserCountry"
+                class="text-xs text-primary-600 hover:text-primary-500 underline"
+                title="Refresh country detection"
+              >
+                🔄 Refresh Country
+              </button>
+            </div>
+            <div class="flex" style="direction: ltr;">
               <!-- Custom Country Selector -->
               <div class="relative flex-shrink-0">
                 <button
@@ -431,9 +441,18 @@ export default {
     const detectUserCountry = async () => {
       try {
         console.log('🌍 Detecting user country from API...')
-        // Try to get user's country from IP
-        const response = await api.get('/wp-json/jalsah-ai/v1/user-country')
+        // Add cache-busting parameter to force fresh detection
+        const timestamp = Date.now()
+        const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?t=${timestamp}`)
         console.log('📍 User country API response:', response.data)
+        
+        // Log debug information if available
+        if (response.data.debug_info) {
+          console.log('🔍 Debug Info:', response.data.debug_info)
+          console.log('🌐 Detected IP:', response.data.debug_info.detected_ip)
+          console.log('🖥️ Remote Addr:', response.data.debug_info.remote_addr)
+          console.log('🔧 Raw Country Code:', response.data.debug_info.raw_country_code)
+        }
         
         if (response.data && response.data.country_code) {
           const detectedCountry = response.data.country_code.toUpperCase()
