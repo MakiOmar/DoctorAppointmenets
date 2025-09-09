@@ -37,7 +37,7 @@
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }}</label>
+              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
               <input
                 id="last_name"
                 v-model="form.last_name"
@@ -50,7 +50,7 @@
               />
             </div>
             <div>
-              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }}</label>
+              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
               <input
                 id="first_name"
                 v-model="form.first_name"
@@ -66,7 +66,7 @@
 
           <!-- Age -->
           <div>
-            <label for="age" class="form-label">{{ $t('auth.register.age') }}</label>
+            <label for="age" class="form-label">{{ $t('auth.register.age') }} <span class="text-red-500">*</span></label>
             <input
               id="age"
               v-model="form.age"
@@ -83,7 +83,7 @@
 
           <!-- Email (conditional based on settings) -->
           <div v-if="shouldShowEmailField">
-            <label for="email" class="form-label">{{ $t('auth.register.email') }}</label>
+            <label for="email" class="form-label">{{ $t('auth.register.email') }} <span class="text-red-500">*</span></label>
             <input
               id="email"
               v-model="form.email"
@@ -100,7 +100,7 @@
           <!-- WhatsApp with International Prefix -->
           <div>
             <div class="mb-2">
-              <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }}</label>
+              <label for="whatsapp" class="form-label">{{ $t('auth.register.whatsapp') }} <span class="text-red-500">*</span></label>
             </div>
             <div class="flex" style="direction: ltr;">
               <!-- Custom Country Selector -->
@@ -176,7 +176,7 @@
 
           <!-- Password -->
           <div>
-            <label for="password" class="form-label">{{ $t('auth.register.password') }}</label>
+            <label for="password" class="form-label">{{ $t('auth.register.password') }} <span class="text-red-500">*</span></label>
             <input
               id="password"
               v-model="form.password"
@@ -193,7 +193,7 @@
 
           <!-- Confirm Password -->
           <div>
-            <label for="confirm_password" class="form-label">{{ $t('auth.register.confirmPassword') }}</label>
+            <label for="confirm_password" class="form-label">{{ $t('auth.register.confirmPassword') }} <span class="text-red-500">*</span></label>
             <input
               id="confirm_password"
               v-model="form.confirm_password"
@@ -221,6 +221,7 @@
               <a href="#" class="text-primary-600 hover:text-primary-500">{{ $t('auth.register.termsOfService') }}</a>
               {{ $t('auth.register.and') }}
               <a href="#" class="text-primary-600 hover:text-primary-500">{{ $t('auth.register.privacyPolicy') }}</a>
+              <span class="text-red-500">*</span>
             </label>
           </div>
 
