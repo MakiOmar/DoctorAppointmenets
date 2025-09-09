@@ -308,6 +308,7 @@ import { useCartStore } from '@/stores/cart'
 import { useSettingsStore } from '@/stores/settings'
 import { useToast } from 'vue-toastification'
 import { useRouter } from 'vue-router'
+import api from '@/services/api'
 import StarRating from './StarRating.vue'
 import Lightbox from './Lightbox.vue'
 
