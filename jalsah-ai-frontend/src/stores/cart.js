@@ -53,7 +53,7 @@ export const useCartStore = defineStore('cart', () => {
         // Reload cart to get updated data
         await loadCart(appointmentData.user_id)
         return { success: true, message: response.data.message }
-      } else if (response.data.error === 'different_therapist') {
+      } else if (response.data.requires_confirmation) {
         // Return special response for different therapist confirmation
         return { 
           success: false, 

@@ -4126,9 +4126,9 @@ Best regards,
 		
 		if ($different_therapist) {
 			return new WP_REST_Response([
-				'error' => 'different_therapist',
-				'message' => 'You have appointments from another therapist in your cart. Adding this appointment will clear your cart to book with a different therapist.',
-				'requires_confirmation' => true
+				'success' => false,
+				'requires_confirmation' => true,
+				'message' => 'You have appointments from another therapist in your cart. Adding this appointment will clear your cart to book with a different therapist.'
 			], 200);
 		}
 		
