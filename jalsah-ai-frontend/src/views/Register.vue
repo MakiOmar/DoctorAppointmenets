@@ -396,11 +396,11 @@ export default {
       }
     }
 
-    // Fetch countries from JSON API (same as phone_input_cb function)
+    // Fetch countries from local JSON file (to avoid CORS issues)
     const loadCountries = async () => {
       try {
         isLoadingCountries.value = true
-        const response = await fetch('https://jalsah.app/wp-content/uploads/2024/09/countires-codes-and-flags.json')
+        const response = await fetch('/jalsah-ai-frontend/countires-codes-and-flags.json')
         
         if (!response.ok) {
           throw new Error('Failed to fetch countries')
