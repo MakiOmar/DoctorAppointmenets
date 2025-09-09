@@ -499,7 +499,10 @@ export default {
       try {
         // First, try to use the earliest_slot_data from the therapist object
         if (props.therapist.earliest_slot_data) {
-          earliestSlot.value = props.therapist.earliest_slot_data
+          earliestSlot.value = {
+            ...props.therapist.earliest_slot_data,
+            id: parseInt(props.therapist.earliest_slot_data.id) // Ensure ID is a number
+          }
           // Check if this slot is in cart
           if (earliestSlot.value.id) {
             await checkSlotCartStatus(earliestSlot.value)
@@ -541,16 +544,31 @@ export default {
       try {
         // Use the actual available dates from the therapist data
         if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
-          availableDates.value = props.therapist.available_dates.map(dateInfo => {
+          // Deduplicate dates by creating a Map with date as key
+          const dateMap = new Map()
+          
+          props.therapist.available_dates.forEach(dateInfo => {
             const dateObj = new Date(dateInfo.date)
-            return {
-              value: dateInfo.date,
-                      day: formatShortDay(dateObj),
-        date: formatShortDate(dateObj),
-              earliest_time: dateInfo.earliest_time,
-              slot_count: dateInfo.slot_count
+            const dateKey = dateInfo.date
+            
+            // If date doesn't exist or this slot has earlier time, update it
+            if (!dateMap.has(dateKey) || 
+                (dateInfo.earliest_time && dateMap.get(dateKey).earliest_time && 
+                 dateInfo.earliest_time < dateMap.get(dateKey).earliest_time)) {
+              dateMap.set(dateKey, {
+                value: dateInfo.date,
+                day: formatShortDay(dateObj),
+                date: formatShortDate(dateObj),
+                earliest_time: dateInfo.earliest_time,
+                slot_count: dateInfo.slot_count
+              })
             }
           })
+          
+          // Convert Map back to array and sort by date
+          availableDates.value = Array.from(dateMap.values()).sort((a, b) => 
+            new Date(a.value) - new Date(b.value)
+          )
         } else {
           // Fallback to generating dates from earliest_slot_data
           if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
@@ -593,7 +611,7 @@ export default {
           if (selectedDateInfo) {
             // Create a time slot using the real slot data from the database
             const timeSlot = {
-              id: selectedDateInfo.slot_id, // Use the real database slot ID
+              id: parseInt(selectedDateInfo.slot_id), // Ensure ID is a number
               value: selectedDateInfo.time,
               time: selectedDateInfo.time,
               end_time: selectedDateInfo.end_time,
@@ -617,6 +635,7 @@ export default {
           if (data.success && Array.isArray(data.data)) {
             const slots = data.data.map(slot => ({
               ...slot,
+              id: parseInt(slot.id), // Ensure ID is a number
               inCart: false
             }))
             
@@ -649,7 +668,12 @@ export default {
         
         if (response.data.success && Array.isArray(response.data.data)) {
           const cartItems = response.data.data
-          slot.inCart = cartItems.some(item => item.ID === slot.id)
+          // Debug logging
+          console.log('🔍 Checking cart status for slot:', slot.id)
+          console.log('🔍 Cart items:', cartItems.map(item => ({ ID: item.ID, date_time: item.date_time })))
+          
+          slot.inCart = cartItems.some(item => parseInt(item.ID) === parseInt(slot.id))
+          console.log('🔍 Slot in cart:', slot.inCart)
         } else {
           slot.inCart = false
         }
@@ -674,11 +698,16 @@ export default {
         
         if (response.data.success && Array.isArray(response.data.data)) {
           const cartItems = response.data.data
-          const cartSlotIds = new Set(cartItems.map(item => item.ID))
+          const cartSlotIds = new Set(cartItems.map(item => parseInt(item.ID)))
+          
+          // Debug logging
+          console.log('🔍 Checking cart status for slots:', slots.map(s => s.id))
+          console.log('🔍 Cart slot IDs:', Array.from(cartSlotIds))
           
           // Update each slot's cart status
           slots.forEach(slot => {
-            slot.inCart = cartSlotIds.has(slot.id)
+            slot.inCart = cartSlotIds.has(parseInt(slot.id))
+            console.log(`🔍 Slot ${slot.id} in cart:`, slot.inCart)
           })
         } else {
           slots.forEach(slot => slot.inCart = false)
