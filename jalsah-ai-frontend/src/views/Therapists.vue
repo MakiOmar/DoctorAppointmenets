@@ -52,8 +52,11 @@
           :position="therapist.originalPosition"
           :show-order-badge="false"
           :settings-store="settingsStore"
+          :open-therapist-id="openTherapistId"
           @click="viewTherapist"
           @book="bookAppointment"
+          @show-details="handleShowDetails"
+          @hide-details="handleHideDetails"
         />
         
         <!-- Show More Button -->
@@ -106,6 +109,7 @@ export default {
     const therapists = ref([])
     const diagnoses = ref([])
     const showAllTherapists = ref(false)
+    const openTherapistId = ref(null)
     
     // Sorting controls (similar to diagnosis results page)
     const orderSort = ref('') // Order sorting: '', 'asc', 'desc'
@@ -299,6 +303,14 @@ export default {
       router.push(`/booking/${therapistId}`)
     }
 
+    const handleShowDetails = (therapistId) => {
+      openTherapistId.value = therapistId
+    }
+
+    const handleHideDetails = () => {
+      openTherapistId.value = null
+    }
+
 
     // Watch for search query changes with debouncing
     watch(searchQuery, (newQuery) => {
@@ -331,11 +343,14 @@ export default {
       displayedTherapists,
       hasMoreTherapists,
       showAllTherapists,
+      openTherapistId,
       settingsStore,
       updateSorting,
       showMoreTherapists,
       viewTherapist,
-      bookAppointment
+      bookAppointment,
+      handleShowDetails,
+      handleHideDetails
     }
   }
 }

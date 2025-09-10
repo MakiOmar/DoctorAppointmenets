@@ -439,7 +439,7 @@ export default {
         // If details are hidden, show them
         console.log('🔍 Showing details')
         showDetails.value = true
-        emit('show-details')
+        emit('show-details', props.therapist.id)
         if (!details.value) {
           loadTherapistDetails()
         }
