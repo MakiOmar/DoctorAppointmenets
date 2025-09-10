@@ -413,6 +413,14 @@ export default {
     availableOn: 'Available {date} at {time}',
     contactForAvailability: 'Contact for availability',
     specializations: 'Specializations',
+    sortBy: 'Sort by',
+    sorting: {
+      best: 'The Best',
+      priceLow: 'Lowest Price',
+      priceHigh: 'Highest Price',
+      nearest: 'Nearest',
+      farthest: 'Farthest'
+    },
     filters: {
       specialization: 'Specialization',
       allSpecializations: 'All Specializations',

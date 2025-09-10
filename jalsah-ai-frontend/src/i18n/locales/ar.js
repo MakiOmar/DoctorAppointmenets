@@ -421,6 +421,14 @@ export default {
     availableOn: 'متاح {date} في {time}',
     contactForAvailability: 'تواصل للاستفسار عن التوفر',
     specializations: 'التخصصات',
+    sortBy: 'ترتيب حسب',
+    sorting: {
+      best: 'الأفضل',
+      priceLow: 'السعر الأقل',
+      priceHigh: 'السعر الأعلى',
+      nearest: 'الأقرب',
+      farthest: 'الأبعد'
+    },
     filters: {
       specialization: 'التخصص',
       allSpecializations: 'جميع التخصصات',
