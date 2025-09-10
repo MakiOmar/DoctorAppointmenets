@@ -170,8 +170,20 @@ export default {
       // Apply active sorting
       switch (activeSort.value) {
         case 'best':
-          // Sort by frontend order (best first)
-          sorted.sort((a, b) => a.frontendOrder - b.frontendOrder)
+          // Sort by rating (best first) - higher rating first, then by total_ratings
+          sorted.sort((a, b) => {
+            const ratingA = a.rating || 0
+            const ratingB = b.rating || 0
+            const totalA = a.total_ratings || 0
+            const totalB = b.total_ratings || 0
+            
+            // First sort by rating (descending)
+            if (ratingA !== ratingB) {
+              return ratingB - ratingA
+            }
+            // If ratings are equal, sort by total_ratings (descending)
+            return totalB - totalA
+          })
           break
           
         case 'price-low':
