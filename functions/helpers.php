@@ -591,7 +591,7 @@ function snks_replace_time_units_to_arabic( $text ) {
 	$english_to_arabic = array(
 		'seconds' => 'ثواني',
 		'second'  => 'ثانية',
-		'minutes' => 'دقائق',
+		'minutes' => 'دقيقة',
 		'minute'  => 'دقيقة',
 		'hours'   => 'ساعات',
 		'hour'    => 'ساعة',

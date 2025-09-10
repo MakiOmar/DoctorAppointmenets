@@ -16,7 +16,7 @@
       <div class="card mb-8">
         <div class="flex flex-col lg:flex-row lg:items-end gap-6">
           <!-- Search Filter -->
-          <div class="flex-1">
+          <div class="w-full lg:w-1/4">
             <label class="form-label">{{ $t('therapists.filters.search') }}</label>
             <div class="relative">
               <input
@@ -35,7 +35,7 @@
           </div>
           
           <!-- Sorting Buttons -->
-          <div class="flex-shrink-0">
+          <div class="w-full lg:w-1/4">
             <label class="form-label mb-4">{{ $t('therapists.sortBy') }}</label>
             <div class="flex flex-wrap gap-3">
               <!-- Best/Order Sorting -->
