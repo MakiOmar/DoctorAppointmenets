@@ -427,6 +427,8 @@ export default {
       priceLow: 'السعر الأقل',
       nearest: 'الأقرب'
     },
+    loadingMore: 'جاري تحميل المزيد...',
+    allLoaded: 'تم تحميل جميع المعالجين',
     filters: {
       specialization: 'التخصص',
       allSpecializations: 'جميع التخصصات',

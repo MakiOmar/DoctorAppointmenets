@@ -99,6 +99,20 @@
           @show-details="handleShowDetails"
           @hide-details="handleHideDetails"
         />
+        
+        <!-- Loading More Indicator -->
+        <div v-if="loadingMore" class="text-center py-8">
+          <svg class="animate-spin h-8 w-8 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-gray-600">{{ $t('therapists.loadingMore') }}</p>
+        </div>
+        
+        <!-- End of Results -->
+        <div v-else-if="!hasMoreTherapists && displayedTherapists.length > 0" class="text-center py-8">
+          <p class="text-gray-500">{{ $t('therapists.allLoaded') }}</p>
+        </div>
       </div>
 
       <!-- Empty State -->
@@ -140,6 +154,12 @@ export default {
     const therapists = ref([])
     const diagnoses = ref([])
     const openTherapistId = ref(null)
+    
+    // Pagination controls
+    const initialLoadCount = ref(20) // Initial number of therapists to show
+    const loadMoreCount = ref(10) // Number of therapists to load on scroll
+    const displayedCount = ref(20) // Currently displayed count
+    const loadingMore = ref(false) // Loading state for infinite scroll
     
     // Sorting controls - single active sort
     const activeSort = ref('') // Active sorting: '', 'best', 'price-low', 'nearest'
@@ -212,9 +232,14 @@ export default {
       return sorted
     })
 
-    // Computed property for displayed therapists (no pagination)
+    // Computed property for displayed therapists (with pagination)
     const displayedTherapists = computed(() => {
-      return sortedTherapists.value
+      return sortedTherapists.value.slice(0, displayedCount.value)
+    })
+
+    // Computed property to check if there are more therapists to load
+    const hasMoreTherapists = computed(() => {
+      return displayedCount.value < sortedTherapists.value.length
     })
 
 
@@ -310,6 +335,9 @@ export default {
         
         therapists.value = response.data.data || []
         
+        // Reset pagination when loading new data
+        displayedCount.value = initialLoadCount.value
+        
       } catch (error) {
         toast.error('Failed to load therapists')
         console.error('Error loading therapists:', error)
@@ -343,6 +371,33 @@ export default {
       openTherapistId.value = null
     }
 
+    // Load more therapists function
+    const loadMoreTherapists = () => {
+      if (loadingMore.value || !hasMoreTherapists.value) return
+      
+      loadingMore.value = true
+      
+      // Simulate loading delay for better UX
+      setTimeout(() => {
+        displayedCount.value += loadMoreCount.value
+        loadingMore.value = false
+      }, 500)
+    }
+
+    // Infinite scroll handler
+    const handleScroll = () => {
+      if (loadingMore.value || !hasMoreTherapists.value) return
+      
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const windowHeight = window.innerHeight
+      const documentHeight = document.documentElement.scrollHeight
+      
+      // Load more when user is 80% down the page
+      if (scrollTop + windowHeight >= documentHeight * 0.8) {
+        loadMoreTherapists()
+      }
+    }
+
 
     // Watch for search query changes with debouncing
     watch(searchQuery, (newQuery) => {
@@ -360,6 +415,14 @@ export default {
     onMounted(() => {
       loadTherapists()
       loadDiagnoses()
+      
+      // Add scroll event listener for infinite scroll
+      window.addEventListener('scroll', handleScroll)
+    })
+
+    onUnmounted(() => {
+      // Remove scroll event listener
+      window.removeEventListener('scroll', handleScroll)
     })
 
     return {
@@ -371,13 +434,18 @@ export default {
       activeSort,
       sortedTherapists,
       displayedTherapists,
+      hasMoreTherapists,
+      loadingMore,
+      initialLoadCount,
+      loadMoreCount,
       openTherapistId,
       settingsStore,
       setSorting,
       viewTherapist,
       bookAppointment,
       handleShowDetails,
-      handleHideDetails
+      handleHideDetails,
+      loadMoreTherapists
     }
   }
 }

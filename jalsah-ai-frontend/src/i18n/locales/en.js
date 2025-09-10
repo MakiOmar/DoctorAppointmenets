@@ -419,6 +419,8 @@ export default {
       priceLow: 'Lowest Price',
       nearest: 'Nearest'
     },
+    loadingMore: 'Loading more...',
+    allLoaded: 'All therapists loaded',
     filters: {
       specialization: 'Specialization',
       allSpecializations: 'All Specializations',
