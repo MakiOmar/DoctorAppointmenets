@@ -153,27 +153,35 @@ export default {
     const therapistsWithOriginalPositions = computed(() => {
       if (!therapists.value.length) return []
       
-      // Return all therapists without position data since we removed diagnosis filtering
-      return therapists.value.map(therapist => ({
+      console.log('🔍 therapistsWithOriginalPositions - sample therapist:', therapists.value[0])
+      
+      // Return all therapists with proper position data
+      return therapists.value.map((therapist, index) => ({
         ...therapist,
-        originalPosition: 0,
-        displayOrder: 0,
-        frontendOrder: 0
+        originalPosition: index + 1,
+        displayOrder: therapist.display_order || index + 1,
+        frontendOrder: therapist.frontend_order || index + 1
       }))
     })
 
     // Computed property to sort therapists (search is now handled by API)
     const sortedTherapists = computed(() => {
+      console.log('🔍 sortedTherapists computed called')
+      console.log('🔍 activeSort.value:', activeSort.value)
+      console.log('🔍 therapists count:', therapistsWithOriginalPositions.value.length)
+      
       let sorted = [...therapistsWithOriginalPositions.value]
 
       // Apply active sorting
       switch (activeSort.value) {
         case 'best':
+          console.log('🔍 Applying best sorting')
           // Sort by frontend order (best first)
           sorted.sort((a, b) => a.frontendOrder - b.frontendOrder)
           break
           
         case 'price-low':
+          console.log('🔍 Applying price-low sorting')
           // Sort by price (lowest to highest)
           sorted.sort((a, b) => {
             const priceA = a.price?.others || 0
@@ -183,6 +191,7 @@ export default {
           break
           
         case 'nearest':
+          console.log('🔍 Applying nearest sorting')
           // Sort by earliest appointment (nearest to farthest)
           sorted.sort((a, b) => {
             const timeA = getEarliestSlotTime(a)
@@ -192,10 +201,12 @@ export default {
           break
           
         default:
+          console.log('🔍 No sorting applied (default)')
           // Default sorting (no specific sorting applied)
           break
       }
 
+      console.log('🔍 Returning sorted therapists:', sorted.length)
       return sorted
     })
 
@@ -252,14 +263,20 @@ export default {
 
     // Sorting button handlers
     const setSorting = (sortType) => {
+      console.log('🔍 setSorting called with:', sortType)
+      console.log('🔍 Current activeSort:', activeSort.value)
+      
       // If clicking the same sort, deactivate it (reset to default)
       if (activeSort.value === sortType) {
+        console.log('🔍 Deactivating sort')
         activeSort.value = ''
         return
       }
       
       // Apply new sorting
+      console.log('🔍 Applying new sort:', sortType)
       activeSort.value = sortType
+      console.log('🔍 New activeSort:', activeSort.value)
     }
 
 
