@@ -153,18 +153,11 @@ export default {
     const therapistsWithOriginalPositions = computed(() => {
       if (!therapists.value.length) return []
       
-      console.log('🔍 therapistsWithOriginalPositions - sample therapist:', therapists.value[0])
-      console.log('🔍 All therapist names:')
-      therapists.value.forEach(t => console.log(`  ${t.name}`))
-      console.log('🔍 All therapist prices:')
-      therapists.value.forEach(t => console.log(`  ${t.name}: price=${JSON.stringify(t.price)}`))
-      console.log('🔍 All therapist earliest_slots:')
-      therapists.value.forEach(t => console.log(`  ${t.name}: earliest_slot=${t.earliest_slot}`))
       
       // Return all therapists with proper position data
       return therapists.value.map((therapist, index) => ({
         ...therapist,
-        originalPosition: index + 1,
+        originalPosition: therapist.frontend_order || index + 1,
         displayOrder: therapist.display_order || index + 1,
         frontendOrder: therapist.frontend_order || index + 1
       }))
@@ -172,59 +165,38 @@ export default {
 
     // Computed property to sort therapists (search is now handled by API)
     const sortedTherapists = computed(() => {
-      console.log('🔍 sortedTherapists computed called')
-      console.log('🔍 activeSort.value:', activeSort.value)
-      console.log('🔍 therapists count:', therapistsWithOriginalPositions.value.length)
-      
       let sorted = [...therapistsWithOriginalPositions.value]
 
       // Apply active sorting
       switch (activeSort.value) {
         case 'best':
-          console.log('🔍 Applying best sorting')
-          console.log('🔍 Before sorting - frontendOrder values:')
-          sorted.forEach(t => console.log(`  ${t.name}: frontendOrder=${t.frontendOrder}`))
           // Sort by frontend order (best first)
           sorted.sort((a, b) => a.frontendOrder - b.frontendOrder)
-          console.log('🔍 After sorting - frontendOrder values:')
-          sorted.forEach(t => console.log(`  ${t.name}: frontendOrder=${t.frontendOrder}`))
           break
           
         case 'price-low':
-          console.log('🔍 Applying price-low sorting')
-          console.log('🔍 Before sorting - price values:')
-          sorted.forEach(t => console.log(`  ${t.name}: price=${t.price?.others || 0}`))
           // Sort by price (lowest to highest)
           sorted.sort((a, b) => {
             const priceA = a.price?.others || 0
             const priceB = b.price?.others || 0
             return priceA - priceB
           })
-          console.log('🔍 After sorting - price values:')
-          sorted.forEach(t => console.log(`  ${t.name}: price=${t.price?.others || 0}`))
           break
           
         case 'nearest':
-          console.log('🔍 Applying nearest sorting')
-          console.log('🔍 Before sorting - earliest slot times:')
-          sorted.forEach(t => console.log(`  ${t.name}: earliest_slot=${t.earliest_slot}, time=${getEarliestSlotTime(t)}`))
           // Sort by earliest appointment (nearest to farthest)
           sorted.sort((a, b) => {
             const timeA = getEarliestSlotTime(a)
             const timeB = getEarliestSlotTime(b)
             return timeA - timeB
           })
-          console.log('🔍 After sorting - earliest slot times:')
-          sorted.forEach(t => console.log(`  ${t.name}: earliest_slot=${t.earliest_slot}, time=${getEarliestSlotTime(t)}`))
           break
           
         default:
-          console.log('🔍 No sorting applied (default)')
           // Default sorting (no specific sorting applied)
           break
       }
 
-      console.log('🔍 Returning sorted therapists:', sorted.length)
       return sorted
     })
 
@@ -281,20 +253,14 @@ export default {
 
     // Sorting button handlers
     const setSorting = (sortType) => {
-      console.log('🔍 setSorting called with:', sortType)
-      console.log('🔍 Current activeSort:', activeSort.value)
-      
       // If clicking the same sort, deactivate it (reset to default)
       if (activeSort.value === sortType) {
-        console.log('🔍 Deactivating sort')
         activeSort.value = ''
         return
       }
       
       // Apply new sorting
-      console.log('🔍 Applying new sort:', sortType)
       activeSort.value = sortType
-      console.log('🔍 New activeSort:', activeSort.value)
     }
 
 
