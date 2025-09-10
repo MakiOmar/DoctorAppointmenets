@@ -14,7 +14,7 @@
 
       <!-- Search Filter -->
       <div class="card mb-8">
-        <div>
+          <div>
           <label class="form-label">{{ $t('therapists.filters.search') }}</label>
           <div class="relative">
             <input
@@ -31,11 +31,11 @@
             </div>
           </div>
         </div>
-      </div>
-
+          </div>
+          
       <!-- Sorting Buttons -->
       <div class="card mb-8">
-        <div>
+          <div>
           <label class="form-label mb-4">{{ $t('therapists.sortBy') }}</label>
           <div class="flex flex-wrap gap-3">
             <!-- Best/Order Sorting -->
@@ -49,7 +49,7 @@
               {{ $t('therapists.sorting.best') }}
             </button>
             
-            <!-- Price Low -->
+            <!-- Lowest Price -->
             <button
               @click="setSorting('price-low')"
               class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
@@ -60,18 +60,7 @@
               {{ $t('therapists.sorting.priceLow') }}
             </button>
             
-            <!-- Price High -->
-            <button
-              @click="setSorting('price-high')"
-              class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-              :class="activeSort === 'price-high' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-            >
-              {{ $t('therapists.sorting.priceHigh') }}
-            </button>
-            
-            <!-- Nearest Appointment -->
+            <!-- Nearest Slot -->
             <button
               @click="setSorting('nearest')"
               class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
@@ -80,17 +69,6 @@
                 : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
             >
               {{ $t('therapists.sorting.nearest') }}
-            </button>
-            
-            <!-- Farthest Appointment -->
-            <button
-              @click="setSorting('farthest')"
-              class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-              :class="activeSort === 'farthest' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-            >
-              {{ $t('therapists.sorting.farthest') }}
             </button>
           </div>
         </div>
@@ -121,16 +99,6 @@
           @show-details="handleShowDetails"
           @hide-details="handleHideDetails"
         />
-        
-        <!-- Show More Button -->
-        <div v-if="hasMoreTherapists && !showAllTherapists" class="text-center pt-6">
-          <button
-            @click="showMoreTherapists"
-            class="btn-secondary"
-          >
-            {{ $t('therapists.showMore') }} ({{ sortedTherapists.length - displayedTherapists.length }} {{ $t('therapists.moreTherapists') }})
-          </button>
-        </div>
       </div>
 
       <!-- Empty State -->
@@ -171,11 +139,10 @@ export default {
     const loading = ref(true)
     const therapists = ref([])
     const diagnoses = ref([])
-    const showAllTherapists = ref(false)
     const openTherapistId = ref(null)
     
     // Sorting controls - single active sort
-    const activeSort = ref('') // Active sorting: '', 'best', 'price-low', 'price-high', 'nearest', 'farthest'
+    const activeSort = ref('') // Active sorting: '', 'best', 'price-low', 'nearest'
 
     // Search query for therapist names
     const searchQuery = ref('')
@@ -207,7 +174,7 @@ export default {
           break
           
         case 'price-low':
-          // Sort by price (lowest first)
+          // Sort by price (lowest to highest)
           sorted.sort((a, b) => {
             const priceA = a.price?.others || 0
             const priceB = b.price?.others || 0
@@ -215,17 +182,8 @@ export default {
           })
           break
           
-        case 'price-high':
-          // Sort by price (highest first)
-          sorted.sort((a, b) => {
-            const priceA = a.price?.others || 0
-            const priceB = b.price?.others || 0
-            return priceB - priceA
-          })
-          break
-          
         case 'nearest':
-          // Sort by earliest appointment (nearest first)
+          // Sort by earliest appointment (nearest to farthest)
           sorted.sort((a, b) => {
             const timeA = getEarliestSlotTime(a)
             const timeB = getEarliestSlotTime(b)
@@ -233,37 +191,17 @@ export default {
           })
           break
           
-        case 'farthest':
-          // Sort by earliest appointment (farthest first)
-          sorted.sort((a, b) => {
-            const timeA = getEarliestSlotTime(a)
-            const timeB = getEarliestSlotTime(b)
-            return timeB - timeA
-          })
-          break
-          
         default:
-          // No sorting applied
+          // Default sorting (no specific sorting applied)
           break
       }
 
       return sorted
     })
 
-    // Computed property for displayed therapists (with show more functionality)
+    // Computed property for displayed therapists (no pagination)
     const displayedTherapists = computed(() => {
-      if (showAllTherapists.value) {
-        return sortedTherapists.value
-      }
-      
-      // Show all therapists since we removed diagnosis filtering
       return sortedTherapists.value
-    })
-
-    // Computed property to check if there are more therapists to show
-    const hasMoreTherapists = computed(() => {
-      // No more therapists to show since we removed diagnosis filtering
-      return false
     })
 
 
@@ -314,20 +252,18 @@ export default {
 
     // Sorting button handlers
     const setSorting = (sortType) => {
-      // If clicking the same sort, deactivate it
+      // Always reset to default sorting first
+      activeSort.value = ''
+      
+      // If clicking the same sort, keep it deactivated (default)
       if (activeSort.value === sortType) {
-        activeSort.value = ''
-      } else {
-        // Set new active sort (automatically deactivates others)
-        activeSort.value = sortType
+        return
       }
-      showAllTherapists.value = false
+      
+      // Apply new sorting
+      activeSort.value = sortType
     }
 
-    // Show more therapists
-    const showMoreTherapists = () => {
-      showAllTherapists.value = true
-    }
 
     const loadTherapists = async () => {
       loading.value = true
@@ -344,10 +280,10 @@ export default {
         } else {
           // Load all therapists
           response = await api.get('/api/ai/therapists', {
-            params: {
-              _t: Date.now() // Cache busting
-            }
-          })
+          params: {
+            _t: Date.now() // Cache busting
+          }
+        })
         }
         
         therapists.value = response.data.data || []
@@ -413,12 +349,9 @@ export default {
       activeSort,
       sortedTherapists,
       displayedTherapists,
-      hasMoreTherapists,
-      showAllTherapists,
       openTherapistId,
       settingsStore,
       setSorting,
-      showMoreTherapists,
       viewTherapist,
       bookAppointment,
       handleShowDetails,

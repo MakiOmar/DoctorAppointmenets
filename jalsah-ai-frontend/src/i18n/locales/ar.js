@@ -425,9 +425,7 @@ export default {
     sorting: {
       best: 'الأفضل',
       priceLow: 'السعر الأقل',
-      priceHigh: 'السعر الأعلى',
-      nearest: 'الأقرب',
-      farthest: 'الأبعد'
+      nearest: 'الأقرب'
     },
     filters: {
       specialization: 'التخصص',

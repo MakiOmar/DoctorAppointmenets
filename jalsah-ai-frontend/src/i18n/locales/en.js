@@ -417,9 +417,7 @@ export default {
     sorting: {
       best: 'The Best',
       priceLow: 'Lowest Price',
-      priceHigh: 'Highest Price',
-      nearest: 'Nearest',
-      farthest: 'Farthest'
+      nearest: 'Nearest'
     },
     filters: {
       specialization: 'Specialization',
