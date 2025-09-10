@@ -46,6 +46,12 @@ class SNKS_AI_Integration {
 		add_action( 'send_headers', array( $this, 'handle_very_early_cors' ) );
 		add_action( 'parse_request', array( $this, 'handle_early_api_requests' ) );
 		
+		// Handle CORS for admin-ajax requests
+		add_action( 'wp_ajax_nopriv_get_ai_nonce', array( $this, 'handle_admin_ajax_cors' ), 1 );
+		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'handle_admin_ajax_cors' ), 1 );
+		add_action( 'wp_ajax_nopriv_register_therapist_shortcode', array( $this, 'handle_admin_ajax_cors' ), 1 );
+		add_action( 'wp_ajax_nopriv_chat_diagnosis_ajax', array( $this, 'handle_admin_ajax_cors' ), 1 );
+		
 		
 		// Add nonce generation endpoint
 		add_action( 'wp_ajax_get_ai_nonce', array( $this, 'get_ai_nonce' ) );
@@ -246,8 +252,9 @@ class SNKS_AI_Integration {
 	 * Handle CORS headers
 	 */
 	public function handle_cors() {
-		// Only handle CORS for API requests
-		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+		// Handle CORS for API requests and admin-ajax requests
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false || 
+			 strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
 			header( 'Access-Control-Allow-Origin: *' );
 			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
@@ -268,8 +275,9 @@ class SNKS_AI_Integration {
 	 * Handle very early CORS
 	 */
 	public function handle_very_early_cors() {
-		// Check if this is an AI API request
-		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+		// Check if this is an AI API request or admin-ajax request
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false || 
+			 strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
 			// Set CORS headers immediately
 			header( 'Access-Control-Allow-Origin: *' );
 			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
@@ -288,8 +296,9 @@ class SNKS_AI_Integration {
 	 * Handle early API requests
 	 */
 	public function handle_early_api_requests( $wp ) {
-		// Check if this is an AI API request
-		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+		// Check if this is an AI API request or admin-ajax request
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false || 
+			 strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
 			// Set CORS headers immediately
 			header( 'Access-Control-Allow-Origin: *' );
 			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
@@ -304,6 +313,23 @@ class SNKS_AI_Integration {
 			
 			// Don't prevent WordPress from processing - let it continue
 			// but ensure our handler gets called
+		}
+	}
+
+	/**
+	 * Handle CORS for admin-ajax requests
+	 */
+	public function handle_admin_ajax_cors() {
+		// Set CORS headers for admin-ajax requests
+		header( 'Access-Control-Allow-Origin: *' );
+		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+		header( 'Access-Control-Allow-Credentials: true' );
+		
+		// Handle preflight OPTIONS request
+		if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
+			http_response_code( 200 );
+			exit;
 		}
 	}
 
