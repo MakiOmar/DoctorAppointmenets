@@ -14,7 +14,7 @@
 
       <!-- Search and Sorting -->
       <div class="card mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-end gap-6">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-4">
           <!-- Search Filter -->
           <div class="w-full lg:w-1/4">
             <label class="form-label">{{ $t('therapists.filters.search') }}</label>
@@ -34,43 +34,46 @@
             </div>
           </div>
           
-          <!-- Sorting Buttons -->
+          <!-- Best/Order Sorting Button -->
           <div class="w-full lg:w-1/4">
-            <label class="form-label mb-4">{{ $t('therapists.sortBy') }}</label>
-            <div class="flex flex-wrap gap-3">
-              <!-- Best/Order Sorting -->
-              <button
-                @click="setSorting('best')"
-                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                :class="activeSort === 'best' 
-                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-              >
-                {{ $t('therapists.sorting.best') }}
-              </button>
-              
-              <!-- Lowest Price -->
-              <button
-                @click="setSorting('price-low')"
-                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                :class="activeSort === 'price-low' 
-                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-              >
-                {{ $t('therapists.sorting.priceLow') }}
-              </button>
-              
-              <!-- Nearest Slot -->
-              <button
-                @click="setSorting('nearest')"
-                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                :class="activeSort === 'nearest' 
-                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-              >
-                {{ $t('therapists.sorting.nearest') }}
-              </button>
-            </div>
+            <label class="form-label mb-4">{{ $t('therapists.sorting.best') }}</label>
+            <button
+              @click="setSorting('best')"
+              class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+              :class="activeSort === 'best' 
+                ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+            >
+              {{ $t('therapists.sorting.best') }}
+            </button>
+          </div>
+          
+          <!-- Lowest Price Button -->
+          <div class="w-full lg:w-1/4">
+            <label class="form-label mb-4">{{ $t('therapists.sorting.priceLow') }}</label>
+            <button
+              @click="setSorting('price-low')"
+              class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+              :class="activeSort === 'price-low' 
+                ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+            >
+              {{ $t('therapists.sorting.priceLow') }}
+            </button>
+          </div>
+          
+          <!-- Nearest Slot Button -->
+          <div class="w-full lg:w-1/4">
+            <label class="form-label mb-4">{{ $t('therapists.sorting.nearest') }}</label>
+            <button
+              @click="setSorting('nearest')"
+              class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+              :class="activeSort === 'nearest' 
+                ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+            >
+              {{ $t('therapists.sorting.nearest') }}
+            </button>
           </div>
         </div>
       </div>

@@ -40,7 +40,7 @@ export default {
     contact: 'تواصل',
     pleaseLogin: 'يرجى تسجيل الدخول أولاً',
     sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى',
-    minutes: 'دقائق'
+    minutes: 'دقيقة'
   },
 
   // Navigation
@@ -556,7 +556,7 @@ export default {
   emptyCart: 'السلة فارغة',
   emptyCartDescription: 'لم تقم بإضافة أي مواعيد إلى سلتك بعد',
   subtotal: 'المجموع الفرعي',
-  minutes: 'دقائق',
+  minutes: 'دقيقة',
   appointments: 'المواعيد',
   orderSummary: 'ملخص الطلب',
   total: 'المجموع',
@@ -619,7 +619,7 @@ export default {
     statusCancelled: 'ملغي',
     statusNoShow: 'لم يحضر',
     // Time units
-    minutes: 'دقائق',
+    minutes: 'دقيقة',
     // Additional fields
     therapist: 'المعالج',
     session: 'الجلسة'
@@ -901,7 +901,7 @@ export default {
     therapist: 'المعالج',
     time: 'وقت الجلسة',
     duration: 'المدة',
-    minutes: 'دقائق',
+    minutes: 'دقيقة',
     actions: 'إجراءات الجلسة',
     join: 'انضم للجلسة',
     joining: 'جاري الانضمام...',
