@@ -158,7 +158,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
-import axios from 'axios'
+import api from '@/services/api'
 import { useI18n } from 'vue-i18n'
 import FancyUpload from '@/components/FancyUpload.vue'
 
@@ -229,7 +229,7 @@ async function onSubmit() {
     
     data.append('action', 'register_therapist_shortcode')
     
-    const response = await axios.post('/wp-admin/admin-ajax.php', data)
+    const response = await api.post('/wp-admin/admin-ajax.php', data)
     
     if (response.data.success) {
       if (response.data.data.step === 'otp_verification') {
@@ -270,7 +270,7 @@ async function verifyOtp() {
     data.append('session_key', sessionKey.value)
     data.append('otp_code', otpCode.value)
     
-    const response = await axios.post('/wp-admin/admin-ajax.php', data)
+    const response = await api.post('/wp-admin/admin-ajax.php', data)
     
     if (response.data.success) {
       success.value = response.data.data.message

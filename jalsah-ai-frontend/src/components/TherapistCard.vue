@@ -464,8 +464,8 @@ export default {
       error.value = null
       
       try {
-        const response = await fetch(`/api/ai/therapists/${props.therapist.id}/details`)
-        const data = await response.json()
+        const response = await api.get(`/api/ai/therapists/${props.therapist.id}/details`)
+        const data = response.data
         
         if (data.success) {
           details.value = data.data
@@ -497,8 +497,8 @@ export default {
         }
         
         // Fallback to API call if earliest_slot_data is not available
-        const response = await fetch(`/api/ai/therapists/${props.therapist.id}/earliest-slot`)
-        const data = await response.json()
+        const response = await api.get(`/api/ai/therapists/${props.therapist.id}/earliest-slot`)
+        const data = response.data
         
         if (data.success && data.data) {
           earliestSlot.value = data.data
@@ -616,8 +616,8 @@ export default {
           }
         } else {
           // Fallback to API call
-          const response = await fetch(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
-          const data = await response.json()
+          const response = await api.get(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
+          const data = response.data
           if (data.success && Array.isArray(data.data)) {
             const slots = data.data.map(slot => ({
               ...slot,
