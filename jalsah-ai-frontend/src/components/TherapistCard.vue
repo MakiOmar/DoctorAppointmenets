@@ -23,7 +23,7 @@
 
       <!-- Therapist Info -->
       <div class="flex-1 flex flex-col justify-between min-h-32">
-        <!-- Top Section: Name, Rating, Bio -->
+        <!-- Top Section: Name, Rating -->
         <div class="space-y-4">
           <div>
             <div class="flex items-center justify-between mb-2">
@@ -45,9 +45,6 @@
             </div>
           </div>
 
-          <p class="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-            {{ therapist.bio || $t('therapists.bioDefault') }}
-          </p>
 
           <!-- Specializations/Diagnoses -->
           <div class="flex flex-wrap gap-2">
@@ -275,11 +272,6 @@
         </div>
       </div>
       
-      <!-- Bio Section - Only show when details are loaded -->
-      <div v-if="details && details.bio" class="bg-gray-50 rounded-lg p-4">
-        <h4 class="text-lg font-semibold text-gray-900 mb-3">{{ $t('therapistDetails.bio') }}</h4>
-        <p class="text-gray-700 leading-relaxed">{{ details.bio }}</p>
-      </div>
     </div>
     
     <!-- Lightbox Component -->
