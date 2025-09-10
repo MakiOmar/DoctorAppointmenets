@@ -172,7 +172,15 @@ export default {
 
     // Computed property to sort therapists (search is now handled by API)
     const sortedTherapists = computed(() => {
-      let sorted = [...therapistsWithOriginalPositions.value]
+      // Filter out therapists with no available slots
+      let filtered = therapistsWithOriginalPositions.value.filter(therapist => {
+        // Check if therapist has available slots
+        return therapist.earliest_slot_data && 
+               therapist.earliest_slot_data.date && 
+               therapist.earliest_slot_data.time
+      })
+      
+      let sorted = [...filtered]
 
       // Apply active sorting
       switch (activeSort.value) {

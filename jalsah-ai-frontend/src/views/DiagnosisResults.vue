@@ -231,7 +231,15 @@ export default {
     const sortedTherapists = computed(() => {
       if (!therapistsWithOriginalPositions.value.length) return []
       
-      return [...therapistsWithOriginalPositions.value].sort((a, b) => {
+      // Filter out therapists with no available slots
+      const filteredTherapists = therapistsWithOriginalPositions.value.filter(therapist => {
+        // Check if therapist has available slots
+        return therapist.earliest_slot_data && 
+               therapist.earliest_slot_data.date && 
+               therapist.earliest_slot_data.time
+      })
+      
+      return [...filteredTherapists].sort((a, b) => {
         // Priority: Order > Price > Appointment
         // If multiple sorting criteria are selected, order takes precedence
         
