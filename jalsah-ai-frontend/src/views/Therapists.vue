@@ -14,10 +14,9 @@
 
       <!-- Search and Sorting -->
       <div class="card mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <!-- Search Filter -->
           <div class="w-full lg:w-1/4">
-            <label class="form-label">{{ $t('therapists.filters.search') }}</label>
             <div class="relative">
               <input
                 v-model="searchQuery"
@@ -36,7 +35,6 @@
           
           <!-- Best/Order Sorting Button -->
           <div class="w-full lg:w-1/4">
-            <label class="form-label mb-4">{{ $t('therapists.sorting.best') }}</label>
             <button
               @click="setSorting('best')"
               class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
@@ -50,7 +48,6 @@
           
           <!-- Lowest Price Button -->
           <div class="w-full lg:w-1/4">
-            <label class="form-label mb-4">{{ $t('therapists.sorting.priceLow') }}</label>
             <button
               @click="setSorting('price-low')"
               class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
@@ -64,7 +61,6 @@
           
           <!-- Nearest Slot Button -->
           <div class="w-full lg:w-1/4">
-            <label class="form-label mb-4">{{ $t('therapists.sorting.nearest') }}</label>
             <button
               @click="setSorting('nearest')"
               class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
