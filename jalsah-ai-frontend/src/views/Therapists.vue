@@ -252,11 +252,9 @@ export default {
 
     // Sorting button handlers
     const setSorting = (sortType) => {
-      // Always reset to default sorting first
-      activeSort.value = ''
-      
-      // If clicking the same sort, keep it deactivated (default)
+      // If clicking the same sort, deactivate it (reset to default)
       if (activeSort.value === sortType) {
+        activeSort.value = ''
         return
       }
       

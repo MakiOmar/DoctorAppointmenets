@@ -436,21 +436,6 @@ export default {
       random: 'Random',
       highestRated: 'Highest Rated'
     },
-    sorting: {
-      title: 'Sorting Options',
-      order: 'Order',
-      defaultOrder: 'Default Order',
-      lowestFirst: 'Lowest First',
-      highestFirst: 'Highest First',
-      price: 'Price',
-      anyPrice: 'Any Price',
-      lowestPrice: 'Lowest Price',
-      highestPrice: 'Highest Price',
-      appointment: 'Appointment',
-      anyTime: 'Any Time',
-      nearest: 'Nearest',
-      farthest: 'Farthest'
-    },
     showMore: 'Show More',
     moreTherapists: 'more therapists',
     noResults: 'No therapists found',
