@@ -16,7 +16,7 @@
       <div class="card mb-8">
         <div class="flex flex-col lg:flex-row lg:items-center gap-4">
           <!-- Search Filter -->
-          <div class="w-full lg:w-1/4">
+          <div class="w-full lg:w-1/3">
             <div class="relative">
               <input
                 v-model="searchQuery"
@@ -33,21 +33,8 @@
             </div>
           </div>
           
-          <!-- Best/Order Sorting Button -->
-          <div class="w-full lg:w-1/4">
-            <button
-              @click="setSorting('best')"
-              class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-              :class="activeSort === 'best' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-            >
-              {{ $t('therapists.sorting.best') }}
-            </button>
-          </div>
-          
           <!-- Lowest Price Button -->
-          <div class="w-full lg:w-1/4">
+          <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('price-low')"
               class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
@@ -60,7 +47,7 @@
           </div>
           
           <!-- Nearest Slot Button -->
-          <div class="w-full lg:w-1/4">
+          <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('nearest')"
               class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
@@ -162,7 +149,7 @@ export default {
     const loadingMore = ref(false) // Loading state for infinite scroll
     
     // Sorting controls - single active sort
-    const activeSort = ref('') // Active sorting: '', 'best', 'price-low', 'nearest'
+    const activeSort = ref('') // Active sorting: '', 'price-low', 'nearest'
 
     // Search query for therapist names
     const searchQuery = ref('')
@@ -189,23 +176,6 @@ export default {
 
       // Apply active sorting
       switch (activeSort.value) {
-        case 'best':
-          // Sort by rating (best first) - higher rating first, then by total_ratings
-          sorted.sort((a, b) => {
-            const ratingA = a.rating || 0
-            const ratingB = b.rating || 0
-            const totalA = a.total_ratings || 0
-            const totalB = b.total_ratings || 0
-            
-            // First sort by rating (descending)
-            if (ratingA !== ratingB) {
-              return ratingB - ratingA
-            }
-            // If ratings are equal, sort by total_ratings (descending)
-            return totalB - totalA
-          })
-          break
-          
         case 'price-low':
           // Sort by price (lowest to highest)
           sorted.sort((a, b) => {
