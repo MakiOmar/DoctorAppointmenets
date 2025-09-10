@@ -452,7 +452,7 @@ const waitingForTherapist = computed(() => {
   const waiting = isConfirmed && !sessionData.value.therapist_joined
   
   // Debug logging
-  
+  console.log({
     sessionData: sessionData.value,
     isConfirmed,
     therapist_joined: sessionData.value.therapist_joined,
@@ -481,20 +481,20 @@ const sessionNotAvailableReason = computed(() => {
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-   // Debug logging
-   
-     currentUserId,
-     sessionTherapistId,
-     sessionClientId,
-     isTherapist: isTherapist.value,
-     userRole: authStore.user?.role,
-     sessionStatus: sessionData.value.session_status,
-     isCompleted: sessionData.value.session_status === 'completed',
-     isCancelled: sessionData.value.session_status === 'cancelled',
-     therapistMatch: currentUserId === sessionTherapistId,
-     clientMatch: currentUserId === sessionClientId,
-     notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
-   })
+  // Debug logging
+  console.log({
+    currentUserId,
+    sessionTherapistId,
+    sessionClientId,
+    isTherapist: isTherapist.value,
+    userRole: authStore.user?.role,
+    sessionStatus: sessionData.value.session_status,
+    isCompleted: sessionData.value.session_status === 'completed',
+    isCancelled: sessionData.value.session_status === 'cancelled',
+    therapistMatch: currentUserId === sessionTherapistId,
+    clientMatch: currentUserId === sessionClientId,
+    notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
+  })
   
    if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
      return t('session.reason.notAuthorized')
@@ -541,8 +541,9 @@ const loadSession = async () => {
     
     
          if (response.data.success) {
-       sessionData.value = response.data.data
-       
+      sessionData.value = response.data.data
+      
+      console.log({
           ID: sessionData.value.ID,
           user_id: sessionData.value.user_id,
           client_id: sessionData.value.client_id,
