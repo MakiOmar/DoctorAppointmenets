@@ -8,32 +8,20 @@ import { useCartStore } from './cart'
 // Helper function to get nonce from WordPress
 const getNonce = async (action) => {
   try {
-    // Try AI API nonce endpoint first (uses proxy)
-    const response = await fetch(`/api/ai/nonce?action=${action}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
+    // Try AI API nonce endpoint first (uses configured API base URL)
+    const response = await api.get(`/api/ai/nonce?action=${action}`)
     
-    const data = await response.json()
-    if (data.success && data.data.nonce) {
-
-      return data.data.nonce
+    if (response.data.success && response.data.data.nonce) {
+      console.log('✅ Got nonce from AI API endpoint')
+      return response.data.data.nonce
     }
     
     // Fallback to admin-ajax endpoint
-    const ajaxResponse = await fetch(`/wp-admin/admin-ajax.php?action=get_ai_nonce&action=${action}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
+    const ajaxResponse = await api.get(`/wp-admin/admin-ajax.php?action=get_ai_nonce&action=${action}`)
     
-    const ajaxData = await ajaxResponse.json()
-    if (ajaxData.success && ajaxData.data.nonce) {
-
-      return ajaxData.data.nonce
+    if (ajaxResponse.data.success && ajaxResponse.data.data.nonce) {
+      console.log('✅ Got nonce from admin-ajax endpoint')
+      return ajaxResponse.data.data.nonce
     }
     
     throw new Error('Failed to get nonce from server')
