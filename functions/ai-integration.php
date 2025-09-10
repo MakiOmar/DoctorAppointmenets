@@ -2572,14 +2572,10 @@ Best regards,
 		$table_name = $wpdb->prefix . 'therapist_applications';
 		
 		// Get all approved therapists who are enabled for AI platform
-		// Include general ordering information from therapist applications table
 		$applications = $wpdb->get_results(
-			"SELECT ta.*, 
-				COALESCE(ta.ai_display_order, ta.id) as frontend_order,
-				COALESCE(ta.ai_display_order, ta.id) as display_order
-			FROM $table_name ta
-			WHERE ta.status = 'approved' AND ta.show_on_ai_site = 1 
-			ORDER BY COALESCE(ta.ai_display_order, ta.id) ASC, ta.name ASC"
+			"SELECT * FROM $table_name 
+			WHERE status = 'approved' AND show_on_ai_site = 1 
+			ORDER BY id ASC"
 		);
 		
 		$result = array();
@@ -2839,8 +2835,8 @@ Best regards,
 			'price' => $pricing,
 			'diagnoses' => $diagnoses,
 			'certificates' => $certificates_data,
-			'frontend_order' => isset($application->frontend_order) ? intval($application->frontend_order) : 0,
-			'display_order' => isset($application->display_order) ? intval($application->display_order) : 0,
+			'frontend_order' => isset($application->frontend_order) ? intval($application->frontend_order) : intval($application->id),
+			'display_order' => isset($application->display_order) ? intval($application->display_order) : intval($application->id),
 		);
 		
 		return $result;
