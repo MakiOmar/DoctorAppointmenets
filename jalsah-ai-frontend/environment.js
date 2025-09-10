@@ -17,7 +17,7 @@ export const ENVIRONMENT_CONFIG = {
   API_TARGET: 'https://staging.jalsah.app', // ← CHANGE THIS LINE
   
   // Other settings (usually don't need to change)
-  API_BASE_URL: '/api',
+  API_BASE_URL: 'https://staging.jalsah.app', // ← FIXED: Use full URL for production
   MAIN_SITE_URL: 'https://staging.jalsah.app' // This will auto-update based on API_TARGET
 };
 
