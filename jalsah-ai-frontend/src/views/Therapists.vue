@@ -12,64 +12,65 @@
         </p>
       </div>
 
-      <!-- Search Filter -->
+      <!-- Search and Sorting -->
       <div class="card mb-8">
-          <div>
-          <label class="form-label">{{ $t('therapists.filters.search') }}</label>
-          <div class="relative">
-            <input
-              v-model="searchQuery"
-              type="text"
-              :placeholder="$t('therapists.filters.searchPlaceholder')"
-              class="input-field w-full pr-10"
-              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-            />
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" :class="$i18n.locale === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3'">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
+        <div class="flex flex-col lg:flex-row lg:items-end gap-6">
+          <!-- Search Filter -->
+          <div class="flex-1">
+            <label class="form-label">{{ $t('therapists.filters.search') }}</label>
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="$t('therapists.filters.searchPlaceholder')"
+                class="input-field w-full pr-10"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" :class="$i18n.locale === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3'">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
-          </div>
           
-      <!-- Sorting Buttons -->
-      <div class="card mb-8">
-          <div>
-          <label class="form-label mb-4">{{ $t('therapists.sortBy') }}</label>
-          <div class="flex flex-wrap gap-3">
-            <!-- Best/Order Sorting -->
-            <button
-              @click="setSorting('best')"
-              class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-              :class="activeSort === 'best' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-            >
-              {{ $t('therapists.sorting.best') }}
-            </button>
-            
-            <!-- Lowest Price -->
-            <button
-              @click="setSorting('price-low')"
-              class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-              :class="activeSort === 'price-low' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-            >
-              {{ $t('therapists.sorting.priceLow') }}
-            </button>
-            
-            <!-- Nearest Slot -->
-            <button
-              @click="setSorting('nearest')"
-              class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-              :class="activeSort === 'nearest' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-            >
-              {{ $t('therapists.sorting.nearest') }}
-            </button>
+          <!-- Sorting Buttons -->
+          <div class="flex-shrink-0">
+            <label class="form-label mb-4">{{ $t('therapists.sortBy') }}</label>
+            <div class="flex flex-wrap gap-3">
+              <!-- Best/Order Sorting -->
+              <button
+                @click="setSorting('best')"
+                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="activeSort === 'best' 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+              >
+                {{ $t('therapists.sorting.best') }}
+              </button>
+              
+              <!-- Lowest Price -->
+              <button
+                @click="setSorting('price-low')"
+                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="activeSort === 'price-low' 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+              >
+                {{ $t('therapists.sorting.priceLow') }}
+              </button>
+              
+              <!-- Nearest Slot -->
+              <button
+                @click="setSorting('nearest')"
+                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="activeSort === 'nearest' 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+              >
+                {{ $t('therapists.sorting.nearest') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -235,7 +236,18 @@ export default {
     }
 
     const getEarliestSlotTime = (therapist) => {
-      // If no earliest slot, return a very high number to push to end
+      // Use earliest_slot_data if available (structured data with date and time)
+      if (therapist.earliest_slot_data && therapist.earliest_slot_data.date && therapist.earliest_slot_data.time) {
+        try {
+          const dateTime = new Date(therapist.earliest_slot_data.date + ' ' + therapist.earliest_slot_data.time)
+          return isNaN(dateTime.getTime()) ? 999999 : dateTime.getTime()
+        } catch (error) {
+          console.error('Error parsing earliest_slot_data:', error)
+          return 999999
+        }
+      }
+      
+      // Fallback to earliest_slot if earliest_slot_data is not available
       if (!therapist.earliest_slot) {
         return 999999
       }
