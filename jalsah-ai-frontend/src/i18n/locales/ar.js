@@ -544,6 +544,7 @@ export default {
     promoApplied: 'تم تطبيق كود الخصم: {code} (-${discount})',
     proceedToCheckout: 'المتابعة للدفع',
     proceedToPayment: 'المتابعة للدفع',
+    addMoreBookings: 'إضافة مواعيد أخرى',
     processing: 'جاري المعالجة...',
     continueShopping: 'مواصلة التسوق',
     importantInfo: 'معلومات مهمة',

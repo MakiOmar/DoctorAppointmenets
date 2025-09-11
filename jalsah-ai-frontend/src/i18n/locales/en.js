@@ -593,6 +593,7 @@ export default {
     promoApplied: 'Promo code applied: {code} (-${discount})',
     proceedToCheckout: 'Proceed to Checkout',
     proceedToPayment: 'Proceed to Payment',
+    addMoreBookings: 'Add More Bookings',
     processing: 'Processing...',
     continueShopping: 'Continue Shopping',
     importantInfo: 'Important Information',

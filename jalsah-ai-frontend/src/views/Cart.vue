@@ -126,6 +126,14 @@
               <span v-if="cartStore.loading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(cartStore.totalPrice) }}</span>
             </button>
+
+            <!-- Add More Bookings Button -->
+            <button
+              @click="addMoreBookings"
+              class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-300"
+            >
+              {{ $t('addMoreBookings') }}
+            </button>
             
             <!-- Appointment Change Terms -->
             <div v-if="settingsStore.getAppointmentChangeTerms" class="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -217,6 +225,11 @@ const proceedToPayment = async () => {
   } else {
     console.error('Payment failed:', result.message)
   }
+}
+
+const addMoreBookings = () => {
+  // Redirect to homepage to allow user to book more appointments
+  window.location.href = '/'
 }
 
 onMounted(() => {
