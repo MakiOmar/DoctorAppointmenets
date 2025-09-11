@@ -171,6 +171,7 @@ export default {
     const requireEmail = computed(() => {
       const result = therapistRegistrationStore.shouldShowEmail
       console.log('🔍 requireEmail computed called, result:', result, 'type:', typeof result)
+      console.log('🔍 Original require_email value:', therapistRegistrationStore.settings.require_email)
       return result
     })
 
