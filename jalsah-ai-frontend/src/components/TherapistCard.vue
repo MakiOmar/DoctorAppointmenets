@@ -172,15 +172,6 @@
         <div class="bg-gray-50 rounded-lg p-4">
           <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.bookAppointment') }}</h4>
           
-
-          <!-- Book Another Appointment Button -->
-          <button 
-            @click="showDateSelection = !showDateSelection"
-            class="btn-secondary w-full py-3"
-          >
-            {{ showDateSelection ? $t('common.hide') : $t('therapistDetails.bookAnother') }}
-          </button>
-
           <!-- Date Selection Carousel -->
           <div v-if="showDateSelection" class="mt-4">
             <div v-if="loadingDates" class="text-center py-4">
@@ -418,11 +409,13 @@ export default {
         // If details are currently shown, hide them
         console.log('🔍 Hiding details')
         showDetails.value = false
+        showDateSelection.value = false // Also hide date selection
         emit('hide-details')
       } else {
         // If details are hidden, show them
         console.log('🔍 Showing details')
         showDetails.value = true
+        showDateSelection.value = true // Directly show date selection
         emit('show-details', props.therapist.id)
         if (!details.value) {
           loadTherapistDetails()
@@ -439,6 +432,7 @@ export default {
         // This therapist should be open
         if (!showDetails.value) {
           showDetails.value = true
+          showDateSelection.value = true // Also show date selection
           if (!details.value) {
             loadTherapistDetails()
           }
@@ -447,6 +441,7 @@ export default {
         // This therapist should be closed
         if (showDetails.value) {
           showDetails.value = false
+          showDateSelection.value = false // Also hide date selection
         }
       }
     }, { immediate: true })
