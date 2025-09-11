@@ -498,9 +498,13 @@ function snks_get_country_dial_codes() {
  * Get therapist registration settings for frontend
  */
 function snks_get_therapist_registration_settings() {
-	return array(
+	// Debug logging
+	$require_email_option = get_option( 'snks_therapist_require_email', 1 );
+	error_log('🔍 Settings: snks_therapist_require_email option value: ' . var_export($require_email_option, true));
+	
+	$settings = array(
 		'otp_method' => get_option( 'snks_therapist_otp_method', 'email' ),
-		'require_email' => get_option( 'snks_therapist_require_email', 1 ),
+		'require_email' => $require_email_option,
 		'country_dial_required' => get_option( 'snks_therapist_country_dial_required', 1 ),
 		'whatsapp_api_url' => get_option( 'snks_whatsapp_api_url', '' ),
 		'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
@@ -511,15 +515,25 @@ function snks_get_therapist_registration_settings() {
 		'default_country' => get_option( 'snks_therapist_default_country', 'EG' ),
 		'country_codes' => snks_get_country_dial_codes()
 	);
+	
+	error_log('🔍 Settings: Final settings array: ' . print_r($settings, true));
+	
+	return $settings;
 }
 
 /**
  * REST API endpoint for therapist registration settings
  */
 function snks_get_therapist_registration_settings_rest( $request ) {
+	// Debug logging
+	error_log('🔍 REST API: therapist-registration-settings called');
+	
+	$settings = snks_get_therapist_registration_settings();
+	error_log('🔍 REST API: Settings returned: ' . print_r($settings, true));
+	
 	return array(
 		'success' => true,
-		'data' => snks_get_therapist_registration_settings()
+		'data' => $settings
 	);
 }
 

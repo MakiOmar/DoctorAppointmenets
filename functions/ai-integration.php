@@ -2148,6 +2148,7 @@ class SNKS_AI_Integration {
 		
 		// Get therapist registration settings to check email requirement
 		$registration_settings = snks_get_therapist_registration_settings();
+		error_log('🔍 Login API: Registration settings: ' . print_r($registration_settings, true));
 		
 		$user = null;
 		$login_method = '';
@@ -2155,6 +2156,7 @@ class SNKS_AI_Integration {
 		// Determine login method based on settings and provided data
 		if ( $registration_settings['require_email'] ) {
 			// Email login is required
+			error_log('🔍 Login API: Using EMAIL login method');
 			if ( ! isset( $data['email'] ) ) {
 				$this->send_error( 'Email and password required', 400 );
 			}
@@ -2162,6 +2164,7 @@ class SNKS_AI_Integration {
 			$login_method = 'email';
 		} else {
 			// WhatsApp login is used
+			error_log('🔍 Login API: Using WHATSAPP login method');
 			if ( ! isset( $data['whatsapp'] ) ) {
 				$this->send_error( 'WhatsApp number and password required', 400 );
 			}
