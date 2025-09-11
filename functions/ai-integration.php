@@ -249,13 +249,68 @@ class SNKS_AI_Integration {
 	}
 	
 	/**
+	 * Get allowed frontend origins from settings
+	 */
+	private function get_allowed_frontend_origins() {
+		$frontend_urls = get_option( 'snks_ai_frontend_urls', 'https://jalsah-ai.com' );
+		
+		// Parse URLs from textarea (one per line)
+		$urls = array_filter( array_map( 'trim', explode( "\n", $frontend_urls ) ) );
+		
+		// Validate and clean URLs
+		$valid_origins = array();
+		foreach ( $urls as $url ) {
+			$url = trim( $url );
+			if ( ! empty( $url ) && filter_var( $url, FILTER_VALIDATE_URL ) ) {
+				// Remove trailing slash and ensure proper format
+				$url = rtrim( $url, '/' );
+				$valid_origins[] = $url;
+			}
+		}
+		
+		// If no valid URLs found, use default
+		if ( empty( $valid_origins ) ) {
+			$valid_origins = array( 'https://jalsah-ai.com' );
+		}
+		
+		return $valid_origins;
+	}
+	
+	/**
+	 * Check if request origin is allowed
+	 */
+	private function is_origin_allowed( $origin ) {
+		$allowed_origins = $this->get_allowed_frontend_origins();
+		return in_array( $origin, $allowed_origins, true );
+	}
+	
+	/**
+	 * Get the first valid frontend URL for redirects
+	 */
+	private function get_primary_frontend_url() {
+		$allowed_origins = $this->get_allowed_frontend_origins();
+		return $allowed_origins[0] ?? 'https://jalsah-ai.com';
+	}
+
+	/**
 	 * Handle CORS headers
 	 */
 	public function handle_cors() {
 		// Handle CORS for API requests and admin-ajax requests
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false || 
 			 strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
-			header( 'Access-Control-Allow-Origin: *' );
+			
+			// Get the request origin
+			$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+			
+			// Set CORS headers based on origin validation
+			if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
+				header( 'Access-Control-Allow-Origin: ' . $origin );
+			} else {
+				// Fallback to wildcard for development or if no origin
+				header( 'Access-Control-Allow-Origin: *' );
+			}
+			
 			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
 			header( 'Access-Control-Allow-Credentials: true' );
@@ -278,8 +333,18 @@ class SNKS_AI_Integration {
 		// Check if this is an AI API request or admin-ajax request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false || 
 			 strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
-			// Set CORS headers immediately
-			header( 'Access-Control-Allow-Origin: *' );
+			
+			// Get the request origin
+			$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+			
+			// Set CORS headers based on origin validation
+			if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
+				header( 'Access-Control-Allow-Origin: ' . $origin );
+			} else {
+				// Fallback to wildcard for development or if no origin
+				header( 'Access-Control-Allow-Origin: *' );
+			}
+			
 			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
 			header( 'Access-Control-Allow-Credentials: true' );
@@ -299,8 +364,18 @@ class SNKS_AI_Integration {
 		// Check if this is an AI API request or admin-ajax request
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false || 
 			 strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
-			// Set CORS headers immediately
-			header( 'Access-Control-Allow-Origin: *' );
+			
+			// Get the request origin
+			$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+			
+			// Set CORS headers based on origin validation
+			if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
+				header( 'Access-Control-Allow-Origin: ' . $origin );
+			} else {
+				// Fallback to wildcard for development or if no origin
+				header( 'Access-Control-Allow-Origin: *' );
+			}
+			
 			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
 			header( 'Access-Control-Allow-Credentials: true' );
@@ -320,8 +395,17 @@ class SNKS_AI_Integration {
 	 * Handle CORS for admin-ajax requests
 	 */
 	public function handle_admin_ajax_cors() {
-		// Set CORS headers for admin-ajax requests
-		header( 'Access-Control-Allow-Origin: *' );
+		// Get the request origin
+		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+		
+		// Set CORS headers based on origin validation
+		if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+		} else {
+			// Fallback to wildcard for development or if no origin
+			header( 'Access-Control-Allow-Origin: *' );
+		}
+		
 		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
 		header( 'Access-Control-Allow-Credentials: true' );
@@ -1625,7 +1709,16 @@ class SNKS_AI_Integration {
 		define( 'DOING_AJAX', true );
 		
 		// Set CORS headers early to prevent redirects
-		header( 'Access-Control-Allow-Origin: *' );
+		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
+		
+		// Set CORS headers based on origin validation
+		if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+		} else {
+			// Fallback to wildcard for development or if no origin
+			header( 'Access-Control-Allow-Origin: *' );
+		}
+		
 		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
 		header( 'Access-Control-Allow-Credentials: true' );
@@ -5378,7 +5471,7 @@ function snks_ai_order_thankyou_redirect($order_id) {
 		$is_ai_order = $order->get_meta('from_jalsah_ai');
 		if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
 			// Redirect AI orders to the frontend appointments page
-			$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
+			$frontend_url = $this->get_primary_frontend_url();
 			wp_safe_redirect($frontend_url . '/appointments');
 			exit;
 		}
@@ -5406,7 +5499,7 @@ function snks_ai_order_template_redirect() {
 				
 				if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
 					// Redirect AI orders to the frontend appointments page
-					$frontend_url = get_option('snks_ai_frontend_url', 'https://jalsah-ai.com');
+					$frontend_url = $this->get_primary_frontend_url();
 					wp_safe_redirect($frontend_url . '/appointments');
 					exit;
 				}
@@ -5426,8 +5519,8 @@ function snks_ai_frontend_url_notice() {
 		return;
 	}
 	
-	$frontend_url = get_option('snks_ai_frontend_url');
-	if (empty($frontend_url)) {
+	$frontend_urls = get_option('snks_ai_frontend_urls');
+	if (empty($frontend_urls)) {
 		?>
 		<div class="notice notice-warning is-dismissible">
 			<p>

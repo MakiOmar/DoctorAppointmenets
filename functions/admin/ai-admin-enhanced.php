@@ -2638,7 +2638,7 @@ function snks_enhanced_ai_settings_page() {
 				update_option( 'snks_ai_site_title_ar', sanitize_text_field( $_POST['site_title_ar'] ) );
 				update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
 				update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
-				update_option( 'snks_ai_frontend_url', esc_url_raw( $_POST['frontend_url'] ) );
+				update_option( 'snks_ai_frontend_urls', sanitize_textarea_field( $_POST['frontend_urls'] ) );
 				update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
 				update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
 				
@@ -2666,7 +2666,7 @@ function snks_enhanced_ai_settings_page() {
 	$site_title_ar = get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
 	$site_description_en = get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
 	$site_description_ar = get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
-	$frontend_url = get_option( 'snks_ai_frontend_url', 'https://jalsah-ai.com' );
+	$frontend_urls = get_option( 'snks_ai_frontend_urls', 'https://jalsah-ai.com' );
 	$ratings_enabled = get_option( 'snks_ai_ratings_enabled', '1' ); // Default to enabled
 	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
 	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
@@ -2730,9 +2730,9 @@ function snks_enhanced_ai_settings_page() {
 				<h3>Payment Integration</h3>
 				
 				<div class="bilingual-field">
-					<label for="frontend_url">Frontend URL</label>
-					<input type="url" id="frontend_url" name="frontend_url" value="<?php echo esc_attr( $frontend_url ); ?>" class="regular-text">
-					<p class="description">The URL of your Jalsah AI frontend application. Used for payment redirects after AI order completion. (e.g., https://jalsah-ai.com)</p>
+					<label for="frontend_urls">Frontend URLs (Multiple Origins)</label>
+					<textarea id="frontend_urls" name="frontend_urls" rows="3" class="large-text" placeholder="https://jalsah.online&#10;https://jalsah-ai.com&#10;https://staging.jalsah.app"><?php echo esc_textarea( $frontend_urls ); ?></textarea>
+					<p class="description">Enter multiple frontend URLs, one per line. These will be used for CORS validation and payment redirects. (e.g., https://jalsah.online, https://jalsah-ai.com)</p>
 				</div>
 				
 				<h3>Frontend Features</h3>
