@@ -119,6 +119,7 @@ export default {
       createAccount: 'Create a new account',
       rememberMe: 'Remember me',
       forgotPassword: 'Forgot your password?',
+      needVerification: 'Need to verify your account?',
       signingIn: 'Signing in...',
       signIn: 'Sign in',
       orContinueWith: 'Or continue with',
@@ -209,7 +210,9 @@ export default {
     resendCode: 'Resend Code',
     resendIn: 'Resend in {seconds} seconds',
     sending: 'Sending...',
-    backToLogin: 'Back to Login'
+    backToLogin: 'Back to Login',
+    continue: 'Continue',
+    changeContact: 'Change contact'
   },
 
   // Toast Messages

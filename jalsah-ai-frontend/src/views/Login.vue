@@ -129,6 +129,16 @@
           </div>
         </form>
 
+        <!-- Verification Link -->
+        <div class="mt-4 text-center">
+          <button
+            @click="goToVerification"
+            class="text-sm text-primary-600 hover:text-primary-500 font-medium"
+          >
+            {{ $t('auth.login.needVerification') }}
+          </button>
+        </div>
+
         <div class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
@@ -225,9 +235,17 @@ export default {
     }
 
     const goToVerification = () => {
-      // Navigate to verification page with the identifier
+      // Navigate to verification page with the identifier if available
       const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
-      router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
+      
+      if (identifier) {
+        // If user has entered email/WhatsApp, pass it to verification page
+        router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
+      } else {
+        // If no identifier entered, go to verification page without identifier
+        // User will need to enter their email/WhatsApp on verification page
+        router.push('/verify')
+      }
     }
 
     // Load therapist registration settings on mount

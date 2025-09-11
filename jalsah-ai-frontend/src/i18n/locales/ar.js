@@ -119,6 +119,7 @@ export default {
       createAccount: 'إنشاء حساب جديد',
       rememberMe: 'تذكرني',
       forgotPassword: 'نسيت كلمة المرور؟',
+      needVerification: 'تحتاج للتحقق من حسابك؟',
       signingIn: 'جاري تسجيل الدخول...',
       signIn: 'تسجيل الدخول',
       orContinueWith: 'أو تابع باستخدام',
@@ -213,7 +214,9 @@ export default {
     resendCode: 'إعادة إرسال الرمز',
     resendIn: 'إعادة الإرسال خلال {seconds} ثانية',
     sending: 'جاري الإرسال...',
-    backToLogin: 'العودة لتسجيل الدخول'
+    backToLogin: 'العودة لتسجيل الدخول',
+    continue: 'متابعة',
+    changeContact: 'تغيير جهة الاتصال'
   },
 
   // Toast Messages

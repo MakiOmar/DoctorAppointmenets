@@ -17,12 +17,44 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="card">
         <form @submit.prevent="handleVerification" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-          <!-- Contact Display -->
-          <div class="text-center">
+          <!-- Contact Input (if not provided) -->
+          <div v-if="!contact" class="space-y-4">
+            <div>
+              <label for="contact" class="form-label">
+                {{ requireEmail ? $t('auth.login.email') : $t('auth.login.whatsapp') }}
+              </label>
+              <input
+                id="contact"
+                v-model="contactInput"
+                :type="requireEmail ? 'email' : 'tel'"
+                required
+                class="input-field"
+                :placeholder="requireEmail ? $t('auth.login.emailPlaceholder') : $t('auth.login.whatsappPlaceholder')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              />
+            </div>
+            <button
+              type="button"
+              @click="setContact"
+              class="w-full btn-primary py-2"
+            >
+              {{ $t('verification.continue') }}
+            </button>
+          </div>
+
+          <!-- Contact Display (if provided) -->
+          <div v-else class="text-center">
             <p class="text-sm text-gray-600">
               {{ verificationMethod === 'whatsapp' ? $t('verification.whatsappSentTo') : $t('verification.emailSentTo') }}
             </p>
             <p class="text-lg font-medium text-gray-900">{{ contact }}</p>
+            <button
+              type="button"
+              @click="changeContact"
+              class="mt-2 text-sm text-primary-600 hover:text-primary-500"
+            >
+              {{ $t('verification.changeContact') }}
+            </button>
           </div>
 
           <!-- Verification Code -->
@@ -94,6 +126,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
 import { useToast } from 'vue-toastification'
 
 export default {
@@ -113,15 +146,38 @@ export default {
     const resendLoading = ref(false)
     const resendCooldown = ref(0)
     const contact = ref('')
+    const contactInput = ref('')
     const verificationMethod = ref('email')
     const countdownInterval = ref(null)
+    const therapistRegistrationStore = useTherapistRegistrationStore()
 
     const isFormValid = computed(() => {
       return form.value.verification_code.length === 6
     })
 
+    const requireEmail = computed(() => {
+      return therapistRegistrationStore.shouldShowEmail
+    })
+
+    const setContact = () => {
+      if (contactInput.value) {
+        contact.value = contactInput.value
+        // Determine verification method based on identifier format
+        verificationMethod.value = contactInput.value.includes('@') ? 'email' : 'whatsapp'
+      }
+    }
+
+    const changeContact = () => {
+      contact.value = ''
+      contactInput.value = ''
+      form.value.verification_code = ''
+    }
+
     // Get contact info from route params, query, or localStorage
-    onMounted(() => {
+    onMounted(async () => {
+      // Load therapist registration settings
+      await therapistRegistrationStore.loadSettings()
+      
       // Check for identifier from login form
       const identifier = route.query.identifier
       if (identifier) {
@@ -133,10 +189,7 @@ export default {
         verificationMethod.value = route.query.method || 'email'
       }
       
-      if (!contact.value) {
-        router.push('/register')
-        return
-      }
+      // Don't redirect to register if no contact - let user enter it
       
       // Start countdown if user just registered (to prevent immediate resend)
       // Check if we have a recent registration timestamp
@@ -239,8 +292,12 @@ export default {
       resendLoading,
       resendCooldown,
       contact,
+      contactInput,
       verificationMethod,
+      requireEmail,
       isFormValid,
+      setContact,
+      changeContact,
       handleVerification,
       resendCode
     }
