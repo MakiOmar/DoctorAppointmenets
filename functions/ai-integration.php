@@ -2716,14 +2716,26 @@ Best regards,
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
-		if ( ! isset( $data['email'] ) ) {
-			$this->send_error( 'Email is required', 400 );
+		// Check if we have email or WhatsApp identifier
+		if ( ! isset( $data['email'] ) && ! isset( $data['whatsapp'] ) ) {
+			$this->send_error( 'Email or WhatsApp number required', 400 );
 		}
 		
-		$email = sanitize_email( $data['email'] );
+		$user = null;
 		
-		// Find user by email
-		$user = get_user_by( 'email', $email );
+		// Find user by email or WhatsApp
+		if ( isset( $data['email'] ) ) {
+			$email = sanitize_email( $data['email'] );
+			$user = get_user_by( 'email', $email );
+		} else {
+			$whatsapp = sanitize_text_field( $data['whatsapp'] );
+			$users = get_users( array(
+				'meta_key' => 'whatsapp',
+				'meta_value' => $whatsapp
+			) );
+			$user = ! empty( $users ) ? $users[0] : null;
+		}
+		
 		if ( ! $user ) {
 			$this->send_error( 'User not found', 404 );
 		}
