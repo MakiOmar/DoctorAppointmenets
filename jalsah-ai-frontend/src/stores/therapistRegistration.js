@@ -27,9 +27,13 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
       
       this.loading = true
       try {
+        console.log('🔍 Loading therapist registration settings...')
         const response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
+        console.log('🔍 API Response:', response.data)
         if (response.data.success) {
           this.settings = response.data.data
+          console.log('🔍 Settings loaded:', this.settings)
+          console.log('🔍 require_email value:', this.settings.require_email)
         }
       } catch (error) {
         console.error('Failed to load therapist registration settings:', error)

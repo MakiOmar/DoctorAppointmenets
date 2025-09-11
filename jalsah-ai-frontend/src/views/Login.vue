@@ -186,8 +186,10 @@ export default {
     }
 
     // Load therapist registration settings on mount
-    onMounted(() => {
-      therapistRegistrationStore.loadSettings()
+    onMounted(async () => {
+      await therapistRegistrationStore.loadSettings()
+      console.log('🔍 Login form - Registration settings loaded:', therapistRegistrationStore.settings)
+      console.log('🔍 Login form - Should show email:', requireEmail.value)
     })
 
     return {
