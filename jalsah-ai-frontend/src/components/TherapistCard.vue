@@ -57,7 +57,6 @@
 
           <!-- Bio Section (only show on therapists page, not diagnosis results) -->
           <div v-if="!diagnosisId && therapist.bio" class="mt-4">
-            <h4 class="text-sm font-semibold text-gray-900 mb-2">{{ $t('therapistDetails.bio') }}</h4>
             <p class="text-sm text-gray-700 line-clamp-3">{{ therapist.bio }}</p>
           </div>
 
