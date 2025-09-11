@@ -14,7 +14,11 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
   }),
 
   getters: {
-    shouldShowEmail: (state) => state.settings.require_email,
+    shouldShowEmail: (state) => {
+      const result = state.settings.require_email
+      console.log('🔍 shouldShowEmail getter called, result:', result, 'type:', typeof result)
+      return result
+    },
     shouldShowCountryDialCodes: (state) => state.settings.country_dial_required,
     otpMethod: (state) => state.settings.otp_method,
     defaultCountry: (state) => state.settings.default_country,

@@ -20,6 +20,11 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="card">
         <form @submit.prevent="handleLogin" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+          <!-- Debug info -->
+          <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px; font-size: 12px;">
+            DEBUG: requireEmail = {{ requireEmail }} (type: {{ typeof requireEmail }})
+          </div>
+          
           <!-- Email field (shown when email is required) -->
           <div v-if="requireEmail">
             <label for="email" class="form-label">{{ $t('auth.login.email') }}</label>
@@ -163,7 +168,11 @@ export default {
     })
 
     const loading = computed(() => authStore.loading)
-    const requireEmail = computed(() => therapistRegistrationStore.shouldShowEmail)
+    const requireEmail = computed(() => {
+      const result = therapistRegistrationStore.shouldShowEmail
+      console.log('🔍 requireEmail computed called, result:', result, 'type:', typeof result)
+      return result
+    })
 
     const handleLogin = async () => {
       const credentials = {
