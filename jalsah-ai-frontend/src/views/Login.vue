@@ -20,7 +20,8 @@
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="card">
         <form @submit.prevent="handleLogin" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
-          <div>
+          <!-- Email field (shown when email is required) -->
+          <div v-if="requireEmail">
             <label for="email" class="form-label">{{ $t('auth.login.email') }}</label>
             <input
               id="email"
@@ -31,6 +32,21 @@
               :placeholder="$t('auth.login.emailPlaceholder')"
               :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
               autocomplete="email"
+            />
+          </div>
+
+          <!-- WhatsApp field (shown when email is not required) -->
+          <div v-else>
+            <label for="whatsapp" class="form-label">{{ $t('auth.login.whatsapp') }}</label>
+            <input
+              id="whatsapp"
+              v-model="form.whatsapp"
+              type="tel"
+              required
+              class="input-field"
+              :placeholder="$t('auth.login.whatsappPlaceholder')"
+              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+              autocomplete="tel"
             />
           </div>
 
@@ -127,29 +143,41 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
 
 export default {
   name: 'Login',
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    const therapistRegistrationStore = useTherapistRegistrationStore()
     
     const form = ref({
       email: '',
+      whatsapp: '',
       password: '',
       rememberMe: false
     })
 
     const loading = computed(() => authStore.loading)
+    const requireEmail = computed(() => therapistRegistrationStore.shouldShowEmail)
 
     const handleLogin = async () => {
-      const success = await authStore.login({
-        email: form.value.email,
+      const credentials = {
         password: form.value.password
-      })
+      }
+      
+      // Add email or WhatsApp based on settings
+      if (requireEmail.value) {
+        credentials.email = form.value.email
+      } else {
+        credentials.whatsapp = form.value.whatsapp
+      }
+      
+      const success = await authStore.login(credentials)
       
       if (success) {
         // Redirect to homepage after successful login
@@ -157,9 +185,15 @@ export default {
       }
     }
 
+    // Load therapist registration settings on mount
+    onMounted(() => {
+      therapistRegistrationStore.loadSettings()
+    })
+
     return {
       form,
       loading,
+      requireEmail,
       handleLogin
     }
   }

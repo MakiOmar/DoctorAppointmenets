@@ -126,11 +126,14 @@ export default {
       facebook: 'فيسبوك',
       email: 'البريد الإلكتروني',
       emailPlaceholder: 'أدخل بريدك الإلكتروني',
+      whatsapp: 'رقم الواتساب',
+      whatsappPlaceholder: 'أدخل رقم الواتساب',
       password: 'كلمة المرور',
       passwordPlaceholder: 'أدخل كلمة المرور',
       errors: {
         invalidCredentials: 'بيانات الدخول غير صحيحة',
         emailRequired: 'البريد الإلكتروني مطلوب',
+        whatsappRequired: 'رقم الواتساب مطلوب',
         passwordRequired: 'كلمة المرور مطلوبة'
       }
     },

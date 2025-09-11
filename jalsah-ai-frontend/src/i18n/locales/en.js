@@ -127,9 +127,16 @@ export default {
       noAccount: "Don't have an account?",
       signUp: 'Sign up',
       submit: 'Login',
+      email: 'Email',
+      emailPlaceholder: 'Enter your email',
+      whatsapp: 'WhatsApp Number',
+      whatsappPlaceholder: 'Enter your WhatsApp number',
+      password: 'Password',
+      passwordPlaceholder: 'Enter your password',
       errors: {
         invalidCredentials: 'Invalid credentials',
         emailRequired: 'Email is required',
+        whatsappRequired: 'WhatsApp number is required',
         passwordRequired: 'Password is required'
       }
     },

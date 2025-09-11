@@ -2141,15 +2141,45 @@ class SNKS_AI_Integration {
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 
-		
-		if ( ! isset( $data['email'] ) || ! isset( $data['password'] ) ) {
-	
-			$this->send_error( 'Email and password required', 400 );
+		// Check if password is provided
+		if ( ! isset( $data['password'] ) ) {
+			$this->send_error( 'Password required', 400 );
 		}
 		
-		$user = get_user_by( 'email', sanitize_email( $data['email'] ) );
+		// Get therapist registration settings to check email requirement
+		$registration_settings = snks_get_therapist_registration_settings();
+		
+		$user = null;
+		$login_method = '';
+		
+		// Determine login method based on settings and provided data
+		if ( $registration_settings['require_email'] ) {
+			// Email login is required
+			if ( ! isset( $data['email'] ) ) {
+				$this->send_error( 'Email and password required', 400 );
+			}
+			$user = get_user_by( 'email', sanitize_email( $data['email'] ) );
+			$login_method = 'email';
+		} else {
+			// WhatsApp login is used
+			if ( ! isset( $data['whatsapp'] ) ) {
+				$this->send_error( 'WhatsApp number and password required', 400 );
+			}
+			
+			// Find user by WhatsApp number
+			$users = get_users( array(
+				'meta_key' => 'billing_whatsapp',
+				'meta_value' => sanitize_text_field( $data['whatsapp'] ),
+				'number' => 1
+			) );
+			
+			if ( ! empty( $users ) ) {
+				$user = $users[0];
+			}
+			$login_method = 'whatsapp';
+		}
+		
 		if ( ! $user ) {
-	
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 		
@@ -2184,16 +2214,26 @@ class SNKS_AI_Integration {
 		
 
 		
+		// Prepare user data
+		$user_data = array(
+			'id' => $user->ID,
+			'email' => $user->user_email,
+			'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
+			'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
+			'role' => $user->roles[0], // Primary role
+			'roles' => $user->roles,   // All roles
+			'login_method' => $login_method
+		);
+		
+		// Add WhatsApp number if available
+		$whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+		if ( $whatsapp ) {
+			$user_data['whatsapp'] = $whatsapp;
+		}
+		
 		$this->send_success( array(
 			'token' => $token,
-			'user' => array(
-				'id' => $user->ID,
-				'email' => $user->user_email,
-				'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
-				'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
-				'role' => $user->roles[0], // Primary role
-				'roles' => $user->roles,   // All roles
-			)
+			'user' => $user_data
 		) );
 	}
 	
