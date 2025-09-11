@@ -132,7 +132,7 @@
               @click="addMoreBookings"
               class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-300"
             >
-              {{ $t('addMoreBookings') }}
+              {{ $t('cart.addMoreBookings') }}
             </button>
             
             <!-- Appointment Change Terms -->
