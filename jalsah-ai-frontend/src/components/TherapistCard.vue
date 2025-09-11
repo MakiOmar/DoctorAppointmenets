@@ -717,7 +717,9 @@ export default {
         
         if (result.success) {
           slot.inCart = true
-          toast.success(t('therapistDetails.appointmentAdded'))
+          toast.success(t('therapistDetails.appointmentAdded'), {
+            timeout: 8000 // 8 seconds for lengthy message
+          })
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
         } else if (result.requiresConfirmation) {
@@ -732,7 +734,9 @@ export default {
             
             if (confirmResult.success) {
               slot.inCart = true
-              toast.success(t('therapistDetails.appointmentAdded'))
+              toast.success(t('therapistDetails.appointmentAdded'), {
+                timeout: 8000 // 8 seconds for lengthy message
+              })
               // Emit event to update cart
               window.dispatchEvent(new CustomEvent('cart-updated'))
             } else {
@@ -798,7 +802,9 @@ export default {
         })
         
         if (result.success) {
-          toast.success(t('therapistDetails.appointmentAdded'))
+          toast.success(t('therapistDetails.appointmentAdded'), {
+            timeout: 8000 // 8 seconds for lengthy message
+          })
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
           
@@ -815,7 +821,9 @@ export default {
             })
             
             if (confirmResult.success) {
-              toast.success(t('therapistDetails.appointmentAdded'))
+              toast.success(t('therapistDetails.appointmentAdded'), {
+                timeout: 8000 // 8 seconds for lengthy message
+              })
               // Emit event to update cart
               window.dispatchEvent(new CustomEvent('cart-updated'))
               
