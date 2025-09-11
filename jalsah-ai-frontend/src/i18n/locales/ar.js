@@ -135,7 +135,8 @@ export default {
         emailRequired: 'البريد الإلكتروني مطلوب',
         whatsappRequired: 'رقم الواتساب مطلوب',
         passwordRequired: 'كلمة المرور مطلوبة'
-      }
+      },
+      verifyAccount: 'تحقق من الحساب'
     },
     register: {
       title: 'إنشاء حسابك',

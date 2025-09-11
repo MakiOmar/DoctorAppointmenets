@@ -138,7 +138,8 @@ export default {
         emailRequired: 'Email is required',
         whatsappRequired: 'WhatsApp number is required',
         passwordRequired: 'Password is required'
-      }
+      },
+      verifyAccount: 'Verify Account'
     },
     register: {
       title: 'Create your account',

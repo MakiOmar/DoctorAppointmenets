@@ -107,8 +107,9 @@ export const useAuthStore = defineStore('auth', () => {
         const errorMessage = error.response.data.error
         if (errorMessage.includes('User already exists and is verified')) {
           toast.error(t('toast.auth.userExistsVerified'))
-        } else if (errorMessage.includes('Please verify your email address')) {
-          toast.error(t('toast.auth.verificationRequired'))
+        } else if (errorMessage.includes('Please verify your') || errorMessage.includes('verification')) {
+          // Return verification error for login form to handle
+          return { success: false, needsVerification: true, message: errorMessage }
         } else {
           toast.error(errorMessage)
         }

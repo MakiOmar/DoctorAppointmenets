@@ -2206,8 +2206,18 @@ class SNKS_AI_Integration {
 		if ( self::is_ai_patient( $user->ID ) ) {
 			$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
 			if ( $is_verified !== '1' ) {
-		
-				$this->send_error( 'Please verify your email address before logging in. Check your email for verification code.', 401 );
+				// Get registration settings to determine verification method
+				$otp_method = $registration_settings['otp_method'] ?? 'email';
+				$require_email = $registration_settings['require_email'] ?? 1;
+				
+				// Create context-aware verification message
+				if ( $otp_method === 'whatsapp' || !$require_email ) {
+					$verification_message = 'Please verify your WhatsApp number before logging in. Check your WhatsApp for verification code.';
+				} else {
+					$verification_message = 'Please verify your email address before logging in. Check your email for verification code.';
+				}
+				
+				$this->send_error( $verification_message, 401 );
 			}
 	
 		}
@@ -2311,9 +2321,16 @@ class SNKS_AI_Integration {
 			$this->update_ai_user_fields( $existing_user->ID, $data );
 			$user = $existing_user;
 		} else {
-			// Create new user - use email if provided, otherwise use WhatsApp as username
+			// Create new user - use email if provided, otherwise create email from WhatsApp
 			$username = ! empty( $data['email'] ) ? sanitize_email( $data['email'] ) : sanitize_text_field( $data['whatsapp'] );
-			$email = ! empty( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
+			
+			if ( ! empty( $data['email'] ) ) {
+				$email = sanitize_email( $data['email'] );
+			} else {
+				// Create email from WhatsApp number: +201234567890@jalsah.app
+				$clean_whatsapp = preg_replace('/[^0-9+]/', '', $data['whatsapp']);
+				$email = $clean_whatsapp . '@jalsah.app';
+			}
 			
 			$user_id = wp_create_user( $username, $data['password'], $email );
 			if ( is_wp_error( $user_id ) ) {
@@ -2599,15 +2616,31 @@ Best regards,
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
-		if ( ! isset( $data['email'] ) || ! isset( $data['code'] ) ) {
-			$this->send_error( 'Email and verification code required', 400 );
+		if ( ! isset( $data['code'] ) ) {
+			$this->send_error( 'Verification code required', 400 );
 		}
 		
-		$email = sanitize_email( $data['email'] );
-		$code = sanitize_text_field( $data['code'] );
+		// Check if we have email or WhatsApp identifier
+		if ( ! isset( $data['email'] ) && ! isset( $data['whatsapp'] ) ) {
+			$this->send_error( 'Email or WhatsApp number required', 400 );
+		}
 		
-		// Find user by email
-		$user = get_user_by( 'email', $email );
+		$code = sanitize_text_field( $data['code'] );
+		$user = null;
+		
+		// Find user by email or WhatsApp
+		if ( isset( $data['email'] ) ) {
+			$email = sanitize_email( $data['email'] );
+			$user = get_user_by( 'email', $email );
+		} else {
+			$whatsapp = sanitize_text_field( $data['whatsapp'] );
+			$users = get_users( array(
+				'meta_key' => 'whatsapp',
+				'meta_value' => $whatsapp
+			) );
+			$user = ! empty( $users ) ? $users[0] : null;
+		}
+		
 		if ( ! $user ) {
 			$this->send_error( 'User not found', 404 );
 		}

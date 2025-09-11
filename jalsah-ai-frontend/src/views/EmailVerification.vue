@@ -120,10 +120,19 @@ export default {
       return form.value.verification_code.length === 6
     })
 
-    // Get contact info from route params or localStorage
+    // Get contact info from route params, query, or localStorage
     onMounted(() => {
-      contact.value = route.params.contact || localStorage.getItem('pending_verification_contact') || ''
-      verificationMethod.value = route.query.method || 'email'
+      // Check for identifier from login form
+      const identifier = route.query.identifier
+      if (identifier) {
+        contact.value = decodeURIComponent(identifier)
+        // Determine verification method based on identifier format
+        verificationMethod.value = identifier.includes('@') ? 'email' : 'whatsapp'
+      } else {
+        contact.value = route.params.contact || localStorage.getItem('pending_verification_contact') || ''
+        verificationMethod.value = route.query.method || 'email'
+      }
+      
       if (!contact.value) {
         router.push('/register')
         return
@@ -176,10 +185,18 @@ export default {
 
       loading.value = true
       try {
-        const response = await authStore.verifyEmail({
-          email: contact.value,
+        // Determine the identifier field based on verification method
+        const verificationData = {
           code: form.value.verification_code
-        })
+        }
+        
+        if (verificationMethod.value === 'whatsapp') {
+          verificationData.whatsapp = contact.value
+        } else {
+          verificationData.email = contact.value
+        }
+        
+        const response = await authStore.verifyEmail(verificationData)
         
         if (response) {
           // Clear pending verification contact
