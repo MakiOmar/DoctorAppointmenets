@@ -46,19 +46,6 @@
           </div>
 
 
-          <!-- Specializations/Diagnoses -->
-          <div class="flex flex-wrap gap-2">
-            <span 
-              v-for="diagnosis in therapist.diagnoses?.slice(0, 3)" 
-              :key="diagnosis.id"
-              class="bg-primary-100 text-primary-800 text-xs px-3 py-1 rounded-full"
-            >
-              {{ diagnosis.name }}
-            </span>
-            <span v-if="therapist.diagnoses?.length > 3" class="text-xs text-gray-500 px-2 py-1">
-              {{ $t('therapists.more', { count: therapist.diagnoses.length - 3 }) }}
-            </span>
-          </div>
 
           <!-- Suitability Message (only show if provided) -->
           <div v-if="suitabilityMessage" class="bg-primary-50 border border-primary-200 rounded-lg p-3">
@@ -66,6 +53,12 @@
             <p class="text-sm text-primary-800">
               {{ suitabilityMessage }}
             </p>
+          </div>
+
+          <!-- Bio Section (only show on therapists page, not diagnosis results) -->
+          <div v-if="!diagnosisId && therapist.bio" class="mt-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-2">{{ $t('therapistDetails.bio') }}</h4>
+            <p class="text-sm text-gray-700 line-clamp-3">{{ therapist.bio }}</p>
           </div>
 
           <!-- Soonest Available Appointment - Always Visible -->
