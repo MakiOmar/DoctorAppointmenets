@@ -418,7 +418,7 @@ export default {
     specializations: 'Specializations',
     sortBy: 'Sort by',
     sorting: {
-      order: 'Order',
+      best: 'The Best',
       priceLow: 'Lowest Price',
       nearest: 'Nearest Slot'
     },

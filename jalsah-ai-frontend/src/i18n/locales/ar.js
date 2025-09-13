@@ -422,7 +422,7 @@ export default {
     specializations: 'التخصصات',
     sortBy: 'ترتيب حسب',
     sorting: {
-      order: 'الترتيب',
+      best: 'الأفضل',
       priceLow: 'السعر الأقل',
       nearest: 'أقرب موعد'
     },

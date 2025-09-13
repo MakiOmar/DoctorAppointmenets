@@ -45,16 +45,16 @@
         <!-- Sorting Controls -->
         <div v-if="matchedTherapists.length > 0" class="mb-6">
           <div class="flex flex-col lg:flex-row gap-4 items-center">
-            <!-- Order Button -->
+            <!-- The Best Button -->
             <div class="w-full lg:w-1/3">
               <button
-                @click="setSorting('order')"
+                @click="setSorting('best')"
                 class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                :class="activeSort === 'order' 
+                :class="activeSort === 'best' 
                   ? 'border-primary-600 bg-primary-50 text-primary-700' 
                   : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
-                {{ $t('therapists.sorting.order') }}
+                {{ $t('therapists.sorting.best') }}
               </button>
             </div>
             
@@ -175,7 +175,7 @@ export default {
     const firstTherapistCard = ref(null)
     const openTherapistId = ref(null) // Track which therapist's details are currently open
     // Sorting controls - single active sort (same as therapists page)
-    const activeSort = ref('') // Active sorting: '', 'order', 'price-low', 'nearest'
+    const activeSort = ref('') // Active sorting: '', 'best', 'price-low', 'nearest'
 
     // Computed property to get therapists with their original system positions
     const therapistsWithOriginalPositions = computed(() => {
@@ -244,10 +244,12 @@ export default {
 
       // Apply active sorting (same logic as therapists page)
       switch (activeSort.value) {
-        case 'order':
-          // Sort by frontend_order (ascending)
+        case 'best':
+          // Sort by rating (highest to lowest)
           sorted.sort((a, b) => {
-            return a.frontendOrder - b.frontendOrder
+            const ratingA = a.rating || 0
+            const ratingB = b.rating || 0
+            return ratingB - ratingA // Higher rating first
           })
           break
           
