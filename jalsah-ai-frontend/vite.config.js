@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import { ENVIRONMENT_CONFIG } from './environment.js'
-import { writeFileSync } from 'fs'
+import { writeFileSync, copyFileSync } from 'fs'
 
 export default defineConfig({
   plugins: [
@@ -66,7 +66,16 @@ RewriteRule . /index.html [L]
 
         writeFileSync('dist/.htaccess', htaccess)
         writeFileSync('dist/web.config', webConfig)
-        console.log('✅ Generated .htaccess and web.config for SPA routing')
+        
+        // Copy countries JSON file to dist folder
+        try {
+          copyFileSync('countries-codes-and-flags.json', 'dist/countries-codes-and-flags.json')
+          console.log('✅ Generated .htaccess and web.config for SPA routing')
+          console.log('✅ Copied countries-codes-and-flags.json to dist folder')
+        } catch (error) {
+          console.warn('⚠️ Could not copy countries-codes-and-flags.json:', error.message)
+          console.log('✅ Generated .htaccess and web.config for SPA routing')
+        }
       }
     }
   ],

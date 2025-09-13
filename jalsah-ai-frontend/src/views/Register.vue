@@ -371,7 +371,7 @@ export default {
     const loadCountries = async () => {
       try {
         isLoadingCountries.value = true
-        const response = await fetch('/countires-codes-and-flags.json')
+        const response = await fetch('/countries-codes-and-flags.json')
         
         if (!response.ok) {
           throw new Error('Failed to fetch countries')
