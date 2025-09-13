@@ -45,19 +45,19 @@
         <!-- Sorting Controls -->
         <div v-if="matchedTherapists.length > 0" class="mb-6">
           <div class="flex flex-col lg:flex-row gap-4 items-center">
-            <!-- The Best Button -->
-            <div class="w-full lg:w-1/3">
+            
+                        <!-- Nearest Slot Button -->
+                        <div class="w-full lg:w-1/3">
               <button
-                @click="setSorting('best')"
+                @click="setSorting('nearest')"
                 class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                :class="activeSort === 'best' 
+                :class="activeSort === 'nearest' 
                   ? 'border-primary-600 bg-primary-50 text-primary-700' 
                   : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
-                {{ $t('therapists.sorting.best') }}
+                {{ $t('therapists.sorting.nearest') }}
               </button>
             </div>
-            
             <!-- Lowest Price Button -->
             <div class="w-full lg:w-1/3">
               <button
@@ -70,19 +70,19 @@
                 {{ $t('therapists.sorting.priceLow') }}
               </button>
             </div>
-            
-            <!-- Nearest Slot Button -->
+            <!-- The Best Button -->
             <div class="w-full lg:w-1/3">
               <button
-                @click="setSorting('nearest')"
+                @click="setSorting('best')"
                 class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-                :class="activeSort === 'nearest' 
+                :class="activeSort === 'best' 
                   ? 'border-primary-600 bg-primary-50 text-primary-700' 
                   : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
-                {{ $t('therapists.sorting.nearest') }}
+                {{ $t('therapists.sorting.best') }}
               </button>
             </div>
+
           </div>
         </div>
         
