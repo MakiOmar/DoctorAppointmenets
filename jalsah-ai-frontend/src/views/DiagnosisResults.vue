@@ -561,6 +561,9 @@ export default {
     const rediagnose = () => {
       // Clear stored diagnosis data
       localStorage.removeItem('diagnosis_data')
+      // Clear stored diagnosis ID
+      localStorage.removeItem('lastDiagnosisId')
+      console.log('🔍 Cleared stored diagnosis ID')
       // Redirect to homepage
       router.push('/')
     }
@@ -610,6 +613,12 @@ export default {
     }
 
     onMounted(async () => {
+      // Store diagnosis ID in localStorage for homepage button logic
+      if (route.params.diagnosisId) {
+        localStorage.setItem('lastDiagnosisId', route.params.diagnosisId)
+        console.log('🔍 Stored diagnosis ID:', route.params.diagnosisId)
+      }
+      
       // Ensure settings are loaded
       if (!settingsStore.isInitialized) {
         settingsStore.initializeSettings()

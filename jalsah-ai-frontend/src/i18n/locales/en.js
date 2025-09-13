@@ -69,6 +69,7 @@ export default {
       title: 'Smart & Advanced Mental Health Care',
       subtitle: 'Get AI-powered diagnosis and find the right therapist for you',
       cta: 'Start AI Diagnosis',
+      ctaWithDiagnosis: 'Browse Therapists Best for Your Diagnosis',
       secondaryCta: 'Browse Therapists'
     },
     features: {

@@ -13,10 +13,10 @@
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <router-link 
-              to="/diagnosis"
+              :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
               class="btn-primary text-lg px-8 py-3"
             >
-              {{ $t('home.hero.cta') }}
+              {{ hasPreviousDiagnosis ? $t('home.hero.ctaWithDiagnosis') : $t('home.hero.cta') }}
             </router-link>
             <router-link 
               to="/therapists"
@@ -177,10 +177,10 @@
           {{ $t('home.hero.subtitle') }}
         </p>
         <router-link 
-          to="/diagnosis"
+          :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
           class="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-md text-lg font-medium transition-colors"
         >
-          {{ $t('home.hero.cta') }}
+          {{ hasPreviousDiagnosis ? $t('home.hero.ctaWithDiagnosis') : $t('home.hero.cta') }}
         </router-link>
       </div>
     </section>
@@ -188,7 +188,31 @@
 </template>
 
 <script>
+import { ref, computed, onMounted } from 'vue'
+
 export default {
-  name: 'Home'
+  name: 'Home',
+  setup() {
+    const lastDiagnosisId = ref(null)
+    
+    // Computed property to check if user has a previous diagnosis
+    const hasPreviousDiagnosis = computed(() => {
+      return lastDiagnosisId.value !== null
+    })
+    
+    // Check for stored diagnosis ID on component mount
+    onMounted(() => {
+      const storedDiagnosisId = localStorage.getItem('lastDiagnosisId')
+      if (storedDiagnosisId) {
+        lastDiagnosisId.value = storedDiagnosisId
+        console.log('🔍 Found stored diagnosis ID:', storedDiagnosisId)
+      }
+    })
+    
+    return {
+      lastDiagnosisId,
+      hasPreviousDiagnosis
+    }
+  }
 }
 </script> 
