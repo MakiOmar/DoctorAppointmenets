@@ -24,18 +24,12 @@
           <p class="text-gray-600 mb-4">
             {{ diagnosisResult.description }}
           </p>
-          <div class="flex justify-center space-x-4" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-4'">
+          <div class="flex justify-center">
             <button
               @click="rediagnose"
               class="btn-secondary"
             >
               {{ $t('diagnosisResults.rediagnose') }}
-            </button>
-            <button
-              @click="browseAllTherapists"
-              class="btn-primary"
-            >
-              {{ $t('diagnosisResults.browseAll') }}
             </button>
           </div>
         </div>
@@ -123,15 +117,9 @@
           <h3 class="text-lg font-medium text-gray-900 mb-2">
             {{ $t('diagnosisResults.noTherapistsFound') }}
           </h3>
-          <p class="text-gray-600 mb-6">
+          <p class="text-gray-600">
             {{ $t('diagnosisResults.noTherapistsDescription') }}
           </p>
-          <button
-            @click="browseAllTherapists"
-            class="btn-primary"
-          >
-            {{ $t('diagnosisResults.browseAllTherapists') }}
-          </button>
         </div>
 
         <!-- Therapists List -->
@@ -602,9 +590,6 @@ export default {
       router.push('/')
     }
 
-    const browseAllTherapists = () => {
-      router.push('/therapists')
-    }
 
     const viewTherapist = (therapistId) => {
       router.push(`/therapist/${therapistId}`)
@@ -689,7 +674,6 @@ export default {
       firstTherapistCard,
       openTherapistId,
       rediagnose,
-      browseAllTherapists,
       viewTherapist,
       bookAppointment,
       showMoreTherapists,
