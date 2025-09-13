@@ -44,56 +44,44 @@
         
         <!-- Sorting Controls -->
         <div v-if="matchedTherapists.length > 0" class="mb-6">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Order Sorting -->
-            <div class="flex flex-col">
-              <label for="orderSort" class="text-sm font-medium text-gray-700 mb-2">
-                {{ $t('diagnosisResults.sortByOrder') }}
-              </label>
-              <select 
-                id="orderSort" 
-                v-model="orderSort" 
-                @change="updateSorting"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+          <div class="flex flex-col lg:flex-row gap-4 items-center">
+            <!-- Order Button -->
+            <div class="w-full lg:w-1/3">
+              <button
+                @click="setSorting('order')"
+                class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="activeSort === 'order' 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
-                <option value="">{{ $t('diagnosisResults.any') }}</option>
-                <option value="asc">{{ $t('diagnosisResults.orderAsc') }}</option>
-                <option value="desc">{{ $t('diagnosisResults.orderDesc') }}</option>
-              </select>
+                {{ $t('therapists.sorting.order') }}
+              </button>
             </div>
-
-            <!-- Price Sorting -->
-            <div class="flex flex-col">
-              <label for="priceSort" class="text-sm font-medium text-gray-700 mb-2">
-                {{ $t('diagnosisResults.sortByPrice') }}
-              </label>
-              <select 
-                id="priceSort" 
-                v-model="priceSort" 
-                @change="updateSorting"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+            
+            <!-- Lowest Price Button -->
+            <div class="w-full lg:w-1/3">
+              <button
+                @click="setSorting('price-low')"
+                class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="activeSort === 'price-low' 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
-                <option value="">{{ $t('diagnosisResults.any') }}</option>
-                <option value="lowest">{{ $t('diagnosisResults.priceLowest') }}</option>
-                <option value="highest">{{ $t('diagnosisResults.priceHighest') }}</option>
-              </select>
+                {{ $t('therapists.sorting.priceLow') }}
+              </button>
             </div>
-
-            <!-- Appointment Sorting -->
-            <div class="flex flex-col">
-              <label for="appointmentSort" class="text-sm font-medium text-gray-700 mb-2">
-                {{ $t('diagnosisResults.sortByAppointment') }}
-              </label>
-              <select 
-                id="appointmentSort" 
-                v-model="appointmentSort" 
-                @change="updateSorting"
-                class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm"
+            
+            <!-- Nearest Slot Button -->
+            <div class="w-full lg:w-1/3">
+              <button
+                @click="setSorting('nearest')"
+                class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="activeSort === 'nearest' 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
-                <option value="">{{ $t('diagnosisResults.any') }}</option>
-                <option value="nearest">{{ $t('diagnosisResults.appointmentNearest') }}</option>
-                <option value="farthest">{{ $t('diagnosisResults.appointmentFarthest') }}</option>
-              </select>
+                {{ $t('therapists.sorting.nearest') }}
+              </button>
             </div>
           </div>
         </div>
@@ -186,9 +174,8 @@ export default {
     const showAllTherapists = ref(false)
     const firstTherapistCard = ref(null)
     const openTherapistId = ref(null) // Track which therapist's details are currently open
-    const orderSort = ref('') // Order sorting: '', 'asc', 'desc'
-    const priceSort = ref('') // Price sorting: '', 'lowest', 'highest'
-    const appointmentSort = ref('') // Appointment sorting: '', 'nearest', 'farthest'
+    // Sorting controls - single active sort (same as therapists page)
+    const activeSort = ref('') // Active sorting: '', 'order', 'price-low', 'nearest'
 
     // Computed property to get therapists with their original system positions
     const therapistsWithOriginalPositions = computed(() => {
@@ -215,96 +202,82 @@ export default {
       })
     })
 
-    // Computed property to sort therapists based on selected sorting criteria
+    // Helper function to get earliest slot time (same as therapists page)
+    const getEarliestSlotTime = (therapist) => {
+      // First try to use earliest_slot_data if available
+      if (therapist.earliest_slot_data && therapist.earliest_slot_data.date && therapist.earliest_slot_data.time) {
+        try {
+          const slotDate = new Date(`${therapist.earliest_slot_data.date} ${therapist.earliest_slot_data.time}`)
+          if (!isNaN(slotDate.getTime())) {
+            return slotDate.getTime()
+          }
+        } catch (error) {
+          console.warn('Error parsing earliest_slot_data:', error)
+        }
+      }
+      
+      // Fallback to earliest_slot (minutes from now)
+      if (therapist.earliest_slot && parseInt(therapist.earliest_slot) > 0) {
+        const minutesFromNow = parseInt(therapist.earliest_slot)
+        const slotDate = new Date(Date.now() + minutesFromNow * 60000)
+        return slotDate.getTime()
+      }
+      
+      // If it's a full datetime string, parse it
+      const slotDate = new Date(therapist.earliest_slot || '9999-12-31')
+      return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
+    }
+
+    // Computed property to sort therapists (same logic as therapists page)
     const sortedTherapists = computed(() => {
       if (!therapistsWithOriginalPositions.value.length) return []
       
       // Filter out therapists with no available slots
-      const filteredTherapists = therapistsWithOriginalPositions.value.filter(therapist => {
+      let filtered = therapistsWithOriginalPositions.value.filter(therapist => {
         // Check if therapist has available slots
         return therapist.earliest_slot_data && 
                therapist.earliest_slot_data.date && 
                therapist.earliest_slot_data.time
       })
       
-      return [...filteredTherapists].sort((a, b) => {
-        // Priority: Order > Price > Appointment
-        // If multiple sorting criteria are selected, order takes precedence
-        
-        // Order sorting
-        if (orderSort.value) {
-          if (orderSort.value === 'asc') {
-            return a.displayOrder - b.displayOrder
-          } else if (orderSort.value === 'desc') {
-            return b.displayOrder - a.displayOrder
-          }
-        }
-        
-        // Price sorting
-        if (priceSort.value) {
-          // Get the actual price value from the price object structure
-          const getPriceValue = (therapist) => {
-            if (!therapist.price) return 0
-            // For demo therapists, price is { others: number }
-            // For regular therapists, price is { countries: [], others: number }
-            return parseInt(therapist.price.others || 0)
-          }
-          
-          const aPrice = getPriceValue(a)
-          const bPrice = getPriceValue(b)
-          
-          if (priceSort.value === 'lowest') {
-            return aPrice - bPrice
-          } else if (priceSort.value === 'highest') {
-            return bPrice - aPrice
-          }
-        }
-        
-        // Appointment sorting
-        if (appointmentSort.value) {
-          // Get the actual datetime from earliest_slot_data for proper sorting
-          const getEarliestDateTime = (therapist) => {
-            if (therapist.earliest_slot_data && therapist.earliest_slot_data.date && therapist.earliest_slot_data.time) {
-              try {
-                const dateTime = new Date(therapist.earliest_slot_data.date + ' ' + therapist.earliest_slot_data.time)
-        
-                return isNaN(dateTime.getTime()) ? new Date('9999-12-31') : dateTime
-              } catch (error) {
-                
-                return new Date('9999-12-31')
-              }
-            }
-            // Fallback to earliest_slot (minutes from now) if no real data
-            if (therapist.earliest_slot && parseInt(therapist.earliest_slot) > 0) {
-              try {
-                const minutesFromNow = parseInt(therapist.earliest_slot)
-                const dateTime = new Date(Date.now() + minutesFromNow * 60000)
+      let sorted = [...filtered]
 
-                return dateTime
-              } catch (error) {
-                
-                return new Date('9999-12-31')
-              }
-            }
-            
-            return new Date('9999-12-31') // No slot available
-          }
+      // Apply active sorting (same logic as therapists page)
+      switch (activeSort.value) {
+        case 'order':
+          // Sort by frontend_order (ascending)
+          sorted.sort((a, b) => {
+            return a.frontendOrder - b.frontendOrder
+          })
+          break
           
-          const aDateTime = getEarliestDateTime(a)
-          const bDateTime = getEarliestDateTime(b)
+        case 'price-low':
+          // Sort by price (lowest to highest)
+          sorted.sort((a, b) => {
+            const priceA = a.price?.others || 0
+            const priceB = b.price?.others || 0
+            return priceA - priceB
+          })
+          break
           
+        case 'nearest':
+          // Sort by earliest appointment (nearest to farthest)
+          sorted.sort((a, b) => {
+            const timeA = getEarliestSlotTime(a)
+            const timeB = getEarliestSlotTime(b)
+            return timeA - timeB
+          })
+          break
           
-          
-          if (appointmentSort.value === 'nearest') {
-            return aDateTime - bDateTime
-          } else if (appointmentSort.value === 'farthest') {
-            return bDateTime - aDateTime
-          }
-        }
-        
-        // Default: sort by frontend_order ascending if no sorting criteria are selected
-        return a.frontendOrder - b.frontendOrder
-      })
+        default:
+          // Default sorting (no specific sorting applied) - use frontend_order
+          sorted.sort((a, b) => {
+            return a.frontendOrder - b.frontendOrder
+          })
+          break
+      }
+
+      return sorted
     })
 
     // Computed property to get displayed therapists based on limit
@@ -490,11 +463,11 @@ export default {
 
       
       while (retryCount <= maxRetries) {
-        try {
-          const diagnosisId = route.params.diagnosisId
-          let response
-          
-          if (diagnosisId) {
+      try {
+        const diagnosisId = route.params.diagnosisId
+        let response
+        
+        if (diagnosisId) {
             // Check if diagnosisId is numeric (ID) or string (name)
             
             // If diagnosisId is numeric, always use ID-based search regardless of settings
@@ -505,28 +478,28 @@ export default {
           matchedTherapists.value = response.data.data || []
             } else {
               // For non-numeric IDs, check if we should search by name
-              if (settingsStore && settingsStore.isDiagnosisSearchByName) {
-                // Load all therapists and filter by diagnosis name on frontend
-                response = await api.get('/api/ai/therapists')
+          if (settingsStore && settingsStore.isDiagnosisSearchByName) {
+            // Load all therapists and filter by diagnosis name on frontend
+            response = await api.get('/api/ai/therapists')
                 
-                if (response.data.data) {
-                  // Get diagnosis name from result or URL parameter
-                  let diagnosisName = ''
-                  if (diagnosisResult.value && diagnosisResult.value.title) {
-                    diagnosisName = diagnosisResult.value.title.toLowerCase()
-                  } else {
-                    // Use URL parameter directly (decoded)
-                    diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
-                  }
-                  
-                  if (diagnosisName) {
-                    // Filter therapists by diagnosis name
+            if (response.data.data) {
+              // Get diagnosis name from result or URL parameter
+              let diagnosisName = ''
+              if (diagnosisResult.value && diagnosisResult.value.title) {
+                diagnosisName = diagnosisResult.value.title.toLowerCase()
+              } else {
+                // Use URL parameter directly (decoded)
+                diagnosisName = decodeURIComponent(diagnosisId).toLowerCase()
+              }
+              
+              if (diagnosisName) {
+                // Filter therapists by diagnosis name
                     const allFilteredTherapists = response.data.data.filter(therapist => 
-                      therapist.diagnoses?.some(diagnosis => 
-                        diagnosis.name?.toLowerCase().includes(diagnosisName) ||
-                        diagnosis.name_en?.toLowerCase().includes(diagnosisName)
-                      )
-                    )
+                  therapist.diagnoses?.some(diagnosis => 
+                    diagnosis.name?.toLowerCase().includes(diagnosisName) ||
+                    diagnosis.name_en?.toLowerCase().includes(diagnosisName)
+                  )
+                )
                     
                     // Apply limit if show more button is disabled
                     if (!settingsStore.isShowMoreButtonEnabled && settingsStore.getDiagnosisResultsLimit > 0) {
@@ -534,33 +507,33 @@ export default {
                     } else {
                       matchedTherapists.value = allFilteredTherapists
                     }
-                  } else {
-                    matchedTherapists.value = []
-                  }
-                } else {
-                  matchedTherapists.value = []
-                }
               } else {
-                // If it's a name but ID search is enabled, load all therapists
-                response = await api.get('/api/ai/therapists')
-                matchedTherapists.value = response.data.data || []
+                matchedTherapists.value = []
               }
+            } else {
+              matchedTherapists.value = []
             }
-          } else {
-            // Load all therapists (for simulation)
-            response = await api.get('/api/ai/therapists')
-            matchedTherapists.value = response.data.data || []
+            } else {
+              // If it's a name but ID search is enabled, load all therapists
+              response = await api.get('/api/ai/therapists')
+              matchedTherapists.value = response.data.data || []
+            }
           }
+        } else {
+          // Load all therapists (for simulation)
+          response = await api.get('/api/ai/therapists')
+          matchedTherapists.value = response.data.data || []
+        }
           
           // If we get here, the request was successful
           break
           
-        } catch (error) {
+      } catch (error) {
           retryCount++
           console.error(`Error loading matched therapists (attempt ${retryCount}):`, error)
           
           if (retryCount > maxRetries) {
-            toast.error(t('diagnosisResults.errorLoadingTherapists'))
+        toast.error(t('diagnosisResults.errorLoadingTherapists'))
             matchedTherapists.value = []
           } else {
             // Wait a bit before retrying
@@ -569,7 +542,7 @@ export default {
         }
       }
       
-      loading.value = false
+        loading.value = false
       
       // Auto-click first therapist after loading
       if (matchedTherapists.value.length > 0) {
@@ -615,6 +588,18 @@ export default {
       console.log('🔍 Previous openTherapistId:', openTherapistId.value)
       openTherapistId.value = null
       console.log('🔍 New openTherapistId:', openTherapistId.value)
+    }
+
+    // Sorting button handlers (same as therapists page)
+    const setSorting = (sortType) => {
+      // If clicking the same sort, deactivate it (reset to default)
+      if (activeSort.value === sortType) {
+        activeSort.value = ''
+        return
+      }
+      
+      // Apply new sorting
+      activeSort.value = sortType
     }
 
     const updateSorting = () => {
@@ -668,9 +653,8 @@ export default {
       showAllTherapists,
       diagnosisResult,
       route,
-      orderSort,
-      priceSort,
-      appointmentSort,
+      activeSort,
+      setSorting,
       firstTherapistCard,
       openTherapistId,
       rediagnose,

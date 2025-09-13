@@ -422,9 +422,9 @@ export default {
     specializations: 'التخصصات',
     sortBy: 'ترتيب حسب',
     sorting: {
-      best: 'الأفضل',
+      order: 'الترتيب',
       priceLow: 'السعر الأقل',
-      nearest: 'الأقرب'
+      nearest: 'أقرب موعد'
     },
     loadingMore: 'جاري تحميل المزيد...',
     allLoaded: 'تم تحميل جميع المعالجين',

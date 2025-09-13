@@ -418,9 +418,9 @@ export default {
     specializations: 'Specializations',
     sortBy: 'Sort by',
     sorting: {
-      best: 'The Best',
+      order: 'Order',
       priceLow: 'Lowest Price',
-      nearest: 'Nearest'
+      nearest: 'Nearest Slot'
     },
     loadingMore: 'Loading more...',
     allLoaded: 'All therapists loaded',
