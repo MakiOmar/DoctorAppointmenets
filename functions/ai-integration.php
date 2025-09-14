@@ -5559,11 +5559,33 @@ function snks_ai_order_thankyou_redirect($order_id) {
 		$is_ai_order = $order->get_meta('from_jalsah_ai');
 		if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
 			// Redirect AI orders to the frontend appointments page
-			$frontend_url = $this->get_primary_frontend_url();
+			$frontend_url = snks_ai_get_primary_frontend_url();
 			wp_safe_redirect($frontend_url . '/appointments');
 			exit;
 		}
 	}
+}
+
+/**
+ * Get the first valid frontend URL for redirects (standalone function)
+ */
+function snks_ai_get_primary_frontend_url() {
+	$frontend_urls = get_option( 'snks_ai_frontend_urls', 'https://jalsah-ai.com' );
+	
+	// Parse URLs from textarea (one per line)
+	$urls = array_filter( array_map( 'trim', explode( "\n", $frontend_urls ) ) );
+	
+	// Validate and clean URLs
+	$valid_origins = array();
+	foreach ( $urls as $url ) {
+		$url = trim( $url );
+		if ( ! empty( $url ) && filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			$valid_origins[] = $url;
+		}
+	}
+	
+	// Return the first valid URL, or fallback
+	return $valid_origins[0] ?? 'https://jalsah-ai.com';
 }
 
 function snks_ai_order_template_redirect() {
@@ -5587,7 +5609,7 @@ function snks_ai_order_template_redirect() {
 				
 				if ($is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1) {
 					// Redirect AI orders to the frontend appointments page
-					$frontend_url = $this->get_primary_frontend_url();
+					$frontend_url = snks_ai_get_primary_frontend_url();
 					wp_safe_redirect($frontend_url . '/appointments');
 					exit;
 				}
