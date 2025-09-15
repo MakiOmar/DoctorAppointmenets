@@ -35,19 +35,80 @@
             />
           </div>
 
-          <!-- WhatsApp field (shown when email is not required) -->
+          <!-- WhatsApp field with dial code selector (shown when email is not required) -->
           <div v-else>
-            <label for="whatsapp" class="form-label">{{ $t('auth.login.whatsapp') }}</label>
-            <input
-              id="whatsapp"
-              v-model="form.whatsapp"
-              type="tel"
-              required
-              class="input-field"
-              :placeholder="$t('auth.login.whatsappPlaceholder')"
-              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-              autocomplete="tel"
-            />
+            <div class="mb-2">
+              <label for="whatsapp" class="form-label">{{ $t('auth.login.whatsapp') }}</label>
+            </div>
+            <div class="flex" style="direction: ltr;">
+              <!-- Custom Country Selector -->
+              <div class="relative flex-shrink-0">
+                <button
+                  type="button"
+                  @click="toggleCountryDropdown"
+                  :disabled="isDetectingCountry"
+                  class="w-32 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
+                  style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
+                >
+                  <span class="flex items-center">
+                    <span v-if="isDetectingCountry" class="text-lg mr-1">
+                      <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                    <span v-else-if="!isLoadingCountries" class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
+                    <span v-else class="text-lg mr-1">🇪🇬</span>
+                    <span class="text-xs">{{ getSelectedCountryDial() }}</span>
+                  </span>
+                  <svg v-if="!isDetectingCountry" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div
+                  v-if="showCountryDropdown && !isLoadingCountries"
+                  class="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                  style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
+                >
+                  <div class="p-2">
+                    <input
+                      v-model="countrySearch"
+                      type="text"
+                      placeholder="Search countries..."
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
+                  </div>
+                  <div class="max-h-48 overflow-y-auto">
+                    <button
+                      v-for="country in filteredCountries"
+                      :key="country.code"
+                      type="button"
+                      @click="selectCountry(country.code)"
+                      class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                      :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
+                    >
+                      <span class="text-lg mr-3 emoji-flag">{{ country.flag }}</span>
+                      <span class="flex-1">{{ country.name }}</span>
+                      <span class="text-gray-500 text-xs">{{ country.dial }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <input
+                id="whatsapp"
+                v-model="form.whatsapp"
+                type="tel"
+                required
+                class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                :placeholder="$t('auth.login.whatsappPlaceholder')"
+                dir="ltr"
+                autocomplete="tel"
+                style="text-align: left; direction: ltr;"
+              />
+            </div>
           </div>
 
           <div>
@@ -140,15 +201,18 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
+import api from '@/services/api'
 
 export default {
   name: 'Login',
   setup() {
     const router = useRouter()
+    const { locale } = useI18n()
     const authStore = useAuthStore()
     const therapistRegistrationStore = useTherapistRegistrationStore()
     
@@ -159,6 +223,14 @@ export default {
       rememberMe: false
     })
 
+    // Country selector state
+    const selectedCountryCode = ref('EG')
+    const showCountryDropdown = ref(false)
+    const countrySearch = ref('')
+    const isDetectingCountry = ref(false)
+    const countries = ref([])
+    const isLoadingCountries = ref(false)
+
     const loading = computed(() => authStore.loading)
     const requireEmail = computed(() => {
       const result = therapistRegistrationStore.shouldShowEmail
@@ -168,6 +240,30 @@ export default {
     })
 
     const verificationError = ref(null)
+
+    // Filtered countries based on search
+    // Localized country names
+    const localizedCountries = computed(() => {
+      const isArabic = locale.value === 'ar'
+      return countries.value.map(country => ({
+        ...country,
+        name: isArabic ? country.name_ar : country.name_en,
+        code: country.country_code,
+        dial: country.dial_code,
+        flag: country.flag // Explicitly preserve the flag
+      }))
+    })
+
+    const filteredCountries = computed(() => {
+      if (!countrySearch.value) {
+        return localizedCountries.value
+      }
+      return localizedCountries.value.filter(country => 
+        country.name.toLowerCase().includes(countrySearch.value.toLowerCase()) ||
+        country.dial.includes(countrySearch.value) ||
+        country.code.toLowerCase().includes(countrySearch.value.toLowerCase())
+      )
+    })
 
     const handleLogin = async () => {
       verificationError.value = null
@@ -180,7 +276,10 @@ export default {
       if (requireEmail.value) {
         credentials.email = form.value.email
       } else {
-        credentials.whatsapp = form.value.whatsapp
+        // Get selected country info and build full WhatsApp number
+        const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+        const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
+        credentials.whatsapp = fullWhatsAppNumber
       }
       
       const result = await authStore.login(credentials)

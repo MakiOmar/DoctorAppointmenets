@@ -64,23 +64,6 @@
             </div>
           </div>
 
-          <!-- Age -->
-          <div>
-            <label for="age" class="form-label">{{ $t('auth.register.age') }} <span class="text-red-500">*</span></label>
-            <input
-              id="age"
-              v-model="form.age"
-              type="number"
-              min="13"
-              max="120"
-              required
-              class="input-field"
-              :placeholder="$t('auth.register.agePlaceholder')"
-              :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-              autocomplete="on"
-            />
-          </div>
-
           <!-- Email (conditional based on settings) -->
           <div v-if="shouldShowEmailField">
             <label for="email" class="form-label">{{ $t('auth.register.email') }} <span class="text-red-500">*</span></label>
@@ -201,6 +184,7 @@
               required
               class="input-field"
               :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
+              @blur="validatePasswordMatch"
             />
             <div v-if="passwordMismatchError" class="mt-1 text-sm text-red-600">
               {{ $t('auth.register.passwordMismatch') }}
@@ -267,7 +251,6 @@ export default {
     const form = ref({
       first_name: '',
       last_name: '',
-      age: '',
       email: '',
       whatsapp: '',
       password: '',
@@ -287,13 +270,17 @@ export default {
 
     const loading = computed(() => authStore.loading)
     
-    // Password mismatch error - only show when passwords have same length but don't match
-    const passwordMismatchError = computed(() => {
-      return form.value.password &&
-             form.value.confirm_password &&
-             form.value.password.length === form.value.confirm_password.length &&
-             form.value.password !== form.value.confirm_password
-    })
+    // Password mismatch error - shown when user focuses out of confirm password field
+    const passwordMismatchError = ref(false)
+    
+    // Function to validate password match on focusout
+    const validatePasswordMatch = () => {
+      if (form.value.password && form.value.confirm_password) {
+        passwordMismatchError.value = form.value.password !== form.value.confirm_password
+      } else {
+        passwordMismatchError.value = false
+      }
+    }
     
     // Filtered countries based on search
     // Localized country names
@@ -322,7 +309,6 @@ export default {
     const isFormValid = computed(() => {
       const baseValidation = form.value.first_name &&
              form.value.last_name &&
-             form.value.age &&
              form.value.whatsapp &&
              form.value.password &&
              form.value.confirm_password &&
@@ -595,6 +581,7 @@ export default {
       shouldShowEmailField,
       otpMethod,
       passwordMismatchError,
+      validatePasswordMatch,
       showCountryDropdown,
       countrySearch,
       filteredCountries,
