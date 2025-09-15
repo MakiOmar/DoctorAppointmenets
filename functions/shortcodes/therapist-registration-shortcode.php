@@ -1085,6 +1085,18 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		$template_name = isset( $settings['whatsapp_template_name'] ) ? $settings['whatsapp_template_name'] : 'hello_world';
 		$template_language = $settings['whatsapp_message_language'] === 'ar' ? 'ar' : 'en_US';
 		
+		// Extract verification code from message (assuming it's the first 6-digit number)
+		preg_match('/\b\d{6}\b/', $message, $matches);
+		$verification_code = isset($matches[0]) ? $matches[0] : '123456';
+		
+		// Debug template parameters
+		error_log( '=== WHATSAPP TEMPLATE DEBUG ===' );
+		error_log( 'Template Name: ' . $template_name );
+		error_log( 'Template Language: ' . $template_language );
+		error_log( 'Original Message: ' . $message );
+		error_log( 'Extracted Verification Code: ' . $verification_code );
+		error_log( '===============================' );
+		
 		$body = array(
 			'messaging_product' => 'whatsapp',
 			'to' => $phone_number,
@@ -1093,6 +1105,17 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 				'name' => $template_name,
 				'language' => array(
 					'code' => $template_language
+				),
+				'components' => array(
+					array(
+						'type' => 'body',
+						'parameters' => array(
+							array(
+								'type' => 'text',
+								'text' => $verification_code
+							)
+						)
+					)
 				)
 			)
 		);
@@ -1140,9 +1163,9 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	error_log( 'Access Token (first 20 chars): ' . substr( $access_token, 0, 20 ) . '...' );
 	error_log( 'Use Template: ' . ( $use_template ? 'Yes' : 'No' ) );
 	error_log( 'Template Name: ' . ( $template_name ?? 'N/A' ) );
+	error_log( 'Request Body: ' . wp_json_encode( $body ) );
 	error_log( 'Message Length: ' . strlen( $message ) );
 	error_log( 'Message: ' . $message );
-	error_log( 'Request Body: ' . wp_json_encode( $body ) );
 	error_log( 'Response Code: ' . $response_code );
 	error_log( 'Response Body: ' . $response_body );
 	
