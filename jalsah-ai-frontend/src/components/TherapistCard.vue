@@ -468,6 +468,61 @@ export default {
       }
     }
 
+    // Helper function to get the nearest slot date
+    const getNearestSlotDate = () => {
+      // First try to use the earliestSlot ref (loaded from API)
+      if (earliestSlot.value && earliestSlot.value.date) {
+        return earliestSlot.value.date
+      }
+      
+      // Fallback to therapist.earliest_slot_data
+      if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
+        return props.therapist.earliest_slot_data.date
+      }
+      
+      // Fallback to therapist.earliest_slot (minutes from now)
+      if (props.therapist.earliest_slot && parseInt(props.therapist.earliest_slot) > 0) {
+        const minutesFromNow = parseInt(props.therapist.earliest_slot)
+        const now = new Date()
+        const earliestTime = new Date(now.getTime() + minutesFromNow * 60000)
+        return earliestTime.toISOString().split('T')[0]
+      }
+      
+      return null
+    }
+    
+    // Helper function to get the nearest slot info (date and time)
+    const getNearestSlotInfo = () => {
+      // First try to use the earliestSlot ref (loaded from API)
+      if (earliestSlot.value && earliestSlot.value.date && earliestSlot.value.time) {
+        return {
+          date: earliestSlot.value.date,
+          time: earliestSlot.value.time
+        }
+      }
+      
+      // Fallback to therapist.earliest_slot_data
+      if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date && props.therapist.earliest_slot_data.time) {
+        return {
+          date: props.therapist.earliest_slot_data.date,
+          time: props.therapist.earliest_slot_data.time
+        }
+      }
+      
+      // Fallback to therapist.earliest_slot (minutes from now)
+      if (props.therapist.earliest_slot && parseInt(props.therapist.earliest_slot) > 0) {
+        const minutesFromNow = parseInt(props.therapist.earliest_slot)
+        const now = new Date()
+        const earliestTime = new Date(now.getTime() + minutesFromNow * 60000)
+        return {
+          date: earliestTime.toISOString().split('T')[0],
+          time: earliestTime.toTimeString().split(' ')[0].substring(0, 5)
+        }
+      }
+      
+      return null
+    }
+
     const loadEarliestSlot = async () => {
       try {
         // First, try to use the earliest_slot_data from the therapist object
@@ -517,12 +572,20 @@ export default {
       try {
         // Use the actual available dates from the therapist data
         if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
+          // Get the nearest slot info to exclude it
+          const nearestSlotDate = getNearestSlotDate()
+          
           // Deduplicate dates by creating a Map with date as key
           const dateMap = new Map()
           
           props.therapist.available_dates.forEach(dateInfo => {
             const dateObj = new Date(dateInfo.date)
             const dateKey = dateInfo.date
+            
+            // Skip if this is the nearest slot date
+            if (nearestSlotDate && dateKey === nearestSlotDate) {
+              return
+            }
             
             // If date doesn't exist or this slot has earlier time, update it
             if (!dateMap.has(dateKey) || 
@@ -547,16 +610,23 @@ export default {
           if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
             const baseDate = new Date(props.therapist.earliest_slot_data.date)
             const dates = []
+            const nearestSlotDate = getNearestSlotDate()
             
             // Generate next 7 days starting from the earliest slot date
             for (let i = 0; i < 7; i++) {
               const date = new Date(baseDate)
               date.setDate(baseDate.getDate() + i)
+              const dateString = date.toISOString().split('T')[0]
+              
+              // Skip if this is the nearest slot date
+              if (nearestSlotDate && dateString === nearestSlotDate) {
+                continue
+              }
               
               dates.push({
-                value: date.toISOString().split('T')[0],
-                        day: formatShortDay(date),
-        date: formatShortDate(date)
+                value: dateString,
+                day: formatShortDay(date),
+                date: formatShortDate(date)
               })
             }
             
@@ -582,6 +652,9 @@ export default {
           const selectedDateInfo = props.therapist.available_dates.find(d => d.date === date.value)
           
           if (selectedDateInfo) {
+            // Get nearest slot info to exclude it
+            const nearestSlotInfo = getNearestSlotInfo()
+            
             // Create a time slot using the real slot data from the database
             const timeSlot = {
               id: parseInt(selectedDateInfo.slot_id), // Ensure ID is a number
@@ -595,6 +668,14 @@ export default {
               inCart: false
             }
             
+            // Skip if this is the nearest slot
+            if (nearestSlotInfo && 
+                nearestSlotInfo.date === date.value && 
+                nearestSlotInfo.time === selectedDateInfo.time) {
+              timeSlots.value = []
+              return
+            }
+            
             // Check if this slot is in the user's cart
             await checkSlotCartStatus(timeSlot)
             timeSlots.value = [timeSlot]
@@ -606,11 +687,23 @@ export default {
           const response = await api.get(`/api/ai/therapists/${props.therapist.id}/time-slots?date=${date.value}`)
           const data = response.data
           if (data.success && Array.isArray(data.data)) {
-            const slots = data.data.map(slot => ({
-              ...slot,
-              id: parseInt(slot.id), // Ensure ID is a number
-              inCart: false
-            }))
+            const nearestSlotInfo = getNearestSlotInfo()
+            
+            const slots = data.data
+              .map(slot => ({
+                ...slot,
+                id: parseInt(slot.id), // Ensure ID is a number
+                inCart: false
+              }))
+              .filter(slot => {
+                // Filter out the nearest slot
+                if (nearestSlotInfo && 
+                    nearestSlotInfo.date === date.value && 
+                    nearestSlotInfo.time === slot.time) {
+                  return false
+                }
+                return true
+              })
             
             // Check cart status for all slots
             await checkSlotsCartStatus(slots)
