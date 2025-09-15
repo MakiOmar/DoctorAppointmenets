@@ -1111,15 +1111,15 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 			)
 		);
 		
-		// Add OTP button component for auto-fill functionality
+		// Add URL button component (template expects URL button type)
 		$components[] = array(
 			'type' => 'button',
-			'sub_type' => 'COPY_CODE',
+			'sub_type' => 'URL',
 			'index' => '0',
 			'parameters' => array(
 				array(
 					'type' => 'text',
-					'text' => $verification_code
+					'text' => 'jalsah.app'
 				)
 			)
 		);
