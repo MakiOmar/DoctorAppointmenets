@@ -65,6 +65,16 @@ export default {
 
   // Home Page
   home: {
+    auth: {
+      title: 'Welcome to Jalsah AI',
+      subtitle: 'Sign in or create an account to get started',
+      login: 'Sign In',
+      register: 'Create Account',
+      featuresTitle: 'What you\'ll get:',
+      feature1: 'AI-powered intelligent diagnosis',
+      feature2: 'Expert licensed therapists',
+      feature3: 'Safe and convenient online sessions'
+    },
     hero: {
       title: 'Smart & Advanced Mental Health Care',
       subtitle: 'Get AI-powered diagnosis and find the right therapist for you',
