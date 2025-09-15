@@ -1089,8 +1089,13 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		preg_match('/\b\d{6}\b/', $message, $matches);
 		$verification_code = isset($matches[0]) ? $matches[0] : '123456';
 		
-		// Get button URL for template
-		$button_url = isset( $settings['whatsapp_button_url'] ) ? $settings['whatsapp_button_url'] : 'https://jalsah.app';
+		// Get button URL for template (WhatsApp has 15 character limit for button parameters)
+		$button_url = isset( $settings['whatsapp_button_url'] ) ? $settings['whatsapp_button_url'] : 'jalsah.app';
+		
+		// Ensure button URL doesn't exceed 15 characters
+		if ( strlen( $button_url ) > 15 ) {
+			$button_url = substr( $button_url, 0, 15 );
+		}
 		
 		// Debug template parameters
 		error_log( '=== WHATSAPP TEMPLATE DEBUG ===' );
