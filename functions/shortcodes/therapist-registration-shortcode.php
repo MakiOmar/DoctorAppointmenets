@@ -1089,12 +1089,12 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		preg_match('/\b\d{6}\b/', $message, $matches);
 		$verification_code = isset($matches[0]) ? $matches[0] : '123456';
 		
-		// Get button URL for template (WhatsApp has 15 character limit for button parameters)
-		$button_url = isset( $settings['whatsapp_button_url'] ) ? $settings['whatsapp_button_url'] : 'jalsah.app';
+		// Get button parameter for template (WhatsApp has 15 character limit for button parameters)
+		$button_parameter = isset( $settings['whatsapp_button_url'] ) ? $settings['whatsapp_button_url'] : 'jalsah.app';
 		
-		// Ensure button URL doesn't exceed 15 characters
-		if ( strlen( $button_url ) > 15 ) {
-			$button_url = substr( $button_url, 0, 15 );
+		// Ensure button parameter doesn't exceed 15 characters
+		if ( strlen( $button_parameter ) > 15 ) {
+			$button_parameter = substr( $button_parameter, 0, 15 );
 		}
 		
 		// Debug template parameters
@@ -1103,7 +1103,7 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		error_log( 'Template Language: ' . $template_language );
 		error_log( 'Original Message: ' . $message );
 		error_log( 'Extracted Verification Code: ' . $verification_code );
-		error_log( 'Button URL: ' . $button_url );
+		error_log( 'Button Parameter: ' . $button_parameter );
 		error_log( '===============================' );
 		
 		// Build components array
@@ -1121,7 +1121,7 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		);
 		
 		// Add button component if template has buttons (common for OTP templates)
-		// Most OTP templates have a button that requires a URL parameter
+		// Most OTP templates have a button that requires a parameter (URL, text, etc.)
 		$components[] = array(
 			'type' => 'button',
 			'sub_type' => 'url',
@@ -1129,7 +1129,7 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 			'parameters' => array(
 				array(
 					'type' => 'text',
-					'text' => $button_url
+					'text' => $button_parameter
 				)
 			)
 		);

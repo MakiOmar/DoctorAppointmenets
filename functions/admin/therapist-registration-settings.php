@@ -247,11 +247,11 @@ function snks_therapist_registration_settings_page() {
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="whatsapp_button_url">Template Button URL</label>
+							<label for="whatsapp_button_url">Template Button Parameter</label>
 						</th>
 						<td>
 							<input type="text" name="whatsapp_button_url" id="whatsapp_button_url" value="<?php echo esc_attr( $whatsapp_button_url ); ?>" class="regular-text" placeholder="jalsah.app" maxlength="15">
-							<p class="description">URL for template button (if your template has buttons). <strong>Maximum 15 characters</strong> due to WhatsApp limitations. Example: "jalsah.app"</p>
+							<p class="description">Text parameter for template button (if your template has buttons). <strong>Maximum 15 characters</strong> due to WhatsApp limitations. Can be URL, text, or any parameter your template expects. Example: "jalsah.app" or "verify"</p>
 						</td>
 					</tr>
 					<tr>
