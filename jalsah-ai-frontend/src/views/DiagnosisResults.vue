@@ -245,11 +245,9 @@ export default {
       // Apply active sorting (same logic as therapists page)
       switch (activeSort.value) {
         case 'best':
-          // Sort by rating (highest to lowest)
+          // Sort by frontend_order (order 1 first, then order 2, etc.)
           sorted.sort((a, b) => {
-            const ratingA = a.rating || 0
-            const ratingB = b.rating || 0
-            return ratingB - ratingA // Higher rating first
+            return a.frontendOrder - b.frontendOrder
           })
           break
           
