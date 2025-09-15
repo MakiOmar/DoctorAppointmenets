@@ -49,7 +49,8 @@ function snks_test_whatsapp_api_ajax() {
 		'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
 		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' ),
 		'whatsapp_template_name' => get_option( 'snks_whatsapp_template_name', 'hello_world' ),
-		'whatsapp_use_template' => get_option( 'snks_whatsapp_use_template', 1 )
+		'whatsapp_use_template' => get_option( 'snks_whatsapp_use_template', 1 ),
+		'whatsapp_button_url' => get_option( 'snks_whatsapp_button_url', 'https://jalsah.app' )
 	);
 	
 	if ( empty( $settings['whatsapp_api_url'] ) || empty( $settings['whatsapp_api_token'] ) || empty( $settings['whatsapp_phone_number_id'] ) ) {
@@ -120,6 +121,7 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_whatsapp_message_language', sanitize_text_field( $_POST['whatsapp_message_language'] ?? 'ar' ) );
 		update_option( 'snks_whatsapp_template_name', sanitize_text_field( $_POST['whatsapp_template_name'] ?? 'hello_world' ) );
 		update_option( 'snks_whatsapp_use_template', isset( $_POST['whatsapp_use_template'] ) ? 1 : 0 );
+		update_option( 'snks_whatsapp_button_url', sanitize_url( $_POST['whatsapp_button_url'] ?? 'https://jalsah.app' ) );
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
 	}
@@ -137,6 +139,7 @@ function snks_therapist_registration_settings_page() {
 	$whatsapp_message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
 	$whatsapp_template_name = get_option( 'snks_whatsapp_template_name', 'hello_world' );
 	$whatsapp_use_template = get_option( 'snks_whatsapp_use_template', 1 );
+	$whatsapp_button_url = get_option( 'snks_whatsapp_button_url', 'https://jalsah.app' );
 	
 	?>
 	<div class="wrap">
@@ -240,6 +243,15 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="whatsapp_template_name" id="whatsapp_template_name" value="<?php echo esc_attr( $whatsapp_template_name ); ?>" class="regular-text" placeholder="hello_world">
 							<p class="description">Name of your approved WhatsApp message template. Default: "hello_world" (for testing only).</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="whatsapp_button_url">Template Button URL</label>
+						</th>
+						<td>
+							<input type="url" name="whatsapp_button_url" id="whatsapp_button_url" value="<?php echo esc_attr( $whatsapp_button_url ); ?>" class="regular-text" placeholder="https://jalsah.app">
+							<p class="description">URL for template button (if your template has buttons). Required for templates with URL buttons.</p>
 						</td>
 					</tr>
 					<tr>
