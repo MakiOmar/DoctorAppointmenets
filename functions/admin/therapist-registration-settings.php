@@ -50,7 +50,7 @@ function snks_test_whatsapp_api_ajax() {
 		'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' ),
 		'whatsapp_template_name' => get_option( 'snks_whatsapp_template_name', 'hello_world' ),
 		'whatsapp_use_template' => get_option( 'snks_whatsapp_use_template', 1 ),
-		'whatsapp_button_url' => get_option( 'snks_whatsapp_button_url', 'jalsah.app' )
+		// Note: Button URL removed - OTP messages should not have buttons
 	);
 	
 	if ( empty( $settings['whatsapp_api_url'] ) || empty( $settings['whatsapp_api_token'] ) || empty( $settings['whatsapp_phone_number_id'] ) ) {
@@ -121,7 +121,7 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_whatsapp_message_language', sanitize_text_field( $_POST['whatsapp_message_language'] ?? 'ar' ) );
 		update_option( 'snks_whatsapp_template_name', sanitize_text_field( $_POST['whatsapp_template_name'] ?? 'hello_world' ) );
 		update_option( 'snks_whatsapp_use_template', isset( $_POST['whatsapp_use_template'] ) ? 1 : 0 );
-		update_option( 'snks_whatsapp_button_url', sanitize_text_field( $_POST['whatsapp_button_url'] ?? 'jalsah.app' ) );
+		// Note: Button URL removed - OTP messages should not have buttons
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
 	}
@@ -139,7 +139,7 @@ function snks_therapist_registration_settings_page() {
 	$whatsapp_message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
 	$whatsapp_template_name = get_option( 'snks_whatsapp_template_name', 'hello_world' );
 	$whatsapp_use_template = get_option( 'snks_whatsapp_use_template', 1 );
-	$whatsapp_button_url = get_option( 'snks_whatsapp_button_url', 'jalsah.app' );
+	// Note: Button URL setting removed - OTP messages should not have buttons
 	
 	?>
 	<div class="wrap">
@@ -245,15 +245,7 @@ function snks_therapist_registration_settings_page() {
 							<p class="description">Name of your approved WhatsApp message template. Default: "hello_world" (for testing only).</p>
 						</td>
 					</tr>
-					<tr>
-						<th scope="row">
-							<label for="whatsapp_button_url">Template Button Parameter</label>
-						</th>
-						<td>
-							<input type="text" name="whatsapp_button_url" id="whatsapp_button_url" value="<?php echo esc_attr( $whatsapp_button_url ); ?>" class="regular-text" placeholder="jalsah.app" maxlength="15">
-							<p class="description">Text parameter for template button (if your template has buttons). <strong>Maximum 15 characters</strong> due to WhatsApp limitations. Can be URL, text, or any parameter your template expects. Example: "jalsah.app" or "verify"</p>
-						</td>
-					</tr>
+					<!-- Button URL field removed - OTP messages should not have buttons -->
 					<tr>
 						<th scope="row">
 							<label for="test_whatsapp_phone">Test WhatsApp API</label>

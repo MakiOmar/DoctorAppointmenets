@@ -1089,24 +1089,15 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		preg_match('/\b\d{6}\b/', $message, $matches);
 		$verification_code = isset($matches[0]) ? $matches[0] : '123456';
 		
-		// Get button parameter for template (WhatsApp has 15 character limit for button parameters)
-		$button_parameter = isset( $settings['whatsapp_button_url'] ) ? $settings['whatsapp_button_url'] : 'jalsah.app';
-		
-		// Ensure button parameter doesn't exceed 15 characters
-		if ( strlen( $button_parameter ) > 15 ) {
-			$button_parameter = substr( $button_parameter, 0, 15 );
-		}
-		
 		// Debug template parameters
 		error_log( '=== WHATSAPP TEMPLATE DEBUG ===' );
 		error_log( 'Template Name: ' . $template_name );
 		error_log( 'Template Language: ' . $template_language );
 		error_log( 'Original Message: ' . $message );
 		error_log( 'Extracted Verification Code: ' . $verification_code );
-		error_log( 'Button Parameter: ' . $button_parameter );
 		error_log( '===============================' );
 		
-		// Build components array
+		// Build components array - OTP messages only need body component
 		$components = array();
 		
 		// Add body component with verification code
@@ -1120,19 +1111,8 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 			)
 		);
 		
-		// Add button component if template has buttons (common for OTP templates)
-		// Most OTP templates have a button that requires a parameter (URL, text, etc.)
-		$components[] = array(
-			'type' => 'button',
-			'sub_type' => 'url',
-			'index' => '0',
-			'parameters' => array(
-				array(
-					'type' => 'text',
-					'text' => $button_parameter
-				)
-			)
-		);
+		// Note: OTP messages should not have button components
+		// Only add button component if specifically needed for non-OTP templates
 		
 		$body = array(
 			'messaging_product' => 'whatsapp',
