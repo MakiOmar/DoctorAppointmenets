@@ -931,11 +931,11 @@
       "country_code":"HN"
    },
    {
-      "name_en":"Israel",
-      "name_ar":"إسرائيل",
+      "name_en":"Occupied Palestine",
+      "name_ar":"فلسطين المحتلة",
       "dial_code":"+972",
-      "flag":"🇮🇱",
-      "country_code":"IL"
+      "flag":"🇵🇸",
+      "country_code":"PS"
    },
    {
       "name_en":"Kiribati",
@@ -1041,6 +1041,13 @@
       "dial_code":"+227",
       "flag":"🇳🇪",
       "country_code":"NE"
+   },
+   {
+      "name_en":"Palestine",
+      "name_ar":"فلسطين",
+      "dial_code":"+970",
+      "flag":"🇵🇸",
+      "country_code":"PS"
    },
    {
       "name_en":"Palau",
