@@ -1097,7 +1097,7 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		error_log( 'Extracted Verification Code: ' . $verification_code );
 		error_log( '===============================' );
 		
-		// Build components array - OTP messages only need body component
+		// Build components array for OTP template
 		$components = array();
 		
 		// Add body component with verification code
@@ -1111,8 +1111,18 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 			)
 		);
 		
-		// Note: OTP messages should not have button components
-		// Only add button component if specifically needed for non-OTP templates
+		// Add OTP button component for auto-fill functionality
+		$components[] = array(
+			'type' => 'button',
+			'sub_type' => 'otp',
+			'index' => '0',
+			'parameters' => array(
+				array(
+					'type' => 'otp',
+					'otp' => $verification_code
+				)
+			)
+		);
 		
 		$body = array(
 			'messaging_product' => 'whatsapp',
