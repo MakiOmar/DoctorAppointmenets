@@ -2778,11 +2778,20 @@ Best regards,
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'therapist_applications';
 		
+		// Check if random ordering is requested
+		$random_param = $_GET['random'] ?? '';
+		$order_clause = 'ORDER BY id ASC'; // Default ordering
+		
+		if ( ! empty( $random_param ) ) {
+			// Use RAND() for random ordering when random parameter is provided
+			$order_clause = 'ORDER BY RAND()';
+		}
+		
 		// Get all approved therapists who are enabled for AI platform
 		$applications = $wpdb->get_results(
 			"SELECT * FROM $table_name 
 			WHERE status = 'approved' AND show_on_ai_site = 1 
-			ORDER BY id ASC"
+			$order_clause"
 		);
 		
 		$result = array();

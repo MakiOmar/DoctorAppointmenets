@@ -303,10 +303,11 @@ export default {
           
           response = await api.get('/api/ai/therapists/search', { params })
         } else {
-          // Load all therapists
+          // Load all therapists with random ordering
           response = await api.get('/api/ai/therapists', {
           params: {
-            _t: Date.now() // Cache busting
+            _t: Date.now(), // Cache busting
+            random: Math.random() // Random parameter to get different order each time
           }
         })
         }
