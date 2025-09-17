@@ -231,7 +231,18 @@
         </div>
         <!-- Modal Body -->
         <div class="w-full" style="height: 80vh;">
-          <iframe v-if="sessionIframeSrc" :src="sessionIframeSrc" class="w-full h-full" frameborder="0" allow="camera; microphone; display-capture; fullscreen"></iframe>
+          <!-- Jitsi Meeting Container -->
+          <div v-if="jitsiLoaded" id="session-meeting" class="w-full h-full"></div>
+          <!-- Loading State -->
+          <div v-else class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p class="text-gray-600">{{ $t('session.loadingMeeting') }}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -594,6 +605,9 @@ export default {
     const showSimulate = ref(!import.meta.env.PROD)
     const showSessionModal = ref(false)
     const sessionIframeSrc = ref('')
+    const jitsiLoaded = ref(false)
+    const sessionMeetAPI = ref(null)
+    const currentSessionId = ref(null)
 
     const tabs = computed(() => [
       { 
@@ -772,15 +786,155 @@ export default {
     }
 
     const joinSession = (appointmentId) => {
-      // Open session inside a modal iframe
-      sessionIframeSrc.value = `${window.location.origin}/session/${appointmentId}`
+      // Open session with direct Jitsi integration
+      currentSessionId.value = appointmentId
       showSessionModal.value = true
+      jitsiLoaded.value = false
+      
+      // Initialize Jitsi meeting
+      initializeSessionJitsi()
     }
 
     const closeSessionModal = () => {
       showSessionModal.value = false
-      // Reset iframe to stop media streams
-      sessionIframeSrc.value = ''
+      // Clean up Jitsi meeting
+      if (sessionMeetAPI.value) {
+        sessionMeetAPI.value.dispose()
+        sessionMeetAPI.value = null
+      }
+      jitsiLoaded.value = false
+      currentSessionId.value = null
+    }
+
+    const initializeSessionJitsi = () => {
+      // Check if JitsiMeetExternalAPI is already available
+      if (typeof JitsiMeetExternalAPI !== 'undefined') {
+        startSessionJitsiMeeting()
+        return
+      }
+      
+      // Load Jitsi external API script
+      const script = document.createElement('script')
+      script.src = 'https://s.jalsah.app/external_api.js'
+      script.onload = () => {
+        setTimeout(() => {
+          startSessionJitsiMeeting()
+        }, 500) // Give it a moment to initialize
+      }
+      script.onerror = (error) => {
+        console.error('❌ Failed to load Jitsi script:', error)
+        toast.error('Failed to load meeting interface')
+        jitsiLoaded.value = false
+      }
+      document.head.appendChild(script)
+    }
+
+    const startSessionJitsiMeeting = () => {
+      if (!currentSessionId.value) return
+      
+      const roomID = currentSessionId.value
+      const userName = authStore.user?.name || authStore.user?.username || 'User'
+      const isTherapist = authStore.user?.role === 'doctor' || authStore.user?.role === 'therapist'
+      
+      const options = {
+        parentNode: document.querySelector('#session-meeting'),
+        roomName: `${roomID} جلسة`,
+        width: '100%',
+        height: '100%',
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableAudioLevels: false,
+          enableClosePage: true,
+          enableWelcomePage: false,
+          participantsPane: {
+            enabled: true,
+            hideModeratorSettingsTab: false,
+            hideMoreActionsButton: false,
+            hideMuteAllButton: false
+          },
+          toolbarButtons: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+            'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+          ]
+        },
+        interfaceConfigOverwrite: {
+          prejoinPageEnabled: false,
+          APP_NAME: 'Jalsah AI',
+          DEFAULT_BACKGROUND: "#1a1a1a",
+          SHOW_JITSI_WATERMARK: false,
+          HIDE_DEEP_LINKING_LOGO: true,
+          SHOW_BRAND_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          SHOW_POWERED_BY: false,
+          DISPLAY_WELCOME_FOOTER: false,
+          JITSI_WATERMARK_LINK: 'https://jalsah.app',
+          PROVIDER_NAME: 'Jalsah',
+          DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+          DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+          TOOLBAR_ALWAYS_VISIBLE: true,
+          TOOLBAR_BUTTONS: [
+            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
+            'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
+          ]
+        }
+      }
+      
+      try {
+        // Try the main Jitsi server first
+        try {
+          sessionMeetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
+        } catch (serverError) {
+          console.warn('⚠️ Main server failed, trying fallback:', serverError)
+          // Fallback to meet.jit.si if main server fails
+          sessionMeetAPI.value = new JitsiMeetExternalAPI("meet.jit.si", options)
+        }
+        
+        sessionMeetAPI.value.executeCommand('displayName', userName)
+        
+        // Add event listeners
+        sessionMeetAPI.value.addListener('videoConferenceJoined', () => {
+          jitsiLoaded.value = true
+          
+          // If therapist joined, notify the backend
+          if (isTherapist) {
+            notifyTherapistJoined(roomID)
+          }
+        })
+        
+        sessionMeetAPI.value.addListener('videoConferenceLeft', () => {
+          closeSessionModal()
+        })
+        
+        sessionMeetAPI.value.addListener('readyToClose', () => {
+          closeSessionModal()
+        })
+        
+        // Set a timeout to show the meeting even if not fully loaded
+        setTimeout(() => {
+          if (!jitsiLoaded.value) {
+            jitsiLoaded.value = true
+          }
+        }, 10000) // 10 seconds timeout
+        
+      } catch (error) {
+        console.error('❌ Error initializing Jitsi meeting:', error)
+        toast.error('Failed to start meeting')
+        jitsiLoaded.value = false
+      }
+    }
+
+    const notifyTherapistJoined = async (roomID) => {
+      try {
+        await api.post(`/wp-json/jalsah-ai/v1/session/${roomID}/therapist-join`)
+      } catch (error) {
+        console.error('Failed to notify therapist joined:', error)
+      }
     }
 
     const rescheduleAppointment = (appointmentId) => {
@@ -1113,9 +1267,15 @@ export default {
         }
       })
       openPopups.value.clear()
+      // Clean up Jitsi meeting
+      if (sessionMeetAPI.value) {
+        sessionMeetAPI.value.dispose()
+        sessionMeetAPI.value = null
+      }
       // Ensure session modal cleaned
-      sessionIframeSrc.value = ''
       showSessionModal.value = false
+      jitsiLoaded.value = false
+      currentSessionId.value = null
     })
 
     return {
@@ -1140,7 +1300,7 @@ export default {
       showSimulate,
       simulateTherapistJoin,
       showSessionModal,
-      sessionIframeSrc,
+      jitsiLoaded,
       closeSessionModal,
       bookWithSameTherapist,
       // Rochtah booking related
