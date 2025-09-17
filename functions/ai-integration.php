@@ -3395,10 +3395,18 @@ Best regards,
 		$appointments = $wpdb->get_results($query);
 		$ai_appointments = array();
 		
+		// Debug: Log appointments found
+		error_log("=== APPOINTMENTS DEBUG ===");
+		error_log("User ID: $user_id");
+		error_log("Total appointments found: " . count($appointments));
+		
 		foreach ( $appointments as $appointment ) {
 			$order = wc_get_order( $appointment->order_id );
 			if ( $order ) {
 				$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+				
+				// Debug: Log each appointment
+				error_log("Appointment ID: {$appointment->ID}, Order ID: {$appointment->order_id}, AI Order: " . var_export($is_ai_order, true));
 				
 				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 					// Map database status to frontend status
@@ -3431,6 +3439,10 @@ Best regards,
 				}
 			}
 		}
+		
+		// Debug: Log final result
+		error_log("AI appointments to return: " . count($ai_appointments));
+		error_log("================================");
 		
 		$this->send_success( $ai_appointments );
 	}
