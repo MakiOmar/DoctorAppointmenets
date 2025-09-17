@@ -2378,9 +2378,11 @@ class SNKS_AI_Integration {
 		// Send verification code based on OTP method settings
 		$otp_success = false;
 		$contact_method = '';
+		$actual_otp_method = '';
 		
 		if ( $registration_settings['otp_method'] === 'sms' && ! empty( $data['whatsapp'] ) ) {
 			$contact_method = $data['whatsapp'];
+			$actual_otp_method = 'sms';
 			$message = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
 			
 			// Use existing WhySMS SMS service
@@ -2391,6 +2393,7 @@ class SNKS_AI_Integration {
 			}
 		} elseif ( $registration_settings['otp_method'] === 'whatsapp' && ! empty( $data['whatsapp'] ) ) {
 			$contact_method = $data['whatsapp'];
+			$actual_otp_method = 'whatsapp';
 			$message = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
 			
 			// Debug patient registration WhatsApp
@@ -2412,6 +2415,7 @@ class SNKS_AI_Integration {
 			}
 		} elseif ( $registration_settings['otp_method'] === 'email' && ! empty( $data['email'] ) ) {
 			$contact_method = $data['email'];
+			$actual_otp_method = 'email';
 			
 			// Send verification email using existing method
 			$otp_success = $this->send_verification_email( $user->ID, $verification_code );
@@ -2419,7 +2423,12 @@ class SNKS_AI_Integration {
 			// Fallback to email if no method matches or email is available
 			if ( ! empty( $data['email'] ) ) {
 				$contact_method = $data['email'];
+				$actual_otp_method = 'email';
 				$otp_success = $this->send_verification_email( $user->ID, $verification_code );
+			} else {
+				// If no email available, use WhatsApp as contact method
+				$contact_method = $data['whatsapp'];
+				$actual_otp_method = 'whatsapp';
 			}
 		}
 		
@@ -2439,13 +2448,13 @@ class SNKS_AI_Integration {
 		// Get locale for response message
 		$locale = $this->get_request_locale();
 		
-		// Dynamic success message based on OTP method
+		// Dynamic success message based on actual OTP method used
 		$success_message = '';
-		if ( $registration_settings['otp_method'] === 'sms' ) {
+		if ( $actual_otp_method === 'sms' ) {
 			$success_message = $locale === 'ar' 
 				? 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق عبر الرسائل القصيرة.'
 				: 'Registration successful! Verification code sent via SMS.';
-		} elseif ( $registration_settings['otp_method'] === 'whatsapp' ) {
+		} elseif ( $actual_otp_method === 'whatsapp' ) {
 			$success_message = $locale === 'ar' 
 				? 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق إلى واتساب.'
 				: 'Registration successful! Verification code sent via WhatsApp.';
@@ -2460,7 +2469,7 @@ class SNKS_AI_Integration {
 			'user_id' => $user->ID,
 			'email' => $user->user_email,
 			'contact_method' => $contact_method,
-			'otp_method' => $registration_settings['otp_method'],
+			'otp_method' => $actual_otp_method,
 			'requires_verification' => true
 		) );
 	}
