@@ -574,6 +574,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import PrescriptionCard from '@/components/PrescriptionCard.vue'
+import Swal from 'sweetalert2'
 export default {
   name: 'Appointments',
   components: {
@@ -820,20 +821,38 @@ export default {
       currentSessionId.value = null
     }
 
-    const confirmCloseSessionModal = () => {
+    const confirmCloseSessionModal = async () => {
       if (jitsiLoaded.value) {
-        // Show confirmation if Jitsi is loaded (session is active)
-        if (confirm($t('session.confirmCloseModal'))) {
+        const result = await Swal.fire({
+          title: $t('session.meetingRoom'),
+          text: $t('session.confirmCloseModal'),
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc2626',
+          cancelButtonColor: '#6b7280',
+          confirmButtonText: $t('common.confirm') || 'OK',
+          cancelButtonText: $t('common.cancel') || 'Cancel'
+        })
+        if (result.isConfirmed) {
           closeSessionModal()
         }
       } else {
-        // No confirmation needed if session isn't loaded yet
         closeSessionModal()
       }
     }
 
-    const exitSession = () => {
-      if (confirm($t('session.confirmExit'))) {
+    const exitSession = async () => {
+      const result = await Swal.fire({
+        title: $t('session.exitSession'),
+        text: $t('session.confirmExit'),
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: $t('session.exitSession'),
+        cancelButtonText: $t('common.cancel') || 'Cancel'
+      })
+      if (result.isConfirmed) {
         closeSessionModal()
       }
     }
