@@ -2652,7 +2652,7 @@ Best regards,
 			global $wpdb;
 			$user_id = $wpdb->get_var( $wpdb->prepare(
 				"SELECT user_id FROM {$wpdb->usermeta} 
-				WHERE meta_key = 'whatsapp' 
+				WHERE meta_key = 'billing_whatsapp' 
 				AND meta_value = %s 
 				LIMIT 1",
 				$whatsapp
@@ -2752,7 +2752,7 @@ Best regards,
 			global $wpdb;
 			$user_id = $wpdb->get_var( $wpdb->prepare(
 				"SELECT user_id FROM {$wpdb->usermeta} 
-				WHERE meta_key = 'whatsapp' 
+				WHERE meta_key = 'billing_whatsapp' 
 				AND meta_value = %s 
 				LIMIT 1",
 				$whatsapp
