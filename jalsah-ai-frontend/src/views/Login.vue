@@ -307,11 +307,75 @@ export default {
       }
     }
 
-    // Load therapist registration settings on mount
+    // Country selector functions
+    const toggleCountryDropdown = () => {
+      showCountryDropdown.value = !showCountryDropdown.value
+    }
+
+    const selectCountry = (countryCode) => {
+      selectedCountryCode.value = countryCode
+      showCountryDropdown.value = false
+      countrySearch.value = ''
+    }
+
+    const getSelectedCountryFlag = () => {
+      const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      return country ? country.flag : '🇪🇬'
+    }
+
+    const getSelectedCountryDial = () => {
+      const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      return country ? country.dial_code : '+20'
+    }
+
+    // Load countries data
+    const loadCountries = async () => {
+      if (isLoadingCountries.value) return
+      
+      isLoadingCountries.value = true
+      try {
+        const response = await fetch('/countries-codes-and-flags.json')
+        if (response.ok) {
+          const data = await response.json()
+          countries.value = data
+        } else {
+          console.warn('Failed to load countries data, using fallback')
+          // Fallback data
+          countries.value = [
+            { country_code: 'EG', name_en: 'Egypt', name_ar: 'مصر', dial_code: '+20', flag: '🇪🇬' }
+          ]
+        }
+      } catch (error) {
+        console.error('Error loading countries:', error)
+        // Fallback data
+        countries.value = [
+          { country_code: 'EG', name_en: 'Egypt', name_ar: 'مصر', dial_code: '+20', flag: '🇪🇬' }
+        ]
+      } finally {
+        isLoadingCountries.value = false
+      }
+    }
+
+    // Handle clicks outside dropdown
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.relative')) {
+        showCountryDropdown.value = false
+      }
+    }
+
+    // Load therapist registration settings and countries on mount
     onMounted(async () => {
       await therapistRegistrationStore.loadSettings()
+      await loadCountries()
       console.log('🔍 Login form - Registration settings loaded:', therapistRegistrationStore.settings)
       console.log('🔍 Login form - Should show email:', requireEmail.value)
+      
+      // Add click outside listener
+      document.addEventListener('click', handleClickOutside)
+    })
+
+    onUnmounted(() => {
+      document.removeEventListener('click', handleClickOutside)
     })
 
     return {
@@ -320,7 +384,20 @@ export default {
       requireEmail,
       verificationError,
       handleLogin,
-      goToVerification
+      goToVerification,
+      // Country selector
+      selectedCountryCode,
+      showCountryDropdown,
+      countrySearch,
+      isDetectingCountry,
+      countries,
+      isLoadingCountries,
+      localizedCountries,
+      filteredCountries,
+      toggleCountryDropdown,
+      selectCountry,
+      getSelectedCountryFlag,
+      getSelectedCountryDial
     }
   }
 }
