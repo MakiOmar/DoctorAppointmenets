@@ -200,8 +200,7 @@
         <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointmentsPage.noAppointments') }}</h3>
         <p class="text-gray-600 mb-6">
           {{ activeTab === 'upcoming' ? $t('appointmentsPage.noUpcoming') : 
-             activeTab === 'past' ? $t('appointmentsPage.noPast') : 
-             $t('appointmentsPage.noCancelled') }}
+             $t('appointmentsPage.noPast') }}
         </p>
         <button 
           @click="$router.push('/therapists')"
@@ -559,11 +558,6 @@ export default {
         id: 'past', 
         name: $t('appointmentsPage.tabs.past'), 
         count: appointments.value.filter(a => a.status === 'completed').length 
-      },
-      { 
-        id: 'cancelled', 
-        name: $t('appointmentsPage.tabs.cancelled'), 
-        count: appointments.value.filter(a => a.status === 'cancelled').length 
       }
     ])
 
@@ -582,14 +576,6 @@ export default {
         case 'past':
           filtered = appointments.value.filter(a => a.status === 'completed')
           // Sort past sessions from newest to oldest
-          return filtered.sort((a, b) => {
-            const dateA = new Date(a.date_time || a.date)
-            const dateB = new Date(b.date_time || b.date)
-            return dateB - dateA
-          })
-        case 'cancelled':
-          filtered = appointments.value.filter(a => a.status === 'cancelled')
-          // Sort cancelled sessions from newest to oldest
           return filtered.sort((a, b) => {
             const dateA = new Date(a.date_time || a.date)
             const dateB = new Date(b.date_time || b.date)
