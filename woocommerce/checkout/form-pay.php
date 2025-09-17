@@ -44,22 +44,20 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 			'_paymob'            => $order->get_meta( '_paymob', true ),
 		);
 	}
-	snks_user_info();
 	//phpcs:disable
 	
 	// Check if this is an AI order
-	$is_ai_order = $order->get_meta( 'from_jalsah_ai' ) === 'true';
-	
-	if ( $is_ai_order ) {
+	$is_ai_order = $order->get_meta( 'from_jalsah_ai' ) === '1';
+	if ( ! $is_ai_order ) {
 		// Use AI session pricing table for AI orders
-		echo ai_session_pricing_table_shortcode( $form_data );
-	} else {
+		//echo ai_session_pricing_table_shortcode( $form_data );
+		snks_user_info();
 		// Use regular pricing table for normal orders
 		echo consulting_session_pricing_table_shortcode( $form_data );
 		if ( 'edit-fees' !== $order_type ) {
 			echo snks_doctor_rules( $form_data['_user_id'] );
 		}
-	}
+	} 
 	//phpcs:enable
 
 	echo '<h2 style="margin:20px 0;color:#fff;font-size:25px;text-align:center">إختر طريقة الدفع المناسبة</h2>';
@@ -92,6 +90,14 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 				?>
 			</ul>
 		<?php endif; ?>
+		<?php if ( $is_ai_order ) : ?>
+		<div class="form-row" style="margin-bottom: 20px;">
+			<a href="<?php echo esc_url( home_url( '/cart' ) ); ?>" class="button" style="background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;">
+				<?php echo esc_html__( 'العودة إلى السلة', 'woocommerce' ); ?>
+			</a>
+		</div>
+		<?php endif; ?>
+		
 		<div class="form-row">
 			<input type="hidden" name="woocommerce_pay" value="1" />
 
