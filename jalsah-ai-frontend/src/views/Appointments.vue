@@ -138,10 +138,10 @@
                   @click="joinSession(appointment.id)"
                   :disabled="!appointment.therapist_joined"
                   :class="[
-                    'text-sm',
+                    'text-sm px-4 py-2 rounded-lg font-medium transition-colors',
                     appointment.therapist_joined 
                       ? 'btn-primary' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
                   ]"
                 >
                   <span v-if="appointment.therapist_joined">
