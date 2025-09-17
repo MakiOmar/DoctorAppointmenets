@@ -502,7 +502,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -545,6 +545,9 @@ export default {
     // Prescription viewing related refs
     const showPrescriptionModal = ref(false)
     const selectedPrescription = ref(null)
+    
+    // Popup management
+    const openPopups = ref(new Map())
 
     const tabs = computed(() => [
       { 
@@ -736,8 +739,46 @@ export default {
     }
 
     const joinSession = (appointmentId) => {
-      // Redirect to the session page
-      router.push(`/session/${appointmentId}`)
+      // Check if popup is already open for this session
+      if (openPopups.value.has(appointmentId)) {
+        const existingPopup = openPopups.value.get(appointmentId)
+        if (existingPopup && !existingPopup.closed) {
+          // Focus existing popup
+          existingPopup.focus()
+          return
+        } else {
+          // Remove closed popup from tracking
+          openPopups.value.delete(appointmentId)
+        }
+      }
+      
+      // Open session in popup window
+      const sessionUrl = `${window.location.origin}/session/${appointmentId}`
+      const popupFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+      
+      // Open popup window
+      const popup = window.open(sessionUrl, `session_${appointmentId}`, popupFeatures)
+      
+      // Focus the popup window
+      if (popup) {
+        // Track the popup
+        openPopups.value.set(appointmentId, popup)
+        popup.focus()
+        
+        // Add event listener to detect when popup is closed
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed)
+            // Remove from tracking when closed
+            openPopups.value.delete(appointmentId)
+            // Optional: Refresh appointments when popup is closed
+            // loadAppointments()
+          }
+        }, 1000)
+      } else {
+        // Fallback if popup is blocked
+        toast.error('Popup blocked. Please allow popups for this site and try again.')
+      }
     }
 
     const rescheduleAppointment = (appointmentId) => {
@@ -1053,6 +1094,16 @@ export default {
       loadAppointments()
       loadPrescriptionRequests()
       loadCompletedPrescriptions()
+    })
+
+    onUnmounted(() => {
+      // Close all open popups when component is unmounted
+      openPopups.value.forEach((popup, appointmentId) => {
+        if (popup && !popup.closed) {
+          popup.close()
+        }
+      })
+      openPopups.value.clear()
     })
 
     return {
