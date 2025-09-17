@@ -3410,6 +3410,9 @@ Best regards,
 					);
 					$frontend_status = isset($status_mapping[$appointment->session_status]) ? $status_mapping[$appointment->session_status] : $appointment->session_status;
 					
+					// Check if therapist has joined
+					$therapist_joined = snks_doctor_has_joined($appointment->ID, $appointment->user_id);
+					
 					$ai_appointments[] = array(
 						'id' => $appointment->ID,
 						'date' => $appointment->date_time,
@@ -3422,7 +3425,8 @@ Best regards,
 							'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )
 						),
 						'notes' => '', // No notes column in the database
-						'session_link' => null // No session_link column in the database
+						'session_link' => null, // No session_link column in the database
+						'therapist_joined' => $therapist_joined // Add therapist joined status
 					);
 				}
 			}
