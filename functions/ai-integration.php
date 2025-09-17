@@ -4143,41 +4143,25 @@ Best regards,
 	}
 	
 	/**
-	 * Get AI Settings AJAX Handler
+	 * Get AI Settings AJAX Handler - Optimized
 	 */
 	public function get_ai_settings_ajax() {
-		$current_language = snks_get_current_language();
+		// Get current language with fallback
+		$current_language = function_exists( 'snks_get_current_language' ) ? snks_get_current_language() : 'ar';
 		
-		// Ensure helper functions are available
-		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
-			require_once SNKS_DIR . 'functions/helpers.php';
-		}
-		
-		// Fallback function if still not available
-		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
-			function snks_get_appointment_change_terms( $locale = null ) {
-				if ( ! $locale ) {
-					$locale = snks_get_current_language();
-				}
-				
-				if ( $locale === 'ar' ) {
-					return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
-				} else {
-					return get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
-				}
-			}
-		}
-		
+		// Optimized settings with minimal function calls
 		$settings = array(
-			'bilingual_enabled' => snks_is_bilingual_enabled(),
-			'default_language' => snks_get_default_language(),
-			'site_title' => snks_get_site_title( $current_language ),
-			'site_description' => snks_get_site_description( $current_language ),
+			'bilingual_enabled' => get_option( 'snks_bilingual_enabled', '0' ) === '1',
+			'default_language' => get_option( 'snks_default_language', 'ar' ),
+			'site_title' => get_bloginfo( 'name' ),
+			'site_description' => get_bloginfo( 'description' ),
 			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
-			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
-			'show_more_button_enabled' => snks_get_show_more_button_enabled(),
-			'appointment_change_terms' => snks_get_appointment_change_terms( $current_language ),
+			'diagnosis_results_limit' => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
+			'show_more_button_enabled' => get_option( 'snks_ai_show_more_button_enabled', '1' ) === '1',
+			'appointment_change_terms' => $current_language === 'ar' 
+				? get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' )
+				: get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' ),
 		);
 		
 		wp_send_json_success( $settings );
@@ -4200,41 +4184,25 @@ Best regards,
 	}
 	
 	/**
-	 * Get AI Settings REST API Handler
+	 * Get AI Settings REST API Handler - Optimized
 	 */
 	public function get_ai_settings_rest( $request ) {
-		$current_language = snks_get_current_language();
+		// Get current language with fallback
+		$current_language = function_exists( 'snks_get_current_language' ) ? snks_get_current_language() : 'ar';
 		
-		// Ensure helper functions are available
-		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
-			require_once SNKS_DIR . 'functions/helpers.php';
-		}
-		
-		// Fallback function if still not available
-		if ( ! function_exists( 'snks_get_appointment_change_terms' ) ) {
-			function snks_get_appointment_change_terms( $locale = null ) {
-				if ( ! $locale ) {
-					$locale = snks_get_current_language();
-				}
-				
-				if ( $locale === 'ar' ) {
-					return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
-				} else {
-					return get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
-				}
-			}
-		}
-		
+		// Optimized settings with minimal function calls
 		$settings = array(
-			'bilingual_enabled' => snks_is_bilingual_enabled(),
-			'default_language' => snks_get_default_language(),
-			'site_title' => snks_get_site_title( $current_language ),
-			'site_description' => snks_get_site_description( $current_language ),
+			'bilingual_enabled' => get_option( 'snks_bilingual_enabled', '0' ) === '1',
+			'default_language' => get_option( 'snks_default_language', 'ar' ),
+			'site_title' => get_bloginfo( 'name' ),
+			'site_description' => get_bloginfo( 'description' ),
 			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
-			'diagnosis_results_limit' => snks_get_diagnosis_results_limit(),
-			'show_more_button_enabled' => snks_get_show_more_button_enabled(),
-			'appointment_change_terms' => snks_get_appointment_change_terms( $current_language ),
+			'diagnosis_results_limit' => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
+			'show_more_button_enabled' => get_option( 'snks_ai_show_more_button_enabled', '1' ) === '1',
+			'appointment_change_terms' => $current_language === 'ar' 
+				? get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' )
+				: get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' ),
 		);
 		
 		return new WP_REST_Response( array(
