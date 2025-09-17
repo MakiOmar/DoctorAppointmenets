@@ -807,37 +807,48 @@ export default {
     }
 
     const initializeSessionJitsi = () => {
-      // Check if JitsiMeetExternalAPI is already available
-      if (typeof JitsiMeetExternalAPI !== 'undefined') {
-        startSessionJitsiMeeting()
-        return
-      }
-      
-      // Load Jitsi external API script
-      const script = document.createElement('script')
-      script.src = 'https://s.jalsah.app/external_api.js'
-      script.onload = () => {
-        setTimeout(() => {
+      // Wait for DOM to be ready
+      setTimeout(() => {
+        // Check if JitsiMeetExternalAPI is already available
+        if (typeof JitsiMeetExternalAPI !== 'undefined') {
           startSessionJitsiMeeting()
-        }, 500) // Give it a moment to initialize
-      }
-      script.onerror = (error) => {
-        console.error('❌ Failed to load Jitsi script:', error)
-        toast.error('Failed to load meeting interface')
-        jitsiLoaded.value = false
-      }
-      document.head.appendChild(script)
+          return
+        }
+        
+        // Load Jitsi external API script
+        const script = document.createElement('script')
+        script.src = 'https://s.jalsah.app/external_api.js'
+        script.onload = () => {
+          setTimeout(() => {
+            startSessionJitsiMeeting()
+          }, 500) // Give it a moment to initialize
+        }
+        script.onerror = (error) => {
+          console.error('❌ Failed to load Jitsi script:', error)
+          toast.error('Failed to load meeting interface')
+          jitsiLoaded.value = false
+        }
+        document.head.appendChild(script)
+      }, 100) // Small delay to ensure DOM is ready
     }
 
     const startSessionJitsiMeeting = () => {
       if (!currentSessionId.value) return
+      
+      // Wait for DOM element to be available
+      const meetingContainer = document.querySelector('#session-meeting')
+      if (!meetingContainer) {
+        console.error('Session meeting container not found')
+        toast.error('Failed to initialize meeting room')
+        return
+      }
       
       const roomID = currentSessionId.value
       const userName = authStore.user?.name || authStore.user?.username || 'User'
       const isTherapist = authStore.user?.role === 'doctor' || authStore.user?.role === 'therapist'
       
       const options = {
-        parentNode: document.querySelector('#session-meeting'),
+        parentNode: meetingContainer,
         roomName: `${roomID} جلسة`,
         width: '100%',
         height: '100%',
