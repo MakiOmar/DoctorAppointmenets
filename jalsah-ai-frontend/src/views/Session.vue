@@ -199,30 +199,6 @@
         </div>
       </div>
 
-      <!-- Session Instructions -->
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 class="text-lg font-medium text-blue-900 mb-3">{{ $t('session.instructions') }}</h3>
-        <ul class="space-y-2 text-sm text-blue-800">
-          <li class="flex items-start space-x-2 rtl:space-x-reverse">
-            <svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <span>{{ $t('session.instruction1') }}</span>
-          </li>
-          <li class="flex items-start space-x-2 rtl:space-x-reverse">
-            <svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <span>{{ $t('session.instruction2') }}</span>
-          </li>
-          <li class="flex items-start space-x-2 rtl:space-x-reverse">
-            <svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-            </svg>
-            <span>{{ $t('session.instruction3') }}</span>
-          </li>
-        </ul>
-      </div>
     </div>
 
          <!-- Meeting Room Modal -->

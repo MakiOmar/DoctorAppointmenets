@@ -5676,7 +5676,7 @@ function snks_ai_order_thankyou_redirect($order_id) {
  * Get the first valid frontend URL for redirects (standalone function)
  */
 function snks_ai_get_primary_frontend_url() {
-	$frontend_urls = get_option( 'snks_ai_frontend_urls', 'https://jalsah-ai.com' );
+	$frontend_urls = get_option( 'snks_ai_frontend_urls', 'http://localhost:3000' );
 	
 	// Parse URLs from textarea (one per line)
 	$urls = array_filter( array_map( 'trim', explode( "\n", $frontend_urls ) ) );
