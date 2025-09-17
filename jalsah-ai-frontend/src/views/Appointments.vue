@@ -230,11 +230,11 @@
           </button>
         </div>
         <!-- Modal Body -->
-        <div class="w-full" style="height: 80vh;">
-          <!-- Jitsi Meeting Container -->
-          <div v-if="jitsiLoaded" id="session-meeting" class="w-full h-full"></div>
+        <div class="w-full relative" style="height: 80vh;">
+          <!-- Jitsi Meeting Container (always rendered) -->
+          <div id="session-meeting" class="w-full h-full" :class="{ 'hidden': !jitsiLoaded }"></div>
           <!-- Loading State -->
-          <div v-else class="flex items-center justify-center h-full">
+          <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full absolute inset-0">
             <div class="text-center">
               <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
