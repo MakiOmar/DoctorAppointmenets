@@ -890,14 +890,14 @@ export default {
         })
         
         if (result.success) {
+          earliestSlot.value.inCart = true
           toast.success(t('therapistDetails.appointmentAdded'), {
             timeout: 8000 // 8 seconds for lengthy message
           })
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
           
-          // Redirect directly to checkout page
-          router.push('/checkout')
+          // Don't redirect to checkout - just add to cart
         } else if (result.requiresConfirmation) {
           // Show confirmation dialog for different therapist
           const confirmed = await showDifferentTherapistConfirmation(t('therapistDetails.differentTherapistMessage'))
@@ -909,14 +909,14 @@ export default {
             })
             
             if (confirmResult.success) {
+              earliestSlot.value.inCart = true
               toast.success(t('therapistDetails.appointmentAdded'), {
                 timeout: 8000 // 8 seconds for lengthy message
               })
               // Emit event to update cart
               window.dispatchEvent(new CustomEvent('cart-updated'))
               
-              // Redirect directly to checkout page
-              router.push('/checkout')
+              // Don't redirect to checkout - just add to cart
             } else {
               toast.error(confirmResult.message || t('common.error'))
             }
