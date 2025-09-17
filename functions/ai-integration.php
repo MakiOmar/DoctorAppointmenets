@@ -2464,6 +2464,14 @@ class SNKS_AI_Integration {
 				: 'Registration successful! Please check your email for verification code.';
 		}
 		
+		// Debug: Log response data
+		error_log( "=== REGISTRATION RESPONSE DEBUG ===" );
+		error_log( "User Email: " . $user->user_email );
+		error_log( "Contact Method: " . $contact_method );
+		error_log( "Actual OTP Method: " . $actual_otp_method );
+		error_log( "Success Message: " . $success_message );
+		error_log( "================================" );
+		
 		$this->send_success( array(
 			'message' => $success_message,
 			'user_id' => $user->ID,

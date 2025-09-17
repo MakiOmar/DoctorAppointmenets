@@ -507,8 +507,8 @@ export default {
       const result = await authStore.register(registrationData, otpMethod.value)
       
       if (result && result.requiresVerification) {
-        // Redirect to verification page
-        const contact = form.value.email || fullWhatsAppNumber
+        // Redirect to verification page using contact method from backend response
+        const contact = result.contact || form.value.email || fullWhatsAppNumber
         const routeName = otpMethod.value === 'whatsapp' ? 'WhatsAppVerification' : 'EmailVerification'
         router.push({
           name: routeName,

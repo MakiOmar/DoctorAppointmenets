@@ -143,17 +143,18 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Check if verification is required
       if (response.data.data.requires_verification) {
-        // Store email for verification page
-        localStorage.setItem('pending_verification_email', userData.email)
+        // Store contact method from backend response (not userData.email)
+        const contactMethod = response.data.data.contact_method || userData.email
+        localStorage.setItem('pending_verification_contact', contactMethod)
         // Store registration timestamp for countdown
         localStorage.setItem('registration_timestamp', Date.now().toString())
         
         // Dynamic success message based on OTP method
         const successMessage = otpMethod === 'whatsapp' 
-          ? t('toast.auth.whatsappSentTo', { contact: userData.whatsapp_number })
+          ? t('toast.auth.whatsappSentTo', { contact: contactMethod })
           : t('toast.auth.registerSuccess')
         toast.success(successMessage)
-        return { requiresVerification: true, email: userData.email }
+        return { requiresVerification: true, contact: contactMethod }
       }
       
       // If no verification required, proceed with login
