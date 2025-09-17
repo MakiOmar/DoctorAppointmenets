@@ -223,11 +223,22 @@
         <!-- Modal Header -->
         <div class="flex items-center justify-between px-4 py-3 border-b">
           <h3 class="text-lg font-medium text-gray-900">{{ $t('session.meetingRoom') }}</h3>
-          <button @click="closeSessionModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+          <div class="flex items-center space-x-2 rtl:space-x-reverse">
+            <!-- Exit Session Button -->
+            <button 
+              v-if="jitsiLoaded"
+              @click="exitSession"
+              class="bg-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+            >
+              {{ $t('session.exitSession') }}
+            </button>
+            <!-- Close Modal Button -->
+            <button @click="confirmCloseSessionModal" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
         </div>
         <!-- Modal Body -->
         <div class="w-full relative" style="height: 80vh;">
@@ -809,6 +820,24 @@ export default {
       currentSessionId.value = null
     }
 
+    const confirmCloseSessionModal = () => {
+      if (jitsiLoaded.value) {
+        // Show confirmation if Jitsi is loaded (session is active)
+        if (confirm(t('session.confirmCloseModal'))) {
+          closeSessionModal()
+        }
+      } else {
+        // No confirmation needed if session isn't loaded yet
+        closeSessionModal()
+      }
+    }
+
+    const exitSession = () => {
+      if (confirm(t('session.confirmExit'))) {
+        closeSessionModal()
+      }
+    }
+
     const initializeSessionJitsi = () => {
       // Check if modal and container are ready
       const checkContainer = () => {
@@ -1337,6 +1366,8 @@ export default {
       showSessionModal,
       jitsiLoaded,
       closeSessionModal,
+      confirmCloseSessionModal,
+      exitSession,
       bookWithSameTherapist,
       // Rochtah booking related
       prescriptionRequests,
