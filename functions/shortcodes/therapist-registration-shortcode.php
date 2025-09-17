@@ -1156,7 +1156,9 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	$args = array(
 		'headers' => $headers,
 		'body' => wp_json_encode( $body ),
-		'timeout' => 30,
+		'timeout' => 15, // Reduced timeout to prevent gateway timeouts
+		'blocking' => true,
+		'sslverify' => true,
 	);
 	
 	$response = wp_remote_post( $endpoint, $args );

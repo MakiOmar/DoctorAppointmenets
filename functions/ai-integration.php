@@ -2298,16 +2298,21 @@ class SNKS_AI_Integration {
 			$existing_user = get_user_by( 'email', sanitize_email( $data['email'] ) );
 			$user_identifier = sanitize_email( $data['email'] );
 		} else {
-			// If no email, check by WhatsApp number in user meta
-			$users = get_users( array(
-				'meta_key' => 'billing_whatsapp',
-				'meta_value' => sanitize_text_field( $data['whatsapp'] ),
-				'number' => 1
+			// If no email, check by WhatsApp number in user meta - optimized query
+			global $wpdb;
+			$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
+			$user_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT user_id FROM {$wpdb->usermeta} 
+				WHERE meta_key = 'billing_whatsapp' 
+				AND meta_value = %s 
+				LIMIT 1",
+				$whatsapp_number
 			) );
-			if ( ! empty( $users ) ) {
-				$existing_user = $users[0];
+			
+			if ( $user_id ) {
+				$existing_user = get_user_by( 'ID', $user_id );
 			}
-			$user_identifier = sanitize_text_field( $data['whatsapp'] );
+			$user_identifier = $whatsapp_number;
 		}
 		
 		if ( $existing_user ) {
@@ -2634,11 +2639,16 @@ Best regards,
 			$user = get_user_by( 'email', $email );
 		} else {
 			$whatsapp = sanitize_text_field( $data['whatsapp'] );
-			$users = get_users( array(
-				'meta_key' => 'whatsapp',
-				'meta_value' => $whatsapp
+			// Optimized query for WhatsApp lookup
+			global $wpdb;
+			$user_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT user_id FROM {$wpdb->usermeta} 
+				WHERE meta_key = 'whatsapp' 
+				AND meta_value = %s 
+				LIMIT 1",
+				$whatsapp
 			) );
-			$user = ! empty( $users ) ? $users[0] : null;
+			$user = $user_id ? get_user_by( 'ID', $user_id ) : null;
 		}
 		
 		if ( ! $user ) {
@@ -2729,11 +2739,16 @@ Best regards,
 			$user = get_user_by( 'email', $email );
 		} else {
 			$whatsapp = sanitize_text_field( $data['whatsapp'] );
-			$users = get_users( array(
-				'meta_key' => 'whatsapp',
-				'meta_value' => $whatsapp
+			// Optimized query for WhatsApp lookup
+			global $wpdb;
+			$user_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT user_id FROM {$wpdb->usermeta} 
+				WHERE meta_key = 'whatsapp' 
+				AND meta_value = %s 
+				LIMIT 1",
+				$whatsapp
 			) );
-			$user = ! empty( $users ) ? $users[0] : null;
+			$user = $user_id ? get_user_by( 'ID', $user_id ) : null;
 		}
 		
 		if ( ! $user ) {
