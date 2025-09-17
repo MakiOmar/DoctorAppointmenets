@@ -185,7 +185,8 @@ export default {
         // Determine verification method based on identifier format
         verificationMethod.value = identifier.includes('@') ? 'email' : 'whatsapp'
       } else {
-        contact.value = route.params.contact || localStorage.getItem('pending_verification_contact') || ''
+        const contactParam = route.params.contact || localStorage.getItem('pending_verification_contact') || ''
+        contact.value = contactParam ? decodeURIComponent(contactParam) : ''
         verificationMethod.value = route.query.method || 'email'
       }
       
