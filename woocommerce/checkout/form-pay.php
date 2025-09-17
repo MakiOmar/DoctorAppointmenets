@@ -92,7 +92,7 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 		<?php endif; ?>
 		<?php if ( $is_ai_order ) : ?>
 		<div class="form-row" style="margin-bottom: 20px;">
-			<a href="<?php echo esc_url( home_url( '/cart' ) ); ?>" class="button" style="background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;">
+			<a href="<?php echo esc_url( snks_ai_get_primary_frontend_url() . '/cart' ); ?>" class="button" style="background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;">
 				<?php echo esc_html__( 'العودة إلى السلة', 'woocommerce' ); ?>
 			</a>
 		</div>
