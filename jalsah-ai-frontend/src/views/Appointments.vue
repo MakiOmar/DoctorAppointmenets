@@ -217,6 +217,25 @@
         </div>
       </div>
 
+    <!-- Session Modal -->
+    <div v-if="showSessionModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-8 mx-auto w-11/12 max-w-6xl bg-white rounded-lg shadow-xl">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b">
+          <h3 class="text-lg font-medium text-gray-900">{{ $t('session.meetingRoom') }}</h3>
+          <button @click="closeSessionModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <!-- Modal Body -->
+        <div class="w-full" style="height: 80vh;">
+          <iframe v-if="sessionIframeSrc" :src="sessionIframeSrc" class="w-full h-full" frameborder="0" allow="camera; microphone; display-capture; fullscreen"></iframe>
+        </div>
+      </div>
+    </div>
+
       <!-- Empty State -->
       <div v-else class="text-center py-12">
         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -573,6 +592,8 @@ export default {
     // Popup management
     const openPopups = ref(new Map())
     const showSimulate = ref(!import.meta.env.PROD)
+    const showSessionModal = ref(false)
+    const sessionIframeSrc = ref('')
 
     const tabs = computed(() => [
       { 
@@ -751,46 +772,15 @@ export default {
     }
 
     const joinSession = (appointmentId) => {
-      // Check if popup is already open for this session
-      if (openPopups.value.has(appointmentId)) {
-        const existingPopup = openPopups.value.get(appointmentId)
-        if (existingPopup && !existingPopup.closed) {
-          // Focus existing popup
-          existingPopup.focus()
-          return
-        } else {
-          // Remove closed popup from tracking
-          openPopups.value.delete(appointmentId)
-        }
-      }
-      
-      // Open session in popup window
-      const sessionUrl = `${window.location.origin}/session/${appointmentId}`
-      const popupFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
-      
-      // Open popup window
-      const popup = window.open(sessionUrl, `session_${appointmentId}`, popupFeatures)
-      
-      // Focus the popup window
-      if (popup) {
-        // Track the popup
-        openPopups.value.set(appointmentId, popup)
-        popup.focus()
-        
-        // Add event listener to detect when popup is closed
-        const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed)
-            // Remove from tracking when closed
-            openPopups.value.delete(appointmentId)
-            // Optional: Refresh appointments when popup is closed
-            // loadAppointments()
-          }
-        }, 1000)
-      } else {
-        // Fallback if popup is blocked
-        toast.error('Popup blocked. Please allow popups for this site and try again.')
-      }
+      // Open session inside a modal iframe
+      sessionIframeSrc.value = `${window.location.origin}/session/${appointmentId}`
+      showSessionModal.value = true
+    }
+
+    const closeSessionModal = () => {
+      showSessionModal.value = false
+      // Reset iframe to stop media streams
+      sessionIframeSrc.value = ''
     }
 
     const rescheduleAppointment = (appointmentId) => {
@@ -1123,6 +1113,9 @@ export default {
         }
       })
       openPopups.value.clear()
+      // Ensure session modal cleaned
+      sessionIframeSrc.value = ''
+      showSessionModal.value = false
     })
 
     return {
@@ -1146,6 +1139,9 @@ export default {
       confirmCancel,
       showSimulate,
       simulateTherapistJoin,
+      showSessionModal,
+      sessionIframeSrc,
+      closeSessionModal,
       bookWithSameTherapist,
       // Rochtah booking related
       prescriptionRequests,
