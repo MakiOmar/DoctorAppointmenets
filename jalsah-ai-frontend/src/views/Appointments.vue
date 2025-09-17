@@ -156,6 +156,16 @@
                   </span>
                 </button>
 
+                <!-- Testing: Simulate Therapist Join (non-production only) -->
+                <button
+                  v-if="showSimulate && !appointment.therapist_joined && canJoinSession(appointment)"
+                  @click="simulateTherapistJoin(appointment)"
+                  class="text-xs px-3 py-1 rounded-lg border border-dashed border-gray-400 text-gray-600 hover:bg-gray-50"
+                  title="Simulate therapist joined (testing)"
+                >
+                  {{ $t('session.waitingForTherapist') }} — Test Join
+                </button>
+
                 <!-- Reschedule Button -->
                 <button 
                   v-if="canReschedule(appointment)"
@@ -562,6 +572,7 @@ export default {
     
     // Popup management
     const openPopups = ref(new Map())
+    const showSimulate = ref(!import.meta.env.PROD)
 
     const tabs = computed(() => [
       { 
@@ -813,6 +824,13 @@ export default {
       } finally {
         cancelling.value = false
       }
+    }
+
+    // Simulate therapist joining (testing helper)
+    const simulateTherapistJoin = (appointment) => {
+      if (!appointment) return
+      appointment.therapist_joined = true
+      toast.success($t('appointmentsPage.joinSession'))
     }
 
     const bookWithSameTherapist = (appointment) => {
@@ -1126,6 +1144,8 @@ export default {
       rescheduleAppointment,
       cancelAppointment,
       confirmCancel,
+      showSimulate,
+      simulateTherapistJoin,
       bookWithSameTherapist,
       // Rochtah booking related
       prescriptionRequests,
