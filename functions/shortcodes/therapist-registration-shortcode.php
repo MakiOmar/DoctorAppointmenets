@@ -1097,24 +1097,33 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		error_log( 'Extracted Verification Code: ' . $verification_code );
 		error_log( '===============================' );
 		
-		// Build components array for OTP template - only body component needed
-		$components = array();
-		
-		// Add body component with verification code
-		$components[] = array(
-			'type' => 'body',
-			'parameters' => array(
-				array(
-					'type' => 'text',
-					'text' => $verification_code
+		// Build components array for OTP template - body and button components
+		$components = array(
+			array(
+				'type' => 'body',
+				'parameters' => array(
+					array(
+						'type' => 'text',
+						'text' => $verification_code
+					)
+				)
+			),
+			array(
+				'type' => 'button',
+				'sub_type' => 'url',
+				'index' => '0',
+				'parameters' => array(
+					array(
+						'type' => 'text',
+						'text' => $verification_code
+					)
 				)
 			)
 		);
 		
-		// Note: OTP templates should only have body component, no button components
-		
 		$body = array(
 			'messaging_product' => 'whatsapp',
+			'recipient_type' => 'individual',
 			'to' => $phone_number,
 			'type' => 'template',
 			'template' => array(
@@ -1144,12 +1153,13 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	);
 	
 	// Make API request with exact Meta specifications
-	$response = wp_remote_post( $endpoint, array(
+	$args = array(
 		'headers' => $headers,
 		'body' => wp_json_encode( $body ),
 		'timeout' => 30,
-		'sslverify' => true, // Ensure SSL verification for Meta API
-	) );
+	);
+	
+	$response = wp_remote_post( $endpoint, $args );
 	
 	// Check for errors
 	if ( is_wp_error( $response ) ) {
