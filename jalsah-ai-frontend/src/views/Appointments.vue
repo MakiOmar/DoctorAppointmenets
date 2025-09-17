@@ -556,7 +556,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -785,14 +785,17 @@ export default {
       return appointmentTime - now > 24 * 60 * 60 * 1000
     }
 
-    const joinSession = (appointmentId) => {
+    const joinSession = async (appointmentId) => {
       // Open session with direct Jitsi integration
       currentSessionId.value = appointmentId
       showSessionModal.value = true
       jitsiLoaded.value = false
       
-      // Initialize Jitsi meeting
-      initializeSessionJitsi()
+      // Wait for modal to be rendered before initializing Jitsi
+      await nextTick()
+      setTimeout(() => {
+        initializeSessionJitsi()
+      }, 200) // Give modal time to fully render
     }
 
     const closeSessionModal = () => {
@@ -807,8 +810,26 @@ export default {
     }
 
     const initializeSessionJitsi = () => {
-      // Wait for DOM to be ready
-      setTimeout(() => {
+      // Check if modal and container are ready
+      const checkContainer = () => {
+        const container = document.querySelector('#session-meeting')
+        if (!container) {
+          console.log('Waiting for session container...')
+          return false
+        }
+        return true
+      }
+      
+      // Wait for container to be available
+      const waitForContainer = () => {
+        if (checkContainer()) {
+          loadJitsiScript()
+        } else {
+          setTimeout(waitForContainer, 50) // Check every 50ms
+        }
+      }
+      
+      const loadJitsiScript = () => {
         // Check if JitsiMeetExternalAPI is already available
         if (typeof JitsiMeetExternalAPI !== 'undefined') {
           startSessionJitsiMeeting()
@@ -829,7 +850,10 @@ export default {
           jitsiLoaded.value = false
         }
         document.head.appendChild(script)
-      }, 100) // Small delay to ensure DOM is ready
+      }
+      
+      // Start waiting for container
+      waitForContainer()
     }
 
     const startSessionJitsiMeeting = () => {
