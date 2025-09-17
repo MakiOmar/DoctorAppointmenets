@@ -2474,8 +2474,17 @@ class SNKS_AI_Integration {
 		update_user_meta( $user_id, 'age', intval( $data['age'] ) );
 		
 		// WhatsApp is always provided, also store as billing_whatsapp for consistency
-		update_user_meta( $user_id, 'whatsapp', sanitize_text_field( $data['whatsapp'] ) );
-		update_user_meta( $user_id, 'billing_whatsapp', sanitize_text_field( $data['whatsapp'] ) );
+		$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
+		update_user_meta( $user_id, 'whatsapp', $whatsapp_number );
+		update_user_meta( $user_id, 'billing_whatsapp', $whatsapp_number );
+		
+		// Debug: Log WhatsApp storage
+		error_log( "=== WHATSAPP STORAGE DEBUG ===" );
+		error_log( "User ID: $user_id" );
+		error_log( "WhatsApp Number: $whatsapp_number" );
+		error_log( "Stored in 'whatsapp': " . get_user_meta( $user_id, 'whatsapp', true ) );
+		error_log( "Stored in 'billing_whatsapp': " . get_user_meta( $user_id, 'billing_whatsapp', true ) );
+		error_log( "=============================" );
 		
 		// Optional fields
 		if ( ! empty( $data['phone'] ) ) {
@@ -2658,6 +2667,13 @@ Best regards,
 				$whatsapp
 			) );
 			$user = $user_id ? get_user_by( 'ID', $user_id ) : null;
+			
+			// Debug: Log WhatsApp lookup
+			error_log( "=== WHATSAPP VERIFICATION DEBUG ===" );
+			error_log( "Looking for WhatsApp: $whatsapp" );
+			error_log( "Found User ID: " . ($user_id ? $user_id : 'NULL') );
+			error_log( "User object: " . ($user ? 'Found' : 'Not found') );
+			error_log( "================================" );
 		}
 		
 		if ( ! $user ) {
