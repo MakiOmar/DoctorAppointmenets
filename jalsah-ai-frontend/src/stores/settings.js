@@ -74,17 +74,22 @@ export const useSettingsStore = defineStore('settings', () => {
       // Try multiple endpoints
       let response = null
       
-      // Try REST API first
+      // Try custom API endpoint first (same pattern as working therapist requests)
       try {
-        			response = await api.get('/wp-json/jalsah-ai/v1/ai-settings')
+        response = await api.get('/api/ai/settings')
       } catch (e) {
-        // Try WordPress AJAX
+        // Try REST API as fallback
         try {
-          response = await api.get('/wp-admin/admin-ajax.php', {
-            params: { action: 'get_ai_settings' }
-          })
+          response = await api.get('/wp-json/jalsah-ai/v1/ai-settings')
         } catch (e2) {
-          return
+          // Try WordPress AJAX as last resort
+          try {
+            response = await api.get('/wp-admin/admin-ajax.php', {
+              params: { action: 'get_ai_settings' }
+            })
+          } catch (e3) {
+            return
+          }
         }
       }
       

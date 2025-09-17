@@ -96,6 +96,8 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/therapists/?$', 'index.php?ai_endpoint=therapists', 'top' );
 		add_rewrite_rule( '^api/ai/diagnoses/(\d+)/?$', 'index.php?ai_endpoint=diagnoses/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/diagnoses/?$', 'index.php?ai_endpoint=diagnoses', 'top' );
+		add_rewrite_rule( '^api/ai/settings/?$', 'index.php?ai_endpoint=settings', 'top' );
+		add_rewrite_rule( '^api/ai/therapist-registration-settings/?$', 'index.php?ai_endpoint=therapist-registration-settings', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
 		// Add rewrite rule for v2 endpoints
@@ -1821,6 +1823,12 @@ class SNKS_AI_Integration {
 				break;
 			case 'diagnosis':
 				$this->handle_diagnosis_endpoint( $method, $path );
+				break;
+			case 'settings':
+				$this->handle_settings_endpoint( $method, $path );
+				break;
+			case 'therapist-registration-settings':
+				$this->handle_therapist_registration_settings_endpoint( $method, $path );
 				break;
 			case 'therapist-availability':
 				$this->handle_therapist_availability_endpoint( $method, $path );
@@ -4183,6 +4191,78 @@ Best regards,
 		) );
 	}
 	
+	/**
+	 * Handle settings endpoint
+	 */
+	private function handle_settings_endpoint( $method, $path ) {
+		switch ( $method ) {
+			case 'GET':
+				$this->get_ai_settings();
+				break;
+			default:
+				$this->send_error( 'Method not allowed', 405 );
+		}
+	}
+	
+	/**
+	 * Handle therapist registration settings endpoint
+	 */
+	private function handle_therapist_registration_settings_endpoint( $method, $path ) {
+		switch ( $method ) {
+			case 'GET':
+				$this->get_therapist_registration_settings();
+				break;
+			default:
+				$this->send_error( 'Method not allowed', 405 );
+		}
+	}
+	
+	/**
+	 * Get AI Settings - Custom Endpoint
+	 */
+	private function get_ai_settings() {
+		// Get current language with fallback
+		$current_language = function_exists( 'snks_get_current_language' ) ? snks_get_current_language() : 'ar';
+		
+		// Optimized settings with minimal function calls
+		$settings = array(
+			'bilingual_enabled' => get_option( 'snks_bilingual_enabled', '0' ) === '1',
+			'default_language' => get_option( 'snks_default_language', 'ar' ),
+			'site_title' => get_bloginfo( 'name' ),
+			'site_description' => get_bloginfo( 'description' ),
+			'ratings_enabled' => get_option( 'snks_ai_ratings_enabled', '1' ) === '1',
+			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
+			'diagnosis_results_limit' => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
+			'show_more_button_enabled' => get_option( 'snks_ai_show_more_button_enabled', '1' ) === '1',
+			'appointment_change_terms' => $current_language === 'ar' 
+				? get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' )
+				: get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' ),
+		);
+		
+		$this->send_success( $settings );
+	}
+	
+	/**
+	 * Get Therapist Registration Settings - Custom Endpoint
+	 */
+	private function get_therapist_registration_settings() {
+		$settings = array(
+			'otp_method' => get_option( 'snks_therapist_otp_method', 'email' ),
+			'require_email' => get_option( 'snks_therapist_require_email', 0 ),
+			'country_dial_required' => get_option( 'snks_therapist_country_dial_required', 1 ),
+			'whatsapp_api_url' => get_option( 'snks_whatsapp_api_url', '' ),
+			'whatsapp_api_token' => get_option( 'snks_whatsapp_api_token', '' ),
+			'whatsapp_phone_number_id' => get_option( 'snks_whatsapp_phone_number_id', '' ),
+			'whatsapp_message_language' => get_option( 'snks_whatsapp_message_language', 'ar' ),
+			'whatsapp_template_name' => get_option( 'snks_whatsapp_template_name', 'hello_world' ),
+			'whatsapp_use_template' => get_option( 'snks_whatsapp_use_template', 1 ),
+			'default_country' => get_option( 'snks_therapist_default_country', 'EG' ),
+			'country_codes' => snks_get_country_dial_codes()
+		);
+		
+		$this->send_success( $settings );
+	}
+
 	/**
 	 * Get AI Settings REST API Handler - Optimized
 	 */

@@ -33,7 +33,15 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
       this.loading = true
       try {
         console.log('🔍 Loading therapist registration settings...')
-        const response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
+        // Try custom API endpoint first (same pattern as working therapist requests)
+        let response
+        try {
+          response = await api.get('/api/ai/therapist-registration-settings')
+        } catch (e) {
+          // Fallback to REST API
+          response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
+        }
+        
         console.log('🔍 API Response:', response.data)
         if (response.data.success) {
           this.settings = response.data.data
