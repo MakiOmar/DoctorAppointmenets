@@ -823,7 +823,7 @@ export default {
     const confirmCloseSessionModal = () => {
       if (jitsiLoaded.value) {
         // Show confirmation if Jitsi is loaded (session is active)
-        if (confirm(t('session.confirmCloseModal'))) {
+        if (confirm($t('session.confirmCloseModal'))) {
           closeSessionModal()
         }
       } else {
@@ -833,7 +833,7 @@ export default {
     }
 
     const exitSession = () => {
-      if (confirm(t('session.confirmExit'))) {
+      if (confirm($t('session.confirmExit'))) {
         closeSessionModal()
       }
     }
