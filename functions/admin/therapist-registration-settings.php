@@ -128,7 +128,7 @@ function snks_therapist_registration_settings_page() {
 	
 	// Get current settings
 	$otp_method = get_option( 'snks_therapist_otp_method', 'email' );
-	$require_email = get_option( 'snks_therapist_require_email', 1 );
+	$require_email = get_option( 'snks_therapist_require_email', 0 );
 	$country_dial_required = get_option( 'snks_therapist_country_dial_required', 1 );
 	$default_country = get_option( 'snks_therapist_default_country', 'EG' );
 	
@@ -511,7 +511,7 @@ function snks_get_country_dial_codes() {
  */
 function snks_get_therapist_registration_settings() {
 	// Debug logging
-	$require_email_option = get_option( 'snks_therapist_require_email', 1 );
+	$require_email_option = get_option( 'snks_therapist_require_email', 0 );
 	error_log('🔍 Settings: snks_therapist_require_email option value: ' . var_export($require_email_option, true));
 	
 	$settings = array(

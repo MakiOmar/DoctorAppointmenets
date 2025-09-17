@@ -5,7 +5,7 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
   state: () => ({
     settings: {
       otp_method: 'email',
-      require_email: true,
+      require_email: false,
       country_dial_required: true,
       default_country: 'EG',
       country_codes: {}
