@@ -36,61 +36,69 @@
         <form @submit.prevent="handleRegister" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4">
-            <!-- First Name Field -->
-            <div v-if="$i18n.locale === 'ar'" class="order-2">
-              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
-              <input
-                id="first_name"
-                v-model="form.first_name"
-                type="text"
-                required
-                class="input-field"
-                :placeholder="$t('auth.register.firstName')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                autocomplete="given-name"
-              />
-            </div>
-            <div v-else>
-              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
-              <input
-                id="first_name"
-                v-model="form.first_name"
-                type="text"
-                required
-                class="input-field"
-                :placeholder="$t('auth.register.firstName')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                autocomplete="given-name"
-              />
-            </div>
+            <!-- For Arabic: First Name first (on right), then Last Name (on left) -->
+            <template v-if="$i18n.locale === 'ar'">
+              <!-- First Name Field (appears on right in RTL - first position) -->
+              <div>
+                <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
+                <input
+                  id="first_name"
+                  v-model="form.first_name"
+                  type="text"
+                  required
+                  class="input-field"
+                  :placeholder="$t('auth.register.firstName')"
+                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                  autocomplete="given-name"
+                />
+              </div>
+              <!-- Last Name Field (appears on left in RTL - second position) -->
+              <div>
+                <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
+                <input
+                  id="last_name"
+                  v-model="form.last_name"
+                  type="text"
+                  required
+                  class="input-field"
+                  :placeholder="$t('auth.register.lastName')"
+                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                  autocomplete="family-name"
+                />
+              </div>
+            </template>
             
-            <!-- Last Name Field -->
-            <div v-if="$i18n.locale === 'ar'" class="order-1">
-              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
-              <input
-                id="last_name"
-                v-model="form.last_name"
-                type="text"
-                required
-                class="input-field"
-                :placeholder="$t('auth.register.lastName')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                autocomplete="family-name"
-              />
-            </div>
-            <div v-else>
-              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
-              <input
-                id="last_name"
-                v-model="form.last_name"
-                type="text"
-                required
-                class="input-field"
-                :placeholder="$t('auth.register.lastName')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                autocomplete="family-name"
-              />
-            </div>
+            <!-- For English: First Name first, then Last Name -->
+            <template v-else>
+              <!-- First Name Field (appears on left in LTR) -->
+              <div>
+                <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
+                <input
+                  id="first_name"
+                  v-model="form.first_name"
+                  type="text"
+                  required
+                  class="input-field"
+                  :placeholder="$t('auth.register.firstName')"
+                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                  autocomplete="given-name"
+                />
+              </div>
+              <!-- Last Name Field (appears on right in LTR) -->
+              <div>
+                <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
+                <input
+                  id="last_name"
+                  v-model="form.last_name"
+                  type="text"
+                  required
+                  class="input-field"
+                  :placeholder="$t('auth.register.lastName')"
+                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                  autocomplete="family-name"
+                />
+              </div>
+            </template>
           </div>
 
           <!-- Email (conditional based on settings) -->
