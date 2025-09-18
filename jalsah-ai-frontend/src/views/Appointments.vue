@@ -112,12 +112,6 @@
                   <div>
                     <span class="font-medium">{{ $t('appointmentsPage.duration') }}:</span> {{ appointment.session_type }} {{ $t('appointmentsPage.minutes') }}
                   </div>
-                  <div>
-                    <span class="font-medium">{{ $t('appointmentsPage.status') }}:</span> 
-                    <span :class="getStatusClass(appointment.status)">
-                      {{ getStatusText(appointment.status) }}
-                    </span>
-                  </div>
                 </div>
                 
                 <!-- Notes -->
