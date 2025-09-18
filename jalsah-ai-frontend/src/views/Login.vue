@@ -506,11 +506,24 @@ export default {
           
           // User needs verification, redirect to verification page after a short delay
           setTimeout(() => {
-            const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
+            let identifier
+            if (requireEmail.value) {
+              identifier = form.value.email
+            } else {
+              // For WhatsApp, use the full number with dial code (same as what was sent to backend)
+              const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+              const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
+              identifier = fullWhatsAppNumber
+            }
+            
             console.log('🔄 Redirecting to verification page with identifier:', identifier)
             console.log('🔍 requireEmail.value:', requireEmail.value)
             console.log('🔍 form.value.email:', form.value.email)
             console.log('🔍 form.value.whatsapp:', form.value.whatsapp)
+            console.log('🔍 selectedCountryCode.value:', selectedCountryCode.value)
+            console.log('🔍 selectedCountry:', selectedCountry)
+            console.log('🔍 fullWhatsAppNumber:', identifier)
+            
             if (identifier) {
               console.log('🔄 Navigating to:', `/verify?identifier=${encodeURIComponent(identifier)}`)
               router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
