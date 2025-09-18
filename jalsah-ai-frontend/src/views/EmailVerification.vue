@@ -124,7 +124,7 @@
             <p class="text-sm text-gray-600">
               {{ verificationMethod === 'whatsapp' ? $t('verification.whatsappSentTo') : $t('verification.emailSentTo') }}
             </p>
-            <p class="text-lg font-medium text-gray-900" :dir="verificationMethod === 'whatsapp' ? 'ltr' : 'auto'" :style="verificationMethod === 'whatsapp' ? 'text-align: left; direction: ltr;' : ''">{{ contact }}</p>
+            <p class="text-lg font-medium text-gray-900" :dir="verificationMethod === 'whatsapp' ? 'ltr' : 'auto'" :style="verificationMethod === 'whatsapp' ? 'text-align: center; direction: ltr;' : ''">{{ contact }}</p>
             <button
               type="button"
               @click="changeContact"
