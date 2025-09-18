@@ -218,7 +218,9 @@ export default {
     sending: 'Sending...',
     backToLogin: 'Back to Login',
     continue: 'Continue',
-    changeContact: 'Edit number'
+    changeContact: 'Edit number',
+    userNotFound: 'User not found in the system',
+    checkUserError: 'Error checking if user exists'
   },
 
   // Toast Messages

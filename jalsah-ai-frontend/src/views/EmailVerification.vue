@@ -267,18 +267,35 @@ export default {
       )
     })
 
-    const setContact = () => {
-      if (contactInput.value) {
-        if (requireEmail.value) {
-          // Email method
-          contact.value = contactInput.value
-          verificationMethod.value = 'email'
-        } else {
-          // WhatsApp method - combine country code with input
-          const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
-          const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value
-          contact.value = fullWhatsAppNumber
-          verificationMethod.value = 'whatsapp'
+    const setContact = async () => {
+      if (!contactInput.value) return
+      
+      if (requireEmail.value) {
+        // Email method - no need to check if user exists for email
+        contact.value = contactInput.value
+        verificationMethod.value = 'email'
+      } else {
+        // WhatsApp method - check if user exists first
+        const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+        const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value
+        
+        try {
+          // Check if user with this WhatsApp number exists
+          const response = await authStore.checkUserExists(fullWhatsAppNumber)
+          
+          if (response && response.exists) {
+            // User exists, proceed with verification
+            contact.value = fullWhatsAppNumber
+            verificationMethod.value = 'whatsapp'
+          } else {
+            // User doesn't exist, show error
+            toast.error(t('verification.userNotFound'))
+            return
+          }
+        } catch (error) {
+          console.error('Error checking user existence:', error)
+          toast.error(t('verification.checkUserError'))
+          return
         }
       }
     }

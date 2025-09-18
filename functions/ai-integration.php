@@ -1881,6 +1881,9 @@ class SNKS_AI_Integration {
 				} elseif ( $path[1] === 'resend-verification' ) {
 
 					$this->ai_resend_verification();
+				} elseif ( $path[1] === 'check-user' ) {
+
+					$this->ai_check_user_exists();
 				} else {
 
 					$this->send_error( 'Auth endpoint not found', 404 );
@@ -2824,6 +2827,43 @@ Best regards,
 			'message' => 'Verification code sent successfully! Please check your email.',
 			'user_id' => $user->ID,
 			'email' => $user->user_email
+		) );
+	}
+	
+	/**
+	 * Check if user exists by WhatsApp number
+	 */
+	private function ai_check_user_exists() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_check_user_nonce' ) ) {
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		// Check if WhatsApp number is provided
+		if ( ! isset( $data['whatsapp'] ) || empty( $data['whatsapp'] ) ) {
+			$this->send_error( 'WhatsApp number required', 400 );
+		}
+		
+		$whatsapp = sanitize_text_field( $data['whatsapp'] );
+		
+		// Check if user exists with this WhatsApp number
+		global $wpdb;
+		$user_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->usermeta} 
+			WHERE meta_key = 'billing_whatsapp' 
+			AND meta_value = %s 
+			LIMIT 1",
+			$whatsapp
+		) );
+		
+		$exists = ! empty( $user_id );
+		
+		$this->send_success( array(
+			'exists' => $exists,
+			'whatsapp' => $whatsapp,
+			'user_id' => $exists ? $user_id : null
 		) );
 	}
 	

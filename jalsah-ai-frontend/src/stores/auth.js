@@ -304,6 +304,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Check if user exists by WhatsApp number
+  const checkUserExists = async (whatsappNumber) => {
+    try {
+      const nonce = await getNonce('ai_check_user_nonce')
+      
+      const response = await api.post('/api/ai/auth/check-user', {
+        whatsapp: whatsappNumber,
+        nonce: nonce
+      })
+      
+      return response.data
+    } catch (error) {
+      console.error('Error checking user existence:', error)
+      throw error
+    }
+  }
+
   // Initialize auth state
   
   
@@ -324,6 +341,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     verifyEmail,
     resendVerification,
-    loadUser
+    loadUser,
+    checkUserExists
   }
 }) 

@@ -222,7 +222,9 @@ export default {
     sending: 'جاري الإرسال...',
     backToLogin: 'العودة لتسجيل الدخول',
     continue: 'متابعة',
-    changeContact: 'تعديل الرقم'
+    changeContact: 'تعديل الرقم',
+    userNotFound: 'المستخدم غير موجود في النظام',
+    checkUserError: 'حدث خطأ أثناء التحقق من وجود المستخدم'
   },
 
   // Toast Messages
