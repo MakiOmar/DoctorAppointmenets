@@ -37,19 +37,6 @@
           <!-- Name Fields -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
-              <input
-                id="last_name"
-                v-model="form.last_name"
-                type="text"
-                required
-                class="input-field"
-                :placeholder="$t('auth.register.lastName')"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                autocomplete="family-name"
-              />
-            </div>
-            <div>
               <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
               <input
                 id="first_name"
@@ -60,6 +47,19 @@
                 :placeholder="$t('auth.register.firstName')"
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
                 autocomplete="given-name"
+              />
+            </div>
+            <div>
+              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
+              <input
+                id="last_name"
+                v-model="form.last_name"
+                type="text"
+                required
+                class="input-field"
+                :placeholder="$t('auth.register.lastName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="family-name"
               />
             </div>
           </div>
