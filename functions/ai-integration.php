@@ -2874,11 +2874,10 @@ Best regards,
 			$this->send_error( 'Email is already verified', 400 );
 		}
 		
-		// Generate new verification code
-		$verification_code = wp_generate_password( 6, false, false );
-		$verification_code = preg_replace( '/[^0-9]/', '', $verification_code ); // Ensure it's only numbers
-		if ( strlen( $verification_code ) < 6 ) {
-			$verification_code = str_pad( $verification_code, 6, '0', STR_PAD_LEFT );
+		// Generate new verification code - use random numbers only (same as registration)
+		$verification_code = '';
+		for ( $i = 0; $i < 6; $i++ ) {
+			$verification_code .= rand( 0, 9 );
 		}
 		
 		// Store new verification code and expiry
