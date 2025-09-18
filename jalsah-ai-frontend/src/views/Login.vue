@@ -514,15 +514,16 @@ export default {
               const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
               const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
               identifier = fullWhatsAppNumber
+              
+              console.log('🔍 selectedCountryCode.value:', selectedCountryCode.value)
+              console.log('🔍 selectedCountry:', selectedCountry)
+              console.log('🔍 fullWhatsAppNumber:', identifier)
             }
             
             console.log('🔄 Redirecting to verification page with identifier:', identifier)
             console.log('🔍 requireEmail.value:', requireEmail.value)
             console.log('🔍 form.value.email:', form.value.email)
             console.log('🔍 form.value.whatsapp:', form.value.whatsapp)
-            console.log('🔍 selectedCountryCode.value:', selectedCountryCode.value)
-            console.log('🔍 selectedCountry:', selectedCountry)
-            console.log('🔍 fullWhatsAppNumber:', identifier)
             
             if (identifier) {
               console.log('🔄 Navigating to:', `/verify?identifier=${encodeURIComponent(identifier)}`)
