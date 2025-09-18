@@ -666,30 +666,31 @@ export default {
       }
     }
 
-    const verifyForgotPasswordCode = async () => {
-      if (!forgotPasswordForm.value.code) {
-        toast.error(t('verification.enterResetCode'))
-        return
-      }
+           const verifyForgotPasswordCode = async () => {
+             if (!forgotPasswordForm.value.code) {
+               toast.error(t('verification.enterResetCode'))
+               return
+             }
 
-      forgotPasswordLoading.value = true
-      try {
-        const fullWhatsAppNumber = getSelectedCountryDial() + forgotPasswordForm.value.whatsapp
-        
-        const response = await authStore.verifyForgotPassword(fullWhatsAppNumber, forgotPasswordForm.value.code)
-        
-        if (response) {
-          resetToken.value = response.reset_token
-          toast.success(t('verification.codeVerified'))
-          forgotPasswordStep.value = 3
-        }
-      } catch (error) {
-        console.error('Verify forgot password error:', error)
-        toast.error(error.response?.data?.error || t('verification.resendFailed'))
-      } finally {
-        forgotPasswordLoading.value = false
-      }
-    }
+             forgotPasswordLoading.value = true
+             try {
+               const fullWhatsAppNumber = getSelectedCountryDial() + forgotPasswordForm.value.whatsapp
+               
+               const response = await authStore.verifyForgotPassword(fullWhatsAppNumber, forgotPasswordForm.value.code)
+               
+               if (response) {
+                 console.log('✅ Reset token received:', response.reset_token)
+                 resetToken.value = response.reset_token
+                 toast.success(t('verification.codeVerified'))
+                 forgotPasswordStep.value = 3
+               }
+             } catch (error) {
+               console.error('Verify forgot password error:', error)
+               toast.error(error.response?.data?.error || t('verification.resendFailed'))
+             } finally {
+               forgotPasswordLoading.value = false
+             }
+           }
 
            const resetPassword = async () => {
              if (!forgotPasswordForm.value.newPassword || !forgotPasswordForm.value.confirmPassword) {
@@ -707,6 +708,9 @@ export default {
                toast.error(t('verification.passwordTooShort'))
                return
              }
+
+             console.log('🔄 About to reset password with token:', resetToken.value)
+             console.log('🔄 New password:', forgotPasswordForm.value.newPassword)
 
              forgotPasswordLoading.value = true
              try {

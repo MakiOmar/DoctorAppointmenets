@@ -378,6 +378,12 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const nonce = await getNonce('ai_reset_password_nonce')
       
+      console.log('🔄 Reset password request:', {
+        reset_token: resetToken,
+        new_password: newPassword,
+        nonce: nonce
+      })
+      
       const response = await api.post('/api/ai/auth/reset-password', {
         reset_token: resetToken,
         new_password: newPassword,
@@ -387,6 +393,7 @@ export const useAuthStore = defineStore('auth', () => {
       return response.data
     } catch (error) {
       console.error('Error resetting password:', error)
+      console.error('Error response:', error.response?.data)
       throw error
     }
   }
