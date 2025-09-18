@@ -497,13 +497,18 @@ export default {
             : t('toast.auth.whatsappVerificationRequired')
           toast.info(verificationMessage)
           
-          // User needs verification, redirect to verification page
-          const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
-          if (identifier) {
-            router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
-          } else {
-            router.push('/verify')
-          }
+          // User needs verification, redirect to verification page after a short delay
+          setTimeout(() => {
+            const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
+            console.log('🔄 Redirecting to verification page with identifier:', identifier)
+            if (identifier) {
+              console.log('🔄 Navigating to:', `/verify?identifier=${encodeURIComponent(identifier)}`)
+              router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
+            } else {
+              console.log('🔄 Navigating to: /verify')
+              router.push('/verify')
+            }
+          }, 1500) // 1.5 second delay to let user read the message
         }
       } catch (error) {
         // This catch block should not be reached for verification errors
