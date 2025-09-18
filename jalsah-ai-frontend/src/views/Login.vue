@@ -401,4 +401,64 @@ export default {
     }
   }
 }
-</script> 
+</script>
+
+<style scoped>
+/* Import comprehensive emoji fonts for better cross-browser support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&display=swap');
+
+.emoji-flag {
+  /* Comprehensive emoji font stack with Chrome-specific fixes */
+  font-family: 
+    'Noto Color Emoji',           /* Google's color emoji font */
+    'Noto Emoji',                 /* Google's monochrome emoji font */
+    'Apple Color Emoji',          /* macOS/iOS */
+    'Segoe UI Emoji',             /* Windows 10+ */
+    'Segoe UI Symbol',            /* Windows 8/8.1 */
+    'Twemoji',                    /* Twitter's emoji font */
+    'EmojiOne',                   /* Alternative emoji font */
+    'Android Emoji',              /* Android */
+    'Noto Emoji',                 /* Fallback */
+    sans-serif;
+  
+  font-size: 1.2em;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  
+  /* Chrome-specific emoji rendering fixes */
+  font-variant-emoji: emoji;
+  -webkit-font-feature-settings: "liga", "kern";
+  font-feature-settings: "liga", "kern";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Force emoji rendering mode */
+  font-variant-ligatures: common-ligatures;
+  -webkit-font-variant-ligatures: common-ligatures;
+  
+  /* Prevent text selection issues with emojis */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Chrome-specific flag emoji fixes */
+@supports (-webkit-appearance: none) {
+  .emoji-flag {
+    /* Force Chrome to use emoji fonts */
+    font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+    -webkit-font-feature-settings: "liga", "kern", "calt";
+    font-feature-settings: "liga", "kern", "calt";
+  }
+}
+
+/* Additional emoji font fallbacks and optimization */
+.emoji-flag {
+  font-display: swap;
+  unicode-range: U+1F1E6-1F1FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F680-1F6FF, U+1F700-1F77F, U+1F780-1F7FF, U+1F800-1F8FF, U+1F900-1F9FF, U+1FA00-1FA6F, U+1FA70-1FAFF, U+2600-26FF, U+2700-27BF;
+}
+</style> 
