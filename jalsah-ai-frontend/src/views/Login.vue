@@ -351,17 +351,22 @@
               {{ $t('verification.setNewPassword') }}
             </p>
             
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                {{ $t('verification.newPassword') }}
-              </label>
-              <input
-                v-model="forgotPasswordForm.newPassword"
-                type="password"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                :placeholder="$t('verification.newPassword')"
-              />
-            </div>
+                   <div class="mb-4">
+                     <label class="block text-sm font-medium text-gray-700 mb-2">
+                       {{ $t('verification.newPassword') }}
+                     </label>
+                     <input
+                       v-model="forgotPasswordForm.newPassword"
+                       type="password"
+                       @blur="validatePasswordMatch"
+                       class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                       :class="{
+                         'border-gray-300': !confirmPasswordError,
+                         'border-red-300 focus:border-red-500 focus:ring-red-500': confirmPasswordError
+                       }"
+                       :placeholder="$t('verification.newPassword')"
+                     />
+                   </div>
 
                    <div class="mb-4">
                      <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -618,8 +623,9 @@ export default {
              confirmPasswordError.value = ''
            }
 
-           const validateConfirmPassword = () => {
-             if (!forgotPasswordForm.value.confirmPassword) {
+           const validatePasswordMatch = () => {
+             // Only validate if both fields have values
+             if (!forgotPasswordForm.value.newPassword || !forgotPasswordForm.value.confirmPassword) {
                confirmPasswordError.value = ''
                return
              }
@@ -629,6 +635,10 @@ export default {
              } else {
                confirmPasswordError.value = ''
              }
+           }
+
+           const validateConfirmPassword = () => {
+             validatePasswordMatch()
            }
 
     const sendForgotPasswordCode = async () => {
@@ -760,7 +770,8 @@ export default {
       sendForgotPasswordCode,
       verifyForgotPasswordCode,
       resetPassword,
-      validateConfirmPassword
+      validateConfirmPassword,
+      validatePasswordMatch
     }
   }
 }

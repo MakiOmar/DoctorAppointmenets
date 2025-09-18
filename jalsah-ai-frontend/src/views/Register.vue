@@ -162,7 +162,11 @@
               v-model="form.password"
               type="password"
               required
+              @blur="validatePasswordMatch"
               class="input-field"
+              :class="{
+                'border-red-300 focus:border-red-500 focus:ring-red-500': passwordMismatchError
+              }"
               :placeholder="$t('auth.register.createPassword')"
               minlength="8"
             />
@@ -179,13 +183,16 @@
               v-model="form.confirm_password"
               type="password"
               required
-              class="input-field"
-              :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
               @blur="validatePasswordMatch"
+              class="input-field"
+              :class="{
+                'border-red-300 focus:border-red-500 focus:ring-red-500': passwordMismatchError
+              }"
+              :placeholder="$t('auth.register.confirmPasswordPlaceholder')"
             />
-            <div v-if="passwordMismatchError" class="mt-1 text-sm text-red-600">
-              {{ $t('auth.register.passwordMismatch') }}
-            </div>
+            <p v-if="passwordMismatchError" class="mt-1 text-sm text-red-600">
+              {{ $t('verification.passwordMismatch') }}
+            </p>
           </div>
 
           <!-- Terms -->
