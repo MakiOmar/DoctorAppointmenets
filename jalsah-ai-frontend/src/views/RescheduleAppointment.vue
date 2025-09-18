@@ -46,15 +46,15 @@
           </div>
           <div>
             <p class="text-sm text-gray-600">{{ $t('reschedule.currentDate') }}</p>
-            <p class="font-medium text-gray-900">{{ formatDate(appointment.date) }}</p>
+            <p class="font-medium text-gray-900">{{ formatDate(appointment.data?.date) }}</p>
           </div>
           <div>
             <p class="text-sm text-gray-600">{{ $t('reschedule.currentTime') }}</p>
-            <p class="font-medium text-gray-900">{{ formatTime(appointment.time) }}</p>
+            <p class="font-medium text-gray-900">{{ formatTime(appointment.data?.time) }}</p>
           </div>
           <div>
             <p class="text-sm text-gray-600">{{ $t('reschedule.duration') }}</p>
-            <p class="font-medium text-gray-900">{{ appointment.session_type || '45' }} {{ $t('common.minutes') }}</p>
+            <p class="font-medium text-gray-900">{{ appointment.data?.period || '45' }} {{ $t('common.minutes') }}</p>
           </div>
         </div>
       </div>
