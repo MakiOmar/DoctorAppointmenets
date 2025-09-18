@@ -226,13 +226,23 @@
                 {{ $t('auth.login.whatsapp') }}
               </label>
               <div class="flex">
+                <!-- WhatsApp Input -->
+                <input
+                  v-model="forgotPasswordForm.whatsapp"
+                  type="tel"
+                  required
+                  dir="ltr"
+                  class="flex-1 px-3 py-3 border border-gray-300 rounded-r-md rounded-l-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                  :placeholder="$t('auth.login.whatsappPlaceholder')"
+                />
+                
                 <!-- Country Selector -->
                 <div class="relative flex-shrink-0">
                   <button
                     type="button"
                     @click="toggleCountryDropdown"
                     :disabled="isDetectingCountry"
-                    class="w-32 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
+                    class="w-32 px-3 py-3 border border-gray-300 rounded-l-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
                     style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
                   >
                     <span class="flex items-center">
@@ -281,16 +291,6 @@
                     </div>
                   </div>
                 </div>
-                
-                <!-- WhatsApp Input -->
-                <input
-                  v-model="forgotPasswordForm.whatsapp"
-                  type="tel"
-                  required
-                  dir="ltr"
-                  class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
-                  :placeholder="$t('auth.login.whatsappPlaceholder')"
-                />
               </div>
             </div>
 
