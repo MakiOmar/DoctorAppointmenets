@@ -489,17 +489,8 @@ export default {
         if (result === true) {
         // Redirect to homepage after successful login
         router.push('/')
-        }
-      } catch (error) {
-        // Check if error is due to unverified account
-        const errorMessage = error.response?.data?.error || error.message
-        
-        if (errorMessage && (
-          errorMessage.includes('verify') || 
-          errorMessage.includes('verification') ||
-          errorMessage.includes('تحقق') ||
-          errorMessage.includes('التحقق')
-        )) {
+        } else if (result && result.needsVerification) {
+          console.log('✅ Auth store returned verification error, redirecting to verification page')
           // User needs verification, redirect to verification page
           const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
           if (identifier) {
@@ -507,10 +498,13 @@ export default {
           } else {
             router.push('/verify')
           }
-        } else {
-          // Other login errors, show error message
-          toast.error(errorMessage)
         }
+      } catch (error) {
+        // This catch block should not be reached for verification errors
+        // as the auth store handles them and returns a special object
+        console.log('🔍 Unexpected error in login:', error)
+        const errorMessage = error.response?.data?.error || error.message
+        toast.error(errorMessage)
       }
     }
 
