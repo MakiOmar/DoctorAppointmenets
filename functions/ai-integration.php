@@ -2616,6 +2616,75 @@ Best regards,
 	}
 	
 	/**
+	 * Send verification WhatsApp message
+	 */
+	private function send_verification_whatsapp( $user_id, $verification_code, $whatsapp_number ) {
+		$user = get_user_by( 'ID', $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+		
+		$first_name = get_user_meta( $user_id, 'billing_first_name', true );
+		$site_name = get_bloginfo( 'name' );
+		
+		// Get locale from request or user preference
+		$locale = $this->get_request_locale();
+		
+		// Get therapist registration settings for WhatsApp configuration
+		$registration_settings = snks_get_therapist_registration_settings();
+		
+		// WhatsApp message based on locale
+		if ( $locale === 'ar' ) {
+			$message = sprintf(
+				'مرحباً %s،
+
+شكراً لك على التسجيل في %s!
+
+رمز التحقق الخاص بك هو: %s
+
+هذا الرمز سينتهي خلال 15 دقيقة.
+
+يرجى إدخال هذا الرمز في نموذج التحقق لإكمال تسجيلك.
+
+إذا لم تقم بالتسجيل للحصول على حساب، يرجى تجاهل هذه الرسالة.
+
+مع أطيب التحيات،
+فريق %s',
+				$first_name,
+				$site_name,
+				$verification_code,
+				$site_name
+			);
+		} else {
+			$message = sprintf(
+				'Hello %s,
+
+Thank you for registering with %s!
+
+Your verification code is: %s
+
+This code will expire in 15 minutes.
+
+Please enter this code in the verification form to complete your registration.
+
+If you did not register for an account, please ignore this message.
+
+Best regards,
+%s Team',
+				$first_name,
+				$site_name,
+				$verification_code,
+				$site_name
+			);
+		}
+		
+		// Send WhatsApp message using the existing function
+		$result = snks_send_whatsapp_message( $whatsapp_number, $message, $registration_settings );
+		
+		return $result && ! is_wp_error( $result );
+	}
+	
+	/**
 	 * Get locale from request
 	 */
 	private function get_request_locale() {
@@ -2816,17 +2885,35 @@ Best regards,
 		update_user_meta( $user->ID, 'ai_verification_code', $verification_code );
 		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
 		
-		// Send verification email
-		$email_sent = $this->send_verification_email( $user->ID, $verification_code );
+		// Determine verification method and send accordingly
+		$verification_sent = false;
+		$contact_method = '';
+		$success_message = '';
 		
-		if ( ! $email_sent ) {
-			$this->send_error( 'Failed to send verification email. Please try again.', 500 );
+		if ( isset( $data['email'] ) ) {
+			// User was found by email, send email verification
+			$verification_sent = $this->send_verification_email( $user->ID, $verification_code );
+			$contact_method = $user->user_email;
+			$success_message = 'Verification code sent successfully! Please check your email.';
+		} else {
+			// User was found by WhatsApp, send WhatsApp verification
+			$whatsapp = sanitize_text_field( $data['whatsapp'] );
+			$verification_sent = $this->send_verification_whatsapp( $user->ID, $verification_code, $whatsapp );
+			$contact_method = $whatsapp;
+			$success_message = 'Verification code sent successfully! Please check your WhatsApp.';
+		}
+		
+		if ( ! $verification_sent ) {
+			$error_message = isset( $data['email'] ) 
+				? 'Failed to send verification email. Please try again.'
+				: 'Failed to send verification code via WhatsApp. Please try again.';
+			$this->send_error( $error_message, 500 );
 		}
 		
 		$this->send_success( array(
-			'message' => 'Verification code sent successfully! Please check your email.',
+			'message' => $success_message,
 			'user_id' => $user->ID,
-			'email' => $user->user_email
+			'contact_method' => $contact_method
 		) );
 	}
 	
