@@ -415,6 +415,20 @@ export default {
     const resendCode = async () => {
       resendLoading.value = true
       try {
+        // Debug: Log the contact value
+        console.log('🔍 Resend Code Debug:', {
+          contact: contact.value,
+          verificationMethod: verificationMethod.value,
+          requireEmail: requireEmail.value
+        })
+        
+        // Ensure we have a valid contact value
+        if (!contact.value) {
+          console.error('❌ No contact value available for resend')
+          toast.error(t('verification.noContactToResend'))
+          return
+        }
+        
         const response = await authStore.resendVerification(contact.value)
         
         if (response) {
@@ -423,6 +437,7 @@ export default {
         }
       } catch (error) {
         console.error('Resend error:', error)
+        toast.error(t('verification.resendFailed'))
       } finally {
         resendLoading.value = false
       }

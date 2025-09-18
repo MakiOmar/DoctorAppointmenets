@@ -220,7 +220,9 @@ export default {
     continue: 'Continue',
     changeContact: 'Edit number',
     userNotFound: 'User not found in the system',
-    checkUserError: 'Error checking if user exists'
+    checkUserError: 'Error checking if user exists',
+    noContactToResend: 'No contact information to resend code',
+    resendFailed: 'Failed to resend verification code'
   },
 
   // Toast Messages

@@ -248,6 +248,18 @@ export const useAuthStore = defineStore('auth', () => {
 
   const resendVerification = async (contact) => {
     try {
+      // Debug: Log the contact parameter
+      console.log('🔍 ResendVerification Debug:', {
+        contact: contact,
+        contactType: typeof contact,
+        contactLength: contact ? contact.length : 0
+      })
+      
+      // Validate contact parameter
+      if (!contact) {
+        throw new Error('No contact information provided')
+      }
+      
       // Get nonce for security
       const nonce = await getNonce('ai_resend_verification_nonce')
 
@@ -259,13 +271,18 @@ export const useAuthStore = defineStore('auth', () => {
       
       if (contact.includes('@')) {
         requestData.email = contact
+        console.log('📧 Using email for resend:', contact)
       } else {
         requestData.whatsapp = contact
+        console.log('📱 Using WhatsApp for resend:', contact)
       }
+      
+      console.log('📤 Sending resend request:', requestData)
       
       const response = await api.post('/api/ai/auth/resend-verification', requestData)
       return true
     } catch (error) {
+      console.error('❌ Resend verification error:', error)
       const message = error.response?.data?.error || t('toast.auth.verificationFailed')
       toast.error(message)
       return false

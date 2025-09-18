@@ -224,7 +224,9 @@ export default {
     continue: 'متابعة',
     changeContact: 'تعديل الرقم',
     userNotFound: 'المستخدم غير موجود في النظام',
-    checkUserError: 'حدث خطأ أثناء التحقق من وجود المستخدم'
+    checkUserError: 'حدث خطأ أثناء التحقق من وجود المستخدم',
+    noContactToResend: 'لا يوجد رقم أو بريد إلكتروني لإعادة الإرسال',
+    resendFailed: 'فشل في إعادة إرسال الرمز'
   },
 
   // Toast Messages
