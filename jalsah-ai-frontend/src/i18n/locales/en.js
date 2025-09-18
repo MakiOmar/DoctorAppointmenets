@@ -258,7 +258,8 @@ export default {
       invalidCredentials: 'Invalid credentials',
       emailRequired: 'Email is required',
       passwordRequired: 'Password is required',
-      verificationRequired: 'Please verify your email address before logging in. Check your email for verification code.'
+      verificationRequired: 'Please verify your email address before logging in. Check your email for verification code.',
+      whatsappVerificationRequired: 'Please verify your WhatsApp number before logging in. Check your WhatsApp for verification code.'
     },
     general: {
       error: 'An error occurred',

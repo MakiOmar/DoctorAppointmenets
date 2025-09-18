@@ -2232,10 +2232,15 @@ class SNKS_AI_Integration {
 				$require_email = $registration_settings['require_email'] ?? 1;
 				
 				// Create context-aware verification message
+				$locale = $this->get_request_locale();
 				if ( $otp_method === 'whatsapp' || !$require_email ) {
-					$verification_message = 'Please verify your WhatsApp number before logging in. Check your WhatsApp for verification code.';
+					$verification_message = $locale === 'ar' 
+						? 'يرجى التحقق من رقم الواتساب قبل تسجيل الدخول. تحقق من الواتساب للحصول على رمز التحقق.'
+						: 'Please verify your WhatsApp number before logging in. Check your WhatsApp for verification code.';
 				} else {
-					$verification_message = 'Please verify your email address before logging in. Check your email for verification code.';
+					$verification_message = $locale === 'ar' 
+						? 'يرجى التحقق من عنوان البريد الإلكتروني قبل تسجيل الدخول. تحقق من البريد الإلكتروني للحصول على رمز التحقق.'
+						: 'Please verify your email address before logging in. Check your email for verification code.';
 				}
 				
 				$this->send_error( $verification_message, 401 );
