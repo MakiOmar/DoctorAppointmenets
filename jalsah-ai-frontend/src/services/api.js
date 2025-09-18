@@ -71,12 +71,22 @@ api.interceptors.response.use(
     })
     
     if (error.response?.status === 401) {
-      // Token expired or invalid - only redirect if not on login page
-      localStorage.removeItem('jalsah_token')
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+      // Check if this is a verification error (not a session expired error)
+      const errorMessage = error.response?.data?.error || ''
+      const isVerificationError = errorMessage.includes('verify') || 
+                                 errorMessage.includes('verification') ||
+                                 errorMessage.includes('تحقق') ||
+                                 errorMessage.includes('التحقق')
+      
+      if (!isVerificationError) {
+        // Token expired or invalid - only redirect if not on login page
+        localStorage.removeItem('jalsah_token')
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+        toast.error('Session expired. Please login again.')
       }
-      toast.error('Session expired. Please login again.')
+      // For verification errors, don't show toast - let the auth store handle it
     } else if (error.response?.status === 403) {
       toast.error('Access denied')
     } else if (error.response?.status >= 500) {
