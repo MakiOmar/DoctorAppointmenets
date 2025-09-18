@@ -140,6 +140,9 @@ export const useCartStore = defineStore('cart', () => {
       })
       
       if (response.data.success) {
+        // Clear cart items immediately to prevent cart page from showing
+        cartItems.value = []
+        
         // Keep loading state active and set redirecting state
         redirecting.value = true
         
