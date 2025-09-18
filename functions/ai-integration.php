@@ -3137,12 +3137,20 @@ Best regards,
 		
 		$locale = $this->get_request_locale();
 		
-		$this->send_success( array(
+		// Debug logging
+		error_log( '🔍 AI Verify Forgot Password - Reset token generated: ' . $reset_token );
+		error_log( '🔍 AI Verify Forgot Password - User ID: ' . $user_id );
+		
+		$response_data = array(
 			'message' => $locale === 'ar' 
 				? 'تم التحقق من الرمز بنجاح. يمكنك الآن تعيين كلمة مرور جديدة' 
 				: 'Code verified successfully. You can now set a new password',
 			'reset_token' => $reset_token
-		) );
+		);
+		
+		error_log( '🔍 AI Verify Forgot Password - Response data: ' . print_r( $response_data, true ) );
+		
+		$this->send_success( $response_data );
 	}
 	
 	/**
