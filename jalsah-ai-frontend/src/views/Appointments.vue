@@ -168,7 +168,7 @@
 
                 <!-- Reschedule Button -->
                 <button 
-                  v-if="canReschedule(appointment)"
+                  v-if="canReschedule(appointment) || true"
                   @click="rescheduleAppointment(appointment.id)"
                   class="btn-outline text-sm"
                 >
@@ -768,13 +768,29 @@ export default {
       } else if (appointment.date && appointment.time) {
         appointmentTime = new Date(`${appointment.date}T${appointment.time}`)
       } else {
+        console.log('🔍 Reschedule Debug - No valid date found:', appointment)
         return false
       }
       
       const now = new Date()
+      const timeDiff = appointmentTime - now
+      const hoursUntilAppointment = timeDiff / (1000 * 60 * 60)
+      
+      console.log('🔍 Reschedule Debug:', {
+        appointmentId: appointment.id,
+        status: appointment.status,
+        date: appointment.date,
+        date_time: appointment.date_time,
+        time: appointment.time,
+        appointmentTime: appointmentTime,
+        now: now,
+        timeDiff: timeDiff,
+        hoursUntilAppointment: hoursUntilAppointment,
+        canReschedule: timeDiff > 24 * 60 * 60 * 1000
+      })
       
       // Can reschedule up to 24 hours before
-      return appointmentTime - now > 24 * 60 * 60 * 1000
+      return timeDiff > 24 * 60 * 60 * 1000
     }
 
     const canCancel = (appointment) => {
