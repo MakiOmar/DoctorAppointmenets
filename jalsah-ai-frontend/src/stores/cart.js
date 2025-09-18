@@ -6,7 +6,6 @@ export const useCartStore = defineStore('cart', () => {
   const cartItems = ref([])
   const loading = ref(false)
   const checkoutLoading = ref(false)
-  const redirecting = ref(false)
   const error = ref(null)
 
   // Computed properties
@@ -130,7 +129,6 @@ export const useCartStore = defineStore('cart', () => {
 
   const checkout = async (userId) => {
     checkoutLoading.value = true
-    redirecting.value = false
     error.value = null
     
     try {
@@ -141,18 +139,11 @@ export const useCartStore = defineStore('cart', () => {
       })
       
       if (response.data.success) {
-        // Clear cart items immediately to prevent cart page from showing
-        cartItems.value = []
-        
-        // Stop checkout loading and start redirecting
+        // Stop loading and redirect immediately
         checkoutLoading.value = false
-        redirecting.value = true
         
-        // Small delay to show redirect message, then redirect
-        setTimeout(() => {
-          // Redirect to auto-login URL for main website
-          window.location.href = response.data.auto_login_url
-        }, 1500)
+        // Redirect directly to payment URL
+        window.location.href = response.data.auto_login_url
         
         return { success: true, auto_login_url: response.data.auto_login_url }
       } else {
@@ -178,7 +169,6 @@ export const useCartStore = defineStore('cart', () => {
     cartItems,
     loading,
     checkoutLoading,
-    redirecting,
     error,
     
     // Computed

@@ -43,7 +43,7 @@
       </div>
 
       <!-- Cart Items -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
+      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Cart Items List -->
         <div class="lg:col-span-2">
           <div class="bg-white shadow rounded-lg">
@@ -140,15 +140,6 @@
               <h3 class="text-sm font-medium text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
               <p class="text-sm text-gray-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
             </div>
-          </div>
-        </div>
-        
-        <!-- Redirecting Overlay -->
-        <div v-if="cartStore.redirecting" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 rounded-lg">
-          <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-lg font-medium text-gray-900">{{ $t('redirectingToPayment') }}</p>
-            <p class="mt-2 text-sm text-gray-500">{{ $t('redirectingMessage') }}</p>
           </div>
         </div>
       </div>
