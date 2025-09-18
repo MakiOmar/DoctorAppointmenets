@@ -222,7 +222,7 @@ export default {
     sending: 'جاري الإرسال...',
     backToLogin: 'العودة لتسجيل الدخول',
     continue: 'متابعة',
-    changeContact: 'تغيير جهة الاتصال'
+    changeContact: 'تعديل الرقم'
   },
 
   // Toast Messages

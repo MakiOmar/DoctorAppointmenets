@@ -218,7 +218,7 @@ export default {
     sending: 'Sending...',
     backToLogin: 'Back to Login',
     continue: 'Continue',
-    changeContact: 'Change contact'
+    changeContact: 'Edit number'
   },
 
   // Toast Messages

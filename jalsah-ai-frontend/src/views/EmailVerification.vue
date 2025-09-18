@@ -19,20 +19,97 @@
         <form @submit.prevent="handleVerification" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Contact Input (if not provided) -->
           <div v-if="!contact" class="space-y-4">
-            <div>
+            <!-- Email Input -->
+            <div v-if="requireEmail">
               <label for="contact" class="form-label">
-                {{ requireEmail ? $t('auth.login.email') : $t('auth.login.whatsapp') }}
+                {{ $t('auth.login.email') }}
               </label>
               <input
                 id="contact"
                 v-model="contactInput"
-                :type="requireEmail ? 'email' : 'tel'"
+                type="email"
                 required
                 class="input-field"
-                :placeholder="requireEmail ? $t('auth.login.emailPlaceholder') : $t('auth.login.whatsappPlaceholder')"
+                :placeholder="$t('auth.login.emailPlaceholder')"
                 :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
               />
             </div>
+            
+            <!-- WhatsApp Input with Country Selector -->
+            <div v-else>
+              <label for="contact" class="form-label">
+                {{ $t('auth.login.whatsapp') }}
+              </label>
+              <div class="flex" style="direction: ltr;">
+                <!-- Country Selector -->
+                <div class="relative flex-shrink-0">
+                  <button
+                    type="button"
+                    @click="toggleCountryDropdown"
+                    :disabled="isDetectingCountry"
+                    class="w-32 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
+                    style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
+                  >
+                    <span class="flex items-center">
+                      <span v-if="isDetectingCountry" class="text-lg mr-1">
+                        <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </span>
+                      <span v-else-if="!isLoadingCountries" class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
+                      <span v-else class="text-lg mr-1">🇪🇬</span>
+                      <span class="text-xs">{{ getSelectedCountryDial() }}</span>
+                    </span>
+                    <svg v-if="!isDetectingCountry" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Dropdown Menu -->
+                  <div
+                    v-if="showCountryDropdown && !isLoadingCountries"
+                    class="absolute z-10 mt-1 w-64 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                    style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
+                  >
+                    <div class="p-2">
+                      <input
+                        v-model="countrySearch"
+                        type="text"
+                        placeholder="Search countries..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                    <div class="max-h-48 overflow-y-auto">
+                      <button
+                        v-for="country in filteredCountries"
+                        :key="country.code"
+                        type="button"
+                        @click="selectCountry(country.code)"
+                        class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center"
+                        :class="{ 'bg-primary-50 text-primary-700': selectedCountryCode === country.code }"
+                      >
+                        <span class="text-lg mr-3 emoji-flag">{{ country.flag }}</span>
+                        <span class="flex-1">{{ country.name }}</span>
+                        <span class="text-gray-500 text-xs">{{ country.dial }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <input
+                  id="contact"
+                  v-model="contactInput"
+                  type="tel"
+                  required
+                  class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                  :placeholder="$t('auth.login.whatsappPlaceholder')"
+                  dir="ltr"
+                  style="text-align: left; direction: ltr;"
+                />
+              </div>
+            </div>
+            
             <button
               type="button"
               @click="setContact"
@@ -134,7 +211,7 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
     const authStore = useAuthStore()
     const toast = useToast()
     
@@ -150,6 +227,14 @@ export default {
     const verificationMethod = ref('email')
     const countdownInterval = ref(null)
     const therapistRegistrationStore = useTherapistRegistrationStore()
+    
+    // Country selector variables
+    const selectedCountryCode = ref('EG')
+    const showCountryDropdown = ref(false)
+    const countrySearch = ref('')
+    const isDetectingCountry = ref(false)
+    const countries = ref([])
+    const isLoadingCountries = ref(false)
 
     const isFormValid = computed(() => {
       return form.value.verification_code.length === 6
@@ -158,12 +243,43 @@ export default {
     const requireEmail = computed(() => {
       return therapistRegistrationStore.shouldShowEmail
     })
+    
+    // Country selector computed properties
+    const localizedCountries = computed(() => {
+      const isArabic = locale.value === 'ar'
+      return countries.value.map(country => ({
+        ...country,
+        name: isArabic ? country.name_ar : country.name_en,
+        code: country.country_code,
+        dial: country.dial_code,
+        flag: country.flag
+      }))
+    })
+
+    const filteredCountries = computed(() => {
+      if (!countrySearch.value) {
+        return localizedCountries.value
+      }
+      return localizedCountries.value.filter(country => 
+        country.name.toLowerCase().includes(countrySearch.value.toLowerCase()) ||
+        country.dial.includes(countrySearch.value) ||
+        country.code.toLowerCase().includes(countrySearch.value.toLowerCase())
+      )
+    })
 
     const setContact = () => {
       if (contactInput.value) {
-        contact.value = contactInput.value
-        // Determine verification method based on identifier format
-        verificationMethod.value = contactInput.value.includes('@') ? 'email' : 'whatsapp'
+        if (requireEmail.value) {
+          // Email method
+          contact.value = contactInput.value
+          verificationMethod.value = 'email'
+        } else {
+          // WhatsApp method - combine country code with input
+          const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+          const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value
+          contact.value = fullWhatsAppNumber
+          verificationMethod.value = 'whatsapp'
+        }
       }
     }
 
@@ -177,6 +293,12 @@ export default {
     onMounted(async () => {
       // Load therapist registration settings
       await therapistRegistrationStore.loadSettings()
+      
+      // Load countries for country selector
+      await loadCountries()
+      
+      // Add click outside listener
+      document.addEventListener('click', handleClickOutside)
       
       // Check for identifier from login form
       const identifier = route.query.identifier
@@ -220,6 +342,8 @@ export default {
       if (countdownInterval.value) {
         clearInterval(countdownInterval.value)
       }
+      // Remove click outside listener
+      document.removeEventListener('click', handleClickOutside)
     })
 
     const startResendCooldown = () => {
@@ -286,6 +410,104 @@ export default {
         resendLoading.value = false
       }
     }
+    
+    // Country selector functions
+    const toggleCountryDropdown = () => {
+      showCountryDropdown.value = !showCountryDropdown.value
+      if (showCountryDropdown.value) {
+        countrySearch.value = ''
+      }
+    }
+    
+    const selectCountry = (countryCode) => {
+      selectedCountryCode.value = countryCode
+      showCountryDropdown.value = false
+      countrySearch.value = ''
+    }
+    
+    const getSelectedCountryFlag = () => {
+      const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      return country ? country.flag : '🇪🇬'
+    }
+    
+    const getSelectedCountryDial = () => {
+      const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      return country ? country.dial_code : '+20'
+    }
+    
+    // Load countries from local JSON file
+    const loadCountries = async () => {
+      try {
+        isLoadingCountries.value = true
+        const response = await fetch('/countries-codes-and-flags.json')
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch countries')
+        }
+        
+        const countriesData = await response.json()
+        
+        if (!Array.isArray(countriesData)) {
+          throw new Error('Invalid countries data format')
+        }
+        
+        // Sort by Arabic name
+        const keyValues = countriesData.map(country => country.name_ar)
+        countriesData.sort((a, b) => {
+          const indexA = keyValues.indexOf(a.name_ar)
+          const indexB = keyValues.indexOf(b.name_ar)
+          return a.name_ar.localeCompare(b.name_ar)
+        })
+        
+        // Reorder to put Egypt first, then Arab countries, then others
+        const egyptIndex = countriesData.findIndex(c => c.country_code === 'EG')
+        if (egyptIndex > 0) {
+          const egypt = countriesData.splice(egyptIndex, 1)[0]
+          countriesData.unshift(egypt)
+        }
+        
+        // Add Arab countries after Egypt
+        const arabCountries = ['SA', 'AE', 'KW', 'QA', 'BH', 'OM', 'JO', 'LB', 'SY', 'IQ', 'YE', 'PS', 'MA', 'TN', 'DZ', 'LY', 'SD']
+        const reorderedCountries = [countriesData[0]] // Start with Egypt
+        
+        // Add Arab countries in order
+        arabCountries.forEach(code => {
+          const index = countriesData.findIndex(c => c.country_code === code)
+          if (index > 0) {
+            reorderedCountries.push(countriesData[index])
+          }
+        })
+        
+        // Add remaining countries
+        countriesData.forEach(country => {
+          if (!reorderedCountries.includes(country)) {
+            reorderedCountries.push(country)
+          }
+        })
+        
+        countries.value = reorderedCountries
+        
+      } catch (error) {
+        console.error('Error loading countries:', error)
+        // Fallback to basic countries if API fails
+        countries.value = [
+          { country_code: 'EG', name_ar: 'مصر', name_en: 'Egypt', dial_code: '+20', flag: '🇪🇬' },
+          { country_code: 'SA', name_ar: 'السعودية', name_en: 'Saudi Arabia', dial_code: '+966', flag: '🇸🇦' },
+          { country_code: 'AE', name_ar: 'الإمارات', name_en: 'UAE', dial_code: '+971', flag: '🇦🇪' },
+          { country_code: 'US', name_ar: 'الولايات المتحدة', name_en: 'United States', dial_code: '+1', flag: '🇺🇸' },
+          { country_code: 'GB', name_ar: 'بريطانيا', name_en: 'United Kingdom', dial_code: '+44', flag: '🇬🇧' }
+        ]
+      } finally {
+        isLoadingCountries.value = false
+      }
+    }
+    
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.relative')) {
+        showCountryDropdown.value = false
+      }
+    }
 
     return {
       form,
@@ -300,7 +522,22 @@ export default {
       setContact,
       changeContact,
       handleVerification,
-      resendCode
+      resendCode,
+      // Country selector
+      selectedCountryCode,
+      showCountryDropdown,
+      countrySearch,
+      isDetectingCountry,
+      countries,
+      isLoadingCountries,
+      localizedCountries,
+      filteredCountries,
+      toggleCountryDropdown,
+      selectCountry,
+      getSelectedCountryFlag,
+      getSelectedCountryDial,
+      loadCountries,
+      handleClickOutside
     }
   }
 }
@@ -321,5 +558,35 @@ export default {
 
 .btn-primary {
   @apply relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+
+/* Import Twemoji font for better emoji support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
+
+.emoji-flag {
+  font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Twemoji', 'EmojiOne', 'Segoe UI Symbol', sans-serif;
+  font-size: 1.2em;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  font-variant-emoji: emoji;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Additional emoji font fallbacks */
+.emoji-flag {
+  font-display: swap;
+  unicode-range: U+1F1E6-1F1FF; /* Flag emoji range */
+}
+
+/* Ensure proper emoji rendering */
+.emoji-flag {
+  font-variant-emoji: emoji;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
 }
 </style>
