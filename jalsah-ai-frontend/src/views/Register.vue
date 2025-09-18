@@ -35,70 +35,35 @@
       <div class="card">
         <form @submit.prevent="handleRegister" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Name Fields -->
-          <div class="grid grid-cols-2 gap-4">
-            <!-- For Arabic: First Name first (on right), then Last Name (on left) -->
-            <template v-if="$i18n.locale === 'ar'">
-              <!-- First Name Field (appears on right in RTL - first position) -->
-              <div>
-                <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
-                <input
-                  id="first_name"
-                  v-model="form.first_name"
-                  type="text"
-                  required
-                  class="input-field"
-                  :placeholder="$t('auth.register.firstName')"
-                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                  autocomplete="given-name"
-                />
-              </div>
-              <!-- Last Name Field (appears on left in RTL - second position) -->
-              <div>
-                <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
-                <input
-                  id="last_name"
-                  v-model="form.last_name"
-                  type="text"
-                  required
-                  class="input-field"
-                  :placeholder="$t('auth.register.lastName')"
-                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                  autocomplete="family-name"
-                />
-              </div>
-            </template>
-            
-            <!-- For English: First Name first, then Last Name -->
-            <template v-else>
-              <!-- First Name Field (appears on left in LTR) -->
-              <div>
-                <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
-                <input
-                  id="first_name"
-                  v-model="form.first_name"
-                  type="text"
-                  required
-                  class="input-field"
-                  :placeholder="$t('auth.register.firstName')"
-                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                  autocomplete="given-name"
-                />
-              </div>
-              <!-- Last Name Field (appears on right in LTR) -->
-              <div>
-                <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
-                <input
-                  id="last_name"
-                  v-model="form.last_name"
-                  type="text"
-                  required
-                  class="input-field"
-                  :placeholder="$t('auth.register.lastName')"
-                  :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
-                  autocomplete="family-name"
-                />
-              </div>
-            </template>
+          <div class="grid grid-cols-2 gap-4 name-fields-grid">
+            <!-- First Name Field -->
+            <div class="first-name-field" :class="{ 'order-2': $i18n.locale === 'ar' }">
+              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
+              <input
+                id="first_name"
+                v-model="form.first_name"
+                type="text"
+                required
+                class="input-field"
+                :placeholder="$t('auth.register.firstName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="given-name"
+              />
+            </div>
+            <!-- Last Name Field -->
+            <div class="last-name-field" :class="{ 'order-1': $i18n.locale === 'ar' }">
+              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
+              <input
+                id="last_name"
+                v-model="form.last_name"
+                type="text"
+                required
+                class="input-field"
+                :placeholder="$t('auth.register.lastName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="family-name"
+              />
+            </div>
           </div>
 
           <!-- Email (conditional based on settings) -->
@@ -664,6 +629,15 @@ export default {
   font-variant-emoji: emoji;
   -webkit-font-feature-settings: "liga";
   font-feature-settings: "liga";
+}
+
+/* CSS Grid Order for Name Fields */
+.name-fields-grid .order-1 {
+  order: 1;
+}
+
+.name-fields-grid .order-2 {
+  order: 2;
 }
 
 </style> 
