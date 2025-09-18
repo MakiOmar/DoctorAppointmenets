@@ -5,6 +5,7 @@ import api from '../services/api'
 export const useCartStore = defineStore('cart', () => {
   const cartItems = ref([])
   const loading = ref(false)
+  const checkoutLoading = ref(false)
   const redirecting = ref(false)
   const error = ref(null)
 
@@ -128,7 +129,7 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   const checkout = async (userId) => {
-    loading.value = true
+    checkoutLoading.value = true
     redirecting.value = false
     error.value = null
     
@@ -143,7 +144,8 @@ export const useCartStore = defineStore('cart', () => {
         // Clear cart items immediately to prevent cart page from showing
         cartItems.value = []
         
-        // Keep loading state active and set redirecting state
+        // Stop checkout loading and start redirecting
+        checkoutLoading.value = false
         redirecting.value = true
         
         // Small delay to show redirect message, then redirect
@@ -155,16 +157,15 @@ export const useCartStore = defineStore('cart', () => {
         return { success: true, auto_login_url: response.data.auto_login_url }
       } else {
         error.value = response.data.error || 'Failed to create order'
-        loading.value = false
+        checkoutLoading.value = false
         return { success: false, message: error.value }
       }
     } catch (err) {
       error.value = 'Failed to checkout'
       console.error('Error during checkout:', err)
-      loading.value = false
+      checkoutLoading.value = false
       return { success: false, message: error.value }
     }
-    // Note: Don't set loading.value = false in finally block when redirecting
   }
 
   const clearCart = () => {
@@ -176,6 +177,7 @@ export const useCartStore = defineStore('cart', () => {
     // State
     cartItems,
     loading,
+    checkoutLoading,
     redirecting,
     error,
     

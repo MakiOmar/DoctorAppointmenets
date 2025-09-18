@@ -10,12 +10,7 @@
       <!-- Loading State -->
       <div v-if="cartStore.loading" class="text-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p class="mt-4 text-gray-600">
-          {{ cartStore.redirecting ? $t('redirectingToPayment') : $t('loadingCart') }}
-        </p>
-        <p v-if="cartStore.redirecting" class="mt-2 text-sm text-gray-500">
-          {{ $t('redirectingMessage') }}
-        </p>
+        <p class="mt-4 text-gray-600">{{ $t('loadingCart') }}</p>
       </div>
 
       <!-- Error State -->
@@ -48,7 +43,7 @@
       </div>
 
       <!-- Cart Items -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative">
         <!-- Cart Items List -->
         <div class="lg:col-span-2">
           <div class="bg-white shadow rounded-lg">
@@ -125,10 +120,10 @@
 
             <button
               @click="proceedToPayment"
-              :disabled="cartStore.loading || cartStore.itemCount === 0"
+              :disabled="cartStore.checkoutLoading || cartStore.itemCount === 0"
               class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              <span v-if="cartStore.loading">{{ $t('processing') }}...</span>
+              <span v-if="cartStore.checkoutLoading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(cartStore.totalPrice) }}</span>
             </button>
 
@@ -145,6 +140,15 @@
               <h3 class="text-sm font-medium text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
               <p class="text-sm text-gray-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
             </div>
+          </div>
+        </div>
+        
+        <!-- Redirecting Overlay -->
+        <div v-if="cartStore.redirecting" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 rounded-lg">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p class="mt-4 text-lg font-medium text-gray-900">{{ $t('redirectingToPayment') }}</p>
+            <p class="mt-2 text-sm text-gray-500">{{ $t('redirectingMessage') }}</p>
           </div>
         </div>
       </div>
