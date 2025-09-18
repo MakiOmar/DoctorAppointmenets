@@ -35,9 +35,9 @@
       <div class="card">
         <form @submit.prevent="handleRegister" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Name Fields -->
-          <div class="grid grid-cols-2 gap-4 name-fields-grid">
+          <div class="flex gap-4 name-fields-container">
             <!-- First Name Field -->
-            <div class="first-name-field" :class="{ 'order-2': $i18n.locale === 'ar' }">
+            <div class="flex-1">
               <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
               <input
                 id="first_name"
@@ -51,7 +51,7 @@
               />
             </div>
             <!-- Last Name Field -->
-            <div class="last-name-field" :class="{ 'order-1': $i18n.locale === 'ar' }">
+            <div class="flex-1">
               <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
               <input
                 id="last_name"
@@ -631,13 +631,9 @@ export default {
   font-feature-settings: "liga";
 }
 
-/* CSS Grid Order for Name Fields */
-.name-fields-grid .order-1 {
-  order: 1;
-}
-
-.name-fields-grid .order-2 {
-  order: 2;
+/* Flexbox RTL Layout for Name Fields */
+.name-fields-container[dir="rtl"] {
+  flex-direction: row-reverse;
 }
 
 </style> 
