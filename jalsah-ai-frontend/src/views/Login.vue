@@ -491,6 +491,9 @@ export default {
         router.push('/')
         } else if (result && result.needsVerification) {
           console.log('✅ Auth store returned verification error, redirecting to verification page')
+          // Show verification message to user
+          toast.info(result.message || 'Please verify your account before logging in')
+          
           // User needs verification, redirect to verification page
           const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
           if (identifier) {
