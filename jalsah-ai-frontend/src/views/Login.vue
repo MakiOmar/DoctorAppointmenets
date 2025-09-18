@@ -145,27 +145,6 @@
             </div>
           </div>
 
-          <!-- Verification Error -->
-          <div v-if="verificationError" class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <p class="text-sm text-yellow-800">{{ verificationError }}</p>
-                <div class="mt-3">
-                  <button
-                    @click="goToVerification"
-                    class="bg-yellow-100 text-yellow-800 px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-200 transition-colors"
-                  >
-                    {{ $t('auth.verifyAccount') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div>
             <button
@@ -185,15 +164,6 @@
           </div>
         </form>
 
-        <!-- Verification Link -->
-        <div class="mt-4 text-center">
-          <button
-            @click="goToVerification"
-            class="text-sm text-primary-600 hover:text-primary-500 font-medium"
-          >
-            {{ $t('auth.login.needVerification') }}
-          </button>
-        </div>
 
       </div>
     </div>
@@ -460,7 +430,6 @@ export default {
       return result
     })
 
-    const verificationError = ref(null)
 
     // Forgot password state
     const showForgotPasswordModal = ref(false)
@@ -500,8 +469,6 @@ export default {
     })
 
     const handleLogin = async () => {
-      verificationError.value = null
-      
       const credentials = {
         password: form.value.password
       }
@@ -516,14 +483,34 @@ export default {
         credentials.whatsapp = fullWhatsAppNumber
       }
       
-      const result = await authStore.login(credentials)
-      
-      if (result === true) {
+      try {
+        const result = await authStore.login(credentials)
+        
+        if (result === true) {
         // Redirect to homepage after successful login
         router.push('/')
-      } else if (result && result.needsVerification) {
-        // Show verification error and button
-        verificationError.value = result.message
+        }
+      } catch (error) {
+        // Check if error is due to unverified account
+        const errorMessage = error.response?.data?.error || error.message
+        
+        if (errorMessage && (
+          errorMessage.includes('verify') || 
+          errorMessage.includes('verification') ||
+          errorMessage.includes('تحقق') ||
+          errorMessage.includes('التحقق')
+        )) {
+          // User needs verification, redirect to verification page
+          const identifier = requireEmail.value ? form.value.email : form.value.whatsapp
+          if (identifier) {
+            router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
+          } else {
+            router.push('/verify')
+          }
+        } else {
+          // Other login errors, show error message
+          toast.error(errorMessage)
+        }
       }
     }
 
@@ -754,7 +741,6 @@ export default {
       form,
       loading,
       requireEmail,
-      verificationError,
       handleLogin,
       goToVerification,
       // Country selector
