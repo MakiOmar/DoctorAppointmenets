@@ -35,8 +35,8 @@
       <div class="card">
         <form @submit.prevent="handleRegister" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Name Fields -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
+          <div class="grid grid-cols-2 gap-4 name-fields-container">
+            <div class="first-name-field">
               <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
               <input
                 id="first_name"
@@ -49,7 +49,7 @@
                 autocomplete="given-name"
               />
             </div>
-            <div>
+            <div class="last-name-field">
               <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
               <input
                 id="last_name"
@@ -627,5 +627,23 @@ export default {
   font-variant-emoji: emoji;
   -webkit-font-feature-settings: "liga";
   font-feature-settings: "liga";
+}
+
+/* RTL Layout for Name Fields */
+.name-fields-container[dir="rtl"] .first-name-field {
+  order: 2;
+}
+
+.name-fields-container[dir="rtl"] .last-name-field {
+  order: 1;
+}
+
+/* LTR Layout for Name Fields (default order) */
+.name-fields-container[dir="ltr"] .first-name-field {
+  order: 1;
+}
+
+.name-fields-container[dir="ltr"] .last-name-field {
+  order: 2;
 }
 </style> 
