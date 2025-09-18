@@ -231,22 +231,24 @@
                   <button
                     type="button"
                     @click="toggleCountryDropdown"
-                    class="relative w-20 bg-white border border-gray-300 rounded-l-md px-3 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    class="relative w-32 bg-white border border-gray-300 rounded-l-md px-3 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   >
-                    <span class="flex items-center">
-                      <span v-if="isLoadingCountries" class="text-gray-500">
-                        <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                    <span class="flex items-center justify-between">
+                      <span class="flex items-center">
+                        <span v-if="isLoadingCountries" class="text-gray-500">
+                          <svg class="animate-spin h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </span>
+                        <span v-else-if="!isLoadingCountries" class="text-lg mr-2 emoji-flag">{{ getSelectedCountryFlag() }}</span>
+                        <span v-else class="text-lg mr-2">🇪🇬</span>
+                        <span class="text-sm font-medium">{{ getSelectedCountryDial() }}</span>
                       </span>
-                      <span v-else-if="!isLoadingCountries" class="text-lg mr-1 emoji-flag">{{ getSelectedCountryFlag() }}</span>
-                      <span v-else class="text-lg mr-1">🇪🇬</span>
-                      <span class="text-xs">{{ getSelectedCountryDial() }}</span>
+                      <svg v-if="!isDetectingCountry" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
                     </span>
-                    <svg v-if="!isDetectingCountry" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
                   </button>
                   
                   <!-- Country Dropdown -->
@@ -278,7 +280,8 @@
                 <input
                   v-model="forgotPasswordForm.whatsapp"
                   type="tel"
-                  class="flex-1 rounded-r-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  dir="ltr"
+                  class="flex-1 rounded-r-md border-gray-300 shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-left"
                   :placeholder="$t('auth.login.whatsappPlaceholder')"
                 />
               </div>

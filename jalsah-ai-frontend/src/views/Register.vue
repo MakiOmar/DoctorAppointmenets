@@ -136,10 +136,10 @@
               v-model="form.whatsapp"
               type="tel"
               required
+              dir="ltr"
                 class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
               :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': whatsappDialCodeError }"
               :placeholder="$t('auth.register.whatsappPlaceholder')"
-                dir="ltr"
                 autocomplete="tel"
                 style="text-align: left; direction: ltr;"
                 @input="validateWhatsAppNumber"
