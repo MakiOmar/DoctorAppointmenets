@@ -602,6 +602,8 @@ export default {
   proceedToPayment: 'المتابعة للدفع',
   remove: 'إزالة',
   duration: 'المدة',
+  redirectingToPayment: 'جاري التوجيه لصفحة الدفع...',
+  redirectingMessage: 'يرجى الانتظار بينما نوجهك إلى صفحة الدفع.',
 
   // Checkout page translations
   checkout: 'إتمام الحجز',

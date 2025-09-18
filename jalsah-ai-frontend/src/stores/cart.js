@@ -140,11 +140,10 @@ export const useCartStore = defineStore('cart', () => {
       })
       
       if (response.data.success) {
-        // Set redirecting state to true before redirecting
-        loading.value = false
+        // Keep loading state active and set redirecting state
         redirecting.value = true
         
-        // Small delay to show redirect message
+        // Small delay to show redirect message, then redirect
         setTimeout(() => {
           // Redirect to auto-login URL for main website
           window.location.href = response.data.auto_login_url
@@ -153,15 +152,16 @@ export const useCartStore = defineStore('cart', () => {
         return { success: true, auto_login_url: response.data.auto_login_url }
       } else {
         error.value = response.data.error || 'Failed to create order'
+        loading.value = false
         return { success: false, message: error.value }
       }
     } catch (err) {
       error.value = 'Failed to checkout'
       console.error('Error during checkout:', err)
-      return { success: false, message: error.value }
-    } finally {
       loading.value = false
+      return { success: false, message: error.value }
     }
+    // Note: Don't set loading.value = false in finally block when redirecting
   }
 
   const clearCart = () => {

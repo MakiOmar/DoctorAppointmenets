@@ -10,7 +10,12 @@
       <!-- Loading State -->
       <div v-if="cartStore.loading" class="text-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p class="mt-4 text-gray-600">{{ $t('loadingCart') }}</p>
+        <p class="mt-4 text-gray-600">
+          {{ cartStore.redirecting ? $t('redirectingToPayment') : $t('loadingCart') }}
+        </p>
+        <p v-if="cartStore.redirecting" class="mt-2 text-sm text-gray-500">
+          {{ $t('redirectingMessage') }}
+        </p>
       </div>
 
       <!-- Error State -->

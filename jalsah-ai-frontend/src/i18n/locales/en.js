@@ -651,6 +651,8 @@ export default {
   proceedToPayment: 'Proceed to Payment',
   remove: 'Remove',
   duration: 'Duration',
+  redirectingToPayment: 'Redirecting to Payment...',
+  redirectingMessage: 'Please wait while we redirect you to the payment page.',
 
   // Checkout page translations
   checkout: 'Checkout',
