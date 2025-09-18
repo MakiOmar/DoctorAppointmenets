@@ -192,6 +192,7 @@ export default {
       signIn: 'Sign in',
       passwordMismatch: 'Passwords do not match',
       whatsappPlaceholder: '1234567890',
+      noNeedDialCode: 'No need to enter the dial code, it\'s already selected',
       errors: {
         passwordMismatch: 'Passwords do not match',
         emailExists: 'Email already exists',

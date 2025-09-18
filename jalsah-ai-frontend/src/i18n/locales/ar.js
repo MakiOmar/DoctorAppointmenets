@@ -195,6 +195,7 @@ export default {
       phonePlaceholder: '+1234567890',
       whatsapp: 'رقم الواتساب',
       whatsappPlaceholder: '1234567890',
+      noNeedDialCode: 'لا حاجة لإدخال رمز الدولة، تم اختياره بالفعل',
       passwordMismatch: 'كلمات المرور غير متطابقة',
       errors: {
         passwordMismatch: 'كلمات المرور غير متطابقة',

@@ -150,12 +150,20 @@
               type="tel"
               required
                 class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': whatsappDialCodeError }"
               :placeholder="$t('auth.register.whatsappPlaceholder')"
                 dir="ltr"
                 autocomplete="tel"
                 style="text-align: left; direction: ltr;"
+                @input="validateWhatsAppNumber"
+                @blur="validateWhatsAppNumber"
             />
           </div>
+          </div>
+          
+          <!-- WhatsApp Dial Code Error Message -->
+          <div v-if="whatsappDialCodeError" class="mt-1 text-sm text-red-600">
+            {{ $t('auth.register.noNeedDialCode') }}
           </div>
 
 
@@ -275,6 +283,9 @@ export default {
     // Password mismatch error - shown when user focuses out of confirm password field
     const passwordMismatchError = ref(false)
     
+    // WhatsApp dial code error - shown when user includes dial code in input
+    const whatsappDialCodeError = ref(false)
+    
     // Function to validate password match on focusout
     const validatePasswordMatch = () => {
       if (form.value.password && form.value.confirm_password) {
@@ -282,6 +293,29 @@ export default {
       } else {
         passwordMismatchError.value = false
       }
+    }
+    
+    // Function to validate WhatsApp number doesn't include dial code
+    const validateWhatsAppNumber = () => {
+      if (!form.value.whatsapp) {
+        whatsappDialCodeError.value = false
+        return
+      }
+      
+      const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      if (!selectedCountry) {
+        whatsappDialCodeError.value = false
+        return
+      }
+      
+      const dialCode = selectedCountry.dial_code
+      const whatsappInput = form.value.whatsapp.trim()
+      
+      // Check if input starts with dial code (+x or 00x format)
+      const hasDialCode = whatsappInput.startsWith(dialCode) || 
+                         whatsappInput.startsWith('00' + dialCode.substring(1))
+      
+      whatsappDialCodeError.value = hasDialCode
     }
     
     // Filtered countries based on search
@@ -316,7 +350,8 @@ export default {
              form.value.confirm_password &&
              form.value.agreeToTerms &&
              form.value.password === form.value.confirm_password &&
-             form.value.password.length >= 8
+             form.value.password.length >= 8 &&
+             !whatsappDialCodeError.value
       
       // Add email validation if email field is required
       if (shouldShowEmailField.value) {
@@ -583,7 +618,9 @@ export default {
       shouldShowEmailField,
       otpMethod,
       passwordMismatchError,
+      whatsappDialCodeError,
       validatePasswordMatch,
+      validateWhatsAppNumber,
       showCountryDropdown,
       countrySearch,
       filteredCountries,
