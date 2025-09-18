@@ -338,6 +338,59 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Forgot password - send reset code to WhatsApp
+  const forgotPassword = async (whatsappNumber) => {
+    try {
+      const nonce = await getNonce('ai_forgot_password_nonce')
+      
+      const response = await api.post('/api/ai/auth/forgot-password', {
+        whatsapp: whatsappNumber,
+        nonce: nonce
+      })
+      
+      return response.data
+    } catch (error) {
+      console.error('Error sending forgot password code:', error)
+      throw error
+    }
+  }
+
+  // Verify forgot password code
+  const verifyForgotPassword = async (whatsappNumber, code) => {
+    try {
+      const nonce = await getNonce('ai_verify_forgot_password_nonce')
+      
+      const response = await api.post('/api/ai/auth/verify-forgot-password', {
+        whatsapp: whatsappNumber,
+        code: code,
+        nonce: nonce
+      })
+      
+      return response.data
+    } catch (error) {
+      console.error('Error verifying forgot password code:', error)
+      throw error
+    }
+  }
+
+  // Reset password with new password
+  const resetPassword = async (resetToken, newPassword) => {
+    try {
+      const nonce = await getNonce('ai_reset_password_nonce')
+      
+      const response = await api.post('/api/ai/auth/reset-password', {
+        reset_token: resetToken,
+        new_password: newPassword,
+        nonce: nonce
+      })
+      
+      return response.data
+    } catch (error) {
+      console.error('Error resetting password:', error)
+      throw error
+    }
+  }
+
   // Initialize auth state
   
   
@@ -359,6 +412,9 @@ export const useAuthStore = defineStore('auth', () => {
     verifyEmail,
     resendVerification,
     loadUser,
-    checkUserExists
+    checkUserExists,
+    forgotPassword,
+    verifyForgotPassword,
+    resetPassword
   }
 }) 

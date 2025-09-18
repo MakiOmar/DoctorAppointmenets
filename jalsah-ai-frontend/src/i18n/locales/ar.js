@@ -226,7 +226,22 @@ export default {
     userNotFound: 'المستخدم غير موجود في النظام',
     checkUserError: 'حدث خطأ أثناء التحقق من وجود المستخدم',
     noContactToResend: 'لا يوجد رقم أو بريد إلكتروني لإعادة الإرسال',
-    resendFailed: 'فشل في إعادة إرسال الرمز'
+    resendFailed: 'فشل في إعادة إرسال الرمز',
+    forgotPasswordTitle: 'نسيت كلمة المرور؟',
+    enterWhatsApp: 'أدخل رقم الواتساب المرتبط بحسابك',
+    sendResetCode: 'إرسال رمز إعادة التعيين',
+    resetCodeSent: 'تم إرسال رمز إعادة التعيين إلى واتسابك',
+    enterResetCode: 'أدخل رمز إعادة التعيين المرسل إلى واتسابك',
+    verifyCode: 'تحقق من الرمز',
+    codeVerified: 'تم التحقق من الرمز بنجاح',
+    setNewPassword: 'تعيين كلمة مرور جديدة',
+    newPassword: 'كلمة المرور الجديدة',
+    confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
+    passwordMismatch: 'كلمات المرور غير متطابقة',
+    passwordTooShort: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+    resetPassword: 'إعادة تعيين كلمة المرور',
+    passwordResetSuccess: 'تم تغيير كلمة المرور بنجاح',
+    backToLogin: 'العودة لتسجيل الدخول'
   },
 
   // Toast Messages

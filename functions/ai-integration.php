@@ -1884,6 +1884,15 @@ class SNKS_AI_Integration {
 				} elseif ( $path[1] === 'check-user' ) {
 
 					$this->ai_check_user_exists();
+				} elseif ( $path[1] === 'forgot-password' ) {
+
+					$this->ai_forgot_password();
+				} elseif ( $path[1] === 'verify-forgot-password' ) {
+
+					$this->ai_verify_forgot_password();
+				} elseif ( $path[1] === 'reset-password' ) {
+
+					$this->ai_reset_password();
 				} else {
 
 					$this->send_error( 'Auth endpoint not found', 404 );
@@ -2950,6 +2959,253 @@ Best regards,
 			'exists' => $exists,
 			'whatsapp' => $whatsapp,
 			'user_id' => $exists ? $user_id : null
+		) );
+	}
+	
+	/**
+	 * Handle forgot password request
+	 */
+	private function ai_forgot_password() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_forgot_password_nonce' ) ) {
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		// Check if WhatsApp number is provided
+		if ( ! isset( $data['whatsapp'] ) || empty( $data['whatsapp'] ) ) {
+			$this->send_error( 'WhatsApp number required', 400 );
+		}
+		
+		$whatsapp = sanitize_text_field( $data['whatsapp'] );
+		
+		// Check if user exists with this WhatsApp number
+		global $wpdb;
+		$user_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->usermeta} 
+			WHERE meta_key = 'billing_whatsapp' 
+			AND meta_value = %s 
+			LIMIT 1",
+			$whatsapp
+		) );
+		
+		if ( empty( $user_id ) ) {
+			$this->send_error( 'User not found with this WhatsApp number', 404 );
+		}
+		
+		$user = get_user_by( 'ID', $user_id );
+		if ( ! $user ) {
+			$this->send_error( 'User not found', 404 );
+		}
+		
+		// Generate verification code for password reset
+		$reset_code = '';
+		for ( $i = 0; $i < 6; $i++ ) {
+			$reset_code .= rand( 0, 9 );
+		}
+		
+		// Store reset code and expiry (15 minutes)
+		update_user_meta( $user_id, 'ai_password_reset_code', $reset_code );
+		update_user_meta( $user_id, 'ai_password_reset_expires', time() + ( 15 * 60 ) );
+		
+		// Send WhatsApp message with reset code
+		$first_name = get_user_meta( $user_id, 'billing_first_name', true );
+		$site_name = get_bloginfo( 'name' );
+		$locale = $this->get_request_locale();
+		
+		// Get therapist registration settings for WhatsApp configuration
+		$registration_settings = snks_get_therapist_registration_settings();
+		
+		// WhatsApp message based on locale
+		if ( $locale === 'ar' ) {
+			$message = sprintf(
+				'مرحباً %s،
+
+تم طلب إعادة تعيين كلمة المرور لحسابك في %s.
+
+رمز إعادة التعيين: %s
+
+هذا الرمز سينتهي خلال 15 دقيقة.
+
+إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذه الرسالة.
+
+مع أطيب التحيات،
+فريق %s',
+				$first_name,
+				$site_name,
+				$reset_code,
+				$site_name
+			);
+		} else {
+			$message = sprintf(
+				'Hello %s,
+
+A password reset has been requested for your account at %s.
+
+Reset code: %s
+
+This code will expire in 15 minutes.
+
+If you did not request a password reset, please ignore this message.
+
+Best regards,
+%s Team',
+				$first_name,
+				$site_name,
+				$reset_code,
+				$site_name
+			);
+		}
+		
+		// Send WhatsApp message
+		$result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
+		
+		if ( ! $result || is_wp_error( $result ) ) {
+			$this->send_error( 'Failed to send reset code via WhatsApp. Please try again.', 500 );
+		}
+		
+		$this->send_success( array(
+			'message' => $locale === 'ar' 
+				? 'تم إرسال رمز إعادة التعيين إلى واتسابك' 
+				: 'Reset code sent to your WhatsApp',
+			'whatsapp' => $whatsapp
+		) );
+	}
+	
+	/**
+	 * Verify forgot password code
+	 */
+	private function ai_verify_forgot_password() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_verify_forgot_password_nonce' ) ) {
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		// Check required fields
+		if ( ! isset( $data['whatsapp'] ) || empty( $data['whatsapp'] ) ) {
+			$this->send_error( 'WhatsApp number required', 400 );
+		}
+		
+		if ( ! isset( $data['code'] ) || empty( $data['code'] ) ) {
+			$this->send_error( 'Reset code required', 400 );
+		}
+		
+		$whatsapp = sanitize_text_field( $data['whatsapp'] );
+		$code = sanitize_text_field( $data['code'] );
+		
+		// Find user by WhatsApp number
+		global $wpdb;
+		$user_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->usermeta} 
+			WHERE meta_key = 'billing_whatsapp' 
+			AND meta_value = %s 
+			LIMIT 1",
+			$whatsapp
+		) );
+		
+		if ( empty( $user_id ) ) {
+			$this->send_error( 'User not found', 404 );
+		}
+		
+		// Check reset code
+		$stored_code = get_user_meta( $user_id, 'ai_password_reset_code', true );
+		$expires = get_user_meta( $user_id, 'ai_password_reset_expires', true );
+		
+		if ( empty( $stored_code ) || empty( $expires ) ) {
+			$this->send_error( 'No reset code found. Please request a new one.', 400 );
+		}
+		
+		if ( time() > $expires ) {
+			$this->send_error( 'Reset code has expired. Please request a new one.', 400 );
+		}
+		
+		if ( $code !== $stored_code ) {
+			$this->send_error( 'Invalid reset code', 400 );
+		}
+		
+		// Generate a temporary token for password reset
+		$reset_token = wp_generate_password( 32, false );
+		update_user_meta( $user_id, 'ai_password_reset_token', $reset_token );
+		update_user_meta( $user_id, 'ai_password_reset_token_expires', time() + ( 10 * 60 ) ); // 10 minutes
+		
+		// Clear the verification code
+		delete_user_meta( $user_id, 'ai_password_reset_code' );
+		delete_user_meta( $user_id, 'ai_password_reset_expires' );
+		
+		$locale = $this->get_request_locale();
+		
+		$this->send_success( array(
+			'message' => $locale === 'ar' 
+				? 'تم التحقق من الرمز بنجاح. يمكنك الآن تعيين كلمة مرور جديدة' 
+				: 'Code verified successfully. You can now set a new password',
+			'reset_token' => $reset_token
+		) );
+	}
+	
+	/**
+	 * Reset password with new password
+	 */
+	private function ai_reset_password() {
+		// Verify nonce for security
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_reset_password_nonce' ) ) {
+			$this->send_error( 'Security check failed', 401 );
+		}
+		
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		// Check required fields
+		if ( ! isset( $data['reset_token'] ) || empty( $data['reset_token'] ) ) {
+			$this->send_error( 'Reset token required', 400 );
+		}
+		
+		if ( ! isset( $data['new_password'] ) || empty( $data['new_password'] ) ) {
+			$this->send_error( 'New password required', 400 );
+		}
+		
+		$reset_token = sanitize_text_field( $data['reset_token'] );
+		$new_password = $data['new_password'];
+		
+		// Validate password strength
+		if ( strlen( $new_password ) < 6 ) {
+			$this->send_error( 'Password must be at least 6 characters long', 400 );
+		}
+		
+		// Find user by reset token
+		global $wpdb;
+		$user_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->usermeta} 
+			WHERE meta_key = 'ai_password_reset_token' 
+			AND meta_value = %s 
+			LIMIT 1",
+			$reset_token
+		) );
+		
+		if ( empty( $user_id ) ) {
+			$this->send_error( 'Invalid or expired reset token', 400 );
+		}
+		
+		// Check token expiry
+		$token_expires = get_user_meta( $user_id, 'ai_password_reset_token_expires', true );
+		if ( empty( $token_expires ) || time() > $token_expires ) {
+			$this->send_error( 'Reset token has expired. Please request a new one.', 400 );
+		}
+		
+		// Update password
+		wp_set_password( $new_password, $user_id );
+		
+		// Clear reset token
+		delete_user_meta( $user_id, 'ai_password_reset_token' );
+		delete_user_meta( $user_id, 'ai_password_reset_token_expires' );
+		
+		$locale = $this->get_request_locale();
+		
+		$this->send_success( array(
+			'message' => $locale === 'ar' 
+				? 'تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة' 
+				: 'Password changed successfully. You can now login with your new password'
 		) );
 	}
 	

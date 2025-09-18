@@ -222,7 +222,22 @@ export default {
     userNotFound: 'User not found in the system',
     checkUserError: 'Error checking if user exists',
     noContactToResend: 'No contact information to resend code',
-    resendFailed: 'Failed to resend verification code'
+    resendFailed: 'Failed to resend verification code',
+    forgotPasswordTitle: 'Forgot your password?',
+    enterWhatsApp: 'Enter the WhatsApp number associated with your account',
+    sendResetCode: 'Send Reset Code',
+    resetCodeSent: 'Reset code sent to your WhatsApp',
+    enterResetCode: 'Enter the reset code sent to your WhatsApp',
+    verifyCode: 'Verify Code',
+    codeVerified: 'Code verified successfully',
+    setNewPassword: 'Set New Password',
+    newPassword: 'New Password',
+    confirmNewPassword: 'Confirm New Password',
+    passwordMismatch: 'Passwords do not match',
+    passwordTooShort: 'Password must be at least 6 characters',
+    resetPassword: 'Reset Password',
+    passwordResetSuccess: 'Password changed successfully',
+    backToLogin: 'Back to Login'
   },
 
   // Toast Messages
