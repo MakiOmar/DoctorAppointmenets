@@ -169,14 +169,6 @@
                   {{ $t('appointmentsPage.reschedule') }}
                 </button>
 
-                <!-- Cancel Button -->
-                <button 
-                  v-if="canCancel(appointment)"
-                  @click="cancelAppointment(appointment.id)"
-                  class="btn-outline text-sm text-red-600 hover:text-red-700"
-                >
-                  {{ $t('appointmentsPage.cancel') }}
-                </button>
               </template>
 
               <!-- For Past Sessions -->
