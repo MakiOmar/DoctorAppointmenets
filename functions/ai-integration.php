@@ -2283,7 +2283,7 @@ class SNKS_AI_Integration {
 		$registration_settings = snks_get_therapist_registration_settings();
 		
 		// Base required fields (no phone field, conditional email)
-		$required_fields = array( 'first_name', 'last_name', 'age', 'whatsapp', 'password' );
+		$required_fields = array( 'first_name', 'last_name', 'whatsapp', 'password' );
 		
 		// Add email to required fields if it's required in settings
 		if ( $registration_settings['require_email'] ) {
@@ -2488,7 +2488,6 @@ class SNKS_AI_Integration {
 	private function update_ai_user_fields( $user_id, $data ) {
 		update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $data['first_name'] ) );
 		update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $data['last_name'] ) );
-		update_user_meta( $user_id, 'age', intval( $data['age'] ) );
 		
 		// WhatsApp is always provided, also store as billing_whatsapp for consistency
 		$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
