@@ -35,8 +35,9 @@
       <div class="card">
         <form @submit.prevent="handleRegister" class="space-y-6" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
           <!-- Name Fields -->
-          <div class="grid grid-cols-2 gap-4 name-fields-container">
-            <div class="first-name-field">
+          <div class="grid grid-cols-2 gap-4">
+            <!-- First Name Field -->
+            <div v-if="$i18n.locale === 'ar'" class="order-2">
               <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
               <input
                 id="first_name"
@@ -49,7 +50,35 @@
                 autocomplete="given-name"
               />
             </div>
-            <div class="last-name-field">
+            <div v-else>
+              <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
+              <input
+                id="first_name"
+                v-model="form.first_name"
+                type="text"
+                required
+                class="input-field"
+                :placeholder="$t('auth.register.firstName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="given-name"
+              />
+            </div>
+            
+            <!-- Last Name Field -->
+            <div v-if="$i18n.locale === 'ar'" class="order-1">
+              <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
+              <input
+                id="last_name"
+                v-model="form.last_name"
+                type="text"
+                required
+                class="input-field"
+                :placeholder="$t('auth.register.lastName')"
+                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                autocomplete="family-name"
+              />
+            </div>
+            <div v-else>
               <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
               <input
                 id="last_name"
@@ -629,21 +658,4 @@ export default {
   font-feature-settings: "liga";
 }
 
-/* RTL Layout for Name Fields */
-.name-fields-container[dir="rtl"] .first-name-field {
-  order: 2;
-}
-
-.name-fields-container[dir="rtl"] .last-name-field {
-  order: 1;
-}
-
-/* LTR Layout for Name Fields (default order) */
-.name-fields-container[dir="ltr"] .first-name-field {
-  order: 1;
-}
-
-.name-fields-container[dir="ltr"] .last-name-field {
-  order: 2;
-}
 </style> 
