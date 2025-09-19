@@ -3169,6 +3169,12 @@ Best regards,
 			error_log( "=====================================" );
 			
 			// Only update if the number has changed
+			error_log( "=== PHONE NUMBER COMPARISON ===" );
+			error_log( "Current WhatsApp: '$current_whatsapp'" );
+			error_log( "New WhatsApp: '$new_whatsapp'" );
+			error_log( "Are they different? " . ($current_whatsapp !== $new_whatsapp ? 'YES' : 'NO') );
+			error_log( "===============================" );
+			
 			if ( $current_whatsapp !== $new_whatsapp ) {
 				error_log( "=== PHONE NUMBERS ARE DIFFERENT - PROCEEDING WITH UPDATE ===" );
 				// Update WhatsApp number in all relevant fields
@@ -3306,7 +3312,16 @@ Best regards,
 				error_log( "New WhatsApp: $new_whatsapp" );
 				error_log( "Updated billing_phone: " . ($current_billing_phone === $current_whatsapp ? 'Yes' : 'No') );
 				error_log( "=====================================" );
+			} else {
+				error_log( "=== PHONE NUMBERS ARE THE SAME - NO UPDATE NEEDED ===" );
+				error_log( "Current WhatsApp: '$current_whatsapp'" );
+				error_log( "New WhatsApp: '$new_whatsapp'" );
+				error_log( "Skipping phone number update" );
+				error_log( "===============================" );
 			}
+		} else {
+			error_log( "=== NO WHATSAPP DATA PROVIDED - SKIPPING PHONE UPDATE ===" );
+			error_log( "===============================" );
 		}
 		
 		// Determine verification method and send accordingly
