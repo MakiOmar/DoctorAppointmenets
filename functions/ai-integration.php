@@ -3148,6 +3148,13 @@ Best regards,
 		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
 		
 		// Update user's phone numbers if WhatsApp number was provided and has changed
+		error_log( "=== RESEND WHATSAPP DATA CHECK ===" );
+		error_log( "WhatsApp data provided: " . (isset( $data['whatsapp'] ) ? 'Yes' : 'No') );
+		if ( isset( $data['whatsapp'] ) ) {
+			error_log( "WhatsApp value: " . $data['whatsapp'] );
+		}
+		error_log( "===============================" );
+		
 		if ( isset( $data['whatsapp'] ) ) {
 			$new_whatsapp = sanitize_text_field( $data['whatsapp'] );
 			$current_whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
@@ -3163,6 +3170,7 @@ Best regards,
 			
 			// Only update if the number has changed
 			if ( $current_whatsapp !== $new_whatsapp ) {
+				error_log( "=== PHONE NUMBERS ARE DIFFERENT - PROCEEDING WITH UPDATE ===" );
 				// Update WhatsApp number in all relevant fields
 				update_user_meta( $user->ID, 'whatsapp', $new_whatsapp );
 				update_user_meta( $user->ID, 'billing_whatsapp', $new_whatsapp );
@@ -3178,10 +3186,23 @@ Best regards,
 				$clean_old_whatsapp = preg_replace('/[^0-9+]/', '', $current_whatsapp);
 				$expected_old_email = $clean_old_whatsapp . '@jalsah.app';
 				
+				error_log( "=== RESEND EMAIL UPDATE CHECK ===" );
+				error_log( "Current Email: $current_email" );
+				error_log( "Clean Old WhatsApp: $clean_old_whatsapp" );
+				error_log( "Expected Old Email: $expected_old_email" );
+				error_log( "Emails Match: " . ($current_email === $expected_old_email ? 'Yes' : 'No') );
+				error_log( "===============================" );
+				
 				if ( $current_email === $expected_old_email ) {
+					error_log( "=== RESEND EMAIL MATCHES OLD WHATSAPP - PROCEEDING WITH EMAIL UPDATE ===" );
 					// Generate new email from new WhatsApp number
 					$clean_new_whatsapp = preg_replace('/[^0-9+]/', '', $new_whatsapp);
 					$new_email = $clean_new_whatsapp . '@jalsah.app';
+					
+					error_log( "=== RESEND NEW EMAIL GENERATED ===" );
+					error_log( "Clean New WhatsApp: $clean_new_whatsapp" );
+					error_log( "New Email: $new_email" );
+					error_log( "===============================" );
 					
 					// Check if the new email already exists
 					$existing_user_with_email = get_user_by( 'email', $new_email );
@@ -3194,6 +3215,7 @@ Best regards,
 						
 						// Don't update email if it already exists for another user
 					} else {
+						error_log( "=== RESEND EMAIL DOES NOT EXIST - PROCEEDING WITH UPDATE ===" );
 						// Update ALL user fields using direct database queries
 						global $wpdb;
 						
