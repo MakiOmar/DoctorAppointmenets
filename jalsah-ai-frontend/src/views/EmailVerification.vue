@@ -113,9 +113,17 @@
             <button
               type="button"
               @click="setContact"
-              class="w-full btn-primary py-2"
+              :disabled="updatingPhone"
+              class="w-full btn-primary py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ $t('verification.continue') }}
+              <span v-if="updatingPhone" class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ $t('verification.updatingPhone') }}
+              </span>
+              <span v-else>{{ $t('verification.continue') }}</span>
             </button>
           </div>
 
@@ -223,6 +231,7 @@ export default {
     const loading = ref(false)
     const resendLoading = ref(false)
     const resendCooldown = ref(0)
+    const updatingPhone = ref(false)
     const contact = ref('')
     const contactInput = ref('')
     const verificationMethod = ref('email')
@@ -293,12 +302,14 @@ export default {
         })
         
         if (result.isConfirmed) {
-          // Set the contact value
-          contact.value = fullWhatsAppNumber
-          verificationMethod.value = 'whatsapp'
+          updatingPhone.value = true
           
-          // Immediately send verification code to update phone number in database
           try {
+            // Set the contact value
+            contact.value = fullWhatsAppNumber
+            verificationMethod.value = 'whatsapp'
+            
+            // Immediately send verification code to update phone number in database
             const success = await authStore.resendVerification(fullWhatsAppNumber)
             if (success) {
               toast.success(t('verification.resetCodeSent'))
@@ -308,12 +319,18 @@ export default {
           } catch (error) {
             console.error('Error sending verification code:', error)
             
+            // Reset contact value on error
+            contact.value = ''
+            verificationMethod.value = 'email'
+            
             // Check if it's the specific "WhatsApp already verified" error
             if (error.response?.data?.error === 'WhatsApp number is already verified') {
               toast.error(t('verification.whatsappAlreadyVerified'))
             } else {
               toast.error(t('verification.resendFailed'))
             }
+          } finally {
+            updatingPhone.value = false
           }
         }
       }
@@ -565,6 +582,7 @@ export default {
       loading,
       resendLoading,
       resendCooldown,
+      updatingPhone,
       contact,
       contactInput,
       verificationMethod,
