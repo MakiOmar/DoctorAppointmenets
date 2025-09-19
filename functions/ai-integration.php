@@ -1683,12 +1683,11 @@ class SNKS_AI_Integration {
 			return;
 		}
 		
-		// Log all AI API requests
-		error_log( "=== AI API REQUEST START ===" );
-		error_log( "Request URI: " . $_SERVER['REQUEST_URI'] );
-		error_log( "Request Method: " . $_SERVER['REQUEST_METHOD'] );
-		error_log( "Timestamp: " . date('Y-m-d H:i:s') );
-		error_log( "=========================" );
+		// Log AI API requests for debugging
+		error_log( "=== AI API REQUEST ===" );
+		error_log( "URI: " . $_SERVER['REQUEST_URI'] );
+		error_log( "Method: " . $_SERVER['REQUEST_METHOD'] );
+		error_log( "===================" );
 		
 		// Set error handler to catch any PHP errors
 		set_error_handler(function($severity, $message, $file, $line) {
@@ -1884,11 +1883,10 @@ class SNKS_AI_Integration {
 	 */
 	private function handle_auth_endpoint( $method, $path ) {
 		// Log auth endpoint requests
-		error_log( "=== AUTH ENDPOINT REQUEST ===" );
+		error_log( "=== AUTH ENDPOINT ===" );
 		error_log( "Method: $method" );
 		error_log( "Path: " . implode('/', $path) );
-		error_log( "Request URI: " . $_SERVER['REQUEST_URI'] );
-		error_log( "===========================" );
+		error_log( "===================" );
 		
 		switch ( $method ) {
 			case 'POST':
@@ -1898,12 +1896,10 @@ class SNKS_AI_Integration {
 				} elseif ( $path[1] === 'register' ) {
 
 					$this->ai_register();
-				} elseif ( $path[1] === 'verify' ) {
-					error_log( "=== CALLING AI_VERIFY_EMAIL ===" );
-					$this->ai_verify_email();
-				} elseif ( $path[1] === 'resend-verification' ) {
-					error_log( "=== CALLING AI_RESEND_VERIFICATION ===" );
-					$this->ai_resend_verification();
+		} elseif ( $path[1] === 'verify' ) {
+			$this->ai_verify_email();
+		} elseif ( $path[1] === 'resend-verification' ) {
+			$this->ai_resend_verification();
 				} elseif ( $path[1] === 'check-user' ) {
 
 					$this->ai_check_user_exists();
@@ -2866,6 +2862,15 @@ Best regards,
 			// Get current WhatsApp number for comparison
 			$current_whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
 			
+			// Log phone number update attempt
+			error_log( "=== PHONE NUMBER UPDATE DEBUG ===" );
+			error_log( "User ID: " . $user->ID );
+			error_log( "User email: " . $user->user_email );
+			error_log( "Current WhatsApp: " . $current_whatsapp );
+			error_log( "New WhatsApp: " . $new_whatsapp );
+			error_log( "Numbers different: " . ($current_whatsapp !== $new_whatsapp ? 'Yes' : 'No') );
+			error_log( "===============================" );
+			
 			// Only update if the number has changed
 			if ( $current_whatsapp !== $new_whatsapp ) {
 				// Update WhatsApp number in all relevant fields
@@ -3006,27 +3011,15 @@ Best regards,
 	 */
 	private function ai_resend_verification() {
 		try {
-			// Log the start of resend verification process
-			error_log( "=== RESEND VERIFICATION PROCESS START ===" );
-			error_log( "Timestamp: " . date('Y-m-d H:i:s') );
-			error_log( "=====================================" );
-			
 			// Verify nonce for security
 			if ( ! $this->verify_api_nonce( 'nonce', 'ai_resend_verification_nonce' ) ) {
-				error_log( "=== RESEND VERIFICATION SECURITY CHECK FAILED ===" );
 				$this->send_error( 'Security check failed', 401 );
 			}
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
-		// Log the resend verification data
-		error_log( "=== RESEND VERIFICATION DATA ===" );
-		error_log( "Data: " . json_encode( $data ) );
-		error_log( "=============================" );
-		
 		// Check if we have email or WhatsApp identifier
 		if ( ! isset( $data['email'] ) && ! isset( $data['whatsapp'] ) ) {
-			error_log( "=== NO EMAIL OR WHATSAPP PROVIDED ===" );
 			$this->send_error( 'Email or WhatsApp number required', 400 );
 		}
 		
@@ -3035,15 +3028,9 @@ Best regards,
 		// Find user by email or WhatsApp
 		if ( isset( $data['email'] ) ) {
 			$email = sanitize_email( $data['email'] );
-			error_log( "=== LOOKING FOR USER BY EMAIL ===" );
-			error_log( "Email: $email" );
 			$user = get_user_by( 'email', $email );
-			error_log( "User found: " . ($user ? 'Yes' : 'No') );
-			error_log( "=============================" );
 		} else {
 			$whatsapp = sanitize_text_field( $data['whatsapp'] );
-			error_log( "=== LOOKING FOR USER BY WHATSAPP ===" );
-			error_log( "WhatsApp: $whatsapp" );
 			
 			// First, check if this WhatsApp number already exists for a verified user
 			global $wpdb;
@@ -3061,10 +3048,6 @@ Best regards,
 			) );
 			
 			if ( $existing_verified_user_id ) {
-				error_log( "=== WHATSAPP NUMBER ALREADY VERIFIED ===" );
-				error_log( "WhatsApp: $whatsapp" );
-				error_log( "Existing User ID: $existing_verified_user_id" );
-				error_log( "===============================" );
 				$this->send_error( 'WhatsApp number is already verified', 400 );
 			}
 			
@@ -3092,24 +3075,12 @@ Best regards,
 					)
 					LIMIT 1"
 				) );
-				
-				// Log the phone number change attempt
-				error_log( "=== PHONE NUMBER CHANGE DEBUG ===" );
-				error_log( "New WhatsApp: $whatsapp" );
-				error_log( "Found user with pending verification: " . ($user_id ? $user_id : 'NULL') );
-				error_log( "===============================" );
 			}
 			
 			$user = $user_id ? get_user_by( 'ID', $user_id ) : null;
-			error_log( "User found: " . ($user ? 'Yes' : 'No') );
-			error_log( "User ID: " . ($user_id ? $user_id : 'NULL') );
-			error_log( "=============================" );
 		}
 		
 		if ( ! $user ) {
-			error_log( "=== USER NOT FOUND ERROR ===" );
-			error_log( "Sending 'User not found' error" );
-			error_log( "=========================" );
 			$this->send_error( 'User not found', 404 );
 		}
 		
@@ -3133,6 +3104,15 @@ Best regards,
 		if ( isset( $data['whatsapp'] ) ) {
 			$new_whatsapp = sanitize_text_field( $data['whatsapp'] );
 			$current_whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+			
+			// Log phone number update attempt in resend verification
+			error_log( "=== RESEND VERIFICATION PHONE UPDATE ===" );
+			error_log( "User ID: " . $user->ID );
+			error_log( "User email: " . $user->user_email );
+			error_log( "Current WhatsApp: " . $current_whatsapp );
+			error_log( "New WhatsApp: " . $new_whatsapp );
+			error_log( "Numbers different: " . ($current_whatsapp !== $new_whatsapp ? 'Yes' : 'No') );
+			error_log( "=====================================" );
 			
 			// Only update if the number has changed
 			if ( $current_whatsapp !== $new_whatsapp ) {
@@ -3181,6 +3161,15 @@ Best regards,
 			$this->send_error( $error_message, 500 );
 		}
 		
+		// Log user update information
+		error_log( "=== USER UPDATE DEBUG ===" );
+		error_log( "User ID being updated: " . $user->ID );
+		error_log( "User email: " . $user->user_email );
+		error_log( "Current WhatsApp: " . get_user_meta( $user->ID, 'billing_whatsapp', true ) );
+		error_log( "New WhatsApp: " . (isset($whatsapp) ? $whatsapp : 'N/A') );
+		error_log( "Verification method: " . (isset($data['email']) ? 'email' : 'whatsapp') );
+		error_log( "=========================" );
+		
 		$this->send_success( array(
 			'message' => $success_message,
 			'user_id' => $user->ID,
@@ -3188,13 +3177,9 @@ Best regards,
 		) );
 		
 		} catch ( Exception $e ) {
-			error_log( "=== RESEND VERIFICATION PROCESS ERROR ===" );
-			error_log( "Error Message: " . $e->getMessage() );
-			error_log( "Error Code: " . $e->getCode() );
-			error_log( "Error File: " . $e->getFile() );
-			error_log( "Error Line: " . $e->getLine() );
-			error_log( "Stack Trace: " . $e->getTraceAsString() );
-			error_log( "=====================================" );
+			error_log( "=== RESEND VERIFICATION ERROR ===" );
+			error_log( "Error: " . $e->getMessage() );
+			error_log( "=============================" );
 			
 			$this->send_error( 'Resend verification process failed: ' . $e->getMessage(), 500 );
 		}
