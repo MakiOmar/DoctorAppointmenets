@@ -2833,12 +2833,38 @@ Best regards,
 					update_user_meta( $user->ID, 'billing_phone', $new_whatsapp );
 				}
 				
+				// Update user email if it was generated from the old WhatsApp number
+				$current_email = $user->user_email;
+				$clean_old_whatsapp = preg_replace('/[^0-9+]/', '', $current_whatsapp);
+				$expected_old_email = $clean_old_whatsapp . '@jalsah.app';
+				
+				if ( $current_email === $expected_old_email ) {
+					// Generate new email from new WhatsApp number
+					$clean_new_whatsapp = preg_replace('/[^0-9+]/', '', $new_whatsapp);
+					$new_email = $clean_new_whatsapp . '@jalsah.app';
+					
+					// Update user email
+					wp_update_user( array(
+						'ID' => $user->ID,
+						'user_email' => $new_email
+					) );
+					
+					// Update user object for response
+					$user->user_email = $new_email;
+					
+					error_log( "=== EMAIL UPDATE DEBUG ===" );
+					error_log( "Old Email: $current_email" );
+					error_log( "New Email: $new_email" );
+					error_log( "========================" );
+				}
+				
 				// Log the phone number update
 				error_log( "=== PHONE NUMBER UPDATE DEBUG ===" );
 				error_log( "User ID: $user->ID" );
 				error_log( "Old WhatsApp: $current_whatsapp" );
 				error_log( "New WhatsApp: $new_whatsapp" );
 				error_log( "Updated billing_phone: " . ($current_billing_phone === $current_whatsapp ? 'Yes' : 'No') );
+				error_log( "Updated email: " . ($current_email === $expected_old_email ? 'Yes' : 'No') );
 				error_log( "===============================" );
 			}
 		}
@@ -2856,17 +2882,33 @@ Best regards,
 			? 'تم التحقق من البريد الإلكتروني بنجاح! تم تسجيل دخولك الآن.'
 			: 'Email verified successfully! You are now logged in.';
 		
+		// Prepare user data with updated information
+		$user_data = array(
+			'id' => $user->ID,
+			'email' => $user->user_email,
+			'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
+			'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
+			'role' => $user->roles[0], // Primary role
+			'roles' => $user->roles,   // All roles
+		);
+		
+		// Add updated WhatsApp number if available
+		$whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+		if ( $whatsapp ) {
+			$user_data['whatsapp'] = $whatsapp;
+		}
+		
+		// Log the user data being returned
+		error_log( "=== VERIFICATION SUCCESS USER DATA ===" );
+		error_log( "User ID: $user->ID" );
+		error_log( "WhatsApp: $whatsapp" );
+		error_log( "User Data: " . json_encode( $user_data ) );
+		error_log( "=====================================" );
+		
 		$this->send_success( array(
 			'message' => $success_message,
 			'token' => $token,
-			'user' => array(
-				'id' => $user->ID,
-				'email' => $user->user_email,
-				'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
-				'last_name' => get_user_meta( $user->ID, 'billing_last_name', true ),
-				'role' => $user->roles[0], // Primary role
-				'roles' => $user->roles,   // All roles
-			)
+			'user' => $user_data
 		) );
 	}
 	
