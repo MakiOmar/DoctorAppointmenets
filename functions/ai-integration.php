@@ -2931,6 +2931,9 @@ Best regards,
 							
 							// Update user object for response
 							$user->user_email = $new_email;
+							
+							// Refresh user object to ensure all data is current
+							$user = get_user_by( 'ID', $user->ID );
 						}
 					}
 					
@@ -3124,6 +3127,56 @@ Best regards,
 				$current_billing_phone = get_user_meta( $user->ID, 'billing_phone', true );
 				if ( $current_billing_phone === $current_whatsapp ) {
 					update_user_meta( $user->ID, 'billing_phone', $new_whatsapp );
+				}
+				
+				// Update user email if it was generated from the old WhatsApp number
+				$current_email = $user->user_email;
+				$clean_old_whatsapp = preg_replace('/[^0-9+]/', '', $current_whatsapp);
+				$expected_old_email = $clean_old_whatsapp . '@jalsah.app';
+				
+				if ( $current_email === $expected_old_email ) {
+					// Generate new email from new WhatsApp number
+					$clean_new_whatsapp = preg_replace('/[^0-9+]/', '', $new_whatsapp);
+					$new_email = $clean_new_whatsapp . '@jalsah.app';
+					
+					// Check if the new email already exists
+					$existing_user_with_email = get_user_by( 'email', $new_email );
+					if ( $existing_user_with_email && $existing_user_with_email->ID !== $user->ID ) {
+						error_log( "=== RESEND EMAIL ALREADY EXISTS ===" );
+						error_log( "New Email: $new_email" );
+						error_log( "Existing User ID: " . $existing_user_with_email->ID );
+						error_log( "Current User ID: $user->ID" );
+						error_log( "===============================" );
+						
+						// Don't update email if it already exists for another user
+					} else {
+						// Update user email
+						$update_result = wp_update_user( array(
+							'ID' => $user->ID,
+							'user_email' => $new_email
+						) );
+				
+						// Check for update errors
+						if ( is_wp_error( $update_result ) ) {
+							error_log( "=== RESEND EMAIL UPDATE ERROR ===" );
+							error_log( "User ID: $user->ID" );
+							error_log( "New Email: $new_email" );
+							error_log( "Error: " . $update_result->get_error_message() );
+							error_log( "===============================" );
+						} else {
+							error_log( "=== RESEND EMAIL UPDATE SUCCESS ===" );
+							error_log( "User ID: $user->ID" );
+							error_log( "New Email: $new_email" );
+							error_log( "Update Result: $update_result" );
+							error_log( "===============================" );
+							
+							// Update user object for response
+							$user->user_email = $new_email;
+							
+							// Refresh user object to ensure all data is current
+							$user = get_user_by( 'ID', $user->ID );
+						}
+					}
 				}
 				
 				// Log the phone number update during resend
