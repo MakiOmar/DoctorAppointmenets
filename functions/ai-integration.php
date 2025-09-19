@@ -2923,11 +2923,11 @@ Best regards,
 							// Don't fail the verification, just log the error
 							// The phone number update is more important than email update
 						} else {
-							// Update user_login using direct database query
+							// Update user_login using direct database query (use WhatsApp number, not email)
 							global $wpdb;
 							$login_update_result = $wpdb->update(
 								$wpdb->users,
-								array( 'user_login' => $new_email ),
+								array( 'user_login' => $new_whatsapp ),
 								array( 'ID' => $user->ID ),
 								array( '%s' ),
 								array( '%d' )
@@ -2936,21 +2936,21 @@ Best regards,
 							if ( $login_update_result === false ) {
 								error_log( "=== LOGIN UPDATE ERROR ===" );
 								error_log( "User ID: $user->ID" );
-								error_log( "New Login: $new_email" );
+								error_log( "New Login: $new_whatsapp" );
 								error_log( "Database Error: " . $wpdb->last_error );
 								error_log( "========================" );
 							} else {
 								error_log( "=== EMAIL AND LOGIN UPDATE SUCCESS ===" );
 								error_log( "User ID: $user->ID" );
 								error_log( "New Email: $new_email" );
-								error_log( "New Login: $new_email" );
+								error_log( "New Login: $new_whatsapp" );
 								error_log( "Email Update Result: $update_result" );
 								error_log( "Login Update Result: $login_update_result" );
 								error_log( "=========================" );
 								
 								// Update user object for response
 								$user->user_email = $new_email;
-								$user->user_login = $new_email;
+								$user->user_login = $new_whatsapp;
 								
 								// Refresh user object to ensure all data is current
 								$user = get_user_by( 'ID', $user->ID );
@@ -3185,11 +3185,11 @@ Best regards,
 							error_log( "Error: " . $update_result->get_error_message() );
 							error_log( "===============================" );
 						} else {
-							// Update user_login using direct database query
+							// Update user_login using direct database query (use WhatsApp number, not email)
 							global $wpdb;
 							$login_update_result = $wpdb->update(
 								$wpdb->users,
-								array( 'user_login' => $new_email ),
+								array( 'user_login' => $new_whatsapp ),
 								array( 'ID' => $user->ID ),
 								array( '%s' ),
 								array( '%d' )
@@ -3198,21 +3198,21 @@ Best regards,
 							if ( $login_update_result === false ) {
 								error_log( "=== RESEND LOGIN UPDATE ERROR ===" );
 								error_log( "User ID: $user->ID" );
-								error_log( "New Login: $new_email" );
+								error_log( "New Login: $new_whatsapp" );
 								error_log( "Database Error: " . $wpdb->last_error );
 								error_log( "===============================" );
 							} else {
 								error_log( "=== RESEND EMAIL AND LOGIN UPDATE SUCCESS ===" );
 								error_log( "User ID: $user->ID" );
 								error_log( "New Email: $new_email" );
-								error_log( "New Login: $new_email" );
+								error_log( "New Login: $new_whatsapp" );
 								error_log( "Email Update Result: $update_result" );
 								error_log( "Login Update Result: $login_update_result" );
 								error_log( "===============================" );
 								
 								// Update user object for response
 								$user->user_email = $new_email;
-								$user->user_login = $new_email;
+								$user->user_login = $new_whatsapp;
 								
 								// Refresh user object to ensure all data is current
 								$user = get_user_by( 'ID', $user->ID );
