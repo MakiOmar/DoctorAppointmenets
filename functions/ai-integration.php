@@ -3175,11 +3175,17 @@ Best regards,
 				update_user_meta( $user->ID, 'whatsapp', $new_whatsapp );
 				update_user_meta( $user->ID, 'billing_whatsapp', $new_whatsapp );
 				
+				error_log( "=== PHONE NUMBER UPDATE COMPLETED - MOVING TO EMAIL UPDATE ===" );
+				
 				// Also update billing_phone if it was the same as the old WhatsApp
 				$current_billing_phone = get_user_meta( $user->ID, 'billing_phone', true );
 				if ( $current_billing_phone === $current_whatsapp ) {
 					update_user_meta( $user->ID, 'billing_phone', $new_whatsapp );
 				}
+				
+				error_log( "=== ABOUT TO START EMAIL UPDATE LOGIC IN RESEND ===" );
+				error_log( "Current user email: " . $user->user_email );
+				error_log( "===============================" );
 				
 				// Update user email if it was generated from the old WhatsApp number
 				$current_email = $user->user_email;
