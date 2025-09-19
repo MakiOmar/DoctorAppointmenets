@@ -205,6 +205,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
 import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'EmailVerification',
