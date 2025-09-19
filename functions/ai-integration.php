@@ -2895,7 +2895,8 @@ Best regards,
 			$user = get_user_by( 'email', $email );
 		} else {
 			$whatsapp = sanitize_text_field( $data['whatsapp'] );
-			// Optimized query for WhatsApp lookup
+			
+			// First, try to find user by the new WhatsApp number
 			global $wpdb;
 			$user_id = $wpdb->get_var( $wpdb->prepare(
 				"SELECT user_id FROM {$wpdb->usermeta} 
@@ -2904,6 +2905,30 @@ Best regards,
 				LIMIT 1",
 				$whatsapp
 			) );
+			
+			// If user not found by new number, try to find user with pending verification
+			// This handles the case where user is changing their phone number
+			if ( ! $user_id ) {
+				$user_id = $wpdb->get_var( $wpdb->prepare(
+					"SELECT user_id FROM {$wpdb->usermeta} 
+					WHERE meta_key = 'ai_verification_code' 
+					AND meta_value IS NOT NULL 
+					AND meta_value != '' 
+					AND user_id IN (
+						SELECT user_id FROM {$wpdb->usermeta} 
+						WHERE meta_key = 'ai_email_verified' 
+						AND meta_value = '0'
+					)
+					LIMIT 1"
+				) );
+				
+				// Log the phone number change attempt
+				error_log( "=== PHONE NUMBER CHANGE DEBUG ===" );
+				error_log( "New WhatsApp: $whatsapp" );
+				error_log( "Found user with pending verification: " . ($user_id ? $user_id : 'NULL') );
+				error_log( "===============================" );
+			}
+			
 			$user = $user_id ? get_user_by( 'ID', $user_id ) : null;
 		}
 		
