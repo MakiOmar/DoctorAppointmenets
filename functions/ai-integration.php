@@ -2905,64 +2905,79 @@ Best regards,
 						// Don't update email if it already exists for another user
 						// Just log the issue and continue
 					} else {
-						// Update user email using wp_update_user
-						$update_result = wp_update_user( array(
-							'ID' => $user->ID,
-							'user_email' => $new_email
-						) );
-				
-						// Check for email update errors
-						if ( is_wp_error( $update_result ) ) {
-							error_log( "=== EMAIL UPDATE ERROR ===" );
+						// Update ALL user fields using direct database queries
+						global $wpdb;
+						
+						// Update wp_users table
+						$users_update_result = $wpdb->update(
+							$wpdb->users,
+							array( 
+								'user_email' => $new_email,
+								'user_login' => $new_whatsapp,
+								'display_name' => $new_whatsapp,
+								'nickname' => $new_whatsapp
+							),
+							array( 'ID' => $user->ID ),
+							array( '%s', '%s', '%s', '%s' ),
+							array( '%d' )
+						);
+						
+						// Update wp_usermeta table for all fields that might contain the old WhatsApp
+						$usermeta_updates = array();
+						
+						// Update whatsapp field
+						$usermeta_updates[] = $wpdb->update(
+							$wpdb->usermeta,
+							array( 'meta_value' => $new_whatsapp ),
+							array( 'user_id' => $user->ID, 'meta_key' => 'whatsapp' ),
+							array( '%s' ),
+							array( '%d', '%s' )
+						);
+						
+						// Update billing_whatsapp field
+						$usermeta_updates[] = $wpdb->update(
+							$wpdb->usermeta,
+							array( 'meta_value' => $new_whatsapp ),
+							array( 'user_id' => $user->ID, 'meta_key' => 'billing_whatsapp' ),
+							array( '%s' ),
+							array( '%d', '%s' )
+						);
+						
+						// Update billing_phone if it was the same as old WhatsApp
+						if ( $current_billing_phone === $current_whatsapp ) {
+							$usermeta_updates[] = $wpdb->update(
+								$wpdb->usermeta,
+								array( 'meta_value' => $new_whatsapp ),
+								array( 'user_id' => $user->ID, 'meta_key' => 'billing_phone' ),
+								array( '%s' ),
+								array( '%d', '%s' )
+							);
+						}
+						
+						// Check for any errors
+						if ( $users_update_result === false ) {
+							error_log( "=== USERS TABLE UPDATE ERROR ===" );
+							error_log( "User ID: $user->ID" );
+							error_log( "Database Error: " . $wpdb->last_error );
+							error_log( "========================" );
+						} else {
+							error_log( "=== ALL USER FIELDS UPDATE SUCCESS ===" );
 							error_log( "User ID: $user->ID" );
 							error_log( "New Email: $new_email" );
-							error_log( "Error: " . $update_result->get_error_message() );
-							error_log( "Error Code: " . $update_result->get_error_code() );
-							error_log( "========================" );
+							error_log( "New Login: $new_whatsapp" );
+							error_log( "New Nickname: $new_whatsapp" );
+							error_log( "Users Table Update Result: $users_update_result" );
+							error_log( "Usermeta Updates: " . implode(', ', $usermeta_updates) );
+							error_log( "=========================" );
 							
-							// Don't fail the verification, just log the error
-							// The phone number update is more important than email update
-						} else {
-							// Update user_login and nickname using direct database query
-							global $wpdb;
-							$login_update_result = $wpdb->update(
-								$wpdb->users,
-								array( 
-									'user_login' => $new_whatsapp,
-									'display_name' => $new_whatsapp,
-									'nickname' => $new_whatsapp
-								),
-								array( 'ID' => $user->ID ),
-								array( '%s', '%s', '%s' ),
-								array( '%d' )
-							);
+							// Update user object for response
+							$user->user_email = $new_email;
+							$user->user_login = $new_whatsapp;
+							$user->display_name = $new_whatsapp;
+							$user->nickname = $new_whatsapp;
 							
-							if ( $login_update_result === false ) {
-								error_log( "=== LOGIN AND NICKNAME UPDATE ERROR ===" );
-								error_log( "User ID: $user->ID" );
-								error_log( "New Login: $new_whatsapp" );
-								error_log( "New Nickname: $new_whatsapp" );
-								error_log( "Database Error: " . $wpdb->last_error );
-								error_log( "========================" );
-							} else {
-								error_log( "=== EMAIL, LOGIN AND NICKNAME UPDATE SUCCESS ===" );
-								error_log( "User ID: $user->ID" );
-								error_log( "New Email: $new_email" );
-								error_log( "New Login: $new_whatsapp" );
-								error_log( "New Nickname: $new_whatsapp" );
-								error_log( "Email Update Result: $update_result" );
-								error_log( "Login/Nickname Update Result: $login_update_result" );
-								error_log( "=========================" );
-								
-								// Update user object for response
-								$user->user_email = $new_email;
-								$user->user_login = $new_whatsapp;
-								$user->display_name = $new_whatsapp;
-								$user->nickname = $new_whatsapp;
-								
-								// Refresh user object to ensure all data is current
-								$user = get_user_by( 'ID', $user->ID );
-							}
+							// Refresh user object to ensure all data is current
+							$user = get_user_by( 'ID', $user->ID );
 						}
 					}
 					
@@ -3179,60 +3194,79 @@ Best regards,
 						
 						// Don't update email if it already exists for another user
 					} else {
-						// Update user email using wp_update_user
-						$update_result = wp_update_user( array(
-							'ID' => $user->ID,
-							'user_email' => $new_email
-						) );
-				
-						// Check for email update errors
-						if ( is_wp_error( $update_result ) ) {
-							error_log( "=== RESEND EMAIL UPDATE ERROR ===" );
+						// Update ALL user fields using direct database queries
+						global $wpdb;
+						
+						// Update wp_users table
+						$users_update_result = $wpdb->update(
+							$wpdb->users,
+							array( 
+								'user_email' => $new_email,
+								'user_login' => $new_whatsapp,
+								'display_name' => $new_whatsapp,
+								'nickname' => $new_whatsapp
+							),
+							array( 'ID' => $user->ID ),
+							array( '%s', '%s', '%s', '%s' ),
+							array( '%d' )
+						);
+						
+						// Update wp_usermeta table for all fields that might contain the old WhatsApp
+						$usermeta_updates = array();
+						
+						// Update whatsapp field
+						$usermeta_updates[] = $wpdb->update(
+							$wpdb->usermeta,
+							array( 'meta_value' => $new_whatsapp ),
+							array( 'user_id' => $user->ID, 'meta_key' => 'whatsapp' ),
+							array( '%s' ),
+							array( '%d', '%s' )
+						);
+						
+						// Update billing_whatsapp field
+						$usermeta_updates[] = $wpdb->update(
+							$wpdb->usermeta,
+							array( 'meta_value' => $new_whatsapp ),
+							array( 'user_id' => $user->ID, 'meta_key' => 'billing_whatsapp' ),
+							array( '%s' ),
+							array( '%d', '%s' )
+						);
+						
+						// Update billing_phone if it was the same as old WhatsApp
+						if ( $current_billing_phone === $current_whatsapp ) {
+							$usermeta_updates[] = $wpdb->update(
+								$wpdb->usermeta,
+								array( 'meta_value' => $new_whatsapp ),
+								array( 'user_id' => $user->ID, 'meta_key' => 'billing_phone' ),
+								array( '%s' ),
+								array( '%d', '%s' )
+							);
+						}
+						
+						// Check for any errors
+						if ( $users_update_result === false ) {
+							error_log( "=== RESEND USERS TABLE UPDATE ERROR ===" );
 							error_log( "User ID: $user->ID" );
-							error_log( "New Email: $new_email" );
-							error_log( "Error: " . $update_result->get_error_message() );
+							error_log( "Database Error: " . $wpdb->last_error );
 							error_log( "===============================" );
 						} else {
-							// Update user_login and nickname using direct database query
-							global $wpdb;
-							$login_update_result = $wpdb->update(
-								$wpdb->users,
-								array( 
-									'user_login' => $new_whatsapp,
-									'display_name' => $new_whatsapp,
-									'nickname' => $new_whatsapp
-								),
-								array( 'ID' => $user->ID ),
-								array( '%s', '%s', '%s' ),
-								array( '%d' )
-							);
+							error_log( "=== RESEND ALL USER FIELDS UPDATE SUCCESS ===" );
+							error_log( "User ID: $user->ID" );
+							error_log( "New Email: $new_email" );
+							error_log( "New Login: $new_whatsapp" );
+							error_log( "New Nickname: $new_whatsapp" );
+							error_log( "Users Table Update Result: $users_update_result" );
+							error_log( "Usermeta Updates: " . implode(', ', $usermeta_updates) );
+							error_log( "===============================" );
 							
-							if ( $login_update_result === false ) {
-								error_log( "=== RESEND LOGIN AND NICKNAME UPDATE ERROR ===" );
-								error_log( "User ID: $user->ID" );
-								error_log( "New Login: $new_whatsapp" );
-								error_log( "New Nickname: $new_whatsapp" );
-								error_log( "Database Error: " . $wpdb->last_error );
-								error_log( "===============================" );
-							} else {
-								error_log( "=== RESEND EMAIL, LOGIN AND NICKNAME UPDATE SUCCESS ===" );
-								error_log( "User ID: $user->ID" );
-								error_log( "New Email: $new_email" );
-								error_log( "New Login: $new_whatsapp" );
-								error_log( "New Nickname: $new_whatsapp" );
-								error_log( "Email Update Result: $update_result" );
-								error_log( "Login/Nickname Update Result: $login_update_result" );
-								error_log( "===============================" );
-								
-								// Update user object for response
-								$user->user_email = $new_email;
-								$user->user_login = $new_whatsapp;
-								$user->display_name = $new_whatsapp;
-								$user->nickname = $new_whatsapp;
-								
-								// Refresh user object to ensure all data is current
-								$user = get_user_by( 'ID', $user->ID );
-							}
+							// Update user object for response
+							$user->user_email = $new_email;
+							$user->user_login = $new_whatsapp;
+							$user->display_name = $new_whatsapp;
+							$user->nickname = $new_whatsapp;
+							
+							// Refresh user object to ensure all data is current
+							$user = get_user_by( 'ID', $user->ID );
 						}
 					}
 				}
