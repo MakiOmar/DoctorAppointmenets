@@ -2919,7 +2919,7 @@ Best regards,
 								'user_email' => $new_email,
 								'user_login' => $new_whatsapp,
 								'display_name' => $new_whatsapp,
-								'nickname' => $new_whatsapp
+								'user_nicename' => $new_whatsapp
 							),
 							array( 'ID' => $user->ID ),
 							array( '%s', '%s', '%s', '%s' ),
@@ -2969,7 +2969,7 @@ Best regards,
 							error_log( "User ID: $user->ID" );
 							error_log( "New Email: $new_email" );
 							error_log( "New Login: $new_whatsapp" );
-							error_log( "New Nickname: $new_whatsapp" );
+							error_log( "New Nicename: $new_whatsapp" );
 							error_log( "Users Table Update Result: $users_update_result" );
 							error_log( "Usermeta Updates: " . implode(', ', $usermeta_updates) );
 							error_log( "=========================" );
@@ -2978,7 +2978,7 @@ Best regards,
 							$user->user_email = $new_email;
 							$user->user_login = $new_whatsapp;
 							$user->display_name = $new_whatsapp;
-							$user->nickname = $new_whatsapp;
+							$user->user_nicename = $new_whatsapp;
 							
 							// Refresh user object to ensure all data is current
 							$user = get_user_by( 'ID', $user->ID );
@@ -3242,7 +3242,7 @@ Best regards,
 								'user_email' => $new_email,
 								'user_login' => $new_whatsapp,
 								'display_name' => $new_whatsapp,
-								'nickname' => $new_whatsapp
+								'user_nicename' => $new_whatsapp
 							),
 							array( 'ID' => $user->ID ),
 							array( '%s', '%s', '%s', '%s' ),
@@ -3292,7 +3292,7 @@ Best regards,
 							error_log( "User ID: $user->ID" );
 							error_log( "New Email: $new_email" );
 							error_log( "New Login: $new_whatsapp" );
-							error_log( "New Nickname: $new_whatsapp" );
+							error_log( "New Nicename: $new_whatsapp" );
 							error_log( "Users Table Update Result: $users_update_result" );
 							error_log( "Usermeta Updates: " . implode(', ', $usermeta_updates) );
 							error_log( "===============================" );
@@ -3301,7 +3301,7 @@ Best regards,
 							$user->user_email = $new_email;
 							$user->user_login = $new_whatsapp;
 							$user->display_name = $new_whatsapp;
-							$user->nickname = $new_whatsapp;
+							$user->user_nicename = $new_whatsapp;
 							
 							// Refresh user object to ensure all data is current
 							$user = get_user_by( 'ID', $user->ID );
