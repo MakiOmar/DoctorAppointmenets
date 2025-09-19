@@ -2958,6 +2958,15 @@ Best regards,
 							);
 						}
 						
+						// Update nickname meta key
+						$usermeta_updates[] = $wpdb->update(
+							$wpdb->usermeta,
+							array( 'meta_value' => $new_whatsapp ),
+							array( 'user_id' => $user->ID, 'meta_key' => 'nickname' ),
+							array( '%s' ),
+							array( '%d', '%s' )
+						);
+						
 						// Check for any errors
 						if ( $users_update_result === false ) {
 							error_log( "=== USERS TABLE UPDATE ERROR ===" );
@@ -3280,6 +3289,15 @@ Best regards,
 								array( '%d', '%s' )
 							);
 						}
+						
+						// Update nickname meta key
+						$usermeta_updates[] = $wpdb->update(
+							$wpdb->usermeta,
+							array( 'meta_value' => $new_whatsapp ),
+							array( 'user_id' => $user->ID, 'meta_key' => 'nickname' ),
+							array( '%s' ),
+							array( '%d', '%s' )
+						);
 						
 						// Check for any errors
 						if ( $users_update_result === false ) {
