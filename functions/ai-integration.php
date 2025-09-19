@@ -2739,15 +2739,27 @@ Best regards,
 	 * AI Verify Email
 	 */
 	private function ai_verify_email() {
-		// Verify nonce for security
-		if ( ! $this->verify_api_nonce( 'nonce', 'ai_verify_nonce' ) ) {
-	
-			$this->send_error( 'Security check failed', 401 );
-		}
+		try {
+			// Log the start of verification process
+			error_log( "=== VERIFICATION PROCESS START ===" );
+			error_log( "Timestamp: " . date('Y-m-d H:i:s') );
+			error_log( "===============================" );
+			
+			// Verify nonce for security
+			if ( ! $this->verify_api_nonce( 'nonce', 'ai_verify_nonce' ) ) {
+				error_log( "=== VERIFICATION SECURITY CHECK FAILED ===" );
+				$this->send_error( 'Security check failed', 401 );
+			}
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
+		// Log the verification data
+		error_log( "=== VERIFICATION DATA ===" );
+		error_log( "Data: " . json_encode( $data ) );
+		error_log( "=======================" );
+		
 		if ( ! isset( $data['code'] ) ) {
+			error_log( "=== VERIFICATION CODE MISSING ===" );
 			$this->send_error( 'Verification code required', 400 );
 		}
 		
@@ -2818,6 +2830,10 @@ Best regards,
 		}
 		
 		// Mark email as verified
+		error_log( "=== MARKING USER AS VERIFIED ===" );
+		error_log( "User ID: $user->ID" );
+		error_log( "=============================" );
+		
 		update_user_meta( $user->ID, 'ai_email_verified', '1' );
 		
 		// Update user's phone numbers if WhatsApp number was provided in verification
@@ -2948,6 +2964,18 @@ Best regards,
 			'token' => $token,
 			'user' => $user_data
 		) );
+		
+		} catch ( Exception $e ) {
+			error_log( "=== VERIFICATION PROCESS ERROR ===" );
+			error_log( "Error Message: " . $e->getMessage() );
+			error_log( "Error Code: " . $e->getCode() );
+			error_log( "Error File: " . $e->getFile() );
+			error_log( "Error Line: " . $e->getLine() );
+			error_log( "Stack Trace: " . $e->getTraceAsString() );
+			error_log( "===============================" );
+			
+			$this->send_error( 'Verification process failed: ' . $e->getMessage(), 500 );
+		}
 	}
 	
 	/**
