@@ -2905,14 +2905,13 @@ Best regards,
 						// Don't update email if it already exists for another user
 						// Just log the issue and continue
 					} else {
-						// Update user email and login
+						// Update user email using wp_update_user
 						$update_result = wp_update_user( array(
 							'ID' => $user->ID,
-							'user_email' => $new_email,
-							'user_login' => $new_email  // Update login to match new email
+							'user_email' => $new_email
 						) );
 				
-						// Check for update errors
+						// Check for email update errors
 						if ( is_wp_error( $update_result ) ) {
 							error_log( "=== EMAIL UPDATE ERROR ===" );
 							error_log( "User ID: $user->ID" );
@@ -2924,19 +2923,38 @@ Best regards,
 							// Don't fail the verification, just log the error
 							// The phone number update is more important than email update
 						} else {
-							error_log( "=== EMAIL UPDATE SUCCESS ===" );
-							error_log( "User ID: $user->ID" );
-							error_log( "New Email: $new_email" );
-							error_log( "New Login: $new_email" );
-							error_log( "Update Result: $update_result" );
-							error_log( "=========================" );
+							// Update user_login using direct database query
+							global $wpdb;
+							$login_update_result = $wpdb->update(
+								$wpdb->users,
+								array( 'user_login' => $new_email ),
+								array( 'ID' => $user->ID ),
+								array( '%s' ),
+								array( '%d' )
+							);
 							
-							// Update user object for response
-							$user->user_email = $new_email;
-							$user->user_login = $new_email;
-							
-							// Refresh user object to ensure all data is current
-							$user = get_user_by( 'ID', $user->ID );
+							if ( $login_update_result === false ) {
+								error_log( "=== LOGIN UPDATE ERROR ===" );
+								error_log( "User ID: $user->ID" );
+								error_log( "New Login: $new_email" );
+								error_log( "Database Error: " . $wpdb->last_error );
+								error_log( "========================" );
+							} else {
+								error_log( "=== EMAIL AND LOGIN UPDATE SUCCESS ===" );
+								error_log( "User ID: $user->ID" );
+								error_log( "New Email: $new_email" );
+								error_log( "New Login: $new_email" );
+								error_log( "Email Update Result: $update_result" );
+								error_log( "Login Update Result: $login_update_result" );
+								error_log( "=========================" );
+								
+								// Update user object for response
+								$user->user_email = $new_email;
+								$user->user_login = $new_email;
+								
+								// Refresh user object to ensure all data is current
+								$user = get_user_by( 'ID', $user->ID );
+							}
 						}
 					}
 					
@@ -3153,14 +3171,13 @@ Best regards,
 						
 						// Don't update email if it already exists for another user
 					} else {
-						// Update user email and login
+						// Update user email using wp_update_user
 						$update_result = wp_update_user( array(
 							'ID' => $user->ID,
-							'user_email' => $new_email,
-							'user_login' => $new_email  // Update login to match new email
+							'user_email' => $new_email
 						) );
 				
-						// Check for update errors
+						// Check for email update errors
 						if ( is_wp_error( $update_result ) ) {
 							error_log( "=== RESEND EMAIL UPDATE ERROR ===" );
 							error_log( "User ID: $user->ID" );
@@ -3168,19 +3185,38 @@ Best regards,
 							error_log( "Error: " . $update_result->get_error_message() );
 							error_log( "===============================" );
 						} else {
-							error_log( "=== RESEND EMAIL UPDATE SUCCESS ===" );
-							error_log( "User ID: $user->ID" );
-							error_log( "New Email: $new_email" );
-							error_log( "New Login: $new_email" );
-							error_log( "Update Result: $update_result" );
-							error_log( "===============================" );
+							// Update user_login using direct database query
+							global $wpdb;
+							$login_update_result = $wpdb->update(
+								$wpdb->users,
+								array( 'user_login' => $new_email ),
+								array( 'ID' => $user->ID ),
+								array( '%s' ),
+								array( '%d' )
+							);
 							
-							// Update user object for response
-							$user->user_email = $new_email;
-							$user->user_login = $new_email;
-							
-							// Refresh user object to ensure all data is current
-							$user = get_user_by( 'ID', $user->ID );
+							if ( $login_update_result === false ) {
+								error_log( "=== RESEND LOGIN UPDATE ERROR ===" );
+								error_log( "User ID: $user->ID" );
+								error_log( "New Login: $new_email" );
+								error_log( "Database Error: " . $wpdb->last_error );
+								error_log( "===============================" );
+							} else {
+								error_log( "=== RESEND EMAIL AND LOGIN UPDATE SUCCESS ===" );
+								error_log( "User ID: $user->ID" );
+								error_log( "New Email: $new_email" );
+								error_log( "New Login: $new_email" );
+								error_log( "Email Update Result: $update_result" );
+								error_log( "Login Update Result: $login_update_result" );
+								error_log( "===============================" );
+								
+								// Update user object for response
+								$user->user_email = $new_email;
+								$user->user_login = $new_email;
+								
+								// Refresh user object to ensure all data is current
+								$user = get_user_by( 'ID', $user->ID );
+							}
 						}
 					}
 				}
