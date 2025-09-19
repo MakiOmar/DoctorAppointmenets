@@ -2365,6 +2365,12 @@ class SNKS_AI_Integration {
 			
 			$user_id = wp_create_user( $username, $data['password'], $email );
 			if ( is_wp_error( $user_id ) ) {
+				error_log( "=== USER CREATION ERROR ===" );
+				error_log( "Username: $username" );
+				error_log( "Email: $email" );
+				error_log( "Error: " . $user_id->get_error_message() );
+				error_log( "Error Code: " . $user_id->get_error_code() );
+				error_log( "=========================" );
 				$this->send_error( $user_id->get_error_message(), 400 );
 			}
 			
@@ -2843,14 +2849,46 @@ Best regards,
 					$clean_new_whatsapp = preg_replace('/[^0-9+]/', '', $new_whatsapp);
 					$new_email = $clean_new_whatsapp . '@jalsah.app';
 					
-					// Update user email
-					wp_update_user( array(
-						'ID' => $user->ID,
-						'user_email' => $new_email
-					) );
-					
-					// Update user object for response
-					$user->user_email = $new_email;
+					// Check if the new email already exists
+					$existing_user_with_email = get_user_by( 'email', $new_email );
+					if ( $existing_user_with_email && $existing_user_with_email->ID !== $user->ID ) {
+						error_log( "=== EMAIL ALREADY EXISTS ===" );
+						error_log( "New Email: $new_email" );
+						error_log( "Existing User ID: " . $existing_user_with_email->ID );
+						error_log( "Current User ID: $user->ID" );
+						error_log( "=========================" );
+						
+						// Don't update email if it already exists for another user
+						// Just log the issue and continue
+					} else {
+						// Update user email
+						$update_result = wp_update_user( array(
+							'ID' => $user->ID,
+							'user_email' => $new_email
+						) );
+				
+						// Check for update errors
+						if ( is_wp_error( $update_result ) ) {
+							error_log( "=== EMAIL UPDATE ERROR ===" );
+							error_log( "User ID: $user->ID" );
+							error_log( "New Email: $new_email" );
+							error_log( "Error: " . $update_result->get_error_message() );
+							error_log( "Error Code: " . $update_result->get_error_code() );
+							error_log( "========================" );
+							
+							// Don't fail the verification, just log the error
+							// The phone number update is more important than email update
+						} else {
+							error_log( "=== EMAIL UPDATE SUCCESS ===" );
+							error_log( "User ID: $user->ID" );
+							error_log( "New Email: $new_email" );
+							error_log( "Update Result: $update_result" );
+							error_log( "=========================" );
+							
+							// Update user object for response
+							$user->user_email = $new_email;
+						}
+					}
 					
 					error_log( "=== EMAIL UPDATE DEBUG ===" );
 					error_log( "Old Email: $current_email" );
