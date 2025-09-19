@@ -1683,6 +1683,24 @@ class SNKS_AI_Integration {
 			return;
 		}
 		
+		// Log all AI API requests
+		error_log( "=== AI API REQUEST START ===" );
+		error_log( "Request URI: " . $_SERVER['REQUEST_URI'] );
+		error_log( "Request Method: " . $_SERVER['REQUEST_METHOD'] );
+		error_log( "Timestamp: " . date('Y-m-d H:i:s') );
+		error_log( "=========================" );
+		
+		// Set error handler to catch any PHP errors
+		set_error_handler(function($severity, $message, $file, $line) {
+			error_log( "=== PHP ERROR CAUGHT ===" );
+			error_log( "Severity: $severity" );
+			error_log( "Message: $message" );
+			error_log( "File: $file" );
+			error_log( "Line: $line" );
+			error_log( "=====================" );
+			return false; // Let PHP handle the error normally
+		});
+		
 		$endpoint = get_query_var( 'ai_endpoint' );
 		
 		// Only log for auth-related requests
@@ -1865,7 +1883,12 @@ class SNKS_AI_Integration {
 	 * Handle auth endpoints
 	 */
 	private function handle_auth_endpoint( $method, $path ) {
-		
+		// Log auth endpoint requests
+		error_log( "=== AUTH ENDPOINT REQUEST ===" );
+		error_log( "Method: $method" );
+		error_log( "Path: " . implode('/', $path) );
+		error_log( "Request URI: " . $_SERVER['REQUEST_URI'] );
+		error_log( "===========================" );
 		
 		switch ( $method ) {
 			case 'POST':
@@ -1876,10 +1899,10 @@ class SNKS_AI_Integration {
 
 					$this->ai_register();
 				} elseif ( $path[1] === 'verify' ) {
-
+					error_log( "=== CALLING AI_VERIFY_EMAIL ===" );
 					$this->ai_verify_email();
 				} elseif ( $path[1] === 'resend-verification' ) {
-
+					error_log( "=== CALLING AI_RESEND_VERIFICATION ===" );
 					$this->ai_resend_verification();
 				} elseif ( $path[1] === 'check-user' ) {
 
