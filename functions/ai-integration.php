@@ -1683,11 +1683,13 @@ class SNKS_AI_Integration {
 			return;
 		}
 		
-		// Log AI API requests for debugging
-		error_log( "=== AI API REQUEST ===" );
-		error_log( "URI: " . $_SERVER['REQUEST_URI'] );
-		error_log( "Method: " . $_SERVER['REQUEST_METHOD'] );
-		error_log( "===================" );
+		// Log AI API requests for debugging (only for auth endpoints)
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/auth/' ) !== false ) {
+			error_log( "=== AI AUTH REQUEST ===" );
+			error_log( "URI: " . $_SERVER['REQUEST_URI'] );
+			error_log( "Method: " . $_SERVER['REQUEST_METHOD'] );
+			error_log( "===================" );
+		}
 		
 		// Set error handler to catch any PHP errors
 		set_error_handler(function($severity, $message, $file, $line) {
@@ -1882,11 +1884,13 @@ class SNKS_AI_Integration {
 	 * Handle auth endpoints
 	 */
 	private function handle_auth_endpoint( $method, $path ) {
-		// Log auth endpoint requests
-		error_log( "=== AUTH ENDPOINT ===" );
-		error_log( "Method: $method" );
-		error_log( "Path: " . implode('/', $path) );
-		error_log( "===================" );
+		// Log auth endpoint requests (only for resend-verification)
+		if ( isset( $path[1] ) && $path[1] === 'resend-verification' ) {
+			error_log( "=== AUTH ENDPOINT ===" );
+			error_log( "Method: $method" );
+			error_log( "Path: " . implode('/', $path) );
+			error_log( "===================" );
+		}
 		
 		switch ( $method ) {
 			case 'POST':
@@ -3027,12 +3031,12 @@ Best regards,
 			$user_data['whatsapp'] = $whatsapp;
 		}
 		
-		// Log the user data being returned
-		error_log( "=== VERIFICATION SUCCESS USER DATA ===" );
-		error_log( "User ID: $user->ID" );
-		error_log( "WhatsApp: $whatsapp" );
-		error_log( "User Data: " . json_encode( $user_data ) );
-		error_log( "=====================================" );
+		// Log the user data being returned (only for debugging)
+		// error_log( "=== VERIFICATION SUCCESS USER DATA ===" );
+		// error_log( "User ID: $user->ID" );
+		// error_log( "WhatsApp: $whatsapp" );
+		// error_log( "User Data: " . json_encode( $user_data ) );
+		// error_log( "=====================================" );
 		
 		$this->send_success( array(
 			'message' => $success_message,
@@ -3305,13 +3309,13 @@ Best regards,
 					}
 				}
 				
-				// Log the phone number update during resend
-				error_log( "=== RESEND PHONE NUMBER UPDATE DEBUG ===" );
-				error_log( "User ID: $user->ID" );
-				error_log( "Old WhatsApp: $current_whatsapp" );
-				error_log( "New WhatsApp: $new_whatsapp" );
-				error_log( "Updated billing_phone: " . ($current_billing_phone === $current_whatsapp ? 'Yes' : 'No') );
-				error_log( "=====================================" );
+				// Log the phone number update during resend (only for debugging)
+				// error_log( "=== RESEND PHONE NUMBER UPDATE DEBUG ===" );
+				// error_log( "User ID: $user->ID" );
+				// error_log( "Old WhatsApp: $current_whatsapp" );
+				// error_log( "New WhatsApp: $new_whatsapp" );
+				// error_log( "Updated billing_phone: " . ($current_billing_phone === $current_whatsapp ? 'Yes' : 'No') );
+				// error_log( "=====================================" );
 			} else {
 				error_log( "=== PHONE NUMBERS ARE THE SAME - NO UPDATE NEEDED ===" );
 				error_log( "Current WhatsApp: '$current_whatsapp'" );
@@ -3349,14 +3353,14 @@ Best regards,
 			$this->send_error( $error_message, 500 );
 		}
 		
-		// Log user update information
-		error_log( "=== USER UPDATE DEBUG ===" );
-		error_log( "User ID being updated: " . $user->ID );
-		error_log( "User email: " . $user->user_email );
-		error_log( "Current WhatsApp: " . get_user_meta( $user->ID, 'billing_whatsapp', true ) );
-		error_log( "New WhatsApp: " . (isset($whatsapp) ? $whatsapp : 'N/A') );
-		error_log( "Verification method: " . (isset($data['email']) ? 'email' : 'whatsapp') );
-		error_log( "=========================" );
+		// Log user update information (only for debugging)
+		// error_log( "=== USER UPDATE DEBUG ===" );
+		// error_log( "User ID being updated: " . $user->ID );
+		// error_log( "User email: " . $user->user_email );
+		// error_log( "Current WhatsApp: " . get_user_meta( $user->ID, 'billing_whatsapp', true ) );
+		// error_log( "New WhatsApp: " . (isset($whatsapp) ? $whatsapp : 'N/A') );
+		// error_log( "Verification method: " . (isset($data['email']) ? 'email' : 'whatsapp') );
+		// error_log( "=========================" );
 		
 		$this->send_success( array(
 			'message' => $success_message,
