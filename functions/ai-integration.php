@@ -2814,6 +2814,35 @@ Best regards,
 		// Mark email as verified
 		update_user_meta( $user->ID, 'ai_email_verified', '1' );
 		
+		// Update user's phone numbers if WhatsApp number was provided in verification
+		if ( isset( $data['whatsapp'] ) ) {
+			$new_whatsapp = sanitize_text_field( $data['whatsapp'] );
+			
+			// Get current WhatsApp number for comparison
+			$current_whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+			
+			// Only update if the number has changed
+			if ( $current_whatsapp !== $new_whatsapp ) {
+				// Update WhatsApp number in all relevant fields
+				update_user_meta( $user->ID, 'whatsapp', $new_whatsapp );
+				update_user_meta( $user->ID, 'billing_whatsapp', $new_whatsapp );
+				
+				// Also update billing_phone if it was the same as the old WhatsApp
+				$current_billing_phone = get_user_meta( $user->ID, 'billing_phone', true );
+				if ( $current_billing_phone === $current_whatsapp ) {
+					update_user_meta( $user->ID, 'billing_phone', $new_whatsapp );
+				}
+				
+				// Log the phone number update
+				error_log( "=== PHONE NUMBER UPDATE DEBUG ===" );
+				error_log( "User ID: $user->ID" );
+				error_log( "Old WhatsApp: $current_whatsapp" );
+				error_log( "New WhatsApp: $new_whatsapp" );
+				error_log( "Updated billing_phone: " . ($current_billing_phone === $current_whatsapp ? 'Yes' : 'No') );
+				error_log( "===============================" );
+			}
+		}
+		
 		// Clear verification code
 		delete_user_meta( $user->ID, 'ai_verification_code' );
 		delete_user_meta( $user->ID, 'ai_verification_expires' );
@@ -2897,6 +2926,33 @@ Best regards,
 		// Store new verification code and expiry
 		update_user_meta( $user->ID, 'ai_verification_code', $verification_code );
 		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
+		
+		// Update user's phone numbers if WhatsApp number was provided and has changed
+		if ( isset( $data['whatsapp'] ) ) {
+			$new_whatsapp = sanitize_text_field( $data['whatsapp'] );
+			$current_whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+			
+			// Only update if the number has changed
+			if ( $current_whatsapp !== $new_whatsapp ) {
+				// Update WhatsApp number in all relevant fields
+				update_user_meta( $user->ID, 'whatsapp', $new_whatsapp );
+				update_user_meta( $user->ID, 'billing_whatsapp', $new_whatsapp );
+				
+				// Also update billing_phone if it was the same as the old WhatsApp
+				$current_billing_phone = get_user_meta( $user->ID, 'billing_phone', true );
+				if ( $current_billing_phone === $current_whatsapp ) {
+					update_user_meta( $user->ID, 'billing_phone', $new_whatsapp );
+				}
+				
+				// Log the phone number update during resend
+				error_log( "=== RESEND PHONE NUMBER UPDATE DEBUG ===" );
+				error_log( "User ID: $user->ID" );
+				error_log( "Old WhatsApp: $current_whatsapp" );
+				error_log( "New WhatsApp: $new_whatsapp" );
+				error_log( "Updated billing_phone: " . ($current_billing_phone === $current_whatsapp ? 'Yes' : 'No') );
+				error_log( "=====================================" );
+			}
+		}
 		
 		// Determine verification method and send accordingly
 		$verification_sent = false;
