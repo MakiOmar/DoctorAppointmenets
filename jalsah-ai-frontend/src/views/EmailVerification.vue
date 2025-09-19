@@ -283,7 +283,7 @@ export default {
         // Show confirmation dialog before updating phone number
         const result = await Swal.fire({
           title: t('verification.confirmPhoneUpdate'),
-          text: t('verification.confirmPhoneUpdateText', { phone: fullWhatsAppNumber }),
+          html: t('verification.confirmPhoneUpdateText', { phone: `<span dir="ltr" style="direction: ltr; text-align: left; font-family: monospace;">${fullWhatsAppNumber}</span>` }),
           icon: 'question',
           showCancelButton: true,
           confirmButtonColor: '#3085d6',
