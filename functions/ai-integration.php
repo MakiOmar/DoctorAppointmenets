@@ -2905,10 +2905,11 @@ Best regards,
 						// Don't update email if it already exists for another user
 						// Just log the issue and continue
 					} else {
-						// Update user email
+						// Update user email and login
 						$update_result = wp_update_user( array(
 							'ID' => $user->ID,
-							'user_email' => $new_email
+							'user_email' => $new_email,
+							'user_login' => $new_email  // Update login to match new email
 						) );
 				
 						// Check for update errors
@@ -2926,11 +2927,13 @@ Best regards,
 							error_log( "=== EMAIL UPDATE SUCCESS ===" );
 							error_log( "User ID: $user->ID" );
 							error_log( "New Email: $new_email" );
+							error_log( "New Login: $new_email" );
 							error_log( "Update Result: $update_result" );
 							error_log( "=========================" );
 							
 							// Update user object for response
 							$user->user_email = $new_email;
+							$user->user_login = $new_email;
 							
 							// Refresh user object to ensure all data is current
 							$user = get_user_by( 'ID', $user->ID );
@@ -3150,10 +3153,11 @@ Best regards,
 						
 						// Don't update email if it already exists for another user
 					} else {
-						// Update user email
+						// Update user email and login
 						$update_result = wp_update_user( array(
 							'ID' => $user->ID,
-							'user_email' => $new_email
+							'user_email' => $new_email,
+							'user_login' => $new_email  // Update login to match new email
 						) );
 				
 						// Check for update errors
@@ -3167,11 +3171,13 @@ Best regards,
 							error_log( "=== RESEND EMAIL UPDATE SUCCESS ===" );
 							error_log( "User ID: $user->ID" );
 							error_log( "New Email: $new_email" );
+							error_log( "New Login: $new_email" );
 							error_log( "Update Result: $update_result" );
 							error_log( "===============================" );
 							
 							// Update user object for response
 							$user->user_email = $new_email;
+							$user->user_login = $new_email;
 							
 							// Refresh user object to ensure all data is current
 							$user = get_user_by( 'ID', $user->ID );
