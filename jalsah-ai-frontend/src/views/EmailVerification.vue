@@ -605,9 +605,7 @@ export default {
   @apply relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
 }
 
-/* Import comprehensive emoji fonts for better cross-browser support */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&display=swap');
+/* Emoji fonts are imported globally in style.css */
 
 .emoji-flag {
   /* Comprehensive emoji font stack with Chrome-specific fixes */

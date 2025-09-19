@@ -492,8 +492,8 @@ export default {
         
         if (result === true) {
           console.log('✅ Login successful, redirecting to homepage')
-          // Redirect to homepage after successful login
-          router.push('/')
+        // Redirect to homepage after successful login
+        router.push('/')
         } else if (result && result.needsVerification) {
           console.log('✅ Auth store returned verification error, redirecting to verification page')
           console.log('🔍 Verification result details:', result)
@@ -806,9 +806,7 @@ export default {
 </script> 
 
 <style scoped>
-/* Import comprehensive emoji fonts for better cross-browser support */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&display=swap');
+/* Emoji fonts are imported globally in style.css */
 
 .emoji-flag {
   /* Comprehensive emoji font stack with Chrome-specific fixes */

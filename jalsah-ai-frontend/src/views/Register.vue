@@ -617,9 +617,7 @@ export default {
 </script> 
 
 <style scoped>
-/* Import comprehensive emoji fonts for better cross-browser support */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&display=swap');
+/* Emoji fonts are imported globally in style.css */
 
 .emoji-flag {
   /* Comprehensive emoji font stack with Chrome-specific fixes */
