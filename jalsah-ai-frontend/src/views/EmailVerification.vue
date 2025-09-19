@@ -279,10 +279,22 @@ export default {
         const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
         const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value
         
-        // Proceed with verification without checking user existence
-        // This allows users to update their phone numbers during verification
+        // Set the contact value
         contact.value = fullWhatsAppNumber
         verificationMethod.value = 'whatsapp'
+        
+        // Immediately send verification code to update phone number in database
+        try {
+          const success = await authStore.resendVerification(fullWhatsAppNumber)
+          if (success) {
+            toast.success(t('verification.resetCodeSent'))
+            // Start countdown to prevent immediate resend
+            startResendCooldown()
+          }
+        } catch (error) {
+          console.error('Error sending verification code:', error)
+          toast.error(t('verification.resendFailed'))
+        }
       }
     }
 
