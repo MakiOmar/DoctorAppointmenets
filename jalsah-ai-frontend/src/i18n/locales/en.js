@@ -225,6 +225,7 @@ export default {
     resendFailed: 'Failed to resend verification code',
     confirmPhoneUpdate: 'Confirm Phone Number Update',
     confirmPhoneUpdateText: 'Do you want to update your phone number to {phone}? A verification code will be sent to the new number.',
+    whatsappAlreadyVerified: 'WhatsApp number is already verified',
     forgotPasswordTitle: 'Forgot your password?',
     enterWhatsApp: 'Enter the WhatsApp number associated with your account',
     sendResetCode: 'Send Reset Code',

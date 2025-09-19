@@ -229,6 +229,7 @@ export default {
     resendFailed: 'فشل في إعادة إرسال الرمز',
     confirmPhoneUpdate: 'تأكيد تحديث رقم الهاتف',
     confirmPhoneUpdateText: 'هل تريد تحديث رقم الهاتف إلى {phone}؟ سيتم إرسال رمز التحقق إلى الرقم الجديد.',
+    whatsappAlreadyVerified: 'رقم الواتساب مُتحقق منه بالفعل',
     forgotPasswordTitle: 'نسيت كلمة المرور؟',
     enterWhatsApp: 'أدخل رقم الواتساب المرتبط بحسابك',
     sendResetCode: 'إرسال رمز إعادة التعيين',

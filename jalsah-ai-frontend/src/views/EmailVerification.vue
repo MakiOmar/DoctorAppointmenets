@@ -307,7 +307,13 @@ export default {
             }
           } catch (error) {
             console.error('Error sending verification code:', error)
-            toast.error(t('verification.resendFailed'))
+            
+            // Check if it's the specific "WhatsApp already verified" error
+            if (error.response?.data?.error === 'WhatsApp number is already verified') {
+              toast.error(t('verification.whatsappAlreadyVerified'))
+            } else {
+              toast.error(t('verification.resendFailed'))
+            }
           }
         }
       }

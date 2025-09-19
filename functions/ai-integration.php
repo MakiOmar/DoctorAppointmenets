@@ -3045,8 +3045,30 @@ Best regards,
 			error_log( "=== LOOKING FOR USER BY WHATSAPP ===" );
 			error_log( "WhatsApp: $whatsapp" );
 			
-			// First, try to find user by the new WhatsApp number
+			// First, check if this WhatsApp number already exists for a verified user
 			global $wpdb;
+			$existing_verified_user_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT user_id FROM {$wpdb->usermeta} 
+				WHERE meta_key = 'billing_whatsapp' 
+				AND meta_value = %s 
+				AND user_id IN (
+					SELECT user_id FROM {$wpdb->usermeta} 
+					WHERE meta_key = 'ai_email_verified' 
+					AND meta_value = '1'
+				)
+				LIMIT 1",
+				$whatsapp
+			) );
+			
+			if ( $existing_verified_user_id ) {
+				error_log( "=== WHATSAPP NUMBER ALREADY VERIFIED ===" );
+				error_log( "WhatsApp: $whatsapp" );
+				error_log( "Existing User ID: $existing_verified_user_id" );
+				error_log( "===============================" );
+				$this->send_error( 'WhatsApp number is already verified', 400 );
+			}
+			
+			// Now try to find user by the new WhatsApp number (for unverified users)
 			$user_id = $wpdb->get_var( $wpdb->prepare(
 				"SELECT user_id FROM {$wpdb->usermeta} 
 				WHERE meta_key = 'billing_whatsapp' 
