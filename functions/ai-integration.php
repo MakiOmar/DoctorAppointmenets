@@ -3005,16 +3005,28 @@ Best regards,
 	 * AI Resend Verification
 	 */
 	private function ai_resend_verification() {
-		// Verify nonce for security
-		if ( ! $this->verify_api_nonce( 'nonce', 'ai_resend_verification_nonce' ) ) {
-	
-			$this->send_error( 'Security check failed', 401 );
-		}
+		try {
+			// Log the start of resend verification process
+			error_log( "=== RESEND VERIFICATION PROCESS START ===" );
+			error_log( "Timestamp: " . date('Y-m-d H:i:s') );
+			error_log( "=====================================" );
+			
+			// Verify nonce for security
+			if ( ! $this->verify_api_nonce( 'nonce', 'ai_resend_verification_nonce' ) ) {
+				error_log( "=== RESEND VERIFICATION SECURITY CHECK FAILED ===" );
+				$this->send_error( 'Security check failed', 401 );
+			}
 		
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 		
+		// Log the resend verification data
+		error_log( "=== RESEND VERIFICATION DATA ===" );
+		error_log( "Data: " . json_encode( $data ) );
+		error_log( "=============================" );
+		
 		// Check if we have email or WhatsApp identifier
 		if ( ! isset( $data['email'] ) && ! isset( $data['whatsapp'] ) ) {
+			error_log( "=== NO EMAIL OR WHATSAPP PROVIDED ===" );
 			$this->send_error( 'Email or WhatsApp number required', 400 );
 		}
 		
@@ -3023,9 +3035,15 @@ Best regards,
 		// Find user by email or WhatsApp
 		if ( isset( $data['email'] ) ) {
 			$email = sanitize_email( $data['email'] );
+			error_log( "=== LOOKING FOR USER BY EMAIL ===" );
+			error_log( "Email: $email" );
 			$user = get_user_by( 'email', $email );
+			error_log( "User found: " . ($user ? 'Yes' : 'No') );
+			error_log( "=============================" );
 		} else {
 			$whatsapp = sanitize_text_field( $data['whatsapp'] );
+			error_log( "=== LOOKING FOR USER BY WHATSAPP ===" );
+			error_log( "WhatsApp: $whatsapp" );
 			
 			// First, try to find user by the new WhatsApp number
 			global $wpdb;
@@ -3061,9 +3079,15 @@ Best regards,
 			}
 			
 			$user = $user_id ? get_user_by( 'ID', $user_id ) : null;
+			error_log( "User found: " . ($user ? 'Yes' : 'No') );
+			error_log( "User ID: " . ($user_id ? $user_id : 'NULL') );
+			error_log( "=============================" );
 		}
 		
 		if ( ! $user ) {
+			error_log( "=== USER NOT FOUND ERROR ===" );
+			error_log( "Sending 'User not found' error" );
+			error_log( "=========================" );
 			$this->send_error( 'User not found', 404 );
 		}
 		
@@ -3140,6 +3164,18 @@ Best regards,
 			'user_id' => $user->ID,
 			'contact_method' => $contact_method
 		) );
+		
+		} catch ( Exception $e ) {
+			error_log( "=== RESEND VERIFICATION PROCESS ERROR ===" );
+			error_log( "Error Message: " . $e->getMessage() );
+			error_log( "Error Code: " . $e->getCode() );
+			error_log( "Error File: " . $e->getFile() );
+			error_log( "Error Line: " . $e->getLine() );
+			error_log( "Stack Trace: " . $e->getTraceAsString() );
+			error_log( "=====================================" );
+			
+			$this->send_error( 'Resend verification process failed: ' . $e->getMessage(), 500 );
+		}
 	}
 	
 	/**
