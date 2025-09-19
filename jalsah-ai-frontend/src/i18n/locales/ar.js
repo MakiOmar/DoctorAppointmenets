@@ -227,6 +227,8 @@ export default {
     checkUserError: 'حدث خطأ أثناء التحقق من وجود المستخدم',
     noContactToResend: 'لا يوجد رقم أو بريد إلكتروني لإعادة الإرسال',
     resendFailed: 'فشل في إعادة إرسال الرمز',
+    confirmPhoneUpdate: 'تأكيد تحديث رقم الهاتف',
+    confirmPhoneUpdateText: 'هل تريد تحديث رقم الهاتف إلى {phone}؟ سيتم إرسال رمز التحقق إلى الرقم الجديد.',
     forgotPasswordTitle: 'نسيت كلمة المرور؟',
     enterWhatsApp: 'أدخل رقم الواتساب المرتبط بحسابك',
     sendResetCode: 'إرسال رمز إعادة التعيين',

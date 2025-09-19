@@ -223,6 +223,8 @@ export default {
     checkUserError: 'Error checking if user exists',
     noContactToResend: 'No contact information to resend code',
     resendFailed: 'Failed to resend verification code',
+    confirmPhoneUpdate: 'Confirm Phone Number Update',
+    confirmPhoneUpdateText: 'Do you want to update your phone number to {phone}? A verification code will be sent to the new number.',
     forgotPasswordTitle: 'Forgot your password?',
     enterWhatsApp: 'Enter the WhatsApp number associated with your account',
     sendResetCode: 'Send Reset Code',

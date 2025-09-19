@@ -279,21 +279,35 @@ export default {
         const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
         const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value
         
-        // Set the contact value
-        contact.value = fullWhatsAppNumber
-        verificationMethod.value = 'whatsapp'
+        // Show confirmation dialog before updating phone number
+        const result = await Swal.fire({
+          title: t('verification.confirmPhoneUpdate'),
+          text: t('verification.confirmPhoneUpdateText', { phone: fullWhatsAppNumber }),
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: t('common.confirm'),
+          cancelButtonText: t('common.cancel')
+        })
         
-        // Immediately send verification code to update phone number in database
-        try {
-          const success = await authStore.resendVerification(fullWhatsAppNumber)
-          if (success) {
-            toast.success(t('verification.resetCodeSent'))
-            // Start countdown to prevent immediate resend
-            startResendCooldown()
+        if (result.isConfirmed) {
+          // Set the contact value
+          contact.value = fullWhatsAppNumber
+          verificationMethod.value = 'whatsapp'
+          
+          // Immediately send verification code to update phone number in database
+          try {
+            const success = await authStore.resendVerification(fullWhatsAppNumber)
+            if (success) {
+              toast.success(t('verification.resetCodeSent'))
+              // Start countdown to prevent immediate resend
+              startResendCooldown()
+            }
+          } catch (error) {
+            console.error('Error sending verification code:', error)
+            toast.error(t('verification.resendFailed'))
           }
-        } catch (error) {
-          console.error('Error sending verification code:', error)
-          toast.error(t('verification.resendFailed'))
         }
       }
     }
