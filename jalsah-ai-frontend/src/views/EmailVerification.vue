@@ -275,28 +275,14 @@ export default {
         contact.value = contactInput.value
         verificationMethod.value = 'email'
       } else {
-        // WhatsApp method - check if user exists first
+        // WhatsApp method - allow phone number updates without existence check
         const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
         const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value
         
-        try {
-          // Check if user with this WhatsApp number exists
-          const response = await authStore.checkUserExists(fullWhatsAppNumber)
-          
-          if (response && response.exists) {
-            // User exists, proceed with verification
-            contact.value = fullWhatsAppNumber
-            verificationMethod.value = 'whatsapp'
-          } else {
-            // User doesn't exist, show error
-            toast.error(t('verification.userNotFound'))
-            return
-          }
-        } catch (error) {
-          console.error('Error checking user existence:', error)
-          toast.error(t('verification.checkUserError'))
-          return
-        }
+        // Proceed with verification without checking user existence
+        // This allows users to update their phone numbers during verification
+        contact.value = fullWhatsAppNumber
+        verificationMethod.value = 'whatsapp'
       }
     }
 
