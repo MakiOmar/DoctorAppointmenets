@@ -1514,6 +1514,8 @@ export default {
       selectedTherapist,
       closeBookingModal,
       handleAppointmentAdded,
+      // Auth store
+      authStore,
       // Therapist join status polling
       startPolling,
       stopPolling,
