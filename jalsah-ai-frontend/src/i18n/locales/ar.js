@@ -636,6 +636,7 @@ export default {
     date: 'التاريخ',
     time: 'الوقت',
     duration: 'المدة',
+    bookingId: 'رقم الحجز',
     status: 'الحالة',
     notes: 'ملاحظات',
     joinSession: 'انضم للجلسة',

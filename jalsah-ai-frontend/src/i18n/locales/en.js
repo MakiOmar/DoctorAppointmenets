@@ -685,6 +685,7 @@ export default {
     date: 'Date',
     time: 'Time',
     duration: 'Duration',
+    bookingId: 'Booking ID',
     status: 'Status',
     notes: 'Notes',
     joinSession: 'Join Session',

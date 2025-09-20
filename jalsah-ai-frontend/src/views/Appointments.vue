@@ -112,6 +112,9 @@
                   <div>
                     <span class="font-medium">{{ $t('appointmentsPage.duration') }}:</span> {{ appointment.session_type }} {{ $t('appointmentsPage.minutes') }}
                   </div>
+                  <div>
+                    <span class="font-medium">{{ $t('appointmentsPage.bookingId') }}:</span> {{ appointment.id }}
+                  </div>
                 </div>
                 
                 <!-- Notes -->
