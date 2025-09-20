@@ -692,6 +692,7 @@ export default {
     cancel: 'Cancel',
     viewDetails: 'View Details',
     bookWithSameTherapist: 'Book a new appointment with the same therapist',
+    appointmentBooked: 'Appointment booked successfully',
     sessionLinkAvailable: 'Session Link Available',
     sessionLinkMessage: 'Click the link below to join your session',
     joinNow: 'Join Now',

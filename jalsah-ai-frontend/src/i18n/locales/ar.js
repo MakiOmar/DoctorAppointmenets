@@ -643,6 +643,7 @@ export default {
     cancel: 'إلغاء',
     viewDetails: 'عرض التفاصيل',
     bookWithSameTherapist: 'حجز جلسة جديدة مع نفس المعالج',
+    appointmentBooked: 'تم حجز الموعد بنجاح',
     sessionLinkAvailable: 'رابط الجلسة متاح',
     sessionLinkMessage: 'انقر على الرابط أدناه للانضمام إلى جلستك',
     joinNow: 'انضم الآن',

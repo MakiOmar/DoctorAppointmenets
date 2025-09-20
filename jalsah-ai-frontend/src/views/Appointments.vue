@@ -550,6 +550,16 @@
       </div>
     </div>
   </div>
+
+  <!-- Booking Modal -->
+  <BookingModal
+    v-if="selectedTherapist"
+    :is-open="showBookingModal"
+    :therapist="selectedTherapist"
+    :user-id="authStore.user?.id"
+    @close="closeBookingModal"
+    @appointment-added="handleAppointmentAdded"
+  />
 </template>
 
 <script>
@@ -560,11 +570,13 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import PrescriptionCard from '@/components/PrescriptionCard.vue'
+import BookingModal from '@/components/BookingModal.vue'
 import Swal from 'sweetalert2'
 export default {
   name: 'Appointments',
   components: {
-    PrescriptionCard
+    PrescriptionCard,
+    BookingModal
   },
   setup() {
     const router = useRouter()
@@ -589,6 +601,10 @@ export default {
     const availableSlots = ref([])
     const selectedSlot = ref(null)
     const currentRequestId = ref(null)
+    
+    // Booking modal state
+    const showBookingModal = ref(false)
+    const selectedTherapist = ref(null)
     
     // Rochtah session related refs
     const showRochtahSessionModal = ref(false)
@@ -739,19 +755,13 @@ export default {
     }
 
     const canReschedule = (appointment) => {
-      // Debug: Log appointment data to see structure
-      console.log('canReschedule - appointment data:', appointment)
-      console.log('canReschedule - appointment.settings:', appointment.settings)
-      
       // Check status - allow reschedule for confirmed, open, and pending appointments
       if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') {
-        console.log('canReschedule - status check failed:', appointment.status)
         return false
       }
       
       // Check if appointment has already been rescheduled
       if (appointment.settings && appointment.settings.includes('ai_booking:rescheduled')) {
-        console.log('canReschedule - already rescheduled, settings:', appointment.settings)
         return false
       }
       
@@ -1066,15 +1076,29 @@ export default {
     }
 
     const bookWithSameTherapist = (appointment) => {
-      // Debug logging to see appointment structure
-      
-      
       // Try to find the therapist ID from various possible fields
       const therapistId = appointment.therapist_id || appointment.user_id || appointment.therapist?.id
       
+      // Create therapist object for the modal
+      selectedTherapist.value = {
+        user_id: therapistId,
+        name: appointment.therapist?.name || 'Unknown Therapist',
+        photo: appointment.therapist?.photo
+      }
       
-      // Navigate to the new therapist appointment page
-      router.push(`/therapist-appointment/${therapistId}`)
+      // Open the booking modal
+      showBookingModal.value = true
+    }
+
+    const closeBookingModal = () => {
+      showBookingModal.value = false
+      selectedTherapist.value = null
+    }
+
+    const handleAppointmentAdded = (appointmentData) => {
+      // Handle successful appointment booking
+      toast.success($t('appointmentsPage.appointmentBooked'))
+      closeBookingModal()
     }
 
     // Load prescription requests
@@ -1393,6 +1417,11 @@ export default {
       confirmCloseSessionModal,
       exitSession,
       bookWithSameTherapist,
+      // Booking modal related
+      showBookingModal,
+      selectedTherapist,
+      closeBookingModal,
+      handleAppointmentAdded,
       // Rochtah booking related
       prescriptionRequests,
       completedPrescriptions,
