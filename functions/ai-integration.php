@@ -4017,9 +4017,9 @@ Best regards,
 		
 		// Get AI appointments for the specific user from the timetable
 		$query = $wpdb->prepare(
-			"SELECT t.*, u.display_name as therapist_name 
+			"SELECT t.*, ta.name as therapist_name, ta.profile_image
 			FROM {$wpdb->prefix}snks_provider_timetable t
-			LEFT JOIN {$wpdb->users} u ON t.user_id = u.ID
+			LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
 			WHERE t.client_id = %d 
 			AND t.order_id IS NOT NULL 
 			AND t.order_id != 0
@@ -4042,6 +4042,7 @@ Best regards,
 				
 				// Debug: Log each appointment
 				error_log("Appointment ID: {$appointment->ID}, Order ID: {$appointment->order_id}, AI Order: " . var_export($is_ai_order, true));
+				error_log("Therapist ID: {$appointment->user_id}, Therapist Name: {$appointment->therapist_name}, Profile Image ID: {$appointment->profile_image}");
 				
 				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 					// Map database status to frontend status
@@ -4056,6 +4057,10 @@ Best regards,
 					// Check if therapist has joined
 					$therapist_joined = snks_doctor_has_joined($appointment->ID, $appointment->user_id);
 					
+					// Debug: Log photo URL generation
+					$photo_url = $appointment->profile_image ? wp_get_attachment_image_url( $appointment->profile_image, 'thumbnail' ) : null;
+					error_log("Generated photo URL for therapist {$appointment->user_id}: " . ($photo_url ?: 'NULL'));
+					
 					$ai_appointments[] = array(
 						'id' => $appointment->ID,
 						'date' => $appointment->date_time,
@@ -4066,7 +4071,7 @@ Best regards,
 						'settings' => $appointment->settings, // Add settings field for reschedule detection
 						'therapist' => array(
 							'name' => $appointment->therapist_name ?: 'Unknown Therapist',
-							'photo' => wp_get_attachment_image_url( get_user_meta( $appointment->user_id, 'profile_image', true ), 'thumbnail' )
+							'photo' => $photo_url
 						),
 						'notes' => '', // No notes column in the database
 						'session_link' => null, // No session_link column in the database
