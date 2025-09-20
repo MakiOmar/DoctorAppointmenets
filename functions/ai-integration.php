@@ -4063,6 +4063,7 @@ Best regards,
 						'status' => $frontend_status,
 						'session_type' => $appointment->period ?: 60,
 						'therapist_id' => $appointment->user_id, // Add therapist ID
+						'settings' => $appointment->settings, // Add settings field for reschedule detection
 						'therapist' => array(
 							'name' => $appointment->therapist_name ?: 'Unknown Therapist',
 							'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )

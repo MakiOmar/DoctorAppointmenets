@@ -739,13 +739,19 @@ export default {
     }
 
     const canReschedule = (appointment) => {
+      // Debug: Log appointment data to see structure
+      console.log('canReschedule - appointment data:', appointment)
+      console.log('canReschedule - appointment.settings:', appointment.settings)
+      
       // Check status - allow reschedule for confirmed, open, and pending appointments
       if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'pending') {
+        console.log('canReschedule - status check failed:', appointment.status)
         return false
       }
       
       // Check if appointment has already been rescheduled
       if (appointment.settings && appointment.settings.includes('ai_booking:rescheduled')) {
+        console.log('canReschedule - already rescheduled, settings:', appointment.settings)
         return false
       }
       
