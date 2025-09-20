@@ -5875,6 +5875,10 @@ Best regards,
 		
 		// Query for dates that have available slots in the next 30 days
 		// Only include dates where there are actually available slots (not booked)
+		// For today, only include slots that are in the future
+		$current_time = current_time('H:i:s');
+		$today = current_time('Y-m-d');
+		
 		$query = $wpdb->prepare(
 			"SELECT DISTINCT DATE(date_time) as date
 			 FROM {$wpdb->prefix}snks_provider_timetable 
@@ -5887,8 +5891,9 @@ Best regards,
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC",
-			$therapist_id
+			$therapist_id, $today, $current_time
 		);
 		
 

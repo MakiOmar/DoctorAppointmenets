@@ -221,28 +221,34 @@ const resetModal = () => {
   availableSlots.value = []
 }
 
-const generateAvailableDates = () => {
-  const dates = []
-  const today = new Date()
+const generateAvailableDates = async () => {
+  if (!props.therapist.user_id) return
   
-  // Generate next 30 days
-  for (let i = 1; i <= 30; i++) {
-    const date = new Date(today)
-    date.setDate(today.getDate() + i)
-    
-    // Skip weekends (Saturday = 6, Sunday = 0) - adjust based on your business logic
-    const dayOfWeek = date.getDay()
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
-    
-    dates.push({
-      date: date.toISOString().split('T')[0],
-      day: date.getDate(),
-      isAvailable: !isWeekend,
-      isSelected: false
+  try {
+    const response = await api.get('/api/ai/therapist-available-dates', {
+      params: {
+        therapist_id: props.therapist.user_id
+      }
     })
+    
+    if (response.data.success) {
+      const dates = response.data.available_dates.map(dateInfo => {
+        const date = new Date(dateInfo.date)
+        return {
+          date: dateInfo.date,
+          day: date.getDate(),
+          isAvailable: true,
+          isSelected: false
+        }
+      })
+      availableDates.value = dates
+    } else {
+      availableDates.value = []
+    }
+  } catch (error) {
+    console.error('Error loading available dates:', error)
+    availableDates.value = []
   }
-  
-  availableDates.value = dates
 }
 
 const selectDate = (date) => {
@@ -323,16 +329,16 @@ const addToCart = async () => {
 }
 
 // Watch for modal open/close
-watch(() => props.isOpen, (isOpen) => {
+watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
-    generateAvailableDates()
+    await generateAvailableDates()
   }
 })
 
 // Initialize
-onMounted(() => {
+onMounted(async () => {
   if (props.isOpen) {
-    generateAvailableDates()
+    await generateAvailableDates()
   }
 })
 </script> 
