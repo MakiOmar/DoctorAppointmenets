@@ -131,15 +131,15 @@
               <button 
                 v-if="canJoinSession(appointment)"
                 @click="joinSession(appointment.id)"
-                :disabled="!appointment.therapist_joined"
+                :disabled="appointment.status !== 'completed' && !appointment.therapist_joined"
                 :class="[
                   'text-sm px-4 py-2 rounded-lg font-medium transition-colors',
-                  appointment.therapist_joined 
+                  (appointment.status === 'completed' || appointment.therapist_joined)
                     ? 'btn-primary' 
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
                 ]"
               >
-                <span v-if="appointment.therapist_joined">
+                <span v-if="appointment.status === 'completed' || appointment.therapist_joined">
                   {{ $t('appointmentsPage.joinSession') }}
                 </span>
                 <span v-else class="flex items-center">
