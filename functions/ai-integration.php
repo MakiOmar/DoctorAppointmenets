@@ -5023,7 +5023,15 @@ Best regards,
 		$available_slots = $wpdb->get_results($query);
 		
 		$formatted_slots = [];
+		$current_time = current_time('H:i:s');
+		$is_today = ($date === current_time('Y-m-d'));
+		
 		foreach ($available_slots as $slot) {
+			// Skip past slots for today
+			if ($is_today && $slot->starts <= $current_time) {
+				continue;
+			}
+			
 			$formatted_slots[] = [
 				'time' => $slot->starts,
 				'formatted_time' => date('g:i A', strtotime($slot->starts)),
@@ -5929,7 +5937,15 @@ Best regards,
 		));
 		
 		$slots = [];
+		$current_time = current_time('H:i:s');
+		$is_today = ($date === current_time('Y-m-d'));
+		
 		foreach ($time_slots as $slot) {
+			// Skip past slots for today
+			if ($is_today && $slot->starts <= $current_time) {
+				continue;
+			}
+			
 			$slots[] = [
 				'id' => $slot->ID,
 				'value' => $slot->starts,

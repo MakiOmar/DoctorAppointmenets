@@ -682,7 +682,15 @@ function snks_get_session_rochtah_time_slots() {
 	) );
 	
 	$available_slots = array();
+	$current_time = current_time('H:i:s');
+	$is_today = ($date === current_time('Y-m-d'));
+	
 	foreach ( $slots as $slot ) {
+		// Skip past slots for today
+		if ( $is_today && $slot->starts <= $current_time ) {
+			continue;
+		}
+		
 		$available_slots[] = array(
 			'slot_id' => $slot->ID,
 			'time' => gmdate( 'h:i a', strtotime( $slot->starts ) ) . ' - ' . gmdate( 'h:i a', strtotime( $slot->ends ) )
