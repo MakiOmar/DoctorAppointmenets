@@ -554,15 +554,16 @@
     </div>
   </div>
 
-  <!-- Booking Section -->
-  <div v-if="showBookingSection && selectedTherapist" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white rounded-lg shadow-md p-6">
+  <!-- Booking Modal -->
+  <div v-if="showBookingModal && selectedTherapist" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="closeBookingModal">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+      <!-- Modal Header -->
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-xl font-semibold text-gray-900">
           {{ $t('appointmentsPage.bookWithSameTherapist') }} - {{ selectedTherapist.name }}
         </h3>
         <button
-          @click="closeBookingSection"
+          @click="closeBookingModal"
           class="text-gray-400 hover:text-gray-600 transition-colors"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -571,60 +572,76 @@
         </button>
       </div>
 
-      <!-- Date Selection -->
-      <div v-if="loadingDates" class="text-center py-4">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
-        <p class="text-sm text-gray-600 mt-2">{{ $t('therapistDetails.loadingDates') }}</p>
-      </div>
-      
-      <div v-else-if="availableDates.length > 0" class="space-y-4">
-        <!-- Date Carousel -->
-        <div class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
-          <button
-            v-for="date in availableDates"
-            :key="date.value"
-            @click="selectDate(date)"
-            class="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
-            :class="selectedDate?.value === date.value 
-              ? 'border-primary-600 bg-primary-50 text-primary-700' 
-              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
-          >
-            <div class="text-center">
-              <div class="font-semibold">{{ date.day }}</div>
-              <div class="text-xs">{{ date.date }}</div>
-            </div>
-          </button>
+      <!-- Modal Body -->
+      <div class="space-y-6">
+        <!-- Date Selection -->
+        <div v-if="loadingDates" class="text-center py-4">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+          <p class="text-sm text-gray-600 mt-2">{{ $t('therapistDetails.loadingDates') }}</p>
         </div>
+        
+        <div v-else-if="availableDates.length > 0" class="space-y-4">
+          <!-- Date Carousel -->
+          <div>
+            <h4 class="text-lg font-medium text-gray-900 mb-3">{{ $t('therapistDetails.selectDate') }}</h4>
+            <div class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
+              <button
+                v-for="date in availableDates"
+                :key="date.value"
+                @click="selectDate(date)"
+                class="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                :class="selectedDate?.value === date.value 
+                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+              >
+                <div class="text-center">
+                  <div class="font-semibold">{{ date.day }}</div>
+                  <div class="text-xs">{{ date.date }}</div>
+                </div>
+              </button>
+            </div>
+          </div>
 
-        <!-- Time Slots Grid -->
-        <div v-if="selectedDate && timeSlots.length > 0" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-          <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
-          <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-            <button
-              v-for="slot in timeSlots"
-              :key="slot.slot_id"
-              @click="addToCart(slot)"
-              :disabled="cartLoading[slot.slot_id]"
-              class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="cartLoading[slot.slot_id]" class="flex items-center justify-center">
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
-                {{ $t('common.loading') }}
-              </span>
-              <span v-else>{{ formatTimeSlot(slot.time) }}</span>
-            </button>
+          <!-- Time Slots Grid -->
+          <div v-if="selectedDate && timeSlots.length > 0" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+            <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
+            <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
+              <button
+                v-for="slot in timeSlots"
+                :key="slot.slot_id"
+                @click="addToCart(slot)"
+                :disabled="cartLoading[slot.slot_id]"
+                class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="cartLoading[slot.slot_id]" class="flex items-center justify-center">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
+                  {{ $t('common.loading') }}
+                </span>
+                <span v-else>{{ formatTimeSlot(slot.time) }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- No Time Slots -->
+          <div v-else-if="selectedDate && timeSlots.length === 0" class="text-center py-4 text-gray-500">
+            {{ $t('therapistDetails.noTimeSlots') }}
           </div>
         </div>
 
-        <!-- No Time Slots -->
-        <div v-else-if="selectedDate && timeSlots.length === 0" class="text-center py-4 text-gray-500">
-          {{ $t('therapistDetails.noTimeSlots') }}
+        <!-- No Available Dates -->
+        <div v-else class="text-center py-4 text-gray-500">
+          {{ $t('therapistDetails.noAvailableDates') }}
         </div>
       </div>
 
-      <!-- No Available Dates -->
-      <div v-else class="text-center py-4 text-gray-500">
-        {{ $t('therapistDetails.noAvailableDates') }}
+      <!-- Modal Footer -->
+      <div class="mt-6 flex justify-end">
+        <button
+          @click="closeBookingModal"
+          class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+        >
+          {{ $t('common.close') }}
+        </button>
       </div>
     </div>
   </div>
@@ -677,8 +694,8 @@ export default {
     const selectedSlot = ref(null)
     const currentRequestId = ref(null)
     
-    // Booking section state
-    const showBookingSection = ref(false)
+    // Booking modal state
+    const showBookingModal = ref(false)
     const selectedTherapist = ref(null)
     const availableDates = ref([])
     const selectedDate = ref(null)
@@ -1171,13 +1188,13 @@ export default {
         photo: appointment.therapist?.photo
       }
       
-      // Show the booking section and load available dates
-      showBookingSection.value = true
+      // Show the booking modal and load available dates
+      showBookingModal.value = true
       loadAvailableDates()
     }
 
-    const closeBookingSection = () => {
-      showBookingSection.value = false
+    const closeBookingModal = () => {
+      showBookingModal.value = false
       selectedTherapist.value = null
       selectedDate.value = null
       timeSlots.value = []
@@ -1682,8 +1699,8 @@ export default {
       confirmCloseSessionModal,
       exitSession,
       bookWithSameTherapist,
-      // Booking section related
-      showBookingSection,
+      // Booking modal related
+      showBookingModal,
       selectedTherapist,
       availableDates,
       selectedDate,
@@ -1691,7 +1708,7 @@ export default {
       loadingDates,
       bookingLoadingSlots,
       cartLoading,
-      closeBookingSection,
+      closeBookingModal,
       loadAvailableDates,
       selectDate,
       loadTimeSlots,
