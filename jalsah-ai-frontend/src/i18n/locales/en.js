@@ -909,6 +909,7 @@ export default {
     bookThis: 'Book This',
     bookAnother: 'Book Another Appointment',
     loadingDates: 'Loading available dates...',
+    loadingTimes: 'Loading available times...',
     availableTimes: 'Available Times',
     noTimeSlots: 'No time slots available for this date',
     noAvailableDates: 'No available dates found',

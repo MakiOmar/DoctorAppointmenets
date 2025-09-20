@@ -853,6 +853,7 @@ export default {
     bookThis: 'احجز هذا',
     bookAnother: 'احجز موعد آخر',
     loadingDates: 'جاري تحميل التواريخ المتاحة...',
+    loadingTimes: 'جاري تحميل الأوقات المتاحة...',
     availableTimes: 'الأوقات المتاحة',
     noTimeSlots: 'لا توجد أوقات متاحة لهذا التاريخ',
     noAvailableDates: 'لا توجد تواريخ متاحة',

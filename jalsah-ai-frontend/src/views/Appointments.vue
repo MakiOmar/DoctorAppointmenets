@@ -602,8 +602,17 @@
             </div>
           </div>
 
+          <!-- Loading Time Slots -->
+          <div v-if="selectedDate && bookingLoadingSlots" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+            <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
+            <div class="text-center py-4">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+              <p class="text-sm text-gray-600 mt-2">{{ $t('therapistDetails.loadingTimes') }}</p>
+            </div>
+          </div>
+
           <!-- Time Slots Grid -->
-          <div v-if="selectedDate && timeSlots.length > 0" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+          <div v-else-if="selectedDate && timeSlots.length > 0" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
             <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
             <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
               <button
@@ -623,7 +632,7 @@
           </div>
 
           <!-- No Time Slots -->
-          <div v-else-if="selectedDate && timeSlots.length === 0" class="text-center py-4 text-gray-500">
+          <div v-else-if="selectedDate && timeSlots.length === 0 && !bookingLoadingSlots" class="text-center py-4 text-gray-500">
             {{ $t('therapistDetails.noTimeSlots') }}
           </div>
         </div>
