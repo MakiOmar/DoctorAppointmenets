@@ -856,6 +856,7 @@ export default {
     availableTimes: 'الأوقات المتاحة',
     noTimeSlots: 'لا توجد أوقات متاحة لهذا التاريخ',
     noAvailableDates: 'لا توجد تواريخ متاحة',
+    selectDate: 'اختر التاريخ',
     appointmentAdded: 'تم إضافة الموعد إلى السلة بنجاح. سيتم إزالة الموعد تلقائياً بعد نصف ساعة إذا لم يتم إتمام الدفع.',
     appointmentRemoved: 'تم إزالة الموعد من السلة بنجاح',
     differentTherapistTitle: 'معالج مختلف',
