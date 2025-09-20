@@ -554,15 +554,80 @@
     </div>
   </div>
 
-  <!-- Booking Modal -->
-  <BookingModal
-    v-if="selectedTherapist"
-    :is-open="showBookingModal"
-    :therapist="selectedTherapist"
-    :user-id="authStore.user?.id"
-    @close="closeBookingModal"
-    @appointment-added="handleAppointmentAdded"
-  />
+  <!-- Booking Section -->
+  <div v-if="showBookingSection && selectedTherapist" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold text-gray-900">
+          {{ $t('appointmentsPage.bookWithSameTherapist') }} - {{ selectedTherapist.name }}
+        </h3>
+        <button
+          @click="closeBookingSection"
+          class="text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Date Selection -->
+      <div v-if="loadingDates" class="text-center py-4">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+        <p class="text-sm text-gray-600 mt-2">{{ $t('therapistDetails.loadingDates') }}</p>
+      </div>
+      
+      <div v-else-if="availableDates.length > 0" class="space-y-4">
+        <!-- Date Carousel -->
+        <div class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
+          <button
+            v-for="date in availableDates"
+            :key="date.value"
+            @click="selectDate(date)"
+            class="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+            :class="selectedDate?.value === date.value 
+              ? 'border-primary-600 bg-primary-50 text-primary-700' 
+              : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+          >
+            <div class="text-center">
+              <div class="font-semibold">{{ date.day }}</div>
+              <div class="text-xs">{{ date.date }}</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Time Slots Grid -->
+        <div v-if="selectedDate && timeSlots.length > 0" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+          <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
+          <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
+            <button
+              v-for="slot in timeSlots"
+              :key="slot.slot_id"
+              @click="addToCart(slot)"
+              :disabled="cartLoading[slot.slot_id]"
+              class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="cartLoading[slot.slot_id]" class="flex items-center justify-center">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
+                {{ $t('common.loading') }}
+              </span>
+              <span v-else>{{ formatTimeSlot(slot.time) }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- No Time Slots -->
+        <div v-else-if="selectedDate && timeSlots.length === 0" class="text-center py-4 text-gray-500">
+          {{ $t('therapistDetails.noTimeSlots') }}
+        </div>
+      </div>
+
+      <!-- No Available Dates -->
+      <div v-else class="text-center py-4 text-gray-500">
+        {{ $t('therapistDetails.noAvailableDates') }}
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -578,21 +643,21 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
 import PrescriptionCard from '@/components/PrescriptionCard.vue'
-import BookingModal from '@/components/BookingModal.vue'
 import Swal from 'sweetalert2'
 export default {
   name: 'Appointments',
   components: {
-    PrescriptionCard,
-    BookingModal
+    PrescriptionCard
   },
   setup() {
     const router = useRouter()
     const toast = useToast()
     const { t: $t, locale } = useI18n()
     const authStore = useAuthStore()
+    const cartStore = useCartStore()
     
     const loading = ref(true)
     const cancelling = ref(false)
@@ -612,9 +677,15 @@ export default {
     const selectedSlot = ref(null)
     const currentRequestId = ref(null)
     
-    // Booking modal state
-    const showBookingModal = ref(false)
+    // Booking section state
+    const showBookingSection = ref(false)
     const selectedTherapist = ref(null)
+    const availableDates = ref([])
+    const selectedDate = ref(null)
+    const timeSlots = ref([])
+    const loadingDates = ref(false)
+    const bookingLoadingSlots = ref(false)
+    const cartLoading = ref({})
     
     // Therapist join status polling
     const pollingInterval = ref(null)
@@ -1093,26 +1164,120 @@ export default {
       // Try to find the therapist ID from various possible fields
       const therapistId = appointment.therapist_id || appointment.user_id || appointment.therapist?.id
       
-      // Create therapist object for the modal
+      // Create therapist object for the booking section
       selectedTherapist.value = {
         user_id: therapistId,
         name: appointment.therapist?.name || 'Unknown Therapist',
         photo: appointment.therapist?.photo
       }
       
-      // Open the booking modal
-      showBookingModal.value = true
+      // Show the booking section and load available dates
+      showBookingSection.value = true
+      loadAvailableDates()
     }
 
-    const closeBookingModal = () => {
-      showBookingModal.value = false
+    const closeBookingSection = () => {
+      showBookingSection.value = false
       selectedTherapist.value = null
+      selectedDate.value = null
+      timeSlots.value = []
+      availableDates.value = []
     }
 
-    const handleAppointmentAdded = (appointmentData) => {
-      // Handle successful appointment booking
-      toast.success($t('appointmentsPage.appointmentBooked'))
-      closeBookingModal()
+    const loadAvailableDates = async () => {
+      if (!selectedTherapist.value?.user_id) return
+      
+      loadingDates.value = true
+      try {
+        const response = await api.get('/api/ai/therapist-available-dates', {
+          params: {
+            therapist_id: selectedTherapist.value.user_id
+          }
+        })
+        
+        if (response.data.success) {
+          const dates = response.data.available_dates.map(dateInfo => {
+            const date = new Date(dateInfo.date)
+            return {
+              value: dateInfo.date,
+              day: date.getDate(),
+              date: date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' }),
+              isAvailable: true
+            }
+          })
+          availableDates.value = dates
+        } else {
+          availableDates.value = []
+        }
+      } catch (error) {
+        console.error('Error loading available dates:', error)
+        availableDates.value = []
+      } finally {
+        loadingDates.value = false
+      }
+    }
+
+    const selectDate = async (date) => {
+      selectedDate.value = date
+      await loadTimeSlots(date.value)
+    }
+
+    const loadTimeSlots = async (date) => {
+      if (!selectedTherapist.value?.user_id || !date) return
+      
+      bookingLoadingSlots.value = true
+      try {
+        const response = await api.get('/api/ai/therapist-availability', {
+          params: {
+            therapist_id: selectedTherapist.value.user_id,
+            date: date
+          }
+        })
+        
+        timeSlots.value = response.data.available_slots || []
+      } catch (error) {
+        console.error('Error loading time slots:', error)
+        timeSlots.value = []
+      } finally {
+        bookingLoadingSlots.value = false
+      }
+    }
+
+    const addToCart = async (slot) => {
+      if (!authStore.isAuthenticated) {
+        toast.error($t('common.pleaseLogin'))
+        return
+      }
+      
+      cartLoading.value[slot.slot_id] = true
+      try {
+        const result = await cartStore.addToCart({
+          slot_id: slot.slot_id,
+          user_id: authStore.user.id
+        })
+        
+        if (result.success) {
+          slot.inCart = true
+          toast.success($t('appointmentsPage.appointmentBooked'))
+          // Emit event to update cart
+          window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else {
+          toast.error(result.message || $t('common.error'))
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error)
+        toast.error($t('common.error'))
+      } finally {
+        cartLoading.value[slot.slot_id] = false
+      }
+    }
+
+    const formatTimeSlot = (time) => {
+      return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
     }
 
     // Therapist join status polling functions
@@ -1509,11 +1674,21 @@ export default {
       confirmCloseSessionModal,
       exitSession,
       bookWithSameTherapist,
-      // Booking modal related
-      showBookingModal,
+      // Booking section related
+      showBookingSection,
       selectedTherapist,
-      closeBookingModal,
-      handleAppointmentAdded,
+      availableDates,
+      selectedDate,
+      timeSlots,
+      loadingDates,
+      bookingLoadingSlots,
+      cartLoading,
+      closeBookingSection,
+      loadAvailableDates,
+      selectDate,
+      loadTimeSlots,
+      addToCart,
+      formatTimeSlot,
       // Auth store
       authStore,
       // Therapist join status polling
