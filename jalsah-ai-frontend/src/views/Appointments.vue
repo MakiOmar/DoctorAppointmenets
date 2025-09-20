@@ -1116,8 +1116,16 @@ export default {
     const startPolling = () => {
       if (isPolling.value) return
       
+      // Double-check if we still need polling before starting
+      if (!hasUpcomingAppointments.value) return
+      
       isPolling.value = true
       pollingInterval.value = setInterval(async () => {
+        // Check if we still need to poll before making API call
+        if (!hasUpcomingAppointments.value) {
+          stopPolling()
+          return
+        }
         await checkTherapistJoinStatus()
       }, 5000) // Check every 5 seconds
     }
@@ -1132,14 +1140,23 @@ export default {
 
     const checkTherapistJoinStatus = async () => {
       try {
+        // If no appointments need polling, don't make API call
+        if (appointmentsNeedingPolling.value.length === 0) {
+          stopPolling()
+          return
+        }
+
         const response = await api.get('/api/ai/appointments')
         const updatedAppointments = response.data.data || []
         
-        // Update therapist_joined status for each appointment
-        appointments.value.forEach((appointment, index) => {
-          const updatedAppointment = updatedAppointments.find(updated => updated.id === appointment.id)
-          if (updatedAppointment) {
-            appointments.value[index].therapist_joined = updatedAppointment.therapist_joined
+        // Only update therapist_joined status for appointments that haven't been joined yet
+        appointmentsNeedingPolling.value.forEach((appointment) => {
+          const appointmentIndex = appointments.value.findIndex(apt => apt.id === appointment.id)
+          if (appointmentIndex !== -1) {
+            const updatedAppointment = updatedAppointments.find(updated => updated.id === appointment.id)
+            if (updatedAppointment && updatedAppointment.therapist_joined) {
+              appointments.value[appointmentIndex].therapist_joined = updatedAppointment.therapist_joined
+            }
           }
         })
       } catch (error) {
@@ -1149,6 +1166,14 @@ export default {
 
     const hasUpcomingAppointments = computed(() => {
       return appointments.value.some(appointment => 
+        (appointment.status === 'confirmed' || appointment.status === 'open' || appointment.status === 'pending') &&
+        !appointment.therapist_joined
+      )
+    })
+
+    // Track appointments that still need therapist join status checking
+    const appointmentsNeedingPolling = computed(() => {
+      return appointments.value.filter(appointment => 
         (appointment.status === 'confirmed' || appointment.status === 'open' || appointment.status === 'pending') &&
         !appointment.therapist_joined
       )
@@ -1491,6 +1516,7 @@ export default {
       stopPolling,
       checkTherapistJoinStatus,
       hasUpcomingAppointments,
+      appointmentsNeedingPolling,
       isPolling,
       // Rochtah booking related
       prescriptionRequests,
