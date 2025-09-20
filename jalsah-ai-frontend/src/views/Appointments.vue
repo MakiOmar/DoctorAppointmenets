@@ -563,7 +563,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -605,6 +605,10 @@ export default {
     // Booking modal state
     const showBookingModal = ref(false)
     const selectedTherapist = ref(null)
+    
+    // Therapist join status polling
+    const pollingInterval = ref(null)
+    const isPolling = ref(false)
     
     // Rochtah session related refs
     const showRochtahSessionModal = ref(false)
@@ -1101,6 +1105,57 @@ export default {
       closeBookingModal()
     }
 
+    // Therapist join status polling functions
+    const startPolling = () => {
+      if (isPolling.value) return
+      
+      isPolling.value = true
+      pollingInterval.value = setInterval(async () => {
+        await checkTherapistJoinStatus()
+      }, 5000) // Check every 5 seconds
+    }
+
+    const stopPolling = () => {
+      if (pollingInterval.value) {
+        clearInterval(pollingInterval.value)
+        pollingInterval.value = null
+      }
+      isPolling.value = false
+    }
+
+    const checkTherapistJoinStatus = async () => {
+      try {
+        const response = await api.get('/api/ai/appointments')
+        const updatedAppointments = response.data.data || []
+        
+        // Update therapist_joined status for each appointment
+        appointments.value.forEach((appointment, index) => {
+          const updatedAppointment = updatedAppointments.find(updated => updated.id === appointment.id)
+          if (updatedAppointment) {
+            appointments.value[index].therapist_joined = updatedAppointment.therapist_joined
+          }
+        })
+      } catch (error) {
+        console.error('Error checking therapist join status:', error)
+      }
+    }
+
+    const hasUpcomingAppointments = computed(() => {
+      return appointments.value.some(appointment => 
+        (appointment.status === 'confirmed' || appointment.status === 'open' || appointment.status === 'pending') &&
+        !appointment.therapist_joined
+      )
+    })
+
+    // Watch for upcoming appointments to start/stop polling
+    watch(hasUpcomingAppointments, (hasUpcoming) => {
+      if (hasUpcoming) {
+        startPolling()
+      } else {
+        stopPolling()
+      }
+    }, { immediate: true })
+
     // Load prescription requests
     const loadPrescriptionRequests = async () => {
       try {
@@ -1388,6 +1443,8 @@ export default {
       showSessionModal.value = false
       jitsiLoaded.value = false
       currentSessionId.value = null
+      // Stop polling when component unmounts
+      stopPolling()
     })
 
     return {
@@ -1422,6 +1479,12 @@ export default {
       selectedTherapist,
       closeBookingModal,
       handleAppointmentAdded,
+      // Therapist join status polling
+      startPolling,
+      stopPolling,
+      checkTherapistJoinStatus,
+      hasUpcomingAppointments,
+      isPolling,
       // Rochtah booking related
       prescriptionRequests,
       completedPrescriptions,
