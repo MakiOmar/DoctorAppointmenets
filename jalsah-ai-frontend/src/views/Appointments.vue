@@ -1195,7 +1195,9 @@ export default {
           }
         })
         
-        if (response.data.success) {
+        console.log('Available dates API response:', response.data)
+        
+        if (response.data.success && response.data.available_dates) {
           const dates = response.data.available_dates.map(dateInfo => {
             const date = new Date(dateInfo.date)
             return {
@@ -1207,6 +1209,7 @@ export default {
           })
           availableDates.value = dates
         } else {
+          console.log('No available dates or API error:', response.data)
           availableDates.value = []
         }
       } catch (error) {
@@ -1234,6 +1237,7 @@ export default {
           }
         })
         
+        console.log('Time slots API response:', response.data)
         timeSlots.value = response.data.available_slots || []
       } catch (error) {
         console.error('Error loading time slots:', error)
