@@ -771,9 +771,9 @@ export default {
       const now = new Date()
       const timeDiff = appointmentTime - now
       
-      // Can reschedule up to 24 hours before the appointment
-      // For testing purposes, allow reschedule for any future appointment
-      return timeDiff > 0 // Allow reschedule for any future appointment
+      // Can reschedule only if more than 24 hours before the appointment
+      // 24 hours = 24 * 60 * 60 * 1000 milliseconds
+      return timeDiff > (24 * 60 * 60 * 1000)
     }
 
     const canCancel = (appointment) => {

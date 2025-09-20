@@ -301,7 +301,32 @@ const canReschedule = computed(() => {
     return false
   }
   
-  return true
+  // Check if appointment is within 24 hours
+  const appointmentData = appointment.value.data
+  let appointmentTime
+  
+  if (appointmentData.date_time) {
+    appointmentTime = new Date(appointmentData.date_time)
+  } else if (appointmentData.date && appointmentData.time) {
+    const dateStr = appointmentData.date.includes(' ') ? appointmentData.date : `${appointmentData.date}T${appointmentData.time}`
+    appointmentTime = new Date(dateStr)
+  } else if (appointmentData.date) {
+    appointmentTime = new Date(appointmentData.date)
+  } else {
+    return false
+  }
+  
+  // Check if date is valid
+  if (isNaN(appointmentTime.getTime())) {
+    return false
+  }
+  
+  const now = new Date()
+  const timeDiff = appointmentTime - now
+  
+  // Can reschedule only if more than 24 hours before the appointment
+  // 24 hours = 24 * 60 * 60 * 1000 milliseconds
+  return timeDiff > (24 * 60 * 60 * 1000)
 })
 
 // Reschedule appointment
