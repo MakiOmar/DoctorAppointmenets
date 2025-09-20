@@ -878,12 +878,12 @@ export default {
     }
 
     const canJoinSession = (appointment) => {
-      // Allow joining for both 'open' and 'confirmed' statuses
-      if (appointment.status !== 'confirmed' && appointment.status !== 'open') {
+      // Allow joining for 'open', 'confirmed', and 'completed' statuses
+      if (appointment.status !== 'confirmed' && appointment.status !== 'open' && appointment.status !== 'completed') {
         return false
       }
       
-      // Always show the button for confirmed/open appointments
+      // Always show the button for confirmed/open/completed appointments
       return true
     }
 
