@@ -4066,7 +4066,7 @@ Best regards,
 						'settings' => $appointment->settings, // Add settings field for reschedule detection
 						'therapist' => array(
 							'name' => $appointment->therapist_name ?: 'Unknown Therapist',
-							'photo' => get_user_meta( $appointment->user_id, 'profile_image', true )
+							'photo' => wp_get_attachment_image_url( get_user_meta( $appointment->user_id, 'profile_image', true ), 'thumbnail' )
 						),
 						'notes' => '', // No notes column in the database
 						'session_link' => null, // No session_link column in the database
