@@ -615,19 +615,42 @@
           <div v-else-if="selectedDate && timeSlots.length > 0" class="bg-gray-50 rounded-lg border border-gray-200 p-4">
             <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
             <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
-              <button
+              <div
                 v-for="slot in timeSlots"
                 :key="slot.slot_id"
-                @click="addToCart(slot)"
-                :disabled="cartLoading[slot.slot_id]"
-                class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="relative"
               >
-                <span v-if="cartLoading[slot.slot_id]" class="flex items-center justify-center">
-                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
-                  {{ $t('common.loading') }}
-                </span>
-                <span v-else>{{ formatTimeSlot(slot.time) }}</span>
-              </button>
+                <button
+                  v-if="!slot.inCart"
+                  @click="addToCart(slot)"
+                  :disabled="cartLoading[slot.slot_id]"
+                  class="w-full px-3 py-2 text-sm rounded border transition-colors border-gray-300 bg-white text-gray-700 hover:border-primary-400 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span v-if="cartLoading[slot.slot_id]" class="flex items-center justify-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
+                    {{ $t('common.loading') }}
+                  </span>
+                  <span v-else>{{ formatTimeSlot(slot.time) }}</span>
+                </button>
+                <div
+                  v-else
+                  class="w-full px-3 py-2 text-sm rounded border border-green-600 bg-green-50 text-green-700 flex items-center justify-between"
+                >
+                  <span>{{ formatTimeSlot(slot.time) }}</span>
+                  <button
+                    @click="removeFromCart(slot)"
+                    :disabled="cartLoading[slot.slot_id]"
+                    class="ml-2 text-red-600 hover:text-red-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Remove from cart"
+                  >
+                    <span v-if="cartLoading[slot.slot_id]" class="flex items-center">
+                      <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600 mr-1"></div>
+                      {{ $t('common.loading') }}
+                    </span>
+                    <span v-else>{{ $t('common.remove') }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1292,9 +1315,32 @@ export default {
         
         if (result.success) {
           slot.inCart = true
-          toast.success($t('appointmentsPage.appointmentBooked'))
+          toast.success($t('therapistDetails.appointmentAdded'), {
+            timeout: 8000 // 8 seconds for lengthy message
+          })
           // Emit event to update cart
           window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else if (result.requiresConfirmation) {
+          // Show confirmation dialog for different therapist
+          const confirmed = await showDifferentTherapistConfirmation($t('therapistDetails.differentTherapistMessage'))
+          if (confirmed) {
+            // User confirmed, add to cart with confirmation
+            const confirmResult = await cartStore.addToCartWithConfirmation({
+              slot_id: slot.slot_id,
+              user_id: authStore.user.id
+            })
+            
+            if (confirmResult.success) {
+              slot.inCart = true
+              toast.success($t('therapistDetails.appointmentAdded'), {
+                timeout: 8000 // 8 seconds for lengthy message
+              })
+              // Emit event to update cart
+              window.dispatchEvent(new CustomEvent('cart-updated'))
+            } else {
+              toast.error(confirmResult.message || $t('common.error'))
+            }
+          }
         } else {
           toast.error(result.message || $t('common.error'))
         }
@@ -1303,6 +1349,54 @@ export default {
         toast.error($t('common.error'))
       } finally {
         cartLoading.value[slot.slot_id] = false
+      }
+    }
+
+    const removeFromCart = async (slot) => {
+      if (!authStore.isAuthenticated) {
+        toast.error($t('common.pleaseLogin'))
+        return
+      }
+      
+      cartLoading.value[slot.slot_id] = true
+      try {
+        const result = await cartStore.removeFromCart({
+          slot_id: slot.slot_id,
+          user_id: authStore.user.id
+        })
+        
+        if (result.success) {
+          slot.inCart = false
+          toast.success($t('therapistDetails.appointmentRemoved'))
+          // Emit event to update cart
+          window.dispatchEvent(new CustomEvent('cart-updated'))
+        } else {
+          toast.error(result.message || $t('common.error'))
+        }
+      } catch (error) {
+        console.error('Error removing from cart:', error)
+        toast.error($t('common.error'))
+      } finally {
+        cartLoading.value[slot.slot_id] = false
+      }
+    }
+
+    const showDifferentTherapistConfirmation = async (message) => {
+      try {
+        const result = await Swal.fire({
+          title: $t('therapistDetails.differentTherapistTitle'),
+          text: message,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: $t('common.yes'),
+          cancelButtonText: $t('common.cancel')
+        })
+        return result.isConfirmed
+      } catch (error) {
+        console.error('Error showing confirmation:', error)
+        return false
       }
     }
 
@@ -1722,6 +1816,8 @@ export default {
       selectDate,
       loadTimeSlots,
       addToCart,
+      removeFromCart,
+      showDifferentTherapistConfirmation,
       formatTimeSlot,
       // Auth store
       authStore,
