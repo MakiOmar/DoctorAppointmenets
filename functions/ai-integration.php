@@ -4277,7 +4277,29 @@ Best regards,
 			$cart = array();
 		}
 
-		$this->send_success( $cart );
+		// Clean up expired cart items (older than 30 minutes)
+		$current_time = current_time( 'mysql' );
+		$valid_cart = array();
+		
+		foreach ( $cart as $item ) {
+			if ( isset( $item['added_at'] ) ) {
+				$added_time = strtotime( $item['added_at'] );
+				$current_timestamp = strtotime( $current_time );
+				
+				// Check if item is older than 30 minutes (1800 seconds)
+				if ( ( $current_timestamp - $added_time ) > 1800 ) {
+					continue; // Skip this expired item
+				}
+			}
+			$valid_cart[] = $item;
+		}
+		
+		// Update cart with only valid items
+		if ( count( $valid_cart ) !== count( $cart ) ) {
+			update_user_meta( $user_id, 'ai_cart', $valid_cart );
+		}
+
+		$this->send_success( $valid_cart );
 	}
 
 	/**
@@ -4328,6 +4350,23 @@ Best regards,
 			$date_time    = $slot->date_time;
 		}
 
+		// Real-time availability check - verify slot is still available
+		global $wpdb;
+		$current_slot = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+				 WHERE ID = %d AND session_status = 'waiting' 
+				 AND order_id = 0 AND (client_id = 0 OR client_id IS NULL)
+				 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+				 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)",
+				$slot_id
+			)
+		);
+
+		if ( ! $current_slot ) {
+			$this->send_error( 'This appointment slot has been booked by another user. Please refresh and select a different time.', 400 );
+		}
+
 		$cart = get_user_meta( $user_id, 'ai_cart', true );
 		if ( ! is_array( $cart ) ) {
 			$cart = array();
@@ -4345,6 +4384,7 @@ Best regards,
 			'therapist_id' => $therapist_id,
 			'date_time'    => $date_time,
 			'price'        => $this->get_therapist_ai_price( $therapist_id ),
+			'added_at'     => current_time( 'mysql' ),
 		);
 
 		update_user_meta( $user_id, 'ai_cart', $cart );
@@ -5216,6 +5256,7 @@ Best regards,
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			 AND period NOT IN (30, 60)
 			 ORDER BY starts ASC",
 			$therapist_id,
 			$date
@@ -5263,17 +5304,20 @@ Best regards,
 
 		global $wpdb;
 
-		// Check if slot is still available
+		// Real-time availability check - verify slot is still available
 		$slot = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
-			 WHERE ID = %d AND session_status = 'waiting' AND order_id = 0",
+			 WHERE ID = %d AND session_status = 'waiting' 
+			 AND order_id = 0 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)",
 				$slot_id
 			)
 		);
 
 		if ( ! $slot ) {
-			return new WP_REST_Response( array( 'error' => 'Time slot is no longer available' ), 400 );
+			return new WP_REST_Response( array( 'error' => 'This appointment slot has been booked by another user. Please refresh and select a different time.' ), 400 );
 		}
 
 		// Check if slot is already in user's cart
@@ -6148,6 +6192,7 @@ Best regards,
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			 AND period NOT IN (30, 60)
 			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC",
 			$therapist_id,
@@ -6192,6 +6237,7 @@ Best regards,
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND DATE(date_time) = %s
 			 AND (settings LIKE '%ai_booking%' OR settings = '')
+			 AND period NOT IN (30, 60)
 			 ORDER BY starts ASC",
 				$therapist_id,
 				$date
@@ -6685,6 +6731,34 @@ function snks_ai_get_primary_frontend_url() {
 	// Return the first valid URL, or fallback
 	return $valid_origins[0] ?? 'https://jalsah-ai.com';
 }
+
+/**
+ * Clear cart for specific user (for logout/switch user scenarios)
+ */
+function snks_clear_user_ai_cart( $user_id ) {
+	if ( $user_id ) {
+		delete_user_meta( $user_id, 'ai_cart' );
+	}
+}
+
+// Clear AI cart when user logs out
+add_action( 'wp_logout', function() {
+	$user_id = get_current_user_id();
+	if ( $user_id ) {
+		snks_clear_user_ai_cart( $user_id );
+	}
+});
+
+// Clear AI cart when user switches (if using user switching plugin)
+add_action( 'switch_to_user', function( $user_id ) {
+	// Clear cart for the user being switched to
+	snks_clear_user_ai_cart( $user_id );
+});
+
+add_action( 'switch_back_user', function( $user_id ) {
+	// Clear cart for the user being switched back to
+	snks_clear_user_ai_cart( $user_id );
+});
 
 function snks_ai_order_template_redirect() {
 	// Check if we're on the order received page

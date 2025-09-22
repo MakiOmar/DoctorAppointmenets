@@ -829,10 +829,20 @@ export default {
               window.dispatchEvent(new CustomEvent('cart-updated'))
             } else {
               toast.error(confirmResult.message || t('common.error'))
+              
+              // If slot was booked by another user, refresh availability
+              if (confirmResult.shouldRefresh) {
+                await loadTimeSlots(selectedDate.value)
+              }
             }
           }
         } else {
           toast.error(result.message || t('common.error'))
+          
+          // If slot was booked by another user, refresh availability
+          if (result.shouldRefresh) {
+            await loadTimeSlots(selectedDate.value)
+          }
         }
       } catch (err) {
         toast.error(t('common.error'))
@@ -919,6 +929,11 @@ export default {
               // Don't redirect to checkout - just add to cart
             } else {
               toast.error(confirmResult.message || t('common.error'))
+              
+              // If slot was booked by another user, refresh availability
+              if (confirmResult.shouldRefresh) {
+                await loadTimeSlots(selectedDate.value)
+              }
             }
           }
         } else {
@@ -931,6 +946,11 @@ export default {
             window.location.href = '/login'
           } else {
             toast.error(result.message || t('common.error'))
+            
+            // If slot was booked by another user, refresh availability
+            if (result.shouldRefresh) {
+              await loadTimeSlots(selectedDate.value)
+            }
           }
         }
       } catch (err) {

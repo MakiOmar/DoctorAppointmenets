@@ -64,12 +64,13 @@ export const useCartStore = defineStore('cart', () => {
         }
       } else {
         error.value = response.data.error || 'Failed to add to cart'
-        return { success: false, message: error.value }
+        return { success: false, message: error.value, shouldRefresh: response.data.error?.includes('booked by another user') }
       }
     } catch (err) {
       console.error('🛒 Cart API Error:', err)
-      error.value = 'Failed to add to cart'
-      return { success: false, message: error.value }
+      const errorMessage = err.response?.data?.error || 'Failed to add to cart'
+      error.value = errorMessage
+      return { success: false, message: errorMessage, shouldRefresh: errorMessage.includes('booked by another user') }
     } finally {
       loading.value = false
     }
@@ -91,11 +92,12 @@ export const useCartStore = defineStore('cart', () => {
         return { success: true, message: response.data.message }
       } else {
         error.value = response.data.error || 'Failed to add to cart'
-        return { success: false, message: error.value }
+        return { success: false, message: error.value, shouldRefresh: response.data.error?.includes('booked by another user') }
       }
     } catch (err) {
-      error.value = 'Failed to add to cart'
-      return { success: false, message: error.value }
+      const errorMessage = err.response?.data?.error || 'Failed to add to cart'
+      error.value = errorMessage
+      return { success: false, message: errorMessage, shouldRefresh: errorMessage.includes('booked by another user') }
     } finally {
       loading.value = false
     }
