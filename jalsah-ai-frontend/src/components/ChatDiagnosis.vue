@@ -111,6 +111,7 @@
           <div class="border-t border-gray-200 p-4">
             <form @submit.prevent="sendMessage" class="flex space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
               <input
+                ref="messageInput"
                 v-model="newMessage"
                 type="text"
                 :placeholder="$t('chatDiagnosis.input.placeholder')"
@@ -172,6 +173,7 @@ export default {
     const isTyping = ref(false)
     const diagnosisCompleted = ref(false)
     const chatContainer = ref(null)
+    const messageInput = ref(null)
     
          const diagnosisResult = reactive({
        title: '',
@@ -207,6 +209,14 @@ export default {
       if (chatContainer.value) {
         chatContainer.value.scrollTop = chatContainer.value.scrollHeight
       }
+    }
+
+    const focusInput = () => {
+      nextTick(() => {
+        if (messageInput.value && !diagnosisCompleted.value) {
+          messageInput.value.focus()
+        }
+      })
     }
 
     const formatMessage = (content) => {
@@ -295,6 +305,7 @@ export default {
       } finally {
         isTyping.value = false
         await scrollToBottom()
+        focusInput()
       }
     }
 
@@ -302,6 +313,7 @@ export default {
 
     onMounted(() => {
       addWelcomeMessage()
+      focusInput()
     })
 
          return {
@@ -311,10 +323,12 @@ export default {
        diagnosisCompleted,
        diagnosisResult,
        chatContainer,
+       messageInput,
        aiQuestionsCount,
        sendMessage,
        formatMessage,
-       formatTime
+       formatTime,
+       focusInput
      }
   }
 }
