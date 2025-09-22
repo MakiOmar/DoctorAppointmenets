@@ -6647,7 +6647,7 @@ add_action( 'woocommerce_checkout_order_processed', 'snks_handle_ai_checkout_ord
 /**
  * Redirect AI orders to appointments page after payment completion
  */
-add_action( 'woocommerce_thankyou', 'snks_ai_order_thankyou_redirect', 1, 1 );
+add_action( 'woocommerce_thankyou', 'snks_ai_order_thankyou_redirect', 0, 1 );
 add_action( 'template_redirect', 'snks_ai_order_template_redirect', 1 );
 
 function snks_ai_order_thankyou_redirect( $order_id ) {
@@ -6667,7 +6667,9 @@ function snks_ai_order_thankyou_redirect( $order_id ) {
 			$frontend_url = snks_ai_get_primary_frontend_url();
 			error_log( 'Frontend URL: ' . $frontend_url );
 			error_log( 'Redirecting to: ' . $frontend_url . '/appointments' );
-			wp_safe_redirect( $frontend_url . '/appointments' );
+			
+			// Use wp_redirect instead of wp_safe_redirect for more aggressive redirect
+			wp_redirect( $frontend_url . '/appointments' );
 			exit;
 		} else {
 			error_log( 'Not an AI order, skipping redirect' );
@@ -6737,7 +6739,7 @@ function snks_ai_order_template_redirect() {
 					$frontend_url = snks_ai_get_primary_frontend_url();
 					error_log( 'Frontend URL: ' . $frontend_url );
 					error_log( 'Redirecting to: ' . $frontend_url . '/appointments' );
-					wp_safe_redirect( $frontend_url . '/appointments' );
+					wp_redirect( $frontend_url . '/appointments' );
 					exit;
 				} else {
 					error_log( 'Not an AI order, skipping redirect' );

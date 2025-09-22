@@ -18,6 +18,22 @@
  */
 
 defined( 'ABSPATH' ) || die();
+
+// Check if this is an AI order and add JavaScript redirect as fallback
+$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+	$frontend_url = snks_ai_get_primary_frontend_url();
+	?>
+	<script>
+	// JavaScript fallback redirect for AI orders
+	console.log('AI Order detected, redirecting to frontend...');
+	setTimeout(function() {
+		window.location.href = '<?php echo esc_js( $frontend_url . '/appointments' ); ?>';
+	}, 1000);
+	</script>
+	<?php
+}
+
 do_action( 'woocommerce_thankyou', $order->get_id() );
 ?>
 <div class="woocommerce-order">

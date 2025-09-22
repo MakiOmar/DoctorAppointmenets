@@ -45,7 +45,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 		$frontend_url = snks_ai_get_primary_frontend_url();
 		error_log( 'PAYMENT COMPLETE - Frontend URL: ' . $frontend_url );
 		error_log( 'PAYMENT COMPLETE - Redirecting to: ' . $frontend_url . '/appointments' );
-		wp_safe_redirect( $frontend_url . '/appointments' );
+		wp_redirect( $frontend_url . '/appointments' );
 		exit;
 	}
 	

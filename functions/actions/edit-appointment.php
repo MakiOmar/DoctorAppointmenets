@@ -347,7 +347,7 @@ add_action(
             $frontend_url = snks_ai_get_primary_frontend_url();
             error_log( 'EDIT APPOINTMENT - Frontend URL: ' . $frontend_url );
             error_log( 'EDIT APPOINTMENT - Redirecting to: ' . $frontend_url . '/appointments' );
-            wp_safe_redirect( $frontend_url . '/appointments' );
+            wp_redirect( $frontend_url . '/appointments' );
             exit;
 		}
 		
@@ -379,7 +379,7 @@ add_action(
 			error_log( 'Not an edit-fees order or wrong status, skipping' );
 		}
 	},
-	5
+	10
 );
 
 /**
