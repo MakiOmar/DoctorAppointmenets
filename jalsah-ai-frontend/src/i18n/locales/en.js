@@ -387,7 +387,9 @@ export default {
       title: 'Diagnosis Complete!',
       message: 'We have completed your diagnosis and are now redirecting you to choose a therapist.',
       redirecting: 'Redirecting to therapist selection...'
-    }
+    },
+    loadingPrevious: 'Loading previous diagnosis...',
+    loadedFromPrevious: 'Loaded previous diagnosis from last session'
   },
 
   // Diagnosis Results

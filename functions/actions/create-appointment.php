@@ -34,7 +34,10 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 	// Skip processing if this is an AI order (handled separately)
 	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
 	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
-		return;
+		// Redirect AI orders to the frontend appointments page
+		$frontend_url = snks_ai_get_primary_frontend_url();
+		wp_safe_redirect( $frontend_url . '/appointments' );
+		exit;
 	}
 	
 	$customer_id = $order->get_customer_id();

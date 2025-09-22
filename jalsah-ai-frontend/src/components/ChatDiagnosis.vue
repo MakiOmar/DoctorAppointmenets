@@ -39,8 +39,18 @@
          </div>
        </div>
 
+      <!-- Loading Diagnosis -->
+      <div v-if="isLoadingDiagnosis" class="card">
+        <div class="text-center py-8">
+          <div class="mb-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          </div>
+          <p class="text-gray-600">{{ $t('chatDiagnosis.loadingPrevious') }}</p>
+        </div>
+      </div>
+
       <!-- Chat Container -->
-      <div class="card">
+      <div v-else class="card">
         <div class="flex flex-col h-96">
           <!-- Chat Messages -->
           <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="chatContainer">
@@ -159,6 +169,7 @@ import { ref, reactive, nextTick, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 
 export default {
@@ -167,6 +178,7 @@ export default {
          const router = useRouter()
      const toast = useToast()
      const { t: $t, locale } = useI18n()
+     const authStore = useAuthStore()
     
     const messages = ref([])
     const newMessage = ref('')
@@ -174,6 +186,7 @@ export default {
     const diagnosisCompleted = ref(false)
     const chatContainer = ref(null)
     const messageInput = ref(null)
+    const isLoadingDiagnosis = ref(false)
     
          const diagnosisResult = reactive({
        title: '',
@@ -217,6 +230,51 @@ export default {
           messageInput.value.focus()
         }
       })
+    }
+
+    const loadLatestDiagnosis = async () => {
+      if (!authStore.user || !authStore.token) {
+        return
+      }
+
+      try {
+        isLoadingDiagnosis.value = true
+        const response = await api.get('/api/ai/user-diagnosis-results', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+
+        if (response.data.success && response.data.data.current_diagnosis) {
+          const diagnosis = response.data.data.current_diagnosis
+          
+          // Check if diagnosis was completed recently (within last hour)
+          const diagnosisTime = new Date(diagnosis.completed_at)
+          const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+          
+          if (diagnosisTime > oneHourAgo) {
+            // Load the diagnosis result and conversation history
+            diagnosisResult.title = diagnosis.diagnosis_name
+            diagnosisResult.description = diagnosis.diagnosis_description
+            diagnosisResult.diagnosisId = diagnosis.diagnosis_id
+            diagnosisCompleted.value = true
+            
+            // Load conversation history if available
+            if (diagnosis.conversation_history && Array.isArray(diagnosis.conversation_history)) {
+              messages.value = diagnosis.conversation_history
+            }
+            
+            // Show a message that diagnosis was loaded from previous session
+            toast.info($t('chatDiagnosis.loadedFromPrevious'))
+          }
+        }
+        // If no diagnosis exists, that's fine - just continue with normal flow
+      } catch (error) {
+        console.error('Error loading latest diagnosis:', error)
+        // Don't show error to user as this is not critical
+      } finally {
+        isLoadingDiagnosis.value = false
+      }
     }
 
     const formatMessage = (content) => {
@@ -311,8 +369,15 @@ export default {
 
 
 
-    onMounted(() => {
-      addWelcomeMessage()
+    onMounted(async () => {
+      // First try to load existing diagnosis from database
+      await loadLatestDiagnosis()
+      
+      // Only add welcome message if no existing diagnosis was loaded
+      if (!diagnosisCompleted.value) {
+        addWelcomeMessage()
+      }
+      
       focusInput()
     })
 
@@ -325,10 +390,12 @@ export default {
        chatContainer,
        messageInput,
        aiQuestionsCount,
+       isLoadingDiagnosis,
        sendMessage,
        formatMessage,
        formatTime,
-       focusInput
+       focusInput,
+       loadLatestDiagnosis
      }
   }
 }

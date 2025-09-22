@@ -391,7 +391,9 @@ export default {
       title: 'اكتمل التشخيص!',
       message: 'لقد أكملنا تشخيصك ونقوم الآن بإعادة توجيهك لاختيار معالج.',
       redirecting: 'جاري إعادة التوجيه لاختيار المعالج...'
-    }
+    },
+    loadingPrevious: 'جاري تحميل آخر تشخيص...',
+    loadedFromPrevious: 'تم تحميل آخر تشخيص من الجلسة السابقة'
   },
 
   // Diagnosis Results
