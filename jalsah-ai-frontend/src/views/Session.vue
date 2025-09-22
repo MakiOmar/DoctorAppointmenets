@@ -357,10 +357,10 @@ const formatSessionTime = computed(() => {
   const monthName = arabicMonths[date.getMonth() + 1]
   const year = date.getFullYear()
   
-  // Format time in 12-hour format with Arabic AM/PM
+  // Format time in 12-hour format with translated AM/PM
   let hours = date.getHours()
   const minutes = date.getMinutes()
-  const period = hours >= 12 ? 'م' : 'ص'
+  const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
   
   if (hours > 12) {
     hours -= 12

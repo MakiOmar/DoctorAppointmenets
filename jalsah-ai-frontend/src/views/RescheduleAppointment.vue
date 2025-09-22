@@ -385,10 +385,24 @@ const formatDateShort = (dateStr) => {
   })
 }
 
-// Format time
+// Format time - convert 24hr to 12hr format with AM/PM
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
-  return timeStr
+  
+  // Handle both "09:00" and "09:00:00" formats
+  const timeParts = timeStr.split(':')
+  const hours = parseInt(timeParts[0])
+  const minutes = parseInt(timeParts[1])
+  
+  if (isNaN(hours) || isNaN(minutes)) {
+    return timeStr // Return original if parsing fails
+  }
+  
+  const period = hours >= 12 ? $t('dateTime.pm') : $t('dateTime.am')
+  const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+  const formattedMinutes = minutes.toString().padStart(2, '0')
+  
+  return `${displayHours}:${formattedMinutes} ${period}`
 }
 
 // Watch for date selection

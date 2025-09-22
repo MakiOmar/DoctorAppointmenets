@@ -846,11 +846,21 @@ export default {
 
     const formatTime = (timeString) => {
       if (!timeString) return 'N/A'
-      const [hours, minutes] = timeString.split(':')
-      const hour = parseInt(hours)
-      const ampm = hour >= 12 ? $t('dateTime.pm') : $t('dateTime.am')
-      const displayHour = hour % 12 || 12
-      return `${displayHour}:${minutes} ${ampm}`
+      
+      // Handle both "09:00" and "09:00:00" formats
+      const timeParts = timeString.split(':')
+      const hours = parseInt(timeParts[0])
+      const minutes = parseInt(timeParts[1])
+      
+      if (isNaN(hours) || isNaN(minutes)) {
+        return 'N/A'
+      }
+      
+      const ampm = hours >= 12 ? $t('dateTime.pm') : $t('dateTime.am')
+      const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+      const formattedMinutes = minutes.toString().padStart(2, '0')
+      
+      return `${displayHour}:${formattedMinutes} ${ampm}`
     }
 
     const getStatusText = (status) => {

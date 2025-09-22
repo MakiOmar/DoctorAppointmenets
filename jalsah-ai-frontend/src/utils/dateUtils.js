@@ -37,11 +37,20 @@ export const formatDate = (dateString, locale = 'en') => {
 export const formatTime = (timeString, locale = 'en') => {
   if (!timeString) return 'N/A'
   
-  const [hours, minutes] = timeString.split(':')
-  const hour = parseInt(hours)
-  const ampm = hour >= 12 ? (locale === 'ar' ? 'م' : 'PM') : (locale === 'ar' ? 'ص' : 'AM')
-  const displayHour = hour % 12 || 12
-  return `${displayHour}:${minutes} ${ampm}`
+  // Handle both "09:00" and "09:00:00" formats
+  const timeParts = timeString.split(':')
+  const hours = parseInt(timeParts[0])
+  const minutes = parseInt(timeParts[1])
+  
+  if (isNaN(hours) || isNaN(minutes)) {
+    return 'N/A'
+  }
+  
+  const ampm = hours >= 12 ? (locale === 'ar' ? 'م' : 'PM') : (locale === 'ar' ? 'ص' : 'AM')
+  const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+  const formattedMinutes = minutes.toString().padStart(2, '0')
+  
+  return `${displayHour}:${formattedMinutes} ${ampm}`
 }
 
 export const formatDateTime = (dateTimeString, locale = 'en') => {
