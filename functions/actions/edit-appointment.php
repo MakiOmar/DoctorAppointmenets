@@ -331,21 +331,35 @@ add_action(
 add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
+		error_log( '=== EDIT APPOINTMENT THANKYOU DEBUG ===' );
+		error_log( 'Order ID: ' . $order_id );
+		
 		$order      = wc_get_order( $order_id );
+		error_log( 'Order object: ' . ( $order ? 'FOUND' : 'NOT FOUND' ) );
 		
 		// Skip processing if this is an AI order (handled separately)
 		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+		error_log( 'AI Order Meta Value: ' . var_export( $is_ai_order, true ) );
+		error_log( 'AI Order Check: ' . ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) ? 'TRUE' : 'FALSE' ) );
+		
 		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 			// Redirect AI orders to the frontend appointments page
             $frontend_url = snks_ai_get_primary_frontend_url();
+            error_log( 'EDIT APPOINTMENT - Frontend URL: ' . $frontend_url );
+            error_log( 'EDIT APPOINTMENT - Redirecting to: ' . $frontend_url . '/appointments' );
             wp_safe_redirect( $frontend_url . '/appointments' );
             exit;
 		}
 		
 		$order_type = $order->get_meta( 'order_type' );
+		error_log( 'Order Type: ' . $order_type );
+		error_log( 'Order Status: ' . $order->get_status() );
+		
 		if ( 'edit-fees' === $order_type && ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) ) {
+			error_log( 'Processing edit-fees order' );
 			$connected_order = $order->get_meta( 'connected_order' );
 			if ( ! $connected_order ) {
+				error_log( 'No connected order found' );
 				return;
 			}
 			$old_booking_id = $order->get_meta( 'booking_id' );
@@ -353,12 +367,16 @@ add_action(
 			$booking        = snks_get_timetable_by( 'ID', absint( $old_booking_id ) );
 			$main_order     = wc_get_order( absint( $connected_order ) );
 			if ( ! $main_order ) {
+				error_log( 'No main order found' );
 				return;
 			}
 			snks_apply_booking_edit( $booking, $main_order, $new_booking_id, false );
 			do_action( 'snks_patient_edit_booking' );
+			error_log( 'EDIT APPOINTMENT - Redirecting to: ' . home_url( '/my-bookings' ) );
 			wp_safe_redirect( home_url( '/my-bookings' ) );
 			exit;
+		} else {
+			error_log( 'Not an edit-fees order or wrong status, skipping' );
 		}
 	},
 	5
