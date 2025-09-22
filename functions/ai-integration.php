@@ -6651,31 +6651,16 @@ add_action( 'woocommerce_thankyou', 'snks_ai_order_thankyou_redirect', 0, 1 );
 add_action( 'template_redirect', 'snks_ai_order_template_redirect', 1 );
 
 function snks_ai_order_thankyou_redirect( $order_id ) {
-	error_log( '=== AI ORDER THANKYOU REDIRECT DEBUG ===' );
-	error_log( 'Order ID: ' . $order_id );
-	
 	$order = wc_get_order( $order_id );
-	error_log( 'Order object: ' . ( $order ? 'FOUND' : 'NOT FOUND' ) );
 
 	if ( $order ) {
 		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-		error_log( 'AI Order Meta Value: ' . var_export( $is_ai_order, true ) );
-		error_log( 'AI Order Check: ' . ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) ? 'TRUE' : 'FALSE' ) );
-		
 		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 			// Redirect AI orders to the frontend appointments page
 			$frontend_url = snks_ai_get_primary_frontend_url();
-			error_log( 'Frontend URL: ' . $frontend_url );
-			error_log( 'Redirecting to: ' . $frontend_url . '/appointments' );
-			
-			// Use wp_redirect instead of wp_safe_redirect for more aggressive redirect
 			wp_redirect( $frontend_url . '/appointments' );
 			exit;
-		} else {
-			error_log( 'Not an AI order, skipping redirect' );
 		}
-	} else {
-		error_log( 'No order found, skipping redirect' );
 	}
 }
 
@@ -6684,11 +6669,9 @@ function snks_ai_order_thankyou_redirect( $order_id ) {
  */
 function snks_ai_get_primary_frontend_url() {
 	$frontend_urls = get_option( 'snks_ai_frontend_urls', 'http://localhost:3000' );
-	error_log( 'Frontend URLs option: ' . $frontend_urls );
 
 	// Parse URLs from textarea (one per line)
 	$urls = array_filter( array_map( 'trim', explode( "\n", $frontend_urls ) ) );
-	error_log( 'Parsed URLs: ' . var_export( $urls, true ) );
 
 	// Validate and clean URLs
 	$valid_origins = array();
@@ -6698,60 +6681,38 @@ function snks_ai_get_primary_frontend_url() {
 			$valid_origins[] = $url;
 		}
 	}
-	error_log( 'Valid origins: ' . var_export( $valid_origins, true ) );
 
 	// Return the first valid URL, or fallback
-	$final_url = $valid_origins[0] ?? 'https://jalsah-ai.com';
-	error_log( 'Final frontend URL: ' . $final_url );
-	return $final_url;
+	return $valid_origins[0] ?? 'https://jalsah-ai.com';
 }
 
 function snks_ai_order_template_redirect() {
-	error_log( '=== AI ORDER TEMPLATE REDIRECT DEBUG ===' );
-	error_log( 'Current URL: ' . $_SERVER['REQUEST_URI'] );
-	error_log( 'Is order-received endpoint: ' . ( is_wc_endpoint_url( 'order-received' ) ? 'YES' : 'NO' ) );
-	
 	// Check if we're on the order received page
 	if ( is_wc_endpoint_url( 'order-received' ) ) {
 		// Try multiple ways to get the order ID
 		$order_id = get_query_var( 'order-received' );
-		error_log( 'Order ID from query var: ' . $order_id );
 
 		// If not found in query var, try to extract from URL
 		if ( ! $order_id && isset( $_SERVER['REQUEST_URI'] ) ) {
 			if ( preg_match( '/order-received\/(\d+)/', $_SERVER['REQUEST_URI'], $matches ) ) {
 				$order_id = $matches[1];
-				error_log( 'Order ID from URL regex: ' . $order_id );
 			}
 		}
 
 		if ( $order_id ) {
 			$order = wc_get_order( $order_id );
-			error_log( 'Order object: ' . ( $order ? 'FOUND' : 'NOT FOUND' ) );
 
 			if ( $order ) {
 				$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-				error_log( 'AI Order Meta Value: ' . var_export( $is_ai_order, true ) );
-				error_log( 'AI Order Check: ' . ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) ? 'TRUE' : 'FALSE' ) );
 
 				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 					// Redirect AI orders to the frontend appointments page
 					$frontend_url = snks_ai_get_primary_frontend_url();
-					error_log( 'Frontend URL: ' . $frontend_url );
-					error_log( 'Redirecting to: ' . $frontend_url . '/appointments' );
 					wp_redirect( $frontend_url . '/appointments' );
 					exit;
-				} else {
-					error_log( 'Not an AI order, skipping redirect' );
 				}
-			} else {
-				error_log( 'No order found, skipping redirect' );
 			}
-		} else {
-			error_log( 'No order ID found, skipping redirect' );
 		}
-	} else {
-		error_log( 'Not on order-received page, skipping redirect' );
 	}
 }
 

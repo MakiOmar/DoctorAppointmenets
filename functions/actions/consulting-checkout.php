@@ -341,20 +341,12 @@ add_filter(
 add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
-		error_log( '=== CONSULTING CHECKOUT THANKYOU DEBUG ===' );
-		error_log( 'Order ID: ' . $order_id );
-		
 		$order = wc_get_order( $order_id );
-		error_log( 'Order object: ' . ( $order ? 'FOUND' : 'NOT FOUND' ) );
 		
 		// Skip processing if this is an AI order (handled separately)
 		if ( $order ) {
 			$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-			error_log( 'AI Order Meta Value: ' . var_export( $is_ai_order, true ) );
-			error_log( 'AI Order Check: ' . ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) ? 'TRUE' : 'FALSE' ) );
-			
 			if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
-				error_log( 'CONSULTING CHECKOUT - Skipping AI order processing' );
 				return;
 			}
 		}
