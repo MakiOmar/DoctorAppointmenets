@@ -533,7 +533,8 @@ export default {
       thu: 'Thu',
       fri: 'Fri',
       sat: 'Sat'
-    }
+    },
+    egyptTime: 'Egypt Time'
   },
 
   // Therapist Detail

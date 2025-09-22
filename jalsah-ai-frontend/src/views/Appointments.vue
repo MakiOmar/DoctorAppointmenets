@@ -107,7 +107,7 @@
                     <span class="font-medium">{{ $t('appointmentsPage.date') }}:</span> {{ formatDate(appointment.date) }}
                   </div>
                   <div>
-                    <span class="font-medium">{{ $t('appointmentsPage.time') }}:</span> {{ formatTime(appointment.time) }}
+                    <span class="font-medium">{{ $t('appointmentsPage.time') }}:</span> {{ formatTime(appointment.time) }} {{ $t('dateTime.egyptTime') }}
                   </div>
                   <div>
                     <span class="font-medium">{{ $t('appointmentsPage.duration') }}:</span> {{ appointment.session_type }} {{ $t('appointmentsPage.minutes') }}

@@ -934,7 +934,8 @@ export default {
       thu: 'خمي',
       fri: 'جمع',
       sat: 'سبت'
-    }
+    },
+    egyptTime: 'بتوقيت مصر'
   },
 
   // Session Management

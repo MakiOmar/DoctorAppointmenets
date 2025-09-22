@@ -50,7 +50,7 @@
           </div>
           <div>
             <p class="text-sm text-gray-600">{{ $t('reschedule.currentTime') }}</p>
-            <p class="font-medium text-gray-900">{{ formatTime(appointment.data?.time) }}</p>
+            <p class="font-medium text-gray-900">{{ formatTime(appointment.data?.time) }} {{ $t('dateTime.egyptTime') }}</p>
           </div>
           <div>
             <p class="text-sm text-gray-600">{{ $t('reschedule.duration') }}</p>
