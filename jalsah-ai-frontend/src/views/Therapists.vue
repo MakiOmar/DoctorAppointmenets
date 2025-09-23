@@ -295,31 +295,44 @@ export default {
       try {
         let response
         
+        console.log('🔍 Loading therapists...')
+        console.log('🔍 Search query:', searchQuery.value)
+        
         // If search query exists, use search API
         if (searchQuery.value.trim()) {
           const params = {
             q: searchQuery.value.trim()
           }
           
+          console.log('🔍 Using search API with params:', params)
           response = await api.get('/api/ai/therapists/search', { params })
         } else {
           // Load all therapists with random ordering
-          response = await api.get('/api/ai/therapists', {
-          params: {
+          const params = {
             _t: Date.now(), // Cache busting
             random: Math.random() // Random parameter to get different order each time
           }
-        })
+          
+          console.log('🔍 Using main therapists API with params:', params)
+          response = await api.get('/api/ai/therapists', { params })
         }
         
+        console.log('🔍 API Response:', response)
+        console.log('🔍 Response data:', response.data)
+        console.log('🔍 Therapists data:', response.data.data)
+        
         therapists.value = response.data.data || []
+        
+        console.log('🔍 Set therapists to:', therapists.value)
+        console.log('🔍 Number of therapists:', therapists.value.length)
         
         // Reset pagination when loading new data
         displayedCount.value = initialLoadCount.value
         
       } catch (error) {
+        console.error('🔍 Error loading therapists:', error)
+        console.error('🔍 Error response:', error.response)
         toast.error('Failed to load therapists')
-        console.error('Error loading therapists:', error)
       } finally {
         loading.value = false
       }

@@ -3609,6 +3609,10 @@ Best regards,
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'therapist_applications';
 
+		// Debug logging
+		error_log( '🔍 get_ai_therapists called' );
+		error_log( '🔍 Table name: ' . $table_name );
+
 		// Check if random ordering is requested
 		$random_param = $_GET['random'] ?? '';
 		$order_clause = 'ORDER BY id ASC'; // Default ordering
@@ -3618,18 +3622,51 @@ Best regards,
 			$order_clause = 'ORDER BY RAND()';
 		}
 
+		error_log( '🔍 Order clause: ' . $order_clause );
+
 		// Get all approved therapists who are enabled for AI platform
-		$applications = $wpdb->get_results(
-			"SELECT * FROM $table_name 
+		$query = "SELECT * FROM $table_name 
 			WHERE status = 'approved' AND show_on_ai_site = 1 
-			$order_clause"
-		);
+			$order_clause";
+		
+		error_log( '🔍 Query: ' . $query );
+
+		$applications = $wpdb->get_results( $query );
+
+		error_log( '🔍 Found ' . count( $applications ) . ' applications' );
+
+		// Debug: Check what we actually got
+		if ( count( $applications ) === 0 ) {
+			// Check total count in table
+			$total_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name" );
+			error_log( '🔍 Total therapists in table: ' . $total_count );
+
+			// Check approved count
+			$approved_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE status = 'approved'" );
+			error_log( '🔍 Approved therapists: ' . $approved_count );
+
+			// Check AI site count
+			$ai_site_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE show_on_ai_site = 1" );
+			error_log( '🔍 Therapists with show_on_ai_site = 1: ' . $ai_site_count );
+
+			// Check both conditions
+			$both_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE status = 'approved' AND show_on_ai_site = 1" );
+			error_log( '🔍 Therapists with both conditions: ' . $both_count );
+
+			// Sample some records to see what we have
+			$samples = $wpdb->get_results( "SELECT user_id, name, status, show_on_ai_site FROM $table_name LIMIT 5" );
+			error_log( '🔍 Sample records:' );
+			foreach ( $samples as $sample ) {
+				error_log( '🔍   ID: ' . $sample->user_id . ', Name: ' . $sample->name . ', Status: ' . $sample->status . ', AI Site: ' . $sample->show_on_ai_site );
+			}
+		}
 
 		$result = array();
 		foreach ( $applications as $application ) {
 			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
 
+		error_log( '🔍 Returning ' . count( $result ) . ' formatted therapists' );
 		$this->send_success( $result );
 	}
 
