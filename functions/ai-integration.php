@@ -94,6 +94,8 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/user-diagnosis-results/?$', 'index.php?ai_endpoint=user-diagnosis-results', 'top' );
 		add_rewrite_rule( '^api/ai/therapist-registration-settings/?$', 'index.php?ai_endpoint=therapist-registration-settings', 'top' );
 		add_rewrite_rule( '^api/ai/settings/?$', 'index.php?ai_endpoint=settings', 'top' );
+		add_rewrite_rule( '^api/ai/profile/([^/]+)/?$', 'index.php?ai_endpoint=profile/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/profile/?$', 'index.php?ai_endpoint=profile', 'top' );
 		add_rewrite_rule( '^api/ai/auth/([^/]+)/?$', 'index.php?ai_endpoint=auth/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
@@ -1941,6 +1943,9 @@ class SNKS_AI_Integration {
 				break;
 			case 'therapist-available-dates':
 				$this->handle_therapist_available_dates_endpoint( $method, $path );
+				break;
+			case 'profile':
+				$this->handle_profile_endpoint( $method, $path );
 				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
@@ -7737,3 +7742,117 @@ function snks_get_rochtah_meeting_details_rest( $request ) {
 		'data'    => $meeting_details,
 	);
 }
+
+	/**
+	 * Handle profile endpoints
+	 */
+	private function handle_profile_endpoint( $method, $path ) {
+		$user_id = $this->verify_jwt_token();
+		
+		if ( ! $user_id ) {
+			$this->send_error( 'Authentication required', 401 );
+			return;
+		}
+
+		// Handle password endpoint
+		if ( count( $path ) > 1 && $path[1] === 'password' ) {
+			$this->handle_profile_password_endpoint( $method, $path );
+			return;
+		}
+
+		switch ( $method ) {
+			case 'GET':
+				// Get user profile
+				$user = get_userdata( $user_id );
+				if ( ! $user ) {
+					$this->send_error( 'User not found', 404 );
+					return;
+				}
+
+				$profile_data = array(
+					'id' => $user->ID,
+					'first_name' => $user->first_name,
+					'last_name' => $user->last_name,
+					'email' => $user->user_email,
+					'phone' => get_user_meta( $user_id, 'phone', true ),
+					'date_of_birth' => get_user_meta( $user_id, 'date_of_birth', true ),
+					'emergency_phone' => get_user_meta( $user_id, 'emergency_phone', true ),
+					'address' => get_user_meta( $user_id, 'address', true ),
+				);
+
+				$this->send_success( $profile_data );
+				break;
+
+			case 'PUT':
+				// Update user profile
+				$data = json_decode( file_get_contents( 'php://input' ), true );
+				
+				if ( isset( $data['first_name'] ) ) {
+					wp_update_user( array( 'ID' => $user_id, 'first_name' => $data['first_name'] ) );
+				}
+				
+				if ( isset( $data['last_name'] ) ) {
+					wp_update_user( array( 'ID' => $user_id, 'last_name' => $data['last_name'] ) );
+				}
+				
+				if ( isset( $data['email'] ) ) {
+					wp_update_user( array( 'ID' => $user_id, 'user_email' => $data['email'] ) );
+				}
+				
+				if ( isset( $data['phone'] ) ) {
+					update_user_meta( $user_id, 'phone', $data['phone'] );
+				}
+				
+				if ( isset( $data['date_of_birth'] ) ) {
+					update_user_meta( $user_id, 'date_of_birth', $data['date_of_birth'] );
+				}
+				
+				if ( isset( $data['emergency_phone'] ) ) {
+					update_user_meta( $user_id, 'emergency_phone', $data['emergency_phone'] );
+				}
+				
+				if ( isset( $data['address'] ) ) {
+					update_user_meta( $user_id, 'address', $data['address'] );
+				}
+
+				$this->send_success( array( 'message' => 'Profile updated successfully' ) );
+				break;
+
+			default:
+				$this->send_error( 'Method not allowed', 405 );
+		}
+	}
+
+	/**
+	 * Handle profile password endpoint
+	 */
+	private function handle_profile_password_endpoint( $method, $path ) {
+		$user_id = $this->verify_jwt_token();
+		
+		if ( ! $user_id ) {
+			$this->send_error( 'Authentication required', 401 );
+			return;
+		}
+
+		if ( $method !== 'PUT' ) {
+			$this->send_error( 'Method not allowed', 405 );
+			return;
+		}
+
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		
+		if ( ! isset( $data['current_password'] ) || ! isset( $data['new_password'] ) ) {
+			$this->send_error( 'Current password and new password are required', 400 );
+			return;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! wp_check_password( $data['current_password'], $user->user_pass, $user_id ) ) {
+			$this->send_error( 'Current password is incorrect', 400 );
+			return;
+		}
+
+		wp_set_password( $data['new_password'], $user_id );
+
+		$this->send_success( array( 'message' => 'Password updated successfully' ) );
+	}
