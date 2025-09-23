@@ -172,13 +172,22 @@ export default {
 
     // Computed property to sort therapists (search is now handled by API)
     const sortedTherapists = computed(() => {
+      console.log('🔍 sortedTherapists computed - total therapists:', therapistsWithOriginalPositions.value.length)
+      
       // Filter out therapists with no available slots
       let filtered = therapistsWithOriginalPositions.value.filter(therapist => {
+        console.log('🔍 Checking therapist:', therapist.name, 'earliest_slot_data:', therapist.earliest_slot_data)
+        
         // Check if therapist has available slots
-        return therapist.earliest_slot_data && 
+        const hasSlot = therapist.earliest_slot_data && 
                therapist.earliest_slot_data.date && 
                therapist.earliest_slot_data.time
+        
+        console.log('🔍 Therapist', therapist.name, 'has slot:', hasSlot)
+        return hasSlot
       })
+      
+      console.log('🔍 After filtering:', filtered.length, 'therapists remain')
       
       let sorted = [...filtered]
 
