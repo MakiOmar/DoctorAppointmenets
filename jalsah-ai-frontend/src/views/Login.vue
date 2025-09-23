@@ -468,6 +468,26 @@ export default {
       )
     })
 
+    // Phone validation function
+    const validatePhoneNumber = (phoneNumber, countryCode) => {
+      const country = countries.value.find(c => c.country_code === countryCode)
+      if (!country || !country.validation_pattern) {
+        return { isValid: true, error: null } // Skip validation if no pattern
+      }
+      
+      const fullPhoneNumber = country.dial_code + phoneNumber
+      const pattern = new RegExp(country.validation_pattern)
+      
+      if (!pattern.test(fullPhoneNumber)) {
+        return { 
+          isValid: false, 
+          error: `${t('auth.login.invalidPhoneFormat')} ${country.name_en}` 
+        }
+      }
+      
+      return { isValid: true, error: null }
+    }
+
     const handleLogin = async () => {
       const credentials = {
         password: form.value.password
@@ -477,6 +497,13 @@ export default {
       if (requireEmail.value) {
         credentials.email = form.value.email
       } else {
+        // Validate phone number before proceeding
+        const phoneValidation = validatePhoneNumber(form.value.whatsapp, selectedCountryCode.value)
+        if (!phoneValidation.isValid) {
+          toast.error(phoneValidation.error)
+          return
+        }
+        
         // Get selected country info and build full WhatsApp number
         const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
         const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
@@ -662,6 +689,13 @@ export default {
     const sendForgotPasswordCode = async () => {
       if (!forgotPasswordForm.value.whatsapp) {
         toast.error(t('verification.enterWhatsApp'))
+        return
+      }
+
+      // Validate phone number before proceeding
+      const phoneValidation = validatePhoneNumber(forgotPasswordForm.value.whatsapp, selectedCountryCode.value)
+      if (!phoneValidation.isValid) {
+        toast.error(phoneValidation.error)
         return
       }
 

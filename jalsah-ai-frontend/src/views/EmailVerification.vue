@@ -277,6 +277,26 @@ export default {
       )
     })
 
+    // Phone validation function
+    const validatePhoneNumber = (phoneNumber, countryCode) => {
+      const country = countries.value.find(c => c.country_code === countryCode)
+      if (!country || !country.validation_pattern) {
+        return { isValid: true, error: null } // Skip validation if no pattern
+      }
+      
+      const fullPhoneNumber = country.dial_code + phoneNumber
+      const pattern = new RegExp(country.validation_pattern)
+      
+      if (!pattern.test(fullPhoneNumber)) {
+        return { 
+          isValid: false, 
+          error: `${t('auth.login.invalidPhoneFormat')} ${country.name_en}` 
+        }
+      }
+      
+      return { isValid: true, error: null }
+    }
+
     const setContact = async () => {
       if (!contactInput.value) return
       
@@ -285,6 +305,13 @@ export default {
         contact.value = contactInput.value
         verificationMethod.value = 'email'
       } else {
+        // Validate phone number before proceeding
+        const phoneValidation = validatePhoneNumber(contactInput.value, selectedCountryCode.value)
+        if (!phoneValidation.isValid) {
+          toast.error(phoneValidation.error)
+          return
+        }
+        
         // WhatsApp method - allow phone number updates without existence check
         const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
         const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + contactInput.value : contactInput.value

@@ -197,6 +197,7 @@ export default {
       whatsappPlaceholder: '1234567890',
       noNeedDialCode: 'لا حاجة لإدخال رمز الدولة، تم اختياره بالفعل',
       passwordMismatch: 'كلمات المرور غير متطابقة',
+      invalidPhoneFormat: 'رقم الهاتف غير صحيح لـ',
       errors: {
         passwordMismatch: 'كلمات المرور غير متطابقة',
         emailExists: 'البريد الإلكتروني مستخدم بالفعل',

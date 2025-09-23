@@ -204,12 +204,55 @@ function onFileChange(event, field, multiple = false) {
   }
 }
 
+// Phone validation function
+const validatePhoneNumber = (phoneNumber, countryCode) => {
+  const country = registrationStore.countryCodes[countryCode]
+  if (!country || !country.validation_pattern) {
+    return { isValid: true, error: null } // Skip validation if no pattern
+  }
+  
+  const fullPhoneNumber = country.code + phoneNumber
+  const pattern = new RegExp(country.validation_pattern)
+  
+  if (!pattern.test(fullPhoneNumber)) {
+    return { 
+      isValid: false, 
+      error: `${t('auth.login.invalidPhoneFormat')} ${country.name}` 
+    }
+  }
+  
+  return { isValid: true, error: null }
+}
+
 async function onSubmit() {
   error.value = ''
   success.value = ''
   loading.value = true
   
   try {
+    // Validate phone numbers if country codes are enabled
+    if (registrationStore.shouldShowCountryDialCodes) {
+      // Validate phone number
+      if (form.value.phone && form.value.phone_country) {
+        const phoneValidation = validatePhoneNumber(form.value.phone, form.value.phone_country)
+        if (!phoneValidation.isValid) {
+          error.value = phoneValidation.error
+          loading.value = false
+          return
+        }
+      }
+      
+      // Validate WhatsApp number
+      if (form.value.whatsapp && form.value.whatsapp_country) {
+        const whatsappValidation = validatePhoneNumber(form.value.whatsapp, form.value.whatsapp_country)
+        if (!whatsappValidation.isValid) {
+          error.value = whatsappValidation.error
+          loading.value = false
+          return
+        }
+      }
+    }
+    
     const data = new FormData()
     
     // Add nonce for security
