@@ -6047,13 +6047,18 @@ Best regards,
 	private function get_earliest_slot_from_timetable( $therapist_id ) {
 		global $wpdb;
 
-		// Get the earliest slot regardless of settings - prioritize by date/time
+		// Get the earliest available slot (exclude reserved/in-cart and booked/rescheduled)
 		$earliest_slot = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			 AND period NOT IN (30, 60)
 			 ORDER BY date_time ASC 
 			 LIMIT 1",
 				$therapist_id
@@ -6141,6 +6146,11 @@ Best regards,
 				 WHERE user_id = %d AND session_status = 'open' 
 				 AND date_time >= NOW()
 				 AND (settings LIKE '%ai_booking%' OR settings = '')
+				 AND (client_id = 0 OR client_id IS NULL)
+				 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
+				 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+				 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+				 AND period NOT IN (30, 60)
 				 ORDER BY date_time ASC 
 				 LIMIT 1",
 					$therapist_id
