@@ -5260,6 +5260,7 @@ Best regards,
 			 AND attendance_type = 'online'
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 			 ORDER BY starts ASC",
@@ -6099,7 +6100,11 @@ Best regards,
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
-			 AND (settings LIKE '%ai_booking%' OR settings = '')
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			 AND (period IN (30, 45) OR period IS NULL OR period = 0)
 			 ORDER BY date_time ASC",
 				$therapist_id
 			)
@@ -6251,8 +6256,11 @@ Best regards,
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND DATE(date_time) = %s
-			 AND (settings LIKE '%ai_booking%' OR settings = '')
-			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			 AND (period IN (30, 45) OR period IS NULL OR period = 0)
 			 ORDER BY starts ASC",
 				$therapist_id,
 				$date
