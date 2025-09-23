@@ -3612,6 +3612,9 @@ Best regards,
 		// Debug logging
 		error_log( '🔍 get_ai_therapists called' );
 		error_log( '🔍 Table name: ' . $table_name );
+		
+		// Also try to log to a custom file
+		file_put_contents( ABSPATH . 'therapist-debug.log', date('Y-m-d H:i:s') . " - get_ai_therapists called\n", FILE_APPEND );
 
 		// Check if random ordering is requested
 		$random_param = $_GET['random'] ?? '';
@@ -3634,6 +3637,7 @@ Best regards,
 		$applications = $wpdb->get_results( $query );
 
 		error_log( '🔍 Found ' . count( $applications ) . ' applications' );
+		file_put_contents( ABSPATH . 'therapist-debug.log', date('Y-m-d H:i:s') . " - Found " . count( $applications ) . " applications\n", FILE_APPEND );
 
 		// Debug: Check what we actually got
 		if ( count( $applications ) === 0 ) {
