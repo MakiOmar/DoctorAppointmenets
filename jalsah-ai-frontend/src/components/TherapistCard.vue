@@ -400,20 +400,14 @@ export default {
     })
 
     const showTherapistDetails = () => {
-      console.log('🔍 showTherapistDetails called')
-      console.log('🔍 Current showDetails:', showDetails.value)
-      console.log('🔍 Current therapist ID:', props.therapist.id)
-      console.log('🔍 Current openTherapistId:', props.openTherapistId)
       
       if (showDetails.value) {
         // If details are currently shown, hide them
-        console.log('🔍 Hiding details')
         showDetails.value = false
         showDateSelection.value = false // Also hide date selection
         emit('hide-details')
       } else {
         // If details are hidden, show them
-        console.log('🔍 Showing details')
         showDetails.value = true
         showDateSelection.value = true // Directly show date selection
         emit('show-details', props.therapist.id)
@@ -734,12 +728,7 @@ export default {
         
         if (response.data.success && Array.isArray(response.data.data)) {
           const cartItems = response.data.data
-          // Debug logging
-          console.log('🔍 Checking cart status for slot:', slot.id)
-          console.log('🔍 Cart items:', cartItems.map(item => ({ ID: item.ID, date_time: item.date_time })))
-          
           slot.inCart = cartItems.some(item => parseInt(item.ID) === parseInt(slot.id))
-          console.log('🔍 Slot in cart:', slot.inCart)
         } else {
           slot.inCart = false
         }
@@ -766,14 +755,9 @@ export default {
           const cartItems = response.data.data
           const cartSlotIds = new Set(cartItems.map(item => parseInt(item.ID)))
           
-          // Debug logging
-          console.log('🔍 Checking cart status for slots:', slots.map(s => s.id))
-          console.log('🔍 Cart slot IDs:', Array.from(cartSlotIds))
-          
           // Update each slot's cart status
           slots.forEach(slot => {
             slot.inCart = cartSlotIds.has(parseInt(slot.id))
-            console.log(`🔍 Slot ${slot.id} in cart:`, slot.inCart)
           })
         } else {
           slots.forEach(slot => slot.inCart = false)
