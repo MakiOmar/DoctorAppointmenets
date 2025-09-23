@@ -172,22 +172,13 @@ export default {
 
     // Computed property to sort therapists (search is now handled by API)
     const sortedTherapists = computed(() => {
-      console.log('🔍 sortedTherapists computed - total therapists:', therapistsWithOriginalPositions.value.length)
-      
       // Filter out therapists with no available slots
       let filtered = therapistsWithOriginalPositions.value.filter(therapist => {
-        console.log('🔍 Checking therapist:', therapist.name, 'earliest_slot_data:', therapist.earliest_slot_data)
-        
         // Check if therapist has available slots
-        const hasSlot = therapist.earliest_slot_data && 
+        return therapist.earliest_slot_data && 
                therapist.earliest_slot_data.date && 
                therapist.earliest_slot_data.time
-        
-        console.log('🔍 Therapist', therapist.name, 'has slot:', hasSlot)
-        return hasSlot
       })
-      
-      console.log('🔍 After filtering:', filtered.length, 'therapists remain')
       
       let sorted = [...filtered]
 
@@ -304,8 +295,6 @@ export default {
       try {
         let response
         
-        console.log('🔍 Loading therapists...')
-        console.log('🔍 Search query:', searchQuery.value)
         
         // If search query exists, use search API
         if (searchQuery.value.trim()) {
@@ -313,7 +302,6 @@ export default {
             q: searchQuery.value.trim()
           }
           
-          console.log('🔍 Using search API with params:', params)
           response = await api.get('/api/ai/therapists/search', { params })
         } else {
           // Load all therapists with random ordering
@@ -322,25 +310,16 @@ export default {
             random: Math.random() // Random parameter to get different order each time
           }
           
-          console.log('🔍 Using main therapists API with params:', params)
           response = await api.get('/api/ai/therapists', { params })
         }
         
-        console.log('🔍 API Response:', response)
-        console.log('🔍 Response data:', response.data)
-        console.log('🔍 Therapists data:', response.data.data)
-        
         therapists.value = response.data.data || []
-        
-        console.log('🔍 Set therapists to:', therapists.value)
-        console.log('🔍 Number of therapists:', therapists.value.length)
         
         // Reset pagination when loading new data
         displayedCount.value = initialLoadCount.value
         
       } catch (error) {
-        console.error('🔍 Error loading therapists:', error)
-        console.error('🔍 Error response:', error.response)
+        console.error('Error loading therapists:', error)
         toast.error('Failed to load therapists')
       } finally {
         loading.value = false
