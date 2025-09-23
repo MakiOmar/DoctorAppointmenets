@@ -6141,6 +6141,10 @@ Best regards,
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 ORDER BY date_time ASC 
 			 LIMIT 1",
 				$therapist_id
