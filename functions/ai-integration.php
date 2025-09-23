@@ -5256,7 +5256,7 @@ Best regards,
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND period NOT IN (30, 60)
+			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 			 ORDER BY starts ASC",
 			$therapist_id,
 			$date
@@ -6058,7 +6058,7 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND period NOT IN (30, 60)
+			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 			 ORDER BY date_time ASC 
 			 LIMIT 1",
 				$therapist_id
@@ -6150,7 +6150,7 @@ Best regards,
 				 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 				 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 				 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-				 AND period NOT IN (30, 60)
+				 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 				 ORDER BY date_time ASC 
 				 LIMIT 1",
 					$therapist_id
@@ -6202,7 +6202,7 @@ Best regards,
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND period NOT IN (30, 60)
+			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC",
 			$therapist_id,
@@ -6247,7 +6247,7 @@ Best regards,
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND DATE(date_time) = %s
 			 AND (settings LIKE '%ai_booking%' OR settings = '')
-			 AND period NOT IN (30, 60)
+			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 			 ORDER BY starts ASC",
 				$therapist_id,
 				$date
