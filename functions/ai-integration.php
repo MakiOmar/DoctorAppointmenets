@@ -4369,7 +4369,11 @@ Best regards,
 		);
 
 		if ( ! $current_slot ) {
-			$this->send_error( 'This appointment slot has been booked by another user. Please refresh and select a different time.', 400 );
+			$locale = $this->get_request_locale();
+			$error_message = $locale === 'ar'
+				? 'تم حجز هذا الموعد من قبل مستخدم آخر. يرجى تحديث الصفحة واختيار وقت مختلف.'
+				: 'This appointment slot has been booked by another user. Please refresh and select a different time.';
+			$this->send_error( $error_message, 400 );
 		}
 
 		$cart = get_user_meta( $user_id, 'ai_cart', true );
@@ -5323,7 +5327,11 @@ Best regards,
 		);
 
 		if ( ! $slot ) {
-			return new WP_REST_Response( array( 'error' => 'This appointment slot has been booked by another user. Please refresh and select a different time.' ), 400 );
+			$locale = $this->get_request_locale();
+			$error_message = $locale === 'ar'
+				? 'تم حجز هذا الموعد من قبل مستخدم آخر. يرجى تحديث الصفحة واختيار وقت مختلف.'
+				: 'This appointment slot has been booked by another user. Please refresh and select a different time.';
+			return new WP_REST_Response( array( 'error' => $error_message ), 400 );
 		}
 
 		// Check if slot is already in user's cart
