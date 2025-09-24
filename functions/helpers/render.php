@@ -1162,6 +1162,9 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	if ( strpos( $template, '{room_url}' ) !== false ) {
 		error_log( 'Room URL not replaced in template for record ID: ' . $record->ID );
 		error_log( 'Room variable value: ' . $room );
+		error_log( 'Button URL value: ' . $button_url );
+		error_log( 'Is AI session: ' . ( $is_ai_session ? 'yes' : 'no' ) );
+		error_log( 'Is too early: ' . ( $is_too_early ? 'yes' : 'no' ) );
 	}
 }
 add_shortcode(
