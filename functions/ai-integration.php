@@ -7168,6 +7168,80 @@ function snks_handle_ai_order_completion( $order_id ) {
 }
 
 /**
+ * Process AI order completion - connect slots to order and change status
+ */
+function snks_process_ai_order_completion( $order_id ) {
+	$order = wc_get_order( $order_id );
+	
+	if ( ! $order ) {
+		return false;
+	}
+	
+	// Get AI sessions data from order meta
+	$ai_sessions = $order->get_meta( 'ai_sessions' );
+	
+	if ( empty( $ai_sessions ) ) {
+		error_log( "AI Order Completion: No sessions data found for order {$order_id}" );
+		return false;
+	}
+	
+	// Decode JSON if it's a string
+	if ( is_string( $ai_sessions ) ) {
+		$ai_sessions = json_decode( $ai_sessions, true );
+	}
+	
+	if ( ! is_array( $ai_sessions ) || empty( $ai_sessions ) ) {
+		error_log( "AI Order Completion: Invalid sessions data for order {$order_id}" );
+		return false;
+	}
+	
+	global $wpdb;
+	$customer_id = $order->get_customer_id();
+	$processed_sessions = array();
+	
+	foreach ( $ai_sessions as $session ) {
+		$slot_id = $session['slot_id'] ?? null;
+		
+		if ( ! $slot_id ) {
+			continue;
+		}
+		
+		// Update the slot to connect it to the order and change status to 'open'
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			array(
+				'client_id'      => $customer_id,
+				'session_status' => 'open',
+				'order_id'       => $order_id,
+				'settings'       => 'ai_booking:booked:' . current_time( 'mysql' ), // Mark as booked with timestamp
+			),
+			array( 'ID' => $slot_id ),
+			array( '%d', '%s', '%d', '%s' ),
+			array( '%d' )
+		);
+		
+		if ( $result !== false ) {
+			$processed_sessions[] = $slot_id;
+			
+			// Insert session action record
+			snks_insert_session_actions( $slot_id, $customer_id, 'no' );
+			
+			error_log( "AI Order Completion: Successfully processed slot {$slot_id} for order {$order_id}" );
+		} else {
+			error_log( "AI Order Completion: Failed to process slot {$slot_id} for order {$order_id}" );
+		}
+	}
+	
+	// Update order meta with processed sessions
+	$order->update_meta_data( 'ai_processed_sessions', json_encode( $processed_sessions ) );
+	$order->save();
+	
+	error_log( "AI Order Completion: Processed " . count( $processed_sessions ) . " sessions for order {$order_id}" );
+	
+	return true;
+}
+
+/**
  * Handle session action updates
  */
 function snks_handle_session_action_update( $session_id, $action_data ) {
