@@ -151,7 +151,7 @@
           <!-- WhatsApp Phone Validation Message -->
           <div v-if="phoneValidationMessage" class="mt-2 text-sm" :class="phoneValidationMessage.type === 'error' ? 'text-red-600' : 'text-green-600'">
             <div class="font-medium">{{ phoneValidationMessage.title }}</div>
-            <div class="font-mono text-xs mt-1" dir="ltr" style="text-align: left;">{{ phoneValidationMessage.fullNumber }}</div>
+            <div class="font-mono text-xs mt-1" dir="ltr">{{ phoneValidationMessage.fullNumber }}</div>
           </div>
           
           <!-- WhatsApp Dial Code Error Message -->
