@@ -60,6 +60,7 @@ function snks_create_coupon_ajax_handler() {
 				'discount_value' => $args['discount_value'],
 				'expires_at'     => $args['expires_at'],
 				'usage_limit'    => $args['usage_limit'],
+				'is_ai_coupon'   => isset( $args['is_ai_coupon'] ) ? (int) $args['is_ai_coupon'] : 0,
 			),
 		)
 	);
