@@ -1060,13 +1060,27 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$scheduled_timestamp = strtotime( $record->date_time );
 	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
 	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
+	
+	// Check if this is an AI session
+	$is_ai_session = snks_is_ai_session( $record->ID );
+	
+	// For AI sessions, add additional time validation to prevent early joining
+	$time_difference = $current_timestamp - $scheduled_timestamp;
+	$is_too_early = $time_difference < 0; // Current time is before scheduled time
+	
 	if (
 		( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 )
 		|| ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp )
 		|| ( 'cancelled' === $record->session_status )
+		|| ( $is_ai_session && $is_too_early ) // Prevent AI session joining before scheduled time
 	) {
 		$_class = 'snks-disabled';
 		$room   = '#';
+		
+		// For AI sessions that are too early, show a specific message
+		if ( $is_ai_session && $is_too_early ) {
+			$button_text = 'الجلسة لم تبدأ بعد';
+		}
 	}
 	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = SNKS_CAMERA;

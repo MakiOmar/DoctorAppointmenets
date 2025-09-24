@@ -41,7 +41,18 @@ add_shortcode(
 		add_action(
 			'wp_footer',
 			function () use ( $room_id, $doctor_id, $name ) {
-				if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
+				// Check if this is an AI session and if it's too early to join
+				$session = snks_get_timetable_by( 'ID', $room_id );
+				$is_ai_session = $session ? snks_is_ai_session( $room_id ) : false;
+				$is_too_early = false;
+				
+				if ( $is_ai_session && $session ) {
+					$scheduled_timestamp = strtotime( $session->date_time );
+					$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+					$is_too_early = $current_timestamp < $scheduled_timestamp;
+				}
+				
+				if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
 					?>
 					<script>
 					jQuery(document).ready(function($){
@@ -170,8 +181,21 @@ add_shortcode(
 				100%   {background-position:left 1px top 1px,0 0,0 0,100% 100%}
 				}.room-loader-wrapper{width:95vw;height:450px;max-width:450px;background-color:#024059;margin:auto;}</style>';
 		$html .= '<div id="meeting">';
-		if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
-			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">يرجى انتظار المعالج شكراً لك</h5></div>';
+		
+		// Check if this is an AI session and if it's too early to join
+		$session = snks_get_timetable_by( 'ID', $room_id );
+		$is_ai_session = $session ? snks_is_ai_session( $room_id ) : false;
+		$is_too_early = false;
+		
+		if ( $is_ai_session && $session ) {
+			$scheduled_timestamp = strtotime( $session->date_time );
+			$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+			$is_too_early = $current_timestamp < $scheduled_timestamp;
+		}
+		
+		if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
+			$message = $is_too_early ? 'الجلسة لم تبدأ بعد - يرجى الانتظار حتى وقت الجلسة المحدد' : 'يرجى انتظار المعالج شكراً لك';
+			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">' . $message . '</h5></div>';
 		}
 		$html .= '</div><input type="hidden" id="room_id" value="' . $room_id . '"/>';
 		return $html;
