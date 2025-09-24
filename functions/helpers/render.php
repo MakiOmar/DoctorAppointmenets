@@ -1001,12 +1001,14 @@ function template_str_replace( $record ) {
 	
 	// Set button URL and status class for AI sessions that are too early
 	$button_url = site_url( 'meeting-room/?room_id=' . $record->ID );
+	$room = $button_url; // Set room URL same as button URL
 	$status_class = '';
 	
 	// For AI sessions that are too early, disable the button
 	if ( $is_ai_session && $is_too_early ) {
 		$button_text = 'الجلسة لم تبدأ بعد';
 		$button_url = '#';
+		$room = '#'; // Also disable room URL for disabled sessions
 		$status_class = 'snks-disabled';
 	}
 
@@ -1421,9 +1423,7 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 		</div>
 	<?php
 	}
-	
-	// Timer script moved to Jet popup event handler
-	<?php
+
 	//phpcs:enable
 	return ob_get_clean();
 }

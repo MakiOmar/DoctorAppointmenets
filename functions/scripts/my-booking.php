@@ -201,14 +201,9 @@ add_shortcode(
 		return $html;
 	}
 );
-
-
 add_action(
 	'wp_footer',
 	function () {
-		if ( ! snks_is_patient() ) {
-			return;
-		}
 		?>
 		<script>
 		// Timer script for Jet popup events
@@ -229,7 +224,7 @@ add_action(
 						var dateTime = parent.data('datetime');
 						// Set the date we're counting down to.
 						var countDownDate = new Date(dateTime).getTime();
-						
+						console.log(countDownDate);
 						// Update the count down every 1 second.
 						var x = setInterval(
 							function() {
@@ -292,14 +287,25 @@ add_action(
 		}
 		
 		// Call timer function on Jet popup events
-		$(window).on('jet-popup/show-event/after-show', function(){
+		jQuery(window).on('jet-popup/show-event/after-show', function(){
 			initializeSnksTimer();
 		});
 		
-		$(window).on('jet-popup/render-content/render-custom-content', function(){
+		jQuery(window).on('jet-popup/render-content/render-custom-content', function(){
 			initializeSnksTimer();
 		});
-		</script>
+	</script>
+	<?php
+	}
+);
+
+add_action(
+	'wp_footer',
+	function () {
+		if ( ! snks_is_patient() ) {
+			return;
+		}
+		?>
 		<script>
 			jQuery(document).ready(function($) {
 				// Attach a click event to the .edit-booking element.
