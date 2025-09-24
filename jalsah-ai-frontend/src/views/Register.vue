@@ -242,15 +242,17 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useTherapistRegistrationStore } from '@/stores/therapistRegistration'
+import { useToast } from 'vue-toastification'
 import api from '@/services/api'
 
 export default {
   name: 'Register',
   setup() {
     const router = useRouter()
-    const { locale } = useI18n()
+    const { locale, t } = useI18n()
     const authStore = useAuthStore()
     const therapistRegStore = useTherapistRegistrationStore()
+    const toast = useToast()
     
     const form = ref({
       first_name: '',
@@ -486,6 +488,26 @@ export default {
     }
     
 
+    // Phone validation function
+    const validatePhoneNumber = (phoneNumber, countryCode) => {
+      const country = countries.value.find(c => c.country_code === countryCode)
+      if (!country || !country.validation_pattern) {
+        return { isValid: true, error: null } // Skip validation if no pattern
+      }
+      
+      const fullPhoneNumber = country.dial_code + phoneNumber
+      const pattern = new RegExp(country.validation_pattern)
+      
+      if (!pattern.test(fullPhoneNumber)) {
+        return { 
+          isValid: false, 
+          error: `${t('auth.login.invalidPhoneFormat')} ${country.name_en}` 
+        }
+      }
+      
+      return { isValid: true, error: null }
+    }
+
     const handleRegister = async () => {
       if (!isFormValid.value) {
         return
@@ -495,13 +517,22 @@ export default {
       const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
       const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
 
+      // Validate phone number before proceeding
+      const phoneValidation = validatePhoneNumber(form.value.whatsapp, selectedCountryCode.value)
+      if (!phoneValidation.isValid) {
+        console.log('🔍 Phone validation failed:', phoneValidation.error)
+        toast.error(phoneValidation.error)
+        return
+      }
+
       // Debug: Log the phone number being sent
       console.log('📱 Frontend Debug - Phone Number:', {
         selectedCountry: selectedCountry,
         dialCode: selectedCountry?.dial_code,
         userInput: form.value.whatsapp,
         fullNumber: fullWhatsAppNumber,
-        otpMethod: otpMethod.value
+        otpMethod: otpMethod.value,
+        validationPassed: true
       })
 
       const registrationData = {
