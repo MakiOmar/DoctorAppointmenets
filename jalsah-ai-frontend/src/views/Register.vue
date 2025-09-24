@@ -342,11 +342,8 @@ export default {
       const validation = validatePhoneNumber(form.value.whatsapp, selectedCountryCode.value)
       
       if (validation.isValid) {
-        phoneValidationMessage.value = {
-          type: 'success',
-          title: t('auth.register.phoneValidation.valid'),
-          fullNumber: fullPhoneNumber
-        }
+        // Do not show any message when valid
+        phoneValidationMessage.value = null
       } else {
         phoneValidationMessage.value = {
           type: 'error',
