@@ -1157,6 +1157,12 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 		),
 		$template
 	);
+	
+	// Debug: Check if room URL is being replaced
+	if ( strpos( $template, '{room_url}' ) !== false ) {
+		error_log( 'Room URL not replaced in template for record ID: ' . $record->ID );
+		error_log( 'Room variable value: ' . $room );
+	}
 }
 add_shortcode(
 	'snks_doctor_change_appointment',
