@@ -152,7 +152,6 @@
           <div v-if="phoneValidationMessage" class="mt-2 text-sm" :class="phoneValidationMessage.type === 'error' ? 'text-red-600' : 'text-green-600'">
             <div class="font-medium">{{ phoneValidationMessage.title }}</div>
             <div class="font-mono text-xs mt-1">{{ phoneValidationMessage.fullNumber }}</div>
-            <div v-if="phoneValidationMessage.type === 'error'" class="mt-1">{{ phoneValidationMessage.error }}</div>
           </div>
           
           <!-- WhatsApp Dial Code Error Message -->
@@ -346,15 +345,13 @@ export default {
         phoneValidationMessage.value = {
           type: 'success',
           title: t('auth.register.phoneValidation.valid'),
-          fullNumber: fullPhoneNumber,
-          error: null
+          fullNumber: fullPhoneNumber
         }
       } else {
         phoneValidationMessage.value = {
           type: 'error',
           title: t('auth.register.phoneValidation.invalid'),
-          fullNumber: fullPhoneNumber,
-          error: validation.error
+          fullNumber: fullPhoneNumber
         }
       }
     }
