@@ -243,11 +243,21 @@ async function onSubmit() {
   success.value = ''
   loading.value = true
   
+  console.log('🔍 Form Submission Debug:', {
+    shouldShowCountryDialCodes: registrationStore.shouldShowCountryDialCodes,
+    phone: form.value.phone,
+    phone_country: form.value.phone_country,
+    whatsapp: form.value.whatsapp,
+    whatsapp_country: form.value.whatsapp_country,
+    countryCodes: registrationStore.countryCodes
+  })
+  
   try {
     // Validate phone numbers if country codes are enabled
     if (registrationStore.shouldShowCountryDialCodes) {
       // Validate phone number
       if (form.value.phone && form.value.phone_country) {
+        console.log('🔍 Validating phone number...')
         const phoneValidation = validatePhoneNumber(form.value.phone, form.value.phone_country)
         if (!phoneValidation.isValid) {
           error.value = phoneValidation.error
@@ -258,6 +268,7 @@ async function onSubmit() {
       
       // Validate WhatsApp number
       if (form.value.whatsapp && form.value.whatsapp_country) {
+        console.log('🔍 Validating WhatsApp number...')
         const whatsappValidation = validatePhoneNumber(form.value.whatsapp, form.value.whatsapp_country)
         if (!whatsappValidation.isValid) {
           error.value = whatsappValidation.error
@@ -265,6 +276,8 @@ async function onSubmit() {
           return
         }
       }
+    } else {
+      console.log('🔍 Country dial codes not required, skipping validation')
     }
     
     const data = new FormData()

@@ -1089,13 +1089,7 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 		preg_match('/\b\d{6}\b/', $message, $matches);
 		$verification_code = isset($matches[0]) ? $matches[0] : '123456';
 		
-		// Debug template parameters
-		error_log( '=== WHATSAPP TEMPLATE DEBUG ===' );
-		error_log( 'Template Name: ' . $template_name );
-		error_log( 'Template Language: ' . $template_language );
-		error_log( 'Original Message: ' . $message );
-		error_log( 'Extracted Verification Code: ' . $verification_code );
-		error_log( '===============================' );
+		// Debug template parameters (removed for production)
 		
 		// Build components array for OTP template - body and button components
 		$components = array(
@@ -1173,24 +1167,7 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	$response_code = wp_remote_retrieve_response_code( $response );
 	
 	// Enhanced logging for debugging
-	error_log( '=== WHATSAPP API DEBUG ===' );
-	error_log( 'Endpoint: ' . $endpoint );
-	error_log( 'Original Phone Number: ' . $phone_number );
-	error_log( 'Phone Number Length: ' . strlen( $phone_number ) );
-	error_log( 'Phone Number ID: ' . $phone_number_id );
-	error_log( 'Access Token (first 20 chars): ' . substr( $access_token, 0, 20 ) . '...' );
-	error_log( 'Use Template: ' . ( $use_template ? 'Yes' : 'No' ) );
-	error_log( 'Template Name: ' . ( $template_name ?? 'N/A' ) );
-	error_log( 'Request Body: ' . wp_json_encode( $body ) );
-	error_log( 'Message Length: ' . strlen( $message ) );
-	error_log( 'Message: ' . $message );
-	error_log( 'Response Code: ' . $response_code );
-	error_log( 'Response Body: ' . $response_body );
-	
-	// Check if this is a registration vs test message
-	$is_registration = strpos( $message, 'رمز التحقق' ) !== false || strpos( $message, 'verification' ) !== false;
-	error_log( 'Message Type: ' . ( $is_registration ? 'REGISTRATION OTP' : 'TEST MESSAGE' ) );
-	error_log( '=========================' );
+	// Enhanced logging for debugging (removed for production)
 	
 	// Check response code - Meta typically returns 200 for success
 	if ( $response_code !== 200 ) {

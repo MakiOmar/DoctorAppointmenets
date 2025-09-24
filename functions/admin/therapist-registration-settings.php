@@ -62,13 +62,7 @@ function snks_test_whatsapp_api_ajax() {
 	$test_message = snks_get_multilingual_otp_message( '123456', $settings['whatsapp_message_language'] );
 	$test_message .= ' (TEST MESSAGE)';
 	
-	// Debug test message
-	error_log( '=== WHATSAPP TEST API DEBUG ===' );
-	error_log( 'Test Phone: ' . $test_phone );
-	error_log( 'Test Message: ' . $test_message );
-	error_log( 'Use Template: ' . ( $settings['whatsapp_use_template'] ? 'Yes' : 'No' ) );
-	error_log( 'Template Name: ' . $settings['whatsapp_template_name'] );
-	error_log( '===============================' );
+	// Debug test message (removed for production)
 	
 	// Send test message
 	$result = snks_send_whatsapp_message( $test_phone, $test_message, $settings );
