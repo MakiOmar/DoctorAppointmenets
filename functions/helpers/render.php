@@ -991,6 +991,24 @@ function snks_is_ai_session_booking( $record ) {
 function template_str_replace( $record ) {
 	$user_details = snks_user_details( $record->client_id );
 	$button_text  = 'ابدأ الجلسة';
+	
+	// Check if this is an AI session and if it's too early to join
+	$is_ai_session = snks_is_ai_session( $record->ID );
+	$scheduled_timestamp = strtotime( $record->date_time );
+	$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+	$time_difference = $current_timestamp - $scheduled_timestamp;
+	$is_too_early = $time_difference < 0; // Current time is before scheduled time
+	
+	// Set button URL and status class for AI sessions that are too early
+	$button_url = site_url( 'meeting-room/?room_id=' . $record->ID );
+	$status_class = '';
+	
+	// For AI sessions that are too early, disable the button
+	if ( $is_ai_session && $is_too_early ) {
+		$button_text = 'الجلسة لم تبدأ بعد';
+		$button_url = '#';
+		$status_class = 'snks-disabled';
+	}
 
 	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = SNKS_CAMERA;
@@ -1034,9 +1052,9 @@ function template_str_replace( $record ) {
 			esc_html( $first_name . ' ' . $last_name ),
 			esc_html( $phone ),
 			esc_html( $whatsapp ),
-			add_query_arg( 'id', $record->user_id, esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ) ),
+			$button_url,
 			$button_text,
-			'',
+			$status_class,
 		),
 		$template
 	);
