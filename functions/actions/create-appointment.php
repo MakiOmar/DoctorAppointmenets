@@ -37,10 +37,19 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 		// Process AI order completion
 		snks_process_ai_order_completion( $order_id );
 		
-		// Redirect AI orders to the frontend appointments page
-		$frontend_url = snks_ai_get_primary_frontend_url();
-		wp_redirect( $frontend_url . '/appointments' );
-		exit;
+		// Only redirect if this is not a manual admin completion
+		// Check if we're in admin area or if this is a manual status change
+		$is_admin_area = is_admin();
+		$is_manual_completion = ( isset( $_GET['action'] ) && $_GET['action'] === 'mark_complete' ) ||
+							   ( isset( $_POST['order_status'] ) && current_user_can( 'manage_woocommerce' ) ) ||
+							   ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/' ) !== false );
+		
+		if ( ! $is_admin_area && ! $is_manual_completion ) {
+			// Redirect AI orders to the frontend appointments page
+			$frontend_url = snks_ai_get_primary_frontend_url();
+			wp_redirect( $frontend_url . '/appointments' );
+			exit;
+		}
 	}
 	
 	$customer_id = $order->get_customer_id();
