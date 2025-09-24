@@ -293,25 +293,50 @@ const applyCoupon = async () => {
   couponError.value = ''
   
   try {
-    const response = await api.post('/wp-json/jalsah-ai/v1/apply-coupon', {
-      coupon_code: couponCode.value.trim(),
-      user_id: userId.value,
-      _is_ai_booking: true // This is an AI booking context
+    // Get a nonce for the coupons action (works both logged-in and guests)
+    let nonce = ''
+    try {
+      const nonceRes = await api.get('/wp-json/jalsah-ai/v1/nonce', {
+        params: { action: 'snks_coupon_nonce' }
+      })
+      nonce = nonceRes?.data?.data?.nonce || ''
+    } catch (e) {
+      // Fallback to admin-ajax nonce endpoint if needed
+      const fallback = await api.get(`/wp-admin/admin-ajax.php`, {
+        params: { action: 'get_ai_nonce', action2: 'snks_coupon_nonce' }
+      })
+      nonce = fallback?.data?.data?.nonce || ''
+    }
+
+    if (!nonce) {
+      throw new Error('Nonce generation failed')
+    }
+
+    // Build form-encoded body for WordPress admin-ajax
+    const body = new URLSearchParams()
+    body.append('action', 'snks_apply_coupon')
+    body.append('code', couponCode.value.trim())
+    body.append('security', nonce)
+
+    const response = await api.post('/wp-admin/admin-ajax.php', body, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     })
-    
-    if (response.data.success) {
+
+    if (response.data?.success) {
+      const finalPrice = Number(response.data.final_price || 0)
+      const discountAmount = Math.max(0, Number(cartStore.totalPrice) - finalPrice)
       appliedCoupon.value = {
         code: couponCode.value.trim(),
-        discount: response.data.discount || 0,
+        discount: discountAmount,
         type: response.data.coupon_type || 'General'
       }
       couponCode.value = ''
     } else {
-      couponError.value = response.data.message || t('cart.couponError')
+      couponError.value = response.data?.message || t('cart.couponError')
     }
   } catch (error) {
     console.error('Coupon application error:', error)
-    couponError.value = error.response?.data?.message || t('cart.couponError')
+    couponError.value = error.response?.data?.message || error.message || t('cart.couponError')
   } finally {
     couponLoading.value = false
   }
