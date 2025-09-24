@@ -192,7 +192,7 @@ import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { useSettingsStore } from '../stores/settings'
 import { formatPrice } from '../utils/currency'
-import api from '../utils/api'
+import api from '../services/api'
 
 const { t, locale } = useI18n()
 const cartStore = useCartStore()
