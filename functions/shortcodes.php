@@ -1251,6 +1251,7 @@ add_shortcode(
 					)
 				);
 				$coupon_code = null;
+				$coupon_type = null;
 				// تحقق من النتيجة
 				if ( $order_id ) {
 					// Step 2: Get order items
@@ -1261,6 +1262,13 @@ add_shortcode(
 							$item_coupon = $item->get_meta( '_coupon_code' );
 							if ( $item_coupon ) {
 								$coupon_code = $item_coupon;
+								// Get coupon type from database
+								global $wpdb;
+								$coupon_data = $wpdb->get_row( $wpdb->prepare(
+									"SELECT is_ai_coupon FROM {$wpdb->prefix}snks_custom_coupons WHERE code = %s",
+									$item_coupon
+								) );
+								$coupon_type = $coupon_data ? ( $coupon_data->is_ai_coupon ? 'AI' : 'General' ) : 'Unknown';
 								break; // Stop if one is found
 							}
 						}
@@ -1287,7 +1295,7 @@ add_shortcode(
 				$user_details = snks_user_details( $transaction->client_id );
 				$first_name   = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
 				$last_name    = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
-				$details      = '<button class="details-button" data-coupon="' . esc_attr( $coupon_text ) . '" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
+				$details      = '<button class="details-button" data-coupon="' . esc_attr( $coupon_text ) . '" data-coupon-type="' . esc_attr( $coupon_type ) . '" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
 			} else {
 				$details = 'غير متاح';
 			}
