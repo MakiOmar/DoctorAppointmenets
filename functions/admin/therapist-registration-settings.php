@@ -485,24 +485,24 @@ function snks_therapist_registration_settings_page() {
  */
 function snks_get_country_dial_codes() {
 	return array(
-		'EG' => array( 'name' => 'Egypt', 'code' => '+20' ),
-		'SA' => array( 'name' => 'Saudi Arabia', 'code' => '+966' ),
-		'AE' => array( 'name' => 'UAE', 'code' => '+971' ),
-		'KW' => array( 'name' => 'Kuwait', 'code' => '+965' ),
-		'QA' => array( 'name' => 'Qatar', 'code' => '+974' ),
-		'BH' => array( 'name' => 'Bahrain', 'code' => '+973' ),
-		'OM' => array( 'name' => 'Oman', 'code' => '+968' ),
-		'JO' => array( 'name' => 'Jordan', 'code' => '+962' ),
-		'LB' => array( 'name' => 'Lebanon', 'code' => '+961' ),
-		'SY' => array( 'name' => 'Syria', 'code' => '+963' ),
-		'IQ' => array( 'name' => 'Iraq', 'code' => '+964' ),
-		'YE' => array( 'name' => 'Yemen', 'code' => '+967' ),
-		'PS' => array( 'name' => 'Palestine', 'code' => '+970' ),
-		'MA' => array( 'name' => 'Morocco', 'code' => '+212' ),
-		'TN' => array( 'name' => 'Tunisia', 'code' => '+216' ),
-		'DZ' => array( 'name' => 'Algeria', 'code' => '+213' ),
-		'LY' => array( 'name' => 'Libya', 'code' => '+218' ),
-		'SD' => array( 'name' => 'Sudan', 'code' => '+249' )
+		'EG' => array( 'name' => 'Egypt', 'code' => '+20', 'validation_pattern' => '^\\+20(10|11|12|15|16)[0-9]{8}$' ),
+		'SA' => array( 'name' => 'Saudi Arabia', 'code' => '+966', 'validation_pattern' => '^\\+966(5|50|51|52|53|54|55|56|57|58|59)[0-9]{7}$' ),
+		'AE' => array( 'name' => 'UAE', 'code' => '+971', 'validation_pattern' => '^\\+971(5|50|52|54|55|56|58|59)[0-9]{7}$' ),
+		'KW' => array( 'name' => 'Kuwait', 'code' => '+965', 'validation_pattern' => '^\\+965[569][0-9]{7}$' ),
+		'QA' => array( 'name' => 'Qatar', 'code' => '+974', 'validation_pattern' => '^\\+974[3-7][0-9]{7}$' ),
+		'BH' => array( 'name' => 'Bahrain', 'code' => '+973', 'validation_pattern' => '^\\+973[3-9][0-9]{7}$' ),
+		'OM' => array( 'name' => 'Oman', 'code' => '+968', 'validation_pattern' => '^\\+968[79][0-9]{7}$' ),
+		'JO' => array( 'name' => 'Jordan', 'code' => '+962', 'validation_pattern' => '^\\+962[7][789][0-9]{7}$' ),
+		'LB' => array( 'name' => 'Lebanon', 'code' => '+961', 'validation_pattern' => '^\\+961[3-9][0-9]{7}$' ),
+		'SY' => array( 'name' => 'Syria', 'code' => '+963', 'validation_pattern' => '^\\+963[9][0-9]{8}$' ),
+		'IQ' => array( 'name' => 'Iraq', 'code' => '+964', 'validation_pattern' => '^\\+964[7][3-9][0-9]{8}$' ),
+		'YE' => array( 'name' => 'Yemen', 'code' => '+967', 'validation_pattern' => '^\\+967[7][0-9]{8}$' ),
+		'PS' => array( 'name' => 'Palestine', 'code' => '+970', 'validation_pattern' => '^\\+970[5][0-9]{8}$' ),
+		'MA' => array( 'name' => 'Morocco', 'code' => '+212', 'validation_pattern' => '^\\+212[6-7][0-9]{8}$' ),
+		'TN' => array( 'name' => 'Tunisia', 'code' => '+216', 'validation_pattern' => '^\\+216[2-5][0-9]{7}$' ),
+		'DZ' => array( 'name' => 'Algeria', 'code' => '+213', 'validation_pattern' => '^\\+213[5-7][0-9]{8}$' ),
+		'LY' => array( 'name' => 'Libya', 'code' => '+218', 'validation_pattern' => '^\\+218[9][0-9]{8}$' ),
+		'SD' => array( 'name' => 'Sudan', 'code' => '+249', 'validation_pattern' => '^\\+249[9][0-9]{8}$' )
 	);
 }
 

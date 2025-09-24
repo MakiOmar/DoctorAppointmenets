@@ -207,12 +207,26 @@ function onFileChange(event, field, multiple = false) {
 // Phone validation function
 const validatePhoneNumber = (phoneNumber, countryCode) => {
   const country = registrationStore.countryCodes[countryCode]
+  console.log('🔍 Validation Debug:', {
+    countryCode,
+    country,
+    phoneNumber,
+    hasPattern: !!(country && country.validation_pattern)
+  })
+  
   if (!country || !country.validation_pattern) {
+    console.log('🔍 Skipping validation - no pattern available')
     return { isValid: true, error: null } // Skip validation if no pattern
   }
   
   const fullPhoneNumber = country.code + phoneNumber
   const pattern = new RegExp(country.validation_pattern)
+  
+  console.log('🔍 Validation Test:', {
+    fullPhoneNumber,
+    pattern: country.validation_pattern,
+    testResult: pattern.test(fullPhoneNumber)
+  })
   
   if (!pattern.test(fullPhoneNumber)) {
     return { 
