@@ -164,6 +164,17 @@ function snks_apply_coupon_ajax_handler() {
 	if ( $doctor_id !== $form_data['_user_id'] ) {
 		wp_send_json_error( array( 'message' => 'كوبون غير صالح' ) );
 	}
+
+	// Enforce AI-only vs general coupon usage based on current booking context
+	$is_ai_context = ! empty( $form_data['_is_ai_booking'] ) || ! empty( $form_data['_from_jalsah_ai'] );
+	$is_ai_coupon  = ! empty( $coupon->is_ai_coupon );
+	if ( $is_ai_context && ! $is_ai_coupon ) {
+		wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
+	}
+	if ( ! $is_ai_context && $is_ai_coupon ) {
+		wp_send_json_error( array( 'message' => 'هذا الكوبون مخصص لجلسات الذكاء الاصطناعي فقط.' ) );
+	}
+
 	$user_id      = get_current_user_id();
 	$timetable_id = absint( $form_data['booking_id'] ?? 0 );
 
