@@ -143,9 +143,16 @@
                 autocomplete="tel"
                 style="text-align: left; direction: ltr;"
                 @input="validateWhatsAppNumber"
-                @blur="validateWhatsAppNumber"
+                @blur="onWhatsAppBlur"
             />
           </div>
+          </div>
+          
+          <!-- WhatsApp Phone Validation Message -->
+          <div v-if="phoneValidationMessage" class="mt-2 text-sm" :class="phoneValidationMessage.type === 'error' ? 'text-red-600' : 'text-green-600'">
+            <div class="font-medium">{{ phoneValidationMessage.title }}</div>
+            <div class="font-mono text-xs mt-1">{{ phoneValidationMessage.fullNumber }}</div>
+            <div v-if="phoneValidationMessage.type === 'error'" class="mt-1">{{ phoneValidationMessage.error }}</div>
           </div>
           
           <!-- WhatsApp Dial Code Error Message -->
@@ -282,6 +289,9 @@ export default {
     // WhatsApp dial code error - shown when user includes dial code in input
     const whatsappDialCodeError = ref(false)
     
+    // Phone validation message - shown when user focuses out of WhatsApp input
+    const phoneValidationMessage = ref(null)
+    
     // Function to validate password match on focusout
     const validatePasswordMatch = () => {
       if (form.value.password && form.value.confirm_password) {
@@ -312,6 +322,41 @@ export default {
                          whatsappInput.startsWith('00' + dialCode.substring(1))
       
       whatsappDialCodeError.value = hasDialCode
+    }
+    
+    // Function to validate phone number and show message on blur
+    const onWhatsAppBlur = () => {
+      if (!form.value.whatsapp || !form.value.whatsapp.trim()) {
+        phoneValidationMessage.value = null
+        return
+      }
+      
+      const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      if (!selectedCountry) {
+        phoneValidationMessage.value = null
+        return
+      }
+      
+      const fullPhoneNumber = selectedCountry.dial_code + form.value.whatsapp
+      
+      // Validate phone number
+      const validation = validatePhoneNumber(form.value.whatsapp, selectedCountryCode.value)
+      
+      if (validation.isValid) {
+        phoneValidationMessage.value = {
+          type: 'success',
+          title: t('auth.register.phoneValidation.valid'),
+          fullNumber: fullPhoneNumber,
+          error: null
+        }
+      } else {
+        phoneValidationMessage.value = {
+          type: 'error',
+          title: t('auth.register.phoneValidation.invalid'),
+          fullNumber: fullPhoneNumber,
+          error: validation.error
+        }
+      }
     }
     
     // Filtered countries based on search
@@ -629,8 +674,10 @@ export default {
       otpMethod,
       passwordMismatchError,
       whatsappDialCodeError,
+      phoneValidationMessage,
       validatePasswordMatch,
       validateWhatsAppNumber,
+      onWhatsAppBlur,
       showCountryDropdown,
       countrySearch,
       filteredCountries,

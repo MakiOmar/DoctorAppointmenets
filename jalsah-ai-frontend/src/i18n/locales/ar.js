@@ -198,6 +198,10 @@ export default {
       noNeedDialCode: 'لا حاجة لإدخال رمز الدولة، تم اختياره بالفعل',
       passwordMismatch: 'كلمات المرور غير متطابقة',
       invalidPhoneFormat: 'رقم الهاتف غير صحيح لـ',
+      phoneValidation: {
+        valid: 'رقم الهاتف صحيح',
+        invalid: 'رقم الهاتف غير صحيح'
+      },
       errors: {
         passwordMismatch: 'كلمات المرور غير متطابقة',
         emailExists: 'البريد الإلكتروني مستخدم بالفعل',

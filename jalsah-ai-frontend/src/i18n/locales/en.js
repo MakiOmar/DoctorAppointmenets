@@ -194,6 +194,10 @@ export default {
       whatsappPlaceholder: '1234567890',
       noNeedDialCode: 'No need to enter the dial code, it\'s already selected',
       invalidPhoneFormat: 'Invalid phone number format for',
+      phoneValidation: {
+        valid: 'Phone number is valid',
+        invalid: 'Phone number is invalid'
+      },
       errors: {
         passwordMismatch: 'Passwords do not match',
         emailExists: 'Email already exists',
