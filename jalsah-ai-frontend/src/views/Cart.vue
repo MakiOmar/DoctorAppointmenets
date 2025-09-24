@@ -99,16 +99,59 @@
           <div class="bg-white shadow rounded-lg p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">{{ $t('orderSummary') }}</h2>
             
+            <!-- Coupon Form -->
+            <div v-if="!appliedCoupon" class="mb-4">
+              <div class="flex space-x-2 rtl:space-x-reverse">
+                <input
+                  v-model="couponCode"
+                  type="text"
+                  :placeholder="$t('cart.enterCouponCode')"
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  @click="applyCoupon"
+                  :disabled="couponLoading || !couponCode.trim()"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  <span v-if="couponLoading">{{ $t('common.loading') }}</span>
+                  <span v-else>{{ $t('cart.applyCoupon') }}</span>
+                </button>
+              </div>
+              <p v-if="couponError" class="mt-2 text-sm text-red-600">{{ couponError }}</p>
+            </div>
+
+            <!-- Applied Coupon -->
+            <div v-if="appliedCoupon" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-green-800">{{ $t('cart.appliedCoupon') }}</p>
+                  <p class="text-sm text-green-600">{{ appliedCoupon.code }}</p>
+                </div>
+                <button
+                  @click="removeCoupon"
+                  class="text-red-600 hover:text-red-800 text-sm"
+                >
+                  {{ $t('cart.removeCoupon') }}
+                </button>
+              </div>
+            </div>
+
             <div class="space-y-4">
               <div class="flex justify-between">
                 <span class="text-gray-600">{{ $t('subtotal') }}</span>
                 <span class="text-gray-900">{{ formatPrice(cartStore.totalPrice) }}</span>
               </div>
               
+              <!-- Coupon Discount -->
+              <div v-if="appliedCoupon && appliedCoupon.discount > 0" class="flex justify-between text-green-600">
+                <span>{{ $t('cart.discount') }}</span>
+                <span>-{{ formatPrice(appliedCoupon.discount) }}</span>
+              </div>
+              
               <div class="border-t border-gray-200 pt-4">
                 <div class="flex justify-between">
                   <span class="text-lg font-medium text-gray-900">{{ $t('total') }}</span>
-                  <span class="text-lg font-medium text-gray-900">{{ formatPrice(cartStore.totalPrice) }}</span>
+                  <span class="text-lg font-medium text-gray-900">{{ formatPrice(finalTotal) }}</span>
                 </div>
               </div>
             </div>
@@ -143,12 +186,13 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { useSettingsStore } from '../stores/settings'
 import { formatPrice } from '../utils/currency'
+import api from '../utils/api'
 
 const { t, locale } = useI18n()
 const cartStore = useCartStore()
@@ -157,6 +201,20 @@ const settingsStore = useSettingsStore()
 
 // Get the authenticated user's ID
 const userId = computed(() => authStore.user?.id)
+
+// Coupon state
+const couponCode = ref('')
+const appliedCoupon = ref(null)
+const couponLoading = ref(false)
+const couponError = ref('')
+
+// Calculate final total with coupon discount
+const finalTotal = computed(() => {
+  if (appliedCoupon.value && appliedCoupon.value.discount > 0) {
+    return Math.max(0, cartStore.totalPrice - appliedCoupon.value.discount)
+  }
+  return cartStore.totalPrice
+})
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''
@@ -225,6 +283,43 @@ const proceedToPayment = async () => {
 const addMoreBookings = () => {
   // Redirect to homepage to allow user to book more appointments
   window.location.href = '/'
+}
+
+// Coupon functions
+const applyCoupon = async () => {
+  if (!couponCode.value.trim()) return
+  
+  couponLoading.value = true
+  couponError.value = ''
+  
+  try {
+    const response = await api.post('/wp-json/jalsah-ai/v1/apply-coupon', {
+      coupon_code: couponCode.value.trim(),
+      user_id: userId.value,
+      _is_ai_booking: true // This is an AI booking context
+    })
+    
+    if (response.data.success) {
+      appliedCoupon.value = {
+        code: couponCode.value.trim(),
+        discount: response.data.discount || 0,
+        type: response.data.coupon_type || 'General'
+      }
+      couponCode.value = ''
+    } else {
+      couponError.value = response.data.message || t('cart.couponError')
+    }
+  } catch (error) {
+    console.error('Coupon application error:', error)
+    couponError.value = error.response?.data?.message || t('cart.couponError')
+  } finally {
+    couponLoading.value = false
+  }
+}
+
+const removeCoupon = () => {
+  appliedCoupon.value = null
+  couponError.value = ''
 }
 
 onMounted(() => {
