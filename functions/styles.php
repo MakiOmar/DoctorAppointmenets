@@ -668,7 +668,7 @@ add_action(
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
 			.snks-disabled .snks-appointment-button {
-				background-color: #7a898f;
+				background-color: #3d7288!important;
 			}
 			.snks-timetable-accordion-wrapper.future:nth-child(1) .snks-timetable-accordion-content-wrapper{
 				display: block;

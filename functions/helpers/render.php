@@ -931,7 +931,7 @@ function snks_booking_item_template( $record ) {
 			</div>
 			<?php if ( 'online' === $record->attendance_type && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
-				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
+				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);left:-50%;color:#fff">{button_text}</a>
 			</div>
 			<?php } ?>
 		</div>
@@ -1026,7 +1026,10 @@ function template_str_replace( $record ) {
 	} else {
 		$template = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
 	}
-	$template = preg_replace( '/<!--timer-->.*?<!--\/timer-->/s', '', $template );
+	// Keep timer for AI sessions that are too early
+	if ( ! ( $is_ai_session && $is_too_early ) ) {
+		$template = preg_replace( '/<!--timer-->.*?<!--\/timer-->/s', '', $template );
+	}
 	$template = preg_replace( '/<!--patientaction-->.*?<!--\/patientaction-->/s', '', $template );
 
 	return str_replace(
@@ -1041,6 +1044,7 @@ function template_str_replace( $record ) {
 			'{whatsapp}',
 			'{button_url}',
 			'{button_text}',
+			'{snks_timer}',
 			'{status_class}',
 		),
 		array(
@@ -1054,6 +1058,8 @@ function template_str_replace( $record ) {
 			esc_html( $whatsapp ),
 			$button_url,
 			$button_text,
+			// Show timer for AI sessions that are too early
+			( $is_ai_session && $is_too_early ) ? '<span class="snks-apointment-timer"></span>' : '',
 			$status_class,
 		),
 		$template
