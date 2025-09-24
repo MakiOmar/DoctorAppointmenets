@@ -501,7 +501,7 @@ export default {
       if (!pattern.test(fullPhoneNumber)) {
         return { 
           isValid: false, 
-          error: `${t('auth.login.invalidPhoneFormat')} ${country.name_en}` 
+          error: `${t('auth.register.invalidPhoneFormat')} ${country.name_en}` 
         }
       }
       
