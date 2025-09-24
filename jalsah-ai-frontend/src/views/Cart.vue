@@ -312,10 +312,11 @@ const applyCoupon = async () => {
       throw new Error('Nonce generation failed')
     }
 
-    // Build form-encoded body for WordPress admin-ajax
+    // Build form-encoded body for WordPress admin-ajax (AI-specific apply)
     const body = new URLSearchParams()
-    body.append('action', 'snks_apply_coupon')
+    body.append('action', 'snks_apply_ai_coupon')
     body.append('code', couponCode.value.trim())
+    body.append('amount', String(cartStore.totalPrice))
     body.append('security', nonce)
 
     const response = await api.post('/wp-admin/admin-ajax.php', body, {
@@ -324,7 +325,7 @@ const applyCoupon = async () => {
 
     if (response.data?.success) {
       const finalPrice = Number(response.data.final_price || 0)
-      const discountAmount = Math.max(0, Number(cartStore.totalPrice) - finalPrice)
+      const discountAmount = Number(response.data.discount ?? (Math.max(0, Number(cartStore.totalPrice) - finalPrice)))
       appliedCoupon.value = {
         code: couponCode.value.trim(),
         discount: discountAmount,

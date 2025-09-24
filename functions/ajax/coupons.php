@@ -257,3 +257,49 @@ function snks_remove_coupon_ajax_handler() {
 
 	wp_send_json_success( array( 'message' => 'تمت إزالة الكوبون وإعادة السعر الأصلي.' ) );
 }
+
+/**
+ * Ajax: Apply coupon for AI cart context without relying on session transient.
+ * Expects: code, amount, security (nonce for 'snks_coupon_nonce').
+ * Returns: success, final_price, discount.
+ */
+add_action( 'wp_ajax_snks_apply_ai_coupon', 'snks_apply_ai_coupon_ajax_handler' );
+add_action( 'wp_ajax_nopriv_snks_apply_ai_coupon', 'snks_apply_ai_coupon_ajax_handler' );
+
+function snks_apply_ai_coupon_ajax_handler() {
+    check_ajax_referer( 'snks_coupon_nonce', 'security' );
+
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( array( 'message' => 'يجب تسجيل الدخول لتفعيل الكوبون.' ) );
+    }
+
+    $code   = sanitize_text_field( $_POST['code'] ?? '' );
+    $amount = floatval( $_POST['amount'] ?? 0 );
+
+    if ( '' === $code || $amount <= 0 ) {
+        wp_send_json_error( array( 'message' => 'بيانات غير صالحة لتطبيق الكوبون.' ) );
+    }
+
+    // Validate coupon and compute discount against provided amount
+    $result = snks_apply_coupon_to_amount( $code, $amount );
+
+    if ( false === $result['valid'] ) {
+        wp_send_json_error( array( 'message' => $result['message'] ) );
+    }
+
+    // Enforce AI-only coupon usage for this AI cart endpoint
+    $coupon      = $result['coupon'];
+    $is_ai_coupon = ! empty( $coupon->is_ai_coupon );
+    if ( ! $is_ai_coupon ) {
+        wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
+    }
+
+    wp_send_json_success(
+        array(
+            'message'     => 'تم تطبيق الكوبون بنجاح.',
+            'final_price' => $result['final'],
+            'discount'    => $result['discount'],
+            'coupon_type' => 'AI',
+        )
+    );
+}
