@@ -207,7 +207,7 @@ add_action(
 	'wp_footer',
 	function () {
 		if ( ! snks_is_patient() ) {
-			//return;
+			return;
 		}
 		?>
 		<!-- Timer script moved to snks-bookings shortcode -->
