@@ -28,12 +28,19 @@ function snks_create_custom_coupons_table() {
 		expires_at DATETIME DEFAULT NULL,
 		usage_limit INT DEFAULT NULL,
 		doctor_id BIGINT(20) NOT NULL,
+		is_ai_coupon TINYINT(1) NOT NULL DEFAULT 0,
 		PRIMARY KEY (id),
 		UNIQUE KEY code (code)
 	) $collate;";
 
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );
+	
+	// Add is_ai_coupon column if it doesn't exist (for existing installations)
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $table_name LIKE 'is_ai_coupon'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $table_name ADD COLUMN is_ai_coupon TINYINT(1) NOT NULL DEFAULT 0" );
+	}
 }
 
 

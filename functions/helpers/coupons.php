@@ -21,6 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *     @type string  $expires_at     Expiry datetime (Y-m-d H:i:s).
  *     @type int     $usage_limit    Maximum number of uses.
  *     @type int     $doctor_id      ID of the doctor who created the coupon.
+ *     @type int     $is_ai_coupon   Whether this coupon is for AI sessions only (0|1).
  * }
  * @return int|false Inserted coupon ID on success, false on failure.
  */
@@ -38,8 +39,9 @@ function snks_insert_coupon( $args ) {
 			'expires_at'     => $args['expires_at'],
 			'usage_limit'    => $args['usage_limit'],
 			'doctor_id'      => $args['doctor_id'],
+			'is_ai_coupon'   => isset( $args['is_ai_coupon'] ) ? intval( $args['is_ai_coupon'] ) : 0,
 		),
-		array( '%s', '%s', '%f', '%s', '%d', '%d' )
+		array( '%s', '%s', '%f', '%s', '%d', '%d', '%d' )
 	);
 	return $inserted ? $wpdb->insert_id : false;
 }

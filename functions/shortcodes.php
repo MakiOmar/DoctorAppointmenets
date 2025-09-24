@@ -1508,6 +1508,12 @@ function snks_doctor_coupons_ajax_shortcode() {
 				<label for="expires_at" style="margin-bottom:10px">صلاحية الكوبون حتى تاريخ</label>
 				<input type="date" id="expires_at" name="expires_at" style="width:100%"></p>
 			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
+			<p>
+				<label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+					<input type="checkbox" name="is_ai_coupon" value="1" style="margin: 0;">
+					<span>كوبون للجلسات الذكية (AI) فقط</span>
+				</label>
+			</p>
 			<button type="submit">➕ إضافة الكوبون</button>
 		</form>
 		<hr>
@@ -1519,6 +1525,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 					<th>الخصم</th>
 					<th>الصلاحية</th>
 					<th>المتبقي</th>
+					<th>النوع</th>
 					<th>الحالة</th>
 					<th>حذف الكوبون</th>
 				</tr>
@@ -1535,6 +1542,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 						<td data-label="الخصم"><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
 						<td data-label="الصلاحية"><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
 						<td data-label="المتبقي"><?php echo esc_html( $remaining ); ?></td>
+						<td data-label="النوع"><?php echo ( ! empty( $coupon->is_ai_coupon ) && $coupon->is_ai_coupon ) ? '🤖 AI فقط' : '📋 عام'; ?></td>
 						<td data-label="الحالة"><?php echo esc_html( $status ); ?></td>
 						<td data-label="حذف الكوبون">
 							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>

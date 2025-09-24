@@ -1045,6 +1045,7 @@ function template_str_replace( $record ) {
 			'{phone}',
 			'{whatsapp}',
 			'{button_url}',
+			'{room_url}',
 			'{button_text}',
 			'{snks_timer}',
 			'{status_class}',
@@ -1059,6 +1060,7 @@ function template_str_replace( $record ) {
 			esc_html( $phone ),
 			esc_html( $whatsapp ),
 			$button_url,
+			$room,
 			$button_text,
 			// Show timer for AI sessions that are too early
 			( $is_ai_session && $is_too_early ) ? '<span class="snks-apointment-timer"></span>' : '',
