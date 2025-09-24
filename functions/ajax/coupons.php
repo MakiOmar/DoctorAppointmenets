@@ -32,7 +32,8 @@ function snks_create_coupon_ajax_handler() {
 		'expires_at'     => ! empty( $_POST['expires_at'] ) ? date( 'Y-m-d 00:00:00', strtotime( $_POST['expires_at'] ) ) : null,
 		'usage_limit'    => ! empty( $_POST['usage_limit'] ) ? intval( $_POST['usage_limit'] ) : null,
 		'doctor_id'      => $current_user,
-		'is_ai_coupon'   => isset( $_POST['is_ai_coupon'] ) ? 1 : 0,
+		// Respect explicit 0/1 sent from client; default to 0 when absent
+		'is_ai_coupon'   => array_key_exists( 'is_ai_coupon', $_POST ) ? intval( $_POST['is_ai_coupon'] ) : 0,
 	);
 
 	if ( empty( $args['code'] ) || 0 >= $args['discount_value'] ) {
