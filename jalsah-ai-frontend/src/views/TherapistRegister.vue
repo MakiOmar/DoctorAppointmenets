@@ -207,26 +207,14 @@ function onFileChange(event, field, multiple = false) {
 // Phone validation function
 const validatePhoneNumber = (phoneNumber, countryCode) => {
   const country = registrationStore.countryCodes[countryCode]
-  console.log('🔍 Validation Debug:', {
-    countryCode,
-    country,
-    phoneNumber,
-    hasPattern: !!(country && country.validation_pattern)
-  })
   
   if (!country || !country.validation_pattern) {
-    console.log('🔍 Skipping validation - no pattern available')
     return { isValid: true, error: null } // Skip validation if no pattern
   }
   
   const fullPhoneNumber = country.code + phoneNumber
   const pattern = new RegExp(country.validation_pattern)
   
-  console.log('🔍 Validation Test:', {
-    fullPhoneNumber,
-    pattern: country.validation_pattern,
-    testResult: pattern.test(fullPhoneNumber)
-  })
   
   if (!pattern.test(fullPhoneNumber)) {
     return { 
@@ -257,7 +245,6 @@ async function onSubmit() {
     if (registrationStore.shouldShowCountryDialCodes) {
       // Validate phone number
       if (form.value.phone && form.value.phone_country) {
-        console.log('🔍 Validating phone number...')
         const phoneValidation = validatePhoneNumber(form.value.phone, form.value.phone_country)
         if (!phoneValidation.isValid) {
           error.value = phoneValidation.error
@@ -268,7 +255,6 @@ async function onSubmit() {
       
       // Validate WhatsApp number
       if (form.value.whatsapp && form.value.whatsapp_country) {
-        console.log('🔍 Validating WhatsApp number...')
         const whatsappValidation = validatePhoneNumber(form.value.whatsapp, form.value.whatsapp_country)
         if (!whatsappValidation.isValid) {
           error.value = whatsappValidation.error
@@ -276,8 +262,6 @@ async function onSubmit() {
           return
         }
       }
-    } else {
-      console.log('🔍 Country dial codes not required, skipping validation')
     }
     
     const data = new FormData()

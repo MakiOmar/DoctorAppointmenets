@@ -478,9 +478,6 @@ export default {
     const resendCode = async () => {
       resendLoading.value = true
       try {
-        // Debug: Log the contact value
-        console.log('🔍 Resend Code Debug:', {
-          contact: contact.value,
           verificationMethod: verificationMethod.value,
           requireEmail: requireEmail.value
         })

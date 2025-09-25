@@ -188,10 +188,6 @@ export default {
         const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
         const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
         
-        console.log('🔍 Therapist:', therapist.name, 'ID:', therapist.id)
-        console.log('🔍 Diagnosis data:', diagnosis)
-        console.log('🔍 Frontend order from API:', diagnosis?.frontend_order)
-        console.log('🔍 Parsed frontend order:', frontendOrder)
         
         return {
           ...therapist,
@@ -561,7 +557,6 @@ export default {
       localStorage.removeItem('diagnosis_data')
       // Clear stored diagnosis ID
       localStorage.removeItem('lastDiagnosisId')
-      console.log('🔍 Cleared stored diagnosis ID')
       // Redirect to homepage
       router.push('/')
     }
@@ -580,17 +575,11 @@ export default {
     }
 
     const handleShowDetails = (therapistId) => {
-      console.log('🔍 handleShowDetails called with therapistId:', therapistId)
-      console.log('🔍 Previous openTherapistId:', openTherapistId.value)
       openTherapistId.value = therapistId
-      console.log('🔍 New openTherapistId:', openTherapistId.value)
     }
 
     const handleHideDetails = () => {
-      console.log('🔍 handleHideDetails called')
-      console.log('🔍 Previous openTherapistId:', openTherapistId.value)
       openTherapistId.value = null
-      console.log('🔍 New openTherapistId:', openTherapistId.value)
     }
 
     // Sorting button handlers (same as therapists page)
@@ -614,7 +603,6 @@ export default {
       // Store diagnosis ID in localStorage for homepage button logic
       if (route.params.diagnosisId) {
         localStorage.setItem('lastDiagnosisId', route.params.diagnosisId)
-        console.log('🔍 Stored diagnosis ID:', route.params.diagnosisId)
       }
       
       // Ensure settings are loaded
@@ -643,9 +631,7 @@ export default {
             if (firstTherapistCard.value && firstTherapistCard.value[0]) {
               // Set the first therapist as the open therapist
               if (matchedTherapists.value.length > 0) {
-                console.log('🔍 Auto-setting first therapist as open')
                 openTherapistId.value = matchedTherapists.value[0].id
-                console.log('🔍 Set openTherapistId to:', openTherapistId.value)
               }
             }
           }, 500)

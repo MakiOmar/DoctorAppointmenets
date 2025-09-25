@@ -47,9 +47,7 @@ export const useCartStore = defineStore('cart', () => {
     error.value = null
     
     try {
-      console.log('🛒 Adding to cart:', appointmentData)
       const response = await api.post('/wp-json/jalsah-ai/v1/add-appointment-to-cart', appointmentData)
-      console.log('🛒 API Response:', response.data)
       
       if (response.data.success) {
         // Reload cart to get updated data

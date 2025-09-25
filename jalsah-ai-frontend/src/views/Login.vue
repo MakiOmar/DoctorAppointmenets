@@ -425,8 +425,6 @@ export default {
     const loading = computed(() => authStore.loading)
     const requireEmail = computed(() => {
       const result = therapistRegistrationStore.shouldShowEmail
-      console.log('🔍 requireEmail computed called, result:', result, 'type:', typeof result)
-      console.log('🔍 Original require_email value:', therapistRegistrationStore.settings.require_email)
       return result
     })
 
@@ -511,24 +509,16 @@ export default {
       }
       
       try {
-        console.log('🔍 About to call authStore.login with credentials:', credentials)
         const result = await authStore.login(credentials)
-        console.log('🔍 Auth store login result:', result)
-        console.log('🔍 Result type:', typeof result)
-        console.log('🔍 Result needsVerification:', result?.needsVerification)
         
         if (result === true) {
-          console.log('✅ Login successful, redirecting to homepage')
         // Redirect to homepage after successful login
         router.push('/')
         } else if (result && result.needsVerification) {
-          console.log('✅ Auth store returned verification error, redirecting to verification page')
-          console.log('🔍 Verification result details:', result)
           // Show verification message to user
           const verificationMessage = requireEmail.value 
             ? t('toast.auth.verificationRequired')
             : t('toast.auth.whatsappVerificationRequired')
-          console.log('🔍 Showing verification message:', verificationMessage)
           toast.info(verificationMessage)
           
           // User needs verification, redirect to verification page after a short delay
@@ -542,31 +532,18 @@ export default {
               const fullWhatsAppNumber = selectedCountry ? selectedCountry.dial_code + form.value.whatsapp : form.value.whatsapp
               identifier = fullWhatsAppNumber
               
-              console.log('🔍 selectedCountryCode.value:', selectedCountryCode.value)
-              console.log('🔍 selectedCountry:', selectedCountry)
-              console.log('🔍 fullWhatsAppNumber:', identifier)
             }
             
-            console.log('🔄 Redirecting to verification page with identifier:', identifier)
-            console.log('🔍 requireEmail.value:', requireEmail.value)
-            console.log('🔍 form.value.email:', form.value.email)
-            console.log('🔍 form.value.whatsapp:', form.value.whatsapp)
-            
             if (identifier) {
-              console.log('🔄 Navigating to:', `/verify?identifier=${encodeURIComponent(identifier)}`)
               router.push(`/verify?identifier=${encodeURIComponent(identifier)}`)
             } else {
-              console.log('🔄 Navigating to: /verify')
               router.push('/verify')
             }
           }, 1500) // 1.5 second delay to let user read the message
-        } else {
-          console.log('❌ Unexpected result from auth store:', result)
         }
       } catch (error) {
         // This catch block should not be reached for verification errors
         // as the auth store handles them and returns a special object
-        console.log('🔍 Unexpected error in login:', error)
         const errorMessage = error.response?.data?.error || error.message
         toast.error(errorMessage)
       }
@@ -791,8 +768,6 @@ export default {
     onMounted(async () => {
       await therapistRegistrationStore.loadSettings()
       await loadCountries()
-      console.log('🔍 Login form - Registration settings loaded:', therapistRegistrationStore.settings)
-      console.log('🔍 Login form - Should show email:', requireEmail.value)
       
       // Add click outside listener
       document.addEventListener('click', handleClickOutside)

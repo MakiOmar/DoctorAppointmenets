@@ -288,7 +288,6 @@ export default {
       const storedDiagnosisId = localStorage.getItem('lastDiagnosisId')
       if (storedDiagnosisId) {
         lastDiagnosisId.value = storedDiagnosisId
-        console.log('🔍 Found stored diagnosis ID:', storedDiagnosisId)
       }
     })
     

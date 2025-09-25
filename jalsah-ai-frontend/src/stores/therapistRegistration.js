@@ -16,7 +16,6 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
   getters: {
     shouldShowEmail: (state) => {
       const result = state.settings.require_email
-      console.log('🔍 shouldShowEmail getter called, result:', result, 'type:', typeof result)
       // Convert string "0"/"1" to boolean
       return result === '1' || result === 1 || result === true
     },
@@ -32,7 +31,6 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
       
       this.loading = true
       try {
-        console.log('🔍 Loading therapist registration settings...')
         // Try custom API endpoint first (same pattern as working therapist requests)
         let response
         try {
@@ -42,11 +40,8 @@ export const useTherapistRegistrationStore = defineStore('therapistRegistration'
           response = await api.get('/wp-json/jalsah-ai/v1/therapist-registration-settings')
         }
         
-        console.log('🔍 API Response:', response.data)
         if (response.data.success) {
           this.settings = response.data.data
-          console.log('🔍 Settings loaded:', this.settings)
-          console.log('🔍 require_email value:', this.settings.require_email)
         }
       } catch (error) {
         console.error('Failed to load therapist registration settings:', error)

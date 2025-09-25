@@ -559,20 +559,10 @@ export default {
       // Validate phone number before proceeding
       const phoneValidation = validatePhoneNumber(form.value.whatsapp, selectedCountryCode.value)
       if (!phoneValidation.isValid) {
-        console.log('🔍 Phone validation failed:', phoneValidation.error)
         toast.error(phoneValidation.error)
         return
       }
 
-      // Debug: Log the phone number being sent
-      console.log('📱 Frontend Debug - Phone Number:', {
-        selectedCountry: selectedCountry,
-        dialCode: selectedCountry?.dial_code,
-        userInput: form.value.whatsapp,
-        fullNumber: fullWhatsAppNumber,
-        otpMethod: otpMethod.value,
-        validationPassed: true
-      })
 
       const registrationData = {
         first_name: form.value.first_name,

@@ -249,9 +249,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   const resendVerification = async (contact) => {
     try {
-      // Debug: Log the contact parameter
-      console.log('🔍 ResendVerification Debug:', {
-        contact: contact,
         contactType: typeof contact,
         contactLength: contact ? contact.length : 0
       })
@@ -367,9 +364,6 @@ export const useAuthStore = defineStore('auth', () => {
         nonce: nonce
       })
       
-      console.log('🔍 Verify forgot password response:', response.data)
-      console.log('🔍 Response structure:', {
-        success: response.data.success,
         data: response.data.data,
         reset_token: response.data.data?.reset_token
       })
