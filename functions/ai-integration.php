@@ -6112,7 +6112,7 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND (period IN (30, 45) OR period IS NULL OR period = 0)
+			 AND period = 45
 			 ORDER BY date_time ASC",
 				$therapist_id
 			)
@@ -6272,7 +6272,7 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND (period IN (30, 45) OR period IS NULL OR period = 0)
+			 AND period = 45
 			 ORDER BY starts ASC",
 				$therapist_id,
 				$date
