@@ -397,13 +397,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Initialize auth state
-  
-  
   if (token.value && user.value) {
-    
     loadUser()
-  } else {
-    
   }
 
   return {
