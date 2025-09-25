@@ -478,10 +478,6 @@ export default {
     const resendCode = async () => {
       resendLoading.value = true
       try {
-          verificationMethod: verificationMethod.value,
-          requireEmail: requireEmail.value
-        })
-        
         // Ensure we have a valid contact value
         if (!contact.value) {
           console.error('❌ No contact value available for resend')
