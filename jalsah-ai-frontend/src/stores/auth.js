@@ -364,10 +364,6 @@ export const useAuthStore = defineStore('auth', () => {
         nonce: nonce
       })
       
-        data: response.data.data,
-        reset_token: response.data.data?.reset_token
-      })
-      
       return response.data
     } catch (error) {
       console.error('Error verifying forgot password code:', error)
