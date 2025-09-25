@@ -785,7 +785,6 @@ export default {
           user_id: authStore.user.id
         })
         
-        console.log('🎯 Cart result:', result)
         
         if (result.success) {
           slot.inCart = true
@@ -946,7 +945,6 @@ export default {
 
     // Show confirmation dialog for different therapist
     const showDifferentTherapistConfirmation = async (message) => {
-      console.log('🔔 Showing confirmation dialog:', message)
       // Use SweetAlert2 for confirmation dialog
       const result = await Swal.fire({
         title: t('therapistDetails.differentTherapistTitle'),
@@ -959,7 +957,6 @@ export default {
         cancelButtonColor: '#d33'
       })
       
-      console.log('🔔 Confirmation result:', result.isConfirmed)
       return result.isConfirmed
     }
 

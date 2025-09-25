@@ -708,13 +708,8 @@ export default {
                const response = await authStore.verifyForgotPassword(fullWhatsAppNumber, forgotPasswordForm.value.code)
                
                if (response) {
-                 console.log('✅ Full response received:', response)
-                 console.log('✅ Reset token from response.data:', response.data?.reset_token)
-                 console.log('✅ Reset token from response directly:', response.reset_token)
-                 
                  // Try to get reset token from different possible locations
                  const token = response.data?.reset_token || response.reset_token
-                 console.log('✅ Final reset token:', token)
                  
                  resetToken.value = token
                  toast.success(t('verification.codeVerified'))
@@ -745,8 +740,6 @@ export default {
                return
              }
 
-             console.log('🔄 About to reset password with token:', resetToken.value)
-             console.log('🔄 New password:', forgotPasswordForm.value.newPassword)
 
              forgotPasswordLoading.value = true
              try {

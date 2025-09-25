@@ -400,19 +400,6 @@ const canJoinSession = computed(() => {
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-   // Debug logging
-   console.log('Session eligibility check:', {
-     currentUserId,
-     sessionTherapistId,
-     sessionClientId,
-     isTherapist: isTherapist.value,
-     userRole: authStore.user?.role,
-     sessionStatus: sessionData.value.session_status,
-     isCompleted: sessionData.value.session_status === 'completed',
-     isCancelled: sessionData.value.session_status === 'cancelled',
-     therapistMatch: currentUserId === sessionTherapistId,
-     clientMatch: currentUserId === sessionClientId
-   })
   
   return currentUserId === sessionTherapistId || currentUserId === sessionClientId
 })
@@ -427,15 +414,6 @@ const waitingForTherapist = computed(() => {
   const isConfirmed = sessionData.value.session_status === 'confirmed' || sessionData.value.session_status === 'open'
   const waiting = isConfirmed && !sessionData.value.therapist_joined
   
-  // Debug logging
-  console.log({
-    sessionData: sessionData.value,
-    isConfirmed,
-    therapist_joined: sessionData.value.therapist_joined,
-    waiting,
-    isTherapist: isTherapist.value,
-    userRole: authStore.user?.role
-  })
   
   return waiting
 })
@@ -457,20 +435,6 @@ const sessionNotAvailableReason = computed(() => {
    const sessionTherapistId = Number(sessionData.value.therapist_id || sessionData.value.user_id)
    const sessionClientId = Number(sessionData.value.client_id)
   
-  // Debug logging
-  console.log({
-    currentUserId,
-    sessionTherapistId,
-    sessionClientId,
-    isTherapist: isTherapist.value,
-    userRole: authStore.user?.role,
-    sessionStatus: sessionData.value.session_status,
-    isCompleted: sessionData.value.session_status === 'completed',
-    isCancelled: sessionData.value.session_status === 'cancelled',
-    therapistMatch: currentUserId === sessionTherapistId,
-    clientMatch: currentUserId === sessionClientId,
-    notAuthorized: currentUserId !== sessionTherapistId && currentUserId !== sessionClientId
-  })
   
    if (currentUserId !== sessionTherapistId && currentUserId !== sessionClientId) {
      return t('session.reason.notAuthorized')
@@ -519,15 +483,6 @@ const loadSession = async () => {
          if (response.data.success) {
       sessionData.value = response.data.data
       
-      console.log({
-          ID: sessionData.value.ID,
-          user_id: sessionData.value.user_id,
-          client_id: sessionData.value.client_id,
-          therapist_id: sessionData.value.therapist_id,
-          session_status: sessionData.value.session_status,
-          date_time: sessionData.value.date_time,
-          therapist_joined: sessionData.value.therapist_joined
-        })
         startTimer()
         startSessionRefresh() // Start refreshing session data
      } else {

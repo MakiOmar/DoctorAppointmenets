@@ -1014,7 +1014,6 @@ export default {
       const checkContainer = () => {
         const container = document.querySelector('#session-meeting')
         if (!container) {
-          console.log('Waiting for session container...')
           return false
         }
         return true
@@ -1247,7 +1246,6 @@ export default {
           }
         })
         
-        console.log('Available dates API response:', response.data)
         
         if (response.data.success && response.data.data && response.data.data.available_dates) {
           const dates = response.data.data.available_dates.map(dateInfo => {
@@ -1261,7 +1259,6 @@ export default {
           })
           availableDates.value = dates
         } else {
-          console.log('No available dates or API error:', response.data)
           availableDates.value = []
         }
       } catch (error) {
@@ -1289,7 +1286,6 @@ export default {
           }
         })
         
-        console.log('Time slots API response:', response.data)
         if (response.data.success && response.data.data && response.data.data.available_slots) {
           timeSlots.value = response.data.data.available_slots
         } else {

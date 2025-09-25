@@ -231,14 +231,6 @@ async function onSubmit() {
   success.value = ''
   loading.value = true
   
-  console.log('🔍 Form Submission Debug:', {
-    shouldShowCountryDialCodes: registrationStore.shouldShowCountryDialCodes,
-    phone: form.value.phone,
-    phone_country: form.value.phone_country,
-    whatsapp: form.value.whatsapp,
-    whatsapp_country: form.value.whatsapp_country,
-    countryCodes: registrationStore.countryCodes
-  })
   
   try {
     // Validate phone numbers if country codes are enabled
