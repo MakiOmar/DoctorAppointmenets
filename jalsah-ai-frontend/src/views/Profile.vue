@@ -13,209 +13,123 @@
         <p class="text-gray-600">Loading profile...</p>
       </div>
 
-      <div v-else class="grid md:grid-cols-3 gap-8">
+      <div v-else class="max-w-2xl mx-auto">
         <!-- Profile Information -->
-        <div class="md:col-span-2">
-          <div class="card">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
-            
-            <form @submit.prevent="updateProfile" class="space-y-6">
-              <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label class="form-label">First Name</label>
-                  <input 
-                    v-model="profile.firstName" 
-                    type="text" 
-                    class="input-field"
-                    required
-                  />
-                </div>
-                <div>
-                  <label class="form-label">Last Name</label>
-                  <input 
-                    v-model="profile.lastName" 
-                    type="text" 
-                    class="input-field"
-                    required
-                  />
-                </div>
-              </div>
-
+        <div class="card">
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
+          
+          <form @submit.prevent="updateProfile" class="space-y-6">
+            <div class="grid md:grid-cols-2 gap-4">
               <div>
-                <label class="form-label">Email</label>
+                <label class="form-label">First Name</label>
                 <input 
-                  v-model="profile.email" 
-                  type="email" 
+                  v-model="profile.firstName" 
+                  type="text" 
                   class="input-field"
                   required
                 />
               </div>
-
               <div>
-                <label class="form-label">Phone Number</label>
+                <label class="form-label">Last Name</label>
                 <input 
-                  v-model="profile.phone" 
-                  type="tel" 
-                  class="input-field"
-                />
-              </div>
-
-              <div>
-                <label class="form-label">{{ $t('profile.dateOfBirth') }}</label>
-                <input 
-                  v-model="profile.dateOfBirth" 
-                  type="date" 
-                  class="input-field"
-                />
-              </div>
-
-              <div>
-                <label class="form-label">{{ $t('profile.emergencyContact') }}</label>
-                <div class="grid md:grid-cols-2 gap-4">
-                  <input 
-                    v-model="profile.emergencyName" 
-                    type="text" 
-                    class="input-field"
-                    :placeholder="$t('profile.contactName')"
-                  />
-                  <input 
-                    v-model="profile.emergencyPhone" 
-                    type="tel" 
-                    class="input-field"
-                    :placeholder="$t('profile.contactPhone')"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label class="form-label">{{ $t('profile.address') }}</label>
-                <textarea 
-                  v-model="profile.address" 
-                  rows="3" 
-                  class="input-field"
-                  :placeholder="$t('profile.addressPlaceholder')"
-                ></textarea>
-              </div>
-
-              <div class="flex justify-end">
-                <button 
-                  type="submit" 
-                  :disabled="updating"
-                  class="btn-primary"
-                >
-                  <span v-if="updating" class="flex items-center">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {{ $t('profile.updating') }}
-                  </span>
-                  <span v-else>{{ $t('profile.updateProfile') }}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Change Password -->
-          <div class="card mt-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.changePassword') }}</h2>
-            
-            <form @submit.prevent="changePassword" class="space-y-6">
-              <div>
-                <label class="form-label">{{ $t('profile.currentPassword') }}</label>
-                <input 
-                  v-model="password.current" 
-                  type="password" 
+                  v-model="profile.lastName" 
+                  type="text" 
                   class="input-field"
                   required
                 />
               </div>
+            </div>
 
-              <div>
-                <label class="form-label">{{ $t('profile.newPassword') }}</label>
-                <input 
-                  v-model="password.new" 
-                  type="password" 
-                  class="input-field"
-                  required
-                />
-              </div>
+            <div>
+              <label class="form-label">Email</label>
+              <input 
+                v-model="profile.email" 
+                type="email" 
+                class="input-field"
+                required
+              />
+            </div>
 
-              <div>
-                <label class="form-label">{{ $t('profile.confirmNewPassword') }}</label>
-                <input 
-                  v-model="password.confirm" 
-                  type="password" 
-                  class="input-field"
-                  required
-                />
-              </div>
+            <div>
+              <label class="form-label">Phone Number</label>
+              <input 
+                v-model="profile.phone" 
+                type="tel" 
+                class="input-field"
+              />
+            </div>
 
-              <div class="flex justify-end">
-                <button 
-                  type="submit" 
-                  :disabled="changingPassword"
-                  class="btn-outline"
-                >
-                  <span v-if="changingPassword" class="flex items-center">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    {{ $t('profile.changing') }}
-                  </span>
-                  <span v-else>{{ $t('profile.changePasswordButton') }}</span>
-                </button>
-              </div>
-            </form>
-          </div>
+            <div class="flex justify-end">
+              <button 
+                type="submit" 
+                :disabled="updating"
+                class="btn-primary"
+              >
+                <span v-if="updating" class="flex items-center">
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ $t('profile.updating') }}
+                </span>
+                <span v-else>{{ $t('profile.updateProfile') }}</span>
+              </button>
+            </div>
+          </form>
         </div>
 
-        <!-- Sidebar -->
-        <div class="md:col-span-1">
-          <!-- Account Summary -->
-          <div class="card mt-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.accountSummary') }}</h2>
-            <div class="space-y-4">
-              <div class="flex justify-between">
-                <span class="text-gray-600">{{ $t('profile.memberSince') }}</span>
-                <span class="font-medium">{{ formatDate(profile.createdAt) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">{{ $t('profile.totalSessions') }}</span>
-                <span class="font-medium">{{ profile.totalSessions }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">{{ $t('profile.accountStatus') }}</span>
-                <span class="font-medium text-green-600">{{ $t('profile.active') }}</span>
-              </div>
+        <!-- Change Password -->
+        <div class="card mt-8">
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.changePassword') }}</h2>
+          
+          <form @submit.prevent="changePassword" class="space-y-6">
+            <div>
+              <label class="form-label">{{ $t('profile.currentPassword') }}</label>
+              <input 
+                v-model="password.current" 
+                type="password" 
+                class="input-field"
+                required
+              />
             </div>
-          </div>
 
-          <!-- Quick Actions -->
-          <div class="card mt-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.quickActions') }}</h2>
-            <div class="space-y-3">
+            <div>
+              <label class="form-label">{{ $t('profile.newPassword') }}</label>
+              <input 
+                v-model="password.new" 
+                type="password" 
+                class="input-field"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="form-label">{{ $t('profile.confirmNewPassword') }}</label>
+              <input 
+                v-model="password.confirm" 
+                type="password" 
+                class="input-field"
+                required
+              />
+            </div>
+
+            <div class="flex justify-end">
               <button 
-                @click="$router.push('/appointments')"
-                class="w-full btn-outline text-left"
+                type="submit" 
+                :disabled="changingPassword"
+                class="btn-outline"
               >
-                {{ $t('profile.viewAppointments') }}
-              </button>
-              <button 
-                @click="$router.push('/diagnosis')"
-                class="w-full btn-outline text-left"
-              >
-                {{ $t('profile.takeDiagnosis') }}
-              </button>
-              <button 
-                @click="logout"
-                class="w-full btn-outline text-left text-red-600 hover:text-red-700"
-              >
-                {{ $t('profile.logout') }}
+                <span v-if="changingPassword" class="flex items-center">
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ $t('profile.changing') }}
+                </span>
+                <span v-else>{{ $t('profile.changePasswordButton') }}</span>
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -243,13 +157,7 @@ export default {
       firstName: '',
       lastName: '',
       email: '',
-      phone: '',
-      dateOfBirth: '',
-      emergencyName: '',
-      emergencyPhone: '',
-      address: '',
-      createdAt: '',
-      totalSessions: 0
+      phone: ''
     })
 
     const password = ref({
@@ -268,13 +176,7 @@ export default {
           firstName: userData.first_name || '',
           lastName: userData.last_name || '',
           email: userData.email || '',
-          phone: userData.phone || '',
-          dateOfBirth: userData.date_of_birth || '',
-          emergencyName: userData.emergency_contact?.name || '',
-          emergencyPhone: userData.emergency_contact?.phone || '',
-          address: userData.address || '',
-          createdAt: userData.created_at || '',
-          totalSessions: userData.total_sessions || 0
+          phone: userData.phone || ''
         }
       } catch (error) {
         toast.error('Failed to load profile')
@@ -292,13 +194,7 @@ export default {
           first_name: profile.value.firstName,
           last_name: profile.value.lastName,
           email: profile.value.email,
-          phone: profile.value.phone,
-          date_of_birth: profile.value.dateOfBirth,
-          emergency_contact: {
-            name: profile.value.emergencyName,
-            phone: profile.value.emergencyPhone
-          },
-          address: profile.value.address
+          phone: profile.value.phone
         }
 
         await api.put('/api/ai/profile', profileData)
@@ -352,11 +248,6 @@ export default {
       toast.success('Logged out successfully')
     }
 
-    const formatDate = (dateString) => {
-      if (!dateString) return 'N/A'
-      const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
-      return new Date(dateString).toLocaleDateString(currentLocale)
-    }
 
     onMounted(() => {
       loadProfile()
@@ -370,8 +261,7 @@ export default {
       password,
       updateProfile,
       changePassword,
-      logout,
-      formatDate
+      logout
     }
   }
 }
