@@ -96,8 +96,9 @@
                 :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
                 :class="[
                   'btn-primary text-lg px-8 py-3 transition-all duration-300',
-                  loadingDiagnosis ? 'opacity-75 cursor-wait' : ''
+                  loadingDiagnosis ? 'opacity-75 cursor-wait' : 'hover:scale-105 active:scale-95'
                 ]"
+                @click="handleNavigationClick"
               >
                 <span v-if="loadingDiagnosis" class="flex items-center justify-center">
                   <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
@@ -269,8 +270,9 @@
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
             :class="[
               'bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-md text-lg font-medium transition-all duration-300',
-              loadingDiagnosis ? 'opacity-75 cursor-wait' : ''
+              loadingDiagnosis ? 'opacity-75 cursor-wait' : 'hover:scale-105 active:scale-95'
             ]"
+            @click="handleNavigationClick"
           >
             <span v-if="loadingDiagnosis" class="flex items-center justify-center">
               <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600 mr-2"></div>
@@ -353,12 +355,19 @@ export default {
       fetchLastDiagnosisId()
     }
     
+    // Handle navigation click for immediate feedback
+    const handleNavigationClick = () => {
+      // Add immediate visual feedback
+      loadingDiagnosis.value = true
+    }
+    
     return {
       authStore,
       lastDiagnosisId,
       hasPreviousDiagnosis,
       loadingDiagnosis,
-      refreshDiagnosis
+      refreshDiagnosis,
+      handleNavigationClick
     }
   }
 }
