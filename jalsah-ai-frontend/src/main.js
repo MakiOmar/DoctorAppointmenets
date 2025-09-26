@@ -61,10 +61,6 @@ app.use(Toast, {
   rtl: i18n.global.locale.value === 'ar'
 })
 
-// Setup auth interceptor for 401 error handling
-console.log('Main.js: Setting up auth interceptor...')
-setupAuthInterceptor(api)
-
 // Setup periodic session validation (every 5 minutes)
 console.log('Main.js: Setting up periodic validation...')
 setupPeriodicValidation(api, 5)
