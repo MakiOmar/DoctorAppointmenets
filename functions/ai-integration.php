@@ -8014,5 +8014,5 @@ function snks_get_rochtah_meeting_details_rest( $request ) {
 
 // Hook to handle user deletion - invalidate tokens and sessions
 add_action( 'delete_user', function( $user_id ) {
-	AI_Integration::handle_user_deletion( $user_id );
+	SNKS_AI_Integration::handle_user_deletion( $user_id );
 });
