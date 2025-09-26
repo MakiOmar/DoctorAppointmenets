@@ -94,9 +94,18 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
               <router-link 
                 :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-                class="btn-primary text-lg px-8 py-3"
+                :class="[
+                  'btn-primary text-lg px-8 py-3 transition-all duration-300',
+                  loadingDiagnosis ? 'opacity-75 cursor-wait' : ''
+                ]"
               >
-                {{ hasPreviousDiagnosis ? $t('home.hero.ctaWithDiagnosis') : $t('home.hero.cta') }}
+                <span v-if="loadingDiagnosis" class="flex items-center justify-center">
+                  <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {{ $t('home.hero.loading') }}
+                </span>
+                <span v-else>
+                  {{ hasPreviousDiagnosis ? $t('home.hero.ctaWithDiagnosis') : $t('home.hero.cta') }}
+                </span>
               </router-link>
               <router-link 
                 to="/therapists"
@@ -258,9 +267,18 @@
           </p>
           <router-link 
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-md text-lg font-medium transition-colors"
+            :class="[
+              'bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-md text-lg font-medium transition-all duration-300',
+              loadingDiagnosis ? 'opacity-75 cursor-wait' : ''
+            ]"
           >
-            {{ hasPreviousDiagnosis ? $t('home.hero.ctaWithDiagnosis') : $t('home.hero.cta') }}
+            <span v-if="loadingDiagnosis" class="flex items-center justify-center">
+              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600 mr-2"></div>
+              {{ $t('home.hero.loading') }}
+            </span>
+            <span v-else>
+              {{ hasPreviousDiagnosis ? $t('home.hero.ctaWithDiagnosis') : $t('home.hero.cta') }}
+            </span>
           </router-link>
         </div>
       </section>
@@ -323,7 +341,10 @@ export default {
     // Fetch diagnosis ID on component mount
     onMounted(() => {
       if (authStore.user) {
-        fetchLastDiagnosisId()
+        // Add a small delay to show loading state
+        setTimeout(() => {
+          fetchLastDiagnosisId()
+        }, 100)
       }
     })
     

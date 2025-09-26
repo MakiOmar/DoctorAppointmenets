@@ -80,6 +80,7 @@ export default {
       subtitle: 'Get AI-powered diagnosis and find the right therapist for you',
       cta: 'Start AI Diagnosis',
       ctaWithDiagnosis: 'Browse Therapists Best for Your Diagnosis',
+      loading: 'Loading...',
       secondaryCta: 'Browse Therapists'
     },
     features: {

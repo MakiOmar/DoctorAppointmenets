@@ -80,6 +80,7 @@ export default {
       subtitle: 'احصل على تشخيص ذكي وابحث عن المعالج المناسب لك',
       cta: 'ابدأ التشخيص الذكي',
       ctaWithDiagnosis: 'تصفح المعالجين الأنسب لتشخيصك',
+      loading: 'جاري التحميل...',
       secondaryCta: 'تصفح المعالجين'
     },
     features: {
