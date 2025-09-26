@@ -6642,9 +6642,12 @@ Best regards,
 					'last_name' => $user->last_name,
 					'email' => $user->user_email,
 					'phone' => get_user_meta( $user_id, 'phone', true ),
+					'whatsapp' => get_user_meta( $user_id, 'whatsapp', true ),
 					'date_of_birth' => get_user_meta( $user_id, 'date_of_birth', true ),
 					'emergency_phone' => get_user_meta( $user_id, 'emergency_phone', true ),
 					'address' => get_user_meta( $user_id, 'address', true ),
+					'created_at' => $user->user_registered,
+					'total_sessions' => 0, // This would need to be calculated from appointments
 				);
 
 				$this->send_success( $profile_data );
@@ -6668,6 +6671,10 @@ Best regards,
 				
 				if ( isset( $data['phone'] ) ) {
 					update_user_meta( $user_id, 'phone', $data['phone'] );
+				}
+				
+				if ( isset( $data['whatsapp'] ) ) {
+					update_user_meta( $user_id, 'whatsapp', $data['whatsapp'] );
 				}
 				
 				if ( isset( $data['date_of_birth'] ) ) {
