@@ -1692,6 +1692,15 @@ class SNKS_AI_Integration {
 	 * Chat diagnosis endpoint via AJAX
 	 */
 	public function chat_diagnosis_ajax() {
+		// Check JWT authentication first
+		$user_id = $this->verify_jwt_token();
+		if ( ! $user_id ) {
+			wp_send_json_error( 'Authentication required', 401 );
+		}
+		
+		// Set the current user for WordPress context
+		wp_set_current_user( $user_id );
+		error_log( "🔍 Chat diagnosis - Authenticated user ID: " . $user_id . ", WordPress user ID: " . get_current_user_id() );
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
 
