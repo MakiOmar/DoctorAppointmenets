@@ -568,6 +568,7 @@ export default {
         first_name: form.value.first_name,
         last_name: form.value.last_name,
         whatsapp: fullWhatsAppNumber,
+        country_dial_code: selectedCountry ? selectedCountry.dial_code : '',
         password: form.value.password
       }
       
