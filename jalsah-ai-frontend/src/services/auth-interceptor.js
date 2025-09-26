@@ -1,5 +1,5 @@
 // Helper function to handle user logout
-function handleUserLogout(message) {
+function handleUserLogout(message, apiInstance) {
   // Clear user data from localStorage
   localStorage.removeItem('jalsah_token')
   localStorage.removeItem('jalsah_user')
@@ -8,8 +8,10 @@ function handleUserLogout(message) {
   localStorage.removeItem('lastDiagnosisId')
   sessionStorage.clear()
   
-  // Remove authorization header
-  delete axios.defaults.headers.common['Authorization']
+  // Remove authorization header if apiInstance is provided
+  if (apiInstance) {
+    delete apiInstance.defaults.headers.common['Authorization']
+  }
   
   // Redirect to login page
   window.location.href = '/login'
@@ -115,7 +117,7 @@ export function setupPeriodicValidation(api, intervalMinutes = 5) {
     const isValid = await validateUserSession(api)
     if (!isValid) {
       console.log('Periodic validation failed - logging out user')
-      handleUserLogout('Your session has expired. Please log in again.')
+      handleUserLogout('Your session has expired. Please log in again.', api)
     } else {
       console.log('Periodic validation: User session is valid')
     }
@@ -133,7 +135,7 @@ export function setupPeriodicValidation(api, intervalMinutes = 5) {
     const isValid = await validateUserSession(api)
     console.log('Manual test result:', isValid)
     if (!isValid) {
-      handleUserLogout('Manual test: User session invalid')
+      handleUserLogout('Manual test: User session invalid', api)
     }
   }
   
