@@ -1,6 +1,3 @@
-import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
-
 // Global Axios interceptor for handling 401 errors
 export function setupAuthInterceptor(axios) {
   // Response interceptor to handle 401 errors
@@ -14,21 +11,19 @@ export function setupAuthInterceptor(axios) {
       if (error.response && error.response.status === 401) {
         console.log('401 Unauthorized - User session expired or invalid')
         
-        // Get auth store and router
-        const authStore = useAuthStore()
-        const router = useRouter()
-        
-        // Clear user data
-        authStore.logout()
-        
-        // Clear any additional local storage
+        // Clear user data from localStorage
+        localStorage.removeItem('jalsah_token')
+        localStorage.removeItem('jalsah_user')
         localStorage.removeItem('user')
         localStorage.removeItem('token')
         localStorage.removeItem('lastDiagnosisId')
         sessionStorage.clear()
         
+        // Remove authorization header
+        delete axios.defaults.headers.common['Authorization']
+        
         // Redirect to login page
-        router.push('/login')
+        window.location.href = '/login'
         
         // Show user-friendly message
         if (window.$toast) {
@@ -59,34 +54,47 @@ export async function validateUserSession(api) {
 
 // Function to setup periodic session validation
 export function setupPeriodicValidation(api, intervalMinutes = 5) {
-  const authStore = useAuthStore()
+  // Check if user is logged in by checking localStorage
+  const token = localStorage.getItem('jalsah_token')
+  const user = localStorage.getItem('jalsah_user')
   
   // Only run if user is logged in
-  if (!authStore.user || !authStore.token) {
+  if (!token || !user) {
     return
   }
   
   const intervalMs = intervalMinutes * 60 * 1000
   
   const validateSession = async () => {
-    if (!authStore.user || !authStore.token) {
+    // Check again if user is still logged in
+    const currentToken = localStorage.getItem('jalsah_token')
+    const currentUser = localStorage.getItem('jalsah_user')
+    
+    if (!currentToken || !currentUser) {
       return
     }
     
     const isValid = await validateUserSession(api)
     if (!isValid) {
       console.log('Periodic validation failed - logging out user')
-      authStore.logout()
-      localStorage.clear()
+      
+      // Clear all user data
+      localStorage.removeItem('jalsah_token')
+      localStorage.removeItem('jalsah_user')
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+      localStorage.removeItem('lastDiagnosisId')
       sessionStorage.clear()
+      
+      // Remove authorization header
+      delete api.defaults.headers.common['Authorization']
       
       if (window.$toast) {
         window.$toast.error('Your session has expired. Please log in again.')
       }
       
       // Redirect to login
-      const router = useRouter()
-      router.push('/login')
+      window.location.href = '/login'
     }
   }
   
