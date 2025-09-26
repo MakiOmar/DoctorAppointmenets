@@ -370,14 +370,8 @@ export default {
 
 
     onMounted(async () => {
-      // First try to load existing diagnosis from database
-      await loadLatestDiagnosis()
-      
-      // Only add welcome message if no existing diagnosis was loaded
-      if (!diagnosisCompleted.value) {
-        addWelcomeMessage()
-      }
-      
+      // Always start with a fresh diagnosis session
+      addWelcomeMessage()
       focusInput()
     })
 
@@ -394,8 +388,7 @@ export default {
        sendMessage,
        formatMessage,
        formatTime,
-       focusInput,
-       loadLatestDiagnosis
+       focusInput
      }
   }
 }
