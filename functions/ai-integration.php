@@ -4738,6 +4738,7 @@ Best regards,
 		}
 
 		// Format response message
+		error_log( "🔍 Diagnosis conditions - Status: " . ( $response_data['status'] ?? 'NOT_SET' ) . ", Diagnosis ID: " . ( $diagnosis_id ?? 'NULL' ) );
 		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
 			$confidence_text = '';
 			if ( isset( $response_data['confidence'] ) ) {
@@ -4786,6 +4787,7 @@ Best regards,
 
 			// Save diagnosis result to user meta if user is authenticated
 			$user_id = get_current_user_id();
+			error_log( "🔍 Diagnosis completion - User ID: " . $user_id . ", Diagnosis ID: " . $diagnosis_id );
 			if ( $user_id ) {
 				$diagnosis_data = array(
 					'diagnosis_id'          => $diagnosis_id,
@@ -4799,7 +4801,8 @@ Best regards,
 				);
 
 				// Store the diagnosis result in user meta
-				update_user_meta( $user_id, 'ai_diagnosis_result', $diagnosis_data );
+				$result = update_user_meta( $user_id, 'ai_diagnosis_result', $diagnosis_data );
+				error_log( "🔍 Diagnosis save result: " . ( $result ? 'SUCCESS' : 'FAILED' ) );
 
 				// Also store a history of all diagnosis results
 				$diagnosis_history = get_user_meta( $user_id, 'ai_diagnosis_history', true );
@@ -4815,7 +4818,8 @@ Best regards,
 					$diagnosis_history = array_slice( $diagnosis_history, -10 );
 				}
 
-				update_user_meta( $user_id, 'ai_diagnosis_history', $diagnosis_history );
+				$history_result = update_user_meta( $user_id, 'ai_diagnosis_history', $diagnosis_history );
+				error_log( "🔍 Diagnosis history save result: " . ( $history_result ? 'SUCCESS' : 'FAILED' ) );
 			}
 
 			return array(
