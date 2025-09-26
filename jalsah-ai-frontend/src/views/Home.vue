@@ -301,14 +301,7 @@ export default {
         
         if (response.data.success && response.data.data.current_diagnosis) {
           const diagnosis = response.data.data.current_diagnosis
-          
-          // Check if diagnosis was completed recently (within last 24 hours)
-          const diagnosisTime = new Date(diagnosis.completed_at)
-          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-          
-          if (diagnosisTime > oneDayAgo) {
-            lastDiagnosisId.value = diagnosis.diagnosis_id
-          }
+          lastDiagnosisId.value = diagnosis.diagnosis_id
         }
       } catch (error) {
         console.error('Error fetching last diagnosis:', error)
