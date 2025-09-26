@@ -84,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Setup periodic validation after successful login
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
-      setupPeriodicValidation(api, 1) // 1 minute for testing
+      setupPeriodicValidation(api, 1) // 1 minute
       
       toast.success(t('toast.auth.loginSuccess'))
       return true
@@ -178,7 +178,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Setup periodic validation after successful registration
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
-      setupPeriodicValidation(api, 1) // 1 minute for testing
+      setupPeriodicValidation(api, 1) // 1 minute
       
       toast.success(t('toast.auth.registerSuccess'))
       return { requiresVerification: false }
@@ -254,7 +254,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Setup periodic validation after successful verification
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
-      setupPeriodicValidation(api, 1) // 1 minute for testing
+      setupPeriodicValidation(api, 1) // 1 minute
       
       return true
     } catch (error) {
