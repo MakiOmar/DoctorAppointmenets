@@ -176,6 +176,10 @@ export const useAuthStore = defineStore('auth', () => {
       const cartStore = useCartStore()
       cartStore.loadCart(newUser.id)
       
+      // Setup periodic validation after successful registration
+      const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
+      setupPeriodicValidation(api, 1) // 1 minute for testing
+      
       toast.success(t('toast.auth.registerSuccess'))
       return { requiresVerification: false }
     } catch (error) {
@@ -247,6 +251,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Load cart after successful verification
       const cartStore = useCartStore()
       cartStore.loadCart(newUser.id)
+      
+      // Setup periodic validation after successful verification
+      const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
+      setupPeriodicValidation(api, 1) // 1 minute for testing
       
       return true
     } catch (error) {
