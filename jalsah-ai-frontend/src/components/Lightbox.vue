@@ -53,11 +53,11 @@
            </button>
           
           <!-- Image Container -->
-          <div class="relative">
+          <div class="relative text-center">
             <img
               :src="currentImage.url"
               :alt="currentImage.name || currentImage.alt || 'Certificate'"
-              class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl inline-block"
               @load="imageLoaded = true"
               @error="imageLoaded = false"
             />
