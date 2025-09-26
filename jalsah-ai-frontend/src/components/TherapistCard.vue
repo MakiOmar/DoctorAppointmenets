@@ -1026,7 +1026,7 @@ export default {
       const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
-      return `${displayHours}:${formattedMinutes} ${period}`
+      return `${displayHours}:${formattedMinutes} ${period} بتوقيت مصر`
     }
 
     const formatShortDay = (date) => {
@@ -1123,7 +1123,7 @@ export default {
       const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
-      const formattedTime = `${displayHours}:${formattedMinutes} ${period}`
+      const formattedTime = `${displayHours}:${formattedMinutes} ${period} بتوقيت مصر`
       
       const dateStr = formatShortDateWithDay(date)
       
