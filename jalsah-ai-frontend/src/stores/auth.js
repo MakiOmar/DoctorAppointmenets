@@ -190,22 +190,30 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = () => {
-
-    
+    // Clear user data
     user.value = null
     token.value = null
+    
+    // Clear all localStorage items
     localStorage.removeItem('jalsah_token')
     localStorage.removeItem('jalsah_user')
-    delete api.defaults.headers.common['Authorization']
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    localStorage.removeItem('lastDiagnosisId')
+    localStorage.removeItem('locale')
+    localStorage.removeItem('jalsah_locale')
     
-
+    // Clear sessionStorage
+    sessionStorage.clear()
+    
+    // Remove authorization header
+    delete api.defaults.headers.common['Authorization']
     
     // Clear cart on logout
     const cartStore = useCartStore()
     cartStore.clearCart()
     
-
-    
+    // Show success message
     toast.success(t('toast.auth.logoutSuccess'))
   }
 
@@ -249,43 +257,45 @@ export const useAuthStore = defineStore('auth', () => {
 
   const resendVerification = async (contact) => {
     try {
+      // Log contact information for debugging
+      console.log('Contact info:', {
         contactType: typeof contact,
         contactLength: contact ? contact.length : 0
-      })
-      
+      });
+       
       // Validate contact parameter
       if (!contact) {
-        throw new Error('No contact information provided')
+        throw new Error('No contact information provided');
       }
-      
+       
       // Get nonce for security
-      const nonce = await getNonce('ai_resend_verification_nonce')
-
+      const nonce = await getNonce('ai_resend_verification_nonce');
+      
       // Determine if contact is email or WhatsApp
       const requestData = {
         nonce: nonce,
         locale: locale.value
-      }
-      
+      };
+       
       if (contact.includes('@')) {
-        requestData.email = contact
-        console.log('📧 Using email for resend:', contact)
+        requestData.email = contact;
+        console.log('📧 Using email for resend:', contact);
       } else {
-        requestData.whatsapp = contact
-        console.log('📱 Using WhatsApp for resend:', contact)
+        requestData.whatsapp = contact;
+        console.log('📱 Using WhatsApp for resend:', contact);
       }
-      
-      console.log('📤 Sending resend request:', requestData)
-      
-      const response = await api.post('/api/ai/auth/resend-verification', requestData)
-      return true
+       
+      console.log('📤 Sending resend request:', requestData);
+       
+      const response = await api.post('/api/ai/auth/resend-verification', requestData);
+      return true;
     } catch (error) {
-      console.error('❌ Resend verification error:', error)
-      const message = error.response?.data?.error || t('toast.auth.verificationFailed')
-      toast.error(message)
-      return false
+      console.error('❌ Resend verification error:', error);
+      const message = error.response?.data?.error || t('toast.auth.verificationFailed');
+      toast.error(message);
+      return false;
     }
-  }
+  };
 
   const loadUser = async () => {
 

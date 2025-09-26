@@ -2581,6 +2581,21 @@ class SNKS_AI_Integration {
 	}
 
 	/**
+	 * Handle user deletion - invalidate tokens and sessions
+	 */
+	public function handle_user_deletion( $user_id ) {
+		// Remove any stored tokens for this user
+		delete_user_meta( $user_id, 'ai_auth_token' );
+		delete_user_meta( $user_id, 'ai_token_expires' );
+		
+		// Clear any session data
+		delete_user_meta( $user_id, 'ai_session_data' );
+		
+		// Log the action
+		error_log( "User {$user_id} deleted - tokens and sessions invalidated" );
+	}
+
+	/**
 	 * Update AI user fields
 	 */
 	private function update_ai_user_fields( $user_id, $data ) {
@@ -7981,3 +7996,9 @@ function snks_get_rochtah_meeting_details_rest( $request ) {
 		'data'    => $meeting_details,
 	);
 }
+
+// Hook to handle user deletion - invalidate tokens and sessions
+add_action( 'delete_user', function( $user_id ) {
+	$ai_integration = new AI_Integration();
+	$ai_integration->handle_user_deletion( $user_id );
+});

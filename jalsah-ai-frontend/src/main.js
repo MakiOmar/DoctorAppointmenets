@@ -7,6 +7,8 @@ import i18n from './i18n'
 import App from './App.vue'
 import './style.css'
 import { useSettingsStore } from './stores/settings'
+import { setupAuthInterceptor, setupPeriodicValidation } from './services/auth-interceptor'
+import api from './services/api'
 
 const app = createApp(App)
 
@@ -58,5 +60,11 @@ app.use(Toast, {
   icon: true,
   rtl: i18n.global.locale.value === 'ar'
 })
+
+// Setup auth interceptor for 401 error handling
+setupAuthInterceptor(api)
+
+// Setup periodic session validation (every 5 minutes)
+setupPeriodicValidation(api, 5)
 
 app.mount('#app') 
