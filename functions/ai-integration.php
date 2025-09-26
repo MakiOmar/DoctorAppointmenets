@@ -6677,6 +6677,15 @@ Best regards,
 					$whatsapp_number = substr( $whatsapp_full, strlen( $whatsapp_country_code ) );
 					error_log( "Profile Debug - Split number: {$whatsapp_number}" );
 				} else {
+					// Fallback: try to detect common country codes for existing users
+					$common_codes = ['+20', '+966', '+971', '+974', '+973', '+965', '+968', '+962', '+961', '+970'];
+					foreach ( $common_codes as $code ) {
+						if ( strpos( $whatsapp_full, $code ) === 0 ) {
+							$whatsapp_number = substr( $whatsapp_full, strlen( $code ) );
+							error_log( "Profile Debug - Fallback split with {$code}: {$whatsapp_number}" );
+							break;
+						}
+					}
 					error_log( "Profile Debug - No splitting applied. Full: {$whatsapp_full}, Code: {$whatsapp_country_code}" );
 				}
 				
