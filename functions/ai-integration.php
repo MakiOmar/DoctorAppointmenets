@@ -2584,6 +2584,14 @@ class SNKS_AI_Integration {
 	 * Update AI user fields
 	 */
 	private function update_ai_user_fields( $user_id, $data ) {
+		// Set WordPress user's first_name and last_name fields
+		wp_update_user( array(
+			'ID' => $user_id,
+			'first_name' => sanitize_text_field( $data['first_name'] ),
+			'last_name' => sanitize_text_field( $data['last_name'] )
+		) );
+		
+		// Also store as billing meta for WooCommerce compatibility
 		update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $data['first_name'] ) );
 		update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $data['last_name'] ) );
 
