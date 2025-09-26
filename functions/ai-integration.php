@@ -1700,7 +1700,6 @@ class SNKS_AI_Integration {
 		
 		// Set the current user for WordPress context
 		wp_set_current_user( $user_id );
-		error_log( "🔍 Chat diagnosis - Authenticated user ID: " . $user_id . ", WordPress user ID: " . get_current_user_id() );
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
 
@@ -3532,9 +3531,6 @@ Best regards,
 
 		$locale = $this->get_request_locale();
 
-		// Debug logging
-		error_log( '🔍 AI Verify Forgot Password - Reset token generated: ' . $reset_token );
-		error_log( '🔍 AI Verify Forgot Password - User ID: ' . $user_id );
 
 		$response_data = array(
 			'message'     => $locale === 'ar'
@@ -3543,7 +3539,6 @@ Best regards,
 			'reset_token' => $reset_token,
 		);
 
-		error_log( '🔍 AI Verify Forgot Password - Response data: ' . print_r( $response_data, true ) );
 
 		$this->send_success( $response_data );
 	}
@@ -3685,9 +3680,6 @@ Best regards,
 			$this->send_error( 'Search query is required', 400 );
 		}
 
-		// Debug logging
-		error_log( '🔍 Search query: ' . $search_query );
-		error_log( '🔍 Diagnosis ID: ' . $diagnosis_id );
 
 		// Build the base query
 		$where_conditions = array( 'ta.status = "approved"', 'ta.show_on_ai_site = 1' );
@@ -3725,13 +3717,7 @@ Best regards,
 			$query = "SELECT ta.* FROM $table_name ta WHERE $where_clause ORDER BY ta.name ASC";
 		}
 
-		// Debug logging
-		error_log( '🔍 Final query: ' . $query );
-
 		$applications = $wpdb->get_results( $query );
-
-		// Debug logging
-		error_log( '🔍 Found ' . count( $applications ) . ' applications' );
 
 		$result = array();
 		foreach ( $applications as $application ) {
@@ -3748,8 +3734,6 @@ Best regards,
 		global $wpdb;
 		$table_name = $wpdb->prefix . 'therapist_applications';
 
-		// Debug logging
-		error_log( '🔍 get_ai_therapists_by_diagnosis called with diagnosis_id: ' . $diagnosis_id );
 
 		// Check if limit should be applied (when show more button is disabled)
 		$limit                   = null;
@@ -3776,9 +3760,6 @@ Best regards,
 
 		$applications = $wpdb->get_results( $query );
 
-		// Debug logging
-		error_log( '🔍 Query executed: ' . $query );
-		error_log( '🔍 Found ' . count( $applications ) . ' applications for diagnosis_id: ' . $diagnosis_id );
 
 		$result = array();
 		foreach ( $applications as $application ) {
@@ -4747,7 +4728,6 @@ Best regards,
 		}
 
 		// Format response message
-		error_log( "🔍 Diagnosis conditions - Status: " . ( $response_data['status'] ?? 'NOT_SET' ) . ", Diagnosis ID: " . ( $diagnosis_id ?? 'NULL' ) );
 		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
 			$confidence_text = '';
 			if ( isset( $response_data['confidence'] ) ) {
@@ -4796,7 +4776,6 @@ Best regards,
 
 			// Save diagnosis result to user meta if user is authenticated
 			$user_id = get_current_user_id();
-			error_log( "🔍 Diagnosis completion - User ID: " . $user_id . ", Diagnosis ID: " . $diagnosis_id );
 			if ( $user_id ) {
 				$diagnosis_data = array(
 					'diagnosis_id'          => $diagnosis_id,
@@ -4810,8 +4789,7 @@ Best regards,
 				);
 
 				// Store the diagnosis result in user meta
-				$result = update_user_meta( $user_id, 'ai_diagnosis_result', $diagnosis_data );
-				error_log( "🔍 Diagnosis save result: " . ( $result ? 'SUCCESS' : 'FAILED' ) );
+				update_user_meta( $user_id, 'ai_diagnosis_result', $diagnosis_data );
 
 				// Also store a history of all diagnosis results
 				$diagnosis_history = get_user_meta( $user_id, 'ai_diagnosis_history', true );
@@ -4827,8 +4805,7 @@ Best regards,
 					$diagnosis_history = array_slice( $diagnosis_history, -10 );
 				}
 
-				$history_result = update_user_meta( $user_id, 'ai_diagnosis_history', $diagnosis_history );
-				error_log( "🔍 Diagnosis history save result: " . ( $history_result ? 'SUCCESS' : 'FAILED' ) );
+				update_user_meta( $user_id, 'ai_diagnosis_history', $diagnosis_history );
 			}
 
 			return array(
