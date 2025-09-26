@@ -1,3 +1,25 @@
+// Helper function to handle user logout
+function handleUserLogout(message) {
+  // Clear user data from localStorage
+  localStorage.removeItem('jalsah_token')
+  localStorage.removeItem('jalsah_user')
+  localStorage.removeItem('user')
+  localStorage.removeItem('token')
+  localStorage.removeItem('lastDiagnosisId')
+  sessionStorage.clear()
+  
+  // Remove authorization header
+  delete axios.defaults.headers.common['Authorization']
+  
+  // Redirect to login page
+  window.location.href = '/login'
+  
+  // Show user-friendly message
+  if (window.$toast) {
+    window.$toast.error(message)
+  }
+}
+
 // Global Axios interceptor for handling 401 errors
 export function setupAuthInterceptor(axios) {
   // Response interceptor to handle 401 errors
@@ -10,24 +32,17 @@ export function setupAuthInterceptor(axios) {
       // Handle 401 Unauthorized errors
       if (error.response && error.response.status === 401) {
         console.log('401 Unauthorized - User session expired or invalid')
-        
-        // Clear user data from localStorage
-        localStorage.removeItem('jalsah_token')
-        localStorage.removeItem('jalsah_user')
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-        localStorage.removeItem('lastDiagnosisId')
-        sessionStorage.clear()
-        
-        // Remove authorization header
-        delete axios.defaults.headers.common['Authorization']
-        
-        // Redirect to login page
-        window.location.href = '/login'
-        
-        // Show user-friendly message
-        if (window.$toast) {
-          window.$toast.error('Your session has expired. Please log in again.')
+        handleUserLogout('Your session has expired. Please log in again.')
+      }
+      // Handle 404 errors on user-related endpoints (user deleted)
+      else if (error.response && error.response.status === 404) {
+        const url = error.config?.url || ''
+        // Check if it's a user-related endpoint
+        if (url.includes('/api/ai/profile') || 
+            url.includes('/api/ai/user') || 
+            url.includes('/api/ai/auth')) {
+          console.log('404 User Not Found - User may have been deleted')
+          handleUserLogout('Your account is no longer available. Please contact support.')
         }
       }
       
@@ -77,24 +92,7 @@ export function setupPeriodicValidation(api, intervalMinutes = 5) {
     const isValid = await validateUserSession(api)
     if (!isValid) {
       console.log('Periodic validation failed - logging out user')
-      
-      // Clear all user data
-      localStorage.removeItem('jalsah_token')
-      localStorage.removeItem('jalsah_user')
-      localStorage.removeItem('user')
-      localStorage.removeItem('token')
-      localStorage.removeItem('lastDiagnosisId')
-      sessionStorage.clear()
-      
-      // Remove authorization header
-      delete api.defaults.headers.common['Authorization']
-      
-      if (window.$toast) {
-        window.$toast.error('Your session has expired. Please log in again.')
-      }
-      
-      // Redirect to login
-      window.location.href = '/login'
+      handleUserLogout('Your session has expired. Please log in again.')
     }
   }
   
