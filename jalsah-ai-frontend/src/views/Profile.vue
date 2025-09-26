@@ -41,7 +41,7 @@
                 </div>
               </div>
 
-              <div>
+              <div v-if="showEmailField">
                 <label class="form-label">{{ $t('profile.email') }}</label>
                 <input 
                   v-model="profile.email" 
@@ -237,6 +237,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 export default {
@@ -245,6 +246,7 @@ export default {
     const router = useRouter()
     const toast = useToast()
     const authStore = useAuthStore()
+    const settingsStore = useSettingsStore()
     const { locale } = useI18n()
     
     const loading = ref(true)
@@ -297,28 +299,19 @@ export default {
           
           // Wait for countries to load if not already loaded
           if (countries.value.length === 0) {
-            console.log('Profile Debug - Countries not loaded yet, waiting...')
             await loadCountries()
           }
           
-          console.log('Profile Debug - WhatsApp Country Code:', userData.whatsapp_country_code)
-          console.log('Profile Debug - Available Countries:', countries.value.length)
-          
           // Find country by dial code
           const country = countries.value.find(c => c.dial_code === userData.whatsapp_country_code)
-          console.log('Profile Debug - Found Country:', country)
           
           if (country) {
             selectedCountryCode.value = country.country_code
-            console.log('Profile Debug - Set Selected Country Code:', country.country_code)
           } else {
-            console.log('Profile Debug - No country found for dial code:', userData.whatsapp_country_code)
             // Try to find by partial match
             const partialMatch = countries.value.find(c => c.dial_code.includes(userData.whatsapp_country_code) || userData.whatsapp_country_code.includes(c.dial_code))
-            console.log('Profile Debug - Partial Match:', partialMatch)
             if (partialMatch) {
               selectedCountryCode.value = partialMatch.country_code
-              console.log('Profile Debug - Set Partial Match Country Code:', partialMatch.country_code)
             }
           }
         }
@@ -424,6 +417,11 @@ export default {
       ).slice(0, 20)
     })
 
+    // Check if email field should be shown based on registration settings
+    const showEmailField = computed(() => {
+      return settingsStore.settings?.require_email === true
+    })
+
     const getSelectedCountryFlag = () => {
       const country = countries.value.find(c => c.country_code === selectedCountryCode.value)
       return country ? country.flag : '🇪🇬'
@@ -491,7 +489,8 @@ export default {
       toggleCountryDropdown,
       selectCountry,
       validateWhatsAppNumber,
-      onWhatsAppBlur
+      onWhatsAppBlur,
+      showEmailField
     }
   }
 }
