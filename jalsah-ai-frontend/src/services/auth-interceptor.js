@@ -22,6 +22,8 @@ function handleUserLogout(message) {
 
 // Global Axios interceptor for handling 401 errors
 export function setupAuthInterceptor(axios) {
+  console.log('Setting up auth interceptor...')
+  
   // Response interceptor to handle 401 errors
   axios.interceptors.response.use(
     (response) => {
@@ -83,12 +85,17 @@ export async function validateUserSession(api) {
 
 // Function to setup periodic session validation
 export function setupPeriodicValidation(api, intervalMinutes = 5) {
+  console.log('Setting up periodic validation...')
+  
   // Check if user is logged in by checking localStorage
   const token = localStorage.getItem('jalsah_token')
   const user = localStorage.getItem('jalsah_user')
   
+  console.log('Periodic validation setup - Token:', !!token, 'User:', !!user)
+  
   // Only run if user is logged in
   if (!token || !user) {
+    console.log('Periodic validation: No user logged in, skipping setup')
     return
   }
   
@@ -118,5 +125,17 @@ export function setupPeriodicValidation(api, intervalMinutes = 5) {
   validateSession()
   
   // Set up periodic validation
-  return setInterval(validateSession, intervalMs)
+  const interval = setInterval(validateSession, intervalMs)
+  
+  // Add manual test function to window for debugging
+  window.testUserDeletion = async () => {
+    console.log('Manual test: Checking user session...')
+    const isValid = await validateUserSession(api)
+    console.log('Manual test result:', isValid)
+    if (!isValid) {
+      handleUserLogout('Manual test: User session invalid')
+    }
+  }
+  
+  return interval
 }
