@@ -7,7 +7,7 @@ import i18n from './i18n'
 import App from './App.vue'
 import './style.css'
 import { useSettingsStore } from './stores/settings'
-import { setupAuthInterceptor, setupPeriodicValidation } from './services/auth-interceptor'
+import { setupAuthInterceptor } from './services/auth-interceptor'
 import api from './services/api'
 
 const app = createApp(App)
@@ -61,8 +61,6 @@ app.use(Toast, {
   rtl: i18n.global.locale.value === 'ar'
 })
 
-// Setup periodic session validation (every 1 minute for testing)
-console.log('Main.js: Setting up periodic validation...')
-setupPeriodicValidation(api, 1)
+// Periodic validation will be set up after user login
 
 app.mount('#app') 
