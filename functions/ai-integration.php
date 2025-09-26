@@ -2583,7 +2583,7 @@ class SNKS_AI_Integration {
 	/**
 	 * Handle user deletion - invalidate tokens and sessions
 	 */
-	public function handle_user_deletion( $user_id ) {
+	public static function handle_user_deletion( $user_id ) {
 		// Remove any stored tokens for this user
 		delete_user_meta( $user_id, 'ai_auth_token' );
 		delete_user_meta( $user_id, 'ai_token_expires' );
@@ -8014,6 +8014,5 @@ function snks_get_rochtah_meeting_details_rest( $request ) {
 
 // Hook to handle user deletion - invalidate tokens and sessions
 add_action( 'delete_user', function( $user_id ) {
-	$ai_integration = new AI_Integration();
-	$ai_integration->handle_user_deletion( $user_id );
+	AI_Integration::handle_user_deletion( $user_id );
 });
