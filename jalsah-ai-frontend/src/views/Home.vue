@@ -271,30 +271,63 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 
 export default {
   name: 'Home',
   setup() {
     const authStore = useAuthStore()
     const lastDiagnosisId = ref(null)
+    const loadingDiagnosis = ref(false)
     
     // Computed property to check if user has a previous diagnosis
     const hasPreviousDiagnosis = computed(() => {
       return lastDiagnosisId.value !== null
     })
     
-    // Check for stored diagnosis ID on component mount
-    onMounted(() => {
-      const storedDiagnosisId = localStorage.getItem('lastDiagnosisId')
-      if (storedDiagnosisId) {
-        lastDiagnosisId.value = storedDiagnosisId
+    // Fetch last diagnosis ID from API
+    const fetchLastDiagnosisId = async () => {
+      if (!authStore.user || !authStore.token) {
+        return
       }
+      
+      try {
+        loadingDiagnosis.value = true
+        const response = await api.get('/api/ai/user-diagnosis-results', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (response.data.success && response.data.data.current_diagnosis) {
+          const diagnosis = response.data.data.current_diagnosis
+          
+          // Check if diagnosis was completed recently (within last 24 hours)
+          const diagnosisTime = new Date(diagnosis.completed_at)
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+          
+          if (diagnosisTime > oneDayAgo) {
+            lastDiagnosisId.value = diagnosis.diagnosis_id
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching last diagnosis:', error)
+        // Don't show error to user as this is not critical
+      } finally {
+        loadingDiagnosis.value = false
+      }
+    }
+    
+    // Fetch diagnosis ID on component mount
+    onMounted(() => {
+      fetchLastDiagnosisId()
     })
     
     return {
       authStore,
       lastDiagnosisId,
-      hasPreviousDiagnosis
+      hasPreviousDiagnosis,
+      loadingDiagnosis
     }
   }
 }
