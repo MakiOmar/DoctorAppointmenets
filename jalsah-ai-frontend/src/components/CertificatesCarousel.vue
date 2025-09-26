@@ -137,19 +137,51 @@
     <!-- Lightbox overlay -->
     <div v-if="lightboxOpen" class="fixed inset-0 z-60 bg-black bg-opacity-90 flex items-center justify-center" @click="closeLightbox">
       <div class="relative max-w-4xl max-h-full p-4" @click.stop>
+        <!-- Close Button -->
         <button
           @click="closeLightbox"
-          class="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+          class="absolute -top-8 right-0 text-white hover:text-gray-300 transition-colors z-10"
+          :aria-label="$t('common.close')"
         >
           <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+        
+        <!-- Navigation Arrows -->
+        <button
+          @click="previousSlide"
+          :disabled="certificates.length <= 1"
+          class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
+          :aria-label="$t('common.previous')"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <button
+          @click="nextSlide"
+          :disabled="certificates.length <= 1"
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
+          :aria-label="$t('common.next')"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        
+        <!-- Image -->
         <img
           :src="currentCertificate.url"
           :alt="currentCertificate.name"
           class="max-w-full max-h-full object-contain"
         />
+        
+        <!-- Image counter -->
+        <div v-if="certificates.length > 1" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+          {{ currentIndex + 1 }} / {{ certificates.length }}
+        </div>
       </div>
     </div>
   </div>
@@ -251,17 +283,29 @@ export default {
       
       switch (event.key) {
         case 'ArrowLeft':
-          if (locale.value === 'ar') {
-            nextSlide()
-          } else {
+          if (lightboxOpen.value) {
+            // In lightbox, always use standard left/right navigation
             previousSlide()
+          } else {
+            // In modal, respect RTL
+            if (locale.value === 'ar') {
+              nextSlide()
+            } else {
+              previousSlide()
+            }
           }
           break
         case 'ArrowRight':
-          if (locale.value === 'ar') {
-            previousSlide()
-          } else {
+          if (lightboxOpen.value) {
+            // In lightbox, always use standard left/right navigation
             nextSlide()
+          } else {
+            // In modal, respect RTL
+            if (locale.value === 'ar') {
+              previousSlide()
+            } else {
+              nextSlide()
+            }
           }
           break
         case 'Escape':
