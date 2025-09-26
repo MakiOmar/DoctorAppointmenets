@@ -294,10 +294,25 @@ export default {
         // Set country code and WhatsApp number
         if (userData.whatsapp_country_code) {
           whatsappCountryCode.value = userData.whatsapp_country_code
+          console.log('Profile Debug - WhatsApp Country Code:', userData.whatsapp_country_code)
+          console.log('Profile Debug - Available Countries:', countries.value.length)
+          
           // Find country by dial code
           const country = countries.value.find(c => c.dial_code === userData.whatsapp_country_code)
+          console.log('Profile Debug - Found Country:', country)
+          
           if (country) {
             selectedCountryCode.value = country.country_code
+            console.log('Profile Debug - Set Selected Country Code:', country.country_code)
+          } else {
+            console.log('Profile Debug - No country found for dial code:', userData.whatsapp_country_code)
+            // Try to find by partial match
+            const partialMatch = countries.value.find(c => c.dial_code.includes(userData.whatsapp_country_code) || userData.whatsapp_country_code.includes(c.dial_code))
+            console.log('Profile Debug - Partial Match:', partialMatch)
+            if (partialMatch) {
+              selectedCountryCode.value = partialMatch.country_code
+              console.log('Profile Debug - Set Partial Match Country Code:', partialMatch.country_code)
+            }
           }
         }
       } catch (error) {
