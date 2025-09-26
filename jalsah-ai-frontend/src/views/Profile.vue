@@ -294,6 +294,13 @@ export default {
         // Set country code and WhatsApp number
         if (userData.whatsapp_country_code) {
           whatsappCountryCode.value = userData.whatsapp_country_code
+          
+          // Wait for countries to load if not already loaded
+          if (countries.value.length === 0) {
+            console.log('Profile Debug - Countries not loaded yet, waiting...')
+            await loadCountries()
+          }
+          
           console.log('Profile Debug - WhatsApp Country Code:', userData.whatsapp_country_code)
           console.log('Profile Debug - Available Countries:', countries.value.length)
           
