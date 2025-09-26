@@ -269,7 +269,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 
@@ -311,16 +311,33 @@ export default {
       }
     }
     
+    // Watch for user changes and refetch diagnosis
+    watch(() => authStore.user, (newUser) => {
+      if (newUser) {
+        fetchLastDiagnosisId()
+      } else {
+        lastDiagnosisId.value = null
+      }
+    }, { immediate: true })
+    
     // Fetch diagnosis ID on component mount
     onMounted(() => {
-      fetchLastDiagnosisId()
+      if (authStore.user) {
+        fetchLastDiagnosisId()
+      }
     })
+    
+    // Expose method to manually refresh diagnosis (useful for testing)
+    const refreshDiagnosis = () => {
+      fetchLastDiagnosisId()
+    }
     
     return {
       authStore,
       lastDiagnosisId,
       hasPreviousDiagnosis,
-      loadingDiagnosis
+      loadingDiagnosis,
+      refreshDiagnosis
     }
   }
 }
