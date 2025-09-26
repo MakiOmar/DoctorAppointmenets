@@ -237,6 +237,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 export default {
   name: 'Profile',
@@ -244,6 +245,7 @@ export default {
     const router = useRouter()
     const toast = useToast()
     const authStore = useAuthStore()
+    const { locale } = useI18n()
     
     const loading = ref(true)
     const updating = ref(false)
@@ -360,7 +362,7 @@ export default {
 
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A'
-      const currentLocale = $i18n.locale === 'ar' ? 'ar-SA' : 'en-US'
+      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
       return new Date(dateString).toLocaleDateString(currentLocale)
     }
 
