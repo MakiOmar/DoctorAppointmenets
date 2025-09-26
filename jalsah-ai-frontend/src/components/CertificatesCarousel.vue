@@ -175,7 +175,7 @@
         <img
           :src="currentCertificate.url"
           :alt="currentCertificate.name"
-          class="max-w-full max-h-full object-contain"
+          class="max-w-full max-h-full object-contain inline-block"
         />
         
         <!-- Image counter -->
