@@ -274,6 +274,7 @@ export default {
     const countries = ref([])
     const isLoadingCountries = ref(false)
     const whatsappDialCodeError = ref(false)
+    const whatsappCountryCode = ref('')
 
     const loadProfile = async () => {
       loading.value = true
@@ -285,9 +286,19 @@ export default {
           firstName: userData.first_name || '',
           lastName: userData.last_name || '',
           email: userData.email || '',
-          whatsapp: userData.whatsapp || userData.phone || '',
+          whatsapp: userData.whatsapp || '',
           createdAt: userData.created_at || '',
           totalSessions: userData.total_sessions || 0
+        }
+        
+        // Set country code and WhatsApp number
+        if (userData.whatsapp_country_code) {
+          whatsappCountryCode.value = userData.whatsapp_country_code
+          // Find country by dial code
+          const country = countries.value.find(c => c.dial_code === userData.whatsapp_country_code)
+          if (country) {
+            selectedCountryCode.value = country.country_code
+          }
         }
       } catch (error) {
         toast.error('Failed to load profile')
@@ -306,6 +317,7 @@ export default {
           last_name: profile.value.lastName,
           email: profile.value.email,
           whatsapp: profile.value.whatsapp,
+          whatsapp_country_code: whatsappCountryCode.value,
           phone: profile.value.whatsapp
         }
 
@@ -409,6 +421,7 @@ export default {
 
     const selectCountry = (country) => {
       selectedCountryCode.value = country.country_code
+      whatsappCountryCode.value = country.dial_code
       showCountryDropdown.value = false
       countrySearch.value = ''
     }
@@ -449,6 +462,7 @@ export default {
       countries,
       isLoadingCountries,
       whatsappDialCodeError,
+      whatsappCountryCode,
       filteredCountries,
       getSelectedCountryFlag,
       getSelectedCountryDial,

@@ -2591,6 +2591,11 @@ class SNKS_AI_Integration {
 		$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
 		update_user_meta( $user_id, 'whatsapp', $whatsapp_number );
 		update_user_meta( $user_id, 'billing_whatsapp', $whatsapp_number );
+		
+		// Store country dial code if provided
+		if ( ! empty( $data['country_dial_code'] ) ) {
+			update_user_meta( $user_id, 'whatsapp_country_code', sanitize_text_field( $data['country_dial_code'] ) );
+		}
 
 		// Optional fields
 		if ( ! empty( $data['phone'] ) ) {
@@ -6636,13 +6641,24 @@ Best regards,
 					return;
 				}
 
+				// Get WhatsApp number and country code
+				$whatsapp_full = get_user_meta( $user_id, 'whatsapp', true );
+				$whatsapp_country_code = get_user_meta( $user_id, 'whatsapp_country_code', true );
+				
+				// Split WhatsApp number if it contains country code
+				$whatsapp_number = $whatsapp_full;
+				if ( ! empty( $whatsapp_country_code ) && strpos( $whatsapp_full, $whatsapp_country_code ) === 0 ) {
+					$whatsapp_number = substr( $whatsapp_full, strlen( $whatsapp_country_code ) );
+				}
+				
 				$profile_data = array(
 					'id' => $user->ID,
 					'first_name' => $user->first_name,
 					'last_name' => $user->last_name,
 					'email' => $user->user_email,
 					'phone' => get_user_meta( $user_id, 'phone', true ),
-					'whatsapp' => get_user_meta( $user_id, 'whatsapp', true ),
+					'whatsapp' => $whatsapp_number,
+					'whatsapp_country_code' => $whatsapp_country_code,
 					'date_of_birth' => get_user_meta( $user_id, 'date_of_birth', true ),
 					'emergency_phone' => get_user_meta( $user_id, 'emergency_phone', true ),
 					'address' => get_user_meta( $user_id, 'address', true ),
@@ -6674,7 +6690,17 @@ Best regards,
 				}
 				
 				if ( isset( $data['whatsapp'] ) ) {
-					update_user_meta( $user_id, 'whatsapp', $data['whatsapp'] );
+					// Combine country code with WhatsApp number if both provided
+					$whatsapp_number = $data['whatsapp'];
+					if ( ! empty( $data['whatsapp_country_code'] ) && ! empty( $data['whatsapp'] ) ) {
+						$whatsapp_number = $data['whatsapp_country_code'] . $data['whatsapp'];
+					}
+					update_user_meta( $user_id, 'whatsapp', $whatsapp_number );
+					update_user_meta( $user_id, 'billing_whatsapp', $whatsapp_number );
+				}
+				
+				if ( isset( $data['whatsapp_country_code'] ) ) {
+					update_user_meta( $user_id, 'whatsapp_country_code', $data['whatsapp_country_code'] );
 				}
 				
 				if ( isset( $data['date_of_birth'] ) ) {
