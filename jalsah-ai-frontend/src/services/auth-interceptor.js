@@ -102,8 +102,11 @@ export function setupPeriodicValidation(api, intervalMinutes = 5) {
   }
   
   const intervalMs = intervalMinutes * 60 * 1000
+  console.log(`Periodic validation: Setting up ${intervalMinutes} minute interval (${intervalMs}ms)`)
   
   const validateSession = async () => {
+    console.log('Periodic validation: Function called at', new Date().toLocaleTimeString())
+    
     // Check again if user is still logged in
     const currentToken = localStorage.getItem('jalsah_token')
     const currentUser = localStorage.getItem('jalsah_user')
@@ -124,10 +127,18 @@ export function setupPeriodicValidation(api, intervalMinutes = 5) {
   }
   
   // Run validation immediately
+  console.log('Periodic validation: Running immediate check...')
   validateSession()
   
   // Set up periodic validation
+  console.log('Periodic validation: Setting up interval...')
   const interval = setInterval(validateSession, intervalMs)
+  
+  // Add a test function to manually trigger validation
+  window.triggerPeriodicCheck = () => {
+    console.log('Manual trigger: Running periodic check...')
+    validateSession()
+  }
   
   // Add manual test function to window for debugging
   window.testUserDeletion = async () => {

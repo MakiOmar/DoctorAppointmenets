@@ -61,8 +61,8 @@ app.use(Toast, {
   rtl: i18n.global.locale.value === 'ar'
 })
 
-// Setup periodic session validation (every 5 minutes)
+// Setup periodic session validation (every 1 minute for testing)
 console.log('Main.js: Setting up periodic validation...')
-setupPeriodicValidation(api, 5)
+setupPeriodicValidation(api, 1)
 
 app.mount('#app') 
