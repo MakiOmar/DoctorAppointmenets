@@ -200,7 +200,7 @@
 
               <!-- Time Slots Grid -->
               <div v-if="selectedDate && timeSlots.length > 0" class="bg-white rounded-lg border border-gray-200 p-4">
-                <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }} ( جميع المواعيد بتوقيت مصر )</h5>
+                <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
                 <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
                   <div
                     v-for="slot in timeSlots"
@@ -1038,7 +1038,7 @@ export default {
       const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
-      return `${displayHours}:${formattedMinutes} ${period} بتوقيت مصر`
+      return `${displayHours}:${formattedMinutes} ${period}`
     }
 
     const formatShortDay = (date) => {
@@ -1112,7 +1112,7 @@ export default {
       const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
-      const formattedTime = `${displayHours}:${formattedMinutes} ${period} بتوقيت مصر`
+      const formattedTime = `${displayHours}:${formattedMinutes} ${period}`
       
       const dateStr = formatShortDateWithDay(date)
       
