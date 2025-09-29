@@ -423,18 +423,14 @@ export default {
     }
 
     const showTherapistDetails = () => {
-      console.log('👁️ TherapistCard - Show therapist details clicked for therapist:', props.therapist.id)
-      console.log('👁️ TherapistCard - Current showDetails state:', showDetails.value)
       
       if (showDetails.value) {
         // If details are currently shown, hide them
-        console.log('👁️ TherapistCard - Hiding details')
         showDetails.value = false
         showDateSelection.value = false // Also hide date selection
         emit('hide-details')
       } else {
         // If details are hidden, show them
-        console.log('👁️ TherapistCard - Showing details and date selection')
         showDetails.value = true
         showDateSelection.value = true // Directly show date selection
         emit('show-details', props.therapist.id)
@@ -568,9 +564,6 @@ export default {
     }
 
     const loadAvailableDates = async () => {
-      console.log('📅 TherapistCard - Loading available dates for therapist:', props.therapist.id)
-      console.log('📅 TherapistCard - Available dates data:', props.therapist.available_dates)
-      
       loadingDates.value = true
       try {
         // Use the actual available dates from the therapist data
@@ -646,9 +639,6 @@ export default {
     }
 
     const selectDate = async (date) => {
-      console.log('🕒 TherapistCard - Selecting date:', date)
-      console.log('🕒 TherapistCard - Available dates data:', props.therapist.available_dates)
-      
       selectedDate.value = date
       loadingDates.value = true
       try {
@@ -684,14 +674,12 @@ export default {
             
             // Filter out 45-minute offline slots
             if (timeSlot.attendance_type === 'offline' && timeSlot.period === 45) {
-              console.log('🚫 TherapistCard - Filtering out 45-minute offline slot:', timeSlot)
               timeSlots.value = []
               return
             }
             
             // Check if this slot is in the user's cart
             await checkSlotCartStatus(timeSlot)
-            console.log('🕒 TherapistCard - Generated time slot:', timeSlot)
             timeSlots.value = [timeSlot]
           } else {
             timeSlots.value = []
@@ -718,7 +706,6 @@ export default {
                 }
                 // Filter out 45-minute offline slots
                 if (slot.attendance_type === 'offline' && slot.period === 45) {
-                  console.log('🚫 TherapistCard - Filtering out 45-minute offline slot from API:', slot)
                   return false
                 }
                 return true

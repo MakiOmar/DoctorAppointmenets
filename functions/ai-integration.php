@@ -6160,8 +6160,6 @@ Best regards,
 	 * Get available dates from timetable for a therapist
 	 */
 	private function get_available_dates_from_timetable( $therapist_id ) {
-		error_log( 'AI Available Dates from Timetable - Function called for therapist_id=' . $therapist_id );
-		
 		global $wpdb;
 
 		// Get all available slots from the timetable
@@ -6182,13 +6180,8 @@ Best regards,
 			)
 		);
 
-		error_log( 'AI Available Dates from Timetable - SQL Query: ' . $wpdb->last_query );
-		error_log( 'AI Available Dates from Timetable - Results Count: ' . count( $available_slots ) );
-
 		$available_dates = array();
 		foreach ( $available_slots as $slot ) {
-			error_log( 'AI Available Dates from Timetable - Processing slot: ID=' . $slot->ID . ', date=' . $slot->date_time . ', time=' . $slot->starts . ', period=' . $slot->period . ', attendance_type=' . $slot->attendance_type );
-			
 			$date              = new DateTime( $slot->date_time );
 			$available_dates[] = array(
 				'date'            => $date->format( 'Y-m-d' ),
@@ -6202,7 +6195,6 @@ Best regards,
 			);
 		}
 
-		error_log( 'AI Available Dates from Timetable - Final available_dates count: ' . count( $available_dates ) );
 		return $available_dates;
 	}
 
@@ -6360,8 +6352,6 @@ Best regards,
 	 * Get therapist's time slots for a specific date
 	 */
 	private function get_ai_therapist_time_slots( $therapist_id, $date ) {
-		error_log( 'AI Therapist Time Slots - Function called with therapist_id=' . $therapist_id . ', date=' . $date );
-		
 		global $wpdb;
 
 		if ( empty( $date ) ) {
@@ -6387,9 +6377,6 @@ Best regards,
 			)
 		);
 
-		error_log( 'AI Therapist Time Slots - SQL Query: ' . $wpdb->last_query );
-		error_log( 'AI Therapist Time Slots - Results Count: ' . count( $time_slots ) );
-
 		$slots        = array();
 		$current_time = current_time( 'H:i:s' );
 		$is_today     = ( $date === current_time( 'Y-m-d' ) );
@@ -6400,7 +6387,7 @@ Best regards,
 				continue;
 			}
 
-			$slot_data = array(
+			$slots[] = array(
 				'id'              => $slot->ID,
 				'value'           => $slot->starts,
 				'time'            => $slot->starts,
@@ -6410,12 +6397,8 @@ Best regards,
 				'attendance_type' => $slot->attendance_type,
 				'date_time'       => $slot->date_time,
 			);
-			
-			error_log( 'AI Therapist Time Slots - Processing slot: ' . print_r( $slot_data, true ) );
-			$slots[] = $slot_data;
 		}
 
-		error_log( 'AI Therapist Time Slots - Final slots count: ' . count( $slots ) );
 		$this->send_success( $slots );
 	}
 

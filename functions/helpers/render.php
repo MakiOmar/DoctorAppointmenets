@@ -444,7 +444,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '</div>';
 	$html .= '<hr style="margin:20px 0">';
 	$html .= '<div id="snks-available-hours-wrapper">';
-	$html .= '<p class="anony-center-text">( جميع المواعيد بتوقيت مصر )</p>';
+	$html .= '<p class="anony-center-text" style="margin-bottom: 10px;">( جميع المواعيد بتوقيت مصر )</p>';
 	$html .= '<div class="snks-available-hours"></div>';
 	$html .= '</div>';
 	$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
