@@ -68,11 +68,6 @@
             </div>
           </div>
           
-          <!-- Image Info -->
-          <div v-if="currentImage.name" class="mt-4 text-center text-white">
-            <h3 class="text-lg font-semibold">{{ currentImage.name }}</h3>
-          </div>
-          
                      <!-- Image Counter -->
            <div class="mt-2 text-center text-white text-sm">
              {{ currentIndex + 1 }} / {{ images.length }}
