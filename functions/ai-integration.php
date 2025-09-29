@@ -5262,6 +5262,8 @@ Best regards,
 	 * Get therapist availability for a specific date
 	 */
 	public function get_ai_therapist_availability( $request ) {
+		error_log( 'AI Therapist Availability - Function called' );
+		
 		$therapist_id = $request->get_param( 'therapist_id' );
 		$date         = $request->get_param( 'date' );
 		$attendance_type = $request->get_param( 'attendance_type' );
@@ -5288,6 +5290,7 @@ Best regards,
 
 		// Log the query conditions for debugging
 		error_log( 'AI Therapist Availability Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition );
+		error_log( 'AI Therapist Availability - Function called with parameters: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type );
 
 		// Query the existing timetable system for available slots
 		// Only include slots that are actually available (not booked)
@@ -6248,6 +6251,8 @@ Best regards,
 	 * Get therapist's available dates
 	 */
 	private function get_ai_therapist_available_dates( $therapist_id ) {
+		error_log( 'AI Therapist Available Dates - Function called' );
+		
 		global $wpdb;
 
 		// Get attendance_type parameter
