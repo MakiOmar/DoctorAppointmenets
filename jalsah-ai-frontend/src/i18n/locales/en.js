@@ -197,7 +197,19 @@ export default {
       invalidPhoneFormat: 'Invalid phone number format for',
       phoneValidation: {
         valid: 'Phone number is valid',
-        invalid: 'Phone number is invalid'
+        invalid: 'Phone number is invalid',
+        tooShort: 'Phone number is too short',
+        tooLong: 'Phone number is too long',
+        invalidFormat: 'Phone number format is incorrect',
+        invalidCharacters: 'Phone number contains invalid characters',
+        missingDigits: 'Phone number is missing required digits',
+        wrongPrefix: 'Phone number has incorrect prefix for this country',
+        specificErrors: {
+          saudiArabia: 'Saudi phone numbers must start with 5 and be 9 digits (excluding country code)',
+          uae: 'UAE phone numbers must start with 5 and be 9 digits (excluding country code)',
+          egypt: 'Egypt phone numbers must start with 10, 11, 12, 15, or 16 and be 10 digits (excluding country code)',
+          default: 'Please check the phone number format for your country'
+        }
       },
       errors: {
         passwordMismatch: 'Passwords do not match',

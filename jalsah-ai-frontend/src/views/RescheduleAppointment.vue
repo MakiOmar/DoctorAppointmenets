@@ -398,7 +398,7 @@ const formatTime = (timeStr) => {
     return timeStr // Return original if parsing fails
   }
   
-  const period = hours >= 12 ? $t('dateTime.pm') : $t('dateTime.am')
+  const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
   const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
   const formattedMinutes = minutes.toString().padStart(2, '0')
   

@@ -204,7 +204,7 @@ function onFileChange(event, field, multiple = false) {
   }
 }
 
-// Phone validation function
+// Enhanced phone validation function with detailed error messages
 const validatePhoneNumber = (phoneNumber, countryCode) => {
   const country = registrationStore.countryCodes[countryCode]
   
@@ -212,14 +212,54 @@ const validatePhoneNumber = (phoneNumber, countryCode) => {
     return { isValid: true, error: null } // Skip validation if no pattern
   }
   
-  const fullPhoneNumber = country.code + phoneNumber
+  // Clean the phone number (remove spaces, dashes, etc.)
+  const cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '')
+  
+  // Check for invalid characters (only digits should be allowed)
+  if (!/^\d+$/.test(cleanPhoneNumber)) {
+    return {
+      isValid: false,
+      error: t('auth.register.phoneValidation.invalidCharacters')
+    }
+  }
+  
+  // Check length constraints
+  if (cleanPhoneNumber.length < 7) {
+    return {
+      isValid: false,
+      error: t('auth.register.phoneValidation.tooShort')
+    }
+  }
+  
+  if (cleanPhoneNumber.length > 15) {
+    return {
+      isValid: false,
+      error: t('auth.register.phoneValidation.tooLong')
+    }
+  }
+  
+  const fullPhoneNumber = country.code + cleanPhoneNumber
   const pattern = new RegExp(country.validation_pattern)
   
-  
   if (!pattern.test(fullPhoneNumber)) {
+    // Get specific error message based on country
+    let specificError = t('auth.register.phoneValidation.specificErrors.default')
+    
+    switch (countryCode) {
+      case 'SA':
+        specificError = t('auth.register.phoneValidation.specificErrors.saudiArabia')
+        break
+      case 'AE':
+        specificError = t('auth.register.phoneValidation.specificErrors.uae')
+        break
+      case 'EG':
+        specificError = t('auth.register.phoneValidation.specificErrors.egypt')
+        break
+    }
+    
     return { 
       isValid: false, 
-      error: `${t('auth.login.invalidPhoneFormat')} ${country.name}` 
+      error: specificError
     }
   }
   
