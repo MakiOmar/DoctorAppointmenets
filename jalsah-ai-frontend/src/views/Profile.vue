@@ -446,6 +446,53 @@ export default {
       countrySearch.value = ''
     }
 
+    // Enhanced phone validation function with detailed error messages
+    const validatePhoneNumber = (phoneNumber, countryCode) => {
+      const country = countries.value.find(c => c.country_code === countryCode)
+      if (!country || !country.validation_pattern) {
+        return { isValid: false, error: t('phoneValidation.invalid') }
+      }
+
+      // Remove any non-digit characters except +
+      let cleanNumber = phoneNumber.replace(/[^\d+]/g, '')
+      
+      // Check if number starts with 0 (common mistake)
+      if (cleanNumber.startsWith('0')) {
+        return { isValid: false, error: t('phoneValidation.startsWithZero') }
+      }
+
+      // Check for invalid characters (only digits should remain after cleaning)
+      if (!/^\d+$/.test(cleanNumber)) {
+        return { isValid: false, error: t('phoneValidation.invalidCharacters') }
+      }
+
+      // Check length
+      const expectedLength = country.phone_length
+      if (cleanNumber.length < expectedLength) {
+        return { isValid: false, error: t('phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
+      }
+      if (cleanNumber.length > expectedLength) {
+        return { isValid: false, error: t('phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
+      }
+
+      // Check pattern
+      const pattern = new RegExp(country.validation_pattern)
+      if (!pattern.test(cleanNumber)) {
+        // Return specific error based on country
+        if (countryCode === 'SA') {
+          return { isValid: false, error: t('phoneValidation.specificErrors.saudiArabia') }
+        } else if (countryCode === 'AE') {
+          return { isValid: false, error: t('phoneValidation.specificErrors.uae') }
+        } else if (countryCode === 'EG') {
+          return { isValid: false, error: t('phoneValidation.specificErrors.egypt') }
+        } else {
+          return { isValid: false, error: t('phoneValidation.specificErrors.default') }
+        }
+      }
+
+      return { isValid: true, error: null }
+    }
+
     const validateWhatsAppNumber = () => {
       const whatsappValue = profile.value.whatsapp
       if (whatsappValue && whatsappValue.includes('+')) {
@@ -453,10 +500,27 @@ export default {
       } else {
         whatsappDialCodeError.value = false
       }
+      
+      // Also validate the phone number format
+      if (whatsappValue && selectedCountryCode.value) {
+        const validation = validatePhoneNumber(whatsappValue, selectedCountryCode.value)
+        if (!validation.isValid) {
+          whatsappDialCodeError.value = true
+        }
+      }
     }
 
     const onWhatsAppBlur = () => {
       validateWhatsAppNumber()
+      
+      // Show specific validation error if needed
+      if (profile.value.whatsapp && selectedCountryCode.value) {
+        const validation = validatePhoneNumber(profile.value.whatsapp, selectedCountryCode.value)
+        if (!validation.isValid) {
+          // You could show a toast or set an error message here
+          console.log('WhatsApp validation error:', validation.error)
+        }
+      }
     }
 
 
@@ -488,6 +552,7 @@ export default {
       getSelectedCountryDial,
       toggleCountryDropdown,
       selectCountry,
+      validatePhoneNumber,
       validateWhatsAppNumber,
       onWhatsAppBlur,
       showEmailField
