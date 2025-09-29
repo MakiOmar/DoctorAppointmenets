@@ -57,9 +57,6 @@ function snks_get_therapist_details_rest($request) {
     // Get certificates
     $certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];
     
-    // Debug logging
-    error_log("Therapist Details Debug: Raw certificates from application: " . print_r($application->certificates, true));
-    error_log("Therapist Details Debug: After JSON decode: " . print_r($certificates, true));
     
     $certificates_data = [];
 
@@ -108,7 +105,6 @@ function snks_get_therapist_details_rest($request) {
         return strtotime($b['upload_date']) - strtotime($a['upload_date']);
     });
     
-    error_log("Therapist Details Debug: Final certificates data: " . print_r($certificates_data, true));
 
     // Build therapist details
     $therapist_details = [
@@ -128,7 +124,6 @@ function snks_get_therapist_details_rest($request) {
         'approval_date' => date('Y-m-d', strtotime($application->updated_at))
     ];
     
-    error_log("Therapist Details Debug: Final therapist details: " . print_r($therapist_details, true));
 
     return [
         'success' => true,
