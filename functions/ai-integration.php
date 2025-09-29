@@ -6184,9 +6184,12 @@ Best regards,
 		$available_dates = array();
 		foreach ( $available_slots as $slot ) {
 			$date              = new DateTime( $slot->date_time );
+			$full_day_name     = $date->format( 'l' ); // Full day name (Saturday, Sunday, etc.)
+			$arabic_day_name   = localize_date_to_arabic( $full_day_name ); // Convert to Arabic
+			
 			$available_dates[] = array(
 				'date'            => $date->format( 'Y-m-d' ),
-				'day'             => $date->format( 'D' ), // Short day name
+				'day'             => $arabic_day_name, // Full Arabic day name
 				'slot_id'         => $slot->ID,
 				'time'            => $slot->starts,
 				'end_time'        => $slot->ends,
