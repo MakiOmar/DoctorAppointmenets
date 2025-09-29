@@ -5291,9 +5291,9 @@ Best regards,
 		$period_condition = '';
 		
 		if ( $attendance_type === 'offline' ) {
-			// For offline slots, exclude 45-minute slots
+			// For offline slots, allow all periods (including 45-minute for reschedule)
 			$attendance_condition = "AND attendance_type = 'offline'";
-			$period_condition = "AND (period != 45 OR period IS NULL OR period = 0)";
+			$period_condition = ""; // Allow all periods for offline slots
 		} else {
 			// Default to online slots
 			$attendance_condition = "AND attendance_type = 'online'";
@@ -6287,9 +6287,9 @@ Best regards,
 		$period_condition = '';
 		
 		if ( $attendance_type === 'offline' ) {
-			// For offline slots, exclude 45-minute slots
+			// For offline slots, allow all periods (including 45-minute for reschedule)
 			$attendance_condition = "AND attendance_type = 'offline'";
-			$period_condition = "AND (period != 45 OR period IS NULL OR period = 0)";
+			$period_condition = ""; // Allow all periods for offline slots
 		} else {
 			// Default to online slots
 			$attendance_condition = "AND attendance_type = 'online'";
