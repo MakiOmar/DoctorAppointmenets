@@ -24,7 +24,7 @@
           <!-- Name Fields -->
           <div class="flex gap-4 name-fields-container">
             <!-- First Name Field -->
-            <div class="flex-1">
+            <div class="flex-1 order-1">
               <label for="first_name" class="form-label">{{ $t('auth.register.firstName') }} <span class="text-red-500">*</span></label>
               <input
                 id="first_name"
@@ -38,7 +38,7 @@
               />
             </div>
             <!-- Last Name Field -->
-            <div class="flex-1">
+            <div class="flex-1 order-2">
               <label for="last_name" class="form-label">{{ $t('auth.register.lastName') }} <span class="text-red-500">*</span></label>
               <input
                 id="last_name"
@@ -241,6 +241,26 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Ensure consistent field order in both LTR and RTL layouts */
+.name-fields-container .order-1 {
+  order: 1;
+}
+
+.name-fields-container .order-2 {
+  order: 2;
+}
+
+/* Override RTL behavior to maintain consistent order */
+[dir="rtl"] .name-fields-container .order-1 {
+  order: 1;
+}
+
+[dir="rtl"] .name-fields-container .order-2 {
+  order: 2;
+}
+</style>
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
