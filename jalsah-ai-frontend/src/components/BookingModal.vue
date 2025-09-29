@@ -224,6 +224,11 @@ const resetModal = () => {
 const generateAvailableDates = async () => {
   if (!props.therapist.user_id) return
   
+  console.log('📅 BookingModal - Loading available dates for:', {
+    therapist_id: props.therapist.user_id,
+    attendance_type: 'offline'
+  })
+  
   try {
     const response = await api.get('/api/ai/therapist-available-dates', {
       params: {
@@ -231,6 +236,8 @@ const generateAvailableDates = async () => {
         attendance_type: 'offline'
       }
     })
+    
+    console.log('📅 BookingModal - Available dates API response:', response.data)
     
     if (response.data.success) {
       const dates = response.data.available_dates.map(dateInfo => {
@@ -270,6 +277,12 @@ const nextStep = async () => {
 const loadTimeSlots = async () => {
   if (!selectedDate.value || !props.therapist.user_id) return
   
+  console.log('🕒 BookingModal - Loading time slots for:', {
+    therapist_id: props.therapist.user_id,
+    date: selectedDate.value,
+    attendance_type: 'offline'
+  })
+  
   loadingSlots.value = true
   availableSlots.value = []
   
@@ -281,6 +294,8 @@ const loadTimeSlots = async () => {
         attendance_type: 'offline'
       }
     })
+    
+    console.log('🕒 BookingModal - Time slots API response:', response.data)
     
     availableSlots.value = response.data.available_slots || []
   } catch (error) {

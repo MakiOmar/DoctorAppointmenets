@@ -1218,6 +1218,11 @@ export default {
     const loadAvailableDates = async () => {
       if (!selectedTherapist.value?.user_id) return
       
+      console.log('📅 Loading available dates for:', {
+        therapist_id: selectedTherapist.value.user_id,
+        attendance_type: 'offline'
+      })
+      
       loadingDates.value = true
       try {
         const response = await api.get('/api/ai/therapist-available-dates', {
@@ -1226,6 +1231,8 @@ export default {
             attendance_type: 'offline'
           }
         })
+        
+        console.log('📅 Available dates API response:', response.data)
         
         
         if (response.data.success && response.data.data && response.data.data.available_dates) {
@@ -1258,6 +1265,12 @@ export default {
     const loadTimeSlots = async (date) => {
       if (!selectedTherapist.value?.user_id || !date) return
       
+      console.log('🕒 Loading time slots for:', {
+        therapist_id: selectedTherapist.value.user_id,
+        date: date,
+        attendance_type: 'offline'
+      })
+      
       bookingLoadingSlots.value = true
       try {
         const response = await api.get('/api/ai/therapist-availability', {
@@ -1267,6 +1280,8 @@ export default {
             attendance_type: 'offline'
           }
         })
+        
+        console.log('🕒 Time slots API response:', response.data)
         
         if (response.data.success && response.data.data && response.data.data.available_slots) {
           timeSlots.value = response.data.data.available_slots
