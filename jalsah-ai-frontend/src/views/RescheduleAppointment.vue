@@ -234,7 +234,8 @@ const loadAvailableDates = async () => {
   try {
     const response = await api.get('/api/ai/therapist-available-dates', {
       params: {
-        therapist_id: therapistId
+        therapist_id: therapistId,
+        attendance_type: 'offline'
       }
     })
     
@@ -274,7 +275,8 @@ const loadTimeSlots = async () => {
     const response = await api.get('/api/ai/therapist-availability', {
       params: {
         therapist_id: therapistId,
-        date: selectedDate.value
+        date: selectedDate.value,
+        attendance_type: 'offline'
       }
     })
     

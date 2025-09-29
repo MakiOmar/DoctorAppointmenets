@@ -1222,7 +1222,8 @@ export default {
       try {
         const response = await api.get('/api/ai/therapist-available-dates', {
           params: {
-            therapist_id: selectedTherapist.value.user_id
+            therapist_id: selectedTherapist.value.user_id,
+            attendance_type: 'offline'
           }
         })
         
@@ -1262,7 +1263,8 @@ export default {
         const response = await api.get('/api/ai/therapist-availability', {
           params: {
             therapist_id: selectedTherapist.value.user_id,
-            date: date
+            date: date,
+            attendance_type: 'offline'
           }
         })
         
