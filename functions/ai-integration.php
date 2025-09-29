@@ -6351,6 +6351,8 @@ Best regards,
 	 * Get therapist's time slots for a specific date
 	 */
 	private function get_ai_therapist_time_slots( $therapist_id, $date ) {
+		error_log( 'AI Therapist Time Slots - Function called with therapist_id=' . $therapist_id . ', date=' . $date );
+		
 		global $wpdb;
 
 		if ( empty( $date ) ) {
@@ -6369,11 +6371,15 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND period = 45
+			 AND NOT (attendance_type = 'offline' AND period = 45)
 			 ORDER BY starts ASC",
 				$therapist_id,
 				$date
 			)
 		);
+
+		error_log( 'AI Therapist Time Slots - SQL Query: ' . $wpdb->last_query );
+		error_log( 'AI Therapist Time Slots - Results Count: ' . count( $time_slots ) );
 
 		$slots        = array();
 		$current_time = current_time( 'H:i:s' );
@@ -6385,7 +6391,7 @@ Best regards,
 				continue;
 			}
 
-			$slots[] = array(
+			$slot_data = array(
 				'id'              => $slot->ID,
 				'value'           => $slot->starts,
 				'time'            => $slot->starts,
@@ -6395,8 +6401,12 @@ Best regards,
 				'attendance_type' => $slot->attendance_type,
 				'date_time'       => $slot->date_time,
 			);
+			
+			error_log( 'AI Therapist Time Slots - Processing slot: ' . print_r( $slot_data, true ) );
+			$slots[] = $slot_data;
 		}
 
+		error_log( 'AI Therapist Time Slots - Final slots count: ' . count( $slots ) );
 		$this->send_success( $slots );
 	}
 
