@@ -5264,12 +5264,27 @@ Best regards,
 	public function get_ai_therapist_availability( $request ) {
 		$therapist_id = $request->get_param( 'therapist_id' );
 		$date         = $request->get_param( 'date' );
+		$attendance_type = $request->get_param( 'attendance_type' );
 
 		if ( ! $therapist_id || ! $date ) {
 			$this->send_error( 'Missing therapist_id or date', 400 );
 		}
 
 		global $wpdb;
+
+		// Build the query based on attendance_type parameter
+		$attendance_condition = '';
+		$period_condition = '';
+		
+		if ( $attendance_type === 'offline' ) {
+			// For offline slots, exclude 45-minute slots
+			$attendance_condition = "AND attendance_type = 'offline'";
+			$period_condition = "AND (period != 45 OR period IS NULL OR period = 0)";
+		} else {
+			// Default to online slots
+			$attendance_condition = "AND attendance_type = 'online'";
+			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
+		}
 
 		// Query the existing timetable system for available slots
 		// Only include slots that are actually available (not booked)
@@ -5279,12 +5294,12 @@ Best regards,
 			 AND DATE(date_time) = %s 
 			 AND session_status = 'waiting' 
 			 AND order_id = 0
-			 AND attendance_type = 'online'
+			 {$attendance_condition}
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
+			 {$period_condition}
 			 ORDER BY starts ASC",
 			$therapist_id,
 			$date
@@ -6222,7 +6237,24 @@ Best regards,
 	private function get_ai_therapist_available_dates( $therapist_id ) {
 		global $wpdb;
 
+		// Get attendance_type parameter
+		$attendance_type = $_GET['attendance_type'] ?? 'online';
+
 		// Debug logging
+
+		// Build the query based on attendance_type parameter
+		$attendance_condition = '';
+		$period_condition = '';
+		
+		if ( $attendance_type === 'offline' ) {
+			// For offline slots, exclude 45-minute slots
+			$attendance_condition = "AND attendance_type = 'offline'";
+			$period_condition = "AND (period != 45 OR period IS NULL OR period = 0)";
+		} else {
+			// Default to online slots
+			$attendance_condition = "AND attendance_type = 'online'";
+			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
+		}
 
 		// Query for dates that have available slots in the next 30 days
 		// Only include dates where there are actually available slots (not booked)
@@ -6238,11 +6270,11 @@ Best regards,
 			 AND DATE(date_time) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
 			 AND session_status = 'waiting' 
 			 AND order_id = 0
-			 AND attendance_type = 'online'
+			 {$attendance_condition}
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
+			 {$period_condition}
 			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC",
 			$therapist_id,
