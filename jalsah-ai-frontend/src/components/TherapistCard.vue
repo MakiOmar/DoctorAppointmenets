@@ -1061,7 +1061,7 @@ export default {
 
     const formatShortDateWithDay = (date) => {
       return formatGregorianDate(date, locale.value, { 
-        weekday: 'short', 
+        weekday: 'long', 
         month: 'short', 
         day: 'numeric' 
       })
