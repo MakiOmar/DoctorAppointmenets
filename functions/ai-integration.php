@@ -6160,6 +6160,8 @@ Best regards,
 	 * Get available dates from timetable for a therapist
 	 */
 	private function get_available_dates_from_timetable( $therapist_id ) {
+		error_log( 'AI Available Dates from Timetable - Function called for therapist_id=' . $therapist_id );
+		
 		global $wpdb;
 
 		// Get all available slots from the timetable
@@ -6174,13 +6176,19 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND period = 45
+			 AND NOT (attendance_type = 'offline')
 			 ORDER BY date_time ASC",
 				$therapist_id
 			)
 		);
 
+		error_log( 'AI Available Dates from Timetable - SQL Query: ' . $wpdb->last_query );
+		error_log( 'AI Available Dates from Timetable - Results Count: ' . count( $available_slots ) );
+
 		$available_dates = array();
 		foreach ( $available_slots as $slot ) {
+			error_log( 'AI Available Dates from Timetable - Processing slot: ID=' . $slot->ID . ', date=' . $slot->date_time . ', time=' . $slot->starts . ', period=' . $slot->period . ', attendance_type=' . $slot->attendance_type );
+			
 			$date              = new DateTime( $slot->date_time );
 			$available_dates[] = array(
 				'date'            => $date->format( 'Y-m-d' ),
@@ -6194,6 +6202,7 @@ Best regards,
 			);
 		}
 
+		error_log( 'AI Available Dates from Timetable - Final available_dates count: ' . count( $available_dates ) );
 		return $available_dates;
 	}
 
