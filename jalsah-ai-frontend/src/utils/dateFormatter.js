@@ -16,7 +16,12 @@ export const formatGregorianDate = (dateString, locale = 'en', options = {}) => 
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return 'N/A'
   
-  // Force Gregorian calendar by using specific locale settings
+  // For Arabic locale, use manual formatting to ensure Arabic month names with Gregorian calendar
+  if (locale === 'ar') {
+    return formatDateManually(date, locale, options)
+  }
+  
+  // For English locale, use standard formatting
   const gregorianOptions = {
     year: 'numeric',
     month: 'long',
@@ -25,15 +30,11 @@ export const formatGregorianDate = (dateString, locale = 'en', options = {}) => 
     ...options
   }
   
-  // Use English locale for date formatting to ensure Gregorian
-  // but keep the month names in the appropriate language
-  const formatLocale = locale === 'ar' ? 'en-US' : 'en-US'
-  
   try {
-    return date.toLocaleDateString(formatLocale, gregorianOptions)
+    return date.toLocaleDateString('en-US', gregorianOptions)
   } catch (error) {
     // Fallback to manual formatting if locale options fail
-    return formatDateManually(date, locale)
+    return formatDateManually(date, locale, options)
   }
 }
 
@@ -96,21 +97,68 @@ export const formatGregorianDateShort = (dateString, locale = 'en') => {
 }
 
 /**
- * Manual date formatting fallback
+ * Manual date formatting fallback with proper Arabic month names
  * @param {Date} date - Date object
  * @param {string} locale - Current app locale
+ * @param {object} options - Formatting options
  * @returns {string} Manually formatted date
  */
-const formatDateManually = (date, locale) => {
+const formatDateManually = (date, locale, options = {}) => {
   const year = date.getFullYear()
   const month = date.getMonth() + 1
   const day = date.getDate()
+  const dayOfWeek = date.getDay()
   
   if (locale === 'ar') {
-    return `${day}/${month}/${year}`
+    // Arabic month names (Gregorian calendar)
+    const arabicMonths = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ]
+    
+    // Arabic day names
+    const arabicDays = [
+      'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
+    ]
+    
+    const monthName = arabicMonths[date.getMonth()]
+    const dayName = arabicDays[dayOfWeek]
+    
+    // Check if we need weekday in the format
+    if (options.weekday === 'long') {
+      return `${dayName}، ${day} ${monthName} ${year}`
+    } else if (options.weekday === 'short') {
+      const shortDays = ['أحد', 'إثن', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت']
+      return `${shortDays[dayOfWeek]}، ${day} ${monthName}`
+    } else if (options.month === 'short') {
+      const shortMonths = [
+        'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+        'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      ]
+      return `${day} ${shortMonths[date.getMonth()]}`
+    } else {
+      return `${day} ${monthName} ${year}`
+    }
   }
   
-  return `${month}/${day}/${year}`
+  // English formatting
+  if (options.weekday === 'long') {
+    const englishDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const englishMonths = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December']
+    return `${englishDays[dayOfWeek]}, ${englishMonths[date.getMonth()]} ${day}, ${year}`
+  } else if (options.weekday === 'short') {
+    const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${shortDays[dayOfWeek]}, ${shortMonths[date.getMonth()]} ${day}`
+  } else if (options.month === 'short') {
+    const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${shortMonths[date.getMonth()]} ${day}`
+  } else {
+    return `${month}/${day}/${year}`
+  }
 }
 
 /**
@@ -127,10 +175,20 @@ const formatDateTimeManually = (date, locale) => {
   const minutes = date.getMinutes().toString().padStart(2, '0')
   
   if (locale === 'ar') {
-    return `${day}/${month}/${year} ${hours}:${minutes}`
+    // Arabic month names (Gregorian calendar)
+    const arabicMonths = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ]
+    const monthName = arabicMonths[date.getMonth()]
+    return `${day} ${monthName} ${year} ${hours}:${minutes}`
   }
   
-  return `${month}/${day}/${year} ${hours}:${minutes}`
+  // English formatting
+  const englishMonths = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December']
+  const monthName = englishMonths[date.getMonth()]
+  return `${monthName} ${day}, ${year} ${hours}:${minutes}`
 }
 
 /**
@@ -145,10 +203,20 @@ const formatDateShortManually = (date, locale) => {
   const day = date.getDate().toString().padStart(2, '0')
   
   if (locale === 'ar') {
-    return `${day}/${month}/${year}`
+    // Arabic short month names (Gregorian calendar)
+    const shortArabicMonths = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ]
+    const monthName = shortArabicMonths[date.getMonth()]
+    return `${day} ${monthName}`
   }
   
-  return `${month}/${day}/${year}`
+  // English short formatting
+  const shortEnglishMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthName = shortEnglishMonths[date.getMonth()]
+  return `${monthName} ${day}`
 }
 
 /**
