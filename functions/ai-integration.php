@@ -2225,6 +2225,9 @@ class SNKS_AI_Integration {
 	 * Handle therapist available dates endpoint
 	 */
 	private function handle_therapist_available_dates_endpoint( $method, $path ) {
+		error_log( 'AI API - Therapist Available Dates Endpoint called: method=' . $method . ', path=' . print_r( $path, true ) );
+		error_log( 'AI API - GET params: ' . print_r( $_GET, true ) );
+		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
@@ -2233,6 +2236,7 @@ class SNKS_AI_Integration {
 						$this->send_error( 'Missing therapist_id', 400 );
 						return;
 					}
+					error_log( 'AI API - Calling get_ai_therapist_available_dates with therapist_id=' . $therapist_id );
 					$this->get_ai_therapist_available_dates( $therapist_id );
 				} else {
 					$this->send_error( 'Invalid endpoint', 404 );
@@ -2247,6 +2251,9 @@ class SNKS_AI_Integration {
 	 * Handle therapist availability endpoint
 	 */
 	private function handle_therapist_availability_endpoint( $method, $path ) {
+		error_log( 'AI API - Therapist Availability Endpoint called: method=' . $method . ', path=' . print_r( $path, true ) );
+		error_log( 'AI API - GET params: ' . print_r( $_GET, true ) );
+		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
@@ -2254,6 +2261,8 @@ class SNKS_AI_Integration {
 					$request = new WP_REST_Request( 'GET' );
 					$request->set_param( 'therapist_id', $_GET['therapist_id'] ?? null );
 					$request->set_param( 'date', $_GET['date'] ?? null );
+					$request->set_param( 'attendance_type', $_GET['attendance_type'] ?? null );
+					error_log( 'AI API - Calling get_ai_therapist_availability with request' );
 					$this->get_ai_therapist_availability( $request );
 				} else {
 					$this->send_error( 'Invalid endpoint', 404 );
@@ -5263,10 +5272,13 @@ Best regards,
 	 */
 	public function get_ai_therapist_availability( $request ) {
 		error_log( 'AI Therapist Availability - Function called' );
+		error_log( 'AI Therapist Availability - Request params: ' . print_r( $request->get_params(), true ) );
 		
 		$therapist_id = $request->get_param( 'therapist_id' );
 		$date         = $request->get_param( 'date' );
 		$attendance_type = $request->get_param( 'attendance_type' );
+		
+		error_log( 'AI Therapist Availability - Extracted params: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type );
 
 		if ( ! $therapist_id || ! $date ) {
 			$this->send_error( 'Missing therapist_id or date', 400 );
@@ -6252,11 +6264,14 @@ Best regards,
 	 */
 	private function get_ai_therapist_available_dates( $therapist_id ) {
 		error_log( 'AI Therapist Available Dates - Function called' );
+		error_log( 'AI Therapist Available Dates - GET params: ' . print_r( $_GET, true ) );
 		
 		global $wpdb;
 
 		// Get attendance_type parameter
 		$attendance_type = $_GET['attendance_type'] ?? 'online';
+		
+		error_log( 'AI Therapist Available Dates - Extracted params: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type );
 
 		// Debug logging
 
