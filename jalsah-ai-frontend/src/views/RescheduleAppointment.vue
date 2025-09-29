@@ -233,14 +233,14 @@ const loadAvailableDates = async () => {
   
   console.log('📅 RescheduleAppointment - Loading available dates for:', {
     therapist_id: therapistId,
-    attendance_type: 'offline'
+    attendance_type: 'online'
   })
   
   try {
     const response = await api.get('/api/ai/therapist-available-dates', {
       params: {
         therapist_id: therapistId,
-        attendance_type: 'offline'
+        attendance_type: 'online'
       }
     })
     
@@ -278,7 +278,7 @@ const loadTimeSlots = async () => {
   console.log('🕒 RescheduleAppointment - Loading time slots for:', {
     therapist_id: therapistId,
     date: selectedDate.value,
-    attendance_type: 'offline'
+    attendance_type: 'online'
   })
   
   loadingSlots.value = true
@@ -289,7 +289,7 @@ const loadTimeSlots = async () => {
       params: {
         therapist_id: therapistId,
         date: selectedDate.value,
-        attendance_type: 'offline'
+        attendance_type: 'online'
       }
     })
     
