@@ -5286,6 +5286,9 @@ Best regards,
 			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
 		}
 
+		// Log the query conditions for debugging
+		error_log( 'AI Therapist Availability Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition );
+
 		// Query the existing timetable system for available slots
 		// Only include slots that are actually available (not booked)
 		$query = $wpdb->prepare(
@@ -5305,7 +5308,17 @@ Best regards,
 			$date
 		);
 
+		// Log the SQL query for debugging
+		error_log( 'AI Therapist Availability SQL Query: ' . $wpdb->last_query );
+		error_log( 'AI Therapist Availability Parameters: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type );
+
 		$available_slots = $wpdb->get_results( $query );
+
+		// Log the results for debugging
+		error_log( 'AI Therapist Availability Results Count: ' . count( $available_slots ) );
+		if ( ! empty( $available_slots ) ) {
+			error_log( 'AI Therapist Availability Sample Result: ' . print_r( $available_slots[0], true ) );
+		}
 
 		$formatted_slots = array();
 		$current_time    = current_time( 'H:i:s' );
@@ -6256,6 +6269,9 @@ Best regards,
 			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
 		}
 
+		// Log the query conditions for debugging
+		error_log( 'AI Therapist Available Dates Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition );
+
 		// Query for dates that have available slots in the next 30 days
 		// Only include dates where there are actually available slots (not booked)
 		// For today, only include slots that are in the future
@@ -6282,7 +6298,17 @@ Best regards,
 			$current_time
 		);
 
+		// Log the SQL query for debugging
+		error_log( 'AI Therapist Available Dates SQL Query: ' . $wpdb->last_query );
+		error_log( 'AI Therapist Available Dates Parameters: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type );
+
 		$available_dates = $wpdb->get_results( $query );
+
+		// Log the results for debugging
+		error_log( 'AI Therapist Available Dates Results Count: ' . count( $available_dates ) );
+		if ( ! empty( $available_dates ) ) {
+			error_log( 'AI Therapist Available Dates Sample Result: ' . print_r( $available_dates[0], true ) );
+		}
 
 		$formatted_dates = array();
 		foreach ( $available_dates as $date_row ) {
