@@ -6371,7 +6371,7 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND period = 45
-			 AND NOT (attendance_type = 'offline' AND period = 45)
+			 AND NOT (attendance_type = 'offline')
 			 ORDER BY starts ASC",
 				$therapist_id,
 				$date
