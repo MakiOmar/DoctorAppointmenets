@@ -535,7 +535,7 @@ export default {
       }
       
       // Clean the phone number (remove spaces, dashes, etc.)
-      const cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '')
+      let cleanPhoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '')
       
       // Check for invalid characters (only digits should be allowed)
       if (!/^\d+$/.test(cleanPhoneNumber)) {
@@ -545,18 +545,38 @@ export default {
         }
       }
       
-      // Check length constraints
-      if (cleanPhoneNumber.length < 7) {
+      // Check if number starts with 0 (common mistake)
+      if (cleanPhoneNumber.startsWith('0')) {
         return {
           isValid: false,
-          error: t('auth.register.phoneValidation.tooShort')
+          error: t('auth.register.phoneValidation.startsWithZero')
         }
       }
       
-      if (cleanPhoneNumber.length > 15) {
+      // Get expected length based on country
+      let expectedLength = 10 // default
+      switch (countryCode) {
+        case 'SA':
+        case 'AE':
+          expectedLength = 9
+          break
+        case 'EG':
+          expectedLength = 10
+          break
+        case 'US':
+        case 'CA':
+          expectedLength = 10
+          break
+      }
+      
+      // Check length constraints with specific messages
+      if (cleanPhoneNumber.length !== expectedLength) {
         return {
           isValid: false,
-          error: t('auth.register.phoneValidation.tooLong')
+          error: t('auth.register.phoneValidation.invalidLength', { 
+            expected: expectedLength, 
+            actual: cleanPhoneNumber.length 
+          })
         }
       }
       
