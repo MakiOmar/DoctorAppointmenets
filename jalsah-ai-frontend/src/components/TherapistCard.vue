@@ -200,7 +200,7 @@
 
               <!-- Time Slots Grid -->
               <div v-if="selectedDate && timeSlots.length > 0" class="bg-white rounded-lg border border-gray-200 p-4">
-                <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }}</h5>
+                <h5 class="font-medium text-gray-900 mb-3">{{ $t('therapistDetails.availableTimes') }} ( جميع المواعيد بتوقيت مصر )</h5>
                 <div class="grid grid-cols-3 md:grid-cols-4 gap-2">
                   <div
                     v-for="slot in timeSlots"
