@@ -400,6 +400,28 @@ export default {
       return diagnosis?.suitability_message || null
     })
 
+    const loadTherapistDetails = async () => {
+      loading.value = true
+      error.value = null
+      
+      try {
+        const response = await api.get(`/api/ai/therapists/${props.therapist.id}/details`)
+        const data = response.data
+        
+        if (data.success) {
+          details.value = data.data
+          // Load earliest slot
+          loadEarliestSlot()
+        } else {
+          error.value = data.message || t('therapistDetails.loadError')
+        }
+      } catch (err) {
+        error.value = t('therapistDetails.error')
+      } finally {
+        loading.value = false
+      }
+    }
+
     const showTherapistDetails = () => {
       console.log('👁️ TherapistCard - Show therapist details clicked for therapist:', props.therapist.id)
       console.log('👁️ TherapistCard - Current showDetails state:', showDetails.value)
@@ -445,27 +467,6 @@ export default {
       }
     }, { immediate: true })
 
-    const loadTherapistDetails = async () => {
-      loading.value = true
-      error.value = null
-      
-      try {
-        const response = await api.get(`/api/ai/therapists/${props.therapist.id}/details`)
-        const data = response.data
-        
-        if (data.success) {
-          details.value = data.data
-          // Load earliest slot
-          loadEarliestSlot()
-        } else {
-          error.value = data.message || t('therapistDetails.loadError')
-        }
-      } catch (err) {
-        error.value = t('therapistDetails.error')
-      } finally {
-        loading.value = false
-      }
-    }
 
     // Helper function to get the nearest slot date
     const getNearestSlotDate = () => {
