@@ -192,6 +192,7 @@ import { useAuthStore } from '../stores/auth'
 import { useSettingsStore } from '../stores/settings'
 import { useRouter } from 'vue-router'
 import { formatPrice } from '../utils/currency'
+import { formatGregorianDate } from '@/utils/dateFormatter'
 
 const { t, locale } = useI18n()
 const cartStore = useCartStore()
@@ -206,38 +207,12 @@ const userId = computed(() => authStore.user?.id)
 const paymentMethod = ref('cash')
 
 const formatDate = (dateTime) => {
-  if (!dateTime) return ''
-  
-  const date = new Date(dateTime)
-  const isArabic = locale?.value === 'ar'
-  
-  if (isArabic) {
-    // Arabic month names
-    const arabicMonths = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ]
-    
-    // Arabic day names
-    const arabicDays = [
-      'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
-    ]
-    
-    const dayName = arabicDays[date.getDay()]
-    const monthName = arabicMonths[date.getMonth()]
-    const day = date.getDate()
-    const year = date.getFullYear()
-    
-    return `${dayName}، ${day} ${monthName} ${year}`
-  } else {
-    // English formatting
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
+  return formatGregorianDate(dateTime, locale?.value || 'en', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
 const formatTime = (time) => {

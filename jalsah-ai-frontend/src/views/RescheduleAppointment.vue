@@ -165,6 +165,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 import api from '../services/api'
+import { formatGregorianDate } from '@/utils/dateFormatter'
 
 const route = useRoute()
 const router = useRouter()
@@ -362,11 +363,8 @@ const rescheduleAppointment = async () => {
 
 // Format date
 const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const isArabic = (locale?.value || 'en') === 'ar'
-  return date.toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', {
-    weekday: isArabic ? 'long' : 'long',
+  return formatGregorianDate(dateStr, locale?.value || 'en', {
+    weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -375,10 +373,7 @@ const formatDate = (dateStr) => {
 
 // Format date short
 const formatDateShort = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const isArabic = (locale?.value || 'en') === 'ar'
-  return date.toLocaleDateString(isArabic ? 'ar-EG' : 'en-US', {
+  return formatGregorianDate(dateStr, locale?.value || 'en', {
     weekday: 'short',
     month: 'short',
     day: 'numeric'

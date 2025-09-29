@@ -240,6 +240,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
+import { formatGregorianDate } from '@/utils/dateFormatter'
 export default {
   name: 'Profile',
   setup() {
@@ -388,9 +389,7 @@ export default {
     }
 
     const formatDate = (dateString) => {
-      if (!dateString) return 'N/A'
-      const currentLocale = locale.value === 'ar' ? 'ar-SA' : 'en-US'
-      return new Date(dateString).toLocaleDateString(currentLocale)
+      return formatGregorianDate(dateString, locale.value)
     }
 
     // Country dial code functions

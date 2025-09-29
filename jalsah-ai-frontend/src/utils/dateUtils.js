@@ -1,37 +1,12 @@
-import { useI18n } from 'vue-i18n'
+import { formatGregorianDate } from './dateFormatter'
 
 export const formatDate = (dateString, locale = 'en') => {
-  if (!dateString) return 'N/A'
-  
-  const date = new Date(dateString)
-  
-  if (locale === 'ar') {
-    // Arabic month names
-    const arabicMonths = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ]
-    
-    // Arabic day names
-    const arabicDays = [
-      'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
-    ]
-    
-    const dayName = arabicDays[date.getDay()]
-    const monthName = arabicMonths[date.getMonth()]
-    const day = date.getDate()
-    const year = date.getFullYear()
-    
-    return `${dayName}، ${day} ${monthName} ${year}`
-  } else {
-    // English formatting
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
+  return formatGregorianDate(dateString, locale, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
 export const formatTime = (timeString, locale = 'en') => {

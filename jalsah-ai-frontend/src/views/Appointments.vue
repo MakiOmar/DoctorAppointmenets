@@ -689,6 +689,7 @@ import { useCartStore } from '@/stores/cart'
 import api from '@/services/api'
 import PrescriptionCard from '@/components/PrescriptionCard.vue'
 import Swal from 'sweetalert2'
+import { formatGregorianDate } from '@/utils/dateFormatter'
 export default {
   name: 'Appointments',
   components: {
@@ -804,38 +805,12 @@ export default {
     }
 
     const formatDate = (dateString) => {
-      if (!dateString) return 'N/A'
-      
-      const date = new Date(dateString)
-      const isArabic = locale.value === 'ar'
-      
-      if (isArabic) {
-        // Arabic month names
-        const arabicMonths = [
-          'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-          'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-        ]
-        
-        // Arabic day names
-        const arabicDays = [
-          'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'
-        ]
-        
-        const dayName = arabicDays[date.getDay()]
-        const monthName = arabicMonths[date.getMonth()]
-        const day = date.getDate()
-        const year = date.getFullYear()
-        
-        return `${dayName}، ${day} ${monthName} ${year}`
-      } else {
-        // English formatting
-        return date.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })
-      }
+      return formatGregorianDate(dateString, locale.value, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
     }
 
     const formatTime = (timeString) => {

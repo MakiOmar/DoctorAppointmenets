@@ -279,6 +279,7 @@ import api from '@/services/api'
 import StarRating from './StarRating.vue'
 import Lightbox from './Lightbox.vue'
 import Swal from 'sweetalert2'
+import { formatGregorianDate } from '@/utils/dateFormatter'
 
 export default {
   name: 'TherapistCard',
@@ -1041,41 +1042,18 @@ export default {
     }
 
     const formatShortDate = (date) => {
-      const isArabic = locale.value === 'ar'
-      
-      if (isArabic) {
-        const arabicFullMonths = [
-          'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-          'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-        ]
-        const monthName = arabicFullMonths[date.getMonth()]
-        const day = date.getDate()
-        return `${day} ${monthName}`
-      } else {
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      }
+      return formatGregorianDate(date, locale.value, { 
+        month: 'short', 
+        day: 'numeric' 
+      })
     }
 
     const formatShortDateWithDay = (date) => {
-      const isArabic = locale.value === 'ar'
-      
-      if (isArabic) {
-        const arabicFullDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
-        const arabicFullMonths = [
-          'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-          'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-        ]
-        const dayName = arabicFullDays[date.getDay()]
-        const monthName = arabicFullMonths[date.getMonth()]
-        const day = date.getDate()
-        return `${dayName}، ${day} ${monthName}`
-      } else {
-        return date.toLocaleDateString('en-US', { 
-          weekday: 'short', 
-          month: 'short', 
-          day: 'numeric' 
-        })
-      }
+      return formatGregorianDate(date, locale.value, { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      })
     }
 
     const calculateEndTime = (startTime, durationMinutes) => {
