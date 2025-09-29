@@ -21,19 +21,19 @@
             
             <form @submit.prevent="updateProfile" class="space-y-6">
               <div class="grid md:grid-cols-2 gap-4">
-                <div class="order-1">
-                  <label class="form-label">{{ $t('profile.firstName') }}</label>
+                <div>
+                  <label class="form-label">{{ $t('profile.lastName') }}</label>
                   <input 
-                    v-model="profile.firstName" 
+                    v-model="profile.lastName" 
                     type="text" 
                     class="input-field"
                     required
                   />
                 </div>
-                <div class="order-2">
-                  <label class="form-label">{{ $t('profile.lastName') }}</label>
+                <div>
+                  <label class="form-label">{{ $t('profile.firstName') }}</label>
                   <input 
-                    v-model="profile.lastName" 
+                    v-model="profile.firstName" 
                     type="text" 
                     class="input-field"
                     required
@@ -232,25 +232,6 @@
   </div>
 </template>
 
-<style scoped>
-/* Ensure consistent field order in both LTR and RTL layouts */
-.grid.md\\:grid-cols-2 .order-1 {
-  order: 1;
-}
-
-.grid.md\\:grid-cols-2 .order-2 {
-  order: 2;
-}
-
-/* Override RTL behavior to maintain consistent order */
-[dir="rtl"] .grid.md\\:grid-cols-2 .order-1 {
-  order: 1;
-}
-
-[dir="rtl"] .grid.md\\:grid-cols-2 .order-2 {
-  order: 2;
-}
-</style>
 
 <script>
 import { ref, onMounted, computed } from 'vue'
