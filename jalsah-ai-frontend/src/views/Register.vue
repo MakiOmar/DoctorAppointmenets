@@ -321,6 +321,23 @@ export default {
                          whatsappInput.startsWith('00' + dialCode.substring(1))
       
       whatsappDialCodeError.value = hasDialCode
+      
+      // Also check for leading zero and show validation message immediately
+      if (whatsappInput.startsWith('0')) {
+        const fullPhoneNumber = selectedCountry.dial_code + whatsappInput
+        const errorMessage = t('auth.register.phoneValidation.startsWithZero')
+        console.log('Leading zero detected, error message:', errorMessage) // Debug log
+        phoneValidationMessage.value = {
+          type: 'error',
+          title: errorMessage,
+          fullNumber: fullPhoneNumber
+        }
+      } else {
+        // Clear the message if it was about leading zero
+        if (phoneValidationMessage.value && phoneValidationMessage.value.title === t('auth.register.phoneValidation.startsWithZero')) {
+          phoneValidationMessage.value = null
+        }
+      }
     }
     
     // Function to validate phone number and show message on blur
@@ -347,7 +364,7 @@ export default {
       } else {
         phoneValidationMessage.value = {
           type: 'error',
-          title: t('auth.register.phoneValidation.invalid'),
+          title: validation.error, // Use the specific error message from validation
           fullNumber: fullPhoneNumber
         }
       }
@@ -547,9 +564,11 @@ export default {
       
       // Check if number starts with 0 (common mistake)
       if (cleanPhoneNumber.startsWith('0')) {
+        const errorMessage = t('auth.register.phoneValidation.startsWithZero')
+        console.log('Validation: Leading zero detected, error message:', errorMessage) // Debug log
         return {
           isValid: false,
-          error: t('auth.register.phoneValidation.startsWithZero')
+          error: errorMessage
         }
       }
       
