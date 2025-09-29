@@ -682,6 +682,13 @@ export default {
               return
             }
             
+            // Filter out 45-minute offline slots
+            if (timeSlot.attendance_type === 'offline' && timeSlot.period === 45) {
+              console.log('🚫 TherapistCard - Filtering out 45-minute offline slot:', timeSlot)
+              timeSlots.value = []
+              return
+            }
+            
             // Check if this slot is in the user's cart
             await checkSlotCartStatus(timeSlot)
             console.log('🕒 TherapistCard - Generated time slot:', timeSlot)
@@ -707,6 +714,11 @@ export default {
                 if (nearestSlotInfo && 
                     nearestSlotInfo.date === date.value && 
                     nearestSlotInfo.time === slot.time) {
+                  return false
+                }
+                // Filter out 45-minute offline slots
+                if (slot.attendance_type === 'offline' && slot.period === 45) {
+                  console.log('🚫 TherapistCard - Filtering out 45-minute offline slot from API:', slot)
                   return false
                 }
                 return true
