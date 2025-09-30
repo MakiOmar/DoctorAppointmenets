@@ -1237,9 +1237,31 @@ export default {
         if (response.data.success && response.data.data && response.data.data.available_dates) {
           const dates = response.data.data.available_dates.map(dateInfo => {
             const date = new Date(dateInfo.date)
+            const isArabic = locale.value === 'ar'
+            
+            let formattedDate
+            if (isArabic) {
+              // Arabic formatting with day name
+              const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+              const arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+              
+              const dayName = arabicDays[date.getDay()]
+              const monthName = arabicMonths[date.getMonth()]
+              const dayNumber = date.getDate()
+              
+              formattedDate = `${dayName}، ${dayNumber} ${monthName}`
+            } else {
+              // English formatting with day name
+              formattedDate = date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+              })
+            }
+            
             return {
               value: dateInfo.date,
-              date: date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' }),
+              date: formattedDate,
               isAvailable: true
             }
           })
