@@ -429,7 +429,6 @@ const formatTime = (timeStr) => {
   if (isNaN(hours) || isNaN(minutes)) {
     return timeStr // Return original if parsing fails
   }
-  
   const isArabic = locale.value === 'ar'
   const period = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
   const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours

@@ -1025,7 +1025,7 @@ export default {
     const formatTimeSlot = (time) => {
       if (!time) return ''
       
-      // Convert 24-hour format to 12-hour format with AM/PM
+      // Convert 24-hour format to 12-hour format with Arabic AM/PM
       const timeParts = time.split(':')
       const hours = parseInt(timeParts[0])
       const minutes = parseInt(timeParts[1]) // Parse minutes as integer
@@ -1035,7 +1035,8 @@ export default {
         return time // Return original time if parsing fails
       }
       
-      const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
+      const isArabic = locale.value === 'ar'
+      const period = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
       return `${displayHours}:${formattedMinutes} ${period}`
@@ -1109,7 +1110,8 @@ export default {
         return t('therapists.noSlotsAvailable')
       }
       
-      const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
+      const isArabic = locale.value === 'ar'
+      const period = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
       const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
       const formattedTime = `${displayHours}:${formattedMinutes} ${period}`
@@ -1176,7 +1178,8 @@ export default {
           return t('therapists.noSlotsAvailable')
         }
         
-        const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
+        const isArabic = locale.value === 'ar'
+        const period = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
         const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
         const formattedTime = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`
         

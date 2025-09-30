@@ -824,7 +824,8 @@ export default {
         return 'N/A'
       }
       
-      const ampm = hours >= 12 ? $t('dateTime.pm') : $t('dateTime.am')
+      const isArabic = locale.value === 'ar'
+      const ampm = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
       const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
       const formattedMinutes = minutes.toString().padStart(2, '0')
       

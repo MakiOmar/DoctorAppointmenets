@@ -360,7 +360,8 @@ const formatSessionTime = computed(() => {
   // Format time in 12-hour format with translated AM/PM
   let hours = date.getHours()
   const minutes = date.getMinutes()
-  const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
+  const isArabic = locale.value === 'ar'
+  const period = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
   
   if (hours > 12) {
     hours -= 12
