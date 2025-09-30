@@ -289,7 +289,8 @@ const loadTimeSlots = async () => {
       params: {
         therapist_id: therapistId,
         date: selectedDate.value,
-        attendance_type: 'online'
+        attendance_type: 'online',
+        locale: locale.value
       }
     })
     

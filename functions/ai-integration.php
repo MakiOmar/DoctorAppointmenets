@@ -5278,7 +5278,10 @@ Best regards,
 		$date         = $request->get_param( 'date' );
 		$attendance_type = $request->get_param( 'attendance_type' );
 		
-		error_log( 'AI Therapist Availability - Extracted params: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type );
+		// Get locale for time formatting
+		$locale = $this->get_request_locale();
+		
+		error_log( 'AI Therapist Availability - Extracted params: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type . ', locale=' . $locale );
 
 		if ( ! $therapist_id || ! $date ) {
 			$this->send_error( 'Missing therapist_id or date', 400 );
@@ -5345,16 +5348,16 @@ Best regards,
 				continue;
 			}
 
-			// Format time with Arabic AM/PM
+			// Format time with locale-aware AM/PM
 			$time_parts = explode(':', $slot->starts);
 			$hours = intval($time_parts[0]);
 			$minutes = intval($time_parts[1]);
-			$period = $hours >= 12 ? 'م' : 'ص';
+			$period = $locale === 'ar' ? ($hours >= 12 ? 'م' : 'ص') : ($hours >= 12 ? 'PM' : 'AM');
 			$display_hours = $hours > 12 ? $hours - 12 : ($hours === 0 ? 12 : $hours);
 			$formatted_time = sprintf('%d:%02d %s', $display_hours, $minutes, $period);
 			
 			// Debug log for time formatting
-			error_log('RescheduleAppointment - Time formatting: original=' . $slot->starts . ', formatted=' . $formatted_time);
+			error_log('RescheduleAppointment - Time formatting: original=' . $slot->starts . ', formatted=' . $formatted_time . ', locale=' . $locale);
 			
 			$formatted_slots[] = array(
 				'time'           => $slot->starts,
