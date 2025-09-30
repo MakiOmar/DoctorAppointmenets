@@ -451,7 +451,7 @@ export default {
     const validatePhoneNumber = (phoneNumber, countryCode) => {
       const country = countries.value.find(c => c.country_code === countryCode)
       if (!country || !country.validation_pattern) {
-        return { isValid: false, error: t('phoneValidation.invalid') }
+        return { isValid: false, error: t('auth.register.phoneValidation.invalid') }
       }
 
       // Remove any non-digit characters except +
@@ -459,21 +459,21 @@ export default {
       
       // Check if number starts with 0 (common mistake)
       if (cleanNumber.startsWith('0')) {
-        return { isValid: false, error: t('phoneValidation.startsWithZero') }
+        return { isValid: false, error: t('auth.register.phoneValidation.startsWithZero') }
       }
 
       // Check for invalid characters (only digits should remain after cleaning)
       if (!/^\d+$/.test(cleanNumber)) {
-        return { isValid: false, error: t('phoneValidation.invalidCharacters') }
+        return { isValid: false, error: t('auth.register.phoneValidation.invalidCharacters') }
       }
 
       // Check length
       const expectedLength = country.phone_length
       if (cleanNumber.length < expectedLength) {
-        return { isValid: false, error: t('phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
+        return { isValid: false, error: t('auth.register.phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
       }
       if (cleanNumber.length > expectedLength) {
-        return { isValid: false, error: t('phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
+        return { isValid: false, error: t('auth.register.phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
       }
 
       // Check pattern
@@ -481,13 +481,13 @@ export default {
       if (!pattern.test(cleanNumber)) {
         // Return specific error based on country
         if (countryCode === 'SA') {
-          return { isValid: false, error: t('phoneValidation.specificErrors.saudiArabia') }
+          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.saudiArabia') }
         } else if (countryCode === 'AE') {
-          return { isValid: false, error: t('phoneValidation.specificErrors.uae') }
+          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.uae') }
         } else if (countryCode === 'EG') {
-          return { isValid: false, error: t('phoneValidation.specificErrors.egypt') }
+          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.egypt') }
         } else {
-          return { isValid: false, error: t('phoneValidation.specificErrors.default') }
+          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.default') }
         }
       }
 
