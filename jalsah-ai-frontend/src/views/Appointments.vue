@@ -1220,7 +1220,7 @@ export default {
       
       console.log('📅 Loading available dates for:', {
         therapist_id: selectedTherapist.value.user_id,
-        attendance_type: 'offline'
+        attendance_type: 'online'
       })
       
       loadingDates.value = true
@@ -1228,7 +1228,7 @@ export default {
         const response = await api.get('/api/ai/therapist-available-dates', {
           params: {
             therapist_id: selectedTherapist.value.user_id,
-            attendance_type: 'offline'
+            attendance_type: 'online'
           }
         })
         
@@ -1268,7 +1268,7 @@ export default {
       console.log('🕒 Loading time slots for:', {
         therapist_id: selectedTherapist.value.user_id,
         date: date,
-        attendance_type: 'offline'
+        attendance_type: 'online'
       })
       
       bookingLoadingSlots.value = true
@@ -1277,7 +1277,7 @@ export default {
           params: {
             therapist_id: selectedTherapist.value.user_id,
             date: date,
-            attendance_type: 'offline'
+            attendance_type: 'online'
           }
         })
         
