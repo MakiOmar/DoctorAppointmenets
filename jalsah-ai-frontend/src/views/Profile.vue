@@ -249,7 +249,7 @@ export default {
     const toast = useToast()
     const authStore = useAuthStore()
     const settingsStore = useSettingsStore()
-    const { locale } = useI18n()
+    const { locale, t } = useI18n()
     
     const loading = ref(true)
     const updating = ref(false)
