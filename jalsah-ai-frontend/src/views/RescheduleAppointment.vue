@@ -231,10 +231,6 @@ const loadAvailableDates = async () => {
   
   
   
-  console.log('📅 RescheduleAppointment - Loading available dates for:', {
-    therapist_id: therapistId,
-    attendance_type: 'online'
-  })
   
   try {
     const response = await api.get('/api/ai/therapist-available-dates', {
@@ -244,7 +240,6 @@ const loadAvailableDates = async () => {
       }
     })
     
-    console.log('📅 RescheduleAppointment - Available dates API response:', response.data)
     
          availableDates.value = response.data.data?.available_dates || []
   } catch (err) {
@@ -275,11 +270,6 @@ const loadTimeSlots = async () => {
     return
   }
   
-  console.log('🕒 RescheduleAppointment - Loading time slots for:', {
-    therapist_id: therapistId,
-    date: selectedDate.value,
-    attendance_type: 'online'
-  })
   
   loadingSlots.value = true
   availableSlots.value = []
@@ -294,11 +284,6 @@ const loadTimeSlots = async () => {
       }
     })
     
-    console.log('🕒 RescheduleAppointment - Time slots API response:', response.data)
-    
-    if (response.data.data?.available_slots) {
-      console.log('🕒 RescheduleAppointment - Sample slot formatted_time:', response.data.data.available_slots[0]?.formatted_time)
-    }
     
     availableSlots.value = response.data.data?.available_slots || []
   } catch (err) {

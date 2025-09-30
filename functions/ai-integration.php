@@ -5271,17 +5271,12 @@ Best regards,
 	 * Get therapist availability for a specific date
 	 */
 	public function get_ai_therapist_availability( $request ) {
-		error_log( 'AI Therapist Availability - Function called' );
-		error_log( 'AI Therapist Availability - Request params: ' . print_r( $request->get_params(), true ) );
-		
 		$therapist_id = $request->get_param( 'therapist_id' );
 		$date         = $request->get_param( 'date' );
 		$attendance_type = $request->get_param( 'attendance_type' );
 		
 		// Get locale for time formatting
 		$locale = $this->get_request_locale();
-		
-		error_log( 'AI Therapist Availability - Extracted params: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type . ', locale=' . $locale );
 
 		if ( ! $therapist_id || ! $date ) {
 			$this->send_error( 'Missing therapist_id or date', 400 );
@@ -5303,9 +5298,6 @@ Best regards,
 			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
 		}
 
-		// Log the query conditions for debugging
-		error_log( 'AI Therapist Availability Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition );
-		error_log( 'AI Therapist Availability - Function called with parameters: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type );
 
 		// Query the existing timetable system for available slots
 		// Only include slots that are actually available (not booked)
@@ -5326,17 +5318,7 @@ Best regards,
 			$date
 		);
 
-		// Log the SQL query for debugging
-		error_log( 'AI Therapist Availability SQL Query: ' . $wpdb->last_query );
-		error_log( 'AI Therapist Availability Parameters: therapist_id=' . $therapist_id . ', date=' . $date . ', attendance_type=' . $attendance_type );
-
 		$available_slots = $wpdb->get_results( $query );
-
-		// Log the results for debugging
-		error_log( 'AI Therapist Availability Results Count: ' . count( $available_slots ) );
-		if ( ! empty( $available_slots ) ) {
-			error_log( 'AI Therapist Availability Sample Result: ' . print_r( $available_slots[0], true ) );
-		}
 
 		$formatted_slots = array();
 		$current_time    = current_time( 'H:i:s' );
@@ -5356,8 +5338,6 @@ Best regards,
 			$display_hours = $hours > 12 ? $hours - 12 : ($hours === 0 ? 12 : $hours);
 			$formatted_time = sprintf('%d:%02d %s', $display_hours, $minutes, $period);
 			
-			// Debug log for time formatting
-			error_log('RescheduleAppointment - Time formatting: original=' . $slot->starts . ', formatted=' . $formatted_time . ', locale=' . $locale);
 			
 			$formatted_slots[] = array(
 				'time'           => $slot->starts,
