@@ -126,9 +126,9 @@
                   />
                 </div>
                 
-                <!-- WhatsApp Dial Code Error Message -->
-                <div v-if="whatsappDialCodeError" class="mt-1 text-sm text-red-600">
-                  {{ $t('profile.noNeedDialCode') }}
+                <!-- WhatsApp Validation Error Message -->
+                <div v-if="whatsappDialCodeError && whatsappValidationError" class="mt-1 text-sm text-red-600">
+                  {{ whatsappValidationError }}
                 </div>
               </div>
 
@@ -278,6 +278,7 @@ export default {
     const countries = ref([])
     const isLoadingCountries = ref(false)
     const whatsappDialCodeError = ref(false)
+    const whatsappValidationError = ref('')
     const whatsappCountryCode = ref('')
 
     const loadProfile = async () => {
@@ -497,8 +498,10 @@ export default {
       const whatsappValue = profile.value.whatsapp
       if (whatsappValue && whatsappValue.includes('+')) {
         whatsappDialCodeError.value = true
+        whatsappValidationError.value = t('auth.register.phoneValidation.startsWithZero')
       } else {
         whatsappDialCodeError.value = false
+        whatsappValidationError.value = ''
       }
       
       // Also validate the phone number format
@@ -506,6 +509,7 @@ export default {
         const validation = validatePhoneNumber(whatsappValue, selectedCountryCode.value)
         if (!validation.isValid) {
           whatsappDialCodeError.value = true
+          whatsappValidationError.value = validation.error
         }
       }
     }
@@ -517,8 +521,8 @@ export default {
       if (profile.value.whatsapp && selectedCountryCode.value) {
         const validation = validatePhoneNumber(profile.value.whatsapp, selectedCountryCode.value)
         if (!validation.isValid) {
-          // You could show a toast or set an error message here
-          console.log('WhatsApp validation error:', validation.error)
+          whatsappDialCodeError.value = true
+          whatsappValidationError.value = validation.error
         }
       }
     }
@@ -546,6 +550,7 @@ export default {
       countries,
       isLoadingCountries,
       whatsappDialCodeError,
+      whatsappValidationError,
       whatsappCountryCode,
       filteredCountries,
       getSelectedCountryFlag,
