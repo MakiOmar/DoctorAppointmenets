@@ -390,14 +390,34 @@ const formatDate = (dateStr) => {
 
 // Format date short
 const formatDateShort = (dateStr) => {
-  return formatGregorianDate(dateStr, locale?.value || 'en', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric'
-  })
+  if (!dateStr) return ''
+  
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  
+  const isArabic = locale.value === 'ar'
+  
+  if (isArabic) {
+    // Arabic formatting with full day names (with ال)
+    const arabicDays = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+    const arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+    
+    const dayName = arabicDays[date.getDay()]
+    const monthName = arabicMonths[date.getMonth()]
+    const dayNumber = date.getDate()
+    
+    return `${dayName}، ${dayNumber} ${monthName}`
+  } else {
+    // English formatting with day name
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    })
+  }
 }
 
-// Format time - convert 24hr to 12hr format with AM/PM
+// Format time - convert 24hr to 12hr format with Arabic AM/PM
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
   
@@ -410,7 +430,8 @@ const formatTime = (timeStr) => {
     return timeStr // Return original if parsing fails
   }
   
-  const period = hours >= 12 ? t('dateTime.pm') : t('dateTime.am')
+  const isArabic = locale.value === 'ar'
+  const period = isArabic ? (hours >= 12 ? 'م' : 'ص') : (hours >= 12 ? 'PM' : 'AM')
   const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
   const formattedMinutes = minutes.toString().padStart(2, '0')
   
