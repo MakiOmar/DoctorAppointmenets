@@ -475,18 +475,30 @@ export default {
         return { isValid: false, error: t('auth.register.phoneValidation.invalidCharacters') }
       }
 
-      // Check length
-      const expectedLength = country.phone_length
-      if (cleanNumber.length < expectedLength) {
-        return { isValid: false, error: t('auth.register.phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
+      // Get expected length based on country (mirror Register.vue)
+      let expectedLength = 10
+      switch (countryCode) {
+        case 'SA':
+        case 'AE':
+          expectedLength = 9
+          break
+        case 'EG':
+          expectedLength = 10
+          break
+        case 'US':
+        case 'CA':
+          expectedLength = 10
+          break
       }
-      if (cleanNumber.length > expectedLength) {
+
+      if (cleanNumber.length !== expectedLength) {
         return { isValid: false, error: t('auth.register.phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
       }
 
-      // Check pattern
+      // Check pattern against full number (with dial code)
+      const fullPhoneNumber = country.dial_code + cleanNumber
       const pattern = new RegExp(country.validation_pattern)
-      if (!pattern.test(cleanNumber)) {
+      if (!pattern.test(fullPhoneNumber)) {
         // Return specific error based on country
         if (countryCode === 'SA') {
           return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.saudiArabia') }
