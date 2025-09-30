@@ -295,6 +295,10 @@ const loadTimeSlots = async () => {
     
     console.log('🕒 RescheduleAppointment - Time slots API response:', response.data)
     
+    if (response.data.data?.available_slots) {
+      console.log('🕒 RescheduleAppointment - Sample slot formatted_time:', response.data.data.available_slots[0]?.formatted_time)
+    }
+    
     availableSlots.value = response.data.data?.available_slots || []
   } catch (err) {
     console.error('Error loading time slots:', err)

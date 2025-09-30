@@ -5353,6 +5353,9 @@ Best regards,
 			$display_hours = $hours > 12 ? $hours - 12 : ($hours === 0 ? 12 : $hours);
 			$formatted_time = sprintf('%d:%02d %s', $display_hours, $minutes, $period);
 			
+			// Debug log for time formatting
+			error_log('RescheduleAppointment - Time formatting: original=' . $slot->starts . ', formatted=' . $formatted_time);
+			
 			$formatted_slots[] = array(
 				'time'           => $slot->starts,
 				'formatted_time' => $formatted_time,
