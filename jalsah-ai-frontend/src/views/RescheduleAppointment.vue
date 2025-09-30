@@ -91,7 +91,7 @@
         <!-- Time Slots -->
         <div v-if="selectedDate && availableSlots.length > 0">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            {{ $t('reschedule.selectTime') }}
+            {{ $t('reschedule.selectTime') }} ( جميع المواعيد بتوقيت مصر )
           </label>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <button

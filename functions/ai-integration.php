@@ -5345,9 +5345,17 @@ Best regards,
 				continue;
 			}
 
+			// Format time with Arabic AM/PM
+			$time_parts = explode(':', $slot->starts);
+			$hours = intval($time_parts[0]);
+			$minutes = intval($time_parts[1]);
+			$period = $hours >= 12 ? 'م' : 'ص';
+			$display_hours = $hours > 12 ? $hours - 12 : ($hours === 0 ? 12 : $hours);
+			$formatted_time = sprintf('%d:%02d %s', $display_hours, $minutes, $period);
+			
 			$formatted_slots[] = array(
 				'time'           => $slot->starts,
-				'formatted_time' => date( 'g:i A', strtotime( $slot->starts ) ),
+				'formatted_time' => $formatted_time,
 				'slot_id'        => $slot->ID,
 				'available'      => true,
 			);
