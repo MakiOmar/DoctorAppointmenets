@@ -561,6 +561,8 @@ export default {
 
 
     onMounted(() => {
+      // Ensure countries are loaded so length validation works immediately
+      loadCountries()
       loadProfile()
     })
 
