@@ -588,8 +588,7 @@
                   : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
               >
                 <div class="text-center">
-                  <div class="font-semibold">{{ date.day }}</div>
-                  <div class="text-xs">{{ date.date }}</div>
+                  <div class="font-semibold">{{ date.date }}</div>
                 </div>
               </button>
             </div>
@@ -1240,7 +1239,6 @@ export default {
             const date = new Date(dateInfo.date)
             return {
               value: dateInfo.date,
-              day: date.getDate(),
               date: date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' }),
               isAvailable: true
             }
@@ -1397,11 +1395,22 @@ export default {
     }
 
     const formatTimeSlot = (time) => {
-      return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      })
+      if (!time) return ''
+      
+      // Handle both "09:00" and "09:00:00" formats
+      const timeParts = time.split(':')
+      const hours = parseInt(timeParts[0])
+      const minutes = parseInt(timeParts[1])
+      
+      if (isNaN(hours) || isNaN(minutes)) {
+        return time // Return original if parsing fails
+      }
+      
+      const period = hours >= 12 ? 'م' : 'ص'
+      const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours
+      const formattedMinutes = minutes.toString().padStart(2, '0')
+      
+      return `${displayHours}:${formattedMinutes} ${period}`
     }
 
     // Therapist join status polling functions
