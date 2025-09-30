@@ -126,9 +126,15 @@
                   />
                 </div>
                 
-                <!-- WhatsApp Validation Error Message -->
-                <div v-if="whatsappDialCodeError && whatsappValidationError" class="mt-1 text-sm text-red-600">
-                  {{ whatsappValidationError }}
+                <!-- Phone Validation Message (same UX as registration) -->
+                <div v-if="phoneValidationMessage" class="mt-2 text-sm" :class="phoneValidationMessage.type === 'error' ? 'text-red-600' : 'text-green-600'">
+                  <div class="font-medium">{{ phoneValidationMessage.title }}</div>
+                  <div class="font-mono text-xs mt-1" dir="ltr">{{ phoneValidationMessage.fullNumber }}</div>
+                </div>
+
+                <!-- WhatsApp Dial Code Error Message -->
+                <div v-if="whatsappDialCodeError" class="mt-1 text-sm text-red-600">
+                  {{ $t('auth.register.noNeedDialCode') }}
                 </div>
               </div>
 
@@ -279,6 +285,7 @@ export default {
     const isLoadingCountries = ref(false)
     const whatsappDialCodeError = ref(false)
     const whatsappValidationError = ref('')
+    const phoneValidationMessage = ref(null)
     const whatsappCountryCode = ref('')
 
     const loadProfile = async () => {
@@ -447,11 +454,12 @@ export default {
       countrySearch.value = ''
     }
 
-    // Enhanced phone validation function with detailed error messages
+    // Enhanced phone validation function with detailed error messages (mirrors Register.vue)
     const validatePhoneNumber = (phoneNumber, countryCode) => {
       const country = countries.value.find(c => c.country_code === countryCode)
       if (!country || !country.validation_pattern) {
-        return { isValid: false, error: t('auth.register.phoneValidation.invalid') }
+        // Skip validation if no pattern (same as Register.vue)
+        return { isValid: true, error: null }
       }
 
       // Remove any non-digit characters except +
@@ -495,34 +503,58 @@ export default {
     }
 
     const validateWhatsAppNumber = () => {
-      const whatsappValue = profile.value.whatsapp
-      if (whatsappValue && whatsappValue.includes('+')) {
-        whatsappDialCodeError.value = true
-        whatsappValidationError.value = t('auth.register.phoneValidation.startsWithZero')
-      } else {
+      const whatsappInput = (profile.value.whatsapp || '').trim()
+      const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      if (!selectedCountry) {
         whatsappDialCodeError.value = false
-        whatsappValidationError.value = ''
+        phoneValidationMessage.value = null
+        return
       }
-      
-      // Also validate the phone number format
-      if (whatsappValue && selectedCountryCode.value) {
-        const validation = validatePhoneNumber(whatsappValue, selectedCountryCode.value)
-        if (!validation.isValid) {
-          whatsappDialCodeError.value = true
-          whatsappValidationError.value = validation.error
+
+      const dialCode = selectedCountry.dial_code
+      const hasDialCode = whatsappInput.startsWith(dialCode) || whatsappInput.startsWith('00' + dialCode.substring(1))
+      whatsappDialCodeError.value = !!hasDialCode
+
+      // Show immediate message for leading zero
+      if (whatsappInput.startsWith('0')) {
+        const fullPhoneNumber = selectedCountry.dial_code + whatsappInput
+        phoneValidationMessage.value = {
+          type: 'error',
+          title: t('auth.register.phoneValidation.startsWithZero'),
+          fullNumber: fullPhoneNumber
+        }
+      } else {
+        // Clear the message if it was about leading zero
+        if (phoneValidationMessage.value && phoneValidationMessage.value.title === t('auth.register.phoneValidation.startsWithZero')) {
+          phoneValidationMessage.value = null
         }
       }
     }
 
     const onWhatsAppBlur = () => {
       validateWhatsAppNumber()
-      
-      // Show specific validation error if needed
-      if (profile.value.whatsapp && selectedCountryCode.value) {
-        const validation = validatePhoneNumber(profile.value.whatsapp, selectedCountryCode.value)
-        if (!validation.isValid) {
-          whatsappDialCodeError.value = true
-          whatsappValidationError.value = validation.error
+      const whatsappInput = (profile.value.whatsapp || '').trim()
+      if (!whatsappInput) {
+        phoneValidationMessage.value = null
+        return
+      }
+
+      const selectedCountry = countries.value.find(c => c.country_code === selectedCountryCode.value)
+      if (!selectedCountry) {
+        phoneValidationMessage.value = null
+        return
+      }
+
+      const fullPhoneNumber = selectedCountry.dial_code + whatsappInput
+      const validation = validatePhoneNumber(whatsappInput, selectedCountryCode.value)
+
+      if (validation.isValid) {
+        phoneValidationMessage.value = null
+      } else {
+        phoneValidationMessage.value = {
+          type: 'error',
+          title: validation.error,
+          fullNumber: fullPhoneNumber
         }
       }
     }
@@ -551,6 +583,7 @@ export default {
       isLoadingCountries,
       whatsappDialCodeError,
       whatsappValidationError,
+      phoneValidationMessage,
       whatsappCountryCode,
       filteredCountries,
       getSelectedCountryFlag,
