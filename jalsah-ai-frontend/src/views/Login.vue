@@ -102,13 +102,23 @@
                 v-model="form.whatsapp"
                 type="tel"
                 required
-                class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                @input="validateWhatsAppNumber"
+                @blur="onWhatsAppBlur"
+                class="flex-1 px-3 py-3 border rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                :class="{
+                  'border-gray-300': !whatsappDialCodeError,
+                  'border-red-300 focus:border-red-500 focus:ring-red-500': whatsappDialCodeError
+                }"
                 :placeholder="$t('auth.login.whatsappPlaceholder')"
                 dir="ltr"
                 autocomplete="tel"
                 style="text-align: left; direction: ltr;"
               />
             </div>
+            <!-- WhatsApp validation error message -->
+            <p v-if="whatsappDialCodeError && whatsappValidationError" class="mt-1 text-sm text-red-600">
+              {{ whatsappValidationError }}
+            </p>
           </div>
 
           <div>
@@ -421,6 +431,10 @@ export default {
     const isDetectingCountry = ref(false)
     const countries = ref([])
     const isLoadingCountries = ref(false)
+    
+    // WhatsApp validation state
+    const whatsappDialCodeError = ref(false)
+    const whatsappValidationError = ref('')
 
     const loading = computed(() => authStore.loading)
     const requireEmail = computed(() => {
@@ -545,6 +559,40 @@ export default {
       }
       
       return { isValid: true, error: null }
+    }
+
+    // WhatsApp validation functions
+    const validateWhatsAppNumber = () => {
+      const whatsappValue = form.value.whatsapp
+      if (whatsappValue && whatsappValue.includes('+')) {
+        whatsappDialCodeError.value = true
+        whatsappValidationError.value = t('auth.register.phoneValidation.startsWithZero')
+      } else {
+        whatsappDialCodeError.value = false
+        whatsappValidationError.value = ''
+      }
+      
+      // Also validate the phone number format
+      if (whatsappValue && selectedCountryCode.value) {
+        const validation = validatePhoneNumber(whatsappValue, selectedCountryCode.value)
+        if (!validation.isValid) {
+          whatsappDialCodeError.value = true
+          whatsappValidationError.value = validation.error
+        }
+      }
+    }
+
+    const onWhatsAppBlur = () => {
+      validateWhatsAppNumber()
+      
+      // Show specific validation error if needed
+      if (form.value.whatsapp && selectedCountryCode.value) {
+        const validation = validatePhoneNumber(form.value.whatsapp, selectedCountryCode.value)
+        if (!validation.isValid) {
+          whatsappDialCodeError.value = true
+          whatsappValidationError.value = validation.error
+        }
+      }
     }
 
     const handleLogin = async () => {
@@ -850,6 +898,11 @@ export default {
       selectCountry,
       getSelectedCountryFlag,
       getSelectedCountryDial,
+      // WhatsApp validation
+      whatsappDialCodeError,
+      whatsappValidationError,
+      validateWhatsAppNumber,
+      onWhatsAppBlur,
       // Forgot password
       showForgotPasswordModal,
       forgotPasswordStep,
