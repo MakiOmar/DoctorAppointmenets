@@ -6415,13 +6415,17 @@ Best regards,
 			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC";
 
-		// Prepare query parameters
-		$query_params = array( $therapist_id, $today, $current_time );
+		// Prepare query parameters in the correct order
+		$query_params = array( $therapist_id );
 		
-		// Add off_days parameters if they exist
+		// Add off_days parameters if they exist (these go to the NOT IN condition)
 		if ( ! empty( $off_days ) ) {
 			$query_params = array_merge( $query_params, $off_days );
 		}
+		
+		// Add the remaining parameters (today and current_time for the last condition)
+		$query_params[] = $today;
+		$query_params[] = $current_time;
 
 		// Prepare the query with all parameters
 		$query = $wpdb->prepare( $query, $query_params );
