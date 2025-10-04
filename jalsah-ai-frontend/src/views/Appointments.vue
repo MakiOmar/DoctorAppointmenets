@@ -1236,6 +1236,8 @@ export default {
         
         
         if (response.data.success && response.data.data && response.data.data.available_dates) {
+          // The API already respects form_days_count from doctor settings
+          // so we get the correct number of dates (up to the doctor's limit)
           const dates = response.data.data.available_dates.map(dateInfo => {
             const date = new Date(dateInfo.date)
             const isArabic = locale.value === 'ar'

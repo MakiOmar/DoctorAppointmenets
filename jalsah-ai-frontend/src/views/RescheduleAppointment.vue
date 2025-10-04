@@ -240,6 +240,8 @@ const loadAvailableDates = async () => {
       }
     })
     
+    // The API already respects form_days_count from doctor settings
+    // so we get the correct number of dates (up to the doctor's limit)
     availableDates.value = response.data.data?.available_dates || []
   } catch (err) {
     console.error('Error loading available dates:', err)
