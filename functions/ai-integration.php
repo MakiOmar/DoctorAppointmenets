@@ -6129,9 +6129,13 @@ Best regards,
 	private function get_earliest_slot_from_timetable( $therapist_id ) {
 		global $wpdb;
 
-		// Get doctor settings to retrieve off_days
+		// Get doctor settings to retrieve off_days and form_days_count
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+		$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
+		if ( $days_count > 90 ) {
+			$days_count = 90;
+		}
 
 		// Prepare the off-days for SQL query
 		$off_days_placeholder = '';
@@ -6157,6 +6161,7 @@ Best regards,
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
+			 AND date_time <= DATE_ADD(NOW(), INTERVAL {$days_count} DAY)
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
@@ -6192,9 +6197,13 @@ Best regards,
 	private function get_available_dates_from_timetable( $therapist_id ) {
 		global $wpdb;
 
-		// Get doctor settings to retrieve off_days
+		// Get doctor settings to retrieve off_days and form_days_count
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+		$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
+		if ( $days_count > 90 ) {
+			$days_count = 90;
+		}
 
 		// Prepare the off-days for SQL query
 		$off_days_placeholder = '';
@@ -6213,13 +6222,14 @@ Best regards,
 			$query_params = array_merge( $query_params, $off_days );
 		}
 
-		// Get all available slots from the timetable
+		// Get all available slots from the timetable within the form_days_count limit
 		$available_slots = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= NOW()
+			 AND date_time <= DATE_ADD(NOW(), INTERVAL {$days_count} DAY)
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
@@ -6307,6 +6317,7 @@ Best regards,
 				 FROM {$wpdb->prefix}snks_provider_timetable 
 				 WHERE user_id = %d AND session_status = 'open' 
 				 AND date_time >= NOW()
+				 AND date_time <= DATE_ADD(NOW(), INTERVAL {$days_count} DAY)
 				 AND (settings LIKE '%ai_booking%' OR settings = '')
 				 AND (client_id = 0 OR client_id IS NULL)
 				 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
@@ -6351,9 +6362,13 @@ Best regards,
 		$attendance_type = $_GET['attendance_type'] ?? 'online';
 		
 
-		// Get doctor settings to retrieve off_days
+		// Get doctor settings to retrieve off_days and form_days_count
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+		$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
+		if ( $days_count > 90 ) {
+			$days_count = 90;
+		}
 		
 		// Trim whitespace from off_days
 		$off_days = array_map( 'trim', $off_days );
@@ -6395,7 +6410,7 @@ Best regards,
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d 
 			 AND DATE(date_time) >= CURDATE()
-			 AND DATE(date_time) <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+			 AND DATE(date_time) <= DATE_ADD(CURDATE(), INTERVAL {$days_count} DAY)
 			 AND session_status = 'waiting' 
 			 AND order_id = 0
 			 {$attendance_condition}
