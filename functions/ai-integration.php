@@ -6132,6 +6132,27 @@ Best regards,
 	private function get_earliest_slot_from_timetable( $therapist_id ) {
 		global $wpdb;
 
+		// Get doctor settings to retrieve off_days
+		$doctor_settings = snks_doctor_settings( $therapist_id );
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Prepare the off-days for SQL query
+		$off_days_placeholder = '';
+		if ( ! empty( $off_days ) ) {
+			$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
+		}
+
+		// Add off_days condition
+		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+
+		// Prepare query parameters
+		$query_params = array( $therapist_id );
+		
+		// Add off_days parameters if they exist
+		if ( ! empty( $off_days ) ) {
+			$query_params = array_merge( $query_params, $off_days );
+		}
+
 		// Get the earliest available slot (exclude reserved/in-cart and booked/rescheduled)
 		$earliest_slot = $wpdb->get_row(
 			$wpdb->prepare(
@@ -6145,9 +6166,10 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 			 AND NOT (attendance_type = 'offline')
+			 {$off_days_condition}
 			 ORDER BY date_time ASC 
 			 LIMIT 1",
-				$therapist_id
+				$query_params
 			)
 		);
 
@@ -6173,6 +6195,27 @@ Best regards,
 	private function get_available_dates_from_timetable( $therapist_id ) {
 		global $wpdb;
 
+		// Get doctor settings to retrieve off_days
+		$doctor_settings = snks_doctor_settings( $therapist_id );
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Prepare the off-days for SQL query
+		$off_days_placeholder = '';
+		if ( ! empty( $off_days ) ) {
+			$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
+		}
+
+		// Add off_days condition
+		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+
+		// Prepare query parameters
+		$query_params = array( $therapist_id );
+		
+		// Add off_days parameters if they exist
+		if ( ! empty( $off_days ) ) {
+			$query_params = array_merge( $query_params, $off_days );
+		}
+
 		// Get all available slots from the timetable
 		$available_slots = $wpdb->get_results(
 			$wpdb->prepare(
@@ -6186,8 +6229,9 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND period = 45
 			 AND NOT (attendance_type = 'offline')
+			 {$off_days_condition}
 			 ORDER BY date_time ASC",
-				$therapist_id
+				$query_params
 			)
 		);
 
@@ -6218,6 +6262,27 @@ Best regards,
 	private function get_ai_therapist_earliest_slot( $therapist_id ) {
 		global $wpdb;
 
+		// Get doctor settings to retrieve off_days
+		$doctor_settings = snks_doctor_settings( $therapist_id );
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Prepare the off-days for SQL query
+		$off_days_placeholder = '';
+		if ( ! empty( $off_days ) ) {
+			$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
+		}
+
+		// Add off_days condition
+		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+
+		// Prepare query parameters
+		$query_params = array( $therapist_id );
+		
+		// Add off_days parameters if they exist
+		if ( ! empty( $off_days ) ) {
+			$query_params = array_merge( $query_params, $off_days );
+		}
+
 		// Get the earliest slot regardless of settings - prioritize by date/time
 		$earliest_slot = $wpdb->get_row(
 			$wpdb->prepare(
@@ -6230,9 +6295,10 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 AND NOT (attendance_type = 'offline')
+			 {$off_days_condition}
 			 ORDER BY date_time ASC 
 			 LIMIT 1",
-				$therapist_id
+				$query_params
 			)
 		);
 
@@ -6251,9 +6317,10 @@ Best regards,
 				 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 				 AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)
 				 AND NOT (attendance_type = 'offline')
+				 {$off_days_condition}
 				 ORDER BY date_time ASC 
 				 LIMIT 1",
-					$therapist_id
+					$query_params
 				)
 			);
 		}
