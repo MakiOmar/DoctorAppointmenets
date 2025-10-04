@@ -6398,16 +6398,8 @@ Best regards,
 		$current_time = current_time( 'H:i:s' );
 		$today        = current_time( 'Y-m-d' );
 
-		// Prepare query parameters
-		$query_params = array( $therapist_id, $today, $current_time );
-		
-		// Add off_days parameters if they exist
-		if ( ! empty( $off_days ) ) {
-			$query_params = array_merge( $query_params, $off_days );
-		}
-
-		$query = $wpdb->prepare(
-			"SELECT DISTINCT DATE(date_time) as date
+		// Build the query with proper parameter handling
+		$query = "SELECT DISTINCT DATE(date_time) as date
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d 
 			 AND DATE(date_time) >= CURDATE()
@@ -6421,9 +6413,18 @@ Best regards,
 			 {$period_condition}
 			 {$off_days_condition}
 			 AND (DATE(date_time) != %s OR starts > %s)
-			 ORDER BY DATE(date_time) ASC",
-			$query_params
-		);
+			 ORDER BY DATE(date_time) ASC";
+
+		// Prepare query parameters
+		$query_params = array( $therapist_id, $today, $current_time );
+		
+		// Add off_days parameters if they exist
+		if ( ! empty( $off_days ) ) {
+			$query_params = array_merge( $query_params, $off_days );
+		}
+
+		// Prepare the query with all parameters
+		$query = $wpdb->prepare( $query, $query_params );
 
 		// Log the SQL query for debugging
 		error_log( 'AI Therapist Available Dates SQL Query: ' . $wpdb->last_query );

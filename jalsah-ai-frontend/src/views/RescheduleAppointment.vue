@@ -242,11 +242,16 @@ const loadAvailableDates = async () => {
     })
     
     console.log('🔍 RescheduleAppointment - API Response:', response.data)
-    console.log('🔍 RescheduleAppointment - Available dates:', response.data.data?.available_dates)
+    console.log('🔍 RescheduleAppointment - Available dates from API:', response.data.data?.available_dates)
     
-    availableDates.value = response.data.data?.available_dates || []
+    const apiDates = response.data.data?.available_dates || []
+    console.log('🔍 RescheduleAppointment - Raw API dates count:', apiDates.length)
+    console.log('🔍 RescheduleAppointment - Raw API dates:', apiDates)
+    
+    availableDates.value = apiDates
     
     console.log('🔍 RescheduleAppointment - Final availableDates:', availableDates.value)
+    console.log('🔍 RescheduleAppointment - Final availableDates count:', availableDates.value.length)
   } catch (err) {
     console.error('Error loading available dates:', err)
     availableDates.value = []
