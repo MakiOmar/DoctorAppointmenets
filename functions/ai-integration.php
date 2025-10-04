@@ -6129,12 +6129,21 @@ Best regards,
 	private function get_earliest_slot_from_timetable( $therapist_id ) {
 		global $wpdb;
 
-		// Get doctor settings to retrieve off_days and form_days_count
+		// Get doctor settings to retrieve off_days, form_days_count, and block_if_before settings
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 		$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
 		if ( $days_count > 90 ) {
 			$days_count = 90;
+		}
+
+		// Calculate seconds before blocking (same logic as shortcode form)
+		$seconds_before_block = 0;
+		if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+			$number               = $doctor_settings['block_if_before_number'];
+			$unit                 = $doctor_settings['block_if_before_unit'];
+			$base                 = ( 'day' === $unit ) ? 24 : 1;
+			$seconds_before_block = $number * $base * 3600;
 		}
 
 		// Prepare the off-days for SQL query
@@ -6146,8 +6155,14 @@ Best regards,
 		// Add off_days condition
 		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
 
+		// Calculate adjusted current datetime with block_if_before_number (same as shortcode form)
+		$adjusted_current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
+
 		// Prepare query parameters
 		$query_params = array( $therapist_id );
+		
+		// Add adjusted current datetime (with block_if_before_number applied)
+		$query_params[] = $adjusted_current_datetime;
 		
 		// Add off_days parameters if they exist
 		if ( ! empty( $off_days ) ) {
@@ -6160,7 +6175,7 @@ Best regards,
 				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
-			 AND date_time >= NOW()
+			 AND date_time >= %s
 			 AND date_time <= DATE_ADD(NOW(), INTERVAL {$days_count} DAY)
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
@@ -6197,12 +6212,21 @@ Best regards,
 	private function get_available_dates_from_timetable( $therapist_id ) {
 		global $wpdb;
 
-		// Get doctor settings to retrieve off_days and form_days_count
+		// Get doctor settings to retrieve off_days, form_days_count, and block_if_before settings
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 		$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
 		if ( $days_count > 90 ) {
 			$days_count = 90;
+		}
+
+		// Calculate seconds before blocking (same logic as shortcode form)
+		$seconds_before_block = 0;
+		if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+			$number               = $doctor_settings['block_if_before_number'];
+			$unit                 = $doctor_settings['block_if_before_unit'];
+			$base                 = ( 'day' === $unit ) ? 24 : 1;
+			$seconds_before_block = $number * $base * 3600;
 		}
 
 		// Prepare the off-days for SQL query
@@ -6214,8 +6238,14 @@ Best regards,
 		// Add off_days condition
 		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
 
+		// Calculate adjusted current datetime with block_if_before_number (same as shortcode form)
+		$adjusted_current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
+
 		// Prepare query parameters
 		$query_params = array( $therapist_id );
+		
+		// Add adjusted current datetime (with block_if_before_number applied)
+		$query_params[] = $adjusted_current_datetime;
 		
 		// Add off_days parameters if they exist
 		if ( ! empty( $off_days ) ) {
@@ -6228,7 +6258,7 @@ Best regards,
 				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
-			 AND date_time >= NOW()
+			 AND date_time >= %s
 			 AND date_time <= DATE_ADD(NOW(), INTERVAL {$days_count} DAY)
 			 AND (client_id = 0 OR client_id IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
@@ -6316,7 +6346,7 @@ Best regards,
 					"SELECT ID, date_time, starts, ends, period, clinic, attendance_type, session_status, settings
 				 FROM {$wpdb->prefix}snks_provider_timetable 
 				 WHERE user_id = %d AND session_status = 'open' 
-				 AND date_time >= NOW()
+				 AND date_time >= %s
 				 AND date_time <= DATE_ADD(NOW(), INTERVAL {$days_count} DAY)
 				 AND (settings LIKE '%ai_booking%' OR settings = '')
 				 AND (client_id = 0 OR client_id IS NULL)
@@ -6362,12 +6392,21 @@ Best regards,
 		$attendance_type = $_GET['attendance_type'] ?? 'online';
 		
 
-		// Get doctor settings to retrieve off_days and form_days_count
+		// Get doctor settings to retrieve off_days, form_days_count, and block_if_before settings
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 		$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
 		if ( $days_count > 90 ) {
 			$days_count = 90;
+		}
+
+		// Calculate seconds before blocking (same logic as shortcode form)
+		$seconds_before_block = 0;
+		if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+			$number               = $doctor_settings['block_if_before_number'];
+			$unit                 = $doctor_settings['block_if_before_unit'];
+			$base                 = ( 'day' === $unit ) ? 24 : 1;
+			$seconds_before_block = $number * $base * 3600;
 		}
 		
 		// Trim whitespace from off_days
@@ -6399,17 +6438,20 @@ Best regards,
 		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
 
 
-		// Query for dates that have available slots in the next 30 days
+		// Query for dates that have available slots in the next N days
 		// Only include dates where there are actually available slots (not booked)
-		// For today, only include slots that are in the future
+		// Apply block_if_before_number logic to adjust current time
 		$current_time = current_time( 'H:i:s' );
 		$today        = current_time( 'Y-m-d' );
+		
+		// Calculate adjusted current datetime with block_if_before_number (same as shortcode form)
+		$adjusted_current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
 
 		// Build the query with proper parameter handling
 		$query = "SELECT DISTINCT DATE(date_time) as date
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d 
-			 AND DATE(date_time) >= CURDATE()
+			 AND date_time >= %s
 			 AND DATE(date_time) <= DATE_ADD(CURDATE(), INTERVAL {$days_count} DAY)
 			 AND session_status = 'waiting' 
 			 AND order_id = 0
@@ -6419,20 +6461,18 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 {$period_condition}
 			 {$off_days_condition}
-			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC";
 
 		// Prepare query parameters in the correct order
 		$query_params = array( $therapist_id );
 		
+		// Add adjusted current datetime (with block_if_before_number applied)
+		$query_params[] = $adjusted_current_datetime;
+		
 		// Add off_days parameters if they exist (these go to the NOT IN condition)
 		if ( ! empty( $off_days ) ) {
 			$query_params = array_merge( $query_params, $off_days );
 		}
-		
-		// Add the remaining parameters (today and current_time for the last condition)
-		$query_params[] = $today;
-		$query_params[] = $current_time;
 
 		// Prepare the query with all parameters
 		$query = $wpdb->prepare( $query, $query_params );
