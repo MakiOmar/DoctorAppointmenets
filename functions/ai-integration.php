@@ -6424,6 +6424,7 @@ Best regards,
 		// Log the SQL query for debugging
 		error_log( 'AI Therapist Available Dates SQL Query: ' . $wpdb->last_query );
 		error_log( 'AI Therapist Available Dates Parameters: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type . ', off_days=' . print_r( $off_days, true ) );
+		error_log( 'AI Therapist Available Dates - Doctor Settings: ' . print_r( $doctor_settings, true ) );
 
 		$available_dates = $wpdb->get_results( $query );
 
