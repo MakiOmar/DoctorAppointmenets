@@ -2225,8 +2225,6 @@ class SNKS_AI_Integration {
 	 * Handle therapist available dates endpoint
 	 */
 	private function handle_therapist_available_dates_endpoint( $method, $path ) {
-		error_log( 'AI API - Therapist Available Dates Endpoint called: method=' . $method . ', path=' . print_r( $path, true ) );
-		error_log( 'AI API - GET params: ' . print_r( $_GET, true ) );
 		
 		switch ( $method ) {
 			case 'GET':
@@ -2236,7 +2234,6 @@ class SNKS_AI_Integration {
 						$this->send_error( 'Missing therapist_id', 400 );
 						return;
 					}
-					error_log( 'AI API - Calling get_ai_therapist_available_dates with therapist_id=' . $therapist_id );
 					$this->get_ai_therapist_available_dates( $therapist_id );
 				} else {
 					$this->send_error( 'Invalid endpoint', 404 );
@@ -6347,15 +6344,12 @@ Best regards,
 	 * Get therapist's available dates
 	 */
 	private function get_ai_therapist_available_dates( $therapist_id ) {
-		error_log( 'AI Therapist Available Dates - Function called' );
-		error_log( 'AI Therapist Available Dates - GET params: ' . print_r( $_GET, true ) );
 		
 		global $wpdb;
 
 		// Get attendance_type parameter
 		$attendance_type = $_GET['attendance_type'] ?? 'online';
 		
-		error_log( 'AI Therapist Available Dates - Extracted params: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type );
 
 		// Get doctor settings to retrieve off_days
 		$doctor_settings = snks_doctor_settings( $therapist_id );
@@ -6389,8 +6383,6 @@ Best regards,
 		// Add off_days condition
 		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
 
-		// Log the query conditions for debugging
-		error_log( 'AI Therapist Available Dates Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition . ', off_days_condition=' . $off_days_condition );
 
 		// Query for dates that have available slots in the next 30 days
 		// Only include dates where there are actually available slots (not booked)
@@ -6430,23 +6422,9 @@ Best regards,
 		// Prepare the query with all parameters
 		$query = $wpdb->prepare( $query, $query_params );
 
-		// Log the SQL query for debugging
-		error_log( 'AI Therapist Available Dates SQL Query: ' . $wpdb->last_query );
-		error_log( 'AI Therapist Available Dates Parameters: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type . ', off_days=' . print_r( $off_days, true ) );
-		error_log( 'AI Therapist Available Dates - Doctor Settings: ' . print_r( $doctor_settings, true ) );
-
-		// Log the actual query being executed
-		error_log( 'AI Therapist Available Dates - About to execute query: ' . $query );
-		error_log( 'AI Therapist Available Dates - Query parameters: ' . print_r( $query_params, true ) );
 		
 		$available_dates = $wpdb->get_results( $query );
 
-		// Log the results for debugging
-		error_log( 'AI Therapist Available Dates Results Count: ' . count( $available_dates ) );
-		error_log( 'AI Therapist Available Dates - Last query executed: ' . $wpdb->last_query );
-		if ( ! empty( $available_dates ) ) {
-			error_log( 'AI Therapist Available Dates Sample Result: ' . print_r( $available_dates[0], true ) );
-		}
 
 		$formatted_dates = array();
 		foreach ( $available_dates as $date_row ) {

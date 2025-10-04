@@ -237,8 +237,6 @@ const generateAvailableDates = async () => {
       }
     })
     
-    console.log('📅 BookingModal - Available dates API response:', response.data)
-    
     if (response.data.success && response.data.data && response.data.data.available_dates) {
       const dates = response.data.data.available_dates.map(dateInfo => {
         const date = new Date(dateInfo.date)
