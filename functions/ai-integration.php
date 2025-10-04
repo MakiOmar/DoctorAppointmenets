@@ -5284,6 +5284,23 @@ Best regards,
 
 		global $wpdb;
 
+		// Get doctor settings to retrieve off_days
+		$doctor_settings = snks_doctor_settings( $therapist_id );
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Check if the requested date is in off_days
+		if ( in_array( $date, $off_days, true ) ) {
+			// Return empty results if the date is an off day
+			$this->send_success(
+				array(
+					'available_slots' => array(),
+					'therapist_id'    => $therapist_id,
+					'date'           => $date,
+				)
+			);
+			return;
+		}
+
 		// Build the query based on attendance_type parameter
 		$attendance_condition = '';
 		$period_condition = '';
@@ -5297,7 +5314,6 @@ Best regards,
 			$attendance_condition = "AND attendance_type = 'online'";
 			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
 		}
-
 
 		// Query the existing timetable system for available slots
 		// Only include slots that are actually available (not booked)
@@ -6274,11 +6290,20 @@ Best regards,
 		
 		error_log( 'AI Therapist Available Dates - Extracted params: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type );
 
-		// Debug logging
+		// Get doctor settings to retrieve off_days
+		$doctor_settings = snks_doctor_settings( $therapist_id );
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Prepare the off-days for SQL query
+		$off_days_placeholder = '';
+		if ( ! empty( $off_days ) ) {
+			$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
+		}
 
 		// Build the query based on attendance_type parameter
 		$attendance_condition = '';
 		$period_condition = '';
+		$off_days_condition = '';
 		
 		if ( $attendance_type === 'offline' ) {
 			// Never allow offline slots - return empty results
@@ -6290,14 +6315,25 @@ Best regards,
 			$period_condition = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
 		}
 
+		// Add off_days condition
+		$off_days_condition = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+
 		// Log the query conditions for debugging
-		error_log( 'AI Therapist Available Dates Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition );
+		error_log( 'AI Therapist Available Dates Query Conditions: attendance_condition=' . $attendance_condition . ', period_condition=' . $period_condition . ', off_days_condition=' . $off_days_condition );
 
 		// Query for dates that have available slots in the next 30 days
 		// Only include dates where there are actually available slots (not booked)
 		// For today, only include slots that are in the future
 		$current_time = current_time( 'H:i:s' );
 		$today        = current_time( 'Y-m-d' );
+
+		// Prepare query parameters
+		$query_params = array( $therapist_id, $today, $current_time );
+		
+		// Add off_days parameters if they exist
+		if ( ! empty( $off_days ) ) {
+			$query_params = array_merge( $query_params, $off_days );
+		}
 
 		$query = $wpdb->prepare(
 			"SELECT DISTINCT DATE(date_time) as date
@@ -6312,16 +6348,15 @@ Best regards,
 			 AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
 			 {$period_condition}
+			 {$off_days_condition}
 			 AND (DATE(date_time) != %s OR starts > %s)
 			 ORDER BY DATE(date_time) ASC",
-			$therapist_id,
-			$today,
-			$current_time
+			$query_params
 		);
 
 		// Log the SQL query for debugging
 		error_log( 'AI Therapist Available Dates SQL Query: ' . $wpdb->last_query );
-		error_log( 'AI Therapist Available Dates Parameters: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type );
+		error_log( 'AI Therapist Available Dates Parameters: therapist_id=' . $therapist_id . ', attendance_type=' . $attendance_type . ', off_days=' . print_r( $off_days, true ) );
 
 		$available_dates = $wpdb->get_results( $query );
 
@@ -6356,6 +6391,23 @@ Best regards,
 
 		if ( empty( $date ) ) {
 			$this->send_error( 'Date parameter is required', 400 );
+			return;
+		}
+
+		// Get doctor settings to retrieve off_days
+		$doctor_settings = snks_doctor_settings( $therapist_id );
+		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+
+		// Check if the requested date is in off_days
+		if ( in_array( $date, $off_days, true ) ) {
+			// Return empty results if the date is an off day
+			$this->send_success(
+				array(
+					'available_slots' => array(),
+					'therapist_id'    => $therapist_id,
+					'date'           => $date,
+				)
+			);
 			return;
 		}
 
