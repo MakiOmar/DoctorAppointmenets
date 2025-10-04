@@ -1118,7 +1118,10 @@ export default {
       
       const dateStr = formatShortDateWithDay(date)
       
-      return `${dateStr} ${t('dateTime.at')} ${formattedTime}`
+      // Add "بتوقيت مصر" (Egypt Time) for Arabic locale
+      const timeZoneText = locale.value === 'ar' ? ' بتوقيت مصر' : ''
+      
+      return `${dateStr} ${t('dateTime.at')} ${formattedTime}${timeZoneText}`
     }
 
     const formatEarliestSlot = (therapist) => {
