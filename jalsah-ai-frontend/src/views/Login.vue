@@ -102,7 +102,7 @@
                 v-model="form.whatsapp"
                 type="tel"
                 required
-                @input="validateWhatsAppNumber"
+                @input="onWhatsAppInput"
                 @blur="onWhatsAppBlur"
                 class="flex-1 px-3 py-3 border rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
                 :class="{
@@ -212,6 +212,7 @@
                   type="tel"
                   required
                   dir="ltr"
+                  @input="onForgotPasswordWhatsAppInput"
                   class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-l-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
                   :placeholder="$t('auth.login.whatsappPlaceholder')"
                 />
@@ -595,6 +596,27 @@ export default {
       }
     }
 
+    // Function to filter only numbers for WhatsApp input
+    const onWhatsAppInput = (event) => {
+      // Remove all non-numeric characters
+      const numericValue = event.target.value.replace(/[^0-9]/g, '')
+      
+      // Update the form value
+      form.value.whatsapp = numericValue
+      
+      // Trigger validation
+      validateWhatsAppNumber()
+    }
+
+    // Function to filter only numbers for forgot password WhatsApp input
+    const onForgotPasswordWhatsAppInput = (event) => {
+      // Remove all non-numeric characters
+      const numericValue = event.target.value.replace(/[^0-9]/g, '')
+      
+      // Update the form value
+      forgotPasswordForm.value.whatsapp = numericValue
+    }
+
     const handleLogin = async () => {
       const credentials = {
         password: form.value.password
@@ -903,6 +925,8 @@ export default {
       whatsappValidationError,
       validateWhatsAppNumber,
       onWhatsAppBlur,
+      onWhatsAppInput,
+      onForgotPasswordWhatsAppInput,
       // Forgot password
       showForgotPasswordModal,
       forgotPasswordStep,

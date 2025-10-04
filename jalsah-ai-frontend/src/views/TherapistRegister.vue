@@ -32,9 +32,9 @@
                     {{ country.name }} {{ country.code }}
                   </option>
                 </select>
-                <input v-model="form.phone" id="phone" type="tel" required class="phone-number-input" autocomplete="tel" placeholder="123456789" />
+                <input v-model="form.phone" id="phone" type="tel" required class="phone-number-input" autocomplete="tel" placeholder="123456789" @input="onPhoneInput" />
               </div>
-              <input v-else v-model="form.phone" id="phone" type="tel" required class="input-field" autocomplete="tel" />
+              <input v-else v-model="form.phone" id="phone" type="tel" required class="input-field" autocomplete="tel" @input="onPhoneInput" />
             </div>
             <div>
               <label class="form-label" for="whatsapp">{{ $t('therapistRegister.whatsapp') }}</label>
@@ -44,9 +44,9 @@
                     {{ country.name }} {{ country.code }}
                   </option>
                 </select>
-                <input v-model="form.whatsapp" id="whatsapp" type="tel" required class="phone-number-input" autocomplete="tel" placeholder="123456789" />
+                <input v-model="form.whatsapp" id="whatsapp" type="tel" required class="phone-number-input" autocomplete="tel" placeholder="123456789" @input="onWhatsAppInput" />
               </div>
-              <input v-else v-model="form.whatsapp" id="whatsapp" type="tel" required class="input-field" autocomplete="tel" />
+              <input v-else v-model="form.whatsapp" id="whatsapp" type="tel" required class="input-field" autocomplete="tel" @input="onWhatsAppInput" />
             </div>
             <div>
               <label class="form-label" for="doctor_specialty">{{ $t('therapistRegister.specialty') }}</label>
@@ -402,6 +402,24 @@ function resetForm() {
   otpCode.value = ''
   sessionKey.value = ''
   contactMethod.value = ''
+}
+
+// Function to filter only numbers for phone input
+const onPhoneInput = (event) => {
+  // Remove all non-numeric characters
+  const numericValue = event.target.value.replace(/[^0-9]/g, '')
+  
+  // Update the form value
+  form.value.phone = numericValue
+}
+
+// Function to filter only numbers for WhatsApp input
+const onWhatsAppInput = (event) => {
+  // Remove all non-numeric characters
+  const numericValue = event.target.value.replace(/[^0-9]/g, '')
+  
+  // Update the form value
+  form.value.whatsapp = numericValue
 }
 
 onMounted(() => {

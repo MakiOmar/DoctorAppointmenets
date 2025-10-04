@@ -142,7 +142,7 @@
               :placeholder="$t('auth.register.whatsappPlaceholder')"
                 autocomplete="tel"
                 style="text-align: left; direction: ltr;"
-                @input="validateWhatsAppNumber"
+                @input="onWhatsAppInput"
                 @blur="onWhatsAppBlur"
             />
           </div>
@@ -388,6 +388,18 @@ export default {
           fullNumber: fullPhoneNumber
         }
       }
+    }
+
+    // Function to filter only numbers for WhatsApp input
+    const onWhatsAppInput = (event) => {
+      // Remove all non-numeric characters
+      const numericValue = event.target.value.replace(/[^0-9]/g, '')
+      
+      // Update the form value
+      form.value.whatsapp = numericValue
+      
+      // Trigger validation
+      validateWhatsAppNumber()
     }
     
     // Filtered countries based on search
@@ -763,6 +775,7 @@ export default {
       validatePasswordMatch,
       validateWhatsAppNumber,
       onWhatsAppBlur,
+      onWhatsAppInput,
       showCountryDropdown,
       countrySearch,
       filteredCountries,

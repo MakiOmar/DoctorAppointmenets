@@ -96,6 +96,7 @@
                     type="tel" 
                     class="input-field"
                                           :placeholder="$t('booking.contactPhone')"
+                    @input="onEmergencyPhoneInput"
                   />
                 </div>
               </div>
@@ -306,6 +307,15 @@ export default {
       }
     }
 
+    // Function to filter only numbers for emergency phone input
+    const onEmergencyPhoneInput = (event) => {
+      // Remove all non-numeric characters
+      const numericValue = event.target.value.replace(/[^0-9]/g, '')
+      
+      // Update the booking value
+      booking.value.emergencyPhone = numericValue
+    }
+
     onMounted(() => {
       loadTherapist()
     })
@@ -319,6 +329,7 @@ export default {
       getSessionPrice,
       getTotalPrice,
       submitBooking,
+      onEmergencyPhoneInput,
       formatPrice
     }
   }

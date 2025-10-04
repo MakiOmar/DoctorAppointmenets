@@ -121,7 +121,7 @@
                     :placeholder="$t('profile.whatsappPlaceholder')"
                     autocomplete="tel"
                     style="text-align: left; direction: ltr;"
-                    @input="validateWhatsAppNumber"
+                    @input="onWhatsAppInput"
                     @blur="onWhatsAppBlur"
                   />
                 </div>
@@ -571,6 +571,18 @@ export default {
       }
     }
 
+    // Function to filter only numbers for WhatsApp input
+    const onWhatsAppInput = (event) => {
+      // Remove all non-numeric characters
+      const numericValue = event.target.value.replace(/[^0-9]/g, '')
+      
+      // Update the form value
+      profile.value.whatsapp = numericValue
+      
+      // Trigger validation
+      validateWhatsAppNumber()
+    }
+
 
     onMounted(() => {
       // Ensure countries are loaded so length validation works immediately
@@ -607,6 +619,7 @@ export default {
       validatePhoneNumber,
       validateWhatsAppNumber,
       onWhatsAppBlur,
+      onWhatsAppInput,
       showEmailField
     }
   }

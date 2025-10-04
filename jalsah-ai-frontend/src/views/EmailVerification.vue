@@ -106,6 +106,7 @@
                   :placeholder="$t('auth.login.whatsappPlaceholder')"
                   dir="ltr"
                   style="text-align: left; direction: ltr;"
+                  @input="onContactInput"
                 />
               </div>
             </div>
@@ -430,6 +431,15 @@ export default {
       form.value.verification_code = ''
     }
 
+    // Function to filter only numbers for contact input
+    const onContactInput = (event) => {
+      // Remove all non-numeric characters
+      const numericValue = event.target.value.replace(/[^0-9]/g, '')
+      
+      // Update the input value
+      contactInput.value = numericValue
+    }
+
     // Get contact info from route params, query, or localStorage
     onMounted(async () => {
       // Load therapist registration settings
@@ -671,6 +681,7 @@ export default {
       isFormValid,
       setContact,
       changeContact,
+      onContactInput,
       handleVerification,
       resendCode,
       // Country selector
