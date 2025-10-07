@@ -6190,19 +6190,6 @@ Best regards,
 			)
 		);
 
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-			error_log( "=== Get Earliest Slot Debug for Therapist {$therapist_id} ===" );
-			error_log( "Adjusted current datetime: {$adjusted_current_datetime}" );
-			error_log( "Days count: {$days_count}" );
-			error_log( "Off days: " . implode( ', ', $off_days ) );
-			error_log( "Seconds before block: {$seconds_before_block}" );
-			error_log( "Earliest slot result: " . ( $earliest_slot ? 'Found' : 'NULL' ) );
-			if ( $earliest_slot ) {
-				error_log( "Slot details: ID={$earliest_slot->ID}, date_time={$earliest_slot->date_time}, period={$earliest_slot->period}" );
-			}
-		}
-
 		if ( $earliest_slot ) {
 			$date = new DateTime( $earliest_slot->date_time );
 			return array(
