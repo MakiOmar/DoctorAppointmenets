@@ -379,6 +379,16 @@ add_action(
 					}
 			);
 
+			// Check if WP_DEBUG is enabled
+			var wpDebugEnabled = <?php echo ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? 'true' : 'false'; ?>;
+			
+			// Debug logging helper
+			function debugLog(message) {
+				if (wpDebugEnabled) {
+					console.log(message);
+				}
+			}
+			
 			// Initialize session completion button activation
 			function initSessionCompletionCheck() {
 				$('.doctor-actions').each(function() {
@@ -388,12 +398,12 @@ add_action(
 					var sessionId = $doctorActions.find('input[name="session_id"]').val();
 					
 					if (!sessionEndTime || !$button.length) {
-						console.log('⏭️ Skipping session completion check - missing data');
+						debugLog('⏭️ Skipping session completion check - missing data');
 						return;
 					}
 					
-					console.log('🔧 Initializing session completion check for session #' + sessionId);
-					console.log('📅 Session end time: ' + new Date(sessionEndTime * 1000).toLocaleString());
+					debugLog('🔧 Initializing session completion check for session #' + sessionId);
+					debugLog('📅 Session end time: ' + new Date(sessionEndTime * 1000).toLocaleString());
 					
 					// Function to check if session has ended
 					function checkSessionEnd() {
@@ -401,29 +411,29 @@ add_action(
 						var remainingSeconds = sessionEndTime - currentTime;
 						var remainingMinutes = Math.floor(remainingSeconds / 60);
 						
-						console.log('⏰ Session #' + sessionId + ' check:');
-						console.log('   Current time: ' + new Date(currentTime * 1000).toLocaleString());
-						console.log('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
-						console.log('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
+						debugLog('⏰ Session #' + sessionId + ' check:');
+						debugLog('   Current time: ' + new Date(currentTime * 1000).toLocaleString());
+						debugLog('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
+						debugLog('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
 						
 						if (currentTime >= sessionEndTime) {
 							// Session has ended - enable button
-							console.log('✅ Session #' + sessionId + ' has ended - enabling completion button');
+							debugLog('✅ Session #' + sessionId + ' has ended - enabling completion button');
 							$button.prop('disabled', false).attr('title', '');
 							return false; // Stop the interval
 						}
 						
-						console.log('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
+						debugLog('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
 						return true; // Continue the interval
 					}
 					
 					// Initial check
 					if (checkSessionEnd()) {
 						// Check every 10 seconds
-						console.log('🔄 Starting interval check every 10 seconds for session #' + sessionId);
+						debugLog('🔄 Starting interval check every 10 seconds for session #' + sessionId);
 						var intervalId = setInterval(function() {
 							if (!checkSessionEnd()) {
-								console.log('🛑 Stopping interval check for session #' + sessionId);
+								debugLog('🛑 Stopping interval check for session #' + sessionId);
 								clearInterval(intervalId);
 							}
 						}, 10000);
@@ -433,19 +443,19 @@ add_action(
 			
 			// Initialize checks on page load
 			$(document).ready(function() {
-				console.log('🚀 Initializing session completion checks on page load...');
+				debugLog('🚀 Initializing session completion checks on page load...');
 				initSessionCompletionCheck();
 			});
 			
 			// Reinitialize checks after Jet popup is shown
 			$(window).on('jet-popup/show-event/after-show', function(){
-				console.log('🎯 Jet popup shown - reinitializing session completion checks...');
+				debugLog('🎯 Jet popup shown - reinitializing session completion checks...');
 				initSessionCompletionCheck();
 			});
 			
 			// Reinitialize checks after Jet popup content is rendered
 			$(window).on('jet-popup/render-content/render-custom-content', function(){
-				console.log('📄 Jet popup content rendered - reinitializing session completion checks...');
+				debugLog('📄 Jet popup content rendered - reinitializing session completion checks...');
 				initSessionCompletionCheck();
 			});
 
