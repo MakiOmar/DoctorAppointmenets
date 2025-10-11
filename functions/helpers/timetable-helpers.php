@@ -854,7 +854,16 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	$order           = 'past' === $tense ? 'DESC' : 'ASC';
 	$compare_against = gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) );
 
-	$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d And session_status= %s";
+	// Include both 'open' and 'completed' sessions for future and past bookings
+	$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d";
+	
+	// Add status condition - include both 'open' and 'completed' statuses
+	if ( $status === 'open' ) {
+		$query .= " AND session_status IN ('open', 'completed')";
+	} else {
+		$query .= " AND session_status = %s";
+	}
+	
 	//phpcs:disable
 	if ( 'all' !== $tense ) {
 		$query .= $wpdb->prepare( " AND date_time {$operator} %s", $compare_against );
@@ -864,13 +873,23 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	}
 	$query  .= " ORDER BY date_time {$order}";
 
-	$results = $wpdb->get_results(
-		$wpdb->prepare(
-			$query,
-			$user_id,
-			$status
-		)
-	);
+	// Prepare query with appropriate parameters
+	if ( $status === 'open' ) {
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				$query,
+				$user_id
+			)
+		);
+	} else {
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				$query,
+				$user_id,
+				$status
+			)
+		);
+	}
 	//phpcs:enable
 	
 	// Filter out AI sessions for patients
