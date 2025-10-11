@@ -1024,10 +1024,11 @@ function template_str_replace( $record ) {
 	$last_name  = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
 	$phone      = ! empty( $user_details['billing_phone'] ) ? $user_details['billing_phone'] : '';
 	$whatsapp   = '';
-	if ( ! empty( $user_details['whatsapp'] ) ) {
-		$whatsapp = $user_details['whatsapp'];
-	} else {
+	// Hide WhatsApp for AI bookings or if user doesn't have WhatsApp
+	if ( $is_ai_session || empty( $user_details['whatsapp'] ) ) {
 		$template = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
+	} else {
+		$whatsapp = $user_details['whatsapp'];
 	}
 	// Keep timer for AI sessions that are too early
 	if ( ! ( $is_ai_session && $is_too_early ) ) {
