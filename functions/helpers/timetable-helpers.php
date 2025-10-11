@@ -854,12 +854,13 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	$order           = 'past' === $tense ? 'DESC' : 'ASC';
 	$compare_against = gmdate( 'Y-m-d 23:59:59', strtotime( '-1 day' ) );
 
-	// Include both 'open' and 'completed' sessions for future and past bookings
+	// Include 'open' sessions and 'completed' AI sessions
 	$query = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = %d";
 	
-	// Add status condition - include both 'open' and 'completed' statuses
+	// Add status condition
 	if ( $status === 'open' ) {
-		$query .= " AND session_status IN ('open', 'completed')";
+		// Include 'open' sessions OR 'completed' sessions that are AI bookings
+		$query .= " AND (session_status = 'open' OR (session_status = 'completed' AND settings LIKE '%ai_booking%'))";
 	} else {
 		$query .= " AND session_status = %s";
 	}
