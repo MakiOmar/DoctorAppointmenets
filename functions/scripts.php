@@ -461,9 +461,15 @@ add_action(
 
 			$(document).on(
 				'click',
-				'.doctor_actions .snks-button:not(:disabled)',
+				'.doctor_actions .snks-button',
 				function (e) {
 					e.preventDefault();
+					
+					// Double-check if button is disabled - prevent any action if it is
+					if ($(this).prop('disabled') || $(this).attr('disabled')) {
+						debugLog('❌ Button is disabled - ignoring click event');
+						return false;
+					}
 					
 					// Get the parent form of the clicked button
 					var form = $(this).closest('form');
@@ -474,6 +480,7 @@ add_action(
 					doctorActions.push({ name: 'nonce', value: nonce });
 					doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
 					
+					debugLog('✅ Button is enabled - showing confirmation dialog');
 					Swal.fire({
 							title: 'هل أنت متأكد من تحديد الجلسة كمكتملة؟',
 							text: "لا يمكنك التراجع بعد ذلك!",
