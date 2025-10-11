@@ -1590,9 +1590,8 @@ function snks_doctor_actions( $session ) {
 	$output    = '';
 	if ( ! empty( $attendees ) ) {
 		// Calculate session end time (start datetime + period in minutes)
-		// Use WordPress timezone to ensure consistency
-		$timezone         = wp_timezone();
-		$session_datetime = new DateTime( $session->date_time, $timezone );
+		// Don't specify timezone - database time is already in the correct timezone
+		$session_datetime = new DateTime( $session->date_time );
 		$period_minutes   = isset( $session->period ) ? intval( $session->period ) : 45;
 		$session_datetime->add( new DateInterval( 'PT' . $period_minutes . 'M' ) );
 		$session_end_timestamp = $session_datetime->getTimestamp();
@@ -1604,9 +1603,9 @@ function snks_doctor_actions( $session ) {
 			error_log( 'Session date_time: ' . $session->date_time );
 			error_log( 'Period minutes: ' . $period_minutes );
 			error_log( 'Session end datetime: ' . $session_datetime->format( 'Y-m-d H:i:s' ) );
-			error_log( 'Session end timestamp: ' . $session_end_timestamp . ' (' . date( 'Y-m-d H:i:s', $session_end_timestamp ) . ')' );
-			error_log( 'Current timestamp: ' . $current_timestamp . ' (' . date( 'Y-m-d H:i:s', $current_timestamp ) . ')' );
-			error_log( 'Timezone: ' . $timezone->getName() );
+			error_log( 'Session end timestamp: ' . $session_end_timestamp . ' (' . gmdate( 'Y-m-d H:i:s', $session_end_timestamp ) . ')' );
+			error_log( 'Current timestamp: ' . $current_timestamp . ' (' . gmdate( 'Y-m-d H:i:s', $current_timestamp ) . ')' );
+			error_log( 'Time difference: ' . ( $session_end_timestamp - $current_timestamp ) . ' seconds' );
 		}
 		
 		// Check if session has ended
