@@ -1590,7 +1590,9 @@ function snks_doctor_actions( $session ) {
 	$output    = '';
 	if ( ! empty( $attendees ) ) {
 		// Calculate session end time (start datetime + period in minutes)
-		$session_datetime = new DateTime( $session->date_time );
+		// Use WordPress timezone to ensure consistency
+		$timezone         = wp_timezone();
+		$session_datetime = new DateTime( $session->date_time, $timezone );
 		$period_minutes   = isset( $session->period ) ? intval( $session->period ) : 45;
 		$session_datetime->add( new DateInterval( 'PT' . $period_minutes . 'M' ) );
 		$session_end_timestamp = $session_datetime->getTimestamp();
