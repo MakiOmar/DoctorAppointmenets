@@ -379,63 +379,45 @@ add_action(
 					}
 			);
 
-			// Initialize session completion timers
-			function initSessionCompletionTimers() {
+			// Initialize session completion button activation
+			function initSessionCompletionCheck() {
 				$('.doctor-actions').each(function() {
 					var $doctorActions = $(this);
 					var sessionEndTime = parseInt($doctorActions.data('session-end'));
 					var $button = $doctorActions.find('.snks-complete-session-btn');
-					var $countdown = $doctorActions.find('.timer-countdown');
-					var $timer = $doctorActions.find('.session-timer');
 					
-					if (!sessionEndTime || !$countdown.length) {
+					if (!sessionEndTime || !$button.length) {
 						return;
 					}
 					
-					// Function to update countdown
-					function updateCountdown() {
+					// Function to check if session has ended
+					function checkSessionEnd() {
 						var currentTime = Math.floor(Date.now() / 1000);
-						var remainingSeconds = sessionEndTime - currentTime;
 						
-						if (remainingSeconds <= 0) {
-							// Session has ended - enable button and remove timer
+						if (currentTime >= sessionEndTime) {
+							// Session has ended - enable button
 							$button.prop('disabled', false).attr('title', '');
-							$timer.remove();
 							return false; // Stop the interval
 						}
 						
-						// Calculate hours, minutes, seconds
-						var hours = Math.floor(remainingSeconds / 3600);
-						var minutes = Math.floor((remainingSeconds % 3600) / 60);
-						var seconds = remainingSeconds % 60;
-						
-						// Format the time display
-						var timeDisplay = '';
-						if (hours > 0) {
-							timeDisplay = hours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-						} else {
-							timeDisplay = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-						}
-						
-						$countdown.text(timeDisplay);
 						return true; // Continue the interval
 					}
 					
-					// Initial update
-					if (updateCountdown()) {
-						// Update every second
+					// Initial check
+					if (checkSessionEnd()) {
+						// Check every 10 seconds
 						var intervalId = setInterval(function() {
-							if (!updateCountdown()) {
+							if (!checkSessionEnd()) {
 								clearInterval(intervalId);
 							}
-						}, 1000);
+						}, 10000);
 					}
 				});
 			}
 			
-			// Initialize timers on page load
+			// Initialize checks on page load
 			$(document).ready(function() {
-				initSessionCompletionTimers();
+				initSessionCompletionCheck();
 			});
 
 			$(document).on(
