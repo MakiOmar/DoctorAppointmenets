@@ -385,29 +385,45 @@ add_action(
 					var $doctorActions = $(this);
 					var sessionEndTime = parseInt($doctorActions.data('session-end'));
 					var $button = $doctorActions.find('.snks-complete-session-btn');
+					var sessionId = $doctorActions.find('input[name="session_id"]').val();
 					
 					if (!sessionEndTime || !$button.length) {
+						console.log('⏭️ Skipping session completion check - missing data');
 						return;
 					}
+					
+					console.log('🔧 Initializing session completion check for session #' + sessionId);
+					console.log('📅 Session end time: ' + new Date(sessionEndTime * 1000).toLocaleString());
 					
 					// Function to check if session has ended
 					function checkSessionEnd() {
 						var currentTime = Math.floor(Date.now() / 1000);
+						var remainingSeconds = sessionEndTime - currentTime;
+						var remainingMinutes = Math.floor(remainingSeconds / 60);
+						
+						console.log('⏰ Session #' + sessionId + ' check:');
+						console.log('   Current time: ' + new Date(currentTime * 1000).toLocaleString());
+						console.log('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
+						console.log('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
 						
 						if (currentTime >= sessionEndTime) {
 							// Session has ended - enable button
+							console.log('✅ Session #' + sessionId + ' has ended - enabling completion button');
 							$button.prop('disabled', false).attr('title', '');
 							return false; // Stop the interval
 						}
 						
+						console.log('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
 						return true; // Continue the interval
 					}
 					
 					// Initial check
 					if (checkSessionEnd()) {
 						// Check every 10 seconds
+						console.log('🔄 Starting interval check every 10 seconds for session #' + sessionId);
 						var intervalId = setInterval(function() {
 							if (!checkSessionEnd()) {
+								console.log('🛑 Stopping interval check for session #' + sessionId);
 								clearInterval(intervalId);
 							}
 						}, 10000);
@@ -417,6 +433,7 @@ add_action(
 			
 			// Initialize checks on page load
 			$(document).ready(function() {
+				console.log('🚀 Initializing session completion checks...');
 				initSessionCompletionCheck();
 			});
 
