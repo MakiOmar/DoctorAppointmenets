@@ -389,6 +389,16 @@ add_action(
 				}
 			}
 			
+			// Add CSS to ensure disabled buttons are not clickable
+			function applyDisabledButtonStyles() {
+				if (!$('#session-completion-disabled-style').length) {
+					$('<style id="session-completion-disabled-style">')
+						.html('.snks-complete-session-btn:disabled { pointer-events: none; opacity: 0.5; cursor: not-allowed !important; }')
+						.appendTo('head');
+					debugLog('💅 Applied disabled button styles');
+				}
+			}
+			
 			// Initialize session completion button activation
 			function initSessionCompletionCheck() {
 				$('.doctor-actions').each(function() {
@@ -444,21 +454,35 @@ add_action(
 			// Initialize checks on page load
 			$(document).ready(function() {
 				debugLog('🚀 Initializing session completion checks on page load...');
+				applyDisabledButtonStyles();
 				initSessionCompletionCheck();
 			});
 			
 			// Reinitialize checks after Jet popup is shown
 			$(window).on('jet-popup/show-event/after-show', function(){
 				debugLog('🎯 Jet popup shown - reinitializing session completion checks...');
+				applyDisabledButtonStyles();
 				initSessionCompletionCheck();
 			});
 			
 			// Reinitialize checks after Jet popup content is rendered
 			$(window).on('jet-popup/render-content/render-custom-content', function(){
 				debugLog('📄 Jet popup content rendered - reinitializing session completion checks...');
+				applyDisabledButtonStyles();
 				initSessionCompletionCheck();
 			});
 
+			// Prevent form submission when button is disabled
+			$(document).on('submit', 'form.doctor_actions', function(e) {
+				var $button = $(this).find('.snks-complete-session-btn');
+				if ($button.prop('disabled') || $button.attr('disabled')) {
+					e.preventDefault();
+					e.stopImmediatePropagation();
+					debugLog('🚫 Form submission prevented - button is disabled');
+					return false;
+				}
+			});
+			
 			$(document).on(
 				'click',
 				'.doctor_actions .snks-button',
@@ -468,6 +492,7 @@ add_action(
 					// Double-check if button is disabled - prevent any action if it is
 					if ($(this).prop('disabled') || $(this).attr('disabled')) {
 						debugLog('❌ Button is disabled - ignoring click event');
+						e.stopImmediatePropagation();
 						return false;
 					}
 					
