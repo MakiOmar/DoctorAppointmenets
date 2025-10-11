@@ -1598,8 +1598,25 @@ function snks_doctor_actions( $session ) {
 		$session_end_timestamp = $session_datetime->getTimestamp();
 		$current_timestamp     = current_time( 'timestamp' );
 		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			error_log( '=== Session Completion Button Debug - Session #' . $session->ID . ' ===' );
+			error_log( 'Session date_time: ' . $session->date_time );
+			error_log( 'Period minutes: ' . $period_minutes );
+			error_log( 'Session end datetime: ' . $session_datetime->format( 'Y-m-d H:i:s' ) );
+			error_log( 'Session end timestamp: ' . $session_end_timestamp . ' (' . date( 'Y-m-d H:i:s', $session_end_timestamp ) . ')' );
+			error_log( 'Current timestamp: ' . $current_timestamp . ' (' . date( 'Y-m-d H:i:s', $current_timestamp ) . ')' );
+			error_log( 'Timezone: ' . $timezone->getName() );
+		}
+		
 		// Check if session has ended
 		$is_session_ended = $current_timestamp >= $session_end_timestamp;
+		
+		// Debug logging
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			error_log( 'Is session ended: ' . ( $is_session_ended ? 'YES' : 'NO' ) );
+			error_log( '=============================================' );
+		}
 		
 		// Prepare button attributes
 		$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
