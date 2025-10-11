@@ -1471,6 +1471,13 @@ function snks_get_ai_therapist_completed_sessions() {
 		$current_user_id
 	) );
 	
+	// Add date property to each session for proper grouping
+	if ( $sessions && is_array( $sessions ) ) {
+		foreach ( $sessions as $session ) {
+			$session->date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
+		}
+	}
+	
 	return $sessions ?: array();
 }
 
