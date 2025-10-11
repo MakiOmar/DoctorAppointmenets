@@ -316,6 +316,53 @@ add_action( 'wp_ajax_create_custom_timetable', 'snks_create_custom_timetable' );
 add_action( 'wp_ajax_nopriv_create_custom_timetable', 'snks_create_custom_timetable' );
 
 /**
+ * Get session details (for Roshtah requests)
+ */
+add_action( 'wp_ajax_get_session_details', 'snks_get_session_details_ajax' );
+
+function snks_get_session_details_ajax() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'session_details_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is a doctor
+	if ( ! snks_is_doctor() ) {
+		wp_send_json_error( 'Access denied. Only doctors can perform this action.' );
+	}
+	
+	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
+	
+	if ( ! $session_id ) {
+		wp_send_json_error( 'Missing session ID.' );
+	}
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Get session details
+	$session = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$table_name} WHERE ID = %d",
+		$session_id
+	) );
+	
+	if ( ! $session ) {
+		wp_send_json_error( 'Session not found.' );
+	}
+	
+	// Check if the current user is the doctor assigned to this session
+	if ( $session->user_id != get_current_user_id() ) {
+		wp_send_json_error( 'Access denied. You can only access your own sessions.' );
+	}
+	
+	wp_send_json_success( array(
+		'session_id' => $session->ID,
+		'client_id'  => $session->client_id,
+		'order_id'   => $session->order_id,
+	) );
+}
+
+/**
  * Handle doctor actions form submission (mark session as completed)
  */
 add_action( 'wp_ajax_session_doctor_actions', 'snks_handle_session_doctor_actions' );
