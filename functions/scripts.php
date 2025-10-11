@@ -389,13 +389,43 @@ add_action(
 				}
 			}
 			
-			// Add CSS to ensure disabled buttons are not clickable
+			// Add CSS to ensure disabled buttons are not clickable and show loading effect
 			function applyDisabledButtonStyles() {
 				if (!$('#session-completion-disabled-style').length) {
+					var css = `
+						@keyframes pulse-waiting {
+							0%, 100% { opacity: 0.4; }
+							50% { opacity: 0.7; }
+						}
+						.snks-complete-session-btn:disabled, 
+						.snks-complete-session-btn[disabled] { 
+							pointer-events: none !important; 
+							cursor: not-allowed !important; 
+						}
+						.snks-button-waiting {
+							animation: pulse-waiting 2s ease-in-out infinite;
+							position: relative;
+							overflow: hidden;
+						}
+						.snks-button-waiting::after {
+							content: "";
+							position: absolute;
+							top: 0;
+							left: -100%;
+							width: 100%;
+							height: 100%;
+							background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+							animation: shimmer 2s infinite;
+						}
+						@keyframes shimmer {
+							0% { left: -100%; }
+							100% { left: 100%; }
+						}
+					`;
 					$('<style id="session-completion-disabled-style">')
-						.html('.snks-complete-session-btn:disabled, .snks-complete-session-btn[disabled] { pointer-events: none !important; opacity: 0.5 !important; cursor: not-allowed !important; }')
+						.html(css)
 						.appendTo('head');
-					debugLog('💅 Applied disabled button styles');
+					debugLog('💅 Applied disabled button styles with loading effect');
 				}
 			}
 			
@@ -432,6 +462,7 @@ add_action(
 						$button.prop('disabled', false)
 							.removeAttr('disabled')
 							.removeAttr('style')
+							.removeClass('snks-button-waiting')
 							.attr('title', '');
 						return false; // Stop the interval
 					}

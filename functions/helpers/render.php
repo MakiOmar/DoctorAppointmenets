@@ -1597,31 +1597,17 @@ function snks_doctor_actions( $session ) {
 		$session_end_timestamp = $session_datetime->getTimestamp();
 		$current_timestamp     = current_time( 'timestamp' );
 		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-			error_log( '=== Session Completion Button Debug - Session #' . $session->ID . ' ===' );
-			error_log( 'Session date_time: ' . $session->date_time );
-			error_log( 'Period minutes: ' . $period_minutes );
-			error_log( 'Session end datetime: ' . $session_datetime->format( 'Y-m-d H:i:s' ) );
-			error_log( 'Session end timestamp: ' . $session_end_timestamp . ' (' . gmdate( 'Y-m-d H:i:s', $session_end_timestamp ) . ')' );
-			error_log( 'Current timestamp: ' . $current_timestamp . ' (' . gmdate( 'Y-m-d H:i:s', $current_timestamp ) . ')' );
-			error_log( 'Time difference: ' . ( $session_end_timestamp - $current_timestamp ) . ' seconds' );
-		}
-		
 		// Check if session has ended
 		$is_session_ended = $current_timestamp >= $session_end_timestamp;
-		
-		// Debug logging
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-			error_log( 'Is session ended: ' . ( $is_session_ended ? 'YES' : 'NO' ) );
-			error_log( '=============================================' );
-		}
 		
 		// Prepare button attributes
 		$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
 		$button_class    = 'snks-button table-form-button snks-complete-session-btn';
+		if ( ! $is_session_ended ) {
+			$button_class .= ' snks-button-waiting';
+		}
 		$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
-		$button_style    = $is_session_ended ? '' : 'style="pointer-events: none !important; opacity: 0.5 !important; cursor: not-allowed !important;"';
+		$button_style    = $is_session_ended ? '' : 'style="pointer-events: none !important; cursor: not-allowed !important;"';
 		
 		$output .= '<div class="doctor-actions" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
 		$output .= '<form class="doctor_actions" method="post" action="">';
