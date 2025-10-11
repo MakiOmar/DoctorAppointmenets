@@ -433,7 +433,19 @@ add_action(
 			
 			// Initialize checks on page load
 			$(document).ready(function() {
-				console.log('🚀 Initializing session completion checks...');
+				console.log('🚀 Initializing session completion checks on page load...');
+				initSessionCompletionCheck();
+			});
+			
+			// Reinitialize checks after Jet popup is shown
+			$(window).on('jet-popup/show-event/after-show', function(){
+				console.log('🎯 Jet popup shown - reinitializing session completion checks...');
+				initSessionCompletionCheck();
+			});
+			
+			// Reinitialize checks after Jet popup content is rendered
+			$(window).on('jet-popup/render-content/render-custom-content', function(){
+				console.log('📄 Jet popup content rendered - reinitializing session completion checks...');
 				initSessionCompletionCheck();
 			});
 
