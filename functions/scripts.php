@@ -377,24 +377,83 @@ add_action(
 							}
 						}, 1000); // Update the countdown every second (1000 milliseconds)
 					}
-				);
+			);
 
-				$(document).on(
-					'click',
-					'.doctor_actions .snks-button',
-					function (e) {
-						e.preventDefault();
+			// Initialize session completion timers
+			function initSessionCompletionTimers() {
+				$('.doctor-actions').each(function() {
+					var $doctorActions = $(this);
+					var sessionEndTime = parseInt($doctorActions.data('session-end'));
+					var $button = $doctorActions.find('.snks-complete-session-btn');
+					var $countdown = $doctorActions.find('.timer-countdown');
+					var $timer = $doctorActions.find('.session-timer');
+					
+					if (!sessionEndTime || !$countdown.length) {
+						return;
+					}
+					
+					// Function to update countdown
+					function updateCountdown() {
+						var currentTime = Math.floor(Date.now() / 1000);
+						var remainingSeconds = sessionEndTime - currentTime;
 						
-						// Get the parent form of the clicked button
-						var form = $(this).closest('form');
-						// Serialize the form data
-						var doctorActions = form.serializeArray();
-						// Perform nonce check.
-						var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
-						doctorActions.push({ name: 'nonce', value: nonce });
-						doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
+						if (remainingSeconds <= 0) {
+							// Session has ended - enable button and remove timer
+							$button.prop('disabled', false).attr('title', '');
+							$timer.remove();
+							return false; // Stop the interval
+						}
 						
-						Swal.fire({
+						// Calculate hours, minutes, seconds
+						var hours = Math.floor(remainingSeconds / 3600);
+						var minutes = Math.floor((remainingSeconds % 3600) / 60);
+						var seconds = remainingSeconds % 60;
+						
+						// Format the time display
+						var timeDisplay = '';
+						if (hours > 0) {
+							timeDisplay = hours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+						} else {
+							timeDisplay = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+						}
+						
+						$countdown.text(timeDisplay);
+						return true; // Continue the interval
+					}
+					
+					// Initial update
+					if (updateCountdown()) {
+						// Update every second
+						var intervalId = setInterval(function() {
+							if (!updateCountdown()) {
+								clearInterval(intervalId);
+							}
+						}, 1000);
+					}
+				});
+			}
+			
+			// Initialize timers on page load
+			$(document).ready(function() {
+				initSessionCompletionTimers();
+			});
+
+			$(document).on(
+				'click',
+				'.doctor_actions .snks-button:not(:disabled)',
+				function (e) {
+					e.preventDefault();
+					
+					// Get the parent form of the clicked button
+					var form = $(this).closest('form');
+					// Serialize the form data
+					var doctorActions = form.serializeArray();
+					// Perform nonce check.
+					var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
+					doctorActions.push({ name: 'nonce', value: nonce });
+					doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
+					
+					Swal.fire({
 							title: 'هل أنت متأكد من تحديد الجلسة كمكتملة؟',
 							text: "لا يمكنك التراجع بعد ذلك!",
 							icon: 'question',

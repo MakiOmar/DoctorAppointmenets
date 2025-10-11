@@ -1570,11 +1570,36 @@ function snks_doctor_actions( $session ) {
 	$attendees = explode( ',', $session->client_id );
 	$output    = '';
 	if ( ! empty( $attendees ) ) {
-		$output .= '<div class="doctor-actions">';
+		// Calculate session end time (date_time + period in minutes)
+		$session_datetime = new DateTime( $session->date_time );
+		$period_minutes   = isset( $session->period ) ? intval( $session->period ) : 45;
+		$session_datetime->add( new DateInterval( 'PT' . $period_minutes . 'M' ) );
+		$session_end_timestamp = $session_datetime->getTimestamp();
+		$current_timestamp     = current_time( 'timestamp' );
+		
+		// Check if session has ended
+		$is_session_ended = $current_timestamp >= $session_end_timestamp;
+		
+		// Prepare button attributes
+		$button_disabled = $is_session_ended ? '' : 'disabled';
+		$button_class    = 'snks-button table-form-button snks-complete-session-btn';
+		$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+		
+		$output .= '<div class="doctor-actions" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
 		$output .= '<form class="doctor_actions" method="post" action="">';
 		$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
 		$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
-		$output .= '<input class="snks-button table-form-button" type="submit" name="doctor-actions" value="تحديد كمكتملة">';
+		$output .= '<input class="' . $button_class . '" type="submit" name="doctor-actions" value="تحديد كمكتملة" ' . $button_disabled . ' title="' . esc_attr( $button_title ) . '">';
+		
+		// Add countdown timer display if session hasn't ended
+		if ( ! $is_session_ended ) {
+			$remaining_seconds = $session_end_timestamp - $current_timestamp;
+			$output .= '<div class="session-timer" style="margin-top: 8px; font-size: 12px; color: #666;">';
+			$output .= '<span class="timer-text">سيتم تفعيل الزر بعد: </span>';
+			$output .= '<span class="timer-countdown" data-seconds="' . $remaining_seconds . '">--:--</span>';
+			$output .= '</div>';
+		}
+		
 		$output .= '</form>';
 		$output .= '</div>';
 	}
