@@ -393,7 +393,7 @@ add_action(
 			function applyDisabledButtonStyles() {
 				if (!$('#session-completion-disabled-style').length) {
 					$('<style id="session-completion-disabled-style">')
-						.html('.snks-complete-session-btn:disabled { pointer-events: none; opacity: 0.5; cursor: not-allowed !important; }')
+						.html('.snks-complete-session-btn:disabled, .snks-complete-session-btn[disabled] { pointer-events: none !important; opacity: 0.5 !important; cursor: not-allowed !important; }')
 						.appendTo('head');
 					debugLog('💅 Applied disabled button styles');
 				}
@@ -426,12 +426,15 @@ add_action(
 						debugLog('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
 						debugLog('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
 						
-						if (currentTime >= sessionEndTime) {
-							// Session has ended - enable button
-							debugLog('✅ Session #' + sessionId + ' has ended - enabling completion button');
-							$button.prop('disabled', false).attr('title', '');
-							return false; // Stop the interval
-						}
+					if (currentTime >= sessionEndTime) {
+						// Session has ended - enable button
+						debugLog('✅ Session #' + sessionId + ' has ended - enabling completion button');
+						$button.prop('disabled', false)
+							.removeAttr('disabled')
+							.removeAttr('style')
+							.attr('title', '');
+						return false; // Stop the interval
+					}
 						
 						debugLog('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
 						return true; // Continue the interval
@@ -472,6 +475,18 @@ add_action(
 				initSessionCompletionCheck();
 			});
 
+			// Prevent ANY interaction with disabled buttons at the earliest possible moment
+			$(document).on('mousedown mouseup click submit', '.doctor_actions .snks-complete-session-btn, form.doctor_actions', function(e) {
+				var $button = $(this).hasClass('snks-complete-session-btn') ? $(this) : $(this).find('.snks-complete-session-btn');
+				if ($button.length && ($button.prop('disabled') || $button.attr('disabled') === 'disabled')) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.stopImmediatePropagation();
+					debugLog('🛑 All events prevented - button is disabled');
+					return false;
+				}
+			});
+			
 			// Prevent form submission when button is disabled
 			$(document).on('submit', 'form.doctor_actions', function(e) {
 				var $button = $(this).find('.snks-complete-session-btn');
@@ -487,14 +502,16 @@ add_action(
 				'click',
 				'.doctor_actions .snks-button',
 				function (e) {
-					e.preventDefault();
-					
 					// Double-check if button is disabled - prevent any action if it is
 					if ($(this).prop('disabled') || $(this).attr('disabled')) {
-						debugLog('❌ Button is disabled - ignoring click event');
+						e.preventDefault();
+						e.stopPropagation();
 						e.stopImmediatePropagation();
+						debugLog('❌ Button is disabled - ignoring click event');
 						return false;
 					}
+					
+					e.preventDefault();
 					
 					// Get the parent form of the clicked button
 					var form = $(this).closest('form');

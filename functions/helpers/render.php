@@ -1602,15 +1602,16 @@ function snks_doctor_actions( $session ) {
 		$is_session_ended = $current_timestamp >= $session_end_timestamp;
 		
 		// Prepare button attributes
-		$button_disabled = $is_session_ended ? '' : 'disabled';
+		$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
 		$button_class    = 'snks-button table-form-button snks-complete-session-btn';
 		$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+		$button_style    = $is_session_ended ? '' : 'style="pointer-events: none !important; opacity: 0.5 !important; cursor: not-allowed !important;"';
 		
 		$output .= '<div class="doctor-actions" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
 		$output .= '<form class="doctor_actions" method="post" action="">';
 		$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
 		$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
-		$output .= '<input class="' . $button_class . '" type="submit" name="doctor-actions" value="تحديد كمكتملة" ' . $button_disabled . ' title="' . esc_attr( $button_title ) . '">';
+		$output .= '<input class="' . $button_class . '" type="submit" name="doctor-actions" value="تحديد كمكتملة" ' . $button_disabled . ' ' . $button_style . ' title="' . esc_attr( $button_title ) . '">';
 		$output .= '</form>';
 		$output .= '</div>';
 	}
