@@ -119,6 +119,95 @@
       @click="showNotifications = false"
       class="fixed inset-0 z-40"
     ></div>
+
+    <!-- Message Detail Popup -->
+    <div
+      v-if="showMessagePopup && selectedMessage"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      @click="closeMessagePopup"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        @click.stop
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">
+              {{ $t('messages.title') }}
+            </h3>
+            <p class="text-sm text-gray-500">
+              {{ $t('messages.from') }} {{ selectedMessage.sender_name || 'معالج' }}
+            </p>
+          </div>
+          <button
+            @click="closeMessagePopup"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Message Content -->
+        <div class="p-6">
+          <!-- Message Text -->
+          <div class="mb-4">
+            <p v-if="selectedMessage.message" class="text-gray-800 leading-relaxed">
+              {{ selectedMessage.message }}
+            </p>
+            <p v-else class="text-gray-500 italic">
+              {{ $t('messages.noTextContent') }}
+            </p>
+          </div>
+
+          <!-- Attachments -->
+          <div v-if="selectedMessage.attachments && selectedMessage.attachments.length > 0" class="mt-6">
+            <h4 class="text-sm font-medium text-gray-900 mb-3">
+              {{ $t('messages.attachments') }}
+            </h4>
+            <div class="space-y-2">
+              <div
+                v-for="attachment in selectedMessage.attachments"
+                :key="attachment.id"
+                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div class="flex items-center">
+                  <svg class="w-5 h-5 text-gray-500" :class="locale === 'ar' ? 'ml-2' : 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                  </svg>
+                  <span class="text-sm text-gray-700">{{ attachment.name }}</span>
+                </div>
+                <button
+                  @click="downloadAttachment(attachment)"
+                  class="px-3 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                >
+                  {{ $t('messages.download') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Date -->
+          <div class="mt-6 pt-4 border-t border-gray-200">
+            <p class="text-xs text-gray-500">
+              {{ formatDate(selectedMessage.created_at) }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+          <button
+            @click="closeMessagePopup"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            {{ $t('common.close') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -139,6 +228,8 @@ export default {
     const messages = ref([])
     const unreadCount = ref(0)
     const hasMore = ref(false)
+    const selectedMessage = ref(null)
+    const showMessagePopup = ref(false)
     
     const toggleNotifications = async () => {
       console.log('Notification bell clicked!')
@@ -181,9 +272,30 @@ export default {
         await markAsRead(message)
       }
       
-      // Navigate to notifications page and close dropdown
-      showNotifications.value = false
-      router.push('/notifications')
+      // Show message popup
+      selectedMessage.value = message
+      showMessagePopup.value = true
+      showNotifications.value = false // Close dropdown
+    }
+    
+    const closeMessagePopup = () => {
+      selectedMessage.value = null
+      showMessagePopup.value = false
+    }
+    
+    const downloadAttachment = async (attachment) => {
+      try {
+        const link = document.createElement('a')
+        link.href = attachment.url
+        link.download = attachment.name
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } catch (error) {
+        console.error('Error downloading attachment:', error)
+        window.open(attachment.url, '_blank')
+      }
     }
     
     const markAsRead = async (message) => {
@@ -239,9 +351,13 @@ export default {
       messages,
       unreadCount,
       hasMore,
+      selectedMessage,
+      showMessagePopup,
       toggleNotifications,
       loadMessages,
       openMessage,
+      closeMessagePopup,
+      downloadAttachment,
       markAsRead,
       formatDate
     }
