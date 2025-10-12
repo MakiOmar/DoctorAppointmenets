@@ -944,7 +944,9 @@ function snks_booking_item_template( $record ) {
 			?>
 			<!--doctoraction-->
 		<div class="anony-flex flex-h-center">
+			<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px;margin-left:5px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
+			<?php endif; ?>
 			<?php if ( ! snks_is_clinic_manager() && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<!--<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>-->
 			<?php } ?>
@@ -1139,6 +1141,10 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$whatsapp   = '';
 	$template   = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
 	$template   = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $template );
+	
+	// Hide edit button for AI sessions
+	$patient_edit = $is_ai_session ? '' : snks_edit_button( $record->ID, $record->user_id, $record->settings );
+	
 	return str_replace(
 		array(
 			'{session_id}',
@@ -1170,7 +1176,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			$button_text,
 			'<span class="snks-apointment-timer"></span>',
 			$_class,
-			snks_edit_button( $record->ID, $record->user_id, $record->settings ),
+			$patient_edit,
 		),
 		$template
 	);
