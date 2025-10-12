@@ -7096,8 +7096,8 @@ Best regards,
 					CASE 
 						WHEN m.sender_type = 'therapist' AND ai_name.meta_value IS NOT NULL AND ai_name.meta_value != ''
 						THEN ai_name.meta_value
-						WHEN CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) != ' ' 
-						THEN CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))
+						WHEN CONCAT(COALESCE(first_name.meta_value, ''), ' ', COALESCE(last_name.meta_value, '')) != ' ' 
+						THEN CONCAT(COALESCE(first_name.meta_value, ''), ' ', COALESCE(last_name.meta_value, ''))
 						WHEN u.display_name != '' 
 						THEN u.display_name
 						ELSE u.user_login
@@ -7105,6 +7105,8 @@ Best regards,
 				FROM {$messages_table} m
 				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
 				LEFT JOIN {$wpdb->usermeta} ai_name ON ai_name.user_id = u.ID AND ai_name.meta_key = %s
+				LEFT JOIN {$wpdb->usermeta} first_name ON first_name.user_id = u.ID AND first_name.meta_key = 'first_name'
+				LEFT JOIN {$wpdb->usermeta} last_name ON last_name.user_id = u.ID AND last_name.meta_key = 'last_name'
 				WHERE m.recipient_id = %d
 				ORDER BY m.created_at DESC
 				LIMIT %d OFFSET %d",
