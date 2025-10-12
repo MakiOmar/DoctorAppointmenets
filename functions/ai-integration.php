@@ -7100,7 +7100,30 @@ Best regards,
 
 			// Format messages
 			foreach ( $messages as $message ) {
-				$message->attachments = json_decode( $message->attachments );
+				// Handle attachment_ids - decode JSON or set empty array if null
+				if ( ! empty( $message->attachment_ids ) ) {
+					$attachment_ids = json_decode( $message->attachment_ids, true );
+					$message->attachments = is_array( $attachment_ids ) ? $attachment_ids : array();
+				} else {
+					$message->attachments = array();
+				}
+				
+				// Convert attachment IDs to attachment objects with names and URLs
+				if ( ! empty( $message->attachments ) ) {
+					$formatted_attachments = array();
+					foreach ( $message->attachments as $attachment_id ) {
+						$attachment = get_post( $attachment_id );
+						if ( $attachment ) {
+							$formatted_attachments[] = array(
+								'id' => $attachment_id,
+								'name' => $attachment->post_title ?: basename( get_attached_file( $attachment_id ) ),
+								'url' => wp_get_attachment_url( $attachment_id ),
+								'type' => get_post_mime_type( $attachment_id )
+							);
+						}
+					}
+					$message->attachments = $formatted_attachments;
+				}
 			}
 
 			$this->send_success( array(
