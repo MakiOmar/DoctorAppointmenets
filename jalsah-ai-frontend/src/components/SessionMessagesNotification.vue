@@ -3,8 +3,9 @@
     <!-- Notification Bell Icon -->
     <button
       @click="toggleNotifications"
-      class="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+      class="relative p-2 rounded-full hover:bg-gray-100 transition-colors z-50"
       :class="locale === 'ar' ? 'ml-4' : 'mr-4'"
+      style="pointer-events: auto; cursor: pointer;"
     >
       <!-- Message Icon -->
       <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +139,9 @@ export default {
     const hasMore = ref(false)
     
     const toggleNotifications = async () => {
+      console.log('Notification bell clicked!')
       showNotifications.value = !showNotifications.value
+      console.log('showNotifications:', showNotifications.value)
       if (showNotifications.value && messages.value.length === 0) {
         await loadMessages()
       }
@@ -205,6 +208,7 @@ export default {
     
     // Auto-refresh every 20 seconds
     onMounted(() => {
+      console.log('SessionMessagesNotification component mounted')
       loadMessages()
       setInterval(() => {
         if (!showNotifications.value) {
