@@ -7082,9 +7082,15 @@ Best regards,
 			$offset = isset( $_GET['offset'] ) ? absint( $_GET['offset'] ) : 0;
 
 			// Get messages for the current user
+			// Get current language for AI therapist names
+			$locale = snks_get_current_language();
+			$ai_name_meta_key = $locale === 'ar' ? 'ai_display_name_ar' : 'ai_display_name_en';
+			
 			$messages = $wpdb->get_results( $wpdb->prepare(
 				"SELECT m.*, 
 					CASE 
+						WHEN m.sender_type = 'therapist' AND ai_name.meta_value IS NOT NULL AND ai_name.meta_value != ''
+						THEN ai_name.meta_value
 						WHEN CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) != ' ' 
 						THEN CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))
 						WHEN u.display_name != '' 
@@ -7093,10 +7099,11 @@ Best regards,
 					END as sender_name
 				FROM {$messages_table} m
 				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
+				LEFT JOIN {$wpdb->usermeta} ai_name ON ai_name.user_id = u.ID AND ai_name.meta_key = %s
 				WHERE m.recipient_id = %d
 				ORDER BY m.created_at DESC
 				LIMIT %d OFFSET %d",
-				$user_id, $limit, $offset
+				$ai_name_meta_key, $user_id, $limit, $offset
 			) );
 
 			// Get unread count
