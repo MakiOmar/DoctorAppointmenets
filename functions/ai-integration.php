@@ -7083,7 +7083,14 @@ Best regards,
 
 			// Get messages for the current user
 			$messages = $wpdb->get_results( $wpdb->prepare(
-				"SELECT m.*, u.display_name as sender_name 
+				"SELECT m.*, 
+					CASE 
+						WHEN CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) != ' ' 
+						THEN CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))
+						WHEN u.display_name != '' 
+						THEN u.display_name
+						ELSE u.user_login
+					END as sender_name
 				FROM {$messages_table} m
 				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
 				WHERE m.recipient_id = %d
