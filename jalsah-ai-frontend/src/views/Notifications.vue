@@ -195,13 +195,12 @@
                       <p class="text-xs text-gray-500">{{ attachment.type }}</p>
                     </div>
                   </div>
-                  <a
-                    :href="attachment.url"
-                    target="_blank"
+                  <button
+                    @click="downloadAttachment(attachment)"
                     class="text-primary-600 hover:text-primary-700 text-sm font-medium"
                   >
                     {{ $t('messages.download') }}
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -210,15 +209,8 @@
           <!-- Footer -->
           <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
-              @click="markAsReadAndClose"
-              :disabled="selectedMessage.is_read"
-              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {{ selectedMessage.is_read ? $t('messages.alreadyRead') : $t('messages.markAsRead') }}
-            </button>
-            <button
               @click="closeMessagePopup"
-              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm transition-colors"
             >
               {{ $t('common.close') }}
             </button>
@@ -287,9 +279,10 @@ export default {
       loadMessages(true)
     }
 
-    const openMessagePopup = (message) => {
+    const openMessagePopup = async (message) => {
       selectedMessage.value = message
-      markAsRead(message)
+      // Automatically mark as read when popup opens
+      await markAsRead(message)
     }
 
     const closeMessagePopup = () => {
@@ -307,12 +300,6 @@ export default {
       }
     }
 
-    const markAsReadAndClose = async () => {
-      if (selectedMessage.value && !selectedMessage.value.is_read) {
-        await markAsRead(selectedMessage.value)
-      }
-      closeMessagePopup()
-    }
 
     const formatDate = (dateString) => {
       const date = new Date(dateString)
@@ -336,6 +323,25 @@ export default {
       }
     }
 
+    const downloadAttachment = async (attachment) => {
+      try {
+        // Create a temporary anchor element to trigger download
+        const link = document.createElement('a')
+        link.href = attachment.url
+        link.download = attachment.name
+        link.target = '_blank'
+        
+        // Add to DOM, click, then remove
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } catch (error) {
+        console.error('Error downloading attachment:', error)
+        // Fallback: open in new tab if download fails
+        window.open(attachment.url, '_blank')
+      }
+    }
+
     onMounted(() => {
       loadMessages()
     })
@@ -352,8 +358,8 @@ export default {
       openMessagePopup,
       closeMessagePopup,
       markAsRead,
-      markAsReadAndClose,
-      formatDate
+      formatDate,
+      downloadAttachment
     }
   }
 }
