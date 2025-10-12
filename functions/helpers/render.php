@@ -931,6 +931,16 @@ function snks_booking_item_template( $record ) {
 					</div>
 				</div>
 				<!--/timer-->
+				<!--diagnosis-->
+				<div class="anony-grid-row snks-booking-item-row">
+					<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
+						<img class="anony-padding-5" src="/wp-content/uploads/2024/08/card.png"/>
+					</div>
+					<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
+						<span style="color:#024059;font-size:18px;font-weight:bold">التشخيص: {diagnosis}</span>
+					</div>
+				</div>
+				<!--/diagnosis-->
 			</div>
 			<?php if ( 'online' === $record->attendance_type && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
@@ -1045,6 +1055,21 @@ function template_str_replace( $record ) {
 			$template = preg_replace( '/<!--phone-->.*?<!--\/phone-->/s', '', $template );
 		}
 	}
+	
+	// Get diagnosis for AI sessions
+	$diagnosis_name = '';
+	if ( $is_ai_session ) {
+		$diagnosis_result = get_user_meta( $record->client_id, 'ai_diagnosis_result', true );
+		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
+			$diagnosis_name = $diagnosis_result['diagnosis_name'];
+		} else {
+			$diagnosis_name = 'غير متوفر';
+		}
+	} else {
+		// Hide diagnosis row for non-AI sessions
+		$template = preg_replace( '/<!--diagnosis-->.*?<!--\/diagnosis-->/s', '', $template );
+	}
+	
 	// Keep timer for AI sessions that are too early
 	if ( ! ( $is_ai_session && $is_too_early ) ) {
 		$template = preg_replace( '/<!--timer-->.*?<!--\/timer-->/s', '', $template );
@@ -1066,6 +1091,7 @@ function template_str_replace( $record ) {
 			'{button_text}',
 			'{snks_timer}',
 			'{status_class}',
+			'{diagnosis}',
 		),
 		array(
 			$record->ID,
@@ -1082,6 +1108,7 @@ function template_str_replace( $record ) {
 			// Show timer for AI sessions that are too early
 			( $is_ai_session && $is_too_early ) ? '<span class="snks-apointment-timer"></span>' : '',
 			$status_class,
+			esc_html( $diagnosis_name ),
 		),
 		$template
 	);
@@ -1145,6 +1172,20 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	// Hide edit button for AI sessions
 	$patient_edit = $is_ai_session ? '' : snks_edit_button( $record->ID, $record->user_id, $record->settings );
 	
+	// Get diagnosis for AI sessions (from patient's perspective)
+	$diagnosis_name = '';
+	if ( $is_ai_session && isset( $client_id ) ) {
+		$diagnosis_result = get_user_meta( $client_id, 'ai_diagnosis_result', true );
+		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
+			$diagnosis_name = $diagnosis_result['diagnosis_name'];
+		} else {
+			$diagnosis_name = 'غير متوفر';
+		}
+	} else {
+		// Hide diagnosis row for non-AI sessions
+		$template = preg_replace( '/<!--diagnosis-->.*?<!--\/diagnosis-->/s', '', $template );
+	}
+	
 	return str_replace(
 		array(
 			'{session_id}',
@@ -1161,6 +1202,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'{snks_timer}',
 			'{status_class}',
 			'{patient_edit}',
+			'{diagnosis}',
 		),
 		array(
 			$record->ID,
@@ -1177,6 +1219,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'<span class="snks-apointment-timer"></span>',
 			$_class,
 			$patient_edit,
+			esc_html( $diagnosis_name ),
 		),
 		$template
 	);
