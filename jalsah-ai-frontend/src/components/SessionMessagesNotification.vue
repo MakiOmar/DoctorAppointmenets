@@ -147,14 +147,12 @@ export default {
     const loadMessages = async (limit = 5) => {
       loading.value = true
       try {
-        const response = await api.post('/wp-admin/admin-ajax.php', 
-          new URLSearchParams({
-            action: 'get_session_messages',
+        const response = await api.get('/api/ai/session-messages', {
+          params: {
             limit: limit,
-            offset: 0,
-            nonce: await getNonce('session_messages_nonce')
-          })
-        )
+            offset: 0
+          }
+        })
         
         if (response.data.success) {
           messages.value = response.data.data.messages
@@ -176,25 +174,13 @@ export default {
       if (message.is_read) return
       
       try {
-        await api.post('/wp-admin/admin-ajax.php',
-          new URLSearchParams({
-            action: 'mark_message_read',
-            message_id: message.id,
-            nonce: await getNonce('session_messages_nonce')
-          })
-        )
+        await api.post(`/api/ai/session-messages/${message.id}/read`)
         
         message.is_read = true
         unreadCount.value = Math.max(0, unreadCount.value - 1)
       } catch (error) {
         console.error('Error marking message as read:', error)
       }
-    }
-    
-    const getNonce = async (name) => {
-      // In a real implementation, get nonce from WordPress
-      // For now, return a placeholder
-      return 'nonce_placeholder'
     }
     
     // Auto-refresh every 30 seconds

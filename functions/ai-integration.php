@@ -84,6 +84,8 @@ class SNKS_AI_Integration {
 	 */
 	public function register_ai_endpoints() {
 		// Add rewrite rules for API endpoints - more specific patterns first
+		add_rewrite_rule( '^api/ai/session-messages/(\d+)/read/?$', 'index.php?ai_endpoint=session-messages/$matches[1]/read', 'top' );
+		add_rewrite_rule( '^api/ai/session-messages/?$', 'index.php?ai_endpoint=session-messages', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/search/?$', 'index.php?ai_endpoint=therapists/search', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/by-diagnosis/(\d+)/?$', 'index.php?ai_endpoint=therapists/by-diagnosis/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/([^/]+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]/$matches[2]', 'top' );
@@ -1954,6 +1956,9 @@ class SNKS_AI_Integration {
 				break;
 			case 'profile':
 				$this->handle_profile_endpoint( $method, $path );
+				break;
+			case 'session-messages':
+				$this->handle_session_messages_endpoint( $method, $path );
 				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
@@ -7035,6 +7040,77 @@ Best regards,
 		wp_set_password( $data['new_password'], $user_id );
 
 		$this->send_success( array( 'message' => 'Password updated successfully' ) );
+	}
+
+	/**
+	 * Handle session messages endpoint
+	 */
+	private function handle_session_messages_endpoint( $method, $path ) {
+		$user_id = $this->verify_jwt_token();
+		
+		if ( ! $user_id ) {
+			$this->send_error( 'Authentication required', 401 );
+			return;
+		}
+
+		global $wpdb;
+		$messages_table = $wpdb->prefix . 'snks_session_messages';
+
+		// Handle mark as read endpoint
+		if ( count( $path ) > 1 && $path[2] === 'read' ) {
+			if ( $method !== 'POST' ) {
+				$this->send_error( 'Method not allowed', 405 );
+				return;
+			}
+
+			$message_id = absint( $path[1] );
+			$wpdb->update(
+				$messages_table,
+				array( 'is_read' => 1 ),
+				array( 'id' => $message_id, 'recipient_id' => $user_id ),
+				array( '%d' ),
+				array( '%d', '%d' )
+			);
+
+			$this->send_success( array( 'message' => 'Message marked as read' ) );
+			return;
+		}
+
+		// GET: List messages
+		if ( $method === 'GET' ) {
+			$limit = isset( $_GET['limit'] ) ? absint( $_GET['limit'] ) : 5;
+			$offset = isset( $_GET['offset'] ) ? absint( $_GET['offset'] ) : 0;
+
+			// Get messages for the current user
+			$messages = $wpdb->get_results( $wpdb->prepare(
+				"SELECT m.*, u.display_name as sender_name 
+				FROM {$messages_table} m
+				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
+				WHERE m.recipient_id = %d
+				ORDER BY m.created_at DESC
+				LIMIT %d OFFSET %d",
+				$user_id, $limit, $offset
+			) );
+
+			// Get unread count
+			$unread_count = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$messages_table} WHERE recipient_id = %d AND is_read = 0",
+				$user_id
+			) );
+
+			// Format messages
+			foreach ( $messages as $message ) {
+				$message->attachments = json_decode( $message->attachments );
+			}
+
+			$this->send_success( array(
+				'messages' => $messages,
+				'unread_count' => intval( $unread_count ),
+				'has_more' => count( $messages ) === $limit
+			) );
+		} else {
+			$this->send_error( 'Method not allowed', 405 );
+		}
 	}
 }
 
