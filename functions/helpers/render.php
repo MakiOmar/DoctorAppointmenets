@@ -1397,7 +1397,9 @@ function snks_render_bookings( $_timetables, $tens ) {
 							<?php
 							$output = template_str_replace( $data );
 							// Remove doctor actions for past bookings EXCEPT for AI sessions
-							if ( 'past' === $tens && ! snks_is_ai_session( $data->ID ) ) {
+							// Check if AI session using settings field
+							$is_ai_session_check = isset( $data->settings ) && strpos( $data->settings, 'ai_booking' ) !== false;
+							if ( 'past' === $tens && ! $is_ai_session_check ) {
 								$output = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $output );
 							}
 							//phpcs:disable
