@@ -49,7 +49,7 @@
         <div
           v-for="message in messages"
           :key="message.id"
-          @click="markAsRead(message)"
+          @click="openMessage(message)"
           class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
           :class="!message.is_read ? 'bg-blue-50' : ''"
         >
@@ -125,12 +125,14 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import api from '@/services/api'
 
 export default {
   name: 'SessionMessagesNotification',
   setup() {
     const { t, locale } = useI18n()
+    const router = useRouter()
     
     const showNotifications = ref(false)
     const loading = ref(false)
@@ -170,6 +172,19 @@ export default {
       }
     }
     
+    
+    const openMessage = async (message) => {
+      console.log('Opening message:', message.id)
+      
+      // Mark as read if not already read
+      if (!message.is_read) {
+        await markAsRead(message)
+      }
+      
+      // Navigate to notifications page and close dropdown
+      showNotifications.value = false
+      router.push('/notifications')
+    }
     
     const markAsRead = async (message) => {
       if (message.is_read) return
@@ -226,6 +241,7 @@ export default {
       hasMore,
       toggleNotifications,
       loadMessages,
+      openMessage,
       markAsRead,
       formatDate
     }
