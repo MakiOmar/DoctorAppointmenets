@@ -74,6 +74,9 @@
               {{ cartItemCount }}
             </span>
           </router-link>
+          
+          <!-- Session Messages Notification -->
+          <SessionMessagesNotification v-if="isAuthenticated" />
 
           <!-- User Menu -->
           <div v-if="isAuthenticated" class="relative">
@@ -215,11 +218,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useSettingsStore } from '@/stores/settings'
 import LanguageSwitcher from './LanguageSwitcher.vue'
+import SessionMessagesNotification from './SessionMessagesNotification.vue'
 
 export default {
   name: 'Header',
   components: {
-    LanguageSwitcher
+    LanguageSwitcher,
+    SessionMessagesNotification
   },
   setup() {
     const router = useRouter()
