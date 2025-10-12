@@ -364,7 +364,7 @@ function snks_update_session_attendance() {
 		if ( $attendee_id > 0 ) {
 			// Check if record exists
 			$existing = $wpdb->get_row( $wpdb->prepare(
-				"SELECT * FROM {$actions_table} WHERE session_id = %d AND user_id = %d",
+				"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
 				$session_id,
 				$attendee_id
 			) );
@@ -374,7 +374,7 @@ function snks_update_session_attendance() {
 				$wpdb->update(
 					$actions_table,
 					array( 'attendance' => $attendance ),
-					array( 'session_id' => $session_id, 'user_id' => $attendee_id ),
+					array( 'action_session_id' => $session_id, 'case_id' => $attendee_id ),
 					array( '%s' ),
 					array( '%d', '%d' )
 				);

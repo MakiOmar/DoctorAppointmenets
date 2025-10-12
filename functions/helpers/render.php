@@ -1682,10 +1682,9 @@ function snks_doctor_actions( $session ) {
 			global $wpdb;
 			$actions_table = $wpdb->prefix . 'snks_sessions_actions';
 			$attendance_set = $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$actions_table} WHERE session_id = %d",
+				"SELECT COUNT(*) FROM {$actions_table} WHERE action_session_id = %d",
 				$session->ID
 			) );
-			
 			// Only show button if attendance not set
 			if ( ! $attendance_set || $attendance_set == 0 ) {
 				$output .= '<button class="snks-button snks-attendance-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="background-color: #007cba; border-color: #007cba;">هل حضر المريض الجلسة؟</button>';
