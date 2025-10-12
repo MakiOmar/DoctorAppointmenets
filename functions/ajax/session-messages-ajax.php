@@ -93,13 +93,14 @@ function snks_send_session_message() {
 		array(
 			'session_id'     => $session_id,
 			'sender_id'      => get_current_user_id(),
+			'recipient_id'   => $client_id,
 			'sender_type'    => 'therapist',
 			'message'        => $message,
 			'attachment_ids' => ! empty( $attachment_ids ) ? wp_json_encode( $attachment_ids ) : null,
 			'is_read'        => 0,
 			'created_at'     => current_time( 'mysql' ),
 		),
-		array( '%d', '%d', '%s', '%s', '%s', '%d', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%s' )
 	);
 	
 	if ( $insert_result === false ) {
