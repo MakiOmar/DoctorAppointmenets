@@ -1627,8 +1627,13 @@ function snks_doctor_actions( $session ) {
 			$output .= '</form>';
 		}
 		
-		// Roshtah Request button (only for AI sessions and only if session has ended)
-		if ( $is_ai_session && $is_session_ended ) {
+		// Attendance confirmation button - only show for completed sessions
+		if ( $is_completed ) {
+			$output .= '<button class="snks-button snks-attendance-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="background-color: #007cba; border-color: #007cba;">هل حضر المريض الجلسة؟</button>';
+		}
+		
+		// Roshtah Request button (only for AI sessions and only if session has ended or completed)
+		if ( $is_ai_session && ( $is_session_ended || $is_completed ) ) {
 			$output .= '<button class="snks-button snks-roshtah-request-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #28a745; border-color: #28a745;">إرسال لروشتا</button>';
 		}
 		

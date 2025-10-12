@@ -573,72 +573,20 @@ add_action(
 											// Remove the completion button and form
 											form.remove();
 											
-											// Ask about patient attendance
+											// Show success message only
 											Swal.fire({
-												title: 'هل حضر المريض الجلسة؟',
-												html: `
-													<div style="text-align: right; direction: rtl;">
-														<div style="margin: 20px 0;">
-															<label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-																<input type="radio" name="attendance" value="yes" style="margin-left: 10px;" checked>
-																<span style="font-size: 14px;">حضر المريض الجلسة وحصل عليها دون مشاكل.</span>
-															</label>
-															<label style="display: block; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-																<input type="radio" name="attendance" value="no" style="margin-left: 10px;">
-																<span style="font-size: 14px;">لم يحضر المريض رغم تواجدي في الموعد وبقائي لمدة ربع ساعة على الأقل في انتظاره.</span>
-															</label>
-														</div>
-													</div>
-												`,
-												showCloseButton: true,
-												confirmButtonText: 'تأكيد',
-												confirmButtonColor: '#3085d6',
-												preConfirm: () => {
-													const attendance = document.querySelector('input[name="attendance"]:checked');
-													if (!attendance) {
-														Swal.showValidationMessage('يرجى اختيار حالة الحضور');
-														return false;
-													}
-													return attendance.value;
-												}
-											}).then((attendanceResult) => {
-												if (attendanceResult.isConfirmed) {
-													// Send attendance status to backend
-													$.ajax({
-														type: 'POST',
-														url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-														data: {
-															action: 'update_session_attendance',
-															session_id: response.data.session_id,
-															attendance: attendanceResult.value,
-															nonce: '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>'
-														},
-														success: function(attendanceResponse) {
-															if (attendanceResponse.success) {
-																Swal.fire({
-																	title: 'تم بنجاح!',
-																	text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
-																	icon: 'success',
-																	confirmButtonText: 'حسناً'
-																});
-															} else {
-																Swal.fire({
-																	title: 'تم تحديد الجلسة كمكتملة',
-																	text: 'ولكن حدث خطأ في تسجيل حالة الحضور',
-																	icon: 'warning',
-																	confirmButtonText: 'حسناً'
-																});
-															}
-														},
-														error: function() {
-															Swal.fire({
-																title: 'تم تحديد الجلسة كمكتملة',
-																text: 'ولكن حدث خطأ في تسجيل حالة الحضور',
-																icon: 'warning',
-																confirmButtonText: 'حسناً'
-															});
-														}
-													});
+												title: 'تم بنجاح!',
+												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+												icon: 'success',
+												confirmButtonText: 'حسناً'
+											}).then(() => {
+												// Add the attendance button after completion
+												var $doctorActions = form.closest('.doctor-actions-wrapper');
+												if ($doctorActions.length) {
+													var sessionId = form.find('input[name="session_id"]').val();
+													var clientId = form.find('input[name="attendees"]').val();
+													var attendanceBtn = '<button class="snks-button snks-attendance-btn" data-session-id="' + sessionId + '" data-client-id="' + clientId + '" style="background-color: #007cba; border-color: #007cba;">هل حضر المريض الجلسة؟</button>';
+													$doctorActions.append(attendanceBtn);
 												}
 											});
 										} else {
@@ -664,6 +612,98 @@ add_action(
 						});
 					}
 				);
+				
+				// Handle attendance confirmation button clicks
+				$(document).on('click', '.snks-attendance-btn', function(e) {
+					e.preventDefault();
+					var sessionId = $(this).data('session-id');
+					var clientId = $(this).data('client-id');
+					var $button = $(this);
+					
+					// Show attendance confirmation dialog
+					Swal.fire({
+						title: 'هل حضر المريض الجلسة؟',
+						html: `
+							<div style="text-align: right; direction: rtl;">
+								<div style="margin: 20px 0;">
+									<label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.3s;">
+										<input type="radio" name="attendance" value="yes" style="margin-left: 10px;" checked>
+										<span style="font-size: 14px;">حضر المريض الجلسة وحصل عليها دون مشاكل.</span>
+									</label>
+									<label style="display: block; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.3s;">
+										<input type="radio" name="attendance" value="no" style="margin-left: 10px;">
+										<span style="font-size: 14px;">لم يحضر المريض رغم تواجدي في الموعد وبقائي لمدة ربع ساعة على الأقل في انتظاره.</span>
+									</label>
+								</div>
+							</div>
+						`,
+						showCloseButton: true,
+						confirmButtonText: 'تأكيد',
+						confirmButtonColor: '#007cba',
+						didOpen: () => {
+							// Add click highlighting for radio labels
+							const labels = document.querySelectorAll('label');
+							labels.forEach(label => {
+								label.addEventListener('click', function() {
+									labels.forEach(l => l.style.borderColor = '#ddd');
+									this.style.borderColor = '#007cba';
+								});
+							});
+							// Highlight the checked one initially
+							document.querySelector('input[name="attendance"]:checked').closest('label').style.borderColor = '#007cba';
+						},
+						preConfirm: () => {
+							const attendance = document.querySelector('input[name="attendance"]:checked');
+							if (!attendance) {
+								Swal.showValidationMessage('يرجى اختيار حالة الحضور');
+								return false;
+							}
+							return attendance.value;
+						}
+					}).then((attendanceResult) => {
+						if (attendanceResult.isConfirmed) {
+							// Send attendance status to backend
+							$.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+								data: {
+									action: 'update_session_attendance',
+									session_id: sessionId,
+									attendance: attendanceResult.value,
+									nonce: '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>'
+								},
+								success: function(attendanceResponse) {
+									if (attendanceResponse.success) {
+										Swal.fire({
+											title: 'تم بنجاح!',
+											text: 'تم تسجيل حالة الحضور وإرسال إشعار للإدارة',
+											icon: 'success',
+											confirmButtonText: 'حسناً'
+										}).then(() => {
+											// Hide the attendance button after successful update
+											$button.hide();
+										});
+									} else {
+										Swal.fire({
+											title: 'خطأ!',
+											text: attendanceResponse.data || 'حدث خطأ في تسجيل حالة الحضور',
+											icon: 'error',
+											confirmButtonText: 'حسناً'
+										});
+									}
+								},
+								error: function() {
+									Swal.fire({
+										title: 'خطأ!',
+										text: 'حدث خطأ في تسجيل حالة الحضور',
+										icon: 'error',
+										confirmButtonText: 'حسناً'
+									});
+								}
+							});
+						}
+					});
+				});
 				
 				// Handle Roshtah request button clicks (for therapists to request Roshtah for a patient)
 				$(document).on('click', '.snks-roshtah-request-btn', function(e) {

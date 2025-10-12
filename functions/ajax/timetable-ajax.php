@@ -520,8 +520,15 @@ function snks_handle_session_doctor_actions() {
 		wp_send_json_error( 'Failed to update session status.' );
 	}
 	
-	// Don't add session action records here - will be added after attendance confirmation
-	// This allows the therapist to specify whether patient attended or not
+	// Add session action records for all attendees (default to 'yes' attendance)
+	// This will be updated later if therapist clicks the attendance button
+	$attendee_ids = explode( ',', $attendees );
+	foreach ( $attendee_ids as $attendee_id ) {
+		$attendee_id = absint( $attendee_id );
+		if ( $attendee_id > 0 ) {
+			snks_insert_session_actions( $session_id, $attendee_id, 'yes' );
+		}
+	}
 	
 	// Check if this is an AI session and trigger profit calculation
 	if ( snks_is_ai_session( $session_id ) ) {
