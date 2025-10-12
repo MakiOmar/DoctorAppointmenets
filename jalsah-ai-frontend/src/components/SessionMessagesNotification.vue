@@ -265,17 +265,23 @@ export default {
     
     
     const openMessage = async (message) => {
-      console.log('Opening message:', message.id)
+      console.log('Opening message:', message.id, 'is_read:', message.is_read)
       
       // Mark as read if not already read
       if (!message.is_read) {
+        console.log('Message is unread, marking as read...')
         await markAsRead(message)
+        console.log('After markAsRead, message.is_read:', message.is_read)
+      } else {
+        console.log('Message is already read')
       }
       
       // Show message popup
       selectedMessage.value = message
       showMessagePopup.value = true
       showNotifications.value = false // Close dropdown
+      
+      console.log('Message popup opened for message:', message.id)
     }
     
     const closeMessagePopup = () => {
@@ -299,24 +305,36 @@ export default {
     }
     
     const markAsRead = async (message) => {
-      if (message.is_read) return
+      console.log('markAsRead called for message:', message.id, 'is_read:', message.is_read)
+      
+      if (message.is_read) {
+        console.log('Message already read, skipping')
+        return
+      }
       
       try {
-        await api.post(`/api/ai/session-messages/${message.id}/read`)
+        console.log('Making API call to mark as read...')
+        const response = await api.post(`/api/ai/session-messages/${message.id}/read`)
+        console.log('API response:', response.data)
         
         // Find and update the message in the messages array to ensure reactivity
         const messageIndex = messages.value.findIndex(m => m.id === message.id)
+        console.log('Message index in array:', messageIndex)
+        
         if (messageIndex !== -1) {
-          messages.value[messageIndex].is_read = true
+          messages.value[messageIndex].is_read = 1
+          console.log('Updated message in array, new is_read:', messages.value[messageIndex].is_read)
         }
         
         // Also update the original message object
-        message.is_read = true
+        message.is_read = 1
+        console.log('Updated original message, new is_read:', message.is_read)
         
         // Update unread count
         unreadCount.value = Math.max(0, unreadCount.value - 1)
+        console.log('Updated unread count:', unreadCount.value)
         
-        console.log('Message marked as read:', message.id)
+        console.log('Message marked as read successfully:', message.id)
       } catch (error) {
         console.error('Error marking message as read:', error)
       }
