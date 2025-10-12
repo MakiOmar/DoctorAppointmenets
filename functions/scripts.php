@@ -573,12 +573,73 @@ add_action(
 											// Remove the completion button and form
 											form.remove();
 											
-											// Just show success message, no Roshta prompt
+											// Ask about patient attendance
 											Swal.fire({
-												title: 'تم بنجاح!',
-												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
-												icon: 'success',
-												confirmButtonText: 'حسناً'
+												title: 'هل حضر المريض الجلسة؟',
+												html: `
+													<div style="text-align: right; direction: rtl;">
+														<div style="margin: 20px 0;">
+															<label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
+																<input type="radio" name="attendance" value="yes" style="margin-left: 10px;" checked>
+																<span style="font-size: 14px;">حضر المريض الجلسة وحصل عليها دون مشاكل.</span>
+															</label>
+															<label style="display: block; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
+																<input type="radio" name="attendance" value="no" style="margin-left: 10px;">
+																<span style="font-size: 14px;">لم يحضر المريض رغم تواجدي في الموعد وبقائي لمدة ربع ساعة على الأقل في انتظاره.</span>
+															</label>
+														</div>
+													</div>
+												`,
+												showCloseButton: true,
+												confirmButtonText: 'تأكيد',
+												confirmButtonColor: '#3085d6',
+												preConfirm: () => {
+													const attendance = document.querySelector('input[name="attendance"]:checked');
+													if (!attendance) {
+														Swal.showValidationMessage('يرجى اختيار حالة الحضور');
+														return false;
+													}
+													return attendance.value;
+												}
+											}).then((attendanceResult) => {
+												if (attendanceResult.isConfirmed) {
+													// Send attendance status to backend
+													$.ajax({
+														type: 'POST',
+														url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+														data: {
+															action: 'update_session_attendance',
+															session_id: response.data.session_id,
+															attendance: attendanceResult.value,
+															nonce: '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>'
+														},
+														success: function(attendanceResponse) {
+															if (attendanceResponse.success) {
+																Swal.fire({
+																	title: 'تم بنجاح!',
+																	text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+																	icon: 'success',
+																	confirmButtonText: 'حسناً'
+																});
+															} else {
+																Swal.fire({
+																	title: 'تم تحديد الجلسة كمكتملة',
+																	text: 'ولكن حدث خطأ في تسجيل حالة الحضور',
+																	icon: 'warning',
+																	confirmButtonText: 'حسناً'
+																});
+															}
+														},
+														error: function() {
+															Swal.fire({
+																title: 'تم تحديد الجلسة كمكتملة',
+																text: 'ولكن حدث خطأ في تسجيل حالة الحضور',
+																icon: 'warning',
+																confirmButtonText: 'حسناً'
+															});
+														}
+													});
+												}
 											});
 										} else {
 											Swal.fire({

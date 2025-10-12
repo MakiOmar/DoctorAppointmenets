@@ -316,6 +316,106 @@ add_action( 'wp_ajax_create_custom_timetable', 'snks_create_custom_timetable' );
 add_action( 'wp_ajax_nopriv_create_custom_timetable', 'snks_create_custom_timetable' );
 
 /**
+ * Update session attendance after completion
+ */
+add_action( 'wp_ajax_update_session_attendance', 'snks_update_session_attendance' );
+
+function snks_update_session_attendance() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'session_attendance_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is a doctor
+	if ( ! snks_is_doctor() ) {
+		wp_send_json_error( 'Access denied. Only doctors can perform this action.' );
+	}
+	
+	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
+	$attendance = isset( $_POST['attendance'] ) ? sanitize_text_field( $_POST['attendance'] ) : '';
+	
+	if ( ! $session_id || ! in_array( $attendance, array( 'yes', 'no' ) ) ) {
+		wp_send_json_error( 'Missing or invalid data.' );
+	}
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+	
+	// Get session details
+	$session = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$table_name} WHERE ID = %d",
+		$session_id
+	) );
+	
+	if ( ! $session ) {
+		wp_send_json_error( 'Session not found.' );
+	}
+	
+	// Check if the current user is the doctor assigned to this session
+	if ( $session->user_id != get_current_user_id() ) {
+		wp_send_json_error( 'Access denied. You can only update your own sessions.' );
+	}
+	
+	// Update attendance in sessions_actions table
+	$attendee_ids = explode( ',', $session->client_id );
+	foreach ( $attendee_ids as $attendee_id ) {
+		$attendee_id = absint( $attendee_id );
+		if ( $attendee_id > 0 ) {
+			// Check if record exists
+			$existing = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$actions_table} WHERE session_id = %d AND user_id = %d",
+				$session_id,
+				$attendee_id
+			) );
+			
+			if ( $existing ) {
+				// Update existing record
+				$wpdb->update(
+					$actions_table,
+					array( 'attendance' => $attendance ),
+					array( 'session_id' => $session_id, 'user_id' => $attendee_id ),
+					array( '%s' ),
+					array( '%d', '%d' )
+				);
+			} else {
+				// Insert new record
+				snks_insert_session_actions( $session_id, $attendee_id, $attendance );
+			}
+		}
+	}
+	
+	// Send email to admin
+	$admin_email = get_option( 'admin_email' );
+	$therapist = get_userdata( $session->user_id );
+	$patient = get_userdata( $attendee_id );
+	$attendance_status = $attendance === 'yes' ? 'حضر المريض' : 'لم يحضر المريض';
+	
+	$subject = 'تحديث حالة حضور الجلسة #' . $session_id;
+	$message = "
+	<div dir='rtl' style='font-family: Arial, sans-serif;'>
+		<h2>تفاصيل الجلسة</h2>
+		<p><strong>رقم الجلسة:</strong> {$session->ID}</p>
+		<p><strong>المعالج:</strong> {$therapist->display_name} (ID: {$session->user_id})</p>
+		<p><strong>المريض:</strong> {$patient->display_name} (ID: {$attendee_id})</p>
+		<p><strong>تاريخ الجلسة:</strong> " . gmdate( 'Y-m-d', strtotime( $session->date_time ) ) . "</p>
+		<p><strong>وقت الجلسة:</strong> {$session->starts} - {$session->ends}</p>
+		<p><strong>المدة:</strong> {$session->period} دقيقة</p>
+		<p><strong>نوع الحضور:</strong> {$session->attendance_type}</p>
+		<hr>
+		<p><strong>حالة الحضور:</strong> <span style='color: " . ( $attendance === 'yes' ? '#28a745' : '#dc3545' ) . ";'>{$attendance_status}</span></p>
+	</div>
+	";
+	
+	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+	wp_mail( $admin_email, $subject, $message, $headers );
+	
+	wp_send_json_success( array(
+		'message' => 'تم تحديث حالة الحضور وإرسال إشعار للإدارة',
+	) );
+}
+
+/**
  * Get session details (for Roshtah requests)
  */
 add_action( 'wp_ajax_get_session_details', 'snks_get_session_details_ajax' );
@@ -420,14 +520,8 @@ function snks_handle_session_doctor_actions() {
 		wp_send_json_error( 'Failed to update session status.' );
 	}
 	
-	// Add session action records for all attendees (default to 'yes' attendance)
-	$attendee_ids = explode( ',', $attendees );
-	foreach ( $attendee_ids as $attendee_id ) {
-		$attendee_id = absint( $attendee_id );
-		if ( $attendee_id > 0 ) {
-			snks_insert_session_actions( $session_id, $attendee_id, 'yes' );
-		}
-	}
+	// Don't add session action records here - will be added after attendance confirmation
+	// This allows the therapist to specify whether patient attended or not
 	
 	// Check if this is an AI session and trigger profit calculation
 	if ( snks_is_ai_session( $session_id ) ) {
