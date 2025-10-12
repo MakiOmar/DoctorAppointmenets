@@ -183,14 +183,14 @@ export default {
       }
     }
     
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 20 seconds
     onMounted(() => {
       loadMessages()
       setInterval(() => {
         if (!showNotifications.value) {
           loadMessages()
         }
-      }, 30000)
+      }, 20000)
     })
     
     return {
