@@ -572,6 +572,9 @@ add_action(
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
+											// Remove the completion button and form
+											form.remove();
+											
 											// Just show success message, no Roshta prompt
 											Swal.fire({
 												title: 'تم بنجاح!',
