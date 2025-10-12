@@ -1657,6 +1657,8 @@ function snks_doctor_actions( $session ) {
 	$is_completed = $session->session_status === 'completed';
 	
 	if ( ! empty( $attendees ) ) {
+		global $wpdb;
+		
 		// Calculate session end time (start datetime + period in minutes)
 		// Don't specify timezone - database time is already in the correct timezone
 		$session_datetime = new DateTime( $session->date_time );
@@ -1691,7 +1693,6 @@ function snks_doctor_actions( $session ) {
 		// Attendance confirmation button - only show for completed sessions if attendance not already set
 		if ( $is_completed ) {
 			// Check if attendance is already set
-			global $wpdb;
 			$actions_table = $wpdb->prefix . 'snks_sessions_actions';
 			$attendance_set = $wpdb->get_var( $wpdb->prepare(
 				"SELECT COUNT(*) FROM {$actions_table} WHERE action_session_id = %d",
