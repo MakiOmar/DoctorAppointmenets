@@ -304,8 +304,19 @@ export default {
       try {
         await api.post(`/api/ai/session-messages/${message.id}/read`)
         
+        // Find and update the message in the messages array to ensure reactivity
+        const messageIndex = messages.value.findIndex(m => m.id === message.id)
+        if (messageIndex !== -1) {
+          messages.value[messageIndex].is_read = true
+        }
+        
+        // Also update the original message object
         message.is_read = true
+        
+        // Update unread count
         unreadCount.value = Math.max(0, unreadCount.value - 1)
+        
+        console.log('Message marked as read:', message.id)
       } catch (error) {
         console.error('Error marking message as read:', error)
       }
