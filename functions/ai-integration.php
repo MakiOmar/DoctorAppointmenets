@@ -7098,30 +7098,35 @@ Best regards,
 			$messages = $wpdb->get_results( $wpdb->prepare(
 				"SELECT m.*, 
 					CASE 
-						WHEN m.sender_type = 'therapist' AND ai_name.meta_value IS NOT NULL AND ai_name.meta_value != ''
-						THEN ai_name.meta_value
+						WHEN m.sender_type = 'therapist' AND ta.id IS NOT NULL
+						THEN CASE 
+							WHEN %s = 'ar' AND ta.name IS NOT NULL AND ta.name != ''
+							THEN ta.name
+							WHEN %s = 'en' AND ta.name_en IS NOT NULL AND ta.name_en != ''
+							THEN ta.name_en
+							ELSE ta.name
+						END
 						WHEN CONCAT(COALESCE(first_name.meta_value, ''), ' ', COALESCE(last_name.meta_value, '')) != ' ' 
 						THEN CONCAT(COALESCE(first_name.meta_value, ''), ' ', COALESCE(last_name.meta_value, ''))
 						WHEN u.display_name != '' 
 						THEN u.display_name
 						ELSE u.user_login
-					END as sender_name,
-					ai_name.meta_value as ai_name_value
+					END as sender_name
 				FROM {$messages_table} m
 				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
-				LEFT JOIN {$wpdb->usermeta} ai_name ON ai_name.user_id = u.ID AND ai_name.meta_key = %s
+				LEFT JOIN {$wpdb->prefix}therapist_applications ta ON ta.user_id = u.ID AND ta.status = 'approved'
 				LEFT JOIN {$wpdb->usermeta} first_name ON first_name.user_id = u.ID AND first_name.meta_key = 'first_name'
 				LEFT JOIN {$wpdb->usermeta} last_name ON last_name.user_id = u.ID AND last_name.meta_key = 'last_name'
 				WHERE m.recipient_id = %d
 				ORDER BY m.created_at DESC
 				LIMIT %d OFFSET %d",
-				$ai_name_meta_key, $user_id, $limit, $offset
+				$locale, $locale, $user_id, $limit, $offset
 			) );
 			
 			// Temporary debugging - check what the query returned
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! empty( $messages ) ) {
 				$first_message = $messages[0];
-				error_log( "Message query result - sender_name: '{$first_message->sender_name}', ai_name_value: '{$first_message->ai_name_value}', sender_id: {$first_message->sender_id}" );
+				error_log( "Message query result - sender_name: '{$first_message->sender_name}', sender_id: {$first_message->sender_id}, sender_type: {$first_message->sender_type}" );
 			}
 			
 
