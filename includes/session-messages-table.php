@@ -22,6 +22,7 @@ function snks_create_session_messages_table() {
 		id bigint(20) NOT NULL AUTO_INCREMENT,
 		session_id bigint(20) NOT NULL,
 		sender_id bigint(20) NOT NULL,
+		recipient_id bigint(20) NOT NULL,
 		sender_type enum('therapist','patient') NOT NULL,
 		message text,
 		attachment_ids text,
@@ -31,6 +32,7 @@ function snks_create_session_messages_table() {
 		PRIMARY KEY  (id),
 		KEY session_id (session_id),
 		KEY sender_id (sender_id),
+		KEY recipient_id (recipient_id),
 		KEY sender_type (sender_type),
 		KEY is_read (is_read),
 		KEY created_at (created_at)
