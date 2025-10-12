@@ -871,7 +871,9 @@ function snks_booking_item_template( $record ) {
 	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item {status_class}">
 		<div class="anony-grid-row">
 			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px">
+				<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
+				<?php endif; ?>
 
 				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);left:-25%;display: flex;align-items: center;">
 					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
