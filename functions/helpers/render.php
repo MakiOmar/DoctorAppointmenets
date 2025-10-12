@@ -1585,8 +1585,16 @@ function snks_doctor_actions( $session ) {
 	if ( ! $session ) {
 		return '';
 	}
+	
 	$attendees = explode( ',', $session->client_id );
 	$output    = '';
+	
+	// Check if this is an AI session
+	$is_ai_session = snks_is_ai_session( $session->ID );
+	
+	// Check if session is already completed
+	$is_completed = $session->session_status === 'completed';
+	
 	if ( ! empty( $attendees ) ) {
 		// Calculate session end time (start datetime + period in minutes)
 		// Don't specify timezone - database time is already in the correct timezone
@@ -1599,26 +1607,25 @@ function snks_doctor_actions( $session ) {
 		// Check if session has ended
 		$is_session_ended = $current_timestamp >= $session_end_timestamp;
 		
-		// Prepare button attributes
-		$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
-		$button_class    = 'snks-button table-form-button snks-complete-session-btn';
-		if ( ! $is_session_ended ) {
-			$button_class .= ' snks-button-waiting';
-		}
-		$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
-		$button_style    = $is_session_ended ? '' : 'style="pointer-events: none !important; cursor: not-allowed !important;"';
-		
-		// Check if this is an AI session for Roshtah button
-		$is_ai_session = snks_is_ai_session( $session->ID );
-		
 		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
 		
-		// Mark as Completed button
-		$output .= '<form class="doctor_actions" method="post" action="">';
-		$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
-		$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
-		$output .= '<input class="' . $button_class . '" type="submit" name="doctor-actions" value="تحديد كمكتملة" ' . $button_disabled . ' ' . $button_style . ' title="' . esc_attr( $button_title ) . '">';
-		$output .= '</form>';
+		// Mark as Completed button - only show if not already completed
+		if ( ! $is_completed ) {
+			// Prepare button attributes
+			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
+			$button_class    = 'snks-button table-form-button snks-complete-session-btn';
+			if ( ! $is_session_ended ) {
+				$button_class .= ' snks-button-waiting';
+			}
+			$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+			$button_style    = $is_session_ended ? '' : 'style="pointer-events: none !important; cursor: not-allowed !important;"';
+			
+			$output .= '<form class="doctor_actions" method="post" action="">';
+			$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
+			$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
+			$output .= '<input class="' . $button_class . '" type="submit" name="doctor-actions" value="تحديد كمكتملة" ' . $button_disabled . ' ' . $button_style . ' title="' . esc_attr( $button_title ) . '">';
+			$output .= '</form>';
+		}
 		
 		// Roshtah Request button (only for AI sessions and only if session has ended)
 		if ( $is_ai_session && $is_session_ended ) {
