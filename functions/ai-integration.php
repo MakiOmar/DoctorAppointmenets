@@ -7084,15 +7084,7 @@ Best regards,
 			// Get messages for the current user
 			// Get current language for AI therapist names
 			$locale = snks_get_current_language();
-			$ai_name_meta_key = $locale === 'ar' ? 'ai_display_name_ar' : 'ai_display_name_en';
 			
-			// Temporary debugging - check therapist meta values
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				$therapist_id = 211; // The therapist from your message
-				$ai_name_ar = get_user_meta( $therapist_id, 'ai_display_name_ar', true );
-				$ai_name_en = get_user_meta( $therapist_id, 'ai_display_name_en', true );
-				error_log( "Therapist {$therapist_id} AI names - AR: '{$ai_name_ar}', EN: '{$ai_name_en}', Current locale: {$locale}, Meta key: {$ai_name_meta_key}" );
-			}
 			
 			
 			$messages = $wpdb->get_results( $wpdb->prepare(
@@ -7123,11 +7115,6 @@ Best regards,
 				$locale, $locale, $user_id, $limit, $offset
 			) );
 			
-			// Temporary debugging - check what the query returned
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! empty( $messages ) ) {
-				$first_message = $messages[0];
-				error_log( "Message query result - sender_name: '{$first_message->sender_name}', sender_id: {$first_message->sender_id}, sender_type: {$first_message->sender_type}" );
-			}
 			
 
 			// Get unread count
