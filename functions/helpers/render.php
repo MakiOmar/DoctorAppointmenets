@@ -1565,16 +1565,9 @@ function snks_render_rochtah_section( $rochtah_requests ) {
  * @return string
  */
 function snks_generate_bookings() {
-	// Check if current doctor is an AI therapist
-	if ( snks_is_current_doctor_ai_therapist() ) {
-		// For AI therapists, use completed sessions instead of past sessions
-		$completed_sessions = snks_get_ai_therapist_completed_sessions();
-		$past = snks_render_bookings( $completed_sessions, 'past' );
-	} else {
-		// For normal therapists, use the original past sessions functionality
-		$past = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
-	}
-	
+	// Use date-based filtering for both AI and regular therapists
+	// Past = sessions before today, Future = sessions from today onwards
+	$past = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
 	$current_timetables = snks_render_bookings( snks_get_doctor_sessions( 'future', 'open', true ), 'future' );
 	return snks_generate_the_bookings( $past, $current_timetables );
 }
