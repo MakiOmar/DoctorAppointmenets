@@ -664,6 +664,11 @@ add_action(
 				border-top-style: solid;
 				border-top-color: #fff;
 			}
+			.doctor-actions-wrapper{
+				display: flex;
+				justify-content: space-around;
+				align-items: baseline;
+			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}

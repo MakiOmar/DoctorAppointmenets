@@ -1611,7 +1611,7 @@ function snks_doctor_actions( $session ) {
 		// Check if this is an AI session for Roshtah button
 		$is_ai_session = snks_is_ai_session( $session->ID );
 		
-		$output .= '<div class="doctor-actions" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
+		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
 		
 		// Mark as Completed button
 		$output .= '<form class="doctor_actions" method="post" action="">';
