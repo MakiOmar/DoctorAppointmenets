@@ -1476,11 +1476,14 @@ function snks_get_ai_therapist_completed_sessions() {
 	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
 	
 	// Get completed AI sessions for this therapist
+	// Include sessions with status 'completed' OR settings containing 'ai_booking:completed'
 	$sessions = $wpdb->get_results( $wpdb->prepare(
 		"SELECT * FROM {$table_name} 
 		 WHERE user_id = %d 
-		 AND session_status = 'completed'
-		 AND settings LIKE '%ai_booking%'
+		 AND (
+			(session_status = 'completed' AND settings LIKE '%ai_booking%')
+			OR (settings LIKE '%ai_booking:completed%')
+		 )
 		 ORDER BY date_time DESC",
 		$current_user_id
 	) );
