@@ -377,7 +377,7 @@ add_action(
 							}
 						}, 1000); // Update the countdown every second (1000 milliseconds)
 					}
-			);
+				);
 
 			// Check if WP_DEBUG is enabled
 			var wpDebugEnabled = <?php echo ( defined( 'WP_DEBUG' ) && WP_DEBUG ) ? 'true' : 'false'; ?>;
@@ -529,10 +529,10 @@ add_action(
 				}
 			});
 			
-			$(document).on(
-				'click',
-				'.doctor_actions .snks-button',
-				function (e) {
+				$(document).on(
+					'click',
+					'.doctor_actions .snks-button',
+					function (e) {
 					// Double-check if button is disabled - prevent any action if it is
 					if ($(this).prop('disabled') || $(this).attr('disabled')) {
 						e.preventDefault();
@@ -542,19 +542,19 @@ add_action(
 						return false;
 					}
 					
-					e.preventDefault();
-					
-					// Get the parent form of the clicked button
-					var form = $(this).closest('form');
-					// Serialize the form data
-					var doctorActions = form.serializeArray();
-					// Perform nonce check.
-					var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
-					doctorActions.push({ name: 'nonce', value: nonce });
-					doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
-					
+						e.preventDefault();
+						
+						// Get the parent form of the clicked button
+						var form = $(this).closest('form');
+						// Serialize the form data
+						var doctorActions = form.serializeArray();
+						// Perform nonce check.
+						var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
+						doctorActions.push({ name: 'nonce', value: nonce });
+						doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
+						
 					debugLog('✅ Button is enabled - showing confirmation dialog');
-					Swal.fire({
+						Swal.fire({
 							title: 'هل أنت متأكد من تحديد الجلسة كمكتملة؟',
 							text: "لا يمكنك التراجع بعد ذلك!",
 							icon: 'question',
@@ -705,6 +705,95 @@ add_action(
 					});
 				});
 				
+				// Handle send message button clicks
+				$(document).on('click', '.snks-send-message-btn', function(e) {
+					e.preventDefault();
+					var sessionId = $(this).data('session-id');
+					var clientId = $(this).data('client-id');
+					
+					// Show message form with file upload
+					Swal.fire({
+						title: 'إرسال رسالة للمريض',
+						html: `
+							<div style="text-align: right; direction: rtl;">
+								<div style="margin-bottom: 15px;">
+									<label for="message_text" style="display: block; margin-bottom: 5px; font-weight: bold;">الرسالة:</label>
+									<textarea id="message_text" style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب رسالتك هنا..."></textarea>
+								</div>
+								<div style="margin-bottom: 15px;">
+									<label for="message_files" style="display: block; margin-bottom: 5px; font-weight: bold;">المرفقات (اختياري):</label>
+									<input type="file" id="message_files" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+									<p style="font-size: 12px; color: #666; margin-top: 5px;">يمكنك إرفاق صور، فيديوهات، أو ملفات نصية</p>
+								</div>
+							</div>
+						`,
+						showCloseButton: true,
+						confirmButtonText: 'إرسال',
+						confirmButtonColor: '#6366f1',
+						showLoaderOnConfirm: true,
+						preConfirm: () => {
+							const message = document.getElementById('message_text').value.trim();
+							const files = document.getElementById('message_files').files;
+							
+							if (!message && files.length === 0) {
+								Swal.showValidationMessage('يرجى إدخال رسالة أو إرفاق ملف');
+								return false;
+							}
+							
+							return { message: message, files: files };
+						}
+					}).then((result) => {
+						if (result.isConfirmed) {
+							// Prepare form data with files
+							var formData = new FormData();
+							formData.append('action', 'send_session_message');
+							formData.append('session_id', sessionId);
+							formData.append('client_id', clientId);
+							formData.append('message', result.value.message);
+							formData.append('nonce', '<?php echo esc_html( wp_create_nonce( 'session_message_nonce' ) ); ?>');
+							
+							// Add files
+							for (var i = 0; i < result.value.files.length; i++) {
+								formData.append('attachments[]', result.value.files[i]);
+							}
+							
+							// Send AJAX request
+							$.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+								data: formData,
+								processData: false,
+								contentType: false,
+								success: function(response) {
+										if (response.success) {
+												Swal.fire({
+											title: 'تم بنجاح!',
+											text: 'تم إرسال الرسالة للمريض',
+											icon: 'success',
+											confirmButtonText: 'حسناً'
+										});
+									} else {
+										Swal.fire({
+											title: 'خطأ!',
+											text: response.data || 'حدث خطأ أثناء إرسال الرسالة',
+											icon: 'error',
+											confirmButtonText: 'حسناً'
+										});
+									}
+								},
+								error: function() {
+									Swal.fire({
+										title: 'خطأ!',
+										text: 'حدث خطأ أثناء إرسال الرسالة',
+										icon: 'error',
+										confirmButtonText: 'حسناً'
+									});
+								}
+							});
+						}
+					});
+				});
+				
 				// Handle Roshtah request button clicks (for therapists to request Roshtah for a patient)
 				$(document).on('click', '.snks-roshtah-request-btn', function(e) {
 					e.preventDefault();
@@ -712,56 +801,56 @@ add_action(
 					var clientId = $(this).data('client-id');
 					var $button = $(this);
 					
-					// Show diagnosis and symptoms form
-					Swal.fire({
-						title: 'معلومات التشخيص والأعراض',
-						html: `
-							<div style="text-align: right; direction: rtl;">
-								<div style="margin-bottom: 15px;">
-									<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">تشخيص المريض المبدئي حسب رؤيتك:</label>
-									<textarea id="initial_diagnosis" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب التشخيص الأولي للمريض..."></textarea>
-								</div>
-								<div style="margin-bottom: 15px;">
-									<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الاعراض التي تعتقد انها بحاجه لادوية:</label>
-									<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
-								</div>
-								<div style="margin-bottom: 15px;">
-									<label for="reason_for_referral" style="display: block; margin-bottom: 5px; font-weight: bold;">سبب الإحالة للطبيب النفسي:</label>
-									<textarea id="reason_for_referral" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اشرح لماذا يحتاج المريض إلى استشارة طبيب نفسي..."></textarea>
-								</div>
-							</div>
-						`,
+														// Show diagnosis and symptoms form
+														Swal.fire({
+															title: 'معلومات التشخيص والأعراض',
+															html: `
+																<div style="text-align: right; direction: rtl;">
+																	<div style="margin-bottom: 15px;">
+																		<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">تشخيص المريض المبدئي حسب رؤيتك:</label>
+																		<textarea id="initial_diagnosis" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب التشخيص الأولي للمريض..."></textarea>
+																	</div>
+																	<div style="margin-bottom: 15px;">
+																		<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الاعراض التي تعتقد انها بحاجه لادوية:</label>
+																		<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
+																	</div>
+																	<div style="margin-bottom: 15px;">
+																		<label for="reason_for_referral" style="display: block; margin-bottom: 5px; font-weight: bold;">سبب الإحالة للطبيب النفسي:</label>
+																		<textarea id="reason_for_referral" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اشرح لماذا يحتاج المريض إلى استشارة طبيب نفسي..."></textarea>
+																	</div>
+																</div>
+															`,
 						showCloseButton: true,
 						confirmButtonText: 'إرسال الطلب',
 						confirmButtonColor: '#28a745',
-						preConfirm: () => {
-							const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
-							const symptoms = document.getElementById('symptoms').value.trim();
-							const reasonForReferral = document.getElementById('reason_for_referral').value.trim();
-							
-							if (!initialDiagnosis) {
-								Swal.showValidationMessage('يرجى إدخال التشخيص الأولي');
-								return false;
-							}
-							
-							if (!symptoms) {
-								Swal.showValidationMessage('يرجى إدخال الأعراض');
-								return false;
-							}
-							
-							if (!reasonForReferral) {
-								Swal.showValidationMessage('يرجى إدخال سبب الإحالة');
-								return false;
-							}
-							
-							return {
-								initial_diagnosis: initialDiagnosis,
-								symptoms: symptoms,
-								reason_for_referral: reasonForReferral
-							};
-						}
-					}).then((formResult) => {
-						if (formResult.isConfirmed) {
+															preConfirm: () => {
+																const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
+																const symptoms = document.getElementById('symptoms').value.trim();
+																const reasonForReferral = document.getElementById('reason_for_referral').value.trim();
+																
+																if (!initialDiagnosis) {
+																	Swal.showValidationMessage('يرجى إدخال التشخيص الأولي');
+																	return false;
+																}
+																
+																if (!symptoms) {
+																	Swal.showValidationMessage('يرجى إدخال الأعراض');
+																	return false;
+																}
+																
+																if (!reasonForReferral) {
+																	Swal.showValidationMessage('يرجى إدخال سبب الإحالة');
+																	return false;
+																}
+																
+																return {
+																	initial_diagnosis: initialDiagnosis,
+																	symptoms: symptoms,
+																	reason_for_referral: reasonForReferral
+																};
+															}
+														}).then((formResult) => {
+															if (formResult.isConfirmed) {
 							// Get session and order details via AJAX first
 							$.ajax({
 								type: 'POST',
@@ -773,62 +862,62 @@ add_action(
 								},
 								success: function(sessionResponse) {
 									if (sessionResponse.success) {
-										// Send Roshta request with diagnosis data
-										var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
-										$.ajax({
-											type: 'POST',
-											url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-											data: {
-												action: 'request_rochtah',
+																// Send Roshta request with diagnosis data
+																var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
+																$.ajax({
+																	type: 'POST',
+																	url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+																	data: {
+																		action: 'request_rochtah',
 												session_id: sessionId,
 												client_id: clientId,
 												order_id: sessionResponse.data.order_id,
-												initial_diagnosis: formResult.value.initial_diagnosis,
-												symptoms: formResult.value.symptoms,
-												reason_for_referral: formResult.value.reason_for_referral,
-												nonce: rochtahNonce
-											},
-											success: function(rochtahResponse) {
-												if (rochtahResponse.success) {
-													Swal.fire({
-														title: 'تم إرسال طلب روشتا!',
-														text: 'سيتم إعلام المريض بطلب روشتا',
-														icon: 'success',
-														confirmButtonText: 'حسناً'
-													}).then(() => {
+																		initial_diagnosis: formResult.value.initial_diagnosis,
+																		symptoms: formResult.value.symptoms,
+																		reason_for_referral: formResult.value.reason_for_referral,
+																		nonce: rochtahNonce
+																	},
+																	success: function(rochtahResponse) {
+																		if (rochtahResponse.success) {
+																			Swal.fire({
+																				title: 'تم إرسال طلب روشتا!',
+																				text: 'سيتم إعلام المريض بطلب روشتا',
+																				icon: 'success',
+																				confirmButtonText: 'حسناً'
+																			}).then(() => {
 														// Hide the Roshtah button after successful request
 														$button.hide();
-													});
-												} else {
-													Swal.fire({
-														title: 'خطأ!',
-														text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
-														icon: 'error',
-														confirmButtonText: 'حسناً'
-													});
-												}
-											},
-											error: function(xhr, status, error) {
-												Swal.fire({
-													title: 'خطأ!',
-													text: 'حدث خطأ أثناء إرسال طلب روشتا',
-													icon: 'error',
-													confirmButtonText: 'حسناً'
-												});
-											}
-										});
-									} else {
-										Swal.fire({
-											title: 'خطأ!',
+																			});
+																		} else {
+																			Swal.fire({
+																				title: 'خطأ!',
+																				text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
+																				icon: 'error',
+																				confirmButtonText: 'حسناً'
+																			});
+																		}
+																	},
+																	error: function(xhr, status, error) {
+																		Swal.fire({
+																			title: 'خطأ!',
+																			text: 'حدث خطأ أثناء إرسال طلب روشتا',
+																			icon: 'error',
+																			confirmButtonText: 'حسناً'
+																});
+															}
+														});
+													} else {
+											Swal.fire({
+												title: 'خطأ!',
 											text: 'حدث خطأ في الحصول على معلومات الجلسة',
-											icon: 'error',
-											confirmButtonText: 'حسناً'
-										});
+												icon: 'error',
+												confirmButtonText: 'حسناً'
+											});
+										}
 									}
-								}
-							});
-						}
-					});
+								});
+							}
+						});
 				});
 				
 				// Handle Roshta booking button clicks

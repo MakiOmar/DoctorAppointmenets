@@ -1719,6 +1719,11 @@ function snks_doctor_actions( $session ) {
 			}
 		}
 		
+		// Send Message button (only for AI sessions - available anytime)
+		if ( $is_ai_session ) {
+			$output .= '<button class="snks-button snks-send-message-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #6366f1; border-color: #6366f1;">إرسال رسالة للمريض</button>';
+		}
+		
 		$output .= '</div>';
 	}
 	return $output;

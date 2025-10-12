@@ -155,6 +155,7 @@ require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
 require_once SNKS_DIR . 'functions/ajax/therapist-certificates.php';
 require_once SNKS_DIR . 'functions/ajax/therapist-details.php';
+require_once SNKS_DIR . 'functions/ajax/session-messages-ajax.php';
 require_once SNKS_DIR . 'functions/ai-prescription.php';
 	},
 	20
@@ -172,6 +173,7 @@ require_once SNKS_DIR . 'includes/sessions-actions-table.php';
 require_once SNKS_DIR . 'includes/transaction-table.php';
 require_once SNKS_DIR . 'includes/coupons-tables.php';
 require_once SNKS_DIR . 'includes/ai-tables.php';
+require_once SNKS_DIR . 'includes/session-messages-table.php';
 
 // AI table creation hooks will be registered on init to ensure all functions are loaded
 

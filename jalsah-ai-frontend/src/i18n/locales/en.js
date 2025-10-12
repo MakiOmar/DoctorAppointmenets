@@ -1054,6 +1054,18 @@ export default {
     goBack: 'Go Back'
   },
 
+  // Session Messages
+  messages: {
+    title: 'Session Messages',
+    noMessages: 'No messages yet',
+    seeAll: 'See all messages',
+    more: 'more files',
+    from: 'From',
+    session: 'Session',
+    attachments: 'Attachments',
+    markAsRead: 'Mark as read'
+  },
+
   // Appointment Change Terms
   appointmentChangeTerms: 'Appointment Change Terms'
 } 

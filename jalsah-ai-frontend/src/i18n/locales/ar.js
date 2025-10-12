@@ -1058,6 +1058,18 @@ export default {
     goBack: 'العودة'
   },
 
+  // Session Messages
+  messages: {
+    title: 'رسائل الجلسات',
+    noMessages: 'لا توجد رسائل بعد',
+    seeAll: 'عرض جميع الرسائل',
+    more: 'ملفات إضافية',
+    from: 'من',
+    session: 'الجلسة',
+    attachments: 'المرفقات',
+    markAsRead: 'تحديد كمقروءة'
+  },
+
   // Appointment Change Terms
   appointmentChangeTerms: 'شروط تغيير الموعد'
 } 
