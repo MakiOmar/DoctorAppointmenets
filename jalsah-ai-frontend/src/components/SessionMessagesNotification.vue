@@ -64,10 +64,10 @@
             <!-- Message Content -->
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-gray-900">
-                {{ message.therapist_name }}
+                {{ message.sender_name || 'معالج' }}
               </p>
               <p class="text-xs text-gray-500 mb-1">
-                {{ message.session_date }} - {{ message.session_time }}
+                {{ formatDate(message.created_at) }}
               </p>
               <p v-if="message.message" class="text-sm text-gray-700 line-clamp-2">
                 {{ message.message }}
@@ -95,9 +95,8 @@
 
         <!-- See All Button -->
         <button
-          v-if="hasMore"
           @click="loadAllMessages"
-          class="w-full py-3 text-center text-sm font-medium text-primary-600 hover:bg-gray-50 transition-colors"
+          class="w-full py-3 text-center text-sm font-medium text-primary-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
         >
           {{ $t('messages.seeAll') }}
         </button>
@@ -155,9 +154,10 @@ export default {
         })
         
         if (response.data.success) {
-          messages.value = response.data.data.messages
-          unreadCount.value = response.data.data.unread_count
-          hasMore.value = response.data.data.has_more
+          messages.value = response.data.data.messages || []
+          unreadCount.value = response.data.data.unread_count || 0
+          hasMore.value = response.data.data.has_more || false
+          console.log('Messages loaded:', messages.value.length)
         }
       } catch (error) {
         console.error('Error loading messages:', error)
@@ -168,6 +168,7 @@ export default {
     
     const loadAllMessages = async () => {
       await loadMessages(100) // Load up to 100 messages
+      showNotifications.value = false // Close dropdown after loading all
     }
     
     const markAsRead = async (message) => {
@@ -180,6 +181,28 @@ export default {
         unreadCount.value = Math.max(0, unreadCount.value - 1)
       } catch (error) {
         console.error('Error marking message as read:', error)
+      }
+    }
+    
+    const formatDate = (dateString) => {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffInHours = (now - date) / (1000 * 60 * 60)
+      
+      if (diffInHours < 1) {
+        const diffInMinutes = Math.floor((now - date) / (1000 * 60))
+        return diffInMinutes < 1 ? 'الآن' : `منذ ${diffInMinutes} دقيقة`
+      } else if (diffInHours < 24) {
+        return `منذ ${Math.floor(diffInHours)} ساعة`
+      } else if (diffInHours < 168) { // 7 days
+        const diffInDays = Math.floor(diffInHours / 24)
+        return `منذ ${diffInDays} يوم`
+      } else {
+        return date.toLocaleDateString('ar-SA', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
       }
     }
     
@@ -203,7 +226,8 @@ export default {
       toggleNotifications,
       loadMessages,
       loadAllMessages,
-      markAsRead
+      markAsRead,
+      formatDate
     }
   }
 }
