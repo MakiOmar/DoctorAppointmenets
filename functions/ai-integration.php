@@ -7086,6 +7086,14 @@ Best regards,
 			$locale = snks_get_current_language();
 			$ai_name_meta_key = $locale === 'ar' ? 'ai_display_name_ar' : 'ai_display_name_en';
 			
+			// Temporary debugging - check therapist meta values
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$therapist_id = 211; // The therapist from your message
+				$ai_name_ar = get_user_meta( $therapist_id, 'ai_display_name_ar', true );
+				$ai_name_en = get_user_meta( $therapist_id, 'ai_display_name_en', true );
+				error_log( "Therapist {$therapist_id} AI names - AR: '{$ai_name_ar}', EN: '{$ai_name_en}', Current locale: {$locale}, Meta key: {$ai_name_meta_key}" );
+			}
+			
 			
 			$messages = $wpdb->get_results( $wpdb->prepare(
 				"SELECT m.*, 
@@ -7097,7 +7105,8 @@ Best regards,
 						WHEN u.display_name != '' 
 						THEN u.display_name
 						ELSE u.user_login
-					END as sender_name
+					END as sender_name,
+					ai_name.meta_value as ai_name_value
 				FROM {$messages_table} m
 				LEFT JOIN {$wpdb->users} u ON m.sender_id = u.ID
 				LEFT JOIN {$wpdb->usermeta} ai_name ON ai_name.user_id = u.ID AND ai_name.meta_key = %s
@@ -7108,6 +7117,12 @@ Best regards,
 				LIMIT %d OFFSET %d",
 				$ai_name_meta_key, $user_id, $limit, $offset
 			) );
+			
+			// Temporary debugging - check what the query returned
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! empty( $messages ) ) {
+				$first_message = $messages[0];
+				error_log( "Message query result - sender_name: '{$first_message->sender_name}', ai_name_value: '{$first_message->ai_name_value}', sender_id: {$first_message->sender_id}" );
+			}
 			
 
 			// Get unread count
