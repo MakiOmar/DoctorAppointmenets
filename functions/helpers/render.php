@@ -1343,18 +1343,19 @@ function snks_render_bookings( $_timetables, $tens ) {
 					</div>
 					<?php } ?>
 					<div class="snks-timetable-accordion-content" style="background-color:#fff;padding:10px 0 10px 10px" id="<?php echo esc_attr( $date ); ?>">
-						<?php foreach ( $timetables as $data ) : ?>
-							<div class="snks-booking-item-wrapper">
-								<?php
-								$output = template_str_replace( $data );
-								if ( 'past' === $tens ) {
-									$output = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $output );
-								}
-								//phpcs:disable
-								echo $output;
-								//phpcs:enable
+					<?php foreach ( $timetables as $data ) : ?>
+						<div class="snks-booking-item-wrapper">
+							<?php
+							$output = template_str_replace( $data );
+							// Remove doctor actions for past bookings EXCEPT for AI sessions
+							if ( 'past' === $tens && ! snks_is_ai_session( $data->ID ) ) {
+								$output = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $output );
+							}
+							//phpcs:disable
+							echo $output;
+							//phpcs:enable
 
-								?>
+							?>
 								<?php
 								//phpcs:disable
 								if ( 'past' !== $tens && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { 
