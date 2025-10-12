@@ -558,11 +558,9 @@ add_action(
 							title: 'هل أنت متأكد من تحديد الجلسة كمكتملة؟',
 							text: "لا يمكنك التراجع بعد ذلك!",
 							icon: 'question',
-							showCancelButton: true,
+							showCloseButton: true,
 							confirmButtonColor: '#3085d6',
-							cancelButtonColor: '#6b7280',
-							confirmButtonText: 'نعم، حدد كمكتملة',
-							cancelButtonText: 'إلغاء'
+							confirmButtonText: 'نعم، حدد كمكتملة'
 						}).then((result) => {
 							if (result.isConfirmed) {
 								// Send AJAX request only if user confirms
@@ -632,11 +630,9 @@ add_action(
 								</div>
 							</div>
 						`,
-						showCancelButton: true,
+						showCloseButton: true,
 						confirmButtonText: 'إرسال الطلب',
-						cancelButtonText: 'إلغاء',
 						confirmButtonColor: '#28a745',
-						cancelButtonColor: '#6b7280',
 						preConfirm: () => {
 							const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
 							const symptoms = document.getElementById('symptoms').value.trim();
