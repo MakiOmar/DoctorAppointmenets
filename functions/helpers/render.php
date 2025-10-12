@@ -1638,8 +1638,18 @@ function snks_doctor_actions( $session ) {
 	$attendees = explode( ',', $session->client_id );
 	$output    = '';
 	
-	// Check if this is an AI session
-	$is_ai_session = snks_is_ai_session( $session->ID );
+	// Check if this is an AI session (check settings field or order meta)
+	$is_ai_session = false;
+	if ( isset( $session->settings ) && strpos( $session->settings, 'ai_booking' ) !== false ) {
+		$is_ai_session = true;
+	} elseif ( isset( $session->order_id ) && $session->order_id > 0 ) {
+		$order = wc_get_order( $session->order_id );
+		if ( $order ) {
+			$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+			$is_ai_session_meta = $order->get_meta( 'is_ai_session' );
+			$is_ai_session = $from_jalsah_ai || $is_ai_session_meta;
+		}
+	}
 	
 	// Check if session is already completed
 	$is_completed = $session->session_status === 'completed';
