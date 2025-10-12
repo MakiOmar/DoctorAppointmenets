@@ -1705,7 +1705,17 @@ function snks_doctor_actions( $session ) {
 		
 		// Roshtah Request button (only for AI sessions and only if session has ended or completed)
 		if ( $is_ai_session && ( $is_session_ended || $is_completed ) ) {
-			$output .= '<button class="snks-button snks-roshtah-request-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #28a745; border-color: #28a745;">إرسال لروشتا</button>';
+			// Check if Roshtah request already exists for this session
+			$rochtah_table = $wpdb->prefix . 'snks_rochtah_bookings';
+			$rochtah_exists = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$rochtah_table} WHERE session_id = %d",
+				$session->ID
+			) );
+			
+			// Only show button if Roshtah request doesn't exist
+			if ( ! $rochtah_exists || $rochtah_exists == 0 ) {
+				$output .= '<button class="snks-button snks-roshtah-request-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #28a745; border-color: #28a745;">إرسال لروشتا</button>';
+			}
 		}
 		
 		$output .= '</div>';
