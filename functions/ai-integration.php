@@ -7086,6 +7086,11 @@ Best regards,
 			$locale = snks_get_current_language();
 			$ai_name_meta_key = $locale === 'ar' ? 'ai_display_name_ar' : 'ai_display_name_en';
 			
+			// Debug: Log the query parameters
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( "Session Messages Debug - User ID: {$user_id}, Locale: {$locale}, AI Name Key: {$ai_name_meta_key}" );
+			}
+			
 			$messages = $wpdb->get_results( $wpdb->prepare(
 				"SELECT m.*, 
 					CASE 
@@ -7105,12 +7110,25 @@ Best regards,
 				LIMIT %d OFFSET %d",
 				$ai_name_meta_key, $user_id, $limit, $offset
 			) );
+			
+			// Debug: Log the results
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( "Session Messages Debug - Found " . count( $messages ) . " messages for user {$user_id}" );
+				if ( ! empty( $messages ) ) {
+					error_log( "First message: " . print_r( $messages[0], true ) );
+				}
+			}
 
 			// Get unread count
 			$unread_count = $wpdb->get_var( $wpdb->prepare(
 				"SELECT COUNT(*) FROM {$messages_table} WHERE recipient_id = %d AND is_read = 0",
 				$user_id
 			) );
+			
+			// Debug: Log unread count
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( "Session Messages Debug - Unread count for user {$user_id}: {$unread_count}" );
+			}
 
 			// Format messages
 			foreach ( $messages as $message ) {
@@ -7140,6 +7158,11 @@ Best regards,
 				}
 			}
 
+			// Debug: Log final response
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( "Session Messages Debug - Final response: " . count( $messages ) . " messages, {$unread_count} unread" );
+			}
+			
 			$this->send_success( array(
 				'messages' => $messages,
 				'unread_count' => intval( $unread_count ),
