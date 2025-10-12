@@ -268,7 +268,8 @@ export default {
       console.log('Opening message:', message.id, 'is_read:', message.is_read)
       
       // Mark as read if not already read
-      if (!message.is_read) {
+      console.log('Checking if_read condition:', message.is_read, 'typeof:', typeof message.is_read, 'truthy:', !!message.is_read)
+      if (message.is_read == 0 || message.is_read === false || !message.is_read) {
         console.log('Message is unread, marking as read...')
         await markAsRead(message)
         console.log('After markAsRead, message.is_read:', message.is_read)
@@ -307,7 +308,7 @@ export default {
     const markAsRead = async (message) => {
       console.log('markAsRead called for message:', message.id, 'is_read:', message.is_read)
       
-      if (message.is_read) {
+      if (message.is_read == 1 || message.is_read === true) {
         console.log('Message already read, skipping')
         return
       }
