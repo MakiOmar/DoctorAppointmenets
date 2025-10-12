@@ -49,6 +49,7 @@ export default {
     therapists: 'Therapists',
     diagnosis: 'Diagnosis',
     appointments: 'Appointments',
+    notifications: 'Messages',
     profile: 'Profile',
     cart: 'Cart',
     login: 'Login',
@@ -1057,13 +1058,19 @@ export default {
   // Session Messages
   messages: {
     title: 'Session Messages',
+    subtitle: 'View all messages from your therapists',
     noMessages: 'No messages yet',
+    noMessagesDescription: 'You will see messages from your therapists here when they send them.',
+    noTextContent: 'No text content',
     seeAll: 'See all messages',
+    loadMore: 'Load more messages',
     more: 'more files',
     from: 'From',
     session: 'Session',
     attachments: 'Attachments',
-    markAsRead: 'Mark as read'
+    markAsRead: 'Mark as read',
+    alreadyRead: 'Already read',
+    download: 'Download'
   },
 
   // Appointment Change Terms

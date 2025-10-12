@@ -49,6 +49,7 @@ export default {
     therapists: 'المعالجون',
     diagnosis: 'التشخيص',
     appointments: 'المواعيد',
+    notifications: 'الرسائل',
     profile: 'الملف الشخصي',
     cart: 'السلة',
     login: 'تسجيل الدخول',
@@ -1061,13 +1062,19 @@ export default {
   // Session Messages
   messages: {
     title: 'رسائل الجلسات',
+    subtitle: 'عرض جميع الرسائل من المعالجين',
     noMessages: 'لا توجد رسائل بعد',
+    noMessagesDescription: 'ستظهر هنا الرسائل التي يرسلها لك المعالجون',
+    noTextContent: 'لا يوجد محتوى نصي',
     seeAll: 'عرض جميع الرسائل',
+    loadMore: 'تحميل المزيد',
     more: 'ملفات إضافية',
     from: 'من',
     session: 'الجلسة',
     attachments: 'المرفقات',
-    markAsRead: 'تحديد كمقروءة'
+    markAsRead: 'تحديد كمقروءة',
+    alreadyRead: 'تم القراءة',
+    download: 'تحميل'
   },
 
   // Appointment Change Terms

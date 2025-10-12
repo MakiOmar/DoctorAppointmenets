@@ -94,12 +94,13 @@
         </div>
 
         <!-- See All Button -->
-        <button
-          @click="loadAllMessages"
-          class="w-full py-3 text-center text-sm font-medium text-primary-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
+        <router-link
+          to="/notifications"
+          class="block w-full py-3 text-center text-sm font-medium text-primary-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
+          @click="showNotifications = false"
         >
           {{ $t('messages.seeAll') }}
-        </button>
+        </router-link>
       </div>
 
       <!-- Empty State -->
@@ -166,10 +167,6 @@ export default {
       }
     }
     
-    const loadAllMessages = async () => {
-      await loadMessages(100) // Load up to 100 messages
-      showNotifications.value = false // Close dropdown after loading all
-    }
     
     const markAsRead = async (message) => {
       if (message.is_read) return
@@ -225,7 +222,6 @@ export default {
       hasMore,
       toggleNotifications,
       loadMessages,
-      loadAllMessages,
       markAsRead,
       formatDate
     }

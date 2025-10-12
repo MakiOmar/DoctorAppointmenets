@@ -92,6 +92,12 @@ const routes = [
     component: () => import('@/views/Profile.vue'),
     meta: { requiresAuth: true, roles: ['customer'] }
   },
+  {
+    path: '/notifications',
+    name: 'Notifications',
+    component: () => import('@/views/Notifications.vue'),
+    meta: { requiresAuth: true, roles: ['customer'] }
+  },
   // Doctor routes
   {
     path: '/doctor',
