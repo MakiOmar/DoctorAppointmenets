@@ -612,7 +612,7 @@ add_action(
 											// Show success message and add attendance button dynamically
 											Swal.fire({
 												title: 'تم بنجاح!',
-												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+												text: 'تم تحديد الجلسة كمكتملة بنجاح',
 												icon: 'success',
 												confirmButtonText: 'حسناً'
 											}).then(() => {

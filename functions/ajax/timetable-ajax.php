@@ -584,7 +584,7 @@ function snks_handle_session_doctor_actions() {
 	
 	// Return success with session info
 	wp_send_json_success( array( 
-		'message' => 'Session marked as completed successfully.',
+		'message' => 'تم تحديد الجلسة كمكتملة بنجاح',
 		'session_id' => $session_id,
 		'client_id' => $session->client_id,
 		'order_id' => $session->order_id,
