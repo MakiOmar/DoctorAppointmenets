@@ -246,10 +246,12 @@ export default {
         
         if (isMobile) {
           // Mobile: full width with margins
+          let top = Math.max(rect.bottom + 8, 16) // Ensure minimum 16px from top
+          
           position = {
             left: '16px',
             right: '16px',
-            top: `${rect.bottom + 8}px`,
+            top: `${top}px`,
             width: 'calc(100vw - 32px)',
             maxWidth: 'calc(100vw - 32px)'
           }
@@ -272,8 +274,17 @@ export default {
           
           // Ensure dropdown doesn't go off screen vertically
           if (top + 400 > windowHeight) {
-            top = rect.top - 400 - 8
+            // Try positioning above the button
+            top = Math.max(rect.top - 400 - 8, 16)
+            
+            // If still doesn't fit, position at top with margin
+            if (top < 16) {
+              top = 16
+            }
           }
+          
+          // Ensure top is never negative
+          top = Math.max(top, 16)
           
           position = {
             left: `${left}px`,
@@ -283,6 +294,24 @@ export default {
         }
         
         notificationPosition.value = position
+      } else {
+        // Fallback position if button not found
+        const isMobile = window.innerWidth <= 768
+        if (isMobile) {
+          notificationPosition.value = {
+            left: '16px',
+            right: '16px',
+            top: '80px',
+            width: 'calc(100vw - 32px)',
+            maxWidth: 'calc(100vw - 32px)'
+          }
+        } else {
+          notificationPosition.value = {
+            left: '16px',
+            top: '80px',
+            maxHeight: '400px'
+          }
+        }
       }
     }
     
@@ -464,6 +493,11 @@ export default {
 .notification-dropdown {
   position: fixed !important;
   z-index: 9999 !important;
+}
+
+/* Ensure notification is never positioned above viewport */
+.notification-dropdown[style*="top: -"] {
+  top: 16px !important;
 }
 
 /* Mobile-specific positioning */
