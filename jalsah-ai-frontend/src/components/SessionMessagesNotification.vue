@@ -28,8 +28,9 @@
     <!-- Notifications Dropdown -->
     <div
       v-if="showNotifications"
-      class="absolute left-0 mt-2 w-96 max-w-[90vw] bg-white rounded-lg shadow-xl z-50 border border-gray-200"
-      :class="locale === 'ar' ? 'right-auto left-0' : 'right-0 left-auto'"
+      class="notification-dropdown fixed top-16 w-96 max-w-[90vw] bg-white rounded-lg shadow-xl border border-gray-200"
+      :class="locale === 'ar' ? 'right-4' : 'right-4'"
+      :style="notificationPosition"
     >
       <!-- Header -->
       <div class="px-4 py-3 border-b border-gray-200">
@@ -231,11 +232,67 @@ export default {
     const hasMore = ref(false)
     const selectedMessage = ref(null)
     const showMessagePopup = ref(false)
+    const notificationPosition = ref({})
+    
+    const calculatePosition = () => {
+      const button = document.querySelector('.relative button')
+      if (button) {
+        const rect = button.getBoundingClientRect()
+        const windowWidth = window.innerWidth
+        const windowHeight = window.innerHeight
+        const isMobile = windowWidth <= 768
+        
+        let position = {}
+        
+        if (isMobile) {
+          // Mobile: full width with margins
+          position = {
+            left: '16px',
+            right: '16px',
+            top: `${rect.bottom + 8}px`,
+            width: 'calc(100vw - 32px)',
+            maxWidth: 'calc(100vw - 32px)'
+          }
+        } else {
+          // Desktop: positioned relative to button
+          let left = rect.right - 384 // 384px = w-96
+          let top = rect.bottom + 8
+          
+          // Adjust for RTL
+          if (locale.value === 'ar') {
+            left = rect.left
+          }
+          
+          // Ensure dropdown doesn't go off screen horizontally
+          if (left < 16) {
+            left = 16
+          } else if (left + 384 > windowWidth - 16) {
+            left = windowWidth - 384 - 16
+          }
+          
+          // Ensure dropdown doesn't go off screen vertically
+          if (top + 400 > windowHeight) {
+            top = rect.top - 400 - 8
+          }
+          
+          position = {
+            left: `${left}px`,
+            top: `${top}px`,
+            maxHeight: `${Math.min(400, windowHeight - top - 16)}px`
+          }
+        }
+        
+        notificationPosition.value = position
+      }
+    }
     
     const toggleNotifications = async () => {
       showNotifications.value = !showNotifications.value
-      if (showNotifications.value && messages.value.length === 0) {
-        await loadMessages()
+      if (showNotifications.value) {
+        calculatePosition()
+        if (messages.value.length === 0) {
+          await loadMessages()
+        }
       }
     }
     
@@ -349,6 +406,13 @@ export default {
           loadMessages()
         }
       }, 20000)
+      
+      // Add window resize listener
+      window.addEventListener('resize', () => {
+        if (showNotifications.value) {
+          calculatePosition()
+        }
+      })
     })
     
     return {
@@ -360,6 +424,7 @@ export default {
       hasMore,
       selectedMessage,
       showMessagePopup,
+      notificationPosition,
       toggleNotifications,
       loadMessages,
       openMessage,
@@ -392,6 +457,22 @@ export default {
 @media (max-width: 640px) {
   .max-w-\[90vw\] {
     max-width: 90vw;
+  }
+}
+
+/* Ensure notification dropdown is properly positioned */
+.notification-dropdown {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Mobile-specific positioning */
+@media (max-width: 768px) {
+  .notification-dropdown {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    left: 16px !important;
+    right: 16px !important;
   }
 }
 
