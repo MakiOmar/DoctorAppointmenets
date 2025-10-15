@@ -96,11 +96,11 @@ jQuery(document).ready(function($) {
             <div class="snks-modal-overlay">
                 <div class="snks-modal">
                     <div class="snks-modal-header">
-                        <h3>Reason for Referral</h3>
+                        <h3>سبب الإحالة</h3>
                         <button class="snks-modal-close">&times;</button>
                     </div>
                     <div class="snks-modal-body">
-                        <div class="snks-loading">Loading...</div>
+                        <div class="snks-loading">جاري التحميل...</div>
                     </div>
                 </div>
             </div>
@@ -124,17 +124,17 @@ jQuery(document).ready(function($) {
                         <div class="snks-modal-overlay">
                             <div class="snks-modal">
                                 <div class="snks-modal-header">
-                                    <h3>Reason for Referral</h3>
+                                    <h3>سبب الإحالة</h3>
                                     <button class="snks-modal-close">&times;</button>
                                 </div>
                                 <div class="snks-modal-body">
                                     <div class="snks-referral-reason">
                                         <div class="snks-form-group">
-                                            <label>Preliminary Diagnosis:</label>
+                                            <label>التشخيص المبدئي:</label>
                                             <div class="snks-reason-content">${data.preliminary_diagnosis}</div>
                                         </div>
                                         <div class="snks-form-group">
-                                            <label>Symptoms:</label>
+                                            <label>الأعراض:</label>
                                             <div class="snks-reason-content">${data.symptoms}</div>
                                         </div>
                                     </div>
@@ -146,11 +146,11 @@ jQuery(document).ready(function($) {
                     $('.snks-modal-overlay').remove();
                     $('body').append(reasonDialog);
                 } else {
-                    showError('Failed to load referral reason');
+                    showError('فشل تحميل سبب الإحالة');
                 }
             },
             error: function() {
-                showError('Failed to load referral reason');
+                showError('فشل تحميل سبب الإحالة');
             }
         });
     }
@@ -172,7 +172,7 @@ jQuery(document).ready(function($) {
         };
 
         // Show loading state
-        form.find('button[type="submit"]').prop('disabled', true).text('Submitting...');
+        form.find('button[type="submit"]').prop('disabled', true).text('جاري الإرسال...');
 
         $.ajax({
             url: snks_ai_prescription.ajax_url,
@@ -186,7 +186,7 @@ jQuery(document).ready(function($) {
                         .removeClass('snks-prescription-button')
                         .addClass('snks-prescription-requested')
                         .prop('disabled', true)
-                        .text('Prescription Requested');
+                        .text('تم طلب الروشتة');
                 } else {
                     showError(response.data || snks_ai_prescription.strings.error_message);
                 }
@@ -235,7 +235,7 @@ jQuery(document).ready(function($) {
             <div class="snks-modal-overlay">
                 <div class="snks-modal">
                     <div class="snks-modal-header">
-                        <h3>Success</h3>
+                        <h3>نجح</h3>
                         <button class="snks-modal-close">&times;</button>
                     </div>
                     <div class="snks-modal-body">
@@ -262,7 +262,7 @@ jQuery(document).ready(function($) {
             <div class="snks-modal-overlay">
                 <div class="snks-modal">
                     <div class="snks-modal-header">
-                        <h3>Error</h3>
+                        <h3>خطأ</h3>
                         <button class="snks-modal-close">&times;</button>
                     </div>
                     <div class="snks-modal-body">
