@@ -1699,18 +1699,10 @@ function snks_doctor_actions( $session ) {
 				$session->ID
 			) );
 			
-			// Debug logging
-			error_log( "DEBUG: Session {$session->ID} - is_completed: " . ($is_completed ? 'true' : 'false') . ", attendance_set: {$attendance_set}" );
-			
 			// Only show button if attendance not set
 			if ( ! $attendance_set || $attendance_set == 0 ) {
 				$output .= '<button class="snks-button snks-attendance-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="background-color: #007cba; border-color: #007cba; margin-top: 10px;">هل حضر المريض الجلسة؟</button>';
-				error_log( "DEBUG: Added attendance button for session {$session->ID}" );
-			} else {
-				error_log( "DEBUG: Attendance already set for session {$session->ID}, not showing button" );
 			}
-		} else {
-			error_log( "DEBUG: Session {$session->ID} is not completed, status: {$session->session_status}" );
 		}
 		
 		// Roshtah Request button (only for AI sessions and only if session has ended or completed)
