@@ -734,9 +734,19 @@ add_action(
 			.rotate-90{
 				transform: rotate(-90deg);
 				white-space: nowrap;
+				transform-origin: center;
 			}
 			.rotate-90 *{
 				white-space: nowrap!important;
+			}
+			/* Better positioning for rotated Arabic text */
+			.snks-start-meeting.rotate-90 {
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-width: 100px;
+				width: auto;
 			}
 			.snks-bg{
 				background-color: #024059!important;
