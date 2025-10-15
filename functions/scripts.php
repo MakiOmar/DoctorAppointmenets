@@ -601,10 +601,15 @@ add_action(
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
+											// Get session data before removing form
+											var sessionId = form.find('input[name="session_id"]').val();
+											var clientId = form.find('input[name="attendees"]').val();
+											var $doctorActions = form.closest('.doctor-actions-wrapper');
+											
 											// Remove the completion button and form
 											form.remove();
 											
-											// Show success message only
+											// Show success message and add attendance button
 											Swal.fire({
 												title: 'تم بنجاح!',
 												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
@@ -612,12 +617,12 @@ add_action(
 												confirmButtonText: 'حسناً'
 											}).then(() => {
 												// Add the attendance button after completion
-												var $doctorActions = form.closest('.doctor-actions-wrapper');
-												if ($doctorActions.length) {
-													var sessionId = form.find('input[name="session_id"]').val();
-													var clientId = form.find('input[name="attendees"]').val();
-													var attendanceBtn = '<button class="snks-button snks-attendance-btn" data-session-id="' + sessionId + '" data-client-id="' + clientId + '" style="background-color: #007cba; border-color: #007cba;">هل حضر المريض الجلسة؟</button>';
+												if ($doctorActions.length && sessionId && clientId) {
+													var attendanceBtn = '<button class="snks-button snks-attendance-btn" data-session-id="' + sessionId + '" data-client-id="' + clientId + '" style="background-color: #007cba; border-color: #007cba; margin-top: 10px;">هل حضر المريض الجلسة؟</button>';
 													$doctorActions.append(attendanceBtn);
+													console.log('✅ Attendance button added for session:', sessionId);
+												} else {
+													console.error('❌ Failed to add attendance button - missing data or container');
 												}
 											});
 										} else {
@@ -650,6 +655,19 @@ add_action(
 					var sessionId = $(this).data('session-id');
 					var clientId = $(this).data('client-id');
 					var $button = $(this);
+					
+					console.log('🎯 Attendance button clicked - Session ID:', sessionId, 'Client ID:', clientId);
+					
+					if (!sessionId || !clientId) {
+						console.error('❌ Missing session or client data');
+						Swal.fire({
+							title: 'خطأ!',
+							text: 'بيانات الجلسة مفقودة',
+							icon: 'error',
+							confirmButtonText: 'حسناً'
+						});
+						return;
+					}
 					
 					// Show attendance confirmation dialog
 					Swal.fire({
@@ -704,6 +722,7 @@ add_action(
 									nonce: '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>'
 								},
 								success: function(attendanceResponse) {
+									console.log('📊 Attendance update response:', attendanceResponse);
 									if (attendanceResponse.success) {
 										Swal.fire({
 											title: 'تم بنجاح!',
@@ -713,8 +732,10 @@ add_action(
 										}).then(() => {
 											// Hide the attendance button after successful update
 											$button.hide();
+											console.log('✅ Attendance button hidden after successful update');
 										});
 									} else {
+										console.error('❌ Attendance update failed:', attendanceResponse.data);
 										Swal.fire({
 											title: 'خطأ!',
 											text: attendanceResponse.data || 'حدث خطأ في تسجيل حالة الحضور',
@@ -723,7 +744,8 @@ add_action(
 										});
 									}
 								},
-								error: function() {
+								error: function(xhr, status, error) {
+									console.error('❌ AJAX error updating attendance:', error, xhr.responseText);
 									Swal.fire({
 										title: 'خطأ!',
 										text: 'حدث خطأ في تسجيل حالة الحضور',
