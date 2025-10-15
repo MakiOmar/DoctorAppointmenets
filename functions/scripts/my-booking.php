@@ -219,6 +219,9 @@ add_action(
 				$('.snks-count-down').each(
 					function(){
 						var parent = $(this).closest('.snks-booking-item');
+						if ( parent.closest('.past').length > 0 ) {
+							return;
+						}
 						var parentID = parent.attr('id');
 						var itemID = parentID.match(/\d+/)[0];
 						var dateTime = parent.data('datetime');
@@ -267,7 +270,6 @@ add_action(
 										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
 									}
 								} else {
-									/**
 									if ( now - countDownDate > 3600000 ) {
 										$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
 										parent.addClass('snks-disabled');
@@ -276,8 +278,8 @@ add_action(
 										parent.removeClass('snks-disabled');
 										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
 										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
+										$(".snks-start-meeting", parent).text('إبدأ الجلسة');
 									}
-									*/
 								}
 							},
 							1000
