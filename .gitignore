@@ -11,7 +11,7 @@
 */dist/
 jalsah-ai-frontend/dist/
 jalsah-ai-frontend/node_modules/
-
+dist.zip
 # IDE and editor files
 .vscode/
 .idea/
