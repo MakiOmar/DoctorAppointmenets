@@ -18,22 +18,7 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
               <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                              <span class="text-blue-800 text-sm font-medium">{{ t('prescription.prescriptionRequested') || 'Prescription Requested' }}</span>
-            </div>
-            <div class="text-xs text-gray-500">
-              {{ formatDate(request.created_at) }}
-            </div>
-          </div>
-          
-          <!-- Session Details -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-sm">
-            <div>
-              <span class="font-medium text-gray-700">{{ t('appointmentsPage.therapist') }}:</span>
-              <span class="text-gray-900">{{ request.therapist_name }}</span>
-            </div>
-            <div>
-              <span class="font-medium text-gray-700">{{ t('appointmentsPage.session') }}:</span>
-              <span class="text-gray-900">{{ formatDate(request.date_time) }} - {{ formatTime(request.starts) }}</span>
+              <span class="text-blue-800 text-sm font-medium">{{ t('prescription.prescriptionRequested').replace('{name}', request.therapist_name) || 'Prescription Requested' }}</span>
             </div>
           </div>
           
@@ -98,20 +83,13 @@
                   <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                   <span class="text-green-800 text-sm font-medium">{{ t('prescription.viewPrescription') || 'Prescription Ready' }}</span>
                 </div>
-                <div class="text-xs text-gray-500">
-                  {{ formatDate(prescription.prescribed_at) }}
-                </div>
               </div>
               
               <!-- Prescription Details -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-sm">
+              <div class="grid grid-cols-1 gap-3 mb-4 text-sm">
                 <div>
                   <span class="font-medium text-gray-700">{{ t('prescription.prescribedBy') }}:</span>
                   <span class="text-gray-900">{{ prescription.prescribed_by_name }}</span>
-                </div>
-                <div>
-                  <span class="font-medium text-gray-700">{{ t('prescription.prescribedAt') }}:</span>
-                  <span class="text-gray-900">{{ formatDate(prescription.booking_date) }} - {{ prescription.booking_time }}</span>
                 </div>
               </div>
               

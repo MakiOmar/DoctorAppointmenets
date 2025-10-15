@@ -789,7 +789,7 @@ export default {
     leaveMeeting: 'Leave Meeting',
     stayInMeeting: 'Stay in Meeting',
     prescription: 'Prescription',
-    prescriptionRequested: 'Prescription Requested',
+    prescriptionRequested: 'Your therapist, {name}, have ordered a prescription for you. Please create a free appointment with our psychiatrist to follow up on your medication alongside your sessions.',
     prescriptionServices: 'Prescription Services',
     bookFreeAppointment: 'Book Free Appointment',
     bookAppointment: 'Book Appointment',
@@ -815,7 +815,7 @@ export default {
   // Prescription
   prescription: {
     prescriptionServices: 'Prescription Services',
-    prescriptionRequested: 'Prescription Requested',
+    prescriptionRequested: 'Your therapist, {name}, have ordered a prescription for you. Please create a free appointment with our psychiatrist to follow up on your medication alongside your sessions.',
     completedPrescriptions: 'My Prescriptions',
     bookFreeAppointment: 'Book Free Appointment',
     bookAppointment: 'Book Appointment',

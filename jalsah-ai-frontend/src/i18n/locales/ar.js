@@ -739,7 +739,7 @@ export default {
     leaveMeeting: 'مغادرة الجلسة',
     stayInMeeting: 'البقاء في الجلسة',
     prescription: 'روشتة',
-    prescriptionRequested: 'تم طلب الروشتة',
+    prescriptionRequested: 'لقد طلب معالجك، {name}، وصفة طبية لك. يرجى إنشاء موعد مجاني مع طبيبنا النفسي لمتابعة أدويتك إلى جانب جلساتك.',
     prescriptionServices: 'خدمات الروشتة',
     bookFreeAppointment: 'احجز موعد مجاني',
     bookAppointment: 'احجز موعد',
@@ -765,7 +765,7 @@ export default {
   // Prescription
   prescription: {
     prescriptionServices: 'خدمات الروشتة',
-    prescriptionRequested: 'تم طلب الروشتة',
+    prescriptionRequested: 'لقد طلب معالجك، {name}، وصفة طبية لك. يرجى إنشاء موعد مجاني مع طبيبنا النفسي لمتابعة أدويتك إلى جانب جلساتك.',
     completedPrescriptions: 'الروشتات الخاصة بي',
     bookFreeAppointment: 'احجز موعد مجاني',
     bookAppointment: 'احجز موعد',
