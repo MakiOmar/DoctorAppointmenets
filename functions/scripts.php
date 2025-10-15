@@ -361,10 +361,16 @@ add_action(
 					var textWidth = $temp.width();
 					$temp.remove();
 					
-					// Ensure SVG elements maintain their animation
+					// Ensure SVG elements maintain their exact styling
 					$this.find('svg').css({
+						'display': 'inline-block',
+						'width': '20px',
+						'height': '20px',
+						'margin-left': '8px',
 						'animation': 'spin 1s linear infinite',
-						'display': 'inline-block'
+						'vertical-align': 'middle',
+						'position': 'absolute',
+						'left': '-100%'
 					});
 					
 					// Adjust positioning based on actual text width
