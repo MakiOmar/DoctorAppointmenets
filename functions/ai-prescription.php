@@ -93,7 +93,7 @@ function snks_handle_ai_prescription_request() {
 	
 	// Check if session is completed
 	if ( $session->session_status !== 'completed' ) {
-		wp_send_json_error( __( 'Session must be completed before requesting prescription', 'shrinks' ) );
+		wp_send_json_error( 'يجب إتمام الجلسة قبل طلب الروشتة' );
 	}
 	
 	// Check if prescription already requested - multiple validation points

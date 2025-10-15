@@ -601,12 +601,12 @@ add_action( 'wp_ajax_request_rochtah', 'snks_handle_session_rochtah_request' );
 function snks_handle_session_rochtah_request() {
 	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_request_nonce' ) ) {
-		wp_send_json_error( 'Invalid nonce.' );
+		wp_send_json_error( 'رمز الأمان غير صالح.' );
 	}
 	
 	// Check if user is a doctor
 	if ( ! snks_is_doctor() ) {
-		wp_send_json_error( 'Access denied. Only doctors can perform this action.' );
+		wp_send_json_error( 'الوصول مرفوض. يمكن للأطباء فقط القيام بهذا الإجراء.' );
 	}
 	
 	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
@@ -617,11 +617,11 @@ function snks_handle_session_rochtah_request() {
 	$reason_for_referral = isset( $_POST['reason_for_referral'] ) ? sanitize_textarea_field( $_POST['reason_for_referral'] ) : '';
 	
 	if ( ! $session_id || ! $client_id || ! $order_id ) {
-		wp_send_json_error( 'Missing required data.' );
+		wp_send_json_error( 'بيانات مطلوبة مفقودة.' );
 	}
 	
 	if ( empty( $initial_diagnosis ) || empty( $symptoms ) || empty( $reason_for_referral ) ) {
-		wp_send_json_error( 'Initial diagnosis, symptoms, and reason for referral are required.' );
+		wp_send_json_error( 'التشخيص المبدئي والأعراض وسبب الإحالة مطلوبة.' );
 	}
 	
 	global $wpdb;
@@ -634,12 +634,12 @@ function snks_handle_session_rochtah_request() {
 	) );
 	
 	if ( ! $session ) {
-		wp_send_json_error( 'Session not found or access denied.' );
+		wp_send_json_error( 'الجلسة غير موجودة أو الوصول مرفوض.' );
 	}
 	
 	// Check if session is completed
 	if ( $session->session_status !== 'completed' ) {
-		wp_send_json_error( 'Session must be completed before requesting Roshta.' );
+		wp_send_json_error( 'يجب إتمام الجلسة قبل طلب الروشتة.' );
 	}
 	
 	// Check if Roshta already requested for this session
@@ -651,7 +651,7 @@ function snks_handle_session_rochtah_request() {
 	) );
 	
 	if ( $existing_booking ) {
-		wp_send_json_error( 'Roshta already requested for this session.' );
+		wp_send_json_error( 'تم طلب الروشتة بالفعل لهذه الجلسة.' );
 	}
 	
 	// Create Roshta booking record
@@ -673,7 +673,7 @@ function snks_handle_session_rochtah_request() {
 	);
 	
 	if ( $insert_result === false ) {
-		wp_send_json_error( 'Failed to create Roshta request.' );
+		wp_send_json_error( 'فشل في إنشاء طلب الروشتة.' );
 	}
 	
 	$rochtah_booking_id = $wpdb->insert_id;
