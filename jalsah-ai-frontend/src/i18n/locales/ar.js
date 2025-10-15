@@ -784,6 +784,7 @@ export default {
     prescribedAt: 'تاريخ الوصف',
     medications: 'الأدوية',
     dosageInstructions: 'تعليمات الجرعة',
+    noAvailableSlots: 'لا توجد مواعيد متاحة حالياً',
     doctorNotes: 'ملاحظات الطبيب',
     initialDiagnosis: 'التشخيص الأولي',
     symptoms: 'الأعراض',

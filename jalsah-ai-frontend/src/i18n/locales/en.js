@@ -834,6 +834,7 @@ export default {
     prescribedAt: 'Prescribed on',
     medications: 'Medications',
     dosageInstructions: 'Dosage Instructions',
+    noAvailableSlots: 'No available slots at the moment',
     doctorNotes: 'Doctor Notes',
     initialDiagnosis: 'Initial Diagnosis',
     symptoms: 'Symptoms',
