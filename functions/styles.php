@@ -669,6 +669,9 @@ add_action(
 				justify-content: space-around;
 				align-items: baseline;
 			}
+			.swal2-close{
+				font-family: "Arial", sans-serif!important;
+			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
