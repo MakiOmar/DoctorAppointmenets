@@ -859,8 +859,8 @@ function snks_get_doctor_sessions( $tense, $status = 'waiting', $ordered = false
 	
 	// Add status condition
 	if ( $status === 'open' ) {
-		// Include 'open' sessions OR 'completed' sessions that are AI bookings
-		$query .= " AND (session_status = 'open' OR (session_status = 'completed' AND settings LIKE '%ai_booking%'))";
+		// Include 'open' sessions OR 'completed' sessions (both AI and regular)
+		$query .= " AND (session_status = 'open' OR session_status = 'completed')";
 	} else {
 		$query .= " AND session_status = %s";
 	}
