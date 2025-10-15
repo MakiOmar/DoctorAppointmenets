@@ -1720,9 +1720,21 @@ function snks_doctor_actions( $session ) {
 			}
 		}
 		
-		// Send Message button (only for AI sessions - available anytime)
+		// Send Message button (only for AI sessions)
 		if ( $is_ai_session ) {
-			$output .= '<button class="snks-button snks-send-message-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #6366f1; border-color: #6366f1;">إرسال رسالة للمريض</button>';
+			// Prepare button attributes based on session status
+			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
+			$button_class    = 'snks-button snks-send-message-btn';
+			if ( ! $is_session_ended ) {
+				$button_class .= ' snks-button-waiting';
+			}
+			$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+			$button_style    = 'margin-top: 10px; background-color: #6366f1; border-color: #6366f1;';
+			if ( ! $is_session_ended ) {
+				$button_style .= ' pointer-events: none !important; cursor: not-allowed !important;';
+			}
+			
+			$output .= '<button class="' . $button_class . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="' . $button_style . '" ' . $button_disabled . ' title="' . esc_attr( $button_title ) . '">إرسال رسالة للمريض</button>';
 		}
 		
 		$output .= '</div>';

@@ -429,7 +429,9 @@ add_action(
 							50% { opacity: 0.7; }
 						}
 						.snks-complete-session-btn:disabled, 
-						.snks-complete-session-btn[disabled] { 
+						.snks-complete-session-btn[disabled],
+						.snks-send-message-btn:disabled,
+						.snks-send-message-btn[disabled] { 
 							pointer-events: none !important; 
 							cursor: not-allowed !important; 
 						}
@@ -466,6 +468,7 @@ add_action(
 					var $doctorActions = $(this);
 					var sessionEndTime = parseInt($doctorActions.data('session-end'));
 					var $button = $doctorActions.find('.snks-complete-session-btn');
+					var $sendMessageButton = $doctorActions.find('.snks-send-message-btn');
 					var sessionId = $doctorActions.find('input[name="session_id"]').val();
 					
 					if (!sessionEndTime || !$button.length) {
@@ -495,6 +498,16 @@ add_action(
 							.removeAttr('style')
 							.removeClass('snks-button-waiting')
 							.attr('title', '');
+						
+						// Enable send message button if it exists
+						if ($sendMessageButton.length) {
+							debugLog('✅ Session #' + sessionId + ' has ended - enabling send message button');
+							$sendMessageButton.prop('disabled', false)
+								.removeAttr('disabled')
+								.removeAttr('style')
+								.removeClass('snks-button-waiting')
+								.attr('title', '');
+						}
 						return false; // Stop the interval
 					}
 						
@@ -538,8 +551,14 @@ add_action(
 			});
 
 			// Prevent ANY interaction with disabled buttons at the earliest possible moment
-			$(document).on('mousedown mouseup click submit', '.doctor_actions .snks-complete-session-btn, form.doctor_actions', function(e) {
-				var $button = $(this).hasClass('snks-complete-session-btn') ? $(this) : $(this).find('.snks-complete-session-btn');
+			$(document).on('mousedown mouseup click submit', '.doctor_actions .snks-complete-session-btn, .snks-send-message-btn, form.doctor_actions', function(e) {
+				var $button = $(this);
+				if ($(this).hasClass('snks-complete-session-btn') || $(this).hasClass('snks-send-message-btn')) {
+					$button = $(this);
+				} else {
+					$button = $(this).find('.snks-complete-session-btn, .snks-send-message-btn');
+				}
+				
 				if ($button.length && ($button.prop('disabled') || $button.attr('disabled') === 'disabled')) {
 					e.preventDefault();
 					e.stopPropagation();
@@ -612,7 +631,7 @@ add_action(
 											// Show success message and add attendance button dynamically
 											Swal.fire({
 												title: 'تم بنجاح!',
-												text: 'تم تحديد الجلسة كمكتملة بنجاح',
+												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
 												icon: 'success',
 												confirmButtonText: 'حسناً'
 											}).then(() => {

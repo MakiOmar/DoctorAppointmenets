@@ -28,7 +28,7 @@
     <!-- Notifications Dropdown -->
     <div
       v-if="showNotifications"
-      class="absolute left-0 mt-2 w-96 bg-white rounded-lg shadow-xl z-50 border border-gray-200"
+      class="absolute left-0 mt-2 w-96 max-w-[90vw] bg-white rounded-lg shadow-xl z-50 border border-gray-200"
       :class="locale === 'ar' ? 'right-auto left-0' : 'right-0 left-auto'"
     >
       <!-- Header -->
@@ -75,16 +75,16 @@
               </p>
               
               <!-- Attachments -->
-              <div v-if="message.attachments && message.attachments.length > 0" class="mt-2 flex flex-wrap gap-2">
+              <div v-if="message.attachments && message.attachments.length > 0" class="mt-2 space-y-1">
                 <div
                   v-for="attachment in message.attachments.slice(0, 3)"
                   :key="attachment.id"
-                  class="flex items-center text-xs text-blue-600"
+                  class="flex items-center text-xs text-blue-600 break-words"
                 >
-                  <svg class="w-4 h-4" :class="locale === 'ar' ? 'ml-1' : 'mr-1'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 flex-shrink-0" :class="locale === 'ar' ? 'ml-1' : 'mr-1'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                   </svg>
-                  {{ attachment.name }}
+                  <span class="attachment-name">{{ attachment.name }}</span>
                 </div>
                 <span v-if="message.attachments.length > 3" class="text-xs text-gray-500">
                   +{{ message.attachments.length - 3 }} {{ $t('messages.more') }}
@@ -171,17 +171,18 @@
               <div
                 v-for="attachment in selectedMessage.attachments"
                 :key="attachment.id"
-                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                class="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
               >
-                <div class="flex items-center">
-                  <svg class="w-5 h-5 text-gray-500" :class="locale === 'ar' ? 'ml-2' : 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-start flex-1 min-w-0">
+                  <svg class="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" :class="locale === 'ar' ? 'ml-2' : 'mr-2'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                   </svg>
-                  <span class="text-sm text-gray-700">{{ attachment.name }}</span>
+                  <span class="text-sm text-gray-700 attachment-name">{{ attachment.name }}</span>
                 </div>
                 <button
                   @click="downloadAttachment(attachment)"
-                  class="px-3 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors"
+                  class="px-3 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors flex-shrink-0"
+                  :class="locale === 'ar' ? 'mr-2' : 'ml-2'"
                 >
                   {{ $t('messages.download') }}
                 </button>
@@ -378,6 +379,28 @@ export default {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Ensure proper text wrapping for long filenames */
+.break-all {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 640px) {
+  .max-w-\[90vw\] {
+    max-width: 90vw;
+  }
+}
+
+/* Ensure attachment names wrap properly */
+.attachment-name {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: normal;
+  hyphens: auto;
 }
 </style>
 
