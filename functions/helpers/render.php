@@ -944,7 +944,7 @@ function snks_booking_item_template( $record ) {
 			</div>
 			<?php if ( 'online' === $record->attendance_type && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
-				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);left:-25%;color:#fff">{button_text}</a>
+				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="color:#fff">{button_text}</a>
 			</div>
 			<?php } ?>
 		</div>

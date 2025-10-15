@@ -745,8 +745,21 @@ add_action(
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				min-width: 100px;
-				width: auto;
+				width: 100%;
+				position: absolute;
+				top: calc(50% - 15px);
+				left: 50%;
+				transform: translateX(-50%) rotate(-90deg);
+				transform-origin: center;
+			}
+			/* Positioning for non-rotated session start buttons */
+			.snks-start-meeting {
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 100%;
+				color: #fff !important;
 			}
 			.snks-bg{
 				background-color: #024059!important;

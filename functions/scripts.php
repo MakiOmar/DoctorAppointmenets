@@ -346,7 +346,26 @@ add_action(
 					}
 				);
 				$('.attandance_type', $('.snks-booking-item')).css('right', 'calc(50% - ' + ($('.attandance_type', $('.snks-booking-item')).outerWidth( ) / 2 ) + 'px)');
-				$('.snks-start-meeting').css('right', 'calc(50% - ' + ($('.snks-start-meeting').outerWidth( ) / 2 ) + 'px)');
+				// Dynamic positioning for rotated session start buttons based on actual text width
+				$('.snks-start-meeting.rotate-90').each(function() {
+					var $this = $(this);
+					var $temp = $('<span>').text($this.text()).css({
+						'visibility': 'hidden',
+						'position': 'absolute',
+						'white-space': 'nowrap',
+						'font-family': $this.css('font-family'),
+						'font-size': $this.css('font-size'),
+						'font-weight': $this.css('font-weight')
+					});
+					$('body').append($temp);
+					var textWidth = $temp.width();
+					$temp.remove();
+					
+					// Adjust positioning based on actual text width
+					// For rotated text, we need to consider the height it will take when rotated
+					var leftOffset = textWidth <= 80 ? '-35%' : '-25%';
+					$this.css('left', leftOffset);
+				});
 				$('<span class="snks-switcher-text switcher-no">لا</span>').insertBefore('#allow_appointment_change');
 				$('<span class="snks-switcher-text switcher-yes">نعم</span>').insertAfter('#allow_appointment_change');
 				$(document).on(
