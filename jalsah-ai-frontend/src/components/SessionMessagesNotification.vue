@@ -250,7 +250,7 @@ export default {
           
           position = {
             left: '16px',
-            right: '16px',
+            right: 'auto',
             top: `${top}px`,
             width: 'calc(100vw - 32px)',
             maxWidth: 'calc(100vw - 32px)'
@@ -288,6 +288,7 @@ export default {
           
           position = {
             left: `${left}px`,
+            right: 'auto',
             top: `${top}px`,
             maxHeight: `${Math.min(400, windowHeight - top - 16)}px`
           }
@@ -300,7 +301,7 @@ export default {
         if (isMobile) {
           notificationPosition.value = {
             left: '16px',
-            right: '16px',
+            right: 'auto',
             top: '80px',
             width: 'calc(100vw - 32px)',
             maxWidth: 'calc(100vw - 32px)'
@@ -308,6 +309,7 @@ export default {
         } else {
           notificationPosition.value = {
             left: '16px',
+            right: 'auto',
             top: '80px',
             maxHeight: '400px'
           }
