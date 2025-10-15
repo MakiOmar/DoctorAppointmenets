@@ -349,7 +349,7 @@ add_action(
 				// Dynamic positioning for rotated session start buttons based on actual text width
 				$('.snks-start-meeting.rotate-90').each(function() {
 					var $this = $(this);
-					var $temp = $('<span>').text($this.text()).css({
+					var $temp = $('<span>').html($this.html()).css({
 						'visibility': 'hidden',
 						'position': 'absolute',
 						'white-space': 'nowrap',
@@ -360,6 +360,12 @@ add_action(
 					$('body').append($temp);
 					var textWidth = $temp.width();
 					$temp.remove();
+					
+					// Ensure SVG elements maintain their animation
+					$this.find('svg').css({
+						'animation': 'spin 1s linear infinite',
+						'display': 'inline-block'
+					});
 					
 					// Adjust positioning based on actual text width
 					// For rotated text, we need to consider the height it will take when rotated

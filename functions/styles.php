@@ -752,6 +752,13 @@ add_action(
 				transform: translateX(-50%) rotate(-90deg);
 				transform-origin: center;
 			}
+			/* Ensure SVG loading indicators are visible in rotated buttons */
+			.snks-start-meeting.rotate-90 svg {
+				display: inline-block !important;
+				animation: spin 1s linear infinite !important;
+				margin-left: 8px !important;
+				vertical-align: middle !important;
+			}
 			/* Positioning for non-rotated session start buttons */
 			.snks-start-meeting {
 				text-align: center;
