@@ -1698,9 +1698,10 @@ function snks_doctor_actions( $session ) {
 				"SELECT COUNT(*) FROM {$actions_table} WHERE action_session_id = %d",
 				$session->ID
 			) );
+			
 			// Only show button if attendance not set
 			if ( ! $attendance_set || $attendance_set == 0 ) {
-				$output .= '<button class="snks-button snks-attendance-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="background-color: #007cba; border-color: #007cba;">هل حضر المريض الجلسة؟</button>';
+				$output .= '<button class="snks-button snks-attendance-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="background-color: #007cba; border-color: #007cba; margin-top: 10px;">هل حضر المريض الجلسة؟</button>';
 			}
 		}
 		
