@@ -8,35 +8,6 @@
 defined( 'ABSPATH' ) || die();
 
 /**
- * Check if a session is an AI session
- *
- * @param object|int $session Session object or ID.
- * @return bool
- */
-function snks_is_ai_session( $session ) {
-	if ( is_numeric( $session ) ) {
-		global $wpdb;
-		$session = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
-				$session
-			)
-		);
-	}
-	
-	if ( ! $session ) {
-		return false;
-	}
-	
-	// Check if session settings indicate AI booking
-	if ( ! empty( $session->settings ) ) {
-		return strpos( $session->settings, 'ai_booking' ) !== false;
-	}
-	
-	return false;
-}
-
-/**
  * Get WhatsApp notification settings
  *
  * @return array
@@ -255,7 +226,7 @@ function snks_send_new_session_notification( $session_id ) {
 		)
 	);
 	
-	if ( ! $session || ! snks_is_ai_session( $session ) ) {
+	if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
 		return false;
 	}
 	
@@ -323,7 +294,7 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 		)
 	);
 	
-	if ( ! $session || ! snks_is_ai_session( $session ) ) {
+	if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
 		return false;
 	}
 	
@@ -493,7 +464,7 @@ function snks_send_doctor_joined_notification( $session_id ) {
 		)
 	);
 	
-	if ( ! $session || ! snks_is_ai_session( $session ) ) {
+	if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
 		return false;
 	}
 	
