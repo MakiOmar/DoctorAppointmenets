@@ -86,7 +86,6 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		'type' => 'template',
 		'template' => array(
 			'name' => $template_name,
-			'category' => 'utility',
 			'language' => array(
 				'code' => $template_language
 			)
