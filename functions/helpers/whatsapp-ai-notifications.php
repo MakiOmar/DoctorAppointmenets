@@ -64,9 +64,10 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	if ( ! empty( $parameters ) ) {
 		$template_parameters = array();
-		foreach ( $parameters as $param_value ) {
+		foreach ( $parameters as $index => $param_value ) {
 			$template_parameters[] = array(
 				'type' => 'text',
+				'parameter_name' => (string)($index + 1), // Use numbered parameter names (1, 2, 3, etc.)
 				'text' => $param_value
 			);
 		}
@@ -126,6 +127,13 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		error_log( '[WhatsApp AI] Phone Number (to): ' . $phone_number );
 		error_log( '[WhatsApp AI] Parameters (values): ' . json_encode( $parameters, JSON_UNESCAPED_UNICODE ) );
 		error_log( '[WhatsApp AI] Parameters Count: ' . count( $parameters ) );
+		if ( ! empty( $parameters ) ) {
+			$param_names = array();
+			foreach ( $parameters as $index => $param_value ) {
+				$param_names[] = (string)($index + 1);
+			}
+			error_log( '[WhatsApp AI] Parameter Names: ' . json_encode( $param_names ) );
+		}
 		error_log( '[WhatsApp AI] --- Request Body (JSON) ---' );
 		error_log( $json_body );
 		error_log( '[WhatsApp AI] --- Request Body (Formatted) ---' );
