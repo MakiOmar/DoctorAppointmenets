@@ -43,7 +43,9 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	// Check if WhatsApp API is configured
 	if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
-		error_log( 'WhatsApp API not configured. Please configure in Therapist Registration Settings.' );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] API not configured. Please configure in Therapist Registration Settings.' );
+		}
 		return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
 	}
 	
@@ -112,16 +114,15 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	// Check for errors
 	if ( is_wp_error( $response ) ) {
-		error_log( 'WhatsApp API Error: ' . $response->get_error_message() );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] Connection Error: ' . $response->get_error_message() );
+		}
 		return $response;
 	}
 	
 	// Get response body and code
 	$response_body = wp_remote_retrieve_body( $response );
 	$response_code = wp_remote_retrieve_response_code( $response );
-	
-	// Log response
-	error_log( 'WhatsApp Template Message Response - Code: ' . $response_code . ' Body: ' . $response_body );
 	
 	// Check response code
 	if ( $response_code !== 200 ) {
@@ -132,7 +133,14 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 			$error_message = $error_data['error']['message'];
 		}
 		
-		error_log( 'WhatsApp API Error Response: ' . $error_message );
+		// Debug WhatsApp API errors
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] API Error - Code: ' . $response_code );
+			error_log( '[WhatsApp AI] Error Message: ' . $error_message );
+			error_log( '[WhatsApp AI] Template: ' . $template_name );
+			error_log( '[WhatsApp AI] Phone: ' . $phone_number );
+		}
+		
 		return new WP_Error( 'api_error', $error_message, array( 
 			'response_code' => $response_code,
 			'response_body' => $response_body 
@@ -142,9 +150,11 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	// Parse response data
 	$response_data = json_decode( $response_body, true );
 	
-	// Log success
-	if ( isset( $response_data['messages'][0]['id'] ) ) {
-		error_log( 'WhatsApp Template Message Success - Message ID: ' . $response_data['messages'][0]['id'] );
+	// Debug success
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		if ( isset( $response_data['messages'][0]['id'] ) ) {
+			error_log( '[WhatsApp AI] ✅ Sent - Template: ' . $template_name . ' | Phone: ' . $phone_number . ' | Message ID: ' . $response_data['messages'][0]['id'] );
+		}
 	}
 	
 	return $response_data;
@@ -239,7 +249,9 @@ function snks_send_new_session_notification( $session_id ) {
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
 	if ( ! $patient_phone ) {
-		error_log( 'No WhatsApp number found for patient ID: ' . $session->client_id );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] No phone for patient ID: ' . $session->client_id );
+		}
 		return false;
 	}
 	
@@ -307,7 +319,9 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 	// Get doctor phone
 	$doctor_phone = snks_get_user_whatsapp( $session->user_id );
 	if ( ! $doctor_phone ) {
-		error_log( 'No WhatsApp number found for doctor ID: ' . $session->user_id );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] No phone for doctor ID: ' . $session->user_id );
+		}
 		return false;
 	}
 	
@@ -359,7 +373,9 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $patient_id );
 	if ( ! $patient_phone ) {
-		error_log( 'No WhatsApp number found for patient ID: ' . $patient_id );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] No phone for patient ID: ' . $patient_id );
+		}
 		return false;
 	}
 	
@@ -420,7 +436,9 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $booking->patient_id );
 	if ( ! $patient_phone ) {
-		error_log( 'No WhatsApp number found for patient ID: ' . $booking->patient_id );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] No phone for patient ID: ' . $booking->patient_id );
+		}
 		return false;
 	}
 	
@@ -502,7 +520,9 @@ function snks_send_doctor_joined_notification( $session_id ) {
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
 	if ( ! $patient_phone ) {
-		error_log( 'No WhatsApp number found for patient ID: ' . $session->client_id );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] No phone for patient ID: ' . $session->client_id );
+		}
 		return false;
 	}
 	
@@ -562,7 +582,9 @@ function snks_send_doctor_midnight_reminders() {
 		// Get doctor phone
 		$doctor_phone = snks_get_user_whatsapp( $doctor_id );
 		if ( ! $doctor_phone ) {
-			error_log( 'No WhatsApp number found for doctor ID: ' . $doctor_id );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[WhatsApp AI] No phone for doctor ID: ' . $doctor_id );
+			}
 			continue;
 		}
 		

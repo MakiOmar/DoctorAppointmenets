@@ -91,6 +91,59 @@ function snks_test_whatsapp_api_ajax() {
 add_action( 'wp_ajax_test_whatsapp_api', 'snks_test_whatsapp_api_ajax' );
 
 /**
+ * Test AI WhatsApp notification template
+ */
+function snks_test_ai_whatsapp_notification_ajax() {
+	// Verify nonce
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'test_ai_notification_nonce' ) ) {
+		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+	}
+	
+	// Check user permissions
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$template_name = sanitize_text_field( $_POST['template_name'] );
+	$test_phone = sanitize_text_field( $_POST['test_phone'] );
+	$params = json_decode( stripslashes( $_POST['params'] ), true );
+	
+	if ( empty( $template_name ) || empty( $test_phone ) ) {
+		wp_send_json_error( array( 'message' => 'Template name and phone number are required' ) );
+	}
+	
+	// Get the template name from option (in case it was customized)
+	$template_option_name = 'snks_template_' . str_replace( array( '_new', '_app', '10', '_24h', '_1h', '_now', '_rem' ), array( '_new', '_app', '10', '_24h', '_1h', '_now', '_rem' ), $template_name );
+	$actual_template = get_option( $template_option_name, $template_name );
+	
+	// Send test notification using the WhatsApp template function
+	if ( function_exists( 'snks_send_whatsapp_template_message' ) ) {
+		$result = snks_send_whatsapp_template_message( $test_phone, $actual_template, $params );
+		
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 
+				'message' => 'WhatsApp API test failed: ' . $result->get_error_message()
+			) );
+		} else {
+			$message_id = isset( $result['messages'][0]['id'] ) ? $result['messages'][0]['id'] : null;
+			
+			wp_send_json_success( array( 
+				'message' => 'تم إرسال رسالة الاختبار بنجاح!',
+				'message_id' => $message_id,
+				'debug_info' => array(
+					'template' => $actual_template,
+					'phone' => $test_phone,
+					'params_count' => count( $params )
+				)
+			) );
+		}
+	} else {
+		wp_send_json_error( array( 'message' => 'WhatsApp notification function not available' ) );
+	}
+}
+add_action( 'wp_ajax_test_ai_whatsapp_notification', 'snks_test_ai_whatsapp_notification_ajax' );
+
+/**
  * Therapist Registration Settings Page
  */
 function snks_therapist_registration_settings_page() {
@@ -271,6 +324,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_new_session" id="template_new_session" value="<?php echo esc_attr( get_option( 'snks_template_new_session', 'new_session' ) ); ?>" class="regular-text" placeholder="new_session">
+							<button type="button" class="button test-whatsapp-notification" data-template="new_session" data-params='["د. أحمد محمد", "الاثنين", "2025-10-21", "10:00 ص"]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent to patient when booking AI session | Variables: doctor, day, date, time</p>
 						</td>
 					</tr>
@@ -280,6 +334,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_doctor_new" id="template_doctor_new" value="<?php echo esc_attr( get_option( 'snks_template_doctor_new', 'doctor_new' ) ); ?>" class="regular-text" placeholder="doctor_new">
+							<button type="button" class="button test-whatsapp-notification" data-template="doctor_new" data-params='["سارة أحمد", "الاثنين", "2025-10-21", "10:00 ص"]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent to doctor when patient books AI session | Variables: patient, day, date, time</p>
 						</td>
 					</tr>
@@ -289,6 +344,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_rosheta10" id="template_rosheta10" value="<?php echo esc_attr( get_option( 'snks_template_rosheta10', 'rosheta10' ) ); ?>" class="regular-text" placeholder="rosheta10">
+							<button type="button" class="button test-whatsapp-notification" data-template="rosheta10" data-params='["سارة أحمد", "د. محمد علي"]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent when therapist activates prescription service | Variables: patient, doctor</p>
 						</td>
 					</tr>
@@ -298,6 +354,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_rosheta_app" id="template_rosheta_app" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_app', 'rosheta_app' ) ); ?>" class="regular-text" placeholder="rosheta_app">
+							<button type="button" class="button test-whatsapp-notification" data-template="rosheta_app" data-params='["الثلاثاء", "2025-10-22", "02:00 م"]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent when prescription appointment is booked | Variables: day, date, time</p>
 						</td>
 					</tr>
@@ -307,6 +364,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_patient_rem_24h" id="template_patient_rem_24h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_24h', 'patient_rem_24h' ) ); ?>" class="regular-text" placeholder="patient_rem_24h">
+							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_24h" data-params='["د. خالد حسن", "الأربعاء", "2025-10-23", "03:00 م"]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent to patient 24 hours before AI session | Variables: doctor, day, date, time</p>
 						</td>
 					</tr>
@@ -316,6 +374,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_patient_rem_1h" id="template_patient_rem_1h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_1h', 'patient_rem_1h' ) ); ?>" class="regular-text" placeholder="patient_rem_1h">
+							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_1h" data-params='[]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent to patient 1 hour before AI session | No variables</p>
 						</td>
 					</tr>
@@ -325,6 +384,7 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_patient_rem_now" id="template_patient_rem_now" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ) ); ?>" class="regular-text" placeholder="patient_rem_now">
+							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_now" data-params='[]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent when doctor joins AI session | No variables</p>
 						</td>
 					</tr>
@@ -334,8 +394,18 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_doctor_rem" id="template_doctor_rem" value="<?php echo esc_attr( get_option( 'snks_template_doctor_rem', 'doctor_rem' ) ); ?>" class="regular-text" placeholder="doctor_rem">
+							<button type="button" class="button test-whatsapp-notification" data-template="doctor_rem" data-params='["الخميس", "2025-10-24"]' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Sent at midnight if doctor has AI sessions tomorrow | Variables: day, date</p>
 						</td>
+					</tr>
+					<tr>
+						<th scope="row" colspan="2">
+							<hr style="margin: 20px 0;">
+							<label for="ai_test_phone">Test Phone Number for AI Notifications</label><br>
+							<input type="text" id="ai_test_phone" placeholder="201026795795" class="regular-text" style="margin-top: 10px;">
+							<p class="description">Enter a phone number to receive test notifications (without + sign, e.g., 201026795795)</p>
+							<div id="ai-test-result" style="margin-top: 10px;"></div>
+						</th>
 					</tr>
 					<tr>
 						<th scope="row">
@@ -525,6 +595,71 @@ function snks_therapist_registration_settings_page() {
 			button.textContent = 'Send Test Message';
 		});
 	}
+	
+	// Test AI notification templates
+	document.addEventListener('click', function(e) {
+		if (e.target.classList.contains('test-whatsapp-notification')) {
+			const button = e.target;
+			const templateName = button.dataset.template;
+			const params = JSON.parse(button.dataset.params || '[]');
+			const resultDiv = document.getElementById('ai-test-result');
+			const testPhone = document.getElementById('ai_test_phone').value;
+			
+			if (!testPhone) {
+				resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> يرجى إدخال رقم الهاتف للاختبار</div>';
+				return;
+			}
+			
+			// Disable button and show loading
+			button.disabled = true;
+			button.textContent = 'جاري الإرسال...';
+			resultDiv.innerHTML = '<div style="padding: 10px; background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px;">جاري إرسال رسالة الاختبار...</div>';
+			
+			// Prepare form data
+			const formData = new FormData();
+			formData.append('action', 'test_ai_whatsapp_notification');
+			formData.append('template_name', templateName);
+			formData.append('test_phone', testPhone);
+			formData.append('params', JSON.stringify(params));
+			formData.append('nonce', '<?php echo wp_create_nonce( 'test_ai_notification_nonce' ); ?>');
+			
+			// Send AJAX request
+			fetch('<?php echo admin_url( 'admin-ajax.php' ); ?>', {
+				method: 'POST',
+				body: formData
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					let debugInfo = '';
+					if (data.data.debug_info) {
+						debugInfo = '<br><small><strong>معلومات الاختبار:</strong><br>' +
+							'القالب: ' + data.data.debug_info.template + '<br>' +
+							'الهاتف: ' + data.data.debug_info.phone + '<br>' +
+							'المتغيرات: ' + data.data.debug_info.params_count + '</small>';
+					}
+					
+					let responseInfo = '';
+					if (data.data.message_id) {
+						responseInfo = '<br><small><strong>Message ID:</strong> ' + data.data.message_id + '</small>';
+					}
+					
+					resultDiv.innerHTML = '<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ نجح:</strong> ' + data.data.message + debugInfo + responseInfo + '</div>';
+				} else {
+					resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> ' + data.data.message + '</div>';
+				}
+			})
+			.catch(error => {
+				resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> حدث خطأ في الاتصال</div>';
+				console.error('Error:', error);
+			})
+			.finally(() => {
+				// Re-enable button
+				button.disabled = false;
+				button.textContent = 'اختبار';
+			});
+		}
+	});
 	
 	// Initialize on page load
 	document.addEventListener('DOMContentLoaded', function() {

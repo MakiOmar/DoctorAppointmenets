@@ -4205,19 +4205,10 @@ Best regards,
 		$appointments    = $wpdb->get_results( $query );
 		$ai_appointments = array();
 
-		// Debug: Log appointments found
-		error_log( '=== APPOINTMENTS DEBUG ===' );
-		error_log( "User ID: $user_id" );
-		error_log( 'Total appointments found: ' . count( $appointments ) );
-
 		foreach ( $appointments as $appointment ) {
 			$order = wc_get_order( $appointment->order_id );
 			if ( $order ) {
 				$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-
-				// Debug: Log each appointment
-				error_log( "Appointment ID: {$appointment->ID}, Order ID: {$appointment->order_id}, AI Order: " . var_export( $is_ai_order, true ) );
-				error_log( "Therapist ID: {$appointment->user_id}, Therapist Name: {$appointment->therapist_name}, Profile Image ID: {$appointment->profile_image}" );
 
 				if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 					// Map database status to frontend status
@@ -4232,9 +4223,7 @@ Best regards,
 					// Check if therapist has joined
 					$therapist_joined = snks_doctor_has_joined( $appointment->ID, $appointment->user_id );
 
-					// Debug: Log photo URL generation
 					$photo_url = $appointment->profile_image ? wp_get_attachment_image_url( $appointment->profile_image, 'thumbnail' ) : null;
-					error_log( "Generated photo URL for therapist {$appointment->user_id}: " . ( $photo_url ?: 'NULL' ) );
 
 					$ai_appointments[] = array(
 						'id'               => $appointment->ID,
@@ -4242,23 +4231,19 @@ Best regards,
 						'time'             => $appointment->starts,
 						'status'           => $frontend_status,
 						'session_type'     => $appointment->period ?: 60,
-						'therapist_id'     => $appointment->user_id, // Add therapist ID
-						'settings'         => $appointment->settings, // Add settings field for reschedule detection
+						'therapist_id'     => $appointment->user_id,
+						'settings'         => $appointment->settings,
 						'therapist'        => array(
 							'name'  => $appointment->therapist_name ?: 'Unknown Therapist',
 							'photo' => $photo_url,
 						),
-						'notes'            => '', // No notes column in the database
-						'session_link'     => null, // No session_link column in the database
-						'therapist_joined' => $therapist_joined, // Add therapist joined status
+						'notes'            => '',
+						'session_link'     => null,
+						'therapist_joined' => $therapist_joined,
 					);
 				}
 			}
 		}
-
-		// Debug: Log final result
-		error_log( 'AI appointments to return: ' . count( $ai_appointments ) );
-		error_log( '================================' );
 
 		$this->send_success( $ai_appointments );
 	}
@@ -7617,7 +7602,6 @@ function snks_process_ai_order_completion( $order_id ) {
 	$ai_sessions = $order->get_meta( 'ai_sessions' );
 	
 	if ( empty( $ai_sessions ) ) {
-		error_log( "AI Order Completion: No sessions data found for order {$order_id}" );
 		return false;
 	}
 	

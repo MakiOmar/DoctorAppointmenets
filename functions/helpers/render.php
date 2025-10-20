@@ -1564,7 +1564,7 @@ function snks_get_patient_rochtah_requests( $patient_id ) {
 		"SELECT rb.*, pt.date_time, pt.starts, pt.ends, pt.user_id as therapist_id
 		 FROM {$rochtah_bookings_table} rb
 		 LEFT JOIN {$wpdb->prefix}snks_provider_timetable pt ON rb.session_id = pt.ID
-		 WHERE rb.client_id = %d 
+		 WHERE rb.patient_id = %d 
 		 AND rb.status IN ('pending', 'confirmed')
 		 ORDER BY rb.created_at DESC",
 		$patient_id
