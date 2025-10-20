@@ -387,8 +387,8 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 		$doctor_phone,
 		$settings['template_doctor_new'],
 		array( 
-			'patient_name' => $patient_name, 
-			'day_name' => $day_name, 
+			'patient' => $patient_name, 
+			'day' => $day_name, 
 			'date' => $date, 
 			'time' => $time 
 		)
@@ -444,8 +444,8 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 		$patient_phone,
 		$settings['template_rosheta10'],
 		array( 
-			'patient_name' => $patient_name, 
-			'doctor_name' => $doctor_name 
+			'patient' => $patient_name, 
+			'doctor' => $doctor_name 
 		)
 	);
 	
@@ -508,7 +508,7 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 		$patient_phone,
 		$settings['template_rosheta_app'],
 		array( 
-			'day_name' => $day_name, 
+			'day' => $day_name, 
 			'date' => $date, 
 			'time' => $time 
 		)
@@ -657,7 +657,7 @@ function snks_send_doctor_midnight_reminders() {
 			$doctor_phone,
 			$settings['template_doctor_rem'],
 			array( 
-				'day_name' => $day_name, 
+				'day' => $day_name, 
 				'date' => $date 
 			)
 		);

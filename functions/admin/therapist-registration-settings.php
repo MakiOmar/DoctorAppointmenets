@@ -353,8 +353,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_doctor_new" id="template_doctor_new" value="<?php echo esc_attr( get_option( 'snks_template_doctor_new', 'doctor_new' ) ); ?>" class="regular-text" placeholder="doctor_new">
-							<button type="button" class="button test-whatsapp-notification" data-template="doctor_new" data-params='{"patient_name": "سارة أحمد", "day_name": "الاثنين", "date": "2025-10-21", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Doctor alert | <code>{{patient_name}}</code>, <code>{{day_name}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+						<button type="button" class="button test-whatsapp-notification" data-template="doctor_new" data-params='{"patient": "سارة أحمد", "day": "الاثنين", "date": "2025-10-21", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
+						<p class="description">Doctor alert | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
 						</td>
 					</tr>
 					<tr>
@@ -363,8 +363,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_rosheta10" id="template_rosheta10" value="<?php echo esc_attr( get_option( 'snks_template_rosheta10', 'rosheta10' ) ); ?>" class="regular-text" placeholder="rosheta10">
-							<button type="button" class="button test-whatsapp-notification" data-template="rosheta10" data-params='{"patient_name": "سارة أحمد", "doctor_name": "د. محمد علي"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Prescription activation | <code>{{patient_name}}</code>, <code>{{doctor_name}}</code></p>
+						<button type="button" class="button test-whatsapp-notification" data-template="rosheta10" data-params='{"patient": "سارة أحمد", "doctor": "د. محمد علي"}' style="margin-right: 10px;">اختبار</button>
+						<p class="description">Prescription activation | <code>{{patient}}</code>, <code>{{doctor}}</code></p>
 						</td>
 					</tr>
 					<tr>
@@ -373,8 +373,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_rosheta_app" id="template_rosheta_app" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_app', 'rosheta_app' ) ); ?>" class="regular-text" placeholder="rosheta_app">
-							<button type="button" class="button test-whatsapp-notification" data-template="rosheta_app" data-params='{"day_name": "الثلاثاء", "date": "2025-10-22", "time": "02:00 م"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Prescription appointment | <code>{{day_name}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+						<button type="button" class="button test-whatsapp-notification" data-template="rosheta_app" data-params='{"day": "الثلاثاء", "date": "2025-10-22", "time": "02:00 م"}' style="margin-right: 10px;">اختبار</button>
+						<p class="description">Prescription appointment | <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
 						</td>
 					</tr>
 					<tr>
@@ -383,8 +383,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_patient_rem_24h" id="template_patient_rem_24h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_24h', 'patient_rem_24h' ) ); ?>" class="regular-text" placeholder="patient_rem_24h">
-							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_24h" data-params='{"doctor_name": "د. خالد حسن", "day_name": "الأربعاء", "date": "2025-10-23", "time": "03:00 م"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">24h reminder | <code>{{doctor_name}}</code>, <code>{{day_name}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+						<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_24h" data-params='{"doctor": "د. خالد حسن", "day": "الأربعاء", "date": "2025-10-23", "time": "03:00 م"}' style="margin-right: 10px;">اختبار</button>
+						<p class="description">24h reminder | <code>{{doctor}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
 						</td>
 					</tr>
 					<tr>
@@ -413,8 +413,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_doctor_rem" id="template_doctor_rem" value="<?php echo esc_attr( get_option( 'snks_template_doctor_rem', 'doctor_rem' ) ); ?>" class="regular-text" placeholder="doctor_rem">
-							<button type="button" class="button test-whatsapp-notification" data-template="doctor_rem" data-params='{"day_name": "الخميس", "date": "2025-10-24"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Daily reminder | <code>{{day_name}}</code>, <code>{{date}}</code></p>
+						<button type="button" class="button test-whatsapp-notification" data-template="doctor_rem" data-params='{"day": "الخميس", "date": "2025-10-24"}' style="margin-right: 10px;">اختبار</button>
+						<p class="description">Daily reminder | <code>{{day}}</code>, <code>{{date}}</code></p>
 						</td>
 					</tr>
 					<tr>

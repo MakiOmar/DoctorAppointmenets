@@ -89,7 +89,7 @@ function snks_send_session_notifications() {
 						snks_send_whatsapp_template_message(
 							$billing_phone,
 							$settings['template_patient_rem_24h'],
-							array( $doctor_name, $day_name, $date, $time )
+						array( 'day' => $day_name, 'date' => $date, 'doctor' => $doctor_name, 'time' => $time )
 						);
 					}
 				} elseif ( 'online' === $session->attendance_type ) {
