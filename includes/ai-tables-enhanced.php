@@ -54,6 +54,9 @@ function snks_create_enhanced_ai_tables() {
 		prescribed_by INT(11) NULL,
 		prescribed_at TIMESTAMP NULL,
 		prescription_file VARCHAR(255),
+		whatsapp_activation_sent TINYINT(1) DEFAULT 0,
+		whatsapp_appointment_sent TINYINT(1) DEFAULT 0,
+		appointment_id BIGINT(20) NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
@@ -398,4 +401,39 @@ function snks_increment_coupon_usage( $code ) {
 add_action( 'snks_create_enhanced_ai_tables', 'snks_create_enhanced_ai_tables' );
 add_action( 'snks_add_enhanced_ai_meta_fields', 'snks_add_enhanced_ai_meta_fields' );
 add_action( 'snks_add_enhanced_ai_user_meta_fields', 'snks_add_enhanced_ai_user_meta_fields' );
-add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' ); 
+add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' );
+
+/**
+ * Add WhatsApp notification columns to rochtah_bookings table
+ */
+function snks_add_rochtah_whatsapp_notification_columns() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	$columns_to_add = array(
+		'whatsapp_activation_sent' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_appointment_sent' => 'TINYINT(1) DEFAULT 0',
+		'appointment_id' => 'BIGINT(20) NULL',
+	);
+	
+	//phpcs:disable
+	foreach ( $columns_to_add as $column_name => $column_definition ) {
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s',
+				$table_name,
+				$column_name,
+				$wpdb->dbname
+			)
+		);
+		
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				"ALTER TABLE $table_name ADD COLUMN $column_name $column_definition"
+			);
+		}
+	}
+	//phpcs:enable
+}
+add_action( 'admin_init', 'snks_add_rochtah_whatsapp_notification_columns' ); 

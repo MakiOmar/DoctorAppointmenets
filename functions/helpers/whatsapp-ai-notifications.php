@@ -351,9 +351,10 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
  *
  * @param int $patient_id Patient ID.
  * @param int $doctor_id Doctor ID.
+ * @param int $booking_id Optional booking ID to mark as sent.
  * @return bool
  */
-function snks_send_rosheta_activation_notification( $patient_id, $doctor_id ) {
+function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $booking_id = 0 ) {
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' ) {
 		return false;
@@ -379,6 +380,18 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id ) {
 		$settings['template_rosheta10'],
 		array( $patient_name, $doctor_name )
 	);
+	
+	// Mark as sent if booking_id is provided
+	if ( ! is_wp_error( $result ) && $booking_id > 0 ) {
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->prefix . 'snks_rochtah_bookings',
+			array( 'whatsapp_activation_sent' => 1 ),
+			array( 'id' => $booking_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+	}
 	
 	return ! is_wp_error( $result );
 }
@@ -427,7 +440,19 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 		array( $day_name, $date, $time )
 	);
 	
-	return ! is_wp_error( $result );
+	// Mark as sent
+	if ( ! is_wp_error( $result ) ) {
+		$wpdb->update(
+			$wpdb->prefix . 'snks_rochtah_bookings',
+			array( 'whatsapp_appointment_sent' => 1 ),
+			array( 'id' => $booking_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+		return true;
+	}
+	
+	return false;
 }
 
 /**

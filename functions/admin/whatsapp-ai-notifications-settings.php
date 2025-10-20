@@ -53,8 +53,12 @@ function snks_whatsapp_ai_notifications_page() {
 	<div class="wrap">
 		<h1>إعدادات إشعارات WhatsApp لجلسة AI</h1>
 		<p class="description">
-			قم بتكوين قوالب WhatsApp للإشعارات التلقائية لجلسات AI فقط. تأكد من إنشاء القوالب في WhatsApp Business API أولاً.
+			قم بإدخال أسماء قوالب WhatsApp المعتمدة من WhatsApp Business API. جميع الإشعارات تعمل فقط لجلسات AI.
 		</p>
+		
+		<div class="notice notice-info">
+			<p><strong>ملاحظة هامة:</strong> يجب إنشاء واعتماد جميع القوالب في WhatsApp Business API قبل استخدامها. أدخل اسم القالب فقط، وسيتم إرسال المتغيرات المطلوبة تلقائياً.</p>
+		</div>
 		
 		<form method="post" action="">
 			<?php wp_nonce_field( 'snks_whatsapp_ai_notifications', 'snks_whatsapp_ai_notifications_nonce' ); ?>
@@ -71,8 +75,8 @@ function snks_whatsapp_ai_notifications_page() {
 				</tr>
 			</table>
 			
-			<h2>قوالب الإشعارات</h2>
-			<p class="description">أدخل أسماء القوالب المطابقة لتلك المكونة في WhatsApp Business API. جميع الإشعارات تعمل فقط لجلسات AI.</p>
+			<h2>أسماء قوالب WhatsApp</h2>
+			<p class="description">أدخل أسماء القوالب المعتمدة في WhatsApp Business API (أسماء القوالب فقط، بدون محتوى).</p>
 			
 			<table class="form-table">
 				<tr>
@@ -82,11 +86,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_new_session" id="template_new_session" 
 						       value="<?php echo esc_attr( $settings['template_new_session'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="new_session">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمريض عند حجز جلسة أونلاين جديدة<br>
-							<strong>المتغيرات:</strong> {{doctor}}, {{day}}, {{date}}, {{time}}<br>
-							<strong>التمبلت الافتراضي:</strong> new_session
+							يُرسل للمريض عند حجز جلسة AI جديدة | المتغيرات: doctor, day, date, time
 						</p>
 					</td>
 				</tr>
@@ -98,11 +100,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_doctor_new" id="template_doctor_new" 
 						       value="<?php echo esc_attr( $settings['template_doctor_new'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="doctor_new">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمعالج عند حجز مريض جلسة جديدة<br>
-							<strong>المتغيرات:</strong> {{patient}}, {{day}}, {{date}}, {{time}}<br>
-							<strong>التمبلت الافتراضي:</strong> doctor_new
+							يُرسل للمعالج عند حجز مريض جلسة AI | المتغيرات: patient, day, date, time
 						</p>
 					</td>
 				</tr>
@@ -114,11 +114,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_rosheta10" id="template_rosheta10" 
 						       value="<?php echo esc_attr( $settings['template_rosheta10'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="rosheta10">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمريض عند تفعيل خدمة روشتة من قبل المعالج<br>
-							<strong>المتغيرات:</strong> {{patient}}, {{doctor}}<br>
-							<strong>التمبلت الافتراضي:</strong> rosheta10
+							يُرسل للمريض عند تفعيل خدمة روشتة من قبل المعالج | المتغيرات: patient, doctor
 						</p>
 					</td>
 				</tr>
@@ -130,11 +128,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_rosheta_app" id="template_rosheta_app" 
 						       value="<?php echo esc_attr( $settings['template_rosheta_app'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="rosheta_app">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمريض بعد تحديد موعد جلسة روشتة<br>
-							<strong>المتغيرات:</strong> {{day}}, {{date}}, {{time}}<br>
-							<strong>التمبلت الافتراضي:</strong> rosheta_app
+							يُرسل للمريض بعد تحديد موعد جلسة روشتة | المتغيرات: day, date, time
 						</p>
 					</td>
 				</tr>
@@ -146,11 +142,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_patient_rem_24h" id="template_patient_rem_24h" 
 						       value="<?php echo esc_attr( $settings['template_patient_rem_24h'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="patient_rem_24h">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمريض قبل موعد الجلسة بـ 24 ساعة<br>
-							<strong>المتغيرات:</strong> {{doctor}}, {{day}}, {{date}}, {{time}}<br>
-							<strong>التمبلت الافتراضي:</strong> patient_rem_24h
+							يُرسل للمريض قبل موعد جلسة AI بـ 24 ساعة | المتغيرات: doctor, day, date, time
 						</p>
 					</td>
 				</tr>
@@ -162,11 +156,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_patient_rem_1h" id="template_patient_rem_1h" 
 						       value="<?php echo esc_attr( $settings['template_patient_rem_1h'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="patient_rem_1h">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمريض قبل موعد الجلسة بساعة واحدة<br>
-							<strong>المتغيرات:</strong> لا توجد متغيرات<br>
-							<strong>التمبلت الافتراضي:</strong> patient_rem_1h
+							يُرسل للمريض قبل موعد جلسة AI بساعة واحدة | بدون متغيرات
 						</p>
 					</td>
 				</tr>
@@ -178,11 +170,9 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_patient_rem_now" id="template_patient_rem_now" 
 						       value="<?php echo esc_attr( $settings['template_patient_rem_now'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="patient_rem_now">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمريض عند دخول المعالج للجلسة<br>
-							<strong>المتغيرات:</strong> لا توجد متغيرات<br>
-							<strong>التمبلت الافتراضي:</strong> patient_rem_now
+							يُرسل للمريض عند دخول المعالج لجلسة AI | بدون متغيرات
 						</p>
 					</td>
 				</tr>
@@ -194,90 +184,13 @@ function snks_whatsapp_ai_notifications_page() {
 					<td>
 						<input type="text" name="template_doctor_rem" id="template_doctor_rem" 
 						       value="<?php echo esc_attr( $settings['template_doctor_rem'] ); ?>" 
-						       class="regular-text">
+						       class="regular-text" placeholder="doctor_rem">
 						<p class="description">
-							<strong>الإشعار:</strong> يُرسل للمعالج الساعة 12 ليلاً إذا كان لديه جلسات AI في اليوم التالي<br>
-							<strong>المتغيرات:</strong> {{day}}, {{date}}<br>
-			        <strong>التمبلت الافتراضي:</strong> doctor_rem
+							يُرسل للمعالج الساعة 12 ليلاً إذا كان لديه جلسات AI في اليوم التالي | المتغيرات: day, date
 						</p>
 					</td>
 				</tr>
 			</table>
-			
-			<h2>محتوى القوالب (للمرجعية فقط)</h2>
-			<p class="description">هذه أمثلة لمحتوى القوالب. يجب إنشاءها في WhatsApp Business API أولاً.</p>
-			
-			<div class="card">
-				<h3>new_session - حجز جلسة جديدة للمريض</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5; white-space: pre-wrap;">تم حجز جلسة أونلاين مع المعالج {{doctor}} يوم {{day}} الموافق {{date}} الساعة {{time}} بتوقيت مصر، ويمكنك الدخول للجلسة في موعدها من خلال صفحة الحجوزات بحسابك على موقع جلسة، وسيتم عمل الجلسة عبر نظام الاتصالات الخاص بالموقع.
-
-ملاحظات:
-- مدة الجلسة 45 دقيقة فقط.
-- يمكنك الدخول للجلسة سواء من الموبايل أو اللابتوب.
-- يجب الدخول للجلسة في موعدها تفاديا لالغاء الموعد.
-- يرجى التأكد من جودة الانترنت قبل الدخول للجلسة والجلوس في مكان هادئ للحصول على أفضل تجربة.
-- عند الدخول للجلسة سيطلب المتصفح منك السماح باستخدام المايك والكاميرا ويجب السماح بذلك لضمان عملهم أثناء الجلسة.
-- في حالة ما اذا كانت مشكلتك تستدعي وصف أدوية وكان المعالج غير مصرح له بكتابة أدوية، يرجى الطلب من المعالج أثناء الجلسه تفعيل خدمة روشتة لك وذلك لتتمكن من عمل جلسة مجانية مع الطبيب النفسي الأخصائي الخاص بالموقع لكتابة ومتابعة الأدوية فقط بجانب جلساتك مع المعالج.
-
-لأي استفسار يرجى التواصل مع خدمة العملاء على رقم الواتساب:
-https://wa.me/+201097799323</code>
-			</div>
-			
-			<div class="card">
-				<h3>doctor_new - حجز جلسة جديدة للمعالج</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5;">تم حجز جلسة جديدة عبر ( موقع جلسة أونلاين ).
-إسم العميل:  {{patient}}
-اليوم: {{day}}
-الموافق: {{date}}
-الساعة: {{time}} بتوقيت مصر</code>
-			</div>
-			
-			<div class="card">
-				<h3>rosheta10 - تفعيل خدمة روشتة</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5;">أهلا {{patient}}! 
-قام المعالج الخاص بك ( {{doctor}} ) بتفعيل خدمة روشتة لك، يرجى تحديد موعد الجلسه عن طريق صفحة الحجوزات خلال أسبوع من الآن لتفادي إلغاء الخدمة.</code>
-			</div>
-			
-			<div class="card">
-				<h3>rosheta_app - حجز موعد روشتة</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5; white-space: pre-wrap;">تم حجز جلسة مع الطبيب النفسي الأخصائي الخاص بالموقع يوم {{day}} الموافق {{date}} الساعة {{time}} بتوقيت مصر، ويمكنك الدخول للجلسة في موعدها من خلال صفحة الحجوزات بحسابك على موقع جلسة.
-
-ملاحظات:
-- مدة الجلسة 15 دقيقة فقط.
-- الطبيب سيكون مسئول فقط عن وصف الأدوية، وللاستفسارات الأخرى يرجى المتابعة مع المعالج الخاص بك.
-- يمكنك الدخول للجلسة سواء من الموبايل أو اللابتوب.
-- يجب الدخول للجلسة في موعدها تفاديا لالغاء الموعد.
-- يرجى التأكد من جودة الانترنت والجلوس في مكان هادئ قبل الدخول للجلسة للحصول على أفضل تجربة.
-- عند الدخول للجلسة سيطلب المتصفح منك السماح باستخدام المايك والكاميرا ويجب السماح بذلك لضمان عملهم أثناء الجلسة.</code>
-			</div>
-			
-			<div class="card">
-				<h3>patient_rem_24h - تذكير المريض قبل 24 ساعة</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5; white-space: pre-wrap;">نذكرك بموعد جلستك غدا {{day}} الموافق {{date}} على موقع جلسة مع المعالج {{doctor}} الساعة {{time}} بتوقيت مصر، ويمكنك الدخول للجلسة في موعدها من خلال صفحة الحجوزات بحسابك على الموقع، وسيتم عمل الجلسة عبر نظام الاتصالات الخاص بالموقع.
-
-ملاحظات:
-- مدة الجلسة 45 دقيقة فقط.
-- يمكنك الدخول للجلسة سواء من الموبايل أو اللابتوب.
-- يجب الدخول للجلسة في موعدها تفاديا لالغاء الموعد.
-- يرجى التأكد من جودة الانترنت قبل الدخول للجلسة والجلوس في مكان هادئ للحصول على أفضل تجربة.
-- عند الدخول للجلسة سيطلب المتصفح منك السماح باستخدام المايك والكاميرا ويجب السماح بذلك لضمان عملهم أثناء الجلسة.
-- في حالة ما اذا كانت مشكلتك تستدعي وصف أدوية وكان المعالج غير مصرح له بكتابة أدوية، يرجى الطلب من المعالج أثناء الجلسه تفعيل خدمة روشتة لك وذلك لتتمكن من عمل جلسة مجانية مع الطبيب النفسي الأخصائي الخاص بالموقع لكتابة ومتابعة الأدوية فقط بجانب جلساتك مع المعالج.</code>
-			</div>
-			
-			<div class="card">
-				<h3>patient_rem_1h - تذكير المريض قبل ساعة</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5;">باقي أقل من ساعة على موعد الجلسة، يرجى الدخول للجلسة في موعدها تفاديا لإلغاء الحجز, ويمكنك الدخول للجلسة من خلال صفحة الحجوزات بحسابك على الموقع.</code>
-			</div>
-			
-			<div class="card">
-				<h3>patient_rem_now - إشعار دخول المعالج</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5;">المعالج متواجد وبإنتظارك لبدء الجلسة.</code>
-			</div>
-			
-			<div class="card">
-				<h3>doctor_rem - تذكير المعالج بجلسات الغد</h3>
-				<code dir="rtl" style="display: block; padding: 10px; background: #f5f5f5;">نذكرك بجلساتك غدا {{day}} الموافق {{date}} المحجوزه عبر ( موقع جلسة أونلاين )، يرجى التأكد من التواجد والدخول لكل جلسة في موعدها</code>
-			</div>
 			
 			<p class="submit">
 				<input type="submit" name="submit_whatsapp_ai_notifications" class="button button-primary" value="حفظ الإعدادات">

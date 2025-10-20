@@ -257,7 +257,7 @@ function snks_send_ai_prescription_notifications( $patient_id, $booking_id, $slo
 	
 	// Send rosheta activation notification (rosheta10) via WhatsApp
 	if ( $booking && function_exists( 'snks_send_rosheta_activation_notification' ) ) {
-		snks_send_rosheta_activation_notification( $patient_id, $booking->therapist_id );
+		snks_send_rosheta_activation_notification( $patient_id, $booking->therapist_id, $booking_id );
 	}
 	
 	// Send email notification
