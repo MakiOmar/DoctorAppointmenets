@@ -64,10 +64,10 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	if ( ! empty( $parameters ) ) {
 		$template_parameters = array();
-		foreach ( $parameters as $index => $param_value ) {
+		foreach ( $parameters as $param_name => $param_value ) {
 			$template_parameters[] = array(
 				'type' => 'text',
-				'parameter_name' => (string)($index + 1), // Use numbered parameter names (1, 2, 3, etc.)
+				'parameter_name' => $param_name, // Use named parameters (doctor_name, date, time, etc.)
 				'text' => $param_value
 			);
 		}
@@ -128,10 +128,7 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		error_log( '[WhatsApp AI] Parameters (values): ' . json_encode( $parameters, JSON_UNESCAPED_UNICODE ) );
 		error_log( '[WhatsApp AI] Parameters Count: ' . count( $parameters ) );
 		if ( ! empty( $parameters ) ) {
-			$param_names = array();
-			foreach ( $parameters as $index => $param_value ) {
-				$param_names[] = (string)($index + 1);
-			}
+			$param_names = array_keys( $parameters );
 			error_log( '[WhatsApp AI] Parameter Names: ' . json_encode( $param_names ) );
 		}
 		error_log( '[WhatsApp AI] --- Request Body (JSON) ---' );
@@ -315,7 +312,12 @@ function snks_send_new_session_notification( $session_id ) {
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
 		$settings['template_new_session'],
-		array( $doctor_name, $day_name, $date, $time )
+		array( 
+			'doctor_name' => $doctor_name, 
+			'day_name' => $day_name, 
+			'date' => $date, 
+			'time' => $time 
+		)
 	);
 	
 	// Mark as sent
@@ -385,7 +387,12 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 	$result = snks_send_whatsapp_template_message(
 		$doctor_phone,
 		$settings['template_doctor_new'],
-		array( $patient_name, $day_name, $date, $time )
+		array( 
+			'patient_name' => $patient_name, 
+			'day_name' => $day_name, 
+			'date' => $date, 
+			'time' => $time 
+		)
 	);
 	
 	// Mark as sent
@@ -437,7 +444,10 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
 		$settings['template_rosheta10'],
-		array( $patient_name, $doctor_name )
+		array( 
+			'patient_name' => $patient_name, 
+			'doctor_name' => $doctor_name 
+		)
 	);
 	
 	// Mark as sent if booking_id is provided
@@ -498,7 +508,11 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
 		$settings['template_rosheta_app'],
-		array( $day_name, $date, $time )
+		array( 
+			'day_name' => $day_name, 
+			'date' => $date, 
+			'time' => $time 
+		)
 	);
 	
 	// Mark as sent
@@ -643,7 +657,10 @@ function snks_send_doctor_midnight_reminders() {
 		$result = snks_send_whatsapp_template_message(
 			$doctor_phone,
 			$settings['template_doctor_rem'],
-			array( $day_name, $date )
+			array( 
+				'day_name' => $day_name, 
+				'date' => $date 
+			)
 		);
 		
 		// Mark all doctor's tomorrow sessions as reminded
