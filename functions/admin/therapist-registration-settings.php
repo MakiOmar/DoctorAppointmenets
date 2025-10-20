@@ -596,69 +596,80 @@ function snks_therapist_registration_settings_page() {
 		});
 	}
 	
-	// Test AI notification templates
-	document.addEventListener('click', function(e) {
-		if (e.target.classList.contains('test-whatsapp-notification')) {
-			const button = e.target;
-			const templateName = button.dataset.template;
-			const params = JSON.parse(button.dataset.params || '[]');
-			const resultDiv = document.getElementById('ai-test-result');
-			const testPhone = document.getElementById('ai_test_phone').value;
+	// Test AI notification templates  
+	jQuery(document).ready(function($) {
+		console.log('[WhatsApp AI] Test buttons script loaded');
+		
+		$(document).on('click', '.test-whatsapp-notification', function(e) {
+			e.preventDefault();
+			console.log('[WhatsApp AI] Test button clicked');
+			
+			const button = $(this);
+			const templateName = button.data('template');
+			const params = button.data('params') || [];
+			const resultDiv = $('#ai-test-result');
+			const testPhone = $('#ai_test_phone').val();
+			
+			console.log('[WhatsApp AI] Template:', templateName);
+			console.log('[WhatsApp AI] Phone:', testPhone);
+			console.log('[WhatsApp AI] Params:', params);
 			
 			if (!testPhone) {
-				resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> يرجى إدخال رقم الهاتف للاختبار</div>';
+				resultDiv.html('<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> يرجى إدخال رقم الهاتف للاختبار</div>');
 				return;
 			}
 			
 			// Disable button and show loading
-			button.disabled = true;
-			button.textContent = 'جاري الإرسال...';
-			resultDiv.innerHTML = '<div style="padding: 10px; background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px;">جاري إرسال رسالة الاختبار...</div>';
+			button.prop('disabled', true);
+			button.text('جاري الإرسال...');
+			resultDiv.html('<div style="padding: 10px; background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px;">جاري إرسال رسالة الاختبار...</div>');
 			
-			// Prepare form data
-			const formData = new FormData();
-			formData.append('action', 'test_ai_whatsapp_notification');
-			formData.append('template_name', templateName);
-			formData.append('test_phone', testPhone);
-			formData.append('params', JSON.stringify(params));
-			formData.append('nonce', '<?php echo wp_create_nonce( 'test_ai_notification_nonce' ); ?>');
+			console.log('[WhatsApp AI] Sending AJAX request...');
 			
-			// Send AJAX request
-			fetch('<?php echo admin_url( 'admin-ajax.php' ); ?>', {
-				method: 'POST',
-				body: formData
-			})
-			.then(response => response.json())
-			.then(data => {
-				if (data.success) {
-					let debugInfo = '';
-					if (data.data.debug_info) {
-						debugInfo = '<br><small><strong>معلومات الاختبار:</strong><br>' +
-							'القالب: ' + data.data.debug_info.template + '<br>' +
-							'الهاتف: ' + data.data.debug_info.phone + '<br>' +
-							'المتغيرات: ' + data.data.debug_info.params_count + '</small>';
-					}
+			// Send AJAX request using jQuery
+			$.ajax({
+				url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+				type: 'POST',
+				data: {
+					action: 'test_ai_whatsapp_notification',
+					template_name: templateName,
+					test_phone: testPhone,
+					params: JSON.stringify(params),
+					nonce: '<?php echo wp_create_nonce( 'test_ai_notification_nonce' ); ?>'
+				},
+				success: function(response) {
+					console.log('[WhatsApp AI] Response:', response);
 					
-					let responseInfo = '';
-					if (data.data.message_id) {
-						responseInfo = '<br><small><strong>Message ID:</strong> ' + data.data.message_id + '</small>';
+					if (response.success) {
+						let debugInfo = '';
+						if (response.data.debug_info) {
+							debugInfo = '<br><small><strong>معلومات الاختبار:</strong><br>' +
+								'القالب: ' + response.data.debug_info.template + '<br>' +
+								'الهاتف: ' + response.data.debug_info.phone + '<br>' +
+								'المتغيرات: ' + response.data.debug_info.params_count + '</small>';
+						}
+						
+						let responseInfo = '';
+						if (response.data.message_id) {
+							responseInfo = '<br><small><strong>Message ID:</strong> ' + response.data.message_id + '</small>';
+						}
+						
+						resultDiv.html('<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ نجح:</strong> ' + response.data.message + debugInfo + responseInfo + '</div>');
+					} else {
+						resultDiv.html('<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> ' + response.data.message + '</div>');
 					}
-					
-					resultDiv.innerHTML = '<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ نجح:</strong> ' + data.data.message + debugInfo + responseInfo + '</div>';
-				} else {
-					resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> ' + data.data.message + '</div>';
+				},
+				error: function(xhr, status, error) {
+					console.error('[WhatsApp AI] AJAX Error:', error);
+					resultDiv.html('<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> حدث خطأ في الاتصال</div>');
+				},
+				complete: function() {
+					// Re-enable button
+					button.prop('disabled', false);
+					button.text('اختبار');
 				}
-			})
-			.catch(error => {
-				resultDiv.innerHTML = '<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> حدث خطأ في الاتصال</div>';
-				console.error('Error:', error);
-			})
-			.finally(() => {
-				// Re-enable button
-				button.disabled = false;
-				button.textContent = 'اختبار';
 			});
-		}
+		});
 	});
 	
 	// Initialize on page load
