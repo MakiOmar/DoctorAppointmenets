@@ -91,13 +91,15 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_chatgpt_page'
 	);
 
+	// WhatsApp notifications now managed in the new dedicated page
+	// Redirect to the new page instead of showing old duplicate settings
 	add_submenu_page(
 		'jalsah-ai-management',
-		'WhatsApp Integration',
-		'WhatsApp',
+		'WhatsApp Notifications',
+		'WhatsApp Notifications',
 		'manage_options',
-		'jalsah-ai-whatsapp',
-		'snks_enhanced_ai_whatsapp_page'
+		'whatsapp-ai-notifications',
+		'snks_whatsapp_ai_notifications_redirect'
 	);
 	
 	add_submenu_page(
@@ -2140,98 +2142,47 @@ function snks_test_chatgpt_integration( $test_prompt ) {
 }
 
 /**
- * WhatsApp Integration Page
+ * WhatsApp Integration Page - Redirect to new settings page
+ * This function redirects to the new unified WhatsApp notification settings
  */
-function snks_enhanced_ai_whatsapp_page() {
-	snks_load_ai_admin_styles();
-	
-	// Handle settings updates
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_whatsapp_settings' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_whatsapp_settings' ) ) {
-			update_option( 'snks_ai_whatsapp_access_token', sanitize_text_field( $_POST['access_token'] ) );
-			update_option( 'snks_ai_whatsapp_phone_number_id', sanitize_text_field( $_POST['phone_number_id'] ) );
-			update_option( 'snks_ai_whatsapp_business_account_id', sanitize_text_field( $_POST['business_account_id'] ) );
-			
-			echo '<div class="notice notice-success"><p>WhatsApp settings updated successfully!</p></div>';
-		}
-	}
-	
-	// Handle template updates
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_template' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_whatsapp_template' ) ) {
-			$template_name = sanitize_text_field( $_POST['template_name'] );
-			$template_content = sanitize_textarea_field( $_POST['template_content'] );
-			update_option( 'snks_ai_whatsapp_template_' . $template_name, $template_content );
-			echo '<div class="notice notice-success"><p>Template updated successfully!</p></div>';
-		}
-	}
-	
-	$access_token = get_option( 'snks_ai_whatsapp_access_token', '' );
-	$phone_number_id = get_option( 'snks_ai_whatsapp_phone_number_id', '' );
-	$business_account_id = get_option( 'snks_ai_whatsapp_business_account_id', '' );
-	
-	$templates = array(
-		'booking_confirmation' => 'Booking Confirmation',
-		'reschedule_alert' => 'Reschedule Alert',
-		'reminder_22h' => '22h Reminder',
-		'reminder_1h' => '1h Reminder',
-		'therapist_joined' => 'Therapist Joined Session',
-		'prescription_requested' => 'Prescription Requested',
-		'marketing_campaign' => 'Marketing Campaign'
-	);
+function snks_whatsapp_ai_notifications_redirect() {
 	?>
 	<div class="wrap">
-		<h1>WhatsApp Cloud API Integration</h1>
+		<h1>WhatsApp Notifications</h1>
 		
-		<div class="card">
-			<h2>API Configuration</h2>
-			<form method="post">
-				<?php wp_nonce_field( 'update_whatsapp_settings' ); ?>
-				<input type="hidden" name="action" value="update_whatsapp_settings">
-				
-				<table class="form-table">
-					<tr>
-						<th><label for="access_token">Access Token</label></th>
-						<td><input type="password" id="access_token" name="access_token" value="<?php echo esc_attr( $access_token ); ?>" class="regular-text" required></td>
-					</tr>
-					<tr>
-						<th><label for="phone_number_id">Phone Number ID</label></th>
-						<td><input type="text" id="phone_number_id" name="phone_number_id" value="<?php echo esc_attr( $phone_number_id ); ?>" class="regular-text" required></td>
-					</tr>
-					<tr>
-						<th><label for="business_account_id">Business Account ID</label></th>
-						<td><input type="text" id="business_account_id" name="business_account_id" value="<?php echo esc_attr( $business_account_id ); ?>" class="regular-text"></td>
-					</tr>
-				</table>
-				
-				<?php submit_button( 'Save Settings' ); ?>
-			</form>
+		<div class="notice notice-info">
+			<p style="font-size: 16px;">
+				<strong>تم نقل إعدادات WhatsApp إلى صفحات مخصصة:</strong>
+			</p>
+			<ul style="font-size: 14px; margin: 10px 0;">
+				<li>✅ <strong>إعدادات API:</strong> <a href="<?php echo admin_url( 'admin.php?page=therapist-registration-settings' ); ?>" class="button button-primary">إعدادات تسجيل المعالجين</a></li>
+				<li>✅ <strong>قوالب الإشعارات:</strong> <a href="<?php echo admin_url( 'admin.php?page=whatsapp-ai-notifications' ); ?>" class="button button-primary">إعدادات إشعارات WhatsApp</a></li>
+			</ul>
 		</div>
 		
-		<div class="card">
-			<h2>Message Templates</h2>
-			<?php foreach ( $templates as $template_key => $template_name ) : ?>
-				<div class="template-section">
-					<h3><?php echo esc_html( $template_name ); ?></h3>
-					<form method="post">
-						<?php wp_nonce_field( 'update_whatsapp_template' ); ?>
-						<input type="hidden" name="action" value="update_template">
-						<input type="hidden" name="template_name" value="<?php echo esc_attr( $template_key ); ?>">
-						
-						<textarea name="template_content" rows="4" class="large-text" placeholder="Enter template content..."><?php echo esc_textarea( get_option( 'snks_ai_whatsapp_template_' . $template_key, '' ) ); ?></textarea>
-						
-						<p class="description">
-							Available variables: {{patient_name}}, {{therapist_name}}, {{session_date}}, {{session_time}}, {{diagnosis}}, {{prescription_link}}
-						</p>
-						
-						<?php submit_button( 'Update Template', 'secondary' ); ?>
-					</form>
-				</div>
-			<?php endforeach; ?>
+		<div class="notice notice-warning">
+			<p><strong>ملاحظة:</strong> هذه الصفحة لم تعد مستخدمة. تم دمج جميع إعدادات WhatsApp في الصفحات الجديدة أعلاه لتجنب التكرار.</p>
+		</div>
+		
+		<h2>التغييرات الجديدة</h2>
+		<div class="card" style="background: white; padding: 20px; border: 1px solid #ccd0d4; border-radius: 4px;">
+			<h3>✨ نظام موحد للإشعارات</h3>
+			<p>تم تحديث نظام إشعارات WhatsApp ليصبح:</p>
+			<ul>
+				<li>✅ <strong>مركزي:</strong> إعدادات API في مكان واحد</li>
+				<li>✅ <strong>منظم:</strong> قوالب الإشعارات في صفحة مخصصة</li>
+				<li>✅ <strong>خاص بـ AI:</strong> جميع الإشعارات تعمل فقط لجلسات Jalsah AI</li>
+				<li>✅ <strong>تلقائي:</strong> 8 أنواع من الإشعارات التلقائية</li>
+			</ul>
 		</div>
 	</div>
-
-
+	
+	<style>
+		.card { margin: 20px 0; }
+		.card h3 { margin-top: 0; color: #1d2327; }
+		.card ul { list-style: none; padding: 0; }
+		.card ul li { padding: 5px 0; }
+	</style>
 	<?php
 }
 
