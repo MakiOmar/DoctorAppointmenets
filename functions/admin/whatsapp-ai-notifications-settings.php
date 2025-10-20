@@ -57,7 +57,15 @@ function snks_whatsapp_ai_notifications_page() {
 		</p>
 		
 		<div class="notice notice-info">
-			<p><strong>ملاحظة هامة:</strong> يجب إنشاء واعتماد جميع القوالب في WhatsApp Business API قبل استخدامها. أدخل اسم القالب فقط، وسيتم إرسال المتغيرات المطلوبة تلقائياً.</p>
+			<p>
+				<strong>ملاحظة:</strong> إعدادات WhatsApp API (الرابط، التوكن، رقم الهاتف) موجودة في 
+				<a href="<?php echo admin_url( 'admin.php?page=therapist-registration-settings' ); ?>">إعدادات تسجيل المعالجين</a>.
+				هذه الصفحة خاصة فقط بأسماء قوالب الإشعارات التلقائية لجلسات AI.
+			</p>
+		</div>
+		
+		<div class="notice notice-warning">
+			<p><strong>متطلبات:</strong> يجب إنشاء واعتماد جميع القوالب في WhatsApp Business API قبل استخدامها. أدخل اسم القالب فقط، وسيتم إرسال المتغيرات المطلوبة تلقائياً.</p>
 		</div>
 		
 		<form method="post" action="">

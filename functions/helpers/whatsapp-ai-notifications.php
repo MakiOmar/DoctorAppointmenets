@@ -38,14 +38,15 @@ function snks_get_whatsapp_notification_settings() {
  * @return mixed
  */
 function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array() ) {
-	// Get registration settings for WhatsApp API configuration
-	$registration_settings = get_option( 'snks_therapist_registration_settings', array() );
+	// Get WhatsApp API configuration from existing registration settings
+	$api_url = get_option( 'snks_whatsapp_api_url', '' );
+	$api_token = get_option( 'snks_whatsapp_api_token', '' );
+	$phone_number_id = get_option( 'snks_whatsapp_phone_number_id', '' );
+	$message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
 	
 	// Check if WhatsApp API is configured
-	if ( empty( $registration_settings['whatsapp_api_url'] ) || 
-	     empty( $registration_settings['whatsapp_api_token'] ) || 
-	     empty( $registration_settings['whatsapp_phone_number_id'] ) ) {
-		error_log( 'WhatsApp API not configured for AI notifications' );
+	if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
+		error_log( 'WhatsApp API not configured. Please configure in Therapist Registration Settings.' );
 		return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
 	}
 	
@@ -53,13 +54,11 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	$phone_number = ltrim( $phone_number, '+' );
 	
 	// Prepare API endpoint
-	$api_url = rtrim( $registration_settings['whatsapp_api_url'], '/' );
-	$phone_number_id = $registration_settings['whatsapp_phone_number_id'];
+	$api_url = rtrim( $api_url, '/' );
 	$endpoint = $api_url . '/' . $phone_number_id . '/messages';
 	
 	// Determine template language
-	$template_language = isset( $registration_settings['whatsapp_message_language'] ) && 
-	                     $registration_settings['whatsapp_message_language'] === 'en' ? 'en_US' : 'ar';
+	$template_language = $message_language === 'en' ? 'en_US' : 'ar';
 	
 	// Build template components
 	$components = array();
@@ -99,7 +98,7 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	// Prepare headers
 	$headers = array(
-		'Authorization' => 'Bearer ' . $registration_settings['whatsapp_api_token'],
+		'Authorization' => 'Bearer ' . $api_token,
 		'Content-Type' => 'application/json',
 	);
 	
