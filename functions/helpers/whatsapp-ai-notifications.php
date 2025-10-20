@@ -13,20 +13,17 @@ defined( 'ABSPATH' ) || die();
  * @return array
  */
 function snks_get_whatsapp_notification_settings() {
-	$defaults = array(
-		'enabled' => '1',
-		'template_new_session' => 'new_session',
-		'template_doctor_new' => 'doctor_new',
-		'template_rosheta10' => 'rosheta10',
-		'template_rosheta_app' => 'rosheta_app',
-		'template_patient_rem_24h' => 'patient_rem_24h',
-		'template_patient_rem_1h' => 'patient_rem_1h',
-		'template_patient_rem_now' => 'patient_rem_now',
-		'template_doctor_rem' => 'doctor_rem',
+	return array(
+		'enabled' => get_option( 'snks_ai_notifications_enabled', '1' ),
+		'template_new_session' => get_option( 'snks_template_new_session', 'new_session' ),
+		'template_doctor_new' => get_option( 'snks_template_doctor_new', 'doctor_new' ),
+		'template_rosheta10' => get_option( 'snks_template_rosheta10', 'rosheta10' ),
+		'template_rosheta_app' => get_option( 'snks_template_rosheta_app', 'rosheta_app' ),
+		'template_patient_rem_24h' => get_option( 'snks_template_patient_rem_24h', 'patient_rem_24h' ),
+		'template_patient_rem_1h' => get_option( 'snks_template_patient_rem_1h', 'patient_rem_1h' ),
+		'template_patient_rem_now' => get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ),
+		'template_doctor_rem' => get_option( 'snks_template_doctor_rem', 'doctor_rem' ),
 	);
-	
-	$settings = get_option( 'snks_whatsapp_ai_notifications', array() );
-	return wp_parse_args( $settings, $defaults );
 }
 
 /**

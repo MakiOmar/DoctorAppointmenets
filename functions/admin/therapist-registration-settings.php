@@ -115,6 +115,17 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_whatsapp_message_language', sanitize_text_field( $_POST['whatsapp_message_language'] ?? 'ar' ) );
 		update_option( 'snks_whatsapp_template_name', sanitize_text_field( $_POST['whatsapp_template_name'] ?? 'hello_world' ) );
 		update_option( 'snks_whatsapp_use_template', isset( $_POST['whatsapp_use_template'] ) ? 1 : 0 );
+		
+		// AI Notification Template Names
+		update_option( 'snks_ai_notifications_enabled', isset( $_POST['ai_notifications_enabled'] ) ? '1' : '0' );
+		update_option( 'snks_template_new_session', sanitize_text_field( $_POST['template_new_session'] ?? 'new_session' ) );
+		update_option( 'snks_template_doctor_new', sanitize_text_field( $_POST['template_doctor_new'] ?? 'doctor_new' ) );
+		update_option( 'snks_template_rosheta10', sanitize_text_field( $_POST['template_rosheta10'] ?? 'rosheta10' ) );
+		update_option( 'snks_template_rosheta_app', sanitize_text_field( $_POST['template_rosheta_app'] ?? 'rosheta_app' ) );
+		update_option( 'snks_template_patient_rem_24h', sanitize_text_field( $_POST['template_patient_rem_24h'] ?? 'patient_rem_24h' ) );
+		update_option( 'snks_template_patient_rem_1h', sanitize_text_field( $_POST['template_patient_rem_1h'] ?? 'patient_rem_1h' ) );
+		update_option( 'snks_template_patient_rem_now', sanitize_text_field( $_POST['template_patient_rem_now'] ?? 'patient_rem_now' ) );
+		update_option( 'snks_template_doctor_rem', sanitize_text_field( $_POST['template_doctor_rem'] ?? 'doctor_rem' ) );
 		// Note: Button URL removed - OTP messages should not have buttons
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
@@ -232,14 +243,100 @@ function snks_therapist_registration_settings_page() {
 					</tr>
 					<tr>
 						<th scope="row">
-							<label for="whatsapp_template_name">Template Name</label>
+							<label for="whatsapp_template_name">OTP Template Name</label>
 						</th>
 						<td>
 							<input type="text" name="whatsapp_template_name" id="whatsapp_template_name" value="<?php echo esc_attr( $whatsapp_template_name ); ?>" class="regular-text" placeholder="hello_world">
-							<p class="description">Name of your approved WhatsApp message template. Default: "hello_world" (for testing only).</p>
+							<p class="description">Template name for OTP verification messages. Default: "hello_world" (for testing only).</p>
 						</td>
 					</tr>
-					<!-- Button URL field removed - OTP messages should not have buttons -->
+				</table>
+				
+				<h3>AI Notification Templates (Jalsah AI Only)</h3>
+				<p class="description">Configure template names for automated WhatsApp notifications for AI sessions. All templates must be pre-approved in WhatsApp Business API.</p>
+				
+				<table class="form-table">
+					<tr>
+						<th scope="row">
+							<label for="ai_notifications_enabled">Enable AI Notifications</label>
+						</th>
+						<td>
+							<input type="checkbox" name="ai_notifications_enabled" id="ai_notifications_enabled" value="1" <?php checked( get_option( 'snks_ai_notifications_enabled', '1' ), '1' ); ?> />
+							<label for="ai_notifications_enabled">Enable automated WhatsApp notifications for AI sessions</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_new_session">New Session (Patient)</label>
+						</th>
+						<td>
+							<input type="text" name="template_new_session" id="template_new_session" value="<?php echo esc_attr( get_option( 'snks_template_new_session', 'new_session' ) ); ?>" class="regular-text" placeholder="new_session">
+							<p class="description">Sent to patient when booking AI session | Variables: doctor, day, date, time</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_doctor_new">New Booking (Doctor)</label>
+						</th>
+						<td>
+							<input type="text" name="template_doctor_new" id="template_doctor_new" value="<?php echo esc_attr( get_option( 'snks_template_doctor_new', 'doctor_new' ) ); ?>" class="regular-text" placeholder="doctor_new">
+							<p class="description">Sent to doctor when patient books AI session | Variables: patient, day, date, time</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_rosheta10">Rosheta Activation</label>
+						</th>
+						<td>
+							<input type="text" name="template_rosheta10" id="template_rosheta10" value="<?php echo esc_attr( get_option( 'snks_template_rosheta10', 'rosheta10' ) ); ?>" class="regular-text" placeholder="rosheta10">
+							<p class="description">Sent when therapist activates prescription service | Variables: patient, doctor</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_rosheta_app">Rosheta Appointment</label>
+						</th>
+						<td>
+							<input type="text" name="template_rosheta_app" id="template_rosheta_app" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_app', 'rosheta_app' ) ); ?>" class="regular-text" placeholder="rosheta_app">
+							<p class="description">Sent when prescription appointment is booked | Variables: day, date, time</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_patient_rem_24h">24-Hour Reminder</label>
+						</th>
+						<td>
+							<input type="text" name="template_patient_rem_24h" id="template_patient_rem_24h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_24h', 'patient_rem_24h' ) ); ?>" class="regular-text" placeholder="patient_rem_24h">
+							<p class="description">Sent to patient 24 hours before AI session | Variables: doctor, day, date, time</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_patient_rem_1h">1-Hour Reminder</label>
+						</th>
+						<td>
+							<input type="text" name="template_patient_rem_1h" id="template_patient_rem_1h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_1h', 'patient_rem_1h' ) ); ?>" class="regular-text" placeholder="patient_rem_1h">
+							<p class="description">Sent to patient 1 hour before AI session | No variables</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_patient_rem_now">Doctor Joined</label>
+						</th>
+						<td>
+							<input type="text" name="template_patient_rem_now" id="template_patient_rem_now" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ) ); ?>" class="regular-text" placeholder="patient_rem_now">
+							<p class="description">Sent when doctor joins AI session | No variables</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_doctor_rem">Doctor Daily Reminder</label>
+						</th>
+						<td>
+							<input type="text" name="template_doctor_rem" id="template_doctor_rem" value="<?php echo esc_attr( get_option( 'snks_template_doctor_rem', 'doctor_rem' ) ); ?>" class="regular-text" placeholder="doctor_rem">
+							<p class="description">Sent at midnight if doctor has AI sessions tomorrow | Variables: day, date</p>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row">
 							<label for="test_whatsapp_phone">Test WhatsApp API</label>

@@ -8,27 +8,72 @@
 defined( 'ABSPATH' ) || die();
 
 /**
- * Add admin menu for WhatsApp AI Notifications
+ * Add admin menu for WhatsApp AI Notifications - DEPRECATED
+ * Now managed in Therapist Registration Settings page
+ * This page is kept only as a redirect
  */
 add_action(
 	'admin_menu',
 	function () {
 		add_submenu_page(
 			'shrinks-settings',
-			'WhatsApp AI Notifications',
-			'WhatsApp AI Notifications',
+			'WhatsApp Notifications (Redirect)',
+			'WhatsApp Notifications',
 			'manage_options',
 			'whatsapp-ai-notifications',
-			'snks_whatsapp_ai_notifications_page'
+			'snks_whatsapp_ai_notifications_redirect_page'
 		);
 	},
 	20
 );
 
 /**
- * WhatsApp AI Notifications Settings Page
+ * WhatsApp AI Notifications Redirect Page
+ * Redirects admins to the unified settings in Registration Settings
  */
-function snks_whatsapp_ai_notifications_page() {
+function snks_whatsapp_ai_notifications_redirect_page() {
+	?>
+	<div class="wrap">
+		<h1>WhatsApp Notifications</h1>
+		
+		<div class="notice notice-info" style="padding: 20px;">
+			<h2 style="margin-top: 0;">✅ تم دمج جميع إعدادات WhatsApp في صفحة واحدة</h2>
+			<p style="font-size: 16px;">
+				لتسهيل الإدارة، تم نقل جميع إعدادات WhatsApp (API وقوالب الإشعارات) إلى:
+			</p>
+			<p style="margin: 20px 0;">
+				<a href="<?php echo admin_url( 'admin.php?page=therapist-registration-settings' ); ?>" 
+				   class="button button-primary button-hero">
+					🔧 انتقل إلى إعدادات تسجيل المعالجين
+				</a>
+			</p>
+		</div>
+		
+		<div class="card" style="background: white; padding: 20px; border: 1px solid #ccd0d4; border-radius: 4px; margin-top: 20px;">
+			<h3>📋 ما ستجده في الصفحة الموحدة:</h3>
+			<ul style="list-style: disc; padding-right: 20px; font-size: 14px;">
+				<li>✅ <strong>WhatsApp API Configuration:</strong> الرابط، التوكن، رقم الهاتف، اللغة</li>
+				<li>✅ <strong>OTP Template:</strong> قالب رمز التحقق</li>
+				<li>✅ <strong>AI Notification Templates:</strong> 8 قوالب للإشعارات التلقائية</li>
+				<li>✅ <strong>اختبار API:</strong> زر الاختبار المباشر</li>
+			</ul>
+			
+			<h3 style="margin-top: 20px;">🎯 مميزات النظام الموحد:</h3>
+			<ul style="list-style: disc; padding-right: 20px; font-size: 14px;">
+				<li>✅ جميع الإعدادات في مكان واحد</li>
+				<li>✅ لا تكرار أو تضارب في الإعدادات</li>
+				<li>✅ سهولة في الصيانة والإدارة</li>
+				<li>✅ إعدادات AI منفصلة ومنظمة في نفس الصفحة</li>
+			</ul>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Old settings page - DEPRECATED - kept for reference only
+ */
+function snks_whatsapp_ai_notifications_page_old() {
 	// Handle form submission
 	if ( isset( $_POST['submit_whatsapp_ai_notifications'] ) && check_admin_referer( 'snks_whatsapp_ai_notifications', 'snks_whatsapp_ai_notifications_nonce' ) ) {
 		$settings = array(
