@@ -343,8 +343,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_new_session" id="template_new_session" value="<?php echo esc_attr( get_option( 'snks_template_new_session', 'new_session' ) ); ?>" class="regular-text" placeholder="new_session">
-							<button type="button" class="button test-whatsapp-notification" data-template="new_session" data-params='{"doctor_name": "د. أحمد محمد", "day_name": "الاثنين", "date": "2025-10-21", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Patient booking | <code>{{doctor_name}}</code>, <code>{{day_name}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+							<button type="button" class="button test-whatsapp-notification" data-template="new_session" data-params='{"doctor": "د. أحمد محمد", "day": "الاثنين", "date": "2025-10-21", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Patient booking | <code>{{doctor}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
 						</td>
 					</tr>
 					<tr>

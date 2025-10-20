@@ -312,8 +312,8 @@ function snks_send_new_session_notification( $session_id ) {
 		$patient_phone,
 		$settings['template_new_session'],
 		array( 
-			'doctor_name' => $doctor_name, 
-			'day_name' => $day_name, 
+			'doctor' => $doctor_name, 
+			'day' => $day_name, 
 			'date' => $date, 
 			'time' => $time 
 		)

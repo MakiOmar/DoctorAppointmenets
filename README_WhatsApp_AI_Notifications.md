@@ -164,12 +164,12 @@ Templates must be configured with the correct number of parameters as specified 
 
 ## Template Content Reference
 
-Use these as templates when creating in WhatsApp Business Manager. **Use named placeholders like {{doctor_name}}, {{day_name}}, etc.**
+Use these as templates when creating in WhatsApp Business Manager. **Use the exact named placeholders shown below (e.g., {{doctor}}, {{day}}, {{date}}, etc.).**
 
 ### 1. new_session (4 parameters)
-{{doctor_name}} = doctor name, {{day_name}} = day name, {{date}} = date, {{time}} = time
+{{doctor}} = doctor name, {{day}} = day name, {{date}} = date, {{time}} = time
 ```
-تم حجز جلسة أونلاين مع المعالج {{doctor_name}} يوم {{day_name}} الموافق {{date}} الساعة {{time}} بتوقيت مصر، ويمكنك الدخول للجلسة في موعدها من خلال صفحة الحجوزات بحسابك على موقع جلسة، وسيتم عمل الجلسة عبر نظام الاتصالات الخاص بالموقع.
+تم حجز جلسة أونلاين مع المعالج {{doctor}} يوم {{day}} الموافق {{date}} الساعة {{time}} بتوقيت مصر، ويمكنك الدخول للجلسة في موعدها من خلال صفحة الحجوزات بحسابك على موقع جلسة، وسيتم عمل الجلسة عبر نظام الاتصالات الخاص بالموقع.
 
 ملاحظات:
 - مدة الجلسة 45 دقيقة فقط.
