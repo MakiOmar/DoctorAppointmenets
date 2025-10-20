@@ -101,6 +101,16 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		'Content-Type' => 'application/json',
 	);
 	
+	// Debug request details
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] === REQUEST DEBUG ===' );
+		error_log( '[WhatsApp AI] Endpoint: ' . $endpoint );
+		error_log( '[WhatsApp AI] Template: ' . $template_name );
+		error_log( '[WhatsApp AI] Language: ' . $template_language );
+		error_log( '[WhatsApp AI] Parameters: ' . json_encode( $parameters ) );
+		error_log( '[WhatsApp AI] Request Body: ' . wp_json_encode( $body ) );
+	}
+	
 	// Make API request
 	$args = array(
 		'headers' => $headers,
@@ -137,13 +147,16 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log( '[WhatsApp AI] API Error - Code: ' . $response_code );
 			error_log( '[WhatsApp AI] Error Message: ' . $error_message );
+			error_log( '[WhatsApp AI] Full Error Response: ' . $response_body );
 			error_log( '[WhatsApp AI] Template: ' . $template_name );
 			error_log( '[WhatsApp AI] Phone: ' . $phone_number );
+			error_log( '[WhatsApp AI] Parameters sent: ' . json_encode( $parameters ) );
 		}
 		
 		return new WP_Error( 'api_error', $error_message, array( 
 			'response_code' => $response_code,
-			'response_body' => $response_body 
+			'response_body' => $response_body,
+			'error_data' => $error_data
 		) );
 	}
 	

@@ -121,8 +121,17 @@ function snks_test_ai_whatsapp_notification_ajax() {
 		$result = snks_send_whatsapp_template_message( $test_phone, $actual_template, $params );
 		
 		if ( is_wp_error( $result ) ) {
+			$error_data = $result->get_error_data();
+			$detailed_error = 'WhatsApp API test failed: ' . $result->get_error_message();
+			
+			// Add more details if available
+			if ( isset( $error_data['error_data']['error']['error_data']['details'] ) ) {
+				$detailed_error .= ' | Details: ' . $error_data['error_data']['error']['error_data']['details'];
+			}
+			
 			wp_send_json_error( array( 
-				'message' => 'WhatsApp API test failed: ' . $result->get_error_message()
+				'message' => $detailed_error,
+				'full_error' => $error_data
 			) );
 		} else {
 			$message_id = isset( $result['messages'][0]['id'] ) ? $result['messages'][0]['id'] : null;
@@ -133,7 +142,8 @@ function snks_test_ai_whatsapp_notification_ajax() {
 				'debug_info' => array(
 					'template' => $actual_template,
 					'phone' => $test_phone,
-					'params_count' => count( $params )
+					'params_count' => count( $params ),
+					'params_sent' => $params
 				)
 			) );
 		}
@@ -646,7 +656,8 @@ function snks_therapist_registration_settings_page() {
 							debugInfo = '<br><small><strong>معلومات الاختبار:</strong><br>' +
 								'القالب: ' + response.data.debug_info.template + '<br>' +
 								'الهاتف: ' + response.data.debug_info.phone + '<br>' +
-								'المتغيرات: ' + response.data.debug_info.params_count + '</small>';
+								'المتغيرات: ' + response.data.debug_info.params_count + '<br>' +
+								'القيم المرسلة: ' + JSON.stringify(response.data.debug_info.params_sent) + '</small>';
 						}
 						
 						let responseInfo = '';
@@ -656,7 +667,13 @@ function snks_therapist_registration_settings_page() {
 						
 						resultDiv.html('<div style="color: green; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;"><strong>✓ نجح:</strong> ' + response.data.message + debugInfo + responseInfo + '</div>');
 					} else {
-						resultDiv.html('<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> ' + response.data.message + '</div>');
+						let errorDetails = '';
+						if (response.data.full_error) {
+							errorDetails = '<br><small><pre style="background: #fff; padding: 10px; overflow: auto;">' + 
+								JSON.stringify(response.data.full_error, null, 2) + '</pre></small>';
+						}
+						
+						resultDiv.html('<div style="color: #721c24; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;"><strong>✗ خطأ:</strong> ' + response.data.message + errorDetails + '<br><small>تحقق من سجل الأخطاء للحصول على تفاصيل كاملة</small></div>');
 					}
 				},
 				error: function(xhr, status, error) {
