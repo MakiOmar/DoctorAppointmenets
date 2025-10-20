@@ -101,24 +101,36 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		'Content-Type' => 'application/json',
 	);
 	
-	// Debug request details
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] === REQUEST DEBUG ===' );
-		error_log( '[WhatsApp AI] Endpoint: ' . $endpoint );
-		error_log( '[WhatsApp AI] Template: ' . $template_name );
-		error_log( '[WhatsApp AI] Language: ' . $template_language );
-		error_log( '[WhatsApp AI] Parameters: ' . json_encode( $parameters ) );
-		error_log( '[WhatsApp AI] Request Body: ' . wp_json_encode( $body ) );
-	}
-	
-	// Make API request
+	// Prepare request arguments
+	$json_body = wp_json_encode( $body );
 	$args = array(
 		'headers' => $headers,
-		'body' => wp_json_encode( $body ),
+		'body' => $json_body,
 		'timeout' => 15,
 		'blocking' => true,
 		'sslverify' => true,
 	);
+	
+	// Debug full request details
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] ========== FULL REQUEST DEBUG ==========' );
+		error_log( '[WhatsApp AI] Endpoint URL: ' . $endpoint );
+		error_log( '[WhatsApp AI] Method: POST' );
+		error_log( '[WhatsApp AI] Headers: ' . json_encode( array(
+			'Authorization' => 'Bearer ' . substr( $api_token, 0, 20 ) . '...',
+			'Content-Type' => 'application/json'
+		) ) );
+		error_log( '[WhatsApp AI] Template Name: ' . $template_name );
+		error_log( '[WhatsApp AI] Template Language: ' . $template_language );
+		error_log( '[WhatsApp AI] Phone Number (to): ' . $phone_number );
+		error_log( '[WhatsApp AI] Parameters (array): ' . json_encode( $parameters, JSON_UNESCAPED_UNICODE ) );
+		error_log( '[WhatsApp AI] Parameters Count: ' . count( $parameters ) );
+		error_log( '[WhatsApp AI] --- Request Body (JSON) ---' );
+		error_log( $json_body );
+		error_log( '[WhatsApp AI] --- Request Body (Formatted) ---' );
+		error_log( json_encode( $body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+		error_log( '[WhatsApp AI] ======================================' );
+	}
 	
 	$response = wp_remote_post( $endpoint, $args );
 	
@@ -133,6 +145,16 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	// Get response body and code
 	$response_body = wp_remote_retrieve_body( $response );
 	$response_code = wp_remote_retrieve_response_code( $response );
+	$response_headers = wp_remote_retrieve_headers( $response );
+	
+	// Debug response
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] ========== RESPONSE DEBUG ==========' );
+		error_log( '[WhatsApp AI] Response Code: ' . $response_code );
+		error_log( '[WhatsApp AI] Response Headers: ' . json_encode( $response_headers->getAll() ) );
+		error_log( '[WhatsApp AI] Response Body: ' . $response_body );
+		error_log( '[WhatsApp AI] ======================================' );
+	}
 	
 	// Check response code
 	if ( $response_code !== 200 ) {
@@ -145,12 +167,15 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		
 		// Debug WhatsApp API errors
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] API Error - Code: ' . $response_code );
+			error_log( '[WhatsApp AI] ========== ERROR ANALYSIS ==========' );
+			error_log( '[WhatsApp AI] Error Code: ' . $response_code );
 			error_log( '[WhatsApp AI] Error Message: ' . $error_message );
-			error_log( '[WhatsApp AI] Full Error Response: ' . $response_body );
-			error_log( '[WhatsApp AI] Template: ' . $template_name );
-			error_log( '[WhatsApp AI] Phone: ' . $phone_number );
-			error_log( '[WhatsApp AI] Parameters sent: ' . json_encode( $parameters ) );
+			if ( isset( $error_data['error']['error_data']['details'] ) ) {
+				error_log( '[WhatsApp AI] Error Details: ' . $error_data['error']['error_data']['details'] );
+			}
+			error_log( '[WhatsApp AI] Full Error Response (Formatted): ' );
+			error_log( json_encode( $error_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+			error_log( '[WhatsApp AI] ======================================' );
 		}
 		
 		return new WP_Error( 'api_error', $error_message, array( 
