@@ -318,6 +318,15 @@ function snks_therapist_registration_settings_page() {
 				<h3>AI Notification Templates (Jalsah AI Only)</h3>
 				<p class="description">Configure template names for automated WhatsApp notifications for AI sessions. All templates must be pre-approved in WhatsApp Business API.</p>
 				
+				<div class="notice notice-warning inline" style="margin: 15px 0; padding: 10px;">
+					<p><strong>⚠️ مهم جداً:</strong> عند إنشاء القوالب في WhatsApp Business Manager، استخدم <strong>أرقام</strong> وليس أسماء للمتغيرات:</p>
+					<ul style="margin: 10px 0 10px 20px;">
+						<li>✅ <strong>صحيح:</strong> <code>المعالج {{1}} يوم {{2}} الموافق {{3}} الساعة {{4}}</code></li>
+						<li>❌ <strong>خطأ:</strong> <code>المعالج {{doctor}} يوم {{day}} الموافق {{date}} الساعة {{time}}</code></li>
+					</ul>
+					<p><small>WhatsApp API يستخدم أرقام ({{1}}, {{2}}, ...) فقط. الأسماء المذكورة أدناه (doctor, day, date, time) هي للتوضيح فقط لمعرفة ترتيب إرسال القيم.</small></p>
+				</div>
+				
 				<table class="form-table">
 					<tr>
 						<th scope="row">
@@ -335,7 +344,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_new_session" id="template_new_session" value="<?php echo esc_attr( get_option( 'snks_template_new_session', 'new_session' ) ); ?>" class="regular-text" placeholder="new_session">
 							<button type="button" class="button test-whatsapp-notification" data-template="new_session" data-params='["د. أحمد محمد", "الاثنين", "2025-10-21", "10:00 ص"]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent to patient when booking AI session | Variables: doctor, day, date, time</p>
+							<p class="description">Patient booking | <code>{{1}}</code>=doctor, <code>{{2}}</code>=day, <code>{{3}}</code>=date, <code>{{4}}</code>=time</p>
 						</td>
 					</tr>
 					<tr>
@@ -345,7 +354,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_doctor_new" id="template_doctor_new" value="<?php echo esc_attr( get_option( 'snks_template_doctor_new', 'doctor_new' ) ); ?>" class="regular-text" placeholder="doctor_new">
 							<button type="button" class="button test-whatsapp-notification" data-template="doctor_new" data-params='["سارة أحمد", "الاثنين", "2025-10-21", "10:00 ص"]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent to doctor when patient books AI session | Variables: patient, day, date, time</p>
+							<p class="description">Doctor alert | <code>{{1}}</code>=patient, <code>{{2}}</code>=day, <code>{{3}}</code>=date, <code>{{4}}</code>=time</p>
 						</td>
 					</tr>
 					<tr>
@@ -355,7 +364,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_rosheta10" id="template_rosheta10" value="<?php echo esc_attr( get_option( 'snks_template_rosheta10', 'rosheta10' ) ); ?>" class="regular-text" placeholder="rosheta10">
 							<button type="button" class="button test-whatsapp-notification" data-template="rosheta10" data-params='["سارة أحمد", "د. محمد علي"]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent when therapist activates prescription service | Variables: patient, doctor</p>
+							<p class="description">Prescription activation | <code>{{1}}</code>=patient, <code>{{2}}</code>=doctor</p>
 						</td>
 					</tr>
 					<tr>
@@ -365,7 +374,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_rosheta_app" id="template_rosheta_app" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_app', 'rosheta_app' ) ); ?>" class="regular-text" placeholder="rosheta_app">
 							<button type="button" class="button test-whatsapp-notification" data-template="rosheta_app" data-params='["الثلاثاء", "2025-10-22", "02:00 م"]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent when prescription appointment is booked | Variables: day, date, time</p>
+							<p class="description">Prescription appointment | <code>{{1}}</code>=day, <code>{{2}}</code>=date, <code>{{3}}</code>=time</p>
 						</td>
 					</tr>
 					<tr>
@@ -375,7 +384,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_patient_rem_24h" id="template_patient_rem_24h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_24h', 'patient_rem_24h' ) ); ?>" class="regular-text" placeholder="patient_rem_24h">
 							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_24h" data-params='["د. خالد حسن", "الأربعاء", "2025-10-23", "03:00 م"]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent to patient 24 hours before AI session | Variables: doctor, day, date, time</p>
+							<p class="description">24h reminder | <code>{{1}}</code>=doctor, <code>{{2}}</code>=day, <code>{{3}}</code>=date, <code>{{4}}</code>=time</p>
 						</td>
 					</tr>
 					<tr>
@@ -385,7 +394,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_patient_rem_1h" id="template_patient_rem_1h" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_1h', 'patient_rem_1h' ) ); ?>" class="regular-text" placeholder="patient_rem_1h">
 							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_1h" data-params='[]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent to patient 1 hour before AI session | No variables</p>
+							<p class="description">1h reminder | No parameters</p>
 						</td>
 					</tr>
 					<tr>
@@ -395,7 +404,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_patient_rem_now" id="template_patient_rem_now" value="<?php echo esc_attr( get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ) ); ?>" class="regular-text" placeholder="patient_rem_now">
 							<button type="button" class="button test-whatsapp-notification" data-template="patient_rem_now" data-params='[]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent when doctor joins AI session | No variables</p>
+							<p class="description">Doctor joined | No parameters</p>
 						</td>
 					</tr>
 					<tr>
@@ -405,7 +414,7 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="template_doctor_rem" id="template_doctor_rem" value="<?php echo esc_attr( get_option( 'snks_template_doctor_rem', 'doctor_rem' ) ); ?>" class="regular-text" placeholder="doctor_rem">
 							<button type="button" class="button test-whatsapp-notification" data-template="doctor_rem" data-params='["الخميس", "2025-10-24"]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Sent at midnight if doctor has AI sessions tomorrow | Variables: day, date</p>
+							<p class="description">Daily reminder | <code>{{1}}</code>=day, <code>{{2}}</code>=date</p>
 						</td>
 					</tr>
 					<tr>
