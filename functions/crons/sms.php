@@ -65,22 +65,49 @@ function snks_send_session_notifications() {
 			if ( in_array( 'doctor', $user->roles, true ) && strpos( $billing_phone, '+2' ) === false ) {
 				$billing_phone = '+20' . $billing_phone;
 			}
+			
+			// Check if this is an AI session
+			$is_ai_session = function_exists( 'snks_is_ai_session' ) && snks_is_ai_session( $session );
+			
 			// 24-hour reminder.
 			if ( $time_diff > 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 82800 = 23 hrs, 86400 = 24 hrs
-				if ( 'online' === $session->attendance_type ) {
+				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
+					// Send WhatsApp template notification for AI sessions
+					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
+					
+					if ( $settings['enabled'] == '1' ) {
+						// Get doctor name
+						$doctor = get_user_by( 'id', $session->user_id );
+						$doctor_name = $doctor ? $doctor->display_name : 'المعالج';
+						
+						// Format date and time
+						$day_name = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
+						$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
+						$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
+						
+						// Send via WhatsApp template
+						snks_send_whatsapp_template_message(
+							$billing_phone,
+							$settings['template_patient_rem_24h'],
+							array( $doctor_name, $day_name, $date, $time )
+						);
+					}
+				} elseif ( 'online' === $session->attendance_type ) {
+					// Legacy SMS notification for non-AI sessions
 					$message = sprintf(
 						'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
 						snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
 						'www.jalsah.link'
 					);
+					send_sms_via_whysms( $billing_phone, $message );
 				} else {
 					$message = sprintf(
 						'نذكرك بموعد جلستك غدا الساعه %1$s',
 						snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
 					);
+					send_sms_via_whysms( $billing_phone, $message );
 				}
 
-				send_sms_via_whysms( $billing_phone, $message );
 				//phpcs:disable
 				$wpdb->update(
 					$wpdb->prefix . 'snks_provider_timetable',
@@ -92,11 +119,27 @@ function snks_send_session_notifications() {
 			}
 			// 1-hour reminder.
 			if ( 'online' === $session->attendance_type && $time_diff <= 3600 && ! $session->notification_1hr_sent ) {
-				$message = sprintf(
-					'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
-					'www.jalsah.link'
-				);
-				send_sms_via_whysms( $billing_phone, $message );
+				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
+					// Send WhatsApp template notification for AI sessions
+					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
+					
+					if ( $settings['enabled'] == '1' ) {
+						// Send via WhatsApp template (no parameters for this template)
+						snks_send_whatsapp_template_message(
+							$billing_phone,
+							$settings['template_patient_rem_1h'],
+							array()
+						);
+					}
+				} else {
+					// Legacy SMS notification for non-AI sessions
+					$message = sprintf(
+						'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
+						'www.jalsah.link'
+					);
+					send_sms_via_whysms( $billing_phone, $message );
+				}
+				
 				$wpdb->update(
 					$wpdb->prefix . 'snks_provider_timetable',
 					array( 'notification_1hr_sent' => 1 ),

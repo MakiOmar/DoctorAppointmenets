@@ -6715,6 +6715,13 @@ Best regards,
 		$result        = set_transient( $transient_key, '1', 3600 ); // Expires in 1 hour
 
 		if ( $result ) {
+			// Send WhatsApp notification to patient that doctor has joined (AI sessions only)
+			if ( function_exists( 'snks_is_ai_session' ) && snks_is_ai_session( $session_id ) ) {
+				if ( function_exists( 'snks_send_doctor_joined_notification' ) ) {
+					snks_send_doctor_joined_notification( $session_id );
+				}
+			}
+			
 			return new WP_REST_Response(
 				array(
 					'success'      => true,

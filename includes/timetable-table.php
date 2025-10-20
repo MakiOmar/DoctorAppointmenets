@@ -73,3 +73,41 @@ add_action(
         //phpcs:enable
 	}
 );
+
+/**
+ * Add WhatsApp notification tracking columns for AI sessions
+ */
+function snks_add_whatsapp_notification_columns() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	$columns_to_add = array(
+		'whatsapp_new_session_sent' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_doctor_notified' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_rosheta_activated' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_rosheta_booked' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_doctor_reminded' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_patient_now_sent' => 'TINYINT(1) DEFAULT 0',
+	);
+	
+	//phpcs:disable
+	foreach ( $columns_to_add as $column_name => $column_definition ) {
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+				WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s',
+				$table_name,
+				$column_name,
+				$wpdb->dbname
+			)
+		);
+		
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				"ALTER TABLE $table_name ADD COLUMN $column_name $column_definition"
+			);
+		}
+	}
+	//phpcs:enable
+}
+add_action( 'admin_init', 'snks_add_whatsapp_notification_columns' );

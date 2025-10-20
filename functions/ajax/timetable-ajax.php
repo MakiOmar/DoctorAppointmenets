@@ -946,6 +946,11 @@ function snks_book_session_rochtah_appointment() {
 		wp_send_json_error( 'Failed to update request status.' );
 	}
 	
+	// Send WhatsApp notification for rosheta appointment
+	if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
+		snks_send_rosheta_appointment_notification( $request_id );
+	}
+	
 	wp_send_json_success( array(
 		'message' => 'تم حجز موعد روشتا بنجاح! سيتم إعلامك بموعد الجلسة.',
 		'appointment_id' => $slot_id,

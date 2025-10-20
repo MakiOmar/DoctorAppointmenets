@@ -246,15 +246,19 @@ function snks_send_ai_prescription_notifications( $patient_id, $booking_id, $slo
 		return;
 	}
 	
-	// Send WhatsApp notification
-	$whatsapp_message = sprintf(
-		__( 'Your prescription request has been received. Your Rochtah consultation is scheduled for %s at %s. Click here to confirm: %s', 'shrinks' ),
-		$slot['date'],
-		$slot['time'],
-		home_url( '/rochtah-confirmation?booking_id=' . $booking_id )
+	// Get therapist ID from booking
+	global $wpdb;
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT therapist_id FROM {$wpdb->prefix}snks_rochtah_bookings WHERE id = %d",
+			$booking_id
+		)
 	);
 	
-	snks_send_whatsapp_message( $patient->user_meta['phone'] ?? '', $whatsapp_message );
+	// Send rosheta activation notification (rosheta10) via WhatsApp
+	if ( $booking && function_exists( 'snks_send_rosheta_activation_notification' ) ) {
+		snks_send_rosheta_activation_notification( $patient_id, $booking->therapist_id );
+	}
 	
 	// Send email notification
 	$email_subject = __( 'Prescription Request Received', 'shrinks' );

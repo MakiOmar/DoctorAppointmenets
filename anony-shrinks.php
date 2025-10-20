@@ -315,6 +315,11 @@ function plugin_activation_hook() {
 	snks_create_custom_coupons_table();
 	snks_create_coupon_usages_table();
 	
+	// Add WhatsApp notification columns for AI sessions
+	if ( function_exists( 'snks_add_whatsapp_notification_columns' ) ) {
+		snks_add_whatsapp_notification_columns();
+	}
+	
 	// Create AI tables
 	do_action( 'snks_create_ai_tables' );
 	do_action( 'snks_add_ai_meta_fields' );
