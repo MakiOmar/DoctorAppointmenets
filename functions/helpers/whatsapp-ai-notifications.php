@@ -32,9 +32,10 @@ function snks_get_whatsapp_notification_settings() {
  * @param string $phone_number Recipient phone number.
  * @param string $template_name Template name.
  * @param array  $parameters Template parameters.
+ * @param array  $parameter_names Optional parameter names for each value.
  * @return mixed
  */
-function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array() ) {
+function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array(), $parameter_names = array() ) {
 	// Get WhatsApp API configuration from existing registration settings
 	$api_url = get_option( 'snks_whatsapp_api_url', '' );
 	$api_token = get_option( 'snks_whatsapp_api_token', '' );
@@ -64,11 +65,18 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	if ( ! empty( $parameters ) ) {
 		$template_parameters = array();
-		foreach ( $parameters as $param_value ) {
-			$template_parameters[] = array(
+		foreach ( $parameters as $index => $param_value ) {
+			$param = array(
 				'type' => 'text',
 				'text' => $param_value
 			);
+			
+			// Add name attribute if provided
+			if ( ! empty( $parameter_names ) && isset( $parameter_names[ $index ] ) ) {
+				$param['name'] = $parameter_names[ $index ];
+			}
+			
+			$template_parameters[] = $param;
 		}
 		
 		$components[] = array(
@@ -123,7 +131,8 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		error_log( '[WhatsApp AI] Template Name: ' . $template_name );
 		error_log( '[WhatsApp AI] Template Language: ' . $template_language );
 		error_log( '[WhatsApp AI] Phone Number (to): ' . $phone_number );
-		error_log( '[WhatsApp AI] Parameters (array): ' . json_encode( $parameters, JSON_UNESCAPED_UNICODE ) );
+		error_log( '[WhatsApp AI] Parameters (values): ' . json_encode( $parameters, JSON_UNESCAPED_UNICODE ) );
+		error_log( '[WhatsApp AI] Parameter Names: ' . json_encode( $parameter_names, JSON_UNESCAPED_UNICODE ) );
 		error_log( '[WhatsApp AI] Parameters Count: ' . count( $parameters ) );
 		error_log( '[WhatsApp AI] --- Request Body (JSON) ---' );
 		error_log( $json_body );
@@ -302,11 +311,12 @@ function snks_send_new_session_notification( $session_id ) {
 	$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
 	$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
 	
-	// Send WhatsApp template
+	// Send WhatsApp template with parameter names
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
 		$settings['template_new_session'],
-		array( $doctor_name, $day_name, $date, $time )
+		array( $doctor_name, $day_name, $date, $time ),
+		array( 'doctor_name', 'day', 'date', 'time' )
 	);
 	
 	// Mark as sent

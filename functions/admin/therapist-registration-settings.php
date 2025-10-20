@@ -116,9 +116,23 @@ function snks_test_ai_whatsapp_notification_ajax() {
 	$template_option_name = 'snks_template_' . str_replace( array( '_new', '_app', '10', '_24h', '_1h', '_now', '_rem' ), array( '_new', '_app', '10', '_24h', '_1h', '_now', '_rem' ), $template_name );
 	$actual_template = get_option( $template_option_name, $template_name );
 	
+	// Define parameter names for each template type
+	$parameter_names_map = array(
+		'new_session' => array( 'doctor_name', 'day', 'date', 'time' ),
+		'doctor_new' => array( 'patient_name', 'day', 'date', 'time' ),
+		'rosheta10' => array( 'patient_name', 'doctor_name' ),
+		'rosheta_app' => array( 'day', 'date', 'time' ),
+		'patient_rem_24h' => array( 'doctor_name', 'day', 'date', 'time' ),
+		'patient_rem_1h' => array(),
+		'patient_rem_now' => array(),
+		'doctor_rem' => array( 'day', 'date' ),
+	);
+	
+	$param_names = isset( $parameter_names_map[ $template_name ] ) ? $parameter_names_map[ $template_name ] : array();
+	
 	// Send test notification using the WhatsApp template function
 	if ( function_exists( 'snks_send_whatsapp_template_message' ) ) {
-		$result = snks_send_whatsapp_template_message( $test_phone, $actual_template, $params );
+		$result = snks_send_whatsapp_template_message( $test_phone, $actual_template, $params, $param_names );
 		
 		if ( is_wp_error( $result ) ) {
 			$error_data = $result->get_error_data();
