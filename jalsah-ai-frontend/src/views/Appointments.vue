@@ -1794,13 +1794,35 @@ export default {
     }
 
 
+    // Poll prescription requests to check for doctor joined status
+    const prescriptionPollingInterval = ref(null)
+    
+    const startPrescriptionPolling = () => {
+      // Poll every 5 seconds to check if doctor has joined
+      prescriptionPollingInterval.value = setInterval(async () => {
+        await loadPrescriptionRequests()
+      }, 5000)
+    }
+    
+    const stopPrescriptionPolling = () => {
+      if (prescriptionPollingInterval.value) {
+        clearInterval(prescriptionPollingInterval.value)
+        prescriptionPollingInterval.value = null
+      }
+    }
+    
     onMounted(() => {
       loadAppointments()
       loadPrescriptionRequests()
       loadCompletedPrescriptions()
+      
+      // Start polling prescription requests to check doctor joined status
+      startPrescriptionPolling()
     })
-
+    
     onUnmounted(() => {
+      stopPrescriptionPolling()
+      
       // Close all open popups when component is unmounted
       openPopups.value.forEach((popup, appointmentId) => {
         if (popup && !popup.closed) {
