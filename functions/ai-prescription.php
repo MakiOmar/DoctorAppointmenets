@@ -241,10 +241,17 @@ function snks_get_next_rochtah_slot() {
  * Send prescription notifications to patient
  */
 function snks_send_ai_prescription_notifications( $patient_id, $booking_id, $slot ) {
+	error_log( '[Rochtah Notification Debug] snks_send_ai_prescription_notifications called' );
+	error_log( '[Rochtah Notification Debug] Patient ID: ' . $patient_id );
+	error_log( '[Rochtah Notification Debug] Booking ID: ' . $booking_id );
+	
 	$patient = get_userdata( $patient_id );
 	if ( ! $patient ) {
+		error_log( '[Rochtah Notification Debug] Patient not found!' );
 		return;
 	}
+	
+	error_log( '[Rochtah Notification Debug] Patient found: ' . $patient->display_name );
 	
 	// Get therapist ID from booking
 	global $wpdb;
@@ -255,9 +262,18 @@ function snks_send_ai_prescription_notifications( $patient_id, $booking_id, $slo
 		)
 	);
 	
+	error_log( '[Rochtah Notification Debug] Booking found: ' . ( $booking ? 'Yes' : 'No' ) );
+	if ( $booking ) {
+		error_log( '[Rochtah Notification Debug] Therapist ID: ' . $booking->therapist_id );
+	}
+	
 	// Send rosheta activation notification (rosheta10) via WhatsApp
 	if ( $booking && function_exists( 'snks_send_rosheta_activation_notification' ) ) {
-		snks_send_rosheta_activation_notification( $patient_id, $booking->therapist_id, $booking_id );
+		error_log( '[Rochtah Notification Debug] Calling snks_send_rosheta_activation_notification' );
+		$result = snks_send_rosheta_activation_notification( $patient_id, $booking->therapist_id, $booking_id );
+		error_log( '[Rochtah Notification Debug] Notification result: ' . ( is_wp_error( $result ) ? 'WP_Error' : 'Success' ) );
+	} else {
+		error_log( '[Rochtah Notification Debug] Cannot send notification - booking or function missing' );
 	}
 	
 	// Send email notification
