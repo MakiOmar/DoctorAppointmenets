@@ -1529,7 +1529,10 @@ export default {
         })
         prescriptionRequests.value = response.data.data || []
       } catch (error) {
-        console.error('Error loading prescription requests:', error)
+        // Don't log aborted requests (they're cancelled intentionally)
+        if (error.code !== 'ECONNABORTED') {
+          console.error('Error loading prescription requests:', error)
+        }
       }
     }
 
@@ -1800,7 +1803,17 @@ export default {
     const startPrescriptionPolling = () => {
       // Poll every 5 seconds to check if doctor has joined
       prescriptionPollingInterval.value = setInterval(async () => {
-        await loadPrescriptionRequests()
+        // Only poll if there are confirmed rochtah bookings that haven't been joined yet
+        const hasPendingRochtah = prescriptionRequests.value.some(r => 
+          r.status === 'confirmed' && 
+          r.booking_date && 
+          r.booking_date !== '0000-00-00' &&
+          (!r.doctor_joined || r.doctor_joined === false)
+        )
+        
+        if (hasPendingRochtah) {
+          await loadPrescriptionRequests()
+        }
       }, 5000)
     }
     
