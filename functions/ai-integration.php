@@ -6260,25 +6260,7 @@ Best regards,
 			$query_params
 		);
 		
-		// Debug: Log the query
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[Therapist Dates] Therapist ID: ' . $therapist_id );
-			error_log( '[Therapist Dates] Days count: ' . $days_count );
-			error_log( '[Therapist Dates] Off days: ' . print_r( $off_days, true ) );
-			error_log( '[Therapist Dates] Adjusted current datetime: ' . $adjusted_current_datetime );
-			error_log( '[Therapist Dates] Query: ' . $query );
-			error_log( '[Therapist Dates] Query params: ' . print_r( $query_params, true ) );
-		}
-		
 		$available_slots = $wpdb->get_results( $query );
-		
-		// Debug: Log results
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[Therapist Dates] Total slots found: ' . count( $available_slots ) );
-			if ( ! empty( $available_slots ) ) {
-				error_log( '[Therapist Dates] First 3 slots: ' . print_r( array_slice( $available_slots, 0, 3 ), true ) );
-			}
-		}
 
 		// Group slots by date
 		$dates_map = array();
@@ -6315,14 +6297,6 @@ Best regards,
 		
 		// Convert map to array and return
 		$available_dates = array_values( $dates_map );
-		
-		// Debug: Log grouped dates
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[Therapist Dates] Grouped dates count: ' . count( $available_dates ) );
-			if ( ! empty( $available_dates ) ) {
-				error_log( '[Therapist Dates] Grouped dates: ' . print_r( $available_dates, true ) );
-			}
-		}
 		
 		return $available_dates;
 	}
