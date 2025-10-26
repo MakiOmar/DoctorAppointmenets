@@ -25,6 +25,14 @@
           <!-- Status and Actions -->
           <div class="flex items-center justify-between">
             <div class="text-sm">
+              <div v-if="request.status === 'confirmed' && request.booking_date && request.booking_date !== '0000-00-00'" class="mb-2">
+                <div class="text-gray-700 font-medium">
+                  📅 {{ formatDate(request.booking_date) }}
+                </div>
+                <div class="text-gray-700 font-medium">
+                  🕐 {{ formatTime(request.booking_time) }}
+                </div>
+              </div>
               <span v-if="request.status === 'pending'" class="text-orange-600 font-medium">
                 {{ t('prescription.pending') || 'Pending' }}
               </span>
@@ -43,13 +51,6 @@
                 class="btn-primary text-sm px-4 py-2"
               >
                 {{ t('prescription.bookFreeAppointment') || 'Book Free Appointment' }}
-              </button>
-              <button 
-                v-else-if="request.status === 'confirmed'"
-                @click="$emit('view-appointment', request.id)"
-                class="btn-secondary text-sm px-4 py-2"
-              >
-                {{ t('prescription.viewAppointment') }}
               </button>
               <button 
                 v-if="request.status === 'confirmed'"
