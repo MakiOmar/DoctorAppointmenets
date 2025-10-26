@@ -972,3 +972,64 @@ function snks_book_session_rochtah_appointment() {
 		'appointment_time' => gmdate( 'h:i a', strtotime( $slot->starts ) )
 	) );
 }
+
+/**
+ * Reset rochtah booking to allow patient to book again
+ */
+add_action( 'wp_ajax_reset_rochtah_booking', 'snks_reset_rochtah_booking' );
+
+function snks_reset_rochtah_booking() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'reset_rochtah_booking_nonce' ) ) {
+		wp_send_json_error( 'Invalid nonce.' );
+	}
+	
+	// Check if user is logged in
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( 'User not logged in.' );
+	}
+	
+	$request_id = isset( $_POST['request_id'] ) ? absint( $_POST['request_id'] ) : 0;
+	
+	if ( ! $request_id ) {
+		wp_send_json_error( 'Request ID is required.' );
+	}
+	
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	// Verify the request belongs to the current user
+	$request = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d",
+		$request_id, get_current_user_id()
+	) );
+	
+	if ( ! $request ) {
+		wp_send_json_error( 'Request not found or access denied.' );
+	}
+	
+	// Reset the booking
+	$update_result = $wpdb->update(
+		$rochtah_bookings_table,
+		array(
+			'status' => 'pending',
+			'booking_date' => '0000-00-00',
+			'booking_time' => '00:00:00',
+			'appointment_id' => NULL,
+			'whatsapp_appointment_sent' => 0,
+			'updated_at' => current_time( 'mysql' )
+		),
+		array( 'id' => $request_id ),
+		array( '%s', '%s', '%s', '%d', '%d', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( $update_result === false ) {
+		wp_send_json_error( 'Failed to reset booking.' );
+	}
+	
+	wp_send_json_success( array(
+		'message' => 'تم إعادة تعيين الحجز بنجاح. يمكنك الحجز مرة أخرى.',
+		'request_id' => $request_id
+	) );
+}
