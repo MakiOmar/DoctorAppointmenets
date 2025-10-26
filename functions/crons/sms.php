@@ -27,11 +27,17 @@ add_action( 'snks_check_session_notifications', 'snks_send_session_notifications
  * are only sent once per time frame (24-hour and 1-hour).
  */
 function snks_send_session_notifications() {
+	error_log( '[Notification Cron] snks_send_session_notifications started' );
+	
 	global $wpdb;
 	$current_time  = current_time( 'mysql' );
 	$time_24_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+24 hours', current_time( 'timestamp' ) ) );
 	$time_23_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+23 hours', current_time( 'timestamp' ) ) );
 	$time_1_hour   = gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour', current_time( 'timestamp' ) ) );
+	
+	error_log( '[Notification Cron] Current time: ' . $current_time );
+	error_log( '[Notification Cron] 24 hours window: ' . $time_23_hours . ' to ' . $time_24_hours );
+	error_log( '[Notification Cron] 1 hour window: ' . $current_time . ' to ' . $time_1_hour );
 	//phpcs:disable
 	// Query to get up to 50 sessions happening in the next 24 hours or 1 hour where notifications haven't been sent.
 	$results = $wpdb->get_results(
@@ -53,8 +59,12 @@ function snks_send_session_notifications() {
 		)
 	);
 	//phpcs:enable
+	
+	error_log( '[Notification Cron] Sessions found: ' . count( $results ) );
+	
 	// Process each result.
 	foreach ( $results as $session ) {
+		error_log( '[Notification Cron] Processing session ID: ' . $session->ID . ', date_time: ' . $session->date_time );
 		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
 		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
 		$user          = get_user_by( 'id', $session->client_id );
@@ -71,7 +81,9 @@ function snks_send_session_notifications() {
 			
 			// 24-hour reminder.
 			if ( $time_diff > 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 82800 = 23 hrs, 86400 = 24 hrs
+				error_log( '[Notification Cron] Session ' . $session->ID . ' is eligible for 24hr notification (time_diff: ' . $time_diff . ' seconds)' );
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
+					error_log( '[Notification Cron] Session ' . $session->ID . ' is AI session, sending WhatsApp notification' );
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
 					
@@ -86,26 +98,33 @@ function snks_send_session_notifications() {
 						$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
 						
 						// Send via WhatsApp template
-						snks_send_whatsapp_template_message(
+						error_log( '[Notification Cron] Sending WhatsApp notification to: ' . $billing_phone );
+						$result = snks_send_whatsapp_template_message(
 							$billing_phone,
 							$settings['template_patient_rem_24h'],
 						array( 'day' => $day_name, 'date' => $date, 'doctor' => $doctor_name, 'time' => $time )
 						);
+						error_log( '[Notification Cron] WhatsApp notification result: ' . ( is_wp_error( $result ) ? 'WP_Error' : 'Success' ) );
 					}
-				} elseif ( 'online' === $session->attendance_type ) {
-					// Legacy SMS notification for non-AI sessions
-					$message = sprintf(
-						'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
-						snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
-						'www.jalsah.link'
-					);
-					send_sms_via_whysms( $billing_phone, $message );
 				} else {
-					$message = sprintf(
-						'نذكرك بموعد جلستك غدا الساعه %1$s',
-						snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
-					);
-					send_sms_via_whysms( $billing_phone, $message );
+					error_log( '[Notification Cron] Session ' . $session->ID . ' - WhatsApp disabled or not AI session' );
+				}
+				if ( ! $is_ai_session ) {
+					// Legacy SMS for non-AI sessions
+					if ( 'online' === $session->attendance_type ) {
+						$message = sprintf(
+							'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
+							snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
+							'www.jalsah.link'
+						);
+						send_sms_via_whysms( $billing_phone, $message );
+					} else {
+						$message = sprintf(
+							'نذكرك بموعد جلستك غدا الساعه %1$s',
+							snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
+						);
+						send_sms_via_whysms( $billing_phone, $message );
+					}
 				}
 
 				//phpcs:disable
@@ -116,6 +135,7 @@ function snks_send_session_notifications() {
 					array( '%d' ),
 					array( '%d' )
 				);
+				//phpcs:enable
 			}
 			// 1-hour reminder.
 			if ( 'online' === $session->attendance_type && $time_diff <= 3600 && ! $session->notification_1hr_sent ) {
