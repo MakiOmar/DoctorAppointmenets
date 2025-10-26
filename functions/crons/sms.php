@@ -27,20 +27,14 @@ add_action( 'snks_check_session_notifications', 'snks_send_session_notifications
  * are only sent once per time frame (24-hour and 1-hour).
  */
 function snks_send_session_notifications() {
-	error_log( '[Notification Cron] snks_send_session_notifications started' );
-	
 	global $wpdb;
-	// Use GMT timestamp to match how date_time is stored in database
-	$current_timestamp = time();
-	$current_time = gmdate( 'Y-m-d H:i:s', $current_timestamp );
-	$time_24_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+24 hours', $current_timestamp ) );
-	$time_23_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+23 hours', $current_timestamp ) );
-	$time_1_hour   = gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour', $current_timestamp ) );
-	
-	error_log( '[Notification Cron] Current time: ' . $current_time );
-	error_log( '[Notification Cron] Timezone: ' . get_option( 'timezone_string' ) );
-	error_log( '[Notification Cron] 24 hours window: ' . $time_23_hours . ' to ' . $time_24_hours );
-	error_log( '[Notification Cron] 1 hour window: ' . $current_time . ' to ' . $time_1_hour );
+	// Use WordPress local time to match how date_time is stored in database
+	$current_time      = current_time('mysql');
+	$current_timestamp = current_time('timestamp');
+
+	$time_24_hours = date('Y-m-d H:i:s', strtotime('+24 hours', $current_timestamp));
+	$time_23_hours = date('Y-m-d H:i:s', strtotime('+23 hours', $current_timestamp));
+	$time_1_hour   = date('Y-m-d H:i:s', strtotime('+1 hour', $current_timestamp));
 	//phpcs:disable
 	// Query to get sessions happening between 23-24 hours from now OR 0-1 hour from now
 	// For 24hr reminder: Find sessions where current time is 23-24 hours before the session
@@ -65,18 +59,12 @@ function snks_send_session_notifications() {
 		0                  // notification_1hr_sent = 0
 	);
 	
-	error_log( '[Notification Cron] Query: ' . $query );
-	
 	$results = $wpdb->get_results( $query );
 	//phpcs:enable
 	
-	error_log( '[Notification Cron] Sessions found: ' . count( $results ) );
-	
 	// Process each result.
 	foreach ( $results as $session ) {
-		error_log( '[Notification Cron] Processing session ID: ' . $session->ID . ', date_time: ' . $session->date_time );
 		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
-		error_log( '[Notification Cron] Session ' . $session->ID . ' time_diff: ' . $time_diff . ' seconds (' . round( $time_diff / 3600, 2 ) . ' hours)' );
 		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
 		$user          = get_user_by( 'id', $session->client_id );
 		if ( empty( $billing_phone ) && $user ) {
@@ -101,14 +89,10 @@ function snks_send_session_notifications() {
 				}
 			}
 			
-			error_log( '[Notification Cron] Session ' . $session->ID . ' is AI session: ' . ( $is_ai_session ? 'Yes' : 'No' ) );
-			
 			// 24-hour reminder.
 			// Check if session is 19-24 hours away
 			if ( $time_diff >= 68400 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 68400 = 19 hrs, 86400 = 24 hrs
-				error_log( '[Notification Cron] Session ' . $session->ID . ' is eligible for 24hr notification (time_diff: ' . $time_diff . ' seconds)' );
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
-					error_log( '[Notification Cron] Session ' . $session->ID . ' is AI session, sending WhatsApp notification' );
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
 					
@@ -123,17 +107,14 @@ function snks_send_session_notifications() {
 						$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
 						
 						// Send via WhatsApp template
-						error_log( '[Notification Cron] Sending WhatsApp notification to: ' . $billing_phone );
-						$result = snks_send_whatsapp_template_message(
+						snks_send_whatsapp_template_message(
 							$billing_phone,
 							$settings['template_patient_rem_24h'],
 						array( 'day' => $day_name, 'date' => $date, 'doctor' => $doctor_name, 'time' => $time )
 						);
-						error_log( '[Notification Cron] WhatsApp notification result: ' . ( is_wp_error( $result ) ? 'WP_Error' : 'Success' ) );
 					}
 				} elseif ( ! $is_ai_session ) {
 					// Legacy SMS for non-AI sessions only
-					error_log( '[Notification Cron] Session ' . $session->ID . ' - Not AI session, sending SMS' );
 					if ( 'online' === $session->attendance_type ) {
 						$message = sprintf(
 							'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
@@ -148,8 +129,6 @@ function snks_send_session_notifications() {
 						);
 						send_sms_via_whysms( $billing_phone, $message );
 					}
-				} else {
-					error_log( '[Notification Cron] Session ' . $session->ID . ' - AI session but WhatsApp not sent (disabled or function missing)' );
 				}
 
 				//phpcs:disable
