@@ -6316,6 +6316,14 @@ Best regards,
 		// Convert map to array and return
 		$available_dates = array_values( $dates_map );
 		
+		// Debug: Log grouped dates
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[Therapist Dates] Grouped dates count: ' . count( $available_dates ) );
+			if ( ! empty( $available_dates ) ) {
+				error_log( '[Therapist Dates] Grouped dates: ' . print_r( $available_dates, true ) );
+			}
+		}
+		
 		return $available_dates;
 	}
 
