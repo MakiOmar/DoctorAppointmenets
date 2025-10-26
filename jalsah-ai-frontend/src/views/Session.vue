@@ -510,15 +510,6 @@ const startTimer = () => {
      
      timeRemaining.value = timeDiff
      
-     // Debug logging
-     console.log('Session #' + sessionData.value.ID + ' check:')
-     console.log('Raw date_time:', sessionData.value.date_time)
-     console.log('Period:', sessionData.value.period, 'minutes')
-     console.log('Start time:', startTime.toLocaleString())
-     console.log('Current time:', now.toLocaleString())
-     console.log('Session ends:', endTime.toLocaleString())
-     console.log('Time remaining:', Math.floor(timeDiff / 60), 'minutes (' + timeDiff + ' seconds)')
-     
      // Keep timer running even after session time has passed
      // since we removed time restrictions
    }
