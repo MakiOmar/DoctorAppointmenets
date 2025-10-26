@@ -887,10 +887,16 @@ function snks_rochtah_doctor_dashboard() {
 	}
 
 	function initializeRochtahDoctorJitsiMeeting() {
-		if (!currentMeetingDetails) return;
+		if (!currentMeetingDetails) {
+			console.error('No meeting details available');
+			return;
+		}
 		
+		console.log('Current meeting details:', currentMeetingDetails);
 		const roomName = currentMeetingDetails.room_name;
 		const userName = '<?php echo esc_js( $current_user->display_name ); ?>' || 'Doctor';
+		
+		console.log('Initializing Jitsi meeting with room:', roomName, 'user:', userName);
 		
 		const options = {
 			parentNode: document.querySelector('#rochtah-doctor-meeting'),
