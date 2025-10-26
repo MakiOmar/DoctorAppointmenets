@@ -1660,8 +1660,12 @@ function snks_doctor_actions( $session ) {
 		global $wpdb;
 		
 		// Calculate session end time (start datetime + period in minutes)
-		// Don't specify timezone - database time is already in the correct timezone
-		$session_datetime = new DateTime( $session->date_time );
+		// Use WordPress timezone to ensure consistency
+		$timezone_string = get_option( 'timezone_string' );
+		if ( ! $timezone_string ) {
+			$timezone_string = 'UTC';
+		}
+		$session_datetime = new DateTime( $session->date_time, new DateTimeZone( $timezone_string ) );
 		$period_minutes   = isset( $session->period ) ? intval( $session->period ) : 45;
 		$session_datetime->add( new DateInterval( 'PT' . $period_minutes . 'M' ) );
 		$session_end_timestamp = $session_datetime->getTimestamp();
