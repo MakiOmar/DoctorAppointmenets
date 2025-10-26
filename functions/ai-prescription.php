@@ -430,7 +430,43 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 		$patient_id
 	) );
 	
-	return $pending_requests;
+	// Format results to ensure doctor_joined is included
+	$formatted_requests = array();
+	foreach ( $pending_requests as $request ) {
+		$formatted_requests[] = array(
+			'id' => $request->id,
+			'patient_id' => $request->patient_id,
+			'therapist_id' => $request->therapist_id,
+			'session_id' => $request->session_id,
+			'diagnosis_id' => $request->diagnosis_id,
+			'initial_diagnosis' => $request->initial_diagnosis,
+			'symptoms' => $request->symptoms,
+			'reason_for_referral' => $request->reason_for_referral,
+			'booking_date' => $request->booking_date,
+			'booking_time' => $request->booking_time,
+			'status' => $request->status,
+			'prescription_text' => $request->prescription_text,
+			'medications' => $request->medications,
+			'dosage_instructions' => $request->dosage_instructions,
+			'doctor_notes' => $request->doctor_notes,
+			'prescribed_by' => $request->prescribed_by,
+			'prescribed_at' => $request->prescribed_at,
+			'prescription_file' => $request->prescription_file,
+			'whatsapp_activation_sent' => $request->whatsapp_activation_sent,
+			'whatsapp_appointment_sent' => $request->whatsapp_appointment_sent,
+			'appointment_id' => $request->appointment_id,
+			'created_at' => $request->created_at,
+			'updated_at' => $request->updated_at,
+			'therapist_name' => $request->therapist_name,
+			'date_time' => $request->date_time,
+			'starts' => $request->starts,
+			'ends' => $request->ends,
+			'doctor_joined' => isset( $request->doctor_joined ) ? (bool) $request->doctor_joined : false,
+			'booking_id' => $request->id
+		);
+	}
+	
+	return $formatted_requests;
 }
 
 /**
