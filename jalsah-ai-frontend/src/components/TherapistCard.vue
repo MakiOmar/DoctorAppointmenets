@@ -1,5 +1,5 @@
 <template>
-  <div class="card hover:shadow-lg transition-shadow">
+  <div class="card hover:shadow-lg transition-shadow" :data-therapist-id="therapist.id">
     <div class="flex items-start gap-6" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
       <!-- Therapist Image -->
       <div class="relative flex-shrink-0">
