@@ -8294,6 +8294,21 @@ function snks_book_rochtah_appointment_rest( $request ) {
 			);
 		}
 
+		// Send WhatsApp notification to patient
+		if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[Rochtah REST] Attempting to send WhatsApp notification for request ID: ' . $request_id );
+			}
+			$notification_result = snks_send_rosheta_appointment_notification( $request_id );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[Rochtah REST] Notification result: ' . ( $notification_result ? 'Success' : 'Failed' ) );
+			}
+		} else {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[Rochtah REST] WhatsApp notification function not available' );
+			}
+		}
+
 		error_log( 'Booking update successful' );
 		return array(
 			'success' => true,
