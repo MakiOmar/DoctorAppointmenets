@@ -473,6 +473,10 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 function snks_send_rosheta_appointment_notification( $booking_id ) {
 	global $wpdb;
 	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] snks_send_rosheta_appointment_notification called with booking_id: ' . $booking_id );
+	}
+	
 	$booking = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_rochtah_bookings WHERE id = %d",
@@ -481,11 +485,21 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 	);
 	
 	if ( ! $booking ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] Booking not found for ID: ' . $booking_id );
+		}
 		return false;
+	}
+	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] Booking found - Patient ID: ' . $booking->patient_id . ', Date: ' . $booking->booking_date . ', Time: ' . $booking->booking_time );
 	}
 	
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] Notifications disabled in settings' );
+		}
 		return false;
 	}
 	
@@ -503,6 +517,12 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 	$date = $booking->booking_date;
 	$time = gmdate( 'h:i a', strtotime( $booking->booking_time ) );
 	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] Patient phone: ' . $patient_phone );
+		error_log( '[WhatsApp AI] Template: ' . $settings['template_rosheta_app'] );
+		error_log( '[WhatsApp AI] Parameters - day: ' . $day_name . ', date: ' . $date . ', time: ' . $time );
+	}
+	
 	// Send WhatsApp template
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
@@ -513,6 +533,14 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 			'time' => $time 
 		)
 	);
+	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		if ( is_wp_error( $result ) ) {
+			error_log( '[WhatsApp AI] Error sending notification: ' . $result->get_error_message() );
+		} else {
+			error_log( '[WhatsApp AI] Notification sent successfully' );
+		}
+	}
 	
 	// Mark as sent
 	if ( ! is_wp_error( $result ) ) {

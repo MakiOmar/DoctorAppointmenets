@@ -949,8 +949,20 @@ function snks_book_session_rochtah_appointment() {
 	}
 	
 	// Send WhatsApp notification for rosheta appointment
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[Rochtah Booking] Attempting to send WhatsApp notification for request ID: ' . $request_id );
+		error_log( '[Rochtah Booking] Function exists: ' . ( function_exists( 'snks_send_rosheta_appointment_notification' ) ? 'Yes' : 'No' ) );
+	}
+	
 	if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
-		snks_send_rosheta_appointment_notification( $request_id );
+		$notification_result = snks_send_rosheta_appointment_notification( $request_id );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[Rochtah Booking] Notification result: ' . ( $notification_result ? 'Success' : 'Failed' ) );
+		}
+	} else {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[Rochtah Booking] Notification function not available' );
+		}
 	}
 	
 	wp_send_json_success( array(
