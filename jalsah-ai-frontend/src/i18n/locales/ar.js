@@ -775,6 +775,7 @@ export default {
     waitingForSession: 'بانتظار بدء الجلسة',
     sessionNotStarted: 'لم تبدأ الجلسة بعد',
     waitingForDoctor: 'بانتظار دخول الطبيب',
+    expiryWarning: 'يجب إتمام الحجز قبل',
     rochtahSession: 'جلسة رشتة',
     roomName: 'اسم الغرفة',
     startMeeting: 'ابدأ الجلسة',

@@ -446,6 +446,17 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 			error_log( '[Rochtah Requests] Raw request ID: ' . $request->id . ', doctor_joined: ' . ( isset( $request->doctor_joined ) ? $request->doctor_joined : 'NOT SET' ) );
 		}
 		
+		// Check if request is expired (more than 7 days old)
+		$created_at = strtotime( $request->created_at );
+		$expiry_date = strtotime( '+7 days', $created_at );
+		$now = current_time( 'timestamp' );
+		$is_expired = $now > $expiry_date;
+		
+		// Skip expired bookings
+		if ( $is_expired ) {
+			continue;
+		}
+		
 		$formatted_requests[] = array(
 			'id' => $request->id,
 			'patient_id' => $request->patient_id,
@@ -475,7 +486,9 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 			'starts' => $request->starts,
 			'ends' => $request->ends,
 			'doctor_joined' => isset( $request->doctor_joined ) ? (bool) $request->doctor_joined : false,
-			'booking_id' => $request->id
+			'booking_id' => $request->id,
+			'expiry_date' => date( 'Y-m-d', $expiry_date ),
+			'days_until_expiry' => ceil( ( $expiry_date - $now ) / DAY_IN_SECONDS )
 		);
 	}
 	

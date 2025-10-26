@@ -33,7 +33,15 @@
                   🕐 {{ formatTime(request.booking_time) }}
                 </div>
               </div>
-              <span v-if="request.status === 'pending'" class="text-orange-600 font-medium">
+              <div v-if="request.status === 'pending' && request.days_until_expiry !== undefined">
+                <span class="text-orange-600 font-medium">
+                  {{ t('prescription.pending') || 'Pending' }}
+                </span>
+                <div class="text-xs text-red-600 mt-1" v-if="request.days_until_expiry >= 0">
+                  ⚠️ {{ t('prescription.expiryWarning') || 'يجب إتمام الحجز قبل' }} {{ formatDate(request.expiry_date) }}
+                </div>
+              </div>
+              <span v-else-if="request.status === 'pending'" class="text-orange-600 font-medium">
                 {{ t('prescription.pending') || 'Pending' }}
               </span>
               <span v-else-if="request.status === 'confirmed'" class="text-green-600 font-medium">
