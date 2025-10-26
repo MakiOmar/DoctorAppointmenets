@@ -324,6 +324,9 @@ function plugin_activation_hook() {
 	if ( function_exists( 'snks_add_rochtah_whatsapp_notification_columns' ) ) {
 		snks_add_rochtah_whatsapp_notification_columns();
 	}
+	if ( function_exists( 'snks_add_rochtah_doctor_joined_column' ) ) {
+		snks_add_rochtah_doctor_joined_column();
+	}
 	
 	// Create AI tables
 	do_action( 'snks_create_ai_tables' );
