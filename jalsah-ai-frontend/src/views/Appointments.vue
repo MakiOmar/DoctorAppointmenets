@@ -1569,6 +1569,12 @@ export default {
             const dateB = new Date(`${b.date} ${b.time}`)
             return dateA - dateB
           })
+          
+          // Debug: Log sorted slots
+          console.log('[Rochtah Frontend] Total slots after sort:', availableSlots.value.length)
+          availableSlots.value.slice(0, 5).forEach((slot, index) => {
+            console.log(`[Rochtah Frontend] Slot ${index}:`, slot.date, slot.time)
+          })
         } else {
           toast.error(response.data.message || 'Failed to load available slots')
         }
