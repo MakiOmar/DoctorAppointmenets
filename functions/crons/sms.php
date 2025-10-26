@@ -31,9 +31,10 @@ function snks_send_session_notifications() {
 	
 	global $wpdb;
 	$current_time  = current_time( 'mysql' );
-	$time_24_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+24 hours', current_time( 'timestamp' ) ) );
-	$time_23_hours = gmdate( 'Y-m-d H:i:s', strtotime( '+23 hours', current_time( 'timestamp' ) ) );
-	$time_1_hour   = gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour', current_time( 'timestamp' ) ) );
+	$current_timestamp = current_time( 'timestamp' );
+	$time_24_hours = date( 'Y-m-d H:i:s', strtotime( '+24 hours', $current_timestamp ) );
+	$time_23_hours = date( 'Y-m-d H:i:s', strtotime( '+23 hours', $current_timestamp ) );
+	$time_1_hour   = date( 'Y-m-d H:i:s', strtotime( '+1 hour', $current_timestamp ) );
 	
 	error_log( '[Notification Cron] Current time: ' . $current_time );
 	error_log( '[Notification Cron] Timezone: ' . get_option( 'timezone_string' ) );
