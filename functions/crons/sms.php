@@ -47,19 +47,22 @@ function snks_send_session_notifications() {
 	// For 1hr reminder: Find sessions where current time is 0-1 hour before the session
 	$query = $wpdb->prepare(
 		"
-        SELECT * FROM {$wpdb->prefix}snks_provider_timetable
-        WHERE session_status = %s
-        AND ( ( date_time >= %s AND date_time <= %s AND notification_24hr_sent = %d )
-        OR ( date_time >= %s AND date_time <= %s AND notification_1hr_sent = %d ) )
-        LIMIT 20
-        ",
+		SELECT * FROM {$wpdb->prefix}snks_provider_timetable
+		WHERE session_status = %s
+		AND (
+			( date_time >= %s AND date_time <= %s AND notification_24hr_sent = %d )
+			OR
+			( date_time >= %s AND date_time <= %s AND notification_1hr_sent = %d )
+		)
+		LIMIT 20
+		",
 		'open',
-		$time_23_hours,
-		$time_24_hours,
-		0,
-		$current_time,
-		$time_1_hour,
-		0
+		$current_time,     // start now
+		$time_24_hours,    // up to +24h
+		0,                 // notification_24hr_sent = 0
+		$current_time,     // start now
+		$time_1_hour,      // up to +1h
+		0                  // notification_1hr_sent = 0
 	);
 	
 	error_log( '[Notification Cron] Query: ' . $query );
@@ -73,6 +76,7 @@ function snks_send_session_notifications() {
 	foreach ( $results as $session ) {
 		error_log( '[Notification Cron] Processing session ID: ' . $session->ID . ', date_time: ' . $session->date_time );
 		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
+		error_log( '[Notification Cron] Session ' . $session->ID . ' time_diff: ' . $time_diff . ' seconds (' . round( $time_diff / 3600, 2 ) . ' hours)' );
 		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
 		$user          = get_user_by( 'id', $session->client_id );
 		if ( empty( $billing_phone ) && $user ) {
