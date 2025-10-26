@@ -466,10 +466,17 @@ add_action(
 			function initSessionCompletionCheck() {
 				$('.doctor-actions').each(function() {
 					var $doctorActions = $(this);
+					var rawSessionEnd = $doctorActions.attr('data-session-end');
 					var sessionEndTime = parseInt($doctorActions.data('session-end'));
 					var $button = $doctorActions.find('.snks-complete-session-btn');
 					var $sendMessageButton = $doctorActions.find('.snks-send-message-btn');
 					var sessionId = $doctorActions.find('input[name="session_id"]').val();
+					
+					// Debug logging
+					debugLog('🔍 Session #' + sessionId + ' Debug:');
+					debugLog('   Raw data-session-end attribute: ' + rawSessionEnd);
+					debugLog('   Parsed sessionEndTime: ' + sessionEndTime);
+					debugLog('   Parsed as Date: ' + new Date(sessionEndTime * 1000).toLocaleString());
 					
 					if (!sessionEndTime || !$button.length) {
 						debugLog('⏭️ Skipping session completion check - missing data');
