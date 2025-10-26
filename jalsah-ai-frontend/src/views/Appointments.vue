@@ -1562,7 +1562,13 @@ export default {
         })
         
         if (response.data.success) {
-          availableSlots.value = response.data.data || []
+          // Sort slots by date and time (nearest first)
+          const slots = response.data.data || []
+          availableSlots.value = slots.sort((a, b) => {
+            const dateA = new Date(`${a.date} ${a.time}`)
+            const dateB = new Date(`${b.date} ${b.time}`)
+            return dateA - dateB
+          })
         } else {
           toast.error(response.data.message || 'Failed to load available slots')
         }

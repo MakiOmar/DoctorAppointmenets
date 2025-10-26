@@ -540,8 +540,17 @@ function snks_get_rochtah_available_slots_for_patient() {
 	usort( $available_slots, function( $a, $b ) {
 		$date_a = strtotime( $a['date'] . ' ' . $a['time'] );
 		$date_b = strtotime( $b['date'] . ' ' . $b['time'] );
+		// Return negative if $a comes before $b (nearest first)
 		return $date_a - $date_b;
 	});
+	
+	// Debug: Log sorted slots
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[Rochtah Slots] Total slots after sort: ' . count( $available_slots ) );
+		foreach ( array_slice( $available_slots, 0, 5 ) as $index => $slot ) {
+			error_log( sprintf( '[Rochtah Slots] Slot %d: %s %s', $index, $slot['date'], $slot['time'] ) );
+		}
+	}
 	
 	return $available_slots;
 }
