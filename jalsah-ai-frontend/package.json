@@ -4,9 +4,9 @@
   "type": "module",
   "description": "Jalsah AI Platform Frontend",
   "scripts": {
-    "dev": "NODE_OPTIONS='--no-deprecation' vite",
-    "dev:local": "node switch-env.js local && NODE_OPTIONS='--no-deprecation' vite",
-    "dev:staging": "node switch-env.js staging && NODE_OPTIONS='--no-deprecation' vite",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation vite",
+    "dev:local": "node switch-env.js local && cross-env NODE_OPTIONS=--no-deprecation vite",
+    "dev:staging": "node switch-env.js staging && cross-env NODE_OPTIONS=--no-deprecation vite",
     "env:local": "node switch-env.js local",
     "env:staging": "node switch-env.js staging",
     "env:current": "node switch-env.js current",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.3.4",
     "@vue/eslint-config-prettier": "^8.0.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.49.0",
     "eslint-plugin-vue": "^9.17.0",
     "prettier": "^3.0.3",
