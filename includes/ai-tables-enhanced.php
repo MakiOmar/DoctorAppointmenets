@@ -436,4 +436,29 @@ function snks_add_rochtah_whatsapp_notification_columns() {
 	}
 	//phpcs:enable
 }
-add_action( 'admin_init', 'snks_add_rochtah_whatsapp_notification_columns' ); 
+add_action( 'admin_init', 'snks_add_rochtah_whatsapp_notification_columns' );
+
+/**
+ * Add doctor_joined column to rochtah_bookings table
+ */
+function snks_add_rochtah_doctor_joined_column() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	$column_exists = $wpdb->get_results(
+		$wpdb->prepare(
+			'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+			WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s',
+			$table_name,
+			'doctor_joined',
+			$wpdb->dbname
+		)
+	);
+	
+	if ( empty( $column_exists ) ) {
+		$wpdb->query(
+			"ALTER TABLE $table_name ADD COLUMN doctor_joined TINYINT(1) DEFAULT 0"
+		);
+	}
+}
+add_action( 'admin_init', 'snks_add_rochtah_doctor_joined_column' ); 

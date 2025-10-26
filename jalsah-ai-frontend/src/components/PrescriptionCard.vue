@@ -55,9 +55,24 @@
               <button 
                 v-if="request.status === 'confirmed'"
                 @click="$emit('join-meeting', request.id)"
-                class="btn-success text-sm px-4 py-2"
+                :disabled="!canJoinRochtahSession(request)"
+                :class="[
+                  'text-sm px-4 py-2 rounded-lg font-medium transition-colors',
+                  canJoinRochtahSession(request)
+                    ? 'btn-success'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
+                ]"
               >
-                {{ t('prescription.joinMeeting') || 'Join Meeting' }}
+                <span v-if="canJoinRochtahSession(request)">
+                  {{ t('prescription.joinMeeting') || 'Join Meeting' }}
+                </span>
+                <span v-else class="flex items-center">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ t('prescription.waitingForSession') || 'Waiting for session to start' }}
+                </span>
               </button>
             </div>
           </div>
@@ -114,6 +129,7 @@
 <script>
 import { formatDate, formatTime } from '@/utils/dateUtils'
 import { useI18n } from 'vue-i18n'
+import { computed } from 'vue'
 
 export default {
   name: 'PrescriptionCard',
@@ -139,10 +155,31 @@ export default {
       return formatTime(timeString, locale.value)
     }
     
+    // Check if rochtah session can be joined (at scheduled time AND doctor has joined)
+    const canJoinRochtahSession = (request) => {
+      if (!request.booking_date || !request.booking_time || request.booking_date === '0000-00-00') {
+        return false
+      }
+      
+      // Parse booking date and time
+      const bookingDateTime = new Date(`${request.booking_date}T${request.booking_time}`)
+      const now = new Date()
+      
+      // Check if session time has arrived
+      const timeHasArrived = now >= bookingDateTime
+      
+      // Check if doctor has joined (if doctor_joined field exists)
+      const doctorJoined = request.doctor_joined !== undefined ? request.doctor_joined : false
+      
+      // Allow joining only when both conditions are met
+      return timeHasArrived && doctorJoined
+    }
+    
     return {
       t,
       formatDate: formatDateWithLocale,
-      formatTime: formatTimeWithLocale
+      formatTime: formatTimeWithLocale,
+      canJoinRochtahSession
     }
   }
 }

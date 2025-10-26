@@ -769,7 +769,8 @@ function snks_get_rochtah_meeting_details( $booking_id ) {
 		'booking_time' => $booking->booking_time,
 		'status' => $booking->status,
 		'patient_id' => $booking->patient_id,
-		'therapist_id' => $booking->therapist_id
+		'therapist_id' => $booking->therapist_id,
+		'doctor_joined' => isset( $booking->doctor_joined ) ? (bool) $booking->doctor_joined : false
 	);
 }
 

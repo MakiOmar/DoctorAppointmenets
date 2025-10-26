@@ -822,6 +822,7 @@ export default {
     confirmBooking: 'Confirm Booking',
     confirmBookingMessage: 'Are you sure you want to book this appointment?',
     joinMeeting: 'Join Meeting',
+    waitingForSession: 'Waiting for session to start',
     rochtahSession: 'Rochtah Session',
     roomName: 'Room Name',
     startMeeting: 'Start Meeting',
