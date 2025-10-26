@@ -789,6 +789,36 @@ function snks_rochtah_doctor_dashboard() {
 				</div>
 			</div>
 		`;
+		
+		// Mark doctor as joined
+		markDoctorJoined(details.booking_id);
+		
+		// Auto-start the meeting
+		setTimeout(() => {
+			startRochtahDoctorMeeting();
+		}, 1000);
+	}
+	
+	function markDoctorJoined(bookingId) {
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'mark_rochtah_doctor_joined',
+				booking_id: bookingId,
+				nonce: '<?php echo wp_create_nonce( 'mark_doctor_joined' ); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					console.log('Doctor marked as joined successfully');
+				} else {
+					console.error('Failed to mark doctor as joined:', response.data);
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error marking doctor as joined:', error);
+			}
+		});
 	}
 
 	function startRochtahDoctorMeeting() {

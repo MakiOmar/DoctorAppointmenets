@@ -894,6 +894,42 @@ function snks_get_rochtah_meeting_details_doctor_ajax() {
 add_action( 'wp_ajax_get_rochtah_meeting_details_doctor', 'snks_get_rochtah_meeting_details_doctor_ajax' );
 
 /**
+ * AJAX handler to mark rochtah doctor as joined
+ */
+function snks_mark_rochtah_doctor_joined_ajax() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'mark_doctor_joined' ) ) {
+		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
+	}
+	
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( __( 'You must be logged in', 'shrinks' ) );
+	}
+	
+	// Check if user has permission to access Rochtah doctor features
+	if ( ! current_user_can( 'manage_rochtah' ) && ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( __( 'You do not have permission to access this feature', 'shrinks' ) );
+	}
+	
+	$booking_id = intval( $_POST['booking_id'] );
+	
+	global $wpdb;
+	$result = $wpdb->update(
+		$wpdb->prefix . 'snks_rochtah_bookings',
+		array( 'doctor_joined' => 1 ),
+		array( 'id' => $booking_id ),
+		array( '%d' ),
+		array( '%d' )
+	);
+	
+	if ( $result !== false ) {
+		wp_send_json_success( array( 'message' => 'Doctor marked as joined' ) );
+	} else {
+		wp_send_json_error( __( 'Failed to update booking', 'shrinks' ) );
+	}
+}
+add_action( 'wp_ajax_mark_rochtah_doctor_joined', 'snks_mark_rochtah_doctor_joined_ajax' );
+
+/**
  * Debug AJAX handler to test if AJAX is working
  */
 function snks_debug_ajax_test() {
