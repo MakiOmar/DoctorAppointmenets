@@ -433,6 +433,11 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 	// Format results to ensure doctor_joined is included
 	$formatted_requests = array();
 	foreach ( $pending_requests as $request ) {
+		// Debug: Log the raw request object
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[Rochtah Requests] Raw request ID: ' . $request->id . ', doctor_joined: ' . ( isset( $request->doctor_joined ) ? $request->doctor_joined : 'NOT SET' ) );
+		}
+		
 		$formatted_requests[] = array(
 			'id' => $request->id,
 			'patient_id' => $request->patient_id,
