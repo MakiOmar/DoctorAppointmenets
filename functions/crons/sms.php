@@ -42,21 +42,23 @@ function snks_send_session_notifications() {
 	error_log( '[Notification Cron] 24 hours window: ' . $time_23_hours . ' to ' . $time_24_hours );
 	error_log( '[Notification Cron] 1 hour window: ' . $current_time . ' to ' . $time_1_hour );
 	//phpcs:disable
-	// Query to get up to 50 sessions happening in the next 24 hours or 1 hour where notifications haven't been sent.
+	// Query to get sessions happening between 23-24 hours from now OR 0-1 hour from now
+	// For 24hr reminder: Find sessions where current time is 23-24 hours before the session
+	// For 1hr reminder: Find sessions where current time is 0-1 hour before the session
 	$query = $wpdb->prepare(
 		"
         SELECT * FROM {$wpdb->prefix}snks_provider_timetable
         WHERE session_status = %s
-        AND ( ( date_time <= %s AND date_time >= %s AND notification_24hr_sent = %d )
-        OR ( date_time <= %s AND date_time >= %s AND notification_1hr_sent = %d ) )
+        AND ( ( date_time >= %s AND date_time <= %s AND notification_24hr_sent = %d )
+        OR ( date_time >= %s AND date_time <= %s AND notification_1hr_sent = %d ) )
         LIMIT 20
         ",
 		'open',
-		$time_24_hours,
 		$time_23_hours,
+		$time_24_hours,
 		0,
-		$time_1_hour,
 		$current_time,
+		$time_1_hour,
 		0
 	);
 	
