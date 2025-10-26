@@ -472,45 +472,16 @@ add_action(
 					var $sendMessageButton = $doctorActions.find('.snks-send-message-btn');
 					var sessionId = $doctorActions.find('input[name="session_id"]').val();
 					
-					// Debug logging for session 39282 only
-					if (sessionId == '39282') {
-						debugLog('🔍 Session #' + sessionId + ' Debug:');
-						debugLog('   Raw data-session-end attribute: ' + rawSessionEnd);
-						debugLog('   Parsed sessionEndTime: ' + sessionEndTime);
-						debugLog('   Parsed as Date: ' + new Date(sessionEndTime * 1000).toLocaleString());
-					}
-					
 					if (!sessionEndTime || !$button.length) {
-						if (sessionId == '39282') {
-							debugLog('⏭️ Skipping session completion check - missing data');
-						}
 						return;
-					}
-					
-					if (sessionId == '39282') {
-						debugLog('🔧 Initializing session completion check for session #' + sessionId);
-						debugLog('📅 Session end time: ' + new Date(sessionEndTime * 1000).toLocaleString());
 					}
 					
 					// Function to check if session has ended
 					function checkSessionEnd() {
 						var currentTime = Math.floor(Date.now() / 1000);
-						var remainingSeconds = sessionEndTime - currentTime;
-						var remainingMinutes = Math.floor(remainingSeconds / 60);
-						
-						// Debug logging for session 39282 only
-						if (sessionId == '39282') {
-							debugLog('⏰ Session #' + sessionId + ' check:');
-							debugLog('   Current time: ' + new Date(currentTime * 1000).toLocaleString());
-							debugLog('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
-							debugLog('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
-						}
 						
 					if (currentTime >= sessionEndTime) {
 						// Session has ended - enable button
-						if (sessionId == '39282') {
-							debugLog('✅ Session #' + sessionId + ' has ended - enabling completion button');
-						}
 						$button.prop('disabled', false)
 							.removeAttr('disabled')
 							.removeAttr('style')
@@ -519,9 +490,6 @@ add_action(
 						
 						// Enable send message button if it exists
 						if ($sendMessageButton.length) {
-							if (sessionId == '39282') {
-								debugLog('✅ Session #' + sessionId + ' has ended - enabling send message button');
-							}
 							$sendMessageButton.prop('disabled', false)
 								.removeAttr('disabled')
 								.removeAttr('style')
@@ -531,19 +499,14 @@ add_action(
 						return false; // Stop the interval
 					}
 						
-						if (sessionId == '39282') {
-							debugLog('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
-						}
 						return true; // Continue the interval
 					}
 					
 					// Initial check
 					if (checkSessionEnd()) {
 						// Check every 10 seconds
-						debugLog('🔄 Starting interval check every 10 seconds for session #' + sessionId);
 						var intervalId = setInterval(function() {
 							if (!checkSessionEnd()) {
-								debugLog('🛑 Stopping interval check for session #' + sessionId);
 								clearInterval(intervalId);
 							}
 						}, 10000);
