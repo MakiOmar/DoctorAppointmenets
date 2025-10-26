@@ -56,15 +56,23 @@ function snks_add_ai_prescription_button( $session_id, $session_data ) {
  * Handle AI prescription request
  */
 function snks_handle_ai_prescription_request() {
+	error_log( '[Rochtah Request Debug] AJAX handler called' );
+	
 	// Verify nonce
 	if ( ! wp_verify_nonce( $_POST['nonce'], 'ai_prescription_request' ) ) {
+		error_log( '[Rochtah Request Debug] Nonce verification failed' );
 		wp_send_json_error( __( 'Security check failed', 'shrinks' ) );
 	}
 	
+	error_log( '[Rochtah Request Debug] Nonce verified' );
+	
 	// Check if user is logged in and is a therapist
 	if ( ! is_user_logged_in() || ! snks_is_doctor() ) {
+		error_log( '[Rochtah Request Debug] User not logged in or not a doctor' );
 		wp_send_json_error( __( 'Unauthorized access', 'shrinks' ) );
 	}
+	
+	error_log( '[Rochtah Request Debug] User is doctor: ' . get_current_user_id() );
 	
 	global $wpdb;
 	$current_user = wp_get_current_user();
@@ -125,6 +133,8 @@ function snks_handle_ai_prescription_request() {
 		wp_send_json_error( __( 'No available Rochtah slots at the moment', 'shrinks' ) );
 	}
 	
+	error_log( '[Rochtah Request Debug] Creating booking with patient ID: ' . $session->client_id );
+	
 	// Create the booking
 	$booking_id = $wpdb->insert(
 		$rochtah_bookings_table,
@@ -142,6 +152,8 @@ function snks_handle_ai_prescription_request() {
 		),
 		array( '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 	);
+	
+	error_log( '[Rochtah Request Debug] Booking inserted with ID: ' . $booking_id );
 	
 	if ( $booking_id ) {
 		// Mark prescription as requested
