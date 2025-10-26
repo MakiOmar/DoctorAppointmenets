@@ -1667,6 +1667,14 @@ function snks_doctor_actions( $session ) {
 		$session_end_timestamp = $session_datetime->getTimestamp();
 		$current_timestamp     = current_time( 'timestamp' );
 		
+		// Debug logging
+		error_log( '[Session #' . $session->ID . '] Raw date_time: ' . $session->date_time );
+		error_log( '[Session #' . $session->ID . '] Period: ' . $period_minutes . ' minutes' );
+		error_log( '[Session #' . $session->ID . '] Session end timestamp: ' . $session_end_timestamp );
+		error_log( '[Session #' . $session->ID . '] Session end datetime: ' . $session_datetime->format( 'Y-m-d H:i:s' ) );
+		error_log( '[Session #' . $session->ID . '] Current timestamp: ' . $current_timestamp );
+		error_log( '[Session #' . $session->ID . '] Current datetime: ' . current_time( 'mysql' ) );
+		
 		// Check if session has ended
 		$is_session_ended = $current_timestamp >= $session_end_timestamp;
 		
