@@ -321,7 +321,7 @@
         <div v-else-if="availableSlots.length > 0" class="max-h-96 overflow-y-auto">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div 
-              v-for="slot in availableSlots" 
+              v-for="(slot, index) in availableSlots" 
               :key="`${slot.date}-${slot.time}`"
               @click="selectSlot(slot)"
               :class="[
@@ -330,6 +330,7 @@
                   ? 'border-primary-500 bg-primary-50'
                   : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
               ]"
+              :style="{ order: index }"
             >
               <div class="font-medium text-gray-900">{{ formatDate(slot.date) }}</div>
               <div class="text-sm text-gray-600">{{ slot.formatted_time }}</div>
