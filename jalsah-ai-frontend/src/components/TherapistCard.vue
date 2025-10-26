@@ -651,36 +651,72 @@ export default {
             // Get nearest slot info to exclude it
             const nearestSlotInfo = getNearestSlotInfo()
             
-            // Create a time slot using the real slot data from the database
-            const timeSlot = {
-              id: parseInt(selectedDateInfo.slot_id), // Ensure ID is a number
-              value: selectedDateInfo.time,
-              time: selectedDateInfo.time,
-              end_time: selectedDateInfo.end_time,
-              period: selectedDateInfo.period,
-              clinic: selectedDateInfo.clinic,
-              attendance_type: selectedDateInfo.attendance_type,
-              date_time: `${date.value} ${selectedDateInfo.time}`,
-              inCart: false
+            // Check if slots array exists (new format with grouped slots)
+            if (selectedDateInfo.slots && Array.isArray(selectedDateInfo.slots)) {
+              // Process all slots for this date
+              const processedSlots = selectedDateInfo.slots
+                .map(slot => ({
+                  id: parseInt(slot.slot_id), // Ensure ID is a number
+                  value: slot.time,
+                  time: slot.time,
+                  end_time: slot.end_time,
+                  period: slot.period,
+                  clinic: slot.clinic,
+                  attendance_type: slot.attendance_type,
+                  date_time: `${date.value} ${slot.time}`,
+                  inCart: false
+                }))
+                .filter(slot => {
+                  // Skip if this is the nearest slot
+                  if (nearestSlotInfo && 
+                      nearestSlotInfo.date === date.value && 
+                      nearestSlotInfo.time === slot.time) {
+                    return false
+                  }
+                  
+                  // Filter out 45-minute offline slots
+                  if (slot.attendance_type === 'offline' && slot.period === 45) {
+                    return false
+                  }
+                  
+                  return true
+                })
+              
+              // Check cart status for all slots
+              await checkSlotsCartStatus(processedSlots)
+              timeSlots.value = processedSlots
+            } else {
+              // Fallback: Old format with single slot_id (for backward compatibility)
+              const timeSlot = {
+                id: parseInt(selectedDateInfo.slot_id), // Ensure ID is a number
+                value: selectedDateInfo.time,
+                time: selectedDateInfo.time,
+                end_time: selectedDateInfo.end_time,
+                period: selectedDateInfo.period,
+                clinic: selectedDateInfo.clinic,
+                attendance_type: selectedDateInfo.attendance_type,
+                date_time: `${date.value} ${selectedDateInfo.time}`,
+                inCart: false
+              }
+              
+              // Skip if this is the nearest slot
+              if (nearestSlotInfo && 
+                  nearestSlotInfo.date === date.value && 
+                  nearestSlotInfo.time === selectedDateInfo.time) {
+                timeSlots.value = []
+                return
+              }
+              
+              // Filter out 45-minute offline slots
+              if (timeSlot.attendance_type === 'offline' && timeSlot.period === 45) {
+                timeSlots.value = []
+                return
+              }
+              
+              // Check if this slot is in the user's cart
+              await checkSlotCartStatus(timeSlot)
+              timeSlots.value = [timeSlot]
             }
-            
-            // Skip if this is the nearest slot
-            if (nearestSlotInfo && 
-                nearestSlotInfo.date === date.value && 
-                nearestSlotInfo.time === selectedDateInfo.time) {
-              timeSlots.value = []
-              return
-            }
-            
-            // Filter out 45-minute offline slots
-            if (timeSlot.attendance_type === 'offline' && timeSlot.period === 45) {
-              timeSlots.value = []
-              return
-            }
-            
-            // Check if this slot is in the user's cart
-            await checkSlotCartStatus(timeSlot)
-            timeSlots.value = [timeSlot]
           } else {
             timeSlots.value = []
           }
