@@ -6280,15 +6280,30 @@ Best regards,
 			}
 		}
 
-		$available_dates = array();
+		// Group slots by date
+		$dates_map = array();
 		foreach ( $available_slots as $slot ) {
-			$date              = new DateTime( $slot->date_time );
-			$full_day_name     = $date->format( 'l' ); // Full day name (Saturday, Sunday, etc.)
-			$arabic_day_name   = localize_date_to_arabic( $full_day_name ); // Convert to Arabic
+			$date_obj = new DateTime( $slot->date_time );
+			$date_key = $date_obj->format( 'Y-m-d' );
+			$full_day_name = $date_obj->format( 'l' );
+			$arabic_day_name = localize_date_to_arabic( $full_day_name );
 			
-			$available_dates[] = array(
-				'date'            => $date->format( 'Y-m-d' ),
-				'day'             => $arabic_day_name, // Full Arabic day name
+			if ( ! isset( $dates_map[ $date_key ] ) ) {
+				$dates_map[ $date_key ] = array(
+					'date'            => $date_key,
+					'day'             => $arabic_day_name,
+					'slot_count'      => 0,
+					'earliest_time'   => $slot->starts,
+					'slots'           => array()
+				);
+			}
+			
+			$dates_map[ $date_key ]['slot_count']++;
+			if ( $slot->starts < $dates_map[ $date_key ]['earliest_time'] ) {
+				$dates_map[ $date_key ]['earliest_time'] = $slot->starts;
+			}
+			
+			$dates_map[ $date_key ]['slots'][] = array(
 				'slot_id'         => $slot->ID,
 				'time'            => $slot->starts,
 				'end_time'        => $slot->ends,
@@ -6297,7 +6312,10 @@ Best regards,
 				'attendance_type' => $slot->attendance_type,
 			);
 		}
-
+		
+		// Convert map to array and return
+		$available_dates = array_values( $dates_map );
+		
 		return $available_dates;
 	}
 
