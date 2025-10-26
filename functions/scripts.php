@@ -481,12 +481,16 @@ add_action(
 					}
 					
 					if (!sessionEndTime || !$button.length) {
-						debugLog('⏭️ Skipping session completion check - missing data');
+						if (sessionId == '39282') {
+							debugLog('⏭️ Skipping session completion check - missing data');
+						}
 						return;
 					}
 					
-					debugLog('🔧 Initializing session completion check for session #' + sessionId);
-					debugLog('📅 Session end time: ' + new Date(sessionEndTime * 1000).toLocaleString());
+					if (sessionId == '39282') {
+						debugLog('🔧 Initializing session completion check for session #' + sessionId);
+						debugLog('📅 Session end time: ' + new Date(sessionEndTime * 1000).toLocaleString());
+					}
 					
 					// Function to check if session has ended
 					function checkSessionEnd() {
@@ -504,7 +508,9 @@ add_action(
 						
 					if (currentTime >= sessionEndTime) {
 						// Session has ended - enable button
-						debugLog('✅ Session #' + sessionId + ' has ended - enabling completion button');
+						if (sessionId == '39282') {
+							debugLog('✅ Session #' + sessionId + ' has ended - enabling completion button');
+						}
 						$button.prop('disabled', false)
 							.removeAttr('disabled')
 							.removeAttr('style')
@@ -513,7 +519,9 @@ add_action(
 						
 						// Enable send message button if it exists
 						if ($sendMessageButton.length) {
-							debugLog('✅ Session #' + sessionId + ' has ended - enabling send message button');
+							if (sessionId == '39282') {
+								debugLog('✅ Session #' + sessionId + ' has ended - enabling send message button');
+							}
 							$sendMessageButton.prop('disabled', false)
 								.removeAttr('disabled')
 								.removeAttr('style')
@@ -523,7 +531,9 @@ add_action(
 						return false; // Stop the interval
 					}
 						
-						debugLog('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
+						if (sessionId == '39282') {
+							debugLog('⏳ Session #' + sessionId + ' still in progress - button remains disabled');
+						}
 						return true; // Continue the interval
 					}
 					
