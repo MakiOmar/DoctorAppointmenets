@@ -56,22 +56,13 @@ function snks_send_session_notifications() {
 	// Process each result.
 	foreach ( $results as $session ) {
 		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
-		
-		// Use the centralized WhatsApp phone retrieval function
-		$billing_phone = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $session->client_id ) : null;
-		
-		if ( ! $billing_phone ) {
-			// Fallback to manual retrieval if helper function doesn't exist
-			$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
-			$user          = get_user_by( 'id', $session->client_id );
-			if ( empty( $billing_phone ) && $user ) {
-				$billing_phone = $user->user_login;
-			}
+		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
+		$user          = get_user_by( 'id', $session->client_id );
+		if ( empty( $billing_phone ) && $user ) {
+			$billing_phone = $user->user_login;
 		}
-		
 		if ( ! empty( $billing_phone ) ) {
-			$user = get_user_by( 'id', $session->client_id );
-			if ( $user && in_array( 'doctor', $user->roles, true ) && strpos( $billing_phone, '+2' ) === false ) {
+			if ( in_array( 'doctor', $user->roles, true ) && strpos( $billing_phone, '+2' ) === false ) {
 				$billing_phone = '+20' . $billing_phone;
 			}
 			
