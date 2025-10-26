@@ -118,11 +118,9 @@ function snks_send_session_notifications() {
 						);
 						error_log( '[Notification Cron] WhatsApp notification result: ' . ( is_wp_error( $result ) ? 'WP_Error' : 'Success' ) );
 					}
-				} else {
-					error_log( '[Notification Cron] Session ' . $session->ID . ' - WhatsApp disabled or not AI session' );
-				}
-				if ( ! $is_ai_session ) {
-					// Legacy SMS for non-AI sessions
+				} elseif ( ! $is_ai_session ) {
+					// Legacy SMS for non-AI sessions only
+					error_log( '[Notification Cron] Session ' . $session->ID . ' - Not AI session, sending SMS' );
 					if ( 'online' === $session->attendance_type ) {
 						$message = sprintf(
 							'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
@@ -137,6 +135,8 @@ function snks_send_session_notifications() {
 						);
 						send_sms_via_whysms( $billing_phone, $message );
 					}
+				} else {
+					error_log( '[Notification Cron] Session ' . $session->ID . ' - AI session but WhatsApp not sent (disabled or function missing)' );
 				}
 
 				//phpcs:disable
