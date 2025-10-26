@@ -624,7 +624,11 @@ add_action(
 												if ($doctorActions.length && sessionId && clientId) {
 													var attendanceBtn = '<button class="snks-button snks-attendance-btn" data-session-id="' + sessionId + '" data-client-id="' + clientId + '" style="background-color: #007cba; border-color: #007cba; margin-top: 10px;">هل حضر المريض الجلسة؟</button>';
 													$doctorActions.append(attendanceBtn);
-													console.log('✅ Attendance button added dynamically for session:', sessionId);
+													
+													// Auto-trigger the attendance button click to show the modal
+													setTimeout(function() {
+														$doctorActions.find('.snks-attendance-btn').trigger('click');
+													}, 100);
 												} else {
 													console.error('❌ Failed to add attendance button - missing data or container');
 												}

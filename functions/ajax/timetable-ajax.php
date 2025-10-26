@@ -522,14 +522,7 @@ function snks_handle_session_doctor_actions() {
 	
 	// Do NOT automatically set attendance - let the therapist choose via the attendance button
 	// Attendance records will be created when the therapist explicitly sets attendance status
-	
-	// Clean up any incorrectly auto-set attendance records for this session
-	$actions_table = $wpdb->prefix . 'snks_sessions_actions';
-	$wpdb->delete(
-		$actions_table,
-		array( 'action_session_id' => $session_id ),
-		array( '%d' )
-	);
+	// No need to clean up attendance records - they will be set by the therapist via the attendance button
 	
 	// Check if this is an AI session and trigger profit calculation
 	if ( snks_is_ai_session( $session_id ) ) {
