@@ -702,6 +702,11 @@ function snks_book_rochtah_appointment() {
 			);
 		}
 		
+		// Send WhatsApp notification to patient with booking details
+		if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
+			snks_send_rosheta_appointment_notification( $request_id );
+		}
+		
 		wp_send_json_success( array(
 			'message' => __( 'Appointment booked successfully.', 'shrinks' ),
 			'booking_id' => $request_id,
