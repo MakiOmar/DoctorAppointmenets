@@ -612,8 +612,17 @@ add_action(
 											// Remove the completion button and form
 											form.remove();
 											
-											// Show the detailed attendance modal automatically
+											// Show completion success first, then attendance modal
 											Swal.fire({
+												title: 'تم بنجاح!',
+												text: 'تم تحديد الجلسة كمكتملة بنجاح',
+												icon: 'success',
+												confirmButtonText: 'حسناً',
+												timer: 2000,
+												timerProgressBar: true
+											}).then(() => {
+												// Show the detailed attendance modal
+												Swal.fire({
 												title: 'هل حضر المريض الجلسة؟',
 												html: `
 													<div style="text-align: right; direction: rtl;">
@@ -692,6 +701,7 @@ add_action(
 														}
 													});
 												}
+											});
 											});
 										} else {
 											Swal.fire({
