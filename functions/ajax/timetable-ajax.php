@@ -933,12 +933,14 @@ function snks_book_session_rochtah_appointment() {
 		array(
 			'status' => 'confirmed',
 			'appointment_id' => $slot_id,
+			'booking_date' => $date,
+			'booking_time' => $slot->starts,
 			'updated_at' => current_time( 'mysql' )
 		),
 		array(
 			'id' => $request_id
 		),
-		array( '%s', '%d', '%s' ),
+		array( '%s', '%d', '%s', '%s', '%s' ),
 		array( '%d' )
 	);
 	

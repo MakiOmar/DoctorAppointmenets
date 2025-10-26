@@ -529,6 +529,13 @@ function snks_get_rochtah_available_slots_for_patient() {
 		}
 	}
 	
+	// Sort slots by date and time (nearest first)
+	usort( $available_slots, function( $a, $b ) {
+		$date_a = strtotime( $a['date'] . ' ' . $a['time'] );
+		$date_b = strtotime( $b['date'] . ' ' . $b['time'] );
+		return $date_a - $date_b;
+	});
+	
 	return $available_slots;
 }
 
