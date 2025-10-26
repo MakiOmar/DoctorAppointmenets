@@ -797,6 +797,14 @@ function snks_get_rochtah_meeting_details( $booking_id ) {
 	
 	$room_name = get_post_meta( $booking_id, '_rochtah_room_name', true );
 	
+	// If room_name is empty, extract it from the meeting URL
+	if ( empty( $room_name ) && ! empty( $meeting_link ) ) {
+		// Extract room name from URL like: https://s.jalsah.app/rochtah_8_1761465857
+		if ( preg_match( '/rochtah_\d+_\d+/', $meeting_link, $matches ) ) {
+			$room_name = $matches[0];
+		}
+	}
+	
 	return array(
 		'booking_id' => $booking_id,
 		'room_name' => $room_name,
