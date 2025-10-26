@@ -588,23 +588,15 @@ function snks_handle_session_doctor_actions() {
 add_action( 'wp_ajax_request_rochtah', 'snks_handle_session_rochtah_request' );
 
 function snks_handle_session_rochtah_request() {
-	error_log( '[Rochtah Request Debug] snks_handle_session_rochtah_request called' );
-	
 	// Verify nonce
 	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'rochtah_request_nonce' ) ) {
-		error_log( '[Rochtah Request Debug] Nonce verification failed' );
 		wp_send_json_error( 'رمز الأمان غير صالح.' );
 	}
 	
-	error_log( '[Rochtah Request Debug] Nonce verified' );
-	
 	// Check if user is a doctor
 	if ( ! snks_is_doctor() ) {
-		error_log( '[Rochtah Request Debug] User is not a doctor' );
 		wp_send_json_error( 'الوصول مرفوض. يمكن للأطباء فقط القيام بهذا الإجراء.' );
 	}
-	
-	error_log( '[Rochtah Request Debug] User is doctor: ' . get_current_user_id() );
 	
 	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
 	$client_id = isset( $_POST['client_id'] ) ? absint( $_POST['client_id'] ) : 0;
@@ -675,19 +667,12 @@ function snks_handle_session_rochtah_request() {
 	
 	$rochtah_booking_id = $wpdb->insert_id;
 	
-	error_log( '[Rochtah Request Debug] Booking created with ID: ' . $rochtah_booking_id );
-	error_log( '[Rochtah Request Debug] Patient ID: ' . $client_id );
-	
 	// Mark order as having Roshta requested
 	update_post_meta( $order_id, '_ai_prescription_requested', 'true' );
 	
 	// Send WhatsApp notification to patient
 	if ( function_exists( 'snks_send_rosheta_activation_notification' ) ) {
-		error_log( '[Rochtah Request Debug] Calling snks_send_rosheta_activation_notification' );
-		$notification_result = snks_send_rosheta_activation_notification( $client_id, get_current_user_id(), $rochtah_booking_id );
-		error_log( '[Rochtah Request Debug] Notification result: ' . ( is_wp_error( $notification_result ) ? 'WP_Error' : 'Success' ) );
-	} else {
-		error_log( '[Rochtah Request Debug] snks_send_rosheta_activation_notification function not found' );
+		snks_send_rosheta_activation_notification( $client_id, get_current_user_id(), $rochtah_booking_id );
 	}
 	
 	wp_send_json_success( array(
