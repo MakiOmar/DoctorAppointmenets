@@ -480,6 +480,7 @@ function snks_handle_session_doctor_actions() {
 	
 	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
 	$attendees = isset( $_POST['attendees'] ) ? sanitize_text_field( $_POST['attendees'] ) : '';
+	$attendance = isset( $_POST['attendance'] ) ? sanitize_text_field( $_POST['attendance'] ) : '';
 	
 	if ( ! $session_id || ! $attendees ) {
 		wp_send_json_error( 'Missing required data.' );
@@ -520,9 +521,59 @@ function snks_handle_session_doctor_actions() {
 		wp_send_json_error( 'Failed to update session status.' );
 	}
 	
-	// Do NOT automatically set attendance - let the therapist choose via the attendance button
-	// Attendance records will be created when the therapist explicitly sets attendance status
-	// No need to clean up attendance records - they will be set by the therapist via the attendance button
+	// Set attendance if provided
+	if ( ! empty( $attendance ) && in_array( $attendance, array( 'yes', 'no' ) ) ) {
+		$attendee_id = absint( $attendees );
+		if ( $attendee_id > 0 ) {
+			// Get or create attendance record
+			$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+			$existing = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM $actions_table WHERE action_session_id = %d AND case_id = %d",
+				$session_id,
+				$attendee_id
+			) );
+			
+			if ( $existing ) {
+				// Update existing record
+				$wpdb->update(
+					$actions_table,
+					array( 'attendance' => $attendance ),
+					array( 'action_session_id' => $session_id, 'case_id' => $attendee_id ),
+					array( '%s' ),
+					array( '%d', '%d' )
+				);
+			} else {
+				// Insert new record
+				snks_insert_session_actions( $session_id, $attendee_id, $attendance );
+			}
+			
+			// Send email to admin if patient didn't attend
+			if ( $attendance === 'no' ) {
+				$admin_email = get_option( 'admin_email' );
+				$therapist = get_userdata( $session->user_id );
+				$patient = get_userdata( $attendee_id );
+				
+				$subject = 'تحديث حالة حضور الجلسة #' . $session_id;
+				$message = "
+				<div dir='rtl' style='font-family: Arial, sans-serif;'>
+					<h2>تفاصيل الجلسة</h2>
+					<p><strong>رقم الجلسة:</strong> {$session->ID}</p>
+					<p><strong>المعالج:</strong> {$therapist->display_name} (ID: {$session->user_id})</p>
+					<p><strong>المريض:</strong> {$patient->display_name} (ID: {$attendee_id})</p>
+					<p><strong>تاريخ الجلسة:</strong> " . gmdate( 'Y-m-d', strtotime( $session->date_time ) ) . "</p>
+					<p><strong>وقت الجلسة:</strong> {$session->starts} - {$session->ends}</p>
+					<p><strong>المدة:</strong> {$session->period} دقيقة</p>
+					<p><strong>نوع الحضور:</strong> {$session->attendance_type}</p>
+					<hr>
+					<p><strong>حالة الحضور:</strong> <span style='color: #dc3545;'>لم يحضر المريض</span></p>
+				</div>
+				";
+				
+				$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+				wp_mail( $admin_email, $subject, $message, $headers );
+			}
+		}
+	}
 	
 	// Check if this is an AI session and trigger profit calculation
 	if ( snks_is_ai_session( $session_id ) ) {

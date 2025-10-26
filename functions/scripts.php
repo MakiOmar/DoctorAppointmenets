@@ -598,39 +598,57 @@ add_action(
 							confirmButtonText: 'نعم، حدد كمكتملة'
 						}).then((result) => {
 							if (result.isConfirmed) {
-								// Send AJAX request only if user confirms
-								$.ajax({
-									type: 'POST',
-									url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-									data: doctorActions,
-									success: function(response) {
-										if (response.success) {
-											// Remove the completion button and form
-											form.remove();
-											
-											// Show success message
-											Swal.fire({
-												title: 'تم بنجاح!',
-												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
-												icon: 'success',
-												confirmButtonText: 'حسناً'
-											});
-										} else {
-											Swal.fire({
-												title: 'خطأ!',
-												text: response.data || 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
-												icon: 'error',
-												confirmButtonText: 'حسناً'
-											});
-										}
-									},
-									error: function(xhr, status, error) {
-										console.error('Error:', error);
-										Swal.fire({
-											title: 'خطأ!',
-											text: 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
-											icon: 'error',
-											confirmButtonText: 'حسناً'
+								// Ask about patient attendance
+								Swal.fire({
+									title: 'هل حضر المريض الجلسة؟',
+									text: 'يرجى تأكيد حضور المريض للجلسة',
+									icon: 'question',
+									showCancelButton: true,
+									confirmButtonText: 'نعم، حضر',
+									cancelButtonText: 'لا، لم يحضر',
+									confirmButtonColor: '#28a745',
+									cancelButtonColor: '#dc3545'
+								}).then((attendanceResult) => {
+									if (attendanceResult.isConfirmed !== undefined) {
+										// Add attendance parameter to AJAX data
+										var attendance = attendanceResult.isConfirmed ? 'yes' : 'no';
+										doctorActions.push({ name: 'attendance', value: attendance });
+										
+										// Send AJAX request
+										$.ajax({
+											type: 'POST',
+											url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+											data: doctorActions,
+											success: function(response) {
+												if (response.success) {
+													// Remove the completion button and form
+													form.remove();
+													
+													// Show success message
+													Swal.fire({
+														title: 'تم بنجاح!',
+														text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
+														icon: 'success',
+														confirmButtonText: 'حسناً'
+													});
+												} else {
+													Swal.fire({
+														title: 'خطأ!',
+														text: response.data || 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
+														icon: 'error',
+														confirmButtonText: 'حسناً'
+													});
+												}
+											},
+											error: function(xhr, status, error) {
+												console.error('Error:', error);
+												Swal.fire({
+													title: 'خطأ!',
+													text: 'حدث خطأ أثناء تحديد الجلسة كمكتملة',
+													icon: 'error',
+													confirmButtonText: 'حسناً'
+												});
+											}
 										});
 									}
 								});
