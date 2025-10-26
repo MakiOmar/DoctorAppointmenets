@@ -88,7 +88,20 @@ function snks_send_session_notifications() {
 			}
 			
 			// Check if this is an AI session
-			$is_ai_session = function_exists( 'snks_is_ai_session' ) && snks_is_ai_session( $session );
+			// Method 1: Check settings field for ai_booking
+			$is_ai_session = isset( $session->settings ) && strpos( $session->settings, 'ai_booking' ) !== false;
+			
+			// Method 2: If not detected by settings, check order meta
+			if ( ! $is_ai_session && isset( $session->order_id ) && $session->order_id > 0 ) {
+				$order = wc_get_order( $session->order_id );
+				if ( $order ) {
+					$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+					$is_ai_session_meta = $order->get_meta( 'is_ai_session' );
+					$is_ai_session = $from_jalsah_ai || $is_ai_session_meta;
+				}
+			}
+			
+			error_log( '[Notification Cron] Session ' . $session->ID . ' is AI session: ' . ( $is_ai_session ? 'Yes' : 'No' ) );
 			
 			// 24-hour reminder.
 			// Check if session is 19-24 hours away
