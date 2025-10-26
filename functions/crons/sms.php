@@ -36,28 +36,31 @@ function snks_send_session_notifications() {
 	$time_1_hour   = gmdate( 'Y-m-d H:i:s', strtotime( '+1 hour', current_time( 'timestamp' ) ) );
 	
 	error_log( '[Notification Cron] Current time: ' . $current_time );
+	error_log( '[Notification Cron] Timezone: ' . get_option( 'timezone_string' ) );
 	error_log( '[Notification Cron] 24 hours window: ' . $time_23_hours . ' to ' . $time_24_hours );
 	error_log( '[Notification Cron] 1 hour window: ' . $current_time . ' to ' . $time_1_hour );
 	//phpcs:disable
 	// Query to get up to 50 sessions happening in the next 24 hours or 1 hour where notifications haven't been sent.
-	$results = $wpdb->get_results(
-		$wpdb->prepare(
-			"
+	$query = $wpdb->prepare(
+		"
         SELECT * FROM {$wpdb->prefix}snks_provider_timetable
         WHERE session_status = %s
         AND ( ( date_time <= %s AND date_time >= %s AND notification_24hr_sent = %d )
         OR ( date_time <= %s AND date_time >= %s AND notification_1hr_sent = %d ) )
         LIMIT 20
         ",
-			'open',
-			$time_24_hours,
-			$time_23_hours,
-			0,
-			$time_1_hour,
-			$current_time,
-			0
-		)
+		'open',
+		$time_24_hours,
+		$time_23_hours,
+		0,
+		$time_1_hour,
+		$current_time,
+		0
 	);
+	
+	error_log( '[Notification Cron] Query: ' . $query );
+	
+	$results = $wpdb->get_results( $query );
 	//phpcs:enable
 	
 	error_log( '[Notification Cron] Sessions found: ' . count( $results ) );
