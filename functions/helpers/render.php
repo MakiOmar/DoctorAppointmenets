@@ -868,7 +868,7 @@ function snks_booking_item_template( $record ) {
 	);
 	//phpcs:disable
 	?>
-	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item {status_class}">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" data-period="<?php echo esc_attr( $record->period ) ?>" class="snks-booking-item {status_class}">
 		<div class="anony-grid-row">
 			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px">
 				<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
@@ -1797,7 +1797,7 @@ function snks_render_sessions_listing( $tense ) {
 					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . $room . '" data-url="' . $room . '">ابدأ الجلسة</a>
 				</td></tr>';
 			}
-			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" data-datetime="' . esc_attr( $session->date_time ) . '" class="snks-booking-item snks-patient-booking-item ' . $class . '"> ';
+			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" data-datetime="' . esc_attr( $session->date_time ) . '" data-period="' . esc_attr( $session->period ) . '" class="snks-booking-item snks-patient-booking-item ' . $class . '"> ';
 			$output .= str_replace(
 				array( '<!--edit_button-->', '<!--start_button-->' ),
 				array( $edit, $start ),

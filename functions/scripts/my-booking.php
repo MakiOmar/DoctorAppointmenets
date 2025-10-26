@@ -225,8 +225,11 @@ add_action(
 						var parentID = parent.attr('id');
 						var itemID = parentID.match(/\d+/)[0];
 						var dateTime = parent.data('datetime');
-						// Set the date we're counting down to.
-						var countDownDate = new Date(dateTime).getTime();
+						var period = parent.data('period') || 45; // Default 45 minutes if not specified
+						
+						// Calculate session end time by adding period to start time
+						var startDate = new Date(dateTime);
+						var countDownDate = new Date(startDate.getTime() + (period * 60 * 1000)).getTime();
 						// Update the count down every 1 second.
 						var x = setInterval(
 							function() {
