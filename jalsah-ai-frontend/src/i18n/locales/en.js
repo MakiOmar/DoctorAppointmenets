@@ -823,6 +823,8 @@ export default {
     confirmBookingMessage: 'Are you sure you want to book this appointment?',
     joinMeeting: 'Join Meeting',
     waitingForSession: 'Waiting for session to start',
+    sessionNotStarted: 'Session hasn\'t started yet',
+    waitingForDoctor: 'Waiting for doctor to join',
     rochtahSession: 'Rochtah Session',
     roomName: 'Room Name',
     startMeeting: 'Start Meeting',

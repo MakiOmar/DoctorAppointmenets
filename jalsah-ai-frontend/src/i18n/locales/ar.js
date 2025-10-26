@@ -773,6 +773,8 @@ export default {
     confirmBookingMessage: 'هل أنت متأكد من أنك تريد حجز هذا الموعد؟',
     joinMeeting: 'انضم للجلسة',
     waitingForSession: 'بانتظار بدء الجلسة',
+    sessionNotStarted: 'لم تبدأ الجلسة بعد',
+    waitingForDoctor: 'بانتظار دخول الطبيب',
     rochtahSession: 'جلسة رشتة',
     roomName: 'اسم الغرفة',
     startMeeting: 'ابدأ الجلسة',

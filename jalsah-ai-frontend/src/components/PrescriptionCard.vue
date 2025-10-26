@@ -71,7 +71,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {{ t('prescription.waitingForSession') || 'Waiting for session to start' }}
+                  {{ getRochtahStatusMessage(request) }}
                 </span>
               </button>
             </div>
@@ -175,11 +175,39 @@ export default {
       return timeHasArrived && doctorJoined
     }
     
+    // Get status message based on session state
+    const getRochtahStatusMessage = (request) => {
+      if (!request.booking_date || !request.booking_time || request.booking_date === '0000-00-00') {
+        return t('prescription.waitingForSession') || 'Waiting for session to start'
+      }
+      
+      // Parse booking date and time
+      const bookingDateTime = new Date(`${request.booking_date}T${request.booking_time}`)
+      const now = new Date()
+      
+      // Check if session time has arrived
+      const timeHasArrived = now >= bookingDateTime
+      
+      // Check if doctor has joined
+      const doctorJoined = request.doctor_joined !== undefined ? request.doctor_joined : false
+      
+      if (!timeHasArrived) {
+        return t('prescription.sessionNotStarted') || 'Session hasn\'t started yet'
+      }
+      
+      if (!doctorJoined) {
+        return t('prescription.waitingForDoctor') || 'Waiting for doctor to join'
+      }
+      
+      return t('prescription.waitingForSession') || 'Waiting for session to start'
+    }
+    
     return {
       t,
       formatDate: formatDateWithLocale,
       formatTime: formatTimeWithLocale,
-      canJoinRochtahSession
+      canJoinRochtahSession,
+      getRochtahStatusMessage
     }
   }
 }
