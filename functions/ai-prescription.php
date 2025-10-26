@@ -510,11 +510,18 @@ function snks_get_rochtah_available_slots_for_patient() {
 				) );
 				
 				if ( ! $existing_booking && $slot_count < $max_slots ) {
+					// Format time in Arabic AM/PM
+					$start_time = gmdate( 'h:i a', strtotime( $slot->start_time ) );
+					$end_time = gmdate( 'h:i a', strtotime( $slot->end_time ) );
+					// Replace AM/PM with Arabic equivalents
+					$start_time = str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), strtolower( $start_time ) );
+					$end_time = str_replace( array( 'am', 'pm' ), array( 'ص', 'م' ), strtolower( $end_time ) );
+					
 					$available_slots[] = array(
 						'date' => $check_date,
 						'time' => $slot->start_time,
 						'end_time' => $slot->end_time,
-						'formatted_time' => date( 'g:i A', strtotime( $slot->start_time ) ) . ' - ' . date( 'g:i A', strtotime( $slot->end_time ) ),
+						'formatted_time' => $start_time . ' - ' . $end_time,
 						'day_of_week' => $day_of_week,
 						'slot_name' => $slot->slot_name
 					);
