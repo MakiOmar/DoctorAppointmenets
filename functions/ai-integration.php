@@ -6243,9 +6243,8 @@ Best regards,
 		}
 
 		// Get all available slots from the timetable within the form_days_count limit
-		$available_slots = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
+		$query = $wpdb->prepare(
+			"SELECT ID, date_time, starts, ends, period, clinic, attendance_type
 			 FROM {$wpdb->prefix}snks_provider_timetable 
 			 WHERE user_id = %d AND session_status = 'waiting' 
 			 AND date_time >= %s
@@ -6258,9 +6257,28 @@ Best regards,
 			 AND NOT (attendance_type = 'offline')
 			 {$off_days_condition}
 			 ORDER BY date_time ASC",
-				$query_params
-			)
+			$query_params
 		);
+		
+		// Debug: Log the query
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[Therapist Dates] Therapist ID: ' . $therapist_id );
+			error_log( '[Therapist Dates] Days count: ' . $days_count );
+			error_log( '[Therapist Dates] Off days: ' . print_r( $off_days, true ) );
+			error_log( '[Therapist Dates] Adjusted current datetime: ' . $adjusted_current_datetime );
+			error_log( '[Therapist Dates] Query: ' . $query );
+			error_log( '[Therapist Dates] Query params: ' . print_r( $query_params, true ) );
+		}
+		
+		$available_slots = $wpdb->get_results( $query );
+		
+		// Debug: Log results
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[Therapist Dates] Total slots found: ' . count( $available_slots ) );
+			if ( ! empty( $available_slots ) ) {
+				error_log( '[Therapist Dates] First 3 slots: ' . print_r( array_slice( $available_slots, 0, 3 ), true ) );
+			}
+		}
 
 		$available_dates = array();
 		foreach ( $available_slots as $slot ) {
