@@ -605,33 +605,15 @@ add_action(
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
-											// Get session data before removing form
-											var sessionId = form.find('input[name="session_id"]').val();
-											var clientId = form.find('input[name="attendees"]').val();
-											var $doctorActions = form.closest('.doctor-actions-wrapper');
-											
 											// Remove the completion button and form
 											form.remove();
 											
-											// Show success message and add attendance button dynamically
+											// Show success message
 											Swal.fire({
 												title: 'تم بنجاح!',
 												text: response.data.message || 'تم تحديد الجلسة كمكتملة بنجاح',
 												icon: 'success',
 												confirmButtonText: 'حسناً'
-											}).then(() => {
-												// Add the attendance button dynamically
-												if ($doctorActions.length && sessionId && clientId) {
-													var attendanceBtn = '<button class="snks-button snks-attendance-btn" data-session-id="' + sessionId + '" data-client-id="' + clientId + '" style="background-color: #007cba; border-color: #007cba; margin-top: 10px;">هل حضر المريض الجلسة؟</button>';
-													$doctorActions.append(attendanceBtn);
-													
-													// Auto-trigger the attendance button click to show the modal
-													setTimeout(function() {
-														$doctorActions.find('.snks-attendance-btn').trigger('click');
-													}, 100);
-												} else {
-													console.error('❌ Failed to add attendance button - missing data or container');
-												}
 											});
 										} else {
 											Swal.fire({
