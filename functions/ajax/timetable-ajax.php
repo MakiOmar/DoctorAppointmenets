@@ -998,14 +998,22 @@ function snks_reset_rochtah_booking() {
 	global $wpdb;
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	
-	// Verify the request belongs to the current user
+	// Get the booking
 	$request = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d",
-		$request_id, get_current_user_id()
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d",
+		$request_id
 	) );
 	
 	if ( ! $request ) {
-		wp_send_json_error( 'Request not found or access denied.' );
+		wp_send_json_error( 'Request not found.' );
+	}
+	
+	// Check permissions: admin/doctor can reset any booking, patients can only reset their own
+	$current_user_id = get_current_user_id();
+	$is_admin_or_doctor = current_user_can( 'manage_options' ) || current_user_can( 'manage_rochtah' );
+	
+	if ( ! $is_admin_or_doctor && $request->patient_id != $current_user_id ) {
+		wp_send_json_error( 'Access denied. You can only reset your own bookings.' );
 	}
 	
 	// Reset the booking
