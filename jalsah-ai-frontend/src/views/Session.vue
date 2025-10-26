@@ -502,11 +502,19 @@ const startTimer = () => {
    if (!sessionData.value) return
    
    const updateTimer = () => {
-     const appointmentTime = new Date(sessionData.value.date_time)
+     // Calculate session end time by adding period to start time
+     const startTime = new Date(sessionData.value.date_time)
+     const endTime = new Date(startTime.getTime() + (sessionData.value.period * 60 * 1000))
      const now = new Date()
-     const timeDiff = Math.floor((appointmentTime - now) / 1000)
+     const timeDiff = Math.floor((endTime - now) / 1000)
      
      timeRemaining.value = timeDiff
+     
+     // Debug logging
+     console.log('Session #' + sessionData.value.ID + ' check:')
+     console.log('Current time:', now.toLocaleString())
+     console.log('Session ends:', endTime.toLocaleString())
+     console.log('Time remaining:', Math.floor(timeDiff / 60), 'minutes (' + timeDiff + ' seconds)')
      
      // Keep timer running even after session time has passed
      // since we removed time restrictions
