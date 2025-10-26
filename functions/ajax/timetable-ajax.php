@@ -1032,8 +1032,24 @@ function snks_reset_rochtah_booking() {
 		array( '%d' )
 	);
 	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[Reset Rochtah] Update result: ' . var_export( $update_result, true ) );
+		error_log( '[Reset Rochtah] Query: ' . $wpdb->last_query );
+		error_log( '[Reset Rochtah] Database error: ' . $wpdb->last_error );
+	}
+	
 	if ( $update_result === false ) {
-		wp_send_json_error( 'Failed to reset booking.' );
+		wp_send_json_error( 'Failed to reset booking. Database error: ' . $wpdb->last_error );
+	}
+	
+	// Verify the update worked
+	$verify = $wpdb->get_row( $wpdb->prepare(
+		"SELECT status FROM $rochtah_bookings_table WHERE id = %d",
+		$request_id
+	) );
+	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[Reset Rochtah] Verify status: ' . ( $verify ? $verify->status : 'not found' ) );
 	}
 	
 	wp_send_json_success( array(
