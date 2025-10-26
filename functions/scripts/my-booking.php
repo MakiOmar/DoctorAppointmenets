@@ -227,17 +227,21 @@ add_action(
 						var dateTime = parent.data('datetime');
 						var period = parent.data('period') || 45; // Default 45 minutes if not specified
 						
-						// Debug logging
-						console.log('Session #' + itemID + ' check:');
-						console.log('Raw dateTime:', dateTime);
-						console.log('Period:', period, 'minutes');
+						// Debug logging for session 39282 only
+						if (itemID == '39282') {
+							console.log('Session #' + itemID + ' check:');
+							console.log('Raw dateTime:', dateTime);
+							console.log('Period:', period, 'minutes');
+						}
 						
 						// Calculate session end time by adding period to start time
 						var startDate = new Date(dateTime);
 						var countDownDate = new Date(startDate.getTime() + (period * 60 * 1000)).getTime();
 						
-						console.log('Start time:', startDate.toLocaleString());
-						console.log('End time:', new Date(countDownDate).toLocaleString());
+						if (itemID == '39282') {
+							console.log('Start time:', startDate.toLocaleString());
+							console.log('End time:', new Date(countDownDate).toLocaleString());
+						}
 						// Update the count down every 1 second.
 						var x = setInterval(
 							function() {

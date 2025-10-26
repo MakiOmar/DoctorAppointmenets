@@ -472,11 +472,13 @@ add_action(
 					var $sendMessageButton = $doctorActions.find('.snks-send-message-btn');
 					var sessionId = $doctorActions.find('input[name="session_id"]').val();
 					
-					// Debug logging
-					debugLog('🔍 Session #' + sessionId + ' Debug:');
-					debugLog('   Raw data-session-end attribute: ' + rawSessionEnd);
-					debugLog('   Parsed sessionEndTime: ' + sessionEndTime);
-					debugLog('   Parsed as Date: ' + new Date(sessionEndTime * 1000).toLocaleString());
+					// Debug logging for session 39282 only
+					if (sessionId == '39282') {
+						debugLog('🔍 Session #' + sessionId + ' Debug:');
+						debugLog('   Raw data-session-end attribute: ' + rawSessionEnd);
+						debugLog('   Parsed sessionEndTime: ' + sessionEndTime);
+						debugLog('   Parsed as Date: ' + new Date(sessionEndTime * 1000).toLocaleString());
+					}
 					
 					if (!sessionEndTime || !$button.length) {
 						debugLog('⏭️ Skipping session completion check - missing data');
@@ -492,10 +494,13 @@ add_action(
 						var remainingSeconds = sessionEndTime - currentTime;
 						var remainingMinutes = Math.floor(remainingSeconds / 60);
 						
-						debugLog('⏰ Session #' + sessionId + ' check:');
-						debugLog('   Current time: ' + new Date(currentTime * 1000).toLocaleString());
-						debugLog('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
-						debugLog('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
+						// Debug logging for session 39282 only
+						if (sessionId == '39282') {
+							debugLog('⏰ Session #' + sessionId + ' check:');
+							debugLog('   Current time: ' + new Date(currentTime * 1000).toLocaleString());
+							debugLog('   Session ends: ' + new Date(sessionEndTime * 1000).toLocaleString());
+							debugLog('   Time remaining: ' + remainingMinutes + ' minutes (' + remainingSeconds + ' seconds)');
+						}
 						
 					if (currentTime >= sessionEndTime) {
 						// Session has ended - enable button
