@@ -430,6 +430,14 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 		$patient_id
 	) );
 	
+	// Debug: Log what we got from database
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[Rochtah Requests] Total requests found: ' . count( $pending_requests ) );
+		if ( ! empty( $pending_requests ) ) {
+			error_log( '[Rochtah Requests] First request: ' . print_r( $pending_requests[0], true ) );
+		}
+	}
+	
 	// Format results to ensure doctor_joined is included
 	$formatted_requests = array();
 	foreach ( $pending_requests as $request ) {
