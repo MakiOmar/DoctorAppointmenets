@@ -167,6 +167,12 @@ function snks_rochtah_doctor_dashboard() {
 												🎥 Join Meeting
 											</button>
 											<br>
+											<button class="button button-warning button-small" 
+													onclick="resetRochtahBooking(<?php echo $booking->id; ?>)"
+													style="background-color: #ff9800; border-color: #ff9800; color: white; margin: 2px;">
+												🔄 Reset Booking
+											</button>
+											<br>
 									<?php elseif ( $booking->status === 'prescribed' ) : ?>
 										<button class="button button-secondary button-small" 
 													onclick="viewPrescription(<?php echo $booking->id; ?>)"
@@ -723,6 +729,34 @@ function snks_rochtah_doctor_dashboard() {
 			error: function(xhr, status, error) {
 				console.error('Error loading meeting details:', error);
 				document.getElementById('sessionInfo').innerHTML = '<div style="color: #dc3545;">Failed to load meeting details. Please try again.</div>';
+			}
+		});
+	}
+
+	function resetRochtahBooking(bookingId) {
+		if (!confirm('Are you sure you want to reset this booking? The patient will be able to book again.')) {
+			return;
+		}
+		
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'reset_rochtah_booking',
+				request_id: bookingId,
+				nonce: '<?php echo wp_create_nonce( 'reset_rochtah_booking_nonce' ); ?>'
+			},
+			success: function(response) {
+				if (response.success) {
+					alert('Booking reset successfully!');
+					location.reload();
+				} else {
+					alert('Failed to reset booking: ' + (response.data || 'Unknown error'));
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error resetting booking:', error);
+				alert('Failed to reset booking. Please try again.');
 			}
 		});
 	}
