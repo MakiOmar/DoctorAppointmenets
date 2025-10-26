@@ -6832,9 +6832,9 @@ Best regards,
 			return new WP_REST_Response( array( 'error' => 'Only the therapist can end this session' ), 403 );
 		}
 
-		// Determine attendance automatically - check if patient joined the session
-		$patient_joined = get_transient( "patient_has_joined_{$session_id}_{$session->client_id}" );
-		$attendance = $patient_joined ? 'yes' : 'no';
+		// Get attendance from request - therapist must specify
+		$input      = json_decode( file_get_contents( 'php://input' ), true );
+		$attendance = $input['attendance'] ?? 'yes'; // Default to 'yes'
 
 		// Update session status
 		$result = $wpdb->update(
@@ -6852,7 +6852,7 @@ Best regards,
 			return new WP_REST_Response( array( 'error' => 'Failed to end session' ), 500 );
 		}
 
-		// Add session action record with the determined attendance
+		// Add session action record with attendance set by therapist
 		snks_insert_session_actions( $session_id, $session->client_id, $attendance );
 		
 		// Notify admin if patient didn't attend

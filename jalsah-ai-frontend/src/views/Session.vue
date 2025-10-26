@@ -585,7 +585,7 @@ const startMeeting = async () => {
 const markAsCompleted = async () => {
    if (!canEndSession.value) return
    
-   // Use SweetAlert2 for confirmation
+   // Ask therapist to confirm attendance
    const result = await Swal.fire({
      title: t('session.confirmMarkCompletedTitle'),
      text: t('session.confirmMarkCompleted'),
@@ -599,10 +599,26 @@ const markAsCompleted = async () => {
    
    if (!result.isConfirmed) return
    
+   // Ask therapist if patient attended
+   const attendanceResult = await Swal.fire({
+     title: 'هل حضر المريض الجلسة؟',
+     text: 'يرجى تأكيد حضور المريض للجلسة',
+     icon: 'question',
+     showCancelButton: true,
+     confirmButtonText: 'نعم، حضر',
+     cancelButtonText: 'لا، لم يحضر',
+     confirmButtonColor: '#28a745',
+     cancelButtonColor: '#dc3545'
+   })
+   
+   const attendance = attendanceResult.isConfirmed ? 'yes' : 'no'
+   
    endingSession.value = true
    
    try {
-     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`)
+     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`, {
+       attendance: attendance
+     })
      
      if (response.data.success) {
        toast.success(t('session.markedCompleted'))
