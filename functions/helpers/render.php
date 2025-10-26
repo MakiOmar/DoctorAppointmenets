@@ -1690,20 +1690,7 @@ function snks_doctor_actions( $session ) {
 			$output .= '</form>';
 		}
 		
-		// Attendance confirmation button - only show for completed sessions if attendance not already set
-		if ( $is_completed ) {
-			// Check if attendance is already set
-			$actions_table = $wpdb->prefix . 'snks_sessions_actions';
-			$attendance_set = $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$actions_table} WHERE action_session_id = %d",
-				$session->ID
-			) );
-			
-			// Only show button if attendance not set
-			if ( ! $attendance_set || $attendance_set == 0 ) {
-				$output .= '<button class="snks-button snks-attendance-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="background-color: #007cba; border-color: #007cba; margin-top: 10px;">هل حضر المريض الجلسة؟</button>';
-			}
-		}
+		// Attendance confirmation button removed - attendance is now automatically set when session is completed
 		
 		// Roshtah Request button (only for AI sessions and only if session has ended or completed)
 		if ( $is_ai_session && ( $is_session_ended || $is_completed ) ) {

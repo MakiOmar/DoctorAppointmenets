@@ -544,7 +544,8 @@ const joinSession = async () => {
   joiningSession.value = true
   
   try {
-    
+    // Notify backend that patient joined the session
+    await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/patient-join`)
     
     // Show the meeting room modal within our frontend
     showMeetingRoom.value = true
@@ -601,9 +602,7 @@ const markAsCompleted = async () => {
    endingSession.value = true
    
    try {
-     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`, {
-       attendance: 'yes' // Default to 'yes' since we're not tracking attendance
-     })
+     const response = await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/end`)
      
      if (response.data.success) {
        toast.success(t('session.markedCompleted'))

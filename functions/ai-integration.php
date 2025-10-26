@@ -326,6 +326,16 @@ class SNKS_AI_Integration {
 				'permission_callback' => '__return_true',
 			)
 		);
+
+		register_rest_route(
+			'jalsah-ai/v1',
+			'/session/(?P<id>\d+)/patient-join',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'set_patient_joined' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -6725,17 +6735,68 @@ Best regards,
 				}
 			}
 			
+		return new WP_REST_Response(
+			array(
+				'success'      => true,
+				'message'      => 'Therapist joined status set successfully',
+				'session_id'   => $session_id,
+				'therapist_id' => $user_id,
+			),
+			200
+		);
+	} else {
+		return new WP_REST_Response( array( 'error' => 'Failed to set therapist joined status' ), 500 );
+	}
+}
+
+	/**
+	 * Set patient joined status for AI session
+	 */
+	public function set_patient_joined( $request ) {
+		$session_id = $request->get_param( 'id' );
+		$user_id    = $this->verify_jwt_token();
+
+		if ( ! $session_id || ! $user_id ) {
+			return new WP_REST_Response( array( 'error' => 'Missing session ID or user authentication' ), 400 );
+		}
+
+		global $wpdb;
+
+		// Get session details
+		$session = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+			 WHERE ID = %d AND client_id = %d AND settings LIKE '%ai_booking%'",
+				$session_id,
+				$user_id
+			)
+		);
+
+		if ( ! $session ) {
+			return new WP_REST_Response( array( 'error' => 'Session not found or access denied' ), 404 );
+		}
+
+		// Only the patient can set their joined status
+		if ( $session->client_id != $user_id ) {
+			return new WP_REST_Response( array( 'error' => 'Only the patient can set joined status' ), 403 );
+		}
+
+		// Set the transient to mark patient as joined
+		$transient_key = "patient_has_joined_{$session_id}_{$user_id}";
+		$result        = set_transient( $transient_key, '1', 3600 ); // Expires in 1 hour
+
+		if ( $result ) {
 			return new WP_REST_Response(
 				array(
-					'success'      => true,
-					'message'      => 'Therapist joined status set successfully',
-					'session_id'   => $session_id,
-					'therapist_id' => $user_id,
+					'success'   => true,
+					'message'   => 'Patient joined status set successfully',
+					'session_id' => $session_id,
+					'patient_id' => $user_id,
 				),
 				200
 			);
 		} else {
-			return new WP_REST_Response( array( 'error' => 'Failed to set therapist joined status' ), 500 );
+			return new WP_REST_Response( array( 'error' => 'Failed to set patient joined status' ), 500 );
 		}
 	}
 
@@ -6771,9 +6832,9 @@ Best regards,
 			return new WP_REST_Response( array( 'error' => 'Only the therapist can end this session' ), 403 );
 		}
 
-		// Get attendance from request (default to 'yes' since we're not tracking attendance)
-		$input      = json_decode( file_get_contents( 'php://input' ), true );
-		$attendance = $input['attendance'] ?? 'yes'; // Default to 'yes' for simplicity
+		// Determine attendance automatically - check if patient joined the session
+		$patient_joined = get_transient( "patient_has_joined_{$session_id}_{$session->client_id}" );
+		$attendance = $patient_joined ? 'yes' : 'no';
 
 		// Update session status
 		$result = $wpdb->update(
@@ -6791,8 +6852,34 @@ Best regards,
 			return new WP_REST_Response( array( 'error' => 'Failed to end session' ), 500 );
 		}
 
-		// Add session action record with the specified attendance
+		// Add session action record with the determined attendance
 		snks_insert_session_actions( $session_id, $session->client_id, $attendance );
+		
+		// Notify admin if patient didn't attend
+		if ( $attendance === 'no' ) {
+			$admin_email = get_option( 'admin_email' );
+			$therapist = get_userdata( $session->user_id );
+			$patient = get_userdata( $session->client_id );
+			
+			$subject = '⚠️ المريض لم يحضر الجلسة #' . $session_id;
+			$message = "
+			<div dir='rtl' style='font-family: Arial, sans-serif;'>
+				<h2 style='color: #dc3545;'>تنبيه: المريض لم يحضر الجلسة</h2>
+				<p><strong>رقم الجلسة:</strong> {$session->ID}</p>
+				<p><strong>المعالج:</strong> {$therapist->display_name} (ID: {$session->user_id})</p>
+				<p><strong>المريض:</strong> {$patient->display_name} (ID: {$session->client_id})</p>
+				<p><strong>تاريخ الجلسة:</strong> " . gmdate( 'Y-m-d', strtotime( $session->date_time ) ) . "</p>
+				<p><strong>وقت الجلسة:</strong> {$session->starts} - {$session->ends}</p>
+				<p><strong>المدة:</strong> {$session->period} دقيقة</p>
+				<p><strong>نوع الحضور:</strong> {$session->attendance_type}</p>
+				<hr>
+				<p style='color: #dc3545; font-weight: bold;'>❌ لم يحضر المريض الجلسة</p>
+			</div>
+			";
+			
+			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+			wp_mail( $admin_email, $subject, $message, $headers );
+		}
 
 		// Clear therapist joined transient
 		delete_transient( "doctor_has_joined_{$session_id}_{$user_id}" );
