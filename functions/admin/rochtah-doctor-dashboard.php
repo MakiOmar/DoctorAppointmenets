@@ -142,6 +142,12 @@ function snks_rochtah_doctor_dashboard() {
 								<td><?php echo esc_html( $booking->patient_email ); ?></td>
 								<td><?php echo esc_html( $booking->therapist_name ); ?></td>
 								<td>
+									<?php if ( $booking->status === 'confirmed' && $booking->booking_date !== '0000-00-00' ) : ?>
+										<div style="margin-bottom: 5px;">
+											<strong>📅 <?php echo esc_html( $booking->booking_date ); ?></strong><br>
+											<strong>🕐 <?php echo esc_html( $booking->booking_time ); ?></strong>
+										</div>
+									<?php endif; ?>
 									<span class="status-<?php echo esc_attr( $booking->status ); ?>">
 										<?php echo esc_html( ucfirst( $booking->status ) ); ?>
 									</span>
