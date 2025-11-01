@@ -521,187 +521,95 @@ add_action(
 				initSessionCompletionCheck();
 			});
 			
-			// Reinitialize checks after Jet popup is shown
-			$(window).on('jet-popup/show-event/after-show', function(){
-				debugLog('🎯 Jet popup shown - reinitializing session completion checks...');
-				applyDisabledButtonStyles();
-				initSessionCompletionCheck();
-			});
-			
-			// Reinitialize checks after Jet popup content is rendered
-			$(window).on('jet-popup/render-content/render-custom-content', function(){
-				debugLog('📄 Jet popup content rendered - reinitializing session completion checks...');
-				applyDisabledButtonStyles();
-				initSessionCompletionCheck();
-			});
-
-			// Prevent ANY interaction with disabled buttons at the earliest possible moment
-			$(document).on('mousedown mouseup click submit', '.doctor_actions .snks-complete-session-btn, .snks-send-message-btn, form.doctor_actions', function(e) {
-				var $button = $(this);
-				if ($(this).hasClass('snks-complete-session-btn') || $(this).hasClass('snks-send-message-btn')) {
-					$button = $(this);
-				} else {
-					$button = $(this).find('.snks-complete-session-btn, .snks-send-message-btn');
-				}
+			// Function to attach completion handler
+			function attachCompletionHandlerToButtons() {
+				$(document).off('click.attendanceHandlerV3', '.doctor_actions .snks-complete-session-btn');
+				$('.doctor_actions .snks-complete-session-btn').off('click.attendanceHandlerV3');
 				
-				if ($button.length && ($button.prop('disabled') || $button.attr('disabled') === 'disabled')) {
-					e.preventDefault();
-					e.stopPropagation();
-					e.stopImmediatePropagation();
-					debugLog('🛑 All events prevented - button is disabled');
-					return false;
-				}
-			});
-			
-			// Prevent form submission when button is disabled
-			$(document).on('submit', 'form.doctor_actions', function(e) {
-				var $button = $(this).find('.snks-complete-session-btn');
-				if ($button.prop('disabled') || $button.attr('disabled')) {
-					e.preventDefault();
-					e.stopImmediatePropagation();
-					debugLog('🚫 Form submission prevented - button is disabled');
-					return false;
-				}
-			});
-			
 				$(document).on(
-					'click',
-					'.doctor_actions .snks-button',
+					'click.attendanceHandlerV3',
+					'.doctor_actions .snks-complete-session-btn',
 					function (e) {
-					// Double-check if button is disabled - prevent any action if it is
-					if ($(this).prop('disabled') || $(this).attr('disabled')) {
+						// Stop all propagation to prevent other handlers
 						e.preventDefault();
 						e.stopPropagation();
 						e.stopImmediatePropagation();
-						debugLog('❌ Button is disabled - ignoring click event');
-						return false;
-					}
-					
-						e.preventDefault();
 						
-						// Get the parent form of the clicked button
+						// Check if disabled
+						if ($(this).prop('disabled') || $(this).attr('disabled')) {
+							return false;
+						}
+						
 						var form = $(this).closest('form');
-						// Serialize the form data
 						var doctorActions = form.serializeArray();
-						// Perform nonce check.
-						var nonce = '<?php echo esc_html( wp_create_nonce( 'doctor_actions_nonce' ) ); ?>';
+						var nonce = '<?php echo esc_js( wp_create_nonce( "doctor_actions_nonce" ) ); ?>';
 						doctorActions.push({ name: 'nonce', value: nonce });
 						doctorActions.push({ name: 'action', value: 'session_doctor_actions' });
 						
-					debugLog('✅ Button is enabled - showing confirmation dialog');
+						var sessionId = form.find('input[name="session_id"]').val();
+						var clientId = form.find('input[name="attendees"]').val();
+						
+						// Show attendance question directly
 						Swal.fire({
-							title: 'هل أنت متأكد من تحديد الجلسة كمكتملة؟',
-							text: "لا يمكنك التراجع بعد ذلك!",
-							icon: 'question',
+							title: 'هل حضر المريض الجلسة؟',
+							html: `
+								<div style="text-align: right; direction: rtl;">
+									<div style="margin: 20px 0;">
+										<label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.3s;">
+											<input type="radio" name="attendance" value="yes" style="margin-left: 10px;" checked>
+											<span style="font-size: 14px;">حضر المريض الجلسة وحصل عليها دون مشاكل.</span>
+										</label>
+										<label style="display: block; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.3s;">
+											<input type="radio" name="attendance" value="no" style="margin-left: 10px;">
+											<span style="font-size: 14px;">لم يحضر المريض رغم تواجدي في الموعد وبقائي لمدة ربع ساعة على الأقل في انتظاره.</span>
+										</label>
+									</div>
+								</div>
+							`,
 							showCloseButton: true,
-							confirmButtonColor: '#3085d6',
-							confirmButtonText: 'نعم، حدد كمكتملة'
-						}).then((result) => {
-							if (result.isConfirmed) {
-								// Get session and client IDs before removing form
-								var sessionId = form.find('input[name="session_id"]').val();
-								var clientId = form.find('input[name="attendees"]').val();
+							showCancelButton: true,
+							cancelButtonText: 'إلغاء',
+							confirmButtonText: 'تأكيد',
+							confirmButtonColor: '#007cba',
+							didOpen: () => {
+								const labels = document.querySelectorAll('label');
+								labels.forEach(label => {
+									label.addEventListener('click', function() {
+										labels.forEach(l => l.style.borderColor = '#ddd');
+										this.style.borderColor = '#007cba';
+									});
+								});
+								document.querySelector('input[name="attendance"]:checked').closest('label').style.borderColor = '#007cba';
+							},
+							preConfirm: () => {
+								const attendance = document.querySelector('input[name="attendance"]:checked');
+								if (!attendance) {
+									Swal.showValidationMessage('يرجى اختيار حالة الحضور');
+									return false;
+								}
+								return attendance.value;
+							}
+						}).then((attendanceResult) => {
+							if (attendanceResult.isConfirmed) {
+								var attendance = attendanceResult.value;
+								doctorActions.push({ name: 'attendance', value: attendance });
 								
-								// Send AJAX request to mark session as completed
 								$.ajax({
 									type: 'POST',
 									url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
-											// Remove the completion button and form
 											form.remove();
-											
-											// Show completion success first, then attendance modal
+											var successMessage = 'تم تحديد الجلسة كمكتملة بنجاح';
+											if (attendance === 'no') {
+												successMessage += ' وتم إرسال إشعار للإدارة بأن المريض لم يحضر';
+											}
 											Swal.fire({
 												title: 'تم بنجاح!',
-												text: 'تم تحديد الجلسة كمكتملة بنجاح',
+												text: successMessage,
 												icon: 'success',
-												confirmButtonText: 'حسناً',
-												timer: 2000,
-												timerProgressBar: true
-											}).then(() => {
-												// Show the detailed attendance modal
-												Swal.fire({
-												title: 'هل حضر المريض الجلسة؟',
-												html: `
-													<div style="text-align: right; direction: rtl;">
-														<div style="margin: 20px 0;">
-															<label style="display: block; margin-bottom: 15px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.3s;">
-																<input type="radio" name="attendance" value="yes" style="margin-left: 10px;" checked>
-																<span style="font-size: 14px;">حضر المريض الجلسة وحصل عليها دون مشاكل.</span>
-															</label>
-															<label style="display: block; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: border-color 0.3s;">
-																<input type="radio" name="attendance" value="no" style="margin-left: 10px;">
-																<span style="font-size: 14px;">لم يحضر المريض رغم تواجدي في الموعد وبقائي لمدة ربع ساعة على الأقل في انتظاره.</span>
-															</label>
-														</div>
-													</div>
-												`,
-												showCloseButton: true,
-												confirmButtonText: 'تأكيد',
-												confirmButtonColor: '#007cba',
-												didOpen: () => {
-													// Add click highlighting for radio labels
-													const labels = document.querySelectorAll('label');
-													labels.forEach(label => {
-														label.addEventListener('click', function() {
-															labels.forEach(l => l.style.borderColor = '#ddd');
-															this.style.borderColor = '#007cba';
-														});
-													});
-													// Highlight the checked one initially
-													document.querySelector('input[name="attendance"]:checked').closest('label').style.borderColor = '#007cba';
-												},
-												preConfirm: () => {
-													const attendance = document.querySelector('input[name="attendance"]:checked');
-													if (!attendance) {
-														Swal.showValidationMessage('يرجى اختيار حالة الحضور');
-														return false;
-													}
-													return attendance.value;
-												}
-											}).then((attendanceResult) => {
-												if (attendanceResult.isConfirmed) {
-													// Send attendance status to backend
-													$.ajax({
-														type: 'POST',
-														url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-														data: {
-															action: 'update_session_attendance',
-															session_id: sessionId,
-															attendance: attendanceResult.value,
-															nonce: '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>'
-														},
-														success: function(attendanceResponse) {
-															if (attendanceResponse.success) {
-																Swal.fire({
-																	title: 'تم بنجاح!',
-																	text: 'تم تسجيل حالة الحضور وإرسال إشعار للإدارة',
-																	icon: 'success',
-																	confirmButtonText: 'حسناً'
-																});
-															} else {
-																Swal.fire({
-																	title: 'خطأ!',
-																	text: attendanceResponse.data || 'حدث خطأ في تسجيل حالة الحضور',
-																	icon: 'error',
-																	confirmButtonText: 'حسناً'
-																});
-															}
-														},
-														error: function(xhr, status, error) {
-															console.error('Error updating attendance:', error);
-															Swal.fire({
-																title: 'خطأ!',
-																text: 'حدث خطأ في تسجيل حالة الحضور',
-																icon: 'error',
-																confirmButtonText: 'حسناً'
-															});
-														}
-													});
-												}
-											});
+												confirmButtonText: 'حسناً'
 											});
 										} else {
 											Swal.fire({
@@ -726,6 +634,70 @@ add_action(
 						});
 					}
 				);
+			}
+			
+			// Reinitialize checks after Jet popup is shown
+			$(window).on('jet-popup/show-event/after-show', function(){
+				debugLog('🎯 Jet popup shown - reinitializing session completion checks...');
+				applyDisabledButtonStyles();
+				initSessionCompletionCheck();
+				// Reattach completion handler
+				setTimeout(attachCompletionHandlerToButtons, 100);
+			});
+			
+			// Reinitialize checks after Jet popup content is rendered
+			$(window).on('jet-popup/render-content/render-custom-content', function(){
+				debugLog('📄 Jet popup content rendered - reinitializing session completion checks...');
+				applyDisabledButtonStyles();
+				initSessionCompletionCheck();
+				// Reattach completion handler
+				setTimeout(attachCompletionHandlerToButtons, 500);
+			});
+
+			// Prevent ANY interaction with disabled buttons at the earliest possible moment
+			// Handle disabled state check - but don't interfere with enabled button clicks
+			$(document).on('mousedown mouseup click submit', '.doctor_actions .snks-complete-session-btn, .snks-send-message-btn, form.doctor_actions', function(e) {
+				// Skip if this is a click on snks-complete-session-btn - let the dedicated handler take over
+				if (e.type === 'click' && ($(this).hasClass('snks-complete-session-btn') || $(e.target).hasClass('snks-complete-session-btn'))) {
+					// Don't interfere - let the dedicated click handler handle it
+					return;
+				}
+				
+				var $button = $(this);
+				if ($(this).hasClass('snks-complete-session-btn') || $(this).hasClass('snks-send-message-btn')) {
+					$button = $(this);
+				} else {
+					$button = $(this).find('.snks-complete-session-btn, .snks-send-message-btn');
+				}
+				
+				if ($button.length && ($button.prop('disabled') || $button.attr('disabled') === 'disabled')) {
+					e.preventDefault();
+					e.stopPropagation();
+					e.stopImmediatePropagation();
+					debugLog('🛑 All events prevented - button is disabled');
+					return false;
+				}
+			});
+			
+			// Prevent form submission - we handle it via AJAX in the click handler
+			$(document).on('submit', 'form.doctor_actions', function(e) {
+				var $button = $(this).find('.snks-complete-session-btn');
+				// Always prevent default form submission - we handle it via AJAX
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				e.stopPropagation();
+				if ($button.prop('disabled') || $button.attr('disabled')) {
+					return false;
+				}
+				// If button is enabled, the click handler should have already handled it
+				// But prevent form submission anyway
+				return false;
+			});
+			
+			// Attach completion handler on page load
+			$(document).ready(function() {
+				attachCompletionHandlerToButtons();
+			});
 				
 				// Handle attendance confirmation button clicks
 				$(document).on('click', '.snks-attendance-btn', function(e) {
@@ -734,7 +706,6 @@ add_action(
 					var clientId = $(this).data('client-id');
 					var $button = $(this);
 					
-					console.log('🎯 Attendance button clicked - Session ID:', sessionId, 'Client ID:', clientId);
 					
 					if (!sessionId || !clientId) {
 						console.error('❌ Missing session or client data');
@@ -797,10 +768,9 @@ add_action(
 									action: 'update_session_attendance',
 									session_id: sessionId,
 									attendance: attendanceResult.value,
-									nonce: '<?php echo esc_html( wp_create_nonce( 'session_attendance_nonce' ) ); ?>'
+									nonce: '<?php echo esc_js( wp_create_nonce( "session_attendance_nonce" ) ); ?>'
 								},
 								success: function(attendanceResponse) {
-									console.log('📊 Attendance update response:', attendanceResponse);
 									if (attendanceResponse.success) {
 										Swal.fire({
 											title: 'تم بنجاح!',
@@ -810,7 +780,6 @@ add_action(
 										}).then(() => {
 											// Hide the attendance button after successful update
 											$button.hide();
-											console.log('✅ Attendance button hidden after successful update');
 										});
 									} else {
 										console.error('❌ Attendance update failed:', attendanceResponse.data);

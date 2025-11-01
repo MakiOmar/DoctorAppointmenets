@@ -480,9 +480,15 @@ function snks_handle_session_doctor_actions() {
 	
 	$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
 	$attendees = isset( $_POST['attendees'] ) ? sanitize_text_field( $_POST['attendees'] ) : '';
+	$attendance = isset( $_POST['attendance'] ) ? sanitize_text_field( $_POST['attendance'] ) : '';
 	
 	if ( ! $session_id || ! $attendees ) {
 		wp_send_json_error( 'Missing required data.' );
+	}
+	
+	// Validate attendance if provided
+	if ( ! empty( $attendance ) && ! in_array( $attendance, array( 'yes', 'no' ) ) ) {
+		wp_send_json_error( 'Invalid attendance value.' );
 	}
 	
 	global $wpdb;
@@ -518,6 +524,67 @@ function snks_handle_session_doctor_actions() {
 	
 	if ( $update_result === false ) {
 		wp_send_json_error( 'Failed to update session status.' );
+	}
+	
+	// If attendance is provided, set it
+	if ( ! empty( $attendance ) ) {
+		$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+		$attendee_ids = explode( ',', $session->client_id );
+		
+		foreach ( $attendee_ids as $attendee_id ) {
+			$attendee_id = absint( $attendee_id );
+			if ( $attendee_id > 0 ) {
+				// Check if record exists
+				$existing = $wpdb->get_row( $wpdb->prepare(
+					"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
+					$session_id,
+					$attendee_id
+				) );
+				
+				if ( $existing ) {
+					// Update existing record
+					$wpdb->update(
+						$actions_table,
+						array( 'attendance' => $attendance ),
+						array( 'action_session_id' => $session_id, 'case_id' => $attendee_id ),
+						array( '%s' ),
+						array( '%d', '%d' )
+					);
+				} else {
+					// Insert new record
+					snks_insert_session_actions( $session_id, $attendee_id, $attendance );
+				}
+			}
+		}
+		
+		// Send email to admin if patient did not attend
+		if ( $attendance === 'no' ) {
+			$admin_email = get_option( 'admin_email' );
+			$therapist = get_userdata( $session->user_id );
+			$patient_id = absint( $session->client_id );
+			$patient = get_userdata( $patient_id );
+			
+			$therapist_name = $therapist ? $therapist->display_name : 'غير معروف';
+			$patient_name = $patient ? $patient->display_name : 'غير معروف';
+			
+			$subject = '⚠️ المريض لم يحضر الجلسة #' . $session_id;
+			$message = "
+			<div dir='rtl' style='font-family: Arial, sans-serif;'>
+				<h2 style='color: #dc3545;'>تنبيه: المريض لم يحضر الجلسة</h2>
+				<p><strong>رقم الجلسة:</strong> {$session->ID}</p>
+				<p><strong>المعالج:</strong> {$therapist_name} (ID: {$session->user_id})</p>
+				<p><strong>المريض:</strong> {$patient_name} (ID: {$patient_id})</p>
+				<p><strong>تاريخ الجلسة:</strong> " . gmdate( 'Y-m-d', strtotime( $session->date_time ) ) . "</p>
+				<p><strong>وقت الجلسة:</strong> {$session->starts} - {$session->ends}</p>
+				<p><strong>المدة:</strong> {$session->period} دقيقة</p>
+				<p><strong>نوع الحضور:</strong> {$session->attendance_type}</p>
+				<p style='color: #dc3545; font-weight: bold;'>❌ لم يحضر المريض الجلسة</p>
+			</div>
+			";
+			
+			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+			wp_mail( $admin_email, $subject, $message, $headers );
+		}
 	}
 	
 	// Check if this is an AI session and trigger profit calculation
