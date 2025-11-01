@@ -60,16 +60,6 @@
         </div>
       </div>
 
-      <!-- Prescription Requests Section -->
-      <PrescriptionCard 
-        :prescription-requests="prescriptionRequests"
-        :completed-prescriptions="completedPrescriptions"
-        @book-appointment="showRochtahBookingModal"
-        @view-appointment="viewRochtahAppointment"
-        @join-meeting="joinRochtahMeeting"
-        @view-prescription="viewPrescriptionDetails"
-      />
-
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-12">
         <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -79,8 +69,10 @@
         <p class="text-gray-600">{{ $t('appointmentsPage.loading') }}</p>
       </div>
 
-      <!-- Appointments List -->
-      <div v-else-if="filteredAppointments.length > 0" class="space-y-6">
+      <!-- Tab Content -->
+      <div v-else-if="activeTab !== 'rochtah'">
+        <!-- Appointments List -->
+        <div v-if="filteredAppointments.length > 0" class="space-y-6">
         <div 
           v-for="appointment in filteredAppointments" 
           :key="appointment.id"
@@ -203,6 +195,45 @@
             </div>
           </div>
         </div>
+
+        <!-- Empty State -->
+        <div v-else class="text-center py-12">
+          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointmentsPage.noAppointments') }}</h3>
+          <p class="text-gray-600 mb-6">
+            {{ activeTab === 'upcoming' ? $t('appointmentsPage.noUpcoming') : 
+               $t('appointmentsPage.noPast') }}
+          </p>
+          <button 
+            @click="$router.push('/therapists')"
+            class="btn-primary"
+          >
+            {{ $t('appointmentsPage.bookSession') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Rochtah Tab Content -->
+      <div v-else-if="activeTab === 'rochtah'" class="space-y-6">
+        <PrescriptionCard 
+          :prescription-requests="prescriptionRequests"
+          :completed-prescriptions="completedPrescriptions"
+          @book-appointment="showRochtahBookingModal"
+          @view-appointment="viewRochtahAppointment"
+          @join-meeting="joinRochtahMeeting"
+          @view-prescription="viewPrescriptionDetails"
+        />
+        
+        <!-- Empty State for Rochtah Tab -->
+        <div v-if="prescriptionRequests.length === 0 && completedPrescriptions.length === 0" class="text-center py-12">
+          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('prescription.noPrescriptions') || 'No Prescriptions' }}</h3>
+          <p class="text-gray-600">{{ $t('prescription.noPrescriptionsMessage') || 'You don\'t have any prescription requests or completed prescriptions yet.' }}</p>
+        </div>
       </div>
 
     <!-- Session Modal -->
@@ -240,23 +271,6 @@
       </div>
     </div>
 
-      <!-- Empty State -->
-      <div v-else-if="!loading && filteredAppointments.length === 0" class="text-center py-12">
-        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-        </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointmentsPage.noAppointments') }}</h3>
-        <p class="text-gray-600 mb-6">
-          {{ activeTab === 'upcoming' ? $t('appointmentsPage.noUpcoming') : 
-             $t('appointmentsPage.noPast') }}
-        </p>
-        <button 
-          @click="$router.push('/therapists')"
-          class="btn-primary"
-        >
-          {{ $t('appointmentsPage.bookSession') }}
-        </button>
-      </div>
     </div>
 
     <!-- Cancel Confirmation Modal -->
@@ -750,20 +764,38 @@ export default {
     const sessionMeetAPI = ref(null)
     const currentSessionId = ref(null)
 
-    const tabs = computed(() => [
-      { 
-        id: 'upcoming', 
-        name: $t('appointmentsPage.tabs.upcoming'), 
-        count: appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending' || a.status === 'open').length 
-      },
-      { 
-        id: 'past', 
-        name: $t('appointmentsPage.tabs.past'), 
-        count: appointments.value.filter(a => a.status === 'completed').length 
+    const tabs = computed(() => {
+      const tabList = [
+        { 
+          id: 'upcoming', 
+          name: $t('appointmentsPage.tabs.upcoming'), 
+          count: appointments.value.filter(a => a.status === 'confirmed' || a.status === 'pending' || a.status === 'open').length 
+        },
+        { 
+          id: 'past', 
+          name: $t('appointmentsPage.tabs.past'), 
+          count: appointments.value.filter(a => a.status === 'completed').length 
+        }
+      ]
+      
+      // Add rochtah tab only if there are prescription requests or completed prescriptions
+      if (prescriptionRequests.value.length > 0 || completedPrescriptions.value.length > 0) {
+        tabList.push({
+          id: 'rochtah',
+          name: $t('prescription.rochtah') || 'روشتا',
+          count: prescriptionRequests.value.length + completedPrescriptions.value.length
+        })
       }
-    ])
+      
+      return tabList
+    })
 
     const filteredAppointments = computed(() => {
+      // Don't filter if rochtah tab is active (rochtah content is handled separately)
+      if (activeTab.value === 'rochtah') {
+        return []
+      }
+      
       let filtered = []
       
       switch (activeTab.value) {
