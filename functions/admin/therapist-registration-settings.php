@@ -189,6 +189,7 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_template_patient_rem_1h', sanitize_text_field( $_POST['template_patient_rem_1h'] ?? 'patient_rem_1h' ) );
 		update_option( 'snks_template_patient_rem_now', sanitize_text_field( $_POST['template_patient_rem_now'] ?? 'patient_rem_now' ) );
 		update_option( 'snks_template_doctor_rem', sanitize_text_field( $_POST['template_doctor_rem'] ?? 'doctor_rem' ) );
+		update_option( 'snks_template_edit2', sanitize_text_field( $_POST['template_edit2'] ?? 'edit2' ) );
 		// Note: Button URL removed - OTP messages should not have buttons
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
@@ -245,7 +246,7 @@ function snks_therapist_registration_settings_page() {
 				</table>
 			</div>
 			
-			<div class="card" id="whatsapp_api_settings" style="display: none;">
+			<div class="card" id="whatsapp_api_settings" style="display: none;max-width: 100%;width: 100%;">
 				<h2>WhatsApp API Settings</h2>
 				<p class="description">Configure WhatsApp Business API settings for sending OTP messages via WhatsApp.</p>
 				<table class="form-table">
@@ -415,6 +416,16 @@ function snks_therapist_registration_settings_page() {
 							<input type="text" name="template_doctor_rem" id="template_doctor_rem" value="<?php echo esc_attr( get_option( 'snks_template_doctor_rem', 'doctor_rem' ) ); ?>" class="regular-text" placeholder="doctor_rem">
 						<button type="button" class="button test-whatsapp-notification" data-template="doctor_rem" data-params='{"day": "الخميس", "date": "2025-10-24"}' style="margin-right: 10px;">اختبار</button>
 						<p class="description">Daily reminder | <code>{{day}}</code>, <code>{{date}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_edit2">Appointment Change</label>
+						</th>
+						<td>
+							<input type="text" name="template_edit2" id="template_edit2" value="<?php echo esc_attr( get_option( 'snks_template_edit2', 'edit2' ) ); ?>" class="regular-text" placeholder="edit2">
+						<button type="button" class="button test-whatsapp-notification" data-template="edit2" data-params='{"day": "الثلاثاء", "date": "2025-10-22", "time": "02:00 م", "day2": "الأربعاء", "date2": "2025-10-23", "time2": "03:00 م"}' style="margin-right: 10px;">اختبار</button>
+						<p class="description">Appointment change | <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{day2}}</code>, <code>{{date2}}</code>, <code>{{time2}}</code></p>
 						</td>
 					</tr>
 					<tr>

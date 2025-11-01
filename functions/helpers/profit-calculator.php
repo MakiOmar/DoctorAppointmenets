@@ -252,32 +252,68 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 /**
  * Check if a session is an AI session
  * 
- * @param string $session_id The session ID
+ * @param mixed $session_data The session ID (integer) or session object
  * @return bool True if AI session, false otherwise
  */
-function snks_is_ai_session( $session_id ) {
+function snks_is_ai_session( $session_data ) {
 	global $wpdb;
 	
-	$session_data = $wpdb->get_row( $wpdb->prepare(
-		"SELECT case_id FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
-		$session_id
-	) );
-	
-	if ( ! $session_data ) {
+	// Handle different input types
+	if ( is_numeric( $session_data ) ) {
+		// Input is session ID - get session object from timetable table first
+		$session = $wpdb->get_row( $wpdb->prepare(
+			"SELECT settings FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %s",
+			$session_data
+		) );
+		
+		if ( $session && strpos( $session->settings, 'ai_booking' ) !== false ) {
+			return true;
+		}
+		
+		// Fallback to sessions_actions table for backward compatibility
+		$session_data = $wpdb->get_row( $wpdb->prepare(
+			"SELECT case_id FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
+			$session_data
+		) );
+		
+		if ( ! $session_data ) {
+			return false;
+		}
+		
+		$order = wc_get_order( $session_data->case_id );
+		
+		if ( ! $order ) {
+			return false;
+		}
+		
+		// Check for both AI session meta keys
+		$is_ai_session = $order->get_meta( 'is_ai_session' );
+		$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+		
+		return $is_ai_session || $from_jalsah_ai;
+		
+	} elseif ( is_object( $session_data ) ) {
+		// Input is session object - check settings property first
+		if ( isset( $session_data->settings ) && strpos( $session_data->settings, 'ai_booking' ) !== false ) {
+			return true;
+		}
+		
+		// Fallback to order meta if available
+		if ( isset( $session_data->case_id ) && $session_data->case_id > 0 ) {
+			$order = wc_get_order( $session_data->case_id );
+			
+			if ( $order ) {
+				$is_ai_session = $order->get_meta( 'is_ai_session' );
+				$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+				
+				return $is_ai_session || $from_jalsah_ai;
+			}
+		}
+		
 		return false;
 	}
 	
-	$order = wc_get_order( $session_data->case_id );
-	
-	if ( ! $order ) {
-		return false;
-	}
-	
-	// Check for both AI session meta keys
-	$is_ai_session = $order->get_meta( 'is_ai_session' );
-	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
-	
-	return $is_ai_session || $from_jalsah_ai;
+	return false;
 }
 
 /**

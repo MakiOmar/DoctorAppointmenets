@@ -44,7 +44,15 @@ This document lists all WhatsApp notification events in the DoctorAppointments p
 - **When:** When a patient books a rochtah appointment slot
 - **Sent To:** Patient
 
-### 5. **Doctor Joined Notification** (`snks_send_doctor_joined_notification`)
+### 5. **Appointment Change Notification** (`snks_send_appointment_change_notification`)
+- **Template:** `edit2`
+- **Parameters:** `day`, `date`, `time`, `day2`, `date2`, `time2`
+- **Trigger Location:** `functions/ai-integration.php:6076`
+- **Handler:** Direct call
+- **When:** When a patient reschedules an AI appointment
+- **Sent To:** Patient
+
+### 6. **Doctor Joined Notification** (`snks_send_doctor_joined_notification`)
 - **Template:** `patient_rem_now`
 - **Parameters:** None
 - **Trigger Location:** `functions/ai-integration.php:6734`
@@ -52,7 +60,7 @@ This document lists all WhatsApp notification events in the DoctorAppointments p
 - **When:** When a doctor/therapist joins a session (Jitsi meeting)
 - **Sent To:** Patient
 
-### 6. **Patient 24-Hour Reminder** (`patient_rem_24h`)
+### 7. **Patient 24-Hour Reminder** (`patient_rem_24h`)
 - **Template:** `patient_rem_24h`
 - **Parameters:** `day`, `date`, `doctor`, `time`
 - **Trigger:** Cron job - `snks_check_session_notifications` (runs every minute)
@@ -110,6 +118,7 @@ This document lists all WhatsApp notification events in the DoctorAppointments p
    - `whatsapp_rosheta_booked`
    - `whatsapp_doctor_reminded`
    - `whatsapp_patient_now_sent`
+   - `whatsapp_appointment_changed`
    - `notification_24hr_sent`
    - `notification_1hr_sent`
 

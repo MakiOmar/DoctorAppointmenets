@@ -23,6 +23,7 @@ function snks_get_whatsapp_notification_settings() {
 		'template_patient_rem_1h' => get_option( 'snks_template_patient_rem_1h', 'patient_rem_1h' ),
 		'template_patient_rem_now' => get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ),
 		'template_doctor_rem' => get_option( 'snks_template_doctor_rem', 'doctor_rem' ),
+		'template_edit2' => get_option( 'snks_template_edit2', 'edit2' ),
 	);
 }
 
@@ -418,6 +419,8 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
  * @return bool
  */
 function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $booking_id = 0 ) {
+	global $wpdb;
+	
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' ) {
 		return false;
@@ -451,7 +454,7 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 	
 	// Mark as sent if booking_id is provided
 	if ( ! is_wp_error( $result ) && $booking_id > 0 ) {
-		global $wpdb;
+		// Update rochtah_bookings table
 		$wpdb->update(
 			$wpdb->prefix . 'snks_rochtah_bookings',
 			array( 'whatsapp_activation_sent' => 1 ),
@@ -459,6 +462,27 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 			array( '%d' ),
 			array( '%d' )
 		);
+		
+		// Get session_id from rochtah booking to update timetable table
+		$rochtah_booking = $wpdb->get_row( $wpdb->prepare(
+			"SELECT session_id FROM {$wpdb->prefix}snks_rochtah_bookings WHERE id = %d",
+			$booking_id
+		) );
+		
+		if ( $rochtah_booking && $rochtah_booking->session_id > 0 ) {
+			// Update timetable table with whatsapp_rosheta_activated flag
+			$wpdb->update(
+				$wpdb->prefix . 'snks_provider_timetable',
+				array( 'whatsapp_rosheta_activated' => 1 ),
+				array( 'ID' => $rochtah_booking->session_id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+			
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[WhatsApp AI] Rosheta activation notification sent and marked for session ID: ' . $rochtah_booking->session_id );
+			}
+		}
 	}
 	
 	return ! is_wp_error( $result );
@@ -544,6 +568,7 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 	
 	// Mark as sent
 	if ( ! is_wp_error( $result ) ) {
+		// Update rochtah_bookings table
 		$wpdb->update(
 			$wpdb->prefix . 'snks_rochtah_bookings',
 			array( 'whatsapp_appointment_sent' => 1 ),
@@ -551,6 +576,22 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 			array( '%d' ),
 			array( '%d' )
 		);
+		
+		// Update timetable table with whatsapp_rosheta_booked flag
+		if ( $booking->session_id > 0 ) {
+			$wpdb->update(
+				$wpdb->prefix . 'snks_provider_timetable',
+				array( 'whatsapp_rosheta_booked' => 1 ),
+				array( 'ID' => $booking->session_id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+			
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[WhatsApp AI] Rosheta appointment notification sent and marked for session ID: ' . $booking->session_id );
+			}
+		}
+		
 		return true;
 	}
 	
@@ -706,6 +747,97 @@ function snks_send_doctor_midnight_reminders() {
 			);
 		}
 	}
+}
+
+/**
+ * Send appointment change notification to patient
+ *
+ * @param int $session_id Session ID.
+ * @param string $old_date Old appointment date (Y-m-d format).
+ * @param string $old_time Old appointment time (H:i:s format).
+ * @param string $new_date New appointment date (Y-m-d format).
+ * @param string $new_time New appointment time (H:i:s format).
+ * @return bool
+ */
+function snks_send_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time ) {
+	global $wpdb;
+	
+	$settings = snks_get_whatsapp_notification_settings();
+	if ( $settings['enabled'] != '1' ) {
+		return false;
+	}
+	
+	// Get session details
+	$session = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+		$session_id
+	) );
+	
+	if ( ! $session ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] Session not found for ID: ' . $session_id );
+		}
+		return false;
+	}
+	
+	// Get patient phone
+	$patient_phone = snks_get_user_whatsapp( $session->client_id );
+	if ( ! $patient_phone ) {
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] No phone for patient ID: ' . $session->client_id );
+		}
+		return false;
+	}
+	
+	// Format old appointment details
+	$old_day_name = snks_get_arabic_day_name( $old_date );
+	$old_formatted_date = date( 'Y-m-d', strtotime( $old_date ) );
+	$old_formatted_time = gmdate( 'h:i a', strtotime( $old_time ) );
+	
+	// Format new appointment details
+	$new_day_name = snks_get_arabic_day_name( $new_date );
+	$new_formatted_date = date( 'Y-m-d', strtotime( $new_date ) );
+	$new_formatted_time = gmdate( 'h:i a', strtotime( $new_time ) );
+	
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		error_log( '[WhatsApp AI] Sending appointment change notification for session ID: ' . $session_id );
+		error_log( '[WhatsApp AI] Old: ' . $old_day_name . ' ' . $old_formatted_date . ' ' . $old_formatted_time );
+		error_log( '[WhatsApp AI] New: ' . $new_day_name . ' ' . $new_formatted_date . ' ' . $new_formatted_time );
+	}
+	
+	// Send WhatsApp template
+	$result = snks_send_whatsapp_template_message(
+		$patient_phone,
+		$settings['template_edit2'],
+		array( 
+			'day' => $old_day_name,
+			'date' => $old_formatted_date,
+			'time' => $old_formatted_time,
+			'day2' => $new_day_name,
+			'date2' => $new_formatted_date,
+			'time2' => $new_formatted_time
+		)
+	);
+	
+	// Mark as sent
+	if ( ! is_wp_error( $result ) ) {
+		// Update timetable table with whatsapp_appointment_changed flag
+		$wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			array( 'whatsapp_appointment_changed' => 1 ),
+			array( 'ID' => $session_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+		
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[WhatsApp AI] Appointment change notification sent and marked for session ID: ' . $session_id );
+		}
+		
+		return true;
+	}
+	
+	return false;
 }
 
 /**
