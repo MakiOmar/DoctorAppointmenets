@@ -513,19 +513,7 @@ function snks_rochtah_doctor_dashboard() {
 							${referralInfo}
 							<div style="margin-bottom: 20px;">
 								<label for="prescription_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">نص الروشتة:</label>
-								<textarea id="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-							</div>
-							<div style="margin-bottom: 20px;">
-								<label for="medications" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">الأدوية:</label>
-								<textarea id="medications" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب قائمة الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-							</div>
-							<div style="margin-bottom: 20px;">
-								<label for="dosage_instructions" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">تعليمات الجرعة:</label>
-								<textarea id="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="كيف ومتى تأخذ الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-							</div>
-							<div style="margin-bottom: 20px;">
-								<label for="doctor_notes" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">ملاحظات الطبيب:</label>
-								<textarea id="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="ملاحظات إضافية للمريض..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+								<textarea id="prescription_text" style="width: 100%; height: 180px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
 							</div>
 							<div style="margin-bottom: 15px;">
 						<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">المرفقات (اختياري):</label>
@@ -630,21 +618,15 @@ function snks_rochtah_doctor_dashboard() {
 			},
 			preConfirm: () => {
 				const prescriptionText = document.getElementById('prescription_text').value.trim();
-				const medications = document.getElementById('medications').value.trim();
-				const dosageInstructions = document.getElementById('dosage_instructions').value.trim();
-				const doctorNotes = document.getElementById('doctor_notes').value.trim();
 				const files = document.getElementById('prescription_files').files;
 				
-				if (!prescriptionText || !medications || !dosageInstructions) {
-					Swal.showValidationMessage('يرجى ملء جميع الحقول المطلوبة');
+				if (!prescriptionText) {
+					Swal.showValidationMessage('يرجى إدخال نص الروشتة');
 					return false;
 				}
 				
 				return { 
 					prescription_text: prescriptionText,
-					medications: medications,
-					dosage_instructions: dosageInstructions,
-					doctor_notes: doctorNotes,
 					files: files
 				};
 			}
@@ -655,9 +637,6 @@ function snks_rochtah_doctor_dashboard() {
 				formData.append('action', 'save_rochtah_prescription');
 				formData.append('booking_id', bookingId);
 				formData.append('prescription_text', result.value.prescription_text);
-				formData.append('medications', result.value.medications);
-				formData.append('dosage_instructions', result.value.dosage_instructions);
-				formData.append('doctor_notes', result.value.doctor_notes);
 				formData.append('nonce', '<?php echo esc_html( wp_create_nonce( 'save_prescription' ) ); ?>');
 				
 				// Add files
@@ -745,19 +724,7 @@ function snks_rochtah_doctor_dashboard() {
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label for="edit_prescription_text" style="font-weight: bold; display: block; margin-bottom: 8px;">Prescription Text:</label>
-								<textarea id="edit_prescription_text" name="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;" required>${data.prescription_text || ''}</textarea>
-							</div>
-							<div style="margin-bottom: 20px;">
-								<label for="edit_medications" style="font-weight: bold; display: block; margin-bottom: 8px;">Medications:</label>
-								<textarea id="edit_medications" name="medications" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;">${data.medications || ''}</textarea>
-							</div>
-							<div style="margin-bottom: 20px;">
-								<label for="edit_dosage_instructions" style="font-weight: bold; display: block; margin-bottom: 8px;">Dosage Instructions:</label>
-								<textarea id="edit_dosage_instructions" name="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;">${data.dosage_instructions || ''}</textarea>
-							</div>
-							<div style="margin-bottom: 20px;">
-								<label for="edit_doctor_notes" style="font-weight: bold; display: block; margin-bottom: 8px;">Doctor Notes:</label>
-								<textarea id="edit_doctor_notes" name="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;">${data.doctor_notes || ''}</textarea>
+								<textarea id="edit_prescription_text" name="prescription_text" style="width: 100%; height: 180px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; resize: vertical;" required>${data.prescription_text || ''}</textarea>
 							</div>
 							<div style="margin-bottom: 20px;">
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Prescribed By:</label>
@@ -793,9 +760,6 @@ function snks_rochtah_doctor_dashboard() {
 	function updatePrescription(bookingId) {
 		// Get form data
 		const prescriptionText = document.getElementById('edit_prescription_text').value;
-		const medications = document.getElementById('edit_medications').value;
-		const dosageInstructions = document.getElementById('edit_dosage_instructions').value;
-		const doctorNotes = document.getElementById('edit_doctor_notes').value;
 		
 		// Validate required field
 		if (!prescriptionText.trim()) {
@@ -817,9 +781,6 @@ function snks_rochtah_doctor_dashboard() {
 				action: 'update_rochtah_prescription',
 				booking_id: bookingId,
 				prescription_text: prescriptionText,
-				medications: medications,
-				dosage_instructions: dosageInstructions,
-				doctor_notes: doctorNotes,
 				nonce: '<?php echo wp_create_nonce( 'save_prescription' ); ?>'
 			},
 			success: function(response) {

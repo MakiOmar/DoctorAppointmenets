@@ -279,9 +279,6 @@ function snks_save_rochtah_prescription() {
 	
 	$update_data = array(
 		'prescription_text' => $prescription_text,
-		'medications' => $medications,
-		'dosage_instructions' => $dosage_instructions,
-		'doctor_notes' => $doctor_notes,
 		'prescribed_by' => $current_user->ID,
 		'prescribed_at' => current_time( 'mysql' ),
 		'status' => 'prescribed'
@@ -292,7 +289,7 @@ function snks_save_rochtah_prescription() {
 		$update_data['attachment_ids'] = wp_json_encode( $attachment_ids );
 	}
 	
-	$format = array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' );
+	$format = array( '%s', '%d', '%s', '%s' );
 	if ( ! empty( $attachment_ids ) ) {
 		$format[] = '%s';
 	}
@@ -340,9 +337,7 @@ function snks_save_rochtah_prescription() {
 			$subject = 'Your Prescription is Ready';
 			$message = "Dear " . $patient->display_name . ",\n\n";
 			$message .= "Your prescription has been written by Dr. " . $current_user->display_name . ".\n\n";
-			$message .= "Medications:\n" . $medications . "\n\n";
-			$message .= "Dosage Instructions:\n" . $dosage_instructions . "\n\n";
-			$message .= "Doctor Notes:\n" . $doctor_notes . "\n\n";
+			$message .= "Prescription:\n" . $prescription_text . "\n\n";
 			$message .= "Thank you for using our service.\n\n";
 			$message .= "Best regards,\nJalsah Team";
 			
@@ -523,9 +518,6 @@ function snks_get_rochtah_prescription() {
 		'booking_date' => $booking->booking_date,
 		'booking_time' => date( 'g:i A', strtotime( $booking->booking_time ) ),
 		'prescription_text' => $booking->prescription_text,
-		'medications' => $booking->medications,
-		'dosage_instructions' => $booking->dosage_instructions,
-		'doctor_notes' => $booking->doctor_notes,
 		'prescribed_by_name' => $booking->prescribed_by_name,
 		'prescribed_at' => $booking->prescribed_at ? date( 'Y-m-d H:i:s', strtotime( $booking->prescribed_at ) ) : null,
 		'status' => $booking->status,
@@ -601,9 +593,6 @@ function snks_update_rochtah_prescription() {
 	
 	$update_data = array(
 		'prescription_text' => $prescription_text,
-		'medications' => $medications,
-		'dosage_instructions' => $dosage_instructions,
-		'doctor_notes' => $doctor_notes,
 		'status' => 'prescribed'
 	);
 	
@@ -624,7 +613,7 @@ function snks_update_rochtah_prescription() {
 		$update_data['prescribed_at'] = current_time( 'mysql' );
 	}
 	
-	$format = array( '%s', '%s', '%s', '%s', '%s' );
+	$format = array( '%s', '%s' );
 	if ( ! empty( $attachment_ids ) ) {
 		$format[] = '%s'; // attachment_ids
 	}

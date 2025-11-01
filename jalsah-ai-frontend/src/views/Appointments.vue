@@ -509,24 +509,6 @@
               <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.prescription_text }}</div>
             </div>
 
-            <!-- Medications -->
-            <div v-if="selectedPrescription.medications" class="p-4 bg-green-50 rounded-lg">
-              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.medications') }}:</h4>
-              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.medications }}</div>
-            </div>
-
-            <!-- Dosage Instructions -->
-            <div v-if="selectedPrescription.dosage_instructions" class="p-4 bg-yellow-50 rounded-lg">
-              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.dosageInstructions') }}:</h4>
-              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.dosage_instructions }}</div>
-            </div>
-
-            <!-- Doctor Notes -->
-            <div v-if="selectedPrescription.doctor_notes" class="p-4 bg-purple-50 rounded-lg">
-              <h4 class="font-medium text-gray-700 mb-2">{{ $t('prescription.doctorNotes') }}:</h4>
-              <div class="text-gray-900 whitespace-pre-wrap">{{ selectedPrescription.doctor_notes }}</div>
-            </div>
-
             <!-- Initial Diagnosis & Symptoms -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div v-if="selectedPrescription.initial_diagnosis" class="p-4 bg-orange-50 rounded-lg">
