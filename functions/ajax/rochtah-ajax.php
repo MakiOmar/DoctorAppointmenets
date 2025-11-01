@@ -315,13 +315,26 @@ function snks_save_rochtah_prescription() {
 		if ( $booking ) {
 			$patient = get_user_by( 'ID', $booking->patient_id );
 			
-			// Send notification to patient
+			// Prepare notification message in Arabic
+			$notification_title = 'تمت كتابة الروشتة';
+			$notification_message = sprintf(
+				'تمت كتابة روشتتك بواسطة %s. يرجى مراجعة التفاصيل.',
+				$current_user->display_name
+			);
+			
+			// Create database notification
 			snks_create_ai_notification(
 				$booking->patient_id,
 				'prescription_ready',
-				'Your Prescription is Ready',
-				'Your prescription has been written by Dr. ' . $current_user->display_name . '. Please check your email for details.'
+				$notification_title,
+				$notification_message
 			);
+			
+			// Send Firebase push notification to patient
+			if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
+				$firebase = new \FbCloudMessaging\AnonyengineFirebase();
+				$firebase->trigger_notifier( $notification_title, $notification_message, $booking->patient_id, '' );
+			}
 			
 			// Send email to patient
 			$subject = 'Your Prescription is Ready';
