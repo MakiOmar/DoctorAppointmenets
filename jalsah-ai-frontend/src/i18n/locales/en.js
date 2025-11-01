@@ -827,6 +827,7 @@ export default {
     waitingForDoctor: 'Waiting for doctor to join',
     expiryWarning: 'Must complete booking before',
     rochtahSession: 'Rochtah Session',
+    rochtah: 'Rochtah',
     roomName: 'Room Name',
     startMeeting: 'Start Meeting',
     pending: 'Pending',

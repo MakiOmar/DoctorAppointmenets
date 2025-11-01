@@ -777,6 +777,7 @@ export default {
     waitingForDoctor: 'بانتظار دخول الطبيب',
     expiryWarning: 'يجب إتمام الحجز قبل',
     rochtahSession: 'جلسة رشتة',
+    rochtah: 'روشتا',
     roomName: 'اسم الغرفة',
     startMeeting: 'ابدأ الجلسة',
     pending: 'قيد الانتظار',
