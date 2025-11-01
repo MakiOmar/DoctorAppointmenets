@@ -10,10 +10,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Enqueue SweetAlert2 for admin pages
+ */
+function snks_enqueue_sweetalert2_admin() {
+	wp_enqueue_script( 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11', array( 'jquery' ), '11', true );
+}
+add_action( 'admin_enqueue_scripts', 'snks_enqueue_sweetalert2_admin' );
+
+/**
  * Rochtah Doctor Dashboard
  */
 function snks_rochtah_doctor_dashboard() {
 	snks_load_ai_admin_styles();
+	snks_enqueue_sweetalert2_admin();
 	
 	global $wpdb;
 	$current_user = wp_get_current_user();
