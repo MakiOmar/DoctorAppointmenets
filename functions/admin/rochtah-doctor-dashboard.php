@@ -692,6 +692,7 @@ function snks_rochtah_doctor_dashboard() {
 					}
 				});
 			}
+			}
 		});
 	}
 	
