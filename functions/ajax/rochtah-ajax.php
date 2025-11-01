@@ -241,23 +241,67 @@ function snks_save_rochtah_prescription() {
 	$dosage_instructions = sanitize_textarea_field( $_POST['dosage_instructions'] );
 	$doctor_notes = sanitize_textarea_field( $_POST['doctor_notes'] );
 	
+	// Handle file uploads
+	$attachment_ids = array();
+	if ( ! empty( $_FILES['attachments'] ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/file.php' );
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		require_once( ABSPATH . 'wp-admin/includes/media.php' );
+		
+		$files = $_FILES['attachments'];
+		$file_count = count( $files['name'] );
+		
+		for ( $i = 0; $i < $file_count; $i++ ) {
+			if ( empty( $files['name'][ $i ] ) ) {
+				continue;
+			}
+			
+			$file = array(
+				'name'     => $files['name'][ $i ],
+				'type'     => $files['type'][ $i ],
+				'tmp_name' => $files['tmp_name'][ $i ],
+				'error'    => $files['error'][ $i ],
+				'size'     => $files['size'][ $i ],
+			);
+			
+			$_FILES = array( 'upload' => $file );
+			$attachment_id = media_handle_upload( 'upload', 0 );
+			
+			if ( ! is_wp_error( $attachment_id ) ) {
+				$attachment_ids[] = $attachment_id;
+			}
+		}
+	}
+	
 	global $wpdb;
 	$current_user = wp_get_current_user();
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	
+	$update_data = array(
+		'prescription_text' => $prescription_text,
+		'medications' => $medications,
+		'dosage_instructions' => $dosage_instructions,
+		'doctor_notes' => $doctor_notes,
+		'prescribed_by' => $current_user->ID,
+		'prescribed_at' => current_time( 'mysql' ),
+		'status' => 'prescribed'
+	);
+	
+	// Add attachment IDs if any
+	if ( ! empty( $attachment_ids ) ) {
+		$update_data['attachment_ids'] = wp_json_encode( $attachment_ids );
+	}
+	
+	$format = array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' );
+	if ( ! empty( $attachment_ids ) ) {
+		$format[] = '%s';
+	}
+	
 	$updated = $wpdb->update(
 		$rochtah_bookings_table,
-		array(
-			'prescription_text' => $prescription_text,
-			'medications' => $medications,
-			'dosage_instructions' => $dosage_instructions,
-			'doctor_notes' => $doctor_notes,
-			'prescribed_by' => $current_user->ID,
-			'prescribed_at' => current_time( 'mysql' ),
-			'status' => 'prescribed'
-		),
+		$update_data,
 		array( 'id' => $booking_id ),
-		array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' ),
+		$format,
 		array( '%d' )
 	);
 	
@@ -399,15 +443,31 @@ function snks_get_rochtah_prescription() {
 		wp_send_json_error( 'Security check failed' );
 	}
 	
-	// Check if user has Rochtah doctor capabilities
-	if ( ! current_user_can( 'manage_rochtah' ) && ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( 'Insufficient permissions' );
-	}
-	
+	// Check if user has Rochtah doctor capabilities or is patient viewing own prescription
 	$booking_id = intval( $_POST['booking_id'] );
+	$current_user_id = get_current_user_id();
 	
 	global $wpdb;
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$booking = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $rochtah_bookings_table WHERE id = %d",
+		$booking_id
+	) );
+	
+	if ( ! $booking ) {
+		wp_send_json_error( 'Prescription not found' );
+	}
+	
+	// Allow access if user is rochtah doctor/admin or if user is the patient
+	$has_access = (
+		current_user_can( 'manage_rochtah' ) ||
+		current_user_can( 'manage_options' ) ||
+		$booking->patient_id == $current_user_id
+	);
+	
+	if ( ! $has_access ) {
+		wp_send_json_error( 'Insufficient permissions' );
+	}
 	
 	// Get booking with prescription data and related info
 	$booking = $wpdb->get_row( $wpdb->prepare(
@@ -426,6 +486,24 @@ function snks_get_rochtah_prescription() {
 		wp_send_json_error( 'Booking not found' );
 	}
 	
+	// Format attachments
+	$attachments = array();
+	if ( ! empty( $booking->attachment_ids ) ) {
+		$attachment_ids = json_decode( $booking->attachment_ids, true );
+		if ( is_array( $attachment_ids ) ) {
+			foreach ( $attachment_ids as $att_id ) {
+				$attachments[] = array(
+					'id'        => $att_id,
+					'url'       => wp_get_attachment_url( $att_id ),
+					'name'      => basename( get_attached_file( $att_id ) ),
+					'type'      => get_post_mime_type( $att_id ),
+					'is_image'  => wp_attachment_is_image( $att_id ),
+					'thumbnail' => wp_get_attachment_image_url( $att_id, 'thumbnail' ),
+				);
+			}
+		}
+	}
+	
 	wp_send_json_success( array(
 		'patient_name' => $booking->patient_name,
 		'patient_email' => $booking->patient_email,
@@ -437,7 +515,11 @@ function snks_get_rochtah_prescription() {
 		'doctor_notes' => $booking->doctor_notes,
 		'prescribed_by_name' => $booking->prescribed_by_name,
 		'prescribed_at' => $booking->prescribed_at ? date( 'Y-m-d H:i:s', strtotime( $booking->prescribed_at ) ) : null,
-		'status' => $booking->status
+		'status' => $booking->status,
+		'attachments' => $attachments,
+		'initial_diagnosis' => $booking->initial_diagnosis,
+		'symptoms' => $booking->symptoms,
+		'reason_for_referral' => $booking->reason_for_referral
 	) );
 }
 add_action( 'wp_ajax_get_rochtah_prescription', 'snks_get_rochtah_prescription' );
@@ -462,13 +544,45 @@ function snks_update_rochtah_prescription() {
 	$dosage_instructions = sanitize_textarea_field( $_POST['dosage_instructions'] );
 	$doctor_notes = sanitize_textarea_field( $_POST['doctor_notes'] );
 	
+	// Handle file uploads
+	$attachment_ids = array();
+	if ( ! empty( $_FILES['attachments'] ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/file.php' );
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		require_once( ABSPATH . 'wp-admin/includes/media.php' );
+		
+		$files = $_FILES['attachments'];
+		$file_count = count( $files['name'] );
+		
+		for ( $i = 0; $i < $file_count; $i++ ) {
+			if ( empty( $files['name'][ $i ] ) ) {
+				continue;
+			}
+			
+			$file = array(
+				'name'     => $files['name'][ $i ],
+				'type'     => $files['type'][ $i ],
+				'tmp_name' => $files['tmp_name'][ $i ],
+				'error'    => $files['error'][ $i ],
+				'size'     => $files['size'][ $i ],
+			);
+			
+			$_FILES = array( 'upload' => $file );
+			$attachment_id = media_handle_upload( 'upload', 0 );
+			
+			if ( ! is_wp_error( $attachment_id ) ) {
+				$attachment_ids[] = $attachment_id;
+			}
+		}
+	}
+	
 	global $wpdb;
 	$current_user = wp_get_current_user();
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	
 	// Update prescription (don't change prescribed_by and prescribed_at if already set)
 	$existing_booking = $wpdb->get_row( $wpdb->prepare(
-		"SELECT prescribed_by, prescribed_at FROM $rochtah_bookings_table WHERE id = %d",
+		"SELECT prescribed_by, prescribed_at, attachment_ids FROM $rochtah_bookings_table WHERE id = %d",
 		$booking_id
 	) );
 	
@@ -480,17 +594,37 @@ function snks_update_rochtah_prescription() {
 		'status' => 'prescribed'
 	);
 	
+	// Handle attachment IDs - merge with existing if updating
+	if ( ! empty( $attachment_ids ) ) {
+		$existing_attachments = ! empty( $existing_booking->attachment_ids ) ? json_decode( $existing_booking->attachment_ids, true ) : array();
+		if ( ! is_array( $existing_attachments ) ) {
+			$existing_attachments = array();
+		}
+		// Merge new attachments with existing ones
+		$all_attachments = array_merge( $existing_attachments, $attachment_ids );
+		$update_data['attachment_ids'] = wp_json_encode( $all_attachments );
+	}
+	
 	// Only update prescribed_by and prescribed_at if not already set
 	if ( ! $existing_booking->prescribed_by ) {
 		$update_data['prescribed_by'] = $current_user->ID;
 		$update_data['prescribed_at'] = current_time( 'mysql' );
 	}
 	
+	$format = array( '%s', '%s', '%s', '%s', '%s' );
+	if ( ! empty( $attachment_ids ) ) {
+		$format[] = '%s'; // attachment_ids
+	}
+	if ( ! $existing_booking->prescribed_by ) {
+		$format[] = '%d'; // prescribed_by
+		$format[] = '%s'; // prescribed_at
+	}
+	
 	$updated = $wpdb->update(
 		$rochtah_bookings_table,
 		$update_data,
 		array( 'id' => $booking_id ),
-		array( '%s', '%s', '%s', '%s', '%s', '%d', '%s' ),
+		$format,
 		array( '%d' )
 	);
 	

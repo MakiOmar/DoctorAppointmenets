@@ -464,9 +464,202 @@ function snks_rochtah_doctor_dashboard() {
 	
 	<script>
 	function openPrescriptionModal(bookingId, patientName) {
-		document.getElementById('booking_id').value = bookingId;
-		document.getElementById('prescriptionModal').style.display = 'block';
-		document.querySelector('#prescriptionModal h2').textContent = 'Write Prescription for ' + patientName;
+		// Show fancy prescription form using SweetAlert (like send message form)
+		Swal.fire({
+			title: 'كتابة روشتة',
+			html: `
+				<div style="text-align: right; direction: rtl;">
+					<div style="margin-bottom: 20px;">
+						<label for="prescription_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">نص الروشتة:</label>
+						<textarea id="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+					</div>
+					<div style="margin-bottom: 20px;">
+						<label for="medications" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">الأدوية:</label>
+						<textarea id="medications" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب قائمة الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+					</div>
+					<div style="margin-bottom: 20px;">
+						<label for="dosage_instructions" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">تعليمات الجرعة:</label>
+						<textarea id="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="كيف ومتى تأخذ الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+					</div>
+					<div style="margin-bottom: 20px;">
+						<label for="doctor_notes" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">ملاحظات الطبيب:</label>
+						<textarea id="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="ملاحظات إضافية للمريض..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+					</div>
+					<div style="margin-bottom: 15px;">
+						<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">المرفقات (اختياري):</label>
+						<div id="prescription-file-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#eef2ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background='#f9fafb'">
+							<svg style="width: 48px; height: 48px; margin: 0 auto 12px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+							</svg>
+							<p style="color: #6366f1; font-weight: 600; margin-bottom: 4px;">اضغط أو اسحب الملفات هنا</p>
+							<p style="color: #6b7280; font-size: 13px;">صور، فيديوهات، أو مستندات (حتى 10 ملفات)</p>
+							<input type="file" id="prescription_files" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;">
+						</div>
+						<div id="prescription-file-preview" style="margin-top: 15px; display: none;"></div>
+					</div>
+				</div>
+			`,
+			showCloseButton: true,
+			confirmButtonText: 'حفظ الروشتة',
+			confirmButtonColor: '#6366f1',
+			showLoaderOnConfirm: true,
+			width: '700px',
+			didOpen: () => {
+				const dropZone = document.getElementById('prescription-file-drop-zone');
+				const fileInput = document.getElementById('prescription_files');
+				const filePreview = document.getElementById('prescription-file-preview');
+				let selectedFiles = [];
+				
+				// Click to select files
+				dropZone.addEventListener('click', () => fileInput.click());
+				
+				// Drag and drop handlers
+				dropZone.addEventListener('dragover', (e) => {
+					e.preventDefault();
+					dropZone.style.borderColor = '#6366f1';
+					dropZone.style.background = '#eef2ff';
+				});
+				
+				dropZone.addEventListener('dragleave', () => {
+					dropZone.style.borderColor = '#d1d5db';
+					dropZone.style.background = '#f9fafb';
+				});
+				
+				dropZone.addEventListener('drop', (e) => {
+					e.preventDefault();
+					dropZone.style.borderColor = '#d1d5db';
+					dropZone.style.background = '#f9fafb';
+					handleFiles(e.dataTransfer.files);
+				});
+				
+				fileInput.addEventListener('change', (e) => {
+					handleFiles(e.target.files);
+				});
+				
+				function handleFiles(files) {
+					selectedFiles = Array.from(files);
+					if (selectedFiles.length > 10) {
+						Swal.showValidationMessage('يمكنك رفع حتى 10 ملفات فقط');
+						selectedFiles = selectedFiles.slice(0, 10);
+					}
+					displayFiles(selectedFiles);
+				}
+				
+				function displayFiles(files) {
+					if (files.length === 0) {
+						filePreview.style.display = 'none';
+						return;
+					}
+					
+					filePreview.style.display = 'block';
+					filePreview.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">' + 
+						files.map((file, index) => {
+							const isImage = file.type.startsWith('image/');
+							const fileUrl = isImage ? URL.createObjectURL(file) : '';
+							const fileName = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
+							const fileSize = (file.size / 1024).toFixed(1) + ' KB';
+							
+							return `
+								<div style="position: relative; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; background: white; text-align: center;">
+									${isImage ? 
+										`<img src="${fileUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin-bottom: 6px;">` :
+										`<div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 6px; margin: 0 auto 6px;">
+											<svg style="width: 32px; height: 32px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+											</svg>
+										</div>`
+									}
+									<p style="font-size: 11px; color: #374151; margin: 0; font-weight: 500;">${fileName}</p>
+									<p style="font-size: 10px; color: #9ca3af; margin: 2px 0 0 0;">${fileSize}</p>
+									<button onclick="removePrescriptionFile(${index})" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid white; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">×</button>
+								</div>
+							`;
+						}).join('') + '</div>';
+					
+					// Make removeFile available globally
+					window.removePrescriptionFile = function(index) {
+						selectedFiles.splice(index, 1);
+						const dataTransfer = new DataTransfer();
+						selectedFiles.forEach(file => dataTransfer.items.add(file));
+						fileInput.files = dataTransfer.files;
+						displayFiles(selectedFiles);
+					};
+				}
+			},
+			preConfirm: () => {
+				const prescriptionText = document.getElementById('prescription_text').value.trim();
+				const medications = document.getElementById('medications').value.trim();
+				const dosageInstructions = document.getElementById('dosage_instructions').value.trim();
+				const doctorNotes = document.getElementById('doctor_notes').value.trim();
+				const files = document.getElementById('prescription_files').files;
+				
+				if (!prescriptionText || !medications || !dosageInstructions) {
+					Swal.showValidationMessage('يرجى ملء جميع الحقول المطلوبة');
+					return false;
+				}
+				
+				return { 
+					prescription_text: prescriptionText,
+					medications: medications,
+					dosage_instructions: dosageInstructions,
+					doctor_notes: doctorNotes,
+					files: files
+				};
+			}
+		}).then((result) => {
+			if (result.isConfirmed) {
+				// Prepare form data with files
+				var formData = new FormData();
+				formData.append('action', 'save_rochtah_prescription');
+				formData.append('booking_id', bookingId);
+				formData.append('prescription_text', result.value.prescription_text);
+				formData.append('medications', result.value.medications);
+				formData.append('dosage_instructions', result.value.dosage_instructions);
+				formData.append('doctor_notes', result.value.doctor_notes);
+				formData.append('nonce', '<?php echo esc_html( wp_create_nonce( 'save_prescription' ) ); ?>');
+				
+				// Add files
+				for (var i = 0; i < result.value.files.length; i++) {
+					formData.append('attachments[]', result.value.files[i]);
+				}
+				
+				// Send AJAX request
+				jQuery.ajax({
+					type: 'POST',
+					url: ajaxurl,
+					data: formData,
+					processData: false,
+					contentType: false,
+					success: function(response) {
+						if (response.success) {
+							Swal.fire({
+								title: 'تم بنجاح!',
+								text: 'تم حفظ الروشتة بنجاح',
+								icon: 'success',
+								confirmButtonText: 'حسناً'
+							}).then(() => {
+								location.reload();
+							});
+						} else {
+							Swal.fire({
+								title: 'خطأ!',
+								text: response.data || 'حدث خطأ أثناء حفظ الروشتة',
+								icon: 'error',
+								confirmButtonText: 'حسناً'
+							});
+						}
+					},
+					error: function() {
+						Swal.fire({
+							title: 'خطأ!',
+							text: 'حدث خطأ أثناء حفظ الروشتة',
+							icon: 'error',
+							confirmButtonText: 'حسناً'
+						});
+					}
+				});
+			}
+		});
 	}
 	
 	function openStatusModal(bookingId, currentStatus) {

@@ -54,6 +54,7 @@ function snks_create_enhanced_ai_tables() {
 		prescribed_by INT(11) NULL,
 		prescribed_at TIMESTAMP NULL,
 		prescription_file VARCHAR(255),
+		attachment_ids TEXT NULL,
 		whatsapp_activation_sent TINYINT(1) DEFAULT 0,
 		whatsapp_appointment_sent TINYINT(1) DEFAULT 0,
 		appointment_id BIGINT(20) NULL,
@@ -165,6 +166,20 @@ function snks_add_enhanced_ai_meta_fields() {
 	
 	if ( empty( $column_exists ) ) {
 		$wpdb->query( "ALTER TABLE $orders_table ADD COLUMN jalsah_ai_sessions JSON NULL" );
+	}
+	
+	// Add attachment_ids column to rochtah_bookings table if it doesn't exist
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$column_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$rochtah_bookings_table,
+		'attachment_ids',
+		$wpdb->dbname
+	) );
+	
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD COLUMN attachment_ids TEXT NULL" );
 	}
 }
 
