@@ -147,18 +147,17 @@ function snks_get_rochtah_time_slots() {
 	}
 	
 	$date = sanitize_text_field( $_POST['date'] );
-	$day_of_week = date( 'l', strtotime( $date ) );
 	
 	global $wpdb;
 	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	
-	// Get available slots for the day
+	// Get available slots for the specific date (not template slots)
 	$available_slots = $wpdb->get_results( $wpdb->prepare(
 		"SELECT * FROM $rochtah_appointments_table 
-		WHERE day_of_week = %s AND status = 'active' 
+		WHERE slot_date = %s AND is_template = 0 AND status = 'active' 
 		ORDER BY start_time",
-		$day_of_week
+		$date
 	) );
 	
 	$time_slots = array();

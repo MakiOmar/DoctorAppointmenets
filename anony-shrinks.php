@@ -141,6 +141,7 @@ require_once SNKS_DIR . 'functions/admin/ai-applications.php';
 require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
 require_once SNKS_DIR . 'functions/admin/add-arabic-diagnoses.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
+require_once SNKS_DIR . 'functions/admin/rochtah-slots-manager.php';
 require_once SNKS_DIR . 'functions/admin/therapist-registration-settings.php';
 require_once SNKS_DIR . 'functions/shortcodes/therapist-registration-shortcode.php';
 require_once SNKS_DIR . 'functions/admin/test-data-populator.php';

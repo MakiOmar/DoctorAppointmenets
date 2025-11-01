@@ -75,16 +75,20 @@ function snks_create_enhanced_ai_tables() {
 	$rochtah_appointments_sql = "CREATE TABLE IF NOT EXISTS $rochtah_appointments_table (
 		id INT(11) NOT NULL AUTO_INCREMENT,
 		day_of_week VARCHAR(20) NOT NULL,
+		slot_date DATE NULL,
 		start_time TIME NOT NULL,
 		end_time TIME NOT NULL,
 		current_bookings INT(11) DEFAULT 0,
 		status ENUM('active', 'inactive') DEFAULT 'active',
+		is_template TINYINT(1) DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY day_of_week (day_of_week),
+		KEY slot_date (slot_date),
 		KEY start_time (start_time),
-		KEY status (status)
+		KEY status (status),
+		KEY is_template (is_template)
 	) " . $wpdb->get_charset_collate();
 	
 	// Create AI analytics table
@@ -171,15 +175,46 @@ function snks_add_enhanced_ai_meta_fields() {
 	// Add attachment_ids column to rochtah_bookings table if it doesn't exist
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
 	$column_exists = $wpdb->get_results( $wpdb->prepare(
-		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
 		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
 		$rochtah_bookings_table,
 		'attachment_ids',
 		$wpdb->dbname
 	) );
-	
+
 	if ( empty( $column_exists ) ) {
 		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD COLUMN attachment_ids TEXT NULL" );
+	}
+
+	// Add slot_date and is_template columns to rochtah_appointments table if they don't exist
+	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+	
+	// Check for slot_date column
+	$slot_date_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$rochtah_appointments_table,
+		'slot_date',
+		$wpdb->dbname
+	) );
+
+	if ( empty( $slot_date_exists ) ) {
+		$wpdb->query( "ALTER TABLE $rochtah_appointments_table ADD COLUMN slot_date DATE NULL AFTER day_of_week" );
+		$wpdb->query( "ALTER TABLE $rochtah_appointments_table ADD INDEX slot_date (slot_date)" );
+	}
+
+	// Check for is_template column
+	$is_template_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$rochtah_appointments_table,
+		'is_template',
+		$wpdb->dbname
+	) );
+
+	if ( empty( $is_template_exists ) ) {
+		$wpdb->query( "ALTER TABLE $rochtah_appointments_table ADD COLUMN is_template TINYINT(1) DEFAULT 0 AFTER status" );
+		$wpdb->query( "ALTER TABLE $rochtah_appointments_table ADD INDEX is_template (is_template)" );
 	}
 }
 
