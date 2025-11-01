@@ -148,14 +148,22 @@ add_action( 'edit_user_profile_update', 'snks_save_rochtah_doctor_whatsapp' );
 
 /**
  * Ensure rochtah_doctor role is assigned when role is set via user edit page
- * Hook into set_user_role to automatically assign role if doctor is set as rochtah
+ * Hook into set_user_role to automatically assign administrator role if rochtah_doctor is assigned
  */
 function snks_ensure_rochtah_doctor_role( $user_id, $role, $old_roles ) {
-	// If rochtah_doctor role is being assigned, ensure it's properly set
+	$user = get_userdata( $user_id );
+	if ( ! $user ) {
+		return;
+	}
+	
+	// If rochtah_doctor role is being assigned, also add administrator role
 	if ( $role === 'rochtah_doctor' ) {
-		$user = get_userdata( $user_id );
-		if ( $user && ! in_array( 'rochtah_doctor', $user->roles, true ) ) {
+		if ( ! in_array( 'rochtah_doctor', $user->roles, true ) ) {
 			$user->add_role( 'rochtah_doctor' );
+		}
+		// Also add administrator role
+		if ( ! in_array( 'administrator', (array) $user->roles, true ) ) {
+			$user->add_role( 'administrator' );
 		}
 	}
 }

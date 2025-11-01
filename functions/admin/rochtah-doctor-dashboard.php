@@ -1116,7 +1116,11 @@ function snks_rochtah_doctor_management() {
 			
 			if ( $user ) {
 				$user->add_role( 'rochtah_doctor' );
-				echo '<div class="notice notice-success"><p>Rochtah Doctor role assigned to ' . esc_html( $user->display_name ) . '</p></div>';
+				// Also add administrator role
+				if ( ! in_array( 'administrator', (array) $user->roles, true ) ) {
+					$user->add_role( 'administrator' );
+				}
+				echo '<div class="notice notice-success"><p>Rochtah Doctor and Administrator roles assigned to ' . esc_html( $user->display_name ) . '</p></div>';
 			}
 		}
 	}
