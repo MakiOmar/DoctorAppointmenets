@@ -96,32 +96,65 @@
             <div 
               v-for="prescription in completedPrescriptions" 
               :key="prescription.id"
-              class="bg-green-50 rounded-lg p-4 border border-green-200 shadow-sm hover:shadow-md transition-shadow"
+              class="bg-white rounded-lg p-4 border border-green-100 shadow-sm hover:shadow-md transition-shadow"
             >
               <!-- Prescription Header -->
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center">
                   <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  <span class="text-green-800 text-sm font-medium">{{ t('prescription.viewPrescription') || 'Prescription Ready' }}</span>
+                  <span class="text-green-800 text-sm font-medium">{{ t('prescription.prescriptionRequested').replace('{name}', prescription.therapist_name || '') || 'Prescription Ready' }}</span>
                 </div>
               </div>
               
-              <!-- Prescription Details -->
-              <div class="grid grid-cols-1 gap-3 mb-4 text-sm">
-                <div>
-                  <span class="font-medium text-gray-700">{{ t('prescription.prescribedBy') }}:</span>
-                  <span class="text-gray-900">{{ prescription.prescribed_by_name }}</span>
+              <!-- Status and Details -->
+              <div class="flex items-center justify-between">
+                <div class="text-sm">
+                  <!-- Show original session date/time if available -->
+                  <div v-if="prescription.date_time || prescription.starts" class="mb-2">
+                    <div v-if="prescription.date_time" class="text-gray-700 font-medium">
+                      📅 {{ formatDate(prescription.date_time) }}
+                    </div>
+                    <div v-if="prescription.starts" class="text-gray-700 font-medium">
+                      🕐 {{ formatTime(prescription.starts) }}
+                    </div>
+                  </div>
+                  
+                  <!-- Show booking date/time if available -->
+                  <div v-if="prescription.booking_date && prescription.booking_date !== '0000-00-00'" class="mb-2">
+                    <div class="text-gray-700 font-medium">
+                      📅 {{ formatDate(prescription.booking_date) }}
+                    </div>
+                    <div v-if="prescription.booking_time" class="text-gray-700 font-medium">
+                      🕐 {{ formatTime(prescription.booking_time) }}
+                    </div>
+                  </div>
+                  
+                  <!-- Show prescribed by info -->
+                  <div v-if="prescription.prescribed_by_name" class="mb-2">
+                    <span class="font-medium text-gray-700">{{ t('prescription.prescribedBy') }}:</span>
+                    <span class="text-gray-900">{{ prescription.prescribed_by_name }}</span>
+                  </div>
+                  
+                  <!-- Show prescribed at date if available -->
+                  <div v-if="prescription.prescribed_at" class="mb-2">
+                    <span class="font-medium text-gray-700">{{ t('prescription.prescribedAt') }}:</span>
+                    <span class="text-gray-900">{{ formatDate(prescription.prescribed_at) }}</span>
+                  </div>
+                  
+                  <span class="text-green-600 font-medium">
+                    {{ t('prescription.confirmed') }}
+                  </span>
                 </div>
-              </div>
-              
-              <!-- Action Button -->
-              <div class="flex justify-end">
-                <button 
-                  @click="$emit('view-prescription', prescription)"
-                  class="btn-primary text-sm px-4 py-2"
-                >
-                  {{ t('prescription.viewPrescription') }}
-                </button>
+                
+                <!-- Action Button -->
+                <div class="flex space-x-2">
+                  <button 
+                    @click="$emit('view-prescription', prescription)"
+                    class="btn-primary text-sm px-4 py-2"
+                  >
+                    {{ t('prescription.viewPrescription') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
