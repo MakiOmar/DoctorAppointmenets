@@ -90,7 +90,6 @@ function snks_rochtah_doctor_dashboard() {
 			}
 		}
 	}
-	
 	// Get statistics
 	$total_bookings = count( $bookings );
 	$pending_bookings = count( array_filter( $bookings, function( $b ) { return $b->status === 'pending'; } ) );
@@ -145,18 +144,30 @@ function snks_rochtah_doctor_dashboard() {
 							<tr>
 								<td>
 									<strong><?php echo esc_html( $booking->booking_date ); ?></strong><br>
-									<?php echo esc_html( $booking->booking_time ); ?>
+									<?php 
+									// Convert time to 12-hour format
+									if ( ! empty( $booking->booking_time ) ) {
+										$time_24 = $booking->booking_time;
+										// Handle formats like "14:30" or "14:30:00"
+										if ( preg_match( '/^(\d{1,2}):(\d{2})/', $time_24, $matches ) ) {
+											$hour = intval( $matches[1] );
+											$minute = $matches[2];
+											$period = ( $hour >= 12 ) ? 'PM' : 'AM';
+											$hour_12 = ( $hour > 12 ) ? $hour - 12 : ( $hour == 0 ? 12 : $hour );
+											$time_12 = sprintf( '%d:%s %s', $hour_12, $minute, $period );
+											echo esc_html( $time_12 );
+										} else {
+											echo esc_html( $booking->booking_time );
+										}
+									} else {
+										echo esc_html( $booking->booking_time );
+									}
+									?>
 								</td>
 								<td><?php echo esc_html( $booking->patient_name ); ?></td>
 								<td><?php echo esc_html( $booking->patient_email ); ?></td>
 								<td><?php echo esc_html( $booking->therapist_name ); ?></td>
 								<td>
-									<?php if ( $booking->status === 'confirmed' && $booking->booking_date !== '0000-00-00' ) : ?>
-										<div style="margin-bottom: 5px;">
-											<strong>📅 <?php echo esc_html( $booking->booking_date ); ?></strong><br>
-											<strong>🕐 <?php echo esc_html( $booking->booking_time ); ?></strong>
-										</div>
-									<?php endif; ?>
 									<span class="status-<?php echo esc_attr( $booking->status ); ?>">
 										<?php echo esc_html( ucfirst( $booking->status ) ); ?>
 									</span>
