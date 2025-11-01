@@ -558,11 +558,10 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Booking Modal -->
-  <div v-if="showBookingModal && selectedTherapist" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="closeBookingModal">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+    <!-- Booking Modal -->
+    <div v-if="showBookingModal && selectedTherapist" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" @click.self="closeBookingModal">
+      <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
       <!-- Modal Header -->
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-xl font-semibold text-gray-900">
@@ -680,9 +679,9 @@
           {{ $t('common.close') }}
         </button>
       </div>
+      </div>
     </div>
   </div>
-</div>
 </template>
 
 <script>
