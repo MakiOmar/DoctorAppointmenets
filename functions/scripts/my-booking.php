@@ -98,6 +98,10 @@ add_shortcode(
 						height: (window.innerHeight ) + 'px',
 						configOverwrite: {
 							prejoinPageEnabled: false,
+							startWithAudioMuted: false,
+							startWithVideoMuted: false,
+							enableWelcomePage: false,
+							enableClosePage: true,
 							participantsPane: {
 								enabled: true,
 								hideModeratorSettingsTab: false,
@@ -126,6 +130,43 @@ add_shortcode(
 
 					
 					meetAPI.executeCommand('displayName', '<?php echo esc_html( $name ); ?>');
+					
+					<?php if ( snks_is_patient() ) { ?>
+					// Auto-start the meeting for patients - ensure it joins automatically
+					meetAPI.addListener('videoConferenceJoined', function() {
+						// Meeting has automatically joined
+						console.log('Patient automatically joined the meeting');
+					});
+					
+					// Fallback: Try to auto-click any start/join button if it exists
+					// This handles cases where Jitsi might still show a button despite prejoinPageEnabled: false
+					var attemptAutoJoin = function() {
+						var startButton = document.querySelector('[data-testid="prejoin.joinMeeting"]') || 
+										  document.querySelector('.prejoin-button') ||
+										  document.querySelector('button[aria-label*="Join"]') ||
+										  document.querySelector('button[aria-label*="join"]') ||
+										  document.querySelector('button[aria-label*="ابدأ"]') ||
+										  document.querySelector('button[aria-label*="Join meeting"]') ||
+										  document.querySelector('.videosettingsbutton') ||
+										  document.querySelector('[data-tooltip*="Join"]') ||
+										  document.querySelector('[id*="join"]') ||
+										  document.querySelector('[class*="join-button"]');
+						if (startButton && typeof startButton.click === 'function') {
+							try {
+								startButton.click();
+								console.log('Auto-clicked start button for patient');
+							} catch(e) {
+								console.log('Could not auto-click button:', e);
+							}
+						}
+					};
+					
+					// Try auto-join after delays to catch any delayed button rendering
+					setTimeout(attemptAutoJoin, 500);
+					setTimeout(attemptAutoJoin, 1000);
+					setTimeout(attemptAutoJoin, 2000);
+					<?php } ?>
+					
 					<?php if ( ! snks_is_patient() && ! empty( $room_id ) ) { ?>
 					//videoConferenceJoined
 					meetAPI.addListener('videoConferenceJoined', function(room){
