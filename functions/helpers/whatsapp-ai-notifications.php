@@ -261,6 +261,59 @@ function snks_get_arabic_day_name( $date ) {
 }
 
 /**
+ * Get therapist name from application/profile
+ *
+ * @param int $therapist_id Therapist user ID.
+ * @return string Therapist name or fallback.
+ */
+function snks_get_therapist_name( $therapist_id ) {
+	global $wpdb;
+	
+	// Get current locale - default to Arabic
+	$locale = get_option( 'snks_whatsapp_message_language', 'ar' );
+	$locale = $locale === 'en' ? 'en' : 'ar';
+	
+	// First try: Get from therapist_applications table
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	$application = $wpdb->get_row( $wpdb->prepare(
+		"SELECT name, name_en FROM $table_name WHERE user_id = %d AND status = 'approved' LIMIT 1",
+		$therapist_id
+	) );
+	
+	if ( $application ) {
+		$name = $locale === 'ar' ? $application->name : $application->name_en;
+		if ( empty( $name ) ) {
+			$name = $application->name; // Fallback to Arabic name
+		}
+		if ( ! empty( $name ) ) {
+			return trim( $name );
+		}
+	}
+	
+	// Second try: Get from user meta (ai_display_name)
+	$display_name_ar = get_user_meta( $therapist_id, 'ai_display_name_ar', true );
+	$display_name_en = get_user_meta( $therapist_id, 'ai_display_name_en', true );
+	$display_name = $locale === 'ar' ? $display_name_ar : $display_name_en;
+	if ( empty( $display_name ) ) {
+		$display_name = $display_name_ar; // Fallback to Arabic
+	}
+	if ( ! empty( $display_name ) ) {
+		return trim( $display_name );
+	}
+	
+	// Final fallback: Get from billing fields
+	$first_name = get_user_meta( $therapist_id, 'billing_first_name', true );
+	$last_name = get_user_meta( $therapist_id, 'billing_last_name', true );
+	$billing_name = trim( $first_name . ' ' . $last_name );
+	if ( ! empty( $billing_name ) ) {
+		return $billing_name;
+	}
+	
+	// Ultimate fallback
+	return 'المعالج';
+}
+
+/**
  * Send new session notification to patient (AI sessions only)
  *
  * @param int $session_id Session ID.
@@ -299,9 +352,8 @@ function snks_send_new_session_notification( $session_id ) {
 		return false;
 	}
 	
-	// Get doctor name
-	$doctor = get_user_by( 'id', $session->user_id );
-	$doctor_name = $doctor ? $doctor->display_name : 'المعالج';
+	// Get doctor name from therapist application/profile
+	$doctor_name = snks_get_therapist_name( $session->user_id );
 	
 	// Format date and time
 	$day_name = snks_get_arabic_day_name( $session->date_time );
@@ -375,8 +427,12 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 	}
 	
 	// Get patient name
-	$patient = get_user_by( 'id', $session->client_id );
-	$patient_name = $patient ? $patient->display_name : 'المريض';
+	$patient_first_name = get_user_meta( $session->client_id, 'billing_first_name', true );
+	$patient_last_name = get_user_meta( $session->client_id, 'billing_last_name', true );
+	$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
+	if ( empty( $patient_name ) ) {
+		$patient_name = 'المريض';
+	}
 	
 	// Format date and time
 	$day_name = snks_get_arabic_day_name( $session->date_time );
@@ -436,11 +492,15 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 	}
 	
 	// Get patient and doctor names
-	$patient = get_user_by( 'id', $patient_id );
-	$patient_name = $patient ? $patient->display_name : 'المريض';
+	$patient_first_name = get_user_meta( $patient_id, 'billing_first_name', true );
+	$patient_last_name = get_user_meta( $patient_id, 'billing_last_name', true );
+	$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
+	if ( empty( $patient_name ) ) {
+		$patient_name = 'المريض';
+	}
 	
-	$doctor = get_user_by( 'id', $doctor_id );
-	$doctor_name = $doctor ? $doctor->display_name : 'المعالج';
+	// Get doctor name from therapist application/profile
+	$doctor_name = snks_get_therapist_name( $doctor_id );
 	
 	// Send WhatsApp template
 	$result = snks_send_whatsapp_template_message(
