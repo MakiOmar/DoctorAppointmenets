@@ -464,28 +464,61 @@ function snks_rochtah_doctor_dashboard() {
 	
 	<script>
 	function openPrescriptionModal(bookingId, patientName) {
-		// Show fancy prescription form using SweetAlert (like send message form)
-		Swal.fire({
-			title: 'كتابة روشتة',
-			html: `
-				<div style="text-align: right; direction: rtl;">
-					<div style="margin-bottom: 20px;">
-						<label for="prescription_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">نص الروشتة:</label>
-						<textarea id="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-					</div>
-					<div style="margin-bottom: 20px;">
-						<label for="medications" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">الأدوية:</label>
-						<textarea id="medications" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب قائمة الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-					</div>
-					<div style="margin-bottom: 20px;">
-						<label for="dosage_instructions" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">تعليمات الجرعة:</label>
-						<textarea id="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="كيف ومتى تأخذ الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-					</div>
-					<div style="margin-bottom: 20px;">
-						<label for="doctor_notes" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">ملاحظات الطبيب:</label>
-						<textarea id="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="ملاحظات إضافية للمريض..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-					</div>
-					<div style="margin-bottom: 15px;">
+		// First fetch booking details to show referral information
+		jQuery.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'get_rochtah_referral_reason',
+				booking_id: bookingId,
+				nonce: '<?php echo wp_create_nonce( 'rochtah_referral_reason' ); ?>'
+			},
+			success: function(response) {
+				let referralInfo = '';
+				if (response.success && response.data) {
+					const data = response.data;
+					referralInfo = `
+						<div style="background-color: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+							<h3 style="margin-top: 0; margin-bottom: 16px; color: #0c4a6e; font-weight: bold; font-size: 16px;">معلومات الإحالة من المعالج:</h3>
+							<div style="margin-bottom: 12px;">
+								<label style="display: block; margin-bottom: 6px; font-weight: 600; color: #374151;">تشخيص المريض المبدئي:</label>
+								<div style="background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.6; white-space: pre-wrap; font-size: 14px;">${data.preliminary_diagnosis || 'غير محدد'}</div>
+							</div>
+							<div style="margin-bottom: 12px;">
+								<label style="display: block; margin-bottom: 6px; font-weight: 600; color: #374151;">الأعراض:</label>
+								<div style="background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.6; white-space: pre-wrap; font-size: 14px;">${data.symptoms || 'غير محدد'}</div>
+							</div>
+							<div style="margin-bottom: 0;">
+								<label style="display: block; margin-bottom: 6px; font-weight: 600; color: #374151;">سبب الإحالة:</label>
+								<div style="background-color: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; line-height: 1.6; white-space: pre-wrap; font-size: 14px;">${data.reason_for_referral || 'غير محدد'}</div>
+							</div>
+						</div>
+					`;
+				}
+				
+				// Show fancy prescription form using SweetAlert (like send message form)
+				Swal.fire({
+					title: 'كتابة روشتة',
+					html: `
+						<div style="text-align: right; direction: rtl;">
+							${referralInfo}
+							<div style="margin-bottom: 20px;">
+								<label for="prescription_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">نص الروشتة:</label>
+								<textarea id="prescription_text" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="medications" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">الأدوية:</label>
+								<textarea id="medications" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب قائمة الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="dosage_instructions" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">تعليمات الجرعة:</label>
+								<textarea id="dosage_instructions" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="كيف ومتى تأخذ الأدوية..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+							</div>
+							<div style="margin-bottom: 20px;">
+								<label for="doctor_notes" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">ملاحظات الطبيب:</label>
+								<textarea id="doctor_notes" style="width: 100%; height: 100px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="ملاحظات إضافية للمريض..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+							</div>
+							<div style="margin-bottom: 15px;">
 						<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">المرفقات (اختياري):</label>
 						<div id="prescription-file-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#eef2ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background='#f9fafb'">
 							<svg style="width: 48px; height: 48px; margin: 0 auto 12px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
