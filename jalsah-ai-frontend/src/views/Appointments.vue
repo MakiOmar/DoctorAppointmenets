@@ -235,6 +235,7 @@
           <p class="text-gray-600">{{ $t('prescription.noPrescriptionsMessage') || 'You don\'t have any prescription requests or completed prescriptions yet.' }}</p>
         </div>
       </div>
+    </div>
 
     <!-- Session Modal -->
     <div v-if="showSessionModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -269,8 +270,6 @@
           </div>
         </div>
       </div>
-    </div>
-
     </div>
 
     <!-- Cancel Confirmation Modal -->
@@ -682,6 +681,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
