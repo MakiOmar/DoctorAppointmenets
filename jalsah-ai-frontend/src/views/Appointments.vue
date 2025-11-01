@@ -412,7 +412,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-medium text-gray-900">{{ $t('prescription.rochtahSession') || 'Rochtah Session' }}</h3>
           <button 
-            @click="showRochtahSessionModal = false"
+            @click="closeRochtahSessionModal"
             class="text-gray-400 hover:text-gray-600"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -447,14 +447,9 @@
           
           <!-- Meeting Controls -->
           <div class="flex justify-center space-x-4">
+            <!-- Start button is hidden as meeting auto-starts when modal opens -->
             <button 
-              @click="startRochtahMeeting"
-              class="btn-primary px-6 py-3"
-            >
-              {{ $t('prescription.startMeeting') || 'Start Meeting' }}
-            </button>
-            <button 
-              @click="showRochtahSessionModal = false"
+              @click="closeRochtahSessionModal"
               class="btn-outline px-6 py-3"
             >
               {{ $t('common.close') }}
@@ -740,6 +735,7 @@ export default {
     // Rochtah session related refs
     const showRochtahSessionModal = ref(false)
     const rochtahMeetingDetails = ref(null)
+    const rochtahMeetingAPI = ref(null)
 
     // Prescription viewing related refs
     const showPrescriptionModal = ref(false)
@@ -1677,6 +1673,11 @@ export default {
           // Store meeting details for the session modal
           rochtahMeetingDetails.value = meetingDetails
           showRochtahSessionModal.value = true
+          
+          // Auto-start the meeting when modal opens
+          setTimeout(() => {
+            startRochtahMeeting()
+          }, 300) // Small delay to ensure modal is rendered
         } else {
           toast.error(response.data.message || 'Failed to get meeting details')
         }
@@ -1686,6 +1687,21 @@ export default {
       }
     }
 
+    // Close Rochtah session modal and cleanup
+    const closeRochtahSessionModal = () => {
+      // Clean up meeting API
+      if (rochtahMeetingAPI.value) {
+        try {
+          rochtahMeetingAPI.value.dispose()
+        } catch (e) {
+          console.warn('Error disposing rochtah meeting:', e)
+        }
+        rochtahMeetingAPI.value = null
+      }
+      showRochtahSessionModal.value = false
+      rochtahMeetingDetails.value = null
+    }
+    
     // Start Rochtah meeting
     const startRochtahMeeting = () => {
       if (!rochtahMeetingDetails.value) return
@@ -1768,16 +1784,64 @@ export default {
       }
       
       try {
+        // Clean up any existing meeting API
+        if (rochtahMeetingAPI.value) {
+          try {
+            rochtahMeetingAPI.value.dispose()
+          } catch (e) {
+            console.warn('Error disposing previous meeting:', e)
+          }
+          rochtahMeetingAPI.value = null
+        }
+        
         // Try the main Jitsi server first
+        let meetAPI
         try {
-          const meetAPI = new JitsiMeetExternalAPI("s.jalsah.app", options)
+          meetAPI = new JitsiMeetExternalAPI("s.jalsah.app", options)
         } catch (serverError) {
           console.warn('⚠️ Main server failed, trying fallback:', serverError)
           // Fallback to meet.jit.si if main server fails
-          const meetAPI = new JitsiMeetExternalAPI("meet.jit.si", options)
+          meetAPI = new JitsiMeetExternalAPI("meet.jit.si", options)
         }
         
-        toast.success('Meeting started successfully')
+        // Store the API instance
+        rochtahMeetingAPI.value = meetAPI
+        
+        // Set display name
+        meetAPI.executeCommand('displayName', userName)
+        
+        // Auto-start for patients - listen for when meeting is ready and try to auto-join
+        meetAPI.addListener('videoConferenceJoined', () => {
+          console.log('Rochtah meeting joined successfully')
+          toast.success('Meeting started successfully')
+        })
+        
+        // Fallback: Auto-click any join/start button if it appears
+        const attemptAutoJoin = () => {
+          const startButton = document.querySelector('[data-testid="prejoin.joinMeeting"]') || 
+                              document.querySelector('.prejoin-button') ||
+                              document.querySelector('button[aria-label*="Join"]') ||
+                              document.querySelector('button[aria-label*="join"]') ||
+                              document.querySelector('button[aria-label*="ابدأ"]') ||
+                              document.querySelector('button[aria-label*="Join meeting"]') ||
+                              document.querySelector('[data-tooltip*="Join"]') ||
+                              document.querySelector('[id*="join"]') ||
+                              document.querySelector('[class*="join-button"]')
+          if (startButton && typeof startButton.click === 'function') {
+            try {
+              startButton.click()
+              console.log('Auto-clicked start button for rochtah meeting')
+            } catch(e) {
+              console.log('Could not auto-click button:', e)
+            }
+          }
+        }
+        
+        // Try auto-join after delays to catch any delayed button rendering
+        setTimeout(attemptAutoJoin, 500)
+        setTimeout(attemptAutoJoin, 1000)
+        setTimeout(attemptAutoJoin, 2000)
+        
       } catch (error) {
         console.error('❌ Error initializing Rochtah Jitsi meeting:', error)
         toast.error('Failed to start meeting')
@@ -1924,6 +1988,7 @@ export default {
       joinRochtahMeeting,
       startRochtahMeeting,
       showRochtahSessionModal,
+      closeRochtahSessionModal,
       rochtahMeetingDetails,
       selectSlot,
       viewPrescriptionDetails,
