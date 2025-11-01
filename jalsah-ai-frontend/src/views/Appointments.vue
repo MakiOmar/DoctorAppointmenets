@@ -195,6 +195,7 @@
             </div>
           </div>
         </div>
+        </div>
 
         <!-- Empty State -->
         <div v-else class="text-center py-12">
