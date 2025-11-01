@@ -82,6 +82,15 @@ function snks_rochtah_doctor_dashboard() {
 		ORDER BY rb.booking_date DESC, rb.booking_time DESC
 	" );
 	
+	// Update therapist names using the helper function
+	if ( function_exists( 'snks_get_therapist_name' ) ) {
+		foreach ( $bookings as $booking ) {
+			if ( ! empty( $booking->therapist_id ) ) {
+				$booking->therapist_name = snks_get_therapist_name( $booking->therapist_id );
+			}
+		}
+	}
+	
 	// Get statistics
 	$total_bookings = count( $bookings );
 	$pending_bookings = count( array_filter( $bookings, function( $b ) { return $b->status === 'pending'; } ) );
