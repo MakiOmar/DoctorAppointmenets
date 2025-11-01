@@ -1460,23 +1460,16 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 	
 	// Add Roshta section for patients
 	$rochtah_section = '';
-	$has_rochtah = false;
 	if ( snks_is_patient() ) {
 		$current_user_id = get_current_user_id();
 		$rochtah_requests = snks_get_patient_rochtah_requests( $current_user_id );
-		if ( ! empty( $rochtah_requests ) ) {
-			$rochtah_section = snks_render_rochtah_section( $rochtah_requests );
-			$has_rochtah = true;
-		}
+		$rochtah_section = snks_render_rochtah_section( $rochtah_requests );
 	}
 	?>
 	<div class="snks-tabs">
 		<ul class="snks-tabs-nav">
 			<li class="snks-tab-item snks-active" data-snks-tab="future">الجلسات الحالية</li>
 			<li class="snks-tab-item" data-snks-tab="past">الجلسات السابقة</li>
-			<?php if ( $has_rochtah ) { ?>
-				<li class="snks-tab-item" data-snks-tab="rochtah">روشتا</li>
-			<?php } ?>
 		</ul>
 		<div class="snks-tabs-content">
 			<div id="snks-tab-future" class="snks-tab-panel snks-active">
@@ -1485,13 +1478,12 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 			<div id="snks-tab-past" class="snks-tab-panel">
 				<?php echo $past; ?>
 			</div>
-			<?php if ( $has_rochtah ) { ?>
-				<div id="snks-tab-rochtah" class="snks-tab-panel">
-					<?php echo $rochtah_section; ?>
-				</div>
-			<?php } ?>
 		</div>
 	</div>
+	
+	<?php if ( ! empty( $rochtah_section ) ) { ?>
+		<?php echo $rochtah_section; ?>
+	<?php } ?>
 	
 	<?php if( snks_is_patient() ) { ?>
 		<div class="anony-center-text">
