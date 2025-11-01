@@ -55,6 +55,32 @@ add_action( 'show_user_profile', 'snks_doctor_booking_url' );
 add_action( 'edit_user_profile', 'snks_doctor_booking_url' );
 
 /**
+ * Ensure rochtah_doctor role exists
+ * This ensures the role appears in the roles dropdown on user edit pages
+ */
+function snks_ensure_rochtah_doctor_role_exists() {
+	// Ensure the role exists - this makes it visible in user edit pages
+	if ( ! get_role( 'rochtah_doctor' ) ) {
+		add_role( 'rochtah_doctor', 'Rochtah Doctor', array(
+			'read' => true,
+			'edit_posts' => false,
+			'delete_posts' => false,
+			'manage_rochtah' => true,
+			'view_rochtah_appointments' => true,
+			'manage_rochtah_prescriptions' => true,
+			'view_rochtah_patients' => true,
+			'edit_rochtah_prescriptions' => true,
+			'delete_rochtah_prescriptions' => true,
+			'upload_files' => true,
+		) );
+	}
+}
+// Hook on init to ensure role exists early
+add_action( 'init', 'snks_ensure_rochtah_doctor_role_exists', 1 );
+// Also hook on admin_init as backup
+add_action( 'admin_init', 'snks_ensure_rochtah_doctor_role_exists', 1 );
+
+/**
  * Add WhatsApp number field for Rochtah doctors
  *
  * @param object $user User's object.
