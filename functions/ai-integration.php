@@ -3512,10 +3512,13 @@ Best regards,
 
         // Send WhatsApp using the same template sender used by notifications system
         $password_reset_template = get_option( 'snks_template_password_reset', 'otp_code' );
+        // Resolve to actual template name if mapped in options (consistent with notifications system)
+        $resolved_template_option = 'snks_template_' . preg_replace( '/[^a-z0-9_\-]/i', '', $password_reset_template );
+        $actual_template = get_option( $resolved_template_option, $password_reset_template );
         // Log selected template
-        error_log( '[ForgotPwd] Using template: ' . $password_reset_template );
+        error_log( '[ForgotPwd] Using template: ' . $actual_template );
         // Pass the reset code as body parameter(s)
-        $result = snks_send_whatsapp_template_message( $whatsapp, $password_reset_template, array( 'code' => $reset_code ) );
+        $result = snks_send_whatsapp_template_message( $whatsapp, $actual_template, array( 'code' => $reset_code ) );
 
         if ( is_wp_error( $result ) ) {
             $error_message = $result->get_error_message();
@@ -3528,8 +3531,13 @@ Best regards,
                 error_log( 'WhatsApp password reset error data: ' . print_r( $error_data, true ) );
             }
 
+            // Special guidance for common Meta error: API access blocked (OAuth 200)
+            $friendly = $error_message;
+            if ( stripos( $error_message, 'API access blocked' ) !== false || ( is_array( $error_data ) && isset( $error_data['error']['code'] ) && (int) $error_data['error']['code'] === 200 ) ) {
+                $friendly .= ' | Please ensure: App is Live (not Development) or recipient is added as a tester, the WhatsApp Business access token has whatsapp_business_messaging permission and matches the Phone Number ID business, and the template/language is approved.';
+            }
             // Return specific error message (include code for quick diagnosis)
-            $this->send_error( ( $error_message ? $error_message : 'Failed to send reset code via WhatsApp.' ) . ' [' . $error_code . ']', 400 );
+            $this->send_error( ( $friendly ? $friendly : 'Failed to send reset code via WhatsApp.' ) . ' [' . $error_code . ']', 400 );
         }
 
 		$this->send_success(
