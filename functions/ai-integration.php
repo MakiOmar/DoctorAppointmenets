@@ -3510,8 +3510,12 @@ Best regards,
 			);
 		}
 
-		// Send WhatsApp message
-		$result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
+        // Send WhatsApp using the same template sender used by notifications system
+        $password_reset_template = get_option( 'snks_template_password_reset', 'otp_code' );
+        // Log selected template
+        error_log( '[ForgotPwd] Using template: ' . $password_reset_template );
+        // Pass the reset code as body parameter(s)
+        $result = snks_send_whatsapp_template_message( $whatsapp, $password_reset_template, array( 'code' => $reset_code ) );
 
         if ( is_wp_error( $result ) ) {
             $error_message = $result->get_error_message();
