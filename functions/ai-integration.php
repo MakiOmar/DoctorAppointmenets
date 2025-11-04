@@ -3497,46 +3497,19 @@ Best regards,
 			);
 		}
 
-        // Send WhatsApp message
-        $result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
+		// Send WhatsApp message
+		$result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
 
-        // Handle WhatsApp configuration/API errors gracefully (avoid 4xx/5xx) with email fallback
-        if ( is_wp_error( $result ) ) {
-            $error_code = $result->get_error_code();
-            $error_message = $result->get_error_message();
-
-            // Try email fallback
-            $email_subject = ( $locale === 'ar' ) ? 'رمز إعادة تعيين كلمة المرور' : 'Password Reset Code';
-            $email_body    = ( $locale === 'ar' )
-                ? ( "مرحباً " . $first_name . "\n\n" .
-                    "تم طلب إعادة تعيين كلمة المرور لحسابك في " . $site_name . ".\n\n" .
-                    "رمز إعادة التعيين: " . $reset_code . "\n\n" .
-                    "سينتهي الرمز خلال 15 دقيقة.\n\n" .
-                    "إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذه الرسالة." )
-                : ( "Hello " . $first_name . "\n\n" .
-                    "A password reset has been requested for your account at " . $site_name . ".\n\n" .
-                    "Reset code: " . $reset_code . "\n\n" .
-                    "This code will expire in 15 minutes.\n\n" .
-                    "If you did not request a password reset, please ignore this message." );
-
-            $email_sent = wp_mail( $user->user_email, $email_subject, $email_body );
-
-            if ( $email_sent ) {
-                $this->send_success(
-                    array(
-                        'message'  => $locale === 'ar'
-                            ? 'تم إرسال رمز إعادة التعيين إلى بريدك الإلكتروني'
-                            : 'Reset code sent to your email',
-                        'whatsapp' => $whatsapp,
-                        'delivery' => ( $error_code === 'missing_config' ) ? 'email_fallback_missing_whatsapp_config' : 'email_fallback_whatsapp_error',
-                        'reason'   => $error_message,
-                    )
-                );
-            }
-
-            // If email also failed, return a handled error (400) with details
-            $this->send_error( $error_message ? $error_message : 'Failed to send reset code via WhatsApp and email.', 400 );
-        }
+		if ( is_wp_error( $result ) ) {
+			$error_message = $result->get_error_message();
+			$error_code = $result->get_error_code();
+			
+			// Log error for debugging
+			error_log( 'WhatsApp password reset error: ' . $error_code . ' - ' . $error_message );
+			
+			// Return specific error message
+			$this->send_error( $error_message ? $error_message : 'Failed to send reset code via WhatsApp. Please check your WhatsApp API configuration.', 400 );
+		}
 
 		$this->send_success(
 			array(
