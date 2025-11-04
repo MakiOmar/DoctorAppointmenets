@@ -3497,12 +3497,29 @@ Best regards,
 			);
 		}
 
-		// Send WhatsApp message
-		$result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
+        // Send WhatsApp message
+        $result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
 
-		if ( ! $result || is_wp_error( $result ) ) {
-			$this->send_error( 'Failed to send reset code via WhatsApp. Please try again.', 500 );
-		}
+        // Handle WhatsApp configuration errors gracefully (avoid 500s)
+        if ( is_wp_error( $result ) ) {
+            if ( $result->get_error_code() === 'missing_config' ) {
+                // Config is missing: still proceed so user can continue the flow (staging-friendly)
+                // The reset code is already stored in user meta; user can use it if delivered by another channel.
+                $this->send_success(
+                    array(
+                        'message'  => $locale === 'ar'
+                            ? 'تم إنشاء رمز إعادة التعيين، ولكن إعدادات الواتساب غير مفعلة.'
+                            : 'Reset code generated, but WhatsApp settings are not configured.',
+                        'whatsapp' => $whatsapp,
+                        'delivery' => 'skipped_whatsapp_missing_config',
+                    )
+                );
+            }
+
+            // Other API errors: return a 400 with a clear message instead of generic 500
+            $error_message = $result->get_error_message();
+            $this->send_error( $error_message ? $error_message : 'Failed to send reset code via WhatsApp.', 400 );
+        }
 
 		$this->send_success(
 			array(
