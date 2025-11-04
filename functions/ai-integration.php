@@ -2766,8 +2766,21 @@ Best regards,
 		// Get locale from request or user preference
 		$locale = $this->get_request_locale();
 
-		// Get therapist registration settings for WhatsApp configuration
-		$registration_settings = snks_get_therapist_registration_settings();
+        // Get therapist registration settings for WhatsApp configuration
+        $registration_settings = snks_get_therapist_registration_settings();
+
+        // Debug context
+        error_log( '[ForgotPwd] Start. locale=' . $locale . ', whatsapp=' . $whatsapp );
+
+        // Validate WhatsApp configuration early to surface precise issues
+        $api_url = $registration_settings['whatsapp_api_url'] ?? '';
+        $api_token = $registration_settings['whatsapp_api_token'] ?? '';
+        $phone_number_id = $registration_settings['whatsapp_phone_number_id'] ?? '';
+
+        if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
+            error_log( '[ForgotPwd] Missing WhatsApp config. api_url=' . ( $api_url ? 'yes' : 'no' ) . ', token=' . ( $api_token ? 'yes' : 'no' ) . ', phone_id=' . ( $phone_number_id ? 'yes' : 'no' ) );
+            $this->send_error( 'WhatsApp API configuration is incomplete. Please configure API URL, Access Token, and Phone Number ID.', 400 );
+        }
 
 		// WhatsApp message based on locale
 		if ( $locale === 'ar' ) {
@@ -3500,16 +3513,20 @@ Best regards,
 		// Send WhatsApp message
 		$result = snks_send_whatsapp_message( $whatsapp, $message, $registration_settings );
 
-		if ( is_wp_error( $result ) ) {
-			$error_message = $result->get_error_message();
-			$error_code = $result->get_error_code();
-			
-			// Log error for debugging
-			error_log( 'WhatsApp password reset error: ' . $error_code . ' - ' . $error_message );
-			
-			// Return specific error message
-			$this->send_error( $error_message ? $error_message : 'Failed to send reset code via WhatsApp. Please check your WhatsApp API configuration.', 400 );
-		}
+        if ( is_wp_error( $result ) ) {
+            $error_message = $result->get_error_message();
+            $error_code = $result->get_error_code();
+            $error_data = $result->get_error_data();
+
+            // Log error for debugging
+            error_log( 'WhatsApp password reset error: code=' . $error_code . ' msg=' . $error_message );
+            if ( ! empty( $error_data ) ) {
+                error_log( 'WhatsApp password reset error data: ' . print_r( $error_data, true ) );
+            }
+
+            // Return specific error message (include code for quick diagnosis)
+            $this->send_error( ( $error_message ? $error_message : 'Failed to send reset code via WhatsApp.' ) . ' [' . $error_code . ']', 400 );
+        }
 
 		$this->send_success(
 			array(
