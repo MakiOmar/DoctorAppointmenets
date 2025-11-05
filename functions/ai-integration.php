@@ -2770,7 +2770,7 @@ Best regards,
         $registration_settings = snks_get_therapist_registration_settings();
 
         // Debug context
-        error_log( '[ForgotPwd] Start. locale=' . $locale . ', whatsapp=' . $whatsapp );
+        
 
         // Validate WhatsApp configuration early to surface precise issues
         $api_url = $registration_settings['whatsapp_api_url'] ?? '';
@@ -2778,7 +2778,7 @@ Best regards,
         $phone_number_id = $registration_settings['whatsapp_phone_number_id'] ?? '';
 
         if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
-            error_log( '[ForgotPwd] Missing WhatsApp config. api_url=' . ( $api_url ? 'yes' : 'no' ) . ', token=' . ( $api_token ? 'yes' : 'no' ) . ', phone_id=' . ( $phone_number_id ? 'yes' : 'no' ) );
+            
             $this->send_error( 'WhatsApp API configuration is incomplete. Please configure API URL, Access Token, and Phone Number ID.', 400 );
         }
 
@@ -3516,7 +3516,7 @@ Best regards,
         $resolved_template_option = 'snks_template_' . preg_replace( '/[^a-z0-9_\-]/i', '', $password_reset_template );
         $actual_template = get_option( $resolved_template_option, $password_reset_template );
         // Log selected template
-        error_log( '[ForgotPwd] Using template: ' . $actual_template );
+        
         // Pass the reset code as body parameter(s)
         $result = snks_send_whatsapp_template_message( $whatsapp, $actual_template, array( 'code' => $reset_code ) );
 
@@ -3526,9 +3526,9 @@ Best regards,
             $error_data = $result->get_error_data();
 
             // Log error for debugging
-            error_log( 'WhatsApp password reset error: code=' . $error_code . ' msg=' . $error_message );
+            
             if ( ! empty( $error_data ) ) {
-                error_log( 'WhatsApp password reset error data: ' . print_r( $error_data, true ) );
+                
             }
 
             // Special guidance for common Meta error: API access blocked (OAuth 200)
@@ -8451,15 +8451,15 @@ function snks_book_rochtah_appointment_rest( $request ) {
 		// Send WhatsApp notification to patient
 		if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[Rochtah REST] Attempting to send WhatsApp notification for request ID: ' . $request_id );
+                
 			}
 			$notification_result = snks_send_rosheta_appointment_notification( $request_id );
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[Rochtah REST] Notification result: ' . ( $notification_result ? 'Success' : 'Failed' ) );
+                
 			}
 		} else {
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[Rochtah REST] WhatsApp notification function not available' );
+                
 			}
 		}
 

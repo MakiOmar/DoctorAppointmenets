@@ -47,12 +47,9 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	$message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
 	
 	// Check if WhatsApp API is configured
-	if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] API not configured. Please configure in Therapist Registration Settings.' );
-		}
-		return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
-	}
+    if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
+        return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
+    }
 	
 	// Format phone number (ensure it has proper format without + prefix for API)
 	$phone_number = ltrim( $phone_number, '+' );
@@ -117,93 +114,37 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		'sslverify' => true,
 	);
 	
-	// Debug full request details
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] ========== FULL REQUEST DEBUG ==========' );
-		error_log( '[WhatsApp AI] Endpoint URL: ' . $endpoint );
-		error_log( '[WhatsApp AI] Method: POST' );
-		error_log( '[WhatsApp AI] Headers: ' . json_encode( array(
-			'Authorization' => 'Bearer ' . substr( $api_token, 0, 20 ) . '...',
-			'Content-Type' => 'application/json'
-		) ) );
-		error_log( '[WhatsApp AI] Template Name: ' . $template_name );
-		error_log( '[WhatsApp AI] Template Language: ' . $template_language );
-		error_log( '[WhatsApp AI] Phone Number (to): ' . $phone_number );
-		error_log( '[WhatsApp AI] Parameters (values): ' . json_encode( $parameters, JSON_UNESCAPED_UNICODE ) );
-		error_log( '[WhatsApp AI] Parameters Count: ' . count( $parameters ) );
-		if ( ! empty( $parameters ) ) {
-			$param_names = array_keys( $parameters );
-			error_log( '[WhatsApp AI] Parameter Names: ' . json_encode( $param_names ) );
-		}
-		error_log( '[WhatsApp AI] --- Request Body (JSON) ---' );
-		error_log( $json_body );
-		error_log( '[WhatsApp AI] --- Request Body (Formatted) ---' );
-		error_log( json_encode( $body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-		error_log( '[WhatsApp AI] ======================================' );
-	}
+    // Debug logging removed
 	
 	$response = wp_remote_post( $endpoint, $args );
 	
 	// Check for errors
-	if ( is_wp_error( $response ) ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] Connection Error: ' . $response->get_error_message() );
-		}
-		return $response;
-	}
+    if ( is_wp_error( $response ) ) {
+        return $response;
+    }
 	
 	// Get response body and code
 	$response_body = wp_remote_retrieve_body( $response );
 	$response_code = wp_remote_retrieve_response_code( $response );
 	$response_headers = wp_remote_retrieve_headers( $response );
 	
-	// Debug response
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] ========== RESPONSE DEBUG ==========' );
-		error_log( '[WhatsApp AI] Response Code: ' . $response_code );
-		error_log( '[WhatsApp AI] Response Headers: ' . json_encode( $response_headers->getAll() ) );
-		error_log( '[WhatsApp AI] Response Body: ' . $response_body );
-		error_log( '[WhatsApp AI] ======================================' );
-	}
+    // Debug logging removed
 	
 	// Check response code
-	if ( $response_code !== 200 ) {
-		$error_data = json_decode( $response_body, true );
-		$error_message = 'WhatsApp API request failed';
-		
-		if ( isset( $error_data['error']['message'] ) ) {
-			$error_message = $error_data['error']['message'];
-		}
-		
-		// Debug WhatsApp API errors
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] ========== ERROR ANALYSIS ==========' );
-			error_log( '[WhatsApp AI] Error Code: ' . $response_code );
-			error_log( '[WhatsApp AI] Error Message: ' . $error_message );
-			if ( isset( $error_data['error']['error_data']['details'] ) ) {
-				error_log( '[WhatsApp AI] Error Details: ' . $error_data['error']['error_data']['details'] );
-			}
-			error_log( '[WhatsApp AI] Full Error Response (Formatted): ' );
-			error_log( json_encode( $error_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
-			error_log( '[WhatsApp AI] ======================================' );
-		}
-		
-		return new WP_Error( 'api_error', $error_message, array( 
-			'response_code' => $response_code,
-			'response_body' => $response_body,
-			'error_data' => $error_data
-		) );
-	}
+    if ( $response_code !== 200 ) {
+        $error_data = json_decode( $response_body, true );
+        $error_message = isset( $error_data['error']['message'] ) ? $error_data['error']['message'] : 'WhatsApp API request failed';
+        return new WP_Error( 'api_error', $error_message, array( 
+            'response_code' => $response_code,
+            'response_body' => $response_body,
+            'error_data' => $error_data
+        ) );
+    }
 	
 	// Parse response data
 	$response_data = json_decode( $response_body, true );
 	
-	// Debug success
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		if ( isset( $response_data['messages'][0]['id'] ) ) {
-			error_log( '[WhatsApp AI] ✅ Sent - Template: ' . $template_name . ' | Phone: ' . $phone_number . ' | Message ID: ' . $response_data['messages'][0]['id'] );
-		}
-	}
+    // Debug logging removed
 	
 	return $response_data;
 }
@@ -349,12 +290,9 @@ function snks_send_new_session_notification( $session_id ) {
 	
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
-	if ( ! $patient_phone ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] No phone for patient ID: ' . $session->client_id );
-		}
-		return false;
-	}
+    if ( ! $patient_phone ) {
+        return false;
+    }
 	
 	// Get doctor name from therapist application/profile
 	$doctor_name = snks_get_therapist_name( $session->user_id );
@@ -423,12 +361,9 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 	
 	// Get doctor phone
 	$doctor_phone = snks_get_user_whatsapp( $session->user_id );
-	if ( ! $doctor_phone ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] No phone for doctor ID: ' . $session->user_id );
-		}
-		return false;
-	}
+    if ( ! $doctor_phone ) {
+        return false;
+    }
 	
 	// Get patient name
 	$patient_first_name = get_user_meta( $session->client_id, 'billing_first_name', true );
@@ -488,12 +423,9 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 	
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $patient_id );
-	if ( ! $patient_phone ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] No phone for patient ID: ' . $patient_id );
-		}
-		return false;
-	}
+    if ( ! $patient_phone ) {
+        return false;
+    }
 	
 	// Get patient and doctor names
 	$patient_first_name = get_user_meta( $patient_id, 'billing_first_name', true );
@@ -517,7 +449,7 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 	);
 	
 	// Mark as sent if booking_id is provided
-	if ( ! is_wp_error( $result ) && $booking_id > 0 ) {
+        if ( ! is_wp_error( $result ) && $booking_id > 0 ) {
 		// Update rochtah_bookings table
 		$wpdb->update(
 			$wpdb->prefix . 'snks_rochtah_bookings',
@@ -543,9 +475,7 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 				array( '%d' )
 			);
 			
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[WhatsApp AI] Rosheta activation notification sent and marked for session ID: ' . $rochtah_booking->session_id );
-			}
+            
 		}
 	}
 	
@@ -572,44 +502,31 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 		)
 	);
 	
-	if ( ! $booking ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] Booking not found for ID: ' . $booking_id );
-		}
-		return false;
-	}
+    if ( ! $booking ) {
+        return false;
+    }
 	
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		error_log( '[WhatsApp AI] Booking found - Patient ID: ' . $booking->patient_id . ', Date: ' . $booking->booking_date . ', Time: ' . $booking->booking_time );
 	}
 	
 	$settings = snks_get_whatsapp_notification_settings();
-	if ( $settings['enabled'] != '1' ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] Notifications disabled in settings' );
-		}
-		return false;
-	}
+    if ( $settings['enabled'] != '1' ) {
+        return false;
+    }
 	
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $booking->patient_id );
-	if ( ! $patient_phone ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] No phone for patient ID: ' . $booking->patient_id );
-		}
-		return false;
-	}
+    if ( ! $patient_phone ) {
+        return false;
+    }
 	
 	// Format date and time
 	$day_name = snks_get_arabic_day_name( $booking->booking_date );
 	$date = $booking->booking_date;
 	$time = gmdate( 'h:i a', strtotime( $booking->booking_time ) );
 	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] Patient phone: ' . $patient_phone );
-		error_log( '[WhatsApp AI] Template: ' . $settings['template_rosheta_app'] );
-		error_log( '[WhatsApp AI] Parameters - day: ' . $day_name . ', date: ' . $date . ', time: ' . $time );
-	}
+    
 	
 	// Send WhatsApp template
 	$result = snks_send_whatsapp_template_message(
@@ -622,13 +539,7 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 		)
 	);
 	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		if ( is_wp_error( $result ) ) {
-			error_log( '[WhatsApp AI] Error sending notification: ' . $result->get_error_message() );
-		} else {
-			error_log( '[WhatsApp AI] Notification sent successfully' );
-		}
-	}
+    
 	
 	// Mark as sent
 	if ( ! is_wp_error( $result ) ) {
@@ -651,9 +562,7 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 				array( '%d' )
 			);
 			
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[WhatsApp AI] Rosheta appointment notification sent and marked for session ID: ' . $booking->session_id );
-			}
+            
 		}
 		
 		return true;
@@ -696,9 +605,9 @@ function snks_send_doctor_joined_notification( $session_id ) {
 		)
 	);
 	
-	if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
-		return false;
-	}
+    if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
+        return false;
+    }
 	
 	// Check if notification already sent
 	if ( $session->whatsapp_patient_now_sent ) {
@@ -706,18 +615,15 @@ function snks_send_doctor_joined_notification( $session_id ) {
 	}
 	
 	$settings = snks_get_whatsapp_notification_settings();
-	if ( $settings['enabled'] != '1' ) {
-		return false;
-	}
+    if ( $settings['enabled'] != '1' ) {
+        return false;
+    }
 	
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
-	if ( ! $patient_phone ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] No phone for patient ID: ' . $session->client_id );
-		}
-		return false;
-	}
+    if ( ! $patient_phone ) {
+        return false;
+    }
 	
 	// Send WhatsApp template (no parameters)
 	$result = snks_send_whatsapp_template_message(
@@ -748,9 +654,9 @@ function snks_send_doctor_midnight_reminders() {
 	global $wpdb;
 	
 	$settings = snks_get_whatsapp_notification_settings();
-	if ( $settings['enabled'] != '1' ) {
-		return;
-	}
+    if ( $settings['enabled'] != '1' ) {
+        return;
+    }
 	
 	// Get tomorrow's date
 	$tomorrow_date = gmdate( 'Y-m-d', strtotime( '+1 day', current_time( 'timestamp' ) ) );
@@ -837,21 +743,15 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 		$session_id
 	) );
 	
-	if ( ! $session ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] Session not found for ID: ' . $session_id );
-		}
-		return false;
-	}
+    if ( ! $session ) {
+        return false;
+    }
 	
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
-	if ( ! $patient_phone ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] No phone for patient ID: ' . $session->client_id );
-		}
-		return false;
-	}
+    if ( ! $patient_phone ) {
+        return false;
+    }
 	
 	// Format old appointment details
 	$old_day_name = snks_get_arabic_day_name( $old_date );
@@ -863,11 +763,7 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 	$new_formatted_date = date( 'Y-m-d', strtotime( $new_date ) );
 	$new_formatted_time = gmdate( 'h:i a', strtotime( $new_time ) );
 	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] Sending appointment change notification for session ID: ' . $session_id );
-		error_log( '[WhatsApp AI] Old: ' . $old_day_name . ' ' . $old_formatted_date . ' ' . $old_formatted_time );
-		error_log( '[WhatsApp AI] New: ' . $new_day_name . ' ' . $new_formatted_date . ' ' . $new_formatted_time );
-	}
+    
 	
 	// Send WhatsApp template
 	$result = snks_send_whatsapp_template_message(
@@ -884,8 +780,8 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 	);
 	
 	// Mark as sent
-	if ( ! is_wp_error( $result ) ) {
-		// Update timetable table with whatsapp_appointment_changed flag
+    if ( ! is_wp_error( $result ) ) {
+        // Update timetable table with whatsapp_appointment_changed flag
 		$wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			array( 'whatsapp_appointment_changed' => 1 ),
@@ -894,9 +790,7 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 			array( '%d' )
 		);
 		
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[WhatsApp AI] Appointment change notification sent and marked for session ID: ' . $session_id );
-		}
+        
 		
 		return true;
 	}
