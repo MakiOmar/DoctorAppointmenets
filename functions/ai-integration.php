@@ -6661,7 +6661,8 @@ Best regards,
 					'order_id'           => $order->get_id(),
 					'checkout_url'       => $order->get_checkout_payment_url(),
 					'auto_login_url'     => $auto_login_url,
-					'total'              => $order->get_total(),
+                    'total'              => $order->get_total(),
+                    'applied_coupon'     => is_array( $coupon ) ? $coupon : null,
                     'appointments_count' => count( $cart_items ),
 				)
 			);

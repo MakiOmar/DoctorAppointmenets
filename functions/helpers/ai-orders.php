@@ -81,11 +81,15 @@ class SNKS_AI_Orders {
             $code     = isset( $coupon['code'] ) ? sanitize_text_field( $coupon['code'] ) : '';
             $discount = isset( $coupon['discount'] ) ? floatval( $coupon['discount'] ) : 0;
             if ( $discount > 0 ) {
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( '[AI Orders] Applying coupon: ' . $code . ' discount=' . $discount );
+                }
                 // Use a negative fee to represent discount in WooCommerce
                 $fee = new WC_Order_Item_Fee();
                 $fee->set_name( $code ? sprintf( 'خصم كوبون (%s)', $code ) : 'خصم كوبون' );
                 $fee->set_amount( -1 * $discount );
                 $fee->set_total( -1 * $discount );
+                $fee->set_tax_status( 'none' );
                 $order->add_item( $fee );
                 // Store coupon meta
                 if ( $code ) {
@@ -97,6 +101,9 @@ class SNKS_AI_Orders {
 
         // Recalculate order totals
         $order->calculate_totals();
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[AI Orders] Order total after discount: ' . $order->get_total() );
+        }
 		
 		// Set customer data
 		$order->set_billing_email( $user->user_email );
