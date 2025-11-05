@@ -289,10 +289,31 @@ function snks_apply_ai_coupon_ajax_handler() {
     check_ajax_referer( 'snks_coupon_nonce', 'security' );
 
     if ( ! is_user_logged_in() ) {
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( '[AI Coupon] Rejected: not logged in' );
+        // Try Bearer token auth (same as AI endpoints)
+        $auth_header = isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? trim( $_SERVER['HTTP_AUTHORIZATION'] ) : '';
+        if ( empty( $auth_header ) && function_exists( 'apache_request_headers' ) ) {
+            $headers = apache_request_headers();
+            if ( isset( $headers['Authorization'] ) ) {
+                $auth_header = trim( $headers['Authorization'] );
+            }
         }
-        wp_send_json_error( array( 'message' => 'يجب تسجيل الدخول لتفعيل الكوبون.' ) );
+
+        if ( preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
+            $token = $matches[1];
+            if ( function_exists( 'snks_validate_jalsah_token' ) ) {
+                $user_id = snks_validate_jalsah_token( $token );
+                if ( $user_id ) {
+                    wp_set_current_user( $user_id );
+                }
+            }
+        }
+
+        if ( ! is_user_logged_in() ) {
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( '[AI Coupon] Rejected: not logged in' );
+            }
+            wp_send_json_error( array( 'message' => 'يجب تسجيل الدخول لتفعيل الكوبون.' ) );
+        }
     }
 
     $code   = sanitize_text_field( $_POST['code'] ?? '' );
