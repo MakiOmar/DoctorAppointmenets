@@ -6643,7 +6643,12 @@ Best regards,
         $user_id    = $request->get_param( 'user_id' );
         $cart_items = $request->get_param( 'cart_items' );
         $coupon     = $request->get_param( 'coupon' ); // array: code, discount
-        if ( empty( $coupon ) && $user_id ) {
+
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( '[AI Orders] create_woocommerce_order_from_cart: start user=' . (int) $user_id );
+			error_log( '[AI Orders] Incoming coupon param: ' . json_encode( is_array( $coupon ) ? $coupon : null ) );
+		}
+		if ( empty( $coupon ) && $user_id ) {
             // Fallback: read last applied coupon from user meta (set by AJAX apply)
             $stored = get_user_meta( $user_id, 'snks_ai_applied_coupon', true );
             if ( is_array( $stored ) && ! empty( $stored['discount'] ) ) {
@@ -6656,8 +6661,11 @@ Best regards,
 		}
 
 		try {
-            // Create WooCommerce order from existing cart (with optional coupon)
-            $order = SNKS_AI_Orders::create_order_from_existing_cart( $user_id, $cart_items, is_array( $coupon ) ? $coupon : array() );
+			// Create WooCommerce order from existing cart (with optional coupon)
+			$order = SNKS_AI_Orders::create_order_from_existing_cart( $user_id, $cart_items, is_array( $coupon ) ? $coupon : array() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( '[AI Orders] Order created. Coupon used: ' . json_encode( is_array( $coupon ) ? $coupon : null ) . ' | total=' . $order->get_total() );
+			}
 
             // Clear stored coupon after consuming it
             if ( $user_id ) {
