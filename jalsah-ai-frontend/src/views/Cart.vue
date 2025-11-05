@@ -324,16 +324,20 @@ const applyCoupon = async () => {
     })
 
     if (response.data?.success) {
-      const finalPrice = Number(response.data.final_price || 0)
-      const discountAmount = Number(response.data.discount ?? (Math.max(0, Number(cartStore.totalPrice) - finalPrice)))
+      const payload = response.data?.data || {}
+      const finalPrice = Number(payload.final_price ?? 0)
+      const discountAmount = Number(
+        payload.discount ?? Math.max(0, Number(cartStore.totalPrice) - finalPrice)
+      )
       appliedCoupon.value = {
         code: couponCode.value.trim(),
         discount: discountAmount,
-        type: response.data.coupon_type || 'General'
+        type: payload.coupon_type || 'General'
       }
       couponCode.value = ''
     } else {
-      couponError.value = response.data?.message || t('cart.couponError')
+      const payload = response.data?.data || {}
+      couponError.value = payload?.message || response.data?.message || t('cart.couponError')
     }
   } catch (error) {
     console.error('Coupon application error:', error)
