@@ -101,6 +101,19 @@ class SNKS_AI_Orders {
 
         // Recalculate order totals
         $order->calculate_totals();
+        if ( ! empty( $coupon ) ) {
+            $discount = isset( $coupon['discount'] ) ? floatval( $coupon['discount'] ) : 0;
+            if ( $discount > 0 ) {
+                $before_total = (float) $order->get_total();
+                $after_total  = max( 0, $before_total - $discount );
+                if ( abs( $after_total - $before_total ) > 0.0001 ) {
+                    $order->set_total( $after_total );
+                }
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( '[AI Orders] Total adjust: before=' . $before_total . ' after=' . $after_total );
+                }
+            }
+        }
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             error_log( '[AI Orders] Order total after discount: ' . $order->get_total() );
         }
