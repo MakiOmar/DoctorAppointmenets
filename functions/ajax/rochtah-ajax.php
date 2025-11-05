@@ -113,6 +113,33 @@ function snks_handle_rochtah_request() {
 				'Patient ' . $current_user->display_name . ' has requested a prescription consultation for ' . $preferred_date . ' at ' . $preferred_time
 			);
 		}
+
+		// WhatsApp: notify all Rochtah doctors about new booking
+		if ( function_exists( 'snks_send_whatsapp_template_message' ) ) {
+			$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array();
+			$day_name = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $preferred_date ) : date( 'l', strtotime( $preferred_date ) );
+			$patient_first_name = get_user_meta( $current_user->ID, 'billing_first_name', true );
+			$patient_last_name = get_user_meta( $current_user->ID, 'billing_last_name', true );
+			$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
+			if ( empty( $patient_name ) ) {
+				$patient_name = $current_user->display_name;
+			}
+			foreach ( $rochtah_doctors as $doctor ) {
+				$doctor_phone = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $doctor->ID ) : '';
+				if ( ! empty( $doctor_phone ) && ! empty( $settings['template_rosheta_doctor'] ) ) {
+					snks_send_whatsapp_template_message(
+						$doctor_phone,
+						$settings['template_rosheta_doctor'],
+						array(
+							'patient' => $patient_name,
+							'day' => $day_name,
+							'date' => $preferred_date,
+							'time' => gmdate( 'h:i a', strtotime( $preferred_time ) )
+						)
+					);
+				}
+			}
+		}
 		
 		// Send email notification if enabled
 		if ( get_option( 'snks_ai_email_rochtah_request', '1' ) ) {
@@ -326,11 +353,20 @@ function snks_save_rochtah_prescription() {
 				$notification_message
 			);
 			
-			// Send Firebase push notification to patient
+				// Send Firebase push notification to patient
 			if ( class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 				$firebase = new \FbCloudMessaging\AnonyengineFirebase();
 				$firebase->trigger_notifier( $notification_title, $notification_message, $booking->patient_id, '' );
 			}
+				
+				// WhatsApp: notify patient that prescription is ready (template: prescription2)
+				if ( function_exists( 'snks_send_whatsapp_template_message' ) && function_exists( 'snks_get_whatsapp_notification_settings' ) ) {
+					$settings = snks_get_whatsapp_notification_settings();
+					$patient_phone = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $booking->patient_id ) : '';
+					if ( ! empty( $patient_phone ) && ! empty( $settings['template_prescription2'] ) ) {
+						snks_send_whatsapp_template_message( $patient_phone, $settings['template_prescription2'], array() );
+					}
+				}
 			
 			// Send email to patient
 			$subject = 'Your Prescription is Ready';

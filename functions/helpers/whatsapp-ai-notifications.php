@@ -24,6 +24,10 @@ function snks_get_whatsapp_notification_settings() {
 		'template_patient_rem_now' => get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ),
 		'template_doctor_rem' => get_option( 'snks_template_doctor_rem', 'doctor_rem' ),
 		'template_edit2' => get_option( 'snks_template_edit2', 'edit2' ),
+        // New: Rosheta/Prescription related
+        'template_rosheta_doctor' => get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ),
+        'template_prescription1' => get_option( 'snks_template_prescription1', 'prescription1' ),
+        'template_prescription2' => get_option( 'snks_template_prescription2', 'prescription2' ),
 	);
 }
 

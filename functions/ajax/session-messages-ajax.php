@@ -106,6 +106,20 @@ function snks_send_session_message() {
 	if ( $insert_result === false ) {
 		wp_send_json_error( 'Failed to save message.' );
 	}
+
+	// WhatsApp: notify patient that a new message was sent by therapist (template: prescription1)
+	if ( function_exists( 'snks_send_whatsapp_template_message' ) && function_exists( 'snks_get_whatsapp_notification_settings' ) ) {
+		$settings = snks_get_whatsapp_notification_settings();
+		$patient_phone = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $client_id ) : '';
+		$doctor_name = function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( get_current_user_id() ) : wp_get_current_user()->display_name;
+		if ( ! empty( $patient_phone ) && ! empty( $settings['template_prescription1'] ) ) {
+			snks_send_whatsapp_template_message(
+				$patient_phone,
+				$settings['template_prescription1'],
+				array( 'doctor' => $doctor_name )
+			);
+		}
+	}
 	
 	wp_send_json_success( array(
 		'message' => 'تم إرسال الرسالة بنجاح',
