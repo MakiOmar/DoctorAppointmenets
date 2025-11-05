@@ -363,12 +363,22 @@ function snks_apply_ai_coupon_ajax_handler() {
     if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
         error_log( '[AI Coupon] Success: final=' . $result['final'] . ' discount=' . $result['discount'] );
     }
+
+    // Persist applied coupon for checkout fallback
+    $persist = array(
+        'code'     => $code,
+        'discount' => $result['discount'],
+        'saved_at' => time(),
+    );
+    update_user_meta( get_current_user_id(), 'snks_ai_applied_coupon', $persist );
+
     wp_send_json_success(
         array(
             'message'     => 'تم تطبيق الكوبون بنجاح.',
             'final_price' => $result['final'],
             'discount'    => $result['discount'],
             'coupon_type' => 'AI',
+            'persisted'   => true,
         )
     );
 }

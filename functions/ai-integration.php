@@ -6643,6 +6643,13 @@ Best regards,
         $user_id    = $request->get_param( 'user_id' );
         $cart_items = $request->get_param( 'cart_items' );
         $coupon     = $request->get_param( 'coupon' ); // array: code, discount
+        if ( empty( $coupon ) && $user_id ) {
+            // Fallback: read last applied coupon from user meta (set by AJAX apply)
+            $stored = get_user_meta( $user_id, 'snks_ai_applied_coupon', true );
+            if ( is_array( $stored ) && ! empty( $stored['discount'] ) ) {
+                $coupon = $stored;
+            }
+        }
 
 		if ( ! $user_id || ! $cart_items ) {
 			return new WP_REST_Response( array( 'error' => 'Missing user_id or cart_items' ), 400 );
@@ -6651,6 +6658,11 @@ Best regards,
 		try {
             // Create WooCommerce order from existing cart (with optional coupon)
             $order = SNKS_AI_Orders::create_order_from_existing_cart( $user_id, $cart_items, is_array( $coupon ) ? $coupon : array() );
+
+            // Clear stored coupon after consuming it
+            if ( $user_id ) {
+                delete_user_meta( $user_id, 'snks_ai_applied_coupon' );
+            }
 
 			// Generate auto-login URL for main website
 			$auto_login_url = self::generate_auto_login_url( $user_id, $order->get_id() );
