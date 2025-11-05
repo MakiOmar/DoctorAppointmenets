@@ -162,7 +162,7 @@
               class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.checkoutLoading">{{ $t('processing') }}...</span>
-              <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(cartStore.totalPrice) }}</span>
+              <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(finalTotal) }}</span>
             </button>
 
             <!-- Add More Bookings Button -->
