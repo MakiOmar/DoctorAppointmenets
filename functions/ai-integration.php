@@ -6639,17 +6639,18 @@ Best regards,
 	/**
 	 * Create WooCommerce order from existing cart
 	 */
-	public function create_woocommerce_order_from_cart( $request ) {
-		$user_id    = $request->get_param( 'user_id' );
-		$cart_items = $request->get_param( 'cart_items' );
+    public function create_woocommerce_order_from_cart( $request ) {
+        $user_id    = $request->get_param( 'user_id' );
+        $cart_items = $request->get_param( 'cart_items' );
+        $coupon     = $request->get_param( 'coupon' ); // array: code, discount
 
 		if ( ! $user_id || ! $cart_items ) {
 			return new WP_REST_Response( array( 'error' => 'Missing user_id or cart_items' ), 400 );
 		}
 
 		try {
-			// Create WooCommerce order from existing cart
-			$order = SNKS_AI_Orders::create_order_from_existing_cart( $user_id, $cart_items );
+            // Create WooCommerce order from existing cart (with optional coupon)
+            $order = SNKS_AI_Orders::create_order_from_existing_cart( $user_id, $cart_items, is_array( $coupon ) ? $coupon : array() );
 
 			// Generate auto-login URL for main website
 			$auto_login_url = self::generate_auto_login_url( $user_id, $order->get_id() );
@@ -6661,7 +6662,7 @@ Best regards,
 					'checkout_url'       => $order->get_checkout_payment_url(),
 					'auto_login_url'     => $auto_login_url,
 					'total'              => $order->get_total(),
-					'appointments_count' => count( $cart_items ),
+                    'appointments_count' => count( $cart_items ),
 				)
 			);
 

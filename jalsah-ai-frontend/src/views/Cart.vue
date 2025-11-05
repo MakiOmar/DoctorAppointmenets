@@ -271,7 +271,10 @@ const removeItem = async (slotId) => {
 
 const proceedToPayment = async () => {
   if (!userId.value) return
-  const result = await cartStore.checkout(userId.value)
+  const couponPayload = appliedCoupon.value
+    ? { code: appliedCoupon.value.code, discount: appliedCoupon.value.discount }
+    : null
+  const result = await cartStore.checkout(userId.value, couponPayload)
   if (result.success) {
     // Redirect happens automatically in the store
             // Payment initiated successfully

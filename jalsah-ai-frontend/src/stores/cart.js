@@ -127,7 +127,7 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  const checkout = async (userId) => {
+  const checkout = async (userId, couponData = null) => {
     checkoutLoading.value = true
     error.value = null
     
@@ -135,7 +135,8 @@ export const useCartStore = defineStore('cart', () => {
       // Create WooCommerce order from existing cart
       const response = await api.post('/wp-json/jalsah-ai/v1/create-woocommerce-order', {
         user_id: userId,
-        cart_items: cartItems.value
+        cart_items: cartItems.value,
+        coupon: couponData
       })
       
       if (response.data.success) {

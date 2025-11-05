@@ -17,7 +17,7 @@ class SNKS_AI_Orders {
 	/**
 	 * Create WooCommerce order from existing cart
 	 */
-	public static function create_order_from_existing_cart( $user_id, $cart_items ) {
+    public static function create_order_from_existing_cart( $user_id, $cart_items, $coupon = array() ) {
 		if ( empty( $cart_items ) ) {
 			throw new Exception( 'No appointments in cart' );
 		}
@@ -76,8 +76,27 @@ class SNKS_AI_Orders {
 			$order->add_item( $item );
 		}
 		
-		// Recalculate order totals
-		$order->calculate_totals();
+        // Apply AI coupon discount if provided
+        if ( ! empty( $coupon ) ) {
+            $code     = isset( $coupon['code'] ) ? sanitize_text_field( $coupon['code'] ) : '';
+            $discount = isset( $coupon['discount'] ) ? floatval( $coupon['discount'] ) : 0;
+            if ( $discount > 0 ) {
+                // Use a negative fee to represent discount in WooCommerce
+                $fee = new WC_Order_Item_Fee();
+                $fee->set_name( $code ? sprintf( 'خصم كوبون (%s)', $code ) : 'خصم كوبون' );
+                $fee->set_amount( -1 * $discount );
+                $fee->set_total( -1 * $discount );
+                $order->add_item( $fee );
+                // Store coupon meta
+                if ( $code ) {
+                    $order->update_meta_data( 'ai_coupon_code', $code );
+                }
+                $order->update_meta_data( 'ai_coupon_discount', $discount );
+            }
+        }
+
+        // Recalculate order totals
+        $order->calculate_totals();
 		
 		// Set customer data
 		$order->set_billing_email( $user->user_email );
@@ -92,13 +111,13 @@ class SNKS_AI_Orders {
 		$order->update_meta_data( 'ai_total_amount', $order->get_total() );
 		
 		// Store form data for AI pricing table
-		$form_data = [
+        $form_data = [
 			'_is_ai_booking' => true,
-			'_total_price' => $order->get_total(),
+            '_total_price' => $order->get_total(),
 			'_session_date' => $cart_items[0]['date_time'] ?? '',
 			'_session_time' => $cart_items[0]['starts'] ?? '',
 			'_session_duration' => SNKS_AI_Products::get_session_duration(),
-			'_coupon_code' => '' // Can be added later if needed
+            '_coupon_code' => isset( $coupon['code'] ) ? sanitize_text_field( $coupon['code'] ) : ''
 		];
 		
 		// Store form data in transient for pricing table
