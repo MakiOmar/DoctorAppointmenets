@@ -226,36 +226,6 @@ function snks_therapist_registration_settings_page() {
 				<table class="form-table">
 					<tr>
 						<th scope="row">
-							<label for="template_rosheta_doctor">Rosheta Doctor Alert</label>
-						</th>
-						<td>
-							<input type="text" name="template_rosheta_doctor" id="template_rosheta_doctor" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ) ); ?>" class="regular-text" placeholder="rosheta_doctor">
-							<button type="button" class="button test-whatsapp-notification" data-template="rosheta_doctor" data-params='{"patient": "محمد علي", "day": "الاثنين", "date": "2025-11-10", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Notify rochtah doctor on booking | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="template_prescription1">Therapist Message → Patient</label>
-						</th>
-						<td>
-							<input type="text" name="template_prescription1" id="template_prescription1" value="<?php echo esc_attr( get_option( 'snks_template_prescription1', 'prescription1' ) ); ?>" class="regular-text" placeholder="prescription1">
-							<button type="button" class="button test-whatsapp-notification" data-template="prescription1" data-params='{"doctor": "د. أحمد"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">When therapist sends a message | <code>{{doctor}}</code></p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
-							<label for="template_prescription2">Prescription Completed → Patient</label>
-						</th>
-						<td>
-							<input type="text" name="template_prescription2" id="template_prescription2" value="<?php echo esc_attr( get_option( 'snks_template_prescription2', 'prescription2' ) ); ?>" class="regular-text" placeholder="prescription2">
-							<button type="button" class="button test-whatsapp-notification" data-template="prescription2" data-params='[]' style="margin-right: 10px;">اختبار</button>
-							<p class="description">When rochtah prescription is saved | No parameters</p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">
 							<label for="otp_method">OTP Method</label>
 						</th>
 						<td>
@@ -410,6 +380,36 @@ function snks_therapist_registration_settings_page() {
 							<input type="text" name="template_rosheta_app" id="template_rosheta_app" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_app', 'rosheta_app' ) ); ?>" class="regular-text" placeholder="rosheta_app">
 						<button type="button" class="button test-whatsapp-notification" data-template="rosheta_app" data-params='{"day": "الثلاثاء", "date": "2025-10-22", "time": "02:00 م"}' style="margin-right: 10px;">اختبار</button>
 						<p class="description">Prescription appointment | <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_rosheta_doctor">Rosheta Doctor Alert</label>
+						</th>
+						<td>
+							<input type="text" name="template_rosheta_doctor" id="template_rosheta_doctor" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ) ); ?>" class="regular-text" placeholder="rosheta_doctor">
+							<button type="button" class="button test-whatsapp-notification" data-template="rosheta_doctor" data-params='{"patient": "محمد علي", "day": "الاثنين", "date": "2025-11-10", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Notify rochtah doctor on booking | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_prescription1">Therapist Message → Patient</label>
+						</th>
+						<td>
+							<input type="text" name="template_prescription1" id="template_prescription1" value="<?php echo esc_attr( get_option( 'snks_template_prescription1', 'prescription1' ) ); ?>" class="regular-text" placeholder="prescription1">
+							<button type="button" class="button test-whatsapp-notification" data-template="prescription1" data-params='{"doctor": "د. أحمد"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">When therapist sends a message | <code>{{doctor}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_prescription2">Prescription Completed → Patient</label>
+						</th>
+						<td>
+							<input type="text" name="template_prescription2" id="template_prescription2" value="<?php echo esc_attr( get_option( 'snks_template_prescription2', 'prescription2' ) ); ?>" class="regular-text" placeholder="prescription2">
+							<button type="button" class="button test-whatsapp-notification" data-template="prescription2" data-params='[]' style="margin-right: 10px;">اختبار</button>
+							<p class="description">When rochtah prescription is saved | No parameters</p>
 						</td>
 					</tr>
 					<tr>
