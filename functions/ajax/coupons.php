@@ -267,9 +267,31 @@ add_action( 'wp_ajax_snks_apply_ai_coupon', 'snks_apply_ai_coupon_ajax_handler' 
 add_action( 'wp_ajax_nopriv_snks_apply_ai_coupon', 'snks_apply_ai_coupon_ajax_handler' );
 
 function snks_apply_ai_coupon_ajax_handler() {
+    // Debug: log incoming request (safe/gated)
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( '[AI Coupon] === Handler start ===' );
+        error_log( '[AI Coupon] Raw POST: ' . json_encode( array(
+            'code' => isset( $_POST['code'] ) ? sanitize_text_field( wp_unslash( $_POST['code'] ) ) : null,
+            'amount' => isset( $_POST['amount'] ) ? floatval( $_POST['amount'] ) : null,
+            'security_len' => isset( $_POST['security'] ) ? strlen( sanitize_text_field( wp_unslash( $_POST['security'] ) ) ) : 0,
+        ) ) );
+    }
+
+    // Preflight nonce check to allow logging (instead of immediate die)
+    $raw_nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
+    if ( ! wp_verify_nonce( $raw_nonce, 'snks_coupon_nonce' ) ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[AI Coupon] Nonce invalid or expired' );
+        }
+        wp_send_json_error( array( 'message' => 'انتهت صلاحية الجلسة. حدِّث الصفحة وحاول مرة أخرى.' ) );
+    }
+    // Secondary WordPress nonce enforcement
     check_ajax_referer( 'snks_coupon_nonce', 'security' );
 
     if ( ! is_user_logged_in() ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[AI Coupon] Rejected: not logged in' );
+        }
         wp_send_json_error( array( 'message' => 'يجب تسجيل الدخول لتفعيل الكوبون.' ) );
     }
 
@@ -277,11 +299,23 @@ function snks_apply_ai_coupon_ajax_handler() {
     $amount = floatval( $_POST['amount'] ?? 0 );
 
     if ( '' === $code || $amount <= 0 ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[AI Coupon] Invalid input: code or amount. code=' . $code . ' amount=' . $amount );
+        }
         wp_send_json_error( array( 'message' => 'بيانات غير صالحة لتطبيق الكوبون.' ) );
     }
 
     // Validate coupon and compute discount against provided amount
     $result = snks_apply_coupon_to_amount( $code, $amount );
+
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( '[AI Coupon] Apply result: ' . json_encode( array(
+            'valid' => isset( $result['valid'] ) ? (bool) $result['valid'] : null,
+            'message' => isset( $result['message'] ) ? $result['message'] : null,
+            'final' => isset( $result['final'] ) ? $result['final'] : null,
+            'discount' => isset( $result['discount'] ) ? $result['discount'] : null,
+        ) ) );
+    }
 
     if ( false === $result['valid'] ) {
         wp_send_json_error( array( 'message' => $result['message'] ) );
@@ -289,11 +323,25 @@ function snks_apply_ai_coupon_ajax_handler() {
 
     // Enforce AI-only coupon usage for this AI cart endpoint
     $coupon      = $result['coupon'];
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( '[AI Coupon] Coupon fetched: ' . json_encode( array(
+            'code' => isset( $coupon->code ) ? $coupon->code : null,
+            'is_ai_coupon' => isset( $coupon->is_ai_coupon ) ? (int) $coupon->is_ai_coupon : null,
+            'discount_type' => isset( $coupon->discount_type ) ? $coupon->discount_type : null,
+            'discount_value' => isset( $coupon->discount_value ) ? $coupon->discount_value : null,
+        ) ) );
+    }
     $is_ai_coupon = ! empty( $coupon->is_ai_coupon );
     if ( ! $is_ai_coupon ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[AI Coupon] Rejected: coupon is not AI-only' );
+        }
         wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
     }
 
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+        error_log( '[AI Coupon] Success: final=' . $result['final'] . ' discount=' . $result['discount'] );
+    }
     wp_send_json_success(
         array(
             'message'     => 'تم تطبيق الكوبون بنجاح.',
