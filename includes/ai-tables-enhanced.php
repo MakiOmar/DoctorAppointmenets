@@ -26,6 +26,7 @@ function snks_create_enhanced_ai_tables() {
 		current_usage INT(11) DEFAULT 0,
 		expiry_date DATE NULL,
 		segment VARCHAR(50) DEFAULT '',
+		allowed_users TEXT NULL,
 		active TINYINT(1) DEFAULT 1,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -134,6 +135,13 @@ function snks_create_enhanced_ai_tables() {
 	dbDelta( $rochtah_appointments_sql );
 	dbDelta( $analytics_sql );
 	dbDelta( $notifications_sql );
+	
+	// Add allowed_users column if it doesn't exist (for existing installations)
+	// This must be done AFTER table creation
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $coupons_table LIKE 'allowed_users'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $coupons_table ADD COLUMN allowed_users TEXT NULL AFTER segment" );
+	}
 	
 	// Add AI meta fields to existing tables
 	snks_add_enhanced_ai_meta_fields();
@@ -391,6 +399,17 @@ function snks_validate_ai_coupon( $code, $user_id = null ) {
 			case 'returning_users':
 				if ( $registration_source === 'jalsah_ai' ) {
 					return array( 'valid' => false, 'message' => 'Coupon only for returning users' );
+				}
+				break;
+			case 'specific_users':
+				// Check if user is in allowed_users list
+				if ( ! empty( $coupon->allowed_users ) ) {
+					$allowed_user_ids = array_map( 'intval', explode( ',', $coupon->allowed_users ) );
+					if ( ! in_array( $user_id, $allowed_user_ids, true ) ) {
+						return array( 'valid' => false, 'message' => 'Coupon is not available for your account' );
+					}
+				} else {
+					return array( 'valid' => false, 'message' => 'Coupon is not available for your account' );
 				}
 				break;
 		}

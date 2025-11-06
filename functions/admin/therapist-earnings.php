@@ -226,18 +226,18 @@ function snks_therapist_earnings_page() {
 								<td><?php echo esc_html( $transaction['therapist_name'] ); ?></td>
 								<td><?php echo esc_html( $transaction['patient_name'] ); ?></td>
 								<td>
-									<span class="session-type-badge <?php echo $transaction['session_type'] === 'first' ? 'first-session' : 'subsequent-session'; ?>">
-										<?php echo $transaction['session_type'] === 'first' ? __( 'First', 'anony-turn' ) : __( 'Subsequent', 'anony-turn' ); ?>
+									<span class="session-type-badge <?php echo ( isset( $transaction['session_type'] ) && $transaction['session_type'] === 'first' ) ? 'first-session' : 'subsequent-session'; ?>">
+										<?php echo ( isset( $transaction['session_type'] ) && $transaction['session_type'] === 'first' ) ? __( 'First', 'anony-turn' ) : __( 'Subsequent', 'anony-turn' ); ?>
 									</span>
 								</td>
-								<td><?php echo number_format( $transaction['session_amount'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></td>
+								<td><?php echo number_format( isset( $transaction['session_amount'] ) ? $transaction['session_amount'] : 0, 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></td>
 								<td>
 									<strong style="color: #0073aa;">
-										<?php echo number_format( $transaction['profit_amount'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
+										<?php echo number_format( isset( $transaction['profit_amount'] ) ? $transaction['profit_amount'] : 0, 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 									</strong>
 								</td>
-								<td><?php echo esc_html( $transaction['session_id'] ); ?></td>
-								<td><?php echo esc_html( $transaction['order_id'] ); ?></td>
+								<td><?php echo esc_html( isset( $transaction['session_id'] ) ? $transaction['session_id'] : '-' ); ?></td>
+								<td><?php echo esc_html( isset( $transaction['order_id'] ) ? $transaction['order_id'] : '-' ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

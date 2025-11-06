@@ -310,6 +310,12 @@ if ( function_exists( 'snks_add_missing_therapist_applications_columns' ) ) {
  * @return void
  */
 function plugin_activation_hook() {
+	// Load required files for activation (these might not be loaded yet during activation)
+	$enhanced_tables_file = plugin_dir_path( __FILE__ ) . 'includes/ai-tables-enhanced.php';
+	if ( file_exists( $enhanced_tables_file ) ) {
+		require_once $enhanced_tables_file;
+	}
+	
 	snks_create_timetable_table();
 	snks_create_snks_sessions_actions_table();
 	snks_create_transactions_table();
@@ -341,8 +347,20 @@ function plugin_activation_hook() {
 	if ( function_exists( 'snks_create_ai_tables' ) ) {
 		snks_create_ai_tables();
 	}
+	// Ensure enhanced AI tables are created (including coupons table)
+	// This is critical - the coupons table must be created on activation
 	if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
 		snks_create_enhanced_ai_tables();
+	} else {
+		// If function still doesn't exist after require, something is wrong
+		// But try one more time with absolute path
+		$enhanced_tables_file = plugin_dir_path( __FILE__ ) . 'includes/ai-tables-enhanced.php';
+		if ( file_exists( $enhanced_tables_file ) ) {
+			require_once $enhanced_tables_file;
+			if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+				snks_create_enhanced_ai_tables();
+			}
+		}
 	}
 	if ( function_exists( 'snks_create_rochtah_tables' ) ) {
 		snks_create_rochtah_tables();

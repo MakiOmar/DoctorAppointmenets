@@ -3511,14 +3511,11 @@ Best regards,
 		}
 
         // Send WhatsApp using the same template sender used by notifications system
-        $password_reset_template = get_option( 'snks_template_password_reset', 'otp_code' );
-        // Resolve to actual template name if mapped in options (consistent with notifications system)
-        $resolved_template_option = 'snks_template_' . preg_replace( '/[^a-z0-9_\-]/i', '', $password_reset_template );
-        $actual_template = get_option( $resolved_template_option, $password_reset_template );
-        // Log selected template
+        $settings = snks_get_whatsapp_notification_settings();
+        $password_template = $settings['template_password'];
         
-        // Pass the reset code as body parameter(s)
-        $result = snks_send_whatsapp_template_message( $whatsapp, $actual_template, array( 'code' => $reset_code ) );
+        // Pass the reset code as body parameter (using 'text' variable as per template)
+        $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ) );
 
         if ( is_wp_error( $result ) ) {
             $error_message = $result->get_error_message();
@@ -6644,10 +6641,6 @@ Best regards,
         $cart_items = $request->get_param( 'cart_items' );
         $coupon     = $request->get_param( 'coupon' ); // array: code, discount
 
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[AI Orders] create_woocommerce_order_from_cart: start user=' . (int) $user_id );
-			error_log( '[AI Orders] Incoming coupon param: ' . json_encode( is_array( $coupon ) ? $coupon : null ) );
-		}
 		if ( empty( $coupon ) && $user_id ) {
             // Fallback: read last applied coupon from user meta (set by AJAX apply)
             $stored = get_user_meta( $user_id, 'snks_ai_applied_coupon', true );
@@ -6663,9 +6656,6 @@ Best regards,
 		try {
 			// Create WooCommerce order from existing cart (with optional coupon)
 			$order = SNKS_AI_Orders::create_order_from_existing_cart( $user_id, $cart_items, is_array( $coupon ) ? $coupon : array() );
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[AI Orders] Order created. Coupon used: ' . json_encode( is_array( $coupon ) ? $coupon : null ) . ' | total=' . $order->get_total() );
-			}
 
             // Clear stored coupon after consuming it
             if ( $user_id ) {
@@ -7682,7 +7672,19 @@ function snks_ai_auto_login_handler() {
 		delete_user_meta( $user_id, 'ai_auto_login_expires' );
 		delete_user_meta( $user_id, 'ai_auto_login_order_id' );
 
-		// Redirect to checkout
+		// Check if order is already paid/completed - if so, redirect to appointments
+		$order = wc_get_order( $order_id );
+		if ( $order ) {
+			$order_status = $order->get_status();
+			// If order is completed or processing, redirect to frontend appointments
+			if ( in_array( $order_status, array( 'completed', 'processing' ), true ) ) {
+				$frontend_url = snks_ai_get_primary_frontend_url();
+				wp_redirect( $frontend_url . '/appointments' );
+				exit;
+			}
+		}
+
+		// Otherwise, redirect to checkout payment page
 		wp_redirect( $redirect_url );
 		exit;
 	} else {
@@ -8134,18 +8136,12 @@ function snks_is_ai_patient( $user_id ) {
  * @return int|false User ID if valid, false otherwise
  */
 function snks_validate_jalsah_token( $token ) {
-	error_log( '=== TOKEN VALIDATION DEBUG ===' );
-	error_log( 'Token received: ' . ( $token ? substr( $token, 0, 10 ) . '...' : 'NULL' ) );
-
 	if ( ! $token ) {
-		error_log( 'Token is empty or null' );
 		return false;
 	}
 
 	// Check if this is a JWT token (starts with eyJ)
 	if ( strpos( $token, 'eyJ' ) === 0 ) {
-		error_log( 'Detected JWT token, attempting to decode...' );
-
 		// Decode JWT token (without verification for now)
 		$token_parts = explode( '.', $token );
 		if ( count( $token_parts ) === 3 ) {
@@ -8156,38 +8152,22 @@ function snks_validate_jalsah_token( $token ) {
 
 			if ( $decoded_payload ) {
 				$payload_data = json_decode( $decoded_payload, true );
-				error_log( 'JWT payload: ' . print_r( $payload_data, true ) );
 
 				if ( $payload_data && isset( $payload_data['user_id'] ) ) {
 					$user_id = intval( $payload_data['user_id'] );
-					error_log( "Extracted user_id from JWT: $user_id" );
 
 					// Check if user exists and is active
 					$user = get_userdata( $user_id );
-					error_log( 'User data check - User exists: ' . ( $user ? 'YES' : 'NO' ) );
 
 					if ( $user ) {
-						error_log( 'User status: ' . $user->user_status );
 						if ( $user->user_status == 0 ) {
-							error_log( "JWT token validation successful for user ID: $user_id" );
 							return $user_id;
-						} else {
-							error_log( 'User is not active (status: ' . $user->user_status . ')' );
 						}
-					} else {
-						error_log( "User with ID $user_id does not exist" );
 					}
-				} else {
-					error_log( 'JWT payload does not contain user_id' );
 				}
-			} else {
-				error_log( 'Failed to decode JWT payload' );
 			}
-		} else {
-			error_log( 'Invalid JWT format (should have 3 parts)' );
 		}
 	} else {
-		error_log( 'Not a JWT token, trying legacy token validation...' );
 		// Legacy token validation (for backward compatibility)
 		global $wpdb;
 

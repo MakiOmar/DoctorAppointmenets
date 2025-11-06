@@ -195,16 +195,6 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_rochtah_doctor_dashboard'
 	);
 	
-	// Add Rochtah Slots Management
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Rochtah Slots',
-		'Rochtah Slots',
-		'manage_options',
-		'jalsah-ai-rochtah-slots',
-		'snks_rochtah_slots_admin_page'
-	);
-	
 	// Add Rochtah Doctor Management (only for admins)
 	add_submenu_page(
 		'jalsah-ai-management',
@@ -213,16 +203,6 @@ function snks_add_enhanced_ai_admin_menu() {
 		'manage_options',
 		'rochtah-doctor-management',
 		'snks_rochtah_doctor_management'
-	);
-	
-	// Add Rochtah Slots Management
-	add_submenu_page(
-		'jalsah-ai-management',
-		__( 'Rochtah Slots', 'shrinks' ),
-		__( 'Rochtah Slots', 'shrinks' ),
-		'manage_options',
-		'jalsah-ai-rochtah-slots',
-		'snks_rochtah_slots_admin_page'
 	);
 }
 add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
@@ -885,6 +865,132 @@ function snks_load_enhanced_therapist_profile() {
 	wp_send_json_success( $data );
 }
 add_action( 'wp_ajax_load_enhanced_therapist_profile', 'snks_load_enhanced_therapist_profile' ); 
+
+/**
+ * Check if coupon code is unique (checks both AI coupons and custom coupons tables)
+ */
+function snks_check_coupon_code_unique_ajax() {
+	check_ajax_referer( 'check_coupon_code_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$code = sanitize_text_field( $_POST['code'] ?? '' );
+	
+	if ( empty( $code ) ) {
+		wp_send_json_error( array( 'message' => 'Code is required' ) );
+	}
+	
+	global $wpdb;
+	
+	// Ensure the coupons table exists
+	$ai_coupons_table = $wpdb->prefix . 'snks_ai_coupons';
+	$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $ai_coupons_table ) ) === $ai_coupons_table;
+	
+	if ( ! $table_exists ) {
+		// Create the table if it doesn't exist
+		if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+			snks_create_enhanced_ai_tables();
+			// Re-check if table exists after creation
+			$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $ai_coupons_table ) ) === $ai_coupons_table;
+		}
+		// If table still doesn't exist, assume code is unique
+		if ( ! $table_exists ) {
+			wp_send_json_success( array( 'unique' => true, 'message' => 'Code is available' ) );
+			return;
+		}
+	}
+	
+	// Check in AI coupons table
+	$exists_in_ai = $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM $ai_coupons_table WHERE code = %s",
+		$code
+	) );
+	
+	// Check in custom coupons table (therapist coupons)
+	$custom_coupons_table = $wpdb->prefix . 'snks_custom_coupons';
+	$exists_in_custom = $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM $custom_coupons_table WHERE code = %s",
+		$code
+	) );
+	
+	$is_unique = ( $exists_in_ai == 0 && $exists_in_custom == 0 );
+	
+	wp_send_json_success( array(
+		'unique' => $is_unique,
+		'message' => $is_unique ? 'Code is available' : 'Code already exists'
+	) );
+}
+add_action( 'wp_ajax_snks_check_coupon_code_unique', 'snks_check_coupon_code_unique_ajax' );
+
+/**
+ * Search users for coupon assignment
+ */
+function snks_search_users_for_coupon_ajax() {
+	check_ajax_referer( 'search_users_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$search = sanitize_text_field( $_POST['search'] ?? '' );
+	
+	if ( strlen( $search ) < 2 ) {
+		wp_send_json_success( array( 'users' => array() ) );
+	}
+	
+	$users = get_users( array(
+		'search' => '*' . $search . '*',
+		'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
+		'number' => 10,
+		'orderby' => 'display_name'
+	) );
+	
+	$user_list = array();
+	foreach ( $users as $user ) {
+		$user_list[] = array(
+			'ID' => $user->ID,
+			'display_name' => $user->display_name,
+			'user_email' => $user->user_email,
+			'user_login' => $user->user_login
+		);
+	}
+	
+	wp_send_json_success( array( 'users' => $user_list ) );
+}
+add_action( 'wp_ajax_snks_search_users_for_coupon', 'snks_search_users_for_coupon_ajax' );
+
+/**
+ * Get user info for display
+ */
+function snks_get_user_info_ajax() {
+	check_ajax_referer( 'get_user_info_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$user_id = intval( $_POST['user_id'] ?? 0 );
+	
+	if ( ! $user_id ) {
+		wp_send_json_error( array( 'message' => 'User ID required' ) );
+	}
+	
+	$user = get_user_by( 'ID', $user_id );
+	
+	if ( ! $user ) {
+		wp_send_json_error( array( 'message' => 'User not found' ) );
+	}
+	
+	wp_send_json_success( array(
+		'ID' => $user->ID,
+		'display_name' => $user->display_name,
+		'user_email' => $user->user_email,
+		'user_login' => $user->user_login
+	) );
+}
+add_action( 'wp_ajax_snks_get_user_info', 'snks_get_user_info_ajax' );
 
 /**
  * Enhanced Diagnoses Page
@@ -1648,6 +1754,43 @@ function snks_enhanced_ai_coupons_page() {
 	
 	snks_load_ai_admin_styles();
 	
+	// Ensure the coupons table exists
+	$coupons_table = $wpdb->prefix . 'snks_ai_coupons';
+	$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $coupons_table ) ) === $coupons_table;
+	
+	if ( ! $table_exists ) {
+		// Create the table if it doesn't exist
+		if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+			snks_create_enhanced_ai_tables();
+		} else {
+			// Fallback: create table directly
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			$coupons_sql = "CREATE TABLE IF NOT EXISTS $coupons_table (
+				id INT(11) NOT NULL AUTO_INCREMENT,
+				code VARCHAR(50) NOT NULL UNIQUE,
+				discount_type ENUM('percentage', 'fixed') NOT NULL DEFAULT 'percentage',
+				discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+				usage_limit INT(11) DEFAULT 0,
+				current_usage INT(11) DEFAULT 0,
+				expiry_date DATE NULL,
+				segment VARCHAR(50) DEFAULT '',
+				allowed_users TEXT NULL,
+				active TINYINT(1) DEFAULT 1,
+				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				UNIQUE KEY unique_code (code)
+			) " . $wpdb->get_charset_collate();
+			dbDelta( $coupons_sql );
+		}
+	}
+	
+	// Always check and add allowed_users column if it doesn't exist (for existing tables)
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $coupons_table LIKE 'allowed_users'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $coupons_table ADD COLUMN allowed_users TEXT NULL AFTER segment" );
+	}
+	
 	// Handle coupon creation/editing
 	if ( isset( $_POST['action'] ) ) {
 		if ( $_POST['action'] === 'create_coupon' && wp_verify_nonce( $_POST['_wpnonce'], 'create_ai_coupon' ) ) {
@@ -1658,19 +1801,38 @@ function snks_enhanced_ai_coupons_page() {
 			$expiry_date = sanitize_text_field( $_POST['expiry_date'] );
 			$segment = sanitize_text_field( $_POST['segment'] );
 			
+			// Handle allowed users (comma-separated user IDs)
+			$allowed_users = '';
+			if ( ! empty( $_POST['allowed_users'] ) ) {
+				$user_ids = array_map( 'intval', explode( ',', $_POST['allowed_users'] ) );
+				$user_ids = array_filter( $user_ids ); // Remove empty values
+				$allowed_users = implode( ',', $user_ids );
+			}
+			
+			// Check if allowed_users column exists before inserting
+			$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}snks_ai_coupons LIKE 'allowed_users'" );
+			$insert_data = array(
+				'code' => $code,
+				'discount_type' => $discount_type,
+				'discount_value' => $discount_value,
+				'usage_limit' => $usage_limit,
+				'current_usage' => 0,
+				'expiry_date' => $expiry_date ? $expiry_date : null,
+				'segment' => $segment,
+				'active' => 1,
+			);
+			$insert_format = array( '%s', '%s', '%f', '%d', '%d', '%s', '%s', '%d' );
+			
+			// Only include allowed_users if column exists
+			if ( ! empty( $column_exists ) ) {
+				$insert_data['allowed_users'] = $allowed_users;
+				$insert_format[] = '%s';
+			}
+			
 			$wpdb->insert(
 				$wpdb->prefix . 'snks_ai_coupons',
-				array(
-					'code' => $code,
-					'discount_type' => $discount_type,
-					'discount_value' => $discount_value,
-					'usage_limit' => $usage_limit,
-					'current_usage' => 0,
-					'expiry_date' => $expiry_date,
-					'segment' => $segment,
-					'active' => 1,
-				),
-				array( '%s', '%s', '%f', '%d', '%d', '%s', '%s', '%d' )
+				$insert_data,
+				$insert_format
 			);
 			
 			echo '<div class="notice notice-success"><p>Coupon created successfully!</p></div>';
@@ -1683,7 +1845,12 @@ function snks_enhanced_ai_coupons_page() {
 		}
 	}
 	
-	$coupons = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_ai_coupons ORDER BY created_at DESC" );
+	// Get coupons (handle case where table might not exist)
+	$coupons = array();
+	$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $coupons_table ) ) === $coupons_table;
+	if ( $table_exists ) {
+		$coupons = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_ai_coupons ORDER BY created_at DESC" );
+	}
 	?>
 	<div class="wrap">
 		<h1>AI Coupons Management</h1>
@@ -1697,7 +1864,11 @@ function snks_enhanced_ai_coupons_page() {
 				<table class="form-table">
 					<tr>
 						<th><label for="code">Coupon Code</label></th>
-						<td><input type="text" id="code" name="code" class="regular-text" required></td>
+						<td>
+							<input type="text" id="code" name="code" class="regular-text" required>
+							<button type="button" id="generate-coupon-code" class="button" style="margin-left: 10px;">Generate Code</button>
+							<p class="description">Click to auto-generate a unique coupon code</p>
+						</td>
 					</tr>
 					<tr>
 						<th><label for="discount_type">Discount Type</label></th>
@@ -1714,11 +1885,17 @@ function snks_enhanced_ai_coupons_page() {
 					</tr>
 					<tr>
 						<th><label for="usage_limit">Usage Limit</label></th>
-						<td><input type="number" id="usage_limit" name="usage_limit" min="0" class="regular-text" value="0" title="0 = unlimited"></td>
+						<td>
+							<input type="number" id="usage_limit" name="usage_limit" min="0" class="regular-text" value="0" placeholder="0">
+							<p class="description">Enter <strong>0</strong> for unlimited usage, or specify a number to limit how many times the coupon can be used.</p>
+						</td>
 					</tr>
 					<tr>
 						<th><label for="expiry_date">Expiry Date</label></th>
-						<td><input type="date" id="expiry_date" name="expiry_date" class="regular-text"></td>
+						<td>
+							<input type="date" id="expiry_date" name="expiry_date" class="regular-text">
+							<p class="description">Leave empty for no expiry date (coupon never expires).</p>
+						</td>
 					</tr>
 					<tr>
 						<th><label for="segment">Segment</label></th>
@@ -1728,7 +1905,17 @@ function snks_enhanced_ai_coupons_page() {
 								<option value="new_users">New Users Only</option>
 								<option value="returning_users">Returning Users Only</option>
 								<option value="specific_diagnosis">Specific Diagnosis</option>
+								<option value="specific_users">Specific Users</option>
 							</select>
+						</td>
+					</tr>
+					<tr id="specific-users-row" style="display: none;">
+						<th><label for="allowed_users">Allowed Users</label></th>
+						<td>
+							<input type="text" id="allowed_users_search" class="regular-text" placeholder="Search users by name or email...">
+							<input type="hidden" id="allowed_users" name="allowed_users" value="">
+							<div id="selected-users-list" style="margin-top: 10px; min-height: 30px;"></div>
+							<p class="description">Search and select specific users who can use this coupon. Leave empty if segment is not "Specific Users".</p>
 						</td>
 					</tr>
 				</table>
@@ -1809,6 +1996,213 @@ function snks_enhanced_ai_coupons_page() {
 		</div>
 	</div>
 
+	<script>
+	jQuery(document).ready(function($) {
+		var selectedUsers = [];
+		var userCache = {}; // Cache user info to avoid repeated AJAX calls
+		
+		// Show/hide specific users field based on segment selection
+		$('#segment').on('change', function() {
+			if ($(this).val() === 'specific_users') {
+				$('#specific-users-row').show();
+			} else {
+				$('#specific-users-row').hide();
+				selectedUsers = [];
+				updateSelectedUsersList();
+				$('#allowed_users').val('');
+			}
+		});
+		
+		// User search with debounce
+		var searchTimeout;
+		$('#allowed_users_search').on('input', function() {
+			var searchTerm = $(this).val();
+			if (searchTerm.length < 2) {
+				$('#user-search-results').remove();
+				return;
+			}
+			
+			clearTimeout(searchTimeout);
+			searchTimeout = setTimeout(function() {
+				searchUsers(searchTerm);
+			}, 300);
+		});
+		
+		function searchUsers(term) {
+			$.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'snks_search_users_for_coupon',
+					search: term,
+					nonce: '<?php echo wp_create_nonce( 'search_users_nonce' ); ?>'
+				},
+				success: function(response) {
+					if (response.success) {
+						displayUserSearchResults(response.data.users);
+					}
+				}
+			});
+		}
+		
+		function displayUserSearchResults(users) {
+			$('#user-search-results').remove();
+			if (users.length === 0) {
+				return;
+			}
+			
+			var resultsHtml = '<div id="user-search-results" style="border: 1px solid #ddd; background: #fff; max-height: 200px; overflow-y: auto; margin-top: 5px; position: absolute; z-index: 1000; width: 100%; max-width: 400px;">';
+			users.forEach(function(user) {
+				if (selectedUsers.indexOf(user.ID) === -1) {
+					resultsHtml += '<div class="user-result-item" data-user-id="' + user.ID + '" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;" onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'#fff\'">';
+					resultsHtml += '<strong>' + user.display_name + '</strong> (' + user.user_email + ')';
+					resultsHtml += '</div>';
+				}
+			});
+			resultsHtml += '</div>';
+			
+			$('#allowed_users_search').parent().css('position', 'relative').append(resultsHtml);
+			
+			$('.user-result-item').on('click', function() {
+				var userId = $(this).data('user-id');
+				var userData = users.find(u => u.ID == userId);
+				if (selectedUsers.indexOf(userId) === -1) {
+					selectedUsers.push(userId);
+					// Cache user data immediately
+					if (userData) {
+						userCache[userId] = userData;
+					}
+					updateSelectedUsersList();
+					$('#allowed_users_search').val('');
+					$('#user-search-results').remove();
+				}
+			});
+		}
+		
+		function updateSelectedUsersList() {
+			if (selectedUsers.length === 0) {
+				$('#selected-users-list').html('');
+				$('#allowed_users').val('');
+				return;
+			}
+			
+			var listHtml = '';
+			var promises = [];
+			
+			selectedUsers.forEach(function(userId) {
+				if (userCache[userId]) {
+					// Use cached data
+					var user = userCache[userId];
+					listHtml += '<span class="selected-user-tag" data-user-id="' + userId + '" style="display: inline-block; background: #0073aa; color: #fff; padding: 5px 10px; margin: 5px 5px 5px 0; border-radius: 3px;">';
+					listHtml += user.display_name + ' (' + user.user_email + ') ';
+					listHtml += '<span style="cursor: pointer; margin-left: 5px;" onclick="removeUser(' + userId + ')">×</span>';
+					listHtml += '</span>';
+				} else {
+					// Fetch user info
+					var promise = $.ajax({
+						url: ajaxurl,
+						type: 'POST',
+						data: {
+							action: 'snks_get_user_info',
+							user_id: userId,
+							nonce: '<?php echo wp_create_nonce( 'get_user_info_nonce' ); ?>'
+						}
+					}).then(function(response) {
+						if (response.success) {
+							userCache[userId] = response.data;
+							return response.data;
+						}
+					});
+					promises.push(promise);
+				}
+			});
+			
+			// Update with cached data first
+			$('#selected-users-list').html(listHtml);
+			$('#allowed_users').val(selectedUsers.join(','));
+			
+			// Then update with fetched data
+			if (promises.length > 0) {
+				$.when.apply($, promises).done(function() {
+					updateSelectedUsersList(); // Re-render with all cached data
+				});
+			}
+		}
+		
+		// Remove user from selection
+		window.removeUser = function(userId) {
+			selectedUsers = selectedUsers.filter(id => id != userId);
+			updateSelectedUsersList();
+		};
+		
+		// Close search results when clicking outside
+		$(document).on('click', function(e) {
+			if (!$(e.target).closest('#allowed_users_search, #user-search-results').length) {
+				$('#user-search-results').remove();
+			}
+		});
+		
+		// Generate unique coupon code
+		$('#generate-coupon-code').on('click', function() {
+			var button = $(this);
+			var originalText = button.text();
+			button.prop('disabled', true).text('Generating...');
+			
+			// Generate code and check uniqueness
+			generateUniqueCode();
+		});
+		
+		function generateUniqueCode() {
+			var code = generateRandomCode();
+			var attempts = 0;
+			var maxAttempts = 10;
+			
+			function checkAndSet() {
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'snks_check_coupon_code_unique',
+						code: code,
+						nonce: '<?php echo wp_create_nonce( 'check_coupon_code_nonce' ); ?>'
+					},
+					success: function(response) {
+						if (response.success && response.data.unique) {
+							$('#code').val(code);
+							$('#generate-coupon-code').prop('disabled', false).text('Generate Code');
+						} else {
+							attempts++;
+							if (attempts < maxAttempts) {
+								code = generateRandomCode();
+								checkAndSet();
+							} else {
+								alert('Unable to generate unique code. Please try again or enter manually.');
+								$('#generate-coupon-code').prop('disabled', false).text('Generate Code');
+							}
+						}
+					},
+					error: function() {
+						alert('Error checking code uniqueness. Please try again.');
+						$('#generate-coupon-code').prop('disabled', false).text('Generate Code');
+					}
+				});
+			}
+			
+			checkAndSet();
+		}
+		
+		function generateRandomCode() {
+			// Generate format: AI-XXXXXX (6 random alphanumeric characters)
+			var prefix = 'AI-';
+			var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars like 0, O, I, 1
+			var code = prefix;
+			for (var i = 0; i < 6; i++) {
+				code += chars.charAt(Math.floor(Math.random() * chars.length));
+			}
+			return code;
+		}
+	});
+	</script>
 
 	<?php
 } 

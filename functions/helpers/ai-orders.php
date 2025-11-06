@@ -81,9 +81,6 @@ class SNKS_AI_Orders {
             $code     = isset( $coupon['code'] ) ? sanitize_text_field( $coupon['code'] ) : '';
             $discount = isset( $coupon['discount'] ) ? floatval( $coupon['discount'] ) : 0;
             if ( $discount > 0 ) {
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( '[AI Orders] Applying coupon: ' . $code . ' discount=' . $discount );
-                }
                 // Use a negative fee to represent discount in WooCommerce
                 $fee = new WC_Order_Item_Fee();
                 $fee->set_name( $code ? sprintf( 'خصم كوبون (%s)', $code ) : 'خصم كوبون' );
@@ -101,21 +98,27 @@ class SNKS_AI_Orders {
 
         // Recalculate order totals
         $order->calculate_totals();
+        
+        // If coupon is applied, calculate correct final total from original amount
         if ( ! empty( $coupon ) ) {
             $discount = isset( $coupon['discount'] ) ? floatval( $coupon['discount'] ) : 0;
             if ( $discount > 0 ) {
-                $before_total = (float) $order->get_total();
-                $after_total  = max( 0, $before_total - $discount );
-                if ( abs( $after_total - $before_total ) > 0.0001 ) {
-                    $order->set_total( $after_total );
+                // Calculate items total BEFORE the negative fee (sum of all product line items only)
+                $items_total = 0;
+                foreach ( $order->get_items() as $item ) {
+                    if ( is_a( $item, 'WC_Order_Item_Product' ) ) {
+                        $items_total += (float) $item->get_total();
+                    }
                 }
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( '[AI Orders] Total adjust: before=' . $before_total . ' after=' . $after_total );
-                }
+                
+                // items_total is the original amount (200)
+                // Final total = items_total - discount
+                $final_total = max( 0, $items_total - $discount );
+                
+                // Set the final total directly
+                $order->set_total( $final_total );
+                $order->save(); // Save immediately to persist the total
             }
-        }
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( '[AI Orders] Order total after discount: ' . $order->get_total() );
         }
 		
 		// Set customer data

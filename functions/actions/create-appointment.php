@@ -47,9 +47,15 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 		if ( ! $is_admin_area && ! $is_manual_completion ) {
 			// Redirect AI orders to the frontend appointments page
 			$frontend_url = snks_ai_get_primary_frontend_url();
-			wp_redirect( $frontend_url . '/appointments' );
-			exit;
+			if ( $frontend_url ) {
+				// Use wp_redirect for external URLs (wp_safe_redirect only works for same domain)
+				wp_redirect( $frontend_url . '/appointments' );
+				exit;
+			}
 		}
+		
+		// Return early for AI orders to prevent further processing
+		return;
 	}
 	
 	$customer_id = $order->get_customer_id();

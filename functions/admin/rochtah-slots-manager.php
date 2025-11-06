@@ -26,14 +26,51 @@ function snks_rochtah_slots_manager() {
 	if ( isset( $_POST['action'] ) && wp_verify_nonce( $_POST['rochtah_slots_manager_nonce'], 'rochtah_slots_manager_action' ) ) {
 		if ( $_POST['action'] === 'save_day_template' ) {
 			$day = sanitize_text_field( $_POST['day'] );
-			$slots_json = sanitize_textarea_field( $_POST['slots_json'] );
+			// Use wp_unslash on raw POST to avoid breaking JSON with added slashes; do not over-sanitize structured JSON
+			$slots_json_raw = isset( $_POST['slots_json'] ) ? wp_unslash( $_POST['slots_json'] ) : '[]';
+			
+			// Decode slots
+			$slots = json_decode( $slots_json_raw, true );
+			$original_count = is_array( $slots ) ? count( $slots ) : 0;
+			
+			// Remove duplicate slots (same start_time and end_time)
+			if ( is_array( $slots ) && ! empty( $slots ) ) {
+				$unique_slots = array();
+				$seen_slots = array();
+				
+				foreach ( $slots as $slot ) {
+					if ( ! isset( $slot['start_time'] ) || ! isset( $slot['end_time'] ) ) {
+						continue;
+					}
+					
+					// Create a unique key based on start_time and end_time
+					$slot_key = $slot['start_time'] . '-' . $slot['end_time'];
+					
+					// Only add if we haven't seen this combination before
+					if ( ! isset( $seen_slots[ $slot_key ] ) ) {
+						$seen_slots[ $slot_key ] = true;
+						$unique_slots[] = $slot;
+					}
+				}
+				
+				$slots = $unique_slots;
+			} else {
+				$slots = array();
+			}
+			
+			// Count duplicates removed
+			$duplicate_count = $original_count - ( is_array( $slots ) ? count( $slots ) : 0 );
 			
 			// Save day template
 			$day_templates = get_option( 'snks_rochtah_day_templates', array() );
-			$day_templates[ $day ] = json_decode( $slots_json, true );
+			$day_templates[ $day ] = $slots;
 			update_option( 'snks_rochtah_day_templates', $day_templates );
 			
-			echo '<div class="notice notice-success"><p>Day template saved successfully!</p></div>';
+			if ( $duplicate_count > 0 ) {
+				echo '<div class="notice notice-success"><p>Day template saved successfully! Removed ' . $duplicate_count . ' duplicate slot(s).</p></div>';
+			} else {
+				echo '<div class="notice notice-success"><p>Day template saved successfully!</p></div>';
+			}
 		} elseif ( $_POST['action'] === 'publish_slots_manual' ) {
 			// Manual publish - publish next 3 weeks
 			$published = snks_publish_rochtah_slots_from_templates();
@@ -67,10 +104,10 @@ function snks_rochtah_slots_manager() {
 		'Sunday' => 'Sunday'
 	);
 
-	// Generate time slots (20-minute intervals from 8:00 AM to 8:00 PM)
+	// Generate time slots (15-minute intervals from 8:00 AM to 8:00 PM)
 	$time_slots = array();
 	for ( $hour = 8; $hour < 20; $hour++ ) {
-		for ( $minute = 0; $minute < 60; $minute += 20 ) {
+		for ( $minute = 0; $minute < 60; $minute += 15 ) {
 			$time_slots[] = sprintf( '%02d:%02d', $hour, $minute );
 		}
 	}
@@ -92,9 +129,13 @@ function snks_rochtah_slots_manager() {
 
 	// Get published slots count
 	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+	// Check if is_template column exists
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $rochtah_appointments_table LIKE 'is_template'" );
+	$is_template_condition = ! empty( $column_exists ) ? "is_template = 0 AND " : "";
+	
 	$published_slots_count = $wpdb->get_var(
 		"SELECT COUNT(*) FROM $rochtah_appointments_table 
-		WHERE is_template = 0 AND slot_date >= CURDATE() AND status = 'active'"
+		WHERE $is_template_condition slot_date >= CURDATE() AND status = 'active'"
 	);
 
 	?>
@@ -166,9 +207,10 @@ function snks_rochtah_slots_manager() {
 		<div class="card" style="margin-top: 20px;">
 			<h2>Published Slots (Next 30 Days)</h2>
 			<?php
+			// Use same is_template condition check
 			$published_slots = $wpdb->get_results(
 				"SELECT * FROM $rochtah_appointments_table 
-				WHERE is_template = 0 AND slot_date >= CURDATE() AND slot_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+				WHERE $is_template_condition slot_date >= CURDATE() AND slot_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
 				ORDER BY slot_date ASC, start_time ASC"
 			);
 			?>
@@ -260,7 +302,7 @@ function snks_rochtah_slots_manager() {
 		$('#add-slot-btn').on('click', function() {
 			currentSlots.push({
 				start_time: '08:00',
-				end_time: '08:20'
+				end_time: '08:15'
 			});
 			renderSlots();
 		});
@@ -319,7 +361,7 @@ function snks_rochtah_slots_manager() {
 			const startTime = $(this).val();
 			const timeParts = startTime.split(':');
 			let hours = parseInt(timeParts[0]);
-			let minutes = parseInt(timeParts[1]) + 20;
+			let minutes = parseInt(timeParts[1]) + 15;
 			
 			if (minutes >= 60) {
 				hours += 1;
@@ -362,6 +404,12 @@ function snks_publish_rochtah_slots_from_templates() {
 	}
 
 	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+	
+	// Check if is_template column exists
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $rochtah_appointments_table LIKE 'is_template'" );
+	$has_is_template_column = ! empty( $column_exists );
+	$is_template_condition = $has_is_template_column ? "is_template = 0 AND " : "";
+	
 	$slots_published = 0;
 	
 	// Publish slots for the next 3 weeks (21 days)
@@ -381,7 +429,7 @@ function snks_publish_rochtah_slots_from_templates() {
 		// Check if slots already exist for this date
 		$existing_slots = $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(*) FROM $rochtah_appointments_table 
-			WHERE slot_date = %s AND is_template = 0",
+			WHERE $is_template_condition slot_date = %s",
 			$target_date
 		) );
 		
@@ -395,7 +443,7 @@ function snks_publish_rochtah_slots_from_templates() {
 			// Check if this specific slot already exists
 			$slot_exists = $wpdb->get_var( $wpdb->prepare(
 				"SELECT COUNT(*) FROM $rochtah_appointments_table 
-				WHERE slot_date = %s AND start_time = %s AND is_template = 0",
+				WHERE $is_template_condition slot_date = %s AND start_time = %s",
 				$target_date,
 				$template_slot['start_time']
 			) );
@@ -404,18 +452,27 @@ function snks_publish_rochtah_slots_from_templates() {
 				continue;
 			}
 			
+			// Prepare insert data
+			$insert_data = array(
+				'day_of_week' => $day_of_week,
+				'slot_date' => $target_date,
+				'start_time' => $template_slot['start_time'],
+				'end_time' => $template_slot['end_time'],
+				'status' => 'active'
+			);
+			$insert_format = array( '%s', '%s', '%s', '%s', '%s' );
+			
+			// Add is_template only if column exists
+			if ( $has_is_template_column ) {
+				$insert_data['is_template'] = 0;
+				$insert_format[] = '%d';
+			}
+			
 			// Insert new slot
 			$wpdb->insert(
 				$rochtah_appointments_table,
-				array(
-					'day_of_week' => $day_of_week,
-					'slot_date' => $target_date,
-					'start_time' => $template_slot['start_time'],
-					'end_time' => $template_slot['end_time'],
-					'status' => 'active',
-					'is_template' => 0
-				),
-				array( '%s', '%s', '%s', '%s', '%s', '%d' )
+				$insert_data,
+				$insert_format
 			);
 			
 			if ( $wpdb->insert_id ) {
@@ -471,7 +528,7 @@ function snks_add_rochtah_slots_manager_menu() {
 	add_submenu_page(
 		'jalsah-ai-management',
 		'Rochtah Slots Manager',
-		'Rochtah Slots',
+		'Rochtah slots management',
 		'manage_options',
 		'rochtah-slots-manager',
 		'snks_rochtah_slots_manager'

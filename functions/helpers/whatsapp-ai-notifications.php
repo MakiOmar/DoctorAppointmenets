@@ -28,6 +28,7 @@ function snks_get_whatsapp_notification_settings() {
         'template_rosheta_doctor' => get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ),
         'template_prescription1' => get_option( 'snks_template_prescription1', 'prescription1' ),
         'template_prescription2' => get_option( 'snks_template_prescription2', 'prescription2' ),
+        'template_password' => get_option( 'snks_template_password', 'password' ),
 	);
 }
 
