@@ -34,6 +34,23 @@ function snks_add_therapist_earnings_menu() {
  * Therapist earnings page content
  */
 function snks_therapist_earnings_page() {
+	global $wpdb;
+	
+	// Ensure database columns exist for admin profit tracking
+	$transactions_table = $wpdb->prefix . 'snks_booking_transactions';
+	
+	// Check and add ai_session_amount column if it doesn't exist
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $transactions_table LIKE 'ai_session_amount'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $transactions_table ADD COLUMN ai_session_amount DECIMAL(10,2) DEFAULT NULL COMMENT 'Total session amount (revenue)' AFTER ai_order_id" );
+	}
+	
+	// Check and add ai_admin_profit column if it doesn't exist
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $transactions_table LIKE 'ai_admin_profit'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $transactions_table ADD COLUMN ai_admin_profit DECIMAL(10,2) DEFAULT NULL COMMENT 'Admin/website profit (revenue - therapist share)' AFTER ai_session_amount" );
+	}
+	
 	// Load AI admin styles
 	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
 		snks_load_ai_admin_styles();
@@ -58,7 +75,10 @@ function snks_therapist_earnings_page() {
 	
 	?>
 	<div class="wrap">
-		<h1><?php echo __( 'Therapist Earnings from AI Sessions', 'anony-turn' ); ?></h1>
+		<h1><?php echo __( 'AI Sessions Earnings & Profit Tracking', 'anony-turn' ); ?></h1>
+		<p class="description" style="font-size: 14px; color: #666; margin-bottom: 20px;">
+			<?php echo __( 'Track total revenue, therapist payouts, and admin profit from AI sessions. Filter by date range or month to view earnings for specific periods.', 'anony-turn' ); ?>
+		</p>
 		
 		<!-- Filters Section -->
 		<div class="card">
@@ -92,7 +112,8 @@ function snks_therapist_earnings_page() {
 								<option value="today" <?php selected( $period, 'today' ); ?>><?php echo __( 'Today', 'anony-turn' ); ?></option>
 								<option value="week" <?php selected( $period, 'week' ); ?>><?php echo __( 'This Week', 'anony-turn' ); ?></option>
 								<option value="month" <?php selected( $period, 'month' ); ?>><?php echo __( 'This Month', 'anony-turn' ); ?></option>
-								<option value="custom" <?php selected( $period, 'custom' ); ?>><?php echo __( 'Custom Period', 'anony-turn' ); ?></option>
+								<option value="last_month" <?php selected( $period, 'last_month' ); ?>><?php echo __( 'Last Month', 'anony-turn' ); ?></option>
+								<option value="custom" <?php selected( $period, 'custom' ); ?>><?php echo __( 'Custom Date Range', 'anony-turn' ); ?></option>
 							</select>
 						</td>
 					</tr>
@@ -125,15 +146,30 @@ function snks_therapist_earnings_page() {
 		<div class="card">
 			<h2><?php echo __( 'Summary Statistics', 'anony-turn' ); ?></h2>
 			<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
-				<div class="stat-box" style="background: #f0f8ff; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #0073aa;"><?php echo __( 'Total Earnings', 'anony-turn' ); ?></h3>
-					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #0073aa;">
+				<div class="stat-box" style="background: #e8f5e9; padding: 20px; border-radius: 8px; text-align: center;">
+					<h3 style="margin: 0 0 10px 0; color: #2e7d32;"><?php echo __( 'Total Revenue', 'anony-turn' ); ?></h3>
+					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #2e7d32;">
+						<?php echo number_format( $earnings_data['summary']['total_revenue'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
+					</p>
+					<p style="font-size: 12px; margin: 5px 0 0 0; color: #666;"><?php echo __( 'From all sessions', 'anony-turn' ); ?></p>
+				</div>
+				<div class="stat-box" style="background: #fff3e0; padding: 20px; border-radius: 8px; text-align: center;">
+					<h3 style="margin: 0 0 10px 0; color: #e65100;"><?php echo __( 'Therapist Payouts', 'anony-turn' ); ?></h3>
+					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #e65100;">
 						<?php echo number_format( $earnings_data['summary']['total_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 					</p>
+					<p style="font-size: 12px; margin: 5px 0 0 0; color: #666;"><?php echo __( 'Total therapist earnings', 'anony-turn' ); ?></p>
 				</div>
-				<div class="stat-box" style="background: #f0fff0; padding: 20px; border-radius: 8px; text-align: center;">
-					<h3 style="margin: 0 0 10px 0; color: #46b450;"><?php echo __( 'Total Sessions', 'anony-turn' ); ?></h3>
-					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #46b450;">
+				<div class="stat-box" style="background: #e3f2fd; padding: 20px; border-radius: 8px; text-align: center;">
+					<h3 style="margin: 0 0 10px 0; color: #1565c0;"><?php echo __( 'Net Profit (Admin)', 'anony-turn' ); ?></h3>
+					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #1565c0;">
+						<?php echo number_format( $earnings_data['summary']['total_admin_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
+					</p>
+					<p style="font-size: 12px; margin: 5px 0 0 0; color: #666;"><?php echo __( 'Website share', 'anony-turn' ); ?></p>
+				</div>
+				<div class="stat-box" style="background: #f0f8ff; padding: 20px; border-radius: 8px; text-align: center;">
+					<h3 style="margin: 0 0 10px 0; color: #0073aa;"><?php echo __( 'Total Sessions', 'anony-turn' ); ?></h3>
+					<p style="font-size: 24px; font-weight: bold; margin: 0; color: #0073aa;">
 						<?php echo $earnings_data['summary']['total_sessions']; ?>
 					</p>
 				</div>
@@ -203,6 +239,7 @@ function snks_therapist_earnings_page() {
 		<!-- Transaction History -->
 		<div class="card">
 			<h2><?php echo __( 'Transaction History', 'anony-turn' ); ?></h2>
+			<p class="description"><?php echo __( 'Detailed transaction list showing session revenue, therapist profit, and admin profit for each session', 'anony-turn' ); ?></p>
 			<?php if ( empty( $earnings_data['transactions'] ) ) : ?>
 				<p><?php echo __( 'No transactions for the specified period.', 'anony-turn' ); ?></p>
 			<?php else : ?>
@@ -214,7 +251,8 @@ function snks_therapist_earnings_page() {
 							<th scope="col"><?php echo __( 'Patient', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Session Type', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Session Amount', 'anony-turn' ); ?></th>
-							<th scope="col"><?php echo __( 'Profit Amount', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Therapist Profit', 'anony-turn' ); ?></th>
+							<th scope="col"><?php echo __( 'Admin Profit', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Session ID', 'anony-turn' ); ?></th>
 							<th scope="col"><?php echo __( 'Order ID', 'anony-turn' ); ?></th>
 						</tr>
@@ -226,18 +264,30 @@ function snks_therapist_earnings_page() {
 								<td><?php echo esc_html( $transaction['therapist_name'] ); ?></td>
 								<td><?php echo esc_html( $transaction['patient_name'] ); ?></td>
 								<td>
-									<span class="session-type-badge <?php echo ( isset( $transaction['session_type'] ) && $transaction['session_type'] === 'first' ) ? 'first-session' : 'subsequent-session'; ?>">
-										<?php echo ( isset( $transaction['session_type'] ) && $transaction['session_type'] === 'first' ) ? __( 'First', 'anony-turn' ) : __( 'Subsequent', 'anony-turn' ); ?>
+									<?php 
+									$session_type = isset( $transaction['session_type'] ) ? $transaction['session_type'] : ( isset( $transaction['ai_session_type'] ) ? $transaction['ai_session_type'] : 'subsequent' );
+									?>
+									<span class="session-type-badge <?php echo ( $session_type === 'first' ) ? 'first-session' : 'subsequent-session'; ?>">
+										<?php echo ( $session_type === 'first' ) ? __( 'First', 'anony-turn' ) : __( 'Subsequent', 'anony-turn' ); ?>
 									</span>
 								</td>
-								<td><?php echo number_format( isset( $transaction['session_amount'] ) ? $transaction['session_amount'] : 0, 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></td>
 								<td>
-									<strong style="color: #0073aa;">
+									<strong style="color: #2e7d32;">
+										<?php echo number_format( isset( $transaction['session_amount'] ) ? $transaction['session_amount'] : 0, 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
+									</strong>
+								</td>
+								<td>
+									<strong style="color: #e65100;">
 										<?php echo number_format( isset( $transaction['profit_amount'] ) ? $transaction['profit_amount'] : 0, 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
 									</strong>
 								</td>
-								<td><?php echo esc_html( isset( $transaction['session_id'] ) ? $transaction['session_id'] : '-' ); ?></td>
-								<td><?php echo esc_html( isset( $transaction['order_id'] ) ? $transaction['order_id'] : '-' ); ?></td>
+								<td>
+									<strong style="color: #1565c0;">
+										<?php echo number_format( isset( $transaction['admin_profit'] ) ? $transaction['admin_profit'] : 0, 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?>
+									</strong>
+								</td>
+								<td><?php echo esc_html( isset( $transaction['session_id'] ) && $transaction['session_id'] ? $transaction['session_id'] : ( isset( $transaction['ai_session_id'] ) && $transaction['ai_session_id'] ? $transaction['ai_session_id'] : '-' ) ); ?></td>
+								<td><?php echo esc_html( isset( $transaction['order_id'] ) && $transaction['order_id'] ? $transaction['order_id'] : ( isset( $transaction['ai_order_id'] ) && $transaction['ai_order_id'] ? $transaction['ai_order_id'] : '-' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -319,6 +369,11 @@ function snks_get_earnings_data( $therapist_id = 0, $period = 'all', $date_from 
 		case 'month':
 			$date_filter = $wpdb->prepare( "AND YEAR(t.transaction_time) = YEAR(%s) AND MONTH(t.transaction_time) = MONTH(%s)", current_time( 'Y-m-d' ), current_time( 'Y-m-d' ) );
 			break;
+		case 'last_month':
+			$last_month = date( 'Y-m-d', strtotime( 'first day of last month' ) );
+			$last_month_end = date( 'Y-m-d', strtotime( 'last day of last month' ) );
+			$date_filter = $wpdb->prepare( "AND DATE(t.transaction_time) BETWEEN %s AND %s", $last_month, $last_month_end );
+			break;
 		case 'custom':
 			if ( $date_from && $date_to ) {
 				$date_filter = $wpdb->prepare( "AND DATE(t.transaction_time) BETWEEN %s AND %s", $date_from, $date_to );
@@ -354,7 +409,9 @@ function snks_get_earnings_data( $therapist_id = 0, $period = 'all', $date_from 
 	
 	// Calculate summary statistics
 	$summary = array(
+		'total_revenue' => 0,
 		'total_profit' => 0,
+		'total_admin_profit' => 0,
 		'total_sessions' => 0,
 		'first_sessions' => 0,
 		'subsequent_sessions' => 0
@@ -363,10 +420,23 @@ function snks_get_earnings_data( $therapist_id = 0, $period = 'all', $date_from 
 	$by_therapist = array();
 	
 	foreach ( $transactions as $transaction ) {
+		// Get session amount (from stored value or reverse calculate)
+		$session_amount = isset( $transaction['ai_session_amount'] ) && $transaction['ai_session_amount'] > 0
+			? floatval( $transaction['ai_session_amount'] )
+			: ( $transaction['amount'] / ( $transaction['ai_session_type'] === 'first' ? 0.7 : 0.75 ) );
+		
+		// Get admin profit (from stored value or calculate)
+		$admin_profit = isset( $transaction['ai_admin_profit'] ) && $transaction['ai_admin_profit'] !== null
+			? floatval( $transaction['ai_admin_profit'] )
+			: ( $session_amount - $transaction['amount'] );
+		
+		$summary['total_revenue'] += $session_amount;
 		$summary['total_profit'] += $transaction['amount'];
+		$summary['total_admin_profit'] += $admin_profit;
 		$summary['total_sessions']++;
 		
-		if ( $transaction['ai_session_type'] === 'first' ) {
+		$session_type_check = isset( $transaction['ai_session_type'] ) ? $transaction['ai_session_type'] : 'subsequent';
+		if ( $session_type_check === 'first' ) {
 			$summary['first_sessions']++;
 		} else {
 			$summary['subsequent_sessions']++;
@@ -388,7 +458,8 @@ function snks_get_earnings_data( $therapist_id = 0, $period = 'all', $date_from 
 		$by_therapist[ $therapist_id ]['total_profit'] += $transaction['amount'];
 		$by_therapist[ $therapist_id ]['total_sessions']++;
 		
-		if ( $transaction['ai_session_type'] === 'first' ) {
+		$session_type_check = isset( $transaction['ai_session_type'] ) ? $transaction['ai_session_type'] : 'subsequent';
+		if ( $session_type_check === 'first' ) {
 			$by_therapist[ $therapist_id ]['first_sessions']++;
 		} else {
 			$by_therapist[ $therapist_id ]['subsequent_sessions']++;
@@ -397,8 +468,22 @@ function snks_get_earnings_data( $therapist_id = 0, $period = 'all', $date_from 
 	
 	// Add session amount and profit amount to transactions for display
 	foreach ( $transactions as &$transaction ) {
-		$transaction['session_amount'] = $transaction['amount'] / ( $transaction['ai_session_type'] === 'first' ? 0.7 : 0.75 ) * 100; // Reverse calculate
+		// Get session amount (from stored value or reverse calculate)
+		$transaction['session_amount'] = isset( $transaction['ai_session_amount'] ) && $transaction['ai_session_amount'] > 0
+			? floatval( $transaction['ai_session_amount'] )
+			: ( $transaction['amount'] / ( $transaction['ai_session_type'] === 'first' ? 0.7 : 0.75 ) );
+		
 		$transaction['profit_amount'] = $transaction['amount'];
+		
+		// Get admin profit (from stored value or calculate)
+		$transaction['admin_profit'] = isset( $transaction['ai_admin_profit'] ) && $transaction['ai_admin_profit'] !== null
+			? floatval( $transaction['ai_admin_profit'] )
+			: ( $transaction['session_amount'] - $transaction['amount'] );
+		
+		// Add session_id and order_id for display (with proper fallbacks)
+		$transaction['session_id'] = isset( $transaction['ai_session_id'] ) && $transaction['ai_session_id'] ? $transaction['ai_session_id'] : '-';
+		$transaction['order_id'] = isset( $transaction['ai_order_id'] ) && $transaction['ai_order_id'] ? $transaction['ai_order_id'] : '-';
+		$transaction['session_type'] = isset( $transaction['ai_session_type'] ) && $transaction['ai_session_type'] ? $transaction['ai_session_type'] : 'subsequent';
 	}
 	
 	return array(
@@ -465,7 +550,8 @@ function snks_export_earnings_csv() {
 		'المريض',
 		'نوع الجلسة',
 		'مبلغ الجلسة',
-		'مبلغ الربح',
+		'ربح المعالج',
+		'ربح الموقع',
 		'معرف الجلسة',
 		'معرف الطلب'
 	) );
@@ -480,6 +566,7 @@ function snks_export_earnings_csv() {
 			$transaction['ai_session_type'] === 'first' ? 'أولى' : 'لاحقة',
 			number_format( $transaction['session_amount'], 2 ),
 			number_format( $transaction['profit_amount'], 2 ),
+			number_format( isset( $transaction['admin_profit'] ) ? $transaction['admin_profit'] : 0, 2 ),
 			$transaction['ai_session_id'],
 			$transaction['ai_order_id']
 		) );
