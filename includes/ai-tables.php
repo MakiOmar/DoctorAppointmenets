@@ -542,7 +542,9 @@ function snks_add_ai_transaction_metadata_columns() {
 		'ai_session_id' => 'INT(11) DEFAULT NULL',
 		'ai_session_type' => "ENUM('first', 'subsequent') DEFAULT NULL",
 		'ai_patient_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL',
-		'ai_order_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL'
+		'ai_order_id' => 'BIGINT(20) UNSIGNED DEFAULT NULL',
+		'ai_session_amount' => 'DECIMAL(10,2) DEFAULT NULL COMMENT "Total session amount (revenue)"',
+		'ai_admin_profit' => 'DECIMAL(10,2) DEFAULT NULL COMMENT "Admin/website profit (revenue - therapist share)"'
 	);
 	
 	foreach ( $columns_to_add as $column_name => $column_definition ) {

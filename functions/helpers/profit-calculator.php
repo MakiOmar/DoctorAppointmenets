@@ -112,19 +112,25 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 	
 	if ( $transaction_id ) {
 		
+		// Calculate admin profit (website share)
+		$session_amount = $session_data['session_amount'] ?? 0;
+		$admin_profit = $session_amount - $profit_amount;
+		
 		// Add AI session metadata to the transaction
 		$metadata = array(
 			'ai_session_id' => $session_data['session_id'] ?? 0,
 			'ai_session_type' => $session_data['session_type'] ?? 'first',
 			'ai_patient_id' => $session_data['patient_id'] ?? 0,
-			'ai_order_id' => $session_data['order_id'] ?? 0
+			'ai_order_id' => $session_data['order_id'] ?? 0,
+			'ai_session_amount' => $session_amount,
+			'ai_admin_profit' => round( $admin_profit, 2 )
 		);
 		
 		$metadata_result = $wpdb->update(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
 			array( 'id' => $transaction_id ),
-			array( '%d', '%s', '%d', '%d' ),
+			array( '%d', '%s', '%d', '%d', '%f', '%f' ),
 			array( '%d' )
 		);
 		
