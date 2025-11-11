@@ -253,6 +253,121 @@ function snks_therapist_registration_shortcode( $atts ) {
 		.required {
 			color: #dc3545;
 		}
+		.form-section {
+			border: 1px solid #e5e7eb;
+			border-radius: 8px;
+			padding: 20px;
+			margin-bottom: 30px;
+			background: #fdfdfd;
+		}
+		.section-header {
+			margin-bottom: 15px;
+		}
+		.section-header h3 {
+			margin: 0 0 8px;
+			font-size: 18px;
+			color: #1f2937;
+		}
+		.section-note {
+			margin: 0;
+			font-size: 14px;
+			color: #6b7280;
+		}
+		.section-body {
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+		}
+		.inline-options {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+		.inline-options label {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-weight: 500;
+			color: #374151;
+		}
+		.role-panel {
+			border-top: 1px dashed #e5e7eb;
+			padding-top: 20px;
+			margin-top: 10px;
+			display: none;
+		}
+		.form-subsection h4 {
+			margin: 0 0 10px;
+			font-size: 16px;
+			color: #1f2937;
+		}
+		.file-upload-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 16px;
+		}
+		.dynamic-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			align-items: center;
+			margin-bottom: 12px;
+		}
+		.dynamic-row input[type="text"],
+		.dynamic-row input[type="file"] {
+			flex: 1 1 200px;
+		}
+		.remove-row-btn {
+			background-color: #fee2e2;
+			border: 1px solid #fecaca;
+			color: #991b1b;
+			border-radius: 6px;
+			padding: 6px 12px;
+			cursor: pointer;
+			transition: background 0.2s ease;
+		}
+		.remove-row-btn:hover {
+			background-color: #fecaca;
+		}
+		.category-list {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 12px;
+		}
+		.category-box {
+			background: #f9fafb;
+			border: 1px solid #e5e7eb;
+			border-radius: 8px;
+			padding: 12px 16px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			transition: background 0.2s ease, border 0.2s ease;
+		}
+		.category-box.disabled {
+			opacity: 0.6;
+			cursor: not-allowed;
+		}
+		.helper-text {
+			font-size: 13px;
+			color: #6b7280;
+		}
+		.max-selection-message {
+			color: #b91c1c;
+			font-weight: 600;
+			display: none;
+		}
+		.diagnosis-list {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+			gap: 12px;
+		}
+		.diagnosis-list label {
+			display: flex;
+			align-items: flex-start;
+			gap: 8px;
+			line-height: 1.4;
+		}
 		/* RTL Support */
 		[dir="rtl"] .phone-input-group {
 			direction: ltr;
@@ -267,107 +382,330 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<div id="form-messages"></div>
 			
-			<div class="form-group">
-				<label for="name"><?php echo __( 'Full Name (Arabic)', 'shrinks' ); ?> <span class="required">*</span></label>
-				<input type="text" id="name" name="name" required>
-			</div>
-			
-			<div class="form-group">
-				<label for="name_en"><?php echo __( 'Full Name (English)', 'shrinks' ); ?> <span class="required">*</span></label>
-				<input type="text" id="name_en" name="name_en" required>
-			</div>
-			
-			<?php if ( $settings['require_email'] ) : ?>
-			<div class="form-group">
-				<label for="email"><?php echo __( 'Email Address', 'shrinks' ); ?> <span class="required">*</span></label>
-				<input type="email" id="email" name="email" required>
-			</div>
-			<?php endif; ?>
-			
-			<div class="form-group">
-				<label for="phone"><?php echo __( 'Phone Number', 'shrinks' ); ?> <span class="required">*</span></label>
-				<?php if ( $settings['country_dial_required'] ) : ?>
-				<div class="phone-input-group">
-					<select class="country-code-select" id="phone_country" name="phone_country">
-						<?php foreach ( $country_codes as $code => $country ) : ?>
-						<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, $default_country ); ?>>
-							<?php echo esc_html( $country['name'] . ' ' . $country['code'] ); ?>
-						</option>
-						<?php endforeach; ?>
-					</select>
-					<input type="tel" class="phone-number-input" id="phone" name="phone" required placeholder="123456789">
+			<div class="form-section">
+				<div class="section-header">
+					<h3>القسم الأول: البيانات الشخصية</h3>
+					<p class="section-note">يرجى إدخال بيانات التواصل الأساسية (كما ستظهر في منصتنا).</p>
 				</div>
-				<?php else : ?>
-				<input type="tel" id="phone" name="phone" required>
-				<?php endif; ?>
-			</div>
-			
-			<div class="form-group">
-				<label for="whatsapp"><?php echo __( 'WhatsApp Number', 'shrinks' ); ?> <span class="required">*</span></label>
-				<?php if ( $settings['country_dial_required'] ) : ?>
-				<div class="phone-input-group">
-					<select class="country-code-select" id="whatsapp_country" name="whatsapp_country">
-						<?php foreach ( $country_codes as $code => $country ) : ?>
-						<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, $default_country ); ?>>
-							<?php echo esc_html( $country['name'] . ' ' . $country['code'] ); ?>
-						</option>
-						<?php endforeach; ?>
-					</select>
-					<input type="tel" class="phone-number-input" id="whatsapp" name="whatsapp" required placeholder="123456789">
-				</div>
-				<?php else : ?>
-				<input type="tel" id="whatsapp" name="whatsapp" required>
-				<?php endif; ?>
-			</div>
-			
-			<div class="form-group">
-				<label for="doctor_specialty"><?php echo __( 'Specialty / Job Title', 'shrinks' ); ?> <span class="required">*</span></label>
-				<input type="text" id="doctor_specialty" name="doctor_specialty" required>
-			</div>
-			
-			<div class="form-group">
-				<label for="profile_image"><?php echo __( 'Profile Image', 'shrinks' ); ?></label>
-				<div class="file-upload-group" data-field="profile_image">
+				<div class="section-body">
+					<div class="form-group">
+						<label for="name">الاسم الكامل (بالعربية) <span class="required">*</span></label>
+						<input type="text" id="name" name="name" required>
+					</div>
+					
+					<div class="form-group">
+						<label for="email">البريد الإلكتروني <span class="required">*</span></label>
+						<input type="email" id="email" name="email" required>
+					</div>
+					
+					<div class="form-group">
+						<label for="phone">رقم الهاتف <span class="required">*</span></label>
+						<?php if ( $settings['country_dial_required'] ) : ?>
+						<div class="phone-input-group">
+							<select class="country-code-select" id="phone_country" name="phone_country">
+								<?php foreach ( $country_codes as $code => $country ) : ?>
+								<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, $default_country ); ?>>
+									<?php echo esc_html( $country['name'] . ' ' . $country['code'] ); ?>
+								</option>
+								<?php endforeach; ?>
+							</select>
+							<input type="tel" class="phone-number-input" id="phone" name="phone" required placeholder="123456789">
+						</div>
+						<?php else : ?>
+						<input type="tel" id="phone" name="phone" required>
+						<?php endif; ?>
+					</div>
+					
+					<div class="form-group">
+						<label for="whatsapp">رقم واتساب <span class="required">*</span></label>
+						<?php if ( $settings['country_dial_required'] ) : ?>
+						<div class="phone-input-group">
+							<select class="country-code-select" id="whatsapp_country" name="whatsapp_country">
+								<?php foreach ( $country_codes as $code => $country ) : ?>
+								<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, $default_country ); ?>>
+									<?php echo esc_html( $country['name'] . ' ' . $country['code'] ); ?>
+								</option>
+								<?php endforeach; ?>
+							</select>
+							<input type="tel" class="phone-number-input" id="whatsapp" name="whatsapp" required placeholder="123456789">
+						</div>
+						<?php else : ?>
+						<input type="tel" id="whatsapp" name="whatsapp" required>
+						<?php endif; ?>
+					</div>
+					
+					<div class="form-group">
+						<label for="profile_image">الصورة الشخصية</label>
+						<div class="file-upload-group" data-field="profile_image">
 					<span class="upload-icon">📷</span>
-					<div class="upload-text"><?php echo __( 'Upload Profile Photo', 'shrinks' ); ?></div>
-					<div class="upload-hint"><?php echo __( 'Click or drag image here (JPG, PNG, max 5MB)', 'shrinks' ); ?></div>
-					<input type="file" id="profile_image" name="profile_image" accept="image/*" data-max-size="5242880">
-					<div class="file-preview" id="preview_profile_image"></div>
+					<div class="upload-text">ارفع الصورة الشخصية</div>
+					<div class="upload-hint">ملف صورة (JPG أو PNG)</div>
+					<input type="file" id="profile_image" name="profile_image" accept="image/*">
+							<div class="file-preview" id="preview_profile_image"></div>
+						</div>
+					</div>
 				</div>
 			</div>
 			
-			<div class="form-group">
-				<label for="identity_front"><?php echo __( 'Identity Document (Front)', 'shrinks' ); ?></label>
-				<div class="file-upload-group" data-field="identity_front">
-					<span class="upload-icon">🪪</span>
-					<div class="upload-text"><?php echo __( 'Upload ID Front Side', 'shrinks' ); ?></div>
-					<div class="upload-hint"><?php echo __( 'Click or drag image here (ID front, max 5MB)', 'shrinks' ); ?></div>
-					<input type="file" id="identity_front" name="identity_front" accept="image/*" data-max-size="5242880">
-					<div class="file-preview" id="preview_identity_front"></div>
+			<input type="hidden" id="doctor_specialty" name="doctor_specialty">
+			
+			<div class="form-section">
+				<div class="section-header">
+					<h3>القسم الثاني: المعلومات المهنية</h3>
+					<p class="section-note">اختر المسمى الوظيفي وأرفق المستندات المطلوبة.</p>
+				</div>
+				<div class="section-body">
+					<div class="form-group">
+						<p>اختر المسمى الوظيفي <span class="required">*</span></p>
+						<div class="inline-options">
+							<label><input type="radio" name="role" value="psychiatrist"> طبيب نفسي</label>
+							<label><input type="radio" name="role" value="clinical_psychologist"> أخصائي نفسي إكلينيكي</label>
+						</div>
+					</div>
+					
+					<div id="psychiatrist-section" class="role-panel">
+						<div class="form-subsection">
+							<h4>اختر الدرجة / الرتبة <span class="required">*</span></h4>
+							<div class="inline-options">
+								<label><input type="radio" name="psy_rank" value="resident"> طبيب مقيم طب نفسي</label>
+								<label><input type="radio" name="psy_rank" value="specialist"> أخصائي طب نفسي</label>
+								<label><input type="radio" name="psy_rank" value="consultant"> استشاري طب نفسي</label>
+							</div>
+						</div>
+						<div class="form-subsection">
+							<h4>المستندات المطلوبة <span class="required">*</span></h4>
+							<div class="file-upload-grid">
+								<div class="file-upload-group" data-field="grad_cert">
+									<span class="upload-icon">🎓</span>
+									<div class="upload-text">شهادة التخرج</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="grad_cert" name="grad_cert" accept="image/*,.pdf,.txt,.doc,.docx">
+									<div class="file-preview" id="preview_grad_cert"></div>
+								</div>
+								<div class="file-upload-group" data-field="practice_license">
+									<span class="upload-icon">📝</span>
+									<div class="upload-text">تصريح مزاولة المهنة</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="practice_license" name="practice_license" accept="image/*,.pdf,.txt,.doc,.docx">
+									<div class="file-preview" id="preview_practice_license"></div>
+								</div>
+								<div class="file-upload-group" data-field="syndicate_id">
+									<span class="upload-icon">💳</span>
+									<div class="upload-text">كارنية نقابة الأطباء</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="syndicate_id" name="syndicate_id" accept="image/*,.pdf,.txt,.doc,.docx">
+									<div class="file-preview" id="preview_syndicate_id"></div>
+								</div>
+							</div>
+						</div>
+						<div class="form-subsection" id="degree-upload" style="display: none;">
+							<h4>شهادة الرتبة (أخصائي / استشاري)</h4>
+							<div class="file-upload-grid">
+								<div class="file-upload-group" data-field="rank_degree">
+									<span class="upload-icon">📄</span>
+									<div class="upload-text">شهادة درجة الأخصائي أو الاستشاري</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="rank_degree" name="rank_degree" accept="image/*,.pdf,.txt,.doc,.docx">
+									<div class="file-preview" id="preview_rank_degree"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div id="psychologist-section" class="role-panel">
+						<div class="form-subsection">
+							<h4>أنت خريج أي كلية / قسم <span class="required">*</span></h4>
+							<div class="inline-options">
+								<label><input type="radio" name="psych_origin" value="arts"> آداب قسم علم نفس</label>
+								<label><input type="radio" name="psych_origin" value="human_studies"> دراسات إنسانية قسم علم نفس</label>
+								<label><input type="radio" name="psych_origin" value="human_sciences"> علوم إنسانية قسم علم نفس</label>
+							</div>
+						</div>
+						<div class="form-subsection">
+							<h4>المستندات المطلوبة <span class="required">*</span></h4>
+							<div class="file-upload-grid">
+								<div class="file-upload-group" data-field="cp_grad_degree">
+									<span class="upload-icon">🎓</span>
+									<div class="upload-text">قم برفع شهادة التخرج</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="cp_grad_degree" name="cp_grad_degree" accept="image/*,.pdf,.txt,.doc,.docx">
+									<div class="file-preview" id="preview_cp_grad_degree"></div>
+								</div>
+								<div class="file-upload-group" data-field="cp_highest_degree">
+									<span class="upload-icon">🏅</span>
+									<div class="upload-text">قم برفع أعلى شهادة حصلت عليها في علم النفس الإكلينيكي (دبلوم - ماجستير - دكتوراه)</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="cp_highest_degree" name="cp_highest_degree" accept="image/*,.pdf,.txt,.doc,.docx">
+									<div class="file-preview" id="preview_cp_highest_degree"></div>
+								</div>
+							</div>
+						</div>
+						<div class="form-subsection">
+							<p>هل حصلت على تصريح مزاولة المهنة من وزارة الصحة؟ <span class="required">*</span></p>
+							<div class="inline-options">
+								<label><input type="radio" name="cp_moh_license" value="yes"> نعم</label>
+								<label><input type="radio" name="cp_moh_license" value="no"> لا</label>
+							</div>
+							<div id="cp_moh_license_upload" class="form-subsection" style="display: none;">
+								<div class="file-upload-grid">
+									<div class="file-upload-group" data-field="cp_moh_license_file">
+										<span class="upload-icon">📑</span>
+									<div class="upload-text">قم برفع تصريح مزاولة المهنة من وزارة الصحة</div>
+									<div class="upload-hint">ملفات صور أو مستندات (JPG، PNG، PDF، DOC، DOCX، TXT)</div>
+									<input type="file" id="cp_moh_license_file" name="cp_moh_license_file" accept="image/*,.pdf,.txt,.doc,.docx">
+										<div class="file-preview" id="preview_cp_moh_license_file"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="form-subsection">
+						<h4>المستندات العامة</h4>
+						<p class="section-note">يرجى رفع صورة البطاقة الشخصية (وجه وظهر).</p>
+						<div class="file-upload-grid">
+							<div class="file-upload-group" data-field="identity_front">
+								<span class="upload-icon">🪪</span>
+								<div class="upload-text">البطاقة الشخصية (وجه)</div>
+								<div class="upload-hint">صورة (JPG أو PNG)</div>
+								<input type="file" id="identity_front" name="identity_front" accept="image/*">
+								<div class="file-preview" id="preview_identity_front"></div>
+							</div>
+							<div class="file-upload-group" data-field="identity_back">
+								<span class="upload-icon">🆔</span>
+								<div class="upload-text">البطاقة الشخصية (ظهر)</div>
+								<div class="upload-hint">صورة (JPG أو PNG)</div>
+								<input type="file" id="identity_back" name="identity_back" accept="image/*">
+								<div class="file-preview" id="preview_identity_back"></div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			
-			<div class="form-group">
-				<label for="identity_back"><?php echo __( 'Identity Document (Back)', 'shrinks' ); ?></label>
-				<div class="file-upload-group" data-field="identity_back">
-					<span class="upload-icon">🆔</span>
-					<div class="upload-text"><?php echo __( 'Upload ID Back Side', 'shrinks' ); ?></div>
-					<div class="upload-hint"><?php echo __( 'Click or drag image here (ID back, max 5MB)', 'shrinks' ); ?></div>
-					<input type="file" id="identity_back" name="identity_back" accept="image/*" data-max-size="5242880">
-					<div class="file-preview" id="preview_identity_back"></div>
+			<div class="form-section">
+				<div class="section-header">
+					<h3>القسم الثالث: الشهادات والدورات</h3>
+					<p class="section-note">قم برفع جميع شهادات العلاج النفسي التي حصلت عليها، وأضف الدورات أو الخبرات ذات الصلة.</p>
+				</div>
+				<div class="section-body">
+					<div class="form-subsection">
+						<h4>قم برفع جميع شهادات العلاج النفسي التي حصلت عليها <span class="required">*</span></h4>
+						<div id="therapy-certificates">
+							<div class="dynamic-row certificate-row">
+								<input type="file" name="therapy_certificates[]" accept="image/*,.pdf,.txt,.doc,.docx" required>
+								<button type="button" class="remove-row-btn" data-remove="certificate">❌</button>
+							</div>
+						</div>
+						<button type="button" id="add-certificate-btn" class="add-btn">إضافة شهادة أخرى</button>
+						<p class="helper-text">يسمح بملفات الصور أو المستندات (JPG، PNG، PDF، DOC، DOCX، TXT).</p>
+					</div>
+					
+					<div class="form-subsection">
+						<h4>هل حضرت دورات أخرى ولم تحصل على شهادة أو لديك خبرة شخصية في أحد طرق العلاج النفسي؟</h4>
+						<div id="courses-container">
+							<div class="dynamic-row course-row">
+								<input type="text" name="course_school[]" placeholder="مدرسة العلاج النفسي" required>
+								<input type="text" name="course_place[]" placeholder="مكان الحصول عليها (أو تعليم ذاتي)">
+								<input type="text" name="course_year[]" placeholder="سنة الحصول عليها" required>
+								<button type="button" class="remove-row-btn" data-remove="course">❌</button>
+							</div>
+						</div>
+						<button type="button" id="add-course-btn" class="add-btn">إضافة دورة أخرى</button>
+					</div>
 				</div>
 			</div>
 			
-			<div class="form-group">
-				<label for="certificates"><?php echo __( 'Certificates & Qualifications', 'shrinks' ); ?></label>
-				<div class="file-upload-group" data-field="certificates" data-multiple="true">
-					<span class="upload-icon">📜</span>
-					<div class="upload-text"><?php echo __( 'Upload Certificates', 'shrinks' ); ?></div>
-					<div class="upload-hint"><?php echo __( 'Click or drag files here (PDF, JPG, PNG - multiple files, max 10MB each)', 'shrinks' ); ?></div>
-					<input type="file" id="certificates" name="certificates[]" accept=".pdf,image/*" multiple data-max-size="10485760">
-					<div class="file-preview" id="preview_certificates"></div>
-					<div class="max-files-notice" style="display: none;">
-						<?php echo __( 'Maximum 10 files allowed. Please remove some files before adding more.', 'shrinks' ); ?>
+			<div class="form-section">
+				<div class="section-header">
+					<h3>القسم الرابع: الفئات المفضلة</h3>
+					<p class="section-note">ما هي الفئات التي لديك خبرة أكثر فيها وتفضل التعامل معها وتحقق معها أفضل النتائج؟<br><small>اختر من 1 إلى 4 فئات فقط</small></p>
+				</div>
+				<div class="section-body">
+					<div class="category-list">
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="الأطفال"> الأطفال</label>
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="المراهقين والبالغين"> المراهقين والبالغين</label>
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="المسنين"> المسنين</label>
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="العلاج الزواجي ومشاكل العلاقات"> العلاج الزواجي ومشاكل العلاقات</label>
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="الاضطرابات الجنسية والجندرية"> الاضطرابات الجنسية والجندرية</label>
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="اضطرابات النوم"> اضطرابات النوم</label>
+						<label class="category-box"><input type="checkbox" name="preferred_groups[]" value="اضطرابات النوم"> علاج الصدمات</label>
+					</div>
+					<p class="helper-text max-selection-message">يمكنك اختيار أربع فئات فقط.</p>
+				</div>
+			</div>
+			
+			<div class="form-section">
+				<div class="section-header">
+					<h3>القسم الخامس: التشخيصات</h3>
+					<p class="section-note">ما هي التشخيصات التي لديك خبرة بها وتفضل التعامل معها وتحقق معها أفضل النتائج؟<br><small>يمكنك اختيار أي عدد من التشخيصات</small></p>
+				</div>
+				<div class="section-body">
+					<div id="children-dx-section" class="form-subsection" style="display: none;">
+						<h4>تشخيصات مرتبطة بالأطفال</h4>
+						<div class="diagnosis-list">
+							<label><input type="checkbox" name="dx_children[]" value="Intellectual Disability (ID)"> الإعاقة الذهنية / اضطراب النموّ العقلي — Intellectual Disability (ID)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Autism Spectrum Disorder (ASD)"> اضطراب طيف التوحّد — Autism Spectrum Disorder (ASD)</label>
+							<label><input type="checkbox" name="dx_children[]" value="ADHD"> اضطراب فرط الحركة وتشتّت الانتباه — Attention-Deficit / Hyperactivity Disorder (ADHD)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Learning Disorders"> صعوبات التعلّم — Learning Difficulties / Learning Disorders</label>
+							<label><input type="checkbox" name="dx_children[]" value="Trauma & Stressor-Related (children)"> اضطرابات الصدمة والضغوط النفسية عند الأطفال</label>
+							<label><input type="checkbox" name="dx_children[]" value="Gender Dysphoria (children)"> اضطراب الهوية الجندرية عند الأطفال</label>
+							<label><input type="checkbox" name="dx_children[]" value="Disruptive & Conduct & Behavior Modification"> اضطرابات السلوك والانضباط وتعديل السلوك</label>
+							<label><input type="checkbox" name="dx_children[]" value="Emotional Disorders (children)"> الاضطرابات العاطفية والانفعالية</label>
+							<label><input type="checkbox" name="dx_children[]" value="Habit & Somatic Disorders (children)"> اضطرابات السلوكيات والعادات</label>
+						</div>
+					</div>
+					
+					<div id="adult-dx-section" class="form-subsection" style="display: none;">
+						<h4>تشخيصات مرتبطة بالمراهقين والبالغين</h4>
+						
+						<div id="adult-dx-psychologist" style="display: none;">
+							<div class="diagnosis-list">
+								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب — Depressive Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق — Anxiety Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة</label>
+								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية</label>
+							</div>
+						</div>
+						
+						<div id="adult-dx-psychiatrist" style="display: none;">
+							<div class="diagnosis-list">
+								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب — Depressive Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق — Anxiety Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Couple & Marital Therapy"> مشكلات العلاقات الزوجية والعائلية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Schizophrenia Spectrum & Psychotic Disorders"> اضطرابات الفصام والطيف الذهاني</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster A"> اضطرابات الشخصية من النمط (أ)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Bipolar and Related Disorders"> الاضطرابات ثنائية القطب</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Dissociative Disorders"> الاضطرابات الانفصالية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Somatic Symptom and Related Disorders"> الاضطرابات الجسدية الشكل</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Substance/Medication-Induced Mental Disorders"> الاضطرابات الناتجة عن تعاطي المواد أو الأدوية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Feeding and Eating Disorders"> اضطرابات الأكل والتغذية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Sexual Dysfunctions"> الاضطرابات الجنسية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Substance-Related and Addictive Disorders"> اضطرابات الإدمان المرتبطة بالمواد</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Neurocognitive Disorders"> الاضطرابات العصبية المعرفية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Change Due to Another Medical Condition"> تغيرات الشخصية الناتجة عن حالة طبية أخرى</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Mental Disorders Due to Another Medical Condition or Medication"> الاضطرابات النفسية الناتجة عن حالة طبية أو دواء</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Medication-Induced Movement Disorders"> اضطرابات الحركة الناجمة عن الأدوية</label>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -375,13 +713,11 @@ function snks_therapist_registration_shortcode( $atts ) {
 			<div class="form-group">
 				<div class="checkbox-group">
 					<input type="checkbox" id="accept_terms" name="accept_terms" required>
-					<label for="accept_terms"><?php echo __( 'I accept the terms and conditions and privacy policy', 'shrinks' ); ?> <span class="required">*</span></label>
+					<label for="accept_terms">أوافق على الشروط والأحكام وسياسة الخصوصية <span class="required">*</span></label>
 				</div>
 			</div>
 			
-			<button type="submit" class="submit-btn" id="submit-btn">
-				<?php echo __( 'Submit Application', 'shrinks' ); ?>
-			</button>
+			<button type="submit" class="submit-btn" id="submit-btn">إرسال</button>
 		</form>
 	</div>
 	
@@ -396,7 +732,8 @@ function snks_therapist_registration_shortcode( $atts ) {
 				const $preview = $uploadGroup.find('.file-preview');
 				const fieldName = $uploadGroup.data('field');
 				const isMultiple = $uploadGroup.data('multiple') === true;
-				const maxSize = parseInt($input.data('max-size')) || 5242880; // Default 5MB
+				const maxSizeAttr = $input.attr('data-max-size');
+				const maxSize = maxSizeAttr ? parseInt(maxSizeAttr, 10) : null;
 				const maxFiles = 10;
 				
 				let selectedFiles = [];
@@ -433,7 +770,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 						const file = files[i];
 						
 						// Check file size
-						if (file.size > maxSize) {
+						if (maxSize && file.size > maxSize) {
 							const sizeMB = (maxSize / 1024 / 1024).toFixed(1);
 							alert('File "' + file.name + '" is too large. Maximum size is ' + sizeMB + 'MB');
 							continue;
@@ -546,6 +883,453 @@ function snks_therapist_registration_shortcode( $atts ) {
 		
 		// Initialize fancy uploads
 		initFancyUploads();
+
+		// Form interactivity (mirrors standalone HTML behaviour)
+		const hiddenSpecialty = document.getElementById('doctor_specialty');
+		const roleRadios = Array.from(document.querySelectorAll('input[name="role"]'));
+		const psyRankRadios = Array.from(document.querySelectorAll('input[name="psy_rank"]'));
+		const psychOriginRadios = Array.from(document.querySelectorAll('input[name="psych_origin"]'));
+		const cpMohRadios = Array.from(document.querySelectorAll('input[name="cp_moh_license"]'));
+		const psychiatristSection = document.getElementById('psychiatrist-section');
+		const psychologistSection = document.getElementById('psychologist-section');
+		const degreeUpload = document.getElementById('degree-upload');
+		const cpMohUpload = document.getElementById('cp_moh_license_upload');
+		const doctorFiles = Array.from(document.querySelectorAll('input[name="grad_cert"], input[name="practice_license"], input[name="syndicate_id"], input[name="identity_front"], input[name="identity_back"]'));
+		const degreeFile = document.querySelector('input[name="rank_degree"]');
+		const cpDegree = document.querySelector('input[name="cp_highest_degree"]');
+		const cpLicenseFile = document.querySelector('input[name="cp_moh_license_file"]');
+		const certContainer = document.getElementById('therapy-certificates');
+		const addCertBtn = document.getElementById('add-certificate-btn');
+		const courseContainer = document.getElementById('courses-container');
+		const addCourseBtn = document.getElementById('add-course-btn');
+		const preferredGroupCheckboxes = Array.from(document.querySelectorAll('input[name="preferred_groups[]"]'));
+		const maxSelectionMessage = document.querySelector('.max-selection-message');
+		const childrenDxSection = document.getElementById('children-dx-section');
+		const adultDxSection = document.getElementById('adult-dx-section');
+		const adultDxPsych = document.getElementById('adult-dx-psychiatrist');
+		const adultDxPsychologist = document.getElementById('adult-dx-psychologist');
+
+		function toArray(collection) {
+			if (!collection) {
+				return [];
+			}
+			if (Array.isArray(collection)) {
+				return collection;
+			}
+			if (NodeList.prototype.isPrototypeOf(collection)) {
+				return Array.from(collection);
+			}
+			return [collection];
+		}
+
+		function setRequired(elements, state) {
+			toArray(elements).forEach(function(element) {
+				if (element) {
+					element.required = !!state;
+				}
+			});
+		}
+
+		function showElement(element, shouldShow) {
+			if (!element) {
+				return;
+			}
+			element.style.display = shouldShow ? 'block' : 'none';
+		}
+
+		setRequired(psyRankRadios, false);
+		setRequired(psychOriginRadios, false);
+		setRequired(cpMohRadios, false);
+		setRequired(doctorFiles, false);
+		if (degreeFile) {
+			degreeFile.required = false;
+		}
+		if (cpDegree) {
+			cpDegree.required = false;
+		}
+		if (cpLicenseFile) {
+			cpLicenseFile.required = false;
+		}
+
+		function getCurrentRole() {
+			const checked = document.querySelector('input[name="role"]:checked');
+			return checked ? checked.value : '';
+		}
+
+		function updateDoctorSpecialty() {
+			if (!hiddenSpecialty) {
+				return;
+			}
+			const role = getCurrentRole();
+			let specialty = '';
+
+			if (role === 'psychiatrist') {
+				const rankRadio = document.querySelector('input[name="psy_rank"]:checked');
+				if (rankRadio && rankRadio.parentElement) {
+					specialty = rankRadio.parentElement.textContent.trim();
+				}
+				if (!specialty) {
+					specialty = 'طبيب نفسي';
+				}
+			} else if (role === 'clinical_psychologist') {
+				specialty = 'أخصائي نفسي إكلينيكي';
+			}
+
+			hiddenSpecialty.value = specialty;
+		}
+
+		function updateAdultDxByRole() {
+			if (!adultDxSection) {
+				return;
+			}
+			const adultGroupChecked = document.querySelector('input[name="preferred_groups[]"][value="المراهقين والبالغين"]:checked');
+			if (!adultGroupChecked) {
+				showElement(adultDxSection, false);
+				showElement(adultDxPsych, false);
+				showElement(adultDxPsychologist, false);
+				return;
+			}
+
+			const role = getCurrentRole();
+			showElement(adultDxSection, true);
+			if (role === 'psychiatrist') {
+				showElement(adultDxPsych, true);
+				showElement(adultDxPsychologist, false);
+			} else if (role === 'clinical_psychologist') {
+				showElement(adultDxPsychologist, true);
+				showElement(adultDxPsych, false);
+			} else {
+				showElement(adultDxPsych, false);
+				showElement(adultDxPsychologist, false);
+			}
+		}
+
+		function updateDxSectionsVisibility() {
+			const selectedValues = preferredGroupCheckboxes.filter(function(cb) {
+				return cb.checked;
+			}).map(function(cb) {
+				return cb.value;
+			});
+
+			showElement(childrenDxSection, selectedValues.includes('الأطفال'));
+			if (selectedValues.includes('المراهقين والبالغين')) {
+				updateAdultDxByRole();
+			} else {
+				showElement(adultDxSection, false);
+				showElement(adultDxPsych, false);
+				showElement(adultDxPsychologist, false);
+			}
+		}
+
+		function enforcePreferredGroupsLimit() {
+			const checkedCount = preferredGroupCheckboxes.filter(function(cb) {
+				return cb.checked;
+			}).length;
+
+			if (checkedCount >= 4) {
+				preferredGroupCheckboxes.forEach(function(cb) {
+					if (!cb.checked) {
+						cb.disabled = true;
+						if (cb.parentElement) {
+							cb.parentElement.classList.add('disabled');
+						}
+					}
+				});
+				if (maxSelectionMessage) {
+					maxSelectionMessage.style.display = 'block';
+				}
+			} else {
+				preferredGroupCheckboxes.forEach(function(cb) {
+					cb.disabled = false;
+					if (cb.parentElement) {
+						cb.parentElement.classList.remove('disabled');
+					}
+				});
+				if (maxSelectionMessage) {
+					maxSelectionMessage.style.display = 'none';
+				}
+			}
+		}
+
+		function toggleRoleSections() {
+			const role = getCurrentRole();
+
+			if (role === 'psychiatrist') {
+				showElement(psychiatristSection, true);
+				showElement(psychologistSection, false);
+				setRequired(psyRankRadios, true);
+				setRequired(psychOriginRadios, false);
+				setRequired(cpMohRadios, false);
+				setRequired(doctorFiles, true);
+				if (cpDegree) {
+					cpDegree.required = false;
+				}
+				if (cpLicenseFile) {
+					cpLicenseFile.required = false;
+				}
+			} else if (role === 'clinical_psychologist') {
+				showElement(psychiatristSection, false);
+				showElement(psychologistSection, true);
+				setRequired(psyRankRadios, false);
+				setRequired(psychOriginRadios, true);
+				setRequired(cpMohRadios, true);
+				setRequired(doctorFiles, false);
+				if (cpDegree) {
+					cpDegree.required = true;
+				}
+				if (degreeFile) {
+					degreeFile.required = false;
+				}
+			} else {
+				showElement(psychiatristSection, false);
+				showElement(psychologistSection, false);
+				setRequired(psyRankRadios, false);
+				setRequired(psychOriginRadios, false);
+				setRequired(cpMohRadios, false);
+				setRequired(doctorFiles, false);
+			}
+
+			if (role !== 'psychiatrist') {
+				showElement(degreeUpload, false);
+				if (degreeFile) {
+					degreeFile.required = false;
+				}
+			}
+
+			if (role !== 'clinical_psychologist') {
+				showElement(cpMohUpload, false);
+				if (cpLicenseFile) {
+					cpLicenseFile.required = false;
+				}
+			}
+
+			updateDoctorSpecialty();
+			updateAdultDxByRole();
+		}
+
+		function handleRankChange() {
+			const selectedRank = document.querySelector('input[name="psy_rank"]:checked');
+			if (!degreeUpload) {
+				return;
+			}
+			if (selectedRank && (selectedRank.value === 'specialist' || selectedRank.value === 'consultant')) {
+				showElement(degreeUpload, true);
+				if (degreeFile) {
+					degreeFile.required = true;
+				}
+			} else {
+				showElement(degreeUpload, false);
+				if (degreeFile) {
+					degreeFile.required = false;
+					degreeFile.value = '';
+				}
+			}
+			updateDoctorSpecialty();
+		}
+
+		function handleCpMohChange() {
+			const selectedLicense = document.querySelector('input[name="cp_moh_license"]:checked');
+			if (!cpMohUpload) {
+				return;
+			}
+			if (selectedLicense && selectedLicense.value === 'yes') {
+				showElement(cpMohUpload, true);
+				if (cpLicenseFile) {
+					cpLicenseFile.required = true;
+				}
+			} else {
+				showElement(cpMohUpload, false);
+				if (cpLicenseFile) {
+					cpLicenseFile.required = false;
+					cpLicenseFile.value = '';
+				}
+			}
+		}
+
+		function createRemoveButton(type) {
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'remove-row-btn';
+			button.textContent = '❌';
+			button.addEventListener('click', function() {
+				const container = type === 'certificate' ? certContainer : courseContainer;
+				if (!container) {
+					return;
+				}
+				const selector = type === 'certificate' ? '.certificate-row' : '.course-row';
+				const row = button.closest(selector);
+				if (!row) {
+					return;
+				}
+				const rows = container.querySelectorAll(selector);
+				if (rows.length > 1) {
+					row.remove();
+				} else {
+					row.querySelectorAll('input').forEach(function(input) {
+						input.value = '';
+					});
+				}
+				if (type === 'certificate') {
+					updateCertificateRemoveState();
+				} else {
+					updateCourseRemoveState();
+				}
+			});
+			return button;
+		}
+
+		function attachRemoveButton(row, type) {
+			if (!row) {
+				return;
+			}
+			const existing = row.querySelector('.remove-row-btn');
+			if (existing) {
+				existing.remove();
+			}
+			row.appendChild(createRemoveButton(type));
+		}
+
+		function updateCertificateRemoveState() {
+			if (!certContainer) {
+				return;
+			}
+			const rows = certContainer.querySelectorAll('.certificate-row');
+			rows.forEach(function(row) {
+				const button = row.querySelector('.remove-row-btn');
+				if (button) {
+					button.style.display = rows.length > 1 ? '' : 'none';
+				}
+			});
+		}
+
+		function updateCourseRemoveState() {
+			if (!courseContainer) {
+				return;
+			}
+			const rows = courseContainer.querySelectorAll('.course-row');
+			rows.forEach(function(row) {
+				const button = row.querySelector('.remove-row-btn');
+				if (button) {
+					button.style.display = rows.length > 1 ? '' : 'none';
+				}
+			});
+		}
+
+		function addCertificateRow() {
+			if (!certContainer) {
+				return;
+			}
+			const row = document.createElement('div');
+			row.className = 'dynamic-row certificate-row';
+
+			const input = document.createElement('input');
+			input.type = 'file';
+			input.name = 'therapy_certificates[]';
+			input.accept = 'image/*,.pdf,.txt,.doc,.docx';
+			input.required = true;
+
+			row.appendChild(input);
+			attachRemoveButton(row, 'certificate');
+			certContainer.appendChild(row);
+			updateCertificateRemoveState();
+		}
+
+		function addCourseRow() {
+			if (!courseContainer) {
+				return;
+			}
+			const row = document.createElement('div');
+			row.className = 'dynamic-row course-row';
+
+			const schoolInput = document.createElement('input');
+			schoolInput.type = 'text';
+			schoolInput.name = 'course_school[]';
+			schoolInput.placeholder = 'مدرسة العلاج النفسي';
+			schoolInput.required = true;
+
+			const placeInput = document.createElement('input');
+			placeInput.type = 'text';
+			placeInput.name = 'course_place[]';
+			placeInput.placeholder = 'مكان الحصول عليها (أو تعليم ذاتي)';
+
+			const yearInput = document.createElement('input');
+			yearInput.type = 'text';
+			yearInput.name = 'course_year[]';
+			yearInput.placeholder = 'سنة الحصول عليها';
+			yearInput.required = true;
+
+			row.appendChild(schoolInput);
+			row.appendChild(placeInput);
+			row.appendChild(yearInput);
+			attachRemoveButton(row, 'course');
+			courseContainer.appendChild(row);
+			updateCourseRemoveState();
+		}
+
+		roleRadios.forEach(function(radio) {
+			radio.addEventListener('change', function() {
+				toggleRoleSections();
+			});
+		});
+
+		psyRankRadios.forEach(function(radio) {
+			radio.addEventListener('change', function() {
+				handleRankChange();
+			});
+		});
+
+		psychOriginRadios.forEach(function(radio) {
+			radio.addEventListener('change', function() {
+				updateDoctorSpecialty();
+			});
+		});
+
+		cpMohRadios.forEach(function(radio) {
+			radio.addEventListener('change', function() {
+				handleCpMohChange();
+			});
+		});
+
+		preferredGroupCheckboxes.forEach(function(cb) {
+			cb.addEventListener('change', function() {
+				enforcePreferredGroupsLimit();
+				updateDxSectionsVisibility();
+			});
+		});
+
+		if (addCertBtn) {
+			addCertBtn.addEventListener('click', function() {
+				addCertificateRow();
+			});
+		}
+
+		if (addCourseBtn) {
+			addCourseBtn.addEventListener('click', function() {
+				addCourseRow();
+			});
+		}
+
+		if (certContainer) {
+			Array.from(certContainer.querySelectorAll('.certificate-row')).forEach(function(row) {
+				attachRemoveButton(row, 'certificate');
+			});
+		}
+
+		if (courseContainer) {
+			Array.from(courseContainer.querySelectorAll('.course-row')).forEach(function(row) {
+				attachRemoveButton(row, 'course');
+			});
+		}
+
+		toggleRoleSections();
+		handleRankChange();
+		handleCpMohChange();
+		enforcePreferredGroupsLimit();
+		updateDxSectionsVisibility();
+		updateCertificateRemoveState();
+		updateCourseRemoveState();
+		updateDoctorSpecialty();
+		
 		// Form submission handler
 		$('#therapist-registration-form').on('submit', function(e) {
 			e.preventDefault();
@@ -554,10 +1338,12 @@ function snks_therapist_registration_shortcode( $atts ) {
 			const messagesDiv = $('#form-messages');
 			
 			// Disable submit button and show loading
-			submitBtn.prop('disabled', true).text('<?php echo esc_js( __( 'Submitting...', 'shrinks' ) ); ?>');
+			submitBtn.prop('disabled', true).text('جاري الإرسال...');
 			messagesDiv.empty();
 			
 			// Prepare form data
+			updateDoctorSpecialty();
+			
 			const formData = new FormData(this);
 			formData.append('action', 'register_therapist_shortcode');
 			formData.append('nonce', '<?php echo wp_create_nonce( 'therapist_registration_shortcode' ); ?>');
@@ -590,7 +1376,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					messagesDiv.html('<div class="alert alert-error">An error occurred. Please try again.</div>');
 				},
 				complete: function() {
-					submitBtn.prop('disabled', false).text('<?php echo esc_js( __( 'Submit Application', 'shrinks' ) ); ?>');
+					submitBtn.prop('disabled', false).text('إرسال');
 				}
 			});
 		});
@@ -713,12 +1499,7 @@ function snks_handle_therapist_registration_shortcode() {
 	}
 	
 	// Validate required fields
-	$required_fields = array( 'name', 'name_en', 'phone', 'whatsapp', 'doctor_specialty' );
-	
-	// Add email to required fields if it's required
-	if ( $settings['require_email'] ) {
-		$required_fields[] = 'email';
-	}
+	$required_fields = array( 'name', 'email', 'phone', 'whatsapp', 'role' );
 	
 	foreach ( $required_fields as $field ) {
 		if ( empty( $_POST[ $field ] ) ) {
@@ -730,6 +1511,109 @@ function snks_handle_therapist_registration_shortcode() {
 	if ( ! empty( $_POST['email'] ) && ! is_email( $_POST['email'] ) ) {
 		wp_send_json_error( array( 'message' => 'Invalid email address' ) );
 	}
+	
+	$role = sanitize_text_field( $_POST['role'] ?? '' );
+	$valid_roles = array( 'psychiatrist', 'clinical_psychologist' );
+	if ( ! in_array( $role, $valid_roles, true ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى اختيار المسمى الوظيفي الصحيح.' ) );
+	}
+	
+	if ( empty( $_POST['doctor_specialty'] ) ) {
+		$_POST['doctor_specialty'] = 'psychiatrist' === $role ? 'طبيب نفسي' : 'أخصائي نفسي إكلينيكي';
+	}
+	
+	if ( empty( $_POST['doctor_specialty'] ) ) {
+		wp_send_json_error( array( 'message' => 'Missing required field: doctor_specialty' ) );
+	}
+	
+	$has_uploaded_file = function( $field_name ) {
+		return isset( $_FILES[ $field_name ] ) && ! empty( $_FILES[ $field_name ]['name'] );
+	};
+	
+	if ( 'psychiatrist' === $role ) {
+		if ( empty( $_POST['psy_rank'] ) ) {
+			wp_send_json_error( array( 'message' => 'يرجى اختيار الدرجة المهنية للطبيب النفسي.' ) );
+		}
+		
+		$required_files = array( 'grad_cert', 'practice_license', 'syndicate_id' );
+		foreach ( $required_files as $file_field ) {
+			if ( ! $has_uploaded_file( $file_field ) ) {
+				wp_send_json_error( array( 'message' => 'يرجى رفع جميع المستندات المطلوبة للطبيب النفسي.' ) );
+			}
+		}
+		
+		if ( in_array( $_POST['psy_rank'], array( 'specialist', 'consultant' ), true ) && ! $has_uploaded_file( 'rank_degree' ) ) {
+			wp_send_json_error( array( 'message' => 'يرجى رفع شهادة درجة الأخصائي أو الاستشاري.' ) );
+		}
+	} elseif ( 'clinical_psychologist' === $role ) {
+		if ( empty( $_POST['psych_origin'] ) ) {
+			wp_send_json_error( array( 'message' => 'يرجى اختيار جهة التخرج للأخصائي النفسي الإكلينيكي.' ) );
+		}
+		
+		if ( empty( $_POST['cp_moh_license'] ) ) {
+			wp_send_json_error( array( 'message' => 'يرجى تحديد حالة تصريح وزارة الصحة.' ) );
+		}
+		
+		$required_files = array( 'cp_grad_degree', 'cp_highest_degree' );
+		foreach ( $required_files as $file_field ) {
+			if ( ! $has_uploaded_file( $file_field ) ) {
+				wp_send_json_error( array( 'message' => 'يرجى رفع جميع المستندات المطلوبة للأخصائي النفسي الإكلينيكي.' ) );
+			}
+		}
+		
+		if ( 'yes' === $_POST['cp_moh_license'] && ! $has_uploaded_file( 'cp_moh_license_file' ) ) {
+			wp_send_json_error( array( 'message' => 'يرجى رفع تصريح وزارة الصحة.' ) );
+		}
+	}
+	
+	foreach ( array( 'identity_front', 'identity_back' ) as $identity_field ) {
+		if ( ! $has_uploaded_file( $identity_field ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى رفع صورة البطاقة الشخصية (وجه وظهر).' ) );
+		}
+	}
+	
+	// Ensure at least one therapy certificate
+	$has_certificate = false;
+	if ( isset( $_FILES['therapy_certificates'] ) && isset( $_FILES['therapy_certificates']['name'] ) && is_array( $_FILES['therapy_certificates']['name'] ) ) {
+		foreach ( $_FILES['therapy_certificates']['name'] as $certificate_name ) {
+			if ( ! empty( $certificate_name ) ) {
+				$has_certificate = true;
+				break;
+			}
+		}
+	}
+	if ( ! $has_certificate ) {
+		wp_send_json_error( array( 'message' => 'يرجى رفع شهادة علاج نفسي واحدة على الأقل.' ) );
+	}
+	
+	// Validate courses
+	$course_schools = isset( $_POST['course_school'] ) ? (array) $_POST['course_school'] : array();
+	$course_years = isset( $_POST['course_year'] ) ? (array) $_POST['course_year'] : array();
+	$valid_course = false;
+	
+	foreach ( $course_schools as $index => $school ) {
+		$school = trim( $school );
+		$year = trim( $course_years[ $index ] ?? '' );
+		
+		if ( '' !== $school && '' !== $year ) {
+			$valid_course = true;
+			break;
+		}
+	}
+	
+	if ( ! $valid_course ) {
+		wp_send_json_error( array( 'message' => 'يرجى إضافة دورة واحدة على الأقل مع سنة الحصول عليها.' ) );
+	}
+	
+	// Validate preferred groups selection
+	$preferred_groups = isset( $_POST['preferred_groups'] ) ? array_filter( (array) $_POST['preferred_groups'], 'strlen' ) : array();
+	if ( empty( $preferred_groups ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى اختيار الفئات التي تفضل العمل معها.' ) );
+	}
+	if ( count( $preferred_groups ) > 4 ) {
+		wp_send_json_error( array( 'message' => 'يمكن اختيار أربع فئات فقط كحد أقصى.' ) );
+	}
+	$_POST['preferred_groups'] = $preferred_groups;
 	
 	// Process phone numbers with country codes
 	$phone = $_POST['phone'];
@@ -871,7 +1755,18 @@ function snks_handle_therapist_registration_otp_verification() {
 	
 	// Handle file uploads using the stored $_FILES data
 	$uploaded_files = array();
-	$file_fields = array( 'profile_image', 'identity_front', 'identity_back' );
+	$file_fields = array(
+		'profile_image',
+		'identity_front',
+		'identity_back',
+		'grad_cert',
+		'practice_license',
+		'syndicate_id',
+		'rank_degree',
+		'cp_grad_degree',
+		'cp_highest_degree',
+		'cp_moh_license_file',
+	);
 	
 	// Restore $_FILES from stored data for processing
 	if ( $files_data ) {
@@ -897,27 +1792,91 @@ function snks_handle_therapist_registration_otp_verification() {
 			}
 		}
 		
-		// Handle certificates (multiple files)
-		$certificates = array();
-		if ( ! empty( $files_data['certificates'] ) ) {
-			$files = $files_data['certificates'];
-			for ( $i = 0; $i < count( $files['name'] ); $i++ ) {
-				if ( ! empty( $files['name'][ $i ] ) && file_exists( $files['tmp_name'][ $i ] ) ) {
-					$_FILES['certificate_' . $i] = array(
-						'name' => $files['name'][ $i ],
-						'type' => $files['type'][ $i ],
-						'tmp_name' => $files['tmp_name'][ $i ],
-						'error' => $files['error'][ $i ],
-						'size' => $files['size'][ $i ]
-					);
-					
-					$attachment_id = media_handle_upload( 'certificate_' . $i, 0 );
-					if ( ! is_wp_error( $attachment_id ) ) {
-						$certificates[] = $attachment_id;
-					}
+	// Handle certificates (multiple files)
+	$therapy_certificate_ids = array();
+	$certificate_files = $files_data['therapy_certificates'] ?? $files_data['certificates'] ?? null;
+	if ( ! empty( $certificate_files ) && isset( $certificate_files['name'] ) && is_array( $certificate_files['name'] ) ) {
+		$file_count = count( $certificate_files['name'] );
+		for ( $i = 0; $i < $file_count; $i++ ) {
+			if ( ! empty( $certificate_files['name'][ $i ] ) && file_exists( $certificate_files['tmp_name'][ $i ] ) ) {
+				$_FILES[ 'therapy_certificate_' . $i ] = array(
+					'name'     => $certificate_files['name'][ $i ],
+					'type'     => $certificate_files['type'][ $i ],
+					'tmp_name' => $certificate_files['tmp_name'][ $i ],
+					'error'    => $certificate_files['error'][ $i ],
+					'size'     => $certificate_files['size'][ $i ],
+				);
+				
+				$attachment_id = media_handle_upload( 'therapy_certificate_' . $i, 0 );
+				if ( ! is_wp_error( $attachment_id ) ) {
+					$therapy_certificate_ids[] = $attachment_id;
 				}
 			}
 		}
+	}
+	}
+	
+	// Prepare structured data
+	$role = sanitize_text_field( $form_data['role'] ?? '' );
+	$psychiatrist_rank = '';
+	if ( 'psychiatrist' === $role ) {
+		$rank_key = $form_data['psy_rank'] ?? '';
+		$rank_map = array(
+			'resident' => 'طبيب مقيم طب نفسي',
+			'specialist' => 'أخصائي طب نفسي',
+			'consultant' => 'استشاري طب نفسي',
+		);
+		$psychiatrist_rank = isset( $rank_map[ $rank_key ] ) ? $rank_map[ $rank_key ] : sanitize_text_field( $rank_key );
+	}
+	
+	$psych_origin = '';
+	if ( 'clinical_psychologist' === $role ) {
+		$origin_key = $form_data['psych_origin'] ?? '';
+		$origin_map = array(
+			'arts' => 'آداب قسم علم نفس',
+			'human_studies' => 'دراسات إنسانية قسم علم نفس',
+			'human_sciences' => 'علوم إنسانية قسم علم نفس',
+		);
+		$psych_origin = isset( $origin_map[ $origin_key ] ) ? $origin_map[ $origin_key ] : sanitize_text_field( $origin_key );
+	}
+	
+	$cp_moh_license = 'clinical_psychologist' === $role ? sanitize_text_field( $form_data['cp_moh_license'] ?? '' ) : '';
+	
+	$courses = array();
+	if ( ! empty( $form_data['course_school'] ) && is_array( $form_data['course_school'] ) ) {
+		$schools = $form_data['course_school'];
+		$places = $form_data['course_place'] ?? array();
+		$years = $form_data['course_year'] ?? array();
+		$course_count = count( $schools );
+		
+		for ( $i = 0; $i < $course_count; $i++ ) {
+			$school = sanitize_text_field( $schools[ $i ] ?? '' );
+			$place = sanitize_text_field( $places[ $i ] ?? '' );
+			$year = sanitize_text_field( $years[ $i ] ?? '' );
+			
+			if ( '' !== $school && '' !== $year ) {
+				$courses[] = array(
+					'school' => $school,
+					'place'  => $place,
+					'year'   => $year,
+				);
+			}
+		}
+	}
+	
+	$preferred_groups = array();
+	if ( ! empty( $form_data['preferred_groups'] ) ) {
+		$preferred_groups = array_map( 'sanitize_text_field', (array) $form_data['preferred_groups'] );
+	}
+	
+	$diagnoses_children = array();
+	if ( ! empty( $form_data['dx_children'] ) ) {
+		$diagnoses_children = array_map( 'sanitize_text_field', (array) $form_data['dx_children'] );
+	}
+	
+	$diagnoses_adult = array();
+	if ( ! empty( $form_data['dx_adult'] ) ) {
+		$diagnoses_adult = array_map( 'sanitize_text_field', (array) $form_data['dx_adult'] );
 	}
 	
 	// Insert into database
@@ -928,20 +1887,39 @@ function snks_handle_therapist_registration_otp_verification() {
 		$table_name,
 		array(
 			'name' => sanitize_text_field( $form_data['name'] ),
-			'name_en' => sanitize_text_field( $form_data['name_en'] ),
+			'name_en' => sanitize_text_field( $form_data['name_en'] ?? '' ),
 			'email' => sanitize_email( $form_data['email'] ?? '' ),
 			'phone' => sanitize_text_field( $phone ),
 			'whatsapp' => sanitize_text_field( $whatsapp ),
-			'doctor_specialty' => sanitize_text_field( $form_data['doctor_specialty'] ),
+			'doctor_specialty' => sanitize_text_field( $form_data['doctor_specialty'] ?? '' ),
+			'role' => $role,
+			'psychiatrist_rank' => $psychiatrist_rank,
+			'psych_origin' => $psych_origin,
+			'cp_moh_license' => $cp_moh_license,
+			'graduate_certificate' => $uploaded_files['grad_cert'] ?? null,
+			'practice_license' => $uploaded_files['practice_license'] ?? null,
+			'syndicate_card' => $uploaded_files['syndicate_id'] ?? null,
+			'rank_certificate' => $uploaded_files['rank_degree'] ?? null,
+			'cp_graduate_certificate' => $uploaded_files['cp_grad_degree'] ?? null,
+			'cp_highest_degree' => $uploaded_files['cp_highest_degree'] ?? null,
+			'cp_moh_license_file' => $uploaded_files['cp_moh_license_file'] ?? null,
 			'profile_image' => $uploaded_files['profile_image'] ?? null,
 			'identity_front' => $uploaded_files['identity_front'] ?? null,
 			'identity_back' => $uploaded_files['identity_back'] ?? null,
-			'certificates' => ! empty( $certificates ) ? json_encode( $certificates ) : null,
+			'certificates' => ! empty( $therapy_certificate_ids ) ? wp_json_encode( $therapy_certificate_ids ) : null,
+			'therapy_courses' => ! empty( $courses ) ? wp_json_encode( $courses ) : null,
+			'preferred_groups' => ! empty( $preferred_groups ) ? wp_json_encode( $preferred_groups ) : null,
+			'diagnoses_children' => ! empty( $diagnoses_children ) ? wp_json_encode( $diagnoses_children ) : null,
+			'diagnoses_adult' => ! empty( $diagnoses_adult ) ? wp_json_encode( $diagnoses_adult ) : null,
 			'status' => 'pending',
 			'otp_method' => $settings['otp_method'],
 			'submitted_at' => current_time( 'mysql' )
 		),
-		array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s', '%s', '%s' )
+		array(
+			'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
+			'%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d',
+			'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'
+		)
 	);
 	
 	if ( $result ) {

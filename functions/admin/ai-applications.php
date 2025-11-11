@@ -344,6 +344,71 @@ function snks_display_application_details( $application_id ) {
 	if ( !$application ) {
 		wp_die( 'Application not found.' );
 	}
+	
+	$role_labels = array(
+		'psychiatrist' => 'طبيب نفسي',
+		'clinical_psychologist' => 'أخصائي نفسي إكلينيكي',
+	);
+	$role_label = isset( $role_labels[ $application->role ] ) ? $role_labels[ $application->role ] : ( $application->role ?: '—' );
+	
+	$cp_moh_label = '';
+	if ( 'clinical_psychologist' === $application->role ) {
+		if ( 'yes' === $application->cp_moh_license ) {
+			$cp_moh_label = 'نعم';
+		} elseif ( 'no' === $application->cp_moh_license ) {
+			$cp_moh_label = 'لا';
+		} else {
+			$cp_moh_label = '—';
+		}
+	}
+	
+	$preferred_groups = array();
+	if ( ! empty( $application->preferred_groups ) ) {
+		$decoded_groups = json_decode( $application->preferred_groups, true );
+		if ( is_array( $decoded_groups ) ) {
+			$preferred_groups = array_filter( array_map( 'trim', $decoded_groups ) );
+		}
+	}
+	
+	$therapy_courses = array();
+	if ( ! empty( $application->therapy_courses ) ) {
+		$decoded_courses = json_decode( $application->therapy_courses, true );
+		if ( is_array( $decoded_courses ) ) {
+			$therapy_courses = $decoded_courses;
+		}
+	}
+	
+	$diagnoses_children = array();
+	if ( ! empty( $application->diagnoses_children ) ) {
+		$decoded_children = json_decode( $application->diagnoses_children, true );
+		if ( is_array( $decoded_children ) ) {
+			$diagnoses_children = array_filter( $decoded_children );
+		}
+	}
+	
+	$diagnoses_adult = array();
+	if ( ! empty( $application->diagnoses_adult ) ) {
+		$decoded_adult = json_decode( $application->diagnoses_adult, true );
+		if ( is_array( $decoded_adult ) ) {
+			$diagnoses_adult = array_filter( $decoded_adult );
+		}
+	}
+	
+	$render_document = function( $attachment_id ) {
+		if ( empty( $attachment_id ) ) {
+			echo 'No document uploaded';
+			return;
+		}
+		
+		$attachment = get_post( $attachment_id );
+		$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $attachment_id ) ) ) : 'Document';
+		
+		if ( wp_attachment_is_image( $attachment_id ) ) {
+			echo wp_get_attachment_image( $attachment_id, 'thumbnail', false, array( 'style' => 'max-width: 150px; height: auto;' ) );
+		} else {
+			echo '<a href="' . esc_url( wp_get_attachment_url( $attachment_id ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+		}
+	};
 	?>
 	<div class="wrap">
 		<h1><?php echo $application->status === 'approved' ? 'Therapist Profile' : 'Application Details'; ?></h1>
@@ -356,12 +421,8 @@ function snks_display_application_details( $application_id ) {
 					<td><?php echo esc_html( $application->name ); ?></td>
 				</tr>
 				<tr>
-					<th>Name (English)</th>
-					<td><?php echo esc_html( $application->name_en ); ?></td>
-				</tr>
-				<tr>
 					<th>Email</th>
-					<td><?php echo esc_html( $application->email ); ?></td>
+					<td><?php echo $application->email ? esc_html( $application->email ) : '—'; ?></td>
 				</tr>
 				<tr>
 					<th>Phone</th>
@@ -372,24 +433,124 @@ function snks_display_application_details( $application_id ) {
 					<td><?php echo esc_html( $application->whatsapp ); ?></td>
 				</tr>
 				<tr>
+					<th>Role</th>
+					<td><?php echo esc_html( $role_label ); ?></td>
+				</tr>
+				<?php if ( ! empty( $application->psychiatrist_rank ) ) : ?>
+				<tr>
+					<th>Psychiatrist Rank</th>
+					<td><?php echo esc_html( $application->psychiatrist_rank ); ?></td>
+				</tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $application->psych_origin ) ) : ?>
+				<tr>
+					<th>Psychology Origin</th>
+					<td><?php echo esc_html( $application->psych_origin ); ?></td>
+				</tr>
+				<?php endif; ?>
+				<?php if ( 'clinical_psychologist' === $application->role ) : ?>
+				<tr>
+					<th>MOH License</th>
+					<td><?php echo esc_html( $cp_moh_label ); ?></td>
+				</tr>
+				<?php endif; ?>
+				<tr>
 					<th>Specialty</th>
 					<td><?php echo esc_html( $application->doctor_specialty ); ?></td>
 				</tr>
+			</table>
+		</div>
+		
+		<?php if ( $application->experience_years || $application->education || $application->bio || $application->bio_en ) : ?>
+		<div class="card">
+			<h2>Additional Profile Details</h2>
+			<table class="form-table">
+				<?php if ( $application->experience_years ) : ?>
 				<tr>
 					<th>Experience Years</th>
 					<td><?php echo esc_html( $application->experience_years ); ?></td>
 				</tr>
+				<?php endif; ?>
+				<?php if ( $application->education ) : ?>
 				<tr>
 					<th>Education</th>
 					<td><?php echo esc_html( $application->education ); ?></td>
 				</tr>
+				<?php endif; ?>
+				<?php if ( $application->bio ) : ?>
 				<tr>
 					<th>Bio (Arabic)</th>
 					<td><?php echo esc_html( $application->bio ); ?></td>
 				</tr>
+				<?php endif; ?>
+				<?php if ( $application->bio_en ) : ?>
 				<tr>
 					<th>Bio (English)</th>
 					<td><?php echo esc_html( $application->bio_en ); ?></td>
+				</tr>
+				<?php endif; ?>
+			</table>
+		</div>
+		<?php endif; ?>
+		
+		<div class="card">
+			<h2>Expertise & Preferences</h2>
+			<table class="form-table">
+				<tr>
+					<th>Preferred Groups</th>
+					<td>
+						<?php
+						if ( ! empty( $preferred_groups ) ) {
+							echo esc_html( implode( '، ', $preferred_groups ) );
+						} else {
+							echo '—';
+						}
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th>Therapy Courses / Experiences</th>
+					<td>
+						<?php if ( ! empty( $therapy_courses ) ) : ?>
+							<ul>
+								<?php foreach ( $therapy_courses as $course ) : ?>
+									<?php
+									$school = isset( $course['school'] ) ? $course['school'] : '';
+									$place = isset( $course['place'] ) ? $course['place'] : '';
+									$year  = isset( $course['year'] ) ? $course['year'] : '';
+									$details = array_filter( array( $place, $year ) );
+									?>
+									<li><?php echo esc_html( $school ); ?><?php echo ! empty( $details ) ? ' — ' . esc_html( implode( ' / ', $details ) ) : ''; ?></li>
+								<?php endforeach; ?>
+							</ul>
+						<?php else : ?>
+							—
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th>Diagnoses (Children)</th>
+					<td>
+						<?php
+						if ( ! empty( $diagnoses_children ) ) {
+							echo esc_html( implode( '، ', $diagnoses_children ) );
+						} else {
+							echo '—';
+						}
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th>Diagnoses (Adults)</th>
+					<td>
+						<?php
+						if ( ! empty( $diagnoses_adult ) ) {
+							echo esc_html( implode( '، ', $diagnoses_adult ) );
+						} else {
+							echo '—';
+						}
+						?>
+					</td>
 				</tr>
 			</table>
 		</div>
@@ -409,43 +570,39 @@ function snks_display_application_details( $application_id ) {
 				</tr>
 				<tr>
 					<th>Identity Front</th>
-					<td>
-						<?php if ( !empty( $application->identity_front ) ) : ?>
-							<?php 
-							$attachment = get_post( $application->identity_front );
-							$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_front ) ) ) : 'Document';
-							
-							// Check if it's an image
-							if ( wp_attachment_is_image( $application->identity_front ) ) {
-								echo wp_get_attachment_image( $application->identity_front, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
-							} else {
-								echo '<a href="' . wp_get_attachment_url( $application->identity_front ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
-							}
-							?>
-						<?php else : ?>
-							No document uploaded
-						<?php endif; ?>
-					</td>
+					<td><?php $render_document( $application->identity_front ); ?></td>
 				</tr>
 				<tr>
 					<th>Identity Back</th>
-					<td>
-						<?php if ( !empty( $application->identity_back ) ) : ?>
-							<?php 
-							$attachment = get_post( $application->identity_back );
-							$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->identity_back ) ) ) : 'Document';
-							
-							// Check if it's an image
-							if ( wp_attachment_is_image( $application->identity_back ) ) {
-								echo wp_get_attachment_image( $application->identity_back, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
-							} else {
-								echo '<a href="' . wp_get_attachment_url( $application->identity_back ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
-							}
-							?>
-						<?php else : ?>
-							No document uploaded
-						<?php endif; ?>
-					</td>
+					<td><?php $render_document( $application->identity_back ); ?></td>
+				</tr>
+				<tr>
+					<th>Graduate Certificate</th>
+					<td><?php $render_document( $application->graduate_certificate ); ?></td>
+				</tr>
+				<tr>
+					<th>Practice License</th>
+					<td><?php $render_document( $application->practice_license ); ?></td>
+				</tr>
+				<tr>
+					<th>Syndicate Card</th>
+					<td><?php $render_document( $application->syndicate_card ); ?></td>
+				</tr>
+				<tr>
+					<th>Rank Certificate</th>
+					<td><?php $render_document( $application->rank_certificate ); ?></td>
+				</tr>
+				<tr>
+					<th>Clinical Graduate Certificate</th>
+					<td><?php $render_document( $application->cp_graduate_certificate ); ?></td>
+				</tr>
+				<tr>
+					<th>Highest Clinical Degree</th>
+					<td><?php $render_document( $application->cp_highest_degree ); ?></td>
+				</tr>
+				<tr>
+					<th>MOH License Document</th>
+					<td><?php $render_document( $application->cp_moh_license_file ); ?></td>
 				</tr>
 				<tr>
 					<th>Certificates</th>
@@ -589,6 +746,38 @@ function snks_display_application_edit_form( $application_id ) {
 	
 	// Enqueue media uploader
 	wp_enqueue_media();
+	
+	$preferred_groups_value = '';
+	if ( ! empty( $application->preferred_groups ) ) {
+		$groups_decoded = json_decode( $application->preferred_groups, true );
+		if ( is_array( $groups_decoded ) ) {
+			$preferred_groups_value = wp_json_encode( $groups_decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		}
+	}
+	
+	$therapy_courses_value = '';
+	if ( ! empty( $application->therapy_courses ) ) {
+		$courses_decoded = json_decode( $application->therapy_courses, true );
+		if ( is_array( $courses_decoded ) ) {
+			$therapy_courses_value = wp_json_encode( $courses_decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		}
+	}
+	
+	$diagnoses_children_value = '';
+	if ( ! empty( $application->diagnoses_children ) ) {
+		$children_decoded = json_decode( $application->diagnoses_children, true );
+		if ( is_array( $children_decoded ) ) {
+			$diagnoses_children_value = wp_json_encode( $children_decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		}
+	}
+	
+	$diagnoses_adult_value = '';
+	if ( ! empty( $application->diagnoses_adult ) ) {
+		$adult_decoded = json_decode( $application->diagnoses_adult, true );
+		if ( is_array( $adult_decoded ) ) {
+			$diagnoses_adult_value = wp_json_encode( $adult_decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
+		}
+	}
 	?>
 	<div class="wrap">
 		<h1>Edit Therapist Profile</h1>
@@ -640,6 +829,68 @@ function snks_display_application_edit_form( $application_id ) {
 					<tr>
 						<th><label for="bio_en">Bio (English)</label></th>
 						<td><textarea id="bio_en" name="bio_en" rows="4" class="large-text" autocomplete="on"><?php echo esc_textarea( $application->bio_en ); ?></textarea></td>
+					</tr>
+				</table>
+			</div>
+			
+			<div class="card">
+				<h2>Professional Details</h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="role">Role</label></th>
+						<td>
+							<select id="role" name="role">
+								<option value="">Select role</option>
+								<option value="psychiatrist" <?php selected( $application->role, 'psychiatrist' ); ?>>طبيب نفسي</option>
+								<option value="clinical_psychologist" <?php selected( $application->role, 'clinical_psychologist' ); ?>>أخصائي نفسي إكلينيكي</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="psychiatrist_rank">Psychiatrist Rank</label></th>
+						<td><input type="text" id="psychiatrist_rank" name="psychiatrist_rank" value="<?php echo esc_attr( $application->psychiatrist_rank ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="psych_origin">Psychology Origin</label></th>
+						<td><input type="text" id="psych_origin" name="psych_origin" value="<?php echo esc_attr( $application->psych_origin ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th><label for="cp_moh_license">MOH License</label></th>
+						<td>
+							<select id="cp_moh_license" name="cp_moh_license">
+								<option value="" <?php selected( $application->cp_moh_license, '' ); ?>>—</option>
+								<option value="yes" <?php selected( $application->cp_moh_license, 'yes' ); ?>>نعم</option>
+								<option value="no" <?php selected( $application->cp_moh_license, 'no' ); ?>>لا</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="preferred_groups">Preferred Groups (JSON)</label></th>
+						<td>
+							<textarea id="preferred_groups" name="preferred_groups" rows="4" class="large-text code"><?php echo esc_textarea( $preferred_groups_value ); ?></textarea>
+							<p class="description">JSON array of preferred groups (leave empty to clear).</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="therapy_courses">Therapy Courses (JSON)</label></th>
+						<td>
+							<textarea id="therapy_courses" name="therapy_courses" rows="6" class="large-text code"><?php echo esc_textarea( $therapy_courses_value ); ?></textarea>
+							<p class="description">JSON array of courses. Example: [{"school":"School","place":"Location","year":"2023"}]</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="diagnoses_children">Diagnoses (Children) JSON</label></th>
+						<td>
+							<textarea id="diagnoses_children" name="diagnoses_children" rows="4" class="large-text code"><?php echo esc_textarea( $diagnoses_children_value ); ?></textarea>
+							<p class="description">JSON array of diagnoses (leave empty to clear).</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="diagnoses_adult">Diagnoses (Adults) JSON</label></th>
+						<td>
+							<textarea id="diagnoses_adult" name="diagnoses_adult" rows="4" class="large-text code"><?php echo esc_textarea( $diagnoses_adult_value ); ?></textarea>
+							<p class="description">JSON array of diagnoses (leave empty to clear).</p>
+						</td>
 					</tr>
 				</table>
 			</div>
@@ -754,6 +1005,153 @@ function snks_display_application_edit_form( $application_id ) {
 							</div>
 							<button type="button" class="button" onclick="snks_upload_document('identity_back')">Upload Document</button>
 							<button type="button" class="button" onclick="snks_remove_document('identity_back')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="graduate_certificate">Graduate Certificate</label></th>
+						<td>
+							<input type="hidden" id="graduate_certificate" name="graduate_certificate" value="<?php echo esc_attr( $application->graduate_certificate ); ?>" />
+							<div id="graduate_certificate_preview">
+								<?php if ( ! empty( $application->graduate_certificate ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->graduate_certificate );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->graduate_certificate ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->graduate_certificate ) ) {
+										echo wp_get_attachment_image( $application->graduate_certificate, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->graduate_certificate ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('graduate_certificate')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('graduate_certificate')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="practice_license">Practice License</label></th>
+						<td>
+							<input type="hidden" id="practice_license" name="practice_license" value="<?php echo esc_attr( $application->practice_license ); ?>" />
+							<div id="practice_license_preview">
+								<?php if ( ! empty( $application->practice_license ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->practice_license );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->practice_license ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->practice_license ) ) {
+										echo wp_get_attachment_image( $application->practice_license, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->practice_license ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('practice_license')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('practice_license')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="syndicate_card">Syndicate Card</label></th>
+						<td>
+							<input type="hidden" id="syndicate_card" name="syndicate_card" value="<?php echo esc_attr( $application->syndicate_card ); ?>" />
+							<div id="syndicate_card_preview">
+								<?php if ( ! empty( $application->syndicate_card ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->syndicate_card );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->syndicate_card ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->syndicate_card ) ) {
+										echo wp_get_attachment_image( $application->syndicate_card, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->syndicate_card ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('syndicate_card')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('syndicate_card')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="rank_certificate">Rank Certificate</label></th>
+						<td>
+							<input type="hidden" id="rank_certificate" name="rank_certificate" value="<?php echo esc_attr( $application->rank_certificate ); ?>" />
+							<div id="rank_certificate_preview">
+								<?php if ( ! empty( $application->rank_certificate ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->rank_certificate );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->rank_certificate ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->rank_certificate ) ) {
+										echo wp_get_attachment_image( $application->rank_certificate, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->rank_certificate ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('rank_certificate')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('rank_certificate')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cp_graduate_certificate">Clinical Graduate Certificate</label></th>
+						<td>
+							<input type="hidden" id="cp_graduate_certificate" name="cp_graduate_certificate" value="<?php echo esc_attr( $application->cp_graduate_certificate ); ?>" />
+							<div id="cp_graduate_certificate_preview">
+								<?php if ( ! empty( $application->cp_graduate_certificate ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->cp_graduate_certificate );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->cp_graduate_certificate ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->cp_graduate_certificate ) ) {
+										echo wp_get_attachment_image( $application->cp_graduate_certificate, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->cp_graduate_certificate ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('cp_graduate_certificate')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('cp_graduate_certificate')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cp_highest_degree">Highest Clinical Degree</label></th>
+						<td>
+							<input type="hidden" id="cp_highest_degree" name="cp_highest_degree" value="<?php echo esc_attr( $application->cp_highest_degree ); ?>" />
+							<div id="cp_highest_degree_preview">
+								<?php if ( ! empty( $application->cp_highest_degree ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->cp_highest_degree );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->cp_highest_degree ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->cp_highest_degree ) ) {
+										echo wp_get_attachment_image( $application->cp_highest_degree, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->cp_highest_degree ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('cp_highest_degree')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('cp_highest_degree')">Remove</button>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="cp_moh_license_file">MOH License Document</label></th>
+						<td>
+							<input type="hidden" id="cp_moh_license_file" name="cp_moh_license_file" value="<?php echo esc_attr( $application->cp_moh_license_file ); ?>" />
+							<div id="cp_moh_license_file_preview">
+								<?php if ( ! empty( $application->cp_moh_license_file ) ) : ?>
+									<?php 
+									$attachment = get_post( $application->cp_moh_license_file );
+									$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $application->cp_moh_license_file ) ) ) : 'Document';
+									if ( $attachment && wp_attachment_is_image( $application->cp_moh_license_file ) ) {
+										echo wp_get_attachment_image( $application->cp_moh_license_file, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') );
+									} else {
+										echo '<a href="' . esc_url( wp_get_attachment_url( $application->cp_moh_license_file ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+									}
+									?>
+								<?php endif; ?>
+							</div>
+							<button type="button" class="button" onclick="snks_upload_document('cp_moh_license_file')">Upload Document</button>
+							<button type="button" class="button" onclick="snks_remove_document('cp_moh_license_file')">Remove</button>
 						</td>
 					</tr>
 					<tr>
@@ -1049,27 +1447,72 @@ function snks_save_application_data( $application_id ) {
 	
 	$fields = [
 		'name', 'name_en', 'email', 'phone', 'whatsapp', 'doctor_specialty',
+		'role', 'psychiatrist_rank', 'psych_origin', 'cp_moh_license',
 		'experience_years', 'education', 'bio', 'bio_en',
-		'profile_image', 'identity_front', 'identity_back', 'certificates',
+		'profile_image', 'identity_front', 'identity_back',
+		'graduate_certificate', 'practice_license', 'syndicate_card', 'rank_certificate',
+		'cp_graduate_certificate', 'cp_highest_degree', 'cp_moh_license_file',
+		'certificates', 'therapy_courses', 'preferred_groups', 'diagnoses_children', 'diagnoses_adult',
 		'rating', 'total_ratings', 'ai_bio', 'ai_bio_en', 'ai_certifications',
 		'ai_earliest_slot', 'show_on_ai_site'
 	];
 	
 	$data = [];
 	foreach ( $fields as $field ) {
-		if ( isset( $_POST[$field] ) ) {
-			// Handle different field types
+		if ( isset( $_POST[ $field ] ) ) {
+			$value = wp_unslash( $_POST[ $field ] );
+			
 			switch ( $field ) {
 				case 'rating':
+					$data[ $field ] = floatval( $value );
+					break;
 				case 'total_ratings':
 				case 'ai_earliest_slot':
-					$data[$field] = floatval( $_POST[$field] );
+					$data[ $field ] = intval( $value );
 					break;
 				case 'show_on_ai_site':
-					$data[$field] = isset( $_POST[$field] ) ? intval( $_POST[$field] ) : 0;
+					$data[ $field ] = intval( $value );
+					break;
+				case 'profile_image':
+				case 'identity_front':
+				case 'identity_back':
+				case 'graduate_certificate':
+				case 'practice_license':
+				case 'syndicate_card':
+				case 'rank_certificate':
+				case 'cp_graduate_certificate':
+				case 'cp_highest_degree':
+				case 'cp_moh_license_file':
+					$data[ $field ] = '' === $value ? null : intval( $value );
+					break;
+				case 'therapy_courses':
+					$value = trim( $value );
+					if ( '' === $value ) {
+						$data[ $field ] = null;
+					} else {
+						$decoded = json_decode( $value, true );
+						$data[ $field ] = is_array( $decoded ) ? wp_json_encode( $decoded ) : null;
+					}
+					break;
+				case 'preferred_groups':
+				case 'diagnoses_children':
+				case 'diagnoses_adult':
+					$value = trim( $value );
+					if ( '' === $value ) {
+						$data[ $field ] = null;
+					} else {
+						$decoded = json_decode( $value, true );
+						if ( is_array( $decoded ) ) {
+							$decoded = array_values( array_filter( $decoded ) );
+							$data[ $field ] = ! empty( $decoded ) ? wp_json_encode( $decoded ) : null;
+						} else {
+							$lines = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', $value ) ) );
+							$data[ $field ] = ! empty( $lines ) ? wp_json_encode( $lines ) : null;
+						}
+					}
 					break;
 				default:
-					$data[$field] = $_POST[$field];
+					$data[ $field ] = $value;
 					break;
 			}
 		}
