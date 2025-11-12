@@ -383,7 +383,9 @@ function snks_therapist_registration_shortcode( $atts ) {
 		}
 		.file-upload-group.input-error {
 			border-color: #dc3545 !important;
+			border-style: solid;
 			background: #fef2f2;
+			box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.15);
 		}
 		#therapy-certificates.input-error {
 			border: 2px dashed #dc3545;
@@ -1898,10 +1900,21 @@ function snks_therapist_registration_shortcode( $atts ) {
 					label = group.querySelector('label');
 				}
 			}
-			if (!label) {
-				return '';
+			if (label && label.textContent) {
+				return label.textContent.replace('*', '').trim();
 			}
-			return label.textContent.replace('*', '').trim();
+			const ariaLabel = field.getAttribute('aria-label');
+			if (ariaLabel) {
+				return ariaLabel.trim();
+			}
+			const placeholder = field.getAttribute('placeholder');
+			if (placeholder) {
+				return placeholder.trim();
+			}
+			if (field.name) {
+				return field.name.replace(/[_\[\]]+/g, ' ').trim();
+			}
+			return '';
 		}
 
 		function validateEmailFormat(value) {
