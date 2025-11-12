@@ -1335,7 +1335,6 @@ function snks_therapist_registration_shortcode( $atts ) {
 					return;
 				}
 				setTimeout(function() {
-					scrollToElementCenter(focusElement);
 					const focusable = focusElement.querySelector ? focusElement.querySelector('input, select, textarea, button') : null;
 					if (focusable && typeof focusable.focus === 'function') {
 						focusable.focus({ preventScroll: true });
