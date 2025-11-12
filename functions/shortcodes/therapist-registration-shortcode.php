@@ -416,6 +416,11 @@ function snks_therapist_registration_shortcode( $atts ) {
 			border-color: #dc3545 !important;
 			background: #fef2f2;
 		}
+		.optional-text {
+			font-size: 0.85rem;
+			color: #6c757d;
+			margin-inline-start: 8px;
+		}
 		</style>
 		
 		<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data" novalidate>
@@ -617,12 +622,12 @@ function snks_therapist_registration_shortcode( $atts ) {
 			</div>
 			
 					<div class="form-subsection">
-						<h4>هل حضرت دورات أخرى ولم تحصل على شهادة أو لديك خبرة شخصية في أحد طرق العلاج النفسي؟</h4>
+						<h4>هل حضرت دورات أخرى ولم تحصل على شهادة أو لديك خبرة شخصية في أحد طرق العلاج النفسي؟ <span class="optional-text">(اختياري)</span></h4>
 						<div id="courses-container">
 							<div class="dynamic-row course-row">
-								<input type="text" name="course_school[]" placeholder="مدرسة العلاج النفسي" required>
+								<input type="text" name="course_school[]" placeholder="مدرسة العلاج النفسي">
 								<input type="text" name="course_place[]" placeholder="مكان الحصول عليها (أو تعليم ذاتي)">
-								<input type="text" name="course_year[]" placeholder="سنة الحصول عليها" required>
+								<input type="text" name="course_year[]" placeholder="سنة الحصول عليها">
 								<button type="button" class="remove-row-btn" data-remove="course">❌</button>
 							</div>
 						</div>
@@ -1725,7 +1730,6 @@ function snks_therapist_registration_shortcode( $atts ) {
 			schoolInput.type = 'text';
 			schoolInput.name = 'course_school[]';
 			schoolInput.placeholder = 'مدرسة العلاج النفسي';
-			schoolInput.required = true;
 
 			const placeInput = document.createElement('input');
 			placeInput.type = 'text';
@@ -1736,7 +1740,6 @@ function snks_therapist_registration_shortcode( $atts ) {
 			yearInput.type = 'text';
 			yearInput.name = 'course_year[]';
 			yearInput.placeholder = 'سنة الحصول عليها';
-			yearInput.required = true;
 
 			row.appendChild(schoolInput);
 			row.appendChild(placeInput);
@@ -2034,22 +2037,34 @@ function snks_handle_therapist_registration_shortcode() {
 	
 	// Validate courses
 	$course_schools = isset( $_POST['course_school'] ) ? (array) $_POST['course_school'] : array();
-	$course_years = isset( $_POST['course_year'] ) ? (array) $_POST['course_year'] : array();
-	$valid_course = false;
-	
-	foreach ( $course_schools as $index => $school ) {
-		$school = trim( $school );
-		$year = trim( $course_years[ $index ] ?? '' );
-		
-		if ( '' !== $school && '' !== $year ) {
-			$valid_course = true;
-			break;
+	$course_places  = isset( $_POST['course_place'] ) ? (array) $_POST['course_place'] : array();
+	$course_years   = isset( $_POST['course_year'] ) ? (array) $_POST['course_year'] : array();
+	$course_count   = max( count( $course_schools ), count( $course_years ), count( $course_places ) );
+	$normalized_courses = array();
+
+	for ( $i = 0; $i < $course_count; $i++ ) {
+		$school = trim( $course_schools[ $i ] ?? '' );
+		$place  = trim( $course_places[ $i ] ?? '' );
+		$year   = trim( $course_years[ $i ] ?? '' );
+
+		if ( '' === $school && '' === $year && '' === $place ) {
+			continue;
 		}
+
+		if ( '' === $school || '' === $year ) {
+			wp_send_json_error( array( 'message' => 'يرجى استكمال بيانات الدورة (المدرسة والسنة) أو ترك الحقل فارغاً.' ) );
+		}
+
+		$normalized_courses[] = array(
+			'school' => $school,
+			'place'  => $place,
+			'year'   => $year,
+		);
 	}
-	
-	if ( ! $valid_course ) {
-		wp_send_json_error( array( 'message' => 'يرجى إضافة دورة واحدة على الأقل مع سنة الحصول عليها.' ) );
-	}
+
+	$_POST['course_school'] = array_column( $normalized_courses, 'school' );
+	$_POST['course_place']  = array_column( $normalized_courses, 'place' );
+	$_POST['course_year']   = array_column( $normalized_courses, 'year' );
 	
 	// Validate preferred groups selection
 	$preferred_groups = isset( $_POST['preferred_groups'] ) ? array_filter( (array) $_POST['preferred_groups'], 'strlen' ) : array();
