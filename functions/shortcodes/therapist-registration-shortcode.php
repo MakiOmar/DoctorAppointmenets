@@ -38,7 +38,10 @@ function snks_therapist_registration_shortcode( $atts ) {
 			margin-bottom: 30px;
 		}
 		.form-group {
-			margin-bottom: 20px;
+			margin: 24px 0;
+		}
+		.form-group:first-of-type {
+			margin-top: 0;
 		}
 		.form-group label {
 			display: block;
@@ -82,7 +85,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			background: #fafafa;
 			transition: all 0.3s ease;
 			cursor: pointer;
-			margin-top: 20px;
+			margin-top: 24px;
 		}
 		.file-upload-group:hover, .file-upload-group.dragover {
 			border-color: #2271b1;
@@ -269,13 +272,18 @@ function snks_therapist_registration_shortcode( $atts ) {
 		}
 		.inline-options {
 			display: flex;
-			flex-wrap: wrap;
-			gap: 12px;
+			flex-wrap: nowrap;
+			gap: 24px;
+			align-items: center;
+		}
+		#therapist-registration-form .form-group > p{
+			margin-bottom: 10px;
 		}
 		.inline-options label {
 			display: flex;
 			align-items: center;
-			gap: 6px;
+			gap: 8px;
+			white-space: nowrap;
 			font-weight: 500;
 			color: #374151;
 		}
@@ -286,7 +294,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			display: none;
 		}
 		.form-subsection h4 {
-			margin: 0 0 10px;
+			margin:20px 0 8px 0 ;
 			font-size: 16px;
 			color: #1f2937;
 		}

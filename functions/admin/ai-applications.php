@@ -311,6 +311,8 @@ function snks_approve_therapist_application( $application_id ) {
 	// Set only essential user meta for login purposes
 	update_user_meta( $user_id, 'billing_phone', $application->phone );
 	update_user_meta( $user_id, 'billing_email', $application->email );
+	update_user_meta( $user_id, 'first_name', $application->name );
+	update_user_meta( $user_id, 'billing_first_name', $application->name );
 	
 	// Update application status and link to user
 	$wpdb->update( $table_name, [
@@ -318,17 +320,18 @@ function snks_approve_therapist_application( $application_id ) {
 		'user_id' => $user_id
 	], ['id' => $application_id] );
 	
-	// Notify user
-	$email_subject = __( 'Your therapist application is approved' );
-	$email_message = sprintf(
-		__( 'Your account has been created successfully!' ) . "\n\n" .
-		__( 'Username: %s' ) . "\n" .
-		__( 'Password: %s' ) . "\n\n" .
-		__( 'You can now log in to your account and start using the platform.' ),
-		$application->phone,
-		$password
-	);
-	wp_mail( $application->email, $email_subject, $email_message );
+	if ( ! empty( $password ) ) {
+		$email_subject = __( 'Your therapist application is approved' );
+		$email_message = sprintf(
+			__( 'Your account has been created successfully!' ) . "\n\n" .
+			__( 'Username: %s' ) . "\n" .
+			__( 'Password: %s' ) . "\n\n" .
+			__( 'You can now log in to your account and start using the platform.' ),
+			$application->phone,
+			$password
+		);
+		wp_mail( $application->email, $email_subject, $email_message );
+	}
 	
 	return true;
 }
