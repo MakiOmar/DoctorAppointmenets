@@ -408,7 +408,15 @@ function plugin_activation_hook() {
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 
 // Create therapist applications table on activation
-register_activation_hook( __FILE__, 'snks_create_therapist_applications_table' );
+register_activation_hook(
+	__FILE__,
+	static function() {
+		snks_create_therapist_applications_table();
+		if ( function_exists( 'snks_add_missing_therapist_applications_columns' ) ) {
+			snks_add_missing_therapist_applications_columns();
+		}
+	}
+);
 
 // Hook to set up default pricing when therapist is activated
 add_action( 'update_user_meta', 'snks_check_therapist_activation', 10, 4 );
@@ -470,11 +478,8 @@ function snks_create_therapist_applications_table() {
                KEY email (email)
            ) $charset_collate;";
 	
-	require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );
-	
-	// Add missing columns to existing installations
-	snks_add_missing_therapist_applications_columns();
 }
 
 function snks_add_missing_therapist_applications_columns() {

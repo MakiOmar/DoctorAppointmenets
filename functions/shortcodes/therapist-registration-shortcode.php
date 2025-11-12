@@ -20,10 +20,6 @@ function snks_therapist_registration_shortcode( $atts ) {
 	wp_enqueue_script( 'jquery' );
 	wp_enqueue_script( 'wp-util' );
 	
-	// Get country codes for the dropdown
-	$country_codes = snks_get_country_dial_codes();
-	$default_country = $settings['default_country'];
-	
 	ob_start();
 	?>
 	<div id="therapist-registration-form-container">
@@ -86,6 +82,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			background: #fafafa;
 			transition: all 0.3s ease;
 			cursor: pointer;
+			margin-top: 20px;
 		}
 		.file-upload-group:hover, .file-upload-group.dragover {
 			border-color: #2271b1;
@@ -227,14 +224,6 @@ function snks_therapist_registration_shortcode( $atts ) {
 			background: #ccc;
 			cursor: not-allowed;
 		}
-		.checkbox-group {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-		}
-		.checkbox-group input[type="checkbox"] {
-			width: auto;
-		}
 		.alert {
 			padding: 12px;
 			border-radius: 4px;
@@ -375,6 +364,15 @@ function snks_therapist_registration_shortcode( $atts ) {
 		[dir="rtl"] .form-group label {
 			text-align: right;
 		}
+		.input-error {
+			border-color: #dc3545 !important;
+			box-shadow: 0 0 0 1px rgba(220, 53, 69, 0.25);
+		}
+		.error-message {
+			color: #dc3545;
+			font-size: 12px;
+			margin-top: 6px;
+		}
 		</style>
 		
 		<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data">
@@ -388,53 +386,27 @@ function snks_therapist_registration_shortcode( $atts ) {
 					<p class="section-note">يرجى إدخال بيانات التواصل الأساسية (كما ستظهر في منصتنا).</p>
 				</div>
 				<div class="section-body">
-					<div class="form-group">
+			<div class="form-group">
 						<label for="name">الاسم الكامل (بالعربية) <span class="required">*</span></label>
-						<input type="text" id="name" name="name" required>
-					</div>
-					
-					<div class="form-group">
+				<input type="text" id="name" name="name" required>
+			</div>
+			
+			<div class="form-group">
 						<label for="email">البريد الإلكتروني <span class="required">*</span></label>
 						<input type="email" id="email" name="email" required>
-					</div>
-					
-					<div class="form-group">
+			</div>
+			
+			<div class="form-group">
 						<label for="phone">رقم الهاتف <span class="required">*</span></label>
-						<?php if ( $settings['country_dial_required'] ) : ?>
-						<div class="phone-input-group">
-							<select class="country-code-select" id="phone_country" name="phone_country">
-								<?php foreach ( $country_codes as $code => $country ) : ?>
-								<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, $default_country ); ?>>
-									<?php echo esc_html( $country['name'] . ' ' . $country['code'] ); ?>
-								</option>
-								<?php endforeach; ?>
-							</select>
-							<input type="tel" class="phone-number-input" id="phone" name="phone" required placeholder="123456789">
-						</div>
-						<?php else : ?>
-						<input type="tel" id="phone" name="phone" required>
-						<?php endif; ?>
-					</div>
-					
-					<div class="form-group">
+						<input type="tel" id="phone" name="phone" required placeholder="مثال: +201012345678">
+			</div>
+			
+			<div class="form-group">
 						<label for="whatsapp">رقم واتساب <span class="required">*</span></label>
-						<?php if ( $settings['country_dial_required'] ) : ?>
-						<div class="phone-input-group">
-							<select class="country-code-select" id="whatsapp_country" name="whatsapp_country">
-								<?php foreach ( $country_codes as $code => $country ) : ?>
-								<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, $default_country ); ?>>
-									<?php echo esc_html( $country['name'] . ' ' . $country['code'] ); ?>
-								</option>
-								<?php endforeach; ?>
-							</select>
-							<input type="tel" class="phone-number-input" id="whatsapp" name="whatsapp" required placeholder="123456789">
-						</div>
-						<?php else : ?>
-						<input type="tel" id="whatsapp" name="whatsapp" required>
-						<?php endif; ?>
-					</div>
-					
-					<div class="form-group">
+						<input type="tel" id="whatsapp" name="whatsapp" required placeholder="مثال: +201012345678">
+			</div>
+			
+			<div class="form-group">
 						<label for="profile_image">الصورة الشخصية</label>
 						<div class="file-upload-group" data-field="profile_image">
 					<span class="upload-icon">📷</span>
@@ -442,7 +414,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					<div class="upload-hint">ملف صورة (JPG أو PNG)</div>
 					<input type="file" id="profile_image" name="profile_image" accept="image/*">
 							<div class="file-preview" id="preview_profile_image"></div>
-						</div>
+				</div>
 					</div>
 				</div>
 			</div>
@@ -455,14 +427,14 @@ function snks_therapist_registration_shortcode( $atts ) {
 					<p class="section-note">اختر المسمى الوظيفي وأرفق المستندات المطلوبة.</p>
 				</div>
 				<div class="section-body">
-					<div class="form-group">
+			<div class="form-group">
 						<p>اختر المسمى الوظيفي <span class="required">*</span></p>
 						<div class="inline-options">
 							<label><input type="radio" name="role" value="psychiatrist"> طبيب نفسي</label>
 							<label><input type="radio" name="role" value="clinical_psychologist"> أخصائي نفسي إكلينيكي</label>
 						</div>
-					</div>
-					
+			</div>
+			
 					<div id="psychiatrist-section" class="role-panel">
 						<div class="form-subsection">
 							<h4>اختر الدرجة / الرتبة <span class="required">*</span></h4>
@@ -509,9 +481,9 @@ function snks_therapist_registration_shortcode( $atts ) {
 									<div class="file-preview" id="preview_rank_degree"></div>
 								</div>
 							</div>
-						</div>
-					</div>
-					
+				</div>
+			</div>
+			
 					<div id="psychologist-section" class="role-panel">
 						<div class="form-subsection">
 							<h4>أنت خريج أي كلية / قسم <span class="required">*</span></h4>
@@ -564,19 +536,19 @@ function snks_therapist_registration_shortcode( $atts ) {
 						<h4>المستندات العامة</h4>
 						<p class="section-note">يرجى رفع صورة البطاقة الشخصية (وجه وظهر).</p>
 						<div class="file-upload-grid">
-							<div class="file-upload-group" data-field="identity_front">
-								<span class="upload-icon">🪪</span>
+				<div class="file-upload-group" data-field="identity_front">
+					<span class="upload-icon">🪪</span>
 								<div class="upload-text">البطاقة الشخصية (وجه)</div>
 								<div class="upload-hint">صورة (JPG أو PNG)</div>
 								<input type="file" id="identity_front" name="identity_front" accept="image/*">
-								<div class="file-preview" id="preview_identity_front"></div>
-							</div>
-							<div class="file-upload-group" data-field="identity_back">
-								<span class="upload-icon">🆔</span>
+					<div class="file-preview" id="preview_identity_front"></div>
+				</div>
+				<div class="file-upload-group" data-field="identity_back">
+					<span class="upload-icon">🆔</span>
 								<div class="upload-text">البطاقة الشخصية (ظهر)</div>
 								<div class="upload-hint">صورة (JPG أو PNG)</div>
 								<input type="file" id="identity_back" name="identity_back" accept="image/*">
-								<div class="file-preview" id="preview_identity_back"></div>
+					<div class="file-preview" id="preview_identity_back"></div>
 							</div>
 						</div>
 					</div>
@@ -587,7 +559,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 				<div class="section-header">
 					<h3>القسم الثالث: الشهادات والدورات</h3>
 					<p class="section-note">قم برفع جميع شهادات العلاج النفسي التي حصلت عليها، وأضف الدورات أو الخبرات ذات الصلة.</p>
-				</div>
+					</div>
 				<div class="section-body">
 					<div class="form-subsection">
 						<h4>قم برفع جميع شهادات العلاج النفسي التي حصلت عليها <span class="required">*</span></h4>
@@ -595,12 +567,12 @@ function snks_therapist_registration_shortcode( $atts ) {
 							<div class="dynamic-row certificate-row">
 								<input type="file" name="therapy_certificates[]" accept="image/*,.pdf,.txt,.doc,.docx" required>
 								<button type="button" class="remove-row-btn" data-remove="certificate">❌</button>
-							</div>
+				</div>
 						</div>
 						<button type="button" id="add-certificate-btn" class="add-btn">إضافة شهادة أخرى</button>
 						<p class="helper-text">يسمح بملفات الصور أو المستندات (JPG، PNG، PDF، DOC، DOCX، TXT).</p>
-					</div>
-					
+			</div>
+			
 					<div class="form-subsection">
 						<h4>هل حضرت دورات أخرى ولم تحصل على شهادة أو لديك خبرة شخصية في أحد طرق العلاج النفسي؟</h4>
 						<div id="courses-container">
@@ -707,13 +679,6 @@ function snks_therapist_registration_shortcode( $atts ) {
 							</div>
 						</div>
 					</div>
-				</div>
-			</div>
-			
-			<div class="form-group">
-				<div class="checkbox-group">
-					<input type="checkbox" id="accept_terms" name="accept_terms" required>
-					<label for="accept_terms">أوافق على الشروط والأحكام وسياسة الخصوصية <span class="required">*</span></label>
 				</div>
 			</div>
 			
@@ -908,6 +873,8 @@ function snks_therapist_registration_shortcode( $atts ) {
 		const adultDxSection = document.getElementById('adult-dx-section');
 		const adultDxPsych = document.getElementById('adult-dx-psychiatrist');
 		const adultDxPsychologist = document.getElementById('adult-dx-psychologist');
+		const childrenDxCheckboxes = Array.from(document.querySelectorAll('input[name="dx_children[]"]'));
+		const adultDxCheckboxes = Array.from(document.querySelectorAll('input[name="dx_adult[]"]'));
 
 		function toArray(collection) {
 			if (!collection) {
@@ -935,6 +902,13 @@ function snks_therapist_registration_shortcode( $atts ) {
 				return;
 			}
 			element.style.display = shouldShow ? 'block' : 'none';
+		}
+
+		function isElementVisible(element) {
+			if (!element) {
+				return false;
+			}
+			return element.offsetParent !== null;
 		}
 
 		setRequired(psyRankRadios, false);
@@ -998,7 +972,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			} else if (role === 'clinical_psychologist') {
 				showElement(adultDxPsychologist, true);
 				showElement(adultDxPsych, false);
-			} else {
+						} else {
 				showElement(adultDxPsych, false);
 				showElement(adultDxPsychologist, false);
 			}
@@ -1014,7 +988,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			showElement(childrenDxSection, selectedValues.includes('الأطفال'));
 			if (selectedValues.includes('المراهقين والبالغين')) {
 				updateAdultDxByRole();
-			} else {
+					} else {
 				showElement(adultDxSection, false);
 				showElement(adultDxPsych, false);
 				showElement(adultDxPsychologist, false);
@@ -1336,13 +1310,67 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			const submitBtn = $('#submit-btn');
 			const messagesDiv = $('#form-messages');
+
+			function showFormError(message) {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'error',
+						title: 'تنبيه',
+						text: message,
+						confirmButtonText: 'حسناً'
+					});
+				} else if (messagesDiv.length) {
+					messagesDiv.html('<div class="alert alert-error">' + message + '</div>');
+				} else {
+					alert(message);
+				}
+			}
 			
-			// Disable submit button and show loading
-			submitBtn.prop('disabled', true).text('جاري الإرسال...');
-			messagesDiv.empty();
+			if (messagesDiv.length) {
+				messagesDiv.empty();
+			}
 			
-			// Prepare form data
 			updateDoctorSpecialty();
+
+			const preferredSelected = preferredGroupCheckboxes.some(function(cb) {
+				return cb.checked;
+			});
+
+			if (!preferredSelected) {
+				showFormError('يرجى اختيار فئة واحدة على الأقل ضمن الفئات المفضلة.');
+				return;
+			}
+
+			const childrenVisible = isElementVisible(childrenDxSection);
+			if (childrenVisible) {
+				const childrenChecked = childrenDxCheckboxes.some(function(cb) {
+					return cb.checked;
+				});
+				if (!childrenChecked) {
+					showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات الأطفال.');
+					return;
+				}
+			}
+
+			const adultVisible = isElementVisible(adultDxSection);
+			if (adultVisible) {
+				const visibleAdultCheckboxes = adultDxCheckboxes.filter(function(cb) {
+					return cb.offsetParent !== null;
+				});
+				if (visibleAdultCheckboxes.length > 0) {
+					const adultChecked = visibleAdultCheckboxes.some(function(cb) {
+						return cb.checked;
+					});
+					if (!adultChecked) {
+						showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات المراهقين أو البالغين.');
+						return;
+					}
+				}
+			}
+			
+			if (submitBtn.length) {
+				submitBtn.prop('disabled', true).text('جاري الإرسال...');
+			}
 			
 			const formData = new FormData(this);
 			formData.append('action', 'register_therapist_shortcode');
@@ -1352,126 +1380,50 @@ function snks_therapist_registration_shortcode( $atts ) {
 			formData.append('otp_method', '<?php echo esc_js( $settings['otp_method'] ); ?>');
 			
 			// AJAX submission
-			$.ajax({
-				url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
-				type: 'POST',
-				data: formData,
-				processData: false,
-				contentType: false,
-				success: function(response) {
-					if (response.success) {
-						if (response.data.step === 'otp_verification') {
-							// Show OTP verification step
-							showOtpVerification(response.data);
-						} else {
-							// Direct success
-							messagesDiv.html('<div class="alert alert-success">' + response.data.message + '</div>');
-							$('#therapist-registration-form')[0].reset();
-						}
-					} else {
-						messagesDiv.html('<div class="alert alert-error">' + (response.data.message || 'Registration failed. Please try again.') + '</div>');
-					}
-				},
-				error: function() {
-					messagesDiv.html('<div class="alert alert-error">An error occurred. Please try again.</div>');
-				},
-				complete: function() {
-					submitBtn.prop('disabled', false).text('إرسال');
-				}
-			});
-		});
-		
-		// Auto-sync country codes for phone and WhatsApp
-		<?php if ( $settings['country_dial_required'] ) : ?>
-		$('#phone_country').on('change', function() {
-			$('#whatsapp_country').val($(this).val());
-		});
-		
-		$('#whatsapp_country').on('change', function() {
-			$('#phone_country').val($(this).val());
-		});
-		<?php endif; ?>
-		
-		// Show OTP verification step
-		function showOtpVerification(data) {
-			const messagesDiv = $('#form-messages');
-			messagesDiv.html('<div class="alert alert-success">' + data.message + '</div>');
-			
-			// Hide main form and show OTP verification form
-			$('#therapist-registration-form').hide();
-			
-			const otpFormHtml = `
-				<div id="otp-verification-form" class="therapist-reg-form">
-					<h3>تحقق من رمز التأكيد</h3>
-					<p class="text-info">تم إرسال رمز التحقق إلى: ${data.contact_method}</p>
-					<div class="form-group">
-						<label for="otp_code">رمز التحقق (6 أرقام):</label>
-						<input type="text" id="otp_code" name="otp_code" maxlength="6" pattern="[0-9]{6}" 
-							placeholder="أدخل الرمز المكون من 6 أرقام" class="form-control" style="text-align: center; font-size: 18px; letter-spacing: 2px;" autocomplete="one-time-code">
-					</div>
-					<button type="button" id="verify-otp-btn" class="submit-btn" style="background: #10b981;">تحقق من الرمز</button>
-					<button type="button" id="cancel-otp-btn" class="submit-btn" style="background: #6b7280; margin-top: 10px;">إلغاء والعودة للنموذج</button>
-					<input type="hidden" id="session_key" value="${data.session_key}">
-				</div>
-			`;
-			
-			$('#therapist-registration-form').after(otpFormHtml);
-			
-			// OTP input handler (numbers only)
-			$('#otp_code').on('input', function() {
-				this.value = this.value.replace(/\D/g, '');
-			});
-			
-			// Verify OTP button handler
-			$('#verify-otp-btn').on('click', function() {
-				const otpCode = $('#otp_code').val();
-				const sessionKey = $('#session_key').val();
-				
-				if (!otpCode || otpCode.length !== 6) {
-					messagesDiv.html('<div class="alert alert-error">يرجى إدخال رمز التحقق المكون من 6 أرقام</div>');
-					return;
-				}
-				
-				// Disable button and show loading
-				$(this).prop('disabled', true).text('جاري التحقق...');
-				
-				// Send verification request
 				$.ajax({
 					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
 					type: 'POST',
-					data: {
-						action: 'register_therapist_shortcode',
-						step: 'verify_otp',
-						session_key: sessionKey,
-						otp_code: otpCode,
-						nonce: '<?php echo wp_create_nonce( 'therapist_registration_shortcode' ); ?>'
-					},
+				data: formData,
+				processData: false,
+				contentType: false,
 					success: function(response) {
 						if (response.success) {
-							messagesDiv.html('<div class="alert alert-success">' + response.data.message + '</div>');
-							$('#otp-verification-form').remove();
+							const successMessage = response.data && response.data.message ? response.data.message : 'تم إرسال طلبك بنجاح.';
+							if (typeof Swal !== 'undefined') {
+								Swal.fire({
+									icon: 'success',
+									title: 'تم الإرسال',
+									text: successMessage,
+									confirmButtonText: 'حسناً'
+								}).then(function() {
 							$('#therapist-registration-form')[0].reset();
-							$('#therapist-registration-form').show();
+								});
 						} else {
-							messagesDiv.html('<div class="alert alert-error">' + (response.data.message || 'فشل في التحقق من الرمز') + '</div>');
+								messagesDiv.html('<div class="alert alert-success">' + successMessage + '</div>');
+								$('#therapist-registration-form')[0].reset();
+							}
+						} else {
+							const errorMessage = response.data && response.data.message ? response.data.message : 'Registration failed. Please try again.';
+							if (typeof Swal !== 'undefined') {
+								Swal.fire({
+									icon: 'error',
+									title: 'حدث خطأ',
+									text: errorMessage,
+									confirmButtonText: 'حسناً'
+								});
+							} else {
+								messagesDiv.html('<div class="alert alert-error">' + errorMessage + '</div>');
+							}
 						}
 					},
 					error: function() {
-						messagesDiv.html('<div class="alert alert-error">حدث خطأ أثناء التحقق. حاول مرة أخرى.</div>');
+					messagesDiv.html('<div class="alert alert-error">An error occurred. Please try again.</div>');
 					},
 					complete: function() {
-						$('#verify-otp-btn').prop('disabled', false).text('تحقق من الرمز');
+					submitBtn.prop('disabled', false).text('إرسال');
 					}
 				});
 			});
-			
-			// Cancel OTP button handler
-			$('#cancel-otp-btn').on('click', function() {
-				$('#otp-verification-form').remove();
-				$('#therapist-registration-form').show();
-				messagesDiv.empty();
-			});
-		}
 	});
 	</script>
 	<?php
@@ -1491,12 +1443,6 @@ function snks_handle_therapist_registration_shortcode() {
 	
 	// Get settings
 	$settings = snks_get_therapist_registration_settings();
-	
-	// Check if this is OTP verification step
-	if ( isset( $_POST['step'] ) && $_POST['step'] === 'verify_otp' ) {
-		snks_handle_therapist_registration_otp_verification();
-		return;
-	}
 	
 	// Validate required fields
 	$required_fields = array( 'name', 'email', 'phone', 'whatsapp', 'role' );
@@ -1614,148 +1560,105 @@ function snks_handle_therapist_registration_shortcode() {
 		wp_send_json_error( array( 'message' => 'يمكن اختيار أربع فئات فقط كحد أقصى.' ) );
 	}
 	$_POST['preferred_groups'] = $preferred_groups;
-	
-	// Process phone numbers with country codes
-	$phone = $_POST['phone'];
-	$whatsapp = $_POST['whatsapp'];
-	
-	if ( $settings['country_dial_required'] ) {
-		$country_codes = snks_get_country_dial_codes();
-		$phone_country = $_POST['phone_country'] ?? $settings['default_country'];
-		$whatsapp_country = $_POST['whatsapp_country'] ?? $settings['default_country'];
-		
-		if ( isset( $country_codes[ $phone_country ] ) ) {
-			$phone = $country_codes[ $phone_country ]['code'] . $phone;
-		}
-		
-		if ( isset( $country_codes[ $whatsapp_country ] ) ) {
-			$whatsapp = $country_codes[ $whatsapp_country ]['code'] . $whatsapp;
-		}
-	}
-	
-	// Generate and send OTP based on method
-	$otp_code = rand( 100000, 999999 );
-	$otp_success = false;
-	$contact_method = '';
-	
-	if ( $settings['otp_method'] === 'sms' && ! empty( $whatsapp ) ) {
-		$contact_method = $whatsapp;
-		$message = snks_get_multilingual_otp_message( $otp_code, $settings['whatsapp_message_language'] ?? 'ar' );
-		
-		// Use existing WhySMS SMS service
-		$sms_result = send_sms_via_whysms( $whatsapp, $message );
-		
-		if ( ! is_wp_error( $sms_result ) ) {
-			$otp_success = true;
-		}
-	} elseif ( $settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp ) ) {
-		$contact_method = $whatsapp;
-		$message = snks_get_multilingual_otp_message( $otp_code, $settings['whatsapp_message_language'] ?? 'ar' );
-		
-		// Use WhatsApp Business API
-		$whatsapp_result = snks_send_whatsapp_message( $whatsapp, $message, $settings );
-		
-		if ( $whatsapp_result && ! is_wp_error( $whatsapp_result ) ) {
-			$otp_success = true;
-		}
-	} elseif ( $settings['otp_method'] === 'email' && ! empty( $_POST['email'] ) ) {
-		$contact_method = $_POST['email'];
-		$email_content = snks_get_multilingual_email_otp_message( $otp_code, $settings['whatsapp_message_language'] ?? 'ar' );
-		$headers = array(
-			'Content-Type: text/html; charset=UTF-8',
-			'From: ' . SNKS_APP_NAME . ' <' . SNKS_EMAIL . '>',
-		);
-		
-		if ( wp_mail( $contact_method, $email_content['subject'], $email_content['body'], $headers ) ) {
-			$otp_success = true;
-		}
-	}
-	
-	if ( $otp_success ) {
-		// Store OTP and form data temporarily
-		$session_key = md5( $contact_method . time() );
-		set_transient( 'therapist_reg_otp_' . $session_key, $otp_code, 10 * MINUTE_IN_SECONDS );
-		set_transient( 'therapist_reg_data_' . $session_key, $_POST, 10 * MINUTE_IN_SECONDS );
-		set_transient( 'therapist_reg_files_' . $session_key, $_FILES, 10 * MINUTE_IN_SECONDS );
-		
-		$otp_message = '';
-		if ( $settings['otp_method'] === 'sms' ) {
-			$otp_message = 'تم إرسال رمز التحقق عبر الرسائل القصيرة.';
-		} elseif ( $settings['otp_method'] === 'whatsapp' ) {
-			$otp_message = 'تم إرسال رمز التحقق إلى واتساب.';
-		} else {
-			$otp_message = 'تم إرسال رمز التحقق إلى بريدك الإلكتروني.';
-		}
-			
-		wp_send_json_success( array( 
-			'message' => $otp_message . ' يرجى إدخال الرمز للمتابعة.',
-			'step' => 'otp_verification',
-			'session_key' => $session_key,
-			'contact_method' => $contact_method
-		) );
-	} else {
-		$error_message = '';
-		if ( $settings['otp_method'] === 'sms' ) {
-			$error_message = 'فشل في إرسال رمز التحقق عبر الرسائل القصيرة.';
-		} elseif ( $settings['otp_method'] === 'whatsapp' ) {
-			$error_message = 'فشل في إرسال رمز التحقق عبر واتساب.';
-		} else {
-			$error_message = 'فشل في إرسال رمز التحقق عبر البريد الإلكتروني.';
-		}
-			
-		wp_send_json_error( array( 'message' => $error_message . ' حاول مرة أخرى.' ) );
-	}
-	
-}
 
-/**
- * Handle OTP verification for therapist registration
- */
-function snks_handle_therapist_registration_otp_verification() {
-	$session_key = sanitize_text_field( $_POST['session_key'] ?? '' );
-	$entered_otp = sanitize_text_field( $_POST['otp_code'] ?? '' );
-	
-	if ( empty( $session_key ) || empty( $entered_otp ) ) {
-		wp_send_json_error( array( 'message' => 'Missing verification data' ) );
+	// Validate diagnoses selections when sections are visible
+	$diagnoses_children = isset( $_POST['dx_children'] ) ? array_filter( (array) $_POST['dx_children'], 'strlen' ) : array();
+	$diagnoses_adult = isset( $_POST['dx_adult'] ) ? array_filter( (array) $_POST['dx_adult'], 'strlen' ) : array();
+
+	if ( in_array( 'الأطفال', $preferred_groups, true ) && empty( $diagnoses_children ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى اختيار تشخيص واحد على الأقل من قسم الأطفال.' ) );
 	}
-	
-	// Retrieve stored OTP and form data
-	$stored_otp = get_transient( 'therapist_reg_otp_' . $session_key );
-	$form_data = get_transient( 'therapist_reg_data_' . $session_key );
-	$files_data = get_transient( 'therapist_reg_files_' . $session_key );
-	
-	if ( ! $stored_otp || ! $form_data ) {
-		wp_send_json_error( array( 'message' => 'Verification code expired. Please try again.' ) );
+
+	if ( in_array( 'المراهقين والبالغين', $preferred_groups, true ) && empty( $diagnoses_adult ) ) {
+		wp_send_json_error( array( 'message' => 'يرجى اختيار تشخيص واحد على الأقل من قسم المراهقين والبالغين.' ) );
 	}
+
+	$_POST['dx_children'] = $diagnoses_children;
+	$_POST['dx_adult'] = $diagnoses_adult;
 	
-	if ( $entered_otp !== $stored_otp ) {
-		wp_send_json_error( array( 'message' => 'Invalid verification code. Please try again.' ) );
-	}
-	
-	// OTP verified, process the registration
-	$settings = snks_get_therapist_registration_settings();
-	
-	// Process phone numbers with country codes (recreate from stored data)
-	$phone = $form_data['phone'];
-	$whatsapp = $form_data['whatsapp'];
-	
-	if ( $settings['country_dial_required'] ) {
-		$country_codes = snks_get_country_dial_codes();
-		$phone_country = $form_data['phone_country'] ?? $settings['default_country'];
-		$whatsapp_country = $form_data['whatsapp_country'] ?? $settings['default_country'];
-		
-		if ( isset( $country_codes[ $phone_country ] ) ) {
-			$phone = $country_codes[ $phone_country ]['code'] . $phone;
+	$normalize_phone = static function( $value ) {
+		$value = is_string( $value ) ? trim( $value ) : '';
+		$value = preg_replace( '/\s+/', '', $value );
+		return sanitize_text_field( $value );
+	};
+
+	$find_user_by_phone = static function( $value ) {
+		if ( empty( $value ) ) {
+			return false;
 		}
-		
-		if ( isset( $country_codes[ $whatsapp_country ] ) ) {
-			$whatsapp = $country_codes[ $whatsapp_country ]['code'] . $whatsapp;
+
+		$user = get_user_by( 'login', $value );
+		if ( $user ) {
+			return $user;
+		}
+
+		$users = get_users(
+			array(
+				'meta_key'   => 'billing_phone',
+				'meta_value' => $value,
+				'number'     => 1,
+				'fields'     => 'all',
+			)
+		);
+
+		return ! empty( $users ) ? $users[0] : false;
+	};
+
+	$phone    = $normalize_phone( $_POST['phone'] ?? '' );
+	$whatsapp = $normalize_phone( $_POST['whatsapp'] ?? '' );
+	$email    = sanitize_email( $_POST['email'] ?? '' );
+
+	$duplicate_conditions = array();
+	$duplicate_params     = array();
+
+	if ( ! empty( $phone ) ) {
+		$duplicate_conditions[] = 'phone = %s';
+		$duplicate_params[]     = $phone;
+	}
+
+	if ( ! empty( $whatsapp ) ) {
+		$duplicate_conditions[] = 'whatsapp = %s';
+		$duplicate_params[]     = $whatsapp;
+	}
+
+	if ( ! empty( $email ) ) {
+		$duplicate_conditions[] = 'email = %s';
+		$duplicate_params[]     = $email;
+	}
+
+	if ( ! empty( $duplicate_conditions ) ) {
+		$query = 'SELECT id FROM ' . $table_name . ' WHERE ' . implode( ' OR ', $duplicate_conditions ) . ' LIMIT 1';
+		$existing_application = $wpdb->get_var( $wpdb->prepare( $query, $duplicate_params ) );
+
+		if ( $existing_application ) {
+			wp_send_json_error(
+				array(
+					'message' => 'يوجد طلب سابق مرتبط بنفس بيانات الاتصال. يرجى استخدام بيانات مختلفة أو التواصل مع فريق الدعم.'
+				)
+			);
 		}
 	}
-	
-	// Handle file uploads using the stored $_FILES data
+
+	$phone_user    = $find_user_by_phone( $phone );
+	$whatsapp_user = $find_user_by_phone( $whatsapp );
+
+	if ( $phone_user && $whatsapp_user && $phone_user->ID !== $whatsapp_user->ID ) {
+		wp_send_json_error(
+			array(
+				'message' => 'أرقام الاتصال المُدخلة مرتبطة بحسابات مختلفة. يرجى استخدام نفس الحساب أو تحديث الأرقام.',
+			)
+		);
+	}
+
+	$user_id = 0;
+	if ( $phone_user ) {
+		$user_id = $phone_user->ID;
+	} elseif ( $whatsapp_user ) {
+		$user_id = $whatsapp_user->ID;
+	}
+
 	$uploaded_files = array();
-	$file_fields = array(
+	$file_fields    = array(
 		'profile_image',
 		'identity_front',
 		'identity_back',
@@ -1767,60 +1670,52 @@ function snks_handle_therapist_registration_otp_verification() {
 		'cp_highest_degree',
 		'cp_moh_license_file',
 	);
-	
-	// Restore $_FILES from stored data for processing
-	if ( $files_data ) {
-		foreach ( $file_fields as $field ) {
-			if ( ! empty( $files_data[ $field ]['name'] ) ) {
-				// Create a temporary file upload array
-				$file_array = array(
-					'name'     => $files_data[ $field ]['name'],
-					'type'     => $files_data[ $field ]['type'],
-					'tmp_name' => $files_data[ $field ]['tmp_name'],
-					'error'    => $files_data[ $field ]['error'],
-					'size'     => $files_data[ $field ]['size']
-				);
-				
-				// Only process if the temporary file still exists
-				if ( file_exists( $file_array['tmp_name'] ) ) {
-					$_FILES[ $field ] = $file_array;
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	foreach ( $file_fields as $field ) {
+		if ( ! empty( $_FILES[ $field ]['name'] ) ) {
 					$attachment_id = media_handle_upload( $field, 0 );
 					if ( ! is_wp_error( $attachment_id ) ) {
 						$uploaded_files[ $field ] = $attachment_id;
 					}
 				}
 			}
-		}
-		
-	// Handle certificates (multiple files)
+
 	$therapy_certificate_ids = array();
-	$certificate_files = $files_data['therapy_certificates'] ?? $files_data['certificates'] ?? null;
-	if ( ! empty( $certificate_files ) && isset( $certificate_files['name'] ) && is_array( $certificate_files['name'] ) ) {
-		$file_count = count( $certificate_files['name'] );
+	if ( ! empty( $_FILES['therapy_certificates']['name'] ) && is_array( $_FILES['therapy_certificates']['name'] ) ) {
+		$file_count = count( $_FILES['therapy_certificates']['name'] );
 		for ( $i = 0; $i < $file_count; $i++ ) {
-			if ( ! empty( $certificate_files['name'][ $i ] ) && file_exists( $certificate_files['tmp_name'][ $i ] ) ) {
-				$_FILES[ 'therapy_certificate_' . $i ] = array(
-					'name'     => $certificate_files['name'][ $i ],
-					'type'     => $certificate_files['type'][ $i ],
-					'tmp_name' => $certificate_files['tmp_name'][ $i ],
-					'error'    => $certificate_files['error'][ $i ],
-					'size'     => $certificate_files['size'][ $i ],
-				);
-				
-				$attachment_id = media_handle_upload( 'therapy_certificate_' . $i, 0 );
-				if ( ! is_wp_error( $attachment_id ) ) {
-					$therapy_certificate_ids[] = $attachment_id;
-				}
+			if ( empty( $_FILES['therapy_certificates']['name'][ $i ] ) ) {
+				continue;
 			}
+
+			$key = 'therapy_certificate_' . $i;
+
+			$_FILES[ $key ] = array(
+				'name'     => $_FILES['therapy_certificates']['name'][ $i ],
+				'type'     => $_FILES['therapy_certificates']['type'][ $i ],
+				'tmp_name' => $_FILES['therapy_certificates']['tmp_name'][ $i ],
+				'error'    => $_FILES['therapy_certificates']['error'][ $i ],
+				'size'     => $_FILES['therapy_certificates']['size'][ $i ],
+			);
+
+			$attachment_id = media_handle_upload( $key, 0 );
+
+					if ( ! is_wp_error( $attachment_id ) ) {
+				$therapy_certificate_ids[] = $attachment_id;
+			}
+
+			unset( $_FILES[ $key ] );
 		}
 	}
-	}
-	
-	// Prepare structured data
-	$role = sanitize_text_field( $form_data['role'] ?? '' );
+
+	$role = sanitize_text_field( $_POST['role'] ?? '' );
 	$psychiatrist_rank = '';
 	if ( 'psychiatrist' === $role ) {
-		$rank_key = $form_data['psy_rank'] ?? '';
+		$rank_key = $_POST['psy_rank'] ?? '';
 		$rank_map = array(
 			'resident' => 'طبيب مقيم طب نفسي',
 			'specialist' => 'أخصائي طب نفسي',
@@ -1829,9 +1724,9 @@ function snks_handle_therapist_registration_otp_verification() {
 		$psychiatrist_rank = isset( $rank_map[ $rank_key ] ) ? $rank_map[ $rank_key ] : sanitize_text_field( $rank_key );
 	}
 	
-	$psych_origin = '';
+	$psych_origin      = '';
 	if ( 'clinical_psychologist' === $role ) {
-		$origin_key = $form_data['psych_origin'] ?? '';
+		$origin_key = $_POST['psych_origin'] ?? '';
 		$origin_map = array(
 			'arts' => 'آداب قسم علم نفس',
 			'human_studies' => 'دراسات إنسانية قسم علم نفس',
@@ -1840,13 +1735,13 @@ function snks_handle_therapist_registration_otp_verification() {
 		$psych_origin = isset( $origin_map[ $origin_key ] ) ? $origin_map[ $origin_key ] : sanitize_text_field( $origin_key );
 	}
 	
-	$cp_moh_license = 'clinical_psychologist' === $role ? sanitize_text_field( $form_data['cp_moh_license'] ?? '' ) : '';
-	
+	$cp_moh_license = 'clinical_psychologist' === $role ? sanitize_text_field( $_POST['cp_moh_license'] ?? '' ) : '';
+
 	$courses = array();
-	if ( ! empty( $form_data['course_school'] ) && is_array( $form_data['course_school'] ) ) {
-		$schools = $form_data['course_school'];
-		$places = $form_data['course_place'] ?? array();
-		$years = $form_data['course_year'] ?? array();
+	if ( ! empty( $_POST['course_school'] ) && is_array( $_POST['course_school'] ) ) {
+		$schools = $_POST['course_school'];
+		$places  = $_POST['course_place'] ?? array();
+		$years   = $_POST['course_year'] ?? array();
 		$course_count = count( $schools );
 		
 		for ( $i = 0; $i < $course_count; $i++ ) {
@@ -1864,20 +1759,9 @@ function snks_handle_therapist_registration_otp_verification() {
 		}
 	}
 	
-	$preferred_groups = array();
-	if ( ! empty( $form_data['preferred_groups'] ) ) {
-		$preferred_groups = array_map( 'sanitize_text_field', (array) $form_data['preferred_groups'] );
-	}
-	
-	$diagnoses_children = array();
-	if ( ! empty( $form_data['dx_children'] ) ) {
-		$diagnoses_children = array_map( 'sanitize_text_field', (array) $form_data['dx_children'] );
-	}
-	
-	$diagnoses_adult = array();
-	if ( ! empty( $form_data['dx_adult'] ) ) {
-		$diagnoses_adult = array_map( 'sanitize_text_field', (array) $form_data['dx_adult'] );
-	}
+	$preferred_groups = array_map( 'sanitize_text_field', $preferred_groups );
+	$diagnoses_children = array_map( 'sanitize_text_field', $diagnoses_children );
+	$diagnoses_adult = array_map( 'sanitize_text_field', $diagnoses_adult );
 	
 	// Insert into database
 	global $wpdb;
@@ -1886,12 +1770,13 @@ function snks_handle_therapist_registration_otp_verification() {
 	$result = $wpdb->insert(
 		$table_name,
 		array(
-			'name' => sanitize_text_field( $form_data['name'] ),
-			'name_en' => sanitize_text_field( $form_data['name_en'] ?? '' ),
-			'email' => sanitize_email( $form_data['email'] ?? '' ),
+			'user_id' => $user_id ? $user_id : null,
+			'name' => sanitize_text_field( $_POST['name'] ),
+			'name_en' => sanitize_text_field( $_POST['name_en'] ?? '' ),
+			'email' => $email,
 			'phone' => sanitize_text_field( $phone ),
 			'whatsapp' => sanitize_text_field( $whatsapp ),
-			'doctor_specialty' => sanitize_text_field( $form_data['doctor_specialty'] ?? '' ),
+			'doctor_specialty' => sanitize_text_field( $_POST['doctor_specialty'] ?? '' ),
 			'role' => $role,
 			'psychiatrist_rank' => $psychiatrist_rank,
 			'psych_origin' => $psych_origin,
@@ -1912,36 +1797,40 @@ function snks_handle_therapist_registration_otp_verification() {
 			'diagnoses_children' => ! empty( $diagnoses_children ) ? wp_json_encode( $diagnoses_children ) : null,
 			'diagnoses_adult' => ! empty( $diagnoses_adult ) ? wp_json_encode( $diagnoses_adult ) : null,
 			'status' => 'pending',
-			'otp_method' => $settings['otp_method'],
 			'submitted_at' => current_time( 'mysql' )
 		),
 		array(
-			'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
+			'%d',
+			'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
 			'%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d',
-			'%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'
+			'%s', '%s', '%s', '%s', '%s', '%s', '%s'
 		)
 	);
 	
 	if ( $result ) {
-		// Clean up transients
-		delete_transient( 'therapist_reg_otp_' . $session_key );
-		delete_transient( 'therapist_reg_data_' . $session_key );
-		delete_transient( 'therapist_reg_files_' . $session_key );
-		
 		// Send notification email to admin
 		$admin_email = get_option( 'admin_email' );
 		$subject = 'New Therapist Registration Application';
 		$message = sprintf(
 			"A new therapist has submitted a registration application.\n\nName: %s\nEmail: %s\nPhone: %s\nSpecialty: %s\n\nPlease review the application in the admin dashboard.",
-			$form_data['name'],
-			$form_data['email'] ?? 'Not provided',
+			$_POST['name'],
+			$_POST['email'] ?? 'Not provided',
 			$phone,
-			$form_data['doctor_specialty']
+			$_POST['doctor_specialty']
 		);
 		
 		wp_mail( $admin_email, $subject, $message );
 		
-		wp_send_json_success( array( 'message' => 'تم التحقق بنجاح! تم إرسال طلبك وسيتم مراجعته قريباً.' ) );
+		$response = array(
+			'message'        => 'تم إرسال طلبك بنجاح وسيتم مراجعته قريباً.',
+			'application_id' => $wpdb->insert_id,
+		);
+
+		if ( $user_id ) {
+			$response['user_id'] = $user_id;
+		}
+
+		wp_send_json_success( $response );
 	} else {
 		wp_send_json_error( array( 'message' => 'حدث خطأ أثناء حفظ الطلب. حاول مرة أخرى.' ) );
 	}
