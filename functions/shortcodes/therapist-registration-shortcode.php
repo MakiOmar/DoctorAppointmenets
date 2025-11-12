@@ -45,7 +45,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 		}
 		.form-group label {
 			display: block;
-			margin-bottom: 5px;
+			margin-bottom: 8px;
 			font-weight: 600;
 			color: #555;
 		}
@@ -381,9 +381,42 @@ function snks_therapist_registration_shortcode( $atts ) {
 			font-size: 12px;
 			margin-top: 6px;
 		}
+		.file-upload-group.input-error {
+			border-color: #dc3545 !important;
+			background: #fef2f2;
+		}
+		#therapy-certificates.input-error {
+			border: 2px dashed #dc3545;
+			padding: 20px;
+			border-radius: 8px;
+			background: #fef2f2;
+		}
+		.form-group.input-error label {
+			color: #dc3545;
+		}
+		.form-group.input-error input,
+		.form-group.input-error select,
+		.form-group.input-error textarea {
+			border-color: #dc3545 !important;
+			background: #fef2f2;
+		}
+		.form-subsection.input-error,
+		.category-list.input-error,
+		.inline-options.input-error {
+			border: 1px solid #dc3545;
+			border-radius: 8px;
+			padding: 16px;
+			background: #fef2f2;
+		}
+		input.input-error,
+		textarea.input-error,
+		select.input-error {
+			border-color: #dc3545 !important;
+			background: #fef2f2;
+		}
 		</style>
 		
-		<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data">
+		<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data" novalidate>
 			<h2><?php echo __( 'Therapist Registration', 'shrinks' ); ?></h2>
 			
 			<div id="form-messages"></div>
@@ -697,172 +730,19 @@ function snks_therapist_registration_shortcode( $atts ) {
 	<script>
 	jQuery(document).ready(function($) {
 		
-		// Fancy File Upload Functionality
-		function initFancyUploads() {
-			$('.file-upload-group').each(function() {
-				const $uploadGroup = $(this);
-				const $input = $uploadGroup.find('input[type="file"]');
-				const $preview = $uploadGroup.find('.file-preview');
-				const fieldName = $uploadGroup.data('field');
-				const isMultiple = $uploadGroup.data('multiple') === true;
-				const maxSizeAttr = $input.attr('data-max-size');
-				const maxSize = maxSizeAttr ? parseInt(maxSizeAttr, 10) : null;
-				const maxFiles = 10;
-				
-				let selectedFiles = [];
-				
-				// Drag and drop events
-				$uploadGroup.on('dragover dragenter', function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					$(this).addClass('dragover');
-				});
-				
-				$uploadGroup.on('dragleave dragend', function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					$(this).removeClass('dragover');
-				});
-				
-				$uploadGroup.on('drop', function(e) {
-					e.preventDefault();
-					e.stopPropagation();
-					$(this).removeClass('dragover');
-					
-					const files = e.originalEvent.dataTransfer.files;
-					handleFiles(files);
-				});
-				
-				// Click to upload
-				$input.on('change', function() {
-					handleFiles(this.files);
-				});
-				
-				function handleFiles(files) {
-					for (let i = 0; i < files.length; i++) {
-						const file = files[i];
-						
-						// Check file size
-						if (maxSize && file.size > maxSize) {
-							const sizeMB = (maxSize / 1024 / 1024).toFixed(1);
-							alert('File "' + file.name + '" is too large. Maximum size is ' + sizeMB + 'MB');
-							continue;
-						}
-						
-						// Check max files for multiple uploads
-						if (isMultiple && selectedFiles.length >= maxFiles) {
-							$uploadGroup.find('.max-files-notice').show();
-							break;
-						}
-						
-						// For single file uploads, replace existing
-						if (!isMultiple) {
-							selectedFiles = [];
-							$preview.empty();
-						}
-						
-						selectedFiles.push(file);
-						addFilePreview(file);
-					}
-					
-					updateFileInput();
-				}
-				
-				function addFilePreview(file) {
-					const fileId = 'file_' + Math.random().toString(36).substr(2, 9);
-					const isImage = file.type.startsWith('image/');
-					const isPDF = file.type === 'application/pdf';
-					
-					let previewHtml = `
-						<div class="preview-item" data-file-id="${fileId}">
-							<button type="button" class="remove-file" onclick="removeFile('${fieldName}', '${fileId}')">&times;</button>
-					`;
-					
-					if (isImage) {
-						const reader = new FileReader();
-						reader.onload = function(e) {
-							$(`[data-file-id="${fileId}"] .preview-content`).html(`
-								<img src="${e.target.result}" alt="${file.name}" class="preview-image">
-							`);
-						};
-						reader.readAsDataURL(file);
-						
-						previewHtml += `
-							<div class="preview-content">
-								<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">
-									<span>Loading...</span>
-								</div>
-							</div>
-						`;
-					} else {
-						let icon = '📄';
-						if (isPDF) icon = '📋';
-						
-						previewHtml += `
-							<div class="preview-file">
-								<div class="file-icon">${icon}</div>
-								<div class="file-name">${file.name}</div>
-								<div class="file-size">${formatFileSize(file.size)}</div>
-							</div>
-						`;
-					}
-					
-					previewHtml += '</div>';
-					$preview.append(previewHtml);
-					
-					// Store file reference
-					$(`[data-file-id="${fileId}"]`).data('file', file);
-				}
-				
-				function formatFileSize(bytes) {
-					if (bytes === 0) return '0 Bytes';
-					const k = 1024;
-					const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-					const i = Math.floor(Math.log(bytes) / Math.log(k));
-					return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-				}
-				
-				// Global function to remove files
-				window.removeFile = function(fieldName, fileId) {
-					const $uploadGroup = $(`.file-upload-group[data-field="${fieldName}"]`);
-					const $preview = $uploadGroup.find('.file-preview');
-					const $item = $preview.find(`[data-file-id="${fileId}"]`);
-					
-					// Remove from selectedFiles array
-					const fileIndex = selectedFiles.findIndex(f => 
-						$item.data('file') && $item.data('file').name === f.name
-					);
-					if (fileIndex > -1) {
-						selectedFiles.splice(fileIndex, 1);
-					}
-					
-					$item.remove();
-					updateFileInput();
-					
-					// Hide max files notice if under limit
-					if (selectedFiles.length < maxFiles) {
-						$uploadGroup.find('.max-files-notice').hide();
-					}
-				};
-				
-				function updateFileInput() {
-					// Create a new DataTransfer object to update the input
-					const dt = new DataTransfer();
-					selectedFiles.forEach(file => dt.items.add(file));
-					$input[0].files = dt.files;
-				}
-			});
-		}
-		
-		// Initialize fancy uploads
-		initFancyUploads();
+
 
 		// Form interactivity (mirrors standalone HTML behaviour)
 		const hiddenSpecialty = document.getElementById('doctor_specialty');
+		const formElement = document.getElementById('therapist-registration-form');
 		const roleRadios = Array.from(document.querySelectorAll('input[name="role"]'));
+		const roleGroup = roleRadios.length ? roleRadios[0].closest('.form-group') : null;
 		const psyRankRadios = Array.from(document.querySelectorAll('input[name="psy_rank"]'));
+		const psyRankContainer = psyRankRadios.length ? psyRankRadios[0].closest('.form-subsection') : null;
 		const psychOriginRadios = Array.from(document.querySelectorAll('input[name="psych_origin"]'));
+		const psychOriginContainer = psychOriginRadios.length ? psychOriginRadios[0].closest('.form-subsection') : null;
 		const cpMohRadios = Array.from(document.querySelectorAll('input[name="cp_moh_license"]'));
+		const cpMohContainer = cpMohRadios.length ? cpMohRadios[0].closest('.form-subsection') : null;
 		const psychiatristSection = document.getElementById('psychiatrist-section');
 		const psychologistSection = document.getElementById('psychologist-section');
 		const degreeUpload = document.getElementById('degree-upload');
@@ -883,503 +763,609 @@ function snks_therapist_registration_shortcode( $atts ) {
 		const adultDxPsychologist = document.getElementById('adult-dx-psychologist');
 		const childrenDxCheckboxes = Array.from(document.querySelectorAll('input[name="dx_children[]"]'));
 		const adultDxCheckboxes = Array.from(document.querySelectorAll('input[name="dx_adult[]"]'));
+		const preferredGroupsWrapper = document.querySelector('.category-list');
+		const messagesDiv = $('#form-messages');
 
-		function toArray(collection) {
-			if (!collection) {
-				return [];
-			}
-			if (Array.isArray(collection)) {
-				return collection;
-			}
-			if (NodeList.prototype.isPrototypeOf(collection)) {
-				return Array.from(collection);
-			}
-			return [collection];
-		}
-
-		function setRequired(elements, state) {
-			toArray(elements).forEach(function(element) {
-				if (element) {
-					element.required = !!state;
+		console.log(childrenDxCheckboxes);
+			function toArray(collection) {
+				if (!collection) {
+					return [];
 				}
-			});
-		}
-
-		function showElement(element, shouldShow) {
-			if (!element) {
-				return;
-			}
-			element.style.display = shouldShow ? 'block' : 'none';
-		}
-
-		function isElementVisible(element) {
-			if (!element) {
-				return false;
-			}
-			return element.offsetParent !== null;
-		}
-
-		setRequired(psyRankRadios, false);
-		setRequired(psychOriginRadios, false);
-		setRequired(cpMohRadios, false);
-		setRequired(doctorFiles, false);
-		if (degreeFile) {
-			degreeFile.required = false;
-		}
-		if (cpDegree) {
-			cpDegree.required = false;
-		}
-		if (cpLicenseFile) {
-			cpLicenseFile.required = false;
-		}
-
-		function getCurrentRole() {
-			const checked = document.querySelector('input[name="role"]:checked');
-			return checked ? checked.value : '';
-		}
-
-		function updateDoctorSpecialty() {
-			if (!hiddenSpecialty) {
-				return;
-			}
-			const role = getCurrentRole();
-			let specialty = '';
-
-			if (role === 'psychiatrist') {
-				const rankRadio = document.querySelector('input[name="psy_rank"]:checked');
-				if (rankRadio && rankRadio.parentElement) {
-					specialty = rankRadio.parentElement.textContent.trim();
+				if (Array.isArray(collection)) {
+					return collection;
 				}
-				if (!specialty) {
-					specialty = 'طبيب نفسي';
+				if (NodeList.prototype.isPrototypeOf(collection)) {
+					return Array.from(collection);
 				}
-			} else if (role === 'clinical_psychologist') {
-				specialty = 'أخصائي نفسي إكلينيكي';
+				return [collection];
 			}
 
-			hiddenSpecialty.value = specialty;
-		}
-
-		function updateAdultDxByRole() {
-			if (!adultDxSection) {
-				return;
-			}
-			const adultGroupChecked = document.querySelector('input[name="preferred_groups[]"][value="المراهقين والبالغين"]:checked');
-			if (!adultGroupChecked) {
-				showElement(adultDxSection, false);
-				showElement(adultDxPsych, false);
-				showElement(adultDxPsychologist, false);
-				return;
-			}
-
-			const role = getCurrentRole();
-			showElement(adultDxSection, true);
-			if (role === 'psychiatrist') {
-				showElement(adultDxPsych, true);
-				showElement(adultDxPsychologist, false);
-			} else if (role === 'clinical_psychologist') {
-				showElement(adultDxPsychologist, true);
-				showElement(adultDxPsych, false);
-						} else {
-				showElement(adultDxPsych, false);
-				showElement(adultDxPsychologist, false);
-			}
-		}
-
-		function updateDxSectionsVisibility() {
-			const selectedValues = preferredGroupCheckboxes.filter(function(cb) {
-				return cb.checked;
-			}).map(function(cb) {
-				return cb.value;
-			});
-
-			showElement(childrenDxSection, selectedValues.includes('الأطفال'));
-			if (selectedValues.includes('المراهقين والبالغين')) {
-				updateAdultDxByRole();
-					} else {
-				showElement(adultDxSection, false);
-				showElement(adultDxPsych, false);
-				showElement(adultDxPsychologist, false);
-			}
-		}
-
-		function enforcePreferredGroupsLimit() {
-			const checkedCount = preferredGroupCheckboxes.filter(function(cb) {
-				return cb.checked;
-			}).length;
-
-			if (checkedCount >= 4) {
-				preferredGroupCheckboxes.forEach(function(cb) {
-					if (!cb.checked) {
-						cb.disabled = true;
-						if (cb.parentElement) {
-							cb.parentElement.classList.add('disabled');
-						}
+			function setRequired(elements, state) {
+				toArray(elements).forEach(function(element) {
+					if (element) {
+						element.required = !!state;
 					}
 				});
-				if (maxSelectionMessage) {
-					maxSelectionMessage.style.display = 'block';
-				}
-			} else {
-				preferredGroupCheckboxes.forEach(function(cb) {
-					cb.disabled = false;
-					if (cb.parentElement) {
-						cb.parentElement.classList.remove('disabled');
-					}
-				});
-				if (maxSelectionMessage) {
-					maxSelectionMessage.style.display = 'none';
-				}
-			}
-		}
-
-		function toggleRoleSections() {
-			const role = getCurrentRole();
-
-			if (role === 'psychiatrist') {
-				showElement(psychiatristSection, true);
-				showElement(psychologistSection, false);
-				setRequired(psyRankRadios, true);
-				setRequired(psychOriginRadios, false);
-				setRequired(cpMohRadios, false);
-				setRequired(doctorFiles, true);
-				if (cpDegree) {
-					cpDegree.required = false;
-				}
-				if (cpLicenseFile) {
-					cpLicenseFile.required = false;
-				}
-			} else if (role === 'clinical_psychologist') {
-				showElement(psychiatristSection, false);
-				showElement(psychologistSection, true);
-				setRequired(psyRankRadios, false);
-				setRequired(psychOriginRadios, true);
-				setRequired(cpMohRadios, true);
-				setRequired(doctorFiles, false);
-				if (cpDegree) {
-					cpDegree.required = true;
-				}
-				if (degreeFile) {
-					degreeFile.required = false;
-				}
-			} else {
-				showElement(psychiatristSection, false);
-				showElement(psychologistSection, false);
-				setRequired(psyRankRadios, false);
-				setRequired(psychOriginRadios, false);
-				setRequired(cpMohRadios, false);
-				setRequired(doctorFiles, false);
 			}
 
-			if (role !== 'psychiatrist') {
-				showElement(degreeUpload, false);
-				if (degreeFile) {
-					degreeFile.required = false;
-				}
-			}
-
-			if (role !== 'clinical_psychologist') {
-				showElement(cpMohUpload, false);
-				if (cpLicenseFile) {
-					cpLicenseFile.required = false;
-				}
-			}
-
-			updateDoctorSpecialty();
-			updateAdultDxByRole();
-		}
-
-		function handleRankChange() {
-			const selectedRank = document.querySelector('input[name="psy_rank"]:checked');
-			if (!degreeUpload) {
-				return;
-			}
-			if (selectedRank && (selectedRank.value === 'specialist' || selectedRank.value === 'consultant')) {
-				showElement(degreeUpload, true);
-				if (degreeFile) {
-					degreeFile.required = true;
-				}
-			} else {
-				showElement(degreeUpload, false);
-				if (degreeFile) {
-					degreeFile.required = false;
-					degreeFile.value = '';
-				}
-			}
-			updateDoctorSpecialty();
-		}
-
-		function handleCpMohChange() {
-			const selectedLicense = document.querySelector('input[name="cp_moh_license"]:checked');
-			if (!cpMohUpload) {
-				return;
-			}
-			if (selectedLicense && selectedLicense.value === 'yes') {
-				showElement(cpMohUpload, true);
-				if (cpLicenseFile) {
-					cpLicenseFile.required = true;
-				}
-			} else {
-				showElement(cpMohUpload, false);
-				if (cpLicenseFile) {
-					cpLicenseFile.required = false;
-					cpLicenseFile.value = '';
-				}
-			}
-		}
-
-		function createRemoveButton(type) {
-			const button = document.createElement('button');
-			button.type = 'button';
-			button.className = 'remove-row-btn';
-			button.textContent = '❌';
-			button.addEventListener('click', function() {
-				const container = type === 'certificate' ? certContainer : courseContainer;
-				if (!container) {
+			function showElement(element, shouldShow) {
+				if (!element) {
 					return;
 				}
-				const selector = type === 'certificate' ? '.certificate-row' : '.course-row';
-				const row = button.closest(selector);
+				element.style.display = shouldShow ? 'block' : 'none';
+			}
+
+			function isElementVisible(element) {
+				if (!element) {
+					return false;
+				}
+				return element.offsetParent !== null;
+			}
+
+			setRequired(psyRankRadios, false);
+			setRequired(psychOriginRadios, false);
+			setRequired(cpMohRadios, false);
+			setRequired(doctorFiles, false);
+			if (degreeFile) {
+				degreeFile.required = false;
+			}
+			if (cpDegree) {
+				cpDegree.required = false;
+			}
+			if (cpLicenseFile) {
+				cpLicenseFile.required = false;
+			}
+
+			function getCurrentRole() {
+				const checked = document.querySelector('input[name="role"]:checked');
+				return checked ? checked.value : '';
+			}
+
+			function updateDoctorSpecialty() {
+				if (!hiddenSpecialty) {
+					return;
+				}
+				const role = getCurrentRole();
+				let specialty = '';
+
+				if (role === 'psychiatrist') {
+					const rankRadio = document.querySelector('input[name="psy_rank"]:checked');
+					if (rankRadio && rankRadio.parentElement) {
+						specialty = rankRadio.parentElement.textContent.trim();
+					}
+					if (!specialty) {
+						specialty = 'طبيب نفسي';
+					}
+				} else if (role === 'clinical_psychologist') {
+					specialty = 'أخصائي نفسي إكلينيكي';
+				}
+
+				hiddenSpecialty.value = specialty;
+			}
+
+			function updateAdultDxByRole() {
+				if (!adultDxSection) {
+					return;
+				}
+				const adultGroupChecked = document.querySelector('input[name="preferred_groups[]"][value="المراهقين والبالغين"]:checked');
+				if (!adultGroupChecked) {
+					showElement(adultDxSection, false);
+					showElement(adultDxPsych, false);
+					showElement(adultDxPsychologist, false);
+					return;
+				}
+
+				const role = getCurrentRole();
+				showElement(adultDxSection, true);
+				if (role === 'psychiatrist') {
+					showElement(adultDxPsych, true);
+					showElement(adultDxPsychologist, false);
+				} else if (role === 'clinical_psychologist') {
+					showElement(adultDxPsychologist, true);
+					showElement(adultDxPsych, false);
+							} else {
+					showElement(adultDxPsych, false);
+					showElement(adultDxPsychologist, false);
+				}
+			}
+
+			function updateDxSectionsVisibility() {
+				const selectedValues = preferredGroupCheckboxes.filter(function(cb) {
+					return cb.checked;
+				}).map(function(cb) {
+					return cb.value;
+				});
+
+				showElement(childrenDxSection, selectedValues.includes('الأطفال'));
+				if (!selectedValues.includes('الأطفال')) {
+					clearFieldError(childrenDxSection);
+				}
+				if (selectedValues.includes('المراهقين والبالغين')) {
+					updateAdultDxByRole();
+						} else {
+					showElement(adultDxSection, false);
+					showElement(adultDxPsych, false);
+					showElement(adultDxPsychologist, false);
+					clearFieldError(adultDxSection);
+				}
+			}
+
+			function enforcePreferredGroupsLimit() {
+				const checkedCount = preferredGroupCheckboxes.filter(function(cb) {
+					return cb.checked;
+				}).length;
+
+				if (checkedCount >= 4) {
+					preferredGroupCheckboxes.forEach(function(cb) {
+						if (!cb.checked) {
+							cb.disabled = true;
+							if (cb.parentElement) {
+								cb.parentElement.classList.add('disabled');
+							}
+						}
+					});
+					if (maxSelectionMessage) {
+						maxSelectionMessage.style.display = 'block';
+					}
+				} else {
+					preferredGroupCheckboxes.forEach(function(cb) {
+						cb.disabled = false;
+						if (cb.parentElement) {
+							cb.parentElement.classList.remove('disabled');
+						}
+					});
+					if (maxSelectionMessage) {
+						maxSelectionMessage.style.display = 'none';
+					}
+				}
+			}
+
+			function toggleRoleSections() {
+				const role = getCurrentRole();
+
+				if (role === 'psychiatrist') {
+					showElement(psychiatristSection, true);
+					showElement(psychologistSection, false);
+					clearFieldError(psychologistSection);
+					if (psychOriginContainer) {
+						clearFieldError(psychOriginContainer);
+					}
+					if (cpMohContainer) {
+						clearFieldError(cpMohContainer);
+					}
+					setRequired(psyRankRadios, true);
+					setRequired(psychOriginRadios, false);
+					setRequired(cpMohRadios, false);
+					setRequired(doctorFiles, true);
+					if (cpDegree) {
+						cpDegree.required = false;
+					}
+					if (cpLicenseFile) {
+						cpLicenseFile.required = false;
+					}
+				} else if (role === 'clinical_psychologist') {
+					showElement(psychiatristSection, false);
+					showElement(psychologistSection, true);
+					clearFieldError(psychiatristSection);
+					if (psyRankContainer) {
+						clearFieldError(psyRankContainer);
+					}
+					setRequired(psyRankRadios, false);
+					setRequired(psychOriginRadios, true);
+					setRequired(cpMohRadios, true);
+					setRequired(doctorFiles, false);
+					if (cpDegree) {
+						cpDegree.required = true;
+					}
+					if (degreeFile) {
+						degreeFile.required = false;
+					}
+				} else {
+					showElement(psychiatristSection, false);
+					showElement(psychologistSection, false);
+					clearFieldError(psychiatristSection);
+					clearFieldError(psychologistSection);
+					setRequired(psyRankRadios, false);
+					setRequired(psychOriginRadios, false);
+					setRequired(cpMohRadios, false);
+					setRequired(doctorFiles, false);
+				}
+
+				if (role !== 'psychiatrist') {
+					showElement(degreeUpload, false);
+					if (degreeFile) {
+						degreeFile.required = false;
+						clearFieldError(degreeUpload);
+					}
+				}
+
+				if (role !== 'clinical_psychologist') {
+					showElement(cpMohUpload, false);
+					if (cpLicenseFile) {
+						cpLicenseFile.required = false;
+						clearFieldError(cpMohUpload);
+					}
+				}
+
+				updateDoctorSpecialty();
+				updateAdultDxByRole();
+			}
+
+			function handleRankChange() {
+				const selectedRank = document.querySelector('input[name="psy_rank"]:checked');
+				if (!degreeUpload) {
+					return;
+				}
+				if (selectedRank && (selectedRank.value === 'specialist' || selectedRank.value === 'consultant')) {
+					showElement(degreeUpload, true);
+					if (degreeFile) {
+						degreeFile.required = true;
+					}
+				} else {
+					showElement(degreeUpload, false);
+					if (degreeFile) {
+						degreeFile.required = false;
+						degreeFile.value = '';
+					}
+				}
+				updateDoctorSpecialty();
+			}
+
+			function handleCpMohChange() {
+				const selectedLicense = document.querySelector('input[name="cp_moh_license"]:checked');
+				if (!cpMohUpload) {
+					return;
+				}
+				if (selectedLicense && selectedLicense.value === 'yes') {
+					showElement(cpMohUpload, true);
+					if (cpLicenseFile) {
+						cpLicenseFile.required = true;
+					}
+				} else {
+					showElement(cpMohUpload, false);
+					if (cpLicenseFile) {
+						cpLicenseFile.required = false;
+						cpLicenseFile.value = '';
+					}
+				}
+			}
+
+			function createRemoveButton(type) {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'remove-row-btn';
+				button.textContent = '❌';
+				button.addEventListener('click', function() {
+					const container = type === 'certificate' ? certContainer : courseContainer;
+					if (!container) {
+						return;
+					}
+					const selector = type === 'certificate' ? '.certificate-row' : '.course-row';
+					const row = button.closest(selector);
+					if (!row) {
+						return;
+					}
+					const rows = container.querySelectorAll(selector);
+					if (rows.length > 1) {
+						row.remove();
+					} else {
+						row.querySelectorAll('input').forEach(function(input) {
+							input.value = '';
+						});
+					}
+					if (type === 'certificate') {
+						updateCertificateRemoveState();
+					} else {
+						updateCourseRemoveState();
+					}
+				});
+				return button;
+			}
+
+			function attachRemoveButton(row, type) {
 				if (!row) {
 					return;
 				}
-				const rows = container.querySelectorAll(selector);
-				if (rows.length > 1) {
-					row.remove();
-				} else {
-					row.querySelectorAll('input').forEach(function(input) {
-						input.value = '';
-					});
+				const existing = row.querySelector('.remove-row-btn');
+				if (existing) {
+					existing.remove();
 				}
-				if (type === 'certificate') {
-					updateCertificateRemoveState();
-				} else {
-					updateCourseRemoveState();
+				row.appendChild(createRemoveButton(type));
+			}
+
+			function updateCertificateRemoveState() {
+				if (!certContainer) {
+					return;
 				}
-			});
-			return button;
-		}
+				const rows = certContainer.querySelectorAll('.certificate-row');
+				rows.forEach(function(row) {
+					const button = row.querySelector('.remove-row-btn');
+					if (button) {
+						button.style.display = rows.length > 1 ? '' : 'none';
+					}
+				});
+			}
 
-		function attachRemoveButton(row, type) {
-			if (!row) {
-				return;
-			}
-			const existing = row.querySelector('.remove-row-btn');
-			if (existing) {
-				existing.remove();
-			}
-			row.appendChild(createRemoveButton(type));
-		}
-
-		function updateCertificateRemoveState() {
-			if (!certContainer) {
-				return;
-			}
-			const rows = certContainer.querySelectorAll('.certificate-row');
-			rows.forEach(function(row) {
-				const button = row.querySelector('.remove-row-btn');
-				if (button) {
-					button.style.display = rows.length > 1 ? '' : 'none';
+			function updateCourseRemoveState() {
+				if (!courseContainer) {
+					return;
 				}
-			});
-		}
-
-		function updateCourseRemoveState() {
-			if (!courseContainer) {
-				return;
+				const rows = courseContainer.querySelectorAll('.course-row');
+				rows.forEach(function(row) {
+					const button = row.querySelector('.remove-row-btn');
+					if (button) {
+						button.style.display = rows.length > 1 ? '' : 'none';
+					}
+				});
 			}
-			const rows = courseContainer.querySelectorAll('.course-row');
-			rows.forEach(function(row) {
-				const button = row.querySelector('.remove-row-btn');
-				if (button) {
-					button.style.display = rows.length > 1 ? '' : 'none';
+
+			function addCertificateRow() {
+				if (!certContainer) {
+					return;
 				}
-			});
-		}
+				const row = document.createElement('div');
+				row.className = 'dynamic-row certificate-row';
 
-		function addCertificateRow() {
-			if (!certContainer) {
-				return;
-			}
-			const row = document.createElement('div');
-			row.className = 'dynamic-row certificate-row';
+				const input = document.createElement('input');
+				input.type = 'file';
+				input.name = 'therapy_certificates[]';
+				input.accept = 'image/*,.pdf,.txt,.doc,.docx';
+				input.required = true;
+				input.addEventListener('change', function() {
+					refreshTherapyCertificatesState();
+				});
 
-			const input = document.createElement('input');
-			input.type = 'file';
-			input.name = 'therapy_certificates[]';
-			input.accept = 'image/*,.pdf,.txt,.doc,.docx';
-			input.required = true;
-
-			row.appendChild(input);
-			attachRemoveButton(row, 'certificate');
-			certContainer.appendChild(row);
-			updateCertificateRemoveState();
-		}
-
-		function addCourseRow() {
-			if (!courseContainer) {
-				return;
-			}
-			const row = document.createElement('div');
-			row.className = 'dynamic-row course-row';
-
-			const schoolInput = document.createElement('input');
-			schoolInput.type = 'text';
-			schoolInput.name = 'course_school[]';
-			schoolInput.placeholder = 'مدرسة العلاج النفسي';
-			schoolInput.required = true;
-
-			const placeInput = document.createElement('input');
-			placeInput.type = 'text';
-			placeInput.name = 'course_place[]';
-			placeInput.placeholder = 'مكان الحصول عليها (أو تعليم ذاتي)';
-
-			const yearInput = document.createElement('input');
-			yearInput.type = 'text';
-			yearInput.name = 'course_year[]';
-			yearInput.placeholder = 'سنة الحصول عليها';
-			yearInput.required = true;
-
-			row.appendChild(schoolInput);
-			row.appendChild(placeInput);
-			row.appendChild(yearInput);
-			attachRemoveButton(row, 'course');
-			courseContainer.appendChild(row);
-			updateCourseRemoveState();
-		}
-
-		roleRadios.forEach(function(radio) {
-			radio.addEventListener('change', function() {
-				toggleRoleSections();
-			});
-		});
-
-		psyRankRadios.forEach(function(radio) {
-			radio.addEventListener('change', function() {
-				handleRankChange();
-			});
-		});
-
-		psychOriginRadios.forEach(function(radio) {
-			radio.addEventListener('change', function() {
-				updateDoctorSpecialty();
-			});
-		});
-
-		cpMohRadios.forEach(function(radio) {
-			radio.addEventListener('change', function() {
-				handleCpMohChange();
-			});
-		});
-
-		preferredGroupCheckboxes.forEach(function(cb) {
-			cb.addEventListener('change', function() {
-				enforcePreferredGroupsLimit();
-				updateDxSectionsVisibility();
-			});
-		});
-
-		if (addCertBtn) {
-			addCertBtn.addEventListener('click', function() {
-				addCertificateRow();
-			});
-		}
-
-		if (addCourseBtn) {
-			addCourseBtn.addEventListener('click', function() {
-				addCourseRow();
-			});
-		}
-
-		if (certContainer) {
-			Array.from(certContainer.querySelectorAll('.certificate-row')).forEach(function(row) {
+				row.appendChild(input);
 				attachRemoveButton(row, 'certificate');
-			});
-		}
+				certContainer.appendChild(row);
+				updateCertificateRemoveState();
+				refreshTherapyCertificatesState();
+			}
 
-		if (courseContainer) {
-			Array.from(courseContainer.querySelectorAll('.course-row')).forEach(function(row) {
+			function addCourseRow() {
+				if (!courseContainer) {
+					return;
+				}
+				const row = document.createElement('div');
+				row.className = 'dynamic-row course-row';
+
+				const schoolInput = document.createElement('input');
+				schoolInput.type = 'text';
+				schoolInput.name = 'course_school[]';
+				schoolInput.placeholder = 'مدرسة العلاج النفسي';
+				schoolInput.required = true;
+
+				const placeInput = document.createElement('input');
+				placeInput.type = 'text';
+				placeInput.name = 'course_place[]';
+				placeInput.placeholder = 'مكان الحصول عليها (أو تعليم ذاتي)';
+
+				const yearInput = document.createElement('input');
+				yearInput.type = 'text';
+				yearInput.name = 'course_year[]';
+				yearInput.placeholder = 'سنة الحصول عليها';
+				yearInput.required = true;
+
+				row.appendChild(schoolInput);
+				row.appendChild(placeInput);
+				row.appendChild(yearInput);
 				attachRemoveButton(row, 'course');
-			});
-		}
+				courseContainer.appendChild(row);
+				updateCourseRemoveState();
+			}
 
-		toggleRoleSections();
-		handleRankChange();
-		handleCpMohChange();
-		enforcePreferredGroupsLimit();
-		updateDxSectionsVisibility();
-		updateCertificateRemoveState();
-		updateCourseRemoveState();
-		updateDoctorSpecialty();
-		
+			roleRadios.forEach(function(radio) {
+				radio.addEventListener('change', function() {
+					toggleRoleSections();
+					if (roleGroup) {
+						clearFieldError(roleGroup);
+					}
+				});
+			});
+
+			psyRankRadios.forEach(function(radio) {
+				radio.addEventListener('change', function() {
+					handleRankChange();
+					if (psyRankContainer) {
+						clearFieldError(psyRankContainer);
+					}
+				});
+			});
+
+			psychOriginRadios.forEach(function(radio) {
+				radio.addEventListener('change', function() {
+					updateDoctorSpecialty();
+					if (psychOriginContainer) {
+						clearFieldError(psychOriginContainer);
+					}
+				});
+			});
+
+			cpMohRadios.forEach(function(radio) {
+				radio.addEventListener('change', function() {
+					handleCpMohChange();
+					if (cpMohContainer) {
+						clearFieldError(cpMohContainer);
+					}
+				});
+			});
+
+			preferredGroupCheckboxes.forEach(function(cb) {
+				cb.addEventListener('change', function() {
+					enforcePreferredGroupsLimit();
+					updateDxSectionsVisibility();
+					if (preferredGroupCheckboxes.some(function(item) { return item.checked; })) {
+						if (preferredGroupsWrapper) {
+							clearFieldError(preferredGroupsWrapper);
+						}
+					}
+				});
+			});
+
+			if (addCertBtn) {
+				addCertBtn.addEventListener('click', function() {
+					addCertificateRow();
+				});
+			}
+
+			if (addCourseBtn) {
+				addCourseBtn.addEventListener('click', function() {
+					addCourseRow();
+				});
+			}
+
+			if (certContainer) {
+				Array.from(certContainer.querySelectorAll('.certificate-row')).forEach(function(row) {
+					attachRemoveButton(row, 'certificate');
+				});
+			}
+
+			if (courseContainer) {
+				Array.from(courseContainer.querySelectorAll('.course-row')).forEach(function(row) {
+					attachRemoveButton(row, 'course');
+				});
+			}
+
+			toggleRoleSections();
+			handleRankChange();
+			handleCpMohChange();
+			enforcePreferredGroupsLimit();
+			updateDxSectionsVisibility();
+			updateCertificateRemoveState();
+			updateCourseRemoveState();
+			updateDoctorSpecialty();
+			
+			const initialCertificateInputs = document.querySelectorAll('input[name="therapy_certificates[]"]');
+			initialCertificateInputs.forEach(function(input) {
+				input.addEventListener('change', function() {
+					refreshTherapyCertificatesState();
+				});
+			});
+			refreshTherapyCertificatesState();
+			
 		// Form submission handler
 		$('#therapist-registration-form').on('submit', function(e) {
 			e.preventDefault();
 			
 			const submitBtn = $('#submit-btn');
-			const messagesDiv = $('#form-messages');
-
-			function showFormError(message) {
-				if (typeof Swal !== 'undefined') {
-					Swal.fire({
-						icon: 'error',
-						title: 'تنبيه',
-						text: message,
-						confirmButtonText: 'حسناً'
-					});
-				} else if (messagesDiv.length) {
-					messagesDiv.html('<div class="alert alert-error">' + message + '</div>');
-				} else {
-					alert(message);
+			
+				if (messagesDiv.length) {
+			messagesDiv.empty();
 				}
-			}
-			
-			if (messagesDiv.length) {
-				messagesDiv.empty();
-			}
-			
-			updateDoctorSpecialty();
-
-			const preferredSelected = preferredGroupCheckboxes.some(function(cb) {
-				return cb.checked;
-			});
-
-			if (!preferredSelected) {
-				showFormError('يرجى اختيار فئة واحدة على الأقل ضمن الفئات المفضلة.');
-				return;
-			}
-
-			const childrenVisible = isElementVisible(childrenDxSection);
-			if (childrenVisible) {
-				const childrenChecked = childrenDxCheckboxes.some(function(cb) {
-					return cb.checked;
-				});
-				if (!childrenChecked) {
-					showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات الأطفال.');
+				
+				const currentRole = getCurrentRole();
+				if (!currentRole) {
+					if (roleGroup) {
+						markFieldError(roleGroup);
+					}
+					showFormError('يرجى اختيار المسمى الوظيفي.', roleGroup || this);
 					return;
 				}
-			}
+				if (roleGroup) {
+					clearFieldError(roleGroup);
+				}
 
-			const adultVisible = isElementVisible(adultDxSection);
-			if (adultVisible) {
-				const visibleAdultCheckboxes = adultDxCheckboxes.filter(function(cb) {
-					return cb.offsetParent !== null;
+				const invalidGeneral = findFirstInvalidGeneralField();
+				if (invalidGeneral) {
+					markFieldError(invalidGeneral.field);
+					showFormError(invalidGeneral.message, invalidGeneral.field.closest('.form-group') || invalidGeneral.field);
+					return;
+				}
+
+				updateDoctorSpecialty();
+
+				if (currentRole === 'psychiatrist') {
+					const rankSelected = psyRankRadios.some(function(radio) {
+						return radio.checked;
+					});
+					if (!rankSelected) {
+						const rankTarget = psyRankContainer || psychiatristSection || roleGroup;
+						markFieldError(rankTarget);
+						showFormError('يرجى اختيار الدرجة / الرتبة.', rankTarget || this);
+						return;
+					}
+					if (psyRankContainer) {
+						clearFieldError(psyRankContainer);
+					}
+				} else if (currentRole === 'clinical_psychologist') {
+					const originSelected = psychOriginRadios.some(function(radio) {
+						return radio.checked;
+					});
+					if (!originSelected) {
+						const originTarget = psychOriginContainer || psychologistSection || roleGroup;
+						markFieldError(originTarget);
+						showFormError('يرجى اختيار قسم التخرج.', originTarget || this);
+						return;
+					}
+					if (psychOriginContainer) {
+						clearFieldError(psychOriginContainer);
+					}
+					const mohSelected = cpMohRadios.some(function(radio) {
+						return radio.checked;
+					});
+					if (!mohSelected) {
+						const mohTarget = cpMohContainer || psychologistSection || roleGroup;
+						markFieldError(mohTarget);
+						showFormError('يرجى تحديد حالة ترخيص وزارة الصحة.', mohTarget || this);
+						return;
+					}
+					if (cpMohContainer) {
+						clearFieldError(cpMohContainer);
+					}
+				}
+
+				const preferredSelected = preferredGroupCheckboxes.some(function(cb) {
+					return cb.checked;
 				});
-				if (visibleAdultCheckboxes.length > 0) {
-					const adultChecked = visibleAdultCheckboxes.some(function(cb) {
+				
+				if (!preferredSelected) {
+					if (preferredGroupsWrapper) {
+						markFieldError(preferredGroupsWrapper);
+					}
+					showFormError('يرجى اختيار فئة واحدة على الأقل ضمن الفئات المفضلة.', preferredGroupsWrapper || this);
+					return;
+				}
+				if (preferredGroupsWrapper) {
+					clearFieldError(preferredGroupsWrapper);
+				}
+
+				const childrenVisible = isElementVisible(childrenDxSection);
+				if (childrenVisible) {
+					const childrenChecked = childrenDxCheckboxes.some(function(cb) {
 						return cb.checked;
 					});
-					if (!adultChecked) {
-						showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات المراهقين أو البالغين.');
+					if (!childrenChecked) {
+						markFieldError(childrenDxSection);
+						showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات الأطفال.', childrenDxSection);
 						return;
 					}
 				}
-			}
-			
-			if (submitBtn.length) {
-				submitBtn.prop('disabled', true).text('جاري الإرسال...');
-			}
-			
+
+				const adultVisible = isElementVisible(adultDxSection);
+				if (adultVisible) {
+					const visibleAdultCheckboxes = adultDxCheckboxes.filter(function(cb) {
+						return cb.offsetParent !== null;
+					});
+					if (visibleAdultCheckboxes.length > 0) {
+						const adultChecked = visibleAdultCheckboxes.some(function(cb) {
+							return cb.checked;
+						});
+						if (!adultChecked) {
+							markFieldError(adultDxSection);
+							showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات المراهقين أو البالغين.', adultDxSection);
+							return;
+						}
+					}
+				}
+				
+				if (!validateRequiredUploads()) {
+					return;
+				}
+				
+				if (submitBtn.length) {
+					submitBtn.prop('disabled', true).text('جاري الإرسال...');
+				}
+				
 			const formData = new FormData(this);
 			formData.append('action', 'register_therapist_shortcode');
 			formData.append('nonce', '<?php echo wp_create_nonce( 'therapist_registration_shortcode' ); ?>');
@@ -1388,50 +1374,336 @@ function snks_therapist_registration_shortcode( $atts ) {
 			formData.append('otp_method', '<?php echo esc_js( $settings['otp_method'] ); ?>');
 			
 			// AJAX submission
-				$.ajax({
-					url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
-					type: 'POST',
+			$.ajax({
+				url: '<?php echo admin_url( 'admin-ajax.php' ); ?>',
+				type: 'POST',
 				data: formData,
 				processData: false,
 				contentType: false,
-					success: function(response) {
-						if (response.success) {
-							const successMessage = response.data && response.data.message ? response.data.message : 'تم إرسال طلبك بنجاح.';
-							if (typeof Swal !== 'undefined') {
-								Swal.fire({
-									icon: 'success',
-									title: 'تم الإرسال',
-									text: successMessage,
-									confirmButtonText: 'حسناً'
-								}).then(function() {
-							$('#therapist-registration-form')[0].reset();
-								});
-						} else {
-								messagesDiv.html('<div class="alert alert-success">' + successMessage + '</div>');
+				success: function(response) {
+					if (response.success) {
+								const successMessage = response.data && response.data.message ? response.data.message : 'تم إرسال طلبك بنجاح.';
+								if (typeof Swal !== 'undefined') {
+									Swal.fire({
+										icon: 'success',
+										title: 'تم الإرسال',
+										text: successMessage,
+										confirmButtonText: 'حسناً'
+									}).then(function() {
 								$('#therapist-registration-form')[0].reset();
-							}
+									});
 						} else {
-							const errorMessage = response.data && response.data.message ? response.data.message : 'Registration failed. Please try again.';
-							if (typeof Swal !== 'undefined') {
-								Swal.fire({
-									icon: 'error',
-									title: 'حدث خطأ',
-									text: errorMessage,
-									confirmButtonText: 'حسناً'
-								});
-							} else {
-								messagesDiv.html('<div class="alert alert-error">' + errorMessage + '</div>');
-							}
+									messagesDiv.html('<div class="alert alert-success">' + successMessage + '</div>');
+							$('#therapist-registration-form')[0].reset();
 						}
-					},
-					error: function() {
-					messagesDiv.html('<div class="alert alert-error">An error occurred. Please try again.</div>');
-					},
-					complete: function() {
-					submitBtn.prop('disabled', false).text('إرسال');
+					} else {
+								const errorMessage = response.data && response.data.message ? response.data.message : 'Registration failed. Please try again.';
+								if (typeof Swal !== 'undefined') {
+									Swal.fire({
+										icon: 'error',
+										title: 'حدث خطأ',
+										text: errorMessage,
+										confirmButtonText: 'حسناً'
+									});
+								} else {
+									messagesDiv.html('<div class="alert alert-error">' + errorMessage + '</div>');
+								}
 					}
-				});
+				},
+				error: function() {
+					messagesDiv.html('<div class="alert alert-error">An error occurred. Please try again.</div>');
+				},
+				complete: function() {
+						submitBtn.prop('disabled', false).text('إرسال');
+				}
 			});
+		});
+		});
+
+		function markFieldError(element) {
+			if (!element) {
+				return;
+			}
+			element.classList.add('input-error');
+			if (typeof element.closest === 'function') {
+				const group = element.closest('.form-group');
+				if (group) {
+					group.classList.add('input-error');
+				}
+			}
+		}
+
+		function clearFieldError(element) {
+			if (!element) {
+				return;
+			}
+			element.classList.remove('input-error');
+			if (typeof element.closest === 'function') {
+				const group = element.closest('.form-group');
+				if (group) {
+					group.classList.remove('input-error');
+				}
+			}
+		}
+
+		function scrollToElementCenter(element) {
+			if (!element || typeof element.scrollIntoView !== 'function') {
+				return;
+			}
+			element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+
+		function showFormError(message, focusElement) {
+			const handleFocus = function() {
+				if (!focusElement) {
+					return;
+				}
+				setTimeout(function() {
+					scrollToElementCenter(focusElement);
+					const focusable = focusElement.querySelector ? focusElement.querySelector('input, select, textarea, button') : null;
+					if (focusable && typeof focusable.focus === 'function') {
+						focusable.focus({ preventScroll: true });
+					} else if (typeof focusElement.focus === 'function') {
+						focusElement.focus({ preventScroll: true });
+					}
+				}, 150);
+			};
+
+			if (typeof Swal !== 'undefined') {
+				Swal.fire({
+					icon: 'error',
+					title: 'تنبيه',
+					text: message,
+					confirmButtonText: 'حسناً'
+				}).then(handleFocus);
+			} else if (messagesDiv.length) {
+				messagesDiv.html('<div class="alert alert-error">' + message + '</div>');
+				handleFocus();
+			} else {
+				alert(message);
+				handleFocus();
+			}
+		}
+
+		function refreshTherapyCertificatesState() {
+			const therapyContainer = document.getElementById('therapy-certificates');
+			if (!therapyContainer) {
+				return;
+			}
+			const inputs = therapyContainer.querySelectorAll('input[name="therapy_certificates[]"]');
+			const hasFiles = Array.from(inputs).some(function(input) {
+				return input.files && input.files.length > 0;
+			});
+			if (hasFiles) {
+				therapyContainer.classList.remove('input-error');
+			}
+		}
+
+		function validateRequiredUploads() {
+			const role = getCurrentRole();
+			const selectedRank = document.querySelector('input[name="psy_rank"]:checked');
+			const selectedCpLicense = document.querySelector('input[name="cp_moh_license"]:checked');
+
+			const requirements = [
+				{ name: 'identity_front', message: 'يرجى رفع صورة البطاقة الشخصية (الوجه).' },
+				{ name: 'identity_back', message: 'يرجى رفع صورة البطاقة الشخصية (الظهر).' }
+			];
+
+			if (role === 'psychiatrist') {
+				requirements.push(
+					{ name: 'grad_cert', message: 'يرجى رفع شهادة التخرج.' },
+					{ name: 'practice_license', message: 'يرجى رفع ترخيص مزاولة المهنة.' },
+					{ name: 'syndicate_id', message: 'يرجى رفع صورة بطاقة النقابة.' }
+				);
+				if (selectedRank && (selectedRank.value === 'specialist' || selectedRank.value === 'consultant')) {
+					requirements.push({ name: 'rank_degree', message: 'يرجى رفع شهادة الرتبة.' });
+				}
+			}
+
+			if (role === 'clinical_psychologist') {
+				requirements.push(
+					{ name: 'cp_grad_degree', message: 'يرجى رفع شهادة التخرج للأخصائي الإكلينيكي.' },
+					{ name: 'cp_highest_degree', message: 'يرجى رفع أعلى شهادة إكلينيكية.' }
+				);
+				if (selectedCpLicense && selectedCpLicense.value === 'yes') {
+					requirements.push({ name: 'cp_moh_license_file', message: 'يرجى رفع تصريح وزارة الصحة.' });
+				}
+			}
+
+			for (let i = 0; i < requirements.length; i++) {
+				const requirement = requirements[i];
+				const input = document.querySelector('input[name="' + requirement.name + '"]');
+				if (!input) {
+					continue;
+				}
+				const container = input.closest('.file-upload-group');
+				const visible = isElementVisible(input) || (container && isElementVisible(container));
+				if (!visible) {
+					clearFieldError(container || input);
+					continue;
+				}
+				const hasValue = input.files && input.files.length > 0;
+				if (!hasValue) {
+					markFieldError(container || input);
+					showFormError(requirement.message, container || input);
+					return false;
+				}
+				clearFieldError(container || input);
+			}
+
+			const therapyContainer = document.getElementById('therapy-certificates');
+			if (therapyContainer) {
+				const certificateInputs = therapyContainer.querySelectorAll('input[name="therapy_certificates[]"]');
+				const hasCertificate = Array.from(certificateInputs).some(function(input) {
+					return input.files && input.files.length > 0;
+				});
+				if (!hasCertificate) {
+					therapyContainer.classList.add('input-error');
+					showFormError('يرجى رفع شهادة علاج نفسي واحدة على الأقل.', therapyContainer);
+					return false;
+				}
+				therapyContainer.classList.remove('input-error');
+			}
+
+			return true;
+		}
+
+		function getFieldLabelText(field) {
+			if (!field) {
+				return '';
+			}
+			let label = null;
+			if (field.id) {
+				label = document.querySelector('label[for="' + field.id + '"]');
+			}
+			if (!label && typeof field.closest === 'function') {
+				const group = field.closest('.form-group');
+				if (group) {
+					label = group.querySelector('label');
+				}
+			}
+			if (!label) {
+				return '';
+			}
+			return label.textContent.replace('*', '').trim();
+		}
+
+		function validateEmailFormat(email) {
+			if (!email) {
+				return false;
+			}
+			const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			return pattern.test(email);
+		}
+
+		function findFirstInvalidGeneralField() {
+			if (!formElement) {
+				return null;
+			}
+			const candidates = Array.from(formElement.querySelectorAll('input[required], textarea[required], select[required]')).filter(function(field) {
+				if (!field) {
+					return false;
+				}
+				if (field.type === 'radio' || field.type === 'checkbox' || field.type === 'file') {
+					return false;
+				}
+				if (field.disabled) {
+					return false;
+				}
+				return isElementVisible(field);
+			});
+
+			for (let i = 0; i < candidates.length; i++) {
+				const field = candidates[i];
+				const value = (field.value || '').trim();
+				if (!value) {
+					const labelText = getFieldLabelText(field);
+					return {
+						field: field,
+						message: labelText ? 'يرجى إدخال ' + labelText + '.' : 'يرجى ملء جميع الحقول الإلزامية.'
+					};
+				}
+				if (field.type === 'email' && !validateEmailFormat(value)) {
+					return {
+						field: field,
+						message: 'يرجى إدخال بريد إلكتروني صحيح.'
+					};
+				}
+				clearFieldError(field);
+			}
+			return null;
+		}
+
+		document.addEventListener('change', function(event) {
+			const target = event.target;
+			if (!target) {
+					return;
+				}
+			if (target.matches('.file-upload-group input[type="file"]')) {
+				const group = target.closest('.file-upload-group');
+				if (group && target.files && target.files.length > 0) {
+					clearFieldError(group);
+				}
+			}
+			if (target.name === 'therapy_certificates[]') {
+				refreshTherapyCertificatesState();
+			}
+			if (target.name === 'preferred_groups[]') {
+				if (preferredGroupCheckboxes.some(function(item) { return item.checked; }) && preferredGroupsWrapper) {
+					clearFieldError(preferredGroupsWrapper);
+				}
+			}
+			if (target.name === 'dx_children[]') {
+				if (childrenDxCheckboxes.some(function(item) { return item.checked; })) {
+					clearFieldError(childrenDxSection);
+				}
+			}
+			if (target.name === 'dx_adult[]') {
+				const visibleAdultCheckboxes = adultDxCheckboxes.filter(function(item) {
+					return item.offsetParent !== null;
+				});
+				if (visibleAdultCheckboxes.some(function(item) { return item.checked; })) {
+					clearFieldError(adultDxSection);
+				}
+			}
+			if (target.matches('select[required]') && (target.value || '').trim() !== '') {
+				clearFieldError(target);
+			}
+		});
+
+
+		childrenDxCheckboxes.forEach(function(cb) {
+			cb.addEventListener('change', function() {
+				if (childrenDxCheckboxes.some(function(item) { return item.checked; })) {
+					clearFieldError(childrenDxSection);
+				}
+			});
+		});
+
+		adultDxCheckboxes.forEach(function(cb) {
+			cb.addEventListener('change', function() {
+				const visibleAdultCheckboxes = adultDxCheckboxes.filter(function(item) {
+					return item.offsetParent !== null;
+				});
+				if (visibleAdultCheckboxes.some(function(item) { return item.checked; })) {
+					clearFieldError(adultDxSection);
+				}
+			});
+		});
+
+		document.addEventListener('input', function(event) {
+			const target = event.target;
+			if (!target) {
+				return;
+			}
+			if (target.matches('input[required], textarea[required], select[required]')) {
+				if (target.type === 'radio' || target.type === 'checkbox' || target.type === 'file') {
+					return;
+				}
+				if ((target.value || '').trim() !== '') {
+					clearFieldError(target);
+				}
+		}
 	});
 	</script>
 	<?php
