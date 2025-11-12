@@ -455,12 +455,12 @@ function snks_therapist_registration_shortcode( $atts ) {
 			</div>
 			
 			<div class="form-group">
-						<label for="profile_image">الصورة الشخصية</label>
+						<label for="profile_image">الصورة الشخصية <span class="required">*</span></label>
 						<div class="file-upload-group" data-field="profile_image">
 					<span class="upload-icon">📷</span>
 					<div class="upload-text">ارفع الصورة الشخصية</div>
 					<div class="upload-hint">ملف صورة (JPG أو PNG)</div>
-					<input type="file" id="profile_image" name="profile_image" accept="image/*">
+					<input type="file" id="profile_image" name="profile_image" accept="image/*" required>
 							<div class="file-preview" id="preview_profile_image"></div>
 				</div>
 					</div>
@@ -1623,6 +1623,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			});
 
 			const requirements = [
+				{ name: 'profile_image', message: 'يرجى رفع صورة شخصية.' },
 				{ name: 'identity_front', message: 'يرجى رفع صورة البطاقة الشخصية (الوجه).' },
 				{ name: 'identity_back', message: 'يرجى رفع صورة البطاقة الشخصية (الظهر).' }
 			];
