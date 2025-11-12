@@ -978,7 +978,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					if (dom.roleFieldGroup) {
 						markFieldError(dom.roleFieldGroup);
 					}
-					showFormError('يرجى اختيار المسمى الوظيفي.', dom.roleFieldGroup || dom.form);
+					showFormError('يرجى اختيار المسمى الوظيفي.', dom.roleFieldGroup || dom.form, dom.roleRadios.length ? dom.roleRadios[0] : dom.form);
 					return;
 				}
 
@@ -989,7 +989,11 @@ function snks_therapist_registration_shortcode( $atts ) {
 				const invalidGeneralField = findFirstInvalidGeneralField();
 				if (invalidGeneralField) {
 					markFieldError(invalidGeneralField.field);
-					showFormError(invalidGeneralField.message, invalidGeneralField.field.closest('.form-group') || invalidGeneralField.field);
+					showFormError(
+						invalidGeneralField.message,
+						invalidGeneralField.field.closest('.form-group') || invalidGeneralField.field,
+						invalidGeneralField.field
+					);
 					return;
 				}
 
@@ -1002,7 +1006,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					if (!rankSelected) {
 						const target = dom.psyRankContainer || dom.psychiatristSection || dom.form;
 						markFieldError(target);
-						showFormError('يرجى اختيار الدرجة / الرتبة.', target);
+						showFormError('يرجى اختيار الدرجة / الرتبة.', target, dom.psyRankRadios.length ? dom.psyRankRadios[0] : null);
 						return;
 					}
 					if (dom.psyRankContainer) {
@@ -1015,7 +1019,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					if (!originSelected) {
 						const target = dom.psychOriginContainer || dom.psychologistSection || dom.form;
 						markFieldError(target);
-						showFormError('يرجى اختيار جهة التخرج للأخصائي النفسي الإكلينيكي.', target);
+						showFormError('يرجى اختيار جهة التخرج للأخصائي النفسي الإكلينيكي.', target, dom.psychOriginRadios.length ? dom.psychOriginRadios[0] : null);
 						return;
 					}
 					if (dom.psychOriginContainer) {
@@ -1028,7 +1032,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					if (!mohSelected) {
 						const target = dom.cpMohContainer || dom.psychologistSection || dom.form;
 						markFieldError(target);
-						showFormError('يرجى تحديد حالة ترخيص وزارة الصحة.', target);
+						showFormError('يرجى تحديد حالة ترخيص وزارة الصحة.', target, dom.cpMohRadios.length ? dom.cpMohRadios[0] : null);
 						return;
 					}
 					if (dom.cpMohContainer) {
@@ -1043,7 +1047,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					if (dom.preferredGroupsWrapper) {
 						markFieldError(dom.preferredGroupsWrapper);
 					}
-					showFormError('يرجى اختيار فئة واحدة على الأقل ضمن الفئات المفضلة.', dom.preferredGroupsWrapper || dom.form);
+					showFormError('يرجى اختيار فئة واحدة على الأقل ضمن الفئات المفضلة.', dom.preferredGroupsWrapper || dom.form, dom.preferredGroupCheckboxes.length ? dom.preferredGroupCheckboxes[0] : null);
 					return;
 				}
 				if (dom.preferredGroupsWrapper) {
@@ -1056,7 +1060,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					});
 					if (!childrenChecked) {
 						markFieldError(dom.childrenDxSection);
-						showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات الأطفال.', dom.childrenDxSection);
+						showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات الأطفال.', dom.childrenDxSection, dom.childrenDxCheckboxes.length ? dom.childrenDxCheckboxes[0] : null);
 						return;
 					}
 					clearFieldError(dom.childrenDxSection);
@@ -1072,7 +1076,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 						});
 						if (!adultChecked) {
 							markFieldError(dom.adultDxSection);
-							showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات المراهقين أو البالغين.', dom.adultDxSection);
+							showFormError('يرجى اختيار تشخيص واحد على الأقل من تشخيصات المراهقين أو البالغين.', dom.adultDxSection, visibleAdultCheckboxes.length ? visibleAdultCheckboxes[0] : (dom.adultDxCheckboxes.length ? dom.adultDxCheckboxes[0] : null));
 							return;
 						}
 						clearFieldError(dom.adultDxSection);
@@ -1326,17 +1330,22 @@ function snks_therapist_registration_shortcode( $atts ) {
 			}
 		}
 
-		function showFormError(message, focusElement) {
+		function showFormError(message, focusElement, preferredFocusElement) {
 			const handleFocus = function() {
-				if (!focusElement) {
+				const elementToScroll = preferredFocusElement || focusElement;
+				if (!elementToScroll) {
 					return;
 				}
 				setTimeout(function() {
-					scrollToElementCenter(focusElement);
-					const focusable = focusElement.querySelector ? focusElement.querySelector('input, select, textarea, button') : null;
-					if (focusable && typeof focusable.focus === 'function') {
-						focusable.focus({ preventScroll: true });
-					} else if (typeof focusElement.focus === 'function') {
+					scrollToElementCenter(elementToScroll);
+					const focusCandidate = (preferredFocusElement && typeof preferredFocusElement.focus === 'function')
+						? preferredFocusElement
+						: (focusElement && focusElement.querySelector
+							? focusElement.querySelector('input, select, textarea, button')
+							: null);
+					if (focusCandidate && typeof focusCandidate.focus === 'function') {
+						focusCandidate.focus({ preventScroll: true });
+					} else if (focusElement && typeof focusElement.focus === 'function') {
 						focusElement.focus({ preventScroll: true });
 					}
 				}, 150);
@@ -1359,10 +1368,18 @@ function snks_therapist_registration_shortcode( $atts ) {
 		}
 
 		function scrollToElementCenter(element) {
-			if (!element || typeof element.scrollIntoView !== 'function') {
+			if (!element) {
 				return;
 			}
-			element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			const rect = element.getBoundingClientRect();
+			const pageOffset = window.pageYOffset || document.documentElement.scrollTop || 0;
+			const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+			const focusOffset = Math.min(Math.max(viewportHeight * 0.25, 120), 240);
+			const targetPosition = rect.top + pageOffset - focusOffset;
+			window.scrollTo({
+				top: targetPosition < 0 ? 0 : targetPosition,
+				behavior: 'smooth'
+			});
 		}
 
 		function updateDoctorSpecialty() {
@@ -1654,7 +1671,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 				const hasValue = input.files && input.files.length > 0;
 				if (!hasValue) {
 					markFieldError(container || input);
-					showFormError(requirement.message, container || input);
+					showFormError(requirement.message, container || input, input);
 					return false;
 				}
 				clearFieldError(container || input);
@@ -1667,7 +1684,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 				});
 				if (!hasCertificate) {
 					dom.certContainer.classList.add('input-error');
-					showFormError('يرجى رفع شهادة علاج نفسي واحدة على الأقل.', dom.certContainer);
+					showFormError('يرجى رفع شهادة علاج نفسي واحدة على الأقل.', dom.certContainer, certificateInputs.length ? certificateInputs[0] : null);
 					return false;
 				}
 				dom.certContainer.classList.remove('input-error');
