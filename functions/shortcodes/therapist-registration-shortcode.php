@@ -1947,6 +1947,7 @@ function snks_handle_therapist_registration_shortcode() {
 	
 	// Get settings
 	$settings = snks_get_therapist_registration_settings();
+	global $wpdb;
 	
 	// Validate required fields
 	$required_fields = array( 'name', 'email', 'phone', 'whatsapp', 'role' );
@@ -2280,7 +2281,6 @@ function snks_handle_therapist_registration_shortcode() {
 	$diagnoses_adult = array_map( 'sanitize_text_field', $diagnoses_adult );
 	
 	// Insert into database
-	global $wpdb;
 	$table_name = $wpdb->prefix . 'therapist_applications';
 	
 	$result = $wpdb->insert(
