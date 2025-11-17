@@ -148,9 +148,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			color: #333;
 			margin-bottom: 30px;
 		}
-		.form-group {
-			margin: 24px 0;
-		}
+
 		.form-group:first-of-type {
 			margin-top: 0;
 		}
@@ -159,6 +157,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			margin-bottom: 8px;
 			font-weight: 600;
 			color: #555;
+			line-height: 2;
 		}
 		.form-group input,
 		.form-group select,
@@ -379,6 +378,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			margin: 0;
 			font-size: 14px;
 			color: #6b7280;
+			line-height: 2;
 		}
 		.section-body {
 			display: flex;
@@ -391,6 +391,11 @@ function snks_therapist_registration_shortcode( $atts ) {
 			gap: 24px;
 			align-items: center;
 		}
+		.inline-options.vertical-options {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 12px;
+		}
 		#therapist-registration-form .form-group > p{
 			margin-bottom: 10px;
 		}
@@ -401,6 +406,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			white-space: nowrap;
 			font-weight: 500;
 			color: #374151;
+			line-height: 2;
 		}
 		.role-panel {
 			border-top: 1px dashed #e5e7eb;
@@ -455,6 +461,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			align-items: center;
 			gap: 10px;
 			transition: background 0.2s ease, border 0.2s ease;
+			line-height: 1.5;
 		}
 		.category-box.disabled {
 			opacity: 0.6;
@@ -478,7 +485,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			display: flex;
 			align-items: flex-start;
 			gap: 8px;
-			line-height: 1.4;
+			line-height: 2;
 		}
 		/* RTL Support */
 		[dir="rtl"] .phone-input-group {
@@ -669,7 +676,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 				<div class="section-body">
 			<div class="form-group">
 						<p>اختر المسمى الوظيفي <span class="required">*</span></p>
-						<div class="inline-options">
+						<div class="inline-options vertical-options">
 							<label><input type="radio" name="role" value="psychiatrist"> طبيب نفسي</label>
 							<label><input type="radio" name="role" value="clinical_psychologist"> أخصائي نفسي إكلينيكي</label>
 						</div>
@@ -726,8 +733,8 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 					<div id="psychologist-section" class="role-panel">
 						<div class="form-subsection">
-							<h4>أنت خريج أي كلية / قسم <span class="required">*</span></h4>
-							<div class="inline-options">
+							<h4>الكلية / القسم <span class="required">*</span></h4>
+							<div class="inline-options vertical-options">
 								<label><input type="radio" name="psych_origin" value="arts"> آداب قسم علم نفس</label>
 								<label><input type="radio" name="psych_origin" value="human_studies"> دراسات إنسانية قسم علم نفس</label>
 								<label><input type="radio" name="psych_origin" value="human_sciences"> علوم إنسانية قسم علم نفس</label>
@@ -792,7 +799,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 						<p class="helper-text">يسمح بملفات الصور أو المستندات (JPG، PNG، PDF، DOC، DOCX، TXT).</p>
 			</div>
 			
-					<div class="form-subsection">
+					<div class="form-subsection" style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 20px;">
 						<h4>هل حضرت دورات أخرى ولم تحصل على شهادة أو لديك خبرة شخصية في أحد طرق العلاج النفسي؟ <span class="optional-text">(اختياري)</span></h4>
 						<div id="courses-container">
 							<div class="dynamic-row course-row">
@@ -826,9 +833,9 @@ function snks_therapist_registration_shortcode( $atts ) {
 				</div>
 			</div>
 			
-			<div class="form-section">
+			<div id="diagnoses-section" class="form-section" style="display: none;">
 				<div class="section-header">
-					<h3>التشخيصات</h3>
+					<h3>التشخيصات المفضلة</h3>
 					<p class="section-note">ما هي التشخيصات التي لديك خبرة بها وتفضل التعامل معها وتحقق معها أفضل النتائج؟<br><small>يمكنك اختيار أي عدد من التشخيصات</small></p>
 				</div>
 				<div class="section-body">
@@ -988,6 +995,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 				addCourseBtn: document.getElementById('add-course-btn'),
 				preferredGroupCheckboxes: Array.from(document.querySelectorAll('input[name="preferred_groups[]"]')),
 				maxSelectionMessage: document.querySelector('.max-selection-message'),
+				diagnosesSection: document.getElementById('diagnoses-section'),
 				childrenDxSection: document.getElementById('children-dx-section'),
 				adultDxSection: document.getElementById('adult-dx-section'),
 				adultDxPsych: document.getElementById('adult-dx-psychiatrist'),
@@ -1040,6 +1048,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			dom.roleRadios.forEach(function(radio) {
 				radio.addEventListener('change', function() {
 					toggleRoleSections();
+					updateDxSectionsVisibility();
 					if (dom.roleFieldGroup) {
 						clearFieldError(dom.roleFieldGroup);
 					}
@@ -1309,7 +1318,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					processData: false,
 					contentType: false,
 					success: function(response) {
-						const successMessage = response && response.data && response.data.message ? response.data.message : 'تم إرسال طلبك بنجاح.';
+						const successMessage = response && response.data && response.data.message ? response.data.message : 'تم التسجيل بنجاح وسيقوم فرق خدمة العملاء بالتواصل معك في أقرب وقت';
 						if (response && response.success) {
 							if (typeof Swal !== 'undefined') {
 								Swal.fire({
@@ -1318,8 +1327,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 									text: successMessage,
 									confirmButtonText: 'حسناً'
 								}).then(function() {
-									dom.form.reset();
-									refreshTherapyCertificatesState();
+									window.location.reload();
 								});
 							} else {
 								dom.messagesDiv.html('<div class="alert alert-success">' + successMessage + '</div>');
@@ -1766,12 +1774,36 @@ function snks_therapist_registration_shortcode( $atts ) {
 				return cb.value;
 			});
 
-			showElement(dom.childrenDxSection, selectedValues.includes('الأطفال'));
-			if (!selectedValues.includes('الأطفال') && dom.childrenDxSection) {
+			const hasChildren = selectedValues.includes('الأطفال');
+			const hasAdults = selectedValues.includes('المراهقين والبالغين');
+			const role = getCurrentRole();
+			const hasRole = role === 'psychiatrist' || role === 'clinical_psychologist';
+
+			// Show diagnoses section only if (children or adults) AND role is selected
+			const shouldShowDiagnosesSection = (hasChildren || hasAdults) && hasRole;
+			showElement(dom.diagnosesSection, shouldShowDiagnosesSection);
+
+			if (!shouldShowDiagnosesSection) {
+				// Hide all diagnosis subsections if main section is hidden
+				showElement(dom.childrenDxSection, false);
+				showElement(dom.adultDxSection, false);
+				showElement(dom.adultDxPsych, false);
+				showElement(dom.adultDxPsychologist, false);
+				if (dom.childrenDxSection) {
+					clearFieldError(dom.childrenDxSection);
+				}
+				if (dom.adultDxSection) {
+					clearFieldError(dom.adultDxSection);
+				}
+				return;
+			}
+
+			showElement(dom.childrenDxSection, hasChildren);
+			if (!hasChildren && dom.childrenDxSection) {
 				clearFieldError(dom.childrenDxSection);
 			}
 
-			if (selectedValues.includes('المراهقين والبالغين')) {
+			if (hasAdults) {
 				updateAdultDxByRole();
 			} else {
 				showElement(dom.adultDxSection, false);
@@ -2538,7 +2570,7 @@ function snks_handle_therapist_registration_shortcode() {
 		wp_mail( $admin_email, $subject, $message );
 		
 		$response = array(
-			'message'        => 'تم إرسال طلبك بنجاح وسيتم مراجعته قريباً.',
+			'message'        => 'تم التسجيل بنجاح وسيقوم فرق خدمة العملاء بالتواصل معك في أقرب وقت',
 			'application_id' => $wpdb->insert_id,
 		);
 
