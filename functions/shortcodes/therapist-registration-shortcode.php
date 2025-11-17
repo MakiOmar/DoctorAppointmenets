@@ -370,6 +370,10 @@ function snks_therapist_registration_shortcode( $atts ) {
 			margin: 0 0 8px;
 			font-size: 18px;
 			color: #1f2937;
+			text-align: center;
+			background: #f3f4f6;
+			padding: 12px 20px;
+			border-radius: 6px;
 		}
 		.section-note {
 			margin: 0;
@@ -591,14 +595,14 @@ function snks_therapist_registration_shortcode( $atts ) {
 		<div id="form-step" class="registration-step">
 			<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data" novalidate>
 				<button type="button" class="back-btn" id="back-to-instructions-btn">← رجوع لصفحة التعليمات</button>
-			<h2><?php echo __( 'Therapist Registration', 'shrinks' ); ?></h2>
+			<h2>تسجيل معالج جديد</h2>
 			
 			<div id="form-messages"></div>
 			
 			<div class="form-section">
 				<div class="section-header">
-					<h3>القسم الأول: البيانات الشخصية</h3>
-					<p class="section-note">يرجى إدخال بيانات التواصل الأساسية (كما ستظهر في منصتنا).</p>
+					<h3>البيانات الشخصية</h3>
+					<p class="section-note">يرجى ادخال بياناتك الشخصية</p>
 				</div>
 				<div class="section-body">
 			<div class="form-group">
@@ -613,12 +617,12 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<div class="form-group">
 						<label for="phone">رقم الهاتف <span class="required">*</span></label>
-						<input type="tel" id="phone" name="phone" required placeholder="مثال: +201012345678">
+						<input type="tel" id="phone" name="phone" required>
 			</div>
 			
 			<div class="form-group">
 						<label for="whatsapp">رقم واتساب <span class="required">*</span></label>
-						<input type="tel" id="whatsapp" name="whatsapp" required placeholder="مثال: +201012345678">
+						<input type="tel" id="whatsapp" name="whatsapp" required>
 			</div>
 			
 			<div class="form-group">
@@ -631,6 +635,27 @@ function snks_therapist_registration_shortcode( $atts ) {
 							<div class="file-preview" id="preview_profile_image"></div>
 				</div>
 					</div>
+					
+					<div class="form-subsection">
+						<h4>البطاقة الشخصية</h4>
+						<p class="section-note">يرجى رفع صورة البطاقة الشخصية (وجه وظهر).</p>
+						<div class="file-upload-grid">
+				<div class="file-upload-group" data-field="identity_front">
+					<span class="upload-icon">🪪</span>
+								<div class="upload-text">البطاقة الشخصية (وجه)</div>
+								<div class="upload-hint">صورة (JPG أو PNG)</div>
+								<input type="file" id="identity_front" name="identity_front" accept="image/*">
+					<div class="file-preview" id="preview_identity_front"></div>
+				</div>
+				<div class="file-upload-group" data-field="identity_back">
+					<span class="upload-icon">🆔</span>
+								<div class="upload-text">البطاقة الشخصية (ظهر)</div>
+								<div class="upload-hint">صورة (JPG أو PNG)</div>
+								<input type="file" id="identity_back" name="identity_back" accept="image/*">
+					<div class="file-preview" id="preview_identity_back"></div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			
@@ -638,7 +663,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<div class="form-section">
 				<div class="section-header">
-					<h3>القسم الثاني: المعلومات المهنية</h3>
+					<h3>المعلومات المهنية</h3>
 					<p class="section-note">اختر المسمى الوظيفي وأرفق المستندات المطلوبة.</p>
 				</div>
 				<div class="section-body">
@@ -746,33 +771,12 @@ function snks_therapist_registration_shortcode( $atts ) {
 							</div>
 						</div>
 					</div>
-					
-					<div class="form-subsection">
-						<h4>المستندات العامة</h4>
-						<p class="section-note">يرجى رفع صورة البطاقة الشخصية (وجه وظهر).</p>
-						<div class="file-upload-grid">
-				<div class="file-upload-group" data-field="identity_front">
-					<span class="upload-icon">🪪</span>
-								<div class="upload-text">البطاقة الشخصية (وجه)</div>
-								<div class="upload-hint">صورة (JPG أو PNG)</div>
-								<input type="file" id="identity_front" name="identity_front" accept="image/*">
-					<div class="file-preview" id="preview_identity_front"></div>
-				</div>
-				<div class="file-upload-group" data-field="identity_back">
-					<span class="upload-icon">🆔</span>
-								<div class="upload-text">البطاقة الشخصية (ظهر)</div>
-								<div class="upload-hint">صورة (JPG أو PNG)</div>
-								<input type="file" id="identity_back" name="identity_back" accept="image/*">
-					<div class="file-preview" id="preview_identity_back"></div>
-							</div>
-						</div>
-					</div>
 				</div>
 			</div>
 			
 			<div class="form-section">
 				<div class="section-header">
-					<h3>القسم الثالث: الشهادات والدورات</h3>
+					<h3>الشهادات والدورات</h3>
 					<p class="section-note">قم برفع جميع شهادات العلاج النفسي التي حصلت عليها، وأضف الدورات أو الخبرات ذات الصلة.</p>
 					</div>
 				<div class="section-body">
@@ -805,7 +809,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<div class="form-section">
 				<div class="section-header">
-					<h3>القسم الرابع: الفئات المفضلة</h3>
+					<h3>الفئات المفضلة</h3>
 					<p class="section-note">ما هي الفئات التي لديك خبرة أكثر فيها وتفضل التعامل معها وتحقق معها أفضل النتائج؟<br><small>اختر من 1 إلى 4 فئات فقط</small></p>
 				</div>
 				<div class="section-body">
@@ -824,7 +828,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<div class="form-section">
 				<div class="section-header">
-					<h3>القسم الخامس: التشخيصات</h3>
+					<h3>التشخيصات</h3>
 					<p class="section-note">ما هي التشخيصات التي لديك خبرة بها وتفضل التعامل معها وتحقق معها أفضل النتائج؟<br><small>يمكنك اختيار أي عدد من التشخيصات</small></p>
 				</div>
 				<div class="section-body">
@@ -897,7 +901,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 				</div>
 			</div>
 			
-			<button type="submit" class="submit-btn" id="submit-btn">إرسال</button>
+			<button type="submit" class="submit-btn" id="submit-btn">ابدأ التسجيل</button>
 		</form>
 		</div>
 	</div>
@@ -1343,7 +1347,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					},
 					complete: function() {
 						if (dom.submitBtn.length) {
-							dom.submitBtn.prop('disabled', false).text('إرسال');
+							dom.submitBtn.prop('disabled', false).text('ابدأ التسجيل');
 						}
 					}
 				});
