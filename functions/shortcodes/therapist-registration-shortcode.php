@@ -24,6 +24,117 @@ function snks_therapist_registration_shortcode( $atts ) {
 	?>
 	<div id="therapist-registration-form-container">
 		<style>
+		/* Two-step registration styles */
+		.registration-step {
+			display: none;
+		}
+		.registration-step.active {
+			display: block;
+		}
+		.instructions-step {
+			max-width: 800px;
+			margin: 0 auto;
+			padding: 30px;
+			background: #fff;
+			border-radius: 8px;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			direction: rtl;
+			text-align: right;
+		}
+		.instructions-step h2 {
+			text-align: center;
+			color: #1f2937;
+			margin-bottom: 20px;
+			font-size: 24px;
+			font-weight: 700;
+		}
+		.instructions-step .instructions-header {
+			text-align: center;
+			color: #dc3545;
+			font-weight: 600;
+			margin-bottom: 30px;
+			font-size: 16px;
+		}
+		.instructions-step .divider {
+			text-align: center;
+			margin: 30px 0;
+			color: #6b7280;
+			font-size: 18px;
+		}
+		.instructions-step .instruction-item {
+			margin-bottom: 25px;
+			padding: 15px;
+			background: #f9fafb;
+			border-radius: 6px;
+			border-right: 4px solid #2271b1;
+		}
+		.instructions-step .instruction-item h3 {
+			margin: 0 0 12px 0;
+			color: #1f2937;
+			font-size: 18px;
+			font-weight: 600;
+		}
+		.instructions-step .instruction-item ul {
+			margin: 12px 0;
+			padding-right: 25px;
+			list-style-type: disc;
+		}
+		.instructions-step .instruction-item li {
+			margin-bottom: 8px;
+			color: #374151;
+			line-height: 1.6;
+		}
+		.instructions-step .instruction-item p {
+			margin: 8px 0;
+			color: #374151;
+			line-height: 1.6;
+		}
+		.instructions-step .notes-section {
+			background: #fef3c7;
+			border: 1px solid #fbbf24;
+			border-radius: 6px;
+			padding: 20px;
+			margin-top: 30px;
+		}
+		.instructions-step .notes-section h3 {
+			margin: 0 0 15px 0;
+			color: #92400e;
+			font-size: 18px;
+			font-weight: 600;
+		}
+		.instructions-step .notes-section ul {
+			margin: 0;
+			padding-right: 25px;
+			list-style-type: disc;
+		}
+		.instructions-step .notes-section li {
+			margin-bottom: 10px;
+			color: #78350f;
+			line-height: 1.6;
+		}
+		.continue-btn, .back-btn {
+			background: #2271b1;
+			color: #fff;
+			border: none;
+			padding: 15px 40px;
+			border-radius: 6px;
+			font-size: 16px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.3s;
+			display: block;
+			margin: 30px auto 0;
+		}
+		.continue-btn:hover, .back-btn:hover {
+			background: #1d5f98;
+		}
+		.back-btn {
+			background: #6b7280;
+			margin: 0 0 20px 0;
+		}
+		.back-btn:hover {
+			background: #4b5563;
+		}
 		.therapist-reg-form {
 			max-width: 600px;
 			margin: 0 auto;
@@ -423,7 +534,63 @@ function snks_therapist_registration_shortcode( $atts ) {
 		}
 		</style>
 		
-		<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data" novalidate>
+		<!-- Step 1: Instructions -->
+		<div id="instructions-step" class="registration-step active">
+			<div class="instructions-step">
+				<h2>كيفية عمل دليل موقع جلسة</h2>
+				<p class="instructions-header">( يجب قراءة النقاط التالية قبل التسجيل )</p>
+				<div class="divider">——————————————————-</div>
+				
+				<div class="instruction-item">
+					<p>الدليل خاص بالمعالجين المعتمدين فقط ( اطباء نفسيين واخصائيين نفسيين اكلينيكيين ).</p>
+				</div>
+				
+				<div class="instruction-item">
+					<p>يعتمد دليل موقع جلسة في تقييم المعالجين علي نقاط كل معالج في كل تشخيص من تشخيصات الصحة النفسية وذلك كبديل اكثر مصداقية من تقييم العملاء للمعالجين ، وبالتالي يمكن ان يكون ترتيبك في المقدمه في بعض التشخيصات دونا عن التشخيصات الاخرى حتى وان سجلت حديثا بالدليل، وبالتالي يتيح ذلك لجميع المعالجين الظهور بشكل متوازن بدلا مش احتكار ظهور اصحاب التقييمات العاليه فقط في البداية في انظمة تقييم العملاء.</p>
+				</div>
+				
+				<div class="instruction-item">
+					<h3>يتم تحديد نقاط كل معالج في كل تشخيص بناء على عدة عوامل:</h3>
+					<ul>
+						<li>الدرجة العلمية.</li>
+						<li>عدد سنين الخبرة بعد الدرجة العلميه.</li>
+						<li>المدارس العلاجية التي يستخدمها المعالج.</li>
+						<li>قوة التدريب قي المدرسة العلاجية كمكان التدريب وعدد ساعاته ووجود الاشراف من عدمه او اذا ما كان تعليم ذاتي أو خبرة شخصية.</li>
+						<li>عدد سنين الخبره بعد الحصول علي اي تدريب.</li>
+						<li>الحصول على تدريب متخصص في علاج اضطراب معين.</li>
+						<li>تفضيلات المعالج الشخصية لتشخيصات معينة.</li>
+					</ul>
+				</div>
+				
+				<div class="instruction-item">
+					<h3>بعد الإنضمام للدليل يوجد عدة عوامل تؤدي تلقائيا الي خفض تقييمك:</h3>
+					<ul>
+						<li>عدم الالتزام بالدخول في مواعيد جلساتك.</li>
+						<li>الاعتذار عن الجلسات بشكل متكرر وعدم ابلاغ خدمة العملاء  قبل موعد الجلسة بمدة مناسبة.</li>
+						<li>انخفاض معدل اعادة الحجز معك من نفس العميل في تشخيصات معينة.</li>
+						<li>محاولة اعطاء او الحصول على اي بيانات تواصل من العملاء، او التلميح للعميل بالحجز معك خارج الموقع.</li>
+					</ul>
+				</div>
+				
+				<div class="notes-section">
+					<h3>ملاحظات:</h3>
+					<ul>
+						<li>لن يتم احتساب نقاط اي معلومات غير دقيقه او اي صور للشهادات غير واضحة.</li>
+						<li>بعد الانضمام للدليل يمكنك تعديل تقييمك في حالة حصولك علي اي شهادات او خبرات اضافية عن طريق التواصل مع خدمة العملاء.</li>
+						<li>بعد اتمام التسجيل ستتواصل معك خدمة العملاء بالموقع  في اقرب وقت، وذلك لاستلام حساب لوحة التحكم الخاصة بك لبدء اضافة مواعيدك واسعار جلساتك لداخل او خارج مصر، وسيتم ارسال فيديو لشرح طريقة التعامل مع الموقع بسهولة.</li>
+						<li>يحصل موقع جلسة على ٤٠٪؜ من سعر الجلسة ويتم تحويل نسبة ال٦٠٪؜ لرصيدك علي الموقع بعد اتمام الجلسة ، ويمكنك سحب اي مبالغ موجودة بحسابك خلال يوم عمل واحد.</li>
+						<li>يمكنك استخدام حسابك بالموقع ايضا لعمل صفحة شخصية لادارة حجوزاتك الشخصية بشكل تلقائي، وفي حالة حجز عميل خاص بك من خلال تلك الصفحة لن يتم خصم اي نسبة من سعر الجلسه وستحصل علي مبلغ الجلسه كاملا، ستتيح لك صفحتك الشخصية عدة ميزات حيث ستقوم بكل وظيفة السكرتير والمحاسب بشكل تلقائي، وستستطيع من خلالها استقبال اتعاب جلساتك من جميع انحاء العالم لان صفحتك ستدعم الدفع بالفيزا وماستر كارد بالاضافه لوسائل الدفع الموجوده بمصر، وستحتوي صفحتك ايضا علي نظام اتصالات خاص بك بجوده عاليه وبلا حدود .</li>
+					</ul>
+				</div>
+				
+				<button type="button" class="continue-btn" id="continue-to-form-btn">متابعة</button>
+			</div>
+		</div>
+		
+		<!-- Step 2: Registration Form -->
+		<div id="form-step" class="registration-step">
+			<form id="therapist-registration-form" class="therapist-reg-form" enctype="multipart/form-data" novalidate>
+				<button type="button" class="back-btn" id="back-to-instructions-btn">← رجوع لصفحة التعليمات</button>
 			<h2><?php echo __( 'Therapist Registration', 'shrinks' ); ?></h2>
 			
 			<div id="form-messages"></div>
@@ -732,10 +899,39 @@ function snks_therapist_registration_shortcode( $atts ) {
 			
 			<button type="submit" class="submit-btn" id="submit-btn">إرسال</button>
 		</form>
+		</div>
 	</div>
 	
 	<script>
 	jQuery(document).ready(function($) {
+		// Two-step navigation
+		const instructionsStep = document.getElementById('instructions-step');
+		const formStep = document.getElementById('form-step');
+		const continueBtn = document.getElementById('continue-to-form-btn');
+		const backBtn = document.getElementById('back-to-instructions-btn');
+		
+		if (continueBtn) {
+			continueBtn.addEventListener('click', function() {
+				if (instructionsStep && formStep) {
+					instructionsStep.classList.remove('active');
+					formStep.classList.add('active');
+					// Scroll to top of form
+					formStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			});
+		}
+		
+		if (backBtn) {
+			backBtn.addEventListener('click', function() {
+				if (instructionsStep && formStep) {
+					formStep.classList.remove('active');
+					instructionsStep.classList.add('active');
+					// Scroll to top of instructions
+					instructionsStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			});
+		}
+		
 		initFancyUploads();
 
 		const dom = cacheDom();
