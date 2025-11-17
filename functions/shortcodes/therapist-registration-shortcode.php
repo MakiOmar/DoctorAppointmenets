@@ -685,7 +685,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 					<div id="psychiatrist-section" class="role-panel">
 						<div class="form-subsection">
 							<h4>اختر الدرجة / الرتبة <span class="required">*</span></h4>
-							<div class="inline-options">
+							<div class="inline-options vertical-options">
 								<label><input type="radio" name="psy_rank" value="resident"> طبيب مقيم طب نفسي</label>
 								<label><input type="radio" name="psy_rank" value="specialist"> أخصائي طب نفسي</label>
 								<label><input type="radio" name="psy_rank" value="consultant"> استشاري طب نفسي</label>
