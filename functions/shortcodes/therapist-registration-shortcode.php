@@ -846,11 +846,11 @@ function snks_therapist_registration_shortcode( $atts ) {
 							<label><input type="checkbox" name="dx_children[]" value="Autism Spectrum Disorder (ASD)"> اضطراب طيف التوحّد — Autism Spectrum Disorder (ASD)</label>
 							<label><input type="checkbox" name="dx_children[]" value="ADHD"> اضطراب فرط الحركة وتشتّت الانتباه — Attention-Deficit / Hyperactivity Disorder (ADHD)</label>
 							<label><input type="checkbox" name="dx_children[]" value="Learning Disorders"> صعوبات التعلّم — Learning Difficulties / Learning Disorders</label>
-							<label><input type="checkbox" name="dx_children[]" value="Trauma & Stressor-Related (children)"> اضطرابات الصدمة والضغوط النفسية عند الأطفال</label>
-							<label><input type="checkbox" name="dx_children[]" value="Gender Dysphoria (children)"> اضطراب الهوية الجندرية عند الأطفال</label>
-							<label><input type="checkbox" name="dx_children[]" value="Disruptive & Conduct & Behavior Modification"> اضطرابات السلوك والانضباط وتعديل السلوك</label>
-							<label><input type="checkbox" name="dx_children[]" value="Emotional Disorders (children)"> الاضطرابات العاطفية والانفعالية</label>
-							<label><input type="checkbox" name="dx_children[]" value="Habit & Somatic Disorders (children)"> اضطرابات السلوكيات والعادات</label>
+							<label><input type="checkbox" name="dx_children[]" value="Trauma & Stressor-Related (children)"> اضطرابات الصدمة والضغوط النفسية عند الأطفال — Trauma- & Stressor-Related Disorders (in children)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Gender Dysphoria (children)"> اضطراب الهوية الجندرية عند الأطفال — Gender Dysphoria (in children)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Disruptive & Conduct & Behavior Modification"> اضطرابات السلوك والانضباط وتعديل السلوك ‏(Behavior Modification / Disruptive, Impulse-Control & Conduct Disorders ..etc)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Emotional Disorders (children)"> الاضطرابات العاطفية والانفعالية (Emotional Disorders)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Habit & Somatic Disorders (children)"> اضطرابات السلوكيات والعادات (Habit & Somatic Disorders)</label>
 						</div>
 					</div>
 					
@@ -861,16 +861,16 @@ function snks_therapist_registration_shortcode( $atts ) {
 							<div class="diagnosis-list">
 								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب — Depressive Disorders</label>
 								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق — Anxiety Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة</label>
-								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة — Obsessive–Compulsive and Related Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار (تشمل اضطراب التكيف) — Trauma- and Stressor-Related Disorders (Adults, including Adjustment Disorder)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار — Gender Dysphoria (Adults)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع — Disruptive, Impulse-Control, and Conduct Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية (غير متعلقة بالمواد) — Behavioral Addictive Disorders (Non-Substance Related)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب (Cluster B)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج (Cluster C)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة (الانحرافات الجنسية) — Paraphilic Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة (مثل الاحتراق الوظيفي، الحزن الطبيعي، ومشاكل الحياة) — General Psychological Issues</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية — Chronic Pain with Psychological Factors</label>
 							</div>
 						</div>
 						
@@ -878,30 +878,30 @@ function snks_therapist_registration_shortcode( $atts ) {
 							<div class="diagnosis-list">
 								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب — Depressive Disorders</label>
 								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق — Anxiety Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Couple & Marital Therapy"> مشكلات العلاقات الزوجية والعائلية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Schizophrenia Spectrum & Psychotic Disorders"> اضطرابات الفصام والطيف الذهاني</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster A"> اضطرابات الشخصية من النمط (أ)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Bipolar and Related Disorders"> الاضطرابات ثنائية القطب</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Dissociative Disorders"> الاضطرابات الانفصالية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Somatic Symptom and Related Disorders"> الاضطرابات الجسدية الشكل</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Substance/Medication-Induced Mental Disorders"> الاضطرابات الناتجة عن تعاطي المواد أو الأدوية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Feeding and Eating Disorders"> اضطرابات الأكل والتغذية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Sexual Dysfunctions"> الاضطرابات الجنسية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Substance-Related and Addictive Disorders"> اضطرابات الإدمان المرتبطة بالمواد</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Neurocognitive Disorders"> الاضطرابات العصبية المعرفية</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Change Due to Another Medical Condition"> تغيرات الشخصية الناتجة عن حالة طبية أخرى</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Mental Disorders Due to Another Medical Condition or Medication"> الاضطرابات النفسية الناتجة عن حالة طبية أو دواء</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Medication-Induced Movement Disorders"> اضطرابات الحركة الناجمة عن الأدوية</label>
+								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة — Obsessive–Compulsive and Related Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار (تشمل اضطراب التكيف) — Trauma- and Stressor-Related Disorders (Adults, including Adjustment Disorder)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار — Gender Dysphoria (Adults)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع — Disruptive, Impulse-Control, and Conduct Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية (غير متعلقة بالمواد) — Behavioral Addictive Disorders (Non-Substance Related)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب (Cluster B)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج (Cluster C)</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة (الانحرافات الجنسية) — Paraphilic Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Couple & Marital Therapy"> مشكلات العلاقات الزوجية والعائلية — Couple and Relationship Therapy / Marital Therapy</label>
+								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة (مثل الاحتراق الوظيفي، الحزن الطبيعي، ومشاكل الحياة) — General Psychological Issues</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية — Chronic Pain with Psychological Factors</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Schizophrenia Spectrum & Psychotic Disorders"> اضطرابات الفصام والطيف الذهاني — Schizophrenia Spectrum and Other Psychotic Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster A"> اضطرابات الشخصية من النمط (أ) — Cluster A Personality Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Bipolar and Related Disorders"> اضطرابات المزاج ثنائية القطب والاضطرابات ذات الصلة — Bipolar and Related Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Dissociative Disorders"> الاضطرابات الانفصالية — Dissociative Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Somatic Symptom and Related Disorders"> الاضطرابات الجسدية الشكل والاضطرابات ذات الصلة — Somatic Symptom and Related Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Substance/Medication-Induced Mental Disorders"> الاضطرابات النفسية الناجمة عن استخدام مواد أو أدوية — Substance/Medication-Induced Mental Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Feeding and Eating Disorders"> اضطرابات الأكل والتغذية — Feeding and Eating Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Sexual Dysfunctions"> الاضطرابات الجنسية — Sexual Dysfunctions</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Substance-Related and Addictive Disorders"> الاضطرابات المرتبطة بتعاطي المواد والإدمان — Substance-Related and Addictive Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Neurocognitive Disorders"> الاضطرابات العصبية المعرفية — Neurocognitive Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Change Due to Another Medical Condition"> تغيرات الشخصية الناتجة عن حالة طبية أخرى — Personality Change Due to Another Medical Condition</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Mental Disorders Due to Another Medical Condition or Medication"> الاضطرابات النفسية الناتجة عن حالة طبية أو دواء — Mental Disorders Due to Another Medical Condition or Medication</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Medication-Induced Movement Disorders"> اضطرابات الحركة الناجمة عن الأدوية — Medication-Induced Movement Disorders</label>
 							</div>
 						</div>
 					</div>
