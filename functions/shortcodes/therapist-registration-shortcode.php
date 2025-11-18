@@ -169,6 +169,20 @@ function snks_therapist_registration_shortcode( $atts ) {
 			font-size: 14px;
 			box-sizing: border-box;
 		}
+		/* Prevent iOS zoom on input focus */
+		@supports (-webkit-touch-callout: none) {
+			.form-group input[type="text"],
+			.form-group input[type="email"],
+			.form-group input[type="tel"],
+			.form-group input[type="password"],
+			.form-group textarea,
+			.form-group select,
+			.dynamic-row input[type="text"],
+			.diagnosis-list input[type="checkbox"],
+			.category-list input[type="checkbox"] {
+				font-size: 16px !important;
+			}
+		}
 		.form-group input:focus,
 		.form-group select:focus,
 		.form-group textarea:focus {
@@ -419,6 +433,13 @@ function snks_therapist_registration_shortcode( $atts ) {
 			font-size: 16px;
 			color: #1f2937;
 		}
+		#children-dx-section h4,
+		#adult-dx-section h4 {
+			font-size: 18px;
+			text-align: center;
+			margin-bottom: 20px;
+			font-weight: 600;
+		}
 		.file-upload-grid {
 			display: grid;
 			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -483,9 +504,107 @@ function snks_therapist_registration_shortcode( $atts ) {
 		}
 		.diagnosis-list label {
 			display: flex;
-			align-items: flex-start;
+			align-items: center;
 			gap: 8px;
 			line-height: 2;
+		}
+		.english-tooltip {
+			position: relative;
+			display: inline-block;
+			cursor: help;
+			color: #2271b1;
+			margin-right: 4px;
+			font-size: 14px;
+			user-select: none;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+		}
+		.english-tooltip::after {
+			content: attr(data-tooltip);
+			position: fixed;
+			bottom: auto;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background-color: #333;
+			color: #fff;
+			padding: 12px 16px;
+			border-radius: 8px;
+			font-size: 13px;
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.3s;
+			z-index: 10000;
+			min-width: 250px;
+			max-width: 90vw;
+			white-space: normal;
+			text-align: left;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+			line-height: 1.5;
+		}
+		.english-tooltip::before {
+			content: '';
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, calc(-50% - 60px));
+			border: 8px solid transparent;
+			border-top-color: #333;
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.3s;
+			z-index: 10000;
+		}
+		.english-tooltip:hover::after,
+		.english-tooltip:hover::before,
+		.english-tooltip.active::after,
+		.english-tooltip.active::before {
+			opacity: 1;
+		}
+		.tooltip-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.3);
+			z-index: 9999;
+			display: none;
+			cursor: pointer;
+		}
+		.tooltip-overlay.active {
+			display: block;
+		}
+		body.tooltip-active {
+			overflow: hidden;
+		}
+		body.tooltip-active .diagnosis-list input[type="checkbox"],
+		body.tooltip-active .category-list input[type="checkbox"] {
+			pointer-events: none;
+		}
+		@media (min-width: 768px) {
+			.english-tooltip::after {
+				position: absolute;
+				top: auto;
+				bottom: 100%;
+				left: auto;
+				right: 50%;
+				transform: translateX(50%);
+				max-width: 350px;
+			}
+			.english-tooltip::before {
+				position: absolute;
+				top: auto;
+				bottom: 100%;
+				left: auto;
+				right: 50%;
+				transform: translateX(50%);
+				margin-bottom: 2px;
+			}
+			.tooltip-overlay {
+				display: none !important;
+			}
 		}
 		/* RTL Support */
 		[dir="rtl"] .phone-input-group {
@@ -842,15 +961,15 @@ function snks_therapist_registration_shortcode( $atts ) {
 					<div id="children-dx-section" class="form-subsection" style="display: none;">
 						<h4>تشخيصات مرتبطة بالأطفال</h4>
 						<div class="diagnosis-list">
-							<label><input type="checkbox" name="dx_children[]" value="Intellectual Disability (ID)"> الإعاقة الذهنية / اضطراب النموّ العقلي — Intellectual Disability (ID)</label>
-							<label><input type="checkbox" name="dx_children[]" value="Autism Spectrum Disorder (ASD)"> اضطراب طيف التوحّد — Autism Spectrum Disorder (ASD)</label>
-							<label><input type="checkbox" name="dx_children[]" value="ADHD"> اضطراب فرط الحركة وتشتّت الانتباه — Attention-Deficit / Hyperactivity Disorder (ADHD)</label>
-							<label><input type="checkbox" name="dx_children[]" value="Learning Disorders"> صعوبات التعلّم — Learning Difficulties / Learning Disorders</label>
-							<label><input type="checkbox" name="dx_children[]" value="Trauma & Stressor-Related (children)"> اضطرابات الصدمة والضغوط النفسية عند الأطفال — Trauma- & Stressor-Related Disorders (in children)</label>
-							<label><input type="checkbox" name="dx_children[]" value="Gender Dysphoria (children)"> اضطراب الهوية الجندرية عند الأطفال — Gender Dysphoria (in children)</label>
-							<label><input type="checkbox" name="dx_children[]" value="Disruptive & Conduct & Behavior Modification"> اضطرابات السلوك والانضباط وتعديل السلوك ‏(Behavior Modification / Disruptive, Impulse-Control & Conduct Disorders ..etc)</label>
-							<label><input type="checkbox" name="dx_children[]" value="Emotional Disorders (children)"> الاضطرابات العاطفية والانفعالية (Emotional Disorders)</label>
-							<label><input type="checkbox" name="dx_children[]" value="Habit & Somatic Disorders (children)"> اضطرابات السلوكيات والعادات (Habit & Somatic Disorders)</label>
+							<label><input type="checkbox" name="dx_children[]" value="Intellectual Disability (ID)"> الإعاقة الذهنية / اضطراب النموّ العقلي <span class="english-tooltip" data-tooltip="Intellectual Disability (ID)">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Autism Spectrum Disorder (ASD)"> اضطراب طيف التوحّد <span class="english-tooltip" data-tooltip="Autism Spectrum Disorder (ASD)">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="ADHD"> اضطراب فرط الحركة وتشتّت الانتباه <span class="english-tooltip" data-tooltip="Attention-Deficit / Hyperactivity Disorder (ADHD)">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Learning Disorders"> صعوبات التعلّم <span class="english-tooltip" data-tooltip="Learning Difficulties / Learning Disorders">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Trauma & Stressor-Related (children)"> اضطرابات الصدمة والضغوط النفسية عند الأطفال <span class="english-tooltip" data-tooltip="Trauma- & Stressor-Related Disorders (in children)">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Gender Dysphoria (children)"> اضطراب الهوية الجندرية عند الأطفال <span class="english-tooltip" data-tooltip="Gender Dysphoria (in children)">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Disruptive & Conduct & Behavior Modification"> اضطرابات السلوك والانضباط وتعديل السلوك <span class="english-tooltip" data-tooltip="Behavior Modification / Disruptive, Impulse-Control & Conduct Disorders ..etc">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Emotional Disorders (children)"> الاضطرابات العاطفية والانفعالية <span class="english-tooltip" data-tooltip="Emotional Disorders">ℹ️</span></label>
+							<label><input type="checkbox" name="dx_children[]" value="Habit & Somatic Disorders (children)"> اضطرابات السلوكيات والعادات <span class="english-tooltip" data-tooltip="Habit & Somatic Disorders">ℹ️</span></label>
 						</div>
 					</div>
 					
@@ -859,49 +978,49 @@ function snks_therapist_registration_shortcode( $atts ) {
 						
 						<div id="adult-dx-psychologist" style="display: none;">
 							<div class="diagnosis-list">
-								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب — Depressive Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق — Anxiety Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة — Obsessive–Compulsive and Related Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار (تشمل اضطراب التكيف) — Trauma- and Stressor-Related Disorders (Adults, including Adjustment Disorder)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار — Gender Dysphoria (Adults)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع — Disruptive, Impulse-Control, and Conduct Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية (غير متعلقة بالمواد) — Behavioral Addictive Disorders (Non-Substance Related)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب (Cluster B)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج (Cluster C)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة (الانحرافات الجنسية) — Paraphilic Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة (مثل الاحتراق الوظيفي، الحزن الطبيعي، ومشاكل الحياة) — General Psychological Issues</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية — Chronic Pain with Psychological Factors</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب <span class="english-tooltip" data-tooltip="Depressive Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق <span class="english-tooltip" data-tooltip="Anxiety Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة <span class="english-tooltip" data-tooltip="Obsessive–Compulsive and Related Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار (تشمل اضطراب التكيف) <span class="english-tooltip" data-tooltip="Trauma- and Stressor-Related Disorders (Adults, including Adjustment Disorder)">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار <span class="english-tooltip" data-tooltip="Gender Dysphoria (Adults)">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع <span class="english-tooltip" data-tooltip="Disruptive, Impulse-Control, and Conduct Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية (غير متعلقة بالمواد) <span class="english-tooltip" data-tooltip="Behavioral Addictive Disorders (Non-Substance Related)">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب <span class="english-tooltip" data-tooltip="Cluster B">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج <span class="english-tooltip" data-tooltip="Cluster C">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة (الانحرافات الجنسية) <span class="english-tooltip" data-tooltip="Paraphilic Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة (مثل الاحتراق الوظيفي، الحزن الطبيعي، ومشاكل الحياة) <span class="english-tooltip" data-tooltip="General Psychological Issues">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية <span class="english-tooltip" data-tooltip="Chronic Pain with Psychological Factors">ℹ️</span></label>
 							</div>
 						</div>
 						
 						<div id="adult-dx-psychiatrist" style="display: none;">
 							<div class="diagnosis-list">
-								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب — Depressive Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق — Anxiety Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة — Obsessive–Compulsive and Related Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار (تشمل اضطراب التكيف) — Trauma- and Stressor-Related Disorders (Adults, including Adjustment Disorder)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار — Gender Dysphoria (Adults)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع — Disruptive, Impulse-Control, and Conduct Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية (غير متعلقة بالمواد) — Behavioral Addictive Disorders (Non-Substance Related)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب (Cluster B)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج (Cluster C)</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة (الانحرافات الجنسية) — Paraphilic Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Couple & Marital Therapy"> مشكلات العلاقات الزوجية والعائلية — Couple and Relationship Therapy / Marital Therapy</label>
-								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة (مثل الاحتراق الوظيفي، الحزن الطبيعي، ومشاكل الحياة) — General Psychological Issues</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية — Chronic Pain with Psychological Factors</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Schizophrenia Spectrum & Psychotic Disorders"> اضطرابات الفصام والطيف الذهاني — Schizophrenia Spectrum and Other Psychotic Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster A"> اضطرابات الشخصية من النمط (أ) — Cluster A Personality Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Bipolar and Related Disorders"> اضطرابات المزاج ثنائية القطب والاضطرابات ذات الصلة — Bipolar and Related Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Dissociative Disorders"> الاضطرابات الانفصالية — Dissociative Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Somatic Symptom and Related Disorders"> الاضطرابات الجسدية الشكل والاضطرابات ذات الصلة — Somatic Symptom and Related Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Substance/Medication-Induced Mental Disorders"> الاضطرابات النفسية الناجمة عن استخدام مواد أو أدوية — Substance/Medication-Induced Mental Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Feeding and Eating Disorders"> اضطرابات الأكل والتغذية — Feeding and Eating Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Sexual Dysfunctions"> الاضطرابات الجنسية — Sexual Dysfunctions</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Substance-Related and Addictive Disorders"> الاضطرابات المرتبطة بتعاطي المواد والإدمان — Substance-Related and Addictive Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Neurocognitive Disorders"> الاضطرابات العصبية المعرفية — Neurocognitive Disorders</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Personality Change Due to Another Medical Condition"> تغيرات الشخصية الناتجة عن حالة طبية أخرى — Personality Change Due to Another Medical Condition</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Mental Disorders Due to Another Medical Condition or Medication"> الاضطرابات النفسية الناتجة عن حالة طبية أو دواء — Mental Disorders Due to Another Medical Condition or Medication</label>
-								<label><input type="checkbox" name="dx_adult[]" value="Medication-Induced Movement Disorders"> اضطرابات الحركة الناجمة عن الأدوية — Medication-Induced Movement Disorders</label>
+								<label><input type="checkbox" name="dx_adult[]" value="Depressive Disorders"> اضطرابات الاكتئاب <span class="english-tooltip" data-tooltip="Depressive Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Anxiety Disorders"> اضطرابات القلق <span class="english-tooltip" data-tooltip="Anxiety Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="OCD & Related"> الوسواس القهري والاضطرابات ذات الصلة <span class="english-tooltip" data-tooltip="Obsessive–Compulsive and Related Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Trauma & Stressor (Adults)"> اضطرابات الصدمة والضغوط للكبار (تشمل اضطراب التكيف) <span class="english-tooltip" data-tooltip="Trauma- and Stressor-Related Disorders (Adults, including Adjustment Disorder)">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Gender Dysphoria (Adults)"> اضطراب الهوية الجندرية للكبار <span class="english-tooltip" data-tooltip="Gender Dysphoria (Adults)">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Disruptive & Impulse-Control (Adults)"> اضطرابات السلوك والاندفاع <span class="english-tooltip" data-tooltip="Disruptive, Impulse-Control, and Conduct Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Behavioral Addictive (Non-Substance)"> الاضطرابات الإدمانية السلوكية (غير متعلقة بالمواد) <span class="english-tooltip" data-tooltip="Behavioral Addictive Disorders (Non-Substance Related)">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster B"> اضطرابات الشخصية – الفئة ب <span class="english-tooltip" data-tooltip="Cluster B">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster C"> اضطرابات الشخصية – الفئة ج <span class="english-tooltip" data-tooltip="Cluster C">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Paraphilic Disorders"> الاضطرابات البارافيليّة (الانحرافات الجنسية) <span class="english-tooltip" data-tooltip="Paraphilic Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Couple & Marital Therapy"> مشكلات العلاقات الزوجية والعائلية <span class="english-tooltip" data-tooltip="Couple and Relationship Therapy / Marital Therapy">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="General Psychological Issues"> المشكلات النفسية العامة (مثل الاحتراق الوظيفي، الحزن الطبيعي، ومشاكل الحياة) <span class="english-tooltip" data-tooltip="General Psychological Issues">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Chronic Pain with Psychological Factors"> الألم المزمن المرتبط بعوامل نفسية <span class="english-tooltip" data-tooltip="Chronic Pain with Psychological Factors">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Schizophrenia Spectrum & Psychotic Disorders"> اضطرابات الفصام والطيف الذهاني <span class="english-tooltip" data-tooltip="Schizophrenia Spectrum and Other Psychotic Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Disorders Cluster A"> اضطرابات الشخصية من النمط (أ) <span class="english-tooltip" data-tooltip="Cluster A Personality Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Bipolar and Related Disorders"> اضطرابات المزاج ثنائية القطب والاضطرابات ذات الصلة <span class="english-tooltip" data-tooltip="Bipolar and Related Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Dissociative Disorders"> الاضطرابات الانفصالية <span class="english-tooltip" data-tooltip="Dissociative Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Somatic Symptom and Related Disorders"> الاضطرابات الجسدية الشكل والاضطرابات ذات الصلة <span class="english-tooltip" data-tooltip="Somatic Symptom and Related Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Substance/Medication-Induced Mental Disorders"> الاضطرابات النفسية الناجمة عن استخدام مواد أو أدوية <span class="english-tooltip" data-tooltip="Substance/Medication-Induced Mental Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Feeding and Eating Disorders"> اضطرابات الأكل والتغذية <span class="english-tooltip" data-tooltip="Feeding and Eating Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Sexual Dysfunctions"> الاضطرابات الجنسية <span class="english-tooltip" data-tooltip="Sexual Dysfunctions">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Substance-Related and Addictive Disorders"> الاضطرابات المرتبطة بتعاطي المواد والإدمان <span class="english-tooltip" data-tooltip="Substance-Related and Addictive Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Neurocognitive Disorders"> الاضطرابات العصبية المعرفية <span class="english-tooltip" data-tooltip="Neurocognitive Disorders">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Personality Change Due to Another Medical Condition"> تغيرات الشخصية الناتجة عن حالة طبية أخرى <span class="english-tooltip" data-tooltip="Personality Change Due to Another Medical Condition">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Mental Disorders Due to Another Medical Condition or Medication"> الاضطرابات النفسية الناتجة عن حالة طبية أو دواء <span class="english-tooltip" data-tooltip="Mental Disorders Due to Another Medical Condition or Medication">ℹ️</span></label>
+								<label><input type="checkbox" name="dx_adult[]" value="Medication-Induced Movement Disorders"> اضطرابات الحركة الناجمة عن الأدوية <span class="english-tooltip" data-tooltip="Medication-Induced Movement Disorders">ℹ️</span></label>
 							</div>
 						</div>
 					</div>
@@ -954,6 +1073,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 		bindFileListeners();
 		bindInputListeners();
 		bindFormSubmission();
+		bindTooltipHandlers();
 
 		initialize();
 
@@ -1175,6 +1295,131 @@ function snks_therapist_registration_shortcode( $atts ) {
 					}
 				}
 			});
+		}
+
+		function bindTooltipHandlers() {
+			// Create overlay for mobile
+			let overlay = document.getElementById('tooltip-overlay');
+			if (!overlay) {
+				overlay = document.createElement('div');
+				overlay.id = 'tooltip-overlay';
+				overlay.className = 'tooltip-overlay';
+				document.body.appendChild(overlay);
+			}
+
+			function closeAllTooltips() {
+				document.querySelectorAll('.english-tooltip.active').forEach(function(tooltip) {
+					tooltip.classList.remove('active');
+				});
+				overlay.classList.remove('active');
+				document.body.classList.remove('tooltip-active');
+			}
+
+			function openTooltip(tooltip) {
+				tooltip.classList.add('active');
+				overlay.classList.add('active');
+				document.body.classList.add('tooltip-active');
+			}
+
+			// Prevent all events from passing through overlay
+			overlay.addEventListener('click', function(event) {
+				event.preventDefault();
+				event.stopPropagation();
+				closeAllTooltips();
+			}, true);
+
+			overlay.addEventListener('touchend', function(event) {
+				event.preventDefault();
+				event.stopPropagation();
+				closeAllTooltips();
+			}, true);
+
+			// Prevent checkbox click when clicking on tooltip
+			document.addEventListener('click', function(event) {
+				// If overlay is active, prevent all clicks from reaching checkboxes
+				if (overlay.classList.contains('active')) {
+					const tooltip = event.target.closest('.english-tooltip');
+					if (!tooltip) {
+						event.preventDefault();
+						event.stopPropagation();
+						closeAllTooltips();
+						return false;
+					}
+				}
+
+				const tooltip = event.target.closest('.english-tooltip');
+				if (tooltip) {
+					event.preventDefault();
+					event.stopPropagation();
+					// Toggle tooltip on mobile
+					if (window.innerWidth < 768) {
+						const wasActive = tooltip.classList.contains('active');
+						closeAllTooltips();
+						if (!wasActive) {
+							openTooltip(tooltip);
+						}
+					}
+					return false;
+				}
+			}, true);
+
+			// Also handle touch events for mobile
+			document.addEventListener('touchend', function(event) {
+				// If overlay is active, prevent all touches from reaching checkboxes
+				if (overlay.classList.contains('active')) {
+					const tooltip = event.target.closest('.english-tooltip');
+					if (!tooltip) {
+						event.preventDefault();
+						event.stopPropagation();
+						closeAllTooltips();
+						return false;
+					}
+				}
+
+				const tooltip = event.target.closest('.english-tooltip');
+				if (tooltip) {
+					event.preventDefault();
+					event.stopPropagation();
+					if (window.innerWidth < 768) {
+						const wasActive = tooltip.classList.contains('active');
+						closeAllTooltips();
+						if (!wasActive) {
+							openTooltip(tooltip);
+						}
+					}
+					return false;
+				}
+			}, true);
+
+			// Prevent checkbox clicks when overlay is active
+			document.addEventListener('change', function(event) {
+				if (overlay.classList.contains('active') && (event.target.type === 'checkbox' || event.target.type === 'radio')) {
+					event.preventDefault();
+					event.stopPropagation();
+					// Restore checkbox state
+					if (event.target.type === 'checkbox') {
+						event.target.checked = !event.target.checked;
+					}
+					return false;
+				}
+			}, true);
+
+			// Prevent mousedown and touchstart on checkboxes when overlay is active
+			document.addEventListener('mousedown', function(event) {
+				if (overlay.classList.contains('active') && (event.target.type === 'checkbox' || event.target.type === 'radio')) {
+					event.preventDefault();
+					event.stopPropagation();
+					return false;
+				}
+			}, true);
+
+			document.addEventListener('touchstart', function(event) {
+				if (overlay.classList.contains('active') && (event.target.type === 'checkbox' || event.target.type === 'radio')) {
+					event.preventDefault();
+					event.stopPropagation();
+					return false;
+				}
+			}, true);
 		}
 
 		function bindFormSubmission() {
@@ -2815,3 +3060,4 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	// Return success response
 	return $response_data;
 }
+

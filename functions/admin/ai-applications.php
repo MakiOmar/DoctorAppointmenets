@@ -405,11 +405,14 @@ function snks_display_application_details( $application_id ) {
 		
 		$attachment = get_post( $attachment_id );
 		$filename = $attachment ? ( $attachment->post_title ?: basename( wp_get_attachment_url( $attachment_id ) ) ) : 'Document';
+		$original_url = wp_get_attachment_url( $attachment_id );
 		
 		if ( wp_attachment_is_image( $attachment_id ) ) {
-			echo wp_get_attachment_image( $attachment_id, 'thumbnail', false, array( 'style' => 'max-width: 150px; height: auto;' ) );
+			echo '<a href="' . esc_url( $original_url ) . '" target="_blank" style="display: inline-block;">';
+			echo wp_get_attachment_image( $attachment_id, 'thumbnail', false, array( 'style' => 'max-width: 150px; height: auto; cursor: pointer;' ) );
+			echo '</a>';
 		} else {
-			echo '<a href="' . esc_url( wp_get_attachment_url( $attachment_id ) ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
+			echo '<a href="' . esc_url( $original_url ) . '" target="_blank">' . esc_html( $filename ) . '</a>';
 		}
 	};
 	?>
@@ -565,7 +568,12 @@ function snks_display_application_details( $application_id ) {
 					<th>Profile Image</th>
 					<td>
 						<?php if ( !empty( $application->profile_image ) ) : ?>
-							<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto;') ); ?>
+							<?php 
+							$profile_image_url = wp_get_attachment_url( $application->profile_image );
+							?>
+							<a href="<?php echo esc_url( $profile_image_url ); ?>" target="_blank" style="display: inline-block;">
+								<?php echo wp_get_attachment_image( $application->profile_image, 'thumbnail', false, array('style' => 'max-width: 150px; height: auto; cursor: pointer;') ); ?>
+							</a>
 						<?php else : ?>
 							No image uploaded
 						<?php endif; ?>
@@ -617,11 +625,18 @@ function snks_display_application_details( $application_id ) {
 								$attachment = get_post( $cert_id );
 								if ( $attachment ) :
 									$filename = $attachment->post_title ?: basename( wp_get_attachment_url( $cert_id ) );
+									$cert_url = wp_get_attachment_url( $cert_id );
 									?>
 									<div style="margin-bottom: 10px;">
-										<a href="<?php echo esc_url( wp_get_attachment_url( $cert_id ) ); ?>" target="_blank">
-											<?php echo esc_html( $filename ); ?>
-										</a>
+										<?php if ( wp_attachment_is_image( $cert_id ) ) : ?>
+											<a href="<?php echo esc_url( $cert_url ); ?>" target="_blank" style="display: inline-block;">
+												<?php echo wp_get_attachment_image( $cert_id, 'thumbnail', false, array( 'style' => 'max-width: 150px; height: auto; cursor: pointer;' ) ); ?>
+											</a>
+										<?php else : ?>
+											<a href="<?php echo esc_url( $cert_url ); ?>" target="_blank">
+												<?php echo esc_html( $filename ); ?>
+											</a>
+										<?php endif; ?>
 									</div>
 									<?php
 								endif;
