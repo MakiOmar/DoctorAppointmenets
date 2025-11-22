@@ -1131,7 +1131,7 @@ export default {
           },
           toolbarButtons: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 
             'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
             'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
           ]
@@ -1153,7 +1153,7 @@ export default {
           TOOLBAR_ALWAYS_VISIBLE: true,
           TOOLBAR_BUTTONS: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 
             'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
             'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
           ]
@@ -1815,7 +1815,7 @@ export default {
           },
           toolbarButtons: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 
             'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
             'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
           ]
@@ -1837,7 +1837,7 @@ export default {
           TOOLBAR_ALWAYS_VISIBLE: true,
           TOOLBAR_BUTTONS: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+            'fodeviceselection', 'hangup', 'profile', 'chat', 
             'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
             'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
           ]

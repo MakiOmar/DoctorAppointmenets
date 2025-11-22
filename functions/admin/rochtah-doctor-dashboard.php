@@ -1140,7 +1140,7 @@ function snks_rochtah_doctor_dashboard() {
 				},
 				toolbarButtons: [
 					'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-					'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+					'fodeviceselection', 'hangup', 'profile', 'chat', 
 					'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
 					'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
 				]
@@ -1162,7 +1162,7 @@ function snks_rochtah_doctor_dashboard() {
 				TOOLBAR_ALWAYS_VISIBLE: true,
 				TOOLBAR_BUTTONS: [
 					'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
-					'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 
+					'fodeviceselection', 'hangup', 'profile', 'chat', 
 					'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 
 					'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'
 				]
