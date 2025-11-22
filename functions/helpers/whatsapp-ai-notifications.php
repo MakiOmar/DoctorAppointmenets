@@ -105,12 +105,13 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	}
 	
 	// Add button parameters if provided (for URL buttons that require parameters)
+	// Same structure as OTP template - button uses the code as parameter
 	if ( ! empty( $button_parameters ) ) {
 		foreach ( $button_parameters as $button_index => $button_param ) {
 			$button_component = array(
 				'type' => 'button',
 				'sub_type' => 'url',
-				'index' => $button_index,
+				'index' => (string) $button_index, // Convert to string to match OTP template format
 				'parameters' => array(
 					array(
 						'type' => 'text',

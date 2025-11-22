@@ -3533,13 +3533,11 @@ Best regards,
             $this->send_error( 'Password reset template is not configured. Please set it in Therapist Registration Settings.', 400 );
         }
         
-        // Pass the reset code as body parameter (using 'text' variable as per template)
-        // For password reset template, if it has a URL button, provide an empty or placeholder URL parameter
-        // The template might have a button that requires a parameter - provide empty string or site URL as fallback
+        // Pass the reset code as body parameter (using same structure as OTP template)
+        // The password reset template uses the reset code as button parameter (same as OTP template)
         $button_params = array();
-        // If template has URL button, provide parameter (index 0 for first button)
-        // Using site URL as placeholder - adjust if your template requires a specific URL format
-        $button_params[0] = site_url(); // You can change this to a specific reset URL if needed
+        // Button at index 0 uses the reset code as parameter (same pattern as OTP template)
+        $button_params[0] = $reset_code;
         
         error_log( '[Forgot Password] Calling snks_send_whatsapp_template_message with template: ' . $password_template . ', params: ' . print_r( array( 'text' => $reset_code ), true ) . ', button_params: ' . print_r( $button_params, true ) );
         $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ), $button_params );
