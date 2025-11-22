@@ -40,12 +40,13 @@ function snks_get_whatsapp_notification_settings() {
  * @param array  $parameters Template parameters.
  * @return mixed
  */
-function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array() ) {
+function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array(), $button_parameters = array() ) {
 	// Debug logging
 	error_log( '[WhatsApp API] Function called with:' );
 	error_log( '[WhatsApp API] - Phone: ' . $phone_number );
 	error_log( '[WhatsApp API] - Template: ' . $template_name );
 	error_log( '[WhatsApp API] - Parameters: ' . print_r( $parameters, true ) );
+	error_log( '[WhatsApp API] - Button Parameters: ' . print_r( $button_parameters, true ) );
 	
 	// Validate template name is provided
 	if ( empty( $template_name ) ) {
@@ -86,6 +87,7 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	// Build template components
 	$components = array();
 	
+	// Add body parameters if provided
 	if ( ! empty( $parameters ) ) {
 		$template_parameters = array();
 		foreach ( $parameters as $param_name => $param_value ) {
@@ -100,6 +102,24 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 			'type' => 'body',
 			'parameters' => $template_parameters
 		);
+	}
+	
+	// Add button parameters if provided (for URL buttons that require parameters)
+	if ( ! empty( $button_parameters ) ) {
+		foreach ( $button_parameters as $button_index => $button_param ) {
+			$button_component = array(
+				'type' => 'button',
+				'sub_type' => 'url',
+				'index' => $button_index,
+				'parameters' => array(
+					array(
+						'type' => 'text',
+						'text' => $button_param
+					)
+				)
+			);
+			$components[] = $button_component;
+		}
 	}
 	
 	// Prepare request body

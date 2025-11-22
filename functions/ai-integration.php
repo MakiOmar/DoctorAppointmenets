@@ -3534,8 +3534,15 @@ Best regards,
         }
         
         // Pass the reset code as body parameter (using 'text' variable as per template)
-        error_log( '[Forgot Password] Calling snks_send_whatsapp_template_message with template: ' . $password_template . ', params: ' . print_r( array( 'text' => $reset_code ), true ) );
-        $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ) );
+        // For password reset template, if it has a URL button, provide an empty or placeholder URL parameter
+        // The template might have a button that requires a parameter - provide empty string or site URL as fallback
+        $button_params = array();
+        // If template has URL button, provide parameter (index 0 for first button)
+        // Using site URL as placeholder - adjust if your template requires a specific URL format
+        $button_params[0] = site_url(); // You can change this to a specific reset URL if needed
+        
+        error_log( '[Forgot Password] Calling snks_send_whatsapp_template_message with template: ' . $password_template . ', params: ' . print_r( array( 'text' => $reset_code ), true ) . ', button_params: ' . print_r( $button_params, true ) );
+        $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ), $button_params );
         error_log( '[Forgot Password] WhatsApp API result: ' . print_r( $result, true ) );
 
         if ( is_wp_error( $result ) ) {
