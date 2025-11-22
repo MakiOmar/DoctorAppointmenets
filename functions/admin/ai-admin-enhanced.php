@@ -2948,9 +2948,6 @@ function snks_enhanced_ai_settings_page() {
 				// Therapist AI Coupon Settings
 				update_option( 'snks_ai_therapist_ai_coupons_enabled', isset( $_POST['therapist_ai_coupons_enabled'] ) ? '1' : '0' );
 				
-				// Forget Password Template Setting
-				update_option( 'snks_template_password', sanitize_text_field( $_POST['template_password'] ?? 'password' ) );
-				
 				// Appointment Change Terms Settings
 				update_option( 'snks_ai_appointment_change_terms_en', sanitize_textarea_field( $_POST['appointment_change_terms_en'] ) );
 				update_option( 'snks_ai_appointment_change_terms_ar', sanitize_textarea_field( $_POST['appointment_change_terms_ar'] ) );
@@ -2971,7 +2968,6 @@ function snks_enhanced_ai_settings_page() {
 	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
 	$show_more_button_enabled = get_option( 'snks_ai_show_more_button_enabled', '1' ); // Default to enabled
 	$therapist_ai_coupons_enabled = get_option( 'snks_ai_therapist_ai_coupons_enabled', '1' ); // Default to enabled
-	$template_password = get_option( 'snks_template_password', 'password' ); // Default to 'password'
 	
 	// Appointment Change Terms Settings
 	$appointment_change_terms_en = get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
@@ -3068,14 +3064,6 @@ function snks_enhanced_ai_settings_page() {
 					<label for="therapist_ai_coupons_enabled">Allow Therapists to Create AI Coupons</label>
 					<input type="checkbox" id="therapist_ai_coupons_enabled" name="therapist_ai_coupons_enabled" value="1" <?php checked( $therapist_ai_coupons_enabled, '1' ); ?>>
 					<p class="description">When enabled, therapists can create coupons specifically for Jalsah AI sessions. When disabled, the AI coupon option will be hidden from the coupon creation form.</p>
-				</div>
-				
-				<h3>Password Reset</h3>
-				
-				<div class="bilingual-field">
-					<label for="template_password">Forget Password WhatsApp Template</label>
-					<input type="text" id="template_password" name="template_password" value="<?php echo esc_attr( $template_password ); ?>" class="regular-text" placeholder="password">
-					<p class="description">WhatsApp template name for password reset code. The template should include a <code>{{text}}</code> parameter for the reset code.</p>
 				</div>
 				
 				<h3>Appointment Change Terms</h3>
