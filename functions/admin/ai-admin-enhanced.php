@@ -2945,6 +2945,9 @@ function snks_enhanced_ai_settings_page() {
 				
 				update_option( 'snks_ai_show_more_button_enabled', isset( $_POST['show_more_button_enabled'] ) ? '1' : '0' );
 				
+				// Therapist AI Coupon Settings
+				update_option( 'snks_ai_therapist_ai_coupons_enabled', isset( $_POST['therapist_ai_coupons_enabled'] ) ? '1' : '0' );
+				
 				// Appointment Change Terms Settings
 				update_option( 'snks_ai_appointment_change_terms_en', sanitize_textarea_field( $_POST['appointment_change_terms_en'] ) );
 				update_option( 'snks_ai_appointment_change_terms_ar', sanitize_textarea_field( $_POST['appointment_change_terms_ar'] ) );
@@ -2964,6 +2967,7 @@ function snks_enhanced_ai_settings_page() {
 	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
 	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
 	$show_more_button_enabled = get_option( 'snks_ai_show_more_button_enabled', '1' ); // Default to enabled
+	$therapist_ai_coupons_enabled = get_option( 'snks_ai_therapist_ai_coupons_enabled', '1' ); // Default to enabled
 	
 	// Appointment Change Terms Settings
 	$appointment_change_terms_en = get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
@@ -3052,6 +3056,14 @@ function snks_enhanced_ai_settings_page() {
 					<label for="show_more_button_enabled">Enable "Show More" Button</label>
 					<input type="checkbox" id="show_more_button_enabled" name="show_more_button_enabled" value="1" <?php checked( $show_more_button_enabled, '1' ); ?>>
 					<p class="description">When enabled, shows a "Show More" button on diagnosis results page when there are more therapists than the limit. When disabled, all therapists will be shown at once.</p>
+				</div>
+				
+				<h3>Therapist Coupons</h3>
+				
+				<div class="bilingual-field">
+					<label for="therapist_ai_coupons_enabled">Allow Therapists to Create AI Coupons</label>
+					<input type="checkbox" id="therapist_ai_coupons_enabled" name="therapist_ai_coupons_enabled" value="1" <?php checked( $therapist_ai_coupons_enabled, '1' ); ?>>
+					<p class="description">When enabled, therapists can create coupons specifically for Jalsah AI sessions. When disabled, the AI coupon option will be hidden from the coupon creation form.</p>
 				</div>
 				
 				<h3>Appointment Change Terms</h3>

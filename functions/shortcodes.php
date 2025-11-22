@@ -1378,6 +1378,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 
 	$current_user_id = get_current_user_id();
 	$coupons         = snks_get_coupons_by_doctor( $current_user_id );
+	$therapist_ai_coupons_enabled = get_option( 'snks_ai_therapist_ai_coupons_enabled', '1' ); // Default to enabled
 
 	ob_start();
 	?>
@@ -1516,12 +1517,14 @@ function snks_doctor_coupons_ajax_shortcode() {
 				<label for="expires_at" style="margin-bottom:10px">صلاحية الكوبون حتى تاريخ</label>
 				<input type="date" id="expires_at" name="expires_at" style="width:100%"></p>
 			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
+			<?php if ( $therapist_ai_coupons_enabled === '1' ) : ?>
 			<p>
 				<label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
 					<input type="checkbox" name="is_ai_coupon" value="1" style="margin: 0;">
 					<span>كوبون للجلسات الذكية (AI) فقط</span>
 				</label>
 			</p>
+			<?php endif; ?>
 			<button type="submit">➕ إضافة الكوبون</button>
 		</form>
 		<hr>
