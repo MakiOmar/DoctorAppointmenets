@@ -41,6 +41,11 @@ function snks_get_whatsapp_notification_settings() {
  * @return mixed
  */
 function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array() ) {
+	// Validate template name is provided
+	if ( empty( $template_name ) ) {
+		return new WP_Error( 'missing_template', 'Template name is required' );
+	}
+	
 	// Get WhatsApp API configuration from existing registration settings
 	$api_url = get_option( 'snks_whatsapp_api_url', '' );
 	$api_token = get_option( 'snks_whatsapp_api_token', '' );

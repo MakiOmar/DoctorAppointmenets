@@ -3519,7 +3519,12 @@ Best regards,
 
         // Send WhatsApp using the same template sender used by notifications system
         $settings = snks_get_whatsapp_notification_settings();
-        $password_template = $settings['template_password'];
+        $password_template = isset( $settings['template_password'] ) ? $settings['template_password'] : '';
+        
+        // Validate template name is not empty
+        if ( empty( $password_template ) ) {
+            $this->send_error( 'Password reset template is not configured. Please set it in Therapist Registration Settings.', 400 );
+        }
         
         // Pass the reset code as body parameter (using 'text' variable as per template)
         $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ) );
