@@ -21,7 +21,7 @@ add_action(
 		
 		global $wp;
 		//phpcs:disable
-		if ( false !== strpos( $_SERVER['REQUEST_URI'], 'therapist' ) && false === strpos( $_SERVER['REQUEST_URI'], 'ai-therapist-reg' ) && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
+		if ( false !== strpos( $_SERVER['REQUEST_URI'], 'therapist' ) && false === strpos( $_SERVER['REQUEST_URI'], 'therapist-reg' ) && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
 			wp_redirect( site_url() );
 			exit;
 		}

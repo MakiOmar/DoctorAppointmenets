@@ -169,6 +169,21 @@ function snks_therapist_registration_shortcode( $atts ) {
 			font-size: 14px;
 			box-sizing: border-box;
 		}
+		.form-warning {
+			background: #fff4e5;
+			border-left: 4px solid #f2994a;
+			padding: 12px 16px;
+			border-radius: 6px;
+			color: #92400e;
+			margin: 18px 0;
+			font-size: 14px;
+			display: flex;
+			gap: 8px;
+			align-items: center;
+		}
+		.form-warning .warning-icon {
+			font-size: 18px;
+		}
 		/* Prevent iOS zoom on input focus */
 		@supports (-webkit-touch-callout: none) {
 			.form-group input[type="text"],
@@ -710,6 +725,7 @@ function snks_therapist_registration_shortcode( $atts ) {
 						<li>بعد اتمام التسجيل ستتواصل معك خدمة العملاء بالموقع  في اقرب وقت، وذلك لاستلام حساب لوحة التحكم الخاصة بك لبدء اضافة مواعيدك واسعار جلساتك لداخل او خارج مصر، وسيتم ارسال فيديو لشرح طريقة التعامل مع الموقع بسهولة.</li>
 						<li>يحصل موقع جلسة على ٤٠٪؜ من سعر الجلسة ويتم تحويل نسبة ال٦٠٪؜ لرصيدك علي الموقع بعد اتمام الجلسة ، ويمكنك سحب اي مبالغ موجودة بحسابك خلال يوم عمل واحد.</li>
 						<li>يمكنك استخدام حسابك بالموقع ايضا لعمل صفحة شخصية لادارة حجوزاتك الشخصية بشكل تلقائي، وفي حالة حجز عميل خاص بك من خلال تلك الصفحة لن يتم خصم اي نسبة من سعر الجلسه وستحصل علي مبلغ الجلسه كاملا، ستتيح لك صفحتك الشخصية عدة ميزات حيث ستقوم بكل وظيفة السكرتير والمحاسب بشكل تلقائي، وستستطيع من خلالها استقبال اتعاب جلساتك من جميع انحاء العالم لان صفحتك ستدعم الدفع بالفيزا وماستر كارد بالاضافه لوسائل الدفع الموجوده بمصر، وستحتوي صفحتك ايضا علي نظام اتصالات خاص بك بجوده عاليه وبلا حدود .</li>
+						<li>للمصداقيه مع العملاء سيتم وضع شهاداتك علي الموقع مع ازاله اي معلومات شخصية على الشهادة وابقاء البيانات العلميه فقط، مع تخفيض جودة صورة الشهادة.</li>
 					</ul>
 				</div>
 				
@@ -1028,6 +1044,10 @@ function snks_therapist_registration_shortcode( $atts ) {
 			</div>
 			
 			<button type="submit" class="submit-btn" id="submit-btn">ابدأ التسجيل</button>
+			<div class="form-warning">
+				<span class="warning-icon">⚠️</span>
+				<span>قد يستغرق الأمر بعض الوقت لرفع جميع الصور، يُرجى ترك الصفحة مفتوحة لحين اكتمال الرفع.</span>
+			</div>
 		</form>
 		</div>
 	</div>
