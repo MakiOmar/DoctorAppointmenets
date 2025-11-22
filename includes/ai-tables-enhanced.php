@@ -424,6 +424,7 @@ function snks_validate_ai_coupon( $code, $user_id = null ) {
 
 /**
  * Apply AI coupon
+ * For AI coupons, discount applies only to Jalsah AI fee (40% of session price)
  */
 function snks_apply_ai_coupon( $code, $total_amount ) {
 	$validation = snks_validate_ai_coupon( $code );
@@ -433,22 +434,29 @@ function snks_apply_ai_coupon( $code, $total_amount ) {
 	}
 	
 	$coupon = $validation['coupon'];
-	$discount_amount = 0;
 	
+	// Calculate Jalsah AI fee (40% of the session price)
+	$jalsah_fee = $total_amount * 0.4;
+	
+	// Apply discount only to the Jalsah fee portion
+	$discount_amount = 0;
 	if ( $coupon->discount_type === 'percentage' ) {
-		$discount_amount = ( $total_amount * $coupon->discount_value ) / 100;
+		$discount_amount = ( $jalsah_fee * $coupon->discount_value ) / 100;
 	} else {
-		$discount_amount = $coupon->discount_value;
+		// For fixed discount, apply to Jalsah fee but don't exceed it
+		$discount_amount = min( $coupon->discount_value, $jalsah_fee );
 	}
 	
-	// Ensure discount doesn't exceed total
-	$discount_amount = min( $discount_amount, $total_amount );
+	// Calculate final amount: total - discount (discount only applies to Jalsah fee)
+	$final_amount = $total_amount - $discount_amount;
 	
 	return array(
 		'valid' => true,
-		'discount_amount' => $discount_amount,
-		'final_amount' => $total_amount - $discount_amount,
-		'coupon' => $coupon
+		'discount_amount' => round( $discount_amount, 2 ),
+		'final_amount' => round( $final_amount, 2 ),
+		'coupon' => $coupon,
+		'jalsah_fee' => round( $jalsah_fee, 2 ),
+		'discount_applied_to_fee' => true
 	);
 }
 

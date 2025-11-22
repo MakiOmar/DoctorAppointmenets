@@ -331,13 +331,40 @@ function snks_apply_ai_coupon_ajax_handler() {
 
     // If not found in admin table, check therapist coupons table (snks_custom_coupons)
     if ( ! $result || ! $result['valid'] ) {
-        $result = snks_apply_coupon_to_amount( $code, $amount );
-        if ( $result['valid'] ) {
-            $coupon = $result['coupon'];
+        $coupon_check = snks_get_coupon_by_code( $code );
+        if ( $coupon_check ) {
             // Enforce AI-only coupon usage for therapist coupons
-            $is_ai_coupon = ! empty( $coupon->is_ai_coupon );
+            $is_ai_coupon = ! empty( $coupon_check->is_ai_coupon );
             if ( ! $is_ai_coupon ) {
                 wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
+            }
+            
+            // For AI coupons from therapist table, apply discount only to Jalsah fee (40%)
+            $jalsah_fee = $amount * 0.4;
+            $discount_amount = 0;
+            
+            if ( $coupon_check->discount_type === 'percent' ) {
+                $discount_amount = ( $jalsah_fee * $coupon_check->discount_value ) / 100;
+            } else {
+                // Fixed discount, apply to Jalsah fee but don't exceed it
+                $discount_amount = min( $coupon_check->discount_value, $jalsah_fee );
+            }
+            
+            $final_amount = $amount - $discount_amount;
+            
+            $result = array(
+                'valid'    => true,
+                'final'    => round( $final_amount, 2 ),
+                'discount' => round( $discount_amount, 2 ),
+                'coupon'   => $coupon_check,
+                'message'  => 'تم تطبيق الكوبون بنجاح.',
+            );
+            $coupon = $coupon_check;
+        } else {
+            // Try regular coupon application (for non-AI coupons)
+            $result = snks_apply_coupon_to_amount( $code, $amount );
+            if ( $result['valid'] ) {
+                $coupon = $result['coupon'];
             }
         }
     }
