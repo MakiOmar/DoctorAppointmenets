@@ -41,8 +41,15 @@ function snks_get_whatsapp_notification_settings() {
  * @return mixed
  */
 function snks_send_whatsapp_template_message( $phone_number, $template_name, $parameters = array() ) {
+	// Debug logging
+	error_log( '[WhatsApp API] Function called with:' );
+	error_log( '[WhatsApp API] - Phone: ' . $phone_number );
+	error_log( '[WhatsApp API] - Template: ' . $template_name );
+	error_log( '[WhatsApp API] - Parameters: ' . print_r( $parameters, true ) );
+	
 	// Validate template name is provided
 	if ( empty( $template_name ) ) {
+		error_log( '[WhatsApp API] ERROR: Template name is empty!' );
 		return new WP_Error( 'missing_template', 'Template name is required' );
 	}
 	
@@ -52,8 +59,15 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	$phone_number_id = get_option( 'snks_whatsapp_phone_number_id', '' );
 	$message_language = get_option( 'snks_whatsapp_message_language', 'ar' );
 	
+	error_log( '[WhatsApp API] Configuration:' );
+	error_log( '[WhatsApp API] - API URL: ' . $api_url );
+	error_log( '[WhatsApp API] - API Token: ' . ( ! empty( $api_token ) ? 'SET (hidden)' : 'EMPTY' ) );
+	error_log( '[WhatsApp API] - Phone Number ID: ' . $phone_number_id );
+	error_log( '[WhatsApp API] - Message Language: ' . $message_language );
+	
 	// Check if WhatsApp API is configured
     if ( empty( $api_url ) || empty( $api_token ) || empty( $phone_number_id ) ) {
+		error_log( '[WhatsApp API] ERROR: Configuration incomplete!' );
         return new WP_Error( 'missing_config', 'WhatsApp API configuration is incomplete' );
     }
 	
@@ -63,6 +77,8 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	// Prepare API endpoint
 	$api_url = rtrim( $api_url, '/' );
 	$endpoint = $api_url . '/' . $phone_number_id . '/messages';
+	
+	error_log( '[WhatsApp API] Endpoint: ' . $endpoint );
 	
 	// Determine template language
 	$template_language = $message_language === 'en' ? 'en_US' : 'ar';
@@ -104,6 +120,8 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		$body['template']['components'] = $components;
 	}
 	
+	error_log( '[WhatsApp API] Request body: ' . print_r( $body, true ) );
+	
 	// Prepare headers
 	$headers = array(
 		'Authorization' => 'Bearer ' . $api_token,
@@ -112,6 +130,8 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	
 	// Prepare request arguments
 	$json_body = wp_json_encode( $body );
+	error_log( '[WhatsApp API] JSON body: ' . $json_body );
+	
 	$args = array(
 		'headers' => $headers,
 		'body' => $json_body,
@@ -120,12 +140,13 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		'sslverify' => true,
 	);
 	
-    // Debug logging removed
+	error_log( '[WhatsApp API] Sending request to: ' . $endpoint );
 	
 	$response = wp_remote_post( $endpoint, $args );
 	
 	// Check for errors
     if ( is_wp_error( $response ) ) {
+		error_log( '[WhatsApp API] WP_Error: ' . $response->get_error_message() );
         return $response;
     }
 	
@@ -134,7 +155,8 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 	$response_code = wp_remote_retrieve_response_code( $response );
 	$response_headers = wp_remote_retrieve_headers( $response );
 	
-    // Debug logging removed
+	error_log( '[WhatsApp API] Response code: ' . $response_code );
+	error_log( '[WhatsApp API] Response body: ' . $response_body );
 	
 	// Check response code
     if ( $response_code !== 200 ) {

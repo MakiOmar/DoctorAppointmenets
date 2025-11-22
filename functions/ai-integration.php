@@ -3521,13 +3521,22 @@ Best regards,
         $settings = snks_get_whatsapp_notification_settings();
         $password_template = isset( $settings['template_password'] ) ? $settings['template_password'] : '';
         
+        // Debug logging
+        error_log( '[Forgot Password] Settings retrieved: ' . print_r( $settings, true ) );
+        error_log( '[Forgot Password] Template name: ' . $password_template );
+        error_log( '[Forgot Password] WhatsApp number: ' . $whatsapp );
+        error_log( '[Forgot Password] Reset code: ' . $reset_code );
+        
         // Validate template name is not empty
         if ( empty( $password_template ) ) {
+            error_log( '[Forgot Password] ERROR: Template name is empty!' );
             $this->send_error( 'Password reset template is not configured. Please set it in Therapist Registration Settings.', 400 );
         }
         
         // Pass the reset code as body parameter (using 'text' variable as per template)
+        error_log( '[Forgot Password] Calling snks_send_whatsapp_template_message with template: ' . $password_template . ', params: ' . print_r( array( 'text' => $reset_code ), true ) );
         $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ) );
+        error_log( '[Forgot Password] WhatsApp API result: ' . print_r( $result, true ) );
 
         if ( is_wp_error( $result ) ) {
             $error_message = $result->get_error_message();
