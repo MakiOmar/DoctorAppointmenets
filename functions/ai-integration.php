@@ -2038,7 +2038,7 @@ class SNKS_AI_Integration {
 	/**
 	 * Verify nonce for API requests
 	 */
-	private function verify_api_nonce( $nonce_field = 'nonce', $nonce_action = 'ai_api_nonce' ) {
+	private function verify_api_nonce( $nonce_field = 'nonce', $nonce_action = 'ai_api_nonce', $pre_parsed_data = null ) {
 		// Get nonce from headers or POST data
 		$nonce = null;
 
@@ -2049,10 +2049,15 @@ class SNKS_AI_Integration {
 			return true;
 		}
 
-		// Check for nonce in POST data
-		$input_data = json_decode( file_get_contents( 'php://input' ), true );
-		if ( $input_data && isset( $input_data[ $nonce_field ] ) ) {
-			$nonce = $input_data[ $nonce_field ];
+		// Use pre-parsed data if provided (to avoid reading php://input multiple times)
+		if ( $pre_parsed_data !== null && is_array( $pre_parsed_data ) && isset( $pre_parsed_data[ $nonce_field ] ) ) {
+			$nonce = $pre_parsed_data[ $nonce_field ];
+		} else {
+			// Check for nonce in POST data
+			$input_data = json_decode( file_get_contents( 'php://input' ), true );
+			if ( $input_data && isset( $input_data[ $nonce_field ] ) ) {
+				$nonce = $input_data[ $nonce_field ];
+			}
 		}
 
 		// Check for nonce in $_POST
@@ -3416,12 +3421,14 @@ Best regards,
 	 * Handle forgot password request
 	 */
 	private function ai_forgot_password() {
-		// Verify nonce for security
-		if ( ! $this->verify_api_nonce( 'nonce', 'ai_forgot_password_nonce' ) ) {
+		// Read input data once (php://input can only be read once)
+		$raw_input = file_get_contents( 'php://input' );
+		$data = json_decode( $raw_input, true );
+
+		// Verify nonce for security (pass data to avoid reading php://input again)
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_forgot_password_nonce', $data ) ) {
 			$this->send_error( 'Security check failed', 401 );
 		}
-
-		$data = json_decode( file_get_contents( 'php://input' ), true );
 
 		// Check if WhatsApp number is provided
 		if ( ! isset( $data['whatsapp'] ) || empty( $data['whatsapp'] ) ) {
@@ -3551,12 +3558,14 @@ Best regards,
 	 * Verify forgot password code
 	 */
 	private function ai_verify_forgot_password() {
-		// Verify nonce for security
-		if ( ! $this->verify_api_nonce( 'nonce', 'ai_verify_forgot_password_nonce' ) ) {
+		// Read input data once (php://input can only be read once)
+		$raw_input = file_get_contents( 'php://input' );
+		$data = json_decode( $raw_input, true );
+
+		// Verify nonce for security (pass data to avoid reading php://input again)
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_verify_forgot_password_nonce', $data ) ) {
 			$this->send_error( 'Security check failed', 401 );
 		}
-
-		$data = json_decode( file_get_contents( 'php://input' ), true );
 
 		// Check required fields
 		if ( ! isset( $data['whatsapp'] ) || empty( $data['whatsapp'] ) ) {
@@ -3629,12 +3638,14 @@ Best regards,
 	 * Reset password with new password
 	 */
 	private function ai_reset_password() {
-		// Verify nonce for security
-		if ( ! $this->verify_api_nonce( 'nonce', 'ai_reset_password_nonce' ) ) {
+		// Read input data once (php://input can only be read once)
+		$raw_input = file_get_contents( 'php://input' );
+		$data = json_decode( $raw_input, true );
+
+		// Verify nonce for security (pass data to avoid reading php://input again)
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_reset_password_nonce', $data ) ) {
 			$this->send_error( 'Security check failed', 401 );
 		}
-
-		$data = json_decode( file_get_contents( 'php://input' ), true );
 
 		// Check required fields
 		if ( ! isset( $data['reset_token'] ) || empty( $data['reset_token'] ) ) {
