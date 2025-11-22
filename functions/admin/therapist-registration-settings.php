@@ -399,8 +399,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_prescription1" id="template_prescription1" value="<?php echo esc_attr( get_option( 'snks_template_prescription1', 'prescription1' ) ); ?>" class="regular-text" placeholder="prescription1">
-							<button type="button" class="button test-whatsapp-notification" data-template="prescription1" data-params='{"doctor": "د. أحمد"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">When therapist sends a message | <code>{{doctor}}</code></p>
+							<button type="button" class="button test-whatsapp-notification" data-template="prescription1" data-params='{"patient": "محمد علي"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">When therapist sends a message | <code>{{patient}}</code></p>
 						</td>
 					</tr>
 					<tr>

@@ -111,12 +111,22 @@ function snks_send_session_message() {
 	if ( function_exists( 'snks_send_whatsapp_template_message' ) && function_exists( 'snks_get_whatsapp_notification_settings' ) ) {
 		$settings = snks_get_whatsapp_notification_settings();
 		$patient_phone = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $client_id ) : '';
-		$doctor_name = function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( get_current_user_id() ) : wp_get_current_user()->display_name;
+		$patient_user = get_user_by( 'ID', $client_id );
+		$patient_name = '';
+		if ( $patient_user ) {
+			$patient_name = get_user_meta( $client_id, 'billing_first_name', true );
+			if ( empty( $patient_name ) ) {
+				$patient_name = get_user_meta( $client_id, 'first_name', true );
+			}
+			if ( empty( $patient_name ) ) {
+				$patient_name = $patient_user->display_name;
+			}
+		}
 		if ( ! empty( $patient_phone ) && ! empty( $settings['template_prescription1'] ) ) {
 			snks_send_whatsapp_template_message(
 				$patient_phone,
 				$settings['template_prescription1'],
-				array( 'doctor' => $doctor_name )
+				array( 'patient' => $patient_name )
 			);
 		}
 	}
