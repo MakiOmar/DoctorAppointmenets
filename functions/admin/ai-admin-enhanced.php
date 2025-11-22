@@ -2192,10 +2192,9 @@ function snks_enhanced_ai_coupons_page() {
 		}
 		
 		function generateRandomCode() {
-			// Generate format: AI-XXXXXX (6 random alphanumeric characters)
-			var prefix = 'AI-';
+			// Generate format: XXXXXX (6 random alphanumeric characters)
 			var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars like 0, O, I, 1
-			var code = prefix;
+			var code = '';
 			for (var i = 0; i < 6; i++) {
 				code += chars.charAt(Math.floor(Math.random() * chars.length));
 			}
