@@ -320,19 +320,6 @@ function snks_approve_therapist_application( $application_id ) {
 		'user_id' => $user_id
 	], ['id' => $application_id] );
 	
-	if ( ! empty( $password ) ) {
-		$email_subject = __( 'Your therapist application is approved' );
-		$email_message = sprintf(
-			__( 'Your account has been created successfully!' ) . "\n\n" .
-			__( 'Username: %s' ) . "\n" .
-			__( 'Password: %s' ) . "\n\n" .
-			__( 'You can now log in to your account and start using the platform.' ),
-			$application->phone,
-			$password
-		);
-		wp_mail( $application->email, $email_subject, $email_message );
-	}
-	
 	return true;
 }
 
