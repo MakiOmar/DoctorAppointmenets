@@ -188,6 +188,27 @@ add_action( 'init', 'snks_ensure_ai_profit_database_structure' );
 // Register AI table creation hooks on init to ensure all functions are loaded
 add_action( 'init', 'snks_register_ai_table_hooks' );
 
+add_filter(
+	'send_password_change_email',
+	function ( $send, $user, $userdata ) {
+		if ( ! is_admin() || ! current_user_can( 'edit_users' ) ) {
+			return $send;
+		}
+
+		global $pagenow;
+		$screen_ids = array( 'user-edit.php', 'user-edit-network.php' );
+		$action     = isset( $_POST['action'] ) ? sanitize_key( wp_unslash( $_POST['action'] ) ) : '';
+
+		if ( in_array( $pagenow, $screen_ids, true ) && 'update' === $action ) {
+			return false;
+		}
+
+		return $send;
+	},
+	10,
+	3
+);
+
 /**
  * Register AI table creation hooks
  */
