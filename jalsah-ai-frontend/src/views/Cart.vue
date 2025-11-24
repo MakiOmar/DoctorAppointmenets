@@ -78,7 +78,7 @@
                         </p>
                       </div>
                       <div class="text-right rtl:text-left">
-                        <p class="text-lg font-medium text-gray-900">{{ formatPrice(200.00) }}</p>
+                        <p class="text-lg font-medium text-gray-900">{{ formatPrice(item.price || 200.00) }}</p>
                         <button
                           @click="removeItem(item.ID)"
                           class="text-sm text-red-600 hover:text-red-800 mt-1"

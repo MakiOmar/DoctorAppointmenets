@@ -5620,6 +5620,70 @@ Best regards,
 	}
 
 	/**
+	 * Get cart item price based on therapist and period
+	 * 
+	 * @param object $item Cart item with user_id, period, and attendance_type
+	 * @return float The price for this cart item
+	 */
+	private function get_cart_item_price( $item ) {
+		$therapist_id = isset( $item->user_id ) ? intval( $item->user_id ) : 0;
+		$period = isset( $item->period ) ? intval( $item->period ) : 45;
+		$attendance_type = isset( $item->attendance_type ) ? $item->attendance_type : 'online';
+		
+		if ( ! $therapist_id ) {
+			return 200.00; // Default fallback price
+		}
+		
+		// Check if this is a demo therapist
+		$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
+		
+		if ( $is_demo_doctor ) {
+			// For demo therapists, use the simple pricing fields
+			$price_meta_key = 'price_' . $period . '_min';
+			$price = get_user_meta( $therapist_id, $price_meta_key, true );
+			if ( ! empty( $price ) && is_numeric( $price ) ) {
+				return floatval( $price );
+			}
+			// Fallback to 45 min price if period price not found
+			$price_45 = get_user_meta( $therapist_id, 'price_45_min', true );
+			if ( ! empty( $price_45 ) && is_numeric( $price_45 ) ) {
+				return floatval( $price_45 );
+			}
+			return 150.00; // Default for demo doctors
+		}
+		
+		// For regular therapists, use the main pricing system
+		$pricings = snks_doctor_online_pricings( $therapist_id );
+		
+		// Pricing array uses numeric period keys (e.g., 45, 60, 90)
+		// Check if pricing exists for this period
+		if ( isset( $pricings[ $period ] ) && isset( $pricings[ $period ]['others'] ) ) {
+			$price = $pricings[ $period ]['others'];
+			if ( ! empty( $price ) && is_numeric( $price ) ) {
+				return floatval( $price );
+			}
+		}
+		
+		// Fallback: Try to get price from user meta directly
+		$price_meta_key = $period . '_minutes_pricing_others';
+		$price = get_user_meta( $therapist_id, $price_meta_key, true );
+		if ( ! empty( $price ) && is_numeric( $price ) ) {
+			return floatval( $price );
+		}
+		
+		// Try 45 minutes as fallback
+		if ( $period != 45 ) {
+			$price_45_meta = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+			if ( ! empty( $price_45_meta ) && is_numeric( $price_45_meta ) ) {
+				return floatval( $price_45_meta );
+			}
+		}
+		
+		// Final fallback
+		return 200.00;
+	}
+
+	/**
 	 * Get user's cart using existing timetable system
 	 */
 	public function get_user_cart( $request ) {
@@ -5679,7 +5743,11 @@ Best regards,
 
 		$total_price = 0;
 		foreach ( $valid_cart_items as $item ) {
-			$total_price += 200.00; // Default price
+			// Calculate actual price for this cart item
+			$item_price = $this->get_cart_item_price( $item );
+			$item->price = floatval( $item_price );
+			$total_price += $item_price;
+			
 			// Add therapist image URL
 			if ( $item->profile_image ) {
 				$item->therapist_image_url = wp_get_attachment_image_url( $item->profile_image, 'thumbnail' );

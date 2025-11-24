@@ -10,7 +10,10 @@ export const useCartStore = defineStore('cart', () => {
 
   // Computed properties
   const totalPrice = computed(() => {
-    return cartItems.value.reduce((total, item) => total + 200.00, 0) // Default price
+    return cartItems.value.reduce((total, item) => {
+      const itemPrice = item.price ? parseFloat(item.price) : 200.00 // Use actual price or fallback
+      return total + itemPrice
+    }, 0)
   })
 
   const itemCount = computed(() => cartItems.value.length)

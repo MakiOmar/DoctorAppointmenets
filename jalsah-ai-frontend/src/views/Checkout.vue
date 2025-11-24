@@ -98,7 +98,7 @@
                   </div>
                 </div>
                 <div class="text-right rtl:text-left">
-                  <p class="font-medium text-gray-900">{{ formatPrice(200.00) }}</p>
+                  <p class="font-medium text-gray-900">{{ formatPrice(item.price || 200.00) }}</p>
                 </div>
               </div>
             </div>
