@@ -3070,13 +3070,6 @@ function snks_send_whatsapp_message( $phone_number, $message, $settings ) {
 	// Parse response data
 	$response_data = json_decode( $response_body, true );
 	
-	// Check if the response contains message ID (indicates successful delivery to WhatsApp)
-	if ( isset( $response_data['messages'][0]['id'] ) ) {
-		error_log( 'WhatsApp API Success - Message ID: ' . $response_data['messages'][0]['id'] );
-	} else {
-		error_log( 'WhatsApp API Warning - No message ID in response: ' . print_r( $response_data, true ) );
-	}
-	
 	// Return success response
 	return $response_data;
 }

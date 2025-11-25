@@ -148,27 +148,20 @@ function snks_get_therapist_certificates_rest($request) {
         "SELECT certificates FROM $table_name WHERE user_id = %d AND status = 'approved'",
         $therapist_id
     ));
-    
-    error_log("Certificates Debug: Application query result: " . print_r($application, true));
-    
+        
     if (!$application) {
-        error_log("Certificates Debug: No approved application found for therapist ID: " . $therapist_id);
         $certificates = [];
     } else {
         // Parse certificates from JSON
         $certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];
-        error_log("Certificates Debug: Raw certificates from application: " . print_r($application->certificates, true));
-        error_log("Certificates Debug: After JSON decode: " . print_r($certificates, true));
+
     }
     
     // Ensure certificates is an array
     if (!is_array($certificates)) {
         $certificates = [];
-        error_log("Certificates Debug: Certificates is not an array, setting to empty array");
     }
     
-    error_log("Certificates Debug: Final certificates array: " . print_r($certificates, true));
-
     $certificates_data = [];
 
     foreach ($certificates as $cert_id) {

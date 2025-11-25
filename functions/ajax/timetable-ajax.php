@@ -1096,22 +1096,10 @@ function snks_book_session_rochtah_appointment() {
 	if ( $update_request === false ) {
 		wp_send_json_error( 'Failed to update request status.' );
 	}
-	
-	// Send WhatsApp notification for rosheta appointment
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[Rochtah Booking] Attempting to send WhatsApp notification for request ID: ' . $request_id );
-		error_log( '[Rochtah Booking] Function exists: ' . ( function_exists( 'snks_send_rosheta_appointment_notification' ) ? 'Yes' : 'No' ) );
-	}
+
 	
 	if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
 		$notification_result = snks_send_rosheta_appointment_notification( $request_id );
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[Rochtah Booking] Notification result: ' . ( $notification_result ? 'Success' : 'Failed' ) );
-		}
-	} else {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( '[Rochtah Booking] Notification function not available' );
-		}
 	}
 	
 	wp_send_json_success( array(
@@ -1180,12 +1168,7 @@ function snks_reset_rochtah_booking() {
 		array( '%s', '%s', '%s', '%d', '%d', '%s' ),
 		array( '%d' )
 	);
-	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[Reset Rochtah] Update result: ' . var_export( $update_result, true ) );
-		error_log( '[Reset Rochtah] Query: ' . $wpdb->last_query );
-		error_log( '[Reset Rochtah] Database error: ' . $wpdb->last_error );
-	}
+
 	
 	if ( $update_result === false ) {
 		wp_send_json_error( 'Failed to reset booking. Database error: ' . $wpdb->last_error );
@@ -1196,10 +1179,6 @@ function snks_reset_rochtah_booking() {
 		"SELECT status FROM $rochtah_bookings_table WHERE id = %d",
 		$request_id
 	) );
-	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[Reset Rochtah] Verify status: ' . ( $verify ? $verify->status : 'not found' ) );
-	}
 	
 	wp_send_json_success( array(
 		'message' => 'تم إعادة تعيين الحجز بنجاح. يمكنك الحجز مرة أخرى.',

@@ -514,10 +514,6 @@ function snks_send_rosheta_activation_notification( $patient_id, $doctor_id, $bo
 function snks_send_rosheta_appointment_notification( $booking_id ) {
 	global $wpdb;
 	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] snks_send_rosheta_appointment_notification called with booking_id: ' . $booking_id );
-	}
-	
 	$booking = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_rochtah_bookings WHERE id = %d",
@@ -528,11 +524,6 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
     if ( ! $booking ) {
         return false;
     }
-	
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( '[WhatsApp AI] Booking found - Patient ID: ' . $booking->patient_id . ', Date: ' . $booking->booking_date . ', Time: ' . $booking->booking_time );
-	}
-	
 	$settings = snks_get_whatsapp_notification_settings();
     if ( $settings['enabled'] != '1' ) {
         return false;
@@ -704,9 +695,6 @@ function snks_send_doctor_midnight_reminders() {
 		// Get doctor phone
 		$doctor_phone = snks_get_user_whatsapp( $doctor_id );
 		if ( ! $doctor_phone ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( '[WhatsApp AI] No phone for doctor ID: ' . $doctor_id );
-			}
 			continue;
 		}
 		

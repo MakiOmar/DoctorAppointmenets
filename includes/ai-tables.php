@@ -188,8 +188,6 @@ function snks_upgrade_ai_profit_database_schema() {
 	
 	// If version is less than 1.0.0, we need to fix the schema
 	if ( version_compare( $current_version, '1.0.0', '<' ) ) {
-		error_log( 'AI Profit System: Upgrading database schema from version ' . $current_version . ' to 1.0.0' );
-		
 		// Fix AI profit settings table
 		$table_name = $wpdb->prefix . 'snks_ai_profit_settings';
 		$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" );
@@ -198,7 +196,7 @@ function snks_upgrade_ai_profit_database_schema() {
 			// Check if therapist_id column has correct type
 			$column_info = $wpdb->get_row( "SHOW COLUMNS FROM {$table_name} LIKE 'therapist_id'" );
 			if ( $column_info && strpos( $column_info->Type, 'bigint' ) === false ) {
-				error_log( 'AI Profit System: Dropping table with incorrect structure' );
+
 				$wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
 			}
 		}
@@ -209,14 +207,14 @@ function snks_upgrade_ai_profit_database_schema() {
 		// Check and fix therapist_id column type
 		$therapist_column = $wpdb->get_row( "SHOW COLUMNS FROM {$sessions_table} LIKE 'therapist_id'" );
 		if ( $therapist_column && strpos( $therapist_column->Type, 'bigint' ) === false ) {
-			error_log( 'AI Profit System: Fixing therapist_id column type' );
+
 			$wpdb->query( "ALTER TABLE {$sessions_table} MODIFY COLUMN therapist_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 		}
 		
 		// Check and fix patient_id column type
 		$patient_column = $wpdb->get_row( "SHOW COLUMNS FROM {$sessions_table} LIKE 'patient_id'" );
 		if ( $patient_column && strpos( $patient_column->Type, 'bigint' ) === false ) {
-			error_log( 'AI Profit System: Fixing patient_id column type' );
+
 			$wpdb->query( "ALTER TABLE {$sessions_table} MODIFY COLUMN patient_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 		}
 		
@@ -226,18 +224,18 @@ function snks_upgrade_ai_profit_database_schema() {
 		// Check and fix ai_patient_id column type
 		$ai_patient_column = $wpdb->get_row( "SHOW COLUMNS FROM {$transactions_table} LIKE 'ai_patient_id'" );
 		if ( $ai_patient_column && strpos( $ai_patient_column->Type, 'bigint' ) === false ) {
-			error_log( 'AI Profit System: Fixing ai_patient_id column type' );
+
 			$wpdb->query( "ALTER TABLE {$transactions_table} MODIFY COLUMN ai_patient_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 		}
 		
 		// Check and fix ai_order_id column type
 		$ai_order_column = $wpdb->get_row( "SHOW COLUMNS FROM {$transactions_table} LIKE 'ai_order_id'" );
 		if ( $ai_order_column && strpos( $ai_order_column->Type, 'bigint' ) === false ) {
-			error_log( 'AI Profit System: Fixing ai_order_id column type' );
+
 			$wpdb->query( "ALTER TABLE {$transactions_table} MODIFY COLUMN ai_order_id BIGINT(20) UNSIGNED DEFAULT NULL" );
 		}
 		
-		error_log( 'AI Profit System: Database schema upgrade completed' );
+
 	}
 }
 
@@ -677,7 +675,7 @@ function snks_create_demo_booking_data() {
     // Check if demo data already exists
     $existing_appointments = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_provider_timetable WHERE user_id = 85 AND settings LIKE '%ai_booking%'");
     if ($existing_appointments > 0) {
-        error_log('Demo data already exists for doctor 85');
+
         return; // Demo data already exists
     }
     
@@ -753,7 +751,7 @@ function snks_create_demo_booking_data() {
         );
     }
     
-    error_log('Demo booking data created for doctor 85 using existing timetable system with AI identifier');
+
 } 
 
 /**

@@ -2268,9 +2268,7 @@ class SNKS_AI_Integration {
 	 * Handle therapist availability endpoint
 	 */
 	private function handle_therapist_availability_endpoint( $method, $path ) {
-		error_log( 'AI API - Therapist Availability Endpoint called: method=' . $method . ', path=' . print_r( $path, true ) );
-		error_log( 'AI API - GET params: ' . print_r( $_GET, true ) );
-		
+
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
@@ -2279,7 +2277,6 @@ class SNKS_AI_Integration {
 					$request->set_param( 'therapist_id', $_GET['therapist_id'] ?? null );
 					$request->set_param( 'date', $_GET['date'] ?? null );
 					$request->set_param( 'attendance_type', $_GET['attendance_type'] ?? null );
-					error_log( 'AI API - Calling get_ai_therapist_availability with request' );
 					$this->get_ai_therapist_availability( $request );
 				} else {
 					$this->send_error( 'Invalid endpoint', 404 );
@@ -2616,9 +2613,6 @@ class SNKS_AI_Integration {
 		
 		// Clear any session data
 		delete_user_meta( $user_id, 'ai_session_data' );
-		
-		// Log the action
-		error_log( "User {$user_id} deleted - tokens and sessions invalidated" );
 	}
 
 	/**
@@ -3350,15 +3344,6 @@ Best regards,
 				$this->send_error( $error_message, 500 );
 			}
 
-			// Log user update information (only for debugging)
-			// error_log( "=== USER UPDATE DEBUG ===" );
-			// error_log( "User ID being updated: " . $user->ID );
-			// error_log( "User email: " . $user->user_email );
-			// error_log( "Current WhatsApp: " . get_user_meta( $user->ID, 'billing_whatsapp', true ) );
-			// error_log( "New WhatsApp: " . (isset($whatsapp) ? $whatsapp : 'N/A') );
-			// error_log( "Verification method: " . (isset($data['email']) ? 'email' : 'whatsapp') );
-			// error_log( "=========================" );
-
 			$this->send_success(
 				array(
 					'message'        => $success_message,
@@ -3368,9 +3353,6 @@ Best regards,
 			);
 
 		} catch ( Exception $e ) {
-			error_log( '=== RESEND VERIFICATION ERROR ===' );
-			error_log( 'Error: ' . $e->getMessage() );
-			error_log( '=============================' );
 
 			$this->send_error( 'Resend verification process failed: ' . $e->getMessage(), 500 );
 		}
@@ -3521,15 +3503,8 @@ Best regards,
         $settings = snks_get_whatsapp_notification_settings();
         $password_template = isset( $settings['template_password'] ) ? $settings['template_password'] : '';
         
-        // Debug logging
-        error_log( '[Forgot Password] Settings retrieved: ' . print_r( $settings, true ) );
-        error_log( '[Forgot Password] Template name: ' . $password_template );
-        error_log( '[Forgot Password] WhatsApp number: ' . $whatsapp );
-        error_log( '[Forgot Password] Reset code: ' . $reset_code );
-        
         // Validate template name is not empty
         if ( empty( $password_template ) ) {
-            error_log( '[Forgot Password] ERROR: Template name is empty!' );
             $this->send_error( 'Password reset template is not configured. Please set it in Therapist Registration Settings.', 400 );
         }
         
@@ -3539,9 +3514,7 @@ Best regards,
         // Button at index 0 uses the reset code as parameter (same pattern as OTP template)
         $button_params[0] = $reset_code;
         
-        error_log( '[Forgot Password] Calling snks_send_whatsapp_template_message with template: ' . $password_template . ', params: ' . print_r( array( 'text' => $reset_code ), true ) . ', button_params: ' . print_r( $button_params, true ) );
         $result = snks_send_whatsapp_template_message( $whatsapp, $password_template, array( 'text' => $reset_code ), $button_params );
-        error_log( '[Forgot Password] WhatsApp API result: ' . print_r( $result, true ) );
 
         if ( is_wp_error( $result ) ) {
             $error_message = $result->get_error_message();
@@ -7080,12 +7053,7 @@ Best regards,
 		// Clear therapist joined transient
 		delete_transient( "doctor_has_joined_{$session_id}_{$user_id}" );
 
-		// Check if this is an AI session and trigger earnings creation
-		error_log( "=== EARNINGS DEBUG: Session completion handler - Checking if AI session ===" );
-		error_log( "=== EARNINGS DEBUG: Session data === Session ID: {$session_id}, Order ID: {$session->order_id}, Settings: {$session->settings}" );
-		
 		if ( $session->order_id > 0 && strpos( $session->settings, 'ai_booking' ) !== false ) {
-			error_log( "=== EARNINGS DEBUG: This is an AI session, checking for existing transactions ===" );
 			// Check if earnings transaction already exists for this specific session
 			global $wpdb;
 			$existing_transaction = $wpdb->get_var( $wpdb->prepare(
@@ -7093,7 +7061,6 @@ Best regards,
 				 WHERE ai_session_id = %d AND transaction_type = 'add'",
 				$session_id
 			) );
-			error_log( "=== EARNINGS DEBUG: Existing transaction count (by ai_session_id): {$existing_transaction} ===" );
 			
 			// Also check by order_id AND session_id as secondary safeguard
 			if ( ! $existing_transaction ) {
@@ -7103,11 +7070,9 @@ Best regards,
 					$session->order_id,
 					$session_id
 				) );
-				error_log( "=== EARNINGS DEBUG: Existing transaction count (by order_id + session_id): {$existing_transaction} ===" );
 			}
 			
 			if ( ! $existing_transaction ) {
-				error_log( "=== EARNINGS DEBUG: No existing transaction, attempting to create earnings ===" );
 				// Try to find sessions_actions entry and use existing profit transfer function
 				$actions_table = $wpdb->prefix . 'snks_sessions_actions';
 				$session_action = $wpdb->get_row( $wpdb->prepare(
@@ -7115,37 +7080,21 @@ Best regards,
 					$session_id,
 					$session->order_id
 				) );
-				error_log( "=== EARNINGS DEBUG: Session action lookup === " . ( $session_action ? 'Found' : 'Not found' ) );
 				
 				$profit_result = null;
 				if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
-					error_log( "=== EARNINGS DEBUG: Calling snks_execute_ai_profit_transfer === Session Action ID: {$session_action->action_session_id}" );
 					// Use existing profit transfer function
 					$profit_result = snks_execute_ai_profit_transfer( $session_action->action_session_id );
-					error_log( "=== EARNINGS DEBUG: snks_execute_ai_profit_transfer result === " . var_export( $profit_result, true ) );
-				} else {
-					if ( ! $session_action ) {
-						error_log( "=== EARNINGS DEBUG: Session action not found, will try direct creation ===" );
-					}
-					if ( ! function_exists( 'snks_execute_ai_profit_transfer' ) ) {
-						error_log( "=== EARNINGS DEBUG: Function snks_execute_ai_profit_transfer does NOT exist ===" );
-					}
 				}
 				
 				// If profit transfer failed or session_action doesn't exist, use direct creation
 				if ( ! $profit_result || ! $profit_result['success'] ) {
-					error_log( "=== EARNINGS DEBUG: Profit transfer failed or not attempted, trying direct creation ===" );
 					if ( function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
-						error_log( "=== EARNINGS DEBUG: Calling snks_create_ai_earnings_from_timetable ===" );
 						$profit_result = snks_create_ai_earnings_from_timetable( $session );
-						error_log( "=== EARNINGS DEBUG: snks_create_ai_earnings_from_timetable result === " . var_export( $profit_result, true ) );
-					} else {
-						error_log( "=== EARNINGS DEBUG: Function snks_create_ai_earnings_from_timetable does NOT exist ===" );
 					}
 				}
 				
 				if ( $profit_result && $profit_result['success'] ) {
-					error_log( "=== EARNINGS DEBUG: SUCCESS - Earnings created in session completion handler ===" );
 					// Send notification
 					if ( function_exists( 'snks_ai_session_completion_notification' ) ) {
 						snks_ai_session_completion_notification( $session_id, $profit_result );
@@ -7159,16 +7108,8 @@ Best regards,
 							'profit_amount'  => $profit_result['profit_amount'] ?? null,
 						)
 					);
-				} else {
-					error_log( "=== EARNINGS DEBUG: FAILED - Earnings creation failed in session completion handler ===" );
-					error_log( "=== EARNINGS DEBUG: Profit result === " . var_export( $profit_result, true ) );
 				}
-			} else {
-				error_log( "=== EARNINGS DEBUG: Transaction already exists, skipping creation ===" );
 			}
-		} else {
-			error_log( "=== EARNINGS DEBUG: This is NOT an AI session or missing order_id ===" );
-			error_log( "=== EARNINGS DEBUG: Order ID > 0: " . ( $session->order_id > 0 ? 'yes' : 'no' ) . ", Contains ai_booking: " . ( strpos( $session->settings, 'ai_booking' ) !== false ? 'yes' : 'no' ) );
 		}
 
 		return new WP_REST_Response(

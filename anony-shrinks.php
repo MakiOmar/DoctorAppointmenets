@@ -249,9 +249,7 @@ function snks_check_ai_profit_system_updates() {
 		
 		// Update the version
 		update_option( 'snks_ai_profit_system_version', $plugin_version );
-		
-		// Log the upgrade
-		error_log( 'AI Profit System: Updated from version ' . $current_version . ' to ' . $plugin_version );
+	
 	}
 }
 
@@ -545,7 +543,6 @@ function snks_add_missing_therapist_applications_columns() {
 		
 		if ( empty( $column_exists ) ) {
 			$wpdb->query( $sql );
-			error_log( "Added missing column: $column_name to $table_name" );
 		}
 	}
 }
