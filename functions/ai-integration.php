@@ -7012,7 +7012,44 @@ Best regards,
 		}
 
 		// Add session action record with attendance set by therapist
-		snks_insert_session_actions( $session_id, $session->client_id, $attendance );
+		// For AI sessions, ensure case_id is order_id if order exists
+		if ( $session->order_id > 0 ) {
+			global $wpdb;
+			$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+			$existing_action = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
+				$session_id,
+				$session->order_id
+			) );
+			
+			if ( ! $existing_action ) {
+				// Insert with order_id as case_id for AI sessions
+				$wpdb->insert(
+					$actions_table,
+					array(
+						'action_session_id' => $session_id,
+						'case_id' => $session->order_id,
+						'therapist_id' => $session->user_id,
+						'patient_id' => $session->client_id,
+						'attendance' => $attendance,
+						'session_status' => 'open',
+					),
+					array( '%d', '%d', '%d', '%d', '%s', '%s' )
+				);
+			} else {
+				// Update existing record
+				$wpdb->update(
+					$actions_table,
+					array( 'attendance' => $attendance ),
+					array( 'id' => $existing_action->id ),
+					array( '%s' ),
+					array( '%d' )
+				);
+			}
+		} else {
+			// Fallback to regular insert if no order_id
+			snks_insert_session_actions( $session_id, $session->client_id, $attendance );
+		}
 		
 		// Notify admin if patient didn't attend
 		if ( $attendance === 'no' ) {
@@ -7043,31 +7080,95 @@ Best regards,
 		// Clear therapist joined transient
 		delete_transient( "doctor_has_joined_{$session_id}_{$user_id}" );
 
-		// Check if this is an AI session and trigger profit calculation
-		if ( snks_is_ai_session( $session_id ) ) {
-			$profit_result = snks_execute_ai_profit_transfer( $session_id );
-
-			if ( $profit_result['success'] ) {
-				// Send notification
-				snks_ai_session_completion_notification( $session_id, $profit_result );
-
-				return new WP_REST_Response(
-					array(
-						'success'        => true,
-						'message'        => 'Session ended and profit transferred successfully',
-						'transaction_id' => $profit_result['transaction_id'],
-						'profit_amount'  => $profit_result['profit_amount'],
-					)
-				);
-			} else {
-				return new WP_REST_Response(
-					array(
-						'success'      => true,
-						'message'      => 'Session ended but profit transfer failed: ' . $profit_result['message'],
-						'profit_error' => $profit_result['message'],
-					)
-				);
+		// Check if this is an AI session and trigger earnings creation
+		error_log( "=== EARNINGS DEBUG: Session completion handler - Checking if AI session ===" );
+		error_log( "=== EARNINGS DEBUG: Session data === Session ID: {$session_id}, Order ID: {$session->order_id}, Settings: {$session->settings}" );
+		
+		if ( $session->order_id > 0 && strpos( $session->settings, 'ai_booking' ) !== false ) {
+			error_log( "=== EARNINGS DEBUG: This is an AI session, checking for existing transactions ===" );
+			// Check if earnings transaction already exists for this specific session
+			global $wpdb;
+			$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+				 WHERE ai_session_id = %d AND transaction_type = 'add'",
+				$session_id
+			) );
+			error_log( "=== EARNINGS DEBUG: Existing transaction count (by ai_session_id): {$existing_transaction} ===" );
+			
+			// Also check by order_id AND session_id as secondary safeguard
+			if ( ! $existing_transaction ) {
+				$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+					 WHERE ai_order_id = %d AND ai_session_id = %d AND transaction_type = 'add'",
+					$session->order_id,
+					$session_id
+				) );
+				error_log( "=== EARNINGS DEBUG: Existing transaction count (by order_id + session_id): {$existing_transaction} ===" );
 			}
+			
+			if ( ! $existing_transaction ) {
+				error_log( "=== EARNINGS DEBUG: No existing transaction, attempting to create earnings ===" );
+				// Try to find sessions_actions entry and use existing profit transfer function
+				$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+				$session_action = $wpdb->get_row( $wpdb->prepare(
+					"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
+					$session_id,
+					$session->order_id
+				) );
+				error_log( "=== EARNINGS DEBUG: Session action lookup === " . ( $session_action ? 'Found' : 'Not found' ) );
+				
+				$profit_result = null;
+				if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
+					error_log( "=== EARNINGS DEBUG: Calling snks_execute_ai_profit_transfer === Session Action ID: {$session_action->action_session_id}" );
+					// Use existing profit transfer function
+					$profit_result = snks_execute_ai_profit_transfer( $session_action->action_session_id );
+					error_log( "=== EARNINGS DEBUG: snks_execute_ai_profit_transfer result === " . var_export( $profit_result, true ) );
+				} else {
+					if ( ! $session_action ) {
+						error_log( "=== EARNINGS DEBUG: Session action not found, will try direct creation ===" );
+					}
+					if ( ! function_exists( 'snks_execute_ai_profit_transfer' ) ) {
+						error_log( "=== EARNINGS DEBUG: Function snks_execute_ai_profit_transfer does NOT exist ===" );
+					}
+				}
+				
+				// If profit transfer failed or session_action doesn't exist, use direct creation
+				if ( ! $profit_result || ! $profit_result['success'] ) {
+					error_log( "=== EARNINGS DEBUG: Profit transfer failed or not attempted, trying direct creation ===" );
+					if ( function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
+						error_log( "=== EARNINGS DEBUG: Calling snks_create_ai_earnings_from_timetable ===" );
+						$profit_result = snks_create_ai_earnings_from_timetable( $session );
+						error_log( "=== EARNINGS DEBUG: snks_create_ai_earnings_from_timetable result === " . var_export( $profit_result, true ) );
+					} else {
+						error_log( "=== EARNINGS DEBUG: Function snks_create_ai_earnings_from_timetable does NOT exist ===" );
+					}
+				}
+				
+				if ( $profit_result && $profit_result['success'] ) {
+					error_log( "=== EARNINGS DEBUG: SUCCESS - Earnings created in session completion handler ===" );
+					// Send notification
+					if ( function_exists( 'snks_ai_session_completion_notification' ) ) {
+						snks_ai_session_completion_notification( $session_id, $profit_result );
+					}
+
+					return new WP_REST_Response(
+						array(
+							'success'        => true,
+							'message'        => 'Session ended and earnings created successfully',
+							'transaction_id' => $profit_result['transaction_id'] ?? null,
+							'profit_amount'  => $profit_result['profit_amount'] ?? null,
+						)
+					);
+				} else {
+					error_log( "=== EARNINGS DEBUG: FAILED - Earnings creation failed in session completion handler ===" );
+					error_log( "=== EARNINGS DEBUG: Profit result === " . var_export( $profit_result, true ) );
+				}
+			} else {
+				error_log( "=== EARNINGS DEBUG: Transaction already exists, skipping creation ===" );
+			}
+		} else {
+			error_log( "=== EARNINGS DEBUG: This is NOT an AI session or missing order_id ===" );
+			error_log( "=== EARNINGS DEBUG: Order ID > 0: " . ( $session->order_id > 0 ? 'yes' : 'no' ) . ", Contains ai_booking: " . ( strpos( $session->settings, 'ai_booking' ) !== false ? 'yes' : 'no' ) );
 		}
 
 		return new WP_REST_Response(
@@ -7868,39 +7969,58 @@ function snks_handle_ai_order_completion( $order_id ) {
  * Process AI order completion - connect slots to order and change status
  */
 function snks_process_ai_order_completion( $order_id ) {
+	error_log( "=== EARNINGS DEBUG: snks_process_ai_order_completion called === Order ID: {$order_id}" );
+	
 	$order = wc_get_order( $order_id );
 	
 	if ( ! $order ) {
+		error_log( "=== EARNINGS DEBUG: Order not found for ID: {$order_id} ===" );
 		return false;
 	}
 	
-	// Get AI sessions data from order meta
-	$ai_sessions = $order->get_meta( 'ai_sessions' );
+	error_log( "=== EARNINGS DEBUG: Order found === Order ID: {$order_id}, Order Status: " . $order->get_status() );
+	
+	// Get AI sessions data from order meta (with fallbacks)
+	$ai_sessions_original_meta = $order->get_meta( 'ai_sessions' );
+	error_log( "=== EARNINGS DEBUG: AI Sessions Meta === Order ID: {$order_id}, ai_sessions value: " . var_export( $ai_sessions_original_meta, true ) );
+	
+	$ai_sessions = snks_normalize_ai_session_payload( $ai_sessions_original_meta );
 	
 	if ( empty( $ai_sessions ) ) {
+		error_log( "=== EARNINGS DEBUG: Primary ai_sessions meta empty, attempting fallback sources for order {$order_id} ===" );
+		$ai_sessions = snks_get_ai_sessions_from_fallback_sources( $order );
+		
+		if ( ! empty( $ai_sessions ) ) {
+			error_log( "=== EARNINGS DEBUG: Fallback sessions found for order {$order_id}. Saving back to ai_sessions meta ===" );
+			$order->update_meta_data( 'ai_sessions', wp_json_encode( $ai_sessions ) );
+			$order->save();
+		}
+	}
+	
+	if ( empty( $ai_sessions ) ) {
+		error_log( "=== EARNINGS DEBUG: AI sessions data is empty for order {$order_id} even after fallbacks ===" );
 		return false;
 	}
 	
-	// Decode JSON if it's a string
-	if ( is_string( $ai_sessions ) ) {
-		$ai_sessions = json_decode( $ai_sessions, true );
-	}
-	
-	if ( ! is_array( $ai_sessions ) || empty( $ai_sessions ) ) {
-		error_log( "AI Order Completion: Invalid sessions data for order {$order_id}" );
-		return false;
-	}
+	error_log( "=== EARNINGS DEBUG: Processing " . count( $ai_sessions ) . " AI session(s) ===" );
 	
 	global $wpdb;
 	$customer_id = $order->get_customer_id();
 	$processed_sessions = array();
 	
-	foreach ( $ai_sessions as $session ) {
+	error_log( "=== EARNINGS DEBUG: Customer ID: {$customer_id} ===" );
+	
+	foreach ( $ai_sessions as $index => $session ) {
+		error_log( "=== EARNINGS DEBUG: Processing session #" . ( $index + 1 ) . " === " . var_export( $session, true ) );
+		
 		$slot_id = $session['slot_id'] ?? null;
 		
 		if ( ! $slot_id ) {
+			error_log( "=== EARNINGS DEBUG: Slot ID is missing for session #" . ( $index + 1 ) . ", skipping ===" );
 			continue;
 		}
+		
+		error_log( "=== EARNINGS DEBUG: Updating slot === Slot ID: {$slot_id}, Order ID: {$order_id}, Customer ID: {$customer_id}" );
 		
 		// Update the slot to connect it to the order and change status to 'open'
 		$result = $wpdb->update(
@@ -7916,15 +8036,78 @@ function snks_process_ai_order_completion( $order_id ) {
 			array( '%d' )
 		);
 		
+		error_log( "=== EARNINGS DEBUG: Slot update result === Slot ID: {$slot_id}, Result: " . var_export( $result, true ) . ", Rows affected: " . ( $result !== false ? $result : 'false' ) );
+		
 		if ( $result !== false ) {
 			$processed_sessions[] = $slot_id;
 			
+			error_log( "=== EARNINGS DEBUG: Inserting session action === Slot ID: {$slot_id}, Customer ID: {$customer_id}" );
 			// Insert session action record
-			snks_insert_session_actions( $slot_id, $customer_id, 'no' );
+			$action_result = snks_insert_session_actions( $slot_id, $customer_id, 'no' );
+			error_log( "=== EARNINGS DEBUG: Session action insert result === " . var_export( $action_result, true ) );
 			
-			error_log( "AI Order Completion: Successfully processed slot {$slot_id} for order {$order_id}" );
+			// Get the updated timetable session data
+			$timetable_session = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+				$slot_id
+			) );
+			
+			error_log( "=== EARNINGS DEBUG: Retrieved timetable session === Slot ID: {$slot_id}, Session exists: " . ( $timetable_session ? 'yes' : 'no' ) );
+			if ( $timetable_session ) {
+				error_log( "=== EARNINGS DEBUG: Timetable session data === Order ID: {$timetable_session->order_id}, Settings: {$timetable_session->settings}, User ID: {$timetable_session->user_id}, Client ID: {$timetable_session->client_id}" );
+			}
+			
+			// Create earnings immediately when order is completed
+			error_log( "=== EARNINGS DEBUG: Checking if snks_create_ai_earnings_from_timetable function exists ===" );
+			if ( $timetable_session && function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
+				error_log( "=== EARNINGS DEBUG: Function exists, proceeding to check for existing transactions ===" );
+				// Check if earnings transaction already exists for this specific session
+				error_log( "=== EARNINGS DEBUG: Checking for existing transaction by ai_session_id === Slot ID: {$slot_id}" );
+				$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+					 WHERE ai_session_id = %d AND transaction_type = 'add'",
+					$slot_id
+				) );
+				error_log( "=== EARNINGS DEBUG: Existing transaction count (by ai_session_id): {$existing_transaction} ===" );
+				
+				// Also check by order_id as secondary safeguard
+				if ( ! $existing_transaction ) {
+					error_log( "=== EARNINGS DEBUG: Checking for existing transaction by order_id and session_id === Order ID: {$order_id}, Slot ID: {$slot_id}" );
+					$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+						 WHERE ai_order_id = %d AND transaction_type = 'add' AND ai_session_id = %d",
+						$order_id,
+						$slot_id
+					) );
+					error_log( "=== EARNINGS DEBUG: Existing transaction count (by order_id + session_id): {$existing_transaction} ===" );
+				}
+				
+				if ( ! $existing_transaction ) {
+					error_log( "=== EARNINGS DEBUG: No existing transaction found, calling snks_create_ai_earnings_from_timetable ===" );
+					// Create earnings for this session
+					$earnings_result = snks_create_ai_earnings_from_timetable( $timetable_session );
+					error_log( "=== EARNINGS DEBUG: snks_create_ai_earnings_from_timetable result === " . var_export( $earnings_result, true ) );
+					if ( $earnings_result && $earnings_result['success'] ) {
+						error_log( "=== EARNINGS DEBUG: SUCCESS - Earnings created for slot {$slot_id}, transaction ID: {$earnings_result['transaction_id']} ===" );
+					} else {
+						error_log( "=== EARNINGS DEBUG: FAILED - Failed to create earnings for slot {$slot_id}: " . ( $earnings_result['message'] ?? 'Unknown error' ) . " ===" );
+					}
+				} else {
+					error_log( "=== EARNINGS DEBUG: Earnings already exist for slot {$slot_id}, skipping creation ===" );
+				}
+			} else {
+				if ( ! $timetable_session ) {
+					error_log( "=== EARNINGS DEBUG: Timetable session is null, cannot create earnings ===" );
+				}
+				if ( ! function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
+					error_log( "=== EARNINGS DEBUG: Function snks_create_ai_earnings_from_timetable does NOT exist ===" );
+				}
+			}
+			
+			error_log( "=== EARNINGS DEBUG: Successfully processed slot {$slot_id} for order {$order_id} ===" );
 		} else {
-			error_log( "AI Order Completion: Failed to process slot {$slot_id} for order {$order_id}" );
+			error_log( "=== EARNINGS DEBUG: FAILED to update slot {$slot_id} for order {$order_id} ===" );
+			error_log( "=== EARNINGS DEBUG: Last DB error === " . $wpdb->last_error );
 		}
 	}
 	
@@ -8003,6 +8186,163 @@ function snks_enhanced_end_ai_session( $session_id ) {
 		'success' => true,
 		'message' => 'Session ended successfully',
 	);
+}
+
+/**
+ * Normalize AI session payload to an array of session entries
+ *
+ * @param mixed $payload Raw payload from meta/DB
+ * @return array
+ */
+function snks_normalize_ai_session_payload( $payload ) {
+	if ( empty( $payload ) && '0' !== $payload ) {
+		return array();
+	}
+	
+	// Handle JSON strings or serialized data
+	if ( is_string( $payload ) ) {
+		$payload = trim( $payload );
+		
+		if ( '' === $payload ) {
+			return array();
+		}
+		
+		$decoded = json_decode( $payload, true );
+		if ( json_last_error() === JSON_ERROR_NONE ) {
+			$payload = $decoded;
+		} else {
+			$maybe_unserialized = maybe_unserialize( $payload );
+			if ( $maybe_unserialized !== false || $payload === 'b:0;' ) {
+				$payload = $maybe_unserialized;
+			}
+		}
+	}
+	
+	if ( $payload instanceof stdClass ) {
+		$payload = (array) $payload;
+	}
+	
+	if ( ! is_array( $payload ) ) {
+		return array();
+	}
+	
+	// Some payloads might represent a single session as associative array
+	if ( isset( $payload['slot_id'] ) ) {
+		return array( $payload );
+	}
+	
+	$sessions = array();
+	foreach ( $payload as $session ) {
+		if ( $session instanceof stdClass ) {
+			$session = (array) $session;
+		}
+		
+		if ( is_array( $session ) && isset( $session['slot_id'] ) ) {
+			$sessions[] = $session;
+		}
+	}
+	
+	return $sessions;
+}
+
+/**
+ * Attempt to rebuild AI sessions data when the main meta key is empty
+ *
+ * @param WC_Order $order WooCommerce order object
+ * @return array
+ */
+function snks_get_ai_sessions_from_fallback_sources( $order ) {
+	global $wpdb;
+	
+	$order_id = $order->get_id();
+	$fallback_sessions = array();
+	
+	// 1. Check alternate meta key jalsah_ai_sessions
+	$jalsah_meta = $order->get_meta( 'jalsah_ai_sessions', true );
+	error_log( "=== EARNINGS DEBUG: Checking jalsah_ai_sessions meta for order {$order_id}: " . var_export( $jalsah_meta, true ) );
+	$fallback_sessions = snks_normalize_ai_session_payload( $jalsah_meta );
+	
+	if ( ! empty( $fallback_sessions ) ) {
+		error_log( "=== EARNINGS DEBUG: Found AI sessions via jalsah_ai_sessions meta for order {$order_id} ===" );
+		return $fallback_sessions;
+	}
+	
+	// 2. Check wc_orders table column
+	$orders_table = $wpdb->prefix . 'wc_orders';
+	$table_payload = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT jalsah_ai_sessions FROM {$orders_table} WHERE id = %d",
+			$order_id
+		)
+	);
+	error_log( "=== EARNINGS DEBUG: Checking wc_orders.jalsah_ai_sessions column for order {$order_id}: " . var_export( $table_payload, true ) );
+	$fallback_sessions = snks_normalize_ai_session_payload( $table_payload );
+	
+	if ( ! empty( $fallback_sessions ) ) {
+		error_log( "=== EARNINGS DEBUG: Found AI sessions via wc_orders column for order {$order_id} ===" );
+		return $fallback_sessions;
+	}
+	
+	// 3. Attempt to build from order items metadata
+	error_log( "=== EARNINGS DEBUG: Attempting to build AI sessions from order items for order {$order_id} ===" );
+	$fallback_sessions = snks_build_ai_sessions_from_order_items( $order );
+	
+	if ( ! empty( $fallback_sessions ) ) {
+		error_log( "=== EARNINGS DEBUG: Successfully built AI sessions from order items for order {$order_id} ===" );
+		return $fallback_sessions;
+	}
+	
+	error_log( "=== EARNINGS DEBUG: No fallback AI session data sources yielded results for order {$order_id} ===" );
+	return array();
+}
+
+/**
+ * Build AI session payload from order items metadata (used when no session JSON exists)
+ *
+ * @param WC_Order $order WooCommerce order object
+ * @return array
+ */
+function snks_build_ai_sessions_from_order_items( $order ) {
+	$sessions = array();
+	
+	foreach ( $order->get_items() as $item_id => $item ) {
+		$is_ai_item = $item->get_meta( 'is_ai_session' );
+		$slot_id    = absint( $item->get_meta( 'slot_id' ) );
+		
+		if ( ! $is_ai_item && ! $slot_id ) {
+			continue;
+		}
+		
+		$therapist_id    = absint( $item->get_meta( 'therapist_id' ) );
+		$session_date    = $item->get_meta( 'session_date' );
+		$session_time    = $item->get_meta( 'session_time' );
+		$session_duration = $item->get_meta( 'session_duration' );
+		$session_price   = floatval( $item->get_total() );
+		
+		$date_time = '';
+		if ( $session_date ) {
+			$date_time = $session_date;
+			if ( $session_time && strpos( $session_date, $session_time ) === false ) {
+				$date_time = trim( $session_date . ' ' . $session_time );
+			}
+		}
+		
+		$sessions[] = array(
+			'slot_id'        => $slot_id,
+			'therapist_id'   => $therapist_id,
+			'date_time'      => $date_time,
+			'price'          => $session_price,
+			'session_time'   => $session_time,
+			'session_duration' => $session_duration,
+		);
+		
+		error_log(
+			"=== EARNINGS DEBUG: Built session from order item {$item_id} === " .
+			wp_json_encode( end( $sessions ) )
+		);
+	}
+	
+	return $sessions;
 }
 
 /**

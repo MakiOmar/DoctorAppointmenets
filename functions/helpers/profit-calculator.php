@@ -99,9 +99,14 @@ function snks_calculate_session_profit( $session_amount, $therapist_id, $patient
  * @return int|false Transaction ID on success, false on failure
  */
 function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_amount ) {
+	error_log( "=== EARNINGS DEBUG: snks_add_ai_session_transaction called ===" );
+	error_log( "=== EARNINGS DEBUG: Parameters === Therapist ID: {$therapist_id}, Profit Amount: {$profit_amount}" );
+	error_log( "=== EARNINGS DEBUG: Session data === " . var_export( $session_data, true ) );
+	
 	global $wpdb;
 	
 	// Use existing transaction system
+	error_log( "=== EARNINGS DEBUG: Calling snks_add_transaction === Therapist ID: {$therapist_id}, Profit Amount: {$profit_amount}" );
 	
 	$transaction_id = snks_add_transaction( 
 		$therapist_id, 
@@ -110,11 +115,15 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 		$profit_amount 
 	);
 	
+	error_log( "=== EARNINGS DEBUG: snks_add_transaction returned === Transaction ID: " . ( $transaction_id ? $transaction_id : 'NULL/FALSE' ) );
+	
 	if ( $transaction_id ) {
+		error_log( "=== EARNINGS DEBUG: Transaction created, adding AI metadata ===" );
 		
 		// Calculate admin profit (website share)
 		$session_amount = $session_data['session_amount'] ?? 0;
 		$admin_profit = $session_amount - $profit_amount;
+		error_log( "=== EARNINGS DEBUG: Calculated amounts === Session Amount: {$session_amount}, Admin Profit: {$admin_profit}" );
 		
 		// Add AI session metadata to the transaction
 		$metadata = array(
@@ -125,8 +134,9 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			'ai_session_amount' => $session_amount,
 			'ai_admin_profit' => round( $admin_profit, 2 )
 		);
+		error_log( "=== EARNINGS DEBUG: Metadata to update === " . var_export( $metadata, true ) );
 		
-		$metadata_result = $wpdb->update(
+		$update_result = $wpdb->update(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
 			array( 'id' => $transaction_id ),
@@ -134,12 +144,196 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			array( '%d' )
 		);
 		
-		// Log the transaction
-		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
+		error_log( "=== EARNINGS DEBUG: Metadata update result === " . var_export( $update_result, true ) );
+		if ( $update_result === false ) {
+			error_log( "=== EARNINGS DEBUG: Metadata update FAILED === Last DB error: " . $wpdb->last_error );
+		} else {
+			error_log( "=== EARNINGS DEBUG: Metadata updated successfully === Rows affected: {$update_result}" );
+		}
 		
+		// Log the transaction
+		error_log( "=== EARNINGS DEBUG: Logging transaction === Therapist ID: {$therapist_id}, Profit Amount: {$profit_amount}" );
+		$log_result = snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
+		error_log( "=== EARNINGS DEBUG: Transaction log result === " . var_export( $log_result, true ) );
+		
+		error_log( "=== EARNINGS DEBUG: SUCCESS - Transaction and metadata added to earnings table === Transaction ID: {$transaction_id} ===" );
+	} else {
+		error_log( "=== EARNINGS DEBUG: FAILED - snks_add_transaction returned false/null ===" );
+		error_log( "=== EARNINGS DEBUG: Last DB error === " . $wpdb->last_error );
 	}
 	
+	error_log( "=== EARNINGS DEBUG: snks_add_ai_session_transaction returning === Transaction ID: " . ( $transaction_id ? $transaction_id : 'NULL/FALSE' ) );
 	return $transaction_id;
+}
+
+/**
+ * Create AI earnings transaction from timetable session data
+ * Called when session status is changed to 'completed' in timetable
+ * 
+ * @param object $timetable_session The timetable session object
+ * @return array Result array with success status and message
+ */
+function snks_create_ai_earnings_from_timetable( $timetable_session ) {
+	error_log( "=== EARNINGS DEBUG: snks_create_ai_earnings_from_timetable called ===" );
+	error_log( "=== EARNINGS DEBUG: Timetable session data === " . var_export( $timetable_session, true ) );
+	
+	global $wpdb;
+	
+	// Check if it's an AI session
+	$is_ai_session = ( strpos( $timetable_session->settings, 'ai_booking' ) !== false );
+	error_log( "=== EARNINGS DEBUG: AI Session Check === Settings: {$timetable_session->settings}, is_ai_session: " . ( $is_ai_session ? 'true' : 'false' ) );
+	error_log( "=== EARNINGS DEBUG: Order ID Check === Order ID: {$timetable_session->order_id}" );
+	
+	if ( ! $is_ai_session || ! $timetable_session->order_id ) {
+		error_log( "=== EARNINGS DEBUG: Validation failed === is_ai_session: " . ( $is_ai_session ? 'true' : 'false' ) . ", order_id: {$timetable_session->order_id}" );
+		return array(
+			'success' => false,
+			'message' => 'Not an AI session or missing order ID'
+		);
+	}
+	
+	// Check if transaction already exists for this specific session (by session_id, not just order_id)
+	error_log( "=== EARNINGS DEBUG: Checking for existing transaction === Session ID: {$timetable_session->ID}" );
+	$existing = $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE ai_session_id = %d AND transaction_type = 'add'",
+		$timetable_session->ID
+	) );
+	error_log( "=== EARNINGS DEBUG: Existing transaction count (by ai_session_id): {$existing} ===" );
+	
+	if ( $existing > 0 ) {
+		error_log( "=== EARNINGS DEBUG: Transaction already exists, returning early ===" );
+		return array(
+			'success' => false,
+			'message' => 'Earnings already created for this session'
+		);
+	}
+	
+	// Also check by order_id AND session_id as a secondary safeguard (to handle cases where session_id might not be set correctly)
+	error_log( "=== EARNINGS DEBUG: Secondary check by order_id + session_id === Order ID: {$timetable_session->order_id}, Session ID: {$timetable_session->ID}" );
+	$existing_by_order_and_session = $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+		 WHERE ai_order_id = %d AND ai_session_id = %d AND transaction_type = 'add'",
+		$timetable_session->order_id,
+		$timetable_session->ID
+	) );
+	error_log( "=== EARNINGS DEBUG: Existing transaction count (by order_id + session_id): {$existing_by_order_and_session} ===" );
+	
+	if ( $existing_by_order_and_session > 0 ) {
+		error_log( "=== EARNINGS DEBUG: Transaction already exists (secondary check), returning early ===" );
+		return array(
+			'success' => false,
+			'message' => 'Earnings already created for this session'
+		);
+	}
+	
+	// Get order details
+	error_log( "=== EARNINGS DEBUG: Getting order details === Order ID: {$timetable_session->order_id}" );
+	$order = wc_get_order( $timetable_session->order_id );
+	if ( ! $order ) {
+		error_log( "=== EARNINGS DEBUG: Order not found === Order ID: {$timetable_session->order_id}" );
+		return array(
+			'success' => false,
+			'message' => 'Order not found'
+		);
+	}
+	error_log( "=== EARNINGS DEBUG: Order found === Order ID: {$timetable_session->order_id}, Order Total: " . $order->get_total() );
+	
+	// Get therapist and patient IDs
+	$therapist_id = $timetable_session->user_id;
+	$patient_id = $timetable_session->client_id;
+	error_log( "=== EARNINGS DEBUG: Therapist ID: {$therapist_id}, Patient ID: {$patient_id} ===" );
+	
+	if ( ! $therapist_id || ! $patient_id ) {
+		error_log( "=== EARNINGS DEBUG: Missing therapist or patient information === Therapist ID: {$therapist_id}, Patient ID: {$patient_id}" );
+		return array(
+			'success' => false,
+			'message' => 'Missing therapist or patient information'
+		);
+	}
+	
+	// Get session amount from order
+	$session_amount = $order->get_total();
+	error_log( "=== EARNINGS DEBUG: Session amount from order: {$session_amount} ===" );
+	
+	// Calculate profit
+	error_log( "=== EARNINGS DEBUG: Calculating profit === Session Amount: {$session_amount}, Therapist ID: {$therapist_id}, Patient ID: {$patient_id}" );
+	$profit_amount = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
+	error_log( "=== EARNINGS DEBUG: Calculated profit amount: {$profit_amount} ===" );
+	
+	// Determine session type
+	error_log( "=== EARNINGS DEBUG: Determining session type === Therapist ID: {$therapist_id}, Patient ID: {$patient_id}" );
+	$session_type = snks_is_first_session( $therapist_id, $patient_id );
+	error_log( "=== EARNINGS DEBUG: Session type: {$session_type} ===" );
+	
+	// Prepare session data for transaction
+	$session_data = array(
+		'session_id' => $timetable_session->ID, // Use timetable ID as session ID
+		'session_type' => $session_type,
+		'patient_id' => $patient_id,
+		'order_id' => $timetable_session->order_id,
+		'session_amount' => $session_amount
+	);
+	
+	// Add transaction
+	error_log( "=== EARNINGS DEBUG: Calling snks_add_ai_session_transaction === Therapist ID: {$therapist_id}, Profit Amount: {$profit_amount}" );
+	error_log( "=== EARNINGS DEBUG: Session data === " . var_export( $session_data, true ) );
+	$transaction_id = snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_amount );
+	error_log( "=== EARNINGS DEBUG: Transaction ID returned: " . ( $transaction_id ? $transaction_id : 'NULL/FALSE' ) . " ===" );
+	
+	if ( ! $transaction_id ) {
+		error_log( "=== EARNINGS DEBUG: FAILED to create transaction ===" );
+		error_log( "=== EARNINGS DEBUG: Last DB error === " . $wpdb->last_error );
+		return array(
+			'success' => false,
+			'message' => 'Failed to create transaction'
+		);
+	}
+	error_log( "=== EARNINGS DEBUG: Transaction created successfully === Transaction ID: {$transaction_id} ===" );
+	
+	// Create or update session_actions entry with proper AI session metadata
+	$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+	$existing_action = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
+		$timetable_session->ID,
+		$timetable_session->order_id
+	) );
+	
+	if ( $existing_action ) {
+		// Update existing entry with AI session type
+		$wpdb->update(
+			$actions_table,
+			array( 
+				'ai_session_type' => $session_type,
+				'session_status' => 'completed'
+			),
+			array( 'id' => $existing_action->id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+	} else {
+		// Create new session_actions entry for AI session
+		$wpdb->insert(
+			$actions_table,
+			array(
+				'action_session_id' => $timetable_session->ID,
+				'case_id' => $timetable_session->order_id,
+				'therapist_id' => $therapist_id,
+				'patient_id' => $patient_id,
+				'ai_session_type' => $session_type,
+				'session_status' => 'completed',
+				'attendance' => 'yes',
+			),
+			array( '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
+		);
+	}
+	
+	error_log( "=== EARNINGS DEBUG: SUCCESS - Earnings created successfully === Transaction ID: {$transaction_id} ===" );
+	return array(
+		'success' => true,
+		'transaction_id' => $transaction_id,
+		'message' => 'Earnings created successfully'
+	);
 }
 
 /**
@@ -149,15 +343,21 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
  * @return array Result array with success status and message
  */
 function snks_execute_ai_profit_transfer( $session_id ) {
+	error_log( "=== EARNINGS DEBUG: snks_execute_ai_profit_transfer called === Session ID: {$session_id}" );
+	
 	global $wpdb;
 	
 	// Get session data
+	error_log( "=== EARNINGS DEBUG: Getting session data from snks_sessions_actions table === Session ID: {$session_id}" );
 	$session_data = $wpdb->get_row( $wpdb->prepare(
 		"SELECT * FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
 		$session_id
 	), ARRAY_A );
 	
+	error_log( "=== EARNINGS DEBUG: Session data retrieved === " . ( $session_data ? var_export( $session_data, true ) : 'NULL' ) );
+	
 	if ( ! $session_data ) {
+		error_log( "=== EARNINGS DEBUG: Session not found in snks_sessions_actions table === Session ID: {$session_id}" );
 		return array(
 			'success' => false,
 			'message' => 'Session not found'
@@ -165,7 +365,9 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	}
 	
 	// Check if profit already transferred (ai_session_type should be NULL initially)
+	error_log( "=== EARNINGS DEBUG: Checking if profit already transferred === ai_session_type: " . ( $session_data['ai_session_type'] ?? 'NULL' ) );
 	if ( ! empty( $session_data['ai_session_type'] ) ) {
+		error_log( "=== EARNINGS DEBUG: Profit already transferred, returning early ===" );
 		return array(
 			'success' => false,
 			'message' => 'Profit already transferred for this session'
@@ -174,20 +376,26 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	
 	// Get session details from AI order
 	$order_id = $session_data['case_id'];
+	error_log( "=== EARNINGS DEBUG: Order ID from session data: {$order_id} ===" );
+	
 	$order = wc_get_order( $order_id );
 	
 	if ( ! $order ) {
+		error_log( "=== EARNINGS DEBUG: Order not found === Order ID: {$order_id}" );
 		return array(
 			'success' => false,
 			'message' => 'Order not found'
 		);
 	}
+	error_log( "=== EARNINGS DEBUG: Order found === Order ID: {$order_id}, Order Total: " . $order->get_total() );
 	
 	// Check if it's an AI session (support both meta keys)
 	$is_ai_session = $order->get_meta( 'is_ai_session' );
 	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	error_log( "=== EARNINGS DEBUG: AI Session Check === is_ai_session: " . var_export( $is_ai_session, true ) . ", from_jalsah_ai: " . var_export( $from_jalsah_ai, true ) );
 	
 	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
+		error_log( "=== EARNINGS DEBUG: Not an AI session, returning early ===" );
 		return array(
 			'success' => false,
 			'message' => 'Not an AI session'
@@ -196,12 +404,15 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	
 	// Get session amount
 	$session_amount = $order->get_total();
+	error_log( "=== EARNINGS DEBUG: Session amount: {$session_amount} ===" );
 	
 	// Get therapist and patient IDs
 	$therapist_id = $order->get_meta( 'ai_therapist_id' ) ?: $order->get_meta( 'therapist_id' );
 	$patient_id = $order->get_meta( 'ai_user_id' ) ?: $order->get_customer_id();
+	error_log( "=== EARNINGS DEBUG: Therapist ID: {$therapist_id}, Patient ID: {$patient_id} ===" );
 	
 	if ( ! $therapist_id || ! $patient_id ) {
+		error_log( "=== EARNINGS DEBUG: Missing therapist or patient information === Therapist ID: {$therapist_id}, Patient ID: {$patient_id}" );
 		return array(
 			'success' => false,
 			'message' => 'Missing therapist or patient information'
@@ -209,10 +420,14 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 	}
 	
 	// Calculate profit
+	error_log( "=== EARNINGS DEBUG: Calculating profit === Session Amount: {$session_amount}, Therapist ID: {$therapist_id}, Patient ID: {$patient_id}" );
 	$profit_amount = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
+	error_log( "=== EARNINGS DEBUG: Calculated profit amount: {$profit_amount} ===" );
 	
 	// Determine session type
+	error_log( "=== EARNINGS DEBUG: Determining session type === Therapist ID: {$therapist_id}, Patient ID: {$patient_id}" );
 	$session_type = snks_is_first_session( $therapist_id, $patient_id );
+	error_log( "=== EARNINGS DEBUG: Session type: {$session_type} ===" );
 	
 	// Prepare session data
 	$session_data_for_transaction = array(
@@ -222,18 +437,25 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		'order_id' => $order_id,
 		'session_amount' => $session_amount
 	);
+	error_log( "=== EARNINGS DEBUG: Session data for transaction === " . var_export( $session_data_for_transaction, true ) );
 	
 	// Add transaction
+	error_log( "=== EARNINGS DEBUG: Calling snks_add_ai_session_transaction === Therapist ID: {$therapist_id}, Profit Amount: {$profit_amount}" );
 	$transaction_id = snks_add_ai_session_transaction( $therapist_id, $session_data_for_transaction, $profit_amount );
+	error_log( "=== EARNINGS DEBUG: Transaction ID returned: " . ( $transaction_id ? $transaction_id : 'NULL/FALSE' ) . " ===" );
 	
 	if ( ! $transaction_id ) {
+		error_log( "=== EARNINGS DEBUG: FAILED to create transaction ===" );
+		error_log( "=== EARNINGS DEBUG: Last DB error === " . $wpdb->last_error );
 		return array(
 			'success' => false,
 			'message' => 'Failed to create transaction'
 		);
 	}
+	error_log( "=== EARNINGS DEBUG: Transaction created successfully === Transaction ID: {$transaction_id} ===" );
 	
 	// Update session actions table
+	error_log( "=== EARNINGS DEBUG: Updating session actions table === Session ID: {$session_id}, Session Type: {$session_type}" );
 	$update_result = $wpdb->update(
 		$wpdb->prefix . 'snks_sessions_actions',
 		array(
@@ -245,7 +467,12 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		array( '%s', '%d', '%d' ),
 		array( '%s' )
 	);
+	error_log( "=== EARNINGS DEBUG: Session actions update result === " . var_export( $update_result, true ) );
+	if ( $update_result === false ) {
+		error_log( "=== EARNINGS DEBUG: Last DB error === " . $wpdb->last_error );
+	}
 	
+	error_log( "=== EARNINGS DEBUG: SUCCESS - Profit transfer completed === Transaction ID: {$transaction_id}, Profit Amount: {$profit_amount}, Session Type: {$session_type} ===" );
 	return array(
 		'success' => true,
 		'message' => 'Profit transfer completed successfully',

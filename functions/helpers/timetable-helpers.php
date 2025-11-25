@@ -533,6 +533,19 @@ function snks_insert_timetable( $data, $user_id = false ) {
 function snks_update_timetable( $id, $data ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Check if session_status is being changed to 'completed' for AI sessions
+	$is_status_change_to_completed = isset( $data['session_status'] ) && $data['session_status'] === 'completed';
+	
+	// Get current session data to check if it's an AI session (before update)
+	$current_session = null;
+	if ( $is_status_change_to_completed ) {
+		$current_session = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$table_name} WHERE ID = %d",
+			$id
+		) );
+	}
+	
 	//phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$updated = $wpdb->update(
 		$table_name,
@@ -541,8 +554,56 @@ function snks_update_timetable( $id, $data ) {
 			'ID' => $id,
 		)
 	);
+	//phpcs:enable.
+	
+	// After successful update, trigger earnings creation for AI sessions
+	if ( $updated && $is_status_change_to_completed && $current_session ) {
+		if ( $current_session->order_id > 0 && strpos( $current_session->settings, 'ai_booking' ) !== false ) {
+			// Get updated session data
+			$updated_session = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$table_name} WHERE ID = %d",
+				$id
+			) );
+			
+			if ( $updated_session && function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
+				// Check if earnings transaction already exists for this specific session
+				$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+					 WHERE ai_session_id = %d AND transaction_type = 'add'",
+					$id
+				) );
+				
+				// Also check by order_id AND session_id as secondary safeguard
+				if ( ! $existing_transaction ) {
+					$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+						 WHERE ai_order_id = %d AND ai_session_id = %d AND transaction_type = 'add'",
+						$updated_session->order_id,
+						$id
+					) );
+				}
+				
+				if ( ! $existing_transaction ) {
+					// Try to find sessions_actions entry and use existing profit transfer function
+					$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+					$session_action = $wpdb->get_row( $wpdb->prepare(
+						"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
+						$id,
+						$updated_session->order_id
+					) );
+					
+					if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
+						snks_execute_ai_profit_transfer( $session_action->action_session_id );
+					} else {
+						// Fallback: create earnings directly from timetable data
+						snks_create_ai_earnings_from_timetable( $updated_session );
+					}
+				}
+			}
+		}
+	}
+	
 	return $updated;
-    //phpcs:enable.
 }
 
 /**

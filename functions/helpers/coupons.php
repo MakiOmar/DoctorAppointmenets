@@ -296,6 +296,116 @@ function snks_apply_coupon_to_amount( $code, $amount ) {
 }
 
 /**
+ * Calculate actual Jalsah fee from user's cart items based on therapist profit settings
+ *
+ * @param int   $user_id User ID.
+ * @param float $total_amount Total cart amount (for fallback calculation).
+ * @return float The actual Jalsah fee amount.
+ */
+function snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount = 0 ) {
+	global $wpdb;
+	
+	// Get cart items from timetable
+	$cart_query = $wpdb->prepare(
+		"SELECT t.* FROM {$wpdb->prefix}snks_provider_timetable t
+		 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
+		 AND t.settings LIKE '%%ai_booking:in_cart%%'
+		 ORDER BY t.date_time ASC",
+		$user_id
+	);
+	
+	$cart_items = $wpdb->get_results( $cart_query );
+	
+	if ( empty( $cart_items ) ) {
+		// Fallback: use default 30% (conservative estimate for first sessions)
+		return $total_amount * 0.30;
+	}
+	
+	$total_jalsah_fee = 0;
+	
+	foreach ( $cart_items as $item ) {
+		$therapist_id = isset( $item->user_id ) ? intval( $item->user_id ) : 0;
+		$period = isset( $item->period ) ? intval( $item->period ) : 45;
+		
+		if ( ! $therapist_id ) {
+			continue;
+		}
+		
+		// Calculate item price from therapist pricing settings
+		$item_price = 0;
+		
+		// Check if this is a demo therapist
+		$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
+		
+		if ( $is_demo_doctor ) {
+			// For demo therapists, use simple pricing fields
+			$price_meta_key = 'price_' . $period . '_min';
+			$item_price = get_user_meta( $therapist_id, $price_meta_key, true );
+			if ( empty( $item_price ) || ! is_numeric( $item_price ) ) {
+				$item_price = get_user_meta( $therapist_id, 'price_45_min', true );
+			}
+			$item_price = floatval( $item_price ) ?: 150.00;
+		} else {
+			// For regular therapists, use the main pricing system
+			if ( function_exists( 'snks_doctor_online_pricings' ) ) {
+				$pricings = snks_doctor_online_pricings( $therapist_id );
+				if ( isset( $pricings[ $period ] ) && isset( $pricings[ $period ]['others'] ) ) {
+					$item_price = floatval( $pricings[ $period ]['others'] );
+				}
+			}
+			
+			// Fallback: Try to get price from user meta directly
+			if ( ! $item_price ) {
+				$price_meta_key = $period . '_minutes_pricing_others';
+				$item_price = get_user_meta( $therapist_id, $price_meta_key, true );
+			}
+			
+			// Try 45 minutes as fallback
+			if ( ! $item_price && $period != 45 ) {
+				$item_price = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+			}
+			
+			$item_price = floatval( $item_price ) ?: 200.00;
+		}
+		
+		if ( ! $item_price ) {
+			continue;
+		}
+		
+		// Determine if this is first or subsequent session
+		$is_first_session = true;
+		if ( function_exists( 'snks_is_first_session' ) ) {
+			$session_type = snks_is_first_session( $therapist_id, $user_id );
+			$is_first_session = ( $session_type === 'first' );
+		}
+		
+		// Get therapist profit settings
+		$therapist_percentage = 70.00; // Default for first session
+		if ( function_exists( 'snks_get_therapist_profit_settings' ) ) {
+			$settings = snks_get_therapist_profit_settings( $therapist_id );
+			if ( $settings ) {
+				$therapist_percentage = $is_first_session 
+					? floatval( $settings['first_session_percentage'] )
+					: floatval( $settings['subsequent_session_percentage'] );
+			}
+		}
+		
+		// Calculate Jalsah's share: 100% - therapist percentage
+		$jalsah_percentage = 100 - $therapist_percentage;
+		$jalsah_fee = ( $item_price * $jalsah_percentage ) / 100;
+		
+		$total_jalsah_fee += $jalsah_fee;
+	}
+	
+	// If we couldn't calculate from items, use fallback
+	if ( $total_jalsah_fee <= 0 && $total_amount > 0 ) {
+		return $total_amount * 0.30; // Conservative fallback (30% for first sessions)
+	}
+	
+	return round( $total_jalsah_fee, 2 );
+}
+
+/**
  * Check if the user has already used the coupon on the same session.
  *
  * @param int $coupon_id     Coupon ID.

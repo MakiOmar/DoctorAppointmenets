@@ -426,8 +426,8 @@ function snks_validate_ai_coupon( $code, $user_id = null ) {
  * Apply AI coupon
  * For AI coupons, discount applies only to Jalsah AI fee (40% of session price)
  */
-function snks_apply_ai_coupon( $code, $total_amount ) {
-	$validation = snks_validate_ai_coupon( $code );
+function snks_apply_ai_coupon( $code, $total_amount, $user_id = null ) {
+	$validation = snks_validate_ai_coupon( $code, $user_id );
 	
 	if ( ! $validation['valid'] ) {
 		return $validation;
@@ -435,8 +435,14 @@ function snks_apply_ai_coupon( $code, $total_amount ) {
 	
 	$coupon = $validation['coupon'];
 	
-	// Calculate Jalsah AI fee (40% of the session price)
-	$jalsah_fee = $total_amount * 0.4;
+	// Calculate actual Jalsah fee from cart items based on therapist profit settings
+	$jalsah_fee = 0;
+	if ( $user_id && function_exists( 'snks_calculate_jalsah_fee_from_cart' ) ) {
+		$jalsah_fee = snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount );
+	} else {
+		// Fallback: use default 30% (conservative estimate for first sessions)
+		$jalsah_fee = $total_amount * 0.30;
+	}
 	
 	// Apply discount only to the Jalsah fee portion
 	$discount_amount = 0;

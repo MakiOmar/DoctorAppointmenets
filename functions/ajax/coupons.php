@@ -311,11 +311,20 @@ function snks_apply_ai_coupon_ajax_handler() {
     $result  = null;
     $coupon  = null;
 
+    // Calculate actual Jalsah fee from cart items based on therapist profit settings
+    $jalsah_fee = 0;
+    if ( function_exists( 'snks_calculate_jalsah_fee_from_cart' ) ) {
+        $jalsah_fee = snks_calculate_jalsah_fee_from_cart( $user_id, $amount );
+    } else {
+        // Fallback: use default 30% (conservative estimate for first sessions)
+        $jalsah_fee = $amount * 0.30;
+    }
+
     // First, try to find coupon in admin AI coupons table (snks_ai_coupons)
     if ( function_exists( 'snks_validate_ai_coupon' ) && function_exists( 'snks_apply_ai_coupon' ) ) {
         $validation = snks_validate_ai_coupon( $code, $user_id );
         if ( $validation['valid'] ) {
-            $apply_result = snks_apply_ai_coupon( $code, $amount );
+            $apply_result = snks_apply_ai_coupon( $code, $amount, $user_id );
             if ( $apply_result['valid'] ) {
                 $result = array(
                     'valid'    => true,
@@ -339,8 +348,7 @@ function snks_apply_ai_coupon_ajax_handler() {
                 wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
             }
             
-            // For AI coupons from therapist table, apply discount only to Jalsah fee (40%)
-            $jalsah_fee = $amount * 0.4;
+            // For AI coupons from therapist table, apply discount only to calculated Jalsah fee
             $discount_amount = 0;
             
             if ( $coupon_check->discount_type === 'percent' ) {
