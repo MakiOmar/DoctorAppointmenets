@@ -342,6 +342,15 @@ add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
 		$order = wc_get_order( $order_id );
+		
+		// Skip processing if this is an AI order (handled separately)
+		if ( $order ) {
+			$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+			if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+				return;
+			}
+		}
+		
 		if ( $order ) {
 			if ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) {
 				$booking_day = $order->get_meta( 'booking_id', true );

@@ -32,6 +32,8 @@ function snks_create_coupon_ajax_handler() {
 		'expires_at'     => ! empty( $_POST['expires_at'] ) ? date( 'Y-m-d 00:00:00', strtotime( $_POST['expires_at'] ) ) : null,
 		'usage_limit'    => ! empty( $_POST['usage_limit'] ) ? intval( $_POST['usage_limit'] ) : null,
 		'doctor_id'      => $current_user,
+		// Respect explicit 0/1 sent from client; default to 0 when absent
+		'is_ai_coupon'   => array_key_exists( 'is_ai_coupon', $_POST ) ? intval( $_POST['is_ai_coupon'] ) : 0,
 	);
 
 	if ( empty( $args['code'] ) || 0 >= $args['discount_value'] ) {
@@ -59,6 +61,7 @@ function snks_create_coupon_ajax_handler() {
 				'discount_value' => $args['discount_value'],
 				'expires_at'     => $args['expires_at'],
 				'usage_limit'    => $args['usage_limit'],
+				'is_ai_coupon'   => isset( $args['is_ai_coupon'] ) ? (int) $args['is_ai_coupon'] : 0,
 			),
 		)
 	);
@@ -162,6 +165,17 @@ function snks_apply_coupon_ajax_handler() {
 	if ( $doctor_id !== $form_data['_user_id'] ) {
 		wp_send_json_error( array( 'message' => 'كوبون غير صالح' ) );
 	}
+
+	// Enforce AI-only vs general coupon usage based on current booking context
+	$is_ai_context = ! empty( $form_data['_is_ai_booking'] ) || ! empty( $form_data['_from_jalsah_ai'] );
+	$is_ai_coupon  = ! empty( $coupon->is_ai_coupon );
+	if ( $is_ai_context && ! $is_ai_coupon ) {
+		wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
+	}
+	if ( ! $is_ai_context && $is_ai_coupon ) {
+		wp_send_json_error( array( 'message' => 'هذا الكوبون مخصص لجلسات الذكاء الاصطناعي فقط.' ) );
+	}
+
 	$user_id      = get_current_user_id();
 	$timetable_id = absint( $form_data['booking_id'] ?? 0 );
 
@@ -242,4 +256,146 @@ function snks_remove_coupon_ajax_handler() {
 	set_transient( snks_form_data_transient_key(), $form_data, 3600 );
 
 	wp_send_json_success( array( 'message' => 'تمت إزالة الكوبون وإعادة السعر الأصلي.' ) );
+}
+
+/**
+ * Ajax: Apply coupon for AI cart context without relying on session transient.
+ * Expects: code, amount, security (nonce for 'snks_coupon_nonce').
+ * Returns: success, final_price, discount.
+ */
+add_action( 'wp_ajax_snks_apply_ai_coupon', 'snks_apply_ai_coupon_ajax_handler' );
+add_action( 'wp_ajax_nopriv_snks_apply_ai_coupon', 'snks_apply_ai_coupon_ajax_handler' );
+
+function snks_apply_ai_coupon_ajax_handler() {
+    // Preflight nonce check
+    $raw_nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
+    if ( ! wp_verify_nonce( $raw_nonce, 'snks_coupon_nonce' ) ) {
+        wp_send_json_error( array( 'message' => 'انتهت صلاحية الجلسة. حدِّث الصفحة وحاول مرة أخرى.' ) );
+    }
+    // Secondary WordPress nonce enforcement
+    check_ajax_referer( 'snks_coupon_nonce', 'security' );
+
+    if ( ! is_user_logged_in() ) {
+        // Try Bearer token auth (same as AI endpoints)
+        $auth_header = isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? trim( $_SERVER['HTTP_AUTHORIZATION'] ) : '';
+        if ( empty( $auth_header ) && function_exists( 'apache_request_headers' ) ) {
+            $headers = apache_request_headers();
+            if ( isset( $headers['Authorization'] ) ) {
+                $auth_header = trim( $headers['Authorization'] );
+            }
+        }
+
+        if ( preg_match( '/Bearer\s+(.*)$/i', $auth_header, $matches ) ) {
+            $token = $matches[1];
+            if ( function_exists( 'snks_validate_jalsah_token' ) ) {
+                $user_id = snks_validate_jalsah_token( $token );
+                if ( $user_id ) {
+                    wp_set_current_user( $user_id );
+                }
+            }
+        }
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( array( 'message' => 'يجب تسجيل الدخول لتفعيل الكوبون.' ) );
+        }
+    }
+
+    $code   = sanitize_text_field( $_POST['code'] ?? '' );
+    $amount = floatval( $_POST['amount'] ?? 0 );
+
+    if ( '' === $code || $amount <= 0 ) {
+        wp_send_json_error( array( 'message' => 'بيانات غير صالحة لتطبيق الكوبون.' ) );
+    }
+
+    $user_id = get_current_user_id();
+    $result  = null;
+    $coupon  = null;
+
+    // Calculate actual Jalsah fee from cart items based on therapist profit settings
+    $jalsah_fee = 0;
+    if ( function_exists( 'snks_calculate_jalsah_fee_from_cart' ) ) {
+        $jalsah_fee = snks_calculate_jalsah_fee_from_cart( $user_id, $amount );
+    } else {
+        // Fallback: use default 30% (conservative estimate for first sessions)
+        $jalsah_fee = $amount * 0.30;
+    }
+
+    // First, try to find coupon in admin AI coupons table (snks_ai_coupons)
+    if ( function_exists( 'snks_validate_ai_coupon' ) && function_exists( 'snks_apply_ai_coupon' ) ) {
+        $validation = snks_validate_ai_coupon( $code, $user_id );
+        if ( $validation['valid'] ) {
+            $apply_result = snks_apply_ai_coupon( $code, $amount, $user_id );
+            if ( $apply_result['valid'] ) {
+                $result = array(
+                    'valid'    => true,
+                    'final'    => $apply_result['final_amount'],
+                    'discount' => $apply_result['discount_amount'],
+                    'coupon'   => $apply_result['coupon'],
+                    'message'  => 'تم تطبيق الكوبون بنجاح.',
+                );
+                $coupon = $apply_result['coupon'];
+            }
+        }
+    }
+
+    // If not found in admin table, check therapist coupons table (snks_custom_coupons)
+    if ( ! $result || ! $result['valid'] ) {
+        $coupon_check = snks_get_coupon_by_code( $code );
+        if ( $coupon_check ) {
+            // Enforce AI-only coupon usage for therapist coupons
+            $is_ai_coupon = ! empty( $coupon_check->is_ai_coupon );
+            if ( ! $is_ai_coupon ) {
+                wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
+            }
+            
+            // For AI coupons from therapist table, apply discount only to calculated Jalsah fee
+            $discount_amount = 0;
+            
+            if ( $coupon_check->discount_type === 'percent' ) {
+                $discount_amount = ( $jalsah_fee * $coupon_check->discount_value ) / 100;
+            } else {
+                // Fixed discount, apply to Jalsah fee but don't exceed it
+                $discount_amount = min( $coupon_check->discount_value, $jalsah_fee );
+            }
+            
+            $final_amount = $amount - $discount_amount;
+            
+            $result = array(
+                'valid'    => true,
+                'final'    => round( $final_amount, 2 ),
+                'discount' => round( $discount_amount, 2 ),
+                'coupon'   => $coupon_check,
+                'message'  => 'تم تطبيق الكوبون بنجاح.',
+            );
+            $coupon = $coupon_check;
+        } else {
+            // Try regular coupon application (for non-AI coupons)
+            $result = snks_apply_coupon_to_amount( $code, $amount );
+            if ( $result['valid'] ) {
+                $coupon = $result['coupon'];
+            }
+        }
+    }
+
+    if ( ! $result || false === $result['valid'] ) {
+        wp_send_json_error( array( 'message' => $result['message'] ?? 'الكوبون غير صالح أو انتهى.' ) );
+    }
+
+    // Persist applied coupon for checkout fallback
+    $persist = array(
+        'code'     => $code,
+        'discount' => $result['discount'],
+        'saved_at' => time(),
+    );
+    update_user_meta( get_current_user_id(), 'snks_ai_applied_coupon', $persist );
+
+    wp_send_json_success(
+        array(
+            'message'     => 'تم تطبيق الكوبون بنجاح.',
+            'final_price' => $result['final'],
+            'discount'    => $result['discount'],
+            'coupon_type' => 'AI',
+            'persisted'   => true,
+        )
+    );
 }

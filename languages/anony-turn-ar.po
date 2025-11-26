@@ -1,0 +1,329 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: A Shrinks\n"
+"POT-Creation-Date: 2025-08-22 10:10+0000\n"
+"PO-Revision-Date: 2025-08-23 12:18+0300\n"
+"Last-Translator: \n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+"X-Generator: Poedit 2.2\n"
+
+msgid "Profit Settings"
+msgstr "إعدادات الأرباح"
+
+msgid "Therapist Earnings"
+msgstr "أرباح المعالجين"
+
+msgid "Transaction Processing"
+msgstr "معالجة المعاملات"
+
+msgid "AI Session Profit Settings"
+msgstr "إعدادات أرباح جلسات الذكاء الاصطناعي"
+
+msgid "Global Settings"
+msgstr "الإعدادات العامة"
+
+msgid "Save Global Settings"
+msgstr "حفظ الإعدادات العامة"
+
+msgid "Individual Therapist Settings"
+msgstr "إعدادات المعالجين الفردية"
+
+msgid "Save Therapist Settings"
+msgstr "حفظ إعدادات المعالجين"
+
+msgid "Therapist Earnings from AI Sessions"
+msgstr "أرباح المعالجين من جلسات الذكاء الاصطناعي"
+
+msgid "Search Filters"
+msgstr "فلاتر البحث"
+
+msgid "Summary Statistics"
+msgstr "ملخص الإحصائيات"
+
+msgid "Total Earnings"
+msgstr "إجمالي الأرباح"
+
+msgid "Total Sessions"
+msgstr "إجمالي الجلسات"
+
+msgid "AI Session Transaction Processing"
+msgstr "معالجة معاملات جلسات الذكاء الاصطناعي"
+
+msgid "Processing Statistics"
+msgstr "إحصائيات المعالجة"
+
+msgid "Completed Sessions"
+msgstr "الجلسات المكتملة"
+
+msgid "Processed Transactions"
+msgstr "المعاملات المعالجة"
+
+msgid "Pending Sessions"
+msgstr "الجلسات المعلقة"
+
+msgid "Manual Session Processing"
+msgstr "معالجة الجلسات يدوياً"
+
+msgid "Pending Sessions for Processing"
+msgstr "الجلسات المعلقة للمعالجة"
+
+msgid "First Session Profit Percentage (%)"
+msgstr "نسبة الربح للجلسة الأولى (%)"
+
+msgid "Default profit percentage for the first session with each new patient"
+msgstr "النسبة الافتراضية للربح من الجلسة الأولى مع كل مريض جديد"
+
+msgid "Subsequent Sessions Profit Percentage (%)"
+msgstr "نسبة الربح للجلسات اللاحقة (%)"
+
+msgid "Default profit percentage for subsequent sessions with the same patient"
+msgstr "النسبة الافتراضية للربح من الجلسات اللاحقة مع نفس المريض"
+
+msgid "Therapist"
+msgstr "المعالج"
+
+msgid "All Therapists"
+msgstr "جميع المعالجين"
+
+msgid "Period"
+msgstr "الفترة"
+
+msgid "All Periods"
+msgstr "جميع الفترات"
+
+msgid "Today"
+msgstr "اليوم"
+
+msgid "This Week"
+msgstr "هذا الأسبوع"
+
+msgid "This Month"
+msgstr "هذا الشهر"
+
+msgid "Custom Period"
+msgstr "فترة مخصصة"
+
+msgid "From Date"
+msgstr "من تاريخ"
+
+msgid "To Date"
+msgstr "إلى تاريخ"
+
+msgid "Apply Filters"
+msgstr "تطبيق الفلاتر"
+
+msgid "Export CSV"
+msgstr "تصدير CSV"
+
+msgid "Session ID"
+msgstr "معرف الجلسة"
+
+msgid "Enter session ID"
+msgstr "أدخل معرف الجلسة"
+
+msgid "Enter the session ID to process it manually"
+msgstr "أدخل معرف الجلسة لمعالجتها يدوياً"
+
+msgid "Process Session"
+msgstr "معالجة الجلسة"
+
+msgid "No pending sessions for processing."
+msgstr "لا توجد جلسات معلقة للمعالجة."
+
+msgid "Patient"
+msgstr "المريض"
+
+msgid "Session Type"
+msgstr "نوع الجلسة"
+
+msgid "Session Date"
+msgstr "تاريخ الجلسة"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "Bulk Operations"
+msgstr "عمليات جماعية"
+
+msgid "First Session Percentage:"
+msgstr "نسبة الجلسة الأولى:"
+
+msgid "Subsequent Sessions Percentage:"
+msgstr "نسبة الجلسات اللاحقة:"
+
+msgid "Apply to Selected"
+msgstr "تطبيق على المحددين"
+
+msgid "Select All"
+msgstr "تحديد الكل"
+
+msgid "Deselect All"
+msgstr "إلغاء تحديد الكل"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "First Session Percentage (%)"
+msgstr "نسبة الجلسة الأولى (%)"
+
+msgid "Subsequent Sessions Percentage (%)"
+msgstr "نسبة الجلسات اللاحقة (%)"
+
+msgid "Subsequent Sessions"
+msgstr "الجلسات اللاحقة"
+
+msgid "Earnings by Therapist"
+msgstr "الأرباح حسب المعالج"
+
+msgid "First Sessions"
+msgstr "الجلسات الأولى"
+
+msgid "Average Profit per Session"
+msgstr "متوسط الربح للجلسة"
+
+msgid "Choose Therapist"
+msgstr "اختر المعالج"
+
+msgid "Balance:"
+msgstr "رصيد:"
+
+msgid "EGP"
+msgstr "ج.م"
+
+msgid "Please enter at least one percentage"
+msgstr "يرجى إدخال نسبة واحدة على الأقل"
+
+msgid "Please enter a session ID."
+msgstr "يرجى إدخال معرف الجلسة."
+
+msgid "Session processed successfully. Transaction ID:"
+msgstr "تمت معالجة الجلسة بنجاح. معرف المعاملة:"
+
+msgid "Session processing failed:"
+msgstr "فشلت معالجة الجلسة:"
+
+msgid "Last Updated"
+msgstr "آخر تحديث"
+
+msgid "No earnings data for the specified period."
+msgstr "لا توجد بيانات أرباح للفترة المحددة."
+
+msgid "Session Amount"
+msgstr "مبلغ الجلسة"
+
+msgid "Profit Amount"
+msgstr "مبلغ الربح"
+
+msgid "Order ID"
+msgstr "معرف الطلب"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Please enter all required data."
+msgstr "يرجى إدخال جميع البيانات المطلوبة."
+
+msgid "Withdrawal processed successfully. Amount:"
+msgstr "تمت معالجة السحب بنجاح. المبلغ:"
+
+msgid "Withdrawal processing failed:"
+msgstr "فشلت معالجة السحب:"
+
+msgid "Today Statistics"
+msgstr "إحصائيات اليوم"
+
+msgid "Sessions:"
+msgstr "الجلسات:"
+
+msgid "Earnings:"
+msgstr "الأرباح:"
+
+msgid "View Therapist Earnings"
+msgstr "عرض أرباح المعالجين"
+
+msgid "No therapists found"
+msgstr "لا يوجد معالجون"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Not updated"
+msgstr "لم يتم التحديث"
+
+msgid "Quick Statistics"
+msgstr "إحصائيات سريعة"
+
+msgid "Total Therapists"
+msgstr "إجمالي المعالجين"
+
+msgid "Active Therapists"
+msgstr "المعالجون النشطون"
+
+msgid "Therapists with Custom Settings"
+msgstr "المعالجون مع إعدادات مخصصة"
+
+msgid "Transaction History"
+msgstr "سجل المعاملات"
+
+msgid "No transactions for the specified period."
+msgstr "لا توجد معاملات للفترة المحددة."
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "First"
+msgstr "أولى"
+
+msgid "Subsequent"
+msgstr "لاحقة"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "You are not authorized to access this page"
+msgstr "غير مصرح لك بالوصول إلى هذه الصفحة"
+
+msgid "Process"
+msgstr "معالجة"
+
+msgid "Withdrawal Management"
+msgstr "إدارة السحوبات"
+
+msgid "Withdrawal Amount"
+msgstr "مبلغ السحب"
+
+msgid "Withdrawal Method"
+msgstr "طريقة السحب"
+
+msgid "Wallet"
+msgstr "محفظة"
+
+msgid "Bank Transfer"
+msgstr "تحويل بنكي"
+
+msgid "Meza"
+msgstr "ميزة"
+
+msgid "Process Withdrawal"
+msgstr "معالجة السحب"
+
+msgid "Recent Transactions"
+msgstr "آخر المعاملات"
+
+msgid "No recent transactions."
+msgstr "لا توجد معاملات حديثة."

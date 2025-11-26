@@ -444,6 +444,7 @@ function snks_generate_consulting_form( $user_id, $period, $price, $_attendance_
 	$html .= '</div>';
 	$html .= '<hr style="margin:20px 0">';
 	$html .= '<div id="snks-available-hours-wrapper">';
+	$html .= '<p class="anony-center-text" style="margin-bottom: 10px;">( جميع المواعيد بتوقيت مصر )</p>';
 	$html .= '<div class="snks-available-hours"></div>';
 	$html .= '</div>';
 	$html .= '<input type="hidden" name="create-appointment" value="create-appointment">';
@@ -867,15 +868,23 @@ function snks_booking_item_template( $record ) {
 	);
 	//phpcs:disable
 	?>
-	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" class="snks-booking-item {status_class}">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" data-period="<?php echo esc_attr( $record->period ) ?>" class="snks-booking-item {status_class}">
 		<div class="anony-grid-row">
 			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px">
+				<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
+				<?php endif; ?>
 
 				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);left:-25%;display: flex;align-items: center;">
 					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
+				<?php if ( snks_is_ai_session_booking( $record ) ) : ?>
+				<div class="ai-session-flag" style="position:absolute;top:calc(100%);right:0;display: flex;align-items: center;background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+					<span style="margin-right: 5px;">🤖</span>
+					<span>AI</span>
+				</div>
+				<?php endif; ?>
 			</div>
 
 			<div class="anony-grid-col anony-grid-col-<?php echo 'online' === $record->attendance_type ? '8' : '10 snks-offline-border-radius'; ?>">
@@ -922,10 +931,20 @@ function snks_booking_item_template( $record ) {
 					</div>
 				</div>
 				<!--/timer-->
+				<!--diagnosis-->
+				<div class="anony-grid-row snks-booking-item-row">
+					<div class="anony-grid-col anony-grid-col-3 snks-item-icons-bg anony-flex">
+						<img class="anony-padding-5" src="/wp-content/uploads/2024/08/card.png"/>
+					</div>
+					<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
+						<span style="color:#024059;font-size:18px;font-weight:bold">التشخيص: {diagnosis}</span>
+					</div>
+				</div>
+				<!--/diagnosis-->
 			</div>
 			<?php if ( 'online' === $record->attendance_type && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
-				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="position:absolute;top:calc(50% - 15px);color:#fff">{button_text}</a>
+				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}" style="color:#fff">{button_text}</a>
 			</div>
 			<?php } ?>
 		</div>
@@ -935,11 +954,14 @@ function snks_booking_item_template( $record ) {
 			?>
 			<!--doctoraction-->
 		<div class="anony-flex flex-h-center">
-			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
+			<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
+			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px;margin-left:5px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
+			<?php endif; ?>
 			<?php if ( ! snks_is_clinic_manager() && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<!--<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>-->
 			<?php } ?>
 		</div>
+		<?php echo snks_doctor_actions( $record ); ?>
 			<?php
 		} ?>
 		<!--/doctoraction-->
@@ -954,6 +976,28 @@ function snks_booking_item_template( $record ) {
 	return ob_get_clean();
 }
 /**
+ * Check if a session is an AI session
+ *
+ * @param object $record The Record.
+ * @return bool
+ */
+function snks_is_ai_session_booking( $record ) {
+	if ( ! $record || ! isset( $record->order_id ) || empty( $record->order_id ) ) {
+		return false;
+	}
+	
+	$order = wc_get_order( $record->order_id );
+	if ( ! $order ) {
+		return false;
+	}
+	
+	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	$is_ai_session = $order->get_meta( 'is_ai_session' );
+	
+	return $from_jalsah_ai || $is_ai_session;
+}
+
+/**
  * Template string replace
  *
  * @param object $record The Record.
@@ -962,6 +1006,26 @@ function snks_booking_item_template( $record ) {
 function template_str_replace( $record ) {
 	$user_details = snks_user_details( $record->client_id );
 	$button_text  = 'ابدأ الجلسة';
+	
+	// Check if this is an AI session and if it's too early to join
+	$is_ai_session = snks_is_ai_session( $record->ID );
+	$scheduled_timestamp = strtotime( $record->date_time );
+	$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+	$time_difference = $current_timestamp - $scheduled_timestamp;
+	$is_too_early = $time_difference < 0; // Current time is before scheduled time
+	
+	// Set button URL and status class for AI sessions that are too early
+	$button_url = site_url( 'meeting-room/?room_id=' . $record->ID );
+	$room = $button_url; // Set room URL same as button URL
+	$status_class = '';
+	
+	// For AI sessions that are too early, disable the button
+	if ( $is_ai_session && $is_too_early ) {
+		$button_text = '<svg style="display: inline-block; width: 20px; height: 20px; margin-left: 8px; animation: spin 1s linear infinite; vertical-align: middle;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> الجلسة لم تبدأ بعد';
+		$button_url = '#';
+		$room = '#'; // Also disable room URL for disabled sessions
+		$status_class = 'snks-disabled';
+	}
 
 	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = SNKS_CAMERA;
@@ -972,14 +1036,44 @@ function template_str_replace( $record ) {
 	}
 	$first_name = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
 	$last_name  = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
-	$phone      = ! empty( $user_details['billing_phone'] ) ? $user_details['billing_phone'] : '';
+	$phone      = '';
 	$whatsapp   = '';
-	if ( ! empty( $user_details['whatsapp'] ) ) {
-		$whatsapp = $user_details['whatsapp'];
-	} else {
+	
+	// Hide phone and WhatsApp for AI bookings
+	if ( $is_ai_session ) {
+		$template = preg_replace( '/<!--phone-->.*?<!--\/phone-->/s', '', $template );
 		$template = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
+	} else {
+		// Show phone and WhatsApp for regular bookings
+		$phone = ! empty( $user_details['billing_phone'] ) ? $user_details['billing_phone'] : '';
+		if ( ! empty( $user_details['whatsapp'] ) ) {
+			$whatsapp = $user_details['whatsapp'];
+		} else {
+			$template = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
+		}
+		if ( empty( $phone ) ) {
+			$template = preg_replace( '/<!--phone-->.*?<!--\/phone-->/s', '', $template );
+		}
 	}
-	$template = preg_replace( '/<!--timer-->.*?<!--\/timer-->/s', '', $template );
+	
+	// Get diagnosis for AI sessions
+	$diagnosis_name = '';
+	if ( $is_ai_session ) {
+		$diagnosis_result = get_user_meta( $record->client_id, 'ai_diagnosis_result', true );
+		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
+			$diagnosis_name = $diagnosis_result['diagnosis_name'];
+		} else {
+			$diagnosis_name = 'غير متوفر';
+		}
+	} else {
+		// Hide diagnosis row for non-AI sessions
+		$template = preg_replace( '/<!--diagnosis-->.*?<!--\/diagnosis-->/s', '', $template );
+	}
+	
+	// Keep timer for AI sessions that are too early
+	if ( ! ( $is_ai_session && $is_too_early ) ) {
+		$template = preg_replace( '/<!--timer-->.*?<!--\/timer-->/s', '', $template );
+	}
 	$template = preg_replace( '/<!--patientaction-->.*?<!--\/patientaction-->/s', '', $template );
 
 	return str_replace(
@@ -993,8 +1087,11 @@ function template_str_replace( $record ) {
 			'{phone}',
 			'{whatsapp}',
 			'{button_url}',
+			'{room_url}',
 			'{button_text}',
+			'{snks_timer}',
 			'{status_class}',
+			'{diagnosis}',
 		),
 		array(
 			$record->ID,
@@ -1005,9 +1102,13 @@ function template_str_replace( $record ) {
 			esc_html( $first_name . ' ' . $last_name ),
 			esc_html( $phone ),
 			esc_html( $whatsapp ),
-			add_query_arg( 'id', $record->user_id, esc_url( site_url( 'meeting-room/?room_id=' . $record->ID ) ) ),
+			$button_url,
+			$room,
 			$button_text,
-			'',
+			// Show timer for AI sessions that are too early
+			( $is_ai_session && $is_too_early ) ? '<span class="snks-apointment-timer"></span>' : '',
+			$status_class,
+			esc_html( $diagnosis_name ),
 		),
 		$template
 	);
@@ -1031,13 +1132,27 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$scheduled_timestamp = strtotime( $record->date_time );
 	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
 	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
+	
+	// Check if this is an AI session
+	$is_ai_session = snks_is_ai_session( $record->ID );
+	
+	// For AI sessions, add additional time validation to prevent early joining
+	$time_difference = $current_timestamp - $scheduled_timestamp;
+	$is_too_early = $time_difference < 0; // Current time is before scheduled time
+	
 	if (
 		( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 )
 		|| ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp )
 		|| ( 'cancelled' === $record->session_status )
+		|| ( $is_ai_session && $is_too_early ) // Prevent AI session joining before scheduled time
 	) {
 		$_class = 'snks-disabled';
 		$room   = '#';
+		
+		// For AI sessions that are too early, show a specific message
+		if ( $is_ai_session && $is_too_early ) {
+			$button_text = 'الجلسة لم تبدأ بعد';
+		}
 	}
 	$template              = snks_booking_item_template( $record );
 	$attandance_type_image = SNKS_CAMERA;
@@ -1053,6 +1168,24 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$whatsapp   = '';
 	$template   = preg_replace( '/<!--whatsapp-->.*?<!--\/whatsapp-->/s', '', $template );
 	$template   = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $template );
+	
+	// Hide edit button for AI sessions
+	$patient_edit = $is_ai_session ? '' : snks_edit_button( $record->ID, $record->user_id, $record->settings );
+	
+	// Get diagnosis for AI sessions (from patient's perspective)
+	$diagnosis_name = '';
+	if ( $is_ai_session && isset( $client_id ) ) {
+		$diagnosis_result = get_user_meta( $client_id, 'ai_diagnosis_result', true );
+		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
+			$diagnosis_name = $diagnosis_result['diagnosis_name'];
+		} else {
+			$diagnosis_name = 'غير متوفر';
+		}
+	} else {
+		// Hide diagnosis row for non-AI sessions
+		$template = preg_replace( '/<!--diagnosis-->.*?<!--\/diagnosis-->/s', '', $template );
+	}
+	
 	return str_replace(
 		array(
 			'{session_id}',
@@ -1069,6 +1202,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'{snks_timer}',
 			'{status_class}',
 			'{patient_edit}',
+			'{diagnosis}',
 		),
 		array(
 			$record->ID,
@@ -1084,7 +1218,8 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			$button_text,
 			'<span class="snks-apointment-timer"></span>',
 			$_class,
-			snks_edit_button( $record->ID, $record->user_id, $record->settings ),
+			$patient_edit,
+			esc_html( $diagnosis_name ),
 		),
 		$template
 	);
@@ -1257,18 +1392,21 @@ function snks_render_bookings( $_timetables, $tens ) {
 					</div>
 					<?php } ?>
 					<div class="snks-timetable-accordion-content" style="background-color:#fff;padding:10px 0 10px 10px" id="<?php echo esc_attr( $date ); ?>">
-						<?php foreach ( $timetables as $data ) : ?>
-							<div class="snks-booking-item-wrapper">
-								<?php
-								$output = template_str_replace( $data );
-								if ( 'past' === $tens ) {
-									$output = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $output );
-								}
-								//phpcs:disable
-								echo $output;
-								//phpcs:enable
+					<?php foreach ( $timetables as $data ) : ?>
+						<div class="snks-booking-item-wrapper">
+							<?php
+							$output = template_str_replace( $data );
+							// Remove doctor actions for past bookings EXCEPT for AI sessions
+							// Check if AI session using settings field
+							$is_ai_session_check = isset( $data->settings ) && strpos( $data->settings, 'ai_booking' ) !== false;
+							if ( 'past' === $tens && ! $is_ai_session_check ) {
+								$output = preg_replace( '/<!--doctoraction-->.*?<!--\/doctoraction-->/s', '', $output );
+							}
+							//phpcs:disable
+							echo $output;
+							//phpcs:enable
 
-								?>
+							?>
 								<?php
 								//phpcs:disable
 								if ( 'past' !== $tens && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { 
@@ -1319,6 +1457,14 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 	//phpcs:disable
 	ob_start();
 	echo do_shortcode( '[notification_box]' );
+	
+	// Add Roshta section for patients
+	$rochtah_section = '';
+	if ( snks_is_patient() ) {
+		$current_user_id = get_current_user_id();
+		$rochtah_requests = snks_get_patient_rochtah_requests( $current_user_id );
+		$rochtah_section = snks_render_rochtah_section( $rochtah_requests );
+	}
 	?>
 	<div class="snks-tabs">
 		<ul class="snks-tabs-nav">
@@ -1334,6 +1480,11 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 			</div>
 		</div>
 	</div>
+	
+	<?php if ( ! empty( $rochtah_section ) ) { ?>
+		<?php echo $rochtah_section; ?>
+	<?php } ?>
+	
 	<?php if( snks_is_patient() ) { ?>
 		<div class="anony-center-text">
 			<p>هل لديك مشاكل تقنية؟ اضغط هنا</p>
@@ -1341,16 +1492,134 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 		</div>
 	<?php
 	}
+
 	//phpcs:enable
 	return ob_get_clean();
 }
+/**
+ * Check if current doctor is an AI therapist
+ *
+ * @return bool
+ */
+function snks_is_current_doctor_ai_therapist() {
+	if ( ! snks_is_doctor() ) {
+		return false;
+	}
+	
+	$current_user_id = get_current_user_id();
+	$show_on_ai_site = get_user_meta( $current_user_id, 'show_on_ai_site', true );
+	
+	return $show_on_ai_site === '1';
+}
+
+/**
+ * Get AI therapist completed sessions
+ *
+ * @return array
+ */
+function snks_get_ai_therapist_completed_sessions() {
+	if ( ! snks_is_current_doctor_ai_therapist() ) {
+		return array();
+	}
+	
+	$current_user_id = get_current_user_id();
+	
+	global $wpdb;
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+	
+	// Get completed AI sessions for this therapist
+	// Include sessions with status 'completed' OR settings containing 'ai_booking:completed'
+	$sessions = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM {$table_name} 
+		 WHERE user_id = %d 
+		 AND (
+			(session_status = 'completed' AND settings LIKE '%ai_booking%')
+			OR (settings LIKE '%ai_booking:completed%')
+		 )
+		 ORDER BY date_time DESC",
+		$current_user_id
+	) );
+	
+	// Add date property to each session for proper grouping
+	if ( $sessions && is_array( $sessions ) ) {
+		foreach ( $sessions as $session ) {
+			$session->date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
+		}
+	}
+	
+	return $sessions ?: array();
+}
+
+/**
+ * Get patient Roshta requests
+ *
+ * @param int $patient_id Patient ID
+ * @return array
+ */
+function snks_get_patient_rochtah_requests( $patient_id ) {
+	global $wpdb;
+	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+	
+	$requests = $wpdb->get_results( $wpdb->prepare(
+		"SELECT rb.*, pt.date_time, pt.starts, pt.ends, pt.user_id as therapist_id
+		 FROM {$rochtah_bookings_table} rb
+		 LEFT JOIN {$wpdb->prefix}snks_provider_timetable pt ON rb.session_id = pt.ID
+		 WHERE rb.patient_id = %d 
+		 AND rb.status IN ('pending', 'confirmed')
+		 ORDER BY rb.created_at DESC",
+		$patient_id
+	) );
+	
+	return $requests ?: array();
+}
+
+/**
+ * Render Roshta section for patient appointments
+ *
+ * @param array $rochtah_requests Array of Roshta requests
+ * @return string
+ */
+function snks_render_rochtah_section( $rochtah_requests ) {
+	if ( empty( $rochtah_requests ) ) {
+		return '';
+	}
+	
+	$output = '<div class="rochtah-section" style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007cba;">';
+	$output .= '<h3 style="margin: 0 0 10px 0; color: #007cba;">طلب روشتا (وصف دواء)</h3>';
+	
+	foreach ( $rochtah_requests as $request ) {
+		$therapist_name = get_user_meta( $request->therapist_id, 'nickname', true );
+		$session_date = gmdate( 'Y-m-d', strtotime( $request->date_time ) );
+		$session_time = gmdate( 'h:i a', strtotime( $request->starts ) );
+		
+		$output .= '<div class="rochtah-request" style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">';
+		$output .= '<p style="margin: 0 0 8px 0;"><strong>الجلسة:</strong> ' . $session_date . ' - ' . $session_time . '</p>';
+		$output .= '<p style="margin: 0 0 8px 0;"><strong>المعالج:</strong> ' . $therapist_name . '</p>';
+		$output .= '<p style="margin: 0 0 15px 0; color: #666;">تم إرسال طلب روشتا من معالجك. يمكنك الآن حجز استشارة مجانية لمدة 15 دقيقة مع طبيب نفسي لوصف الدواء المناسب.</p>';
+		
+		if ( $request->status === 'pending' ) {
+			$output .= '<button class="snks-button book-rochtah-btn" data-request-id="' . $request->id . '" style="background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">حجز موعد مجاني</button>';
+		} elseif ( $request->status === 'confirmed' ) {
+			$output .= '<p style="margin: 0; color: #28a745;"><strong>تم حجز الموعد بنجاح!</strong></p>';
+		}
+		
+		$output .= '</div>';
+	}
+	
+	$output .= '</div>';
+	
+	return $output;
+}
+
 /**
  * Generate bookings
  *
  * @return string
  */
 function snks_generate_bookings() {
-	$past               = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
+	// Use date-based filtering for both AI and regular therapists
+	// Past = sessions before today, Future = sessions from today onwards
+	$past = snks_render_bookings( snks_get_doctor_sessions( 'past', 'open', true ), 'past' );
 	$current_timetables = snks_render_bookings( snks_get_doctor_sessions( 'future', 'open', true ), 'future' );
 	return snks_generate_the_bookings( $past, $current_timetables );
 }
@@ -1367,43 +1636,99 @@ function snks_doctor_actions( $session ) {
 	if ( ! $session ) {
 		return '';
 	}
+	
 	$attendees = explode( ',', $session->client_id );
 	$output    = '';
-	if ( ! empty( $attendees ) ) {
-		$output .= '<table class="doctor-actions">';
-		$output .= '<form class="doctor_actions" method="post" action="">';
-		$output .= '<thead><tr><th>المريض</th><th>حضر</th><th>لم يحضر</th></tr></thead>';
-		$output .= '<tbody>';
-		foreach ( $attendees as $index => $client ) {
-			$session_action = snks_get_session_actions( $session->ID, absint( $client ) );
-			$yes_checked    = '';
-			$no_checked     = '';
-			if ( $session_action ) {
-				$yes_checked = checked( 'yes', $session_action->attendance, false );
-				$no_checked  = checked( 'no', $session_action->attendance, false );
-			}
-
-			$output .= '<tr>';
-			$output .= '<td>' . get_user_meta( absint( $client ), 'nickname', true ) . '</td>';
-			$output .= '<td>';
-			$output .= '<input id="has-attended-' . $index . '" type="radio" name="has_attended_' . $client . '" value="yes" ' . $yes_checked . '/>';
-			$output .= '</td>';
-			$output .= '<td>';
-			$output .= '<input id="has-attended--' . $index . '" type="radio" name="has_attended_' . $client . '" value="no" ' . $no_checked . '/>';
-			$output .= '</label>';
-			$output .= '</tr>';
+	
+	// Check if this is an AI session (check settings field or order meta)
+	$is_ai_session = false;
+	if ( isset( $session->settings ) && strpos( $session->settings, 'ai_booking' ) !== false ) {
+		$is_ai_session = true;
+	} elseif ( isset( $session->order_id ) && $session->order_id > 0 ) {
+		$order = wc_get_order( $session->order_id );
+		if ( $order ) {
+			$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+			$is_ai_session_meta = $order->get_meta( 'is_ai_session' );
+			$is_ai_session = $from_jalsah_ai || $is_ai_session_meta;
 		}
-		$output .= '</tbody>';
-		$output .= '<tfoot>';
-		$output .= '<tr><td colspan="3"><input type="hidden" name="attendees" value="' . $session->client_id . '">';
-		$output .= '<tr><td colspan="3"><input type="hidden" name="session_id" value="' . $session->ID . '">';
-		$output .= '<input class="snks-button table-form-button" type="submit" name="doctor-actions" value="إرسال"></td></tr>';
-		$output .= '</tfoot>';
-		$output .= '</form>';
-		$output .= '</table>';
 	}
-	if ( 'cancelled' !== $session->session_status && 'completed' !== $session->session_status ) {
-		$output .= '<a href="#" class="snks-button snks-cancel-appointment" data-id="' . $session->ID . '">إلغاء</a>';
+	
+	// Check if session is already completed
+	$is_completed = $session->session_status === 'completed';
+	
+	if ( ! empty( $attendees ) ) {
+		global $wpdb;
+		
+		// Calculate session end time (start datetime + period in minutes)
+		// Use WordPress timezone to ensure consistency
+		$timezone_string = get_option( 'timezone_string' );
+		if ( ! $timezone_string ) {
+			$timezone_string = 'UTC';
+		}
+		$session_datetime = new DateTime( $session->date_time, new DateTimeZone( $timezone_string ) );
+		$period_minutes   = isset( $session->period ) ? intval( $session->period ) : 45;
+		$session_datetime->add( new DateInterval( 'PT' . $period_minutes . 'M' ) );
+		$session_end_timestamp = $session_datetime->getTimestamp();
+		$current_timestamp     = current_time( 'timestamp' );
+		
+		// Check if session has ended
+		$is_session_ended = $current_timestamp >= $session_end_timestamp;
+		
+		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
+		
+		// Mark as Completed button - only show if not already completed
+		if ( ! $is_completed ) {
+			// Prepare button attributes
+			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
+			$button_class    = 'snks-button table-form-button snks-complete-session-btn';
+			if ( ! $is_session_ended ) {
+				$button_class .= ' snks-button-waiting';
+			}
+			$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+			$button_style    = $is_session_ended ? '' : 'style="pointer-events: none !important; cursor: not-allowed !important;"';
+			
+			$output .= '<form class="doctor_actions" method="post" action="">';
+			$output .= '<input type="hidden" name="attendees" value="' . $session->client_id . '">';
+			$output .= '<input type="hidden" name="session_id" value="' . $session->ID . '">';
+			$output .= '<input class="' . $button_class . '" type="submit" name="doctor-actions" value="تحديد كمكتملة" ' . $button_disabled . ' ' . $button_style . ' title="' . esc_attr( $button_title ) . '">';
+			$output .= '</form>';
+		}
+		
+		// Attendance confirmation button removed - attendance is now automatically set when session is completed
+		
+		// Roshtah Request button (only for AI sessions and only if session has ended or completed)
+		if ( $is_ai_session && ( $is_session_ended || $is_completed ) ) {
+			// Check if Roshtah request already exists for this session
+			$rochtah_table = $wpdb->prefix . 'snks_rochtah_bookings';
+			$rochtah_exists = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$rochtah_table} WHERE session_id = %d",
+				$session->ID
+			) );
+			
+			// Only show button if Roshtah request doesn't exist
+			if ( ! $rochtah_exists || $rochtah_exists == 0 ) {
+				$output .= '<button class="snks-button snks-roshtah-request-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #28a745; border-color: #28a745;">إرسال لروشتا</button>';
+			}
+		}
+		
+		// Send Message button (only for AI sessions)
+		if ( $is_ai_session ) {
+			// Prepare button attributes based on session status
+			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
+			$button_class    = 'snks-button snks-send-message-btn';
+			if ( ! $is_session_ended ) {
+				$button_class .= ' snks-button-waiting';
+			}
+			$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+			$button_style    = 'margin-top: 10px; background-color: #6366f1; border-color: #6366f1;';
+			if ( ! $is_session_ended ) {
+				$button_style .= ' pointer-events: none !important; cursor: not-allowed !important;';
+			}
+			
+			$output .= '<button class="' . $button_class . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="' . $button_style . '" ' . $button_disabled . ' title="' . esc_attr( $button_title ) . '">إرسال رسالة للمريض</button>';
+		}
+		
+		$output .= '</div>';
 	}
 	return $output;
 }
@@ -1476,12 +1801,24 @@ function snks_render_sessions_listing( $tense ) {
 					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . $room . '" data-url="' . $room . '">ابدأ الجلسة</a>
 				</td></tr>';
 			}
-			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" data-datetime="' . esc_attr( $session->date_time ) . '" class="snks-booking-item snks-patient-booking-item ' . $class . '"> ';
+			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" data-datetime="' . esc_attr( $session->date_time ) . '" data-period="' . esc_attr( $session->period ) . '" class="snks-booking-item snks-patient-booking-item ' . $class . '"> ';
 			$output .= str_replace(
 				array( '<!--edit_button-->', '<!--start_button-->' ),
 				array( $edit, $start ),
 				snks_booking_details( $session_details, false )
 			);
+			
+			// Add prescription button for AI sessions
+			if ( function_exists( 'snks_add_ai_prescription_button' ) ) {
+				$prescription_button = snks_add_ai_prescription_button( $session->ID, $session );
+				if ( $prescription_button ) {
+					$output .= '<div class="ai-prescription-section">';
+					$output .= '<h4>' . __( 'Prescription Services', 'shrinks' ) . '</h4>';
+					$output .= $prescription_button;
+					$output .= '</div>';
+				}
+			}
+			
 			$output .= '</div>';
 
 		}

@@ -89,8 +89,6 @@ function snks_delay_appointment( $patient_id, $doctor_id, $delay_period, $date )
 	$timestamp = strtotime( $date );
 
 	if ( false === $timestamp ) {
-		// Handle invalid date parsing.
-		error_log( 'Invalid date provided: ' . $date );
 		return;
 	}
 

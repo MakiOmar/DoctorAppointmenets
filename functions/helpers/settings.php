@@ -334,7 +334,7 @@ function snks_get_available_periods( $user_id = false, $attendance_type = 'both'
  * @return array
  */
 function snks_get_periods( $user_id = false ) {
-	$settings     = snks_doctor_settings( $user_id );
+	$settings = snks_doctor_settings( $user_id );
 	$is_available = array();
 	if ( ( 'on' === $settings['60_minutes'] || 'true' === $settings['60_minutes'] ) ) {
 		$is_available[] = 60;
@@ -1444,3 +1444,5 @@ add_action(
 	},
 	50
 );
+
+// REST API route moved to ai-integration.php to avoid conflicts

@@ -15,12 +15,20 @@
 // plugin textdomain.
 define( 'SNKS_DOMAIN', 'anony-turn' );
 
+// Load text domain for translations
+add_action( 'init', function() {
+	load_plugin_textdomain( 'shrinks', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+});
+
 define( 'TIMETABLE_TABLE_NAME', 'snks_provider_timetable' );
 define( 'TRNS_TABLE_NAME', 'snks_booking_transactions' );
 define( 'WHYSMS_SENDER_ID', 'Jalsah' );
 define( 'WHYSMS_TOKEN', '299|dXuaaScFgVVEUu1FcRa8ApgmE5p0uY6dmsUfp6gR2d0970da' );
 define( 'CANCELL_AFTER', 15 );
 define( 'IL_TO_EG', true );
+
+// JWT Secret for AI Integration
+define( 'JWT_SECRET', 'jalsah-ai-secret-key-2024-v1' );
 
 // Ensure the vendor autoload file is required.
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
@@ -124,6 +132,32 @@ add_action(
 		snks_require_all_files( SNKS_DIR . 'functions' );
 		snks_require_all_files( SNKS_DIR . 'classes' );
 		snks_require_all_files( SNKS_DIR . 'scripts' );
+		
+		// Load AI integration
+require_once SNKS_DIR . 'functions/ai-integration.php';
+require_once SNKS_DIR . 'functions/admin/ai-admin.php';
+require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
+require_once SNKS_DIR . 'functions/admin/ai-applications.php';
+require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
+require_once SNKS_DIR . 'functions/admin/add-arabic-diagnoses.php';
+require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
+require_once SNKS_DIR . 'functions/admin/rochtah-slots-manager.php';
+require_once SNKS_DIR . 'functions/admin/therapist-registration-settings.php';
+require_once SNKS_DIR . 'functions/shortcodes/therapist-registration-shortcode.php';
+require_once SNKS_DIR . 'functions/admin/test-data-populator.php';
+require_once SNKS_DIR . 'functions/admin/demo-doctors-manager.php';
+require_once SNKS_DIR . 'functions/admin/cleanup-demo-data.php';
+require_once SNKS_DIR . 'functions/admin/bulk-diagnosis-assignment.php';
+require_once SNKS_DIR . 'functions/admin/profit-settings.php';
+require_once SNKS_DIR . 'functions/admin/therapist-earnings.php';
+require_once SNKS_DIR . 'functions/admin/ai-transaction-processing.php';
+require_once SNKS_DIR . 'admin-data-migration.php';
+require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
+require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
+require_once SNKS_DIR . 'functions/ajax/therapist-certificates.php';
+require_once SNKS_DIR . 'functions/ajax/therapist-details.php';
+require_once SNKS_DIR . 'functions/ajax/session-messages-ajax.php';
+require_once SNKS_DIR . 'functions/ai-prescription.php';
 	},
 	20
 );
@@ -139,19 +173,396 @@ require_once SNKS_DIR . 'includes/timetable-table.php';
 require_once SNKS_DIR . 'includes/sessions-actions-table.php';
 require_once SNKS_DIR . 'includes/transaction-table.php';
 require_once SNKS_DIR . 'includes/coupons-tables.php';
+require_once SNKS_DIR . 'includes/ai-tables.php';
+require_once SNKS_DIR . 'includes/session-messages-table.php';
+
+// AI table creation hooks will be registered on init to ensure all functions are loaded
+
+// Check for AI profit system updates on plugin load
+add_action( 'init', 'snks_check_ai_profit_system_updates' );
+
+// Ensure database structure is up to date on every page load (for development)
+// Remove this in production after initial deployment
+add_action( 'init', 'snks_ensure_ai_profit_database_structure' );
+
+// Register AI table creation hooks on init to ensure all functions are loaded
+add_action( 'init', 'snks_register_ai_table_hooks' );
+
+add_filter(
+	'send_password_change_email',
+	function ( $send, $user, $userdata ) {
+		if ( ! is_admin() || ! current_user_can( 'edit_users' ) ) {
+			return $send;
+		}
+
+		global $pagenow;
+		$screen_ids = array( 'user-edit.php', 'user-edit-network.php' );
+		$action     = isset( $_POST['action'] ) ? sanitize_key( wp_unslash( $_POST['action'] ) ) : '';
+
+		if ( in_array( $pagenow, $screen_ids, true ) && 'update' === $action ) {
+			return false;
+		}
+
+		return $send;
+	},
+	10,
+	3
+);
+
+/**
+ * Register AI table creation hooks
+ */
+function snks_register_ai_table_hooks() {
+	// Hook AI tables creation functions (with safety checks)
+	if ( function_exists( 'snks_create_ai_tables' ) ) {
+		add_action( 'snks_create_ai_tables', 'snks_create_ai_tables' );
+	}
+	if ( function_exists( 'snks_add_ai_meta_fields' ) ) {
+		add_action( 'snks_add_ai_meta_fields', 'snks_add_ai_meta_fields' );
+	}
+	if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+		add_action( 'snks_create_enhanced_ai_tables', 'snks_create_enhanced_ai_tables' );
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_meta_fields' ) ) {
+		add_action( 'snks_add_enhanced_ai_meta_fields', 'snks_add_enhanced_ai_meta_fields' );
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_user_meta_fields' ) ) {
+		add_action( 'snks_add_enhanced_ai_user_meta_fields', 'snks_add_enhanced_ai_user_meta_fields' );
+	}
+	if ( function_exists( 'snks_create_rochtah_doctor_role' ) ) {
+		add_action( 'snks_create_rochtah_doctor_role', 'snks_create_rochtah_doctor_role' );
+	}
+}
+
+/**
+ * Check for AI profit system updates and run upgrades if needed
+ */
+function snks_check_ai_profit_system_updates() {
+	$current_version = get_option( 'snks_ai_profit_system_version', '0.0.0' );
+	$plugin_version = '1.0.0'; // Current AI profit system version
+	
+	if ( version_compare( $current_version, $plugin_version, '<' ) ) {
+		// Run the upgrade function
+		if ( function_exists( 'snks_upgrade_ai_profit_database_schema' ) ) {
+			snks_upgrade_ai_profit_database_schema();
+		}
+		
+		// Update the version
+		update_option( 'snks_ai_profit_system_version', $plugin_version );
+	
+	}
+}
+
+/**
+ * Ensure AI profit database structure is always up to date
+ * This function runs on every page load during development
+ * Remove this function call in production after initial deployment
+ */
+function snks_ensure_ai_profit_database_structure() {
+	// Only run this in development environment
+	if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+		return;
+	}
+	
+	// Check if all required functions exist
+	if ( ! function_exists( 'snks_create_ai_profit_settings_table' ) ||
+		 ! function_exists( 'snks_add_ai_session_type_column' ) ||
+		 ! function_exists( 'snks_add_ai_transaction_metadata_columns' ) ||
+		 ! function_exists( 'snks_add_default_profit_settings' ) ) {
+		return;
+	}
+	
+	global $wpdb;
+	
+	// Check if AI profit settings table exists
+	$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->prefix}snks_ai_profit_settings'" );
+	if ( ! $table_exists ) {
+		snks_create_ai_profit_settings_table();
+	}
+	
+	// Check if required columns exist in sessions_actions table
+	$sessions_table = $wpdb->prefix . 'snks_sessions_actions';
+	$required_columns = ['ai_session_type', 'therapist_id', 'patient_id'];
+	
+	foreach ( $required_columns as $column ) {
+		$column_exists = $wpdb->get_var( "SHOW COLUMNS FROM $sessions_table LIKE '$column'" );
+		if ( ! $column_exists ) {
+			snks_add_ai_session_type_column();
+			break; // Function adds all columns, so we only need to call it once
+		}
+	}
+	
+	// Check if required columns exist in booking_transactions table
+	$transactions_table = $wpdb->prefix . 'snks_booking_transactions';
+	$required_columns = ['ai_session_id', 'ai_session_type', 'ai_patient_id', 'ai_order_id'];
+	
+	foreach ( $required_columns as $column ) {
+		$column_exists = $wpdb->get_var( "SHOW COLUMNS FROM $transactions_table LIKE '$column'" );
+		if ( ! $column_exists ) {
+			snks_add_ai_transaction_metadata_columns();
+			break; // Function adds all columns, so we only need to call it once
+		}
+	}
+	
+	// Check if we have default profit settings
+	$settings_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}snks_ai_profit_settings" );
+	if ( $settings_count == 0 ) {
+		snks_add_default_profit_settings();
+	}
+}
+
+// Add missing columns to existing installations
+if ( function_exists( 'snks_add_missing_therapist_diagnoses_columns' ) ) {
+	snks_add_missing_therapist_diagnoses_columns();
+}
+
+// Add missing columns to therapist applications table
+if ( function_exists( 'snks_add_missing_therapist_applications_columns' ) ) {
+	snks_add_missing_therapist_applications_columns();
+}
+
+// Note: Demo data creation is now handled manually via create-demo-data.php
+// or through the admin interface when needed
 /**
  * Plugin activation hook
  *
  * @return void
  */
 function plugin_activation_hook() {
+	// Load required files for activation (these might not be loaded yet during activation)
+	$enhanced_tables_file = plugin_dir_path( __FILE__ ) . 'includes/ai-tables-enhanced.php';
+	if ( file_exists( $enhanced_tables_file ) ) {
+		require_once $enhanced_tables_file;
+	}
+	
 	snks_create_timetable_table();
 	snks_create_snks_sessions_actions_table();
 	snks_create_transactions_table();
 	snks_create_custom_coupons_table();
 	snks_create_coupon_usages_table();
+	
+	// Add WhatsApp notification columns for AI sessions
+	if ( function_exists( 'snks_add_whatsapp_notification_columns' ) ) {
+		snks_add_whatsapp_notification_columns();
+	}
+	
+	// Add WhatsApp notification columns for Rochtah bookings
+	if ( function_exists( 'snks_add_rochtah_whatsapp_notification_columns' ) ) {
+		snks_add_rochtah_whatsapp_notification_columns();
+	}
+	if ( function_exists( 'snks_add_rochtah_doctor_joined_column' ) ) {
+		snks_add_rochtah_doctor_joined_column();
+	}
+	
+	// Create AI tables
+	do_action( 'snks_create_ai_tables' );
+	do_action( 'snks_add_ai_meta_fields' );
+	do_action( 'snks_create_enhanced_ai_tables' );
+	do_action( 'snks_add_enhanced_ai_meta_fields' );
+	do_action( 'snks_add_enhanced_ai_user_meta_fields' );
+	do_action( 'snks_create_rochtah_doctor_role' );
+	
+	// Fallback: Direct function calls if action hooks fail
+	if ( function_exists( 'snks_create_ai_tables' ) ) {
+		snks_create_ai_tables();
+	}
+	// Ensure enhanced AI tables are created (including coupons table)
+	// This is critical - the coupons table must be created on activation
+	if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+		snks_create_enhanced_ai_tables();
+	} else {
+		// If function still doesn't exist after require, something is wrong
+		// But try one more time with absolute path
+		$enhanced_tables_file = plugin_dir_path( __FILE__ ) . 'includes/ai-tables-enhanced.php';
+		if ( file_exists( $enhanced_tables_file ) ) {
+			require_once $enhanced_tables_file;
+			if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+				snks_create_enhanced_ai_tables();
+			}
+		}
+	}
+	if ( function_exists( 'snks_create_rochtah_tables' ) ) {
+		snks_create_rochtah_tables();
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_meta_fields' ) ) {
+		snks_add_enhanced_ai_meta_fields();
+	}
+	if ( function_exists( 'snks_add_enhanced_ai_user_meta_fields' ) ) {
+		snks_add_enhanced_ai_user_meta_fields();
+	}
+	if ( function_exists( 'snks_create_rochtah_doctor_role' ) ) {
+		snks_create_rochtah_doctor_role();
+	}
+	
+	// Ensure AI profit system database structure is complete
+	if ( function_exists( 'snks_create_ai_profit_settings_table' ) ) {
+		snks_create_ai_profit_settings_table();
+	}
+	if ( function_exists( 'snks_add_ai_session_type_column' ) ) {
+		snks_add_ai_session_type_column();
+	}
+	if ( function_exists( 'snks_add_ai_transaction_metadata_columns' ) ) {
+		snks_add_ai_transaction_metadata_columns();
+	}
+	if ( function_exists( 'snks_add_default_profit_settings' ) ) {
+		snks_add_default_profit_settings();
+	}
+	
+	// Set AI profit system version
+	update_option( 'snks_ai_profit_system_version', '1.0.0' );
+	
+	// Create AI session product for WooCommerce
+	// Defer AI product creation to avoid WooCommerce conflicts during activation
+	if ( class_exists( 'WooCommerce' ) ) {
+		// Include AI helper classes
+		require_once SNKS_DIR . 'functions/helpers/ai-products.php';
+		// Schedule product creation for next page load to avoid activation conflicts
+		add_action( 'init', function() {
+			if ( class_exists( 'WooCommerce' ) ) {
+				SNKS_AI_Products::create_ai_session_product();
+			}
+		}, 20 );
+	}
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
+
+// Create therapist applications table on activation
+register_activation_hook(
+	__FILE__,
+	static function() {
+		snks_create_therapist_applications_table();
+		if ( function_exists( 'snks_add_missing_therapist_applications_columns' ) ) {
+			snks_add_missing_therapist_applications_columns();
+		}
+	}
+);
+
+// Hook to set up default pricing when therapist is activated
+add_action( 'update_user_meta', 'snks_check_therapist_activation', 10, 4 );
+
+/**
+ * Create custom table for therapist applications
+ */
+function snks_create_therapist_applications_table() {
+	global $wpdb;
+	
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	$charset_collate = $wpdb->get_charset_collate();
+	
+	           $sql = "CREATE TABLE $table_name (
+               id mediumint(9) NOT NULL AUTO_INCREMENT,
+               user_id bigint(20) DEFAULT NULL,
+               name varchar(255) NOT NULL,
+               name_en varchar(255) DEFAULT '',
+               email varchar(255) NOT NULL,
+               phone varchar(50) NOT NULL,
+               whatsapp varchar(50) DEFAULT '',
+               doctor_specialty varchar(255) DEFAULT '',
+               role varchar(50) DEFAULT '',
+               psychiatrist_rank varchar(50) DEFAULT '',
+               psych_origin varchar(100) DEFAULT '',
+               cp_moh_license varchar(10) DEFAULT '',
+               graduate_certificate bigint(20) DEFAULT NULL,
+               practice_license bigint(20) DEFAULT NULL,
+               syndicate_card bigint(20) DEFAULT NULL,
+               rank_certificate bigint(20) DEFAULT NULL,
+               cp_graduate_certificate bigint(20) DEFAULT NULL,
+               cp_highest_degree bigint(20) DEFAULT NULL,
+               cp_moh_license_file bigint(20) DEFAULT NULL,
+               experience_years int(11) DEFAULT 0,
+               education text,
+               bio text,
+               bio_en text,
+               profile_image bigint(20) DEFAULT NULL,
+               identity_front bigint(20) DEFAULT NULL,
+               identity_back bigint(20) DEFAULT NULL,
+               certificates longtext,
+               therapy_courses longtext,
+               preferred_groups text,
+               diagnoses_children text,
+               diagnoses_adult text,
+               rating decimal(3,2) DEFAULT 0.00,
+               total_ratings int(11) DEFAULT 0,
+               ai_bio text,
+               ai_bio_en text,
+               ai_certifications text,
+               ai_earliest_slot int(11) DEFAULT 0,
+               show_on_ai_site tinyint(1) DEFAULT 0,
+               status varchar(20) DEFAULT 'pending',
+               created_at datetime DEFAULT CURRENT_TIMESTAMP,
+               updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+               PRIMARY KEY (id),
+               KEY user_id (user_id),
+               KEY status (status),
+               KEY email (email)
+           ) $charset_collate;";
+	
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	dbDelta( $sql );
+}
+
+function snks_add_missing_therapist_applications_columns() {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	
+	// Check if columns exist and add them if they don't
+	$columns_to_add = [
+       'role' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN role varchar(50) DEFAULT ""',
+       'psychiatrist_rank' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN psychiatrist_rank varchar(50) DEFAULT ""',
+       'psych_origin' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN psych_origin varchar(100) DEFAULT ""',
+       'cp_moh_license' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN cp_moh_license varchar(10) DEFAULT ""',
+       'graduate_certificate' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN graduate_certificate bigint(20) DEFAULT NULL',
+       'practice_license' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN practice_license bigint(20) DEFAULT NULL',
+       'syndicate_card' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN syndicate_card bigint(20) DEFAULT NULL',
+       'rank_certificate' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN rank_certificate bigint(20) DEFAULT NULL',
+       'cp_graduate_certificate' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN cp_graduate_certificate bigint(20) DEFAULT NULL',
+       'cp_highest_degree' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN cp_highest_degree bigint(20) DEFAULT NULL',
+       'cp_moh_license_file' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN cp_moh_license_file bigint(20) DEFAULT NULL',
+       'therapy_courses' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN therapy_courses longtext',
+       'preferred_groups' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN preferred_groups text',
+       'diagnoses_children' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN diagnoses_children text',
+       'diagnoses_adult' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN diagnoses_adult text',
+       'rating' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN rating decimal(3,2) DEFAULT 0.00',
+       'total_ratings' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN total_ratings int(11) DEFAULT 0',
+       'ai_bio' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_bio text',
+       'ai_bio_en' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_bio_en text',
+       'ai_certifications' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_certifications text',
+       'ai_earliest_slot' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN ai_earliest_slot int(11) DEFAULT 0',
+       'show_on_ai_site' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN show_on_ai_site tinyint(1) DEFAULT 0',
+       'otp_method' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN otp_method varchar(20) DEFAULT "email"',
+       'submitted_at' => 'ALTER TABLE ' . $table_name . ' ADD COLUMN submitted_at datetime DEFAULT CURRENT_TIMESTAMP'
+	];
+	
+	foreach ( $columns_to_add as $column_name => $sql ) {
+		$column_exists = $wpdb->get_results( $wpdb->prepare( 
+			"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s",
+			DB_NAME,
+			$table_name,
+			$column_name
+		) );
+		
+		if ( empty( $column_exists ) ) {
+			$wpdb->query( $sql );
+		}
+	}
+}
+
+/**
+ * Check if therapist is being activated and set up default pricing
+ */
+function snks_check_therapist_activation( $meta_id, $user_id, $meta_key, $meta_value ) {
+	// Check if this is the show_on_ai_site meta being set to 1 (activated)
+	if ( $meta_key === 'show_on_ai_site' && $meta_value === '1' ) {
+		// Check if user is a therapist (has doctor role or is in therapist_applications table)
+		$user = get_user_by( 'ID', $user_id );
+		if ( $user && in_array( 'doctor', $user->roles ) ) {
+			// Set up default pricing for the therapist
+			if ( class_exists( 'SNKS_AI_Integration' ) ) {
+				SNKS_AI_Integration::setup_therapist_default_pricing( $user_id );
+			}
+		}
+	}
+}
 
 add_filter(
 	'gettext',

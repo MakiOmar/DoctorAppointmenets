@@ -1,0 +1,231 @@
+[
+    {
+      "title": "Jalsah AI Core System Architecture",
+      "description": "Designed and documented complete system architecture for AI-powered mental health appointment platform with JWT authentication, REST API endpoints, and database schema",
+      "priority": "urgent",
+      "status": "completed"
+    },
+    {
+      "title": "Database Schema Implementation",
+      "description": "Created new database tables: snks_diagnoses, snks_therapist_diagnoses, snks_ai_coupons, snks_rochtah_bookings, snks_ai_analytics, snks_ai_notifications with proper relationships and constraints",
+      "priority": "urgent",
+      "status": "completed"
+    },
+    {
+      "title": "JWT Authentication System",
+      "description": "Implemented secure JWT authentication using Firebase JWT library with 24-hour token expiration, Bearer token authentication, and CORS headers for cross-origin requests",
+      "priority": "urgent",
+      "status": "completed"
+    },
+    {
+      "title": "REST API Endpoints Development",
+      "description": "Built comprehensive REST API with endpoints for authentication, therapist listing, appointment booking, cart management, diagnosis management, and order creation",
+      "priority": "urgent",
+      "status": "completed"
+    },
+    {
+      "title": "User Registration and Login System",
+      "description": "Built complete user registration system with email verification, required fields validation, and token-based login for AI platform",
+      "priority": "urgent",
+      "status": "completed"
+    },
+    {
+      "title": "Enhanced WordPress Admin Interface",
+      "description": "Created complete Jalsah AI admin panel with therapist profile management, diagnosis management, session tracking, coupon system, analytics, ChatGPT integration, and WhatsApp templates",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Therapist Profile Management System",
+      "description": "Implemented comprehensive therapist profile system with AI-specific settings, diagnosis assignments, commission percentages, and visibility controls",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Diagnosis Management System",
+      "description": "Built diagnosis CRUD operations with therapist assignments, ratings, suitability messages, and bulk operations support",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "AI Session Management",
+      "description": "Implemented AI-specific session tracking with attendance management, 45-minute online-only sessions, and AI session badges",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "ChatGPT Integration Framework",
+      "description": "Built ChatGPT API integration for diagnosis recommendations with customizable prompts, model selection, and temperature controls",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Therapist Filtering & Sorting System",
+      "description": "Implement filtering by rating (default), price, nearest appointment, search functionality, pagination (20 per page), and diagnosis-based filtering",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Cart System Implementation",
+      "description": "Built AI-specific cart system with real-time availability checking, multiple slots per therapist, and automatic cart clearing after checkout",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "WooCommerce Payment Integration",
+      "description": "Enhanced WooCommerce integration with automatic product creation, order meta storage, payment processing, and webhook support for AI bookings",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Frontend Cart System Integration",
+      "description": "Enhanced existing Vue.js frontend cart system to work with WooCommerce order creation and payment processing",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Main Dashboard UI Development",
+      "description": "Build main page with two options: ChatGPT diagnosis or browse all therapists, implement navigation header with logo and menu",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Booking Management Interface",
+      "description": "Create patient bookings page with upcoming/past sessions, session cards with therapist info, action buttons for AI-specific bookings",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Session Rescheduling System",
+      "description": "Implement 24-hour free rescheduling, once per session limit, AJAX-based interface without page reload",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Custom Session Page Development",
+      "description": "Create AI-specific session interface, handle exit redirects (patients to bookings, doctors to settings)",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Doctor Interface Enhancements",
+      "description": "Add green AI session indicators, hide modification buttons, show AI diagnosis info, attendance confirmation system",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "File Sharing System",
+      "description": "Enable doctors to send files to patients via email (25MB limit), store files in admin panel for management",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Profit Distribution System Implementation",
+      "description": "Implement custom profit percentages per doctor, separate rates for first session vs subsequent sessions with automated calculations",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Coupon System Development",
+      "description": "Implemented segment-based coupon system with usage limits, expiry dates, platform share-only discounts, and real-time validation",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Analytics and Reporting System",
+      "description": "Created comprehensive analytics tracking user drop-off points, booking patterns, retention metrics, and therapist performance leaderboards",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "WhatsApp Cloud API Integration",
+      "description": "Implemented WhatsApp notification system with template management, variable substitution, and automated messaging for bookings and reminders",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Email Notification System",
+      "description": "Built customizable email notification system with template management, variable substitution, and toggle controls for different notification types",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "User Communication System",
+      "description": "Enable bulk WhatsApp/email messaging for selected users, integration with analytics filters for targeted campaigns",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Rochtah Prescription System",
+      "description": "Created prescription workflow system with rochtah_doctor role, booking management, and prescription handling capabilities",
+      "priority": "low",
+      "status": "completed"
+    },
+    {
+      "title": "Prescription Management Interface",
+      "description": "Build prescription doctor dashboard for schedule management, patient queue, prescription creation with file upload",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Admin Tools and User Management",
+      "description": "Implemented admin tools including user switching functionality, user filtering by registration source, and quick action links",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Therapist Ranking Display System",
+      "description": "Create public page for therapists to view their AI ranking, visibility status, performance metrics",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Therapist Application Management",
+      "description": "Created unified therapist application and profile management system to eliminate data duplication and provide consistent workflows",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "title": "Pricing and Filtering Logic Refactoring",
+      "description": "Planned improvements to therapist filtering, diagnosis-based filtering, and location-based pricing logic for better user experience",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Security Implementation",
+      "description": "Implemented comprehensive security measures including input validation, sanitization, nonce verification, role-based access control, and rate limiting",
+      "priority": "urgent",
+      "status": "completed"
+    },
+    {
+      "title": "Testing and Quality Assurance",
+      "description": "Comprehensive testing strategy including unit tests, integration tests, end-to-end tests, and manual QA for all AI platform features",
+      "priority": "high",
+      "status": "in_progress"
+    },
+    {
+      "title": "Documentation and API Documentation",
+      "description": "Complete technical documentation, API documentation, and user guides for the Jalsah AI platform integration",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "title": "Performance Optimization",
+      "description": "Optimize database queries, implement caching, ensure fast loading times, scalability testing",
+      "priority": "medium",
+      "status": "in_progress"
+    },
+    {
+      "title": "Production Deployment Preparation",
+      "description": "Deployment checklist, migration scripts, and production environment setup for the complete AI platform",
+      "priority": "urgent",
+      "status": "in_progress"
+    },
+    {
+      "title": "Finish the project",
+      "description": "Hoooraaayyyyyy",
+      "priority": "urgent",
+      "status": "completed"
+    }
+    
+  ]

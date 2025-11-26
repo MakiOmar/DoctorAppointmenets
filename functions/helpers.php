@@ -41,7 +41,13 @@ function snks_count_date( $date, $timetables ) {
 function snks_group_objects_by( $objects, $member_name ) {
 	$grouped = array();
 	foreach ( $objects as $object ) {
-		$key = $object->$member_name;
+		// Check if the property exists before accessing it
+		if ( ! isset( $object->$member_name ) ) {
+			// If property doesn't exist, use a default key
+			$key = 'unknown';
+		} else {
+			$key = $object->$member_name;
+		}
 		if ( ! isset( $grouped[ $key ] ) ) {
 			$grouped[ $key ] = array();
 		}
@@ -288,74 +294,103 @@ function snks_send_email( $to, $title, $sub_title, $text_1, $text_2, $text_3, $b
  * the code in a cookie for 24 hours. It uses WordPress functions for making HTTP requests and handling responses.
  *
  * @param bool $set_cookie Weather to set cookie or not.
+ * @param string $custom_ip Optional IP address to use instead of detecting from headers.
  * @return string
  */
-function snks_get_country_code( $set_cookie = true ) {
-	//phpcs:disable
-	// Get the user's IP address, validating it for security.
-	$ip = filter_var( $_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP );
-	//phpcs:enable
-	// If the IP address is not valid, return early.
-	if ( ! $ip ) {
-		return 'Unknown';
-	}
+function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
+    // Use custom IP if provided, otherwise get the real client IP even behind proxies or Cloudflare
+    if ( $custom_ip ) {
+        $ip = filter_var( $custom_ip, FILTER_VALIDATE_IP );
+    } else {
+        $ip_keys = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',  // Proxies, Load balancers
+            'HTTP_X_REAL_IP',        // Some reverse proxies
+            'HTTP_CLIENT_IP',        // Generic
+            'REMOTE_ADDR'            // Default fallback
+        ];
 
-	// API key and URL for IP lookup.
-	$api_key = 'yBZHxURnxnHhONq'; // Replace with your actual API key.
-	$api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
+        $ip = 'Unknown';
+        foreach ( $ip_keys as $key ) {
+            if ( ! empty( $_SERVER[ $key ] ) ) {
+                $ip_list = explode( ',', $_SERVER[ $key ] ); // In case of multiple IPs
+                $ip      = filter_var( trim( $ip_list[0] ), FILTER_VALIDATE_IP );
+                if ( $ip ) {
+                    break;
+                }
+            }
+        }
+    }
 
-	// Send request to the IP API using wp_remote_get.
-	$response = wp_remote_get( $api_url );
 
-	// Check for errors and validate the response.
-	if ( is_wp_error( $response ) ) {
-		return 'Unknown'; // Early return if there's an error in the response.
-	}
-	$country_codes = json_decode( COUNTRY_CURRENCIES, true );
-	$country_code  = 'Unknown';
-	// Retrieve the response body.
-	$body                 = wp_remote_retrieve_body( $response );
-	$europe_country_codes = array( // phpcs:disable
-			'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR',
-			'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'GE', 'DE', 'GR', 'HU',
-			'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT', 'LU', 'MT',
-			'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU',
-			'SM', 'RS', 'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
-		);
-		// phpcs:enable
-	// Check if the body is not empty and contains serialized data.
-	if ( ! empty( $body ) ) {
-		$data = json_decode( $body ); // Using @ to suppress potential warnings.
-		// Check if the country code is present.
-		if ( $data && isset( $data->countryCode ) ) { //phpcs:disable
-			$country_code = sanitize_text_field( $data->countryCode );
-			//phpcs:enable
-			if ( $set_cookie ) {
-				if( IL_TO_EG && 'IL' === $country_code ) {
-					$country_code = 'EG';
-				}
-				// Store the country code in a cookie for 24 hours.
-				setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
-				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
-					$stored_currency = $country_codes[ $country_code ];
-				} else {
-					$stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
-				}
-				if( IL_TO_EG && 'IL' === $country_code ) {
-					$stored_currency = 'EGP';
-				}
-				setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' ); // DAY_IN_SECONDS is a WordPress constant.
-			}
+    // If no valid IP found, return Unknown
+    if ( ! $ip ) {
+        return 'Unknown';
+    }
 
-			if( IL_TO_EG && 'IL' === $country_code ) {
-				$country_code = 'EG';
-			}
+    // API key and URL for IP lookup
+    $api_key = 'yBZHxURnxnHhONq';
+    $api_url = sprintf( 'https://pro.ip-api.com/json/%s?key=%s&fields=countryCode', $ip, esc_attr( $api_key ) );
 
-			return $country_code;
-		}
-	}
-	return $country_code;
+    // Send request to the IP API using wp_remote_get
+    $response = wp_remote_get( $api_url );
+
+    if ( is_wp_error( $response ) ) {
+        return 'Unknown';
+    }
+
+    $country_codes = json_decode( COUNTRY_CURRENCIES, true );
+    $country_code  = 'Unknown';
+
+    // Retrieve the response body
+    $body = wp_remote_retrieve_body( $response );
+
+    $europe_country_codes = [
+        'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+        'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+        'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+        'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+    ];
+
+    if ( ! empty( $body ) ) {
+        $data = json_decode( $body );
+
+        if ( $data && isset( $data->countryCode ) ) {
+            $country_code = sanitize_text_field( $data->countryCode );
+
+            if ( $set_cookie ) {
+                if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
+                    $country_code = 'EG';
+                }
+
+                // Store the country code in a cookie for 24 hours
+                setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' );
+
+                // Determine stored currency
+                if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
+                    $stored_currency = $country_codes[ $country_code ];
+                } else {
+                    $stored_currency = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
+                }
+
+                if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
+                    $stored_currency = 'EGP';
+                }
+
+                setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' );
+            }
+
+            if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
+                $country_code = 'EG';
+            }
+
+            return $country_code;
+        }
+    }
+
+    return $country_code;
 }
+
 
 /**
  * Get country code
@@ -556,7 +591,7 @@ function snks_replace_time_units_to_arabic( $text ) {
 	$english_to_arabic = array(
 		'seconds' => 'ثواني',
 		'second'  => 'ثانية',
-		'minutes' => 'دقائق',
+		'minutes' => 'دقيقة',
 		'minute'  => 'دقيقة',
 		'hours'   => 'ساعات',
 		'hour'    => 'ساعة',
@@ -732,5 +767,273 @@ function snks_auto_publish_appointments( $user_id ) {
 	}
 
 	snks_set_preview_timetable( $preview_timetables, $user_id );
+}
+
+/**
+ * Check if bilingual support is enabled
+ *
+ * @return bool
+ */
+function snks_is_bilingual_enabled() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_bilingual_enabled', 'options' );
+	return get_option( 'snks_ai_bilingual_enabled', '1' ) === '1';
+}
+
+/**
+ * Get the default language for the AI site
+ *
+ * @return string 'ar' for Arabic, 'en' for English
+ */
+function snks_get_default_language() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_default_language', 'options' );
+	return get_option( 'snks_ai_default_language', 'ar' );
+}
+
+/**
+ * Get the current language for the AI site
+ * If bilingual is disabled, returns the default language
+ * If bilingual is enabled, tries to get from user preference or defaults to default language
+ *
+ * @return string 'ar' for Arabic, 'en' for English
+ */
+function snks_get_current_language() {
+	if ( ! snks_is_bilingual_enabled() ) {
+		return snks_get_default_language();
+	}
+	
+	// Try to get from user preference (localStorage in frontend)
+	if ( isset( $_GET['locale'] ) ) {
+		$locale = sanitize_text_field( $_GET['locale'] );
+		if ( in_array( $locale, array( 'ar', 'en' ) ) ) {
+			return $locale;
+		}
+	}
+	
+	// Try to get from session/cookie
+	if ( isset( $_COOKIE['jalsah_locale'] ) ) {
+		$locale = sanitize_text_field( $_COOKIE['jalsah_locale'] );
+		if ( in_array( $locale, array( 'ar', 'en' ) ) ) {
+			return $locale;
+		}
+	}
+	
+	// Default to the configured default language
+	return snks_get_default_language();
+}
+
+/**
+ * Get bilingual site title
+ *
+ * @param string $locale Optional locale, defaults to current language
+ * @return string
+ */
+function snks_get_site_title( $locale = null ) {
+	if ( ! $locale ) {
+		$locale = snks_get_current_language();
+	}
+	
+	if ( $locale === 'ar' ) {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_title_ar', 'options' );
+		return get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
+	} else {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_title_en', 'options' );
+		return get_option( 'snks_ai_site_title_en', 'Jalsah AI - Mental Health Support' );
+	}
+}
+
+/**
+ * Get bilingual site description
+ *
+ * @param string $locale Optional locale, defaults to current language
+ * @return string
+ */
+function snks_get_site_description( $locale = null ) {
+	if ( ! $locale ) {
+		$locale = snks_get_current_language();
+	}
+	
+	if ( $locale === 'ar' ) {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_description_ar', 'options' );
+		return get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
+	} else {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_site_description_en', 'options' );
+		return get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
+	}
+}
+
+/**
+ * Get diagnosis results limit
+ *
+ * @return int
+ */
+function snks_get_diagnosis_results_limit() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_diagnosis_results_limit', 'options' );
+	$limit = get_option( 'snks_ai_diagnosis_results_limit', 10 );
+	
+	return intval( $limit );
+}
+
+/**
+ * Get show more button enabled setting
+ *
+ * @return bool
+ */
+function snks_get_show_more_button_enabled() {
+	// Force refresh cache for this option
+	wp_cache_delete( 'snks_ai_show_more_button_enabled', 'options' );
+	$enabled = get_option( 'snks_ai_show_more_button_enabled', '1' );
+	
+	return $enabled === '1';
+}
+
+/**
+ * Get bilingual appointment change terms
+ *
+ * @param string $locale Optional locale, defaults to current language
+ * @return string
+ */
+function snks_get_appointment_change_terms( $locale = null ) {
+	if ( ! $locale ) {
+		$locale = snks_get_current_language();
+	}
+	
+	if ( $locale === 'ar' ) {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_appointment_change_terms_ar', 'options' );
+		return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+	} else {
+		// Force refresh cache for this option
+		wp_cache_delete( 'snks_ai_appointment_change_terms_en', 'options' );
+		return get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
+	}
+}
+
+/**
+ * Check if appointment can be rescheduled or cancelled (24 hours before)
+ *
+ * @param object $appointment Appointment object
+ * @return bool
+ */
+function snks_can_modify_appointment( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return false;
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	// Can modify up to 24 hours before (86400 seconds = 24 hours)
+	return ( $appointment_time - $current_time ) > 86400;
+}
+
+/**
+ * Get time remaining until appointment (in seconds)
+ *
+ * @param object $appointment Appointment object
+ * @return int Seconds remaining, negative if appointment has passed
+ */
+function snks_get_appointment_time_remaining( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return 0;
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	return $appointment_time - $current_time;
+}
+
+/**
+ * Check if AI appointment can be edited (24 hours before)
+ *
+ * @param object $appointment Appointment object
+ * @return bool
+ */
+function snks_can_edit_ai_appointment( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return false;
+	}
+	
+	// Check if this is an AI booking
+	if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
+		return true; // Not an AI booking, use regular validation
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	// AI appointments can be edited up to 24 hours before (86400 seconds = 24 hours)
+	return ( $appointment_time - $current_time ) > 86400;
+}
+
+/**
+ * Get AI appointment edit time remaining (in seconds)
+ *
+ * @param object $appointment Appointment object
+ * @return int Seconds remaining until edit deadline, negative if past deadline
+ */
+function snks_get_ai_appointment_edit_time_remaining( $appointment ) {
+	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
+		return 0;
+	}
+	
+	// Check if this is an AI booking
+	if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
+		return 0; // Not an AI booking, use regular validation
+	}
+	
+	$appointment_time = strtotime( $appointment->date_time );
+	$current_time = current_time( 'timestamp' );
+	
+	// Return time remaining until 24 hours before appointment
+	return ( $appointment_time - $current_time ) - 86400;
+}
+
+/**
+ * Validate 15-minute rule for marking patient absence
+ * 
+ * @param string $session_date_time Session date and time
+ * @param string $attendance Attendance status ('yes' or 'no')
+ * @return array Validation result with success status and error message
+ */
+function snks_validate_absence_15_minute_rule($session_date_time, $attendance = 'yes') {
+	// If marking as attended, no validation needed
+	if ($attendance === 'yes') {
+		return array(
+			'success' => true,
+			'message' => ''
+		);
+	}
+	
+	// Check if 15 minutes have passed since the session start time
+	$session_start_time = strtotime($session_date_time);
+	$current_time = current_time('timestamp');
+	$minutes_passed = ($current_time - $session_start_time) / 60;
+	
+	if ($minutes_passed < 15) {
+		$remaining_minutes = ceil(15 - $minutes_passed);
+		return array(
+			'success' => false,
+			'message' => sprintf(
+				'Cannot mark patient as absent yet. Please wait %d more minute(s) before ending the session due to patient absence.',
+				$remaining_minutes
+			),
+			'minutes_passed' => round($minutes_passed, 1),
+			'required_minutes' => 15,
+			'remaining_minutes' => $remaining_minutes
+		);
+	}
+	
+	return array(
+		'success' => true,
+		'message' => ''
+	);
 }
 

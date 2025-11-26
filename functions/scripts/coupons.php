@@ -26,6 +26,7 @@ function snks_ajax_coupon_script() {
 			const discountValue  = $('input[name="discount_value"]').val();
 			const expiresAtRaw   = $('input[name="expires_at"]').val();
 			const usageLimit     = $('input[name="usage_limit"]').val();
+			const isAiCoupon     = $('input[name="is_ai_coupon"]').is(':checked') ? 1 : 0;
 
 			// تحقق من التاريخ
 			if (expiresAtRaw) {
@@ -47,17 +48,20 @@ function snks_ajax_coupon_script() {
 				discount_type: discountType,
 				discount_value: discountValue,
 				expires_at: expiresAtRaw,
-				usage_limit: usageLimit
+				usage_limit: usageLimit,
+				is_ai_coupon: isAiCoupon
 			}, function(response) {
 				if (response.success) {
 					Swal.fire('✅ تم!', response.data.message, 'success');
 					const c = response.data.coupon;
+					const isAi = (c.is_ai_coupon === 1 || c.is_ai_coupon === '1' || c.is_ai_coupon === true || c.is_ai_coupon === 'true');
 					const newRow = `
 						<tr id="snks-coupon-row-${c.id}">
 							<td data-label="الكود">${c.code}</td>
 							<td data-label="الخصم">${c.discount_value}${c.discount_type === 'percent' ? '%' : 'ج.م'}</td>
 							<td data-label="الصلاحية">${c.expires_at ?? 'بدون تاريخ صلاحية'}</td>
 							<td data-label="المتبقي">${c.usage_limit ?? 'غير محدد'}</td>
+							<td data-label="النوع">${isAi ? '🤖 AI فقط' : '📋 عام'}</td>
 							<td data-label="الحالة">فعال</td>
 							<td data-label="إجراء"><button class="snks-delete-coupon" data-id="${c.id}">❌</button></td>
 						</tr>

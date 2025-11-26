@@ -1,0 +1,3782 @@
+<?php
+/**
+ * Enhanced AI Admin Interface
+ * 
+ * @package Shrinks
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
+}
+
+// Include bilingual migration
+require_once __DIR__ . '/bilingual-migration.php';
+
+
+
+/**
+ * Add enhanced AI admin menu
+ */
+function snks_add_enhanced_ai_admin_menu() {
+	add_menu_page(
+		'Jalsah AI Management',
+		'Jalsah AI',
+		'manage_options',
+		'jalsah-ai-management',
+		'snks_enhanced_ai_admin_page',
+		'dashicons-brain',
+		30
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Dashboard',
+		'Dashboard',
+		'manage_options',
+		'jalsah-ai-management',
+		'snks_enhanced_ai_admin_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Diagnoses',
+		'Diagnoses',
+		'manage_options',
+		'jalsah-ai-diagnoses',
+		'snks_enhanced_ai_diagnoses_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Therapist Applications & Profiles',
+		'Applications & Profiles',
+		'manage_options',
+		'jalsah-ai-applications',
+		'snks_enhanced_ai_applications_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Sessions & Attendance',
+		'Sessions & Attendance',
+		'manage_options',
+		'jalsah-ai-sessions',
+		'snks_enhanced_ai_sessions_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Coupons',
+		'Coupons',
+		'manage_options',
+		'jalsah-ai-coupons',
+		'snks_enhanced_ai_coupons_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Analytics',
+		'Analytics',
+		'manage_options',
+		'jalsah-ai-analytics',
+		'snks_enhanced_ai_analytics_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'ChatGPT Integration',
+		'ChatGPT',
+		'manage_options',
+		'jalsah-ai-chatgpt',
+		'snks_enhanced_ai_chatgpt_page'
+	);
+
+	// WhatsApp notifications now consolidated in Therapist Registration Settings
+	// No separate menu item needed
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'API Test',
+		'API Test',
+		'manage_options',
+		'jalsah-ai-api-test',
+		'snks_ai_api_test_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Rochtah Integration',
+		'Rochtah',
+		'manage_options',
+		'jalsah-ai-rochtah',
+		'snks_enhanced_ai_rochtah_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'General Settings',
+		'General Settings',
+		'manage_options',
+		'jalsah-ai-settings',
+		'snks_enhanced_ai_settings_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Email Settings',
+		'Email Settings',
+		'manage_options',
+		'jalsah-ai-email',
+		'snks_enhanced_ai_email_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Admin Tools',
+		'Admin Tools',
+		'manage_options',
+		'jalsah-ai-tools',
+		'snks_enhanced_ai_tools_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Bilingual Migration',
+		'Bilingual Migration',
+		'manage_options',
+		'jalsah-ai-bilingual-migration',
+		'snks_bilingual_migration_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Add Arabic Diagnoses',
+		'Add Arabic Diagnoses',
+		'manage_options',
+		'jalsah-ai-add-arabic-diagnoses',
+		'snks_arabic_diagnoses_page'
+	);
+	
+	// Add AI Profit System Pages
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Profit Settings', 'anony-turn' ),
+		__( 'Profit Settings', 'anony-turn' ),
+		'manage_options',
+		'profit-settings',
+		'snks_profit_settings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Therapist Earnings', 'anony-turn' ),
+		__( 'Therapist Earnings', 'anony-turn' ),
+		'manage_options',
+		'therapist-earnings',
+		'snks_therapist_earnings_page'
+	);
+	
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Transaction Processing', 'anony-turn' ),
+		__( 'Transaction Processing', 'anony-turn' ),
+		'manage_options',
+		'ai-transaction-processing',
+		'snks_ai_transaction_processing_page'
+	);
+	
+	// Add Rochtah Doctor Dashboard (for admins and Rochtah doctors)
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Rochtah Doctor Dashboard',
+		'Rochtah Doctor Dashboard',
+		'manage_options', // Changed to manage_options temporarily for visibility
+		'rochtah-doctor-dashboard',
+		'snks_rochtah_doctor_dashboard'
+	);
+	
+	// Add Rochtah Doctor Management (only for admins)
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Manage Rochtah Doctors',
+		'Manage Rochtah Doctors',
+		'manage_options',
+		'rochtah-doctor-management',
+		'snks_rochtah_doctor_management'
+	);
+}
+add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
+add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
+
+/**
+ * Load AI Admin Styles
+ */
+function snks_load_ai_admin_styles() {
+	?>
+	<style>
+	/* Force full width for all AI admin pages */
+	.wp-admin .wrap {
+		max-width: none !important;
+		width: 100% !important;
+		padding: 20px !important;
+		margin: 0 !important;
+	}
+	
+	/* Override WordPress default container constraints */
+	.wp-admin #wpcontent .wrap {
+		max-width: none !important;
+		width: 100% !important;
+	}
+	
+	/* Force full width cards */
+	.wp-admin .card {
+		background: white;
+		padding: 20px;
+		margin: 20px 0;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		width: 100% !important;
+		max-width: auto !important;
+		box-sizing: border-box;
+		display: block !important;
+	}
+	
+	/* Force max-width auto for all admin pages .card */
+	.wp-admin .card,
+	.wp-admin .card *,
+	.wp-admin .wrap .card,
+	.wp-admin .wrap .card * {
+		max-width: auto !important;
+	}
+	
+	/* Force full width tables */
+	.wp-admin .wp-list-table {
+		width: 100% !important;
+		max-width: none !important;
+	}
+	
+	/* Force full width forms */
+	.wp-admin .form-table {
+		width: 100% !important;
+		max-width: none !important;
+	}
+	
+	.wp-admin .form-table th {
+		width: 200px !important;
+	}
+	
+	.wp-admin .form-table td {
+		width: calc(100% - 200px) !important;
+	}
+	
+	/* Override any WordPress admin constraints */
+	
+	/* Bilingual Form Styling */
+	.bilingual-field {
+		margin-bottom: 15px;
+	}
+	
+	.bilingual-field label {
+		display: block;
+		font-weight: bold;
+		margin-bottom: 5px;
+	}
+	
+	.bilingual-field .language-label {
+		font-weight: bold;
+		color: #0073aa;
+		margin-bottom: 5px;
+		display: block;
+	}
+	
+	.bilingual-field input[type="text"],
+	.bilingual-field textarea {
+		width: 100%;
+		margin-bottom: 10px;
+	}
+	
+	.bilingual-field .arabic-input {
+		direction: rtl;
+		text-align: right;
+		font-family: 'Cairo', 'Arial', sans-serif;
+	}
+	
+	.bilingual-field .arabic-input::placeholder {
+		text-align: right;
+	}
+	
+	/* RTL Support for Arabic Text */
+	.rtl-text {
+		direction: rtl;
+		text-align: right;
+		font-family: 'Cairo', 'Arial', sans-serif;
+	}
+	.wp-admin #wpcontent,
+	.wp-admin #wpbody,
+	.wp-admin #wpbody-content {
+		max-width: none !important;
+	}
+	
+	.wp-admin #wpcontent .wrap {
+		max-width: none !important;
+		width: 100% !important;
+	}
+	
+	/* Ensure admin area uses full width */
+	.wp-admin #wpcontent {
+		margin-left: 160px !important;
+		padding: 0 !important;
+	}
+	
+	.wp-admin.folded #wpcontent {
+		margin-left: 36px !important;
+	}
+	
+	/* Force full width on all admin containers */
+	.wp-admin .wrap,
+	.wp-admin .card,
+	.wp-admin .wp-list-table,
+	.wp-admin .form-table {
+		width: 100% !important;
+		max-width: none !important;
+		box-sizing: border-box !important;
+	}
+	
+	/* Stats grid */
+	.stats-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 20px;
+		margin: 20px 0;
+	}
+	
+	.stat-item {
+		text-align: center;
+		padding: 20px;
+		background: #f9f9f9;
+		border-radius: 8px;
+	}
+	
+	.stat-item h3 {
+		font-size: 2em;
+		margin: 0;
+		color: #0073aa;
+	}
+	
+	.quick-actions {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		margin: 20px 0;
+	}
+	
+	/* Filters form */
+	.filters-form {
+		display: flex;
+		gap: 20px;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	
+	.filters-form label {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+	
+	/* AI badge */
+	.ai-badge {
+		background: #28a745;
+		color: white;
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 11px;
+		font-weight: bold;
+	}
+	
+	.status-waiting { color: #ffc107; }
+	.status-open { color: #007cba; }
+	.status-past { color: #6c757d; }
+	
+	/* Template sections */
+	.template-section {
+		margin-bottom: 30px;
+		padding: 20px;
+		border: 1px solid #ddd;
+		border-radius: 5px;
+	}
+	
+	.template-section h3 {
+		margin-top: 0;
+	}
+	
+	/* Time range sections */
+	.time-range-section {
+		margin: 10px 0;
+		padding: 10px;
+		border: 1px solid #ddd;
+		border-radius: 3px;
+	}
+	
+	.time-range-section label {
+		margin-right: 20px;
+	}
+	
+	/* Analytics grid */
+	.analytics-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 20px;
+		margin: 20px 0;
+	}
+	
+	/* Status colors */
+	.status-active { color: #28a745; }
+	.status-inactive { color: #6c757d; }
+	</style>
+	<?php
+}
+
+/**
+ * Enhanced AI Admin Dashboard
+ */
+function snks_enhanced_ai_admin_page() {
+	global $wpdb;
+	
+	// Get statistics
+	$total_therapists = count( get_users( array( 'role' => 'doctor' ) ) );
+	$ai_therapists = count( get_users( array( 
+		'role' => 'doctor',
+		'meta_query' => array(
+			array( 'key' => 'show_on_ai_site', 'value' => '1', 'compare' => '=' )
+		)
+	) ) );
+	
+	$total_diagnoses = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}snks_diagnoses" );
+	$total_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1" );
+	$total_ai_users = count( get_users( array( 
+		'meta_query' => array(
+			array( 'key' => 'registration_source', 'value' => 'jalsah_ai', 'compare' => '=' )
+		)
+	) ) );
+	
+	?>
+	<div class="wrap">
+		<h1>Jalsah AI Management Dashboard</h1>
+		
+		<div class="card">
+			<h2>Quick Statistics</h2>
+			<div class="stats-grid">
+				<div class="stat-item">
+					<h3><?php echo $total_therapists; ?></h3>
+					<p>Total Therapists</p>
+				</div>
+				<div class="stat-item">
+					<h3><?php echo $ai_therapists; ?></h3>
+					<p>AI-Enabled Therapists</p>
+				</div>
+				<div class="stat-item">
+					<h3><?php echo $total_diagnoses; ?></h3>
+					<p>Diagnoses</p>
+				</div>
+				<div class="stat-item">
+					<h3><?php echo $total_ai_orders; ?></h3>
+					<p>AI Orders</p>
+				</div>
+				<div class="stat-item">
+					<h3><?php echo $total_ai_users; ?></h3>
+					<p>AI Users</p>
+				</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<h2>Quick Actions</h2>
+			<div class="quick-actions">
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-therapists' ); ?>" class="button button-primary">Manage Therapist Profiles</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button button-secondary">Manage Diagnoses</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-sessions' ); ?>" class="button button-secondary">View Sessions</a>
+				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-analytics' ); ?>" class="button button-secondary">View Analytics</a>
+			</div>
+		</div>
+
+		<div class="card">
+			<h2>Recent AI Activity</h2>
+			<?php
+			$recent_orders = $wpdb->get_results( "
+				SELECT o.*, u.display_name as patient_name 
+				FROM {$wpdb->prefix}wc_orders o 
+				LEFT JOIN {$wpdb->users} u ON o.customer_id = u.ID 
+				WHERE o.from_jalsah_ai = 1 
+				ORDER BY o.date_created_gmt DESC 
+				LIMIT 10
+			" );
+			
+			if ( $recent_orders ) {
+				echo '<table class="wp-list-table widefat fixed striped">';
+				echo '<thead><tr><th>Order</th><th>Patient</th><th>Status</th><th>Date</th><th>Total</th></tr></thead>';
+				echo '<tbody>';
+				foreach ( $recent_orders as $order ) {
+					echo '<tr>';
+					echo '<td>#' . $order->id . '</td>';
+					echo '<td>' . esc_html( $order->patient_name ) . '</td>';
+					echo '<td>' . esc_html( $order->status ) . '</td>';
+					echo '<td>' . esc_html( $order->date_created_gmt ) . '</td>';
+					echo '<td>$' . esc_html( $order->total_amount ) . '</td>';
+					echo '</tr>';
+				}
+				echo '</tbody></table>';
+			} else {
+				echo '<p>No recent AI orders found.</p>';
+			}
+			?>
+		</div>
+	</div>
+	<?php
+	snks_load_ai_admin_styles();
+}
+
+/**
+ * Enhanced Therapist Profiles Page
+ */
+function snks_enhanced_ai_therapists_page() {
+	global $wpdb;
+	
+	snks_load_ai_admin_styles();
+	
+	// Handle form submissions
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_therapist_profile' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_therapist_profile' ) ) {
+			$therapist_id = intval( $_POST['therapist_id'] );
+			
+			// Update basic AI settings
+			update_user_meta( $therapist_id, 'show_on_ai_site', isset( $_POST['show_on_ai_site'] ) ? '1' : '0' );
+			update_user_meta( $therapist_id, 'ai_display_name_en', sanitize_text_field( $_POST['ai_display_name_en'] ) );
+			update_user_meta( $therapist_id, 'ai_display_name_ar', sanitize_text_field( $_POST['ai_display_name_ar'] ) );
+			update_user_meta( $therapist_id, 'ai_bio_en', sanitize_textarea_field( $_POST['ai_bio_en'] ) );
+			update_user_meta( $therapist_id, 'ai_bio_ar', sanitize_textarea_field( $_POST['ai_bio_ar'] ) );
+			update_user_meta( $therapist_id, 'public_short_bio_en', sanitize_textarea_field( $_POST['public_short_bio_en'] ) );
+			update_user_meta( $therapist_id, 'public_short_bio_ar', sanitize_textarea_field( $_POST['public_short_bio_ar'] ) );
+			update_user_meta( $therapist_id, 'secretary_phone', sanitize_text_field( $_POST['secretary_phone'] ) );
+			update_user_meta( $therapist_id, 'ai_first_session_percentage', floatval( $_POST['ai_first_session_percentage'] ) );
+			update_user_meta( $therapist_id, 'ai_followup_session_percentage', floatval( $_POST['ai_followup_session_percentage'] ) );
+			
+			// Handle diagnosis assignments
+			$diagnoses = $wpdb->get_results( "SELECT id FROM {$wpdb->prefix}snks_diagnoses" );
+			foreach ( $diagnoses as $diagnosis ) {
+				$assigned_key = 'assigned_' . $diagnosis->id;
+				$rank_key = 'rank_' . $diagnosis->id;
+				$message_key = 'message_' . $diagnosis->id;
+				
+				if ( isset( $_POST[ $assigned_key ] ) ) {
+					$rank = intval( $_POST[ $rank_key ] );
+					$message_en = sanitize_textarea_field( $_POST[ $message_key . '_en' ] );
+					$message_ar = sanitize_textarea_field( $_POST[ $message_key . '_ar' ] );
+					
+					$result = $wpdb->replace(
+						$wpdb->prefix . 'snks_therapist_diagnoses',
+						array(
+							'therapist_id' => $therapist_id,
+							'diagnosis_id' => $diagnosis->id,
+							'rating' => $rank,
+							'suitability_message_en' => $message_en,
+							'suitability_message_ar' => $message_ar,
+						),
+						array( '%d', '%d', '%f', '%s', '%s' )
+					);
+					
+					// Trigger hook to recalculate frontend_order
+					if ( $result !== false ) {
+						do_action( 'snks_therapist_diagnosis_updated', $therapist_id, $diagnosis->id );
+					}
+				} else {
+					$result = $wpdb->delete(
+						$wpdb->prefix . 'snks_therapist_diagnoses',
+						array(
+							'therapist_id' => $therapist_id,
+							'diagnosis_id' => $diagnosis->id,
+						),
+						array( '%d', '%d' )
+					);
+					
+					// Trigger hook to recalculate frontend_order
+					if ( $result !== false ) {
+						do_action( 'snks_therapist_diagnosis_deleted', $therapist_id, $diagnosis->id );
+					}
+				}
+			}
+			
+			echo '<div class="notice notice-success"><p>Therapist profile updated successfully!</p></div>';
+		}
+	}
+	
+	$therapists = get_users( array( 'role' => 'doctor' ) );
+	$diagnoses = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+	?>
+	<div class="wrap">
+		<h1>AI Therapist Profiles</h1>
+		
+		<div class="card">
+			<h2>Select Therapist</h2>
+			<select id="therapist-selector" onchange="loadTherapistProfile(this.value)">
+				<option value="">Select a therapist...</option>
+				<?php foreach ( $therapists as $therapist ) : ?>
+					<option value="<?php echo $therapist->ID; ?>">
+						<?php echo esc_html( get_user_meta( $therapist->ID, 'billing_first_name', true ) . ' ' . get_user_meta( $therapist->ID, 'billing_last_name', true ) ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		
+		<div id="therapist-profile" style="display:none;">
+			<form method="post">
+				<?php wp_nonce_field( 'update_therapist_profile' ); ?>
+				<input type="hidden" name="action" value="update_therapist_profile">
+				<input type="hidden" name="therapist_id" id="therapist_id">
+				
+				<div class="card">
+					<h2>Basic AI Settings</h2>
+					<table class="form-table">
+						<tr>
+							<th><label for="show_on_ai_site">Show on AI Site</label></th>
+							<td><input type="checkbox" id="show_on_ai_site" name="show_on_ai_site" value="1"></td>
+						</tr>
+						<tr>
+							<th><label>AI Display Name</label></th>
+							<td>
+								<div style="margin-bottom: 10px;">
+									<label for="ai_display_name_en" style="font-weight: bold; color: #0073aa;">English:</label>
+									<input type="text" id="ai_display_name_en" name="ai_display_name_en" class="regular-text" placeholder="Enter display name in English">
+								</div>
+								<div>
+									<label for="ai_display_name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+									<input type="text" id="ai_display_name_ar" name="ai_display_name_ar" class="regular-text" placeholder="أدخل اسم العرض بالعربية" style="direction: rtl; text-align: right;">
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label>AI Bio</label></th>
+							<td>
+								<div style="margin-bottom: 10px;">
+									<label for="ai_bio_en" style="font-weight: bold; color: #0073aa;">English:</label>
+									<textarea id="ai_bio_en" name="ai_bio_en" rows="4" class="large-text" placeholder="Enter AI bio in English"></textarea>
+								</div>
+								<div>
+									<label for="ai_bio_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+									<textarea id="ai_bio_ar" name="ai_bio_ar" rows="4" class="large-text" placeholder="أدخل السيرة الذاتية للذكاء الاصطناعي بالعربية" style="direction: rtl; text-align: right;"></textarea>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label>Public Short Bio</label></th>
+							<td>
+								<div style="margin-bottom: 10px;">
+									<label for="public_short_bio_en" style="font-weight: bold; color: #0073aa;">English:</label>
+									<textarea id="public_short_bio_en" name="public_short_bio_en" rows="3" class="large-text" placeholder="Enter public short bio in English"></textarea>
+								</div>
+								<div>
+									<label for="public_short_bio_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+									<textarea id="public_short_bio_ar" name="public_short_bio_ar" rows="3" class="large-text" placeholder="أدخل السيرة الذاتية العامة المختصرة بالعربية" style="direction: rtl; text-align: right;"></textarea>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="secretary_phone">Secretary Phone</label></th>
+							<td><input type="text" id="secretary_phone" name="secretary_phone" class="regular-text"></td>
+						</tr>
+					</table>
+				</div>
+				
+				<div class="card">
+					<h2>Financial Settings</h2>
+					<table class="form-table">
+						<tr>
+							<th><label for="ai_first_session_percentage">First Session Percentage</label></th>
+							<td><input type="number" id="ai_first_session_percentage" name="ai_first_session_percentage" min="0" max="100" step="0.1" class="small-text">%</td>
+						</tr>
+						<tr>
+							<th><label for="ai_followup_session_percentage">Follow-up Session Percentage</label></th>
+							<td><input type="number" id="ai_followup_session_percentage" name="ai_followup_session_percentage" min="0" max="100" step="0.1" class="small-text">%</td>
+						</tr>
+					</table>
+				</div>
+				
+				<div class="card">
+					<h2>Diagnosis Assignments</h2>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th>Diagnosis</th>
+								<th>Assigned</th>
+								<th>Rank Points (0-100)</th>
+								<th>Custom Message (English)</th>
+								<th>Custom Message (العربية)</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $diagnoses as $diagnosis ) : ?>
+								<tr>
+									<td><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></td>
+									<td>
+										<input type="checkbox" name="assigned_<?php echo $diagnosis->id; ?>" value="1" id="assigned_<?php echo $diagnosis->id; ?>">
+									</td>
+									<td>
+										<input type="number" name="rank_<?php echo $diagnosis->id; ?>" min="0" max="100" class="small-text" value="0" id="rank_<?php echo $diagnosis->id; ?>">
+									</td>
+									<td>
+										<textarea name="message_<?php echo $diagnosis->id; ?>_en" rows="2" class="large-text" id="message_<?php echo $diagnosis->id; ?>_en" placeholder="Enter custom message in English"></textarea>
+									</td>
+									<td>
+										<textarea name="message_<?php echo $diagnosis->id; ?>_ar" rows="2" class="large-text" id="message_<?php echo $diagnosis->id; ?>_ar" placeholder="أدخل رسالة مخصصة بالعربية" style="direction: rtl; text-align: right;"></textarea>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+				
+				<?php submit_button( 'Update Therapist Profile' ); ?>
+			</form>
+		</div>
+	</div>
+	
+	<script>
+	function loadTherapistProfile(therapistId) {
+		if (!therapistId) {
+			document.getElementById('therapist-profile').style.display = 'none';
+			return;
+		}
+		
+		document.getElementById('therapist-profile').style.display = 'block';
+		document.getElementById('therapist_id').value = therapistId;
+		
+		// Clear form fields
+		clearProfileFields();
+		
+		// Load therapist data via AJAX
+		jQuery.post(ajaxurl, {
+			action: 'load_enhanced_therapist_profile',
+			therapist_id: therapistId,
+			nonce: '<?php echo wp_create_nonce( "load_enhanced_therapist_profile" ); ?>'
+		}, function(response) {
+			if (response.success) {
+				var data = response.data;
+				
+				// Set basic fields
+				document.getElementById('show_on_ai_site').checked = data.show_on_ai_site === '1';
+				document.getElementById('ai_display_name_en').value = data.ai_display_name_en || '';
+				document.getElementById('ai_display_name_ar').value = data.ai_display_name_ar || '';
+				document.getElementById('ai_bio_en').value = data.ai_bio_en || '';
+				document.getElementById('ai_bio_ar').value = data.ai_bio_ar || '';
+				document.getElementById('public_short_bio_en').value = data.public_short_bio_en || '';
+				document.getElementById('public_short_bio_ar').value = data.public_short_bio_ar || '';
+				document.getElementById('secretary_phone').value = data.secretary_phone || '';
+				document.getElementById('ai_first_session_percentage').value = data.ai_first_session_percentage || 0;
+				document.getElementById('ai_followup_session_percentage').value = data.ai_followup_session_percentage || 0;
+				
+				// Set diagnosis assignments
+				if (data.diagnoses && data.diagnoses.length > 0) {
+					data.diagnoses.forEach(function(diagnosis) {
+						var assignedCheckbox = document.getElementById('assigned_' + diagnosis.diagnosis_id);
+						var rankInput = document.getElementById('rank_' + diagnosis.diagnosis_id);
+						var messageTextareaEn = document.getElementById('message_' + diagnosis.diagnosis_id + '_en');
+						var messageTextareaAr = document.getElementById('message_' + diagnosis.diagnosis_id + '_ar');
+						
+						if (assignedCheckbox) assignedCheckbox.checked = true;
+						if (rankInput) rankInput.value = diagnosis.rating || 0;
+						if (messageTextareaEn) messageTextareaEn.value = diagnosis.suitability_message_en || '';
+						if (messageTextareaAr) messageTextareaAr.value = diagnosis.suitability_message_ar || '';
+					});
+				}
+			}
+		});
+	}
+	
+	function clearProfileFields() {
+		// Clear all form fields
+		document.getElementById('show_on_ai_site').checked = false;
+		document.getElementById('ai_display_name_en').value = '';
+		document.getElementById('ai_display_name_ar').value = '';
+		document.getElementById('ai_bio_en').value = '';
+		document.getElementById('ai_bio_ar').value = '';
+		document.getElementById('public_short_bio_en').value = '';
+		document.getElementById('public_short_bio_ar').value = '';
+		document.getElementById('secretary_phone').value = '';
+		document.getElementById('ai_first_session_percentage').value = '0';
+		document.getElementById('ai_followup_session_percentage').value = '0';
+		
+		// Clear diagnosis assignments
+		var checkboxes = document.querySelectorAll('input[type="checkbox"][name^="assigned_"]');
+		checkboxes.forEach(function(checkbox) {
+			checkbox.checked = false;
+		});
+		
+		var rankInputs = document.querySelectorAll('input[name^="rank_"]');
+		rankInputs.forEach(function(input) {
+			input.value = '0';
+		});
+		
+		var messageTextareas = document.querySelectorAll('textarea[name^="message_"]');
+		messageTextareas.forEach(function(textarea) {
+			textarea.value = '';
+		});
+	}
+	</script>
+	<?php
+}
+
+// AJAX handler for loading enhanced therapist profile
+function snks_load_enhanced_therapist_profile() {
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'load_enhanced_therapist_profile' ) ) {
+		wp_send_json_error( 'Invalid nonce' );
+	}
+	
+	$therapist_id = intval( $_POST['therapist_id'] );
+	
+	$data = array(
+		'show_on_ai_site' => get_user_meta( $therapist_id, 'show_on_ai_site', true ),
+		'ai_display_name_en' => get_user_meta( $therapist_id, 'ai_display_name_en', true ),
+		'ai_display_name_ar' => get_user_meta( $therapist_id, 'ai_display_name_ar', true ),
+		'ai_bio_en' => get_user_meta( $therapist_id, 'ai_bio_en', true ),
+		'ai_bio_ar' => get_user_meta( $therapist_id, 'ai_bio_ar', true ),
+		'public_short_bio_en' => get_user_meta( $therapist_id, 'public_short_bio_en', true ),
+		'public_short_bio_ar' => get_user_meta( $therapist_id, 'public_short_bio_ar', true ),
+		'secretary_phone' => get_user_meta( $therapist_id, 'secretary_phone', true ),
+		'ai_first_session_percentage' => get_user_meta( $therapist_id, 'ai_first_session_percentage', true ),
+		'ai_followup_session_percentage' => get_user_meta( $therapist_id, 'ai_followup_session_percentage', true ),
+		'diagnoses' => array(),
+	);
+	
+	global $wpdb;
+	$diagnoses = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_therapist_diagnoses WHERE therapist_id = %d",
+		$therapist_id
+	) );
+	
+	foreach ( $diagnoses as $diagnosis ) {
+		$data['diagnoses'][] = array(
+			'diagnosis_id' => $diagnosis->diagnosis_id,
+			'rating' => $diagnosis->rating,
+			'suitability_message_en' => $diagnosis->suitability_message_en,
+			'suitability_message_ar' => $diagnosis->suitability_message_ar,
+		);
+	}
+	
+	wp_send_json_success( $data );
+}
+add_action( 'wp_ajax_load_enhanced_therapist_profile', 'snks_load_enhanced_therapist_profile' ); 
+
+/**
+ * Check if coupon code is unique (checks both AI coupons and custom coupons tables)
+ */
+function snks_check_coupon_code_unique_ajax() {
+	check_ajax_referer( 'check_coupon_code_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$code = sanitize_text_field( $_POST['code'] ?? '' );
+	
+	if ( empty( $code ) ) {
+		wp_send_json_error( array( 'message' => 'Code is required' ) );
+	}
+	
+	global $wpdb;
+	
+	// Ensure the coupons table exists
+	$ai_coupons_table = $wpdb->prefix . 'snks_ai_coupons';
+	$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $ai_coupons_table ) ) === $ai_coupons_table;
+	
+	if ( ! $table_exists ) {
+		// Create the table if it doesn't exist
+		if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+			snks_create_enhanced_ai_tables();
+			// Re-check if table exists after creation
+			$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $ai_coupons_table ) ) === $ai_coupons_table;
+		}
+		// If table still doesn't exist, assume code is unique
+		if ( ! $table_exists ) {
+			wp_send_json_success( array( 'unique' => true, 'message' => 'Code is available' ) );
+			return;
+		}
+	}
+	
+	// Check in AI coupons table
+	$exists_in_ai = $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM $ai_coupons_table WHERE code = %s",
+		$code
+	) );
+	
+	// Check in custom coupons table (therapist coupons)
+	$custom_coupons_table = $wpdb->prefix . 'snks_custom_coupons';
+	$exists_in_custom = $wpdb->get_var( $wpdb->prepare(
+		"SELECT COUNT(*) FROM $custom_coupons_table WHERE code = %s",
+		$code
+	) );
+	
+	$is_unique = ( $exists_in_ai == 0 && $exists_in_custom == 0 );
+	
+	wp_send_json_success( array(
+		'unique' => $is_unique,
+		'message' => $is_unique ? 'Code is available' : 'Code already exists'
+	) );
+}
+add_action( 'wp_ajax_snks_check_coupon_code_unique', 'snks_check_coupon_code_unique_ajax' );
+
+/**
+ * Search users for coupon assignment
+ */
+function snks_search_users_for_coupon_ajax() {
+	check_ajax_referer( 'search_users_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$search = sanitize_text_field( $_POST['search'] ?? '' );
+	
+	if ( strlen( $search ) < 2 ) {
+		wp_send_json_success( array( 'users' => array() ) );
+	}
+	
+	$users = get_users( array(
+		'search' => '*' . $search . '*',
+		'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
+		'number' => 10,
+		'orderby' => 'display_name'
+	) );
+	
+	$user_list = array();
+	foreach ( $users as $user ) {
+		$user_list[] = array(
+			'ID' => $user->ID,
+			'display_name' => $user->display_name,
+			'user_email' => $user->user_email,
+			'user_login' => $user->user_login
+		);
+	}
+	
+	wp_send_json_success( array( 'users' => $user_list ) );
+}
+add_action( 'wp_ajax_snks_search_users_for_coupon', 'snks_search_users_for_coupon_ajax' );
+
+/**
+ * Get user info for display
+ */
+function snks_get_user_info_ajax() {
+	check_ajax_referer( 'get_user_info_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$user_id = intval( $_POST['user_id'] ?? 0 );
+	
+	if ( ! $user_id ) {
+		wp_send_json_error( array( 'message' => 'User ID required' ) );
+	}
+	
+	$user = get_user_by( 'ID', $user_id );
+	
+	if ( ! $user ) {
+		wp_send_json_error( array( 'message' => 'User not found' ) );
+	}
+	
+	wp_send_json_success( array(
+		'ID' => $user->ID,
+		'display_name' => $user->display_name,
+		'user_email' => $user->user_email,
+		'user_login' => $user->user_login
+	) );
+}
+add_action( 'wp_ajax_snks_get_user_info', 'snks_get_user_info_ajax' );
+
+/**
+ * Enhanced Diagnoses Page
+ */
+function snks_enhanced_ai_diagnoses_page() {
+	global $wpdb;
+	
+	snks_load_ai_admin_styles();
+	
+	// Handle form submissions
+	if ( isset( $_POST['action'] ) ) {
+		if ( $_POST['action'] === 'add_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'add_diagnosis' ) ) {
+			$name_en = sanitize_text_field( $_POST['name_en'] );
+			$name_ar = sanitize_text_field( $_POST['name_ar'] );
+			$description_en = sanitize_textarea_field( $_POST['description_en'] );
+			$description_ar = sanitize_textarea_field( $_POST['description_ar'] );
+			
+			$wpdb->insert(
+				$wpdb->prefix . 'snks_diagnoses',
+				array(
+					'name_en' => $name_en,
+					'name_ar' => $name_ar,
+					'description_en' => $description_en,
+					'description_ar' => $description_ar,
+				),
+				array( '%s', '%s', '%s', '%s' )
+			);
+			
+			echo '<div class="notice notice-success"><p>Diagnosis added successfully!</p></div>';
+		}
+		
+		if ( $_POST['action'] === 'edit_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'edit_diagnosis' ) ) {
+			$diagnosis_id = intval( $_POST['diagnosis_id'] );
+			$name_en = sanitize_text_field( $_POST['name_en'] );
+			$name_ar = sanitize_text_field( $_POST['name_ar'] );
+			$description_en = sanitize_textarea_field( $_POST['description_en'] );
+			$description_ar = sanitize_textarea_field( $_POST['description_ar'] );
+			
+			$wpdb->update(
+				$wpdb->prefix . 'snks_diagnoses',
+				array(
+					'name_en' => $name_en,
+					'name_ar' => $name_ar,
+					'description_en' => $description_en,
+					'description_ar' => $description_ar,
+				),
+				array( 'id' => $diagnosis_id ),
+				array( '%s', '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+			
+			echo '<div class="notice notice-success"><p>Diagnosis updated successfully!</p></div>';
+		}
+		
+		if ( $_POST['action'] === 'delete_diagnosis' && wp_verify_nonce( $_POST['_wpnonce'], 'delete_diagnosis' ) ) {
+			$diagnosis_id = intval( $_POST['diagnosis_id'] );
+			
+			// Delete from diagnoses table
+			$wpdb->delete( $wpdb->prefix . 'snks_diagnoses', array( 'id' => $diagnosis_id ), array( '%d' ) );
+			
+			// Delete from therapist-diagnosis relationships
+			$wpdb->delete( $wpdb->prefix . 'snks_therapist_diagnoses', array( 'diagnosis_id' => $diagnosis_id ), array( '%d' ) );
+			
+			echo '<div class="notice notice-success"><p>Diagnosis deleted successfully!</p></div>';
+		}
+		
+		if ( $_POST['action'] === 'recalculate_frontend_orders' && wp_verify_nonce( $_POST['_wpnonce'], 'recalculate_frontend_orders' ) ) {
+			if ( function_exists( 'snks_calculate_all_frontend_orders' ) ) {
+				$result = snks_calculate_all_frontend_orders();
+				if ( $result ) {
+					echo '<div class="notice notice-success"><p>Frontend orders recalculated successfully!</p></div>';
+				} else {
+					echo '<div class="notice notice-error"><p>Error recalculating frontend orders.</p></div>';
+				}
+			} else {
+				echo '<div class="notice notice-error"><p>Frontend order calculation function is not available.</p></div>';
+			}
+		}
+	}
+	
+	// Handle GET actions
+	if ( isset( $_GET['action'] ) && isset( $_GET['diagnosis_id'] ) && isset( $_GET['_wpnonce'] ) ) {
+		$action = $_GET['action'];
+		$diagnosis_id = intval( $_GET['diagnosis_id'] );
+		
+		if ( wp_verify_nonce( $_GET['_wpnonce'], 'manage_therapists_' . $diagnosis_id ) ) {
+			if ( $action === 'manage_therapists' ) {
+				snks_display_diagnosis_therapists_management( $diagnosis_id );
+				return;
+			}
+		}
+	}
+	
+	// Handle form submission for therapist management
+	if ( isset( $_POST['save_therapists'] ) && isset( $_POST['diagnosis_id'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'save_therapists_' . $_POST['diagnosis_id'] ) ) {
+			$result = snks_save_diagnosis_therapists_ordering( $_POST['diagnosis_id'] );
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
+		} else {
+			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
+		}
+	}
+	
+	// Handle cleanup of orphaned entries
+	if ( isset( $_POST['cleanup_orphaned'] ) && isset( $_POST['diagnosis_id'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'cleanup_orphaned_entries_' . $_POST['diagnosis_id'] ) ) {
+			$result = snks_cleanup_orphaned_therapist_diagnoses( $_POST['diagnosis_id'] );
+			if ( $result['success'] ) {
+				echo '<div class="notice notice-success"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>' . esc_html( $result['message'] ) . '</p></div>';
+			}
+		} else {
+			echo '<div class="notice notice-error"><p>Security check failed. Please try again.</p></div>';
+		}
+	}
+	
+	// Pagination settings
+	$per_page = 20; // Number of diagnoses per page
+	$current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+	$offset = ($current_page - 1) * $per_page;
+	
+	// Get total count for pagination
+	$total_diagnoses = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}snks_diagnoses");
+	$total_pages = ceil($total_diagnoses / $per_page);
+	
+	// Get diagnoses with pagination
+	$diagnoses = $wpdb->get_results($wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_diagnoses ORDER BY name LIMIT %d OFFSET %d",
+		$per_page,
+		$offset
+	));
+	?>
+	<div class="wrap">
+		<h1>AI Diagnoses Management</h1>
+		
+		<!-- Recalculate Frontend Orders Button -->
+		<div class="card" style="max-width: 600px; margin-bottom: 20px;">
+			<h2>Frontend Order Management</h2>
+			<p>Recalculate the frontend order positions for all therapists based on their display_order values.</p>
+			<form method="post" style="margin-top: 10px;">
+				<?php wp_nonce_field( 'recalculate_frontend_orders' ); ?>
+				<input type="hidden" name="action" value="recalculate_frontend_orders">
+				<button type="submit" class="button button-primary">Recalculate All Frontend Orders</button>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Add New Diagnosis</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'add_diagnosis' ); ?>
+				<input type="hidden" name="action" value="add_diagnosis">
+				
+				<table class="form-table">
+					<tr>
+						<th><label>Diagnosis Name</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="name_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<input type="text" id="name_en" name="name_en" class="regular-text" placeholder="Enter diagnosis name in English" required autocomplete="on">
+							</div>
+							<div>
+								<label for="name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<input type="text" id="name_ar" name="name_ar" class="regular-text" placeholder="أدخل اسم التشخيص بالعربية" required style="direction: rtl; text-align: right;" autocomplete="on">
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th><label>Description</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="description_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<textarea id="description_en" name="description_en" rows="3" class="large-text" placeholder="Enter diagnosis description in English" autocomplete="on"></textarea>
+							</div>
+							<div>
+								<label for="description_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<textarea id="description_ar" name="description_ar" rows="3" class="large-text" placeholder="أدخل وصف التشخيص بالعربية" style="direction: rtl; text-align: right;" autocomplete="on"></textarea>
+							</div>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Add Diagnosis' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Existing Diagnoses (<?php echo $total_diagnoses; ?> total)</h2>
+			<?php if ( $diagnoses ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Name (English)</th>
+							<th>Name (العربية)</th>
+							<th>Description (English)</th>
+							<th>Description (العربية)</th>
+							<th>Therapists Assigned</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $diagnoses as $diagnosis ) : ?>
+							<?php
+							$therapist_count = $wpdb->get_var( $wpdb->prepare(
+								"SELECT COUNT(*) FROM {$wpdb->prefix}snks_therapist_diagnoses WHERE diagnosis_id = %d",
+								$diagnosis->id
+							) );
+							?>
+							<tr>
+								<td><strong><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></strong></td>
+								<td style="direction: rtl; text-align: right;"><strong><?php echo esc_html( $diagnosis->name_ar ); ?></strong></td>
+								<td><?php echo esc_html( $diagnosis->description_en ?: $diagnosis->description ); ?></td>
+								<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->description_ar ); ?></td>
+								<td><?php echo esc_html( $therapist_count ); ?> therapists</td>
+								<td>
+									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses&action=manage_therapists&diagnosis_id=' . $diagnosis->id . '&_wpnonce=' . wp_create_nonce( 'manage_therapists_' . $diagnosis->id ) ); ?>" 
+									   class="button button-small button-secondary">Manage Therapists</a>
+									<button type="button" class="button button-small" onclick="editDiagnosis(<?php echo $diagnosis->id; ?>, '<?php echo addslashes( $diagnosis->name_en ?: $diagnosis->name ?: '' ); ?>', '<?php echo addslashes( $diagnosis->name_ar ?: '' ); ?>', '<?php echo addslashes( $diagnosis->description_en ?: $diagnosis->description ?: '' ); ?>', '<?php echo addslashes( $diagnosis->description_ar ?: '' ); ?>')">Edit</button>
+									<form method="post" style="display:inline;">
+										<?php wp_nonce_field( 'delete_diagnosis' ); ?>
+										<input type="hidden" name="action" value="delete_diagnosis">
+										<input type="hidden" name="diagnosis_id" value="<?php echo $diagnosis->id; ?>">
+										<button type="submit" class="button button-small button-link-delete" onclick="return confirm('Are you sure you want to delete this diagnosis?')">Delete</button>
+									</form>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				
+				<!-- Pagination -->
+				<?php if ( $total_pages > 1 ) : ?>
+					<div class="tablenav-pages">
+						<span class="displaying-num"><?php echo $total_diagnoses; ?> items</span>
+						<?php
+						$page_links = paginate_links( array(
+							'base' => add_query_arg( 'paged', '%#%' ),
+							'format' => '',
+							'prev_text' => __( '&laquo;' ),
+							'next_text' => __( '&raquo;' ),
+							'total' => $total_pages,
+							'current' => $current_page,
+							'type' => 'array'
+						) );
+						
+						if ( $page_links ) {
+							echo '<span class="pagination-links">' . join( "\n", $page_links ) . '</span>';
+						}
+						?>
+					</div>
+				<?php endif; ?>
+			<?php else : ?>
+				<p>No diagnoses found.</p>
+			<?php endif; ?>
+		</div>
+		
+		<!-- Modal Backdrop -->
+		<div id="modal-backdrop" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;"></div>
+		
+		<!-- Edit Diagnosis Modal -->
+		<div id="edit-diagnosis-modal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: white; border: 2px solid #0073aa; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 90%; max-height: 90%; overflow-y: auto;" class="card">
+			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+				<h2>Edit Diagnosis</h2>
+				<button type="button" onclick="hideEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+			</div>
+			<form method="post">
+				<?php wp_nonce_field( 'edit_diagnosis' ); ?>
+				<input type="hidden" name="action" value="edit_diagnosis">
+				<input type="hidden" name="diagnosis_id" id="edit_diagnosis_id">
+				
+				<table class="form-table">
+					<tr>
+						<th><label>Diagnosis Name</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="edit_name_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<input type="text" id="edit_name_en" name="name_en" class="regular-text" placeholder="Enter diagnosis name in English" required>
+							</div>
+							<div>
+								<label for="edit_name_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<input type="text" id="edit_name_ar" name="name_ar" class="regular-text" placeholder="أدخل اسم التشخيص بالعربية" required style="direction: rtl; text-align: right;">
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th><label>Description</label></th>
+						<td>
+							<div style="margin-bottom: 10px;">
+								<label for="edit_description_en" style="font-weight: bold; color: #0073aa;">English:</label>
+								<textarea id="edit_description_en" name="description_en" rows="3" class="large-text" placeholder="Enter diagnosis description in English"></textarea>
+							</div>
+							<div>
+								<label for="edit_description_ar" style="font-weight: bold; color: #0073aa;">العربية:</label>
+								<textarea id="edit_description_ar" name="description_ar" rows="3" class="large-text" placeholder="أدخل وصف التشخيص بالعربية" style="direction: rtl; text-align: right;"></textarea>
+							</div>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Update Diagnosis' ); ?>
+				<button type="button" class="button" onclick="hideEditModal()">Cancel</button>
+			</form>
+		</div>
+	</div>
+	
+	<style>
+	/* Ensure modal is hidden by default */
+	#edit-diagnosis-modal {
+		display: none !important;
+		visibility: hidden !important;
+	}
+	
+	#modal-backdrop {
+		display: none !important;
+	}
+	
+	/* Modal styles when visible */
+	#edit-diagnosis-modal.show {
+		display: block !important;
+		visibility: visible !important;
+	}
+	
+	#modal-backdrop.show {
+		display: block !important;
+	}
+	</style>
+	
+	<script>
+	function editDiagnosis(id, name_en, name_ar, description_en, description_ar) {
+		try {
+			console.log('editDiagnosis called with:', { id, name_en, name_ar, description_en, description_ar });
+			
+			// Set the diagnosis ID
+			document.getElementById('edit_diagnosis_id').value = id;
+			
+			// Set the form fields with proper fallbacks
+			document.getElementById('edit_name_en').value = name_en || '';
+			document.getElementById('edit_name_ar').value = name_ar || '';
+			document.getElementById('edit_description_en').value = description_en || '';
+			document.getElementById('edit_description_ar').value = description_ar || '';
+			
+			// Show the modal and backdrop
+			document.getElementById('edit-diagnosis-modal').classList.add('show');
+			document.getElementById('modal-backdrop').classList.add('show');
+			
+			// Scroll to the modal
+			document.getElementById('edit-diagnosis-modal').scrollIntoView({ behavior: 'smooth' });
+			
+		} catch (error) {
+			console.error('Error in editDiagnosis:', error);
+			alert('Error opening edit form. Please try again.');
+		}
+	}
+	
+	function hideEditModal() {
+		try {
+			document.getElementById('edit-diagnosis-modal').classList.remove('show');
+			document.getElementById('modal-backdrop').classList.remove('show');
+		} catch (error) {
+			console.error('Error hiding modal:', error);
+		}
+	}
+	
+	// Close modal when clicking outside
+	document.addEventListener('click', function(event) {
+		var modal = document.getElementById('edit-diagnosis-modal');
+		var backdrop = document.getElementById('modal-backdrop');
+		if (event.target === modal || event.target === backdrop) {
+			hideEditModal();
+		}
+	});
+	
+	// Close modal with Escape key
+	document.addEventListener('keydown', function(event) {
+		if (event.key === 'Escape') {
+			hideEditModal();
+		}
+	});
+	
+	// Ensure modal is hidden on page load
+	document.addEventListener('DOMContentLoaded', function() {
+		hideEditModal();
+	});
+	
+	// Also ensure modal is hidden when page is ready
+	window.addEventListener('load', function() {
+		hideEditModal();
+	});
+	</script>
+	<?php
+}
+
+/**
+ * Enhanced Sessions & Attendance Page
+ */
+function snks_enhanced_ai_sessions_page() {
+	global $wpdb;
+	
+	snks_load_ai_admin_styles();
+	
+	// Handle attendance updates
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_attendance' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_attendance' ) ) {
+			$session_id = intval( $_POST['session_id'] );
+			$attendance = sanitize_text_field( $_POST['attendance'] );
+			$case_id = intval( $_POST['case_id'] );
+			
+			// Update or insert attendance record
+			$existing = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %d",
+				$session_id
+			) );
+			
+			if ( $existing ) {
+				$wpdb->update(
+					$wpdb->prefix . 'snks_sessions_actions',
+					array( 'attendance' => $attendance ),
+					array( 'action_session_id' => $session_id ),
+					array( '%s' ),
+					array( '%d' )
+				);
+			} else {
+				$wpdb->insert(
+					$wpdb->prefix . 'snks_sessions_actions',
+					array(
+						'action_session_id' => $session_id,
+						'case_id' => $case_id,
+						'attendance' => $attendance,
+					),
+					array( '%d', '%d', '%s' )
+				);
+			}
+			
+			echo '<div class="notice notice-success"><p>Attendance updated successfully!</p></div>';
+		}
+	}
+	
+	// Get filter parameters
+	$filter_attendance = isset( $_GET['attendance'] ) ? $_GET['attendance'] : '';
+	$filter_therapist = isset( $_GET['therapist'] ) ? intval( $_GET['therapist'] ) : 0;
+	$filter_date = isset( $_GET['date'] ) ? sanitize_text_field( $_GET['date'] ) : '';
+	
+	// Filters will be applied after fetching AI sessions
+	
+	// First, let's get AI sessions from WordPress posts (WooCommerce orders)
+	$ai_orders_query = "
+		SELECT p.ID as order_id, p.post_status as order_status, p.post_date as date_created,
+		       pm.meta_value as ai_flag_value, pm.meta_key as ai_flag_key
+		FROM {$wpdb->posts} p
+		INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+		WHERE p.post_type = 'shop_order'
+		AND ((pm.meta_key = 'from_jalsah_ai' AND (pm.meta_value = '1' OR pm.meta_value = 'true' OR pm.meta_value = 'yes'))
+		   OR (pm.meta_key = 'is_ai_session' AND (pm.meta_value = '1' OR pm.meta_value = 'true' OR pm.meta_value = 'yes')))
+		ORDER BY p.post_date DESC
+		LIMIT 100
+	";
+	
+	$ai_orders = $wpdb->get_results( $ai_orders_query );
+	
+	// Process AI sessions from orders
+	$ai_sessions = array();
+	foreach ( $ai_orders as $order ) {
+		// Try to get session data from different possible meta keys
+		$sessions_json = $wpdb->get_var( $wpdb->prepare(
+			"SELECT meta_value FROM {$wpdb->postmeta} 
+			 WHERE post_id = %d AND meta_key = 'ai_sessions'",
+			$order->order_id
+		) );
+		
+		// If no ai_sessions, try to get individual session data
+		if ( ! $sessions_json ) {
+			$session_data = array();
+			
+			// Get AI order details
+			$ai_user_id = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'ai_user_id'",
+				$order->order_id
+			) );
+			
+			$ai_appointments_count = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'ai_appointments_count'",
+				$order->order_id
+			) );
+			
+			$ai_total_amount = $wpdb->get_var( $wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->postmeta} 
+				 WHERE post_id = %d AND meta_key = 'ai_total_amount'",
+				$order->order_id
+			) );
+			
+			// Try to get session data from user's AI cart
+			if ( $ai_user_id ) {
+				$cart_data = get_user_meta( $ai_user_id, 'ai_cart', true );
+				if ( $cart_data && is_array( $cart_data ) ) {
+					foreach ( $cart_data as $cart_item ) {
+						$session_data = array(
+							'therapist_id' => $cart_item['therapist_id'] ?? 'Unknown',
+							'session_date' => $cart_item['date'] ?? 'Unknown',
+							'session_time' => $cart_item['time'] ?? 'Unknown',
+							'session_duration' => $cart_item['duration'] ?? '45',
+							'slot_id' => $cart_item['slot_id'] ?? 'Unknown',
+							'date_time' => ($cart_item['date'] ?? '') . ' ' . ($cart_item['time'] ?? ''),
+							'patient_id' => $ai_user_id,
+							'order_id' => $order->order_id
+						);
+					}
+				}
+			}
+			
+			// If still no session data, create a basic session from order info
+			if ( empty( $session_data ) ) {
+				$session_data = array(
+					'therapist_id' => 'Unknown',
+					'session_date' => $order->date_created,
+					'session_time' => 'Unknown',
+					'session_duration' => '45',
+					'slot_id' => 'Unknown',
+					'date_time' => $order->date_created,
+					'patient_id' => $ai_user_id,
+					'order_id' => $order->order_id,
+					'appointments_count' => $ai_appointments_count,
+					'total_amount' => $ai_total_amount
+				);
+			}
+		} else {
+			$session_data = json_decode( $sessions_json, true );
+		}
+		
+		if ( $session_data ) {
+			if ( is_array( $session_data ) ) {
+				// If it's already an array of sessions
+				if ( isset( $session_data[0] ) && is_array( $session_data[0] ) ) {
+					foreach ( $session_data as $session ) {
+						$ai_sessions[] = array(
+							'order_id' => $order->order_id,
+							'order_status' => $order->order_status,
+							'date_created' => $order->date_created,
+							'session_data' => $session,
+							'from_jalsah_ai' => true
+						);
+					}
+				} else {
+					// Single session
+					$ai_sessions[] = array(
+						'order_id' => $order->order_id,
+						'order_status' => $order->order_status,
+						'date_created' => $order->date_created,
+						'session_data' => $session_data,
+						'from_jalsah_ai' => true
+					);
+				}
+			}
+		}
+	}
+	
+		// Only show AI sessions, no regular sessions
+	$sessions = array();
+
+	// Add AI sessions
+	foreach ( $ai_sessions as $ai_session ) {
+		$session_data = $ai_session['session_data'];
+
+		// Get therapist and patient names
+		$therapist_name = 'Unknown';
+		$patient_name = 'Unknown';
+		$therapist_id = null;
+
+		if ( isset($session_data['therapist_id']) && $session_data['therapist_id'] !== 'Unknown' ) {
+			$therapist_id = $session_data['therapist_id'];
+			$therapist_user = get_user_by( 'ID', $session_data['therapist_id'] );
+			if ( $therapist_user ) {
+				$therapist_name = $therapist_user->display_name;
+			}
+		}
+
+		if ( isset($session_data['patient_id']) && $session_data['patient_id'] !== 'Unknown' ) {
+			$patient_user = get_user_by( 'ID', $session_data['patient_id'] );
+			if ( $patient_user ) {
+				$patient_name = $patient_user->display_name;
+			}
+		}
+
+		// Apply filters
+		$should_include = true;
+
+		// Filter by therapist
+		if ( $filter_therapist && $therapist_id != $filter_therapist ) {
+			$should_include = false;
+		}
+
+		// Filter by date
+		if ( $filter_date ) {
+			$session_date = isset($session_data['date_time']) ? date('Y-m-d', strtotime($session_data['date_time'])) : date('Y-m-d', strtotime($ai_session['date_created']));
+			if ( $session_date != $filter_date ) {
+				$should_include = false;
+			}
+		}
+
+		// Filter by attendance (we'll check this after getting attendance data)
+		$attendance = 'not_set';
+		if ( $filter_attendance ) {
+			// For now, we'll include all sessions and filter attendance later
+			// since attendance is stored separately
+		}
+
+		if ( $should_include ) {
+			$sessions[] = (object) array(
+				'ID' => 'AI-' . $ai_session['order_id'] . '-' . (isset($session_data['slot_id']) ? $session_data['slot_id'] : 'unknown'),
+				'date_time' => isset($session_data['date_time']) ? $session_data['date_time'] : $ai_session['date_created'],
+				'therapist_name' => $therapist_name,
+				'patient_name' => $patient_name,
+				'session_status' => $ai_session['order_status'],
+				'from_jalsah_ai' => true,
+				'attendance' => $attendance,
+				'case_id' => $ai_session['order_id'],
+				'order_id' => $ai_session['order_id'],
+				'session_duration' => isset($session_data['session_duration']) ? $session_data['session_duration'] : '45',
+				'appointments_count' => isset($session_data['appointments_count']) ? $session_data['appointments_count'] : '1',
+				'total_amount' => isset($session_data['total_amount']) ? $session_data['total_amount'] : 'Unknown',
+				'therapist_id' => $therapist_id
+			);
+		}
+	}
+
+	// Load attendance data for all sessions
+	foreach ( $sessions as $session ) {
+		$attendance_record = $wpdb->get_row( $wpdb->prepare(
+			"SELECT attendance FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
+			$session->ID
+		) );
+		
+		$session->attendance = $attendance_record ? $attendance_record->attendance : 'not_set';
+	}
+
+	// Now apply attendance filter if needed
+	if ( $filter_attendance ) {
+		$filtered_sessions = array();
+		foreach ( $sessions as $session ) {
+			if ( $filter_attendance === $session->attendance || ( $filter_attendance === 'not_set' && empty($session->attendance) ) ) {
+				$filtered_sessions[] = $session;
+			}
+		}
+		$sessions = $filtered_sessions;
+	}
+	$therapists = get_users( array( 'role' => 'doctor' ) );
+	?>
+	<div class="wrap">
+		<h1>AI Sessions & Attendance</h1>
+		
+
+		
+		<div class="card">
+			<h2>Filters</h2>
+			<form method="get" class="filters-form">
+				<input type="hidden" name="page" value="jalsah-ai-sessions">
+				
+				<label>
+					Attendance Status:
+					<select name="attendance">
+						<option value="">All</option>
+						<option value="yes" <?php selected( $filter_attendance, 'yes' ); ?>>Attended</option>
+						<option value="no" <?php selected( $filter_attendance, 'no' ); ?>>Did Not Attend</option>
+					</select>
+				</label>
+				
+				<label>
+					Therapist:
+					<select name="therapist">
+						<option value="">All Therapists</option>
+						<?php foreach ( $therapists as $therapist ) : ?>
+							<option value="<?php echo $therapist->ID; ?>" <?php selected( $filter_therapist, $therapist->ID ); ?>>
+								<?php echo esc_html( get_user_meta( $therapist->ID, 'billing_first_name', true ) . ' ' . get_user_meta( $therapist->ID, 'billing_last_name', true ) ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				
+				<label>
+					Date:
+					<input type="date" name="date" value="<?php echo esc_attr( $filter_date ); ?>">
+				</label>
+				
+				<button type="submit" class="button">Apply Filters</button>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Sessions</h2>
+			<?php if ( $sessions ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Session ID</th>
+							<th>Date & Time</th>
+							<th>Therapist</th>
+							<th>Patient</th>
+							<th>Status</th>
+							<th>AI Session</th>
+							<th>Attendance</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $sessions as $session ) : ?>
+							<tr>
+								<td>#<?php echo $session->ID; ?></td>
+								<td><?php echo esc_html( $session->date_time ); ?></td>
+								<td><?php echo esc_html( $session->therapist_name ); ?></td>
+								<td><?php echo esc_html( $session->patient_name ); ?></td>
+								<td>
+									<span class="status-<?php echo esc_attr( $session->session_status ); ?>">
+										<?php echo esc_html( ucfirst( $session->session_status ) ); ?>
+									</span>
+								</td>
+								<td>
+									<?php if ( $session->from_jalsah_ai ) : ?>
+										<span class="ai-badge">AI</span>
+									<?php endif; ?>
+								</td>
+								<td>
+									<form method="post" style="display:inline;">
+										<?php wp_nonce_field( 'update_attendance' ); ?>
+										<input type="hidden" name="action" value="update_attendance">
+										<input type="hidden" name="session_id" value="<?php echo $session->ID; ?>">
+										<input type="hidden" name="case_id" value="<?php echo $session->case_id ?: $session->ID; ?>">
+										<select name="attendance" onchange="this.form.submit()">
+											<option value="">Not Set</option>
+											<option value="yes" <?php selected( $session->attendance, 'yes' ); ?>>Attended</option>
+											<option value="no" <?php selected( $session->attendance, 'no' ); ?>>Did Not Attend</option>
+										</select>
+									</form>
+								</td>
+								<td>
+									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-sessions&action=view&id=' . $session->ID ); ?>" class="button button-small">View</a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p>No sessions found matching the current filters.</p>
+			<?php endif; ?>
+		</div>
+	</div>
+
+
+	<?php
+}
+
+/**
+ * Enhanced Coupons Page
+ */
+function snks_enhanced_ai_coupons_page() {
+	global $wpdb;
+	
+	snks_load_ai_admin_styles();
+	
+	// Ensure the coupons table exists
+	$coupons_table = $wpdb->prefix . 'snks_ai_coupons';
+	$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $coupons_table ) ) === $coupons_table;
+	
+	if ( ! $table_exists ) {
+		// Create the table if it doesn't exist
+		if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+			snks_create_enhanced_ai_tables();
+		} else {
+			// Fallback: create table directly
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			$coupons_sql = "CREATE TABLE IF NOT EXISTS $coupons_table (
+				id INT(11) NOT NULL AUTO_INCREMENT,
+				code VARCHAR(50) NOT NULL UNIQUE,
+				discount_type ENUM('percentage', 'fixed') NOT NULL DEFAULT 'percentage',
+				discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+				usage_limit INT(11) DEFAULT 0,
+				current_usage INT(11) DEFAULT 0,
+				expiry_date DATE NULL,
+				segment VARCHAR(50) DEFAULT '',
+				allowed_users TEXT NULL,
+				active TINYINT(1) DEFAULT 1,
+				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				UNIQUE KEY unique_code (code)
+			) " . $wpdb->get_charset_collate();
+			dbDelta( $coupons_sql );
+		}
+	}
+	
+	// Always check and add allowed_users column if it doesn't exist (for existing tables)
+	$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $coupons_table LIKE 'allowed_users'" );
+	if ( empty( $column_exists ) ) {
+		$wpdb->query( "ALTER TABLE $coupons_table ADD COLUMN allowed_users TEXT NULL AFTER segment" );
+	}
+	
+	// Handle coupon creation/editing
+	if ( isset( $_POST['action'] ) ) {
+		if ( $_POST['action'] === 'create_coupon' && wp_verify_nonce( $_POST['_wpnonce'], 'create_ai_coupon' ) ) {
+			$code = sanitize_text_field( $_POST['code'] );
+			$discount_type = sanitize_text_field( $_POST['discount_type'] );
+			$discount_value = floatval( $_POST['discount_value'] );
+			$usage_limit = intval( $_POST['usage_limit'] );
+			$expiry_date = sanitize_text_field( $_POST['expiry_date'] );
+			$segment = sanitize_text_field( $_POST['segment'] );
+			
+			// Handle allowed users (comma-separated user IDs)
+			$allowed_users = '';
+			if ( ! empty( $_POST['allowed_users'] ) ) {
+				$user_ids = array_map( 'intval', explode( ',', $_POST['allowed_users'] ) );
+				$user_ids = array_filter( $user_ids ); // Remove empty values
+				$allowed_users = implode( ',', $user_ids );
+			}
+			
+			// Check if allowed_users column exists before inserting
+			$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM {$wpdb->prefix}snks_ai_coupons LIKE 'allowed_users'" );
+			$insert_data = array(
+				'code' => $code,
+				'discount_type' => $discount_type,
+				'discount_value' => $discount_value,
+				'usage_limit' => $usage_limit,
+				'current_usage' => 0,
+				'expiry_date' => $expiry_date ? $expiry_date : null,
+				'segment' => $segment,
+				'active' => 1,
+			);
+			$insert_format = array( '%s', '%s', '%f', '%d', '%d', '%s', '%s', '%d' );
+			
+			// Only include allowed_users if column exists
+			if ( ! empty( $column_exists ) ) {
+				$insert_data['allowed_users'] = $allowed_users;
+				$insert_format[] = '%s';
+			}
+			
+			$wpdb->insert(
+				$wpdb->prefix . 'snks_ai_coupons',
+				$insert_data,
+				$insert_format
+			);
+			
+			echo '<div class="notice notice-success"><p>Coupon created successfully!</p></div>';
+		}
+		
+		if ( $_POST['action'] === 'delete_coupon' && wp_verify_nonce( $_POST['_wpnonce'], 'delete_ai_coupon' ) ) {
+			$coupon_id = intval( $_POST['coupon_id'] );
+			$wpdb->delete( $wpdb->prefix . 'snks_ai_coupons', array( 'id' => $coupon_id ), array( '%d' ) );
+			echo '<div class="notice notice-success"><p>Coupon deleted successfully!</p></div>';
+		}
+	}
+	
+	// Get coupons (handle case where table might not exist)
+	$coupons = array();
+	$table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $coupons_table ) ) === $coupons_table;
+	if ( $table_exists ) {
+		$coupons = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}snks_ai_coupons ORDER BY created_at DESC" );
+	}
+	?>
+	<div class="wrap">
+		<h1>AI Coupons Management</h1>
+		
+		<div class="card">
+			<h2>Create New Coupon</h2>
+			<form method="post" class="coupon-form">
+				<?php wp_nonce_field( 'create_ai_coupon' ); ?>
+				<input type="hidden" name="action" value="create_coupon">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="code">Coupon Code</label></th>
+						<td>
+							<input type="text" id="code" name="code" class="regular-text" required>
+							<button type="button" id="generate-coupon-code" class="button" style="margin-left: 10px;">Generate Code</button>
+							<p class="description">Click to auto-generate a unique coupon code</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="discount_type">Discount Type</label></th>
+						<td>
+							<select id="discount_type" name="discount_type" required>
+								<option value="percentage">Percentage</option>
+								<option value="fixed">Fixed Amount</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="discount_value">Discount Value</label></th>
+						<td><input type="number" id="discount_value" name="discount_value" min="0" step="0.01" class="regular-text" required></td>
+					</tr>
+					<tr>
+						<th><label for="usage_limit">Usage Limit</label></th>
+						<td>
+							<input type="number" id="usage_limit" name="usage_limit" min="0" class="regular-text" value="0" placeholder="0">
+							<p class="description">Enter <strong>0</strong> for unlimited usage, or specify a number to limit how many times the coupon can be used.</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="expiry_date">Expiry Date</label></th>
+						<td>
+							<input type="date" id="expiry_date" name="expiry_date" class="regular-text">
+							<p class="description">Leave empty for no expiry date (coupon never expires).</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="segment">Segment</label></th>
+						<td>
+							<select id="segment" name="segment">
+								<option value="">All Users</option>
+								<option value="new_users">New Users Only</option>
+								<option value="returning_users">Returning Users Only</option>
+								<option value="specific_diagnosis">Specific Diagnosis</option>
+								<option value="specific_users">Specific Users</option>
+							</select>
+						</td>
+					</tr>
+					<tr id="specific-users-row" style="display: none;">
+						<th><label for="allowed_users">Allowed Users</label></th>
+						<td>
+							<input type="text" id="allowed_users_search" class="regular-text" placeholder="Search users by name or email...">
+							<input type="hidden" id="allowed_users" name="allowed_users" value="">
+							<div id="selected-users-list" style="margin-top: 10px; min-height: 30px;"></div>
+							<p class="description">Search and select specific users who can use this coupon. Leave empty if segment is not "Specific Users".</p>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Create Coupon' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Existing Coupons</h2>
+			<?php if ( $coupons ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Code</th>
+							<th>Type</th>
+							<th>Value</th>
+							<th>Usage</th>
+							<th>Expiry</th>
+							<th>Segment</th>
+							<th>Status</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $coupons as $coupon ) : ?>
+							<tr>
+								<td><strong><?php echo esc_html( $coupon->code ); ?></strong></td>
+								<td><?php echo esc_html( ucfirst( $coupon->discount_type ) ); ?></td>
+								<td>
+									<?php 
+									if ( $coupon->discount_type === 'percentage' ) {
+										echo esc_html( $coupon->discount_value ) . '%';
+									} else {
+										echo '$' . esc_html( $coupon->discount_value );
+									}
+									?>
+								</td>
+								<td>
+									<?php 
+									if ( $coupon->usage_limit > 0 ) {
+										echo esc_html( $coupon->current_usage ) . '/' . esc_html( $coupon->usage_limit );
+									} else {
+										echo esc_html( $coupon->current_usage ) . ' (unlimited)';
+									}
+									?>
+								</td>
+								<td>
+									<?php 
+									if ( $coupon->expiry_date ) {
+										echo esc_html( $coupon->expiry_date );
+									} else {
+										echo 'No expiry';
+									}
+									?>
+								</td>
+								<td><?php echo esc_html( $coupon->segment ?: 'All Users' ); ?></td>
+								<td>
+									<span class="status-<?php echo $coupon->active ? 'active' : 'inactive'; ?>">
+										<?php echo $coupon->active ? 'Active' : 'Inactive'; ?>
+									</span>
+								</td>
+								<td>
+									<form method="post" style="display:inline;">
+										<?php wp_nonce_field( 'delete_ai_coupon' ); ?>
+										<input type="hidden" name="action" value="delete_coupon">
+										<input type="hidden" name="coupon_id" value="<?php echo $coupon->id; ?>">
+										<button type="submit" class="button button-small button-link-delete" onclick="return confirm('Are you sure you want to delete this coupon?')">Delete</button>
+									</form>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p>No coupons found.</p>
+			<?php endif; ?>
+		</div>
+	</div>
+
+	<script>
+	jQuery(document).ready(function($) {
+		var selectedUsers = [];
+		var userCache = {}; // Cache user info to avoid repeated AJAX calls
+		
+		// Show/hide specific users field based on segment selection
+		$('#segment').on('change', function() {
+			if ($(this).val() === 'specific_users') {
+				$('#specific-users-row').show();
+			} else {
+				$('#specific-users-row').hide();
+				selectedUsers = [];
+				updateSelectedUsersList();
+				$('#allowed_users').val('');
+			}
+		});
+		
+		// User search with debounce
+		var searchTimeout;
+		$('#allowed_users_search').on('input', function() {
+			var searchTerm = $(this).val();
+			if (searchTerm.length < 2) {
+				$('#user-search-results').remove();
+				return;
+			}
+			
+			clearTimeout(searchTimeout);
+			searchTimeout = setTimeout(function() {
+				searchUsers(searchTerm);
+			}, 300);
+		});
+		
+		function searchUsers(term) {
+			$.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'snks_search_users_for_coupon',
+					search: term,
+					nonce: '<?php echo wp_create_nonce( 'search_users_nonce' ); ?>'
+				},
+				success: function(response) {
+					if (response.success) {
+						displayUserSearchResults(response.data.users);
+					}
+				}
+			});
+		}
+		
+		function displayUserSearchResults(users) {
+			$('#user-search-results').remove();
+			if (users.length === 0) {
+				return;
+			}
+			
+			var resultsHtml = '<div id="user-search-results" style="border: 1px solid #ddd; background: #fff; max-height: 200px; overflow-y: auto; margin-top: 5px; position: absolute; z-index: 1000; width: 100%; max-width: 400px;">';
+			users.forEach(function(user) {
+				if (selectedUsers.indexOf(user.ID) === -1) {
+					resultsHtml += '<div class="user-result-item" data-user-id="' + user.ID + '" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;" onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'#fff\'">';
+					resultsHtml += '<strong>' + user.display_name + '</strong> (' + user.user_email + ')';
+					resultsHtml += '</div>';
+				}
+			});
+			resultsHtml += '</div>';
+			
+			$('#allowed_users_search').parent().css('position', 'relative').append(resultsHtml);
+			
+			$('.user-result-item').on('click', function() {
+				var userId = $(this).data('user-id');
+				var userData = users.find(u => u.ID == userId);
+				if (selectedUsers.indexOf(userId) === -1) {
+					selectedUsers.push(userId);
+					// Cache user data immediately
+					if (userData) {
+						userCache[userId] = userData;
+					}
+					updateSelectedUsersList();
+					$('#allowed_users_search').val('');
+					$('#user-search-results').remove();
+				}
+			});
+		}
+		
+		function updateSelectedUsersList() {
+			if (selectedUsers.length === 0) {
+				$('#selected-users-list').html('');
+				$('#allowed_users').val('');
+				return;
+			}
+			
+			var listHtml = '';
+			var promises = [];
+			
+			selectedUsers.forEach(function(userId) {
+				if (userCache[userId]) {
+					// Use cached data
+					var user = userCache[userId];
+					listHtml += '<span class="selected-user-tag" data-user-id="' + userId + '" style="display: inline-block; background: #0073aa; color: #fff; padding: 5px 10px; margin: 5px 5px 5px 0; border-radius: 3px;">';
+					listHtml += user.display_name + ' (' + user.user_email + ') ';
+					listHtml += '<span style="cursor: pointer; margin-left: 5px;" onclick="removeUser(' + userId + ')">×</span>';
+					listHtml += '</span>';
+				} else {
+					// Fetch user info
+					var promise = $.ajax({
+						url: ajaxurl,
+						type: 'POST',
+						data: {
+							action: 'snks_get_user_info',
+							user_id: userId,
+							nonce: '<?php echo wp_create_nonce( 'get_user_info_nonce' ); ?>'
+						}
+					}).then(function(response) {
+						if (response.success) {
+							userCache[userId] = response.data;
+							return response.data;
+						}
+					});
+					promises.push(promise);
+				}
+			});
+			
+			// Update with cached data first
+			$('#selected-users-list').html(listHtml);
+			$('#allowed_users').val(selectedUsers.join(','));
+			
+			// Then update with fetched data
+			if (promises.length > 0) {
+				$.when.apply($, promises).done(function() {
+					updateSelectedUsersList(); // Re-render with all cached data
+				});
+			}
+		}
+		
+		// Remove user from selection
+		window.removeUser = function(userId) {
+			selectedUsers = selectedUsers.filter(id => id != userId);
+			updateSelectedUsersList();
+		};
+		
+		// Close search results when clicking outside
+		$(document).on('click', function(e) {
+			if (!$(e.target).closest('#allowed_users_search, #user-search-results').length) {
+				$('#user-search-results').remove();
+			}
+		});
+		
+		// Generate unique coupon code
+		$('#generate-coupon-code').on('click', function() {
+			var button = $(this);
+			var originalText = button.text();
+			button.prop('disabled', true).text('Generating...');
+			
+			// Generate code and check uniqueness
+			generateUniqueCode();
+		});
+		
+		function generateUniqueCode() {
+			var code = generateRandomCode();
+			var attempts = 0;
+			var maxAttempts = 10;
+			
+			function checkAndSet() {
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'snks_check_coupon_code_unique',
+						code: code,
+						nonce: '<?php echo wp_create_nonce( 'check_coupon_code_nonce' ); ?>'
+					},
+					success: function(response) {
+						if (response.success && response.data.unique) {
+							$('#code').val(code);
+							$('#generate-coupon-code').prop('disabled', false).text('Generate Code');
+						} else {
+							attempts++;
+							if (attempts < maxAttempts) {
+								code = generateRandomCode();
+								checkAndSet();
+							} else {
+								alert('Unable to generate unique code. Please try again or enter manually.');
+								$('#generate-coupon-code').prop('disabled', false).text('Generate Code');
+							}
+						}
+					},
+					error: function() {
+						alert('Error checking code uniqueness. Please try again.');
+						$('#generate-coupon-code').prop('disabled', false).text('Generate Code');
+					}
+				});
+			}
+			
+			checkAndSet();
+		}
+		
+		function generateRandomCode() {
+			// Generate format: XXXXXX (6 random alphanumeric characters)
+			var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars like 0, O, I, 1
+			var code = '';
+			for (var i = 0; i < 6; i++) {
+				code += chars.charAt(Math.floor(Math.random() * chars.length));
+			}
+			return code;
+		}
+	});
+	</script>
+
+	<?php
+} 
+
+/**
+ * Enhanced Analytics Page
+ */
+function snks_enhanced_ai_analytics_page() {
+	global $wpdb;
+	
+	snks_load_ai_admin_styles();
+	
+	// Get analytics data
+	$total_ai_users = count( get_users( array( 
+		'meta_query' => array(
+			array( 'key' => 'registration_source', 'value' => 'jalsah_ai', 'compare' => '=' )
+		)
+	) ) );
+	
+	$total_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1" );
+	$completed_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1 AND status = 'completed'" );
+	
+	// Get retention data
+	$retention_data = $wpdb->get_results( "
+		SELECT t.user_id, u.display_name as therapist_name, COUNT(DISTINCT o.customer_id) as repeat_patients
+		FROM {$wpdb->prefix}snks_provider_timetable t
+		JOIN {$wpdb->prefix}wc_orders o ON t.order_id = o.id
+		JOIN {$wpdb->users} u ON t.user_id = u.ID
+		WHERE o.from_jalsah_ai = 1 AND o.status = 'completed'
+		GROUP BY t.user_id
+		HAVING repeat_patients > 1
+		ORDER BY repeat_patients DESC
+		LIMIT 10
+	" );
+	
+	// Get diagnosis booking data
+	$diagnosis_bookings = $wpdb->get_results( "
+		SELECT d.name, COUNT(*) as booking_count
+		FROM {$wpdb->prefix}snks_diagnoses d
+		JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON d.id = td.diagnosis_id
+		JOIN {$wpdb->prefix}snks_provider_timetable t ON td.therapist_id = t.user_id
+		JOIN {$wpdb->prefix}wc_orders o ON t.order_id = o.id
+		WHERE o.from_jalsah_ai = 1
+		GROUP BY d.id
+		ORDER BY booking_count DESC
+	" );
+	
+	?>
+	<div class="wrap">
+		<h1>AI Analytics & Reporting</h1>
+		
+		<div class="analytics-grid">
+			<div class="card">
+				<h2>Overview</h2>
+				<div class="stats-grid">
+					<div class="stat-item">
+						<h3><?php echo $total_ai_users; ?></h3>
+						<p>Total AI Users</p>
+					</div>
+					<div class="stat-item">
+						<h3><?php echo $total_ai_orders; ?></h3>
+						<p>Total AI Orders</p>
+					</div>
+					<div class="stat-item">
+						<h3><?php echo $completed_ai_orders; ?></h3>
+						<p>Completed Orders</p>
+					</div>
+					<div class="stat-item">
+						<h3><?php echo $total_ai_orders > 0 ? round( ( $completed_ai_orders / $total_ai_orders ) * 100, 1 ) : 0; ?>%</h3>
+						<p>Completion Rate</p>
+					</div>
+				</div>
+			</div>
+			
+			<div class="card">
+				<h2>Retention Leaderboard</h2>
+				<p>Therapists with the most repeat patients:</p>
+				<?php if ( $retention_data ) : ?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th>Rank</th>
+								<th>Therapist</th>
+								<th>Repeat Patients</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $retention_data as $index => $therapist ) : ?>
+								<tr>
+									<td>#<?php echo $index + 1; ?></td>
+									<td><?php echo esc_html( $therapist->therapist_name ); ?></td>
+									<td><?php echo esc_html( $therapist->repeat_patients ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php else : ?>
+					<p>No retention data available yet.</p>
+				<?php endif; ?>
+			</div>
+			
+			<div class="card">
+				<h2>Diagnosis Booking Trends</h2>
+				<?php if ( $diagnosis_bookings ) : ?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th>Diagnosis</th>
+								<th>Bookings</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $diagnosis_bookings as $diagnosis ) : ?>
+								<tr>
+									<td><?php echo esc_html( $diagnosis->name ); ?></td>
+									<td><?php echo esc_html( $diagnosis->booking_count ); ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				<?php else : ?>
+					<p>No diagnosis booking data available yet.</p>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
+
+
+	<?php
+}
+
+/**
+ * ChatGPT Integration Page
+ */
+function snks_enhanced_ai_chatgpt_page() {
+	snks_load_ai_admin_styles();
+	
+	// Handle settings updates
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_chatgpt_settings' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_chatgpt_settings' ) ) {
+			update_option( 'snks_ai_chatgpt_api_key', sanitize_text_field( $_POST['api_key'] ) );
+			update_option( 'snks_ai_chatgpt_model', sanitize_text_field( $_POST['model'] ) );
+			update_option( 'snks_ai_chatgpt_prompt', sanitize_textarea_field( $_POST['prompt'] ) );
+					update_option( 'snks_ai_chatgpt_max_tokens', intval( $_POST['max_tokens'] ) );
+		update_option( 'snks_ai_chatgpt_temperature', floatval( $_POST['temperature'] ) );
+		update_option( 'snks_ai_chatgpt_min_questions', intval( $_POST['min_questions'] ) );
+		update_option( 'snks_ai_chatgpt_max_questions', intval( $_POST['max_questions'] ) );
+			
+			echo '<div class="notice notice-success"><p>ChatGPT settings updated successfully!</p></div>';
+		}
+	}
+	
+	// Handle test request
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'test_chatgpt' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'test_chatgpt' ) ) {
+			$test_result = snks_test_chatgpt_integration( $_POST['test_prompt'] );
+			echo '<div class="notice notice-info"><p><strong>Test Result:</strong> ' . esc_html( $test_result ) . '</p></div>';
+		}
+	}
+	
+	$api_key = get_option( 'snks_ai_chatgpt_api_key', '' );
+	$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
+		$prompt = get_option( 'snks_ai_chatgpt_prompt', 'You are a compassionate and professional mental health AI assistant. Your role is to help patients understand their mental health concerns and guide them toward appropriate therapeutic support.
+
+When engaging with patients:
+1. Listen empathetically to their concerns
+2. Ask clarifying questions when needed
+3. Provide supportive and non-judgmental responses
+4. When you have enough information to make a confident assessment, suggest the most appropriate diagnosis from the available list
+5. Always maintain a caring and professional tone
+6. Remember that you are not a replacement for professional mental health care
+7. Always return structured JSON responses as specified
+8. Only suggest diagnoses from the provided list
+
+Focus on understanding the patient\'s symptoms, duration, impact on daily life, and any relevant background information to make an informed recommendation.' );
+	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
+	$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
+	?>
+	<div class="wrap">
+		<h1>ChatGPT Integration</h1>
+		
+		<div class="card">
+			<h2>API Configuration</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'update_chatgpt_settings' ); ?>
+				<input type="hidden" name="action" value="update_chatgpt_settings">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="api_key">OpenAI API Key</label></th>
+						<td><input type="password" id="api_key" name="api_key" value="<?php echo esc_attr( $api_key ); ?>" class="regular-text" required></td>
+					</tr>
+					<tr>
+						<th><label for="model">Model</label></th>
+						<td>
+							<select id="model" name="model">
+								<option value="gpt-3.5-turbo" <?php selected( $model, 'gpt-3.5-turbo' ); ?>>GPT-3.5 Turbo</option>
+								<option value="gpt-4" <?php selected( $model, 'gpt-4' ); ?>>GPT-4</option>
+								<option value="gpt-4-turbo" <?php selected( $model, 'gpt-4-turbo' ); ?>>GPT-4 Turbo</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="prompt">System Prompt</label></th>
+						<td><textarea id="prompt" name="prompt" rows="4" class="large-text"><?php echo esc_textarea( $prompt ); ?></textarea></td>
+					</tr>
+					<tr>
+						<th><label for="max_tokens">Max Tokens</label></th>
+						<td><input type="number" id="max_tokens" name="max_tokens" value="<?php echo esc_attr( $max_tokens ); ?>" min="1" max="4000" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="temperature">Temperature</label></th>
+						<td><input type="number" id="temperature" name="temperature" value="<?php echo esc_attr( $temperature ); ?>" min="0" max="2" step="0.1" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="min_questions">Minimum Questions</label></th>
+						<td><input type="number" id="min_questions" name="min_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_min_questions', 5 ) ); ?>" min="3" max="15" step="1" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="max_questions">Maximum Questions</label></th>
+						<td><input type="number" id="max_questions" name="max_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_max_questions', 10 ) ); ?>" min="5" max="20" step="1" class="small-text"></td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Save Settings' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Test Integration</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'test_chatgpt' ); ?>
+				<input type="hidden" name="action" value="test_chatgpt">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="test_prompt">Test Prompt</label></th>
+						<td><textarea id="test_prompt" name="test_prompt" rows="3" class="large-text" placeholder="Enter patient symptoms to test diagnosis recommendation..."></textarea></td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Test ChatGPT', 'secondary' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Available Diagnoses</h2>
+			<?php
+			global $wpdb;
+			$diagnoses = $wpdb->get_results( "SELECT name FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+			if ( $diagnoses ) {
+				echo '<ul>';
+				foreach ( $diagnoses as $diagnosis ) {
+					echo '<li>' . esc_html( $diagnosis->name ) . '</li>';
+				}
+				echo '</ul>';
+			}
+			?>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Test ChatGPT Integration
+ */
+function snks_test_chatgpt_integration( $test_prompt ) {
+	$api_key = get_option( 'snks_ai_chatgpt_api_key' );
+	$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
+	$system_prompt = get_option( 'snks_ai_chatgpt_prompt' );
+	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
+	$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
+	
+	if ( ! $api_key ) {
+		return 'Error: API key not configured';
+	}
+	
+	// Get available diagnoses
+	global $wpdb;
+	$diagnoses = $wpdb->get_results( "SELECT name FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+	$diagnosis_list = array();
+	foreach ( $diagnoses as $diagnosis ) {
+		$diagnosis_list[] = $diagnosis->name;
+	}
+	
+	$data = array(
+		'model' => $model,
+		'messages' => array(
+			array(
+				'role' => 'system',
+				'content' => $system_prompt . ' Available diagnoses: ' . implode( ', ', $diagnosis_list )
+			),
+			array(
+				'role' => 'user',
+				'content' => $test_prompt
+			)
+		),
+		'max_tokens' => $max_tokens,
+		'temperature' => $temperature
+	);
+	
+	$response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(
+		'headers' => array(
+			'Authorization' => 'Bearer ' . $api_key,
+			'Content-Type' => 'application/json'
+		),
+		'body' => json_encode( $data ),
+		'timeout' => 30
+	) );
+	
+	if ( is_wp_error( $response ) ) {
+		return 'Error: ' . $response->get_error_message();
+	}
+	
+	$body = wp_remote_retrieve_body( $response );
+	$result = json_decode( $body, true );
+	
+	if ( isset( $result['choices'][0]['message']['content'] ) ) {
+		return $result['choices'][0]['message']['content'];
+	} else {
+		return 'Error: Invalid response from OpenAI API';
+	}
+}
+
+// WhatsApp Integration Page removed - all settings now in Therapist Registration Settings
+
+/**
+ * Rochtah Integration Page
+ */
+function snks_enhanced_ai_rochtah_page() {
+	snks_load_ai_admin_styles();
+	
+	global $wpdb;
+	
+	// Handle settings updates
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_rochtah_settings' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_rochtah_settings' ) ) {
+			update_option( 'snks_ai_rochtah_enabled', isset( $_POST['enabled'] ) ? '1' : '0' );
+			update_option( 'snks_ai_rochtah_available_days', serialize( $_POST['available_days'] ) );
+			
+			echo '<div class="notice notice-success"><p>Rochtah settings updated successfully!</p></div>';
+		}
+	}
+	
+	// Handle appointment addition
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'add_appointment' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'add_rochtah_appointment' ) ) {
+			$day = sanitize_text_field( $_POST['day'] );
+			$start_time = sanitize_text_field( $_POST['start_time'] );
+			$end_time = sanitize_text_field( $_POST['end_time'] );
+			
+			// Check if table exists, if not create it
+			$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+			$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name;
+			
+			if ( ! $table_exists ) {
+				// Create the table
+				require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+				$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+					id INT(11) NOT NULL AUTO_INCREMENT,
+					day_of_week VARCHAR(20) NOT NULL,
+					start_time TIME NOT NULL,
+					end_time TIME NOT NULL,
+					current_bookings INT(11) DEFAULT 0,
+					status ENUM('active', 'inactive') DEFAULT 'active',
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+					PRIMARY KEY (id),
+					KEY day_of_week (day_of_week),
+					KEY start_time (start_time),
+					KEY status (status)
+				) " . $wpdb->get_charset_collate();
+				
+				dbDelta( $sql );
+			}
+			
+			$result = $wpdb->insert(
+				$table_name,
+				array(
+					'day_of_week' => $day,
+					'start_time' => $start_time,
+					'end_time' => $end_time,
+					'status' => 'active'
+				),
+				array( '%s', '%s', '%s', '%s' )
+			);
+			
+			if ( $result ) {
+				echo '<div class="notice notice-success"><p>Appointment slot added successfully!</p></div>';
+			} else {
+				echo '<div class="notice notice-error"><p>Error adding appointment slot: ' . $wpdb->last_error . '</p></div>';
+			}
+		}
+	}
+	
+	// Handle appointment deletion
+	if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete_appointment' && isset( $_GET['id'] ) ) {
+		if ( wp_verify_nonce( $_GET['_wpnonce'], 'delete_rochtah_appointment' ) ) {
+			$appointment_id = intval( $_GET['id'] );
+			$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+			$wpdb->delete(
+				$table_name,
+				array( 'id' => $appointment_id ),
+				array( '%d' )
+			);
+			
+			echo '<div class="notice notice-success"><p>Appointment slot deleted successfully!</p></div>';
+		}
+	}
+	
+	// Handle manual table creation (for testing)
+	if ( isset( $_GET['action'] ) && $_GET['action'] === 'create_table' ) {
+		if ( wp_verify_nonce( $_GET['_wpnonce'], 'create_rochtah_table' ) ) {
+			$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+				id INT(11) NOT NULL AUTO_INCREMENT,
+				day_of_week VARCHAR(20) NOT NULL,
+				start_time TIME NOT NULL,
+				end_time TIME NOT NULL,
+				current_bookings INT(11) DEFAULT 0,
+				status ENUM('active', 'inactive') DEFAULT 'active',
+				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+				PRIMARY KEY (id),
+				KEY day_of_week (day_of_week),
+				KEY start_time (start_time),
+				KEY status (status)
+			) " . $wpdb->get_charset_collate();
+			
+			dbDelta( $sql );
+			echo '<div class="notice notice-success"><p>Rochtah appointments table created successfully!</p></div>';
+		}
+	}
+	
+	$enabled = get_option( 'snks_ai_rochtah_enabled', '0' );
+	$available_days = unserialize( get_option( 'snks_ai_rochtah_available_days', serialize( array() ) ) );
+	
+	$days = array(
+		'monday' => 'Monday',
+		'tuesday' => 'Tuesday',
+		'wednesday' => 'Wednesday',
+		'thursday' => 'Thursday',
+		'friday' => 'Friday',
+		'saturday' => 'Saturday',
+		'sunday' => 'Sunday'
+	);
+	
+	// Generate 20-minute time slots from 8:00 AM to 8:00 PM
+	$time_slots = array();
+	$start_hour = 8;
+	$end_hour = 20;
+	
+	for ( $hour = $start_hour; $hour < $end_hour; $hour++ ) {
+		for ( $minute = 0; $minute < 60; $minute += 20 ) {
+			$time = sprintf( '%02d:%02d', $hour, $minute );
+			$time_slots[] = $time;
+		}
+	}
+	
+	// Get existing appointments
+	$table_name = $wpdb->prefix . 'snks_rochtah_appointments';
+	$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name;
+	
+	if ( $table_exists ) {
+		$existing_appointments = $wpdb->get_results( "
+			SELECT * FROM $table_name 
+			ORDER BY day_of_week, start_time
+		" );
+	} else {
+		$existing_appointments = array();
+	}
+	?>
+	<div class="wrap">
+		<h1>Rochtah Integration</h1>
+		
+		<div class="card">
+			<h2>General Settings</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'update_rochtah_settings' ); ?>
+				<input type="hidden" name="action" value="update_rochtah_settings">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="enabled">Enable Rochtah</label></th>
+						<td><input type="checkbox" id="enabled" name="enabled" value="1" <?php checked( $enabled, '1' ); ?>></td>
+					</tr>
+				</table>
+				
+				<h3>Available Days</h3>
+				<?php foreach ( $days as $day_key => $day_name ) : ?>
+					<label>
+						<input type="checkbox" name="available_days[]" value="<?php echo esc_attr( $day_key ); ?>" 
+							<?php checked( in_array( $day_key, $available_days ) ); ?>>
+						<?php echo esc_html( $day_name ); ?>
+					</label><br>
+				<?php endforeach; ?>
+				
+				<?php submit_button( 'Save Settings' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Add Appointment Slots</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'add_rochtah_appointment' ); ?>
+				<input type="hidden" name="action" value="add_appointment">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="day">Day of Week</label></th>
+						<td>
+							<select id="day" name="day" required>
+								<option value="">Select a day...</option>
+								<?php foreach ( $days as $day_key => $day_name ) : ?>
+									<option value="<?php echo esc_attr( $day_key ); ?>"><?php echo esc_html( $day_name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="start_time">Start Time</label></th>
+						<td>
+							<select id="start_time" name="start_time" required>
+								<option value="">Select start time...</option>
+								<?php foreach ( $time_slots as $time ) : ?>
+									<option value="<?php echo esc_attr( $time ); ?>"><?php echo esc_html( $time ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="end_time">End Time</label></th>
+						<td>
+							<select id="end_time" name="end_time" required>
+								<option value="">Select end time...</option>
+								<?php foreach ( $time_slots as $time ) : ?>
+									<option value="<?php echo esc_attr( $time ); ?>"><?php echo esc_html( $time ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description">Appointments are 20 minutes long. End time should be 20 minutes after start time.</p>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( 'Add Appointment Slot' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Database Status</h2>
+			<?php if ( $table_exists ) : ?>
+				<p><strong>✅ Table Status:</strong> Rochtah appointments table exists and is ready.</p>
+			<?php else : ?>
+				<p><strong>❌ Table Status:</strong> Rochtah appointments table does not exist.</p>
+				<p>
+					<a href="<?php echo wp_nonce_url( admin_url( 'admin.php?page=jalsah-ai-rochtah&action=create_table' ), 'create_rochtah_table' ); ?>" 
+					   class="button button-primary">
+						Create Table Manually
+					</a>
+				</p>
+			<?php endif; ?>
+		</div>
+		
+		<div class="card">
+			<h2>Current Appointment Slots</h2>
+			<?php if ( $existing_appointments ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Day</th>
+							<th>Time</th>
+							<th>Duration</th>
+							<th>Status</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $existing_appointments as $appointment ) : ?>
+							<tr>
+								<td><?php echo esc_html( ucfirst( $appointment->day_of_week ) ); ?></td>
+								<td><?php echo esc_html( $appointment->start_time . ' - ' . $appointment->end_time ); ?></td>
+								<td>20 minutes</td>
+								<td>
+									<span class="status-<?php echo esc_attr( $appointment->status ); ?>">
+										<?php echo esc_html( ucfirst( $appointment->status ) ); ?>
+									</span>
+								</td>
+								<td>
+									<a href="<?php echo wp_nonce_url( admin_url( 'admin.php?page=jalsah-ai-rochtah&action=delete_appointment&id=' . $appointment->id ), 'delete_rochtah_appointment' ); ?>" 
+									   class="button button-small button-link-delete" 
+									   onclick="return confirm('Are you sure you want to delete this appointment slot?')">
+										Delete
+									</a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p>No appointment slots configured yet. Add some using the form above.</p>
+			<?php endif; ?>
+		</div>
+		
+		<div class="card">
+			<h2>Rochtah Doctor Dashboard</h2>
+			<?php
+			global $wpdb;
+			$rochtah_bookings = $wpdb->get_results( "
+				SELECT rb.*, u.display_name as patient_name, u.user_email as patient_email,
+				       t.display_name as therapist_name, d.name as diagnosis_name
+				FROM {$wpdb->prefix}snks_rochtah_bookings rb
+				LEFT JOIN {$wpdb->users} u ON rb.patient_id = u.ID
+				LEFT JOIN {$wpdb->users} t ON rb.therapist_id = t.ID
+				LEFT JOIN {$wpdb->prefix}snks_diagnoses d ON rb.diagnosis_id = d.id
+				WHERE rb.status = 'confirmed'
+				ORDER BY rb.booking_date, rb.booking_time
+			" );
+			?>
+			
+			<?php if ( $rochtah_bookings ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>Date</th>
+							<th>Time</th>
+							<th>Patient</th>
+							<th>Email</th>
+							<th>Referring Therapist</th>
+							<th>Diagnosis</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $rochtah_bookings as $booking ) : ?>
+							<tr>
+								<td><?php echo esc_html( $booking->booking_date ); ?></td>
+								<td><?php echo esc_html( $booking->booking_time ); ?></td>
+								<td><?php echo esc_html( $booking->patient_name ); ?></td>
+								<td><?php echo esc_html( $booking->patient_email ); ?></td>
+								<td><?php echo esc_html( $booking->therapist_name ); ?></td>
+								<td><?php echo esc_html( $booking->diagnosis_name ); ?></td>
+								<td>
+									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-rochtah&action=write_prescription&id=' . $booking->id ); ?>" class="button button-small">Write Prescription</a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p>No confirmed Rochtah bookings found.</p>
+			<?php endif; ?>
+		</div>
+	</div>
+
+	<script>
+	jQuery(document).ready(function($) {
+		// Auto-calculate end time when start time is selected
+		$('#start_time').on('change', function() {
+			var startTime = $(this).val();
+			if (startTime) {
+				// Parse the time and add 20 minutes
+				var timeParts = startTime.split(':');
+				var hours = parseInt(timeParts[0]);
+				var minutes = parseInt(timeParts[1]);
+				
+				// Add 20 minutes
+				minutes += 20;
+				if (minutes >= 60) {
+					hours += 1;
+					minutes -= 60;
+				}
+				
+				// Format the end time
+				var endTime = sprintf('%02d:%02d', hours, minutes);
+				$('#end_time').val(endTime);
+			}
+		});
+		
+		// Validate that end time is 20 minutes after start time
+		$('form').on('submit', function(e) {
+			var startTime = $('#start_time').val();
+			var endTime = $('#end_time').val();
+			
+			if (startTime && endTime) {
+				var startParts = startTime.split(':');
+				var endParts = endTime.split(':');
+				var startMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+				var endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+				
+				if (endMinutes - startMinutes !== 20) {
+					alert('End time must be exactly 20 minutes after start time.');
+					e.preventDefault();
+					return false;
+				}
+			}
+		});
+		
+		// Helper function for sprintf
+		function sprintf(format) {
+			var args = Array.prototype.slice.call(arguments, 1);
+			return format.replace(/%(\d*)d/g, function(match, number) {
+				return args[parseInt(number) - 1];
+			});
+		}
+	});
+	</script>
+
+	<?php
+}
+
+/**
+ * General Settings Page
+ */
+function snks_enhanced_ai_settings_page() {
+	snks_load_ai_admin_styles();
+	
+			// Handle settings updates
+		if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_general_settings' ) {
+			if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_general_settings' ) ) {
+				// Debug: Log the POST data
+				error_log( 'Admin Settings Debug - POST data: ' . print_r( $_POST, true ) );
+				
+				update_option( 'snks_ai_bilingual_enabled', isset( $_POST['bilingual_enabled'] ) ? '1' : '0' );
+				update_option( 'snks_ai_default_language', sanitize_text_field( $_POST['default_language'] ) );
+				update_option( 'snks_ai_site_title_en', sanitize_text_field( $_POST['site_title_en'] ) );
+				update_option( 'snks_ai_site_title_ar', sanitize_text_field( $_POST['site_title_ar'] ) );
+				update_option( 'snks_ai_site_description_en', sanitize_textarea_field( $_POST['site_description_en'] ) );
+				update_option( 'snks_ai_site_description_ar', sanitize_textarea_field( $_POST['site_description_ar'] ) );
+				update_option( 'snks_ai_frontend_urls', sanitize_textarea_field( $_POST['frontend_urls'] ) );
+				update_option( 'snks_ai_ratings_enabled', isset( $_POST['ratings_enabled'] ) ? '1' : '0' );
+				update_option( 'snks_ai_diagnosis_search_by_name', isset( $_POST['diagnosis_search_by_name'] ) ? '1' : '0' );
+				
+				$diagnosis_limit = isset( $_POST['diagnosis_results_limit'] ) ? intval( $_POST['diagnosis_results_limit'] ) : 10;
+				error_log( 'Admin Settings Debug - Setting diagnosis_results_limit to: ' . $diagnosis_limit );
+				update_option( 'snks_ai_diagnosis_results_limit', $diagnosis_limit );
+				
+				// Verify the setting was saved
+				$saved_limit = get_option( 'snks_ai_diagnosis_results_limit', 'NOT_SET' );
+				error_log( 'Admin Settings Debug - Saved diagnosis_results_limit: ' . $saved_limit );
+				
+				update_option( 'snks_ai_show_more_button_enabled', isset( $_POST['show_more_button_enabled'] ) ? '1' : '0' );
+				
+				// Therapist AI Coupon Settings
+				update_option( 'snks_ai_therapist_ai_coupons_enabled', isset( $_POST['therapist_ai_coupons_enabled'] ) ? '1' : '0' );
+				
+				// Appointment Change Terms Settings
+				update_option( 'snks_ai_appointment_change_terms_en', sanitize_textarea_field( $_POST['appointment_change_terms_en'] ) );
+				update_option( 'snks_ai_appointment_change_terms_ar', sanitize_textarea_field( $_POST['appointment_change_terms_ar'] ) );
+				
+				echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
+			}
+		}
+	
+	$bilingual_enabled = get_option( 'snks_ai_bilingual_enabled', '1' ); // Default to enabled
+	$default_language = get_option( 'snks_ai_default_language', 'ar' ); // Default to Arabic
+	$site_title_en = get_option( 'snks_ai_site_title_en', 'Jalsah AI - Mental Health Support' );
+	$site_title_ar = get_option( 'snks_ai_site_title_ar', 'جلسة الذكية - دعم الصحة النفسية' );
+	$site_description_en = get_option( 'snks_ai_site_description_en', 'Professional AI-powered mental health support and therapy sessions.' );
+	$site_description_ar = get_option( 'snks_ai_site_description_ar', 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.' );
+	$frontend_urls = get_option( 'snks_ai_frontend_urls', 'https://jalsah-ai.com' );
+	$ratings_enabled = get_option( 'snks_ai_ratings_enabled', '1' ); // Default to enabled
+	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
+	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
+	$show_more_button_enabled = get_option( 'snks_ai_show_more_button_enabled', '1' ); // Default to enabled
+	$therapist_ai_coupons_enabled = get_option( 'snks_ai_therapist_ai_coupons_enabled', '1' ); // Default to enabled
+	
+	// Appointment Change Terms Settings
+	$appointment_change_terms_en = get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
+	$appointment_change_terms_ar = get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+	?>
+	<div class="wrap">
+		<h1>General Settings</h1>
+		
+		<div class="card">
+			<h2>Language & Localization</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'update_general_settings' ); ?>
+				<input type="hidden" name="action" value="update_general_settings">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="bilingual_enabled">Enable Bilingual Support</label></th>
+						<td>
+							<input type="checkbox" id="bilingual_enabled" name="bilingual_enabled" value="1" <?php checked( $bilingual_enabled, '1' ); ?>>
+							<p class="description">Enable this to show language switcher and support both English and Arabic content.</p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="default_language">Default Language</label></th>
+						<td>
+							<select id="default_language" name="default_language">
+								<option value="ar" <?php selected( $default_language, 'ar' ); ?>>العربية (Arabic)</option>
+								<option value="en" <?php selected( $default_language, 'en' ); ?>>English</option>
+							</select>
+							<p class="description">The default language for new users and when bilingual is disabled.</p>
+						</td>
+					</tr>
+				</table>
+				
+				<h3>Site Information</h3>
+				
+				<div class="bilingual-field">
+					<label for="site_title_en">Site Title (English)</label>
+					<input type="text" id="site_title_en" name="site_title_en" value="<?php echo esc_attr( $site_title_en ); ?>" class="regular-text">
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="site_title_ar">Site Title (Arabic)</label>
+					<input type="text" id="site_title_ar" name="site_title_ar" value="<?php echo esc_attr( $site_title_ar ); ?>" class="regular-text" dir="rtl">
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="site_description_en">Site Description (English)</label>
+					<textarea id="site_description_en" name="site_description_en" rows="3" class="large-text"><?php echo esc_textarea( $site_description_en ); ?></textarea>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="site_description_ar">Site Description (Arabic)</label>
+					<textarea id="site_description_ar" name="site_description_ar" rows="3" class="large-text" dir="rtl"><?php echo esc_textarea( $site_description_ar ); ?></textarea>
+				</div>
+				
+				<h3>Payment Integration</h3>
+				
+				<div class="bilingual-field">
+					<label for="frontend_urls">Frontend URLs (Multiple Origins)</label>
+					<textarea id="frontend_urls" name="frontend_urls" rows="3" class="large-text" placeholder="https://jalsah.online&#10;https://jalsah-ai.com&#10;https://staging.jalsah.app"><?php echo esc_textarea( $frontend_urls ); ?></textarea>
+					<p class="description">Enter multiple frontend URLs, one per line. These will be used for CORS validation and payment redirects. (e.g., https://jalsah.online, https://jalsah-ai.com)</p>
+				</div>
+				
+				<h3>Frontend Features</h3>
+				
+				<div class="bilingual-field">
+					<label for="ratings_enabled">Enable Ratings & Reviews</label>
+					<input type="checkbox" id="ratings_enabled" name="ratings_enabled" value="1" <?php checked( $ratings_enabled, '1' ); ?>>
+					<p class="description">Enable this to show star ratings, review counts, and allow rating-based filtering on the frontend. When disabled, ratings will be hidden from therapist cards and filtering options.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="diagnosis_search_by_name">Search Therapists by Diagnosis Name</label>
+					<input type="checkbox" id="diagnosis_search_by_name" name="diagnosis_search_by_name" value="1" <?php checked( $diagnosis_search_by_name, '1' ); ?>>
+					<p class="description">When enabled, the diagnosis results page will search for therapists by diagnosis name instead of diagnosis ID. This allows for more flexible matching based on diagnosis names rather than specific IDs.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="diagnosis_results_limit">Diagnosis Results Limit</label>
+					<input type="number" id="diagnosis_results_limit" name="diagnosis_results_limit" value="<?php echo esc_attr( $diagnosis_results_limit ); ?>" min="1" max="50" class="small-text">
+					<p class="description">Maximum number of therapists to show on diagnosis results page. Set to 0 for unlimited results. Recommended: 10-20 for optimal user experience.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="show_more_button_enabled">Enable "Show More" Button</label>
+					<input type="checkbox" id="show_more_button_enabled" name="show_more_button_enabled" value="1" <?php checked( $show_more_button_enabled, '1' ); ?>>
+					<p class="description">When enabled, shows a "Show More" button on diagnosis results page when there are more therapists than the limit. When disabled, all therapists will be shown at once.</p>
+				</div>
+				
+				<h3>Therapist Coupons</h3>
+				
+				<div class="bilingual-field">
+					<label for="therapist_ai_coupons_enabled">Allow Therapists to Create AI Coupons</label>
+					<input type="checkbox" id="therapist_ai_coupons_enabled" name="therapist_ai_coupons_enabled" value="1" <?php checked( $therapist_ai_coupons_enabled, '1' ); ?>>
+					<p class="description">When enabled, therapists can create coupons specifically for Jalsah AI sessions. When disabled, the AI coupon option will be hidden from the coupon creation form.</p>
+				</div>
+				
+				<h3>Appointment Change Terms</h3>
+				
+				<div class="bilingual-field">
+					<label for="appointment_change_terms_en">Appointment Change Terms (English)</label>
+					<textarea id="appointment_change_terms_en" name="appointment_change_terms_en" rows="3" class="large-text"><?php echo esc_textarea( $appointment_change_terms_en ); ?></textarea>
+					<p class="description">Terms and conditions for changing appointments. This will be displayed under cart items.</p>
+				</div>
+				
+				<div class="bilingual-field">
+					<label for="appointment_change_terms_ar">Appointment Change Terms (Arabic)</label>
+					<textarea id="appointment_change_terms_ar" name="appointment_change_terms_ar" rows="3" class="large-text" dir="rtl"><?php echo esc_textarea( $appointment_change_terms_ar ); ?></textarea>
+					<p class="description">Terms and conditions for changing appointments in Arabic. This will be displayed under cart items.</p>
+				</div>
+				
+				<?php submit_button( 'Save Settings' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>Language Settings Information</h2>
+			<ul>
+				<li><strong>Bilingual Enabled:</strong> Shows language switcher and allows content in both languages</li>
+				<li><strong>Bilingual Disabled:</strong> Shows content only in the default language, no language switcher</li>
+				<li><strong>Default Language:</strong> Used when bilingual is disabled or for new users</li>
+				<li><strong>Arabic Default:</strong> Recommended for Arabic-speaking regions</li>
+			</ul>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Email Settings Page
+ */
+function snks_enhanced_ai_email_page() {
+	snks_load_ai_admin_styles();
+	
+	// Handle settings updates
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_email_settings' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_email_settings' ) ) {
+			update_option( 'snks_ai_email_new_booking', isset( $_POST['new_booking'] ) ? '1' : '0' );
+			update_option( 'snks_ai_email_new_user', isset( $_POST['new_user'] ) ? '1' : '0' );
+			update_option( 'snks_ai_email_rochtah_request', isset( $_POST['rochtah_request'] ) ? '1' : '0' );
+			
+			// Update email templates
+			update_option( 'snks_ai_email_new_booking_template', sanitize_textarea_field( $_POST['new_booking_template'] ) );
+			update_option( 'snks_ai_email_new_user_template', sanitize_textarea_field( $_POST['new_user_template'] ) );
+			update_option( 'snks_ai_email_rochtah_template', sanitize_textarea_field( $_POST['rochtah_template'] ) );
+			
+			echo '<div class="notice notice-success"><p>Email settings updated successfully!</p></div>';
+		}
+	}
+	
+	$new_booking = get_option( 'snks_ai_email_new_booking', '1' );
+	$new_user = get_option( 'snks_ai_email_new_user', '1' );
+	$rochtah_request = get_option( 'snks_ai_email_rochtah_request', '1' );
+	
+	$new_booking_template = get_option( 'snks_ai_email_new_booking_template', 'Your booking has been confirmed with {{therapist_name}} on {{session_date}} at {{session_time}}.' );
+	$new_user_template = get_option( 'snks_ai_email_new_user_template', 'Welcome to Jalsah AI! Your account has been created successfully.' );
+	$rochtah_template = get_option( 'snks_ai_email_rochtah_template', 'Your prescription request has been received. Please confirm to proceed with the Rochtah consultation.' );
+	?>
+	<div class="wrap">
+		<h1>Email Notification Settings</h1>
+		
+		<div class="card">
+			<h2>Email Notifications</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'update_email_settings' ); ?>
+				<input type="hidden" name="action" value="update_email_settings">
+				
+				<table class="form-table">
+					<tr>
+						<th><label for="new_booking">New AI Booking</label></th>
+						<td><input type="checkbox" id="new_booking" name="new_booking" value="1" <?php checked( $new_booking, '1' ); ?>></td>
+					</tr>
+					<tr>
+						<th><label for="new_user">New AI User Registration</label></th>
+						<td><input type="checkbox" id="new_user" name="new_user" value="1" <?php checked( $new_user, '1' ); ?>></td>
+					</tr>
+					<tr>
+						<th><label for="rochtah_request">Rochtah Request</label></th>
+						<td><input type="checkbox" id="rochtah_request" name="rochtah_request" value="1" <?php checked( $rochtah_request, '1' ); ?>></td>
+					</tr>
+				</table>
+				
+				<h3>Email Templates</h3>
+				
+				<h4>New Booking Template</h4>
+				<textarea name="new_booking_template" rows="4" class="large-text"><?php echo esc_textarea( $new_booking_template ); ?></textarea>
+				
+				<h4>New User Template</h4>
+				<textarea name="new_user_template" rows="4" class="large-text"><?php echo esc_textarea( $new_user_template ); ?></textarea>
+				
+				<h4>Rochtah Request Template</h4>
+				<textarea name="rochtah_template" rows="4" class="large-text"><?php echo esc_textarea( $rochtah_template ); ?></textarea>
+				
+				<p class="description">
+					Available variables: {{patient_name}}, {{therapist_name}}, {{session_date}}, {{session_time}}, {{diagnosis}}, {{prescription_link}}
+				</p>
+				
+				<?php submit_button( 'Save Settings' ); ?>
+			</form>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Admin Tools Page
+ */
+function snks_enhanced_ai_tools_page() {
+	snks_load_ai_admin_styles();
+	
+	// Handle switch user action
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'switch_user' ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'switch_user' ) ) {
+			$user_id = intval( $_POST['user_id'] );
+			$user = get_user_by( 'ID', $user_id );
+			
+			if ( $user ) {
+				wp_set_current_user( $user_id );
+				wp_set_auth_cookie( $user_id );
+				echo '<div class="notice notice-success"><p>Switched to user: ' . esc_html( $user->display_name ) . '</p></div>';
+			}
+		}
+	}
+	
+	// Get AI users
+	$ai_users = get_users( array( 
+		'meta_query' => array(
+			array( 'key' => 'registration_source', 'value' => 'jalsah_ai', 'compare' => '=' )
+		),
+		'number' => 50
+	) );
+	?>
+	<div class="wrap">
+		<h1>Admin Tools</h1>
+		
+		<div class="card">
+			<h2>Switch User</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'switch_user' ); ?>
+				<input type="hidden" name="action" value="switch_user">
+				
+				<label>
+					Select User:
+					<select name="user_id" required>
+						<option value="">Choose a user...</option>
+						<?php foreach ( $ai_users as $user ) : ?>
+							<option value="<?php echo $user->ID; ?>">
+								<?php echo esc_html( $user->display_name . ' (' . $user->user_email . ')' ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				
+				<?php submit_button( 'Switch to User', 'secondary' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>User Filters</h2>
+			<p>Use these filters in the Users page to find specific users:</p>
+			<ul>
+				<li><strong>AI Users:</strong> <code>registration_source = jalsah_ai</code></li>
+				<li><strong>AI Therapists:</strong> <code>show_on_ai_site = 1</code></li>
+				<li><strong>Users with specific diagnosis:</strong> Check therapist-diagnosis assignments</li>
+			</ul>
+		</div>
+		
+		<div class="card">
+			<h2>Quick Actions</h2>
+			<div class="quick-actions">
+				<a href="<?php echo admin_url( 'users.php?meta_key=registration_source&meta_value=jalsah_ai' ); ?>" class="button">View AI Users</a>
+				<a href="<?php echo admin_url( 'users.php?role=doctor&meta_key=show_on_ai_site&meta_value=1' ); ?>" class="button">View AI Therapists</a>
+				<a href="<?php echo admin_url( 'edit.php?post_type=shop_order&meta_key=from_jalsah_ai&meta_value=1' ); ?>" class="button">View AI Orders</a>
+			</div>
+		</div>
+	</div>
+
+
+	<?php
+}
+
+/**
+ * API Test Page
+ */
+function snks_ai_api_test_page() {
+	snks_load_ai_admin_styles();
+	
+	// Handle flush rewrite rules
+	if ( isset( $_POST['flush_rules'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'flush_rules' ) ) {
+			flush_rewrite_rules();
+			echo '<div class="notice notice-success"><p>Rewrite rules flushed successfully!</p></div>';
+		}
+	}
+	
+	// Handle test API endpoint
+	if ( isset( $_POST['test_endpoint'] ) ) {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'test_endpoint' ) ) {
+			$endpoint = sanitize_text_field( $_POST['endpoint'] );
+			$test_url = home_url( '/api/ai/' . $endpoint );
+			
+			echo '<div class="notice notice-info"><p>Testing endpoint: <code>' . esc_html( $test_url ) . '</code></p></div>';
+			
+			// Make a test request
+			$response = wp_remote_get( $test_url );
+			if ( is_wp_error( $response ) ) {
+				echo '<div class="notice notice-error"><p>Error: ' . esc_html( $response->get_error_message() ) . '</p></div>';
+			} else {
+				$status_code = wp_remote_retrieve_response_code( $response );
+				$body = wp_remote_retrieve_body( $response );
+				
+				echo '<div class="notice notice-' . ( $status_code === 200 ? 'success' : 'error' ) . '">';
+				echo '<p><strong>Status Code:</strong> ' . esc_html( $status_code ) . '</p>';
+				echo '<p><strong>Response:</strong></p>';
+				echo '<pre>' . esc_html( $body ) . '</pre>';
+				echo '</div>';
+			}
+		}
+	}
+	?>
+	<div class="wrap">
+		<h1>AI API Test</h1>
+		
+		<div class="card">
+			<h2>1. Check Rewrite Rules</h2>
+			<?php
+			$rewrite_rules = get_option( 'rewrite_rules' );
+			$ai_rules = array_filter( $rewrite_rules, function( $rule, $pattern ) {
+				return strpos( $pattern, 'api/ai' ) !== false;
+			}, ARRAY_FILTER_USE_BOTH );
+			
+			if ( empty( $ai_rules ) ) {
+				echo '<p style="color: red;">❌ No AI API rewrite rules found!</p>';
+				echo '<p>This means the rewrite rules need to be flushed.</p>';
+			} else {
+				echo '<p style="color: green;">✅ AI API rewrite rules found:</p>';
+				echo '<ul>';
+				foreach ( $ai_rules as $pattern => $rule ) {
+					echo '<li><strong>' . esc_html( $pattern ) . '</strong> → ' . esc_html( $rule ) . '</li>';
+				}
+				echo '</ul>';
+			}
+			?>
+		</div>
+		
+		<div class="card">
+			<h2>2. Flush Rewrite Rules</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'flush_rules' ); ?>
+				<input type="hidden" name="flush_rules" value="1">
+				<?php submit_button( 'Flush Rewrite Rules', 'secondary' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>3. Test API Endpoints</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'test_endpoint' ); ?>
+				<input type="hidden" name="test_endpoint" value="1">
+				
+				<label>
+					Endpoint to test:
+					<select name="endpoint">
+						<option value="ping">ping</option>
+						<option value="test">test</option>
+						<option value="debug">debug</option>
+					</select>
+				</label>
+				
+				<?php submit_button( 'Test Endpoint', 'secondary' ); ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h2>4. Manual Testing</h2>
+			<p>Try accessing these URLs in your browser:</p>
+			<ul>
+				<li><a href="<?php echo home_url( '/api/ai/ping' ); ?>" target="_blank"><?php echo home_url( '/api/ai/ping' ); ?></a></li>
+				<li><a href="<?php echo home_url( '/api/ai/test' ); ?>" target="_blank"><?php echo home_url( '/api/ai/test' ); ?></a></li>
+				<li><a href="<?php echo home_url( '/api/ai/debug' ); ?>" target="_blank"><?php echo home_url( '/api/ai/debug' ); ?></a></li>
+			</ul>
+		</div>
+		
+		<div class="card">
+			<h2>5. Debug Information</h2>
+			<p><strong>Site URL:</strong> <?php echo get_site_url(); ?></p>
+			<p><strong>Home URL:</strong> <?php echo get_home_url(); ?></p>
+			<p><strong>Current URL:</strong> <?php echo $_SERVER['REQUEST_URI']; ?></p>
+			<p><strong>AI Integration Class:</strong> <?php echo class_exists( 'SNKS_AI_Integration' ) ? '✅ Loaded' : '❌ Not found'; ?></p>
+		</div>
+		
+		<div class="card">
+			<h2>6. Frontend API Test</h2>
+			<p>Test the cart API endpoint that's causing the 404 error:</p>
+			<ul>
+				<li><a href="<?php echo home_url( '/api/ai/cart/42' ); ?>" target="_blank"><?php echo home_url( '/api/ai/cart/42' ); ?></a> (GET cart for user 42)</li>
+			</ul>
+			<p><strong>Note:</strong> This endpoint requires authentication, so it might return an error even if the API is working.</p>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Display diagnosis therapists management interface
+ */
+function snks_display_diagnosis_therapists_management( $diagnosis_id ) {
+	global $wpdb;
+	$diagnoses_table = $wpdb->prefix . 'snks_diagnoses';
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	
+	$diagnosis = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $diagnoses_table WHERE id = %d", $diagnosis_id ) );
+	if ( !$diagnosis ) {
+		wp_die( 'Diagnosis not found.' );
+	}
+	
+	// Get all therapists assigned to this diagnosis (only those with application records)
+	$therapists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT td.*, ta.name, ta.name_en, ta.email, ta.phone, ta.doctor_specialty 
+		 FROM $therapist_diagnoses_table td
+		 INNER JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 WHERE td.diagnosis_id = %d AND ta.status = 'approved'
+		 ORDER BY td.display_order ASC, ta.name ASC",
+		$diagnosis_id
+	) );
+	
+	// Debug: Let's also check what's in the therapist_diagnoses table for this diagnosis
+	$debug_therapists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT * FROM $therapist_diagnoses_table WHERE diagnosis_id = %d",
+		$diagnosis_id
+	) );
+	
+	// Debug: Check if there are any applications with these therapist IDs
+	if ( !empty( $debug_therapists ) ) {
+		$therapist_ids = array_column( $debug_therapists, 'therapist_id' );
+		$debug_applications = $wpdb->get_results( $wpdb->prepare(
+			"SELECT * FROM $applications_table WHERE user_id IN (" . implode( ',', array_fill( 0, count( $therapist_ids ), '%d' ) ) . ")",
+			$therapist_ids
+		) );
+	}
+	
+	?>
+	<div class="wrap">
+		<h1>Manage Therapists for: <?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></h1>
+		<?php if ( $diagnosis->name_ar ) : ?>
+			<h2 style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->name_ar ); ?></h2>
+		<?php endif; ?>
+		
+		<div class="card">
+			<h2>Therapist Points & Settings</h2>
+			<p>Manage the points and settings of therapists for this diagnosis. Each point value can only be assigned to one therapist per diagnosis.</p>
+			
+			<form method="post" action="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>">
+				<?php wp_nonce_field( 'save_therapists_' . $diagnosis_id ); ?>
+				<input type="hidden" name="diagnosis_id" value="<?php echo $diagnosis_id; ?>">
+				<input type="hidden" name="save_therapists" value="1">
+				
+				<?php if ( !empty( $therapists ) ) : ?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th style="width: 80px;">Points</th>
+								<th>Therapist Name</th>
+								<th>Email</th>
+								<th>Phone</th>
+								<th>Specialty</th>
+								<th style="width: 100px;">Rating</th>
+								<th>Suitability Message (English)</th>
+								<th>Suitability Message (Arabic)</th>
+								<th style="width: 100px;">Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $therapists as $therapist ) : ?>
+								<tr>
+									<td>
+										<input type="number" name="therapist_order_<?php echo $therapist->therapist_id; ?>" 
+											   value="<?php echo esc_attr( $therapist->display_order ); ?>" 
+											   min="0" style="width: 60px;">
+									</td>
+									<td>
+										<strong><?php echo esc_html( $therapist->name_en ?: $therapist->name ); ?></strong>
+										<?php if ( $therapist->name_ar ) : ?>
+											<br><small><?php echo esc_html( $therapist->name_ar ); ?></small>
+										<?php endif; ?>
+									</td>
+									<td><?php echo esc_html( $therapist->email ); ?></td>
+									<td><?php echo esc_html( $therapist->phone ); ?></td>
+									<td><?php echo esc_html( $therapist->doctor_specialty ); ?></td>
+									<td>
+										<input type="number" name="therapist_rating_<?php echo $therapist->therapist_id; ?>" 
+											   value="<?php echo esc_attr( $therapist->rating ); ?>" 
+											   min="0" max="5" step="0.1" style="width: 60px;">
+									</td>
+									<td>
+										<textarea name="therapist_message_en_<?php echo $therapist->therapist_id; ?>" 
+												  rows="2" style="width: 100%;"><?php echo esc_textarea( $therapist->suitability_message_en ?: $therapist->suitability_message ); ?></textarea>
+									</td>
+									<td>
+										<textarea name="therapist_message_ar_<?php echo $therapist->therapist_id; ?>" 
+												  rows="2" style="width: 100%;"><?php echo esc_textarea( $therapist->suitability_message_ar ); ?></textarea>
+									</td>
+									<td>
+										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $therapist->therapist_id ); ?>" 
+										   class="button button-small">Edit Profile</a>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+					
+					<p class="submit">
+						<input type="submit" class="button button-primary" value="Save Therapist Points">
+						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button">Back to Diagnoses</a>
+					</p>
+				<?php else : ?>
+					<p>No therapists are currently assigned to this diagnosis.</p>
+					
+					<!-- Debug Information -->
+					<div class="card" style="background: #f9f9f9; border-left: 4px solid #0073aa;">
+						<h3>Debug Information</h3>
+						<p><strong>Diagnosis ID:</strong> <?php echo $diagnosis_id; ?></p>
+						<p><strong>Raw therapist_diagnoses entries:</strong> <?php echo count( $debug_therapists ); ?></p>
+						<?php if ( !empty( $debug_therapists ) ) : ?>
+							<p><strong>Therapist IDs found:</strong> <?php echo implode( ', ', array_column( $debug_therapists, 'therapist_id' ) ); ?></p>
+							<p><strong>Matching applications:</strong> <?php echo count( $debug_applications ); ?></p>
+							<?php if ( !empty( $debug_applications ) ) : ?>
+								<p><strong>Application user IDs:</strong> <?php echo implode( ', ', array_column( $debug_applications, 'user_id' ) ); ?></p>
+							<?php endif; ?>
+							
+							<?php if ( count( $debug_therapists ) > count( $debug_applications ) ) : ?>
+								<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin-top: 10px; border-radius: 4px;">
+									<h4>⚠️ Orphaned Entries Detected</h4>
+									<p>There are <?php echo count( $debug_therapists ) - count( $debug_applications ); ?> therapist-diagnosis entries that don't have corresponding application records.</p>
+									<form method="post" style="margin-top: 10px;">
+										<?php wp_nonce_field( 'cleanup_orphaned_entries_' . $diagnosis_id ); ?>
+										<input type="hidden" name="diagnosis_id" value="<?php echo $diagnosis_id; ?>">
+										<input type="hidden" name="cleanup_orphaned" value="1">
+										<button type="submit" class="button button-secondary" onclick="return confirm('This will remove orphaned therapist-diagnosis entries that don\'t have application records. Continue?')">
+											🧹 Cleanup Orphaned Entries
+										</button>
+									</form>
+								</div>
+							<?php endif; ?>
+						<?php endif; ?>
+					</div>
+					
+					<p>
+						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button button-primary">Assign Therapists</a>
+						<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-diagnoses' ); ?>" class="button">Back to Diagnoses</a>
+					</p>
+				<?php endif; ?>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h3>Diagnosis Information</h3>
+			<table class="form-table">
+				<tr>
+					<th>Name (English)</th>
+					<td><?php echo esc_html( $diagnosis->name_en ?: $diagnosis->name ); ?></td>
+				</tr>
+				<?php if ( $diagnosis->name_ar ) : ?>
+					<tr>
+						<th>Name (العربية)</th>
+						<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->name_ar ); ?></td>
+					</tr>
+				<?php endif; ?>
+				<tr>
+					<th>Description (English)</th>
+					<td><?php echo esc_html( $diagnosis->description_en ?: $diagnosis->description ); ?></td>
+				</tr>
+				<?php if ( $diagnosis->description_ar ) : ?>
+					<tr>
+						<th>Description (العربية)</th>
+						<td style="direction: rtl; text-align: right;"><?php echo esc_html( $diagnosis->description_ar ); ?></td>
+					</tr>
+				<?php endif; ?>
+				<tr>
+					<th>Total Therapists</th>
+					<td><?php echo count( $therapists ); ?> therapists assigned</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Save diagnosis therapists ordering with validation
+ */
+function snks_save_diagnosis_therapists_ordering( $diagnosis_id ) {
+	global $wpdb;
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	
+	// Get all therapists for this diagnosis
+	$therapists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT therapist_id FROM $therapist_diagnoses_table WHERE diagnosis_id = %d",
+		$diagnosis_id
+	) );
+	
+	if ( empty( $therapists ) ) {
+		return array( 'success' => false, 'message' => 'No therapists found for this diagnosis.' );
+	}
+	
+	// Validate order numbers
+	$order_conflicts = array();
+	$orders_to_check = array();
+	
+	foreach ( $therapists as $therapist ) {
+		$therapist_id = $therapist->therapist_id;
+		$order = isset( $_POST["therapist_order_$therapist_id"] ) ? intval( $_POST["therapist_order_$therapist_id"] ) : 0;
+		
+		if ( $order > 0 ) {
+			$orders_to_check[] = array( 'therapist_id' => $therapist_id, 'order' => $order );
+		}
+	}
+	
+	// Check for order conflicts within this diagnosis
+	$order_counts = array();
+	foreach ( $orders_to_check as $check ) {
+		$order = $check['order'];
+		if ( !isset( $order_counts[$order] ) ) {
+			$order_counts[$order] = array();
+		}
+		$order_counts[$order][] = $check['therapist_id'];
+	}
+	
+	// Find conflicts
+	foreach ( $order_counts as $order => $therapist_ids ) {
+		if ( count( $therapist_ids ) > 1 ) {
+			$therapist_names = array();
+			foreach ( $therapist_ids as $therapist_id ) {
+				$name = $wpdb->get_var( $wpdb->prepare(
+					"SELECT name FROM {$wpdb->prefix}therapist_applications WHERE user_id = %d",
+					$therapist_id
+				) );
+				$therapist_names[] = $name ?: "Therapist ID: $therapist_id";
+			}
+			$order_conflicts[] = sprintf(
+				'Points %d is assigned to multiple therapists: %s',
+				$order, implode( ', ', $therapist_names )
+			);
+		}
+	}
+	
+	// If there are conflicts, return error
+	if ( !empty( $order_conflicts ) ) {
+		return array( 
+			'success' => false, 
+			'message' => 'Order conflicts detected: ' . implode( '; ', $order_conflicts ) 
+		);
+	}
+	
+	// Start transaction
+	$wpdb->query( 'START TRANSACTION' );
+	
+	try {
+		// Update each therapist's settings
+		foreach ( $therapists as $therapist ) {
+			$therapist_id = $therapist->therapist_id;
+			$order = isset( $_POST["therapist_order_$therapist_id"] ) ? intval( $_POST["therapist_order_$therapist_id"] ) : 0;
+			$rating = isset( $_POST["therapist_rating_$therapist_id"] ) ? floatval( $_POST["therapist_rating_$therapist_id"] ) : 0;
+			$message_en = isset( $_POST["therapist_message_en_$therapist_id"] ) ? sanitize_textarea_field( $_POST["therapist_message_en_$therapist_id"] ) : '';
+			$message_ar = isset( $_POST["therapist_message_ar_$therapist_id"] ) ? sanitize_textarea_field( $_POST["therapist_message_ar_$therapist_id"] ) : '';
+			
+			$wpdb->update(
+				$therapist_diagnoses_table,
+				array(
+					'display_order' => $order,
+					'rating' => $rating,
+					'suitability_message_en' => $message_en,
+					'suitability_message_ar' => $message_ar
+				),
+				array(
+					'therapist_id' => $therapist_id,
+					'diagnosis_id' => $diagnosis_id
+				),
+				array( '%d', '%f', '%s', '%s' ),
+				array( '%d', '%d' )
+			);
+		}
+		
+		$wpdb->query( 'COMMIT' );
+		
+		// Trigger hook to recalculate frontend_order for this diagnosis
+		// Since multiple therapists might be updated, we'll recalculate for the entire diagnosis
+		do_action( 'snks_therapist_diagnosis_updated', 0, $diagnosis_id );
+		
+		$diagnosis_name = $wpdb->get_var( $wpdb->prepare(
+			"SELECT name_en FROM {$wpdb->prefix}snks_diagnoses WHERE id = %d",
+			$diagnosis_id
+		) );
+		
+		return array( 
+			'success' => true, 
+			'message' => sprintf( 'Successfully updated therapist points for "%s"', $diagnosis_name ?: 'Unknown Diagnosis' ) 
+		);
+		
+	} catch ( Exception $e ) {
+		$wpdb->query( 'ROLLBACK' );
+		return array( 'success' => false, 'message' => 'Database error: ' . $e->getMessage() );
+	}
+}
+
+/**
+ * Cleanup orphaned therapist-diagnosis entries
+ */
+function snks_cleanup_orphaned_therapist_diagnoses( $diagnosis_id ) {
+	global $wpdb;
+	$therapist_diagnoses_table = $wpdb->prefix . 'snks_therapist_diagnoses';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	
+	// Find orphaned entries (therapist-diagnosis entries without corresponding applications)
+	$orphaned_entries = $wpdb->get_results( $wpdb->prepare(
+		"SELECT td.* FROM $therapist_diagnoses_table td
+		 LEFT JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 WHERE td.diagnosis_id = %d AND ta.user_id IS NULL",
+		$diagnosis_id
+	) );
+	
+	if ( empty( $orphaned_entries ) ) {
+		return array( 'success' => true, 'message' => 'No orphaned entries found to clean up.' );
+	}
+	
+	// Delete orphaned entries
+	$deleted_count = $wpdb->query( $wpdb->prepare(
+		"DELETE td FROM $therapist_diagnoses_table td
+		 LEFT JOIN $applications_table ta ON td.therapist_id = ta.user_id
+		 WHERE td.diagnosis_id = %d AND ta.user_id IS NULL",
+		$diagnosis_id
+	) );
+	
+	if ( $deleted_count !== false ) {
+		return array( 
+			'success' => true, 
+			'message' => sprintf( 'Successfully cleaned up %d orphaned therapist-diagnosis entries.', $deleted_count ) 
+		);
+	} else {
+		return array( 'success' => false, 'message' => 'Failed to clean up orphaned entries.' );
+	}
+}
+
+/**
+ * Add AI session statistics dashboard widget
+ */
+function snks_add_ai_session_dashboard_widget() {
+	wp_add_dashboard_widget(
+		'ai_session_statistics_widget',
+		'إحصائيات جلسات الذكاء الاصطناعي',
+		'snks_ai_session_dashboard_widget_content'
+	);
+}
+add_action( 'wp_dashboard_setup', 'snks_add_ai_session_dashboard_widget' );
+
+/**
+ * AI session statistics dashboard widget content
+ */
+function snks_ai_session_dashboard_widget_content() {
+	// Get AI session statistics
+	$stats = snks_get_ai_session_statistics();
+	
+	?>
+	<div class="ai-session-stats-widget">
+		<div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+			<div class="stat-box" style="background: #f0f8ff; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #0073aa;">إجمالي الجلسات</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #0073aa;">
+					<?php echo number_format( $stats['total_sessions'] ); ?>
+				</p>
+			</div>
+			<div class="stat-box" style="background: #f0fff0; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #46b450;">الجلسات المكتملة</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #46b450;">
+					<?php echo number_format( $stats['completed_sessions'] ); ?>
+				</p>
+			</div>
+			<div class="stat-box" style="background: #fff8f0; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #ff8c00;">إجمالي الأرباح</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #ff8c00;">
+					<?php echo number_format( $stats['total_profit'], 2 ); ?> ج.م
+				</p>
+			</div>
+			<div class="stat-box" style="background: #f8f0ff; padding: 15px; border-radius: 6px; text-align: center;">
+				<h4 style="margin: 0 0 8px 0; color: #9932cc;">معدل الإكمال</h4>
+				<p style="font-size: 20px; font-weight: bold; margin: 0; color: #9932cc;">
+					<?php echo $stats['completion_rate']; ?>%
+				</p>
+			</div>
+		</div>
+		
+		<div class="today-stats" style="background: #f9f9f9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+								<h4 style="margin: 0 0 10px 0;"><?php echo __( 'Today Statistics', 'anony-turn' ); ?></h4>
+			<div style="display: flex; justify-content: space-between;">
+				<span><?php echo __( 'Sessions:', 'anony-turn' ); ?> <strong><?php echo number_format( $stats['today_sessions'] ); ?></strong></span>
+				<span><?php echo __( 'Earnings:', 'anony-turn' ); ?> <strong><?php echo number_format( $stats['today_profit'], 2 ); ?> <?php echo __( 'EGP', 'anony-turn' ); ?></strong></span>
+			</div>
+		</div>
+		
+		<div class="quick-actions" style="text-align: center;">
+			<a href="<?php echo admin_url( 'admin.php?page=therapist-earnings' ); ?>" class="button button-primary" style="margin-right: 10px;">
+				<?php echo __( 'View Therapist Earnings', 'anony-turn' ); ?>
+			</a>
+			<a href="<?php echo admin_url( 'admin.php?page=profit-settings' ); ?>" class="button">
+				إعدادات الأرباح
+			</a>
+		</div>
+	</div>
+	<?php
+}

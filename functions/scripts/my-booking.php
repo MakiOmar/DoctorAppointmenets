@@ -41,7 +41,18 @@ add_shortcode(
 		add_action(
 			'wp_footer',
 			function () use ( $room_id, $doctor_id, $name ) {
-				if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
+				// Check if this is an AI session and if it's too early to join
+				$session = snks_get_timetable_by( 'ID', $room_id );
+				$is_ai_session = $session ? snks_is_ai_session( $room_id ) : false;
+				$is_too_early = false;
+				
+				if ( $is_ai_session && $session ) {
+					$scheduled_timestamp = strtotime( $session->date_time );
+					$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+					$is_too_early = $current_timestamp < $scheduled_timestamp;
+				}
+				
+				if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
 					?>
 					<script>
 					jQuery(document).ready(function($){
@@ -87,6 +98,10 @@ add_shortcode(
 						height: (window.innerHeight ) + 'px',
 						configOverwrite: {
 							prejoinPageEnabled: false,
+							startWithAudioMuted: false,
+							startWithVideoMuted: false,
+							enableWelcomePage: false,
+							enableClosePage: true,
 							participantsPane: {
 								enabled: true,
 								hideModeratorSettingsTab: false,
@@ -115,6 +130,43 @@ add_shortcode(
 
 					
 					meetAPI.executeCommand('displayName', '<?php echo esc_html( $name ); ?>');
+					
+					<?php if ( snks_is_patient() ) { ?>
+					// Auto-start the meeting for patients - ensure it joins automatically
+					meetAPI.addListener('videoConferenceJoined', function() {
+						// Meeting has automatically joined
+						console.log('Patient automatically joined the meeting');
+					});
+					
+					// Fallback: Try to auto-click any start/join button if it exists
+					// This handles cases where Jitsi might still show a button despite prejoinPageEnabled: false
+					var attemptAutoJoin = function() {
+						var startButton = document.querySelector('[data-testid="prejoin.joinMeeting"]') || 
+										  document.querySelector('.prejoin-button') ||
+										  document.querySelector('button[aria-label*="Join"]') ||
+										  document.querySelector('button[aria-label*="join"]') ||
+										  document.querySelector('button[aria-label*="ابدأ"]') ||
+										  document.querySelector('button[aria-label*="Join meeting"]') ||
+										  document.querySelector('.videosettingsbutton') ||
+										  document.querySelector('[data-tooltip*="Join"]') ||
+										  document.querySelector('[id*="join"]') ||
+										  document.querySelector('[class*="join-button"]');
+						if (startButton && typeof startButton.click === 'function') {
+							try {
+								startButton.click();
+								console.log('Auto-clicked start button for patient');
+							} catch(e) {
+								console.log('Could not auto-click button:', e);
+							}
+						}
+					};
+					
+					// Try auto-join after delays to catch any delayed button rendering
+					setTimeout(attemptAutoJoin, 500);
+					setTimeout(attemptAutoJoin, 1000);
+					setTimeout(attemptAutoJoin, 2000);
+					<?php } ?>
+					
 					<?php if ( ! snks_is_patient() && ! empty( $room_id ) ) { ?>
 					//videoConferenceJoined
 					meetAPI.addListener('videoConferenceJoined', function(room){
@@ -170,14 +222,129 @@ add_shortcode(
 				100%   {background-position:left 1px top 1px,0 0,0 0,100% 100%}
 				}.room-loader-wrapper{width:95vw;height:450px;max-width:450px;background-color:#024059;margin:auto;}</style>';
 		$html .= '<div id="meeting">';
-		if ( snks_is_patient() && ! snks_doctor_has_joined( $room_id, $doctor_id ) ) {
-			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">يرجى انتظار المعالج شكراً لك</h5></div>';
+		
+		// Check if this is an AI session and if it's too early to join
+		$session = snks_get_timetable_by( 'ID', $room_id );
+		$is_ai_session = $session ? snks_is_ai_session( $room_id ) : false;
+		$is_too_early = false;
+		
+		if ( $is_ai_session && $session ) {
+			$scheduled_timestamp = strtotime( $session->date_time );
+			$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
+			$is_too_early = $current_timestamp < $scheduled_timestamp;
+		}
+		
+		if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
+			$message = $is_too_early ? 'الجلسة لم تبدأ بعد - يرجى الانتظار حتى وقت الجلسة المحدد' : 'يرجى انتظار المعالج شكراً لك';
+			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">' . $message . '</h5></div>';
 		}
 		$html .= '</div><input type="hidden" id="room_id" value="' . $room_id . '"/>';
 		return $html;
 	}
 );
+add_action(
+	'wp_footer',
+	function () {
+		?>
+		<script>
+		// Timer script for Jet popup events
+		function initializeSnksTimer() {
+			jQuery(document).ready(function($){
+				$(document).on(
+					'click',
+					'.snks-disabled .snks-start-meeting',
+					function(event) {
+						event.preventDefault();
+					}
+				);
+				$('.snks-count-down').each(
+					function(){
+						var parent = $(this).closest('.snks-booking-item');
+						if ( parent.closest('.past').length > 0 ) {
+							return;
+						}
+						var parentID = parent.attr('id');
+						var itemID = parentID.match(/\d+/)[0];
+						var dateTime = parent.data('datetime');
+						var period = parent.data('period') || 45; // Default 45 minutes if not specified
+						
+						// Calculate session end time by adding period to start time
+						var startDate = new Date(dateTime);
+						var countDownDate = new Date(startDate.getTime() + (period * 60 * 1000)).getTime();
+						// Update the count down every 1 second.
+						var x = setInterval(
+							function() {
+								// Get today's date and time.
+								var now = new Date().getTime();
+								if ( countDownDate > now ) {
+									// Find the distance between now and the count down date.
+									var distance = countDownDate - now;
 
+									// Time calculations for days, hours, minutes and seconds.
+									var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+									var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+									var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+									var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+									// Update the HTML content.
+									$(".snks-apointment-timer", parent).html("<span>"+ days + " يوم </span>"
+										+ "<span>"+ hours + " ساعة </span>"
+										+ "<span>"+ minutes + " دقيقة </span>"
+										+ "<span>"+ seconds + " ثانية </span>");
+
+									// Check if days is 0 and add a class to its container span.
+									if (days <= 0) {
+										$(".snks-apointment-timer span:contains('0 يوم')", parent).hide();
+									}
+
+									// Check if hours is 0 and add a class to its container span.
+									if ( hours <= 0 && days <= 0 ) {
+										$(".snks-apointment-timer span:contains('0 ساعة')", parent).hide();
+									}
+
+									// Check if hours is 0 and add a class to its container span.
+									if (minutes <= 0 && hours <= 0 && days <= 0 ) {
+										$(".snks-apointment-timer span:contains('0 دقيقة')", parent).hide();
+									}
+
+									// If the count down is finished, write some text.
+									if (distance < 0) {
+										clearInterval(x);
+										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
+										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
+									}
+								} else {
+									if ( now - countDownDate > 3600000 ) {
+										$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
+										parent.addClass('snks-disabled');
+										clearInterval(x);
+									} else if( now - countDownDate < 3600000 && now - countDownDate > 0 ) {
+										parent.removeClass('snks-disabled');
+										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
+										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
+										$(".snks-start-meeting", parent).text('إبدأ الجلسة');
+									}
+								}
+							},
+							1000
+						);
+					}
+				);
+			});
+		}
+		
+		// Call timer function on Jet popup events
+		jQuery(window).on('jet-popup/show-event/after-show', function(){
+			initializeSnksTimer();
+		});
+		
+		jQuery(window).on('jet-popup/render-content/render-custom-content', function(){
+			initializeSnksTimer();
+		});
+	</script>
+	<?php
+	}
+);
 
 add_action(
 	'wp_footer',
@@ -186,88 +353,6 @@ add_action(
 			return;
 		}
 		?>
-		<script>
-			jQuery(document).ready(
-				function($){
-					$(document).on(
-						'click',
-						'.snks-disabled .snks-start-meeting',
-						function(event) {
-							event.preventDefault();
-						}
-					);
-					$('.snks-count-down').each(
-						function(){
-							var parent = $(this).closest('.snks-booking-item');
-							var parentID = parent.attr('id');
-							var itemID = parentID.match(/\d+/)[0];
-							var dateTime = parent.data('datetime');
-							// Set the date we're counting down to.
-							var countDownDate = new Date(dateTime).getTime();
-							
-							// Update the count down every 1 second.
-							var x = setInterval(
-								function() {
-
-									// Get today's date and time.
-									var now = new Date().getTime();
-									if ( countDownDate > now ) {
-										// Find the distance between now and the count down date.
-										var distance = countDownDate - now;
-
-										// Time calculations for days, hours, minutes and seconds.
-										var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-										var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-										var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-										var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-										// Update the HTML content.
-										$(".snks-apointment-timer", parent).html("<span>"+ days + " يوم </span>"
-											+ "<span>"+ hours + " ساعة </span>"
-											+ "<span>"+ minutes + " دقيقة </span>"
-											+ "<span>"+ seconds + " ثانية </span>");
-
-										// Check if days is 0 and add a class to its container span.
-										if (days <= 0) {
-											$(".snks-apointment-timer span:contains('0 يوم')", parent).hide();
-										}
-
-										// Check if hours is 0 and add a class to its container span.
-										if ( hours <= 0 && days <= 0 ) {
-											$(".snks-apointment-timer span:contains('0 ساعة')", parent).hide();
-										}
-
-										// Check if hours is 0 and add a class to its container span.
-										if (minutes <= 0 && hours <= 0 && days <= 0 ) {
-											$(".snks-apointment-timer span:contains('0 دقيقة')", parent).hide();
-										}
-
-										// If the count down is finished, write some text.
-										if (distance < 0) {
-											clearInterval(x);
-											$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
-											$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
-										}
-									} else {
-										if ( now - countDownDate > 3600000 ) {
-											$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
-											parent.addClass('snks-disabled');
-											//$(".snks-start-meeting", parent).attr('href', '#');
-											clearInterval(x);
-										} else if( now - countDownDate < 3600000 && now - countDownDate > 0 ) {
-											parent.removeClass('snks-disabled');
-											$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
-											$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
-										}
-									}
-								},
-								1000
-							);
-						}
-					);
-				}
-			);
-		</script>
 		<script>
 			jQuery(document).ready(function($) {
 				// Attach a click event to the .edit-booking element.

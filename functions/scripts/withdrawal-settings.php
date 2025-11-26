@@ -217,7 +217,8 @@ add_action(
 				const attendanceType = $(this).data('attendance-type');
 				const clientName = $(this).data('client-name');
 				const coupon = $(this).data('coupon');
-				const couponHtml = coupon && coupon !== '' ? `<p><strong>الكوبون:</strong> ${coupon}</p>` : '';
+				const couponType = $(this).data('coupon-type');
+				const couponHtml = coupon && coupon !== '' ? `<p><strong>الكوبون:</strong> ${coupon} <span style="color: #666; font-size: 0.9em;">(${couponType === 'AI' ? '🤖 AI فقط' : couponType === 'General' ? '📋 عام' : 'غير معروف'})</span></p>` : '';
 				// Display details in Arabic using SweetAlert2
 				Swal.fire({
 					title: 'تفاصيل الجلسة',

@@ -420,9 +420,15 @@ add_action(
 				);
 				$(document).on("jet-form-builder/ajax/on-success", function(event, formData, response) {
 					let formId = response[0].dataset.formId;
-					exclude = [ 1974, 2067, 2069 ];
+					var exclude = [ 1974, 2067, 2069 ];
 					if ( exclude.includes( parseInt( formId ) ) ) {
 						setCookie('edited_form', '1956');
+						$('form[data-form-id="' + formId + '"]').closest('.jet-popup').find('.jet-popup__close-button').click();
+						return;
+					}
+
+					var include = [ 10317, 10316, 10315 ];
+					if ( include.includes( parseInt( formId ) ) ) {
 						$('form[data-form-id="' + formId + '"]').closest('.jet-popup').find('.jet-popup__close-button').click();
 						return;
 					}

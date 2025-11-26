@@ -719,6 +719,8 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 	if ( ! $form_data || empty( $form_data ) ) {
 		return;
 	}
+	
+
 	ob_start();
 	?>
 	<style>
@@ -808,7 +810,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 
 	// Define the base URL and image source.
 	$base_url  = home_url( '/' );
-	$user_link = $base_url . 'therapist/' . $current_user->nickname;
+	$user_link = $base_url . 'therapist/' . ( $current_user ? $current_user->nickname : 'unknown' );
 	?>
 	<input type="hidden" id="selected_doctor_url" value="<?php echo esc_url( $user_link ); ?>"/>
 	<div style="text-align:center">
@@ -850,7 +852,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 					</svg>
 				</div>
 				<?php
-				[$converted_price, $currency_label] = acrsw_currency( ( $form_data['_jalsah_commistion'] + $form_data['_paymob'] ) );
+				[$converted_price, $currency_label] = acrsw_currency( ( floatval($form_data['_jalsah_commistion']) + floatval($form_data['_paymob']) ) );
 				?>
 				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 			</div>
@@ -858,7 +860,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 				<div class="amount-section">
 					<p>رسوم موقع جلسة</p>
 					<?php
-					[$converted_price, $currency_label] = acrsw_currency( $form_data['_jalsah_commistion'] );
+					[$converted_price, $currency_label] = acrsw_currency( floatval($form_data['_jalsah_commistion']) );
 					?>
 					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 				</div>
@@ -866,7 +868,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 				<div class="amount-section">
 					<p>رسوم  إدارية</p>
 					<?php
-					[$converted_price, $currency_label] = acrsw_currency( $form_data['_paymob'] );
+					[$converted_price, $currency_label] = acrsw_currency( floatval($form_data['_paymob']) );
 					?>
 					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 				</div>
@@ -884,7 +886,7 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 		<div class="total">
 			<p>الإجمالي</p>
 			<?php
-			[$converted_price, $currency_label] = acrsw_currency( $form_data['_total_price'] );
+			[$converted_price, $currency_label] = acrsw_currency( floatval($form_data['_total_price']) );
 			?>
 			<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
 		</div>
@@ -895,6 +897,237 @@ function consulting_session_pricing_table_shortcode( $form_data = false ) {
 
 // Register the shortcode.
 add_shortcode( 'consulting_session_pricing_table', 'consulting_session_pricing_table_shortcode' );
+
+
+
+/**
+ * AI Booking Details Helper Function
+ */
+function snks_ai_booking_details( $form_data ) {
+	$output = '<div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+	$output .= '<h4 style="color: #0a5468; margin-bottom: 15px;">تفاصيل الجلسة</h4>';
+	
+	// Display session information
+	if ( isset( $form_data['_session_date'] ) ) {
+		$output .= '<p><strong>التاريخ:</strong> ' . esc_html( $form_data['_session_date'] ) . '</p>';
+	}
+	
+	if ( isset( $form_data['_session_time'] ) ) {
+		$output .= '<p><strong>الوقت:</strong> ' . esc_html( $form_data['_session_time'] ) . '</p>';
+	}
+	
+	if ( isset( $form_data['_session_duration'] ) ) {
+		$output .= '<p><strong>المدة:</strong> ' . esc_html( $form_data['_session_duration'] ) . ' دقيقة</p>';
+	} else {
+		$output .= '<p><strong>المدة:</strong> 45 دقيقة</p>';
+	}
+	
+	$output .= '<p><strong>نوع الجلسة:</strong> جلسة علاج نفسي عبر منصة جلسة AI</p>';
+	$output .= '</div>';
+	
+	return $output;
+}
+
+/**
+ * AI Session Rules Helper Function
+ */
+function snks_ai_session_rules() {
+	$output = '<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">';
+	$output .= '<h4 style="color: #856404; margin-bottom: 15px;">قواعد الجلسة</h4>';
+	$output .= '<ul style="color: #856404; margin: 0; padding-left: 20px;">';
+	$output .= '<li>الجلسة تتم عبر الإنترنت باستخدام منصة جلسة AI</li>';
+	$output .= '<li>مدة الجلسة 45 دقيقة</li>';
+	$output .= '<li>يجب الحضور في الوقت المحدد</li>';
+	$output .= '<li>يمكن إلغاء الجلسة قبل 24 ساعة من موعدها</li>';
+	$output .= '<li>الجلسات غير قابلة للاسترداد بعد بدايتها</li>';
+	$output .= '</ul>';
+	$output .= '</div>';
+	
+	return $output;
+}
+
+/**
+ * AI Session Pricing Table Shortcode - Separate from regular pricing table
+ */
+function ai_session_pricing_table_shortcode( $form_data = false ) {
+	if ( ! $form_data ) {
+		$form_data = get_transient( snks_form_data_transient_key() );
+	}
+	
+	// Ensure that necessary data is available.
+	if ( ! $form_data || empty( $form_data ) ) {
+		return;
+	}
+	
+	ob_start();
+	?>
+	<style>
+		#price-break {
+			background-color: #0a5468;
+			width: 300px;
+			margin: auto;
+			padding: 20px;
+			border: 2px dashed white;
+			border-radius: 10px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+		}
+
+		#price-break .discount-section {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-radius: 5px;
+			margin-bottom: 15px;
+		}
+
+		#price-break .discount-section button {
+			background-color: #024059;
+			border: 2px solid #024059;
+			color: white;
+			padding: 5px 10px;
+			border-radius: 5px;
+			cursor: pointer;
+			height: 45px;
+		}
+
+		#price-break .discount-section input {
+			padding: 5px;
+			border: none;
+			border-radius: 5px;
+			text-align: center;
+		}
+
+		#price-break .amount-section:first-child {
+			border-top: 1px solid white;
+			padding-top: 10px;
+		}
+		#price-break .amount-section {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 10px;
+		}
+
+		#price-break .amount-section p {
+			margin: 0;
+		}
+
+		#price-break .price {
+			background-color: white;
+			color: black;
+			padding: 5px;
+			border-radius: 15px;
+			text-align: center;
+			width: 100px; /* Set fixed width */
+			box-sizing: border-box;
+		}
+
+		#price-break .total {
+			display: flex;
+			justify-content: space-between;
+			font-weight: bold;
+			padding-top: 10px;
+			border-top: 1px solid white;
+		}
+		#price-break .amount-section > p:first-child, #price-break .total > p{
+			color:#fff
+		}
+		#price-break .total .price{
+			background-color: transparent!important;
+			color: white!important
+		}
+	</style>
+	<div style="text-align:center">
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل الحجز - جلسة AI</h3>
+	</div>
+	<?php
+	// Display AI session booking details
+	echo wp_kses_post( snks_ai_booking_details( $form_data ) );
+	echo '<br>';
+	echo wp_kses_post( snks_ai_session_rules() );
+	?>
+	<div style="text-align:center">
+		<h3 class="elementor-heading-title elementor-size-default snks-dynamic-bg-darker" style="display: inline-block;margin: 0px 0px 20px 0px;padding: 10px 10px 17px 10px;border-radius: 8px 8px 8px 8px;text-align:center;color:#fff;">تفاصيل المدفوعات</h3>
+	</div>
+	<div id="price-break" class="container">
+		<?php if ( ! is_page( 'booking-details' ) ) { ?>
+			<?php if ( ! isset( $form_data['_coupon_code'] ) ) { ?>
+			<div class="discount-section">
+				<input type="text" placeholder="أدخل كود الخصم" style="background-color: #fff;margin-left: 3px !important;">
+				<button>تفعيل</button>
+			</div>
+			<?php } else { ?>
+				<div class="amount-section">
+					<p>الكوبون المستخدم</p>
+					<p class="price" style="position:relative;">
+						<?php echo esc_html( $form_data['_coupon_code'] ); ?>
+						<button type="button" id="snks-remove-coupon" class="remove-coupon-btn" style="position:absolute;top:-20px;left:10px;padding: 3px;font-size: 12px;border-radius: 50%;">❌</button>
+					</p>
+				</div>
+			<?php } ?>
+		<?php } ?>
+		<div>
+			<div class="amount-section">
+				<p>رسوم الجلسة</p>
+				<?php
+				// Use dynamic total from form data or default price
+				$session_price = isset( $form_data['_total_price'] ) ? floatval($form_data['_total_price']) : SNKS_AI_Products::get_default_session_price();
+				[$converted_price, $currency_label] = acrsw_currency( $session_price );
+				?>
+				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
+			</div>
+			<div class="amount-section">
+				<div class="anony-flex" style="align-items:center">
+					<p style="color:#fff;margin-left:2px;padding:0">رسوم إضافية</p>
+					<svg id="pricing-details-toggle"  style="width:19px;margin-left:2px" height="35px" width="35px" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+						<g fill="none" stroke="#FFFFFF" stroke-width="32">
+							<path d="m256 64c-106 0-192 86-192 192s86 192 192 192 192-86 192-192-86-192-192-192z" stroke-miterlimit="10"/>
+							<path d="m352 216-96 96-96-96" stroke-linecap="round" stroke-linejoin="round"/>
+						</g>
+					</svg>
+				</div>
+				<?php
+				// Static additional fees for AI sessions
+				$additional_fees = 50.00; // Static fee for AI sessions
+				[$converted_price, $currency_label] = acrsw_currency( $additional_fees );
+				?>
+				<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
+			</div>
+			<div id="pricing-details" style="display:none">
+				<div class="amount-section">
+					<p>رسوم منصة جلسة AI</p>
+					<?php
+					$platform_fee = 30.00; // Static platform fee
+					[$converted_price, $currency_label] = acrsw_currency( $platform_fee );
+					?>
+					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
+				</div>
+
+				<div class="amount-section">
+					<p>رسوم إدارية</p>
+					<?php
+					$admin_fee = 20.00; // Static admin fee
+					[$converted_price, $currency_label] = acrsw_currency( $admin_fee );
+					?>
+					<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
+				</div>
+			</div>
+		</div>
+		<div class="total">
+			<p>الإجمالي</p>
+			<?php
+			// Calculate total: session price + additional fees
+			$total_price = $session_price + $additional_fees;
+			[$converted_price, $currency_label] = acrsw_currency( $total_price );
+			?>
+			<p class="price"><?php echo esc_html( $converted_price . ' ' . $currency_label ); ?></p>
+		</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+
+// Register the AI session pricing table shortcode
+add_shortcode( 'ai_session_pricing_table', 'ai_session_pricing_table_shortcode' );
 
 /**
  * Shortcode to display doctor validation messages in Arabic with a red cross.
@@ -1018,6 +1251,7 @@ add_shortcode(
 					)
 				);
 				$coupon_code = null;
+				$coupon_type = null;
 				// تحقق من النتيجة
 				if ( $order_id ) {
 					// Step 2: Get order items
@@ -1028,6 +1262,13 @@ add_shortcode(
 							$item_coupon = $item->get_meta( '_coupon_code' );
 							if ( $item_coupon ) {
 								$coupon_code = $item_coupon;
+								// Get coupon type from database
+								global $wpdb;
+								$coupon_data = $wpdb->get_row( $wpdb->prepare(
+									"SELECT is_ai_coupon FROM {$wpdb->prefix}snks_custom_coupons WHERE code = %s",
+									$item_coupon
+								) );
+								$coupon_type = $coupon_data ? ( $coupon_data->is_ai_coupon ? 'AI' : 'General' ) : 'Unknown';
 								break; // Stop if one is found
 							}
 						}
@@ -1054,7 +1295,7 @@ add_shortcode(
 				$user_details = snks_user_details( $transaction->client_id );
 				$first_name   = ! empty( $user_details['billing_first_name'] ) ? $user_details['billing_first_name'] : '';
 				$last_name    = ! empty( $user_details['billing_last_name'] ) ? $user_details['billing_last_name'] : '';
-				$details      = '<button class="details-button" data-coupon="' . esc_attr( $coupon_text ) . '" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
+				$details      = '<button class="details-button" data-coupon="' . esc_attr( $coupon_text ) . '" data-coupon-type="' . esc_attr( $coupon_type ) . '" data-date-time="' . esc_attr( snks_localized_datetime( $transaction->date_time ) ) . '" data-attendance-type="' . esc_attr( $attendance ) . '" data-client-name="' . esc_attr( $first_name . ' ' . $last_name ) . '">عرض التفاصيل</button>';
 			} else {
 				$details = 'غير متاح';
 			}
@@ -1137,6 +1378,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 
 	$current_user_id = get_current_user_id();
 	$coupons         = snks_get_coupons_by_doctor( $current_user_id );
+	$therapist_ai_coupons_enabled = get_option( 'snks_ai_therapist_ai_coupons_enabled', '1' ); // Default to enabled
 
 	ob_start();
 	?>
@@ -1275,6 +1517,14 @@ function snks_doctor_coupons_ajax_shortcode() {
 				<label for="expires_at" style="margin-bottom:10px">صلاحية الكوبون حتى تاريخ</label>
 				<input type="date" id="expires_at" name="expires_at" style="width:100%"></p>
 			<p><input type="number" name="usage_limit" min="1" placeholder="عدد مرات الاستخدام"></p>
+			<?php if ( $therapist_ai_coupons_enabled === '1' ) : ?>
+			<p>
+				<label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+					<input type="checkbox" name="is_ai_coupon" value="1" style="margin: 0;">
+					<span>كوبون للجلسات الذكية (AI) فقط</span>
+				</label>
+			</p>
+			<?php endif; ?>
 			<button type="submit">➕ إضافة الكوبون</button>
 		</form>
 		<hr>
@@ -1286,6 +1536,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 					<th>الخصم</th>
 					<th>الصلاحية</th>
 					<th>المتبقي</th>
+					<th>النوع</th>
 					<th>الحالة</th>
 					<th>حذف الكوبون</th>
 				</tr>
@@ -1302,6 +1553,7 @@ function snks_doctor_coupons_ajax_shortcode() {
 						<td data-label="الخصم"><?php echo esc_html( $coupon->discount_value . ( 'percent' === $coupon->discount_type ? '%' : 'ج.م' ) ); ?></td>
 						<td data-label="الصلاحية"><?php echo $coupon->expires_at ? esc_html( $coupon->expires_at ) : 'بدون تاريخ صلاحية'; ?></td>
 						<td data-label="المتبقي"><?php echo esc_html( $remaining ); ?></td>
+						<td data-label="النوع"><?php echo ( ! empty( $coupon->is_ai_coupon ) && $coupon->is_ai_coupon ) ? '🤖 AI فقط' : '📋 عام'; ?></td>
 						<td data-label="الحالة"><?php echo esc_html( $status ); ?></td>
 						<td data-label="حذف الكوبون">
 							<button class="snks-delete-coupon" data-id="<?php echo esc_attr( $coupon->id ); ?>">❌</button>

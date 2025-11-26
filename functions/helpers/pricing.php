@@ -65,7 +65,7 @@ function get_price_by_period_and_country( $period, $country_code, $data_array ) 
  */
 function snks_doctor_pricings( $user_id, $attendance_type = 'online' ) {
 	$available_periods = snks_get_periods( $user_id );
-	$pricings          = array();
+	$pricings = array();
 	
 	foreach ( $available_periods as $period ) {
 		if ( 'offline' === $attendance_type ) {
@@ -90,6 +90,7 @@ function snks_doctor_pricings( $user_id, $attendance_type = 'online' ) {
 			);
 		}
 	}
+	
 	return $pricings;
 }
 

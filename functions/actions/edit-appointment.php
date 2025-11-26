@@ -332,6 +332,22 @@ add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
 		$order      = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+		
+		// Skip processing if this is an AI order (handled separately)
+		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+			// Redirect AI orders to the frontend appointments page
+            $frontend_url = snks_ai_get_primary_frontend_url();
+            if ( $frontend_url ) {
+				// Use wp_redirect for external URLs (wp_safe_redirect only works for same domain)
+				wp_redirect( $frontend_url . '/appointments' );
+				exit;
+			}
+		}
+		
 		$order_type = $order->get_meta( 'order_type' );
 		if ( 'edit-fees' === $order_type && ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) ) {
 			$connected_order = $order->get_meta( 'connected_order' );
@@ -351,7 +367,7 @@ add_action(
 			exit;
 		}
 	},
-	5
+	5  // Higher priority to run before other hooks
 );
 
 /**
@@ -390,6 +406,25 @@ add_action(
 			$will_pay         = $calculated_price['total_price'];
 			$order            = wc_get_order( $order_id );
 			$edited_before    = $order->get_meta( 'booking-edited', true );
+			
+			// Check 24-hour restriction for AI bookings using dedicated function
+			if ( ! function_exists( 'snks_can_edit_ai_appointment' ) ) {
+				require_once SNKS_DIR . 'functions/helpers.php';
+			}
+			
+			if ( ! snks_can_edit_ai_appointment( $booking ) ) {
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'edit-booking' => $_request['edit-booking-id'],
+							'error'        => 'ai-24-hour-limit',
+						),
+						$_doctor_url
+					)
+				);
+				exit;
+			}
+			
 			// If not postponed then check for edit time.
 			if ( 'postponed' !== $booking->session_status && ( ( $edited_before && ! empty( $edited_before ) ) || $diff_seconds < snks_get_edit_before_seconds( $doctor_settings ) ) ) {
 				wp_safe_redirect(

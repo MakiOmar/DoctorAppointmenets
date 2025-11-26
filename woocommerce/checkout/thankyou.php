@@ -18,6 +18,31 @@
  */
 
 defined( 'ABSPATH' ) || die();
+
+// Check if this is an AI order and add JavaScript redirect as fallback
+$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+	$frontend_url = snks_ai_get_primary_frontend_url();
+	if ( $frontend_url ) {
+		// Immediate redirect via JavaScript (runs before page fully loads)
+		// This is the most reliable method for external domain redirects
+		?>
+		<script>
+		// Immediate JavaScript redirect for AI orders
+		(function() {
+			var redirectUrl = '<?php echo esc_js( $frontend_url . '/appointments' ); ?>';
+			// Try immediate redirect
+			if (window.location.replace) {
+				window.location.replace(redirectUrl);
+			} else {
+				window.location.href = redirectUrl;
+			}
+		})();
+		</script>
+		<?php
+	}
+}
+
 do_action( 'woocommerce_thankyou', $order->get_id() );
 ?>
 <div class="woocommerce-order">

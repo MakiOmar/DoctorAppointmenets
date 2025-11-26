@@ -664,11 +664,19 @@ add_action(
 				border-top-style: solid;
 				border-top-color: #fff;
 			}
+			.doctor-actions-wrapper{
+				display: flex;
+				justify-content: space-around;
+				align-items: baseline;
+			}
+			.swal2-close{
+				font-family: "Arial", sans-serif!important;
+			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
 			}
 			.snks-disabled .snks-appointment-button {
-				background-color: #7a898f;
+				background-color: #3d7288!important;
 			}
 			.snks-timetable-accordion-wrapper.future:nth-child(1) .snks-timetable-accordion-content-wrapper{
 				display: block;
@@ -726,9 +734,43 @@ add_action(
 			.rotate-90{
 				transform: rotate(-90deg);
 				white-space: nowrap;
+				transform-origin: center;
 			}
 			.rotate-90 *{
 				white-space: nowrap!important;
+			}
+			/* Better positioning for rotated Arabic text */
+			.snks-start-meeting.rotate-90 {
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 100%;
+				position: absolute;
+				top: calc(50% - 15px);
+				left: 50%;
+				transform: translateX(-50%) rotate(-90deg);
+				transform-origin: center;
+			}
+			/* Ensure SVG loading indicators are visible in rotated buttons */
+			.snks-start-meeting.rotate-90 svg {
+				display: inline-block !important;
+				width: 20px !important;
+				height: 20px !important;
+				margin-left: 8px !important;
+				animation: spin 1s linear infinite !important;
+				vertical-align: middle !important;
+				position: absolute !important;
+				left: -100% !important;
+			}
+			/* Positioning for non-rotated session start buttons */
+			.snks-start-meeting {
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 100%;
+				color: #fff !important;
 			}
 			.snks-bg{
 				background-color: #024059!important;

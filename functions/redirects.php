@@ -13,9 +13,15 @@ add_action(
 		if ( is_admin() || ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' === $_SERVER['REQUEST_METHOD'] ) {
 			return;
 		}
+		
+		// Skip redirects for API requests
+		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ) {
+			return;
+		}
+		
 		global $wp;
 		//phpcs:disable
-		if ( false !== strpos( $_SERVER['REQUEST_URI'], 'therapist' ) && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
+		if ( false !== strpos( $_SERVER['REQUEST_URI'], 'therapist' ) && false === strpos( $_SERVER['REQUEST_URI'], 'therapist-reg' ) && ( ! isset( $wp->query_vars ) || empty( $wp->query_vars['doctor_id'] ) ) ) {
 			wp_redirect( site_url() );
 			exit;
 		}
