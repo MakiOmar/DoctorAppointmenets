@@ -266,6 +266,26 @@ const removeItem = async (slotId) => {
   const result = await cartStore.removeFromCart(slotId, userId.value)
   if (!result.success) {
     console.error('Failed to remove item:', result.message)
+    couponError.value = result.message || t('cart.removeError')
+    return
+  }
+
+  const summary = result.data || {}
+
+  if (summary?.coupon) {
+    if (summary.coupon.removed) {
+      appliedCoupon.value = null
+      couponError.value = summary.coupon.message || ''
+    } else {
+      appliedCoupon.value = {
+        code: summary.coupon.code,
+        discount: Number(summary.coupon.discount || 0),
+        type: summary.coupon.source || 'AI'
+      }
+      couponError.value = ''
+    }
+  } else {
+    appliedCoupon.value = null
   }
 }
 

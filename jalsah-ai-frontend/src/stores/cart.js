@@ -114,12 +114,13 @@ export const useCartStore = defineStore('cart', () => {
         user_id: userId
       })
       
-      if (response.data.success) {
-        // Reload cart to get updated data
-        await loadCart(userId)
-        return { success: true }
+      if (response.data?.success) {
+        // Optimistically remove the item locally
+        cartItems.value = cartItems.value.filter(item => item.ID !== slotId)
+        
+        return { success: true, data: response.data }
       } else {
-        error.value = response.data.error || 'Failed to remove from cart'
+        error.value = response.data?.error || 'Failed to remove from cart'
         return { success: false, message: error.value }
       }
     } catch (err) {
