@@ -5657,53 +5657,43 @@ Best regards,
 	}
 
 	/**
-	 * Get user's cart using existing timetable system
+	 * Build cart summary for a user (reusable by multiple endpoints).
 	 */
-	public function get_user_cart( $request ) {
-		$user_id = $request->get_param( 'user_id' );
-
-		if ( ! $user_id ) {
-			return new WP_REST_Response( array( 'error' => 'Missing user_id' ), 400 );
-		}
-
+	private function build_ai_cart_summary( $user_id, $cleanup_expired = true ) {
 		global $wpdb;
 
-		$cart_query = $wpdb->prepare(
-			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
-			 FROM {$wpdb->prefix}snks_provider_timetable t
-			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
-			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
-			 AND t.settings LIKE '%ai_booking:in_cart%'
-			 ORDER BY t.date_time ASC",
-			$user_id
+		$cart_items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
+				 FROM {$wpdb->prefix}snks_provider_timetable t
+				 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
+				 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
+				 AND t.settings LIKE '%ai_booking:in_cart%'
+				 ORDER BY t.date_time ASC",
+				$user_id
+			)
 		);
 
-		$cart_items = $wpdb->get_results( $cart_query );
-
-		// Filter out expired cart items (older than 30 minutes)
 		$current_time     = current_time( 'mysql' );
 		$expired_slot_ids = array();
 		$valid_cart_items = array();
 
 		foreach ( $cart_items as $item ) {
-			// Extract timestamp from settings field
 			if ( preg_match( '/ai_booking:in_cart:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $item->settings, $matches ) ) {
 				$cart_timestamp     = $matches[1];
 				$cart_time          = strtotime( $cart_timestamp );
 				$current_time_stamp = strtotime( $current_time );
 
-				// Check if item is older than 30 minutes (1800 seconds)
 				if ( ( $current_time_stamp - $cart_time ) > 1800 ) {
 					$expired_slot_ids[] = $item->ID;
-					continue; // Skip this expired item
+					continue;
 				}
 			}
 
 			$valid_cart_items[] = $item;
 		}
 
-		// Clean up expired items from database
-		if ( ! empty( $expired_slot_ids ) ) {
+		if ( $cleanup_expired && ! empty( $expired_slot_ids ) ) {
 			$placeholders  = implode( ',', array_fill( 0, count( $expired_slot_ids ), '%d' ) );
 			$cleanup_query = $wpdb->prepare(
 				"UPDATE {$wpdb->prefix}snks_provider_timetable 
@@ -5716,23 +5706,40 @@ Best regards,
 
 		$total_price = 0;
 		foreach ( $valid_cart_items as $item ) {
-			// Calculate actual price for this cart item
-			$item_price = $this->get_cart_item_price( $item );
-			$item->price = floatval( $item_price );
+			$item_price   = $this->get_cart_item_price( $item );
+			$item->price  = floatval( $item_price );
 			$total_price += $item_price;
-			
-			// Add therapist image URL
-			if ( $item->profile_image ) {
+
+			if ( ! empty( $item->profile_image ) ) {
 				$item->therapist_image_url = wp_get_attachment_image_url( $item->profile_image, 'thumbnail' );
 			}
 		}
 
+		return array(
+			'items' => $valid_cart_items,
+			'total' => round( $total_price, 2 ),
+			'count' => count( $valid_cart_items ),
+		);
+	}
+
+	/**
+	 * Get user's cart using existing timetable system
+	 */
+	public function get_user_cart( $request ) {
+		$user_id = $request->get_param( 'user_id' );
+
+		if ( ! $user_id ) {
+			return new WP_REST_Response( array( 'error' => 'Missing user_id' ), 400 );
+		}
+
+		$summary = $this->build_ai_cart_summary( $user_id );
+
 		return new WP_REST_Response(
 			array(
 				'success'     => true,
-				'data'        => $valid_cart_items,
-				'total_price' => $total_price,
-				'item_count'  => count( $valid_cart_items ),
+				'data'        => $summary['items'],
+				'total_price' => $summary['total'],
+				'item_count'  => $summary['count'],
 			),
 			200
 		);
@@ -5770,14 +5777,61 @@ Best regards,
 		if ( $result === false ) {
 			return new WP_REST_Response( array( 'error' => 'Failed to remove from cart' ), 500 );
 		}
+		
+		$summary = $this->build_ai_cart_summary( $user_id );
 
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => 'Item removed from cart',
-			),
-			200
+		$coupon_response = null;
+		$stored_coupon   = get_user_meta( $user_id, 'snks_ai_applied_coupon', true );
+
+		if ( ! empty( $stored_coupon['code'] ) ) {
+			if ( $summary['total'] > 0 && function_exists( 'snks_process_ai_coupon_application' ) ) {
+				$recalc = snks_process_ai_coupon_application( $stored_coupon['code'], $summary['total'], $user_id );
+
+				if ( ! empty( $recalc['valid'] ) ) {
+					$persist = array(
+						'code'     => $stored_coupon['code'],
+						'discount' => $recalc['discount'],
+						'saved_at' => time(),
+					);
+					update_user_meta( $user_id, 'snks_ai_applied_coupon', $persist );
+
+					$coupon_response = array(
+						'code'        => $stored_coupon['code'],
+						'discount'    => $recalc['discount'],
+						'final_price' => $recalc['final'],
+						'message'     => $recalc['message'],
+						'source'      => $recalc['source'],
+					);
+				} else {
+					delete_user_meta( $user_id, 'snks_ai_applied_coupon' );
+					$coupon_response = array(
+						'code'    => $stored_coupon['code'],
+						'removed' => true,
+						'message' => $recalc['message'] ?? __( 'تم إلغاء الكوبون لعدم صلاحيته.', 'anony-turn' ),
+					);
+				}
+			} else {
+				delete_user_meta( $user_id, 'snks_ai_applied_coupon' );
+				$coupon_response = array(
+					'code'    => $stored_coupon['code'],
+					'removed' => true,
+					'message' => __( 'تم إلغاء الكوبون لعدم وجود عناصر في السلة.', 'anony-turn' ),
+				);
+			}
+		}
+
+		$response = array(
+			'success'    => true,
+			'message'    => __( 'تمت إزالة العنصر من السلة.', 'anony-turn' ),
+			'cart_total' => $summary['total'],
+			'item_count' => $summary['count'],
 		);
+
+		if ( $coupon_response ) {
+			$response['coupon'] = $coupon_response;
+		}
+
+		return new WP_REST_Response( $response, 200 );
 	}
 
 	/**

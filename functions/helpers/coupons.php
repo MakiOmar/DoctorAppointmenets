@@ -406,6 +406,99 @@ function snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount = 0 ) {
 }
 
 /**
+ * Central helper to process AI coupon application logic for a given amount.
+ *
+ * @param string $code    Coupon code.
+ * @param float  $amount  Current cart total.
+ * @param int    $user_id User ID.
+ * @return array {
+ *     @type bool        $valid      Whether coupon could be applied.
+ *     @type float       $final      Final total after discount.
+ *     @type float       $discount   Discount value.
+ *     @type object|null $coupon     Coupon object/record when available.
+ *     @type string      $message    User-friendly message.
+ *     @type string|null $source     Coupon source identifier.
+ * }
+ */
+function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
+	$code   = sanitize_text_field( trim( $code ) );
+	$amount = floatval( $amount );
+
+	$response = array(
+		'valid'    => false,
+		'final'    => round( $amount, 2 ),
+		'discount' => 0.0,
+		'coupon'   => null,
+		'message'  => __( 'الكوبون غير صالح أو انتهى.', 'anony-turn' ),
+		'source'   => null,
+	);
+
+	if ( '' === $code || $amount <= 0 || ! $user_id ) {
+		$response['message'] = __( 'بيانات الخصم غير صالحة.', 'anony-turn' );
+		return $response;
+	}
+
+	$jalsah_fee = function_exists( 'snks_calculate_jalsah_fee_from_cart' )
+		? snks_calculate_jalsah_fee_from_cart( $user_id, $amount )
+		: ( $amount * 0.30 );
+
+	// Admin AI coupons table.
+	if ( function_exists( 'snks_validate_ai_coupon' ) && function_exists( 'snks_apply_ai_coupon' ) ) {
+		$validation = snks_validate_ai_coupon( $code, $user_id );
+		if ( ! empty( $validation['valid'] ) ) {
+			$apply_result = snks_apply_ai_coupon( $code, $amount, $user_id );
+			if ( ! empty( $apply_result['valid'] ) ) {
+				return array(
+					'valid'    => true,
+					'final'    => round( $apply_result['final_amount'], 2 ),
+					'discount' => round( $apply_result['discount_amount'], 2 ),
+					'coupon'   => $apply_result['coupon'],
+					'message'  => __( 'تم تطبيق الكوبون بنجاح.', 'anony-turn' ),
+					'source'   => 'admin_ai',
+				);
+			}
+		}
+	}
+
+	// Therapist coupons table (AI-only).
+	$coupon_check = snks_get_coupon_by_code( $code );
+	if ( $coupon_check && ! empty( $coupon_check->is_ai_coupon ) ) {
+		$discount_amount = 0;
+		if ( 'percent' === $coupon_check->discount_type ) {
+			$discount_amount = ( $jalsah_fee * floatval( $coupon_check->discount_value ) ) / 100;
+		} else {
+			$discount_amount = min( floatval( $coupon_check->discount_value ), $jalsah_fee );
+		}
+
+		$final_amount = max( $amount - $discount_amount, 0 );
+
+		return array(
+			'valid'    => true,
+			'final'    => round( $final_amount, 2 ),
+			'discount' => round( $discount_amount, 2 ),
+			'coupon'   => $coupon_check,
+			'message'  => __( 'تم تطبيق الكوبون بنجاح.', 'anony-turn' ),
+			'source'   => 'therapist_ai',
+		);
+	}
+
+	// Fallback to general coupon logic.
+	$general = snks_apply_coupon_to_amount( $code, $amount );
+	if ( ! empty( $general['valid'] ) ) {
+		return array(
+			'valid'    => true,
+			'final'    => $general['final'],
+			'discount' => $general['discount'],
+			'coupon'   => $general['coupon'],
+			'message'  => $general['message'],
+			'source'   => 'general',
+		);
+	}
+
+	return $response;
+}
+
+/**
  * Check if the user has already used the coupon on the same session.
  *
  * @param int $coupon_id     Coupon ID.

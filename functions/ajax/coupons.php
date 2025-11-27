@@ -311,73 +311,11 @@ function snks_apply_ai_coupon_ajax_handler() {
     $result  = null;
     $coupon  = null;
 
-    // Calculate actual Jalsah fee from cart items based on therapist profit settings
-    $jalsah_fee = 0;
-    if ( function_exists( 'snks_calculate_jalsah_fee_from_cart' ) ) {
-        $jalsah_fee = snks_calculate_jalsah_fee_from_cart( $user_id, $amount );
-    } else {
-        // Fallback: use default 30% (conservative estimate for first sessions)
-        $jalsah_fee = $amount * 0.30;
-    }
+    $result = function_exists( 'snks_process_ai_coupon_application' )
+        ? snks_process_ai_coupon_application( $code, $amount, $user_id )
+        : array();
 
-    // First, try to find coupon in admin AI coupons table (snks_ai_coupons)
-    if ( function_exists( 'snks_validate_ai_coupon' ) && function_exists( 'snks_apply_ai_coupon' ) ) {
-        $validation = snks_validate_ai_coupon( $code, $user_id );
-        if ( $validation['valid'] ) {
-            $apply_result = snks_apply_ai_coupon( $code, $amount, $user_id );
-            if ( $apply_result['valid'] ) {
-                $result = array(
-                    'valid'    => true,
-                    'final'    => $apply_result['final_amount'],
-                    'discount' => $apply_result['discount_amount'],
-                    'coupon'   => $apply_result['coupon'],
-                    'message'  => 'تم تطبيق الكوبون بنجاح.',
-                );
-                $coupon = $apply_result['coupon'];
-            }
-        }
-    }
-
-    // If not found in admin table, check therapist coupons table (snks_custom_coupons)
-    if ( ! $result || ! $result['valid'] ) {
-        $coupon_check = snks_get_coupon_by_code( $code );
-        if ( $coupon_check ) {
-            // Enforce AI-only coupon usage for therapist coupons
-            $is_ai_coupon = ! empty( $coupon_check->is_ai_coupon );
-            if ( ! $is_ai_coupon ) {
-                wp_send_json_error( array( 'message' => 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.' ) );
-            }
-            
-            // For AI coupons from therapist table, apply discount only to calculated Jalsah fee
-            $discount_amount = 0;
-            
-            if ( $coupon_check->discount_type === 'percent' ) {
-                $discount_amount = ( $jalsah_fee * $coupon_check->discount_value ) / 100;
-            } else {
-                // Fixed discount, apply to Jalsah fee but don't exceed it
-                $discount_amount = min( $coupon_check->discount_value, $jalsah_fee );
-            }
-            
-            $final_amount = $amount - $discount_amount;
-            
-            $result = array(
-                'valid'    => true,
-                'final'    => round( $final_amount, 2 ),
-                'discount' => round( $discount_amount, 2 ),
-                'coupon'   => $coupon_check,
-                'message'  => 'تم تطبيق الكوبون بنجاح.',
-            );
-            $coupon = $coupon_check;
-        } else {
-            // Try regular coupon application (for non-AI coupons)
-            $result = snks_apply_coupon_to_amount( $code, $amount );
-            if ( $result['valid'] ) {
-                $coupon = $result['coupon'];
-            }
-        }
-    }
-
-    if ( ! $result || false === $result['valid'] ) {
+    if ( empty( $result ) || empty( $result['valid'] ) ) {
         wp_send_json_error( array( 'message' => $result['message'] ?? 'الكوبون غير صالح أو انتهى.' ) );
     }
 
@@ -391,10 +329,10 @@ function snks_apply_ai_coupon_ajax_handler() {
 
     wp_send_json_success(
         array(
-            'message'     => 'تم تطبيق الكوبون بنجاح.',
+            'message'     => $result['message'] ?? 'تم تطبيق الكوبون بنجاح.',
             'final_price' => $result['final'],
             'discount'    => $result['discount'],
-            'coupon_type' => 'AI',
+            'coupon_type' => $result['source'] ?? 'AI',
             'persisted'   => true,
         )
     );

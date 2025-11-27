@@ -40,7 +40,7 @@ function snks_profit_settings_page() {
 	}
 	
 	// Handle form submissions
-	if ( isset( $_POST['submit_profit_settings'] ) ) {
+	if ( isset( $_POST['submit_profit_settings'] ) || isset( $_POST['submit_therapist_settings'] ) ) {
 		snks_handle_profit_settings_submission();
 	}
 	
@@ -124,6 +124,7 @@ function snks_profit_settings_page() {
 			
 			<!-- Therapists Table -->
 			<form method="post" action="" id="therapists-settings-form">
+				<?php wp_nonce_field( 'snks_therapist_profit_settings', 'snks_therapist_profit_settings_nonce' ); ?>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
@@ -293,6 +294,11 @@ function snks_handle_profit_settings_submission() {
 	
 	// Handle therapist settings
 	if ( isset( $_POST['submit_therapist_settings'] ) ) {
+		// Verify nonce
+		if ( ! isset( $_POST['snks_therapist_profit_settings_nonce'] ) || ! wp_verify_nonce( $_POST['snks_therapist_profit_settings_nonce'], 'snks_therapist_profit_settings' ) ) {
+			wp_die( 'Security check failed' );
+		}
+		
 		$therapist_ids = $_POST['therapist_ids'] ?? array();
 		$first_percentages = $_POST['first_percentage'] ?? array();
 		$subsequent_percentages = $_POST['subsequent_percentage'] ?? array();
