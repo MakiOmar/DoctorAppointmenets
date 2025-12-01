@@ -305,6 +305,12 @@ function snks_apply_coupon_to_amount( $code, $amount ) {
 function snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount = 0 ) {
 	global $wpdb;
 	
+	error_log( sprintf(
+		'AI-COUPON DEBUG: snks_calculate_jalsah_fee_from_cart called for user_id=%d, total_amount=%0.2f',
+		$user_id,
+		$total_amount
+	) );
+	
 	// Get cart items from timetable
 	$cart_query = $wpdb->prepare(
 		"SELECT t.* FROM {$wpdb->prefix}snks_provider_timetable t
@@ -318,7 +324,12 @@ function snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount = 0 ) {
 	
 	if ( empty( $cart_items ) ) {
 		// Fallback: use default 30% (conservative estimate for first sessions)
-		return $total_amount * 0.30;
+		$fallback = $total_amount * 0.30;
+		error_log( sprintf(
+			'AI-COUPON DEBUG: No cart items found, using fallback Jalsah fee = %0.2f (30%% of total)',
+			$fallback
+		) );
+		return $fallback;
 	}
 	
 	$total_jalsah_fee = 0;
@@ -395,14 +406,39 @@ function snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount = 0 ) {
 		$jalsah_fee = ( $item_price * $jalsah_percentage ) / 100;
 		
 		$total_jalsah_fee += $jalsah_fee;
+		
+		error_log( sprintf(
+			'AI-COUPON DEBUG: Cart item for user_id=%d, therapist_id=%d, period=%d, price=%0.2f, is_first=%s, therapist_pct=%0.2f, jalsah_pct=%0.2f, jalsah_fee=%0.2f',
+			$user_id,
+			$therapist_id,
+			$period,
+			$item_price,
+			$is_first_session ? 'yes' : 'no',
+			$therapist_percentage,
+			$jalsah_percentage,
+			$jalsah_fee
+		) );
 	}
 	
 	// If we couldn't calculate from items, use fallback
 	if ( $total_jalsah_fee <= 0 && $total_amount > 0 ) {
-		return $total_amount * 0.30; // Conservative fallback (30% for first sessions)
+		$fallback = $total_amount * 0.30; // Conservative fallback (30% for first sessions)
+		error_log( sprintf(
+			'AI-COUPON DEBUG: Total Jalsah fee from items is <= 0, using fallback = %0.2f (30%% of total)',
+			$fallback
+		) );
+		return $fallback;
 	}
 	
-	return round( $total_jalsah_fee, 2 );
+	$total_jalsah_fee = round( $total_jalsah_fee, 2 );
+	
+	error_log( sprintf(
+		'AI-COUPON DEBUG: Final Jalsah fee from cart for user_id=%d is %0.2f',
+		$user_id,
+		$total_jalsah_fee
+	) );
+	
+	return $total_jalsah_fee;
 }
 
 /**
@@ -441,6 +477,14 @@ function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
 	$jalsah_fee = function_exists( 'snks_calculate_jalsah_fee_from_cart' )
 		? snks_calculate_jalsah_fee_from_cart( $user_id, $amount )
 		: ( $amount * 0.30 );
+	
+	error_log( sprintf(
+		'AI-COUPON DEBUG: Processing coupon "%s" for user_id=%d, cart_total=%0.2f, jalsah_fee=%0.2f',
+		$code,
+		$user_id,
+		$amount,
+		$jalsah_fee
+	) );
 
 	// Admin AI coupons table.
 	if ( function_exists( 'snks_validate_ai_coupon' ) && function_exists( 'snks_apply_ai_coupon' ) ) {
@@ -471,6 +515,15 @@ function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
 		}
 
 		$final_amount = max( $amount - $discount_amount, 0 );
+		
+		error_log( sprintf(
+			'AI-COUPON DEBUG: Therapist AI coupon applied. code=%s, type=%s, value=%0.2f, discount=%0.2f, final_total=%0.2f',
+			$code,
+			$coupon_check->discount_type,
+			$coupon_check->discount_value,
+			$discount_amount,
+			$final_amount
+		) );
 
 		return array(
 			'valid'    => true,
@@ -485,6 +538,12 @@ function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
 	// Fallback to general coupon logic.
 	$general = snks_apply_coupon_to_amount( $code, $amount );
 	if ( ! empty( $general['valid'] ) ) {
+		error_log( sprintf(
+			'AI-COUPON DEBUG: General coupon applied. code=%s, discount=%0.2f, final_total=%0.2f',
+			$code,
+			$general['discount'],
+			$general['final']
+		) );
 		return array(
 			'valid'    => true,
 			'final'    => $general['final'],

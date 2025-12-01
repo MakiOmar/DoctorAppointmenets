@@ -29,12 +29,27 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 	
 	if ( ! $settings ) {
 		// Return default settings if not found
-		return array(
+		$defaults = array(
 			'first_session_percentage' => 70.00,
 			'subsequent_session_percentage' => 75.00,
 			'is_active' => 1
 		);
+		error_log( sprintf(
+			'AI-PROFIT DEBUG: Using DEFAULT profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f',
+			$therapist_id,
+			$defaults['first_session_percentage'],
+			$defaults['subsequent_session_percentage']
+		) );
+		return $defaults;
 	}
+	
+	error_log( sprintf(
+		'AI-PROFIT DEBUG: Using CUSTOM profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f, is_active=%d',
+		$therapist_id,
+		$settings['first_session_percentage'],
+		$settings['subsequent_session_percentage'],
+		$settings['is_active']
+	) );
 	
 	return $settings;
 }
