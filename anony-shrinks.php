@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.138
+ * Version: 1.0.139
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -53,6 +53,43 @@ $my_update_checker = Puc_v4_Factory::buildUpdateChecker(
 
 // Set the branch that contains the stable release.
 $my_update_checker->setBranch( 'master' );
+
+// Debug helper: log update checker state on every admin page load.
+add_action(
+	'admin_init',
+	function () use ( $my_update_checker ) {
+		if ( ! current_user_can( 'update_plugins' ) ) {
+			return;
+		}
+
+		// Force a fresh check (ignores transient cache duration).
+		$update = $my_update_checker->checkForUpdates();
+
+		// Gather basic info.
+		$installed_version = $my_update_checker->getInstalledVersion();
+		$slug              = SNKS_PLUGIN_SLUG;
+
+		if ( $update ) {
+			error_log(
+				sprintf(
+					'PUC DEBUG: Plugin=%s, installed=%s, available=%s, download_url=%s',
+					$slug,
+					$installed_version,
+					$update->version,
+					isset( $update->download_url ) ? $update->download_url : '(none)'
+				)
+			);
+		} else {
+			error_log(
+				sprintf(
+					'PUC DEBUG: Plugin=%s, installed=%s, no update available (GitHub returned up-to-date or no release).',
+					$slug,
+					$installed_version
+				)
+			);
+		}
+	}
+);
 
 define( 'SNKS_LOGO', site_url( '/wp-content/uploads/2024/08/logo.jpg' ) );
 define( 'SNKS_EMAIL', 'contact@jalsah.app' );
