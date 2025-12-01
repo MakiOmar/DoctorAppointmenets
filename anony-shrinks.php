@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.139
+ * Version: 1.0.140
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -54,40 +54,87 @@ $my_update_checker = Puc_v4_Factory::buildUpdateChecker(
 // Set the branch that contains the stable release.
 $my_update_checker->setBranch( 'master' );
 
-// Debug helper: log update checker state on every admin page load.
+// Add a plugin row action to clear the update cache manually.
+add_filter(
+	'plugin_action_links_' . SNKS_PLUGIN_SLUG,
+	function ( $links ) {
+		if ( current_user_can( 'update_plugins' ) ) {
+			$url = wp_nonce_url(
+				add_query_arg(
+					array(
+						'snks_clear_update_cache' => '1',
+					),
+					admin_url( 'plugins.php' )
+				),
+				'snks_clear_update_cache'
+			);
+
+			$links['snks_clear_update_cache'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $url ),
+				esc_html__( 'Clear update cache', 'anony-shrinks' )
+			);
+		}
+
+		return $links;
+	}
+);
+
+// Handle cache clear request.
 add_action(
 	'admin_init',
 	function () use ( $my_update_checker ) {
+		if ( ! is_admin() || ! current_user_can( 'update_plugins' ) ) {
+			return;
+		}
+
+		if ( empty( $_GET['snks_clear_update_cache'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'snks_clear_update_cache' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		if ( method_exists( $my_update_checker, 'resetUpdateState' ) ) {
+			$my_update_checker->resetUpdateState();
+		}
+
+		update_option( 'snks_update_cache_cleared_at', current_time( 'mysql' ) );
+
+		wp_safe_redirect( admin_url( 'plugins.php?snks_update_cache_cleared=1' ) );
+		exit;
+	}
+);
+
+// Show admin notice after cache clear.
+add_action(
+	'admin_notices',
+	function () {
+		if ( empty( $_GET['snks_update_cache_cleared'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
 		if ( ! current_user_can( 'update_plugins' ) ) {
 			return;
 		}
 
-		// Force a fresh check (ignores transient cache duration).
-		$update = $my_update_checker->checkForUpdates();
-
-		// Gather basic info.
-		$installed_version = $my_update_checker->getInstalledVersion();
-		$slug              = SNKS_PLUGIN_SLUG;
-
-		if ( $update ) {
-			error_log(
-				sprintf(
-					'PUC DEBUG: Plugin=%s, installed=%s, available=%s, download_url=%s',
-					$slug,
-					$installed_version,
-					$update->version,
-					isset( $update->download_url ) ? $update->download_url : '(none)'
-				)
-			);
-		} else {
-			error_log(
-				sprintf(
-					'PUC DEBUG: Plugin=%s, installed=%s, no update available (GitHub returned up-to-date or no release).',
-					$slug,
-					$installed_version
-				)
-			);
-		}
+		$time = get_option( 'snks_update_cache_cleared_at' );
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %s: date and time */
+						__( 'Shrinks update cache cleared successfully at %s. You can now click "Check for updates" again.', 'anony-shrinks' ),
+						$time ? $time : current_time( 'mysql' )
+					)
+				);
+				?>
+			</p>
+		</div>
+		<?php
 	}
 );
 
