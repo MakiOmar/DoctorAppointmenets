@@ -138,7 +138,10 @@ require_once SNKS_DIR . 'functions/ai-integration.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
 require_once SNKS_DIR . 'functions/admin/ai-applications.php';
-require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
+// Include bilingual migration if available (optional helper)
+if ( file_exists( SNKS_DIR . 'functions/admin/bilingual-migration.php' ) ) {
+	require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
+}
 require_once SNKS_DIR . 'functions/admin/add-arabic-diagnoses.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-slots-manager.php';
