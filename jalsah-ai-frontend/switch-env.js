@@ -15,9 +15,9 @@ const environments = {
     VITE_MAIN_SITE_URL: 'http://localhost/shrinks'
   },
   staging: {
-    VITE_API_TARGET: 'https://staging.jalsah.app',
+    VITE_API_TARGET: 'https://beforelive.jalsah.app',
     VITE_API_BASE_URL: '/api',
-    VITE_MAIN_SITE_URL: 'https://staging.jalsah.app'
+    VITE_MAIN_SITE_URL: 'https://beforelive.jalsah.app'
   }
 };
 
@@ -118,7 +118,7 @@ function main() {
         console.log('3. Clear browser cache');
         console.log('4. Test login to verify environment');
         console.log('\n🎯 Expected console output:');
-        console.log('Proxy target: https://staging.jalsah.app');
+        console.log('Proxy target: https://beforelive.jalsah.app');
       }
       break;
       
