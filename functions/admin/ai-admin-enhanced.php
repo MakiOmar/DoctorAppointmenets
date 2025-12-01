@@ -191,6 +191,15 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_arabic_diagnoses_page'
 	);
 	
+	add_submenu_page(
+		'jalsah-ai-management',
+		'Export/Import Settings',
+		'Export/Import',
+		'manage_options',
+		'jalsah-ai-export-import',
+		'snks_ai_settings_export_import_page'
+	);
+	
 	// Add AI Profit System Pages
 	add_submenu_page(
 		'jalsah-ai-management',

@@ -12,19 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Add export/import menu item
+ * Menu registration moved to ai-admin-enhanced.php to ensure proper integration
  */
-function snks_add_ai_settings_export_import_menu() {
-	add_submenu_page(
-		'jalsah-ai-management',
-		'Export/Import Settings',
-		'Export/Import',
-		'manage_options',
-		'jalsah-ai-export-import',
-		'snks_ai_settings_export_import_page'
-	);
-}
-add_action( 'admin_menu', 'snks_add_ai_settings_export_import_menu' );
 
 /**
  * Export all AI settings
