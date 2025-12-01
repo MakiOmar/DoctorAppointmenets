@@ -115,7 +115,7 @@ function snks_export_ai_settings() {
 		// Remove duplicates
 		$attachment_ids = array_unique( $attachment_ids );
 		
-		// Export attachment metadata and file information
+		// Export attachment metadata and file URLs only (no file content to avoid memory issues)
 		if ( ! empty( $attachment_ids ) ) {
 			$export_data['attachments'] = array();
 			
@@ -125,27 +125,24 @@ function snks_export_ai_settings() {
 					$file_url = wp_get_attachment_url( $att_id );
 					$file_path = get_attached_file( $att_id );
 					
+					$file_size = 0;
+					if ( $file_path && file_exists( $file_path ) ) {
+						$file_size = filesize( $file_path );
+					}
+					
+					// Export only metadata and URLs - files will be downloaded during import
 					$export_data['attachments'][ $att_id ] = array(
 						'id' => $att_id,
 						'post_title' => $attachment->post_title,
 						'post_content' => $attachment->post_content,
 						'post_excerpt' => $attachment->post_excerpt,
 						'post_mime_type' => $attachment->post_mime_type,
-						'file_url' => $file_url,
-						'file_path' => $file_path,
+						'file_url' => $file_url, // Source URL for downloading during import
+						'file_path' => $file_path, // Original path for reference
 						'guid' => $attachment->guid,
+						'file_size' => $file_size,
 						'meta' => get_post_meta( $att_id ),
 					);
-					
-					// Include file content if file exists and is readable
-					if ( $file_path && file_exists( $file_path ) && is_readable( $file_path ) ) {
-						$file_content = file_get_contents( $file_path );
-						if ( $file_content !== false ) {
-							// Base64 encode for JSON compatibility
-							$export_data['attachments'][ $att_id ]['file_content'] = base64_encode( $file_content );
-							$export_data['attachments'][ $att_id ]['file_size'] = filesize( $file_path );
-						}
-					}
 				}
 			}
 		}
@@ -270,120 +267,25 @@ function snks_import_ai_settings() {
 		}
 	}
 	
-	// Import attachments first (if available) to create attachment ID mapping
-	$attachment_id_mapping = array(); // old_id => new_id
+	// Create file download queue for processing via AJAX
+	$file_download_queue = array();
+	$attachment_id_mapping = array(); // old_id => new_id (will be populated as files are downloaded)
+	$queue_key = ''; // Will be set if files need to be downloaded
 	
 	if ( isset( $import_data['attachments'] ) && is_array( $import_data['attachments'] ) ) {
-		require_once( ABSPATH . 'wp-admin/includes/file.php' );
-		require_once( ABSPATH . 'wp-admin/includes/media.php' );
-		require_once( ABSPATH . 'wp-admin/includes/image.php' );
-		
+		// Store attachment metadata and URLs in queue for background processing
 		foreach ( $import_data['attachments'] as $old_att_id => $attachment_data ) {
-			$new_att_id = null;
-			
-			// Try to import file content if available
-			if ( isset( $attachment_data['file_content'] ) && ! empty( $attachment_data['file_content'] ) ) {
-				// Decode base64 content
-				$file_content = base64_decode( $attachment_data['file_content'] );
-				
-				if ( $file_content !== false ) {
-					// Create temporary file
-					$upload_dir = wp_upload_dir();
-					$filename = basename( $attachment_data['file_path'] ?: $attachment_data['file_url'] );
-					if ( empty( $filename ) ) {
-						// Generate filename from mime type
-						$ext = '';
-						if ( ! empty( $attachment_data['post_mime_type'] ) ) {
-							$ext = wp_check_filetype( 'file.' . explode( '/', $attachment_data['post_mime_type'] )[1] )['ext'];
-						}
-						$filename = 'imported-' . $old_att_id . ( $ext ? '.' . $ext : '' );
-					}
-					
-					$file_path = $upload_dir['path'] . '/' . $filename;
-					
-					// Handle filename conflicts
-					$counter = 1;
-					while ( file_exists( $file_path ) ) {
-						$pathinfo = pathinfo( $filename );
-						$filename = $pathinfo['filename'] . '-' . $counter . '.' . $pathinfo['extension'];
-						$file_path = $upload_dir['path'] . '/' . $filename;
-						$counter++;
-					}
-					
-					// Write file
-					if ( file_put_contents( $file_path, $file_content ) !== false ) {
-						// Create WordPress attachment
-						$attachment = array(
-							'post_mime_type' => $attachment_data['post_mime_type'],
-							'post_title' => sanitize_file_name( $attachment_data['post_title'] ?: $filename ),
-							'post_content' => $attachment_data['post_content'],
-							'post_excerpt' => $attachment_data['post_excerpt'],
-							'post_status' => 'inherit',
-						);
-						
-						$new_att_id = wp_insert_attachment( $attachment, $file_path );
-						
-						if ( ! is_wp_error( $new_att_id ) ) {
-							// Generate attachment metadata
-							$attach_data = wp_generate_attachment_metadata( $new_att_id, $file_path );
-							wp_update_attachment_metadata( $new_att_id, $attach_data );
-							
-							// Import attachment meta if available
-							if ( isset( $attachment_data['meta'] ) && is_array( $attachment_data['meta'] ) ) {
-								foreach ( $attachment_data['meta'] as $meta_key => $meta_value ) {
-									// Skip _wp_attached_file and _wp_attachment_metadata as they're auto-generated
-									if ( ! in_array( $meta_key, array( '_wp_attached_file', '_wp_attachment_metadata' ) ) ) {
-										update_post_meta( $new_att_id, $meta_key, maybe_unserialize( $meta_value[0] ) );
-									}
-								}
-							}
-							
-							$attachment_id_mapping[ $old_att_id ] = $new_att_id;
-						} else {
-							// Clean up file if attachment creation failed
-							@unlink( $file_path );
-							$errors[] = sprintf( 'Failed to create attachment for file: %s', $filename );
-						}
-					} else {
-						$errors[] = sprintf( 'Failed to write file: %s', $filename );
-					}
-				}
-			} else {
-				// No file content, try to download from source URL if available
-				if ( ! empty( $attachment_data['file_url'] ) && ! empty( $import_data['site_url'] ) ) {
-					$source_url = $attachment_data['file_url'];
-					
-					// Try to download file
-					$tmp_file = download_url( $source_url );
-					
-					if ( ! is_wp_error( $tmp_file ) ) {
-						$filename = basename( $attachment_data['file_path'] ?: $source_url );
-						$file_array = array(
-							'name' => $filename,
-							'tmp_name' => $tmp_file,
-						);
-						
-						$new_att_id = media_handle_sideload( $file_array, 0 );
-						
-						if ( ! is_wp_error( $new_att_id ) ) {
-							// Update attachment metadata
-							if ( ! empty( $attachment_data['post_title'] ) ) {
-								wp_update_post( array(
-									'ID' => $new_att_id,
-									'post_title' => $attachment_data['post_title'],
-									'post_content' => $attachment_data['post_content'],
-									'post_excerpt' => $attachment_data['post_excerpt'],
-								) );
-							}
-							
-							$attachment_id_mapping[ $old_att_id ] = $new_att_id;
-						} else {
-							@unlink( $tmp_file );
-							$errors[] = sprintf( 'Failed to download attachment from: %s', $source_url );
-						}
-					}
-				}
+			if ( ! empty( $attachment_data['file_url'] ) ) {
+				$file_download_queue[ $old_att_id ] = $attachment_data;
 			}
+		}
+		
+		// Store queue in transient for AJAX processing
+		if ( ! empty( $file_download_queue ) ) {
+			$queue_key = time();
+			set_transient( 'snks_file_import_queue_' . $queue_key, $file_download_queue, DAY_IN_SECONDS );
+			set_transient( 'snks_file_import_mapping_' . $queue_key, array(), DAY_IN_SECONDS );
+			set_transient( 'snks_file_import_source_url_' . $queue_key, isset( $import_data['site_url'] ) ? $import_data['site_url'] : '', DAY_IN_SECONDS );
 		}
 	}
 	
@@ -405,13 +307,14 @@ function snks_import_ai_settings() {
 				$wpdb->query( "TRUNCATE TABLE {$applications_table}" );
 			}
 			
-			// Import applications
+			// Import applications (attachment IDs will be mapped after files are downloaded)
 			foreach ( $import_data['tables']['therapist_applications'] as $application ) {
 				// Remove timestamps to allow auto-generation
 				unset( $application['created_at'] );
 				unset( $application['updated_at'] );
 				
-				// Map attachment IDs
+				// Store original attachment IDs for later mapping
+				$original_attachment_ids = array();
 				$attachment_fields = array(
 					'profile_image', 'identity_front', 'identity_back',
 					'graduate_certificate', 'practice_license', 'syndicate_card',
@@ -420,26 +323,18 @@ function snks_import_ai_settings() {
 				);
 				
 				foreach ( $attachment_fields as $field ) {
-					if ( ! empty( $application[ $field ] ) && isset( $attachment_id_mapping[ $application[ $field ] ] ) ) {
-						$application[ $field ] = $attachment_id_mapping[ $application[ $field ] ];
-					} elseif ( ! empty( $application[ $field ] ) && ! isset( $attachment_id_mapping[ $application[ $field ] ] ) ) {
-						// Attachment not imported, set to null
+					if ( ! empty( $application[ $field ] ) ) {
+						$original_attachment_ids[ $field ] = $application[ $field ];
+						// Set to null temporarily - will be updated after files are downloaded
 						$application[ $field ] = null;
 					}
 				}
 				
-				// Map certificates array
+				// Store original certificates for later mapping
+				$original_certificates = null;
 				if ( ! empty( $application['certificates'] ) ) {
-					$certificates = json_decode( $application['certificates'], true );
-					if ( is_array( $certificates ) ) {
-						$mapped_certificates = array();
-						foreach ( $certificates as $cert_id ) {
-							if ( isset( $attachment_id_mapping[ $cert_id ] ) ) {
-								$mapped_certificates[] = $attachment_id_mapping[ $cert_id ];
-							}
-						}
-						$application['certificates'] = ! empty( $mapped_certificates ) ? wp_json_encode( $mapped_certificates ) : null;
-					}
+					$original_certificates = $application['certificates'];
+					$application['certificates'] = null;
 				}
 				
 				// Check if application already exists by email or phone
@@ -465,9 +360,21 @@ function snks_import_ai_settings() {
 					// Insert new application - remove id to allow auto-increment
 					unset( $application['id'] );
 					$result = $wpdb->insert( $applications_table, $application );
+					$app_id = $wpdb->insert_id;
 				}
 				
-				if ( $result === false ) {
+				if ( $result !== false && $app_id ) {
+					// Store mapping info for later attachment ID update
+					if ( ! empty( $original_attachment_ids ) || ! empty( $original_certificates ) ) {
+						$mapping_key = 'snks_app_attachment_mapping_' . $queue_key;
+						$app_mappings = get_transient( $mapping_key ) ?: array();
+						$app_mappings[ $app_id ] = array(
+							'attachments' => $original_attachment_ids,
+							'certificates' => $original_certificates,
+						);
+						set_transient( $mapping_key, $app_mappings, DAY_IN_SECONDS );
+					}
+				} else {
 					$app_identifier = ! empty( $application['email'] ) ? $application['email'] : ( ! empty( $application['phone'] ) ? $application['phone'] : 'Unknown' );
 					$errors[] = sprintf( 'Failed to import application: %s', $app_identifier );
 				}
@@ -486,10 +393,205 @@ function snks_import_ai_settings() {
 		$redirect_args['error_details'] = urlencode( implode( '; ', array_slice( $errors, 0, 5 ) ) );
 	}
 	
+	// Add file queue info if files need to be downloaded
+	if ( ! empty( $queue_key ) && ! empty( $file_download_queue ) ) {
+		$redirect_args['file_queue_key'] = $queue_key;
+		$redirect_args['file_queue_count'] = count( $file_download_queue );
+	}
+	
 	wp_redirect( add_query_arg( $redirect_args, admin_url( 'admin.php' ) ) );
 	exit;
 }
 add_action( 'admin_post_snks_import_ai_settings', 'snks_import_ai_settings' );
+
+/**
+ * AJAX handler to process file download queue
+ */
+function snks_process_file_import_queue() {
+	// Verify nonce
+	if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'snks_file_import_queue' ) ) {
+		wp_send_json_error( array( 'message' => 'Security check failed' ) );
+	}
+	
+	// Check capability
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Insufficient permissions' ) );
+	}
+	
+	$queue_key = isset( $_POST['queue_key'] ) ? sanitize_text_field( $_POST['queue_key'] ) : '';
+	if ( empty( $queue_key ) ) {
+		wp_send_json_error( array( 'message' => 'Queue key missing' ) );
+	}
+	
+	$queue = get_transient( 'snks_file_import_queue_' . $queue_key );
+	$mapping = get_transient( 'snks_file_import_mapping_' . $queue_key ) ?: array();
+	$source_url = get_transient( 'snks_file_import_source_url_' . $queue_key );
+	
+	if ( empty( $queue ) || ! is_array( $queue ) ) {
+		wp_send_json_success( array(
+			'message' => 'All files processed',
+			'completed' => true,
+			'processed' => count( $mapping ),
+			'total' => 0,
+		) );
+	}
+	
+	require_once( ABSPATH . 'wp-admin/includes/file.php' );
+	require_once( ABSPATH . 'wp-admin/includes/media.php' );
+	require_once( ABSPATH . 'wp-admin/includes/image.php' );
+	
+	// Process up to 5 files per request
+	$batch_size = 5;
+	$processed = 0;
+	$errors = array();
+	
+	foreach ( array_slice( $queue, 0, $batch_size, true ) as $old_att_id => $attachment_data ) {
+		// Skip if already processed
+		if ( isset( $mapping[ $old_att_id ] ) ) {
+			continue;
+		}
+		
+		$new_att_id = null;
+		
+		// Try to download from source URL
+		if ( ! empty( $attachment_data['file_url'] ) ) {
+			$source_file_url = $attachment_data['file_url'];
+			
+			// If URL is relative, make it absolute using source site URL
+			if ( ! empty( $source_url ) && strpos( $source_file_url, 'http' ) !== 0 ) {
+				$source_file_url = rtrim( $source_url, '/' ) . '/' . ltrim( $source_file_url, '/' );
+			}
+			
+			// Download file
+			$tmp_file = download_url( $source_file_url );
+			
+			if ( ! is_wp_error( $tmp_file ) ) {
+				$filename = basename( $attachment_data['file_path'] ?: $source_file_url );
+				if ( empty( $filename ) ) {
+					// Generate filename from mime type
+					$ext = '';
+					if ( ! empty( $attachment_data['post_mime_type'] ) ) {
+						$mime_parts = explode( '/', $attachment_data['post_mime_type'] );
+						$ext = ! empty( $mime_parts[1] ) ? wp_check_filetype( 'file.' . $mime_parts[1] )['ext'] : '';
+					}
+					$filename = 'imported-' . $old_att_id . ( $ext ? '.' . $ext : '' );
+				}
+				
+				$file_array = array(
+					'name' => sanitize_file_name( $filename ),
+					'tmp_name' => $tmp_file,
+				);
+				
+				$new_att_id = media_handle_sideload( $file_array, 0 );
+				
+				if ( ! is_wp_error( $new_att_id ) ) {
+					// Update attachment metadata
+					wp_update_post( array(
+						'ID' => $new_att_id,
+						'post_title' => $attachment_data['post_title'] ?: $filename,
+						'post_content' => $attachment_data['post_content'],
+						'post_excerpt' => $attachment_data['post_excerpt'],
+					) );
+					
+					// Import attachment meta if available
+					if ( isset( $attachment_data['meta'] ) && is_array( $attachment_data['meta'] ) ) {
+						foreach ( $attachment_data['meta'] as $meta_key => $meta_value ) {
+							if ( ! in_array( $meta_key, array( '_wp_attached_file', '_wp_attachment_metadata' ) ) ) {
+								update_post_meta( $new_att_id, $meta_key, maybe_unserialize( $meta_value[0] ) );
+							}
+						}
+					}
+					
+					$mapping[ $old_att_id ] = $new_att_id;
+					$processed++;
+				} else {
+					@unlink( $tmp_file );
+					$errors[] = sprintf( 'Failed to import file: %s - %s', $filename, $new_att_id->get_error_message() );
+				}
+			} else {
+				$errors[] = sprintf( 'Failed to download file: %s - %s', $source_file_url, $tmp_file->get_error_message() );
+			}
+		}
+	}
+	
+	// Update queue and mapping
+	$remaining_queue = array_diff_key( $queue, $mapping );
+	set_transient( 'snks_file_import_queue_' . $queue_key, $remaining_queue, DAY_IN_SECONDS );
+	set_transient( 'snks_file_import_mapping_' . $queue_key, $mapping, DAY_IN_SECONDS );
+	
+	// Update application attachment IDs if mapping exists
+	if ( ! empty( $mapping ) ) {
+		snks_update_application_attachment_ids( $queue_key, $mapping );
+	}
+	
+	$completed = empty( $remaining_queue );
+	
+	wp_send_json_success( array(
+		'message' => $completed ? 'All files processed' : sprintf( 'Processed %d files', $processed ),
+		'completed' => $completed,
+		'processed' => count( $mapping ),
+		'total' => count( $queue ) + count( $mapping ),
+		'errors' => $errors,
+	) );
+}
+add_action( 'wp_ajax_snks_process_file_import_queue', 'snks_process_file_import_queue' );
+
+/**
+ * Update application attachment IDs after files are downloaded
+ */
+function snks_update_application_attachment_ids( $queue_key, $attachment_mapping ) {
+	global $wpdb;
+	
+	$mapping_key = 'snks_app_attachment_mapping_' . $queue_key;
+	$app_mappings = get_transient( $mapping_key );
+	
+	if ( empty( $app_mappings ) || ! is_array( $app_mappings ) ) {
+		return;
+	}
+	
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	$attachment_fields = array(
+		'profile_image', 'identity_front', 'identity_back',
+		'graduate_certificate', 'practice_license', 'syndicate_card',
+		'rank_certificate', 'cp_graduate_certificate', 'cp_highest_degree',
+		'cp_moh_license_file'
+	);
+	
+	foreach ( $app_mappings as $app_id => $mapping_data ) {
+		$update_data = array();
+		
+		// Map single attachment fields
+		foreach ( $attachment_fields as $field ) {
+			if ( isset( $mapping_data['attachments'][ $field ] ) && isset( $attachment_mapping[ $mapping_data['attachments'][ $field ] ] ) ) {
+				$update_data[ $field ] = $attachment_mapping[ $mapping_data['attachments'][ $field ] ];
+			}
+		}
+		
+		// Map certificates array
+		if ( ! empty( $mapping_data['certificates'] ) ) {
+			$certificates = json_decode( $mapping_data['certificates'], true );
+			if ( is_array( $certificates ) ) {
+				$mapped_certificates = array();
+				foreach ( $certificates as $cert_id ) {
+					if ( isset( $attachment_mapping[ $cert_id ] ) ) {
+						$mapped_certificates[] = $attachment_mapping[ $cert_id ];
+					}
+				}
+				if ( ! empty( $mapped_certificates ) ) {
+					$update_data['certificates'] = wp_json_encode( $mapped_certificates );
+				}
+			}
+		}
+		
+		// Update application if we have mappings
+		if ( ! empty( $update_data ) ) {
+			$wpdb->update( $applications_table, $update_data, array( 'id' => $app_id ) );
+		}
+	}
+	
+	// Clean up mapping transient
+	delete_transient( $mapping_key );
+}
 
 /**
  * Export/Import settings page
@@ -505,6 +607,8 @@ function snks_ai_settings_export_import_page() {
 	$imported = isset( $_GET['imported'] ) ? intval( $_GET['imported'] ) : 0;
 	$errors_count = isset( $_GET['errors'] ) ? intval( $_GET['errors'] ) : 0;
 	$error_details = isset( $_GET['error_details'] ) ? urldecode( sanitize_text_field( $_GET['error_details'] ) ) : '';
+	$file_queue_key = isset( $_GET['file_queue_key'] ) ? sanitize_text_field( $_GET['file_queue_key'] ) : '';
+	$file_queue_count = isset( $_GET['file_queue_count'] ) ? intval( $_GET['file_queue_count'] ) : 0;
 	
 	?>
 	<div class="wrap">
@@ -556,6 +660,18 @@ function snks_ai_settings_export_import_page() {
 			</div>
 		<?php endif; ?>
 		
+		<?php if ( ! empty( $file_queue_key ) && $file_queue_count > 0 ) : ?>
+			<div class="notice notice-info" id="file-import-progress" style="margin-top: 20px;">
+				<h3><?php echo esc_html__( 'File Import in Progress', 'anony-turn' ); ?></h3>
+				<p><?php printf( esc_html__( 'Downloading %d files from source site...', 'anony-turn' ), $file_queue_count ); ?></p>
+				<div style="background: #f0f0f0; border-radius: 4px; padding: 10px; margin: 10px 0;">
+					<div id="file-import-progress-bar" style="background: #2271b1; height: 20px; width: 0%; border-radius: 4px; transition: width 0.3s;"></div>
+				</div>
+				<p id="file-import-status"><?php echo esc_html__( 'Starting...', 'anony-turn' ); ?></p>
+				<div id="file-import-errors" style="display: none; margin-top: 10px; color: #d63638;"></div>
+			</div>
+		<?php endif; ?>
+		
 		<div class="card" style="max-width: 800px; margin-top: 20px;">
 			<h2><?php echo esc_html__( 'Export Settings', 'anony-turn' ); ?></h2>
 			<p><?php echo esc_html__( 'Export all Jalsah AI settings to a JSON file. This includes:', 'anony-turn' ); ?></p>
@@ -576,6 +692,8 @@ function snks_ai_settings_export_import_page() {
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<?php wp_nonce_field( 'snks_export_ai_settings', 'snks_export_nonce' ); ?>
 				<input type="hidden" name="action" value="snks_export_ai_settings">
+				
+				
 				<p class="submit">
 					<input type="submit" class="button button-primary" value="<?php echo esc_attr__( 'Export Settings', 'anony-turn' ); ?>">
 				</p>
@@ -627,7 +745,7 @@ function snks_ai_settings_export_import_page() {
 							</label>
 							<p class="description"><?php echo esc_html__( 'If unchecked, imported applications will be merged with existing ones. Applications with matching email or phone will be updated instead of creating duplicates.', 'anony-turn' ); ?></p>
 							<p class="description" style="margin-top: 10px; color: #666;">
-								<strong><?php echo esc_html__( 'Note:', 'anony-turn' ); ?></strong> <?php echo esc_html__( 'Uploaded files (images, certificates, documents) are included in the export. During import, files will be recreated as WordPress attachments. If file content is not available, the system will attempt to download files from the source site.', 'anony-turn' ); ?>
+								<strong><?php echo esc_html__( 'Note:', 'anony-turn' ); ?></strong> <?php echo esc_html__( 'Uploaded files (images, certificates, documents) are exported as URLs. During import, files will be automatically downloaded from the source site in the background using a queue system. You can continue working while files are being imported.', 'anony-turn' ); ?>
 							</p>
 						</td>
 					</tr>
@@ -639,6 +757,71 @@ function snks_ai_settings_export_import_page() {
 			</form>
 		</div>
 	</div>
+	
+	<?php if ( ! empty( $file_queue_key ) && $file_queue_count > 0 ) : ?>
+	<script type="text/javascript">
+	jQuery(document).ready(function($) {
+		var queueKey = '<?php echo esc_js( $file_queue_key ); ?>';
+		var totalFiles = <?php echo intval( $file_queue_count ); ?>;
+		var processedFiles = 0;
+		var processing = false;
+		
+		function processQueue() {
+			if (processing) return;
+			processing = true;
+			
+			$.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'snks_process_file_import_queue',
+					nonce: '<?php echo wp_create_nonce( 'snks_file_import_queue' ); ?>',
+					queue_key: queueKey
+				},
+				success: function(response) {
+					processing = false;
+					
+					if (response.success) {
+						processedFiles = response.data.processed || 0;
+						var percentage = totalFiles > 0 ? Math.round((processedFiles / totalFiles) * 100) : 0;
+						
+						$('#file-import-progress-bar').css('width', percentage + '%');
+						$('#file-import-status').text(response.data.message || 'Processing...');
+						
+						if (response.data.errors && response.data.errors.length > 0) {
+							var errorHtml = '<strong>Errors:</strong><ul>';
+							response.data.errors.forEach(function(error) {
+								errorHtml += '<li>' + error + '</li>';
+							});
+							errorHtml += '</ul>';
+							$('#file-import-errors').html(errorHtml).show();
+						}
+						
+						if (response.data.completed) {
+							$('#file-import-status').html('<strong style="color: #00a32a;">' + response.data.message + '</strong>');
+							$('#file-import-progress').removeClass('notice-info').addClass('notice-success');
+						} else {
+							// Continue processing
+							setTimeout(processQueue, 1000);
+						}
+					} else {
+						$('#file-import-status').html('<strong style="color: #d63638;">Error: ' + (response.data.message || 'Unknown error') + '</strong>');
+						$('#file-import-progress').removeClass('notice-info').addClass('notice-error');
+					}
+				},
+				error: function() {
+					processing = false;
+					$('#file-import-status').html('<strong style="color: #d63638;">Network error. Retrying...</strong>');
+					setTimeout(processQueue, 2000);
+				}
+			});
+		}
+		
+		// Start processing
+		processQueue();
+	});
+	</script>
+	<?php endif; ?>
 	<?php
 }
 
