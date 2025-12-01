@@ -72,6 +72,17 @@ function snks_export_ai_settings() {
 		$export_data['tables']['snks_ai_profit_settings'] = $profit_settings;
 	}
 	
+	// Export therapist applications from database table
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	$applications = $wpdb->get_results(
+		"SELECT * FROM {$applications_table}",
+		ARRAY_A
+	);
+	
+	if ( ! empty( $applications ) ) {
+		$export_data['tables']['therapist_applications'] = $applications;
+	}
+	
 	// Set headers for download
 	header( 'Content-Type: application/json; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename="jalsah-ai-settings-' . date( 'Y-m-d-His' ) . '.json"' );
@@ -191,6 +202,63 @@ function snks_import_ai_settings() {
 		}
 	}
 	
+	// Import table data (therapist applications)
+	if ( isset( $import_data['tables']['therapist_applications'] ) && is_array( $import_data['tables']['therapist_applications'] ) ) {
+		$applications_table = $wpdb->prefix . 'therapist_applications';
+		
+		// Check if table exists
+		$table_exists = $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM information_schema.tables 
+			WHERE table_schema = %s AND table_name = %s",
+			$wpdb->dbname,
+			$applications_table
+		) );
+		
+		if ( $table_exists ) {
+			// Clear existing data if requested
+			if ( isset( $_POST['clear_existing_applications'] ) && $_POST['clear_existing_applications'] === '1' ) {
+				$wpdb->query( "TRUNCATE TABLE {$applications_table}" );
+			}
+			
+			// Import applications
+			foreach ( $import_data['tables']['therapist_applications'] as $application ) {
+				// Remove timestamps to allow auto-generation
+				unset( $application['created_at'] );
+				unset( $application['updated_at'] );
+				
+				// Check if application already exists by email or phone
+				$existing = null;
+				if ( ! empty( $application['email'] ) ) {
+					$existing = $wpdb->get_row( $wpdb->prepare(
+						"SELECT id FROM {$applications_table} WHERE email = %s",
+						$application['email']
+					) );
+				} elseif ( ! empty( $application['phone'] ) ) {
+					$existing = $wpdb->get_row( $wpdb->prepare(
+						"SELECT id FROM {$applications_table} WHERE phone = %s",
+						$application['phone']
+					) );
+				}
+				
+				if ( $existing ) {
+					// Update existing application - remove id from data array
+					$app_id = $existing->id;
+					unset( $application['id'] );
+					$result = $wpdb->update( $applications_table, $application, array( 'id' => $app_id ) );
+				} else {
+					// Insert new application - remove id to allow auto-increment
+					unset( $application['id'] );
+					$result = $wpdb->insert( $applications_table, $application );
+				}
+				
+				if ( $result === false ) {
+					$app_identifier = ! empty( $application['email'] ) ? $application['email'] : ( ! empty( $application['phone'] ) ? $application['phone'] : 'Unknown' );
+					$errors[] = sprintf( 'Failed to import application: %s', $app_identifier );
+				}
+			}
+		}
+	}
+	
 	// Redirect with success/error message
 	$redirect_args = array(
 		'page' => 'jalsah-ai-export-import',
@@ -285,6 +353,7 @@ function snks_ai_settings_export_import_page() {
 				<li><?php echo esc_html__( 'WhatsApp API Settings', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'Therapist Registration Settings', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'Notification Template Settings', 'anony-turn' ); ?></li>
+				<li><?php echo esc_html__( 'Therapist Applications', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'All other AI-related options', 'anony-turn' ); ?></li>
 			</ul>
 			
@@ -329,6 +398,18 @@ function snks_ai_settings_export_import_page() {
 								<?php echo esc_html__( 'Clear existing therapist profit settings before importing', 'anony-turn' ); ?>
 							</label>
 							<p class="description"><?php echo esc_html__( 'If unchecked, imported profit settings will be merged with existing ones (duplicates will be updated).', 'anony-turn' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="clear_existing_applications"><?php echo esc_html__( 'Therapist Applications', 'anony-turn' ); ?></label>
+						</th>
+						<td>
+							<label>
+								<input type="checkbox" name="clear_existing_applications" id="clear_existing_applications" value="1">
+								<?php echo esc_html__( 'Clear existing therapist applications before importing', 'anony-turn' ); ?>
+							</label>
+							<p class="description"><?php echo esc_html__( 'If unchecked, imported applications will be merged with existing ones. Applications with matching email or phone will be updated instead of creating duplicates.', 'anony-turn' ); ?></p>
 						</td>
 					</tr>
 				</table>
