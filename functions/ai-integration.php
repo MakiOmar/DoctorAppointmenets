@@ -2300,7 +2300,7 @@ class SNKS_AI_Integration {
 	 * Handle therapist availability endpoint
 	 */
 	private function handle_therapist_availability_endpoint( $method, $path ) {
-
+		
 		switch ( $method ) {
 			case 'GET':
 				if ( count( $path ) === 1 ) {
@@ -5696,13 +5696,13 @@ Best regards,
 
 		$cart_items = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
-				 FROM {$wpdb->prefix}snks_provider_timetable t
-				 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
-				 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
-				 AND t.settings LIKE '%ai_booking:in_cart%'
-				 ORDER BY t.date_time ASC",
-				$user_id
+			"SELECT t.*, ta.name as therapist_name, ta.name_en as therapist_name_en, ta.profile_image
+			 FROM {$wpdb->prefix}snks_provider_timetable t
+			 LEFT JOIN {$wpdb->prefix}therapist_applications ta ON t.user_id = ta.user_id
+			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
+			 AND t.settings LIKE '%ai_booking:in_cart%'
+			 ORDER BY t.date_time ASC",
+			$user_id
 			)
 		);
 
@@ -5741,7 +5741,7 @@ Best regards,
 			$item_price   = $this->get_cart_item_price( $item );
 			$item->price  = floatval( $item_price );
 			$total_price += $item_price;
-
+			
 			if ( ! empty( $item->profile_image ) ) {
 				$item->therapist_image_url = wp_get_attachment_image_url( $item->profile_image, 'thumbnail' );
 			}
@@ -5809,7 +5809,7 @@ Best regards,
 		if ( $result === false ) {
 			return new WP_REST_Response( array( 'error' => 'Failed to remove from cart' ), 500 );
 		}
-		
+
 		$summary = $this->build_ai_cart_summary( $user_id );
 
 		$coupon_response = null;

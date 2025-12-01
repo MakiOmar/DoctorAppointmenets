@@ -39,11 +39,15 @@ function snks_export_ai_settings() {
 		'tables' => array(),
 	);
 	
-	// Get all AI-related options
+	// Get all AI-related options - expanded to include all plugin settings
 	$ai_options = $wpdb->get_results(
 		"SELECT option_name, option_value FROM {$wpdb->options} 
-		WHERE option_name LIKE 'snks_ai_%' OR option_name LIKE 'snks_bilingual_%' 
-		OR option_name LIKE 'snks_default_%' 
+		WHERE option_name LIKE 'snks_ai_%' 
+		OR option_name LIKE 'snks_bilingual_%' 
+		OR option_name LIKE 'snks_default_%'
+		OR option_name LIKE 'snks_therapist_%'
+		OR option_name LIKE 'snks_whatsapp_%'
+		OR option_name LIKE 'snks_template_%'
 		ORDER BY option_name"
 	);
 	
@@ -114,13 +118,16 @@ function snks_import_ai_settings() {
 	$imported_count = 0;
 	$errors = array();
 	
-	// Import options
+		// Import options
 	if ( isset( $import_data['options'] ) && is_array( $import_data['options'] ) ) {
 		foreach ( $import_data['options'] as $option_name => $option_value ) {
-			// Only import AI-related options for safety
+			// Only import AI-related options for safety (expanded to include all plugin settings)
 			if ( strpos( $option_name, 'snks_ai_' ) === 0 || 
 				 strpos( $option_name, 'snks_bilingual_' ) === 0 || 
-				 strpos( $option_name, 'snks_default_' ) === 0 ) {
+				 strpos( $option_name, 'snks_default_' ) === 0 ||
+				 strpos( $option_name, 'snks_therapist_' ) === 0 ||
+				 strpos( $option_name, 'snks_whatsapp_' ) === 0 ||
+				 strpos( $option_name, 'snks_template_' ) === 0 ) {
 				
 				$result = update_option( $option_name, $option_value );
 				if ( $result !== false ) {
@@ -274,6 +281,10 @@ function snks_ai_settings_export_import_page() {
 				<li><?php echo esc_html__( 'Ratings and diagnosis settings', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'Profit settings (global and therapist-specific)', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'Rochtah integration settings', 'anony-turn' ); ?></li>
+				<li><?php echo esc_html__( 'OTP Verification Settings', 'anony-turn' ); ?></li>
+				<li><?php echo esc_html__( 'WhatsApp API Settings', 'anony-turn' ); ?></li>
+				<li><?php echo esc_html__( 'Therapist Registration Settings', 'anony-turn' ); ?></li>
+				<li><?php echo esc_html__( 'Notification Template Settings', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'All other AI-related options', 'anony-turn' ); ?></li>
 			</ul>
 			
