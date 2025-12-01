@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.140
+ * Version: 1.0.141
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -53,6 +53,12 @@ $my_update_checker = Puc_v4_Factory::buildUpdateChecker(
 
 // Set the branch that contains the stable release.
 $my_update_checker->setBranch( 'master' );
+
+// Set GitHub authentication if token is provided (helps avoid 403 rate limit errors).
+// Define SNKS_GITHUB_TOKEN in wp-config.php: define('SNKS_GITHUB_TOKEN', 'ghp_your_token_here');
+if ( defined( 'SNKS_GITHUB_TOKEN' ) && ! empty( SNKS_GITHUB_TOKEN ) ) {
+	$my_update_checker->setAuthentication( SNKS_GITHUB_TOKEN );
+}
 
 // Add a plugin row action to clear the update cache manually.
 add_filter(
