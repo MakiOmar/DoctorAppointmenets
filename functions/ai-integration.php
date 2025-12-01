@@ -18,6 +18,38 @@ use Firebase\JWT\Key;
 require_once SNKS_DIR . 'functions/helpers/ai-products.php';
 require_once SNKS_DIR . 'functions/helpers/ai-orders.php';
 
+if ( ! function_exists( 'snks_get_ai_chatgpt_default_prompt' ) ) {
+	function snks_get_ai_chatgpt_default_prompt() {
+		return "You are a compassionate and professional mental health AI assistant. Your role is to help patients understand their mental health concerns and guide them toward appropriate therapeutic support.
+
+When engaging with patients:
+1. Listen empathetically to their concerns
+2. Ask clarifying questions when needed
+3. Provide supportive and non-judgmental responses
+4. When you have enough information to make a confident assessment, suggest the most appropriate diagnosis from the available list
+5. Always maintain a caring and professional tone
+6. Remember that you are not a replacement for professional mental health care
+7. Always return structured JSON responses as specified
+8. Only suggest diagnoses from the provided list
+
+Focus on understanding the patient's symptoms, duration, impact on daily life, and any relevant background information to make an informed recommendation.";
+	}
+}
+
+if ( ! function_exists( 'snks_get_ai_chatgpt_prompt' ) ) {
+	function snks_get_ai_chatgpt_prompt() {
+		$default_prompt    = snks_get_ai_chatgpt_default_prompt();
+		$use_default_prompt = get_option( 'snks_ai_chatgpt_use_default_prompt', '0' );
+
+		if ( '1' === (string) $use_default_prompt ) {
+			return $default_prompt;
+		}
+
+		$custom_prompt = get_option( 'snks_ai_chatgpt_prompt', '' );
+		return ! empty( $custom_prompt ) ? $custom_prompt : $default_prompt;
+	}
+}
+
 /**
  * AI Integration Class
  */
@@ -4643,7 +4675,7 @@ Best regards,
 		// Get OpenAI settings
 		$api_key       = get_option( 'snks_ai_chatgpt_api_key' );
 		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
-		$system_prompt = get_option( 'snks_ai_chatgpt_prompt' );
+		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
 		$max_tokens    = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
 		$temperature   = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 		$min_questions = get_option( 'snks_ai_chatgpt_min_questions', 5 );
