@@ -81,6 +81,74 @@ function snks_export_ai_settings() {
 	
 	if ( ! empty( $applications ) ) {
 		$export_data['tables']['therapist_applications'] = $applications;
+		
+		// Collect all attachment IDs from applications
+		$attachment_ids = array();
+		$attachment_fields = array(
+			'profile_image', 'identity_front', 'identity_back',
+			'graduate_certificate', 'practice_license', 'syndicate_card',
+			'rank_certificate', 'cp_graduate_certificate', 'cp_highest_degree',
+			'cp_moh_license_file'
+		);
+		
+		foreach ( $applications as $application ) {
+			// Collect single attachment IDs
+			foreach ( $attachment_fields as $field ) {
+				if ( ! empty( $application[ $field ] ) && is_numeric( $application[ $field ] ) ) {
+					$attachment_ids[] = intval( $application[ $field ] );
+				}
+			}
+			
+			// Collect certificates (JSON array of attachment IDs)
+			if ( ! empty( $application['certificates'] ) ) {
+				$certificates = json_decode( $application['certificates'], true );
+				if ( is_array( $certificates ) ) {
+					foreach ( $certificates as $cert_id ) {
+						if ( is_numeric( $cert_id ) ) {
+							$attachment_ids[] = intval( $cert_id );
+						}
+					}
+				}
+			}
+		}
+		
+		// Remove duplicates
+		$attachment_ids = array_unique( $attachment_ids );
+		
+		// Export attachment metadata and file information
+		if ( ! empty( $attachment_ids ) ) {
+			$export_data['attachments'] = array();
+			
+			foreach ( $attachment_ids as $att_id ) {
+				$attachment = get_post( $att_id );
+				if ( $attachment && $attachment->post_type === 'attachment' ) {
+					$file_url = wp_get_attachment_url( $att_id );
+					$file_path = get_attached_file( $att_id );
+					
+					$export_data['attachments'][ $att_id ] = array(
+						'id' => $att_id,
+						'post_title' => $attachment->post_title,
+						'post_content' => $attachment->post_content,
+						'post_excerpt' => $attachment->post_excerpt,
+						'post_mime_type' => $attachment->post_mime_type,
+						'file_url' => $file_url,
+						'file_path' => $file_path,
+						'guid' => $attachment->guid,
+						'meta' => get_post_meta( $att_id ),
+					);
+					
+					// Include file content if file exists and is readable
+					if ( $file_path && file_exists( $file_path ) && is_readable( $file_path ) ) {
+						$file_content = file_get_contents( $file_path );
+						if ( $file_content !== false ) {
+							// Base64 encode for JSON compatibility
+							$export_data['attachments'][ $att_id ]['file_content'] = base64_encode( $file_content );
+							$export_data['attachments'][ $att_id ]['file_size'] = filesize( $file_path );
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	// Set headers for download
@@ -202,6 +270,123 @@ function snks_import_ai_settings() {
 		}
 	}
 	
+	// Import attachments first (if available) to create attachment ID mapping
+	$attachment_id_mapping = array(); // old_id => new_id
+	
+	if ( isset( $import_data['attachments'] ) && is_array( $import_data['attachments'] ) ) {
+		require_once( ABSPATH . 'wp-admin/includes/file.php' );
+		require_once( ABSPATH . 'wp-admin/includes/media.php' );
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		
+		foreach ( $import_data['attachments'] as $old_att_id => $attachment_data ) {
+			$new_att_id = null;
+			
+			// Try to import file content if available
+			if ( isset( $attachment_data['file_content'] ) && ! empty( $attachment_data['file_content'] ) ) {
+				// Decode base64 content
+				$file_content = base64_decode( $attachment_data['file_content'] );
+				
+				if ( $file_content !== false ) {
+					// Create temporary file
+					$upload_dir = wp_upload_dir();
+					$filename = basename( $attachment_data['file_path'] ?: $attachment_data['file_url'] );
+					if ( empty( $filename ) ) {
+						// Generate filename from mime type
+						$ext = '';
+						if ( ! empty( $attachment_data['post_mime_type'] ) ) {
+							$ext = wp_check_filetype( 'file.' . explode( '/', $attachment_data['post_mime_type'] )[1] )['ext'];
+						}
+						$filename = 'imported-' . $old_att_id . ( $ext ? '.' . $ext : '' );
+					}
+					
+					$file_path = $upload_dir['path'] . '/' . $filename;
+					
+					// Handle filename conflicts
+					$counter = 1;
+					while ( file_exists( $file_path ) ) {
+						$pathinfo = pathinfo( $filename );
+						$filename = $pathinfo['filename'] . '-' . $counter . '.' . $pathinfo['extension'];
+						$file_path = $upload_dir['path'] . '/' . $filename;
+						$counter++;
+					}
+					
+					// Write file
+					if ( file_put_contents( $file_path, $file_content ) !== false ) {
+						// Create WordPress attachment
+						$attachment = array(
+							'post_mime_type' => $attachment_data['post_mime_type'],
+							'post_title' => sanitize_file_name( $attachment_data['post_title'] ?: $filename ),
+							'post_content' => $attachment_data['post_content'],
+							'post_excerpt' => $attachment_data['post_excerpt'],
+							'post_status' => 'inherit',
+						);
+						
+						$new_att_id = wp_insert_attachment( $attachment, $file_path );
+						
+						if ( ! is_wp_error( $new_att_id ) ) {
+							// Generate attachment metadata
+							$attach_data = wp_generate_attachment_metadata( $new_att_id, $file_path );
+							wp_update_attachment_metadata( $new_att_id, $attach_data );
+							
+							// Import attachment meta if available
+							if ( isset( $attachment_data['meta'] ) && is_array( $attachment_data['meta'] ) ) {
+								foreach ( $attachment_data['meta'] as $meta_key => $meta_value ) {
+									// Skip _wp_attached_file and _wp_attachment_metadata as they're auto-generated
+									if ( ! in_array( $meta_key, array( '_wp_attached_file', '_wp_attachment_metadata' ) ) ) {
+										update_post_meta( $new_att_id, $meta_key, maybe_unserialize( $meta_value[0] ) );
+									}
+								}
+							}
+							
+							$attachment_id_mapping[ $old_att_id ] = $new_att_id;
+						} else {
+							// Clean up file if attachment creation failed
+							@unlink( $file_path );
+							$errors[] = sprintf( 'Failed to create attachment for file: %s', $filename );
+						}
+					} else {
+						$errors[] = sprintf( 'Failed to write file: %s', $filename );
+					}
+				}
+			} else {
+				// No file content, try to download from source URL if available
+				if ( ! empty( $attachment_data['file_url'] ) && ! empty( $import_data['site_url'] ) ) {
+					$source_url = $attachment_data['file_url'];
+					
+					// Try to download file
+					$tmp_file = download_url( $source_url );
+					
+					if ( ! is_wp_error( $tmp_file ) ) {
+						$filename = basename( $attachment_data['file_path'] ?: $source_url );
+						$file_array = array(
+							'name' => $filename,
+							'tmp_name' => $tmp_file,
+						);
+						
+						$new_att_id = media_handle_sideload( $file_array, 0 );
+						
+						if ( ! is_wp_error( $new_att_id ) ) {
+							// Update attachment metadata
+							if ( ! empty( $attachment_data['post_title'] ) ) {
+								wp_update_post( array(
+									'ID' => $new_att_id,
+									'post_title' => $attachment_data['post_title'],
+									'post_content' => $attachment_data['post_content'],
+									'post_excerpt' => $attachment_data['post_excerpt'],
+								) );
+							}
+							
+							$attachment_id_mapping[ $old_att_id ] = $new_att_id;
+						} else {
+							@unlink( $tmp_file );
+							$errors[] = sprintf( 'Failed to download attachment from: %s', $source_url );
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	// Import table data (therapist applications)
 	if ( isset( $import_data['tables']['therapist_applications'] ) && is_array( $import_data['tables']['therapist_applications'] ) ) {
 		$applications_table = $wpdb->prefix . 'therapist_applications';
@@ -225,6 +410,37 @@ function snks_import_ai_settings() {
 				// Remove timestamps to allow auto-generation
 				unset( $application['created_at'] );
 				unset( $application['updated_at'] );
+				
+				// Map attachment IDs
+				$attachment_fields = array(
+					'profile_image', 'identity_front', 'identity_back',
+					'graduate_certificate', 'practice_license', 'syndicate_card',
+					'rank_certificate', 'cp_graduate_certificate', 'cp_highest_degree',
+					'cp_moh_license_file'
+				);
+				
+				foreach ( $attachment_fields as $field ) {
+					if ( ! empty( $application[ $field ] ) && isset( $attachment_id_mapping[ $application[ $field ] ] ) ) {
+						$application[ $field ] = $attachment_id_mapping[ $application[ $field ] ];
+					} elseif ( ! empty( $application[ $field ] ) && ! isset( $attachment_id_mapping[ $application[ $field ] ] ) ) {
+						// Attachment not imported, set to null
+						$application[ $field ] = null;
+					}
+				}
+				
+				// Map certificates array
+				if ( ! empty( $application['certificates'] ) ) {
+					$certificates = json_decode( $application['certificates'], true );
+					if ( is_array( $certificates ) ) {
+						$mapped_certificates = array();
+						foreach ( $certificates as $cert_id ) {
+							if ( isset( $attachment_id_mapping[ $cert_id ] ) ) {
+								$mapped_certificates[] = $attachment_id_mapping[ $cert_id ];
+							}
+						}
+						$application['certificates'] = ! empty( $mapped_certificates ) ? wp_json_encode( $mapped_certificates ) : null;
+					}
+				}
 				
 				// Check if application already exists by email or phone
 				$existing = null;
@@ -353,7 +569,7 @@ function snks_ai_settings_export_import_page() {
 				<li><?php echo esc_html__( 'WhatsApp API Settings', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'Therapist Registration Settings', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'Notification Template Settings', 'anony-turn' ); ?></li>
-				<li><?php echo esc_html__( 'Therapist Applications', 'anony-turn' ); ?></li>
+				<li><?php echo esc_html__( 'Therapist Applications (including uploaded files)', 'anony-turn' ); ?></li>
 				<li><?php echo esc_html__( 'All other AI-related options', 'anony-turn' ); ?></li>
 			</ul>
 			
@@ -410,6 +626,9 @@ function snks_ai_settings_export_import_page() {
 								<?php echo esc_html__( 'Clear existing therapist applications before importing', 'anony-turn' ); ?>
 							</label>
 							<p class="description"><?php echo esc_html__( 'If unchecked, imported applications will be merged with existing ones. Applications with matching email or phone will be updated instead of creating duplicates.', 'anony-turn' ); ?></p>
+							<p class="description" style="margin-top: 10px; color: #666;">
+								<strong><?php echo esc_html__( 'Note:', 'anony-turn' ); ?></strong> <?php echo esc_html__( 'Uploaded files (images, certificates, documents) are included in the export. During import, files will be recreated as WordPress attachments. If file content is not available, the system will attempt to download files from the source site.', 'anony-turn' ); ?>
+							</p>
 						</td>
 					</tr>
 				</table>
