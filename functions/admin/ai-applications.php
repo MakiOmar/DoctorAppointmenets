@@ -84,7 +84,14 @@ function snks_enhanced_ai_applications_page() {
 					case 'edit':
 						snks_display_application_edit_form( $app_id );
 						return;
-
+					case 'create_user':
+						$result = snks_create_or_link_user_from_application( $app_id );
+						if ( is_wp_error( $result ) ) {
+							echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
+						} else {
+							echo '<div class="notice notice-success"><p>' . esc_html( $result ) . '</p></div>';
+						}
+						break;
 				}
 			}
 		}
@@ -254,6 +261,16 @@ function snks_enhanced_ai_applications_page() {
 										<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $app->id ) ); ?>" 
 										   class="button button-small button-primary">Approve</a>
 									<?php endif; ?>
+									<?php
+									$create_user_url = admin_url(
+										'admin.php?page=jalsah-ai-applications&action=create_user&application_id=' . $app->id .
+										'&_wpnonce=' . wp_create_nonce( 'application_create_user_' . $app->id )
+									);
+									?>
+									<a href="<?php echo esc_url( $create_user_url ); ?>" 
+									   class="button button-small">
+										<?php echo $app->user_id ? 'Link Existing User' : 'Create User'; ?>
+									</a>
 									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=view&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_view_' . $app->id ) ); ?>" 
 									   class="button button-small">View</a>
 									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $app->id ) ); ?>" 
@@ -321,6 +338,101 @@ function snks_approve_therapist_application( $application_id ) {
 	], ['id' => $application_id] );
 	
 	return true;
+}
+
+/**
+ * Create or link a user account from a therapist application
+ *
+ * - Works for any application status (pending/approved/rejected)
+ * - Avoids duplicate users: reuses existing user by email or billing_phone if found
+ */
+function snks_create_or_link_user_from_application( $application_id ) {
+	global $wpdb;
+	$table_name = $wpdb->prefix . 'therapist_applications';
+	
+	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $application_id ) );
+	if ( ! $application ) {
+		return new WP_Error( 'snks_app_not_found', 'Application not found.' );
+	}
+	
+	// If application already linked to a valid user, just confirm linkage.
+	if ( $application->user_id ) {
+		$existing_user = get_user_by( 'id', $application->user_id );
+		if ( $existing_user ) {
+			return sprintf( 'Application is already linked to user #%d (%s).', $existing_user->ID, $existing_user->user_email );
+		}
+	}
+	
+	$user_id = 0;
+	
+	// Try to find existing user by email first
+	if ( ! empty( $application->email ) ) {
+		$existing_by_email = get_user_by( 'email', $application->email );
+		if ( $existing_by_email ) {
+			$user_id = $existing_by_email->ID;
+		}
+	}
+	
+	// If not found by email, try by phone (billing_phone meta)
+	if ( ! $user_id && ! empty( $application->phone ) ) {
+		$maybe_user = get_users( array(
+			'meta_key'   => 'billing_phone',
+			'meta_value' => $application->phone,
+			'number'     => 1,
+			'fields'     => 'ID',
+		) );
+		if ( ! empty( $maybe_user ) ) {
+			$user_id = intval( $maybe_user[0] );
+		}
+	}
+	
+	// Create new user if none found
+	if ( ! $user_id ) {
+		if ( empty( $application->email ) ) {
+			return new WP_Error( 'snks_missing_email', 'Application email is missing, cannot create user.' );
+		}
+		if ( empty( $application->phone ) ) {
+			return new WP_Error( 'snks_missing_phone', 'Application phone is missing, cannot create user.' );
+		}
+		
+		// Use phone as username; avoid duplicates
+		if ( username_exists( $application->phone ) ) {
+			return new WP_Error( 'snks_username_exists', 'A user with this phone already exists. Please link manually.' );
+		}
+		
+		$password = wp_generate_password( 8, false );
+		$user_id  = wp_create_user( $application->phone, $password, $application->email );
+		if ( is_wp_error( $user_id ) ) {
+			return new WP_Error( 'snks_user_create_failed', 'Failed to create user: ' . $user_id->get_error_message() );
+		}
+	}
+	
+	// Ensure role is doctor
+	$user = get_user_by( 'id', $user_id );
+	if ( $user ) {
+		$user->set_role( 'doctor' );
+		
+		// Basic meta
+		update_user_meta( $user_id, 'billing_phone', $application->phone );
+		update_user_meta( $user_id, 'billing_email', $application->email );
+		update_user_meta( $user_id, 'first_name', $application->name );
+		update_user_meta( $user_id, 'billing_first_name', $application->name );
+	}
+	
+	// Link application to user (do not change status here)
+	$wpdb->update(
+		$table_name,
+		array( 'user_id' => $user_id ),
+		array( 'id' => $application_id ),
+		array( '%d' ),
+		array( '%d' )
+	);
+	
+	return sprintf(
+		'User #%d has been %s and linked to this application.',
+		$user_id,
+		$application->user_id ? 'linked' : 'created'
+	);
 }
 
 /**
@@ -730,6 +842,15 @@ function snks_display_application_details( $application_id ) {
 				<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=approve&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_approve_' . $application_id ) ); ?>" 
 				   class="button button-primary">Approve Application</a>
 			<?php endif; ?>
+			<?php
+			$create_user_url = admin_url(
+				'admin.php?page=jalsah-ai-applications&action=create_user&application_id=' . $application_id .
+				'&_wpnonce=' . wp_create_nonce( 'application_create_user_' . $application_id )
+			);
+			?>
+			<a href="<?php echo esc_url( $create_user_url ); ?>" class="button">
+				<?php echo $application->user_id ? 'Link Existing User' : 'Create User'; ?>
+			</a>
 			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $application_id ) ); ?>" class="button">Edit Profile</a>
 			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button">Back to Applications</a>
 		</div>

@@ -519,18 +519,19 @@ function snks_process_file_import_queue() {
 	set_transient( 'snks_file_import_queue_' . $queue_key, $remaining_queue, DAY_IN_SECONDS );
 	set_transient( 'snks_file_import_mapping_' . $queue_key, $mapping, DAY_IN_SECONDS );
 	
+	$completed = empty( $remaining_queue );
+	
 	// Update application attachment IDs if mapping exists
 	if ( ! empty( $mapping ) ) {
-		snks_update_application_attachment_ids( $queue_key, $mapping );
+		snks_update_application_attachment_ids( $queue_key, $mapping, $completed );
 	}
-	
-	$completed = empty( $remaining_queue );
 	
 	wp_send_json_success( array(
 		'message' => $completed ? 'All files processed' : sprintf( 'Processed %d files', $processed ),
 		'completed' => $completed,
 		'processed' => count( $mapping ),
-		'total' => count( $queue ) + count( $mapping ),
+		// total = remaining in queue + already processed
+		'total' => count( $remaining_queue ) + count( $mapping ),
 		'errors' => $errors,
 	) );
 }
@@ -539,7 +540,7 @@ add_action( 'wp_ajax_snks_process_file_import_queue', 'snks_process_file_import_
 /**
  * Update application attachment IDs after files are downloaded
  */
-function snks_update_application_attachment_ids( $queue_key, $attachment_mapping ) {
+function snks_update_application_attachment_ids( $queue_key, $attachment_mapping, $completed = false ) {
 	global $wpdb;
 	
 	$mapping_key = 'snks_app_attachment_mapping_' . $queue_key;
@@ -589,8 +590,10 @@ function snks_update_application_attachment_ids( $queue_key, $attachment_mapping
 		}
 	}
 	
-	// Clean up mapping transient
-	delete_transient( $mapping_key );
+	// Clean up mapping transient only when the queue is fully processed
+	if ( $completed ) {
+		delete_transient( $mapping_key );
+	}
 }
 
 /**
