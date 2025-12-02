@@ -35,7 +35,8 @@ function snks_enhanced_ai_applications_page() {
 					if ( $application ) {
 						switch ( $action ) {
 							case 'approve':
-								if ( $application->status === 'pending' ) {
+								// Allow approving both pending and rejected applications
+								if ( $application->status === 'pending' || $application->status === 'rejected' ) {
 									snks_approve_therapist_application( $app_id );
 									$processed++;
 								}
@@ -69,7 +70,8 @@ function snks_enhanced_ai_applications_page() {
 			if ( $application ) {
 				switch ( $action ) {
 					case 'approve':
-						if ( $application->status === 'pending' ) {
+						// Allow approving both pending and rejected applications
+						if ( $application->status === 'pending' || $application->status === 'rejected' ) {
 							snks_approve_therapist_application( $app_id );
 							echo '<div class="notice notice-success"><p>Application approved successfully!</p></div>';
 						}
@@ -308,7 +310,8 @@ function snks_approve_therapist_application( $application_id ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'therapist_applications';
 	
-	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d AND status = 'pending'", $application_id ) );
+	// Allow approving both pending and rejected applications
+	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d AND (status = 'pending' OR status = 'rejected')", $application_id ) );
 	if ( !$application ) {
 		return false;
 	}
