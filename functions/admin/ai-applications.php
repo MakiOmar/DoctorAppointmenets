@@ -344,7 +344,7 @@ function snks_approve_therapist_application( $application_id ) {
  * Create or link a user account from a therapist application
  *
  * - Works for any application status (pending/approved/rejected)
- * - Avoids duplicate users: reuses existing user by email or billing_phone if found
+ * - Avoids duplicate users: reuses existing user by email if found
  */
 function snks_create_or_link_user_from_application( $application_id ) {
 	global $wpdb;
@@ -355,42 +355,21 @@ function snks_create_or_link_user_from_application( $application_id ) {
 		return new WP_Error( 'snks_app_not_found', 'Application not found.' );
 	}
 	
-	// If application already linked to a valid user, just confirm linkage.
-	if ( $application->user_id ) {
-		$existing_user = get_user_by( 'id', $application->user_id );
-		if ( $existing_user ) {
-			return sprintf( 'Application is already linked to user #%d (%s).', $existing_user->ID, $existing_user->user_email );
-		}
+	// Email is required for deterministic linking without duplicates.
+	if ( empty( $application->email ) ) {
+		return new WP_Error( 'snks_missing_email', 'Application email is missing, cannot create or link user.' );
 	}
 	
 	$user_id = 0;
 	
-	// Try to find existing user by email first
-	if ( ! empty( $application->email ) ) {
-		$existing_by_email = get_user_by( 'email', $application->email );
-		if ( $existing_by_email ) {
-			$user_id = $existing_by_email->ID;
-		}
+	// 1) Try to find existing user by email.
+	$existing_by_email = get_user_by( 'email', $application->email );
+	if ( $existing_by_email ) {
+		$user_id = $existing_by_email->ID;
 	}
 	
-	// If not found by email, try by phone (billing_phone meta)
-	if ( ! $user_id && ! empty( $application->phone ) ) {
-		$maybe_user = get_users( array(
-			'meta_key'   => 'billing_phone',
-			'meta_value' => $application->phone,
-			'number'     => 1,
-			'fields'     => 'ID',
-		) );
-		if ( ! empty( $maybe_user ) ) {
-			$user_id = intval( $maybe_user[0] );
-		}
-	}
-	
-	// Create new user if none found
+	// 2) Create new user if none found.
 	if ( ! $user_id ) {
-		if ( empty( $application->email ) ) {
-			return new WP_Error( 'snks_missing_email', 'Application email is missing, cannot create user.' );
-		}
 		if ( empty( $application->phone ) ) {
 			return new WP_Error( 'snks_missing_phone', 'Application phone is missing, cannot create user.' );
 		}
@@ -428,10 +407,12 @@ function snks_create_or_link_user_from_application( $application_id ) {
 		array( '%d' )
 	);
 	
+	// Message reflects whether we reused or created.
+	$action_label = $existing_by_email ? 'linked' : 'created';
 	return sprintf(
 		'User #%d has been %s and linked to this application.',
 		$user_id,
-		$application->user_id ? 'linked' : 'created'
+		$action_label
 	);
 }
 
