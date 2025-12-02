@@ -44,11 +44,8 @@ function snks_profit_settings_page() {
 		snks_handle_profit_settings_submission();
 	}
 	
-	// Get current settings
-	$global_settings = get_option( 'snks_ai_profit_global_settings', array(
-		'default_first_percentage' => 70.00,
-		'default_subsequent_percentage' => 75.00
-	) );
+	// Get current settings (no hardcoded defaults - use empty array if not set)
+	$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
 	
 	// Get all therapists with their profit settings
 	$therapists = snks_get_all_therapists_with_profit_settings();
@@ -304,12 +301,17 @@ function snks_handle_profit_settings_submission() {
 		$subsequent_percentages = $_POST['subsequent_percentage'] ?? array();
 		$is_active = $_POST['is_active'] ?? array();
 		
+		// Get global settings to use as defaults
+		$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
+		$default_first = isset( $global_settings['default_first_percentage'] ) ? floatval( $global_settings['default_first_percentage'] ) : 0;
+		$default_subsequent = isset( $global_settings['default_subsequent_percentage'] ) ? floatval( $global_settings['default_subsequent_percentage'] ) : 0;
+		
 		$updated_count = 0;
 		
 		foreach ( $therapist_ids as $therapist_id ) {
 			$settings = array(
-				'first_session_percentage' => floatval( $first_percentages[ $therapist_id ] ?? 70.00 ),
-				'subsequent_session_percentage' => floatval( $subsequent_percentages[ $therapist_id ] ?? 75.00 ),
+				'first_session_percentage' => floatval( $first_percentages[ $therapist_id ] ?? $default_first ),
+				'subsequent_session_percentage' => floatval( $subsequent_percentages[ $therapist_id ] ?? $default_subsequent ),
 				'is_active' => intval( $is_active[ $therapist_id ] ?? 1 )
 			);
 			
@@ -330,13 +332,18 @@ function snks_get_all_therapists_with_profit_settings() {
 	
 	$therapists_table = $wpdb->prefix . 'snks_ai_profit_settings';
 	
+	// Get global settings to use as defaults
+	$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
+	$default_first = isset( $global_settings['default_first_percentage'] ) ? floatval( $global_settings['default_first_percentage'] ) : null;
+	$default_subsequent = isset( $global_settings['default_subsequent_percentage'] ) ? floatval( $global_settings['default_subsequent_percentage'] ) : null;
+	
 	$therapists = $wpdb->get_results( "
 		SELECT 
 			u.ID as therapist_id,
 			u.display_name,
 			u.user_email,
-			COALESCE(ps.first_session_percentage, 70.00) as first_session_percentage,
-			COALESCE(ps.subsequent_session_percentage, 75.00) as subsequent_session_percentage,
+			ps.first_session_percentage,
+			ps.subsequent_session_percentage,
 			COALESCE(ps.is_active, 1) as is_active,
 			ps.updated_at
 		FROM {$wpdb->users} u
@@ -348,6 +355,19 @@ function snks_get_all_therapists_with_profit_settings() {
 		)
 		ORDER BY u.display_name ASC
 	", ARRAY_A );
+	
+	// Process results to replace NULL values with global settings
+	if ( ! empty( $therapists ) ) {
+		foreach ( $therapists as &$therapist ) {
+			if ( is_null( $therapist['first_session_percentage'] ) && ! is_null( $default_first ) ) {
+				$therapist['first_session_percentage'] = $default_first;
+			}
+			if ( is_null( $therapist['subsequent_session_percentage'] ) && ! is_null( $default_subsequent ) ) {
+				$therapist['subsequent_session_percentage'] = $default_subsequent;
+			}
+		}
+		unset( $therapist ); // Break reference
+	}
 	
 	return $therapists;
 }

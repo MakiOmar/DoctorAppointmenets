@@ -22,27 +22,50 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 	
 	$table_name = $wpdb->prefix . 'snks_ai_profit_settings';
 	
-	// First, check if individual settings exist (regardless of is_active)
+	// Get global settings first (we'll use these as fallback)
+	$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
+	
+	// Check if individual settings exist (regardless of is_active)
 	$individual_settings = $wpdb->get_row( $wpdb->prepare(
 		"SELECT * FROM $table_name WHERE therapist_id = %d",
 		$therapist_id
 	), ARRAY_A );
 	
-	// If individual settings exist and are active, use them
+	// If individual settings exist and are active, validate they have values
 	if ( $individual_settings && ! empty( $individual_settings['is_active'] ) ) {
-		error_log( sprintf(
-			'AI-PROFIT DEBUG: Using ACTIVE INDIVIDUAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f, is_active=%d',
-			$therapist_id,
-			$individual_settings['first_session_percentage'],
-			$individual_settings['subsequent_session_percentage'],
-			$individual_settings['is_active']
-		) );
-		return $individual_settings;
+		$first_percentage = isset( $individual_settings['first_session_percentage'] ) ? floatval( $individual_settings['first_session_percentage'] ) : 0;
+		$subsequent_percentage = isset( $individual_settings['subsequent_session_percentage'] ) ? floatval( $individual_settings['subsequent_session_percentage'] ) : 0;
+		
+		// If individual settings have valid values (greater than 0), use them
+		if ( $first_percentage > 0 && $subsequent_percentage > 0 ) {
+			error_log( sprintf(
+				'AI-PROFIT DEBUG: Using ACTIVE INDIVIDUAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f, is_active=%d',
+				$therapist_id,
+				$first_percentage,
+				$subsequent_percentage,
+				$individual_settings['is_active']
+			) );
+			return $individual_settings;
+		} else {
+			// Individual settings are active but missing values, use global settings
+			if ( ! empty( $global_settings ) && isset( $global_settings['default_first_percentage'] ) && isset( $global_settings['default_subsequent_percentage'] ) ) {
+				$settings = array(
+					'first_session_percentage' => floatval( $global_settings['default_first_percentage'] ),
+					'subsequent_session_percentage' => floatval( $global_settings['default_subsequent_percentage'] ),
+					'is_active' => 1
+				);
+				error_log( sprintf(
+					'AI-PROFIT DEBUG: Using GLOBAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (individual settings active but missing values)',
+					$therapist_id,
+					$settings['first_session_percentage'],
+					$settings['subsequent_session_percentage']
+				) );
+				return $settings;
+			}
+		}
 	}
 	
 	// If individual settings exist but are inactive, or if they don't exist, use global settings
-	$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
-	
 	if ( ! empty( $global_settings ) && isset( $global_settings['default_first_percentage'] ) && isset( $global_settings['default_subsequent_percentage'] ) ) {
 		$settings = array(
 			'first_session_percentage' => floatval( $global_settings['default_first_percentage'] ),
@@ -59,19 +82,19 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 		return $settings;
 	}
 	
-	// Fallback to hardcoded defaults only if global settings are not configured
-	$defaults = array(
-		'first_session_percentage' => 70.00,
-		'subsequent_session_percentage' => 75.00,
-		'is_active' => 1
-	);
+	// If global settings are not configured, return error/warning (no hardcoded fallback)
 	error_log( sprintf(
-		'AI-PROFIT DEBUG: Using FALLBACK DEFAULT profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (global settings not configured)',
-		$therapist_id,
-		$defaults['first_session_percentage'],
-		$defaults['subsequent_session_percentage']
+		'AI-PROFIT ERROR: No profit settings configured for therapist_id=%d. Global settings not found. Please configure global profit settings.',
+		$therapist_id
 	) );
-	return $defaults;
+	
+	// Return empty array to indicate no settings available (caller should handle this)
+	return array(
+		'first_session_percentage' => 0,
+		'subsequent_session_percentage' => 0,
+		'is_active' => 0,
+		'error' => 'No profit settings configured'
+	);
 }
 
 /**
@@ -109,6 +132,17 @@ function snks_calculate_session_profit( $session_amount, $therapist_id, $patient
 	
 	// Get therapist profit settings
 	$settings = snks_get_therapist_profit_settings( $therapist_id );
+	
+	// Validate settings exist and have valid values
+	if ( empty( $settings ) || isset( $settings['error'] ) || 
+		 empty( $settings['first_session_percentage'] ) || 
+		 empty( $settings['subsequent_session_percentage'] ) ) {
+		error_log( sprintf(
+			'AI-PROFIT ERROR: Cannot calculate profit for therapist_id=%d - profit settings not configured. Please configure global profit settings.',
+			$therapist_id
+		) );
+		return 0; // Return 0 profit if settings are not configured
+	}
 	
 	// Determine if this is first or subsequent session
 	$session_type = snks_is_first_session( $therapist_id, $patient_id );
