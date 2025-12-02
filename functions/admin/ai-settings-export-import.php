@@ -161,6 +161,130 @@ function snks_export_ai_settings() {
 add_action( 'admin_post_snks_export_ai_settings', 'snks_export_ai_settings' );
 
 /**
+ * Export a single therapist application (with its files) as JSON
+ * so it can be re-imported using the main Import Settings screen.
+ */
+function snks_export_single_application() {
+	global $wpdb;
+
+	// Check capability
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( 'Insufficient permissions' );
+	}
+
+	$application_id = isset( $_GET['application_id'] ) ? intval( $_GET['application_id'] ) : 0;
+	if ( ! $application_id ) {
+		wp_die( 'Missing application ID.' );
+	}
+
+	// Verify nonce
+	check_admin_referer( 'snks_export_single_application_' . $application_id );
+
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+
+	$application = $wpdb->get_row(
+		$wpdb->prepare( "SELECT * FROM {$applications_table} WHERE id = %d", $application_id ),
+		ARRAY_A
+	);
+
+	if ( ! $application ) {
+		wp_die( 'Application not found.' );
+	}
+
+	$export_data = array(
+		'version'     => '1.0',
+		'export_date' => current_time( 'mysql' ),
+		'site_url'    => get_site_url(),
+		// Keep structure compatible with the main importer.
+		'options'     => array(),
+		'tables'      => array(
+			'therapist_applications' => array( $application ),
+		),
+	);
+
+	// Collect attachment IDs for this application only.
+	$attachment_ids   = array();
+	$attachment_fields = array(
+		'profile_image',
+		'identity_front',
+		'identity_back',
+		'graduate_certificate',
+		'practice_license',
+		'syndicate_card',
+		'rank_certificate',
+		'cp_graduate_certificate',
+		'cp_highest_degree',
+		'cp_moh_license_file',
+	);
+
+	foreach ( $attachment_fields as $field ) {
+		if ( ! empty( $application[ $field ] ) && is_numeric( $application[ $field ] ) ) {
+			$attachment_ids[] = intval( $application[ $field ] );
+		}
+	}
+
+	// Collect certificates (JSON array of attachment IDs)
+	if ( ! empty( $application['certificates'] ) ) {
+		$certificates = json_decode( $application['certificates'], true );
+		if ( is_array( $certificates ) ) {
+			foreach ( $certificates as $cert_id ) {
+				if ( is_numeric( $cert_id ) ) {
+					$attachment_ids[] = intval( $cert_id );
+				}
+			}
+		}
+	}
+
+	$attachment_ids = array_unique( $attachment_ids );
+
+	if ( ! empty( $attachment_ids ) ) {
+		$export_data['attachments'] = array();
+
+		foreach ( $attachment_ids as $att_id ) {
+			$attachment = get_post( $att_id );
+			if ( $attachment && $attachment->post_type === 'attachment' ) {
+				$file_url  = wp_get_attachment_url( $att_id );
+				$file_path = get_attached_file( $att_id );
+
+				$file_size = 0;
+				if ( $file_path && file_exists( $file_path ) ) {
+					$file_size = filesize( $file_path );
+				}
+
+				$export_data['attachments'][ $att_id ] = array(
+					'id'             => $att_id,
+					'post_title'     => $attachment->post_title,
+					'post_content'   => $attachment->post_content,
+					'post_excerpt'   => $attachment->post_excerpt,
+					'post_mime_type' => $attachment->post_mime_type,
+					'file_url'       => $file_url,
+					'file_path'      => $file_path,
+					'guid'           => $attachment->guid,
+					'file_size'      => $file_size,
+					'meta'           => get_post_meta( $att_id ),
+				);
+			}
+		}
+	}
+
+	// Output as downloadable JSON.
+	$filename = sprintf(
+		'jalsah-application-%d-%s.json',
+		$application_id,
+		date( 'Y-m-d-His' )
+	);
+
+	header( 'Content-Type: application/json; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+	header( 'Pragma: no-cache' );
+	header( 'Expires: 0' );
+
+	echo wp_json_encode( $export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+	exit;
+}
+add_action( 'admin_post_snks_export_single_application', 'snks_export_single_application' );
+
+/**
  * Import AI settings
  */
 function snks_import_ai_settings() {

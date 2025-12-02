@@ -266,6 +266,10 @@ function snks_enhanced_ai_applications_page() {
 										'admin.php?page=jalsah-ai-applications&action=create_user&application_id=' . $app->id .
 										'&_wpnonce=' . wp_create_nonce( 'application_create_user_' . $app->id )
 									);
+									$export_app_url = admin_url(
+										'admin-post.php?action=snks_export_single_application&application_id=' . $app->id .
+										'&_wpnonce=' . wp_create_nonce( 'snks_export_single_application_' . $app->id )
+									);
 									?>
 									<a href="<?php echo esc_url( $create_user_url ); ?>" 
 									   class="button button-small">
@@ -275,7 +279,10 @@ function snks_enhanced_ai_applications_page() {
 									   class="button button-small">View</a>
 									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $app->id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $app->id ) ); ?>" 
 									   class="button button-small">Edit Profile</a>
-
+									<a href="<?php echo esc_url( $export_app_url ); ?>"
+									   class="button button-small">
+										Export
+									</a>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -828,11 +835,18 @@ function snks_display_application_details( $application_id ) {
 				'admin.php?page=jalsah-ai-applications&action=create_user&application_id=' . $application_id .
 				'&_wpnonce=' . wp_create_nonce( 'application_create_user_' . $application_id )
 			);
+			$export_app_url = admin_url(
+				'admin-post.php?action=snks_export_single_application&application_id=' . $application_id .
+				'&_wpnonce=' . wp_create_nonce( 'snks_export_single_application_' . $application_id )
+			);
 			?>
 			<a href="<?php echo esc_url( $create_user_url ); ?>" class="button">
 				<?php echo $application->user_id ? 'Link Existing User' : 'Create User'; ?>
 			</a>
 			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications&action=edit&application_id=' . $application_id . '&_wpnonce=' . wp_create_nonce( 'application_edit_' . $application_id ) ); ?>" class="button">Edit Profile</a>
+			<a href="<?php echo esc_url( $export_app_url ); ?>" class="button">
+				Export Application
+			</a>
 			<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-applications' ); ?>" class="button">Back to Applications</a>
 		</div>
 	</div>
