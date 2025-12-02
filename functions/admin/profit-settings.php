@@ -301,17 +301,27 @@ function snks_handle_profit_settings_submission() {
 		$subsequent_percentages = $_POST['subsequent_percentage'] ?? array();
 		$is_active = $_POST['is_active'] ?? array();
 		
-		// Get global settings to use as defaults
+		// Get global settings to use as defaults (use null if not set, consistent with display function)
 		$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
-		$default_first = isset( $global_settings['default_first_percentage'] ) ? floatval( $global_settings['default_first_percentage'] ) : 0;
-		$default_subsequent = isset( $global_settings['default_subsequent_percentage'] ) ? floatval( $global_settings['default_subsequent_percentage'] ) : 0;
+		$default_first = isset( $global_settings['default_first_percentage'] ) ? floatval( $global_settings['default_first_percentage'] ) : null;
+		$default_subsequent = isset( $global_settings['default_subsequent_percentage'] ) ? floatval( $global_settings['default_subsequent_percentage'] ) : null;
 		
 		$updated_count = 0;
 		
 		foreach ( $therapist_ids as $therapist_id ) {
+			// Handle first_session_percentage: if form field is empty, use global default or null
+			$first_value = isset( $first_percentages[ $therapist_id ] ) && $first_percentages[ $therapist_id ] !== '' 
+				? floatval( $first_percentages[ $therapist_id ] ) 
+				: ( $default_first !== null ? $default_first : null );
+			
+			// Handle subsequent_session_percentage: if form field is empty, use global default or null
+			$subsequent_value = isset( $subsequent_percentages[ $therapist_id ] ) && $subsequent_percentages[ $therapist_id ] !== '' 
+				? floatval( $subsequent_percentages[ $therapist_id ] ) 
+				: ( $default_subsequent !== null ? $default_subsequent : null );
+			
 			$settings = array(
-				'first_session_percentage' => floatval( $first_percentages[ $therapist_id ] ?? $default_first ),
-				'subsequent_session_percentage' => floatval( $subsequent_percentages[ $therapist_id ] ?? $default_subsequent ),
+				'first_session_percentage' => $first_value,
+				'subsequent_session_percentage' => $subsequent_value,
 				'is_active' => intval( $is_active[ $therapist_id ] ?? 1 )
 			);
 			

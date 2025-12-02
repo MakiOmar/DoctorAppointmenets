@@ -657,29 +657,71 @@ function snks_update_therapist_profit_settings( $therapist_id, $settings ) {
 	
 	if ( $exists ) {
 		// Update existing settings
-		return $wpdb->update(
-			$table_name,
-			array(
-				'first_session_percentage' => $settings['first_session_percentage'],
-				'subsequent_session_percentage' => $settings['subsequent_session_percentage'],
-				'is_active' => $settings['is_active'] ?? 1,
-				'updated_at' => current_time( 'mysql' )
-			),
-			array( 'therapist_id' => $therapist_id ),
-			array( '%f', '%f', '%d', '%s' ),
-			array( '%d' )
-		);
+		// Handle NULL values properly - build query parts separately
+		$set_clauses = array();
+		$prepare_values = array();
+		$prepare_formats = array();
+		
+		// Handle first_session_percentage
+		if ( $settings['first_session_percentage'] !== null ) {
+			$set_clauses[] = 'first_session_percentage = %f';
+			$prepare_values[] = $settings['first_session_percentage'];
+			$prepare_formats[] = '%f';
+		} else {
+			$set_clauses[] = 'first_session_percentage = NULL';
+		}
+		
+		// Handle subsequent_session_percentage
+		if ( $settings['subsequent_session_percentage'] !== null ) {
+			$set_clauses[] = 'subsequent_session_percentage = %f';
+			$prepare_values[] = $settings['subsequent_session_percentage'];
+			$prepare_formats[] = '%f';
+		} else {
+			$set_clauses[] = 'subsequent_session_percentage = NULL';
+		}
+		
+		// Add is_active and updated_at (always have values)
+		$set_clauses[] = 'is_active = %d';
+		$prepare_values[] = $settings['is_active'] ?? 1;
+		$prepare_formats[] = '%d';
+		$set_clauses[] = 'updated_at = %s';
+		$prepare_values[] = current_time( 'mysql' );
+		$prepare_formats[] = '%s';
+		
+		// Build the query - replace placeholders manually for NULL fields, use prepare for others
+		$sql = "UPDATE $table_name SET " . implode( ', ', $set_clauses ) . " WHERE therapist_id = %d";
+		$prepare_values[] = $therapist_id;
+		$prepare_formats[] = '%d';
+		
+		// Use prepare only for the values that need it
+		if ( ! empty( $prepare_values ) ) {
+			return $wpdb->query( $wpdb->prepare( $sql, $prepare_values ) );
+		} else {
+			// Fallback if somehow no values (shouldn't happen)
+			return $wpdb->query( $sql );
+		}
 	} else {
-		// Insert new settings
+		// Insert new settings - only insert if we have non-null values or is_active
+		$insert_data = array(
+			'therapist_id' => $therapist_id,
+			'is_active' => $settings['is_active'] ?? 1
+		);
+		$insert_format = array( '%d', '%d' );
+		
+		if ( $settings['first_session_percentage'] !== null ) {
+			$insert_data['first_session_percentage'] = $settings['first_session_percentage'];
+			$insert_format[] = '%f';
+		}
+		
+		if ( $settings['subsequent_session_percentage'] !== null ) {
+			$insert_data['subsequent_session_percentage'] = $settings['subsequent_session_percentage'];
+			$insert_format[] = '%f';
+		}
+		
 		return $wpdb->insert(
 			$table_name,
-			array(
-				'therapist_id' => $therapist_id,
-				'first_session_percentage' => $settings['first_session_percentage'],
-				'subsequent_session_percentage' => $settings['subsequent_session_percentage'],
-				'is_active' => $settings['is_active'] ?? 1
-			),
-			array( '%d', '%f', '%f', '%d' )
+			$insert_data,
+			$insert_format
 		);
 	}
 }
