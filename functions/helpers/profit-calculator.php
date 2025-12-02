@@ -22,36 +22,56 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 	
 	$table_name = $wpdb->prefix . 'snks_ai_profit_settings';
 	
-	$settings = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM $table_name WHERE therapist_id = %d AND is_active = 1",
+	// First, check if individual settings exist (regardless of is_active)
+	$individual_settings = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM $table_name WHERE therapist_id = %d",
 		$therapist_id
 	), ARRAY_A );
 	
-	if ( ! $settings ) {
-		// Return default settings if not found
-		$defaults = array(
-			'first_session_percentage' => 70.00,
-			'subsequent_session_percentage' => 75.00,
+	// If individual settings exist and are active, use them
+	if ( $individual_settings && ! empty( $individual_settings['is_active'] ) ) {
+		error_log( sprintf(
+			'AI-PROFIT DEBUG: Using ACTIVE INDIVIDUAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f, is_active=%d',
+			$therapist_id,
+			$individual_settings['first_session_percentage'],
+			$individual_settings['subsequent_session_percentage'],
+			$individual_settings['is_active']
+		) );
+		return $individual_settings;
+	}
+	
+	// If individual settings exist but are inactive, or if they don't exist, use global settings
+	$global_settings = get_option( 'snks_ai_profit_global_settings', array() );
+	
+	if ( ! empty( $global_settings ) && isset( $global_settings['default_first_percentage'] ) && isset( $global_settings['default_subsequent_percentage'] ) ) {
+		$settings = array(
+			'first_session_percentage' => floatval( $global_settings['default_first_percentage'] ),
+			'subsequent_session_percentage' => floatval( $global_settings['default_subsequent_percentage'] ),
 			'is_active' => 1
 		);
 		error_log( sprintf(
-			'AI-PROFIT DEBUG: Using DEFAULT profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f',
+			'AI-PROFIT DEBUG: Using GLOBAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (individual settings %s)',
 			$therapist_id,
-			$defaults['first_session_percentage'],
-			$defaults['subsequent_session_percentage']
+			$settings['first_session_percentage'],
+			$settings['subsequent_session_percentage'],
+			$individual_settings ? 'exist but are inactive' : 'do not exist'
 		) );
-		return $defaults;
+		return $settings;
 	}
 	
+	// Fallback to hardcoded defaults only if global settings are not configured
+	$defaults = array(
+		'first_session_percentage' => 70.00,
+		'subsequent_session_percentage' => 75.00,
+		'is_active' => 1
+	);
 	error_log( sprintf(
-		'AI-PROFIT DEBUG: Using CUSTOM profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f, is_active=%d',
+		'AI-PROFIT DEBUG: Using FALLBACK DEFAULT profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (global settings not configured)',
 		$therapist_id,
-		$settings['first_session_percentage'],
-		$settings['subsequent_session_percentage'],
-		$settings['is_active']
+		$defaults['first_session_percentage'],
+		$defaults['subsequent_session_percentage']
 	) );
-	
-	return $settings;
+	return $defaults;
 }
 
 /**

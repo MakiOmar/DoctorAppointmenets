@@ -136,10 +136,17 @@ function snks_enhanced_ai_applications_page() {
 		$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
 	}
 	
-	$applications = $wpdb->get_results( $wpdb->prepare( 
-		"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC",
-		$where_values
-	) );
+	// Only use prepare() if we have placeholders, otherwise use direct query
+	if ( !empty( $where_values ) ) {
+		$applications = $wpdb->get_results( $wpdb->prepare( 
+			"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC",
+			$where_values
+		) );
+	} else {
+		$applications = $wpdb->get_results( 
+			"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC"
+		);
+	}
 	
 	// Count by status
 	$pending_count = $wpdb->get_var( "SELECT COUNT(*) FROM $table_name WHERE status = 'pending'" );
