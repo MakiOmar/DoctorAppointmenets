@@ -32,8 +32,24 @@
             </div>
           </div>
 
-          <p class="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-            {{ therapist.bio || $t('therapists.bioDefault') }}
+          <div v-if="therapist.bio" class="space-y-1">
+            <p
+              class="text-gray-600 text-sm leading-relaxed"
+              :class="!isBioExpanded ? 'line-clamp-2' : ''"
+            >
+              {{ therapist.bio }}
+            </p>
+            <button
+              v-if="therapist.bio && therapist.bio.length > 120"
+              type="button"
+              class="text-xs font-medium text-primary-600 hover:text-primary-700 focus:outline-none"
+              @click.stop="isBioExpanded = !isBioExpanded"
+            >
+              {{ isBioExpanded ? 'عرض أقل' : 'اقرأ المزيد' }}
+            </button>
+          </div>
+          <p v-else class="text-gray-600 text-sm leading-relaxed">
+            {{ $t('therapists.bioDefault') }}
           </p>
 
           <!-- Specializations/Diagnoses -->
@@ -215,6 +231,7 @@ export default {
     const { t, locale } = useI18n()
     
     const showDetails = ref(false)
+    const isBioExpanded = ref(false)
     const loading = ref(false)
     const error = ref(null)
     const details = ref(null)

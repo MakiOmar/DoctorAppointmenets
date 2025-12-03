@@ -57,7 +57,20 @@
 
           <!-- Bio Section (only show on therapists page, not diagnosis results) -->
           <div v-if="!diagnosisId && therapist.bio" class="mt-4">
-            <p class="text-sm text-gray-700 line-clamp-3">{{ therapist.bio }}</p>
+            <p
+              class="text-sm text-gray-700"
+              :class="!isBioExpanded ? 'line-clamp-3' : ''"
+            >
+              {{ therapist.bio }}
+            </p>
+            <button
+              v-if="therapist.bio && therapist.bio.length > 120"
+              type="button"
+              class="mt-2 text-sm font-medium text-primary-600 hover:text-primary-700 focus:outline-none"
+              @click.stop="isBioExpanded = !isBioExpanded"
+            >
+              {{ isBioExpanded ? 'عرض أقل' : 'اقرأ المزيد' }}
+            </button>
           </div>
 
           <!-- Soonest Available Appointment - Always Visible -->
@@ -323,6 +336,7 @@ export default {
     const router = useRouter()
     
     const showDetails = ref(false)
+    const isBioExpanded = ref(false)
     
     // Computed property to get display_order for current diagnosis
     const currentDiagnosisDisplayOrder = computed(() => {
