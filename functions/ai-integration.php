@@ -8051,12 +8051,53 @@ function snks_handle_ai_order_completion( $order_id ) {
 	$session_id = $order->get_meta( 'ai_session_id' );
 
 	if ( ! empty( $session_id ) ) {
+		// Check if profit transaction already exists to prevent duplicate processing
+		global $wpdb;
+		$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+			 WHERE ai_session_id = %d AND transaction_type = 'add'",
+			$session_id
+		) );
+		
+		// Also check by order_id as secondary safeguard
+		if ( ! $existing_transaction ) {
+			$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+				 WHERE ai_order_id = %d AND transaction_type = 'add'",
+				$order_id
+			) );
+		}
+		
+		// Also check if ai_session_type is already set in sessions_actions (used by snks_execute_ai_profit_transfer)
+		if ( ! $existing_transaction ) {
+			$session_action = $wpdb->get_row( $wpdb->prepare(
+				"SELECT ai_session_type FROM {$wpdb->prefix}snks_sessions_actions 
+				 WHERE action_session_id = %s AND case_id = %d",
+				$session_id,
+				$order_id
+			) );
+			
+			if ( $session_action && ! empty( $session_action->ai_session_type ) ) {
+				$existing_transaction = 1; // Profit already processed
+			}
+		}
+		
+		if ( $existing_transaction ) {
+			error_log( "AI Profit Transfer: Skipping duplicate processing for Session ID {$session_id}, Order ID {$order_id} - transaction already exists" );
+			return; // Skip processing if already done
+		}
+		
 		// Trigger profit calculation
 		$result = snks_execute_ai_profit_transfer( $session_id );
 
 		if ( $result['success'] ) {
 			// Log successful profit transfer
 			error_log( "AI Profit Transfer: Session ID {$session_id}, Transaction ID {$result['transaction_id']}" );
+		} else {
+			// Log failure (but don't spam if it's just a duplicate check)
+			if ( strpos( $result['message'], 'already' ) === false ) {
+				error_log( "AI Profit Transfer Failed: Session ID {$session_id}, Reason: {$result['message']}" );
+			}
 		}
 	}
 }
@@ -8075,6 +8116,16 @@ function snks_process_ai_order_completion( $order_id ) {
 	}
 	
 	error_log( "=== EARNINGS DEBUG: Order found === Order ID: {$order_id}, Order Status: " . $order->get_status() );
+	
+	// Check if order has already been processed to prevent duplicate processing
+	$processed_sessions = $order->get_meta( 'ai_processed_sessions' );
+	if ( ! empty( $processed_sessions ) ) {
+		$processed_array = json_decode( $processed_sessions, true );
+		if ( is_array( $processed_array ) && ! empty( $processed_array ) ) {
+			error_log( "=== EARNINGS DEBUG: Order {$order_id} already processed, skipping duplicate processing ===" );
+			return true; // Already processed, return success
+		}
+	}
 	
 	// Get AI sessions data from order meta (with fallbacks)
 	$ai_sessions_original_meta = $order->get_meta( 'ai_sessions' );
