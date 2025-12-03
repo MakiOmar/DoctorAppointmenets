@@ -2265,7 +2265,8 @@ function snks_enhanced_ai_analytics_page() {
 	) ) );
 	
 	$total_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1" );
-	$completed_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1 AND status = 'completed'" );
+	// Include both 'completed' and 'processing' statuses for AI orders
+	$completed_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1 AND status IN ('completed', 'processing')" );
 	
 	// Get retention data
 	$retention_data = $wpdb->get_results( "
@@ -2273,7 +2274,7 @@ function snks_enhanced_ai_analytics_page() {
 		FROM {$wpdb->prefix}snks_provider_timetable t
 		JOIN {$wpdb->prefix}wc_orders o ON t.order_id = o.id
 		JOIN {$wpdb->users} u ON t.user_id = u.ID
-		WHERE o.from_jalsah_ai = 1 AND o.status = 'completed'
+		WHERE o.from_jalsah_ai = 1 AND o.status IN ('completed', 'processing')
 		GROUP BY t.user_id
 		HAVING repeat_patients > 1
 		ORDER BY repeat_patients DESC
