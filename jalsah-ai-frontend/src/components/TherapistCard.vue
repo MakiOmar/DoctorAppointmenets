@@ -57,14 +57,11 @@
 
           <!-- Bio Section (only show on therapists page, not diagnosis results) -->
           <div v-if="!diagnosisId && therapist.bio" class="mt-4">
-            <p
-              class="text-sm text-gray-700"
-              :class="!isBioExpanded ? 'line-clamp-3' : ''"
-            >
-              {{ therapist.bio }}
+            <p class="text-sm text-gray-700">
+              {{ isBioExpanded ? therapist.bio : (therapist.bio.length > 160 ? therapist.bio.slice(0, 160) + '...' : therapist.bio) }}
             </p>
             <button
-              v-if="therapist.bio && therapist.bio.length > 120"
+              v-if="therapist.bio && therapist.bio.length > 160"
               type="button"
               class="mt-2 text-sm font-medium text-primary-600 hover:text-primary-700 focus:outline-none"
               @click.stop="isBioExpanded = !isBioExpanded"
@@ -1311,6 +1308,7 @@ export default {
     })
 
     return {
+      isBioExpanded,
       getAverageRating,
       suitabilityMessage,
       currentDiagnosisDisplayOrder,

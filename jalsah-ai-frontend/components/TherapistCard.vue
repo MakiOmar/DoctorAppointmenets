@@ -33,14 +33,11 @@
           </div>
 
           <div v-if="therapist.bio" class="space-y-1">
-            <p
-              class="text-gray-600 text-sm leading-relaxed"
-              :class="!isBioExpanded ? 'line-clamp-2' : ''"
-            >
-              {{ therapist.bio }}
+            <p class="text-gray-600 text-sm leading-relaxed">
+              {{ isBioExpanded ? therapist.bio : (therapist.bio.length > 160 ? therapist.bio.slice(0, 160) + '...' : therapist.bio) }}
             </p>
             <button
-              v-if="therapist.bio && therapist.bio.length > 120"
+              v-if="therapist.bio && therapist.bio.length > 160"
               type="button"
               class="text-xs font-medium text-primary-600 hover:text-primary-700 focus:outline-none"
               @click.stop="isBioExpanded = !isBioExpanded"
@@ -380,6 +377,7 @@ export default {
     }
 
     return {
+      isBioExpanded,
       getAverageRating,
       suitabilityMessage,
       formatEarliestSlot,
