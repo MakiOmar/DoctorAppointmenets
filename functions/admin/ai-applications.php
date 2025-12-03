@@ -37,8 +37,10 @@ function snks_enhanced_ai_applications_page() {
 							case 'approve':
 								// Allow approving both pending and rejected applications
 								if ( $application->status === 'pending' || $application->status === 'rejected' ) {
-									snks_approve_therapist_application( $app_id );
-									$processed++;
+									$result = snks_approve_therapist_application( $app_id );
+									if ( ! is_wp_error( $result ) ) {
+										$processed++;
+									}
 								}
 								break;
 							case 'reject':
@@ -72,8 +74,12 @@ function snks_enhanced_ai_applications_page() {
 					case 'approve':
 						// Allow approving both pending and rejected applications
 						if ( $application->status === 'pending' || $application->status === 'rejected' ) {
-							snks_approve_therapist_application( $app_id );
-							echo '<div class="notice notice-success"><p>Application approved successfully!</p></div>';
+							$result = snks_approve_therapist_application( $app_id );
+							if ( is_wp_error( $result ) ) {
+								echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
+							} else {
+								echo '<div class="notice notice-success"><p>Application approved successfully!</p></div>';
+							}
 						}
 						break;
 					case 'reject':
@@ -328,14 +334,70 @@ function snks_approve_therapist_application( $application_id ) {
 	if ( $existing_user ) {
 		$user_id = $existing_user->ID;
 	} else {
-		// Create new user with minimal data
-		$password = wp_generate_password( 8, false );
-		if ( username_exists( $application->phone ) ) {
-			return false;
+		// Before creating a new user, enforce uniqueness across username, email, WhatsApp and billing phone
+		$phone    = ! empty( $application->phone ) ? sanitize_text_field( $application->phone ) : '';
+		$email    = ! empty( $application->email ) ? sanitize_email( $application->email ) : '';
+		$whatsapp = ! empty( $application->whatsapp ) ? sanitize_text_field( $application->whatsapp ) : '';
+
+		// Username (we use phone as username) - direct username check is enough here
+		if ( $phone && username_exists( $phone ) ) {
+			return new WP_Error( 'snks_username_exists', __( 'Cannot approve application: a user with this phone (username) already exists.', 'anony-shrinks' ) );
 		}
+
+		// Email
+		if ( $email && email_exists( $email ) ) {
+			return new WP_Error( 'snks_email_exists', __( 'Cannot approve application: a user with this email already exists.', 'anony-shrinks' ) );
+		}
+
+		// WhatsApp (check whatsapp, billing_whatsapp and billing_phone meta) with normalization
+		if ( $whatsapp ) {
+			$normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp );
+
+			$potential_whatsapp_users = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+					 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
+					 AND meta_value LIKE %s",
+					'%' . $wpdb->esc_like( $normalized_whatsapp ) . '%'
+				)
+			);
+
+			if ( ! empty( $potential_whatsapp_users ) ) {
+				foreach ( $potential_whatsapp_users as $row ) {
+					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
+						return new WP_Error( 'snks_whatsapp_exists', __( 'Cannot approve application: a user with this WhatsApp number already exists.', 'anony-shrinks' ) );
+					}
+				}
+			}
+		}
+
+		// Billing phone (normalize to handle presence/absence of country code)
+		if ( $phone ) {
+			$normalized_phone = snks_normalize_phone_for_comparison( $phone );
+
+			$potential_billing_phone_users = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+					 WHERE meta_key = 'billing_phone'
+					 AND meta_value LIKE %s",
+					'%' . $wpdb->esc_like( $normalized_phone ) . '%'
+				)
+			);
+
+			if ( ! empty( $potential_billing_phone_users ) ) {
+				foreach ( $potential_billing_phone_users as $row ) {
+					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
+						return new WP_Error( 'snks_billing_phone_exists', __( 'Cannot approve application: a user with this billing phone already exists.', 'anony-shrinks' ) );
+					}
+				}
+			}
+		}
+
+		// Create new user with minimal data if all checks pass
+		$password = wp_generate_password( 8, false );
 		$user_id = wp_create_user( $application->phone, $password, $application->email );
 		if ( is_wp_error( $user_id ) ) {
-			return false;
+			return $user_id;
 		}
 	}
 	
@@ -390,12 +452,68 @@ function snks_create_or_link_user_from_application( $application_id ) {
 		if ( empty( $application->phone ) ) {
 			return new WP_Error( 'snks_missing_phone', 'Application phone is missing, cannot create user.' );
 		}
-		
-		// Use phone as username; avoid duplicates
-		if ( username_exists( $application->phone ) ) {
-			return new WP_Error( 'snks_username_exists', 'A user with this phone already exists. Please link manually.' );
+		// Normalize values for checks
+		$phone    = sanitize_text_field( $application->phone );
+		$email    = sanitize_email( $application->email );
+		$whatsapp = ! empty( $application->whatsapp ) ? sanitize_text_field( $application->whatsapp ) : '';
+
+		// Enforce uniqueness across username, email, WhatsApp and billing phone
+
+		// Username (phone as username) - direct username check is enough here
+		if ( $phone && username_exists( $phone ) ) {
+			return new WP_Error( 'snks_username_exists', __( 'A user with this phone (username) already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
 		}
-		
+
+		// Email
+		if ( $email && email_exists( $email ) ) {
+			return new WP_Error( 'snks_email_exists', __( 'A user with this email already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
+		}
+
+		// WhatsApp (check whatsapp, billing_whatsapp and billing_phone) with normalization
+		if ( $whatsapp ) {
+			$normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp );
+
+			$potential_whatsapp_users = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+					 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
+					 AND meta_value LIKE %s",
+					'%' . $wpdb->esc_like( $normalized_whatsapp ) . '%'
+				)
+			);
+
+			if ( ! empty( $potential_whatsapp_users ) ) {
+				foreach ( $potential_whatsapp_users as $row ) {
+					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
+						return new WP_Error( 'snks_whatsapp_exists', __( 'A user with this WhatsApp number already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
+					}
+				}
+			}
+		}
+
+		// Billing phone (normalize to handle presence/absence of country code)
+		if ( $phone ) {
+			$normalized_phone = snks_normalize_phone_for_comparison( $phone );
+
+			$potential_billing_phone_users = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+					 WHERE meta_key = 'billing_phone'
+					 AND meta_value LIKE %s",
+					'%' . $wpdb->esc_like( $normalized_phone ) . '%'
+				)
+			);
+
+			if ( ! empty( $potential_billing_phone_users ) ) {
+				foreach ( $potential_billing_phone_users as $row ) {
+					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
+						return new WP_Error( 'snks_billing_phone_exists', __( 'A user with this billing phone already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
+					}
+				}
+			}
+		}
+
+		// All checks passed, safe to create new user
 		$password = wp_generate_password( 8, false );
 		$user_id  = wp_create_user( $application->phone, $password, $application->email );
 		if ( is_wp_error( $user_id ) ) {

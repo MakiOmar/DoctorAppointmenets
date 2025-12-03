@@ -2483,22 +2483,33 @@ class SNKS_AI_Integration {
 			$existing_user   = get_user_by( 'email', sanitize_email( $data['email'] ) );
 			$user_identifier = sanitize_email( $data['email'] );
 		} else {
-			// If no email, check by WhatsApp number in user meta - optimized query
+			// If no email, check by WhatsApp number in user meta with normalization (handles presence/absence of country code)
 			global $wpdb;
-			$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
-			$user_id         = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT user_id FROM {$wpdb->usermeta} 
-				WHERE meta_key = 'billing_whatsapp' 
-				AND meta_value = %s 
-				LIMIT 1",
-					$whatsapp_number
-				)
-			);
+			$whatsapp_number        = sanitize_text_field( $data['whatsapp'] );
+			$normalized_whatsapp_in = snks_normalize_phone_for_comparison( $whatsapp_number );
 
-			if ( $user_id ) {
-				$existing_user = get_user_by( 'ID', $user_id );
+			$potential_users = array();
+
+			if ( $normalized_whatsapp_in ) {
+				$potential_users = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+					 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
+					 AND meta_value LIKE %s",
+						'%' . $wpdb->esc_like( $normalized_whatsapp_in ) . '%'
+					)
+				);
 			}
+
+			if ( ! empty( $potential_users ) ) {
+				foreach ( $potential_users as $row ) {
+					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp_in ) {
+						$existing_user = get_user_by( 'ID', $row->user_id );
+						break;
+					}
+				}
+			}
+
 			$user_identifier = $whatsapp_number;
 		}
 
@@ -2522,6 +2533,64 @@ class SNKS_AI_Integration {
 				// Create email from WhatsApp number: +201234567890@jalsah.app
 				$clean_whatsapp = preg_replace( '/[^0-9+]/', '', $data['whatsapp'] );
 				$email          = $clean_whatsapp . '@jalsah.app';
+			}
+
+			// Enforce uniqueness across username, email, WhatsApp and billing phone before creating a new user
+			global $wpdb;
+
+			// Username
+			if ( $username && username_exists( $username ) ) {
+				$this->send_error( 'An account with this username already exists. Please login instead.', 400 );
+			}
+
+			// Email
+			if ( $email && email_exists( $email ) ) {
+				$this->send_error( 'An account with this email already exists. Please login instead.', 400 );
+			}
+
+			// WhatsApp (check both whatsapp and billing_whatsapp) with normalization (handles country code)
+			$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
+			if ( $whatsapp_number ) {
+				$normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp_number );
+
+				$potential_whatsapp_users = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+						 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
+						 AND meta_value LIKE %s",
+						'%' . $wpdb->esc_like( $normalized_whatsapp ) . '%'
+					)
+				);
+
+				if ( ! empty( $potential_whatsapp_users ) ) {
+					foreach ( $potential_whatsapp_users as $row ) {
+						if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
+							$this->send_error( 'An account with this WhatsApp number already exists. Please login instead.', 400 );
+						}
+					}
+				}
+			}
+
+			// Billing phone (optional, check normalized)
+			if ( ! empty( $data['phone'] ) ) {
+				$billing_phone     = sanitize_text_field( $data['phone'] );
+				$normalized_phone  = snks_normalize_phone_for_comparison( $billing_phone );
+				$potential_phone_users = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
+						 WHERE meta_key = 'billing_phone'
+						 AND meta_value LIKE %s",
+						'%' . $wpdb->esc_like( $normalized_phone ) . '%'
+					)
+				);
+
+				if ( ! empty( $potential_phone_users ) ) {
+					foreach ( $potential_phone_users as $row ) {
+						if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
+							$this->send_error( 'An account with this phone number already exists. Please login instead.', 400 );
+						}
+					}
+				}
 			}
 
 			$user_id = wp_create_user( $username, $data['password'], $email );

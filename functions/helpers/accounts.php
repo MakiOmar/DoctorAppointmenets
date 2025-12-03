@@ -588,3 +588,22 @@ add_filter(
 	999,
 	2
 );
+
+/**
+ * Normalize phone/WhatsApp numbers for duplicate checks.
+ *
+ * - Removes all non-digit characters.
+ * - Compares using the last 9 digits to handle presence/absence of country code.
+ *
+ * @param string $number Raw phone or WhatsApp number.
+ * @return string Normalized string for comparison.
+ */
+function snks_normalize_phone_for_comparison( $number ) {
+	$digits = preg_replace( '/\D+/', '', (string) $number );
+
+	if ( strlen( $digits ) >= 9 ) {
+		return substr( $digits, -9 );
+	}
+
+	return $digits;
+}
