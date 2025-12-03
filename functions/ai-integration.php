@@ -8148,6 +8148,21 @@ function snks_process_ai_order_completion( $order_id ) {
 				$slot_id
 			) );
 			
+			// Trigger appointment creation hook to send WhatsApp notifications
+			if ( $timetable_session ) {
+				$appointment_data = array(
+					'is_ai_session' => true,
+					'order_id' => $order_id,
+					'therapist_id' => $timetable_session->user_id,
+					'patient_id' => $customer_id,
+					'slot_id' => $slot_id,
+					'session_date' => $timetable_session->date_time,
+					'session_status' => 'open',
+					'settings' => $timetable_session->settings
+				);
+				do_action( 'snks_appointment_created', $slot_id, $appointment_data );
+			}
+			
 			error_log( "=== EARNINGS DEBUG: Retrieved timetable session === Slot ID: {$slot_id}, Session exists: " . ( $timetable_session ? 'yes' : 'no' ) );
 			if ( $timetable_session ) {
 				error_log( "=== EARNINGS DEBUG: Timetable session data === Order ID: {$timetable_session->order_id}, Settings: {$timetable_session->settings}, User ID: {$timetable_session->user_id}, Client ID: {$timetable_session->client_id}" );
