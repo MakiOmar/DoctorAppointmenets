@@ -6284,14 +6284,15 @@ Best regards,
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			// Make the old slot available again by clearing client_id and order_id
+			// Make the old slot available again by clearing client_id, order_id, and settings
+			// Remove any booking-related settings to make it available for new bookings
 			$free_old_slot_result = $wpdb->update(
 				$wpdb->prefix . 'snks_provider_timetable',
 				array(
 					'client_id'      => 0,
 					'order_id'       => 0,
 					'session_status' => 'waiting',
-					'settings'       => 'ai_booking:rescheduled_old_slot',
+					'settings'       => '', // Clear settings to make slot available for booking
 				),
 				array( 'ID' => $appointment_id ),
 				array( '%d', '%d', '%s', '%s' ),
