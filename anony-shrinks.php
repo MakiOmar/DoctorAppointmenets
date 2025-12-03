@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.160
+ * Version: 1.0.161
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -238,6 +238,7 @@ require_once SNKS_DIR . 'functions/admin/profit-settings.php';
 require_once SNKS_DIR . 'functions/admin/therapist-earnings.php';
 require_once SNKS_DIR . 'functions/admin/ai-transaction-processing.php';
 require_once SNKS_DIR . 'functions/admin/ai-settings-export-import.php';
+require_once SNKS_DIR . 'functions/admin/duplicate-users.php';
 require_once SNKS_DIR . 'admin-data-migration.php';
 require_once SNKS_DIR . 'includes/ai-tables-enhanced.php';
 require_once SNKS_DIR . 'functions/ajax/rochtah-ajax.php';
