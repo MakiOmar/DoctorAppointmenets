@@ -433,7 +433,9 @@ add_action(
 						.snks-send-message-btn:disabled,
 						.snks-send-message-btn[disabled] { 
 							pointer-events: none !important; 
-							cursor: not-allowed !important; 
+							cursor: not-allowed !important;
+							opacity: 0.6 !important;
+							background-color: #ccc !important;
 						}
 						.snks-button-waiting {
 							animation: pulse-waiting 2s ease-in-out infinite;
@@ -480,31 +482,53 @@ add_action(
 					function checkSessionEnd() {
 						var currentTime = Math.floor(Date.now() / 1000);
 						
-					if (currentTime >= sessionEndTime) {
-						// Session has ended - enable button
-						$button.prop('disabled', false)
-							.removeAttr('disabled')
-							.removeAttr('style')
-							.removeClass('snks-button-waiting')
-							.attr('title', '');
-						
-						// Enable send message button if it exists
-						if ($sendMessageButton.length) {
-							$sendMessageButton.prop('disabled', false)
+						if (currentTime >= sessionEndTime) {
+							// Session has ended - enable button
+							$button.prop('disabled', false)
 								.removeAttr('disabled')
 								.removeAttr('style')
 								.removeClass('snks-button-waiting')
 								.attr('title', '');
+							
+							// Enable send message button if it exists
+							if ($sendMessageButton.length) {
+								$sendMessageButton.prop('disabled', false)
+									.removeAttr('disabled')
+									.removeAttr('style')
+									.removeClass('snks-button-waiting')
+									.attr('title', '');
+							}
+							return false; // Stop the interval
+						} else {
+							// Session hasn't ended - ensure buttons are disabled
+							$button.prop('disabled', true)
+								.attr('disabled', 'disabled')
+								.addClass('snks-button-waiting')
+								.css({
+									'pointer-events': 'none !important',
+									'cursor': 'not-allowed !important'
+								});
+							
+							// Disable send message button if it exists
+							if ($sendMessageButton.length) {
+								$sendMessageButton.prop('disabled', true)
+									.attr('disabled', 'disabled')
+									.addClass('snks-button-waiting')
+									.css({
+										'pointer-events': 'none !important',
+										'cursor': 'not-allowed !important'
+									});
+							}
+							return true; // Continue the interval
 						}
-						return false; // Stop the interval
-					}
-						
-						return true; // Continue the interval
 					}
 					
-					// Initial check
-					if (checkSessionEnd()) {
-						// Check every 10 seconds
+					// Initial check - ensure buttons are in correct state on load
+					var initialCurrentTime = Math.floor(Date.now() / 1000);
+					var shouldContinue = checkSessionEnd();
+					
+					// If session hasn't ended, check every 10 seconds
+					if (shouldContinue && initialCurrentTime < sessionEndTime) {
 						var intervalId = setInterval(function() {
 							if (!checkSessionEnd()) {
 								clearInterval(intervalId);
@@ -514,12 +538,20 @@ add_action(
 				});
 			}
 			
-			// Initialize checks on page load
-			$(document).ready(function() {
-				debugLog('🚀 Initializing session completion checks on page load...');
+			// Initialize checks on page load and immediately
+			function initializeSessionButtons() {
+				debugLog('🚀 Initializing session completion checks...');
 				applyDisabledButtonStyles();
 				initSessionCompletionCheck();
-			});
+			}
+			
+			// Run immediately (in case DOM is already ready)
+			if (document.readyState === 'loading') {
+				$(document).ready(initializeSessionButtons);
+			} else {
+				// DOM is already ready, run immediately
+				initializeSessionButtons();
+			}
 			
 			// Function to attach completion handler
 			function attachCompletionHandlerToButtons() {
@@ -809,6 +841,13 @@ add_action(
 				
 				// Handle send message button clicks
 				$(document).on('click', '.snks-send-message-btn', function(e) {
+					// Prevent action if button is disabled
+					if ($(this).prop('disabled') || $(this).attr('disabled')) {
+						e.preventDefault();
+						e.stopPropagation();
+						return false;
+					}
+					
 					e.preventDefault();
 					var sessionId = $(this).data('session-id');
 					var clientId = $(this).data('client-id');
