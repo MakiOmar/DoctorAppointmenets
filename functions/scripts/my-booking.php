@@ -268,9 +268,11 @@ add_action(
 						var dateTime = parent.data('datetime');
 						var period = parent.data('period') || 45; // Default 45 minutes if not specified
 						
-						// Calculate session end time by adding period to start time
+						// Calculate countdown to session start time
 						var startDate = new Date(dateTime);
-						var countDownDate = new Date(startDate.getTime() + (period * 60 * 1000)).getTime();
+						var countDownDate = startDate.getTime();
+						// Calculate session end time for checking if session has passed
+						var sessionEndDate = new Date(startDate.getTime() + (period * 60 * 1000)).getTime();
 						// Update the count down every 1 second.
 						var x = setInterval(
 							function() {
@@ -314,11 +316,14 @@ add_action(
 										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
 									}
 								} else {
-									if ( now - countDownDate > 3600000 ) {
+									// Session has started - check if it's still within session duration
+									if ( now > sessionEndDate ) {
+										// Session has ended
 										$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
 										parent.addClass('snks-disabled');
 										clearInterval(x);
-									} else if( now - countDownDate < 3600000 && now - countDownDate > 0 ) {
+									} else {
+										// Session is active (started but not ended yet)
 										parent.removeClass('snks-disabled');
 										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
 										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
