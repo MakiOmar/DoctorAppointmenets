@@ -600,6 +600,8 @@ add_action(
 									data: doctorActions,
 									success: function(response) {
 										if (response.success) {
+											// Hide the complete session button after successful completion
+											// Remove the form which contains the button
 											form.remove();
 											var successMessage = 'تم تحديد الجلسة كمكتملة بنجاح';
 											if (attendance === 'no') {
@@ -950,23 +952,28 @@ add_action(
 								data: formData,
 								processData: false,
 								contentType: false,
-								success: function(response) {
-										if (response.success) {
-												Swal.fire({
-											title: 'تم بنجاح!',
-											text: 'تم إرسال الرسالة للمريض',
-											icon: 'success',
-											confirmButtonText: 'حسناً'
-										});
-									} else {
-										Swal.fire({
-											title: 'خطأ!',
-											text: response.data || 'حدث خطأ أثناء إرسال الرسالة',
-											icon: 'error',
-											confirmButtonText: 'حسناً'
-										});
-									}
-								},
+							success: function(response) {
+									if (response.success) {
+											// Hide the send message button after successful send
+											var $sendBtn = $('.snks-send-message-btn[data-session-id="' + sessionId + '"]');
+											if ($sendBtn.length) {
+												$sendBtn.hide();
+											}
+											Swal.fire({
+										title: 'تم بنجاح!',
+										text: 'تم إرسال الرسالة للمريض',
+										icon: 'success',
+										confirmButtonText: 'حسناً'
+									});
+								} else {
+									Swal.fire({
+										title: 'خطأ!',
+										text: response.data || 'حدث خطأ أثناء إرسال الرسالة',
+										icon: 'error',
+										confirmButtonText: 'حسناً'
+									});
+								}
+							},
 								error: function() {
 									Swal.fire({
 										title: 'خطأ!',

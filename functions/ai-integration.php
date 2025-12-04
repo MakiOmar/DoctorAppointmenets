@@ -2492,13 +2492,13 @@ class SNKS_AI_Integration {
 
 			if ( $normalized_whatsapp_in ) {
 				$potential_users = $wpdb->get_results(
-					$wpdb->prepare(
+				$wpdb->prepare(
 						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
 					 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
 					 AND meta_value LIKE %s",
 						'%' . $wpdb->esc_like( $normalized_whatsapp_in ) . '%'
-					)
-				);
+				)
+			);
 			}
 
 			if ( ! empty( $potential_users ) ) {

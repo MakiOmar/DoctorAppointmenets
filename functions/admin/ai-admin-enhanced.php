@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Include bilingual migration if available (optional helper)
 if ( file_exists( __DIR__ . '/bilingual-migration.php' ) ) {
-	require_once __DIR__ . '/bilingual-migration.php';
+require_once __DIR__ . '/bilingual-migration.php';
 }
 
 if ( ! function_exists( 'snks_get_ai_chatgpt_default_prompt' ) ) {

@@ -39,7 +39,7 @@ function snks_enhanced_ai_applications_page() {
 								if ( $application->status === 'pending' || $application->status === 'rejected' ) {
 									$result = snks_approve_therapist_application( $app_id );
 									if ( ! is_wp_error( $result ) ) {
-										$processed++;
+									$processed++;
 									}
 								}
 								break;
@@ -78,7 +78,7 @@ function snks_enhanced_ai_applications_page() {
 							if ( is_wp_error( $result ) ) {
 								echo '<div class="notice notice-error"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
 							} else {
-								echo '<div class="notice notice-success"><p>Application approved successfully!</p></div>';
+							echo '<div class="notice notice-success"><p>Application approved successfully!</p></div>';
 							}
 						}
 						break;
@@ -144,10 +144,10 @@ function snks_enhanced_ai_applications_page() {
 	
 	// Only use prepare() if we have placeholders, otherwise use direct query
 	if ( !empty( $where_values ) ) {
-		$applications = $wpdb->get_results( $wpdb->prepare( 
-			"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC",
-			$where_values
-		) );
+	$applications = $wpdb->get_results( $wpdb->prepare( 
+		"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC",
+		$where_values
+	) );
 	} else {
 		$applications = $wpdb->get_results( 
 			"SELECT * FROM $table_name $where_sql ORDER BY created_at DESC"
@@ -388,7 +388,7 @@ function snks_approve_therapist_application( $application_id ) {
 				foreach ( $potential_billing_phone_users as $row ) {
 					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
 						return new WP_Error( 'snks_billing_phone_exists', __( 'Cannot approve application: a user with this billing phone already exists.', 'anony-shrinks' ) );
-					}
+		}
 				}
 			}
 		}

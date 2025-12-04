@@ -1696,8 +1696,8 @@ function snks_doctor_actions( $session ) {
 		
 		// Attendance confirmation button removed - attendance is now automatically set when session is completed
 		
-		// Roshtah Request button (only for AI sessions and only if session has ended or completed)
-		if ( $is_ai_session && ( $is_session_ended || $is_completed ) ) {
+		// Roshtah Request button (only for AI sessions and only if session is already completed)
+		if ( $is_ai_session && $is_completed ) {
 			// Check if Roshtah request already exists for this session
 			$rochtah_table = $wpdb->prefix . 'snks_rochtah_bookings';
 			$rochtah_exists = $wpdb->get_var( $wpdb->prepare(
@@ -1713,19 +1713,30 @@ function snks_doctor_actions( $session ) {
 		
 		// Send Message button (only for AI sessions)
 		if ( $is_ai_session ) {
-			// Prepare button attributes based on session status
-			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
-			$button_class    = 'snks-button snks-send-message-btn';
-			if ( ! $is_session_ended ) {
-				$button_class .= ' snks-button-waiting';
-			}
-			$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
-			$button_style    = 'margin-top: 10px; background-color: #6366f1; border-color: #6366f1;';
-			if ( ! $is_session_ended ) {
-				$button_style .= ' pointer-events: none !important; cursor: not-allowed !important;';
-			}
+			// Check if message was already sent for this session
+			$messages_table = $wpdb->prefix . 'snks_session_messages';
+			$message_exists = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$messages_table} WHERE session_id = %d AND sender_id = %d AND sender_type = 'therapist'",
+				$session->ID,
+				$session->user_id
+			) );
 			
-			$output .= '<button class="' . $button_class . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="' . $button_style . '" ' . $button_disabled . ' title="' . esc_attr( $button_title ) . '">إرسال رسالة للمريض</button>';
+			// Only show button if message hasn't been sent yet
+			if ( ! $message_exists || $message_exists == 0 ) {
+				// Prepare button attributes based on session status
+				$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
+				$button_class    = 'snks-button snks-send-message-btn';
+				if ( ! $is_session_ended ) {
+					$button_class .= ' snks-button-waiting';
+				}
+				$button_title    = $is_session_ended ? '' : 'سيتم تفعيل الزر تلقائياً عند انتهاء الجلسة';
+				$button_style    = 'margin-top: 10px; background-color: #6366f1; border-color: #6366f1;';
+				if ( ! $is_session_ended ) {
+					$button_style .= ' pointer-events: none !important; cursor: not-allowed !important;';
+				}
+				
+				$output .= '<button class="' . $button_class . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="' . $button_style . '" ' . $button_disabled . ' title="' . esc_attr( $button_title ) . '">إرسال رسالة للمريض</button>';
+			}
 		}
 		
 		$output .= '</div>';

@@ -52,8 +52,8 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 				$settings = array(
 					'first_session_percentage' => floatval( $global_settings['default_first_percentage'] ),
 					'subsequent_session_percentage' => floatval( $global_settings['default_subsequent_percentage'] ),
-					'is_active' => 1
-				);
+			'is_active' => 1
+		);
 				error_log( sprintf(
 					'AI-PROFIT DEBUG: Using GLOBAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (individual settings active but missing values)',
 					$therapist_id,
@@ -79,7 +79,7 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 			$settings['subsequent_session_percentage'],
 			$individual_settings ? 'exist but are inactive' : 'do not exist'
 		) );
-		return $settings;
+	return $settings;
 	}
 	
 	// If global settings are not configured, return error/warning (no hardcoded fallback)
@@ -176,8 +176,8 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 		'add', // transaction_type
 		$profit_amount 
 	);
-		
-	if ( $transaction_id ) {		
+	
+	if ( $transaction_id ) {
 		// Calculate admin profit (website share)
 		$session_amount = $session_data['session_amount'] ?? 0;
 		$admin_profit = $session_amount - $profit_amount;
@@ -367,7 +367,7 @@ function snks_create_ai_earnings_from_timetable( $timetable_session ) {
 		);
 	}
 	
-
+	
 	return array(
 		'success' => true,
 		'transaction_id' => $transaction_id,
@@ -667,7 +667,7 @@ function snks_update_therapist_profit_settings( $therapist_id, $settings ) {
 			$set_clauses[] = 'first_session_percentage = %f';
 			$prepare_values[] = $settings['first_session_percentage'];
 			$prepare_formats[] = '%f';
-		} else {
+	} else {
 			$set_clauses[] = 'first_session_percentage = NULL';
 		}
 		
@@ -703,8 +703,8 @@ function snks_update_therapist_profit_settings( $therapist_id, $settings ) {
 	} else {
 		// Insert new settings - only insert if we have non-null values or is_active
 		$insert_data = array(
-			'therapist_id' => $therapist_id,
-			'is_active' => $settings['is_active'] ?? 1
+				'therapist_id' => $therapist_id,
+				'is_active' => $settings['is_active'] ?? 1
 		);
 		$insert_format = array( '%d', '%d' );
 		

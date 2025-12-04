@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.165
+ * Version: 1.0.166
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -223,7 +223,7 @@ require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
 require_once SNKS_DIR . 'functions/admin/ai-applications.php';
 // Include bilingual migration if available (optional helper)
 if ( file_exists( SNKS_DIR . 'functions/admin/bilingual-migration.php' ) ) {
-	require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
+require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
 }
 require_once SNKS_DIR . 'functions/admin/add-arabic-diagnoses.php';
 require_once SNKS_DIR . 'functions/admin/rochtah-doctor-dashboard.php';
