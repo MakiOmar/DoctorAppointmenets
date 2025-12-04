@@ -880,7 +880,7 @@ function snks_booking_item_template( $record ) {
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
 				<?php if ( snks_is_ai_session_booking( $record ) ) : ?>
-				<div class="ai-session-flag" style="position:absolute;top:calc(100%);right:0;display: flex;align-items: center;background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+				<div class="ai-session-flag" style="position:absolute;top:-20px;right:0;display: flex;align-items: center;background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
 					<span style="margin-right: 5px;">🤖</span>
 					<span>AI</span>
 				</div>

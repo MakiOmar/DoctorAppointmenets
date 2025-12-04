@@ -1696,6 +1696,7 @@ add_action(
 			}
 			.snks-booking-item-wrapper{
 				margin-bottom: 10px;
+				margin-top: 20px;
 			}
 			#countdown-timer{
 				text-align: center;
