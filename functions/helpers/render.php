@@ -1674,7 +1674,7 @@ function snks_doctor_actions( $session ) {
 		// Check if session has ended
 		$is_session_ended = $current_timestamp >= $session_end_timestamp;
 		
-		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '">';
+		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" data-is-ai-session="' . ( $is_ai_session ? '1' : '0' ) . '">';
 		
 		// Mark as Completed button - only show if not already completed
 		if ( ! $is_completed ) {

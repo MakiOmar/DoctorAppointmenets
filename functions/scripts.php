@@ -633,6 +633,11 @@ add_action(
 										if (response.success) {
 											// Hide the complete session button after successful completion
 											// Remove the form which contains the button
+											var $doctorActionsWrapper = form.closest('.doctor-actions-wrapper');
+											var isAiSession = $doctorActionsWrapper.data('is-ai-session') === 1 || $doctorActionsWrapper.data('is-ai-session') === '1';
+											var sessionId = $doctorActionsWrapper.data('session-id');
+											var clientId = $doctorActionsWrapper.data('client-id');
+											
 											form.remove();
 											var successMessage = 'تم تحديد الجلسة كمكتملة بنجاح';
 											if (attendance === 'no') {
@@ -643,6 +648,25 @@ add_action(
 												text: successMessage,
 												icon: 'success',
 												confirmButtonText: 'حسناً'
+											}).then(() => {
+												// Show Roshtah button for AI sessions after confirmation
+												if (isAiSession && sessionId && clientId) {
+													// Check if Roshtah button doesn't already exist
+													if ($doctorActionsWrapper.find('.snks-roshtah-request-btn').length === 0) {
+														var rochtahButton = $('<button>', {
+															class: 'snks-button snks-roshtah-request-btn',
+															'data-session-id': sessionId,
+															'data-client-id': clientId,
+															css: {
+																'margin-top': '10px',
+																'background-color': '#28a745',
+																'border-color': '#28a745'
+															},
+															text: 'إرسال لروشتا'
+														});
+														$doctorActionsWrapper.append(rochtahButton);
+													}
+												}
 											});
 										} else {
 											Swal.fire({
