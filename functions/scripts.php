@@ -435,7 +435,6 @@ add_action(
 							pointer-events: none !important; 
 							cursor: not-allowed !important;
 							opacity: 0.6 !important;
-							background-color: #ccc !important;
 						}
 						.snks-button-waiting {
 							animation: pulse-waiting 2s ease-in-out infinite;
