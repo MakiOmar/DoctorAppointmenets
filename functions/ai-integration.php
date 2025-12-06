@@ -4741,6 +4741,21 @@ Best regards,
 			'content' => $message,
 		);
 
+		// If we've reached the maximum questions, force completion without calling API
+		if ( $ai_questions_count >= $max_questions ) {
+			// Force complete diagnosis immediately
+			$response_data = array(
+				'status'        => 'complete',
+				'diagnosis'     => 'general_assessment',
+				'confidence'    => 'low',
+				'reasoning'     => $is_arabic ? 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.' : 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.',
+				'question_count' => $ai_questions_count,
+			);
+			
+			// Skip API call and process the forced response
+			goto process_response;
+		}
+
 		// Call OpenAI API with forced JSON response format
 		$data = array(
 			'model'           => $model,
@@ -4777,6 +4792,8 @@ Best regards,
 
 		// Parse the JSON response
 		$response_data = json_decode( $ai_response, true );
+
+		process_response:
 
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
 			// Fallback for invalid JSON - provide a contextual response based on conversation
