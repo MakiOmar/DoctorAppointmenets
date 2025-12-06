@@ -4781,53 +4781,12 @@ Best regards,
 			}
 		}
 
-		// Detect dialect from conversation history (especially from country response)
-		$detected_dialect = 'egyptian'; // default
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'user' ) {
-				$dialect_from_msg = $this->detect_country_and_dialect( $msg['content'] );
-				if ( $dialect_from_msg !== 'egyptian' ) {
-					$detected_dialect = $dialect_from_msg;
-					break; // Use first detected dialect
-				}
-			}
-		}
-		// Also check current message
-		$dialect_from_current = $this->detect_country_and_dialect( $message );
-		if ( $dialect_from_current !== 'egyptian' ) {
-			$detected_dialect = $dialect_from_current;
-		}
-
 		// Build conversation messages
 		$messages = array();
 
-		// Map dialect names to user-friendly descriptions
-		$dialect_names = array(
-			'egyptian' => 'Egyptian Arabic (اللهجة المصرية)',
-			'saudi' => 'Saudi Arabic (اللهجة السعودية)',
-			'uae' => 'UAE Arabic (اللهجة الإماراتية)',
-			'kuwait' => 'Kuwaiti Arabic (اللهجة الكويتية)',
-			'qatar' => 'Qatari Arabic (اللهجة القطرية)',
-			'bahrain' => 'Bahraini Arabic (اللهجة البحرينية)',
-			'oman' => 'Omani Arabic (اللهجة العمانية)',
-			'jordan' => 'Jordanian Arabic (اللهجة الأردنية)',
-			'lebanon' => 'Lebanese Arabic (اللهجة اللبنانية)',
-			'syria' => 'Syrian Arabic (اللهجة السورية)',
-			'iraq' => 'Iraqi Arabic (اللهجة العراقية)',
-			'palestine' => 'Palestinian Arabic (اللهجة الفلسطينية)',
-			'yemen' => 'Yemeni Arabic (اللهجة اليمنية)',
-			'sudan' => 'Sudanese Arabic (اللهجة السودانية)',
-			'morocco' => 'Moroccan Arabic (اللهجة المغربية)',
-			'algeria' => 'Algerian Arabic (اللهجة الجزائرية)',
-			'tunisia' => 'Tunisian Arabic (اللهجة التونسية)',
-			'libya' => 'Libyan Arabic (اللهجة الليبية)',
-		);
-
-		$dialect_name = isset( $dialect_names[ $detected_dialect ] ) ? $dialect_names[ $detected_dialect ] : 'Egyptian Arabic (اللهجة المصرية)';
-
 		// Add system prompt with forced JSON structure and language/question limits
 		$language_instruction = $is_arabic ?
-			'IMPORTANT: Respond ONLY in ' . $dialect_name . ' dialect, NOT in Modern Standard Arabic (الفصحى). Use the local dialect naturally and conversationally. Match the patient\'s dialect style. Use colloquial expressions, local terms, and natural speech patterns of ' . $dialect_name . '. Never use formal Arabic (الفصحى) - always use the local dialect.' :
+			'IMPORTANT: Respond ONLY in Modern Standard Arabic (الفصحى). Use formal Arabic language for all communication, reasoning, and explanations. Never use local dialects or colloquial expressions. Always use proper Arabic grammar and formal language.' :
 			'IMPORTANT: Respond ONLY in English language. Use English for all communication, reasoning, and explanations. Never mix languages.';
 
 		$question_limit_instruction = "QUESTION GUIDELINES: You have asked {$ai_questions_count} questions so far. ";
@@ -4839,13 +4798,7 @@ Best regards,
 			$question_limit_instruction .= 'You have asked enough questions. You can now provide a diagnosis if you have sufficient information.';
 		}
 
-		// Add dialect-specific instruction for Arabic
-		$dialect_instruction = '';
-		if ( $is_arabic ) {
-			$dialect_instruction = "\n\nCRITICAL DIALECT INSTRUCTION:\n- The patient is from a region that uses " . $dialect_name . "\n- You MUST respond in " . $dialect_name . " dialect, NOT in Modern Standard Arabic (الفصحى)\n- Use local expressions, colloquial terms, and natural speech patterns\n- Match the patient's dialect style from their messages\n- Examples: Use 'إنت' instead of 'أنت', use local greetings and expressions\n- NEVER use formal Arabic (الفصحى) - always use the local dialect naturally\n- Use everyday conversational Arabic, not formal or literary Arabic\n";
-		}
-
-		$enhanced_system_prompt = 'You are a compassionate mental health assistant conducting a diagnostic conversation. ' . $language_instruction . $dialect_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- IMPORTANT: If this is the first or second question, ask the patient about their country/region to better understand their cultural context and speak in their local language\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ( $ai_questions_count + 1 ) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new\n- For early questions, ask about their country/region to provide culturally appropriate responses";
+		$enhanced_system_prompt = 'You are a compassionate mental health assistant conducting a diagnostic conversation. ' . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- IMPORTANT: If this is the first or second question, ask the patient about their country/region to better understand their cultural context\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ( $ai_questions_count + 1 ) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new\n- For early questions, ask about their country/region to provide culturally appropriate responses";
 
 		$messages[] = array(
 			'role'    => 'system',
