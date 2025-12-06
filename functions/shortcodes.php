@@ -1215,11 +1215,16 @@ add_shortcode(
 
 		//phpcs:disable
 		// Query to fetch transactions for the current user with timetable date_time.
+		// For AI sessions, timetable_id is 0, so we need to join using ai_session_id instead
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT t.*, s.*
 				FROM $transactions_table t
-				LEFT JOIN $timetable_table s ON t.timetable_id = s.id
+				LEFT JOIN $timetable_table s ON (
+					(t.timetable_id > 0 AND t.timetable_id = s.ID) 
+					OR 
+					(t.timetable_id = 0 AND t.ai_session_id > 0 AND t.ai_session_id = s.ID)
+				)
 				WHERE t.user_id = %d
 				ORDER BY t.transaction_time DESC",
 				$user_id
