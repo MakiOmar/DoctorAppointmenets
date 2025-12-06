@@ -194,6 +194,79 @@ add_shortcode(
 							}
 						});
 					});
+					
+					// Redirect therapist to account-setting when they leave the meeting
+					meetAPI.addListener('videoConferenceLeft', function() {
+						// Clean up the meeting API
+						if (meetAPI) {
+							try {
+								meetAPI.dispose();
+							} catch(e) {
+								console.log('Error disposing meeting:', e);
+							}
+						}
+						// Redirect to account-setting page
+						window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+					});
+					
+					meetAPI.addListener('readyToClose', function() {
+						// Clean up the meeting API
+						if (meetAPI) {
+							try {
+								meetAPI.dispose();
+							} catch(e) {
+								console.log('Error disposing meeting:', e);
+							}
+						}
+						// Redirect to account-setting page
+						window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+					});
+					
+					// Also monitor for Jitsi default interface and redirect immediately
+					// This handles cases where the interface appears before events fire
+					var checkForJitsiInterface = setInterval(function() {
+						// Check if we're still in a meeting or if Jitsi default interface appeared
+						var iframe = document.querySelector('#meeting iframe');
+						if (iframe) {
+							try {
+								var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+								if (iframeDoc) {
+									// Check for Jitsi default interface elements (the welcome/start meeting page)
+									var jitsiInterface = iframeDoc.querySelector('.welcome') || 
+														 iframeDoc.querySelector('.welcome-page') ||
+														 iframeDoc.querySelector('[class*="welcome"]') ||
+														 iframeDoc.querySelector('input[placeholder*="meeting"]') ||
+														 iframeDoc.querySelector('input[placeholder*="Meeting"]') ||
+														 iframeDoc.querySelector('button:contains("Start meeting")') ||
+														 iframeDoc.querySelector('button:contains("Start Meeting")');
+									
+									// Also check for the specific text "Jalsah App" which appears in the default interface
+									var pageText = iframeDoc.body ? iframeDoc.body.innerText || iframeDoc.body.textContent : '';
+									if (pageText.includes('Jalsah App') && pageText.includes('Start meeting')) {
+										clearInterval(checkForJitsiInterface);
+										// Redirect immediately
+										setTimeout(function() {
+											window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+										}, 500);
+									} else if (jitsiInterface) {
+										clearInterval(checkForJitsiInterface);
+										// Redirect immediately
+										setTimeout(function() {
+											window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+										}, 500);
+									}
+								}
+							} catch(e) {
+								// CORS - can't access iframe content, which is expected
+								// In this case, rely on the event listeners
+							}
+						}
+					}, 1000); // Check every second
+					
+					// Stop checking after 60 seconds (meeting should have started by then)
+					setTimeout(function() {
+						clearInterval(checkForJitsiInterface);
+					}, 60000);
 					<?php } ?>
 					});
 

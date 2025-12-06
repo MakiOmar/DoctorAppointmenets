@@ -1005,6 +1005,8 @@ export default {
 
     const closeSessionModal = () => {
       showSessionModal.value = false
+      // Stop logo hiding polling
+      stopLogoHidePolling()
       // Clean up Jitsi meeting
       if (sessionMeetAPI.value) {
         sessionMeetAPI.value.dispose()
@@ -1047,6 +1049,105 @@ export default {
       })
       if (result.isConfirmed) {
         closeSessionModal()
+      }
+    }
+
+    // Function to hide Jitsi logo using CSS injection
+    const hideJitsiLogo = (containerId = '#session-meeting', apiInstance = null) => {
+      try {
+        const meetingContainer = document.querySelector(containerId)
+        if (!meetingContainer) return
+        
+        const iframe = meetingContainer.querySelector('iframe')
+        if (!iframe) return
+        
+        // Try direct DOM manipulation if iframe is accessible (same origin)
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+          if (iframeDoc) {
+            const css = `
+              .watermark,
+              .leftwatermark,
+              .rightwatermark,
+              [class*="watermark"],
+              [class*="jitsi-logo"],
+              [id*="watermark"],
+              [id*="jitsi-logo"],
+              .powered-by,
+              [class*="poweredby"],
+              [data-testid*="watermark"],
+              [data-testid*="logo"],
+              a.watermark,
+              div.watermark,
+              a[class*="watermark"],
+              div[class*="watermark"] {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                height: 0 !important;
+                width: 0 !important;
+                overflow: hidden !important;
+                pointer-events: none !important;
+                position: absolute !important;
+                left: -9999px !important;
+                top: -9999px !important;
+              }
+            `
+            
+            // Create and inject style element
+            let style = iframeDoc.getElementById('jalsah-hide-logo-style')
+            if (!style) {
+              style = iframeDoc.createElement('style')
+              style.id = 'jalsah-hide-logo-style'
+              style.textContent = css
+              iframeDoc.head.appendChild(style)
+            } else {
+              style.textContent = css
+            }
+            
+            // Also directly hide elements as fallback
+            const watermarkElements = iframeDoc.querySelectorAll('.watermark, .leftwatermark, .rightwatermark, [class*="watermark"]')
+            watermarkElements.forEach(el => {
+              el.style.display = 'none'
+              el.style.visibility = 'hidden'
+              el.style.opacity = '0'
+              el.style.height = '0'
+              el.style.width = '0'
+            })
+          }
+        } catch (e) {
+          // CORS error - expected for cross-origin iframes
+          // Try using postMessage as fallback
+          try {
+            if (iframe.contentWindow) {
+              iframe.contentWindow.postMessage({
+                type: 'hideWatermark',
+                action: 'hide'
+              }, '*')
+            }
+          } catch (postError) {
+            // Cannot hide logo due to CORS restrictions
+          }
+        }
+      } catch (error) {
+        console.log('Error hiding Jitsi logo:', error)
+      }
+    }
+    
+    // Set up continuous polling to hide logo (for cross-origin iframes)
+    let logoHideInterval = null
+    const startLogoHidePolling = (containerId = '#session-meeting') => {
+      if (logoHideInterval) return
+      
+      logoHideInterval = setInterval(() => {
+        hideJitsiLogo(containerId)
+      }, 500) // Check every 500ms
+    }
+    
+    const stopLogoHidePolling = () => {
+      if (logoHideInterval) {
+        clearInterval(logoHideInterval)
+        logoHideInterval = null
       }
     }
 
@@ -1146,10 +1247,11 @@ export default {
           SHOW_WATERMARK_FOR_GUESTS: false,
           SHOW_POWERED_BY: false,
           DISPLAY_WELCOME_FOOTER: false,
-          JITSI_WATERMARK_LINK: 'https://jalsah.app',
+          HIDE_INVITE_MORE_HEADER: true,
+          JITSI_WATERMARK_LINK: '',
           PROVIDER_NAME: 'Jalsah',
-          DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
-          DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+          DEFAULT_LOGO_URL: '',
+          DEFAULT_WELCOME_PAGE_LOGO_URL: '',
           TOOLBAR_ALWAYS_VISIBLE: true,
           TOOLBAR_BUTTONS: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
@@ -1176,10 +1278,32 @@ export default {
         sessionMeetAPI.value.addListener('videoConferenceJoined', () => {
           jitsiLoaded.value = true
           
+          // Start continuous polling to hide logo
+          startLogoHidePolling('#session-meeting')
+          
+          // Hide Jitsi logo after meeting loads - try multiple times
+          setTimeout(() => {
+            hideJitsiLogo('#session-meeting', sessionMeetAPI.value)
+          }, 500)
+          setTimeout(() => {
+            hideJitsiLogo('#session-meeting', sessionMeetAPI.value)
+          }, 1500)
+          setTimeout(() => {
+            hideJitsiLogo('#session-meeting', sessionMeetAPI.value)
+          }, 3000)
+          
           // If therapist joined, notify the backend
           if (isTherapist) {
             notifyTherapistJoined(roomID)
           }
+        })
+        
+        sessionMeetAPI.value.addListener('videoConferenceLeft', () => {
+          stopLogoHidePolling()
+        })
+        
+        sessionMeetAPI.value.addListener('readyToClose', () => {
+          stopLogoHidePolling()
         })
         
         sessionMeetAPI.value.addListener('videoConferenceLeft', () => {
@@ -1750,6 +1874,8 @@ export default {
 
     // Close Rochtah session modal and cleanup
     const closeRochtahSessionModal = () => {
+      // Stop logo hiding polling
+      stopLogoHidePolling()
       // Clean up meeting API
       if (rochtahMeetingAPI.value) {
         try {
@@ -1830,10 +1956,11 @@ export default {
           SHOW_WATERMARK_FOR_GUESTS: false,
           SHOW_POWERED_BY: false,
           DISPLAY_WELCOME_FOOTER: false,
-          JITSI_WATERMARK_LINK: 'https://jalsah.app',
+          HIDE_INVITE_MORE_HEADER: true,
+          JITSI_WATERMARK_LINK: '',
           PROVIDER_NAME: 'Jalsah',
-          DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
-          DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+          DEFAULT_LOGO_URL: '',
+          DEFAULT_WELCOME_PAGE_LOGO_URL: '',
           TOOLBAR_ALWAYS_VISIBLE: true,
           TOOLBAR_BUTTONS: [
             'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 
@@ -1875,6 +2002,20 @@ export default {
         meetAPI.addListener('videoConferenceJoined', () => {
           console.log('Rochtah meeting joined successfully')
           toast.success('Meeting started successfully')
+          
+          // Start continuous polling to hide logo
+          startLogoHidePolling('#rochtah-meeting')
+          
+          // Hide Jitsi logo after meeting loads - try multiple times
+          setTimeout(() => {
+            hideJitsiLogo('#rochtah-meeting', meetAPI)
+          }, 500)
+          setTimeout(() => {
+            hideJitsiLogo('#rochtah-meeting', meetAPI)
+          }, 1500)
+          setTimeout(() => {
+            hideJitsiLogo('#rochtah-meeting', meetAPI)
+          }, 3000)
         })
         
         // Fallback: Auto-click any join/start button if it appears

@@ -334,4 +334,42 @@
     font-display: swap;
     unicode-range: U+1F1E6-1F1FF, U+1F300-1F5FF, U+1F600-1F64F, U+1F680-1F6FF, U+1F700-1F77F, U+1F780-1F7FF, U+1F800-1F8FF, U+1F900-1F9FF, U+1FA00-1FA6F, U+1FA70-1FAFF, U+2600-26FF, U+2700-27BF;
   }
+}
+
+/* Hide Jitsi logo and branding */
+#meeting iframe,
+#session-meeting iframe,
+#rochtah-meeting iframe {
+  /* Target Jitsi logo elements within iframe */
+}
+
+/* Hide Jitsi logo using CSS that applies to the iframe content */
+iframe[id*="jitsi"],
+iframe[src*="jitsi"],
+iframe[src*="meet.jit.si"],
+iframe[src*="s.jalsah.app"] {
+  /* These selectors target the iframe containers */
+}
+
+/* Use JavaScript injection or global styles that Jitsi respects */
+/* Since we can't directly style iframe content, we'll add these rules globally */
+body .jitsi-watermark,
+body [class*="watermark"],
+body [class*="jitsi-logo"],
+body [id*="jitsi-logo"],
+body [id*="watermark"],
+body .watermark,
+body .jitsi-branding,
+body [class*="branding"],
+body [class*="poweredby"],
+body [id*="poweredby"],
+body .powered-by,
+body [data-testid*="watermark"],
+body [data-testid*="logo"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
 } 
