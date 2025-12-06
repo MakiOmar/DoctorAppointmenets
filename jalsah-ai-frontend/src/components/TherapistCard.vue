@@ -574,6 +574,66 @@ export default {
       }
     }
 
+    // Helper function to check if a date has available slots after filtering
+    const hasAvailableSlots = (dateKey) => {
+      if (!props.therapist.available_dates || !Array.isArray(props.therapist.available_dates)) {
+        return false
+      }
+      
+      // Get all date entries for this date
+      const dateEntries = props.therapist.available_dates.filter(d => d.date === dateKey)
+      if (dateEntries.length === 0) {
+        return false
+      }
+      
+      // Get nearest slot info to exclude it
+      const nearestSlotInfo = getNearestSlotInfo()
+      
+      // Check if any entry has available slots after filtering
+      for (const dateInfo of dateEntries) {
+        // Check if slots array exists (new format with grouped slots)
+        if (dateInfo.slots && Array.isArray(dateInfo.slots)) {
+          const availableSlots = dateInfo.slots.filter(slot => {
+            // Skip if this is the nearest slot
+            if (nearestSlotInfo && 
+                nearestSlotInfo.date === dateKey && 
+                nearestSlotInfo.time === slot.time) {
+              return false
+            }
+            
+            // Filter out 45-minute offline slots
+            if (slot.attendance_type === 'offline' && slot.period === 45) {
+              return false
+            }
+            
+            return true
+          })
+          
+          if (availableSlots.length > 0) {
+            return true
+          }
+        } else {
+          // Old format: single slot per entry
+          // Skip if this is the nearest slot
+          if (nearestSlotInfo && 
+              nearestSlotInfo.date === dateKey && 
+              nearestSlotInfo.time === dateInfo.time) {
+            continue // Check next entry for this date
+          }
+          
+          // Filter out 45-minute offline slots
+          if (dateInfo.attendance_type === 'offline' && dateInfo.period === 45) {
+            continue // Check next entry for this date
+          }
+          
+          // This slot is available
+          return true
+        }
+      }
+      
+      return false
+    }
+
     const loadAvailableDates = async () => {
       loadingDates.value = true
       try {
@@ -600,8 +660,13 @@ export default {
             }
           })
           
-          // Convert Map back to array and sort by date
-          availableDates.value = Array.from(dateMap.values()).sort((a, b) => 
+          // Filter dates to only include those with available slots after excluding nearest slot
+          const filteredDates = Array.from(dateMap.values()).filter(date => {
+            return hasAvailableSlots(date.value)
+          })
+          
+          // Sort by date
+          availableDates.value = filteredDates.sort((a, b) => 
             new Date(a.value) - new Date(b.value)
           )
         } else {
