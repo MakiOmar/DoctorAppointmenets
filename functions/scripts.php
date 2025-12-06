@@ -876,7 +876,7 @@ add_action(
 					var clientId = $(this).data('client-id');
 					
 					// Show message form with fancy file upload
-					Swal.fire({
+					var messagePopup = Swal.fire({
 						title: 'إرسال رسالة للمريض',
 						html: `
 							<div style="text-align: right; direction: rtl;">
@@ -901,7 +901,9 @@ add_action(
 						showCloseButton: true,
 						confirmButtonText: 'إرسال',
 						confirmButtonColor: '#6366f1',
-						showLoaderOnConfirm: true,
+						showLoaderOnConfirm: false, // We'll handle loading manually
+						allowOutsideClick: false, // Prevent closing by clicking outside
+						allowEscapeKey: false, // Prevent closing with ESC key
 						width: '600px',
 						didOpen: () => {
 							const dropZone = document.getElementById('file-drop-zone');
@@ -990,62 +992,71 @@ add_action(
 								return false;
 							}
 							
-							return { message: message, files: files };
-						}
-					}).then((result) => {
-						if (result.isConfirmed) {
+							// Show loading state
+							Swal.showLoading();
+							Swal.disableButtons();
+							
 							// Prepare form data with files
 							var formData = new FormData();
 							formData.append('action', 'send_session_message');
 							formData.append('session_id', sessionId);
 							formData.append('client_id', clientId);
-							formData.append('message', result.value.message);
+							formData.append('message', message);
 							formData.append('nonce', '<?php echo esc_html( wp_create_nonce( 'session_message_nonce' ) ); ?>');
 							
 							// Add files
-							for (var i = 0; i < result.value.files.length; i++) {
-								formData.append('attachments[]', result.value.files[i]);
+							for (var i = 0; i < files.length; i++) {
+								formData.append('attachments[]', files[i]);
 							}
 							
-							// Send AJAX request
-							$.ajax({
-								type: 'POST',
-								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-								data: formData,
-								processData: false,
-								contentType: false,
-							success: function(response) {
-									if (response.success) {
+							// Return a promise that resolves when AJAX is complete
+							return new Promise((resolve, reject) => {
+								$.ajax({
+									type: 'POST',
+									url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+									data: formData,
+									processData: false,
+									contentType: false,
+									success: function(response) {
+										if (response.success) {
 											// Hide the send message button after successful send
 											var $sendBtn = $('.snks-send-message-btn[data-session-id="' + sessionId + '"]');
 											if ($sendBtn.length) {
 												$sendBtn.hide();
 											}
-											Swal.fire({
-										title: 'تم بنجاح!',
-										text: 'تم إرسال الرسالة للمريض',
-										icon: 'success',
-										confirmButtonText: 'حسناً'
-									});
-								} else {
-									Swal.fire({
-										title: 'خطأ!',
-										text: response.data || 'حدث خطأ أثناء إرسال الرسالة',
-										icon: 'error',
-										confirmButtonText: 'حسناً'
-									});
-								}
-							},
-								error: function() {
-									Swal.fire({
-										title: 'خطأ!',
-										text: 'حدث خطأ أثناء إرسال الرسالة',
-										icon: 'error',
-										confirmButtonText: 'حسناً'
-									});
-								}
+											// Resolve with success to close popup
+											resolve(true);
+										} else {
+											// Reject to show error and keep popup open
+											Swal.enableButtons();
+											Swal.hideLoading();
+											Swal.showValidationMessage(response.data || 'حدث خطأ أثناء إرسال الرسالة');
+											reject(new Error(response.data || 'حدث خطأ أثناء إرسال الرسالة'));
+										}
+									},
+									error: function(xhr, status, error) {
+										// Reject to show error and keep popup open
+										Swal.enableButtons();
+										Swal.hideLoading();
+										Swal.showValidationMessage('حدث خطأ أثناء إرسال الرسالة');
+										reject(new Error('حدث خطأ أثناء إرسال الرسالة'));
+									}
+								});
 							});
 						}
+					}).then((result) => {
+						// Only show success message if we get here (popup will close automatically)
+						if (result.value === true) {
+							Swal.fire({
+								title: 'تم بنجاح!',
+								text: 'تم إرسال الرسالة للمريض',
+								icon: 'success',
+								confirmButtonText: 'حسناً'
+							});
+						}
+					}).catch((error) => {
+						// Error is already handled in preConfirm, popup stays open
+						console.error('Error sending message:', error);
 					});
 				});
 				
