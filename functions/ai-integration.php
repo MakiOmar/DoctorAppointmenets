@@ -717,57 +717,6 @@ class SNKS_AI_Integration {
 		}
 
 		if ( $is_arabic ) {
-			// For early questions (first or second), ask about country/region
-			if ( $ai_questions_count <= 1 ) {
-				$country_questions = array(
-					'أهلاً! أنا هنا لمساعدتك في التقييم النفسي المبدئي. هل يمكنك إخباري من أي بلد أنت؟ هذا سيساعدني في فهم سياقك الثقافي والتحدث معك باللغة المناسبة.',
-					'مرحباً! قبل أن نبدأ التقييم النفسي، هل يمكنك إخباري من أي منطقة أو بلد أنت؟ هذا سيساعدني في تقديم إرشادات أكثر ملاءمة لثقافتك.',
-					'أهلاً وسهلاً! أنا هنا لمساعدتك في العثور على المعالج المناسب. هل يمكنك إخباري من أي بلد أنت لنتمكن من التواصل بشكل أفضل؟',
-				);
-
-				foreach ( $country_questions as $question ) {
-					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
-						return $question;
-					}
-				}
-			}
-
-			// Check if this is a response to country question (second question)
-			if ( $ai_questions_count === 1 ) {
-				// Detect country and dialect
-				$dialect = $this->detect_country_and_dialect( $message );
-
-				// If user provided a country response, move to symptoms with appropriate dialect
-				$country_keywords = array( 'مصر', 'السعودية', 'الإمارات', 'الكويت', 'قطر', 'البحرين', 'عمان', 'الأردن', 'لبنان', 'سوريا', 'العراق', 'فلسطين', 'اليمن', 'السودان', 'المغرب', 'الجزائر', 'تونس', 'ليبيا', 'موريتانيا', 'الصومال', 'جيبوتي', 'جزر القمر', 'موريشيوس', 'سيشل', 'جزر المالديف', 'تركيا', 'إيران', 'أفغانستان', 'باكستان', 'الهند', 'بنغلاديش', 'سريلانكا', 'نيبال', 'بوتان', 'ماليزيا', 'إندونيسيا', 'سنغافورة', 'تايلاند', 'فيتنام', 'كمبوديا', 'لاوس', 'ميانمار', 'الفلبين', 'بروناي', 'تيمور الشرقية', 'الصين', 'اليابان', 'كوريا', 'منغوليا', 'كازاخستان', 'أوزبكستان', 'تركمانستان', 'طاجيكستان', 'قيرغيزستان', 'أذربيجان', 'جورجيا', 'أرمينيا', 'روسيا', 'أوكرانيا', 'بيلاروسيا', 'مولدوفا', 'رومانيا', 'بلغاريا', 'صربيا', 'كرواتيا', 'سلوفينيا', 'البوسنة', 'الجبل الأسود', 'ألبانيا', 'مقدونيا', 'اليونان', 'تركيا', 'قبرص', 'مالطا', 'إيطاليا', 'إسبانيا', 'البرتغال', 'فرنسا', 'ألمانيا', 'النمسا', 'سويسرا', 'بلجيكا', 'هولندا', 'لوكسمبورغ', 'الدنمارك', 'السويد', 'النرويج', 'فنلندا', 'آيسلندا', 'إستونيا', 'لاتفيا', 'ليتوانيا', 'بولندا', 'التشيك', 'سلوفاكيا', 'المجر', 'أمريكا', 'كندا', 'المكسيك', 'البرازيل', 'الأرجنتين', 'تشيلي', 'بيرو', 'كولومبيا', 'فنزويلا', 'الإكوادور', 'بوليفيا', 'باراغواي', 'أوروغواي', 'غيانا', 'سورينام', 'غيانا الفرنسية', 'أستراليا', 'نيوزيلندا', 'فيجي', 'بابوا غينيا الجديدة', 'جزر سليمان', 'فانواتو', 'كاليدونيا الجديدة', 'بولينيزيا الفرنسية', 'ساموا', 'تونغا', 'كيريباتي', 'توفالو', 'ناورو', 'بالاو', 'ولايات ميكرونيزيا الموحدة', 'جزر مارشال', 'جنوب أفريقيا', 'نيجيريا', 'كينيا', 'إثيوبيا', 'أوغندا', 'تنزانيا', 'زامبيا', 'زيمبابوي', 'بوتسوانا', 'ناميبيا', 'أنغولا', 'موزمبيق', 'مدغشقر', 'موريشيوس', 'سيشل', 'جزر القمر', 'جيبوتي', 'إريتريا', 'الصومال', 'السودان', 'جنوب السودان', 'جمهورية أفريقيا الوسطى', 'تشاد', 'الكاميرون', 'الغابون', 'جمهورية الكونغو', 'جمهورية الكونغو الديمقراطية', 'رواندا', 'بوروندي', 'مالاوي', 'ليسوتو', 'إسواتيني', 'موريشيوس', 'سيشل', 'جزر القمر', 'جيبوتي', 'إريتريا', 'الصومال', 'السودان', 'جنوب السودان', 'جمهورية أفريقيا الوسطى', 'تشاد', 'الكاميرون', 'الغابون', 'جمهورية الكونغو', 'جمهورية الكونغو الديمقراطية', 'رواندا', 'بوروندي', 'مالاوي', 'ليسوتو', 'إسواتيني' );
-
-				$is_country_response = false;
-				foreach ( $country_keywords as $country ) {
-					if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-						$is_country_response = true;
-						break;
-					}
-				}
-
-				if ( $is_country_response ) {
-					return $this->get_dialect_symptoms_question( $dialect );
-				}
-
-				// Check for general country response patterns
-				$country_patterns = array( 'من', 'أنا من', 'أقيم في', 'أسكن في', 'موطني', 'بلدي', 'وطني' );
-				foreach ( $country_patterns as $pattern ) {
-					if ( strpos( $message_lower, $pattern ) !== false ) {
-						return $this->get_dialect_symptoms_question( $dialect );
-					}
-				}
-
-				// Check if user wants to skip country question or move to symptoms directly
-				$skip_patterns = array( 'لا يهم', 'لا أريد', 'تخطي', 'التالي', 'أريد التحدث عن مشاكلي', 'دعنا نبدأ', 'أريد مساعدة', 'مشاكل', 'أعراض', 'أشعر', 'أعاني' );
-				foreach ( $skip_patterns as $pattern ) {
-					if ( strpos( $message_lower, $pattern ) !== false ) {
-						return $this->get_dialect_symptoms_question( $dialect );
-					}
-				}
-			}
 
 			// Detect dialect from conversation history
 			$dialect = 'egyptian'; // default
@@ -833,55 +782,6 @@ class SNKS_AI_Integration {
 			// If all questions have been asked, provide a generic response
 			return $this->get_dialect_final_response( $dialect );
 		} else {
-			// For early questions (first or second), ask about country/region
-			if ( $ai_questions_count <= 1 ) {
-				$country_questions = array(
-					"Hello! I'm here to help you with a preliminary psychological assessment. Could you tell me which country you're from? This will help me understand your cultural context and speak with you in the appropriate language.",
-					"Hi there! Before we begin the psychological assessment, could you tell me which region or country you're from? This will help me provide guidance that's more suitable for your culture.",
-					"Welcome! I'm here to help you find the right therapist. Could you tell me which country you're from so we can communicate better?",
-				);
-
-				foreach ( $country_questions as $question ) {
-					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
-						return $question;
-					}
-				}
-			}
-
-			// Check if this is a response to country question (second question)
-			if ( $ai_questions_count === 1 ) {
-				// If user provided a country response, move to symptoms
-				$country_keywords = array( 'egypt', 'saudi arabia', 'united arab emirates', 'kuwait', 'qatar', 'bahrain', 'oman', 'jordan', 'lebanon', 'syria', 'iraq', 'palestine', 'yemen', 'sudan', 'morocco', 'algeria', 'tunisia', 'libya', 'mauritania', 'somalia', 'djibouti', 'comoros', 'mauritius', 'seychelles', 'maldives', 'turkey', 'iran', 'afghanistan', 'pakistan', 'india', 'bangladesh', 'sri lanka', 'nepal', 'bhutan', 'malaysia', 'indonesia', 'singapore', 'thailand', 'vietnam', 'cambodia', 'laos', 'myanmar', 'philippines', 'brunei', 'east timor', 'china', 'japan', 'korea', 'mongolia', 'kazakhstan', 'uzbekistan', 'turkmenistan', 'tajikistan', 'kyrgyzstan', 'azerbaijan', 'georgia', 'armenia', 'russia', 'ukraine', 'belarus', 'moldova', 'romania', 'bulgaria', 'serbia', 'croatia', 'slovenia', 'bosnia', 'montenegro', 'albania', 'macedonia', 'greece', 'cyprus', 'malta', 'italy', 'spain', 'portugal', 'france', 'germany', 'austria', 'switzerland', 'belgium', 'netherlands', 'luxembourg', 'denmark', 'sweden', 'norway', 'finland', 'iceland', 'estonia', 'latvia', 'lithuania', 'poland', 'czech republic', 'slovakia', 'hungary', 'usa', 'united states', 'america', 'canada', 'mexico', 'brazil', 'argentina', 'chile', 'peru', 'colombia', 'venezuela', 'ecuador', 'bolivia', 'paraguay', 'uruguay', 'guyana', 'suriname', 'french guiana', 'australia', 'new zealand', 'fiji', 'papua new guinea', 'solomon islands', 'vanuatu', 'new caledonia', 'french polynesia', 'samoa', 'tonga', 'kiribati', 'tuvalu', 'nauru', 'palau', 'micronesia', 'marshall islands', 'south africa', 'nigeria', 'kenya', 'ethiopia', 'uganda', 'tanzania', 'zambia', 'zimbabwe', 'botswana', 'namibia', 'angola', 'mozambique', 'madagascar', 'mauritius', 'seychelles', 'comoros', 'djibouti', 'eritrea', 'somalia', 'south sudan', 'central african republic', 'chad', 'cameroon', 'gabon', 'congo', 'democratic republic of congo', 'rwanda', 'burundi', 'malawi', 'lesotho', 'eswatini' );
-
-				$is_country_response = false;
-				foreach ( $country_keywords as $country ) {
-					if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-						$is_country_response = true;
-						break;
-					}
-				}
-
-				if ( $is_country_response ) {
-					return "Thank you! Now let me help you understand what you're going through. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you'd like - I'm here to listen and help.";
-				}
-
-				// Check for general country response patterns
-				$country_patterns = array( 'from', 'i\'m from', 'i am from', 'i live in', 'i reside in', 'my country', 'my homeland', 'my nationality' );
-				foreach ( $country_patterns as $pattern ) {
-					if ( strpos( $message_lower, $pattern ) !== false ) {
-						return "Thank you! Now let me help you understand what you're going through. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you'd like - I'm here to listen and help.";
-					}
-				}
-
-				// Check if user wants to skip country question or move to symptoms directly
-				$skip_patterns = array( 'doesn\'t matter', 'i don\'t want', 'skip', 'next', 'i want to talk about my problems', 'let\'s start', 'i need help', 'problems', 'symptoms', 'i feel', 'i suffer' );
-				foreach ( $skip_patterns as $pattern ) {
-					if ( strpos( $message_lower, $pattern ) !== false ) {
-						return "Alright, let me help you understand what you're going through. Please tell me about your current situation, symptoms, or concerns. You can be as detailed as you'd like - I'm here to listen and help.";
-					}
-				}
-			}
-
 			// English keyword detection
 			if ( strpos( $message_lower, 'sleep' ) !== false || strpos( $message_lower, 'insomnia' ) !== false || strpos( $message_lower, 'awake' ) !== false ) {
 				return "I understand you're having sleep issues. Can you tell me more about your sleep pattern? How many hours do you usually sleep? Do you wake up frequently during the night?";
@@ -4798,7 +4698,7 @@ Best regards,
 			$question_limit_instruction .= 'You have asked enough questions. You can now provide a diagnosis if you have sufficient information.';
 		}
 
-		$enhanced_system_prompt = 'You are a compassionate mental health assistant conducting a diagnostic conversation. ' . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- IMPORTANT: If this is the first or second question, ask the patient about their country/region to better understand their cultural context\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ( $ai_questions_count + 1 ) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new\n- For early questions, ask about their country/region to provide culturally appropriate responses";
+		$enhanced_system_prompt = 'You are a compassionate mental health assistant conducting a diagnostic conversation. ' . $language_instruction . "\n\n" . $question_limit_instruction . "\n\nAvailable diagnoses: " . implode( ', ', $diagnosis_list ) . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- You MUST ask at least {$min_questions} questions before providing a diagnosis\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ( $ai_questions_count + 1 ) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions\n- Use 'complete' status ONLY when you have asked enough questions AND have sufficient information\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- Do NOT provide diagnosis until you have asked at least {$min_questions} questions\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
 
 		$messages[] = array(
 			'role'    => 'system',
