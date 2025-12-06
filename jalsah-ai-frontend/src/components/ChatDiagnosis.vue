@@ -82,7 +82,7 @@
                     </div>
                   </div>
                   <div class="flex-1">
-                    <p class="text-sm" v-html="formatMessage(message.content)"></p>
+                    <p class="text-sm" v-html="formatMessage(message.content || '')"></p>
                     <p class="text-xs opacity-75 mt-1">{{ formatTime(message.timestamp) }}</p>
                   </div>
                   <div v-if="message.role === 'user'" class="flex-shrink-0">
@@ -196,11 +196,14 @@ export default {
      
      // Question counter
      const aiQuestionsCount = computed(() => {
-       return messages.value.filter(msg => msg.role === 'assistant' && isQuestion(msg.content)).length
+       return messages.value.filter(msg => msg.role === 'assistant' && msg.content && isQuestion(msg.content)).length
      })
      
      const isQuestion = (content) => {
        // Simple question detection
+       if (!content || typeof content !== 'string') {
+         return false
+       }
        const questionMarks = ['?', '؟']
        const questionWords = ['what', 'when', 'where', 'how', 'why', 'who', 'which', 'do', 'does', 'did', 'can', 'could', 'would', 'will', 'هل', 'متى', 'أين', 'كيف', 'لماذا', 'من', 'ما', 'أي']
        
@@ -261,7 +264,11 @@ export default {
             
             // Load conversation history if available
             if (diagnosis.conversation_history && Array.isArray(diagnosis.conversation_history)) {
-              messages.value = diagnosis.conversation_history
+              // Ensure all messages have content as string
+              messages.value = diagnosis.conversation_history.map(msg => ({
+                ...msg,
+                content: typeof msg.content === 'string' ? msg.content : String(msg.content || '')
+              }))
             }
             
             // Show a message that diagnosis was loaded from previous session
@@ -279,6 +286,9 @@ export default {
 
     const formatMessage = (content) => {
       // Convert line breaks to <br> tags
+      if (!content || typeof content !== 'string') {
+        return content || ''
+      }
       return content.replace(/\n/g, '<br>')
     }
 
@@ -324,10 +334,10 @@ export default {
            const assistantMessage = response.data.data.message
            const diagnosis = response.data.data.diagnosis
            
-           // Add assistant response
+           // Add assistant response - ensure content is a string
            messages.value.push({
              role: 'assistant',
-             content: assistantMessage,
+             content: typeof assistantMessage === 'string' ? assistantMessage : String(assistantMessage || ''),
              timestamp: new Date()
            })
 
