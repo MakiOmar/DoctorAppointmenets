@@ -1124,123 +1124,175 @@ add_action(
 					var clientId = $(this).data('client-id');
 					var $button = $(this);
 					
-														// Show diagnosis and symptoms form
-														Swal.fire({
-															title: 'معلومات التشخيص والأعراض',
-															html: `
-																<div style="text-align: right; direction: rtl;">
-																	<div style="margin-bottom: 15px;">
-																		<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">تشخيص المريض المبدئي حسب رؤيتك:</label>
-																		<textarea id="initial_diagnosis" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب التشخيص الأولي للمريض..."></textarea>
-																	</div>
-																	<div style="margin-bottom: 15px;">
-																		<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الاعراض التي تعتقد انها بحاجه لادوية:</label>
-																		<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
-																	</div>
-																	<div style="margin-bottom: 15px;">
-																		<label for="reason_for_referral" style="display: block; margin-bottom: 5px; font-weight: bold;">سبب الإحالة للطبيب النفسي:</label>
-																		<textarea id="reason_for_referral" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اشرح لماذا يحتاج المريض إلى استشارة طبيب نفسي..."></textarea>
-																	</div>
-																</div>
-															`,
+					// Store original HTML for form restoration
+					var originalHtml = `
+						<div style="text-align: right; direction: rtl;">
+							<div style="margin-bottom: 15px;">
+								<label for="initial_diagnosis" style="display: block; margin-bottom: 5px; font-weight: bold;">تشخيص المريض المبدئي حسب رؤيتك:</label>
+								<textarea id="initial_diagnosis" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب التشخيص الأولي للمريض..."></textarea>
+							</div>
+							<div style="margin-bottom: 15px;">
+								<label for="symptoms" style="display: block; margin-bottom: 5px; font-weight: bold;">الاعراض التي تعتقد انها بحاجه لادوية:</label>
+								<textarea id="symptoms" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اكتب الأعراض التي يعاني منها المريض..."></textarea>
+							</div>
+							<div style="margin-bottom: 15px;">
+								<label for="reason_for_referral" style="display: block; margin-bottom: 5px; font-weight: bold;">سبب الإحالة للطبيب النفسي:</label>
+								<textarea id="reason_for_referral" style="width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;" placeholder="اشرح لماذا يحتاج المريض إلى استشارة طبيب نفسي..."></textarea>
+							</div>
+						</div>
+					`;
+					
+					// Show diagnosis and symptoms form
+					var rochtahPopup = Swal.fire({
+						title: 'معلومات التشخيص والأعراض',
+						html: originalHtml,
 						showCloseButton: true,
 						confirmButtonText: 'إرسال الطلب',
 						confirmButtonColor: '#28a745',
-															preConfirm: () => {
-																const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
-																const symptoms = document.getElementById('symptoms').value.trim();
-																const reasonForReferral = document.getElementById('reason_for_referral').value.trim();
-																
-																if (!initialDiagnosis) {
-																	Swal.showValidationMessage('يرجى إدخال التشخيص الأولي');
-																	return false;
-																}
-																
-																if (!symptoms) {
-																	Swal.showValidationMessage('يرجى إدخال الأعراض');
-																	return false;
-																}
-																
-																if (!reasonForReferral) {
-																	Swal.showValidationMessage('يرجى إدخال سبب الإحالة');
-																	return false;
-																}
-																
-																return {
-																	initial_diagnosis: initialDiagnosis,
-																	symptoms: symptoms,
-																	reason_for_referral: reasonForReferral
-																};
-															}
-														}).then((formResult) => {
-															if (formResult.isConfirmed) {
-							// Get session and order details via AJAX first
-							$.ajax({
-								type: 'POST',
-								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-								data: {
-									action: 'get_session_details',
-									session_id: sessionId,
-									nonce: '<?php echo esc_html( wp_create_nonce( 'session_details_nonce' ) ); ?>'
-								},
-								success: function(sessionResponse) {
-									if (sessionResponse.success) {
-																// Send Roshta request with diagnosis data
-																var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
-																$.ajax({
-																	type: 'POST',
-																	url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-																	data: {
-																		action: 'request_rochtah',
-												session_id: sessionId,
-												client_id: clientId,
-												order_id: sessionResponse.data.order_id,
-																		initial_diagnosis: formResult.value.initial_diagnosis,
-																		symptoms: formResult.value.symptoms,
-																		reason_for_referral: formResult.value.reason_for_referral,
-																		nonce: rochtahNonce
-																	},
-																	success: function(rochtahResponse) {
-																		if (rochtahResponse.success) {
-																			Swal.fire({
-																				title: 'تم إرسال طلب روشتا!',
-																				text: 'سيتم إعلام المريض بطلب روشتا',
-																				icon: 'success',
-																				confirmButtonText: 'حسناً'
-																			}).then(() => {
+						showLoaderOnConfirm: false, // We'll handle loading manually
+						allowOutsideClick: false, // Prevent closing by clicking outside
+						allowEscapeKey: false, // Prevent closing with ESC key
+						preConfirm: () => {
+							const initialDiagnosis = document.getElementById('initial_diagnosis').value.trim();
+							const symptoms = document.getElementById('symptoms').value.trim();
+							const reasonForReferral = document.getElementById('reason_for_referral').value.trim();
+							
+							if (!initialDiagnosis) {
+								Swal.showValidationMessage('يرجى إدخال التشخيص الأولي');
+								return false;
+							}
+							
+							if (!symptoms) {
+								Swal.showValidationMessage('يرجى إدخال الأعراض');
+								return false;
+							}
+							
+							if (!reasonForReferral) {
+								Swal.showValidationMessage('يرجى إدخال سبب الإحالة');
+								return false;
+							}
+							
+							// Show loading state with custom message
+							Swal.showLoading();
+							Swal.disableButtons();
+							Swal.update({
+								title: 'يرجى الإنتظار جاري إرسال طلب روشتا...',
+								html: '<div style="text-align: center; padding: 20px;"><div class="swal2-loader"></div><p style="margin-top: 20px; font-size: 16px; color: #374151;">يرجى الإنتظار جاري إرسال طلب روشتا...</p></div>',
+								showConfirmButton: false,
+								showCancelButton: false,
+								showCloseButton: false
+							});
+							
+							// Return a promise that resolves when AJAX is complete
+							return new Promise((resolve, reject) => {
+								// Get session and order details via AJAX first
+								$.ajax({
+									type: 'POST',
+									url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+									data: {
+										action: 'get_session_details',
+										session_id: sessionId,
+										nonce: '<?php echo esc_html( wp_create_nonce( 'session_details_nonce' ) ); ?>'
+									},
+									success: function(sessionResponse) {
+										if (sessionResponse.success) {
+											// Send Roshta request with diagnosis data
+											var rochtahNonce = '<?php echo esc_html( wp_create_nonce( 'rochtah_request_nonce' ) ); ?>';
+											$.ajax({
+												type: 'POST',
+												url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+												data: {
+													action: 'request_rochtah',
+													session_id: sessionId,
+													client_id: clientId,
+													order_id: sessionResponse.data.order_id,
+													initial_diagnosis: initialDiagnosis,
+													symptoms: symptoms,
+													reason_for_referral: reasonForReferral,
+													nonce: rochtahNonce
+												},
+												success: function(rochtahResponse) {
+													if (rochtahResponse.success) {
 														// Hide the Roshtah button after successful request
 														$button.hide();
-																			});
-																		} else {
-																			Swal.fire({
-																				title: 'خطأ!',
-																				text: rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا',
-																				icon: 'error',
-																				confirmButtonText: 'حسناً'
-																			});
-																		}
-																	},
-																	error: function(xhr, status, error) {
-																		Swal.fire({
-																			title: 'خطأ!',
-																			text: 'حدث خطأ أثناء إرسال طلب روشتا',
-																			icon: 'error',
-																			confirmButtonText: 'حسناً'
-																});
-															}
-														});
+														// Resolve with success to close popup
+														resolve(true);
 													} else {
-											Swal.fire({
-												title: 'خطأ!',
-											text: 'حدث خطأ في الحصول على معلومات الجلسة',
-												icon: 'error',
-												confirmButtonText: 'حسناً'
+														// Restore original popup content and show error
+														Swal.update({
+															title: 'معلومات التشخيص والأعراض',
+															html: originalHtml,
+															showConfirmButton: true,
+															showCancelButton: false,
+															showCloseButton: true
+														});
+														Swal.enableButtons();
+														Swal.hideLoading();
+														Swal.showValidationMessage(rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا');
+														reject(new Error(rochtahResponse.data || 'حدث خطأ أثناء إرسال طلب روشتا'));
+													}
+												},
+												error: function(xhr, status, error) {
+													// Restore original popup content and show error
+													Swal.update({
+														title: 'معلومات التشخيص والأعراض',
+														html: originalHtml,
+														showConfirmButton: true,
+														showCancelButton: false,
+														showCloseButton: true
+													});
+													Swal.enableButtons();
+													Swal.hideLoading();
+													Swal.showValidationMessage('حدث خطأ أثناء إرسال طلب روشتا');
+													reject(new Error('حدث خطأ أثناء إرسال طلب روشتا'));
+												}
 											});
+										} else {
+											// Restore original popup content and show error
+											Swal.update({
+												title: 'معلومات التشخيص والأعراض',
+												html: originalHtml,
+												showConfirmButton: true,
+												showCancelButton: false,
+												showCloseButton: true
+											});
+											Swal.enableButtons();
+											Swal.hideLoading();
+											Swal.showValidationMessage('حدث خطأ في الحصول على معلومات الجلسة');
+											reject(new Error('حدث خطأ في الحصول على معلومات الجلسة'));
 										}
+									},
+									error: function(xhr, status, error) {
+										// Restore original popup content and show error
+										Swal.update({
+											title: 'معلومات التشخيص والأعراض',
+											html: originalHtml,
+											showConfirmButton: true,
+											showCancelButton: false,
+											showCloseButton: true
+										});
+										Swal.enableButtons();
+										Swal.hideLoading();
+										Swal.showValidationMessage('حدث خطأ في الحصول على معلومات الجلسة');
+										reject(new Error('حدث خطأ في الحصول على معلومات الجلسة'));
 									}
 								});
-							}
-						});
+							});
+						}
+					}).then((result) => {
+						// Only show success message if we get here (popup will close automatically)
+						if (result.value === true) {
+							Swal.fire({
+								title: 'تم إرسال طلب روشتا!',
+								text: 'سيتم إعلام المريض بطلب روشتا',
+								icon: 'success',
+								confirmButtonText: 'حسناً'
+							});
+						}
+					}).catch((error) => {
+						// Error is already handled in preConfirm, popup stays open
+						console.error('Error sending rochtah request:', error);
+					});
 				});
 				
 				// Handle Roshta booking button clicks
