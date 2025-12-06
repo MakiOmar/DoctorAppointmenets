@@ -390,13 +390,20 @@ add_action(
 									}
 								} else {
 									// Session has started - check if it's still within session duration
+									// Check if this is an AI session
+									var isAiSession = parent.find('.ai-session-flag').length > 0;
+									
 									if ( now > sessionEndDate ) {
 										// Session has ended
 										$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
-										parent.addClass('snks-disabled');
+										// Only add snks-disabled for non-AI sessions
+										if ( ! isAiSession ) {
+											parent.addClass('snks-disabled');
+										}
 										clearInterval(x);
 									} else {
 										// Session is active (started but not ended yet)
+										// Remove snks-disabled for all sessions (AI and non-AI) when session starts
 										parent.removeClass('snks-disabled');
 										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
 										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );

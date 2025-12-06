@@ -1140,18 +1140,25 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	$time_difference = $current_timestamp - $scheduled_timestamp;
 	$is_too_early = $time_difference < 0; // Current time is before scheduled time
 	
-	if (
-		( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 )
-		|| ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp )
-		|| ( 'cancelled' === $record->session_status )
-		|| ( $is_ai_session && $is_too_early ) // Prevent AI session joining before scheduled time
-	) {
-		$_class = 'snks-disabled';
-		$room   = '#';
-		
-		// For AI sessions that are too early, show a specific message
-		if ( $is_ai_session && $is_too_early ) {
+	// For AI sessions, only disable if too early (before session time)
+	// Don't disable after session starts or ends
+	if ( $is_ai_session ) {
+		if ( $is_too_early ) {
+			// Only disable if session hasn't started yet
+			$_class = 'snks-disabled';
+			$room   = '#';
 			$button_text = 'الجلسة لم تبدأ بعد';
+		}
+		// Don't add snks-disabled for AI sessions after they start, even if they've ended
+	} else {
+		// For non-AI sessions, apply the original logic
+		if (
+			( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 )
+			|| ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp )
+			|| ( 'cancelled' === $record->session_status )
+		) {
+			$_class = 'snks-disabled';
+			$room   = '#';
 		}
 	}
 	$template              = snks_booking_item_template( $record );
