@@ -123,48 +123,65 @@ add_action(
 							const newButton = $('<button>', {
 								text: 'x', // Button text
 								class: 'jet-form-builder-repeater__custom_remove', // Add your custom class here
-								click: function(e) {
-									e.preventDefault();
-									let rowRemove = $(this).closest('.jet-form-builder-repeater__row-remove');
-									let removeButton = rowRemove.find('.jet-form-builder-repeater__remove');
-									if ( $(this).closest('form[data-form-id="2199"]').length > 0 ) {
-										let baseHour = rowRemove.prev().find('select[data-field-name="appointment_hour"]').val();
-										let baseHourId = rowRemove.prev().find('select[data-field-name="appointment_hour"]').attr('id');
-										if ( baseHour !== '' && baseHourId !== '' ) {
-											$.ajax({
-												url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
-												type: 'POST',
-												data: {
-													action: 'check_open_session',
-													security: "<?php echo esc_attr( wp_create_nonce( 'snks_nonce' ) ); ?>",
-													baseHour: baseHour,
-													baseHourId: baseHourId
-												},
-												success: function(response) {
-													if (!response.success) {
-														Swal.fire({
-															icon: 'error',
-															title: 'عفواً',
-															text: response.data.message,
-															confirmButtonText: 'إغلاق'
-														});
-													} else {
-														removeButton.trigger('click');
-													}
-												}
-											});
-										} else {
-											removeButton.trigger('click');
-										}
-									} else {
-										removeButton.trigger('click');
-									}
-								}
+								type: 'button' // Prevent form submission
 							});
 							$(this).after(newButton);
 						}
 					});
 				}
+				
+				// Use event delegation for custom remove button clicks
+				$(document).off('click', '.jet-form-builder-repeater__custom_remove').on('click', '.jet-form-builder-repeater__custom_remove', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					
+					let $customButton = $(this);
+					let rowRemove = $customButton.closest('.jet-form-builder-repeater__row-remove');
+					let removeButton = rowRemove.find('.jet-form-builder-repeater__remove');
+					
+					if ( $customButton.closest('form[data-form-id="2199"]').length > 0 ) {
+						let baseHour = rowRemove.prev().find('select[data-field-name="appointment_hour"]').val();
+						let baseHourId = rowRemove.prev().find('select[data-field-name="appointment_hour"]').attr('id');
+						if ( baseHour !== '' && baseHourId !== '' ) {
+							$.ajax({
+								url: "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>",
+								type: 'POST',
+								data: {
+									action: 'check_open_session',
+									security: "<?php echo esc_attr( wp_create_nonce( 'snks_nonce' ) ); ?>",
+									baseHour: baseHour,
+									baseHourId: baseHourId
+								},
+								success: function(response) {
+									if (!response.success) {
+										Swal.fire({
+											icon: 'error',
+											title: 'عفواً',
+											text: response.data.message,
+											confirmButtonText: 'إغلاق'
+										});
+									} else {
+										// Trigger remove and re-add buttons after a delay
+										removeButton.trigger('click');
+										setTimeout(function() {
+											repeaterCustomRemove();
+										}, 500);
+									}
+								}
+							});
+						} else {
+							removeButton.trigger('click');
+							setTimeout(function() {
+								repeaterCustomRemove();
+							}, 500);
+						}
+					} else {
+						removeButton.trigger('click');
+						setTimeout(function() {
+							repeaterCustomRemove();
+						}, 500);
+					}
+				});
 				function disableOptions( valuesInput, target, separator ) {
 					if ( typeof $(valuesInput).val() === 'undefined' ) {
 						return;
@@ -193,6 +210,40 @@ add_action(
 					disableOptions( '#disabled-clinics', 'app_clinic', '|' );
 				}
 				repeaterCustomRemove();
+				
+				// Use MutationObserver to re-add custom buttons when DOM changes
+				if (typeof MutationObserver !== 'undefined') {
+					const observer = new MutationObserver(function(mutations) {
+						let shouldReAdd = false;
+						mutations.forEach(function(mutation) {
+							if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+								// Check if any added nodes are repeater rows
+								$(mutation.addedNodes).each(function() {
+									if ($(this).find('.jet-form-builder-repeater__remove').length > 0 || 
+										$(this).hasClass('jet-form-builder-repeater__row') ||
+										$(this).closest('.jet-form-builder-repeater__row').length > 0) {
+										shouldReAdd = true;
+										return false;
+									}
+								});
+							}
+						});
+						if (shouldReAdd) {
+							setTimeout(function() {
+								repeaterCustomRemove();
+							}, 100);
+						}
+					});
+					
+					// Observe changes to repeater containers
+					$('.jet-form-builder-repeater__items').each(function() {
+						observer.observe(this, {
+							childList: true,
+							subtree: true
+						});
+					});
+				}
+				
 				setCookie('edited_form', '', 0);
 				// Add event listeners for any interaction with form fields
 				var confirmSave = document.querySelectorAll('.snks-confirm');
@@ -211,6 +262,10 @@ add_action(
 
 				$( document ).on('click', '.jet-form-builder-repeater__remove', function(){
 					$(".item-deleted").trigger('click');
+					// Re-add custom remove buttons after row removal
+					setTimeout(function() {
+						repeaterCustomRemove();
+					}, 500);
 				});
 
 				$( document ).on('change', 'input[name=attendance_type]', function(){
@@ -240,7 +295,7 @@ add_action(
 							disableAttendanceOptions();
 							disableClinics();
 						},
-						300
+						500
 					);
 				});
 
