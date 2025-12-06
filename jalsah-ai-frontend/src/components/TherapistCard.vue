@@ -579,20 +579,12 @@ export default {
       try {
         // Use the actual available dates from the therapist data
         if (props.therapist.available_dates && Array.isArray(props.therapist.available_dates)) {
-          // Get the nearest slot info to exclude it
-          const nearestSlotDate = getNearestSlotDate()
-          
           // Deduplicate dates by creating a Map with date as key
           const dateMap = new Map()
           
           props.therapist.available_dates.forEach(dateInfo => {
             const dateObj = new Date(dateInfo.date)
             const dateKey = dateInfo.date
-            
-            // Skip if this is the nearest slot date
-            if (nearestSlotDate && dateKey === nearestSlotDate) {
-              return
-            }
             
             // If date doesn't exist or this slot has earlier time, update it
             if (!dateMap.has(dateKey) || 
@@ -617,18 +609,12 @@ export default {
           if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date) {
             const baseDate = new Date(props.therapist.earliest_slot_data.date)
             const dates = []
-            const nearestSlotDate = getNearestSlotDate()
             
             // Generate next 7 days starting from the earliest slot date
             for (let i = 0; i < 7; i++) {
               const date = new Date(baseDate)
               date.setDate(baseDate.getDate() + i)
               const dateString = date.toISOString().split('T')[0]
-              
-              // Skip if this is the nearest slot date
-              if (nearestSlotDate && dateString === nearestSlotDate) {
-                continue
-              }
               
               dates.push({
                 value: dateString,
