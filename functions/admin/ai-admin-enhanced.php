@@ -2388,7 +2388,7 @@ function snks_enhanced_ai_chatgpt_page() {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_chatgpt_settings' ) ) {
 			update_option( 'snks_ai_chatgpt_api_key', sanitize_text_field( $_POST['api_key'] ) );
 			update_option( 'snks_ai_chatgpt_model', sanitize_text_field( $_POST['model'] ) );
-			update_option( 'snks_ai_chatgpt_prompt', sanitize_textarea_field( $_POST['prompt'] ) );
+			update_option( 'snks_ai_chatgpt_prompt', sanitize_textarea_field( wp_unslash( $_POST['prompt'] ) ) );
 					update_option( 'snks_ai_chatgpt_max_tokens', intval( $_POST['max_tokens'] ) );
 		update_option( 'snks_ai_chatgpt_temperature', floatval( $_POST['temperature'] ) );
 		update_option( 'snks_ai_chatgpt_min_questions', intval( $_POST['min_questions'] ) );
