@@ -875,29 +875,133 @@ add_action(
 					var sessionId = $(this).data('session-id');
 					var clientId = $(this).data('client-id');
 					
+					// Store original HTML for error recovery
+					var originalHtml = `
+						<div style="text-align: right; direction: rtl;">
+							<div style="margin-bottom: 20px;">
+								<label for="message_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">الرسالة:</label>
+								<textarea id="message_text" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب رسالتك هنا..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+							</div>
+							<div style="margin-bottom: 15px;">
+								<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">المرفقات (اختياري):</label>
+								<div id="file-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#eef2ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background='#f9fafb'">
+									<svg style="width: 48px; height: 48px; margin: 0 auto 12px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+									</svg>
+									<p style="color: #6366f1; font-weight: 600; margin-bottom: 4px;">اضغط أو اسحب الملفات هنا</p>
+									<p style="color: #6b7280; font-size: 13px;">صور، فيديوهات، أو مستندات (حتى 10 ملفات)</p>
+									<input type="file" id="message_files" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;">
+								</div>
+								<div id="file-preview" style="margin-top: 15px; display: none;"></div>
+							</div>
+						</div>
+					`;
+					
+					// Function to initialize file handlers (reusable for error recovery)
+					var selectedFiles = [];
+					function initializeFileHandlers() {
+						const dropZone = document.getElementById('file-drop-zone');
+						const fileInput = document.getElementById('message_files');
+						const filePreview = document.getElementById('file-preview');
+						
+						if (!dropZone || !fileInput) return;
+						
+						// Clear previous event listeners by cloning elements
+						const newDropZone = dropZone.cloneNode(true);
+						dropZone.parentNode.replaceChild(newDropZone, dropZone);
+						const newFileInput = fileInput.cloneNode(true);
+						fileInput.parentNode.replaceChild(newFileInput, fileInput);
+						
+						// Get new references
+						const newDropZoneRef = document.getElementById('file-drop-zone');
+						const newFileInputRef = document.getElementById('message_files');
+						
+						// Reset selected files
+						selectedFiles = [];
+						
+						// Click to select files
+						newDropZoneRef.addEventListener('click', () => newFileInputRef.click());
+						
+						// Drag and drop handlers
+						newDropZoneRef.addEventListener('dragover', (e) => {
+							e.preventDefault();
+							newDropZoneRef.style.borderColor = '#6366f1';
+							newDropZoneRef.style.background = '#eef2ff';
+						});
+						
+						newDropZoneRef.addEventListener('dragleave', () => {
+							newDropZoneRef.style.borderColor = '#d1d5db';
+							newDropZoneRef.style.background = '#f9fafb';
+						});
+						
+						newDropZoneRef.addEventListener('drop', (e) => {
+							e.preventDefault();
+							newDropZoneRef.style.borderColor = '#d1d5db';
+							newDropZoneRef.style.background = '#f9fafb';
+							handleFiles(e.dataTransfer.files);
+						});
+						
+						newFileInputRef.addEventListener('change', (e) => {
+							handleFiles(e.target.files);
+						});
+						
+						function handleFiles(files) {
+							selectedFiles = Array.from(files);
+							displayFiles(selectedFiles);
+						}
+						
+						function displayFiles(files) {
+							const preview = document.getElementById('file-preview');
+							if (!preview) return;
+							
+							if (files.length === 0) {
+								preview.style.display = 'none';
+								return;
+							}
+							
+							preview.style.display = 'block';
+							preview.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">' + 
+								files.map((file, index) => {
+									const isImage = file.type.startsWith('image/');
+									const fileUrl = isImage ? URL.createObjectURL(file) : '';
+									const fileName = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
+									const fileSize = (file.size / 1024).toFixed(1) + ' KB';
+									
+									return `
+										<div style="position: relative; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; background: white; text-align: center;">
+											${isImage ? 
+												`<img src="${fileUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin-bottom: 6px;">` :
+												`<div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 6px; margin: 0 auto 6px;">
+													<svg style="width: 32px; height: 32px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+													</svg>
+												</div>`
+											}
+											<p style="font-size: 11px; color: #374151; margin: 0; font-weight: 500;">${fileName}</p>
+											<p style="font-size: 10px; color: #9ca3af; margin: 2px 0 0 0;">${fileSize}</p>
+											<button onclick="removeFile(${index})" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid white; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">×</button>
+										</div>
+									`;
+								}).join('') + '</div>';
+							
+							// Make removeFile available globally
+							window.removeFile = function(index) {
+								selectedFiles.splice(index, 1);
+								const dataTransfer = new DataTransfer();
+								selectedFiles.forEach(file => dataTransfer.items.add(file));
+								const fileInput = document.getElementById('message_files');
+								if (fileInput) {
+									fileInput.files = dataTransfer.files;
+									displayFiles(selectedFiles);
+								}
+							};
+						}
+					}
+					
 					// Show message form with fancy file upload
 					var messagePopup = Swal.fire({
 						title: 'إرسال رسالة للمريض',
-						html: `
-							<div style="text-align: right; direction: rtl;">
-								<div style="margin-bottom: 20px;">
-									<label for="message_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">الرسالة:</label>
-									<textarea id="message_text" style="width: 100%; height: 120px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب رسالتك هنا..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
-								</div>
-								<div style="margin-bottom: 15px;">
-									<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">المرفقات (اختياري):</label>
-									<div id="file-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='#6366f1'; this.style.background='#eef2ff'" onmouseout="this.style.borderColor='#d1d5db'; this.style.background='#f9fafb'">
-										<svg style="width: 48px; height: 48px; margin: 0 auto 12px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-										</svg>
-										<p style="color: #6366f1; font-weight: 600; margin-bottom: 4px;">اضغط أو اسحب الملفات هنا</p>
-										<p style="color: #6b7280; font-size: 13px;">صور، فيديوهات، أو مستندات (حتى 10 ملفات)</p>
-										<input type="file" id="message_files" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display: none;">
-									</div>
-									<div id="file-preview" style="margin-top: 15px; display: none;"></div>
-								</div>
-							</div>
-						`,
+						html: originalHtml,
 						showCloseButton: true,
 						confirmButtonText: 'إرسال',
 						confirmButtonColor: '#6366f1',
@@ -906,82 +1010,7 @@ add_action(
 						allowEscapeKey: false, // Prevent closing with ESC key
 						width: '600px',
 						didOpen: () => {
-							const dropZone = document.getElementById('file-drop-zone');
-							const fileInput = document.getElementById('message_files');
-							const filePreview = document.getElementById('file-preview');
-							let selectedFiles = [];
-							
-							// Click to select files
-							dropZone.addEventListener('click', () => fileInput.click());
-							
-							// Drag and drop handlers
-							dropZone.addEventListener('dragover', (e) => {
-								e.preventDefault();
-								dropZone.style.borderColor = '#6366f1';
-								dropZone.style.background = '#eef2ff';
-							});
-							
-							dropZone.addEventListener('dragleave', () => {
-								dropZone.style.borderColor = '#d1d5db';
-								dropZone.style.background = '#f9fafb';
-							});
-							
-							dropZone.addEventListener('drop', (e) => {
-								e.preventDefault();
-								dropZone.style.borderColor = '#d1d5db';
-								dropZone.style.background = '#f9fafb';
-								handleFiles(e.dataTransfer.files);
-							});
-							
-							fileInput.addEventListener('change', (e) => {
-								handleFiles(e.target.files);
-							});
-							
-							function handleFiles(files) {
-								selectedFiles = Array.from(files);
-								displayFiles(selectedFiles);
-							}
-							
-							function displayFiles(files) {
-								if (files.length === 0) {
-									filePreview.style.display = 'none';
-									return;
-								}
-								
-								filePreview.style.display = 'block';
-								filePreview.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">' + 
-									files.map((file, index) => {
-										const isImage = file.type.startsWith('image/');
-										const fileUrl = isImage ? URL.createObjectURL(file) : '';
-										const fileName = file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name;
-										const fileSize = (file.size / 1024).toFixed(1) + ' KB';
-										
-										return `
-											<div style="position: relative; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; background: white; text-align: center;">
-												${isImage ? 
-													`<img src="${fileUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; margin-bottom: 6px;">` :
-													`<div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; background: #f3f4f6; border-radius: 6px; margin: 0 auto 6px;">
-														<svg style="width: 32px; height: 32px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-														</svg>
-													</div>`
-												}
-												<p style="font-size: 11px; color: #374151; margin: 0; font-weight: 500;">${fileName}</p>
-												<p style="font-size: 10px; color: #9ca3af; margin: 2px 0 0 0;">${fileSize}</p>
-												<button onclick="removeFile(${index})" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid white; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">×</button>
-											</div>
-										`;
-									}).join('') + '</div>';
-								
-								// Make removeFile available globally
-								window.removeFile = function(index) {
-									selectedFiles.splice(index, 1);
-									const dataTransfer = new DataTransfer();
-									selectedFiles.forEach(file => dataTransfer.items.add(file));
-									fileInput.files = dataTransfer.files;
-									displayFiles(selectedFiles);
-								};
-							}
+							initializeFileHandlers();
 						},
 						preConfirm: () => {
 							const message = document.getElementById('message_text').value.trim();
@@ -992,9 +1021,15 @@ add_action(
 								return false;
 							}
 							
-							// Show loading state
+							// Show loading state with message
 							Swal.showLoading();
 							Swal.disableButtons();
+							Swal.update({
+								html: '<div style="text-align: center; padding: 20px;"><div class="swal2-loader"></div><p style="margin-top: 20px; font-size: 16px; color: #374151;">يرجى الإنتظار جاري رفع الملفات والإرسال...</p></div>',
+								showConfirmButton: false,
+								showCancelButton: false,
+								showCloseButton: false
+							});
 							
 							// Prepare form data with files
 							var formData = new FormData();
@@ -1030,6 +1065,17 @@ add_action(
 											// Reject to show error and keep popup open
 											Swal.enableButtons();
 											Swal.hideLoading();
+											// Restore original form content
+											Swal.update({
+												html: originalHtml,
+												showConfirmButton: true,
+												showCancelButton: false,
+												showCloseButton: true
+											});
+											// Re-initialize file handlers after restoring HTML
+											setTimeout(function() {
+												initializeFileHandlers();
+											}, 100);
 											Swal.showValidationMessage(response.data || 'حدث خطأ أثناء إرسال الرسالة');
 											reject(new Error(response.data || 'حدث خطأ أثناء إرسال الرسالة'));
 										}
@@ -1038,6 +1084,17 @@ add_action(
 										// Reject to show error and keep popup open
 										Swal.enableButtons();
 										Swal.hideLoading();
+										// Restore original form content
+										Swal.update({
+											html: originalHtml,
+											showConfirmButton: true,
+											showCancelButton: false,
+											showCloseButton: true
+										});
+										// Re-initialize file handlers after restoring HTML
+										setTimeout(function() {
+											initializeFileHandlers();
+										}, 100);
 										Swal.showValidationMessage('حدث خطأ أثناء إرسال الرسالة');
 										reject(new Error('حدث خطأ أثناء إرسال الرسالة'));
 									}
