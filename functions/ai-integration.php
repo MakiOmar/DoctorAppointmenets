@@ -6300,6 +6300,19 @@ Best regards,
 				
 				snks_send_appointment_change_notification( $appointment_id, $old_date, $old_time, $new_date, $new_time );
 			}
+			
+			// Send therapist notification about appointment change
+			if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) ) {
+				// Extract old appointment details
+				$old_date = date( 'Y-m-d', strtotime( $current_appointment->date_time ) );
+				$old_time = $current_appointment->starts;
+				
+				// Extract new appointment details
+				$new_date = date( 'Y-m-d', strtotime( $new_appointment->date_time ) );
+				$new_time = $new_appointment->starts;
+				
+				snks_send_therapist_appointment_change_notification( $appointment_id, $old_date, $old_time, $new_date, $new_time );
+			}
 
 			$this->send_success(
 				array(

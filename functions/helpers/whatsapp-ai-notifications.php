@@ -24,6 +24,7 @@ function snks_get_whatsapp_notification_settings() {
 		'template_patient_rem_now' => get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ),
 		'template_doctor_rem' => get_option( 'snks_template_doctor_rem', 'doctor_rem' ),
 		'template_edit2' => get_option( 'snks_template_edit2', 'edit2' ),
+		'template_edit' => get_option( 'snks_template_edit', 'edit' ),
         // New: Rosheta/Prescription related
         'template_rosheta_doctor' => get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ),
         'template_prescription1' => get_option( 'snks_template_prescription1', 'prescription1' ),
@@ -807,6 +808,76 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 	}
 	
 	return false;
+}
+
+/**
+ * Send appointment change notification to therapist
+ *
+ * @param int $session_id Session ID (old appointment ID).
+ * @param string $old_date Old appointment date (Y-m-d format).
+ * @param string $old_time Old appointment time (H:i:s format).
+ * @param string $new_date New appointment date (Y-m-d format).
+ * @param string $new_time New appointment time (H:i:s format).
+ * @return bool
+ */
+function snks_send_therapist_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time ) {
+	global $wpdb;
+	
+	$settings = snks_get_whatsapp_notification_settings();
+	if ( $settings['enabled'] != '1' ) {
+		return false;
+	}
+	
+	// Get session details (old appointment)
+	$session = $wpdb->get_row( $wpdb->prepare(
+		"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+		$session_id
+	) );
+	
+	if ( ! $session ) {
+		return false;
+	}
+	
+	// Get therapist phone
+	$therapist_phone = snks_get_user_whatsapp( $session->user_id );
+	if ( ! $therapist_phone ) {
+		return false;
+	}
+	
+	// Get patient name
+	$patient_first_name = get_user_meta( $session->client_id, 'billing_first_name', true );
+	$patient_last_name = get_user_meta( $session->client_id, 'billing_last_name', true );
+	$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
+	if ( empty( $patient_name ) ) {
+		$patient_name = 'المريض';
+	}
+	
+	// Format old appointment details
+	$old_day_name = snks_get_arabic_day_name( $old_date );
+	$old_formatted_date = date( 'Y-m-d', strtotime( $old_date ) );
+	$old_formatted_time = gmdate( 'h:i a', strtotime( $old_time ) );
+	
+	// Format new appointment details
+	$new_day_name = snks_get_arabic_day_name( $new_date );
+	$new_formatted_date = date( 'Y-m-d', strtotime( $new_date ) );
+	$new_formatted_time = gmdate( 'h:i a', strtotime( $new_time ) );
+	
+	// Send WhatsApp template
+	$result = snks_send_whatsapp_template_message(
+		$therapist_phone,
+		$settings['template_edit'],
+		array( 
+			'patient' => $patient_name,
+			'day' => $old_day_name,
+			'date' => $old_formatted_date,
+			'time' => $old_formatted_time,
+			'day2' => $new_day_name,
+			'date2' => $new_formatted_date,
+			'time2' => $new_formatted_time
+		)
+	);
+	
+	return ! is_wp_error( $result );
 }
 
 /**
