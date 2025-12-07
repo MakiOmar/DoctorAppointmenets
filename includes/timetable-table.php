@@ -89,6 +89,7 @@ function snks_add_whatsapp_notification_columns() {
 		'whatsapp_doctor_reminded' => 'TINYINT(1) DEFAULT 0',
 		'whatsapp_patient_now_sent' => 'TINYINT(1) DEFAULT 0',
 		'whatsapp_appointment_changed' => 'TINYINT(1) DEFAULT 0',
+		'whatsapp_therapist_appointment_changed' => 'TINYINT(1) DEFAULT 0',
 	);
 	
 	//phpcs:disable

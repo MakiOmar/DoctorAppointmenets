@@ -877,7 +877,21 @@ function snks_send_therapist_appointment_change_notification( $session_id, $old_
 		)
 	);
 	
-	return ! is_wp_error( $result );
+	// Mark as sent
+	if ( ! is_wp_error( $result ) ) {
+		// Update timetable table with whatsapp_therapist_appointment_changed flag
+		$wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			array( 'whatsapp_therapist_appointment_changed' => 1 ),
+			array( 'ID' => $session_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+		
+		return true;
+	}
+	
+	return false;
 }
 
 /**

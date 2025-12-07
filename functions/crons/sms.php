@@ -97,9 +97,8 @@ function snks_send_session_notifications() {
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
 					
 					if ( $settings['enabled'] == '1' ) {
-						// Get doctor name
-						$doctor = get_user_by( 'id', $session->user_id );
-						$doctor_name = $doctor ? $doctor->display_name : 'المعالج';
+						// Get doctor name using standardized function
+						$doctor_name = function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( $session->user_id ) : 'المعالج';
 						
 						// Format date and time
 						$day_name = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
