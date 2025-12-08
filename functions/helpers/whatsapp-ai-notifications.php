@@ -746,6 +746,7 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 	
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' ) {
+		error_log( "AI-WHATSAPP: appointment change skipped - notifications disabled for session {$session_id}" );
 		return false;
 	}
 	
@@ -756,12 +757,14 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 	) );
 	
     if ( ! $session ) {
+        error_log( "AI-WHATSAPP: appointment change skipped - session not found ({$session_id})" );
         return false;
     }
 	
 	// Get patient phone
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
     if ( ! $patient_phone ) {
+        error_log( "AI-WHATSAPP: appointment change skipped - patient phone missing for client_id {$session->client_id}" );
         return false;
     }
 	
@@ -802,11 +805,11 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 			array( '%d' )
 		);
 		
-        
-		
+        error_log( "AI-WHATSAPP: appointment change sent to patient for session {$session_id}" );
 		return true;
 	}
 	
+	error_log( "AI-WHATSAPP: appointment change failed for session {$session_id} - " . ( is_wp_error( $result ) ? $result->get_error_message() : 'unknown error' ) );
 	return false;
 }
 
@@ -845,9 +848,16 @@ function snks_send_therapist_appointment_change_notification( $session_id, $old_
 	}
 	
 	// Get patient name
+	// Get patient name with better fallbacks
 	$patient_first_name = get_user_meta( $session->client_id, 'billing_first_name', true );
 	$patient_last_name = get_user_meta( $session->client_id, 'billing_last_name', true );
 	$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
+	if ( empty( $patient_name ) ) {
+		$user_obj = get_userdata( $session->client_id );
+		if ( $user_obj ) {
+			$patient_name = $user_obj->display_name ?: $user_obj->user_login;
+		}
+	}
 	if ( empty( $patient_name ) ) {
 		$patient_name = 'المريض';
 	}
