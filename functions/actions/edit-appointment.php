@@ -142,14 +142,14 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					$new_date = date( 'Y-m-d', strtotime( $new_timetable->date_time ) );
 					$new_time = $new_timetable->starts;
 
-					// Patient notification
+					// Patient notification (pass patient_id for fallback when new slot lacks client_id)
 					if ( function_exists( 'snks_send_appointment_change_notification' ) ) {
-						snks_send_appointment_change_notification( $new_timetable->ID, $old_date, $old_time, $new_date, $new_time );
+						snks_send_appointment_change_notification( $new_timetable->ID, $old_date, $old_time, $new_date, $new_time, $booking->client_id );
 					}
 
-					// Therapist notification
+					// Therapist notification (pass patient_id for accurate name)
 					if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) ) {
-						snks_send_therapist_appointment_change_notification( $booking->ID, $old_date, $old_time, $new_date, $new_time );
+						snks_send_therapist_appointment_change_notification( $booking->ID, $old_date, $old_time, $new_date, $new_time, $booking->client_id );
 					}
 				}
 				

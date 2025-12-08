@@ -741,7 +741,7 @@ function snks_send_doctor_midnight_reminders() {
  * @param string $new_time New appointment time (H:i:s format).
  * @return bool
  */
-function snks_send_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time ) {
+function snks_send_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time, $fallback_patient_id = 0 ) {
 	global $wpdb;
 	
 	$settings = snks_get_whatsapp_notification_settings();
@@ -761,10 +761,17 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
         return false;
     }
 	
+	// Resolve patient id (session first, fallback to provided)
+	$patient_id = $session->client_id ? $session->client_id : $fallback_patient_id;
+	if ( ! $patient_id ) {
+		error_log( "AI-WHATSAPP: appointment change skipped - patient id missing (session client_id {$session->client_id}, fallback {$fallback_patient_id})" );
+		return false;
+	}
+
 	// Get patient phone
-	$patient_phone = snks_get_user_whatsapp( $session->client_id );
+	$patient_phone = snks_get_user_whatsapp( $patient_id );
     if ( ! $patient_phone ) {
-        error_log( "AI-WHATSAPP: appointment change skipped - patient phone missing for client_id {$session->client_id}" );
+        error_log( "AI-WHATSAPP: appointment change skipped - patient phone missing for patient_id {$patient_id}" );
         return false;
     }
 	
@@ -823,7 +830,7 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
  * @param string $new_time New appointment time (H:i:s format).
  * @return bool
  */
-function snks_send_therapist_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time ) {
+function snks_send_therapist_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time, $fallback_patient_id = 0 ) {
 	global $wpdb;
 	
 	$settings = snks_get_whatsapp_notification_settings();
@@ -848,12 +855,15 @@ function snks_send_therapist_appointment_change_notification( $session_id, $old_
 	}
 	
 	// Get patient name
+	// Resolve patient id (session first, fallback to provided)
+	$patient_id = $session->client_id ? $session->client_id : $fallback_patient_id;
+
 	// Get patient name with better fallbacks
-	$patient_first_name = get_user_meta( $session->client_id, 'billing_first_name', true );
-	$patient_last_name = get_user_meta( $session->client_id, 'billing_last_name', true );
+	$patient_first_name = get_user_meta( $patient_id, 'billing_first_name', true );
+	$patient_last_name = get_user_meta( $patient_id, 'billing_last_name', true );
 	$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
 	if ( empty( $patient_name ) ) {
-		$user_obj = get_userdata( $session->client_id );
+		$user_obj = get_userdata( $patient_id );
 		if ( $user_obj ) {
 			$patient_name = $user_obj->display_name ?: $user_obj->user_login;
 		}
