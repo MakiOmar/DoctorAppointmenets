@@ -132,8 +132,8 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					$firebase->trigger_notifier( $title, $content, $user_id, '' );
 				}
 				
-				// Send WhatsApp notification to therapist for AI sessions
-				if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) && strpos( $booking->settings, 'ai_booking' ) !== false ) {
+				// Send WhatsApp notifications for AI sessions (patient + therapist)
+				if ( strpos( $booking->settings, 'ai_booking' ) !== false ) {
 					// Extract old appointment details
 					$old_date = date( 'Y-m-d', strtotime( $booking->date_time ) );
 					$old_time = $booking->starts;
@@ -141,8 +141,16 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					// Extract new appointment details
 					$new_date = date( 'Y-m-d', strtotime( $new_timetable->date_time ) );
 					$new_time = $new_timetable->starts;
-					
-					snks_send_therapist_appointment_change_notification( $booking->ID, $old_date, $old_time, $new_date, $new_time );
+
+					// Patient notification
+					if ( function_exists( 'snks_send_appointment_change_notification' ) ) {
+						snks_send_appointment_change_notification( $new_timetable->ID, $old_date, $old_time, $new_date, $new_time );
+					}
+
+					// Therapist notification
+					if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) ) {
+						snks_send_therapist_appointment_change_notification( $booking->ID, $old_date, $old_time, $new_date, $new_time );
+					}
 				}
 				
 				$booking_changed = true;
