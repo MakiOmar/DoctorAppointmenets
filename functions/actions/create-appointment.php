@@ -50,6 +50,14 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 	
 	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 		error_log( "=== EARNINGS DEBUG: This is an AI order, calling snks_process_ai_order_completion ===" );
+		// Send booking notifications as soon as the order is processing (no profit yet)
+		if ( $order->has_status( 'processing' ) && class_exists( 'SNKS_AI_Orders' ) && ! $order->get_meta( 'ai_booking_notified' ) ) {
+			SNKS_AI_Orders::process_ai_order_payment( $order_id );
+			$order->update_meta_data( 'ai_booking_notified', 1 );
+			$order->save();
+			error_log( "=== EARNINGS DEBUG: AI order processing -> booking notifications sent ===" );
+		}
+
 		// Process AI order completion (profit only when completed)
 		if ( $order->has_status( 'completed' ) ) {
 			$result = snks_process_ai_order_completion( $order_id );
