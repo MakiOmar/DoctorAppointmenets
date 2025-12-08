@@ -1257,6 +1257,10 @@ add_shortcode(
 				);
 				$coupon_code = null;
 				$coupon_type = null;
+				// تأمين القيم الافتراضية للقسيمة
+				$coupon_code = '';
+				$coupon_type = '';
+
 				// تحقق من النتيجة
 				if ( $order_id ) {
 					// Step 2: Get order items
