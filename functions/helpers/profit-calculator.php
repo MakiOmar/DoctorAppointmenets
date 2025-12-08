@@ -427,6 +427,14 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		);
 	}
 
+	// Profit must only be processed when the order is fully completed
+	if ( ! $order->has_status( 'completed' ) ) {
+		return array(
+			'success' => false,
+			'message' => 'Order not completed'
+		);
+	}
+	
 	
 	// Check if it's an AI session (support both meta keys)
 	$is_ai_session = $order->get_meta( 'is_ai_session' );

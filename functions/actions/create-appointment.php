@@ -50,9 +50,13 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 	
 	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
 		error_log( "=== EARNINGS DEBUG: This is an AI order, calling snks_process_ai_order_completion ===" );
-		// Process AI order completion
-		$result = snks_process_ai_order_completion( $order_id );
-		error_log( "=== EARNINGS DEBUG: snks_process_ai_order_completion returned: " . var_export( $result, true ) );
+		// Process AI order completion (profit only when completed)
+		if ( $order->has_status( 'completed' ) ) {
+			$result = snks_process_ai_order_completion( $order_id );
+			error_log( "=== EARNINGS DEBUG: snks_process_ai_order_completion returned: " . var_export( $result, true ) );
+		} else {
+			error_log( "=== EARNINGS DEBUG: AI order not completed yet, skipping profit processing ===" );
+		}
 		
 		// Only redirect if this is not a manual admin completion
 		// Check if we're in admin area or if this is a manual status change

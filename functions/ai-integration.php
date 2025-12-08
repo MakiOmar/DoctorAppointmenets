@@ -7974,9 +7974,8 @@ function snks_hook_ai_session_completion() {
 	add_action( 'wp_ajax_end_ai_session', 'snks_handle_ai_session_completion', 10, 1 );
 	add_action( 'wp_ajax_nopriv_end_ai_session', 'snks_handle_ai_session_completion', 10, 1 );
 
-	// Hook into WooCommerce order status changes for AI orders
+	// Hook into WooCommerce order status changes for AI orders (profit only after completion)
 	add_action( 'woocommerce_order_status_completed', 'snks_handle_ai_order_completion', 10, 1 );
-	add_action( 'woocommerce_order_status_processing', 'snks_handle_ai_order_completion', 10, 1 );
 
 	// Hook into session actions table updates
 	add_action( 'snks_session_action_updated', 'snks_handle_session_action_update', 10, 2 );
@@ -8023,6 +8022,11 @@ function snks_handle_ai_order_completion( $order_id ) {
 	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
 
 	if ( ! $is_ai_session && ! $from_jalsah_ai ) {
+		return;
+	}
+
+	// Process profit only when the order is fully completed
+	if ( ! $order->has_status( 'completed' ) ) {
 		return;
 	}
 
