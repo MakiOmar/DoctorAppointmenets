@@ -32,6 +32,10 @@ function snks_send_session_notifications() {
 	$current_time      = current_time('mysql');
 	$current_timestamp = current_time('timestamp');
 
+	// Debug: confirm cron execution time
+	error_log( '[snks_notifications] cron tick at ' . $current_time );
+
+	// Use local time bounds (not UTC) for upcoming window checks.
 	$time_24_hours = date('Y-m-d H:i:s', strtotime('+24 hours', $current_timestamp));
 	$time_23_hours = date('Y-m-d H:i:s', strtotime('+23 hours', $current_timestamp));
 	$time_1_hour   = date('Y-m-d H:i:s', strtotime('+1 hour', $current_timestamp));
@@ -48,11 +52,12 @@ function snks_send_session_notifications() {
 			OR
 			( date_time >= %s AND date_time <= %s AND notification_1hr_sent = %d )
 		)
+		ORDER BY date_time ASC
 		LIMIT 20
 		",
 		'open',
-		$current_time,     // start now
-		$time_24_hours,    // up to +24h
+		$time_23_hours,    // between +23h
+		$time_24_hours,    // and +24h
 		0,                 // notification_24hr_sent = 0
 		$current_time,     // start now
 		$time_1_hour,      // up to +1h
@@ -61,6 +66,13 @@ function snks_send_session_notifications() {
 	
 	$results = $wpdb->get_results( $query );
 	//phpcs:enable
+	
+	// Debug: log fetched session IDs for visibility
+	$fetched_ids = array();
+	foreach ( $results as $session ) {
+		$fetched_ids[] = $session->ID;
+	}
+	error_log( '[snks_notifications] fetched ' . count( $results ) . ' sessions: ' . implode( ',', $fetched_ids ) );
 	
 	// Process each result.
 	foreach ( $results as $session ) {
@@ -90,9 +102,8 @@ function snks_send_session_notifications() {
 			}
 			
 			// 24-hour reminder.
-			// Check if session is 19-24 hours away
-			if ( $time_diff >= 68400 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 68400 = 19 hrs, 86400 = 24 hrs
-				error_log( '24-hour reminder: ' . $billing_phone . ' - ' . $session->ID );
+			// Check if session is 23-24 hours away
+			if ( $time_diff >= 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 82800 = 23 hrs, 86400 = 24 hrs
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
