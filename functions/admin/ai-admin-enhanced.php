@@ -2437,8 +2437,6 @@ function snks_enhanced_ai_chatgpt_page() {
 						<td>
 							<select id="model" name="model">
 								<option value="gpt-3.5-turbo" <?php selected( $model, 'gpt-3.5-turbo' ); ?>>GPT-3.5 Turbo</option>
-								<option value="gpt-4" <?php selected( $model, 'gpt-4' ); ?>>GPT-4</option>
-								<option value="gpt-4-turbo" <?php selected( $model, 'gpt-4-turbo' ); ?>>GPT-4 Turbo</option>
 								<option value="gpt-4o" <?php selected( $model, 'gpt-4o' ); ?>>GPT-4o</option>
 								<option value="gpt-4o-mini" <?php selected( $model, 'gpt-4o-mini' ); ?>>GPT-4o Mini</option>
 								<option value="gpt-4.1" <?php selected( $model, 'gpt-4.1' ); ?>>GPT-4.1</option>
