@@ -10,15 +10,9 @@ defined( 'ABSPATH' ) || die();
 add_action(
 	'woocommerce_order_status_changed',
 	function ( $order_id, $old_status, $new_status ) {
-		// DEBUG: Log order status change
-		error_log( "=== EARNINGS DEBUG: Order status changed === Order ID: {$order_id}, Old Status: {$old_status}, New Status: {$new_status}" );
-		
 		// Check if the new status is 'completed' or 'processing'.
 		if ( in_array( $new_status, array( 'completed', 'processing' ), true ) ) {
-			error_log( "=== EARNINGS DEBUG: Status is 'completed' or 'processing', calling snks_woocommerce_payment_complete_action ===" );
 			snks_woocommerce_payment_complete_action( $order_id );
-		} else {
-			error_log( "=== EARNINGS DEBUG: Status is NOT 'completed' or 'processing', skipping ===" );
 		}
 	},
 	10,
@@ -35,35 +29,26 @@ add_action( 'woocommerce_payment_complete', 'snks_woocommerce_payment_complete_a
  * @throws Exception Exception.
  */
 function snks_woocommerce_payment_complete_action( $order_id ) {
-	error_log( "=== EARNINGS DEBUG: snks_woocommerce_payment_complete_action called === Order ID: {$order_id}" );
-	
 	$order       = wc_get_order( $order_id );
 	
 	if ( ! $order ) {
-		error_log( "=== EARNINGS DEBUG: Order not found for ID: {$order_id} ===" );
 		return;
 	}
 	
 	// Handle AI orders separately
 	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-	error_log( "=== EARNINGS DEBUG: AI Order Check === Order ID: {$order_id}, is_ai_order value: " . var_export( $is_ai_order, true ) );
 	
 	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
-		error_log( "=== EARNINGS DEBUG: This is an AI order, calling snks_process_ai_order_completion ===" );
 		// Send booking notifications as soon as the order is processing (no profit yet)
 		if ( $order->has_status( 'processing' ) && class_exists( 'SNKS_AI_Orders' ) && ! $order->get_meta( 'ai_booking_notified' ) ) {
 			SNKS_AI_Orders::process_ai_order_payment( $order_id );
 			$order->update_meta_data( 'ai_booking_notified', 1 );
 			$order->save();
-			error_log( "=== EARNINGS DEBUG: AI order processing -> booking notifications sent ===" );
 		}
 
 		// Process AI order completion (profit only when completed)
 		if ( $order->has_status( 'completed' ) ) {
 			$result = snks_process_ai_order_completion( $order_id );
-			error_log( "=== EARNINGS DEBUG: snks_process_ai_order_completion returned: " . var_export( $result, true ) );
-		} else {
-			error_log( "=== EARNINGS DEBUG: AI order not completed yet, skipping profit processing ===" );
 		}
 		
 		// Only redirect if this is not a manual admin completion
@@ -84,14 +69,11 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 		}
 		
 		// Return early for AI orders to prevent further processing
-		error_log( "=== EARNINGS DEBUG: Returning early for AI order ===" );
 		return;
 	}
 	
-	error_log( "=== EARNINGS DEBUG: This is NOT an AI order, processing regular order ===" );
 	$customer_id = $order->get_customer_id();
 	$booking_id  = $order->get_meta( 'booking_id', true );
-	error_log( "=== EARNINGS DEBUG: Regular order processing === Customer ID: {$customer_id}, Booking ID: {$booking_id}" );
 	if ( ! empty( $booking_id ) ) {
 		try {
 			$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
