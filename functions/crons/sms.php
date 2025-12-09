@@ -32,9 +32,6 @@ function snks_send_session_notifications() {
 	$current_time      = current_time('mysql');
 	$current_timestamp = current_time('timestamp');
 
-	// Debug: confirm cron execution time
-	error_log( '[snks_notifications] cron tick at ' . $current_time );
-
 	// Use local time bounds (not UTC) for upcoming window checks.
 	$time_24_hours = date('Y-m-d H:i:s', strtotime('+24 hours', $current_timestamp));
 	$time_23_hours = date('Y-m-d H:i:s', strtotime('+23 hours', $current_timestamp));
@@ -66,14 +63,6 @@ function snks_send_session_notifications() {
 	
 	$results = $wpdb->get_results( $query );
 	//phpcs:enable
-	
-	// Debug: log fetched session IDs for visibility
-	$fetched_ids = array();
-	foreach ( $results as $session ) {
-		$fetched_ids[] = $session->ID;
-	}
-	error_log( '[snks_notifications] fetched ' . count( $results ) . ' sessions: ' . implode( ',', $fetched_ids ) );
-	
 	// Process each result.
 	foreach ( $results as $session ) {
 		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
