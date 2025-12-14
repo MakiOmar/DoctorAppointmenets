@@ -297,6 +297,11 @@ export default {
 
       const userMessage = newMessage.value.trim()
       
+      // Check if this is the first real user message (after welcome)
+      // If so, don't include welcome exchange in conversation history
+      const isFirstRealMessage = messages.value.length === 1 && 
+                                  messages.value[0].role === 'assistant'
+      
       // Add user message
       messages.value.push({
         role: 'user',
@@ -314,7 +319,21 @@ export default {
                    const formData = new URLSearchParams()
           formData.append('action', 'chat_diagnosis_ajax')
           formData.append('message', userMessage)
-          formData.append('conversation_history', JSON.stringify(messages.value))
+          
+          // If this is the first real message after welcome, send empty conversation history
+          // This ensures ChatGPT starts fresh without seeing the welcome exchange
+          // Filter out welcome messages (marked with isWelcome flag or "مرحبا" exchange)
+          let conversationToSend = messages.value.slice(0, -1) // Exclude current message
+          
+          if (isFirstRealMessage) {
+            // For first real message, exclude welcome exchange completely
+            conversationToSend = []
+          } else {
+            // For subsequent messages, filter out welcome messages
+            conversationToSend = conversationToSend.filter(msg => !msg.isWelcome && msg.content !== 'مرحبا')
+          }
+          
+          formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')
          
          const response = await api.post('/wp-admin/admin-ajax.php', formData, {
@@ -429,11 +448,12 @@ export default {
           if (response.data.success) {
             const assistantMessage = response.data.data.message
             
-            // Add assistant welcome message
+            // Add assistant welcome message (but mark it as welcome so we can exclude it later)
             messages.value.push({
               role: 'assistant',
               content: typeof assistantMessage === 'string' ? assistantMessage : String(assistantMessage || ''),
-              timestamp: new Date()
+              timestamp: new Date(),
+              isWelcome: true // Mark as welcome message
             })
             
             await scrollToBottom()
