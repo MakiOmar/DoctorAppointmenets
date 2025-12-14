@@ -262,22 +262,18 @@ export default {
           const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
           
           if (diagnosisTime > oneHourAgo) {
-            // Load the diagnosis result and conversation history
+            // Load the diagnosis result but DON'T load conversation history
+            // This allows user to start a fresh conversation
             diagnosisResult.title = diagnosis.diagnosis_name
             diagnosisResult.description = diagnosis.diagnosis_description
             diagnosisResult.diagnosisId = diagnosis.diagnosis_id
             diagnosisCompleted.value = true
             
-            // Load conversation history if available
-            if (diagnosis.conversation_history && Array.isArray(diagnosis.conversation_history)) {
-              // Ensure all messages have content as string
-              messages.value = diagnosis.conversation_history.map(msg => ({
-                ...msg,
-                content: typeof msg.content === 'string' ? msg.content : String(msg.content || '')
-              }))
-            }
+            // Don't load conversation history - start fresh for new diagnosis
+            // This prevents ChatGPT from seeing the completed diagnosis and refusing to start new one
+            messages.value = []
             
-            // Show a message that diagnosis was loaded from previous session
+            // Show a message that previous diagnosis exists but starting fresh
             toast.info($t('chatDiagnosis.loadedFromPrevious'))
           }
         }
@@ -466,8 +462,14 @@ export default {
       await checkPromptAvailability()
       
       if (promptAvailable.value) {
-        // Load welcome message from ChatGPT prompt
-        await sendInitialWelcomeMessage()
+        // Load previous diagnosis if exists (but don't load conversation history)
+        await loadLatestDiagnosis()
+        
+        // Only send welcome message if there are no messages (fresh start)
+        // If diagnosis was completed, don't send welcome - user should start new conversation manually
+        if (messages.value.length === 0 && !diagnosisCompleted.value) {
+          await sendInitialWelcomeMessage()
+        }
       }
     })
 
