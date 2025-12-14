@@ -2483,7 +2483,7 @@ function snks_enhanced_ai_chatgpt_page() {
 					</tr>
 					<tr>
 						<th><label for="max_questions">Maximum Questions</label></th>
-						<td><input type="number" id="max_questions" name="max_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_max_questions', 10 ) ); ?>" min="5" max="20" step="1" class="small-text"></td>
+						<td><input type="number" id="max_questions" name="max_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_max_questions', 10 ) ); ?>" min="5" step="1" class="small-text"></td>
 					</tr>
 				</table>
 				
