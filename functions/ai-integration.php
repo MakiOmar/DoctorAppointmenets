@@ -4708,10 +4708,18 @@ Best regards,
 
 		// Add conversation history (limit to last 10 messages to avoid token limits)
 		// Only add if conversation history is not empty and is a valid array
+		// Debug: Log conversation history
+		// error_log( 'Conversation history count: ' . ( is_array( $conversation_history ) ? count( $conversation_history ) : 'not array' ) );
+		
 		if ( ! empty( $conversation_history ) && is_array( $conversation_history ) && count( $conversation_history ) > 0 ) {
 			$recent_history = array_slice( $conversation_history, -10 );
 			foreach ( $recent_history as $msg ) {
+				// Skip empty messages and welcome messages
 				if ( isset( $msg['role'] ) && isset( $msg['content'] ) && ! empty( trim( $msg['content'] ) ) ) {
+					// Skip "مرحبا" messages
+					if ( trim( $msg['content'] ) === 'مرحبا' ) {
+						continue;
+					}
 					$messages[] = array(
 						'role'    => $msg['role'],
 						'content' => $msg['content'],
