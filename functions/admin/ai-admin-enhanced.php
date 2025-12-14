@@ -34,13 +34,7 @@ Focus on understanding the patient's symptoms, duration, impact on daily life, a
 
 if ( ! function_exists( 'snks_get_ai_chatgpt_prompt' ) ) {
 	function snks_get_ai_chatgpt_prompt() {
-		$default_prompt     = snks_get_ai_chatgpt_default_prompt();
-		$use_default_prompt = get_option( 'snks_ai_chatgpt_use_default_prompt', '0' );
-
-		if ( '1' === (string) $use_default_prompt ) {
-			return $default_prompt;
-		}
-
+		$default_prompt = snks_get_ai_chatgpt_default_prompt();
 		$custom_prompt = get_option( 'snks_ai_chatgpt_prompt', '' );
 		return ! empty( $custom_prompt ) ? $custom_prompt : $default_prompt;
 	}
@@ -2394,10 +2388,6 @@ function snks_enhanced_ai_chatgpt_page() {
 		update_option( 'snks_ai_chatgpt_min_questions', intval( $_POST['min_questions'] ) );
 		update_option( 'snks_ai_chatgpt_max_questions', intval( $_POST['max_questions'] ) );
 			
-			$prompt_source = isset( $_POST['prompt_source'] ) ? sanitize_text_field( $_POST['prompt_source'] ) : 'custom';
-			$use_default_prompt = ( 'default' === $prompt_source ) ? '1' : '0';
-			update_option( 'snks_ai_chatgpt_use_default_prompt', $use_default_prompt );
-			
 			echo '<div class="notice notice-success"><p>ChatGPT settings updated successfully!</p></div>';
 		}
 	}
@@ -2412,7 +2402,6 @@ function snks_enhanced_ai_chatgpt_page() {
 	
 	$api_key             = get_option( 'snks_ai_chatgpt_api_key', '' );
 	$model               = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
-	$use_default_prompt  = get_option( 'snks_ai_chatgpt_use_default_prompt', '0' );
 	$custom_prompt_value = get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
 	$active_prompt       = snks_get_ai_chatgpt_prompt();
 	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
@@ -2445,27 +2434,11 @@ function snks_enhanced_ai_chatgpt_page() {
 						</td>
 					</tr>
 					<tr>
-						<th><label for="prompt_source">Prompt Source</label></th>
-						<td>
-							<label style="display:block;margin-bottom:6px;">
-								<input type="radio" id="prompt_source_default" name="prompt_source" value="default" <?php checked( $use_default_prompt, '1' ); ?> />
-								Use built-in default prompt
-							</label>
-							<label style="display:block;">
-								<input type="radio" id="prompt_source_custom" name="prompt_source" value="custom" <?php checked( $use_default_prompt, '0' ); ?> />
-								Use custom prompt (editable below)
-							</label>
-							<p class="description">
-								When the built-in prompt is selected, the custom prompt field is ignored. The currently active prompt will always follow the selected source.
-							</p>
-						</td>
-					</tr>
-					<tr>
 						<th><label for="prompt">System Prompt</label></th>
 						<td>
 							<textarea id="prompt" name="prompt" rows="4" class="large-text"><?php echo esc_textarea( $custom_prompt_value ); ?></textarea>
 							<p class="description">
-								Custom prompt (used only when "Use custom prompt" is selected). To revert to the default wording, switch the prompt source above.
+								Custom system prompt for ChatGPT interactions.
 							</p>
 						</td>
 					</tr>
