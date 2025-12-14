@@ -297,12 +297,8 @@ export default {
 
       const userMessage = newMessage.value.trim()
       
-      // Check if this is the first real user message (after welcome)
-      // Count only non-welcome messages - if we only have welcome message, this is first real message
-      const hasOnlyWelcome = messages.value.length === 1 && 
-                            messages.value[0].role === 'assistant' && 
-                            (messages.value[0].isWelcome || messages.value[0].content.includes('شكرا لاختيارك'))
-      const isFirstRealMessage = hasOnlyWelcome || messages.value.length === 0
+      // Check if this is the very first message (no previous messages at all)
+      const isFirstMessage = messages.value.length === 0
       
       // Add user message to display
       messages.value.push({
@@ -322,22 +318,16 @@ export default {
           formData.append('action', 'chat_diagnosis_ajax')
           formData.append('message', userMessage)
           
-          // ALWAYS send empty conversation history for first real message
+          // ALWAYS send empty conversation history for first message
           // This ensures ChatGPT starts completely fresh without seeing ANY previous messages
+          // For subsequent messages, send only the conversation history (excluding current message)
           let conversationToSend = []
           
-          if (!isFirstRealMessage) {
-            // Only for subsequent messages (after first real message), send conversation history
-            // Filter out welcome messages and "مرحبا" exchange completely
+          if (!isFirstMessage) {
+            // For subsequent messages, send conversation history
+            // Map to simple format (role and content only)
             conversationToSend = messages.value
               .slice(0, -1) // Exclude current message
-              .filter(msg => {
-                // Exclude welcome messages
-                if (msg.isWelcome) return false
-                // Exclude "مرحبا" messages
-                if (msg.content === 'مرحبا' || msg.content.trim() === '') return false
-                return true
-              })
               .map(msg => ({
                 role: msg.role,
                 content: msg.content
@@ -345,11 +335,8 @@ export default {
           }
           
           // Debug: Log what we're sending
-          console.log('Is first real message:', isFirstRealMessage, 'Total messages:', messages.value.length)
+          console.log('Is first message:', isFirstMessage, 'Total messages:', messages.value.length)
           console.log('Sending conversation history:', conversationToSend.length, 'messages')
-          if (conversationToSend.length > 0) {
-            console.log('Conversation content:', conversationToSend)
-          }
           
           formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')
@@ -496,8 +483,9 @@ export default {
         messages.value = []
         diagnosisCompleted.value = false
         
-        // Always send welcome message for fresh start
-        await sendInitialWelcomeMessage()
+        // Don't send welcome message automatically - let user start the conversation
+        // The prompt should handle the welcome message when user sends first message
+        focusInput()
       }
     })
 
