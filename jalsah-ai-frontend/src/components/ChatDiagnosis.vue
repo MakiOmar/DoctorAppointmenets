@@ -421,14 +421,15 @@ export default {
     }
 
     const sendInitialWelcomeMessage = async () => {
-      // Send an empty message to trigger ChatGPT's welcome message from the prompt
+      // Send a greeting message to trigger ChatGPT's welcome message from the prompt
       if (messages.value.length === 0) {
         isTyping.value = true
         
         try {
           const formData = new URLSearchParams()
           formData.append('action', 'chat_diagnosis_ajax')
-          formData.append('message', '') // Empty message triggers welcome message
+          // Send "مرحبا" (hello) to trigger welcome message - ChatGPT will respond with welcome from prompt
+          formData.append('message', 'مرحبا')
           formData.append('conversation_history', JSON.stringify([]))
           formData.append('locale', locale.value || 'en')
           
