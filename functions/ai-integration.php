@@ -1638,11 +1638,11 @@ class SNKS_AI_Integration {
 		// Set the current user for WordPress context
 		wp_set_current_user( $user_id );
 		// Get data from POST (following the same pattern as other AJAX handlers)
-		$message_raw = $_POST['message'] ?? '';
+		$message_raw = isset( $_POST['message'] ) ? $_POST['message'] : '';
 		$message = sanitize_textarea_field( $message_raw );
 
 		// Handle escaped JSON from frontend
-		$conversation_history_raw = $_POST['conversation_history'] ?? '[]';
+		$conversation_history_raw = isset( $_POST['conversation_history'] ) ? $_POST['conversation_history'] : '[]';
 		$conversation_history     = json_decode( stripslashes( $conversation_history_raw ), true );
 
 		// Ensure we have an array
@@ -1654,9 +1654,10 @@ class SNKS_AI_Integration {
 		// Allow empty message only if conversation history is empty (to trigger welcome message)
 		// Check if conversation_history is truly empty (empty array or null)
 		$is_conversation_empty = empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 );
-		$is_message_empty = empty( trim( $message_raw ) ) && empty( trim( $message ) );
+		$is_message_empty = ( $message_raw === '' || trim( $message_raw ) === '' || trim( $message ) === '' );
 		
 		// Only require message if conversation is not empty
+		// If message is empty AND conversation is NOT empty, then error
 		if ( $is_message_empty && ! $is_conversation_empty ) {
 			wp_send_json_error( 'Message is required', 400 );
 		}
