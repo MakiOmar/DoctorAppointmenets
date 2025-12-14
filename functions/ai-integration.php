@@ -1638,7 +1638,8 @@ class SNKS_AI_Integration {
 		// Set the current user for WordPress context
 		wp_set_current_user( $user_id );
 		// Get data from POST (following the same pattern as other AJAX handlers)
-		$message = sanitize_textarea_field( $_POST['message'] ?? '' );
+		$message_raw = $_POST['message'] ?? '';
+		$message = sanitize_textarea_field( $message_raw );
 
 		// Handle escaped JSON from frontend
 		$conversation_history_raw = $_POST['conversation_history'] ?? '[]';
@@ -1653,7 +1654,10 @@ class SNKS_AI_Integration {
 		// Allow empty message only if conversation history is empty (to trigger welcome message)
 		// Check if conversation_history is truly empty (empty array or null)
 		$is_conversation_empty = empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 );
-		if ( empty( trim( $message ) ) && ! $is_conversation_empty ) {
+		$is_message_empty = empty( trim( $message_raw ) ) && empty( trim( $message ) );
+		
+		// Only require message if conversation is not empty
+		if ( $is_message_empty && ! $is_conversation_empty ) {
 			wp_send_json_error( 'Message is required', 400 );
 		}
 
