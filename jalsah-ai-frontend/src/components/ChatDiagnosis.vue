@@ -262,12 +262,13 @@ export default {
           const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
           
           if (diagnosisTime > oneHourAgo) {
-            // Load the diagnosis result but DON'T load conversation history
-            // This allows user to start a fresh conversation
+            // Store previous diagnosis info but don't mark as completed
+            // This allows user to start a fresh conversation for new assessment
             diagnosisResult.title = diagnosis.diagnosis_name
             diagnosisResult.description = diagnosis.diagnosis_description
             diagnosisResult.diagnosisId = diagnosis.diagnosis_id
-            diagnosisCompleted.value = true
+            // Don't set diagnosisCompleted = true - allow new conversation
+            diagnosisCompleted.value = false
             
             // Don't load conversation history - start fresh for new diagnosis
             // This prevents ChatGPT from seeing the completed diagnosis and refusing to start new one
@@ -465,9 +466,9 @@ export default {
         // Load previous diagnosis if exists (but don't load conversation history)
         await loadLatestDiagnosis()
         
-        // Only send welcome message if there are no messages (fresh start)
-        // If diagnosis was completed, don't send welcome - user should start new conversation manually
-        if (messages.value.length === 0 && !diagnosisCompleted.value) {
+        // Always send welcome message if there are no messages (fresh start)
+        // This allows starting a new assessment even after previous one completed
+        if (messages.value.length === 0) {
           await sendInitialWelcomeMessage()
         }
       }
