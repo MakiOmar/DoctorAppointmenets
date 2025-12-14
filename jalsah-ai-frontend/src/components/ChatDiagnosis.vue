@@ -298,9 +298,11 @@ export default {
       const userMessage = newMessage.value.trim()
       
       // Check if this is the first real user message (after welcome)
-      // Count only non-welcome messages
-      const nonWelcomeMessages = messages.value.filter(msg => !msg.isWelcome && msg.content !== 'مرحبا')
-      const isFirstRealMessage = nonWelcomeMessages.length === 0
+      // Count only non-welcome messages - if we only have welcome message, this is first real message
+      const hasOnlyWelcome = messages.value.length === 1 && 
+                            messages.value[0].role === 'assistant' && 
+                            (messages.value[0].isWelcome || messages.value[0].content.includes('شكرا لاختيارك'))
+      const isFirstRealMessage = hasOnlyWelcome || messages.value.length === 0
       
       // Add user message to display
       messages.value.push({
