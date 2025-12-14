@@ -4708,9 +4708,18 @@ Best regards,
 		$messages = array();
 
 		// Use ONLY the custom prompt - no additional instructions
+		// Add instruction to always start fresh if conversation_history is empty
+		$enhanced_prompt = $system_prompt;
+		if ( empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 ) ) {
+			// Add instruction to start fresh when conversation is empty
+			$enhanced_prompt .= "\n\n" . ( $is_arabic 
+				? "ملاحظة مهمة: هذه محادثة جديدة تماماً. لا توجد محادثة سابقة. ابدأ مباشرة برسالة الترحيب من الـ prompt أعلاه."
+				: "Important note: This is a completely new conversation. There is no previous conversation. Start directly with the welcome message from the prompt above." );
+		}
+		
 		$messages[] = array(
 			'role'    => 'system',
-			'content' => $system_prompt,
+			'content' => $enhanced_prompt,
 		);
 
 		// Add conversation history (limit to last 10 messages to avoid token limits)
