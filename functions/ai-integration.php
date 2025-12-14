@@ -4782,11 +4782,14 @@ Best regards,
 
 		$ai_response = $result['choices'][0]['message']['content'];
 
+		// Parse the JSON response first
+		$response_data = json_decode( $ai_response, true );
+		
 		// Check if ChatGPT is refusing to start because of unfinished conversation
+		// Check both the raw response and the parsed message field
 		$refusal_patterns = array(
 			'لا يمكني عمل التقييم بدون إنهاء المحادثة',
 			'لا يمكنني عمل التقييم بدون إنهاء المحادثة',
-			'لا يمكني عمل التقييم',
 			'بدون إنهاء المحادثة',
 			'finish the conversation',
 			'complete the previous',
@@ -4794,28 +4797,47 @@ Best regards,
 		);
 		
 		$contains_refusal = false;
+		$response_message = '';
+		
+		// Check in parsed response message field if available
+		if ( $response_data && isset( $response_data['message'] ) ) {
+			$response_message = $response_data['message'];
+		} else {
+			// Fallback to raw response
+			$response_message = $ai_response;
+		}
+		
+		// Check for refusal patterns
 		foreach ( $refusal_patterns as $pattern ) {
-			if ( stripos( $ai_response, $pattern ) !== false ) {
+			if ( stripos( $response_message, $pattern ) !== false || stripos( $ai_response, $pattern ) !== false ) {
 				$contains_refusal = true;
 				break;
 			}
 		}
 		
-		// If ChatGPT refuses, add a message to end previous conversation and start fresh
+		// If ChatGPT refuses, rebuild messages with reset instruction and retry
 		if ( $contains_refusal ) {
-			// Add a system instruction to end previous conversation
-			$reset_message = $is_arabic 
-				? 'المحادثة السابقة قد انتهت. يرجى البدء في تقييم جديد. ابدأ برسالة الترحيب من الـ prompt.'
-				: 'The previous conversation has ended. Please start a new assessment. Begin with the welcome message from the prompt.';
+			// Rebuild messages array with reset instruction
+			$reset_messages = array();
 			
-			// Add reset message to conversation
-			$messages[] = array(
+			// Keep system prompt
+			$reset_messages[] = array(
+				'role'    => 'system',
+				'content' => $system_prompt,
+			);
+			
+			// Add reset instruction as user message
+			$reset_message = $is_arabic 
+				? 'المحادثة السابقة قد انتهت تماماً. يرجى البدء في تقييم جديد من البداية. ابدأ برسالة الترحيب من الـ prompt كما هو محدد.'
+				: 'The previous conversation has completely ended. Please start a new assessment from the beginning. Begin with the welcome message from the prompt as specified.';
+			
+			$reset_messages[] = array(
 				'role'    => 'user',
 				'content' => $reset_message,
 			);
 			
 			// Re-send the original user message
-			$messages[] = array(
+			$reset_messages[] = array(
 				'role'    => 'user',
 				'content' => $message,
 			);
@@ -4823,7 +4845,7 @@ Best regards,
 			// Make a new API call with reset instruction
 			$data = array(
 				'model'           => $model,
-				'messages'        => $messages,
+				'messages'        => $reset_messages,
 				'max_tokens'      => intval( $max_tokens ),
 				'temperature'     => floatval( $temperature ),
 				'response_format' => array( 'type' => 'json_object' ),
@@ -4853,10 +4875,10 @@ Best regards,
 			}
 
 			$ai_response = $result['choices'][0]['message']['content'];
+			
+			// Re-parse the new response
+			$response_data = json_decode( $ai_response, true );
 		}
-
-		// Parse the JSON response
-		$response_data = json_decode( $ai_response, true );
 
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
 			// Fallback for invalid JSON - provide a contextual response based on conversation
