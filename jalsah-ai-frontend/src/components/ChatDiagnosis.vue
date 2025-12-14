@@ -298,9 +298,9 @@ export default {
       const userMessage = newMessage.value.trim()
       
       // Check if this is the first real user message (after welcome)
-      // If so, don't include welcome exchange in conversation history
-      const isFirstRealMessage = messages.value.length === 1 && 
-                                  messages.value[0].role === 'assistant'
+      // Count only non-welcome messages
+      const nonWelcomeMessages = messages.value.filter(msg => !msg.isWelcome && msg.content !== 'مرحبا')
+      const isFirstRealMessage = nonWelcomeMessages.length === 0
       
       // Add user message to display
       messages.value.push({
@@ -326,12 +326,19 @@ export default {
           
           if (!isFirstRealMessage) {
             // Only for subsequent messages (after first real message), send conversation history
-            // But still filter out welcome messages
-            conversationToSend = messages.value.slice(0, -1).filter(msg => !msg.isWelcome && msg.content !== 'مرحبا')
+            // Filter out welcome messages and "مرحبا" exchange
+            conversationToSend = messages.value
+              .slice(0, -1) // Exclude current message
+              .filter(msg => !msg.isWelcome && msg.content !== 'مرحبا' && msg.role !== 'user' || (msg.role === 'user' && msg.content !== 'مرحبا'))
+              .map(msg => ({
+                role: msg.role,
+                content: msg.content
+              }))
           }
           
           // Debug: Log what we're sending
-          console.log('Sending conversation history:', conversationToSend.length, 'messages')
+          console.log('Is first real message:', isFirstRealMessage)
+          console.log('Sending conversation history:', conversationToSend.length, 'messages', conversationToSend)
           
           formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')
