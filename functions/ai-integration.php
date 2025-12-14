@@ -4720,15 +4720,17 @@ Best regards,
 		
 		// IMPORTANT: If conversation_history is empty array, don't add anything
 		// This ensures ChatGPT starts fresh for first real message
+		// Also check if it's truly empty (not just an array with empty/null values)
 		if ( ! empty( $conversation_history ) && is_array( $conversation_history ) && count( $conversation_history ) > 0 ) {
-			$recent_history = array_slice( $conversation_history, -10 );
-			foreach ( $recent_history as $msg ) {
-				// Skip empty messages and welcome messages
-				if ( isset( $msg['role'] ) && isset( $msg['content'] ) && ! empty( trim( $msg['content'] ) ) ) {
-					// Skip "مرحبا" messages
-					if ( trim( $msg['content'] ) === 'مرحبا' ) {
-						continue;
-					}
+			// Filter out empty messages first
+			$valid_messages = array_filter( $conversation_history, function( $msg ) {
+				return isset( $msg['role'] ) && isset( $msg['content'] ) && ! empty( trim( $msg['content'] ) ) && trim( $msg['content'] ) !== 'مرحبا';
+			} );
+			
+			// Only add if there are valid messages after filtering
+			if ( ! empty( $valid_messages ) && count( $valid_messages ) > 0 ) {
+				$recent_history = array_slice( $valid_messages, -10 );
+				foreach ( $recent_history as $msg ) {
 					$messages[] = array(
 						'role'    => $msg['role'],
 						'content' => $msg['content'],
