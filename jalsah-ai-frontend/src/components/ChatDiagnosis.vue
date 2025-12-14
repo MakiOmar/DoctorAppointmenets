@@ -302,7 +302,7 @@ export default {
       const isFirstRealMessage = messages.value.length === 1 && 
                                   messages.value[0].role === 'assistant'
       
-      // Add user message
+      // Add user message to display
       messages.value.push({
         role: 'user',
         content: userMessage,
@@ -320,18 +320,18 @@ export default {
           formData.append('action', 'chat_diagnosis_ajax')
           formData.append('message', userMessage)
           
-          // If this is the first real message after welcome, send empty conversation history
-          // This ensures ChatGPT starts fresh without seeing the welcome exchange
-          // Filter out welcome messages (marked with isWelcome flag or "مرحبا" exchange)
-          let conversationToSend = messages.value.slice(0, -1) // Exclude current message
+          // ALWAYS send empty conversation history for first real message
+          // This ensures ChatGPT starts completely fresh without seeing ANY previous messages
+          let conversationToSend = []
           
-          if (isFirstRealMessage) {
-            // For first real message, exclude welcome exchange completely
-            conversationToSend = []
-          } else {
-            // For subsequent messages, filter out welcome messages
-            conversationToSend = conversationToSend.filter(msg => !msg.isWelcome && msg.content !== 'مرحبا')
+          if (!isFirstRealMessage) {
+            // Only for subsequent messages (after first real message), send conversation history
+            // But still filter out welcome messages
+            conversationToSend = messages.value.slice(0, -1).filter(msg => !msg.isWelcome && msg.content !== 'مرحبا')
           }
+          
+          // Debug: Log what we're sending
+          console.log('Sending conversation history:', conversationToSend.length, 'messages')
           
           formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')
