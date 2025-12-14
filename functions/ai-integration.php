@@ -1637,6 +1637,13 @@ class SNKS_AI_Integration {
 		
 		// Set the current user for WordPress context
 		wp_set_current_user( $user_id );
+		// Check if this is a request to get welcome message
+		if ( isset( $_POST['action'] ) && $_POST['action'] === 'get_welcome_message' ) {
+			$welcome_message = get_option( 'snks_ai_chatgpt_welcome_message', 'مرحبا' );
+			wp_send_json_success( array( 'welcome_message' => $welcome_message ) );
+			return;
+		}
+		
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message_raw = isset( $_POST['message'] ) ? $_POST['message'] : '';
 		$message = sanitize_textarea_field( $message_raw );
@@ -4845,10 +4852,10 @@ Best regards,
 				'content' => $system_prompt,
 			);
 			
-			// Add reset instruction as user message
+			// Add reset instruction as user message - be more direct
 			$reset_message = $is_arabic 
-				? 'المحادثة السابقة قد انتهت تماماً. يرجى البدء في تقييم جديد من البداية. ابدأ برسالة الترحيب من الـ prompt كما هو محدد.'
-				: 'The previous conversation has completely ended. Please start a new assessment from the beginning. Begin with the welcome message from the prompt as specified.';
+				? 'هذه محادثة جديدة تماماً. لا توجد محادثة سابقة على الإطلاق. ابدأ مباشرة في التقييم الجديد وابدأ برسالة الترحيب من الـ prompt. تجاهل أي محادثة سابقة تماماً.'
+				: 'This is a completely new conversation. There is no previous conversation at all. Start directly with the new assessment and begin with the welcome message from the prompt. Completely ignore any previous conversation.';
 			
 			$reset_messages[] = array(
 				'role'    => 'user',
