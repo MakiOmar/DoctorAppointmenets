@@ -4816,11 +4816,21 @@ Best regards,
 			$response_message = $ai_response;
 		}
 		
-		// Check for refusal patterns
+		// Check for refusal patterns - be more aggressive in detection
 		foreach ( $refusal_patterns as $pattern ) {
 			if ( stripos( $response_message, $pattern ) !== false || stripos( $ai_response, $pattern ) !== false ) {
 				$contains_refusal = true;
 				break;
+			}
+		}
+		
+		// Also check in reasoning field if available
+		if ( ! $contains_refusal && $response_data && isset( $response_data['reasoning'] ) ) {
+			foreach ( $refusal_patterns as $pattern ) {
+				if ( stripos( $response_data['reasoning'], $pattern ) !== false ) {
+					$contains_refusal = true;
+					break;
+				}
 			}
 		}
 		
