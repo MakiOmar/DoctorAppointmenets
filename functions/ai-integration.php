@@ -4711,6 +4711,8 @@ Best regards,
 		// Debug: Log conversation history
 		// error_log( 'Conversation history count: ' . ( is_array( $conversation_history ) ? count( $conversation_history ) : 'not array' ) );
 		
+		// IMPORTANT: If conversation_history is empty array, don't add anything
+		// This ensures ChatGPT starts fresh for first real message
 		if ( ! empty( $conversation_history ) && is_array( $conversation_history ) && count( $conversation_history ) > 0 ) {
 			$recent_history = array_slice( $conversation_history, -10 );
 			foreach ( $recent_history as $msg ) {
