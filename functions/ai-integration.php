@@ -1653,11 +1653,16 @@ class SNKS_AI_Integration {
 		// Validate required fields
 		// Allow empty message only if conversation history is empty (to trigger welcome message)
 		// Check if conversation_history is truly empty (empty array or null)
-		$is_conversation_empty = empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 );
-		$is_message_empty = ( $message_raw === '' || trim( $message_raw ) === '' || trim( $message ) === '' );
+		$is_conversation_empty = ( empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 ) );
+		
+		// Check if message is empty (check both raw and sanitized)
+		$message_raw_trimmed = trim( $message_raw );
+		$message_trimmed = trim( $message );
+		$is_message_empty = ( $message_raw === '' || $message_raw_trimmed === '' || $message_trimmed === '' );
 		
 		// Only require message if conversation is not empty
 		// If message is empty AND conversation is NOT empty, then error
+		// Otherwise, allow empty message (for welcome message trigger)
 		if ( $is_message_empty && ! $is_conversation_empty ) {
 			wp_send_json_error( 'Message is required', 400 );
 		}
