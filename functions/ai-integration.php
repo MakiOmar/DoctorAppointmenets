@@ -4855,7 +4855,8 @@ Best regards,
 			return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
 		}
 
-		$ai_response = $result['choices'][0]['message']['content'];
+		$assistant_message_raw = $result['choices'][0]['message']['content'];
+		$ai_response           = $assistant_message_raw;
 
 		// Parse the JSON response first
 		$response_data = json_decode( $ai_response, true );
@@ -4930,6 +4931,7 @@ Best regards,
 						'openai_request'           => $data, // no api_key
 						'openai_response'          => $response_data,
 						'prompt_used'              => $enhanced_prompt,
+						'assistant_message_raw'    => $assistant_message_raw,
 					)
 				);
 			} catch ( \Exception $e ) {
