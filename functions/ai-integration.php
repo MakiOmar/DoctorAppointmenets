@@ -1628,6 +1628,18 @@ class SNKS_AI_Integration {
 	}
 
 	/**
+	 * Get welcome message via AJAX (no auth required)
+	 */
+	public function get_welcome_message_ajax() {
+		$welcome_message = get_option( 'snks_ai_chatgpt_welcome_message', 'مرحبا' );
+		wp_send_json_success(
+			array(
+				'welcome_message' => $welcome_message,
+			)
+		);
+	}
+
+	/**
 	 * Chat diagnosis endpoint via AJAX
 	 */
 	public function chat_diagnosis_ajax() {
