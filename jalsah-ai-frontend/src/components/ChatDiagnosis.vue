@@ -305,13 +305,6 @@ export default {
 
       const userMessage = newMessage.value.trim()
       
-      // Check if this is the first real user message (after welcome exchange)
-      // BEFORE adding the new message, check if we only have the welcome message
-      const hasOnlyWelcome = messages.value.length === 1 && 
-                            messages.value[0].role === 'assistant' && 
-                            (messages.value[0].isWelcome || messages.value[0].content.includes('شكرا لاختيارك'))
-      const isFirstRealMessage = hasOnlyWelcome || messages.value.length === 0
-      
       // Add user message to display
       messages.value.push({
         role: 'user',
@@ -334,39 +327,16 @@ export default {
           }
           formData.append('conversation_id', conversationId.value)
           
-          // ALWAYS send empty conversation history for first real message (after welcome)
-          // This ensures ChatGPT starts completely fresh without seeing the welcome exchange
-          // For subsequent messages, send only the conversation history (excluding current message and welcome)
-          let conversationToSend = []
-          
-          if (isFirstRealMessage) {
-            // For first real message, send EMPTY conversation history
-            // This ensures ChatGPT doesn't see the "مرحبا" exchange
-            conversationToSend = []
-          } else {
-            // For subsequent messages, send conversation history
-            // Filter out welcome messages and "مرحبا" exchange
-            conversationToSend = messages.value
-              .slice(0, -1) // Exclude current message
-              .filter(msg => {
-                // Exclude welcome messages
-                if (msg.isWelcome) return false
-                // Exclude "مرحبا" messages
-                if (msg.content === 'مرحبا' || msg.content.trim() === '') return false
-                return true
-              })
-              .map(msg => ({
-                role: msg.role,
-                content: msg.content
-              }))
-          }
+          // Build conversation history including welcome + prior turns (exclude current message only)
+          let conversationToSend = messages.value
+            .slice(0, -1) // Exclude current message
+            .map(msg => ({
+              role: msg.role,
+              content: msg.content
+            }))
           
           // Debug: Log what we're sending
-          console.log('Is first real message:', isFirstRealMessage, 'Total messages before:', messages.value.length - 1)
           console.log('Sending conversation history:', conversationToSend.length, 'messages')
-          if (conversationToSend.length > 0) {
-            console.log('Conversation content:', conversationToSend)
-          }
           
           formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')
