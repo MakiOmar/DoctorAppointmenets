@@ -292,6 +292,14 @@ export default {
       })
     }
 
+    const conversationId = ref('')
+
+    const generateConversationId = () => {
+      const randomPart = Math.random().toString(36).substring(2, 10)
+      const timePart = Date.now().toString(36)
+      return `${timePart}-${randomPart}`
+    }
+
     const sendMessage = async () => {
       if (!newMessage.value.trim() || isTyping.value) return
 
@@ -321,6 +329,10 @@ export default {
                    const formData = new URLSearchParams()
           formData.append('action', 'chat_diagnosis_ajax')
           formData.append('message', userMessage)
+          if (!conversationId.value) {
+            conversationId.value = generateConversationId()
+          }
+          formData.append('conversation_id', conversationId.value)
           
           // ALWAYS send empty conversation history for first real message (after welcome)
           // This ensures ChatGPT starts completely fresh without seeing the welcome exchange
@@ -490,6 +502,7 @@ export default {
     onMounted(async () => {
       // Check if prompt is available before showing chat
       await checkPromptAvailability()
+      conversationId.value = generateConversationId()
       
       if (promptAvailable.value) {
         // Always start fresh - don't load previous diagnosis
@@ -497,7 +510,7 @@ export default {
         messages.value = []
         diagnosisCompleted.value = false
         
-        // Send welcome message automatically to trigger ChatGPT's welcome from prompt
+        // Show welcome message locally
         await sendInitialWelcomeMessage()
       }
     })
@@ -507,6 +520,7 @@ export default {
        newMessage,
        isTyping,
        diagnosisCompleted,
+      conversationId,
        diagnosisResult,
        chatContainer,
        promptAvailable,
