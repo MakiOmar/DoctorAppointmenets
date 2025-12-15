@@ -1699,32 +1699,10 @@ class SNKS_AI_Integration {
 		$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
 
 		// Process the chat diagnosis
-		$result = $this->process_chat_diagnosis( $message, $conversation_history );
+		$result = $this->process_chat_diagnosis( $message, $conversation_history, $user_id, $conversation_id, $locale );
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message(), 400 );
-		}
-
-		// Log request/response per user, daily, JSONL
-		try {
-			$locale = isset( $_POST['locale'] ) ? sanitize_text_field( wp_unslash( $_POST['locale'] ) ) : '';
-			$this->log_chatgpt_request(
-				$user_id,
-				array(
-					'timestamp'                => current_time( 'mysql' ),
-					'user_id'                  => $user_id,
-					'locale'                   => $locale,
-					'model'                    => $model,
-					'endpoint'                 => 'chat_diagnosis_ajax',
-					'message'                  => $message,
-					'conversation_id'          => $conversation_id,
-					'conversation_history'     => $conversation_history,
-					'conversation_history_len' => is_array( $conversation_history ) ? count( $conversation_history ) : 0,
-					'response'                 => $result,
-				)
-			);
-		} catch ( \Exception $e ) {
-			// Silently ignore logging errors to avoid breaking chat
 		}
 
 		wp_send_json_success( $result );
@@ -4731,7 +4709,7 @@ Best regards,
 	/**
 	 * Process chat diagnosis using OpenAI
 	 */
-	private function process_chat_diagnosis( $message, $conversation_history ) {
+	private function process_chat_diagnosis( $message, $conversation_history, $user_id = null, $conversation_id = '', $locale = '' ) {
 		// Get OpenAI settings
 		$api_key       = get_option( 'snks_ai_chatgpt_api_key' );
 		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
@@ -4829,7 +4807,7 @@ Best regards,
 			);
 		}
 
-		// Call OpenAI API with forced JSON response format
+		// Prepare OpenAI API payload (without api_key) for logging
 		$data = array(
 			'model'           => $model,
 			'messages'        => $messages,
@@ -4838,6 +4816,7 @@ Best regards,
 			'response_format' => array( 'type' => 'json_object' ),
 		);
 
+		// Call OpenAI API with forced JSON response format
 		$response = wp_remote_post(
 			'https://api.openai.com/v1/chat/completions',
 			array(
