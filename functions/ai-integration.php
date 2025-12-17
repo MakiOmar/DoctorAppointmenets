@@ -4717,7 +4717,7 @@ Best regards,
 		$base_prompt = $system_prompt;
 		$available_diagnoses_text = "Available diagnoses: " . implode( ', ', $diagnosis_list );
 		
-		$enhanced_system_prompt = $base_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_text . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ( $ai_questions_count + 1 ) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions (less than {$min_questions} questions)\n- Use 'complete' status ONLY when you have asked at least {$min_questions} questions AND have sufficient information OR when you have reached {$max_questions} questions\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions\n- NEVER exceed {$max_questions} questions - if you reach this limit, provide diagnosis immediately\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
+		$enhanced_system_prompt = $base_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_text . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\"\n}\n\nIMPORTANT: The system automatically counts questions from conversation history. You do NOT need to include question_count in your response.\n\nSTATUS RULES (STRICTLY ENFORCED BY SYSTEM):\n- Use 'incomplete' status when you need more information OR when you haven't asked enough questions yet (less than {$min_questions} questions total)\n- Use 'complete' status ONLY when:\n  * You have asked at least {$min_questions} questions (the system will verify this), AND\n  * You have sufficient information to make a diagnosis, AND\n  * You have NOT exceeded {$max_questions} questions\n- The system will automatically override your status if you violate these rules\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions - the system will prevent this\n- NEVER exceed {$max_questions} questions - the system will force completion if you reach this limit\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
 
 		$messages[] = array(
 			'role'    => 'system',
@@ -4742,6 +4742,7 @@ Best regards,
 		);
 
 		// If we've reached the maximum questions, force completion without calling API
+		// This is a hard limit enforced server-side - no API call needed
 		if ( $ai_questions_count >= $max_questions ) {
 			// Force complete diagnosis immediately
 			$response_data = array(
@@ -4749,7 +4750,6 @@ Best regards,
 				'diagnosis'     => 'general_assessment',
 				'confidence'    => 'low',
 				'reasoning'     => $is_arabic ? 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.' : 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.',
-				'question_count' => $ai_questions_count,
 			);
 			
 			// Skip API call and process the forced response
@@ -4883,21 +4883,45 @@ Best regards,
 			);
 		}
 
-		// Validate question count limits - enforce strict compliance
-		$new_question_count = isset( $response_data['question_count'] ) ? intval( $response_data['question_count'] ) : ( $ai_questions_count + 1 );
+		// Validate question count limits - enforce strict compliance using server-side count
+		// Use server-side count as source of truth (ignore ChatGPT's question_count if provided)
+		$current_question_count = $ai_questions_count;
+		$will_be_question_count = $current_question_count;
 		
-		// If status is complete but question count is less than minimum, force incomplete
-		if ( $response_data['status'] === 'complete' && $new_question_count < $min_questions ) {
+		// Check if the current response is a question
+		if ( isset( $response_data['reasoning'] ) && $this->is_question( $response_data['reasoning'] ) ) {
+			$will_be_question_count = $current_question_count + 1;
+		}
+		
+		// STRICT ENFORCEMENT: If status is complete but question count is less than minimum, force incomplete
+		if ( $response_data['status'] === 'complete' && $will_be_question_count < $min_questions ) {
 			$response_data['status'] = 'incomplete';
+			$remaining = $min_questions - $will_be_question_count;
 			if ( $is_arabic ) {
-				$response_data['reasoning'] = 'أحتاج إلى المزيد من المعلومات. ' . ( $min_questions - $new_question_count ) . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
+				$response_data['reasoning'] = 'أحتاج إلى المزيد من المعلومات. ' . $remaining . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
 			} else {
-				$response_data['reasoning'] = 'I need more information. At least ' . ( $min_questions - $new_question_count ) . ' more question(s) before completing the assessment.';
+				$response_data['reasoning'] = 'I need more information. At least ' . $remaining . ' more question(s) before completing the assessment.';
 			}
 		}
 		
-		// If question count exceeds maximum, force complete
-		if ( $new_question_count >= $max_questions && $response_data['status'] !== 'complete' ) {
+		// STRICT ENFORCEMENT: If question count will exceed or reach maximum, force complete
+		if ( $will_be_question_count >= $max_questions && $response_data['status'] !== 'complete' ) {
+			$response_data['status'] = 'complete';
+			if ( empty( $response_data['diagnosis'] ) ) {
+				$response_data['diagnosis'] = 'general_assessment';
+			}
+			if ( empty( $response_data['confidence'] ) ) {
+				$response_data['confidence'] = 'low';
+			}
+			if ( $is_arabic ) {
+				$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
+			} else {
+				$response_data['reasoning'] = 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.';
+			}
+		}
+		
+		// Also enforce: If current count already at max, force complete (safety check)
+		if ( $current_question_count >= $max_questions && $response_data['status'] !== 'complete' ) {
 			$response_data['status'] = 'complete';
 			if ( empty( $response_data['diagnosis'] ) ) {
 				$response_data['diagnosis'] = 'general_assessment';
