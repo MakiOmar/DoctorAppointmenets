@@ -4705,14 +4705,8 @@ Best regards,
 			}
 		}
 
-		// Add current message
-		// If message is empty and conversation is empty, add a trigger message to get welcome message
-		if ( empty( $message ) && empty( $conversation_history ) ) {
-			$messages[] = array(
-				'role'    => 'user',
-				'content' => 'start', // Trigger message to get welcome message from prompt
-			);
-		} elseif ( ! empty( $message ) ) {
+		// Add current message (only if not empty, to allow welcome message trigger)
+		if ( ! empty( $message ) ) {
 			$messages[] = array(
 				'role'    => 'user',
 				'content' => $message,

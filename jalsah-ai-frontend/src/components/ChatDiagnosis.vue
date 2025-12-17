@@ -428,7 +428,7 @@ export default {
         try {
           const formData = new URLSearchParams()
           formData.append('action', 'chat_diagnosis_ajax')
-          formData.append('message', '') // Empty message triggers welcome message
+          formData.append('message', '') // Empty message to trigger welcome
           formData.append('conversation_history', JSON.stringify([]))
           formData.append('locale', locale.value || 'en')
           
