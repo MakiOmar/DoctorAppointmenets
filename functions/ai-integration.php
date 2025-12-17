@@ -4905,40 +4905,12 @@ Best regards,
 			// Fallback for invalid JSON - provide a contextual response based on conversation
 			$fallback_message = $this->generate_contextual_fallback( $message, $conversation_history, $is_arabic );
 
-			$fallback = array(
+			return array(
 				'message'   => $fallback_message,
 				'diagnosis' => array(
 					'completed' => false,
 				),
 			);
-
-			// Log even on fallback if user_id exists
-			if ( ! empty( $user_id ) ) {
-				try {
-					$this->log_chatgpt_request(
-						$user_id,
-						array(
-							'timestamp'                => current_time( 'mysql' ),
-							'user_id'                  => $user_id,
-							'locale'                   => $locale,
-							'model'                    => $model,
-							'endpoint'                 => 'chat_diagnosis_ajax',
-							'conversation_id'          => $conversation_id,
-							'conversation_history'     => $conversation_history,
-							'conversation_history_len' => is_array( $conversation_history ) ? count( $conversation_history ) : 0,
-							'message'                  => $message,
-							'openai_request'           => $data,
-							'openai_response'          => $response_data,
-							'assistant_message_raw'    => $assistant_message_raw,
-							'prompt_used'              => $enhanced_prompt,
-						)
-					);
-				} catch ( \Exception $e ) {
-					// ignore logging errors
-				}
-			}
-
-			return $fallback;
 		}
 
 		// Log request/response if user_id provided (captures payload sent to OpenAI)
