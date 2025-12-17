@@ -1695,9 +1695,8 @@ class SNKS_AI_Integration {
 			wp_send_json_error( 'Chat diagnosis is not available. Please configure the system prompt in admin settings.', 503 );
 		}
 
-		// Get model and locale for logging purposes
-		$model  = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
-		$locale = isset( $_POST['locale'] ) ? sanitize_text_field( wp_unslash( $_POST['locale'] ) ) : snks_get_current_language();
+		// Get model for logging purposes
+		$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
 
 		// Process the chat diagnosis
 		$result = $this->process_chat_diagnosis( $message, $conversation_history, $user_id, $conversation_id, $locale );
