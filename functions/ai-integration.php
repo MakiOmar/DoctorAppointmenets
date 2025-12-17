@@ -1716,9 +1716,7 @@ class SNKS_AI_Integration {
 			return;
 		}
 
-		$conversation_id = isset( $entry['conversation_id'] ) && ! empty( $entry['conversation_id'] )
-			? preg_replace( '/[^a-zA-Z0-9_-]/', '', $entry['conversation_id'] )
-			: 'conv-' . uniqid();
+		$conversation_id = isset( $entry['conversation_id'] ) && ! empty( $entry['conversation_id'] ) ? preg_replace( '/[^a-zA-Z0-9_-]/', '', $entry['conversation_id'] ) : 'no-conv';
 		$date_dir        = gmdate( 'Y-m-d' );
 
 		$upload_dir = wp_upload_dir();
@@ -4962,30 +4960,6 @@ Best regards,
 					'completed' => false,
 				),
 			);
-		}
-
-		// Log request/response if user_id provided (captures payload sent to OpenAI)
-		if ( ! empty( $user_id ) ) {
-			try {
-				$this->log_chatgpt_request(
-					$user_id,
-					array(
-						'timestamp'                => current_time( 'mysql' ),
-						'user_id'                  => $user_id,
-						'locale'                   => $locale,
-						'model'                    => $model,
-						'endpoint'                 => 'chat_diagnosis_ajax',
-						'conversation_id'          => $conversation_id,
-						'conversation_history'     => $conversation_history,
-						'conversation_history_len' => is_array( $conversation_history ) ? count( $conversation_history ) : 0,
-						'message'                  => $message,
-						'openai_request'           => $data, // no api_key
-						'openai_response'          => $response_data,
-					)
-				);
-			} catch ( \Exception $e ) {
-				// Silently ignore logging errors
-			}
 		}
 
 		// Enforce min/max question limits based on configurations
