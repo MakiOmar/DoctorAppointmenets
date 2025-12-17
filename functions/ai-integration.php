@@ -4687,10 +4687,44 @@ Best regards,
 		// Build conversation messages
 		$messages = array();
 
-		// Use ONLY the custom prompt - no additional instructions
+		// Add system prompt with forced JSON structure and language/question limits
+		$language_instruction = $is_arabic ?
+			'IMPORTANT: Respond ONLY in Modern Standard Arabic (الفصحى). Use formal Arabic language for all communication, reasoning, and explanations. Never use local dialects or colloquial expressions. Always use proper Arabic grammar and formal language.' :
+			'IMPORTANT: Respond ONLY in English language. Use English for all communication, reasoning, and explanations. Never mix languages.';
+
+		$question_limit_instruction = "CRITICAL QUESTION LIMITS (STRICTLY ENFORCED):\n";
+		$question_limit_instruction .= "- Minimum Questions Required: {$min_questions}\n";
+		$question_limit_instruction .= "- Maximum Questions Allowed: {$max_questions}\n";
+		$question_limit_instruction .= "- Questions Asked So Far: {$ai_questions_count}\n";
+		$question_limit_instruction .= "- Questions Remaining: " . max( 0, $max_questions - $ai_questions_count ) . "\n\n";
+		
+		if ( $ai_questions_count >= $max_questions ) {
+			$question_limit_instruction .= "⚠️ YOU HAVE REACHED THE MAXIMUM QUESTIONS LIMIT ({$max_questions}). YOU MUST NOW PROVIDE A DIAGNOSIS IMMEDIATELY. DO NOT ASK ANY MORE QUESTIONS.\n";
+		} elseif ( $ai_questions_count < $min_questions ) {
+			$remaining = $min_questions - $ai_questions_count;
+			$question_limit_instruction .= "⚠️ YOU MUST ASK AT LEAST {$min_questions} QUESTIONS TOTAL. You have asked {$ai_questions_count} questions. You MUST ask {$remaining} more question(s) before you can provide a diagnosis. DO NOT provide diagnosis yet. Continue asking questions.\n";
+		} else {
+			$question_limit_instruction .= "✓ You have asked enough questions ({$ai_questions_count} out of {$min_questions} minimum). You can now provide a diagnosis if you have sufficient information, BUT you must NOT exceed {$max_questions} questions total.\n";
+		}
+		
+		$question_limit_instruction .= "\nABSOLUTE RULES:\n";
+		$question_limit_instruction .= "- NEVER exceed {$max_questions} questions - if you reach this limit, you MUST provide diagnosis immediately\n";
+		$question_limit_instruction .= "- NEVER provide diagnosis before asking at least {$min_questions} questions\n";
+		if ( $ai_questions_count < $min_questions ) {
+			$remaining = $min_questions - $ai_questions_count;
+			$question_limit_instruction .= "- You have asked {$ai_questions_count} questions. You MUST ask exactly {$remaining} more question(s) before completing\n";
+		}
+		$question_limit_instruction .= "- Count your questions carefully - this is strictly enforced\n";
+
+		// Merge custom/default prompt with enhanced instructions
+		$base_prompt = $system_prompt;
+		$available_diagnoses_text = "Available diagnoses: " . implode( ', ', $diagnosis_list );
+		
+		$enhanced_system_prompt = $base_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_text . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\",\n  \"question_count\": " . ( $ai_questions_count + 1 ) . "\n}\n\n- Only choose diagnoses from the provided list\n- Use 'incomplete' status when you need more information or haven't asked enough questions (less than {$min_questions} questions)\n- Use 'complete' status ONLY when you have asked at least {$min_questions} questions AND have sufficient information OR when you have reached {$max_questions} questions\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions\n- NEVER exceed {$max_questions} questions - if you reach this limit, provide diagnosis immediately\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
+
 		$messages[] = array(
 			'role'    => 'system',
-			'content' => $system_prompt,
+			'content' => $enhanced_system_prompt,
 		);
 
 		// Add conversation history (limit to last 10 messages to avoid token limits)
@@ -4709,6 +4743,21 @@ Best regards,
 			'role'    => 'user',
 			'content' => $message,
 		);
+
+		// If we've reached the maximum questions, force completion without calling API
+		if ( $ai_questions_count >= $max_questions ) {
+			// Force complete diagnosis immediately
+			$response_data = array(
+				'status'        => 'complete',
+				'diagnosis'     => 'general_assessment',
+				'confidence'    => 'low',
+				'reasoning'     => $is_arabic ? 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.' : 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.',
+				'question_count' => $ai_questions_count,
+			);
+			
+			// Skip API call and process the forced response
+			goto process_response;
+		}
 
 		// Call OpenAI API with forced JSON response format
 		$data = array(
@@ -4747,6 +4796,8 @@ Best regards,
 		// Parse the JSON response
 		$response_data = json_decode( $ai_response, true );
 
+		process_response:
+
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
 			// Fallback for invalid JSON - provide a contextual response based on conversation
 			$fallback_message = $this->generate_contextual_fallback( $message, $conversation_history, $is_arabic );
@@ -4757,6 +4808,35 @@ Best regards,
 					'completed' => false,
 				),
 			);
+		}
+
+		// Validate question count limits - enforce strict compliance
+		$new_question_count = isset( $response_data['question_count'] ) ? intval( $response_data['question_count'] ) : ( $ai_questions_count + 1 );
+		
+		// If status is complete but question count is less than minimum, force incomplete
+		if ( $response_data['status'] === 'complete' && $new_question_count < $min_questions ) {
+			$response_data['status'] = 'incomplete';
+			if ( $is_arabic ) {
+				$response_data['reasoning'] = 'أحتاج إلى المزيد من المعلومات. ' . ( $min_questions - $new_question_count ) . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
+			} else {
+				$response_data['reasoning'] = 'I need more information. At least ' . ( $min_questions - $new_question_count ) . ' more question(s) before completing the assessment.';
+			}
+		}
+		
+		// If question count exceeds maximum, force complete
+		if ( $new_question_count >= $max_questions && $response_data['status'] !== 'complete' ) {
+			$response_data['status'] = 'complete';
+			if ( empty( $response_data['diagnosis'] ) ) {
+				$response_data['diagnosis'] = 'general_assessment';
+			}
+			if ( empty( $response_data['confidence'] ) ) {
+				$response_data['confidence'] = 'low';
+			}
+			if ( $is_arabic ) {
+				$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
+			} else {
+				$response_data['reasoning'] = 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.';
+			}
 		}
 
 		// Validate diagnosis is in our list
