@@ -171,6 +171,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'ChatDiagnosis',
@@ -348,14 +349,41 @@ export default {
              diagnosisResult.diagnosisId = diagnosis.id
              diagnosisCompleted.value = true
              
-             // Auto-redirect to results page after a short delay
-             setTimeout(() => {
+             // Show SweetAlert with diagnosis result
+             const isArabic = locale.value === 'ar'
+             
+             Swal.fire({
+               title: isArabic ? 'تم إكمال التشخيص' : 'Diagnosis Complete',
+               html: `
+                 <div style="text-align: ${isArabic ? 'right' : 'left'}; direction: ${isArabic ? 'rtl' : 'ltr'};">
+                   <h3 style="color: #2563eb; margin-bottom: 15px; font-size: 1.25rem; font-weight: 600;">
+                     ${diagnosisResult.title || (isArabic ? 'التشخيص' : 'Diagnosis')}
+                   </h3>
+                   <p style="color: #4b5563; line-height: 1.6; margin-bottom: 20px; font-size: 1rem;">
+                     ${diagnosisResult.description || (isArabic ? 'تم إكمال التقييم النفسي بنجاح' : 'Psychological assessment completed successfully')}
+                   </p>
+                   <p style="color: #6b7280; font-size: 0.875rem; margin-top: 15px;">
+                     ${isArabic ? 'سيتم توجيهك إلى صفحة النتائج قريباً...' : 'You will be redirected to the results page shortly...'}
+                   </p>
+                 </div>
+               `,
+               icon: 'success',
+               iconColor: '#10b981',
+               confirmButtonText: isArabic ? 'عرض النتائج' : 'View Results',
+               confirmButtonColor: '#2563eb',
+               allowOutsideClick: false,
+               allowEscapeKey: false,
+               showCancelButton: false,
+               timer: 7000, // Show for 7 seconds
+               timerProgressBar: true
+             }).then((result) => {
+               // Redirect when modal closes (either by timer or button click)
                if (diagnosisResult.diagnosisId) {
                  router.push(`/diagnosis-results/${diagnosisResult.diagnosisId}`)
                } else {
                  router.push('/therapists')
                }
-             }, 3000) // 3 second delay to show completion message
+             })
            }
          } else {
            throw new Error(response.data.data || 'Failed to get response')

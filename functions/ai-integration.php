@@ -4661,16 +4661,33 @@ Best regards,
 
 		// Get available diagnoses with proper language support
 		global $wpdb;
-		$diagnoses      = $wpdb->get_results( "SELECT id, name, name_en, name_ar, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+		$diagnoses      = $wpdb->get_results( "SELECT id, name, name_en, name_ar, description, description_en, description_ar FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
 		$diagnosis_list = array();
+		$diagnosis_details = array();
+		
 		foreach ( $diagnoses as $diagnosis ) {
-			// Use appropriate name based on language
+			// Use appropriate name and description based on language
 			if ( $is_arabic ) {
 				$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
+				$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
 			} else {
 				$diagnosis_name = ! empty( $diagnosis->name_en ) ? $diagnosis->name_en : $diagnosis->name;
+				$diagnosis_description = ! empty( $diagnosis->description_en ) ? $diagnosis->description_en : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
 			}
+			
+			// Simple list for quick reference
 			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
+			
+			// Detailed information for better matching
+			$description_text = ! empty( $diagnosis_description ) ? $diagnosis_description : ( $is_arabic ? 'لا يوجد وصف متاح' : 'No description available' );
+			$diagnosis_details[] = sprintf(
+				"%d. %s (ID: %d)\n   %s: %s",
+				count( $diagnosis_details ) + 1,
+				$diagnosis_name,
+				$diagnosis->id,
+				$is_arabic ? 'الوصف' : 'Description',
+				$description_text
+			);
 		}
 
 		// Count questions asked by AI so far
@@ -4687,7 +4704,7 @@ Best regards,
 		// Add system prompt with forced JSON structure and language/question limits
 		$language_instruction = $is_arabic ?
 			'IMPORTANT: Respond ONLY in Modern Standard Arabic (الفصحى). Use formal Arabic language for all communication, reasoning, and explanations. Never use local dialects or colloquial expressions. Always use proper Arabic grammar and formal language.' :
-			'IMPORTANT: Respond ONLY in English language. Use English for all communication, reasoning, and explanations. Never mix languages.';
+			'';
 
 		$question_limit_instruction = "CRITICAL QUESTION LIMITS (STRICTLY ENFORCED):\n";
 		$question_limit_instruction .= "- Minimum Questions Required: {$min_questions}\n";
@@ -4715,9 +4732,25 @@ Best regards,
 
 		// Merge custom/default prompt with enhanced instructions
 		$base_prompt = $system_prompt;
-		$available_diagnoses_text = "Available diagnoses: " . implode( ', ', $diagnosis_list );
 		
-		$enhanced_system_prompt = $base_prompt . "\n\n" . $language_instruction . "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_text . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\"\n}\n\nIMPORTANT: The system automatically counts questions from conversation history. You do NOT need to include question_count in your response.\n\nSTATUS RULES (STRICTLY ENFORCED BY SYSTEM):\n- Use 'incomplete' status when you need more information OR when you haven't asked enough questions yet (less than {$min_questions} questions total)\n- Use 'complete' status ONLY when:\n  * You have asked at least {$min_questions} questions (the system will verify this), AND\n  * You have sufficient information to make a diagnosis, AND\n  * You have NOT exceeded {$max_questions} questions\n- The system will automatically override your status if you violate these rules\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions - the system will prevent this\n- NEVER exceed {$max_questions} questions - the system will force completion if you reach this limit\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
+		// Create comprehensive diagnosis information
+		$available_diagnoses_quick = $is_arabic ? "التشخيصات المتاحة: " : "Available diagnoses: ";
+		$available_diagnoses_quick .= implode( ', ', $diagnosis_list );
+		
+		$available_diagnoses_detailed = $is_arabic ? 
+			"قائمة التشخيصات المتاحة مع الوصف:\n" : 
+			"Available Diagnoses with Descriptions:\n";
+		$available_diagnoses_detailed .= "\n" . implode( "\n\n", $diagnosis_details );
+		$available_diagnoses_detailed .= "\n\n" . ( $is_arabic ? 
+			"ملاحظة مهمة: يجب عليك اختيار التشخيص الذي يطابق الأعراض التي وصفها المريض بدقة. استخدم الأوصاف أعلاه للمساعدة في التطابق الصحيح." :
+			"IMPORTANT NOTE: You must choose the diagnosis that accurately matches the symptoms described by the patient. Use the descriptions above to help with accurate matching." );
+		
+		// Build enhanced system prompt - only include language instruction if Arabic
+		$enhanced_system_prompt = $base_prompt;
+		if ( ! empty( $language_instruction ) ) {
+			$enhanced_system_prompt .= "\n\n" . $language_instruction;
+		}
+		$enhanced_system_prompt .= "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_quick . "\n\n" . $available_diagnoses_detailed . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n- When providing a diagnosis, match the patient's symptoms to the diagnosis descriptions provided above\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\"\n}\n\nIMPORTANT: The system automatically counts questions from conversation history. You do NOT need to include question_count in your response.\n\nDIAGNOSIS SELECTION RULES:\n- You MUST choose a diagnosis from the list provided above\n- Match the diagnosis name EXACTLY as shown in the list (use the name, not the ID)\n- Use the diagnosis descriptions to ensure accurate matching with patient symptoms\n- If no diagnosis matches perfectly, choose the closest match and set confidence to 'low'\n- The diagnosis name in your JSON response must match one of the names from the available diagnoses list\n\nSTATUS RULES (STRICTLY ENFORCED BY SYSTEM):\n- Use 'incomplete' status when you need more information OR when you haven't asked enough questions yet (less than {$min_questions} questions total)\n- Use 'complete' status ONLY when:\n  * You have asked at least {$min_questions} questions (the system will verify this), AND\n  * You have sufficient information to make a diagnosis, AND\n  * You have NOT exceeded {$max_questions} questions\n- The system will automatically override your status if you violate these rules\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions - the system will prevent this\n- NEVER exceed {$max_questions} questions - the system will force completion if you reach this limit\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
 
 		$messages[] = array(
 			'role'    => 'system',
