@@ -4754,17 +4754,10 @@ Best regards,
 			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
 		}
 
-		// Count questions asked by AI so far (skip welcome message)
+		// Count questions asked by AI so far
 		$ai_questions_count = 0;
-		foreach ( $conversation_history as $idx => $msg ) {
-			if ( $msg['role'] !== 'assistant' ) {
-				continue;
-			}
-			// Skip first assistant message if it's a welcome/ready prompt
-			if ( $idx === 0 && preg_match( '/شكرا\s+لاختيارك\s+موقع\s+جلسة/i', $msg['content'] ) ) {
-				continue;
-			}
-			if ( $this->is_question( $msg['content'] ) ) {
+		foreach ( $conversation_history as $msg ) {
+			if ( $msg['role'] === 'assistant' && $this->is_question( $msg['content'] ) ) {
 				++$ai_questions_count;
 			}
 		}
