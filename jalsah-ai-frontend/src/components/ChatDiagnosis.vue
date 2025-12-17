@@ -261,12 +261,22 @@ export default {
           const diagnosisTime = new Date(diagnosis.completed_at)
           const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
           
-          // Don't load previous diagnosis when starting a new chat
-          // Always start fresh to allow new assessment
-          // Previous diagnosis info is not needed for new conversation
-          // This prevents ChatGPT from seeing completed diagnosis and refusing to start new one
-          messages.value = []
-          diagnosisCompleted.value = false
+          if (diagnosisTime > oneHourAgo) {
+            // Store previous diagnosis info but don't mark as completed
+            // This allows user to start a fresh conversation for new assessment
+            diagnosisResult.title = diagnosis.diagnosis_name
+            diagnosisResult.description = diagnosis.diagnosis_description
+            diagnosisResult.diagnosisId = diagnosis.diagnosis_id
+            // Don't set diagnosisCompleted = true - allow new conversation
+            diagnosisCompleted.value = false
+            
+            // Don't load conversation history - start fresh for new diagnosis
+            // This prevents ChatGPT from seeing the completed diagnosis and refusing to start new one
+            messages.value = []
+            
+            // Show a message that previous diagnosis exists but starting fresh
+            toast.info($t('chatDiagnosis.loadedFromPrevious'))
+          }
         }
         // If no diagnosis exists, that's fine - just continue with normal flow
       } catch (error) {
@@ -453,13 +463,14 @@ export default {
       await checkPromptAvailability()
       
       if (promptAvailable.value) {
-        // Always start fresh - don't load previous diagnosis
-        // This ensures ChatGPT doesn't see completed diagnosis and can start new assessment
-        messages.value = []
-        diagnosisCompleted.value = false
+        // Load previous diagnosis if exists (but don't load conversation history)
+        await loadLatestDiagnosis()
         
-        // Always send welcome message for fresh start
-        await sendInitialWelcomeMessage()
+        // Always send welcome message if there are no messages (fresh start)
+        // This allows starting a new assessment even after previous one completed
+        if (messages.value.length === 0) {
+          await sendInitialWelcomeMessage()
+        }
       }
     })
 
