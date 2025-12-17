@@ -4759,43 +4759,6 @@ Best regards,
 			);
 		}
 
-		// Enforce min/max question limits based on configurations
-		// Get the question count from response or calculate it
-		$new_question_count = isset( $response_data['question_count'] ) ? intval( $response_data['question_count'] ) : ( $ai_questions_count + 1 );
-		
-		// If status is complete but question count is less than minimum, force incomplete
-		if ( $response_data['status'] === 'complete' && $new_question_count < $min_questions ) {
-			$response_data['status'] = 'incomplete';
-			// Update reasoning to indicate more questions needed
-			if ( $is_arabic ) {
-				$remaining = $min_questions - $new_question_count;
-				$response_data['reasoning'] = ( isset( $response_data['reasoning'] ) ? $response_data['reasoning'] . ' ' : '' ) . 'أحتاج إلى المزيد من المعلومات. ' . $remaining . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
-			} else {
-				$remaining = $min_questions - $new_question_count;
-				$response_data['reasoning'] = ( isset( $response_data['reasoning'] ) ? $response_data['reasoning'] . ' ' : '' ) . 'I need more information. At least ' . $remaining . ' more question(s) before completing the assessment.';
-			}
-		}
-		
-		// If question count exceeds maximum, force complete
-		if ( $new_question_count >= $max_questions && $response_data['status'] !== 'complete' ) {
-			$response_data['status'] = 'complete';
-			if ( empty( $response_data['diagnosis'] ) ) {
-				$response_data['diagnosis'] = 'general_assessment';
-			}
-			if ( empty( $response_data['confidence'] ) ) {
-				$response_data['confidence'] = 'low';
-			}
-			// Update reasoning to indicate completion due to limit
-			if ( $is_arabic ) {
-				$response_data['reasoning'] = ( isset( $response_data['reasoning'] ) ? $response_data['reasoning'] . ' ' : '' ) . 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
-			} else {
-				$response_data['reasoning'] = ( isset( $response_data['reasoning'] ) ? $response_data['reasoning'] . ' ' : '' ) . 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.';
-			}
-		}
-		
-		// Update question count in response
-		$response_data['question_count'] = $new_question_count;
-
 		// Validate diagnosis is in our list
 		$diagnosis_id          = null;
 		$diagnosis_name        = '';
