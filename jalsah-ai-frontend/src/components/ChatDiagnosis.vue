@@ -450,10 +450,12 @@ export default {
     }
 
     const sendInitialWelcomeMessage = async () => {
-      // Load welcome message from settings and show it locally without sending any message to backend
+      // Send a greeting message to trigger ChatGPT's welcome message from the prompt
       if (messages.value.length === 0) {
         isTyping.value = true
+        
         try {
+          // Get welcome message from settings
           let welcomeMessage = 'مرحبا' // Default fallback
           try {
             const welcomeFormData = new URLSearchParams()
@@ -469,17 +471,36 @@ export default {
           } catch (error) {
             console.warn('Could not load welcome message from settings, using default:', error)
           }
-
-          // Show welcome message locally (assistant role) without hitting ChatGPT
-          messages.value.push({
-            role: 'assistant',
-            content: welcomeMessage,
-            timestamp: new Date(),
-            isWelcome: true // Mark as welcome message so it's excluded from history
+          
+          const formData = new URLSearchParams()
+          formData.append('action', 'chat_diagnosis_ajax')
+          // Send custom welcome message to trigger welcome message - ChatGPT will respond with welcome from prompt
+          formData.append('message', welcomeMessage)
+          formData.append('conversation_history', JSON.stringify([]))
+          formData.append('locale', locale.value || 'en')
+          
+          const response = await api.post('/wp-admin/admin-ajax.php', formData, {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
           })
-          await scrollToBottom()
+
+          if (response.data.success) {
+            const assistantMessage = response.data.data.message
+            
+            // Add assistant welcome message (but mark it as welcome so we can exclude it later)
+            messages.value.push({
+              role: 'assistant',
+              content: typeof assistantMessage === 'string' ? assistantMessage : String(assistantMessage || ''),
+              timestamp: new Date(),
+              isWelcome: true // Mark as welcome message
+            })
+            
+            await scrollToBottom()
+          }
         } catch (error) {
-          console.error('Error showing welcome message:', error)
+          console.error('Error loading welcome message:', error)
+          // Don't show error - just continue without welcome message
         } finally {
           isTyping.value = false
           focusInput()
