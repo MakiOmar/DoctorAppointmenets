@@ -1695,11 +1695,6 @@ class SNKS_AI_Integration {
 			wp_send_json_error( 'Chat diagnosis is not available. Please configure the system prompt in admin settings.', 503 );
 		}
 
-		// Ensure conversation_id present (for logging and per-session grouping)
-		if ( empty( $conversation_id ) ) {
-			$conversation_id = 'conv-' . uniqid();
-		}
-
 		// Get model and locale for logging purposes
 		$model  = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
 		$locale = isset( $_POST['locale'] ) ? sanitize_text_field( wp_unslash( $_POST['locale'] ) ) : snks_get_current_language();
@@ -4787,22 +4782,23 @@ Best regards,
 		// error_log( 'Conversation history count: ' . ( is_array( $conversation_history ) ? count( $conversation_history ) : 'not array' ) );
 		
 		// IMPORTANT: If conversation_history is empty array, don't add anything
-		// Otherwise, send FULL history (no slicing), after basic validation
+		// This ensures ChatGPT starts fresh for first real message
+		// Also check if it's truly empty (not just an array with empty/null values)
 		if ( ! empty( $conversation_history ) && is_array( $conversation_history ) && count( $conversation_history ) > 0 ) {
-			$valid_messages = array_values(
-				array_filter(
-					$conversation_history,
-					function( $msg ) {
-						return isset( $msg['role'] ) && isset( $msg['content'] ) && strlen( trim( $msg['content'] ) ) > 0;
-					}
-				)
-			);
-
-			foreach ( $valid_messages as $msg ) {
-				$messages[] = array(
-					'role'    => $msg['role'],
-					'content' => $msg['content'],
-				);
+			// Filter out empty messages first
+			$valid_messages = array_filter( $conversation_history, function( $msg ) {
+				return isset( $msg['role'] ) && isset( $msg['content'] ) && ! empty( trim( $msg['content'] ) ) && trim( $msg['content'] ) !== 'مرحبا';
+			} );
+			
+			// Only add if there are valid messages after filtering
+			if ( ! empty( $valid_messages ) && count( $valid_messages ) > 0 ) {
+				$recent_history = array_slice( $valid_messages, -10 );
+				foreach ( $recent_history as $msg ) {
+					$messages[] = array(
+						'role'    => $msg['role'],
+						'content' => $msg['content'],
+					);
+				}
 			}
 		}
 
@@ -4922,7 +4918,6 @@ Best regards,
 						'message'                  => $message,
 						'openai_request'           => $data, // no api_key
 						'openai_response'          => $response_data,
-						'prompt_used'              => $enhanced_prompt,
 					)
 				);
 			} catch ( \Exception $e ) {
