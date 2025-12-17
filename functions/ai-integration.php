@@ -94,8 +94,6 @@ class SNKS_AI_Integration {
 		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_nopriv_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
-		add_action( 'wp_ajax_get_welcome_message', array( $this, 'get_welcome_message_ajax' ) );
-		add_action( 'wp_ajax_nopriv_get_welcome_message', array( $this, 'get_welcome_message_ajax' ) );
 		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 
@@ -1639,6 +1637,13 @@ class SNKS_AI_Integration {
 		
 		// Set the current user for WordPress context
 		wp_set_current_user( $user_id );
+		// Check if this is a request to get welcome message
+		if ( isset( $_POST['action'] ) && $_POST['action'] === 'get_welcome_message' ) {
+			$welcome_message = get_option( 'snks_ai_chatgpt_welcome_message', 'مرحبا' );
+			wp_send_json_success( array( 'welcome_message' => $welcome_message ) );
+			return;
+		}
+		
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message_raw = isset( $_POST['message'] ) ? $_POST['message'] : '';
 		$message = sanitize_textarea_field( $message_raw );
