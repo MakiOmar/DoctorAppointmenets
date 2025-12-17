@@ -298,7 +298,7 @@ export default {
       const userMessage = newMessage.value.trim()
       
       // Check if this is the first real user message (after welcome exchange)
-      // BEFORE adding the new message, check if we only have the welcome message
+      // If we have only 1 message (the welcome message from assistant), this is the first real message
       const hasOnlyWelcome = messages.value.length === 1 && 
                             messages.value[0].role === 'assistant' && 
                             (messages.value[0].isWelcome || messages.value[0].content.includes('شكرا لاختيارك'))
@@ -327,11 +327,7 @@ export default {
           // For subsequent messages, send only the conversation history (excluding current message and welcome)
           let conversationToSend = []
           
-          if (isFirstRealMessage) {
-            // For first real message, send EMPTY conversation history
-            // This ensures ChatGPT doesn't see the "مرحبا" exchange
-            conversationToSend = []
-          } else {
+          if (!isFirstRealMessage) {
             // For subsequent messages, send conversation history
             // Filter out welcome messages and "مرحبا" exchange
             conversationToSend = messages.value
@@ -350,11 +346,8 @@ export default {
           }
           
           // Debug: Log what we're sending
-          console.log('Is first real message:', isFirstRealMessage, 'Total messages before:', messages.value.length - 1)
+          console.log('Is first real message:', isFirstRealMessage, 'Total messages:', messages.value.length)
           console.log('Sending conversation history:', conversationToSend.length, 'messages')
-          if (conversationToSend.length > 0) {
-            console.log('Conversation content:', conversationToSend)
-          }
           
           formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')
