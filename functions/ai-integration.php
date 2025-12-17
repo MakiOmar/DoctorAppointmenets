@@ -4704,16 +4704,13 @@ Best regards,
 		);
 
 		// Add conversation history (limit to last 10 messages to avoid token limits)
-		// Only add if conversation history is not empty
-		if ( ! empty( $conversation_history ) && is_array( $conversation_history ) ) {
-			$recent_history = array_slice( $conversation_history, -10 );
-			foreach ( $recent_history as $msg ) {
-				if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
-					$messages[] = array(
-						'role'    => $msg['role'],
-						'content' => $msg['content'],
-					);
-				}
+		$recent_history = array_slice( $conversation_history, -10 );
+		foreach ( $recent_history as $msg ) {
+			if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
+				$messages[] = array(
+					'role'    => $msg['role'],
+					'content' => $msg['content'],
+				);
 			}
 		}
 
