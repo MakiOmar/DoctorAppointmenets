@@ -1694,9 +1694,6 @@ class SNKS_AI_Integration {
 			wp_send_json_error( 'Chat diagnosis is not available. Please configure the system prompt in admin settings.', 503 );
 		}
 
-		// Get model for logging purposes
-		$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
-
 		// Process the chat diagnosis
 		$result = $this->process_chat_diagnosis( $message, $conversation_history );
 
@@ -1704,57 +1701,7 @@ class SNKS_AI_Integration {
 			wp_send_json_error( $result->get_error_message(), 400 );
 		}
 
-		// Log request/response per user, daily, JSONL
-		try {
-			$locale = isset( $_POST['locale'] ) ? sanitize_text_field( wp_unslash( $_POST['locale'] ) ) : '';
-			$this->log_chatgpt_request(
-				$user_id,
-				array(
-					'timestamp'                => current_time( 'mysql' ),
-					'user_id'                  => $user_id,
-					'locale'                   => $locale,
-					'model'                    => $model,
-					'endpoint'                 => 'chat_diagnosis_ajax',
-					'message'                  => $message,
-					'conversation_history'     => $conversation_history,
-					'conversation_history_len' => is_array( $conversation_history ) ? count( $conversation_history ) : 0,
-					'response'                 => $result,
-				)
-			);
-		} catch ( \Exception $e ) {
-			// Silently ignore logging errors to avoid breaking chat
-		}
-
 		wp_send_json_success( $result );
-	}
-
-	/**
-	 * Log ChatGPT requests/responses per user per day as JSONL
-	 */
-	private function log_chatgpt_request( $user_id, $entry ) {
-		if ( empty( $user_id ) ) {
-			return;
-		}
-
-		$upload_dir = wp_upload_dir();
-		$base_dir   = trailingslashit( $upload_dir['basedir'] ) . 'chatgpt-logs/' . intval( $user_id );
-
-		// Ensure directory exists
-		if ( ! wp_mkdir_p( $base_dir ) ) {
-			return;
-		}
-
-		$file = trailingslashit( $base_dir ) . gmdate( 'Y-m-d' ) . '.jsonl';
-
-		$entry['timestamp_gmt'] = gmdate( 'Y-m-d H:i:s' );
-
-		$line = wp_json_encode( $entry, JSON_UNESCAPED_UNICODE );
-		if ( false === $line ) {
-			return;
-		}
-
-		// Append line
-		file_put_contents( $file, $line . PHP_EOL, FILE_APPEND | LOCK_EX );
 	}
 
 	/**
