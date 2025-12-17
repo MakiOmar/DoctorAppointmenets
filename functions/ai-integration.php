@@ -1650,13 +1650,6 @@ class SNKS_AI_Integration {
 			$conversation_history = array();
 		}
 		
-		// Force empty array if it's empty or contains only empty/null values
-		if ( empty( $conversation_history ) || count( array_filter( $conversation_history, function( $msg ) {
-			return ! empty( $msg ) && isset( $msg['content'] ) && ! empty( trim( $msg['content'] ) );
-		} ) ) === 0 ) {
-			$conversation_history = array();
-		}
-		
 		// Debug: Log conversation history length
 		// error_log( 'Conversation history received: ' . count( $conversation_history ) . ' messages' );
 
