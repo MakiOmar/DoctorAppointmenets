@@ -455,27 +455,10 @@ export default {
         isTyping.value = true
         
         try {
-          // Get welcome message from settings
-          let welcomeMessage = 'مرحبا' // Default fallback
-          try {
-            const welcomeFormData = new URLSearchParams()
-            welcomeFormData.append('action', 'get_welcome_message')
-            const welcomeResponse = await api.post('/wp-admin/admin-ajax.php', welcomeFormData, {
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-              }
-            })
-            if (welcomeResponse.data.success && welcomeResponse.data.data.welcome_message) {
-              welcomeMessage = welcomeResponse.data.data.welcome_message
-            }
-          } catch (error) {
-            console.warn('Could not load welcome message from settings, using default:', error)
-          }
-          
           const formData = new URLSearchParams()
           formData.append('action', 'chat_diagnosis_ajax')
-          // Send custom welcome message to trigger welcome message - ChatGPT will respond with welcome from prompt
-          formData.append('message', welcomeMessage)
+          // Send "مرحبا" (hello) to trigger welcome message - ChatGPT will respond with welcome from prompt
+          formData.append('message', 'مرحبا')
           formData.append('conversation_history', JSON.stringify([]))
           formData.append('locale', locale.value || 'en')
           

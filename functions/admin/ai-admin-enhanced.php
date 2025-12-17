@@ -2382,7 +2382,6 @@ function snks_enhanced_ai_chatgpt_page() {
 			update_option( 'snks_ai_chatgpt_api_key', sanitize_text_field( $_POST['api_key'] ) );
 			update_option( 'snks_ai_chatgpt_model', sanitize_text_field( $_POST['model'] ) );
 			update_option( 'snks_ai_chatgpt_prompt', sanitize_textarea_field( wp_unslash( $_POST['prompt'] ) ) );
-		update_option( 'snks_ai_chatgpt_welcome_message', sanitize_textarea_field( wp_unslash( $_POST['welcome_message'] ?? '' ) ) );
 					update_option( 'snks_ai_chatgpt_max_tokens', intval( $_POST['max_tokens'] ) );
 		update_option( 'snks_ai_chatgpt_temperature', floatval( $_POST['temperature'] ) );
 		update_option( 'snks_ai_chatgpt_min_questions', intval( $_POST['min_questions'] ) );
@@ -2457,15 +2456,6 @@ function snks_enhanced_ai_chatgpt_page() {
 					<tr>
 						<th><label for="max_questions">Maximum Questions</label></th>
 						<td><input type="number" id="max_questions" name="max_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_max_questions', 10 ) ); ?>" min="5" step="1" class="small-text"></td>
-					</tr>
-					<tr>
-						<th><label for="welcome_message">Welcome Message</label></th>
-						<td>
-							<textarea id="welcome_message" name="welcome_message" rows="3" class="large-text"><?php echo esc_textarea( get_option( 'snks_ai_chatgpt_welcome_message', 'مرحبا' ) ); ?></textarea>
-							<p class="description">
-								Initial welcome message to send when chat opens. This message will trigger ChatGPT's welcome response from the prompt.
-							</p>
-						</td>
 					</tr>
 				</table>
 				
