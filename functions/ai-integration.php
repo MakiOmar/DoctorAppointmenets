@@ -1651,9 +1651,7 @@ class SNKS_AI_Integration {
 
 		// Validate required fields
 		// Allow empty message only if conversation history is empty (to trigger welcome message)
-		// Check if conversation_history is truly empty (empty array or null)
-		$is_conversation_empty = empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 );
-		if ( empty( trim( $message ) ) && ! $is_conversation_empty ) {
+		if ( empty( $message ) && ! empty( $conversation_history ) ) {
 			wp_send_json_error( 'Message is required', 400 );
 		}
 
@@ -4709,13 +4707,12 @@ Best regards,
 
 		// Add current message
 		// If message is empty and conversation is empty, add a trigger message to get welcome message
-		$is_conversation_empty = empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 );
-		if ( empty( trim( $message ) ) && $is_conversation_empty ) {
+		if ( empty( $message ) && empty( $conversation_history ) ) {
 			$messages[] = array(
 				'role'    => 'user',
 				'content' => 'start', // Trigger message to get welcome message from prompt
 			);
-		} elseif ( ! empty( trim( $message ) ) ) {
+		} elseif ( ! empty( $message ) ) {
 			$messages[] = array(
 				'role'    => 'user',
 				'content' => $message,
