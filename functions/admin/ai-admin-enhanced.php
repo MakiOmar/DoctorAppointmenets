@@ -125,6 +125,15 @@ function snks_add_enhanced_ai_admin_menu() {
 		'snks_enhanced_ai_chatgpt_page'
 	);
 
+	add_submenu_page(
+		'jalsah-ai-management',
+		'ChatGPT Logs',
+		'ChatGPT Logs',
+		'manage_options',
+		'jalsah-ai-chatgpt-logs',
+		'snks_enhanced_ai_chatgpt_logs_page'
+	);
+
 	// WhatsApp notifications now consolidated in Therapist Registration Settings
 	// No separate menu item needed
 	
@@ -2584,6 +2593,301 @@ function snks_test_chatgpt_integration( $test_prompt ) {
 		return $result['choices'][0]['message']['content'];
 	} else {
 		return 'Error: Invalid response from OpenAI API';
+	}
+}
+
+/**
+ * ChatGPT Logs Page
+ */
+function snks_enhanced_ai_chatgpt_logs_page() {
+	snks_load_ai_admin_styles();
+	
+	global $wpdb;
+	
+	// Get filter parameters
+	$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+	$user_id_filter = isset( $_GET['user_id'] ) ? intval( $_GET['user_id'] ) : 0;
+	$paged = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+	$per_page = 20;
+	$offset = ( $paged - 1 ) * $per_page;
+	
+	// Build query args
+	$args = array(
+		'limit'  => $per_page,
+		'offset' => $offset,
+	);
+	
+	if ( $status_filter ) {
+		$args['status'] = $status_filter;
+	}
+	
+	if ( $user_id_filter ) {
+		$args['user_id'] = $user_id_filter;
+	}
+	
+	// Get logs
+	$logs = function_exists( 'snks_get_chatgpt_logs' ) ? snks_get_chatgpt_logs( $args ) : array();
+	
+	// Get total count for pagination
+	$logs_table = $wpdb->prefix . 'snks_chatgpt_logs';
+	$where_clauses = array( '1=1' );
+	$where_values = array();
+	
+	if ( $status_filter ) {
+		$where_clauses[] = 'status = %s';
+		$where_values[] = $status_filter;
+	}
+	
+	if ( $user_id_filter ) {
+		$where_clauses[] = 'user_id = %d';
+		$where_values[] = $user_id_filter;
+	}
+	
+	$where_sql = implode( ' AND ', $where_clauses );
+	$count_query = "SELECT COUNT(*) FROM $logs_table WHERE $where_sql";
+	
+	if ( ! empty( $where_values ) ) {
+		$count_query = $wpdb->prepare( $count_query, $where_values );
+	}
+	
+	$total_logs = $wpdb->get_var( $count_query );
+	$total_pages = ceil( $total_logs / $per_page );
+	
+	// Get stats
+	$stats = array(
+		'total'   => $wpdb->get_var( "SELECT COUNT(*) FROM $logs_table" ),
+		'success' => $wpdb->get_var( "SELECT COUNT(*) FROM $logs_table WHERE status = 'success'" ),
+		'error'   => $wpdb->get_var( "SELECT COUNT(*) FROM $logs_table WHERE status = 'error'" ),
+	);
+	
+	?>
+	<div class="wrap">
+		<h1>ChatGPT API Logs</h1>
+		
+		<!-- Stats Cards -->
+		<div style="display: flex; gap: 20px; margin: 20px 0;">
+			<div class="card" style="flex: 1; padding: 15px;">
+				<h3 style="margin-top: 0;">Total Requests</h3>
+				<p style="font-size: 24px; font-weight: bold; color: #2271b1;"><?php echo esc_html( $stats['total'] ); ?></p>
+			</div>
+			<div class="card" style="flex: 1; padding: 15px; background: #d4edda;">
+				<h3 style="margin-top: 0;">Successful</h3>
+				<p style="font-size: 24px; font-weight: bold; color: #155724;"><?php echo esc_html( $stats['success'] ); ?></p>
+			</div>
+			<div class="card" style="flex: 1; padding: 15px; background: #f8d7da;">
+				<h3 style="margin-top: 0;">Errors</h3>
+				<p style="font-size: 24px; font-weight: bold; color: #721c24;"><?php echo esc_html( $stats['error'] ); ?></p>
+			</div>
+		</div>
+		
+		<!-- Filters -->
+		<div class="card" style="margin: 20px 0;">
+			<h2>Filters</h2>
+			<form method="get" action="">
+				<input type="hidden" name="page" value="jalsah-ai-chatgpt-logs">
+				<table class="form-table">
+					<tr>
+						<th><label for="status">Status</label></th>
+						<td>
+							<select name="status" id="status">
+								<option value="">All</option>
+								<option value="success" <?php selected( $status_filter, 'success' ); ?>>Success</option>
+								<option value="error" <?php selected( $status_filter, 'error' ); ?>>Error</option>
+								<option value="timeout" <?php selected( $status_filter, 'timeout' ); ?>>Timeout</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="user_id">User ID</label></th>
+						<td>
+							<input type="number" name="user_id" id="user_id" value="<?php echo esc_attr( $user_id_filter ); ?>" placeholder="Filter by User ID">
+						</td>
+					</tr>
+				</table>
+				<p class="submit">
+					<input type="submit" class="button button-primary" value="Filter">
+					<a href="?page=jalsah-ai-chatgpt-logs" class="button">Clear Filters</a>
+				</p>
+			</form>
+		</div>
+		
+		<!-- Logs Table -->
+		<div class="card">
+			<h2>Recent Logs (<?php echo esc_html( $total_logs ); ?> total)</h2>
+			
+			<?php if ( empty( $logs ) ) : ?>
+				<p>No logs found.</p>
+			<?php else : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Date/Time</th>
+							<th>User ID</th>
+							<th>Session ID</th>
+							<th>Model</th>
+							<th>Status</th>
+							<th>Response Time</th>
+							<th>Tokens</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $logs as $log ) : 
+							$user = $log->user_id ? get_user_by( 'ID', $log->user_id ) : null;
+							$status_class = $log->status === 'success' ? 'success' : ( $log->status === 'error' ? 'error' : 'warning' );
+						?>
+							<tr>
+								<td><?php echo esc_html( $log->id ); ?></td>
+								<td><?php echo esc_html( date( 'Y-m-d H:i:s', strtotime( $log->created_at ) ) ); ?></td>
+								<td>
+									<?php if ( $user ) : ?>
+										<a href="<?php echo esc_url( admin_url( 'user-edit.php?user_id=' . $log->user_id ) ); ?>">
+											<?php echo esc_html( $log->user_id ); ?> - <?php echo esc_html( $user->display_name ); ?>
+										</a>
+									<?php else : ?>
+										<?php echo esc_html( $log->user_id ?: 'N/A' ); ?>
+									<?php endif; ?>
+								</td>
+								<td><code><?php echo esc_html( substr( $log->session_id ?: 'N/A', 0, 20 ) ); ?>...</code></td>
+								<td><?php echo esc_html( $log->model ); ?></td>
+								<td>
+									<span class="status-<?php echo esc_attr( $status_class ); ?>" style="padding: 3px 8px; border-radius: 3px; background: <?php echo $log->status === 'success' ? '#d4edda' : ( $log->status === 'error' ? '#f8d7da' : '#fff3cd' ); ?>; color: <?php echo $log->status === 'success' ? '#155724' : ( $log->status === 'error' ? '#721c24' : '#856404' ); ?>;">
+										<?php echo esc_html( ucfirst( $log->status ) ); ?>
+									</span>
+								</td>
+								<td><?php echo $log->response_time_ms ? esc_html( $log->response_time_ms ) . ' ms' : 'N/A'; ?></td>
+								<td><?php echo $log->tokens_used ? esc_html( number_format( $log->tokens_used ) ) : 'N/A'; ?></td>
+								<td>
+									<button type="button" class="button button-small view-log-details" data-log-id="<?php echo esc_attr( $log->id ); ?>">
+										View Details
+									</button>
+								</td>
+							</tr>
+							<?php if ( $log->error_message ) : ?>
+								<tr class="error-row" id="error-<?php echo esc_attr( $log->id ); ?>" style="display: none;">
+									<td colspan="9" style="background: #f8d7da; color: #721c24; padding: 10px;">
+										<strong>Error:</strong> <?php echo esc_html( $log->error_message ); ?>
+									</td>
+								</tr>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				
+				<!-- Pagination -->
+				<?php if ( $total_pages > 1 ) : ?>
+					<div class="tablenav">
+						<div class="tablenav-pages">
+							<?php
+							$page_links = paginate_links( array(
+								'base'    => add_query_arg( 'paged', '%#%' ),
+								'format'  => '',
+								'prev_text' => '&laquo;',
+								'next_text' => '&raquo;',
+								'total'   => $total_pages,
+								'current' => $paged,
+							) );
+							echo $page_links;
+							?>
+						</div>
+					</div>
+				<?php endif; ?>
+			<?php endif; ?>
+		</div>
+		
+		<!-- Log Details Modal -->
+		<div id="log-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100000;">
+			<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; max-width: 90%; max-height: 90%; overflow: auto; border-radius: 5px; box-shadow: 0 0 20px rgba(0,0,0,0.3);">
+				<h2>Log Details <span id="log-details-id"></span></h2>
+				<button type="button" class="button" onclick="document.getElementById('log-details-modal').style.display='none'" style="float: right; margin-top: -40px;">Close</button>
+				<div id="log-details-content" style="margin-top: 20px;"></div>
+			</div>
+		</div>
+		
+		<script>
+		jQuery(document).ready(function($) {
+			$('.view-log-details').on('click', function() {
+				var logId = $(this).data('log-id');
+				var modal = $('#log-details-modal');
+				var content = $('#log-details-content');
+				var logIdSpan = $('#log-details-id');
+				
+				content.html('<p>Loading...</p>');
+				modal.show();
+				logIdSpan.text('#' + logId);
+				
+				// AJAX call to get log details
+				$.ajax({
+					url: ajaxurl,
+					type: 'POST',
+					data: {
+						action: 'get_chatgpt_log_details',
+						log_id: logId,
+						nonce: '<?php echo wp_create_nonce( 'get_chatgpt_log_details' ); ?>'
+					},
+					success: function(response) {
+						if (response.success) {
+							var log = response.data;
+							var html = '<h3>Request Data</h3>';
+							html += '<pre style="background: #f5f5f5; padding: 10px; overflow-x: auto; max-height: 300px;">' + escapeHtml(JSON.stringify(JSON.parse(log.request_data), null, 2)) + '</pre>';
+							
+							if (log.response_data) {
+								html += '<h3>Response Data</h3>';
+								html += '<pre style="background: #f5f5f5; padding: 10px; overflow-x: auto; max-height: 300px;">' + escapeHtml(JSON.stringify(JSON.parse(log.response_data), null, 2)) + '</pre>';
+							}
+							
+							if (log.error_message) {
+								html += '<h3>Error Message</h3>';
+								html += '<p style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 3px;">' + escapeHtml(log.error_message) + '</p>';
+							}
+							
+							content.html(html);
+						} else {
+							content.html('<p style="color: red;">Error loading log details.</p>');
+						}
+					},
+					error: function() {
+						content.html('<p style="color: red;">Error loading log details.</p>');
+					}
+				});
+			});
+			
+			function escapeHtml(text) {
+				var map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+				return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+			}
+		});
+		</script>
+	</div>
+	<?php
+}
+
+// AJAX handler for log details
+add_action( 'wp_ajax_get_chatgpt_log_details', 'snks_get_chatgpt_log_details_ajax' );
+function snks_get_chatgpt_log_details_ajax() {
+	check_ajax_referer( 'get_chatgpt_log_details', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( 'Unauthorized' );
+	}
+	
+	$log_id = intval( $_POST['log_id'] );
+	global $wpdb;
+	$logs_table = $wpdb->prefix . 'snks_chatgpt_logs';
+	
+	$log = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $logs_table WHERE id = %d", $log_id ) );
+	
+	if ( $log ) {
+		wp_send_json_success( $log );
+	} else {
+		wp_send_json_error( 'Log not found' );
 	}
 }
 

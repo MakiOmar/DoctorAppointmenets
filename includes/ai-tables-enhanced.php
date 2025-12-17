@@ -128,6 +128,27 @@ function snks_create_enhanced_ai_tables() {
 		KEY read_at (read_at)
 	) " . $wpdb->get_charset_collate();
 	
+	// Create ChatGPT API logging table
+	$chatgpt_logs_table = $wpdb->prefix . 'snks_chatgpt_logs';
+	$chatgpt_logs_sql = "CREATE TABLE IF NOT EXISTS $chatgpt_logs_table (
+		id INT(11) NOT NULL AUTO_INCREMENT,
+		user_id INT(11) NULL,
+		session_id VARCHAR(100) NULL,
+		request_data LONGTEXT NOT NULL,
+		response_data LONGTEXT NULL,
+		model VARCHAR(50) NOT NULL,
+		status ENUM('success', 'error', 'timeout') DEFAULT 'success',
+		error_message TEXT NULL,
+		response_time_ms INT(11) NULL,
+		tokens_used INT(11) NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY user_id (user_id),
+		KEY session_id (session_id),
+		KEY status (status),
+		KEY created_at (created_at)
+	) " . $wpdb->get_charset_collate();
+	
 	// Execute SQL
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $coupons_sql );
@@ -135,6 +156,7 @@ function snks_create_enhanced_ai_tables() {
 	dbDelta( $rochtah_appointments_sql );
 	dbDelta( $analytics_sql );
 	dbDelta( $notifications_sql );
+	dbDelta( $chatgpt_logs_sql );
 	
 	// Add allowed_users column if it doesn't exist (for existing installations)
 	// This must be done AFTER table creation
@@ -544,4 +566,155 @@ function snks_add_rochtah_doctor_joined_column() {
 		);
 	}
 }
-add_action( 'admin_init', 'snks_add_rochtah_doctor_joined_column' ); 
+add_action( 'admin_init', 'snks_add_rochtah_doctor_joined_column' );
+
+/**
+ * Log ChatGPT API request and response
+ *
+ * @param array $request_data The request data sent to OpenAI API
+ * @param array|WP_Error $response_data The response data from OpenAI API or WP_Error
+ * @param string $model The model used for the request
+ * @param int|null $user_id The user ID making the request
+ * @param string|null $session_id Optional session identifier
+ * @param int|null $response_time_ms Response time in milliseconds
+ * @return int|false The log ID on success, false on failure
+ */
+function snks_log_chatgpt_request( $request_data, $response_data, $model, $user_id = null, $session_id = null, $response_time_ms = null ) {
+	global $wpdb;
+	
+	$logs_table = $wpdb->prefix . 'snks_chatgpt_logs';
+	
+	// Check if table exists, if not create it
+	$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '$logs_table'" );
+	if ( ! $table_exists ) {
+		// Table doesn't exist, try to create it
+		if ( function_exists( 'snks_create_enhanced_ai_tables' ) ) {
+			snks_create_enhanced_ai_tables();
+		}
+	}
+	
+	// Prepare request data for storage (remove sensitive API key if present)
+	$log_request_data = $request_data;
+	if ( isset( $log_request_data['headers']['Authorization'] ) ) {
+		$log_request_data['headers']['Authorization'] = 'Bearer ***REDACTED***';
+	}
+	
+	// Determine status and extract response/error information
+	$status = 'success';
+	$error_message = null;
+	$log_response_data = null;
+	$tokens_used = null;
+	
+	if ( is_wp_error( $response_data ) ) {
+		$status = 'error';
+		$error_message = $response_data->get_error_message();
+	} else {
+		$log_response_data = $response_data;
+		
+		// Extract token usage if available
+		if ( isset( $response_data['usage']['total_tokens'] ) ) {
+			$tokens_used = intval( $response_data['usage']['total_tokens'] );
+		}
+		
+		// Check for errors in response
+		if ( isset( $response_data['error'] ) ) {
+			$status = 'error';
+			$error_message = isset( $response_data['error']['message'] ) ? $response_data['error']['message'] : 'Unknown API error';
+		}
+	}
+	
+	// Insert log entry
+	$result = $wpdb->insert(
+		$logs_table,
+		array(
+			'user_id'        => $user_id,
+			'session_id'     => $session_id,
+			'request_data'   => wp_json_encode( $log_request_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ),
+			'response_data'  => $log_response_data ? wp_json_encode( $log_response_data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) : null,
+			'model'          => $model,
+			'status'         => $status,
+			'error_message'  => $error_message,
+			'response_time_ms' => $response_time_ms,
+			'tokens_used'    => $tokens_used,
+		),
+		array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' )
+	);
+	
+	if ( $result === false ) {
+		error_log( 'Failed to log ChatGPT request: ' . $wpdb->last_error );
+		return false;
+	}
+	
+	return $wpdb->insert_id;
+}
+
+/**
+ * Get ChatGPT logs with optional filters
+ *
+ * @param array $args {
+ *     Optional. Arguments to filter logs.
+ *     @type int    $user_id     Filter by user ID
+ *     @type string $session_id  Filter by session ID
+ *     @type string $status      Filter by status (success, error, timeout)
+ *     @type int    $limit       Number of logs to retrieve
+ *     @type int    $offset      Offset for pagination
+ *     @type string $order_by    Column to order by (default: created_at)
+ *     @type string $order       Order direction (ASC or DESC, default: DESC)
+ * }
+ * @return array Array of log entries
+ */
+function snks_get_chatgpt_logs( $args = array() ) {
+	global $wpdb;
+	
+	$logs_table = $wpdb->prefix . 'snks_chatgpt_logs';
+	
+	$defaults = array(
+		'user_id'    => null,
+		'session_id' => null,
+		'status'     => null,
+		'limit'      => 50,
+		'offset'     => 0,
+		'order_by'   => 'created_at',
+		'order'      => 'DESC',
+	);
+	
+	$args = wp_parse_args( $args, $defaults );
+	
+	$where = array( '1=1' );
+	$where_values = array();
+	
+	if ( $args['user_id'] ) {
+		$where[] = 'user_id = %d';
+		$where_values[] = $args['user_id'];
+	}
+	
+	if ( $args['session_id'] ) {
+		$where[] = 'session_id = %s';
+		$where_values[] = $args['session_id'];
+	}
+	
+	if ( $args['status'] ) {
+		$where[] = 'status = %s';
+		$where_values[] = $args['status'];
+	}
+	
+	$where_clause = implode( ' AND ', $where );
+	
+	$order_by = sanitize_sql_orderby( $args['order_by'] . ' ' . $args['order'] );
+	if ( ! $order_by ) {
+		$order_by = 'created_at DESC';
+	}
+	
+	$limit = intval( $args['limit'] );
+	$offset = intval( $args['offset'] );
+	
+	$query = "SELECT * FROM $logs_table WHERE $where_clause ORDER BY $order_by LIMIT %d OFFSET %d";
+	$where_values[] = $limit;
+	$where_values[] = $offset;
+	
+	if ( ! empty( $where_values ) ) {
+		$query = $wpdb->prepare( $query, $where_values );
+	}
+	
+	return $wpdb->get_results( $query );
+} 

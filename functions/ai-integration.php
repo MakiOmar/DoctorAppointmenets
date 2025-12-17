@@ -4765,6 +4765,37 @@ Best regards,
 			'response_format' => array( 'type' => 'json_object' ),
 		);
 
+		// Prepare request data for logging
+		$request_data_for_log = array(
+			'url'     => 'https://api.openai.com/v1/chat/completions',
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type'   => 'application/json',
+			),
+			'body'    => $data,
+		);
+
+		// Get user ID and session ID for logging
+		$user_id = get_current_user_id();
+		$session_id = null;
+		
+		// Generate session ID from conversation history or create one
+		if ( ! empty( $conversation_history ) ) {
+			// Use first message timestamp or create hash from conversation
+			$first_message = reset( $conversation_history );
+			if ( isset( $first_message['timestamp'] ) ) {
+				$session_id = 'chat_' . md5( $user_id . '_' . $first_message['timestamp'] );
+			} else {
+				$session_id = 'chat_' . md5( $user_id . '_' . time() );
+			}
+		} else {
+			$session_id = 'chat_' . md5( $user_id . '_' . time() );
+		}
+
+		// Start timing
+		$start_time = microtime( true );
+
 		$response = wp_remote_post(
 			'https://api.openai.com/v1/chat/completions',
 			array(
@@ -4777,7 +4808,27 @@ Best regards,
 			)
 		);
 
+		// Calculate response time
+		$end_time = microtime( true );
+		$response_time_ms = intval( ( $end_time - $start_time ) * 1000 );
+
+		// Prepare response data for logging
+		$response_data_for_log = null;
+		$log_error = null;
+
 		if ( is_wp_error( $response ) ) {
+			$log_error = $response;
+			// Log the error
+			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
+				snks_log_chatgpt_request(
+					$request_data_for_log,
+					$log_error,
+					$model,
+					$user_id,
+					$session_id,
+					$response_time_ms
+				);
+			}
 			return new WP_Error( 'api_error', 'OpenAI API error: ' . $response->get_error_message() );
 		}
 
@@ -4785,13 +4836,38 @@ Best regards,
 		$result = json_decode( $body, true );
 
 		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
-			return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+			$log_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+			// Log the error
+			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
+				snks_log_chatgpt_request(
+					$request_data_for_log,
+					$log_error,
+					$model,
+					$user_id,
+					$session_id,
+					$response_time_ms
+				);
+			}
+			return $log_error;
 		}
 
 		$ai_response = $result['choices'][0]['message']['content'];
 
 		// Parse the JSON response
 		$response_data = json_decode( $ai_response, true );
+
+		// Log successful request/response
+		if ( function_exists( 'snks_log_chatgpt_request' ) ) {
+			$response_data_for_log = $result;
+			snks_log_chatgpt_request(
+				$request_data_for_log,
+				$response_data_for_log,
+				$model,
+				$user_id,
+				$session_id,
+				$response_time_ms
+			);
+		}
 
 		process_response:
 
