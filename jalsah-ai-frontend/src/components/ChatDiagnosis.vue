@@ -326,16 +326,10 @@ export default {
           
           if (!isFirstRealMessage) {
             // Only for subsequent messages (after first real message), send conversation history
-            // Filter out welcome messages and "مرحبا" exchange completely
+            // Filter out welcome messages and "مرحبا" exchange
             conversationToSend = messages.value
               .slice(0, -1) // Exclude current message
-              .filter(msg => {
-                // Exclude welcome messages
-                if (msg.isWelcome) return false
-                // Exclude "مرحبا" messages
-                if (msg.content === 'مرحبا' || msg.content.trim() === '') return false
-                return true
-              })
+              .filter(msg => !msg.isWelcome && msg.content !== 'مرحبا' && msg.role !== 'user' || (msg.role === 'user' && msg.content !== 'مرحبا'))
               .map(msg => ({
                 role: msg.role,
                 content: msg.content
@@ -343,11 +337,8 @@ export default {
           }
           
           // Debug: Log what we're sending
-          console.log('Is first real message:', isFirstRealMessage, 'Total messages:', messages.value.length)
-          console.log('Sending conversation history:', conversationToSend.length, 'messages')
-          if (conversationToSend.length > 0) {
-            console.log('Conversation content:', conversationToSend)
-          }
+          console.log('Is first real message:', isFirstRealMessage)
+          console.log('Sending conversation history:', conversationToSend.length, 'messages', conversationToSend)
           
           formData.append('conversation_history', JSON.stringify(conversationToSend))
           formData.append('locale', locale.value || 'en')

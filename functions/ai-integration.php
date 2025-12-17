@@ -1649,9 +1649,6 @@ class SNKS_AI_Integration {
 		if ( ! is_array( $conversation_history ) ) {
 			$conversation_history = array();
 		}
-		
-		// Debug: Log conversation history length
-		// error_log( 'Conversation history received: ' . count( $conversation_history ) . ' messages' );
 
 		// Validate required fields
 		// Check if conversation_history is truly empty (empty array or null)
