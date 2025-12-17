@@ -4760,17 +4760,8 @@ Best regards,
 		$messages = array();
 
 		// Use ONLY the custom prompt - no additional instructions
-		// Inject runtime values for placeholders if present
-		$enhanced_prompt = $system_prompt;
-		// Build placeholders map
-		$placeholders = array(
-			'{max_questions}'      => $max_questions,
-			'{question_count}'     => $ai_questions_count,
-			'{available_diagnoses}' => ! empty( $diagnosis_list ) ? implode( ', ', $diagnosis_list ) : '',
-		);
-		$enhanced_prompt = strtr( $enhanced_prompt, $placeholders );
-
 		// Add instruction to always start fresh if conversation_history is empty
+		$enhanced_prompt = $system_prompt;
 		if ( empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 ) ) {
 			// Add instruction to start fresh when conversation is empty
 			$enhanced_prompt .= "\n\n" . ( $is_arabic 
