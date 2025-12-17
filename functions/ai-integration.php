@@ -38,8 +38,9 @@ Focus on understanding the patient's symptoms, duration, impact on daily life, a
 
 if ( ! function_exists( 'snks_get_ai_chatgpt_prompt' ) ) {
 	function snks_get_ai_chatgpt_prompt() {
+		$default_prompt = snks_get_ai_chatgpt_default_prompt();
 		$custom_prompt = get_option( 'snks_ai_chatgpt_prompt', '' );
-		return ! empty( $custom_prompt ) ? $custom_prompt : '';
+		return ! empty( $custom_prompt ) ? $custom_prompt : $default_prompt;
 	}
 }
 
@@ -1652,12 +1653,6 @@ class SNKS_AI_Integration {
 		// Validate required fields
 		if ( empty( $message ) ) {
 			wp_send_json_error( 'Message is required', 400 );
-		}
-
-		// Check if prompt is configured
-		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', '' );
-		if ( empty( $system_prompt ) ) {
-			wp_send_json_error( 'Chat diagnosis is not available. Please configure the system prompt in admin settings.', 503 );
 		}
 
 		// Process the chat diagnosis
@@ -4643,7 +4638,7 @@ Best regards,
 		// Get OpenAI settings
 		$api_key       = get_option( 'snks_ai_chatgpt_api_key' );
 		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
-		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', '' );
+		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
 		$max_tokens    = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
 		$temperature   = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 		$min_questions = get_option( 'snks_ai_chatgpt_min_questions', 5 );
@@ -4651,10 +4646,6 @@ Best regards,
 
 		if ( ! $api_key ) {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
-		}
-
-		if ( empty( $system_prompt ) ) {
-			return new WP_Error( 'no_prompt', 'System prompt not configured' );
 		}
 
 		// Determine conversation language based on user input and locale

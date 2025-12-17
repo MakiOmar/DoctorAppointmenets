@@ -39,31 +39,8 @@
          </div>
        </div>
 
-      <!-- Checking Prompt Availability -->
-      <div v-if="checkingPrompt" class="card">
-        <div class="text-center py-8">
-          <div class="mb-4">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          </div>
-          <p class="text-gray-600">Loading...</p>
-        </div>
-      </div>
-
-      <!-- Prompt Not Available -->
-      <div v-else-if="!promptAvailable" class="card">
-        <div class="text-center py-8">
-          <div class="mb-4">
-            <svg class="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h2 class="text-xl font-bold text-gray-900 mb-2">Chat Diagnosis Unavailable</h2>
-          <p class="text-gray-600 mb-4">The chat diagnosis feature is currently unavailable. Please contact the administrator.</p>
-        </div>
-      </div>
-
       <!-- Loading Diagnosis -->
-      <div v-else-if="isLoadingDiagnosis" class="card">
+      <div v-if="isLoadingDiagnosis" class="card">
         <div class="text-center py-8">
           <div class="mb-4">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -210,8 +187,6 @@ export default {
     const chatContainer = ref(null)
     const messageInput = ref(null)
     const isLoadingDiagnosis = ref(false)
-    const promptAvailable = ref(true)
-    const checkingPrompt = ref(true)
     
          const diagnosisResult = reactive({
        title: '',
@@ -404,50 +379,10 @@ export default {
 
 
 
-    const checkPromptAvailability = async () => {
-      try {
-        // Try to send a minimal request to check if prompt is configured
-        // We send a single character to pass validation, but the backend will check for prompt
-        const formData = new URLSearchParams()
-        formData.append('action', 'chat_diagnosis_ajax')
-        formData.append('message', 'x')
-        formData.append('conversation_history', JSON.stringify([]))
-        formData.append('locale', locale.value || 'en')
-        
-        await api.post('/wp-admin/admin-ajax.php', formData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        })
-        
-        // If we get here without 503 error, prompt is available
-        promptAvailable.value = true
-      } catch (error) {
-        // Check if error is due to missing prompt (503 status)
-        if (error.response && error.response.status === 503 && 
-            error.response.data && 
-            typeof error.response.data === 'object' &&
-            error.response.data.data &&
-            error.response.data.data.includes('prompt')) {
-          promptAvailable.value = false
-        } else {
-          // Other errors - assume prompt is available but there's another issue
-          promptAvailable.value = true
-        }
-      } finally {
-        checkingPrompt.value = false
-      }
-    }
-
     onMounted(async () => {
-      // Check if prompt is available before showing chat
-      await checkPromptAvailability()
-      
-      if (promptAvailable.value) {
-        // Always start with a fresh diagnosis session
-        addWelcomeMessage()
-        focusInput()
-      }
+      // Always start with a fresh diagnosis session
+      addWelcomeMessage()
+      focusInput()
     })
 
          return {
@@ -457,8 +392,6 @@ export default {
        diagnosisCompleted,
        diagnosisResult,
        chatContainer,
-       promptAvailable,
-       checkingPrompt,
        messageInput,
        aiQuestionsCount,
        isLoadingDiagnosis,
