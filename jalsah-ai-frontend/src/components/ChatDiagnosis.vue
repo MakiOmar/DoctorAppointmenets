@@ -420,53 +420,13 @@ export default {
       }
     }
 
-    const sendInitialWelcomeMessage = async () => {
-      // Send an empty message to trigger ChatGPT's welcome message from the prompt
-      if (messages.value.length === 0) {
-        isTyping.value = true
-        
-        try {
-          const formData = new URLSearchParams()
-          formData.append('action', 'chat_diagnosis_ajax')
-          formData.append('message', '') // Empty message to trigger welcome
-          formData.append('conversation_history', JSON.stringify([]))
-          formData.append('locale', locale.value || 'en')
-          
-          const response = await api.post('/wp-admin/admin-ajax.php', formData, {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          })
-
-          if (response.data.success) {
-            const assistantMessage = response.data.data.message
-            
-            // Add assistant welcome message
-            messages.value.push({
-              role: 'assistant',
-              content: typeof assistantMessage === 'string' ? assistantMessage : String(assistantMessage || ''),
-              timestamp: new Date()
-            })
-            
-            await scrollToBottom()
-          }
-        } catch (error) {
-          console.error('Error loading welcome message:', error)
-          // Don't show error - just continue without welcome message
-        } finally {
-          isTyping.value = false
-          focusInput()
-        }
-      }
-    }
-
     onMounted(async () => {
       // Check if prompt is available before showing chat
       await checkPromptAvailability()
       
       if (promptAvailable.value) {
-        // Load welcome message from ChatGPT prompt
-        await sendInitialWelcomeMessage()
+        // Always start with a fresh diagnosis session
+        focusInput()
       }
     })
 

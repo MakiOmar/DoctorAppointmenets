@@ -1650,8 +1650,7 @@ class SNKS_AI_Integration {
 		}
 
 		// Validate required fields
-		// Allow empty message only if conversation history is empty (to trigger welcome message)
-		if ( empty( $message ) && ! empty( $conversation_history ) ) {
+		if ( empty( $message ) ) {
 			wp_send_json_error( 'Message is required', 400 );
 		}
 
@@ -4705,13 +4704,11 @@ Best regards,
 			}
 		}
 
-		// Add current message (only if not empty, to allow welcome message trigger)
-		if ( ! empty( $message ) ) {
-			$messages[] = array(
-				'role'    => 'user',
-				'content' => $message,
-			);
-		}
+		// Add current message
+		$messages[] = array(
+			'role'    => 'user',
+			'content' => $message,
+		);
 
 		// Call OpenAI API with forced JSON response format
 		$data = array(
