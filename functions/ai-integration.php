@@ -1656,12 +1656,9 @@ class SNKS_AI_Integration {
 		$is_conversation_empty = ( empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 ) );
 		
 		// Check if message is empty (check both raw and sanitized)
-		$message_raw_trimmed = trim( (string) $message_raw );
-		$message_trimmed = trim( (string) $message );
-		$is_message_empty = ( $message_raw === '' || $message_raw_trimmed === '' || $message_trimmed === '' || $message_raw === null );
-		
-		// Debug: Log for troubleshooting (remove in production)
-		// error_log( 'Message empty: ' . ( $is_message_empty ? 'yes' : 'no' ) . ', Conversation empty: ' . ( $is_conversation_empty ? 'yes' : 'no' ) );
+		$message_raw_trimmed = trim( $message_raw );
+		$message_trimmed = trim( $message );
+		$is_message_empty = ( $message_raw === '' || $message_raw_trimmed === '' || $message_trimmed === '' );
 		
 		// Only require message if conversation is not empty
 		// If message is empty AND conversation is NOT empty, then error
