@@ -38,7 +38,13 @@ Focus on understanding the patient's symptoms, duration, impact on daily life, a
 
 if ( ! function_exists( 'snks_get_ai_chatgpt_prompt' ) ) {
 	function snks_get_ai_chatgpt_prompt() {
-		$default_prompt = snks_get_ai_chatgpt_default_prompt();
+		$default_prompt    = snks_get_ai_chatgpt_default_prompt();
+		$use_default_prompt = get_option( 'snks_ai_chatgpt_use_default_prompt', '0' );
+
+		if ( '1' === (string) $use_default_prompt ) {
+			return $default_prompt;
+		}
+
 		$custom_prompt = get_option( 'snks_ai_chatgpt_prompt', '' );
 		return ! empty( $custom_prompt ) ? $custom_prompt : $default_prompt;
 	}
