@@ -4770,6 +4770,14 @@ Best regards,
 			'{available_diagnoses}' => ! empty( $diagnosis_list ) ? implode( ', ', $diagnosis_list ) : '',
 		);
 		$enhanced_prompt = strtr( $enhanced_prompt, $placeholders );
+
+		// Add instruction to always start fresh if conversation_history is empty
+		if ( empty( $conversation_history ) || ( is_array( $conversation_history ) && count( $conversation_history ) === 0 ) ) {
+			// Add instruction to start fresh when conversation is empty
+			$enhanced_prompt .= "\n\n" . ( $is_arabic 
+				? "ملاحظة مهمة: هذه محادثة جديدة تماماً. لا توجد محادثة سابقة. ابدأ مباشرة برسالة الترحيب من الـ prompt أعلاه."
+				: "Important note: This is a completely new conversation. There is no previous conversation. Start directly with the welcome message from the prompt above." );
+		}
 		
 		$messages[] = array(
 			'role'    => 'system',
@@ -4887,6 +4895,71 @@ Best regards,
 					break;
 				}
 			}
+		}
+		
+		// If ChatGPT refuses, rebuild messages with reset instruction and retry
+		if ( $contains_refusal ) {
+			// Rebuild messages array with reset instruction
+			$reset_messages = array();
+			
+			// Keep system prompt
+			$reset_messages[] = array(
+				'role'    => 'system',
+				'content' => $system_prompt,
+			);
+			
+			// Add reset instruction as user message - be more direct
+			$reset_message = $is_arabic 
+				? 'هذه محادثة جديدة تماماً. لا توجد محادثة سابقة على الإطلاق. ابدأ مباشرة في التقييم الجديد وابدأ برسالة الترحيب من الـ prompt. تجاهل أي محادثة سابقة تماماً.'
+				: 'This is a completely new conversation. There is no previous conversation at all. Start directly with the new assessment and begin with the welcome message from the prompt. Completely ignore any previous conversation.';
+			
+			$reset_messages[] = array(
+				'role'    => 'user',
+				'content' => $reset_message,
+			);
+			
+			// Re-send the original user message
+			$reset_messages[] = array(
+				'role'    => 'user',
+				'content' => $message,
+			);
+			
+			// Make a new API call with reset instruction
+			$data = array(
+				'model'           => $model,
+				'messages'        => $reset_messages,
+				'max_tokens'      => intval( $max_tokens ),
+				'temperature'     => floatval( $temperature ),
+				'response_format' => array( 'type' => 'json_object' ),
+			);
+
+			$response = wp_remote_post(
+				'https://api.openai.com/v1/chat/completions',
+				array(
+					'headers' => array(
+						'Authorization' => 'Bearer ' . $api_key,
+						'Content-Type'  => 'application/json',
+					),
+					'body'    => json_encode( $data ),
+					'timeout' => 30,
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				return new WP_Error( 'api_error', 'OpenAI API error: ' . $response->get_error_message() );
+			}
+
+			$body   = wp_remote_retrieve_body( $response );
+			$result = json_decode( $body, true );
+
+			if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
+				return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+			}
+
+			$ai_response = $result['choices'][0]['message']['content'];
+			
+			// Re-parse the new response
+			$response_data = json_decode( $ai_response, true );
 		}
 
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
