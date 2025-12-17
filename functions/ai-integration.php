@@ -1654,7 +1654,6 @@ class SNKS_AI_Integration {
 		// Get data from POST (following the same pattern as other AJAX handlers)
 		$message_raw = isset( $_POST['message'] ) ? $_POST['message'] : '';
 		$message = sanitize_textarea_field( $message_raw );
-		$conversation_id = isset( $_POST['conversation_id'] ) ? sanitize_text_field( wp_unslash( $_POST['conversation_id'] ) ) : '';
 
 		// Handle escaped JSON from frontend
 		$conversation_history_raw = isset( $_POST['conversation_history'] ) ? $_POST['conversation_history'] : '[]';
@@ -1717,7 +1716,6 @@ class SNKS_AI_Integration {
 					'model'                    => $model,
 					'endpoint'                 => 'chat_diagnosis_ajax',
 					'message'                  => $message,
-					'conversation_id'          => $conversation_id,
 					'conversation_history'     => $conversation_history,
 					'conversation_history_len' => is_array( $conversation_history ) ? count( $conversation_history ) : 0,
 					'response'                 => $result,
@@ -1738,18 +1736,15 @@ class SNKS_AI_Integration {
 			return;
 		}
 
-		$conversation_id = isset( $entry['conversation_id'] ) && ! empty( $entry['conversation_id'] ) ? preg_replace( '/[^a-zA-Z0-9_-]/', '', $entry['conversation_id'] ) : 'no-conv';
-		$date_dir        = gmdate( 'Y-m-d' );
-
 		$upload_dir = wp_upload_dir();
-		$base_dir   = trailingslashit( $upload_dir['basedir'] ) . 'chatgpt-logs/' . intval( $user_id ) . '/' . $date_dir;
+		$base_dir   = trailingslashit( $upload_dir['basedir'] ) . 'chatgpt-logs/' . intval( $user_id );
 
 		// Ensure directory exists
 		if ( ! wp_mkdir_p( $base_dir ) ) {
 			return;
 		}
 
-		$file = trailingslashit( $base_dir ) . $conversation_id . '.json';
+		$file = trailingslashit( $base_dir ) . gmdate( 'Y-m-d' ) . '.jsonl';
 
 		$entry['timestamp_gmt'] = gmdate( 'Y-m-d H:i:s' );
 
@@ -1758,7 +1753,7 @@ class SNKS_AI_Integration {
 			return;
 		}
 
-		// Append line (JSON Lines format inside .json file)
+		// Append line
 		file_put_contents( $file, $line . PHP_EOL, FILE_APPEND | LOCK_EX );
 	}
 
