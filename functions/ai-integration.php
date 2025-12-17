@@ -4666,26 +4666,21 @@ Best regards,
 		$diagnosis_details = array();
 		
 		foreach ( $diagnoses as $diagnosis ) {
-			// Use appropriate name and description based on language
-			if ( $is_arabic ) {
-				$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-				$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
-			} else {
-				$diagnosis_name = ! empty( $diagnosis->name_en ) ? $diagnosis->name_en : $diagnosis->name;
-				$diagnosis_description = ! empty( $diagnosis->description_en ) ? $diagnosis->description_en : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
-			}
+			// Always use Arabic name and description
+			$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
+			$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
 			
 			// Simple list for quick reference
 			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
 			
 			// Detailed information for better matching
-			$description_text = ! empty( $diagnosis_description ) ? $diagnosis_description : ( $is_arabic ? 'لا يوجد وصف متاح' : 'No description available' );
+			$description_text = ! empty( $diagnosis_description ) ? $diagnosis_description : 'لا يوجد وصف متاح';
 			$diagnosis_details[] = sprintf(
 				"%d. %s (ID: %d)\n   %s: %s",
 				count( $diagnosis_details ) + 1,
 				$diagnosis_name,
 				$diagnosis->id,
-				$is_arabic ? 'الوصف' : 'Description',
+				'الوصف',
 				$description_text
 			);
 		}
@@ -4702,9 +4697,8 @@ Best regards,
 		$messages = array();
 
 		// Add system prompt with forced JSON structure and language/question limits
-		$language_instruction = $is_arabic ?
-			'IMPORTANT: Respond ONLY in Modern Standard Arabic (الفصحى). Use formal Arabic language for all communication, reasoning, and explanations. Never use local dialects or colloquial expressions. Always use proper Arabic grammar and formal language.' :
-			'';
+		// Always use Arabic
+		$language_instruction = 'IMPORTANT: Respond ONLY in Modern Standard Arabic (الفصحى). Use formal Arabic language for all communication, reasoning, and explanations. Never use local dialects or colloquial expressions. Always use proper Arabic grammar and formal language.';
 
 		$question_limit_instruction = "CRITICAL QUESTION LIMITS (STRICTLY ENFORCED):\n";
 		$question_limit_instruction .= "- Minimum Questions Required: {$min_questions}\n";
@@ -4733,23 +4727,15 @@ Best regards,
 		// Merge custom/default prompt with enhanced instructions
 		$base_prompt = $system_prompt;
 		
-		// Create comprehensive diagnosis information
-		$available_diagnoses_quick = $is_arabic ? "التشخيصات المتاحة: " : "Available diagnoses: ";
-		$available_diagnoses_quick .= implode( ', ', $diagnosis_list );
+		// Create comprehensive diagnosis information - always in Arabic
+		$available_diagnoses_quick = "التشخيصات المتاحة: " . implode( ', ', $diagnosis_list );
 		
-		$available_diagnoses_detailed = $is_arabic ? 
-			"قائمة التشخيصات المتاحة مع الوصف:\n" : 
-			"Available Diagnoses with Descriptions:\n";
+		$available_diagnoses_detailed = "قائمة التشخيصات المتاحة مع الوصف:\n";
 		$available_diagnoses_detailed .= "\n" . implode( "\n\n", $diagnosis_details );
-		$available_diagnoses_detailed .= "\n\n" . ( $is_arabic ? 
-			"ملاحظة مهمة: يجب عليك اختيار التشخيص الذي يطابق الأعراض التي وصفها المريض بدقة. استخدم الأوصاف أعلاه للمساعدة في التطابق الصحيح." :
-			"IMPORTANT NOTE: You must choose the diagnosis that accurately matches the symptoms described by the patient. Use the descriptions above to help with accurate matching." );
+		$available_diagnoses_detailed .= "\n\nملاحظة مهمة: يجب عليك اختيار التشخيص الذي يطابق الأعراض التي وصفها المريض بدقة. استخدم الأوصاف أعلاه للمساعدة في التطابق الصحيح.";
 		
-		// Build enhanced system prompt - only include language instruction if Arabic
-		$enhanced_system_prompt = $base_prompt;
-		if ( ! empty( $language_instruction ) ) {
-			$enhanced_system_prompt .= "\n\n" . $language_instruction;
-		}
+		// Build enhanced system prompt - always include Arabic language instruction
+		$enhanced_system_prompt = $base_prompt . "\n\n" . $language_instruction;
 		$enhanced_system_prompt .= "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_quick . "\n\n" . $available_diagnoses_detailed . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n- When providing a diagnosis, match the patient's symptoms to the diagnosis descriptions provided above\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\"\n}\n\nIMPORTANT: The system automatically counts questions from conversation history. You do NOT need to include question_count in your response.\n\nDIAGNOSIS SELECTION RULES:\n- You MUST choose a diagnosis from the list provided above\n- Match the diagnosis name EXACTLY as shown in the list (use the name, not the ID)\n- Use the diagnosis descriptions to ensure accurate matching with patient symptoms\n- If no diagnosis matches perfectly, choose the closest match and set confidence to 'low'\n- The diagnosis name in your JSON response must match one of the names from the available diagnoses list\n\nSTATUS RULES (STRICTLY ENFORCED BY SYSTEM):\n- Use 'incomplete' status when you need more information OR when you haven't asked enough questions yet (less than {$min_questions} questions total)\n- Use 'complete' status ONLY when:\n  * You have asked at least {$min_questions} questions (the system will verify this), AND\n  * You have sufficient information to make a diagnosis, AND\n  * You have NOT exceeded {$max_questions} questions\n- The system will automatically override your status if you violate these rules\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions - the system will prevent this\n- NEVER exceed {$max_questions} questions - the system will force completion if you reach this limit\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
 
 		$messages[] = array(
@@ -4777,12 +4763,12 @@ Best regards,
 		// If we've reached the maximum questions, force completion without calling API
 		// This is a hard limit enforced server-side - no API call needed
 		if ( $ai_questions_count >= $max_questions ) {
-			// Force complete diagnosis immediately
+			// Force complete diagnosis immediately - always in Arabic
 			$response_data = array(
 				'status'        => 'complete',
 				'diagnosis'     => 'general_assessment',
 				'confidence'    => 'low',
-				'reasoning'     => $is_arabic ? 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.' : 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.',
+				'reasoning'     => 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.',
 			);
 			
 			// Skip API call and process the forced response
@@ -4905,8 +4891,8 @@ Best regards,
 		process_response:
 
 		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
-			// Fallback for invalid JSON - provide a contextual response based on conversation
-			$fallback_message = $this->generate_contextual_fallback( $message, $conversation_history, $is_arabic );
+			// Fallback for invalid JSON - provide a contextual response based on conversation (always Arabic)
+			$fallback_message = $this->generate_contextual_fallback( $message, $conversation_history, true );
 
 			return array(
 				'message'   => $fallback_message,
@@ -4930,11 +4916,7 @@ Best regards,
 		if ( $response_data['status'] === 'complete' && $will_be_question_count < $min_questions ) {
 			$response_data['status'] = 'incomplete';
 			$remaining = $min_questions - $will_be_question_count;
-			if ( $is_arabic ) {
-				$response_data['reasoning'] = 'أحتاج إلى المزيد من المعلومات. ' . $remaining . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
-			} else {
-				$response_data['reasoning'] = 'I need more information. At least ' . $remaining . ' more question(s) before completing the assessment.';
-			}
+			$response_data['reasoning'] = 'أحتاج إلى المزيد من المعلومات. ' . $remaining . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
 		}
 		
 		// STRICT ENFORCEMENT: If question count will exceed or reach maximum, force complete
@@ -4946,11 +4928,7 @@ Best regards,
 			if ( empty( $response_data['confidence'] ) ) {
 				$response_data['confidence'] = 'low';
 			}
-			if ( $is_arabic ) {
-				$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
-			} else {
-				$response_data['reasoning'] = 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.';
-			}
+			$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
 		}
 		
 		// Also enforce: If current count already at max, force complete (safety check)
@@ -4962,11 +4940,7 @@ Best regards,
 			if ( empty( $response_data['confidence'] ) ) {
 				$response_data['confidence'] = 'low';
 			}
-			if ( $is_arabic ) {
-				$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
-			} else {
-				$response_data['reasoning'] = 'Based on our conversation, I will refer you to a general psychological assessment with a specialized therapist.';
-			}
+			$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
 		}
 
 		// Validate diagnosis is in our list
@@ -4984,64 +4958,37 @@ Best regards,
 
 				if ( $arabic_match || $english_match ) {
 					$diagnosis_id = $diagnosis->id;
-					// Use appropriate name based on language
-					if ( $is_arabic ) {
-						$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-					} else {
-						$diagnosis_name = ! empty( $diagnosis->name_en ) ? $diagnosis->name_en : $diagnosis->name;
-					}
-					$diagnosis_description = $diagnosis->description;
+					// Always use Arabic name
+					$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
+					$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : $diagnosis->description;
 					break;
 				}
 			}
 		}
 
-		// Format response message
+		// Format response message - always in Arabic
 		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
 			$confidence_text = '';
 			if ( isset( $response_data['confidence'] ) ) {
-				if ( $is_arabic ) {
-					switch ( $response_data['confidence'] ) {
-						case 'high':
-							$confidence_text = ' (ثقة عالية)';
-							break;
-						case 'medium':
-							$confidence_text = ' (ثقة متوسطة)';
-							break;
-						case 'low':
-							$confidence_text = ' (ثقة منخفضة)';
-							break;
-					}
-				} else {
-					switch ( $response_data['confidence'] ) {
-						case 'high':
-							$confidence_text = ' (high confidence)';
-							break;
-						case 'medium':
-							$confidence_text = ' (medium confidence)';
-							break;
-						case 'low':
-							$confidence_text = ' (low confidence)';
-							break;
-					}
+				switch ( $response_data['confidence'] ) {
+					case 'high':
+						$confidence_text = ' (ثقة عالية)';
+						break;
+					case 'medium':
+						$confidence_text = ' (ثقة متوسطة)';
+						break;
+					case 'low':
+						$confidence_text = ' (ثقة منخفضة)';
+						break;
 				}
 			}
 
-			if ( $is_arabic ) {
-				$message = "بناءً على محادثتنا، أعتقد أنك قد تعاني من **{$diagnosis_name}**{$confidence_text}.\n\n";
-				if ( isset( $response_data['reasoning'] ) ) {
-					$message .= '**المنطق:** ' . $response_data['reasoning'] . "\n\n";
-				}
-				$message .= '**الوصف:** ' . $diagnosis_description . "\n\n";
-				$message .= 'لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.';
-			} else {
-				$message = "Based on our conversation, I believe you may be experiencing **{$diagnosis_name}**{$confidence_text}.\n\n";
-				if ( isset( $response_data['reasoning'] ) ) {
-					$message .= '**Reasoning:** ' . $response_data['reasoning'] . "\n\n";
-				}
-				$message .= '**Description:** ' . $diagnosis_description . "\n\n";
-				$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
+			$message = "بناءً على محادثتنا، أعتقد أنك قد تعاني من **{$diagnosis_name}**{$confidence_text}.\n\n";
+			if ( isset( $response_data['reasoning'] ) ) {
+				$message .= '**المنطق:** ' . $response_data['reasoning'] . "\n\n";
 			}
+			$message .= '**الوصف:** ' . $diagnosis_description . "\n\n";
+			$message .= 'لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.';
 
 			// Save diagnosis result to user meta if user is authenticated
 			$user_id = get_current_user_id();
@@ -5089,13 +5036,13 @@ Best regards,
 				),
 			);
 		} else {
-			// Continue conversation - use reasoning if available, otherwise provide a contextual response
+			// Continue conversation - use reasoning if available, otherwise provide a contextual response (always Arabic)
 			$message = '';
 			if ( isset( $response_data['reasoning'] ) && ! empty( trim( $response_data['reasoning'] ) ) ) {
 				$message = $response_data['reasoning'];
 			} else {
 				// If reasoning is empty or just whitespace, provide a contextual follow-up question
-				$message = $this->generate_contextual_fallback( $message, $conversation_history, $is_arabic );
+				$message = $this->generate_contextual_fallback( $message, $conversation_history, true );
 			}
 
 			return array(
