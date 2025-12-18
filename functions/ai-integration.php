@@ -632,20 +632,6 @@ class SNKS_AI_Integration {
 	}
 
 	/**
-	 * Detect language from text
-	 */
-	private function detect_language( $text ) {
-		// Simple Arabic character detection
-		$arabic_pattern = '/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{08A0}-\x{08FF}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u';
-
-		if ( preg_match( $arabic_pattern, $text ) ) {
-			return 'arabic';
-		}
-
-		return 'english';
-	}
-
-	/**
 	 * Check if a message is a question
 	 */
 	private function is_question( $content ) {
@@ -674,921 +660,6 @@ class SNKS_AI_Integration {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Generate contextual fallback response based on conversation history
-	 */
-	private function generate_contextual_fallback( $current_message, $conversation_history, $is_arabic ) {
-		// Analyze the current message and conversation context
-		$message_lower = strtolower( $current_message );
-
-		// Check if we have asked enough questions (minimum requirement)
-		$ai_questions_count = 0;
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'assistant' && $this->is_question( $msg['content'] ) ) {
-				++$ai_questions_count;
-			}
-		}
-
-		$min_questions = get_option( 'snks_ai_chatgpt_min_questions', 5 );
-
-		// Only consider diagnosis if we've asked enough questions
-		if ( $ai_questions_count >= $min_questions ) {
-			$has_sufficient_info = $this->has_sufficient_diagnostic_info( $conversation_history, $current_message );
-
-			if ( $has_sufficient_info ) {
-				// If we have enough information and questions, provide an actual diagnosis
-				$diagnosis_result = $this->generate_fallback_diagnosis( $conversation_history, $current_message, $is_arabic );
-				return $diagnosis_result;
-			}
-		}
-
-		// Check for specific keywords in the current message and conversation history
-		$asked_questions    = array();
-		$ai_questions_count = 0;
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'assistant' ) {
-				$asked_questions[] = strtolower( $msg['content'] );
-				if ( $this->is_question( $msg['content'] ) ) {
-					++$ai_questions_count;
-				}
-			}
-		}
-
-		if ( $is_arabic ) {
-
-			// Detect dialect from conversation history
-			$dialect = 'egyptian'; // default
-			foreach ( $conversation_history as $msg ) {
-				if ( $msg['role'] === 'user' ) {
-					$detected_dialect = $this->detect_country_and_dialect( $msg['content'] );
-					if ( $detected_dialect !== 'egyptian' ) {
-						$dialect = $detected_dialect;
-						break;
-					}
-				}
-			}
-
-			// Arabic keyword detection with repetition avoidance
-			if ( strpos( $message_lower, 'أرق' ) !== false || strpos( $message_lower, 'نوم' ) !== false || strpos( $message_lower, 'سهر' ) !== false ) {
-				$sleep_question = $this->get_dialect_sleep_question( $dialect );
-				if ( ! $this->question_already_asked( $sleep_question, $asked_questions ) ) {
-					return $sleep_question;
-				}
-			}
-
-			if ( strpos( $message_lower, 'حزن' ) !== false || strpos( $message_lower, 'اكتئاب' ) !== false || strpos( $message_lower, 'حزين' ) !== false ) {
-				$sadness_question = $this->get_dialect_sadness_question( $dialect );
-				if ( ! $this->question_already_asked( $sadness_question, $asked_questions ) ) {
-					return $sadness_question;
-				}
-			}
-
-			if ( strpos( $message_lower, 'قلق' ) !== false || strpos( $message_lower, 'توتر' ) !== false || strpos( $message_lower, 'خوف' ) !== false ) {
-				$anxiety_question = $this->get_dialect_anxiety_question( $dialect );
-				if ( ! $this->question_already_asked( $anxiety_question, $asked_questions ) ) {
-					return $anxiety_question;
-				}
-			}
-
-			if ( strpos( $message_lower, 'عمل' ) !== false || strpos( $message_lower, 'وظيفة' ) !== false || strpos( $message_lower, 'مهنة' ) !== false ) {
-				$work_question = $this->get_dialect_work_question( $dialect );
-				if ( ! $this->question_already_asked( $work_question, $asked_questions ) ) {
-					return $work_question;
-				}
-			}
-
-			// If user said "no" or "لا", ask about something different
-			if ( $message_lower === 'لا' || $message_lower === 'no' ) {
-				$different_questions = $this->get_dialect_different_questions( $dialect );
-
-				foreach ( $different_questions as $question ) {
-					if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
-						return $question;
-					}
-				}
-			}
-
-			// Default contextual response - avoid repetition
-			$default_questions = $this->get_dialect_default_questions( $dialect );
-
-			foreach ( $default_questions as $question ) {
-				if ( ! $this->question_already_asked( $question, $asked_questions ) ) {
-					return $question;
-				}
-			}
-
-			// If all questions have been asked, provide a generic response
-			return $this->get_dialect_final_response( $dialect );
-		} else {
-			// English keyword detection
-			if ( strpos( $message_lower, 'sleep' ) !== false || strpos( $message_lower, 'insomnia' ) !== false || strpos( $message_lower, 'awake' ) !== false ) {
-				return "I understand you're having sleep issues. Can you tell me more about your sleep pattern? How many hours do you usually sleep? Do you wake up frequently during the night?";
-			}
-
-			if ( strpos( $message_lower, 'sad' ) !== false || strpos( $message_lower, 'depression' ) !== false || strpos( $message_lower, 'hopeless' ) !== false ) {
-				return "I see you're feeling sad. Can you tell me when you started feeling this way? Is there a specific reason for these feelings?";
-			}
-
-			if ( strpos( $message_lower, 'anxiety' ) !== false || strpos( $message_lower, 'worry' ) !== false || strpos( $message_lower, 'fear' ) !== false ) {
-				return "I understand you're feeling anxious. Can you tell me more about what's worrying you? Are there specific situations that increase this anxiety?";
-			}
-
-			if ( strpos( $message_lower, 'work' ) !== false || strpos( $message_lower, 'job' ) !== false || strpos( $message_lower, 'career' ) !== false ) {
-				return "I see that work is affecting your mental health. Can you tell me more about your work environment and the pressures you're facing?";
-			}
-
-			// Default contextual response
-			return "Thank you for sharing that with me. Can you tell me more about how these feelings are affecting your daily life? Are there any other symptoms you're experiencing?";
-		}
-	}
-
-	/**
-	 * Check if we have sufficient information for diagnosis
-	 */
-	private function has_sufficient_diagnostic_info( $conversation_history, $current_message ) {
-		// Count user messages with substantial content
-		$user_messages = 0;
-		$has_symptoms  = false;
-		$has_duration  = false;
-		$has_impact    = false;
-
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'user' ) {
-				$content = strtolower( $msg['content'] );
-				++$user_messages;
-
-				// Check for symptom keywords
-				if ( strpos( $content, 'أرق' ) !== false || strpos( $content, 'نوم' ) !== false ||
-					strpos( $content, 'حزن' ) !== false || strpos( $content, 'اكتئاب' ) !== false ||
-					strpos( $content, 'قلق' ) !== false || strpos( $content, 'توتر' ) !== false ||
-					strpos( $content, 'sleep' ) !== false || strpos( $content, 'insomnia' ) !== false ||
-					strpos( $content, 'sad' ) !== false || strpos( $content, 'depression' ) !== false ||
-					strpos( $content, 'anxiety' ) !== false || strpos( $content, 'worry' ) !== false ) {
-					$has_symptoms = true;
-				}
-
-				// Check for duration/time information
-				if ( strpos( $content, 'شهر' ) !== false || strpos( $content, 'أسبوع' ) !== false ||
-					strpos( $content, 'يوم' ) !== false || strpos( $content, 'month' ) !== false ||
-					strpos( $content, 'week' ) !== false || strpos( $content, 'day' ) !== false ) {
-					$has_duration = true;
-				}
-
-				// Check for impact information
-				if ( strpos( $content, 'عمل' ) !== false || strpos( $content, 'حياة' ) !== false ||
-					strpos( $content, 'يومي' ) !== false || strpos( $content, 'work' ) !== false ||
-					strpos( $content, 'life' ) !== false || strpos( $content, 'daily' ) !== false ) {
-					$has_impact = true;
-				}
-			}
-		}
-
-		// Also check current message
-		$current_lower = strtolower( $current_message );
-		if ( strpos( $current_lower, 'أرق' ) !== false || strpos( $current_lower, 'نوم' ) !== false ||
-			strpos( $current_lower, 'حزن' ) !== false || strpos( $current_lower, 'اكتئاب' ) !== false ||
-			strpos( $current_lower, 'قلق' ) !== false || strpos( $current_lower, 'توتر' ) !== false ||
-			strpos( $current_lower, 'sleep' ) !== false || strpos( $current_lower, 'insomnia' ) !== false ||
-			strpos( $current_lower, 'sad' ) !== false || strpos( $current_lower, 'depression' ) !== false ||
-			strpos( $current_lower, 'anxiety' ) !== false || strpos( $current_lower, 'worry' ) !== false ) {
-			$has_symptoms = true;
-		}
-
-		// Consider we have sufficient info if we have symptoms and at least 2 user messages
-		return $has_symptoms && $user_messages >= 2;
-	}
-
-	/**
-	 * Detect user's country from message and return appropriate dialect
-	 */
-	private function detect_country_and_dialect( $message ) {
-		$message_lower = strtolower( $message );
-
-		// Egyptian dialect
-		$egyptian_countries = array( 'مصر', 'egypt', 'القاهرة', 'cairo', 'الإسكندرية', 'alexandria', 'الجيزة', 'giza' );
-		foreach ( $egyptian_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'egyptian';
-			}
-		}
-
-		// Saudi dialect
-		$saudi_countries = array( 'السعودية', 'saudi arabia', 'الرياض', 'riyadh', 'جدة', 'jeddah', 'الدمام', 'dammam' );
-		foreach ( $saudi_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'saudi';
-			}
-		}
-
-		// UAE dialect
-		$uae_countries = array( 'الإمارات', 'united arab emirates', 'دبي', 'dubai', 'أبو ظبي', 'abu dhabi', 'الشارقة', 'sharjah' );
-		foreach ( $uae_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'uae';
-			}
-		}
-
-		// Kuwait dialect
-		$kuwait_countries = array( 'الكويت', 'kuwait', 'مدينة الكويت', 'kuwait city' );
-		foreach ( $kuwait_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'kuwait';
-			}
-		}
-
-		// Qatar dialect
-		$qatar_countries = array( 'قطر', 'qatar', 'الدوحة', 'doha' );
-		foreach ( $qatar_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'qatar';
-			}
-		}
-
-		// Bahrain dialect
-		$bahrain_countries = array( 'البحرين', 'bahrain', 'المنامة', 'manama' );
-		foreach ( $bahrain_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'bahrain';
-			}
-		}
-
-		// Oman dialect
-		$oman_countries = array( 'عمان', 'oman', 'مسقط', 'muscat' );
-		foreach ( $oman_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'oman';
-			}
-		}
-
-		// Jordan dialect
-		$jordan_countries = array( 'الأردن', 'jordan', 'عمان', 'amman' );
-		foreach ( $jordan_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'jordan';
-			}
-		}
-
-		// Lebanon dialect
-		$lebanon_countries = array( 'لبنان', 'lebanon', 'بيروت', 'beirut' );
-		foreach ( $lebanon_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'lebanon';
-			}
-		}
-
-		// Syria dialect
-		$syria_countries = array( 'سوريا', 'syria', 'دمشق', 'damascus', 'حلب', 'aleppo' );
-		foreach ( $syria_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'syria';
-			}
-		}
-
-		// Iraq dialect
-		$iraq_countries = array( 'العراق', 'iraq', 'بغداد', 'baghdad' );
-		foreach ( $iraq_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'iraq';
-			}
-		}
-
-		// Palestine dialect
-		$palestine_countries = array( 'فلسطين', 'palestine', 'القدس', 'jerusalem', 'رام الله', 'ramallah' );
-		foreach ( $palestine_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'palestine';
-			}
-		}
-
-		// Yemen dialect
-		$yemen_countries = array( 'اليمن', 'yemen', 'صنعاء', 'sanaa' );
-		foreach ( $yemen_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'yemen';
-			}
-		}
-
-		// Sudan dialect
-		$sudan_countries = array( 'السودان', 'sudan', 'الخرطوم', 'khartoum' );
-		foreach ( $sudan_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'sudan';
-			}
-		}
-
-		// Morocco dialect
-		$morocco_countries = array( 'المغرب', 'morocco', 'الرباط', 'rabat', 'الدار البيضاء', 'casablanca' );
-		foreach ( $morocco_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'morocco';
-			}
-		}
-
-		// Algeria dialect
-		$algeria_countries = array( 'الجزائر', 'algeria', 'الجزائر العاصمة', 'algiers' );
-		foreach ( $algeria_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'algeria';
-			}
-		}
-
-		// Tunisia dialect
-		$tunisia_countries = array( 'تونس', 'tunisia', 'تونس العاصمة', 'tunis' );
-		foreach ( $tunisia_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'tunisia';
-			}
-		}
-
-		// Libya dialect
-		$libya_countries = array( 'ليبيا', 'libya', 'طرابلس', 'tripoli' );
-		foreach ( $libya_countries as $country ) {
-			if ( strpos( $message_lower, strtolower( $country ) ) !== false ) {
-				return 'libya';
-			}
-		}
-
-		// Default to Egyptian if no specific country detected
-		return 'egyptian';
-	}
-
-	/**
-	 * Get dialect-specific response for sleep questions
-	 */
-	private function get_dialect_sleep_question( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return 'أفهم إنك بتعاني من مشاكل في النوم. ممكن تحكيلي أكتر عن نمط نومك؟ كام ساعة بتنام عادة؟ وهل بتيقظ كتير في الليل؟';
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return 'أفهم إنك تعاني من مشاكل في النوم. ممكن تقولي أكتر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تيقظ كتير في الليل؟';
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return 'أفهم إنك تعاني من مشاكل في النوم. ممكن تقولي أكتر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تيقظ كتير في الليل؟';
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return 'أفهم إنك تعاني من مشاكل في النوم. ممكن تقولي ليا أكتر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تيقظ كتير في الليل؟';
-
-			case 'sudan':
-			case 'libya':
-				return 'أفهم إنك بتعاني من مشاكل في النوم. ممكن تحكيلي أكتر عن نمط نومك؟ كام ساعة بتنام عادة؟ وهل بتيقظ كتير في الليل؟';
-
-			default:
-				return 'أفهم أنك تعاني من مشاكل في النوم. هل يمكنك إخباري أكثر عن نمط نومك؟ كم ساعة تنام عادة؟ وهل تستيقظ كثيراً أثناء الليل؟';
-		}
-	}
-
-	/**
-	 * Get dialect-specific response for sadness questions
-	 */
-	private function get_dialect_sadness_question( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return 'أرى إنك بتحس بالحزن. ممكن تحكيلي متى بدأت تحس بالحزن ده؟ وهل في سبب محدد للمشاعر دي؟';
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return 'أرى إنك تحس بالحزن. ممكن تقولي متى بدأت تحس بالحزن هذا؟ وهل في سبب محدد للمشاعر هذه؟';
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return 'أرى إنك تحس بالحزن. ممكن تقولي متى بدأت تحس بالحزن هذا؟ وهل في سبب محدد للمشاعر هذه؟';
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return 'أرى إنك تحس بالحزن. ممكن تقولي ليا متى بدأت تحس بالحزن هذا؟ وهل في سبب محدد للمشاعر هذه؟';
-
-			case 'sudan':
-			case 'libya':
-				return 'أرى إنك بتحس بالحزن. ممكن تحكيلي متى بدأت تحس بالحزن ده؟ وهل في سبب محدد للمشاعر دي؟';
-
-			default:
-				return 'أرى أنك تشعر بالحزن. هل يمكنك إخباري متى بدأت تشعر بهذا الحزن؟ وهل هناك سبب محدد لهذه المشاعر؟';
-		}
-	}
-
-	/**
-	 * Get dialect-specific response for anxiety questions
-	 */
-	private function get_dialect_anxiety_question( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return 'أفهم إنك بتحس بالقلق. ممكن تحكيلي أكتر عن إيه اللي بيقلقك؟ وهل في مواقف معينة بتبقى القلق فيها أكتر؟';
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return 'أفهم إنك تحس بالقلق. ممكن تقولي أكتر عن شو اللي يقلقك؟ وهل في مواقف معينة يصير القلق فيها أكتر؟';
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return 'أفهم إنك تحس بالقلق. ممكن تقولي أكتر عن شو اللي يقلقك؟ وهل في مواقف معينة يصير القلق فيها أكتر؟';
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return 'أفهم إنك تحس بالقلق. ممكن تقولي ليا أكتر عن شنو لي يقلقك؟ وهل في مواقف معينة يصير القلق فيها أكتر؟';
-
-			case 'sudan':
-			case 'libya':
-				return 'أفهم إنك بتحس بالقلق. ممكن تحكيلي أكتر عن إيه اللي بيقلقك؟ وهل في مواقف معينة بتبقى القلق فيها أكتر؟';
-
-			default:
-				return 'أفهم أنك تشعر بالقلق. هل يمكنك إخباري أكثر عن ما يقلقك؟ وهل هناك مواقف معينة تزيد من هذا القلق؟';
-		}
-	}
-
-	/**
-	 * Get dialect-specific response for work questions
-	 */
-	private function get_dialect_work_question( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return 'أرى إن العمل بيأثر على صحتك النفسية. ممكن تحكيلي أكتر عن طبيعة شغلك والضغوط اللي بتحس بيها؟';
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return 'أرى إن العمل يؤثر على صحتك النفسية. ممكن تقولي أكتر عن طبيعة شغلك والضغوط اللي تحس فيها؟';
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return 'أرى إن العمل يؤثر على صحتك النفسية. ممكن تقولي أكتر عن طبيعة شغلك والضغوط اللي تحس فيها؟';
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return 'أرى إن العمل يؤثر على صحتك النفسية. ممكن تقولي ليا أكتر عن طبيعة شغلك والضغوط اللي تحس فيها؟';
-
-			case 'sudan':
-			case 'libya':
-				return 'أرى إن العمل بيأثر على صحتك النفسية. ممكن تحكيلي أكتر عن طبيعة شغلك والضغوط اللي بتحس بيها؟';
-
-			default:
-				return 'أرى أن العمل يؤثر على صحتك النفسية. هل يمكنك إخباري أكثر عن طبيعة عملك والضغوط التي تواجهها؟';
-		}
-	}
-
-	/**
-	 * Get dialect-specific response for different questions when user says "no"
-	 */
-	private function get_dialect_different_questions( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return array(
-					'ممكن تحكيلي عن علاقاتك مع العيلة والأصحاب؟ بتحس بالدعم منهم؟',
-					'لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟',
-					'بتلاقي صعوبة في التركيز أو اتخاذ القرارات؟',
-					'بتحس بالتوتر أو القلق في مواقف معينة؟',
-					'في أنشطة كنت بتحبها قبل كده ومش بتحبها دلوقتي؟',
-				);
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return array(
-					'ممكن تقولي عن علاقاتك مع العيلة والأصحاب؟ تحس بالدعم منهم؟',
-					'لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟',
-					'تلاقي صعوبة في التركيز أو اتخاذ القرارات؟',
-					'تحس بالتوتر أو القلق في مواقف معينة؟',
-					'في أنشطة كنت تحبها قبل هذا وما تحبها الحين؟',
-				);
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return array(
-					'ممكن تقولي عن علاقاتك مع العيلة والأصحاب؟ تحس بالدعم منهم؟',
-					'لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟',
-					'تلاقي صعوبة في التركيز أو اتخاذ القرارات؟',
-					'تحس بالتوتر أو القلق في مواقف معينة؟',
-					'في أنشطة كنت تحبها قبل هذا وما تحبها الحين؟',
-				);
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return array(
-					'ممكن تقولي ليا عن علاقاتك مع العيلة والأصحاب؟ تحس بالدعم منهم؟',
-					'لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟',
-					'تلاقي صعوبة في التركيز أو اتخاذ القرارات؟',
-					'تحس بالتوتر أو القلق في مواقف معينة؟',
-					'في أنشطة كنت تحبها قبل هذا وما تحبها دابا؟',
-				);
-
-			case 'sudan':
-			case 'libya':
-				return array(
-					'ممكن تحكيلي عن علاقاتك مع العيلة والأصحاب؟ بتحس بالدعم منهم؟',
-					'لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟',
-					'بتلاقي صعوبة في التركيز أو اتخاذ القرارات؟',
-					'بتحس بالتوتر أو القلق في مواقف معينة؟',
-					'في أنشطة كنت بتحبها قبل كده ومش بتحبها دلوقتي؟',
-				);
-
-			default:
-				return array(
-					'هل يمكنك إخباري عن علاقاتك مع العائلة والأصدقاء؟ هل تشعر بالدعم منهم؟',
-					'هل لاحظت تغييرات في شهيتك أو وزنك مؤخراً؟',
-					'هل تجد صعوبة في التركيز أو اتخاذ القرارات؟',
-					'هل تشعر بالتوتر أو القلق في مواقف معينة؟',
-					'هل هناك أنشطة كنت تستمتع بها سابقاً ولم تعد تستمتع بها الآن؟',
-				);
-		}
-	}
-
-	/**
-	 * Get dialect-specific response for default questions
-	 */
-	private function get_dialect_default_questions( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return array(
-					'ممكن تحكيلي أكتر عن تأثير المشاعر دي على حياتك اليومية؟',
-					'في أعراض تانية بتعاني منها؟',
-					'لاحظت أي تغييرات في سلوكك أو عاداتك؟',
-					'بتحس إن المشاعر دي بتأثر على علاقاتك مع الناس؟',
-					'في مواقف معينة بتبقى المشاعر دي فيها أسوأ؟',
-				);
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return array(
-					'ممكن تقولي أكتر عن تأثير المشاعر هذه على حياتك اليومية؟',
-					'في أعراض ثانية تعاني منها؟',
-					'لاحظت أي تغييرات في سلوكك أو عاداتك؟',
-					'تحس إن المشاعر هذه تؤثر على علاقاتك مع الناس؟',
-					'في مواقف معينة تصير المشاعر هذه فيها أسوأ؟',
-				);
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return array(
-					'ممكن تقولي أكتر عن تأثير المشاعر هذه على حياتك اليومية؟',
-					'في أعراض ثانية تعاني منها؟',
-					'لاحظت أي تغييرات في سلوكك أو عاداتك؟',
-					'تحس إن المشاعر هذه تؤثر على علاقاتك مع الناس؟',
-					'في مواقف معينة تصير المشاعر هذه فيها أسوأ؟',
-				);
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return array(
-					'ممكن تقولي ليا أكتر عن تأثير المشاعر هذه على حياتك اليومية؟',
-					'في أعراض ثانية تعاني منها؟',
-					'لاحظت أي تغييرات في سلوكك أو عاداتك؟',
-					'تحس إن المشاعر هذه تؤثر على علاقاتك مع الناس؟',
-					'في مواقف معينة تصير المشاعر هذه فيها أسوأ؟',
-				);
-
-			case 'sudan':
-			case 'libya':
-				return array(
-					'ممكن تحكيلي أكتر عن تأثير المشاعر دي على حياتك اليومية؟',
-					'في أعراض تانية بتعاني منها؟',
-					'لاحظت أي تغييرات في سلوكك أو عاداتك؟',
-					'بتحس إن المشاعر دي بتأثر على علاقاتك مع الناس؟',
-					'في مواقف معينة بتبقى المشاعر دي فيها أسوأ؟',
-				);
-
-			default:
-				return array(
-					'هل يمكنك إخباري أكثر عن تأثير هذه المشاعر على حياتك اليومية؟',
-					'هل هناك أي أعراض أخرى تعاني منها؟',
-					'هل لاحظت أي تغييرات في سلوكك أو عاداتك؟',
-					'هل تشعر أن هذه المشاعر تؤثر على علاقاتك مع الآخرين؟',
-					'هل هناك مواقف معينة تجعل هذه المشاعر أسوأ؟',
-				);
-		}
-	}
-
-	/**
-	 * Get dialect-specific final response
-	 */
-	private function get_dialect_final_response( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return 'شكراً لك على مشاركة كده معايا. في حاجة تانية عايز تحكيها عن وضعك الحالي؟';
-
-			case 'saudi':
-			case 'uae':
-			case 'kuwait':
-			case 'qatar':
-			case 'bahrain':
-			case 'oman':
-				return 'شكراً لك على مشاركة هذا معي. في شيء ثاني تريد تقوله عن وضعك الحالي؟';
-
-			case 'jordan':
-			case 'lebanon':
-			case 'syria':
-			case 'iraq':
-			case 'palestine':
-			case 'yemen':
-				return 'شكراً لك على مشاركة هذا معي. في شيء ثاني تريد تقوله عن وضعك الحالي؟';
-
-			case 'morocco':
-			case 'algeria':
-			case 'tunisia':
-				return 'شكراً لك على مشاركة هذا معي. في شيء ثاني تريد تقولي ليا عن وضعك الحالي؟';
-
-			case 'sudan':
-			case 'libya':
-				return 'شكراً لك على مشاركة كده معايا. في حاجة تانية عايز تحكيها عن وضعك الحالي؟';
-
-			default:
-				return 'شكراً لك على مشاركة ذلك معي. هل هناك أي شيء آخر تود إخباري به عن وضعك الحالي؟';
-		}
-	}
-
-	/**
-	 * Get dialect-specific response for symptoms question
-	 */
-	private function get_dialect_symptoms_question( $dialect ) {
-		switch ( $dialect ) {
-			case 'egyptian':
-				return 'شكراً لك! دلوقتي خلينا نفهم إيه اللي مضايقك. ممكن تحكيلي إيه اللي بتحس بيه أو إيه المشاكل اللي بتواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'saudi':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'uae':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'kuwait':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'qatar':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'bahrain':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'oman':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'jordan':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'lebanon':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'syria':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'iraq':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'palestine':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'yemen':
-				return 'شكراً لك! الحين خلينا نفهم شو اللي مضايقك. ممكن تقولي شو اللي تحس فيه أو شو المشاكل اللي تواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'sudan':
-				return 'شكراً لك! دلوقتي خلينا نفهم إيه اللي مضايقك. ممكن تحكيلي إيه اللي بتحس بيه أو إيه المشاكل اللي بتواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			case 'morocco':
-				return 'شكراً لك! دابا خلينا نفهمو شنو لي مضايقك. ممكن تقولي ليا شنو لي كتحس فيه أو شنو المشاكل لي كتواجهها؟ تقدر تكون مفصل كيف ما تحب - أنا هنا نسمعك ونساعدك.';
-
-			case 'algeria':
-				return 'شكراً لك! دابا خلينا نفهمو شنو لي مضايقك. ممكن تقولي ليا شنو لي كتحس فيه أو شنو المشاكل لي كتواجهها؟ تقدر تكون مفصل كيف ما تحب - أنا هنا نسمعك ونساعدك.';
-
-			case 'tunisia':
-				return 'شكراً لك! دابا خلينا نفهمو شنو لي مضايقك. ممكن تقولي ليا شنو لي كتحس فيه أو شنو المشاكل لي كتواجهها؟ تقدر تكون مفصل كيف ما تحب - أنا هنا نسمعك ونساعدك.';
-
-			case 'libya':
-				return 'شكراً لك! دلوقتي خلينا نفهم إيه اللي مضايقك. ممكن تحكيلي إيه اللي بتحس بيه أو إيه المشاكل اللي بتواجهها؟ تقدر تكون مفصل زي ما تحب - أنا هنا أسمعك وأساعدك.';
-
-			default:
-				return 'شكراً لك! الآن دعني أساعدك في فهم ما تمر به. هل يمكنك إخباري عن وضعك الحالي أو الأعراض أو المخاوف التي لديك؟ يمكنك أن تكون مفصلاً كما تريد - أنا هنا للاستماع والمساعدة.';
-		}
-	}
-
-	/**
-	 * Check if a question has already been asked
-	 */
-	private function question_already_asked( $new_question, $asked_questions ) {
-		$new_question_lower = strtolower( $new_question );
-
-		foreach ( $asked_questions as $asked ) {
-			$asked_lower = strtolower( $asked );
-
-			// Check for exact match or high similarity
-			if ( $new_question_lower === $asked_lower ) {
-				return true;
-			}
-
-			// Check for key phrases that indicate the same question
-			$key_phrases = array(
-				'تأثير هذه المشاعر على حياتك اليومية',
-				'أعراض أخرى تعاني منها',
-				'نمط نومك',
-				'كم ساعة تنام',
-				'متى بدأت تشعر',
-				'ما يقلقك',
-				'طبيعة عملك',
-				'من أي بلد أنت',
-				'أي منطقة أو بلد',
-				'بلد أنت',
-				'impact of these feelings on your daily life',
-				'other symptoms you are experiencing',
-				'sleep pattern',
-				'how many hours do you sleep',
-				'when did you start feeling',
-				'what worries you',
-				'nature of your work',
-				'which country you\'re from',
-				'which region or country',
-				'country you\'re from',
-			);
-
-			foreach ( $key_phrases as $phrase ) {
-				if ( strpos( $new_question_lower, $phrase ) !== false && strpos( $asked_lower, $phrase ) !== false ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Generate fallback diagnosis when AI response fails
-	 */
-	private function generate_fallback_diagnosis( $conversation_history, $current_message, $is_arabic ) {
-		global $wpdb;
-
-		// Get all available diagnoses
-		$diagnoses = $wpdb->get_results( "SELECT id, name, name_en, description FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
-
-		// Analyze conversation for symptoms
-		$symptoms = array();
-		$all_text = strtolower( $current_message );
-
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'user' ) {
-				$all_text .= ' ' . strtolower( $msg['content'] );
-			}
-		}
-
-		// Map symptoms to diagnoses
-		$symptom_mapping = array(
-			// Sleep disorders
-			'أرق'        => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
-			'نوم'        => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
-			'sleep'      => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
-			'insomnia'   => array( 'Sleep Disorders', 'sleep', 'insomnia' ),
-
-			// Depression
-			'حزن'        => array( 'Depression', 'depression', 'sadness' ),
-			'اكتئاب'     => array( 'Depression', 'depression', 'sadness' ),
-			'sad'        => array( 'Depression', 'depression', 'sadness' ),
-			'depression' => array( 'Depression', 'depression', 'sadness' ),
-
-			// Anxiety
-			'قلق'        => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
-			'توتر'       => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
-			'anxiety'    => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
-			'worry'      => array( 'Anxiety Disorders', 'anxiety', 'worry' ),
-
-			// Stress
-			'ضغط'        => array( 'Stress Management', 'stress', 'pressure' ),
-			'stress'     => array( 'Stress Management', 'stress', 'pressure' ),
-			'pressure'   => array( 'Stress Management', 'stress', 'pressure' ),
-
-			// Work issues
-			'عمل'        => array( 'Work-Life Balance', 'work', 'job' ),
-			'وظيفة'      => array( 'Work-Life Balance', 'work', 'job' ),
-			'work'       => array( 'Work-Life Balance', 'work', 'job' ),
-			'job'        => array( 'Work-Life Balance', 'work', 'job' ),
-		);
-
-		// Find matching diagnosis
-		$matched_diagnosis = null;
-		foreach ( $symptom_mapping as $symptom => $diagnosis_info ) {
-			if ( strpos( $all_text, $symptom ) !== false ) {
-				$diagnosis_name = $diagnosis_info[0];
-				foreach ( $diagnoses as $diagnosis ) {
-					if ( stripos( $diagnosis->name, $diagnosis_name ) !== false ||
-						stripos( $diagnosis->name_en, $diagnosis_name ) !== false ) {
-						$matched_diagnosis = $diagnosis;
-						break 2;
-					}
-				}
-			}
-		}
-
-		// If no specific match, default to Stress Management
-		if ( ! $matched_diagnosis ) {
-			foreach ( $diagnoses as $diagnosis ) {
-				if ( stripos( $diagnosis->name, 'Stress Management' ) !== false ||
-					stripos( $diagnosis->name_en, 'Stress Management' ) !== false ) {
-					$matched_diagnosis = $diagnosis;
-					break;
-				}
-			}
-		}
-
-		// If still no match, use the first diagnosis
-		if ( ! $matched_diagnosis && ! empty( $diagnoses ) ) {
-			$matched_diagnosis = $diagnoses[0];
-		}
-
-		if ( $matched_diagnosis ) {
-			if ( $is_arabic ) {
-				$message  = "بناءً على المعلومات التي قدمتها، أعتقد أنك قد تعاني من **{$matched_diagnosis->name}**.\n\n";
-				$message .= '**الوصف:** ' . $matched_diagnosis->description . "\n\n";
-				$message .= 'لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.';
-			} else {
-				$message  = "Based on the information you've provided, I believe you may be experiencing **{$matched_diagnosis->name}**.\n\n";
-				$message .= '**Description:** ' . $matched_diagnosis->description . "\n\n";
-				$message .= "I've completed the diagnosis and can now help you find therapists who specialize in this area.";
-			}
-
-			// Return the proper diagnosis completion structure
-			return array(
-				'message'   => $message,
-				'diagnosis' => array(
-					'completed'   => true,
-					'id'          => $matched_diagnosis->id,
-					'title'       => $matched_diagnosis->name,
-					'description' => $matched_diagnosis->description,
-					'confidence'  => 'medium',
-					'reasoning'   => 'Diagnosis generated based on conversation analysis',
-				),
-			);
-		}
-
-		// Fallback message if no diagnosis found
-		if ( $is_arabic ) {
-			$message = 'بناءً على المعلومات التي قدمتها، أعتقد أنك قد تحتاج إلى استشارة متخصص في الصحة النفسية. يمكنني مساعدتك في العثور على معالجين متخصصين.';
-		} else {
-			$message = "Based on the information you've provided, I believe you may need to consult a mental health specialist. I can help you find specialized therapists.";
-		}
-
-		return array(
-			'message'   => $message,
-			'diagnosis' => array(
-				'completed'   => true,
-				'id'          => null,
-				'title'       => 'General Consultation',
-				'description' => 'Recommendation for professional mental health consultation',
-				'confidence'  => 'low',
-				'reasoning'   => 'Insufficient information for specific diagnosis',
-			),
-		);
 	}
 
 	/**
@@ -4655,10 +3726,7 @@ Best regards,
 		}
 
 		// Determine conversation language based on user input and locale
-		$locale                = sanitize_text_field( $_POST['locale'] ?? 'en' );
-		$conversation_language = $this->detect_language( $message );
-		$is_arabic             = $conversation_language === 'arabic' || $locale === 'ar';
-
+		$locale                = 'ar';
 		// Get available diagnoses with proper language support
 		global $wpdb;
 		$diagnoses      = $wpdb->get_results( "SELECT id, name, name_en, name_ar, description, description_en, description_ar FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
@@ -4666,15 +3734,15 @@ Best regards,
 		$diagnosis_details = array();
 		
 		foreach ( $diagnoses as $diagnosis ) {
-			// Always use Arabic name and description
+			// Use appropriate name and description based on language
 			$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
 			$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
-			
+	
 			// Simple list for quick reference
 			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
 			
 			// Detailed information for better matching
-			$description_text = ! empty( $diagnosis_description ) ? $diagnosis_description : 'لا يوجد وصف متاح';
+			$description_text = ! empty( $diagnosis_description ) ? $diagnosis_description : ( 'لا يوجد وصف متاح' );
 			$diagnosis_details[] = sprintf(
 				"%d. %s (ID: %d)\n   %s: %s",
 				count( $diagnosis_details ) + 1,
@@ -4695,48 +3763,15 @@ Best regards,
 
 		// Build conversation messages
 		$messages = array();
-
-		// Add system prompt with forced JSON structure and language/question limits
-		// Always use Arabic
-		$language_instruction = 'IMPORTANT: Respond ONLY in Modern Standard Arabic (الفصحى). Use formal Arabic language for all communication, reasoning, and explanations. Never use local dialects or colloquial expressions. Always use proper Arabic grammar and formal language.';
-
-		$question_limit_instruction = "CRITICAL QUESTION LIMITS (STRICTLY ENFORCED):\n";
-		$question_limit_instruction .= "- Minimum Questions Required: {$min_questions}\n";
-		$question_limit_instruction .= "- Maximum Questions Allowed: {$max_questions}\n";
-		$question_limit_instruction .= "- Questions Asked So Far: {$ai_questions_count}\n";
-		$question_limit_instruction .= "- Questions Remaining: " . max( 0, $max_questions - $ai_questions_count ) . "\n\n";
 		
-		if ( $ai_questions_count >= $max_questions ) {
-			$question_limit_instruction .= "⚠️ YOU HAVE REACHED THE MAXIMUM QUESTIONS LIMIT ({$max_questions}). YOU MUST NOW PROVIDE A DIAGNOSIS IMMEDIATELY. DO NOT ASK ANY MORE QUESTIONS.\n";
-		} elseif ( $ai_questions_count < $min_questions ) {
-			$remaining = $min_questions - $ai_questions_count;
-			$question_limit_instruction .= "⚠️ YOU MUST ASK AT LEAST {$min_questions} QUESTIONS TOTAL. You have asked {$ai_questions_count} questions. You MUST ask {$remaining} more question(s) before you can provide a diagnosis. DO NOT provide diagnosis yet. Continue asking questions.\n";
-		} else {
-			$question_limit_instruction .= "✓ You have asked enough questions ({$ai_questions_count} out of {$min_questions} minimum). You can now provide a diagnosis if you have sufficient information, BUT you must NOT exceed {$max_questions} questions total.\n";
-		}
-		
-		$question_limit_instruction .= "\nABSOLUTE RULES:\n";
-		$question_limit_instruction .= "- NEVER exceed {$max_questions} questions - if you reach this limit, you MUST provide diagnosis immediately\n";
-		$question_limit_instruction .= "- NEVER provide diagnosis before asking at least {$min_questions} questions\n";
-		if ( $ai_questions_count < $min_questions ) {
-			$remaining = $min_questions - $ai_questions_count;
-			$question_limit_instruction .= "- You have asked {$ai_questions_count} questions. You MUST ask exactly {$remaining} more question(s) before completing\n";
-		}
-		$question_limit_instruction .= "- Count your questions carefully - this is strictly enforced\n";
-
 		// Merge custom/default prompt with enhanced instructions
 		$base_prompt = $system_prompt;
 		
-		// Create comprehensive diagnosis information - always in Arabic
-		$available_diagnoses_quick = "التشخيصات المتاحة: " . implode( ', ', $diagnosis_list );
-		
-		$available_diagnoses_detailed = "قائمة التشخيصات المتاحة مع الوصف:\n";
-		$available_diagnoses_detailed .= "\n" . implode( "\n\n", $diagnosis_details );
-		$available_diagnoses_detailed .= "\n\nملاحظة مهمة: يجب عليك اختيار التشخيص الذي يطابق الأعراض التي وصفها المريض بدقة. استخدم الأوصاف أعلاه للمساعدة في التطابق الصحيح.";
-		
-		// Build enhanced system prompt - always include Arabic language instruction
-		$enhanced_system_prompt = $base_prompt . "\n\n" . $language_instruction;
-		$enhanced_system_prompt .= "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_quick . "\n\n" . $available_diagnoses_detailed . "\n\nCRITICAL CONVERSATION RULES:\n- Read the conversation history carefully and respond contextually\n- Acknowledge what the patient has shared and ask relevant follow-up questions\n- NEVER repeat the same question - always ask a NEW, DIFFERENT question\n- If the patient says 'no' or 'لا', ask about something else\n- Be empathetic and supportive in your tone\n- Ask about specific symptoms, duration, severity, and impact on daily life\n- Gather information about sleep, mood, relationships, work, and other relevant areas\n- Ask different types of questions to gather comprehensive information\n- If you've already asked about daily life impact, ask about something else like sleep, relationships, or work\n- DO NOT ask about the patient's country or region - focus only on their psychological symptoms and concerns\n- When providing a diagnosis, match the patient's symptoms to the diagnosis descriptions provided above\n\nRESPONSE FORMAT:\nYou must respond with valid JSON in this exact structure:\n{\n  \"diagnosis\": \"diagnosis_name_from_list\",\n  \"confidence\": \"low|medium|high\",\n  \"reasoning\": \"your conversational response to the patient\",\n  \"status\": \"complete|incomplete\"\n}\n\nIMPORTANT: The system automatically counts questions from conversation history. You do NOT need to include question_count in your response.\n\nDIAGNOSIS SELECTION RULES:\n- You MUST choose a diagnosis from the list provided above\n- Match the diagnosis name EXACTLY as shown in the list (use the name, not the ID)\n- Use the diagnosis descriptions to ensure accurate matching with patient symptoms\n- If no diagnosis matches perfectly, choose the closest match and set confidence to 'low'\n- The diagnosis name in your JSON response must match one of the names from the available diagnoses list\n\nSTATUS RULES (STRICTLY ENFORCED BY SYSTEM):\n- Use 'incomplete' status when you need more information OR when you haven't asked enough questions yet (less than {$min_questions} questions total)\n- Use 'complete' status ONLY when:\n  * You have asked at least {$min_questions} questions (the system will verify this), AND\n  * You have sufficient information to make a diagnosis, AND\n  * You have NOT exceeded {$max_questions} questions\n- The system will automatically override your status if you violate these rules\n- The 'reasoning' field should contain your actual conversational response to the patient\n- Ask specific, contextual questions based on what they've shared\n- Show empathy and understanding of their situation\n- NEVER provide diagnosis before asking at least {$min_questions} questions - the system will prevent this\n- NEVER exceed {$max_questions} questions - the system will force completion if you reach this limit\n- NEVER repeat the same question - always ask something new\n- Focus on psychological symptoms, feelings, and experiences - do NOT ask about geographical location or country";
+		$available_diagnoses_detailed = "\n" . implode( "\n\n", $diagnosis_details );		
+		// Build enhanced system prompt - only include language instruction if Arabic
+		$enhanced_system_prompt = $base_prompt;
+
+		$enhanced_system_prompt .= "\n\n" . $question_limit_instruction . "\n\n" . $available_diagnoses_detailed . "\n\n";
 
 		$messages[] = array(
 			'role'    => 'system',
@@ -4759,21 +3794,6 @@ Best regards,
 			'role'    => 'user',
 			'content' => $message,
 		);
-
-		// If we've reached the maximum questions, force completion without calling API
-		// This is a hard limit enforced server-side - no API call needed
-		if ( $ai_questions_count >= $max_questions ) {
-			// Force complete diagnosis immediately - always in Arabic
-			$response_data = array(
-				'status'        => 'complete',
-				'diagnosis'     => 'general_assessment',
-				'confidence'    => 'low',
-				'reasoning'     => 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.',
-			);
-			
-			// Skip API call and process the forced response
-			goto process_response;
-		}
 
 		// Call OpenAI API with forced JSON response format
 		$data = array(
@@ -4890,18 +3910,6 @@ Best regards,
 
 		process_response:
 
-		if ( ! $response_data || ! isset( $response_data['status'] ) ) {
-			// Fallback for invalid JSON - provide a contextual response based on conversation (always Arabic)
-			$fallback_message = $this->generate_contextual_fallback( $message, $conversation_history, true );
-
-			return array(
-				'message'   => $fallback_message,
-				'diagnosis' => array(
-					'completed' => false,
-				),
-			);
-		}
-
 		// Validate question count limits - enforce strict compliance using server-side count
 		// Use server-side count as source of truth (ignore ChatGPT's question_count if provided)
 		$current_question_count = $ai_questions_count;
@@ -4910,13 +3918,6 @@ Best regards,
 		// Check if the current response is a question
 		if ( isset( $response_data['reasoning'] ) && $this->is_question( $response_data['reasoning'] ) ) {
 			$will_be_question_count = $current_question_count + 1;
-		}
-		
-		// STRICT ENFORCEMENT: If status is complete but question count is less than minimum, force incomplete
-		if ( $response_data['status'] === 'complete' && $will_be_question_count < $min_questions ) {
-			$response_data['status'] = 'incomplete';
-			$remaining = $min_questions - $will_be_question_count;
-			$response_data['reasoning'] = 'أحتاج إلى المزيد من المعلومات. ' . $remaining . ' سؤال إضافي على الأقل قبل إكمال التقييم.';
 		}
 		
 		// STRICT ENFORCEMENT: If question count will exceed or reach maximum, force complete
@@ -4928,7 +3929,7 @@ Best regards,
 			if ( empty( $response_data['confidence'] ) ) {
 				$response_data['confidence'] = 'low';
 			}
-			$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
+				$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
 		}
 		
 		// Also enforce: If current count already at max, force complete (safety check)
@@ -4941,6 +3942,7 @@ Best regards,
 				$response_data['confidence'] = 'low';
 			}
 			$response_data['reasoning'] = 'بناءً على محادثتنا، سأقوم بإحالتك لتقييم نفسي عام مع معالج متخصص.';
+
 		}
 
 		// Validate diagnosis is in our list
@@ -4958,15 +3960,15 @@ Best regards,
 
 				if ( $arabic_match || $english_match ) {
 					$diagnosis_id = $diagnosis->id;
-					// Always use Arabic name
+					// Use appropriate name based on language
 					$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-					$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : $diagnosis->description;
+					$diagnosis_description = $diagnosis->description;
 					break;
 				}
 			}
 		}
 
-		// Format response message - always in Arabic
+		// Format response message
 		if ( $response_data['status'] === 'complete' && $diagnosis_id ) {
 			$confidence_text = '';
 			if ( isset( $response_data['confidence'] ) ) {
@@ -4983,12 +3985,13 @@ Best regards,
 				}
 			}
 
-			$message = "بناءً على محادثتنا، أعتقد أنك قد تعاني من **{$diagnosis_name}**{$confidence_text}.\n\n";
-			if ( isset( $response_data['reasoning'] ) ) {
-				$message .= '**المنطق:** ' . $response_data['reasoning'] . "\n\n";
-			}
-			$message .= '**الوصف:** ' . $diagnosis_description . "\n\n";
-			$message .= 'لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.';
+
+				$message = "بناءً على محادثتنا، أعتقد أنك قد تعاني من **{$diagnosis_name}**{$confidence_text}.\n\n";
+				if ( isset( $response_data['reasoning'] ) ) {
+					$message .= '**المنطق:** ' . $response_data['reasoning'] . "\n\n";
+				}
+				$message .= '**الوصف:** ' . $diagnosis_description . "\n\n";
+				$message .= 'لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.';
 
 			// Save diagnosis result to user meta if user is authenticated
 			$user_id = get_current_user_id();
@@ -5036,13 +4039,13 @@ Best regards,
 				),
 			);
 		} else {
-			// Continue conversation - use reasoning if available, otherwise provide a contextual response (always Arabic)
+			// Continue conversation - use reasoning if available, otherwise provide a contextual response
 			$message = '';
 			if ( isset( $response_data['reasoning'] ) && ! empty( trim( $response_data['reasoning'] ) ) ) {
 				$message = $response_data['reasoning'];
 			} else {
 				// If reasoning is empty or just whitespace, provide a contextual follow-up question
-				$message = $this->generate_contextual_fallback( $message, $conversation_history, true );
+				$message = 'يبدو أن هناك خطأ ما في التشخيص. يرجى المحاولة مرة أخرى.';
 			}
 
 			return array(
