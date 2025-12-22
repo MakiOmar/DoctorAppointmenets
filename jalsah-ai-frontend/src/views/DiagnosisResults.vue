@@ -555,8 +555,8 @@ export default {
     const rediagnose = () => {
       // Clear stored diagnosis data
       localStorage.removeItem('diagnosis_data')
-      // Redirect to homepage
-      router.push('/')
+      // Redirect to diagnosis page
+      router.push('/diagnosis')
     }
 
 

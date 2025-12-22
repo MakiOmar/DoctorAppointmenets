@@ -286,11 +286,21 @@ export default {
     }
 
     const formatMessage = (content) => {
-      // Convert line breaks to <br> tags
+      // Convert line breaks to <br> tags and basic markdown to HTML
       if (!content || typeof content !== 'string') {
         return content || ''
       }
-      return content.replace(/\n/g, '<br>')
+      let formatted = content
+        // Convert line breaks
+        .replace(/\n/g, '<br>')
+        // Convert bold markdown (**text** or __text__)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        // Convert italic markdown (*text* or _text_)
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/_(.+?)_/g, '<em>$1</em>')
+      
+      return formatted
     }
 
     const formatTime = (timestamp) => {
