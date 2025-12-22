@@ -1,7 +1,15 @@
 <template>
   <div>
+    <!-- Loading State - Show nothing until auth state is confirmed -->
+    <div v-if="!authInitialized" class="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">{{ $t('common.loading') }}</p>
+      </div>
+    </div>
+
     <!-- Authentication Required Section -->
-    <div v-if="!authStore.isAuthenticated" class="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div v-else-if="!authStore.isAuthenticated" class="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-md w-full space-y-8">
         <!-- Logo/Brand Section -->
         <div class="text-center">
@@ -289,7 +297,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 
@@ -299,6 +307,7 @@ export default {
     const authStore = useAuthStore()
     const lastDiagnosisId = ref(null)
     const loadingDiagnosis = ref(false)
+    const authInitialized = ref(false)
     
     // Computed property to check if user has a previous diagnosis
     const hasPreviousDiagnosis = computed(() => {
@@ -340,8 +349,15 @@ export default {
       }
     }, { immediate: true })
     
-    // Fetch diagnosis ID on component mount
-    onMounted(() => {
+    // Initialize auth state check
+    // Use nextTick to ensure Vue has fully initialized the store and computed properties
+    onMounted(async () => {
+      // Wait for Vue to fully initialize the reactive state
+      await nextTick()
+      
+      // Now mark as initialized - auth state should be properly evaluated
+      authInitialized.value = true
+      
       if (authStore.user) {
         // Add a small delay to show loading state
         setTimeout(() => {
@@ -367,7 +383,8 @@ export default {
       hasPreviousDiagnosis,
       loadingDiagnosis,
       refreshDiagnosis,
-      handleNavigationClick
+      handleNavigationClick,
+      authInitialized
     }
   }
 }
