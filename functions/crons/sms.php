@@ -92,7 +92,9 @@ function snks_send_session_notifications() {
 			
 			// 24-hour reminder.
 			// Check if session is 23-24 hours away
-			if ( $time_diff >= 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent ) { // 82800 = 23 hrs, 86400 = 24 hrs
+			// Only send after 9 AM to avoid confusion (if sent between midnight and 5 AM, "tomorrow" might be misinterpreted)
+			$current_hour = (int) current_time( 'H' );
+			if ( $time_diff >= 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent && $current_hour >= 9 ) { // 82800 = 23 hrs, 86400 = 24 hrs, hour >= 9 AM
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
