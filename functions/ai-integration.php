@@ -3946,17 +3946,60 @@ Best regards,
 		// Start timing
 		$start_time = microtime( true );
 
-		$response = wp_remote_post(
-			'https://api.openai.com/v1/chat/completions',
-			array(
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-					'Content-Type'  => 'application/json',
-				),
-				'body'    => json_encode( $data ),
-				'timeout' => 30,
-			)
-		);
+		// Retry logic: attempt up to 3 times
+		$max_retries = 3;
+		$attempt = 0;
+		$response = null;
+		$result = null;
+		$last_error = null;
+
+		while ( $attempt < $max_retries ) {
+			$attempt++;
+			
+			$response = wp_remote_post(
+				'https://api.openai.com/v1/chat/completions',
+				array(
+					'headers' => array(
+						'Authorization' => 'Bearer ' . $api_key,
+						'Content-Type'  => 'application/json',
+					),
+					'body'    => json_encode( $data ),
+					'timeout' => 30,
+				)
+			);
+
+			// Check if request was successful
+			if ( ! is_wp_error( $response ) ) {
+				$response_code = wp_remote_retrieve_response_code( $response );
+				
+				// Check HTTP status code (2xx = success, others = error)
+				if ( $response_code >= 200 && $response_code < 300 ) {
+					$body   = wp_remote_retrieve_body( $response );
+					$result = json_decode( $body, true );
+
+					// Check if response contains valid content
+					if ( isset( $result['choices'][0]['message']['content'] ) ) {
+						// Success! Break out of retry loop
+						break;
+					} else {
+						// Invalid response structure
+						$last_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+					}
+				} else {
+					// HTTP error status code
+					$last_error = new WP_Error( 'http_error', 'OpenAI API returned HTTP ' . $response_code );
+				}
+			} else {
+				// Request error
+				$last_error = $response;
+			}
+
+			// If this isn't the last attempt, wait before retrying
+			if ( $attempt < $max_retries ) {
+				// Wait before retry (exponential backoff: 1s, 2s)
+				sleep( $attempt );
+			}
+		}
 
 		// Calculate response time
 		$end_time = microtime( true );
@@ -3966,8 +4009,10 @@ Best regards,
 		$response_data_for_log = null;
 		$log_error = null;
 
-		if ( is_wp_error( $response ) ) {
-			$log_error = $response;
+		// If all retries failed, return error
+		if ( is_wp_error( $response ) || ! isset( $result['choices'][0]['message']['content'] ) ) {
+			$log_error = $last_error ? $last_error : new WP_Error( 'api_error', 'OpenAI API error after ' . $max_retries . ' attempts' );
+			
 			// Log the error
 			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
 				snks_log_chatgpt_request(
@@ -3979,26 +4024,9 @@ Best regards,
 					$response_time_ms
 				);
 			}
-			return new WP_Error( 'api_error', 'OpenAI API error: ' . $response->get_error_message() );
-		}
-
-		$body   = wp_remote_retrieve_body( $response );
-		$result = json_decode( $body, true );
-
-		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
-			$log_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
-			// Log the error
-			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
-				snks_log_chatgpt_request(
-					$request_data_for_log,
-					$log_error,
-					$model,
-					$user_id,
-					$session_id,
-					$response_time_ms
-				);
-			}
-			return $log_error;
+			
+			$error_message = is_wp_error( $last_error ) ? $last_error->get_error_message() : 'فشل الحصول على استجابة من الذكاء الاصطناعي بعد ' . $max_retries . ' محاولات';
+			return new WP_Error( 'api_error', $error_message );
 		}
 
 		$ai_response = $result['choices'][0]['message']['content'];
@@ -4150,17 +4178,60 @@ Best regards,
 		// Start timing
 		$start_time = microtime( true );
 
-		$response = wp_remote_post(
-			'https://api.openai.com/v1/chat/completions',
-			array(
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-					'Content-Type'  => 'application/json',
-				),
-				'body'    => json_encode( $data ),
-				'timeout' => 60, // Increased timeout for final diagnosis
-			)
-		);
+		// Retry logic: attempt up to 3 times
+		$max_retries = 3;
+		$attempt = 0;
+		$response = null;
+		$result = null;
+		$last_error = null;
+
+		while ( $attempt < $max_retries ) {
+			$attempt++;
+			
+			$response = wp_remote_post(
+				'https://api.openai.com/v1/chat/completions',
+				array(
+					'headers' => array(
+						'Authorization' => 'Bearer ' . $api_key,
+						'Content-Type'  => 'application/json',
+					),
+					'body'    => json_encode( $data ),
+					'timeout' => 60, // Increased timeout for final diagnosis
+				)
+			);
+
+			// Check if request was successful
+			if ( ! is_wp_error( $response ) ) {
+				$response_code = wp_remote_retrieve_response_code( $response );
+				
+				// Check HTTP status code (2xx = success, others = error)
+				if ( $response_code >= 200 && $response_code < 300 ) {
+					$body   = wp_remote_retrieve_body( $response );
+					$result = json_decode( $body, true );
+
+					// Check if response contains valid content
+					if ( isset( $result['choices'][0]['message']['content'] ) ) {
+						// Success! Break out of retry loop
+						break;
+					} else {
+						// Invalid response structure
+						$last_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+					}
+				} else {
+					// HTTP error status code
+					$last_error = new WP_Error( 'http_error', 'OpenAI API returned HTTP ' . $response_code );
+				}
+			} else {
+				// Request error
+				$last_error = $response;
+			}
+
+			// If this isn't the last attempt, wait before retrying
+			if ( $attempt < $max_retries ) {
+				// Wait before retry (exponential backoff: 1s, 2s)
+				sleep( $attempt );
+			}
+		}
 
 		// Calculate response time
 		$end_time = microtime( true );
@@ -4170,8 +4241,10 @@ Best regards,
 		$response_data_for_log = null;
 		$log_error = null;
 
-		if ( is_wp_error( $response ) ) {
-			$log_error = $response;
+		// If all retries failed, return error
+		if ( is_wp_error( $response ) || ! isset( $result['choices'][0]['message']['content'] ) ) {
+			$log_error = $last_error ? $last_error : new WP_Error( 'api_error', 'OpenAI API error after ' . $max_retries . ' attempts' );
+			
 			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
 				snks_log_chatgpt_request(
 					$request_data_for_log,
@@ -4182,25 +4255,9 @@ Best regards,
 					$response_time_ms
 				);
 			}
-			return new WP_Error( 'api_error', 'OpenAI API error: ' . $response->get_error_message() );
-		}
-
-		$body   = wp_remote_retrieve_body( $response );
-		$result = json_decode( $body, true );
-
-		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
-			$log_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
-			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
-				snks_log_chatgpt_request(
-					$request_data_for_log,
-					$log_error,
-					$model,
-					$user_id,
-					$session_id,
-					$response_time_ms
-				);
-			}
-			return $log_error;
+			
+			$error_message = is_wp_error( $last_error ) ? $last_error->get_error_message() : 'فشل الحصول على استجابة من الذكاء الاصطناعي بعد ' . $max_retries . ' محاولات';
+			return new WP_Error( 'api_error', $error_message );
 		}
 
 		$ai_response = $result['choices'][0]['message']['content'];
