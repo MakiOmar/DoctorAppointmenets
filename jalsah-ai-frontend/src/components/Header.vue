@@ -31,13 +31,6 @@
             {{ $t('nav.therapists') }}
           </router-link>
           <router-link 
-            to="/diagnosis" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            :class="{ 'text-primary-600': $route.path === '/diagnosis' }"
-          >
-            {{ $t('nav.diagnosis') }}
-          </router-link>
-          <router-link 
             to="/appointments" 
             class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
             :class="{ 'text-primary-600': $route.path === '/appointments' }"
@@ -172,13 +165,6 @@
             @click="mobileMenuOpen = false"
           >
             {{ $t('nav.therapists') }}
-          </router-link>
-          <router-link
-            to="/diagnosis"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.diagnosis') }}
           </router-link>
           <router-link
             to="/appointments"
