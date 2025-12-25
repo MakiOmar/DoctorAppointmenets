@@ -4067,11 +4067,14 @@ Best regards,
 			}
 		}
 		
-		// If ChatGPT signaled readiness AND minimum questions are met, check patient confirmation before transitioning
+		// If ChatGPT signaled readiness AND minimum questions are met, verify patient confirmation before transitioning
+		// Order: First check readiness marker exists, THEN verify patient confirmed
+		// According to the prompt: ChatGPT should ask "are you ready?" first (no marker), 
+		// then after patient confirms, ChatGPT adds [READY_FOR_DIAGNOSIS] marker
+		// So when we see the marker, $message should contain patient's confirmation
 		if ( $has_readiness_marker && $ai_questions_count >= $min_questions ) {
-			// Check if patient confirmed they're ready (look for positive confirmation in current user message)
-			// According to the new prompt, ChatGPT should only add [READY_FOR_DIAGNOSIS] after patient confirms
-			// But we double-check to ensure patient actually confirmed
+			// Verify patient actually confirmed by checking current user message
+			// The prompt states: "عند الرد بالإيجاب أضف فقط العلامة" - so marker should only appear after positive response
 			$patient_message_lower = strtolower( trim( $message ) );
 			$confirmation_keywords_arabic = array( 'نعم', 'جاهز', 'مستعد', 'حسناً', 'حسنا', 'أكمل', 'متابع', 'تمام', 'أيوه', 'اه', 'ايه', 'موافق', 'ماشي', 'حاضر' );
 			$confirmation_keywords_english = array( 'yes', 'ready', 'ok', 'okay', 'continue', 'proceed', 'sure', 'yep', 'yeah', 'yup', 'alright', 'fine' );
@@ -4085,7 +4088,7 @@ Best regards,
 				}
 			}
 			
-			// Also check if patient directly requested diagnosis (exception case)
+			// Also check if patient directly requested diagnosis (exception case per prompt)
 			$direct_request_keywords = array( 'أعطني', 'أريد', 'أعرض', 'أظهر', 'التشخيص', 'النتائج', 'التقييم', 'give me', 'show me', 'i want', 'diagnosis', 'results' );
 			$direct_request = false;
 			foreach ( $direct_request_keywords as $keyword ) {
@@ -4096,6 +4099,7 @@ Best regards,
 			}
 			
 			// Only transition if patient confirmed OR made a direct request
+			// The readiness marker check comes first (above), then we verify confirmation here
 			if ( $patient_confirmed || $direct_request ) {
 				// Add the current assistant response (without marker) to conversation history
 				$updated_conversation_history = $conversation_history;
@@ -4107,10 +4111,9 @@ Best regards,
 				// Transition to final diagnosis phase
 				return $this->process_final_diagnosis_phase( $message, $updated_conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $max_tokens, $system_prompt, $diagnosis_details, $locale );
 			} else {
-				// Patient hasn't confirmed yet (ChatGPT may have added marker incorrectly)
-				// Continue interview phase - remove marker from response and return it
-				// The response should already contain the question asking if patient is ready
-				// Ensure it's still a question
+				// Patient hasn't confirmed yet (ChatGPT may have added marker incorrectly or prematurely)
+				// Continue interview phase - the response should contain the readiness question
+				// Remove marker and ensure it's formatted as a question
 				if ( ! $this->is_question( $clean_response ) && ! empty( $clean_response ) ) {
 					$clean_response = rtrim( $clean_response, '.،' ) . '؟';
 				}
