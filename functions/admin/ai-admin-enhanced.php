@@ -2480,7 +2480,7 @@ function snks_enhanced_ai_chatgpt_page() {
 					</tr>
 					<tr>
 						<th><label for="max_tokens">Max Tokens</label></th>
-						<td><input type="number" id="max_tokens" name="max_tokens" value="<?php echo esc_attr( $max_tokens ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" id="max_tokens" name="max_tokens" value="<?php echo esc_attr( $max_tokens ); ?>" min="1" max="4000" class="small-text"></td>
 					</tr>
 					<tr>
 						<th><label for="temperature">Temperature</label></th>
