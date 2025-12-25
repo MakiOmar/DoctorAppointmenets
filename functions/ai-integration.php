@@ -4067,17 +4067,54 @@ Best regards,
 			}
 		}
 		
-		// If ChatGPT signaled readiness AND minimum questions are met, transition to final phase
+		// If ChatGPT signaled readiness AND minimum questions are met, check patient confirmation before transitioning
 		if ( $has_readiness_marker && $ai_questions_count >= $min_questions ) {
-			// Add the current assistant response (without marker) to conversation history
-			$updated_conversation_history = $conversation_history;
-			$updated_conversation_history[] = array(
-				'role' => 'assistant',
-				'content' => $clean_response,
-			);
+			// Check if patient confirmed they're ready (look for positive confirmation in current user message)
+			// According to the new prompt, ChatGPT should only add [READY_FOR_DIAGNOSIS] after patient confirms
+			// But we double-check to ensure patient actually confirmed
+			$patient_message_lower = strtolower( trim( $message ) );
+			$confirmation_keywords_arabic = array( 'نعم', 'جاهز', 'مستعد', 'حسناً', 'حسنا', 'أكمل', 'متابع', 'تمام', 'أيوه', 'اه', 'ايه', 'موافق', 'ماشي', 'حاضر' );
+			$confirmation_keywords_english = array( 'yes', 'ready', 'ok', 'okay', 'continue', 'proceed', 'sure', 'yep', 'yeah', 'yup', 'alright', 'fine' );
+			$confirmation_keywords = array_merge( $confirmation_keywords_arabic, $confirmation_keywords_english );
 			
-			// Transition to final diagnosis phase immediately
-			return $this->process_final_diagnosis_phase( $message, $updated_conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $max_tokens, $system_prompt, $diagnosis_details, $locale );
+			$patient_confirmed = false;
+			foreach ( $confirmation_keywords as $keyword ) {
+				if ( strpos( $patient_message_lower, $keyword ) !== false ) {
+					$patient_confirmed = true;
+					break;
+				}
+			}
+			
+			// Also check if patient directly requested diagnosis (exception case)
+			$direct_request_keywords = array( 'أعطني', 'أريد', 'أعرض', 'أظهر', 'التشخيص', 'النتائج', 'التقييم', 'give me', 'show me', 'i want', 'diagnosis', 'results' );
+			$direct_request = false;
+			foreach ( $direct_request_keywords as $keyword ) {
+				if ( strpos( $patient_message_lower, $keyword ) !== false ) {
+					$direct_request = true;
+					break;
+				}
+			}
+			
+			// Only transition if patient confirmed OR made a direct request
+			if ( $patient_confirmed || $direct_request ) {
+				// Add the current assistant response (without marker) to conversation history
+				$updated_conversation_history = $conversation_history;
+				$updated_conversation_history[] = array(
+					'role' => 'assistant',
+					'content' => $clean_response,
+				);
+				
+				// Transition to final diagnosis phase
+				return $this->process_final_diagnosis_phase( $message, $updated_conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $max_tokens, $system_prompt, $diagnosis_details, $locale );
+			} else {
+				// Patient hasn't confirmed yet (ChatGPT may have added marker incorrectly)
+				// Continue interview phase - remove marker from response and return it
+				// The response should already contain the question asking if patient is ready
+				// Ensure it's still a question
+				if ( ! $this->is_question( $clean_response ) && ! empty( $clean_response ) ) {
+					$clean_response = rtrim( $clean_response, '.،' ) . '؟';
+				}
+			}
 		}
 		
 		// Ensure response is a question (interview phase requirement)
