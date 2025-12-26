@@ -972,7 +972,7 @@ add_action(
 				top:calc(50% - 20px);
 			}
 			.bulk-action-toggle-tip:after{
-				top: 39px;
+				top: 37px;
 			}
 
 			.switcher-no{

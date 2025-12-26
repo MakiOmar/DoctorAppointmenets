@@ -875,7 +875,7 @@ function snks_booking_item_template( $record ) {
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
 				<?php endif; ?>
 
-				<div class="attandance_type rotate-90" style="position:absolute;top:calc(50% - 15px);left:-25%;display: flex;align-items: center;">
+				<div class="attandance_type rotate-90 anony-flex" style="position:absolute;top:calc(50% - 15px);left:-25%;display: flex;align-items: center;">
 					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
@@ -957,8 +957,8 @@ function snks_booking_item_template( $record ) {
 			<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px;margin-left:5px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
 			<?php endif; ?>
-			<?php if ( ! snks_is_clinic_manager() && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
-			<!--<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>-->
+			<?php if ( ! snks_is_clinic_manager() && !snks_is_ai_session($record->ID) && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
+			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
 			<?php } ?>
 		</div>
 		<?php echo snks_doctor_actions( $record ); ?>

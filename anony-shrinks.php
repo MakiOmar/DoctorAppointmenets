@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.220
+ * Version: 1.0.221
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -204,6 +204,70 @@ function snks_add_cron_schedule( $schedules ) {
 	return $schedules;
 }
 add_filter( 'cron_schedules', 'snks_add_cron_schedule' );
+
+/**
+ * Allow SVG tags in WordPress content sanitization
+ * This prevents SVG icons from being stripped when shortcodes are rendered
+ */
+add_filter(
+	'wp_kses_allowed_html',
+	function ( $allowed, $context ) {
+		// Add SVG support for all contexts where HTML is allowed
+		$allowed['svg'] = array(
+			'width'          => true,
+			'height'         => true,
+			'fill'           => true,
+			'viewbox'        => true,
+			'viewBox'        => true,
+			'xmlns'          => true,
+			'xmlns:xlink'    => true,
+			'version'        => true,
+			'id'             => true,
+			'class'          => true,
+			'style'          => true,
+			'xml:space'      => true,
+			'stroke'         => true,
+			'stroke-width'   => true,
+		);
+		$allowed['g'] = array(
+			'id'    => true,
+			'class' => true,
+			'style' => true,
+			'stroke-width' => true,
+			'stroke-linecap' => true,
+			'stroke-linejoin' => true,
+		);
+		$allowed['path'] = array(
+			'd'          => true,
+			'fill'       => true,
+			'stroke'     => true,
+			'stroke-width' => true,
+			'style'      => true,
+		);
+		$allowed['circle'] = array(
+			'cx'     => true,
+			'cy'     => true,
+			'r'      => true,
+			'fill'   => true,
+			'stroke' => true,
+			'stroke-width' => true,
+			'style'  => true,
+		);
+		$allowed['rect'] = array(
+			'width'  => true,
+			'height' => true,
+			'x'      => true,
+			'y'      => true,
+			'fill'   => true,
+			'style'  => true,
+		);
+		$allowed['title'] = true;
+		
+		return $allowed;
+	},
+	10,
+	2
+);
 
 require_once SNKS_DIR . 'functions/helpers.php';
 require_once SNKS_DIR . '/vendor/autoload.php';
