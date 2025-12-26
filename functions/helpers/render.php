@@ -957,7 +957,7 @@ function snks_booking_item_template( $record ) {
 			<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
 			<button data-title="تعديل" class="snks-change anony-padding-5 snks-bg" style="width:80px;margin-left:5px" data-id="<?php echo esc_attr( $record->ID ) ?>" data-time="<?php echo esc_attr( gmdate( 'H:i a', strtotime( $record->date_time ) ) ) ?>" data-date="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( $record->date_time ) ) ) ?>">تعديل</button>
 			<?php endif; ?>
-			<?php if ( ! snks_is_clinic_manager() && !snks_is_ai_session($record->ID) && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
+			<?php if ( ! snks_is_clinic_manager() && ( 1 > 2) && isset( $_SERVER['HTTP_REFERER'] ) && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<button class="snks-notes anony-padding-5 snks-bg" style="margin-right: 5px;width:80px" data-id="<?php echo esc_attr( $record->ID ) ?>">ملاحظات</button>
 			<?php } ?>
 		</div>
