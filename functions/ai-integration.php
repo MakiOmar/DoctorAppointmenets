@@ -3893,17 +3893,20 @@ Best regards,
 		$recent_history = array_slice( $conversation_history, -10 );
 		foreach ( $recent_history as $msg ) {
 			if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
+				// Sanitize Arabic text to prevent confusion in ChatGPT model
+				$sanitized_content = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $msg['content'] ) : $msg['content'];
 				$messages[] = array(
 					'role'    => $msg['role'],
-					'content' => $msg['content'],
+					'content' => $sanitized_content,
 				);
 			}
 		}
 
-		// Add current message
+		// Add current message (sanitize Arabic text)
+		$sanitized_message = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $message ) : $message;
 		$messages[] = array(
 			'role'    => 'user',
-			'content' => $message,
+			'content' => $sanitized_message,
 		);
 
 		// PHASE 1: Interview - NO response_format, expect plain text
@@ -4127,17 +4130,20 @@ Best regards,
 		// Add full conversation history for final diagnosis
 		foreach ( $conversation_history as $msg ) {
 			if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
+				// Sanitize Arabic text to prevent confusion in ChatGPT model
+				$sanitized_content = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $msg['content'] ) : $msg['content'];
 				$messages[] = array(
 					'role'    => $msg['role'],
-					'content' => $msg['content'],
+					'content' => $sanitized_content,
 				);
 			}
 		}
 
-		// Add current message
+		// Add current message (sanitize Arabic text)
+		$sanitized_message = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $message ) : $message;
 		$messages[] = array(
 			'role'    => 'user',
-			'content' => $message,
+			'content' => $sanitized_message,
 		);
 
 		// PHASE 2: Final Diagnosis - USE response_format: json_object

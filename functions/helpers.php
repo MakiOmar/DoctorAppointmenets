@@ -997,6 +997,52 @@ function snks_get_ai_appointment_edit_time_remaining( $appointment ) {
 }
 
 /**
+ * Sanitize Arabic text for ChatGPT API
+ * Removes diacritics, formatting characters, and normalizes Unicode
+ * This prevents confusion in ChatGPT model with Arabic text containing special characters
+ *
+ * @param string $text The Arabic text to sanitize
+ * @return string The sanitized text
+ */
+function snks_sanitize_arabic_text( $text ) {
+	if ( empty( $text ) || ! is_string( $text ) ) {
+		return $text;
+	}
+
+	// Normalize Unicode to NFC form (Canonical Decomposition, followed by Canonical Composition)
+	// This ensures consistent character representation
+	if ( class_exists( 'Normalizer' ) && method_exists( 'Normalizer', 'normalize' ) ) {
+		try {
+			$text = Normalizer::normalize( $text, Normalizer::FORM_C );
+		} catch ( Exception $e ) {
+			// If normalization fails, continue without it
+		}
+	}
+
+	// Remove Arabic diacritics/vowel marks (harakat)
+	// Range: \u064B-\u065F (Arabic diacritics), \u0670 (Arabic letter superscript alef)
+	// Range: \u06D6-\u06ED (Arabic diacritics)
+	$text = preg_replace( '/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', '', $text );
+
+	// Remove bidirectional formatting characters (can confuse text processing)
+	// \u200E (LEFT-TO-RIGHT MARK), \u200F (RIGHT-TO-LEFT MARK)
+	// \u202A-\x{202E} (Bidirectional text formatting)
+	$text = preg_replace( '/[\x{200E}\x{200F}\x{202A}-\x{202E}]/u', '', $text );
+
+	// Remove Arabic tatweel (kashida) character (ـ) - Unicode U+0640
+	// Used for text justification in Arabic
+	$text = preg_replace( '/\x{0640}/u', '', $text );
+
+	// Normalize whitespace: replace multiple spaces/tabs/newlines with single space
+	$text = preg_replace( '/\s+/u', ' ', $text );
+
+	// Trim leading and trailing whitespace
+	$text = trim( $text );
+
+	return $text;
+}
+
+/**
  * Validate 15-minute rule for marking patient absence
  * 
  * @param string $session_date_time Session date and time
