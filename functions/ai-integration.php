@@ -3884,9 +3884,11 @@ Best regards,
 		// IMPORTANT: Add explicit instruction that this is INTERVIEW phase - ask questions, NO JSON
 		$enhanced_system_prompt .= "\n\nملاحظة مهمة: أنت الآن في مرحلة المقابلة. يجب أن تسأل سؤالاً واحداً فقط بالعربية. لا تقدم أي تشخيص. لا تستخدم JSON. فقط اسأل سؤالاً واضحاً ومحدداً ينتهي بعلامة استفهام.";
 
+		// Sanitize system prompt (remove \r and \n characters)
+		$sanitized_system_prompt = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $enhanced_system_prompt ) : $enhanced_system_prompt;
 		$messages[] = array(
 			'role'    => 'system',
-			'content' => $enhanced_system_prompt,
+			'content' => $sanitized_system_prompt,
 		);
 
 		// Add conversation history (limit to last 10 messages to avoid token limits)
@@ -4122,9 +4124,11 @@ Best regards,
 		// Must include word "json" to satisfy OpenAI requirement for response_format: json_object
 		$final_prompt .= "\n\nملاحظة حرجة: أنت الآن في مرحلة التشخيص النهائي. يجب أن ترد بصيغة JSON فقط (JSON format required). لا تسأل أي أسئلة. استخدم المعلومات التي جمعتها من المحادثة لتقديم التشخيص النهائي. يجب أن يكون ردك JSON صحيح يحتوي على: ai_diagnosis, diagnosis, reasoning, status (يجب أن يكون 'complete'), question_count, therapist_summary, patient_summary.";
 
+		// Sanitize system prompt (remove \r and \n characters)
+		$sanitized_final_prompt = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $final_prompt ) : $final_prompt;
 		$messages[] = array(
 			'role'    => 'system',
-			'content' => $final_prompt,
+			'content' => $sanitized_final_prompt,
 		);
 
 		// Add full conversation history for final diagnosis

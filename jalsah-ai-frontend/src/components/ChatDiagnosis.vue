@@ -1,5 +1,5 @@
 <template>
-  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" ref="diagnosisContainer">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
              <!-- Header -->
        <div class="text-center mb-8">
@@ -165,7 +165,7 @@
 </template>
 
 <script>
-import { ref, reactive, nextTick, onMounted, computed } from 'vue'
+import { ref, reactive, nextTick, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
@@ -187,6 +187,7 @@ export default {
     const diagnosisCompleted = ref(false)
     const chatContainer = ref(null)
     const messageInput = ref(null)
+    const diagnosisContainer = ref(null)
     const isLoadingDiagnosis = ref(false)
     
          const diagnosisResult = reactive({
@@ -417,10 +418,104 @@ export default {
 
 
 
+    // Prevent copy-paste functionality on diagnosis page
+    const preventCopyPaste = () => {
+      // Prevent context menu (right-click) on chat messages
+      const preventContextMenu = (e) => {
+        // Allow context menu only on input fields
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+          return true
+        }
+        e.preventDefault()
+        return false
+      }
+
+      // Prevent copy and cut from all elements including input fields
+      const preventCopyCut = (e) => {
+        // Prevent copy/cut from all elements (chat messages, input fields, etc.)
+        if (e.type === 'copy' || e.type === 'cut') {
+          e.preventDefault()
+          e.stopPropagation()
+          return false
+        }
+      }
+
+      // Prevent paste from anywhere into the page (including input fields)
+      const preventPaste = (e) => {
+        // Prevent paste on all elements including input fields
+        e.preventDefault()
+        e.stopPropagation()
+        return false
+      }
+
+      // Prevent keyboard shortcuts for copy, cut, and paste
+      const preventKeyboardShortcuts = (e) => {
+        // Check for Ctrl+C, Ctrl+X, Ctrl+V (Windows/Linux) or Cmd+C, Cmd+X, Cmd+V (Mac)
+        const isCopy = (e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')
+        const isCut = (e.ctrlKey || e.metaKey) && (e.key === 'x' || e.key === 'X')
+        const isPaste = (e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')
+
+        // Prevent copy, cut, and paste shortcuts everywhere
+        if (isCopy || isCut || isPaste) {
+          e.preventDefault()
+          e.stopPropagation()
+          return false
+        }
+      }
+
+      // Add event listeners to the component container
+      const container = diagnosisContainer.value
+      if (container) {
+        container.addEventListener('contextmenu', preventContextMenu)
+        container.addEventListener('copy', preventCopyCut, true)
+        container.addEventListener('cut', preventCopyCut, true)
+        container.addEventListener('paste', preventPaste, true)
+        container.addEventListener('keydown', preventKeyboardShortcuts, true)
+      }
+
+      // Also add to document for broader coverage
+      document.addEventListener('contextmenu', preventContextMenu)
+      document.addEventListener('copy', preventCopyCut, true)
+      document.addEventListener('cut', preventCopyCut, true)
+      document.addEventListener('paste', preventPaste, true)
+      document.addEventListener('keydown', preventKeyboardShortcuts, true)
+
+      // Cleanup function
+      return () => {
+        if (container) {
+          container.removeEventListener('contextmenu', preventContextMenu)
+          container.removeEventListener('copy', preventCopyCut, true)
+          container.removeEventListener('cut', preventCopyCut, true)
+          container.removeEventListener('paste', preventPaste, true)
+          container.removeEventListener('keydown', preventKeyboardShortcuts, true)
+        }
+        document.removeEventListener('contextmenu', preventContextMenu)
+        document.removeEventListener('copy', preventCopyCut, true)
+        document.removeEventListener('cut', preventCopyCut, true)
+        document.removeEventListener('paste', preventPaste, true)
+        document.removeEventListener('keydown', preventKeyboardShortcuts, true)
+      }
+    }
+
+    let cleanupCopyPaste = null
+
     onMounted(async () => {
       // Always start with a fresh diagnosis session
       addWelcomeMessage()
       focusInput()
+      
+      // Wait for next tick to ensure DOM is ready
+      await nextTick()
+      
+      // Prevent copy-paste functionality
+      cleanupCopyPaste = preventCopyPaste()
+    })
+
+    onUnmounted(() => {
+      // Cleanup event listeners when component unmounts
+      if (cleanupCopyPaste) {
+        cleanupCopyPaste()
+      }
     })
 
          return {
@@ -431,6 +526,7 @@ export default {
        diagnosisResult,
        chatContainer,
        messageInput,
+       diagnosisContainer,
        aiQuestionsCount,
        isLoadingDiagnosis,
        sendMessage,
@@ -495,6 +591,41 @@ export default {
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   border: 1px solid #e5e7eb;
+}
+
+/* Prevent text selection on chat messages */
+.max-w-xs,
+.max-w-md,
+.card {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Prevent selection everywhere including input fields */
+input[type="text"],
+textarea {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow cursor in input field but prevent selection */
+input[type="text"]:focus,
+textarea:focus {
+  cursor: text;
+}
+
+/* Prevent text selection on messages but allow cursor for input */
+.flex-1 p,
+.chat-message {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: default;
 }
 
 /* Scrollbar styling */

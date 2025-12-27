@@ -1033,7 +1033,10 @@ function snks_sanitize_arabic_text( $text ) {
 	// Used for text justification in Arabic
 	$text = preg_replace( '/\x{0640}/u', '', $text );
 
-	// Normalize whitespace: replace multiple spaces/tabs/newlines with single space
+	// Remove carriage returns (\r) and newlines (\n)
+	$text = str_replace( array( "\r\n", "\r", "\n" ), ' ', $text );
+
+	// Normalize whitespace: replace multiple spaces/tabs with single space
 	$text = preg_replace( '/\s+/u', ' ', $text );
 
 	// Trim leading and trailing whitespace
