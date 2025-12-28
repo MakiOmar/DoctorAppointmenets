@@ -2398,10 +2398,6 @@ function snks_enhanced_ai_chatgpt_page() {
 			update_option( 'snks_ai_chatgpt_api_key', sanitize_text_field( $_POST['api_key'] ) );
 			update_option( 'snks_ai_chatgpt_model', sanitize_text_field( $_POST['model'] ) );
 			update_option( 'snks_ai_chatgpt_prompt', sanitize_textarea_field( wp_unslash( $_POST['prompt'] ) ) );
-					update_option( 'snks_ai_chatgpt_max_tokens', intval( $_POST['max_tokens'] ) );
-		update_option( 'snks_ai_chatgpt_temperature', floatval( $_POST['temperature'] ) );
-		update_option( 'snks_ai_chatgpt_min_questions', intval( $_POST['min_questions'] ) );
-		update_option( 'snks_ai_chatgpt_max_questions', intval( $_POST['max_questions'] ) );
 			
 			$prompt_source = isset( $_POST['prompt_source'] ) ? sanitize_text_field( $_POST['prompt_source'] ) : 'custom';
 			$use_default_prompt = ( 'default' === $prompt_source ) ? '1' : '0';
@@ -2424,8 +2420,6 @@ function snks_enhanced_ai_chatgpt_page() {
 	$use_default_prompt  = get_option( 'snks_ai_chatgpt_use_default_prompt', '0' );
 	$custom_prompt_value = get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
 	$active_prompt       = snks_get_ai_chatgpt_prompt();
-	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
-	$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 	?>
 	<div class="wrap">
 		<h1>ChatGPT Integration</h1>
@@ -2478,22 +2472,6 @@ function snks_enhanced_ai_chatgpt_page() {
 							</p>
 						</td>
 					</tr>
-					<tr>
-						<th><label for="max_tokens">Max Tokens</label></th>
-						<td><input type="number" id="max_tokens" name="max_tokens" value="<?php echo esc_attr( $max_tokens ); ?>" min="1" max="4000" class="small-text"></td>
-					</tr>
-					<tr>
-						<th><label for="temperature">Temperature</label></th>
-						<td><input type="number" id="temperature" name="temperature" value="<?php echo esc_attr( $temperature ); ?>" min="0" max="2" step="0.1" class="small-text"></td>
-					</tr>
-					<tr>
-						<th><label for="min_questions">Minimum Questions</label></th>
-						<td><input type="number" id="min_questions" name="min_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_min_questions', 5 ) ); ?>" min="3" max="15" step="1" class="small-text"></td>
-					</tr>
-					<tr>
-						<th><label for="max_questions">Maximum Questions</label></th>
-						<td><input type="number" id="max_questions" name="max_questions" value="<?php echo esc_attr( get_option( 'snks_ai_chatgpt_max_questions', 10 ) ); ?>" min="5" step="1" class="small-text"></td>
-					</tr>
 				</table>
 				
 				<?php submit_button( 'Save Settings' ); ?>
@@ -2542,8 +2520,6 @@ function snks_test_chatgpt_integration( $test_prompt ) {
 	$api_key = get_option( 'snks_ai_chatgpt_api_key' );
 	$model = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
 	$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
-	$max_tokens = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
-	$temperature = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
 	
 	if ( ! $api_key ) {
 		return 'Error: API key not configured';
@@ -2569,8 +2545,6 @@ function snks_test_chatgpt_integration( $test_prompt ) {
 				'content' => $test_prompt
 			)
 		),
-		'max_tokens' => $max_tokens,
-		'temperature' => $temperature
 	);
 	
 	$response = wp_remote_post( 'https://api.openai.com/v1/chat/completions', array(

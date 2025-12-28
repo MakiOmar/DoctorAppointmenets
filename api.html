@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>اختبار ChatGPT API – شات حقيقي</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  direction: rtl;
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 10px;
+}
+
+input, textarea, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  background: #0d6efd;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #084298;
+}
+
+#chat {
+  background: #ffffff;
+  padding: 15px;
+  height: 350px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  margin-top: 15px;
+}
+
+.user {
+  color: #0a58ca;
+  margin-bottom: 12px;
+}
+
+.assistant {
+  color: #198754;
+  margin-bottom: 12px;
+}
+
+.system {
+  color: #6c757d;
+  font-style: italic;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>💬 اختبار ChatGPT API – شات حقيقي</h2>
+
+<label>🔑 OpenAI API Key</label>
+<input type="password" id="apiKey" placeholder="sk-...">
+
+<label>🧠 SYSTEM PROMPT (تعليمات مخفية)</label>
+<textarea id="systemPrompt" rows="6"
+placeholder="حط البرومبت الأساسي هنا..."></textarea>
+
+<button onclick="startChat()">ابدأ الشات</button>
+
+<div id="chat"></div>
+
+<label>✍️ رسالة المستخدم</label>
+<textarea id="userInput" rows="3"
+placeholder="اكتب ردك هنا..."></textarea>
+
+<button onclick="sendMessage()">إرسال</button>
+
+<script>
+let messages = [];
+
+function startChat() {
+  const systemPrompt = document.getElementById("systemPrompt").value;
+  const chat = document.getElementById("chat");
+
+  const welcomeMessage = `
+شكرًا لاختيارك موقع جلسة.
+
+أنا هنا لمساعدتك على عمل تقييم نفسي مبدئي، حتى أتمكن من اختيار أفضل معالج معتمد ومرخص ولديه خبرة وتدريب في التعامل مع مشكلتك تحديدًا، لتتمكن من حجز جلسة أونلاين (عن بُعد) مع أفضل معالج ممكن، وبأفضل سعر، وبسرية تامة.
+
+هل أنت مستعد؟
+`;
+
+  messages = [
+    { role: "system", content: systemPrompt },
+    { role: "assistant", content: welcomeMessage }
+  ];
+
+  chat.innerHTML = "";
+  addToChat("assistant", welcomeMessage);
+}
+
+async function sendMessage() {
+  const apiKey = document.getElementById("apiKey").value;
+  const userText = document.getElementById("userInput").value;
+  if (!userText) return;
+
+  messages.push({ role: "user", content: userText });
+  addToChat("user", userText);
+  document.getElementById("userInput").value = "";
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages: messages,
+        temperature: 0.4
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      addToChat("assistant", "❌ " + data.error.message);
+      return;
+    }
+
+    const reply = data.choices[0].message.content;
+    messages.push({ role: "assistant", content: reply });
+    addToChat("assistant", reply);
+
+  } catch (e) {
+    addToChat("assistant", "❌ حصل خطأ في الاتصال");
+  }
+}
+
+function addToChat(role, text) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = role;
+
+  if (role === "user") {
+    div.textContent = "🧑‍⚕️ أنت: " + text;
+  } else if (role === "assistant") {
+    div.textContent = "🤖 المساعد: " + text;
+  } else {
+    div.textContent = text;
+  }
+
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>

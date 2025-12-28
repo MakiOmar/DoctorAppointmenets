@@ -3769,24 +3769,11 @@ Best regards,
 
 	/**
 	 * Determine if we should transition to final diagnosis phase
-	 * Server-side decision based on question count and data collection
+	 * Server-side decision based on collected data only (no question limits)
 	 */
-	private function should_transition_to_final_phase( $ai_questions_count, $min_questions, $max_questions, $conversation_history, $message ) {
-		// Force transition if we've reached max questions
-		if ( $ai_questions_count >= $max_questions ) {
-			return true;
-		}
-		
-		// Transition if we have minimum questions AND sufficient data
-		if ( $ai_questions_count >= $min_questions ) {
-			// Check if we have sufficient diagnostic information
-			$has_sufficient_info = $this->has_sufficient_diagnostic_info( $conversation_history, $message );
-			if ( $has_sufficient_info ) {
-				return true;
-			}
-		}
-		
-		return false;
+	private function should_transition_to_final_phase( $conversation_history, $message ) {
+		// Transition when sufficient diagnostic information is available
+		return $this->has_sufficient_diagnostic_info( $conversation_history, $message );
 	}
 
 	/**
@@ -3799,11 +3786,6 @@ Best regards,
 		$api_key       = get_option( 'snks_ai_chatgpt_api_key' );
 		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
 		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
-		$max_tokens    = get_option( 'snks_ai_chatgpt_max_tokens', 1000 );
-		$temperature   = get_option( 'snks_ai_chatgpt_temperature', 0.7 );
-		$min_questions = get_option( 'snks_ai_chatgpt_min_questions', 5 );
-		$max_questions = get_option( 'snks_ai_chatgpt_max_questions', 10 );
-
 		if ( ! $api_key ) {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
 		}
@@ -3845,14 +3827,14 @@ Best regards,
 		}
 
 		// SERVER DECIDES: Should we transition to final diagnosis phase?
-		$should_complete = $this->should_transition_to_final_phase( $ai_questions_count, $min_questions, $max_questions, $conversation_history, $message );
+		$should_complete = $this->should_transition_to_final_phase( $conversation_history, $message );
 		
 		if ( $should_complete ) {
 			// PHASE 2: Final Diagnosis Phase (JSON only)
-			return $this->process_final_diagnosis_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $max_tokens, $system_prompt, $diagnosis_details, $locale );
+			return $this->process_final_diagnosis_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale );
 		} else {
 			// PHASE 1: Interview Phase (Conversational, no JSON)
-			return $this->process_interview_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $min_questions, $max_questions, $api_key, $model, $max_tokens, $temperature, $system_prompt, $diagnosis_details, $locale );
+			return $this->process_interview_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale );
 		}
 	}
 
@@ -3860,15 +3842,17 @@ Best regards,
 	 * Phase 1: Interview Phase - Conversational, no JSON
 	 * Purpose: Ask questions, collect data, maintain natural conversation
 	 */
-	private function process_interview_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $min_questions, $max_questions, $api_key, $model, $max_tokens, $temperature, $system_prompt, $diagnosis_details, $locale ) {
+	private function process_interview_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale ) {
 		// Build conversation messages
 		$messages = array();
 		
 		// Prepare interview prompt - replace placeholders
 		$base_prompt = $system_prompt;
-		$enhanced_system_prompt = str_replace( '{max_questions}', $max_questions, $base_prompt );
-		$enhanced_system_prompt = str_replace( '{question_count}', $ai_questions_count, $enhanced_system_prompt );
-		$enhanced_system_prompt = str_replace( '{min_questions}', $min_questions, $enhanced_system_prompt );
+		$enhanced_system_prompt = str_replace(
+			array( '{max_questions}', '{question_count}', '{min_questions}' ),
+			array( '', $ai_questions_count, '' ),
+			$base_prompt
+		);
 		
 		// Build diagnosis list for placeholder replacement
 		$diagnosis_names_only = array();
@@ -3915,8 +3899,7 @@ Best regards,
 		$data = array(
 			'model'       => $model,
 			'messages'    => $messages,
-			'max_tokens'  => intval( $max_tokens ),
-			'temperature' => floatval( $temperature ),
+			'temperature' => 0.4,
 			// NO response_format in interview phase
 		);
 
@@ -4072,8 +4055,8 @@ Best regards,
 			}
 		}
 		
-		// If ChatGPT signaled readiness AND minimum questions are met, transition to final phase
-		if ( $has_readiness_marker && $ai_questions_count >= $min_questions ) {
+		// If ChatGPT signaled readiness, transition to final phase
+		if ( $has_readiness_marker ) {
 			// Add the current assistant response (without marker) to conversation history
 			$updated_conversation_history = $conversation_history;
 			$updated_conversation_history[] = array(
@@ -4082,7 +4065,7 @@ Best regards,
 			);
 			
 			// Transition to final diagnosis phase immediately
-			return $this->process_final_diagnosis_phase( $message, $updated_conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $max_tokens, $system_prompt, $diagnosis_details, $locale );
+			return $this->process_final_diagnosis_phase( $message, $updated_conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale );
 		}
 		
 		// Ensure response is a question (interview phase requirement)
@@ -4108,14 +4091,13 @@ Best regards,
 	 * Phase 2: Final Diagnosis Phase - JSON only
 	 * Purpose: Generate final diagnosis JSON when server decides to complete
 	 */
-	private function process_final_diagnosis_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $max_tokens, $system_prompt, $diagnosis_details, $locale ) {
+	private function process_final_diagnosis_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale ) {
 		// Build final diagnosis messages
 		$messages = array();
 		
 		// Prepare final diagnosis prompt
 		$base_prompt = $system_prompt;
-		$final_prompt = str_replace( '{max_questions}', $ai_questions_count, $base_prompt );
-		$final_prompt = str_replace( '{question_count}', $ai_questions_count, $final_prompt );
+		$final_prompt = str_replace( '{question_count}', $ai_questions_count, $base_prompt );
 		
 		$available_diagnoses_detailed = "\n" . implode( "\n\n", $diagnosis_details );
 		$final_prompt .= "\n\n" . $available_diagnoses_detailed;
@@ -4154,8 +4136,7 @@ Best regards,
 		$data = array(
 			'model'           => $model,
 			'messages'        => $messages,
-			'max_tokens'      => intval( $max_tokens ),
-			'temperature'     => 0.2, // Lower temperature for final diagnosis
+			'temperature'     => 0.4,
 			'response_format' => array( 'type' => 'json_object' ),
 		);
 
