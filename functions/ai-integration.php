@@ -95,20 +95,12 @@ class SNKS_AI_Integration {
 		add_action( 'admin_post_flush_ai_rewrite_rules', array( $this, 'flush_rewrite_rules' ) );
 
 		// Add AJAX endpoints for testing
-		add_action( 'wp_ajax_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
-		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
-		add_action( 'wp_ajax_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
-		add_action( 'wp_ajax_nopriv_test_diagnosis_ajax', array( $this, 'test_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
 		add_action( 'wp_ajax_nopriv_chat_diagnosis_ajax', array( $this, 'chat_diagnosis_ajax' ) );
-		add_action( 'wp_ajax_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
-		add_action( 'wp_ajax_nopriv_simple_test_ajax', array( $this, 'simple_test_ajax' ) );
 
 		// Add AJAX endpoints for settings
 			add_action( 'wp_ajax_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
 		add_action( 'wp_ajax_nopriv_get_ai_settings', array( $this, 'get_ai_settings_ajax' ) );
-		add_action( 'wp_ajax_test_diagnosis_limit', array( $this, 'test_diagnosis_limit_ajax' ) );
-		add_action( 'wp_ajax_nopriv_test_diagnosis_limit', array( $this, 'test_diagnosis_limit_ajax' ) );
 	}
 
 	/**
@@ -139,10 +131,6 @@ class SNKS_AI_Integration {
 
 		add_filter( 'query_vars', array( $this, 'add_ai_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'handle_ai_requests' ) );
-
-		// Also add a simple test endpoint
-		add_action( 'wp_ajax_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
-		add_action( 'wp_ajax_nopriv_test_ai_endpoint', array( $this, 'test_ai_endpoint' ) );
 	}
 
 	/**
@@ -574,31 +562,6 @@ class SNKS_AI_Integration {
 		);
 	}
 
-	/**
-	 * Test AI endpoint
-	 */
-	public function test_ai_endpoint() {
-		wp_send_json_success(
-			array(
-				'message'   => 'AI endpoint is working!',
-				'timestamp' => current_time( 'mysql' ),
-				'endpoint'  => 'test',
-			)
-		);
-	}
-
-	/**
-	 * Simple test AJAX endpoint
-	 */
-	public function simple_test_ajax() {
-		wp_send_json_success(
-			array(
-				'message'   => 'Simple AJAX test successful!',
-				'timestamp' => current_time( 'mysql' ),
-				'post_data' => $_POST,
-			)
-		);
-	}
 
 	/**
 	 * Parse JSON field that may have escaped quotes
@@ -631,77 +594,7 @@ class SNKS_AI_Integration {
 		return array();
 	}
 
-	/**
-	 * Check if a message is a question
-	 */
-	private function is_question( $content ) {
-		// Remove JSON formatting and get the actual message content
-		$clean_content = $content;
 
-		// Check for question marks
-		if ( strpos( $clean_content, '?' ) !== false ) {
-			return true;
-		}
-
-		// Check for Arabic question words
-		$arabic_question_words = array( 'هل', 'متى', 'أين', 'كيف', 'لماذا', 'من', 'ما', 'أي' );
-		foreach ( $arabic_question_words as $word ) {
-			if ( strpos( $clean_content, $word ) !== false ) {
-				return true;
-			}
-		}
-
-		// Check for English question words
-		$english_question_words = array( 'what', 'when', 'where', 'how', 'why', 'who', 'which', 'do', 'does', 'did', 'can', 'could', 'would', 'will' );
-		foreach ( $english_question_words as $word ) {
-			if ( stripos( $clean_content, $word ) !== false ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Test diagnosis endpoint via AJAX
-	 */
-	public function test_diagnosis_ajax() {
-		// Check if this is a POST request
-		if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
-			wp_send_json_error( 'Method not allowed', 405 );
-		}
-
-		// Get data from POST (WordPress AJAX sends data via $_POST)
-		$data = array(
-			'mood'              => $_POST['mood'] ?? '',
-			'duration'          => $_POST['duration'] ?? '',
-			'selectedSymptoms'  => $this->parse_json_field( $_POST['selectedSymptoms'] ?? '[]' ),
-			'impact'            => $_POST['impact'] ?? '',
-			'affectedAreas'     => $this->parse_json_field( $_POST['affectedAreas'] ?? '[]' ),
-			'goals'             => $_POST['goals'] ?? '',
-			'preferredApproach' => $_POST['preferredApproach'] ?? '',
-		);
-
-		// Validate required fields
-		if ( empty( $data['mood'] ) || empty( $data['selectedSymptoms'] ) ) {
-			wp_send_json_error( 'Mood and symptoms are required', 400 );
-		}
-
-		// Process the diagnosis
-		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
-
-		// If no diagnosis found, return error
-		if ( $diagnosis_id === null ) {
-			wp_send_json_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
-		}
-
-		$response_data = array(
-			'diagnosis_id' => $diagnosis_id,
-			'message'      => 'Diagnosis processed successfully',
-		);
-
-		wp_send_json_success( $response_data );
-	}
 
 	/**
 	 * Chat diagnosis endpoint via AJAX
@@ -749,28 +642,6 @@ class SNKS_AI_Integration {
 		flush_rewrite_rules();
 		// Rewrite rules flushed
 	}
-
-	/**
-	 * Debug endpoint (for testing)
-	 */
-	public function debug_ai_endpoint() {
-		if ( isset( $_GET['debug_ai'] ) ) {
-			header( 'Content-Type: application/json' );
-			header( 'Access-Control-Allow-Origin: *' );
-			echo json_encode(
-				array(
-					'success'     => true,
-					'message'     => 'AI endpoint is working!',
-					'endpoint'    => get_query_var( 'ai_endpoint' ),
-					'request_uri' => $_SERVER['REQUEST_URI'],
-					'query_vars'  => $GLOBALS['wp_query']->query_vars,
-				)
-			);
-			exit;
-		}
-	}
-
-
 
 	/**
 	 * Add AI query vars
@@ -880,14 +751,6 @@ class SNKS_AI_Integration {
 		}
 
 		switch ( $path[0] ) {
-			case 'test':
-				$this->send_success(
-					array(
-						'message'  => 'AI endpoint is working!',
-						'endpoint' => $endpoint,
-					)
-				);
-				break;
 			case 'nonce':
 				$this->handle_nonce_endpoint( $method, $path );
 				break;
@@ -910,18 +773,6 @@ class SNKS_AI_Integration {
 						'request_uri' => $_SERVER['REQUEST_URI'],
 						'query_vars'  => $GLOBALS['wp_query']->query_vars,
 						'headers'     => getallheaders(),
-					)
-				);
-				break;
-			case 'earliest-slot-test':
-				$this->send_success(
-					array(
-						'message'     => 'Earliest slot test endpoint',
-						'endpoint'    => $endpoint,
-						'method'      => $method,
-						'path'        => $path,
-						'request_uri' => $_SERVER['REQUEST_URI'],
-						'full_path'   => $path,
 					)
 				);
 				break;
@@ -3712,675 +3563,80 @@ Best regards,
 	 * Process chat diagnosis using OpenAI
 	 */
 	/**
-	 * Check if we have sufficient information for diagnosis
-	 */
-	private function has_sufficient_diagnostic_info( $conversation_history, $current_message ) {
-		// Count user messages with substantial content
-		$user_messages = 0;
-		$has_symptoms  = false;
-		$has_duration  = false;
-		$has_impact    = false;
-
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'user' ) {
-				$content = strtolower( $msg['content'] );
-				++$user_messages;
-
-				// Check for symptom keywords
-				if ( strpos( $content, 'أرق' ) !== false || strpos( $content, 'نوم' ) !== false ||
-					strpos( $content, 'حزن' ) !== false || strpos( $content, 'اكتئاب' ) !== false ||
-					strpos( $content, 'قلق' ) !== false || strpos( $content, 'توتر' ) !== false ||
-					strpos( $content, 'sleep' ) !== false || strpos( $content, 'insomnia' ) !== false ||
-					strpos( $content, 'sad' ) !== false || strpos( $content, 'depression' ) !== false ||
-					strpos( $content, 'anxiety' ) !== false || strpos( $content, 'worry' ) !== false ) {
-					$has_symptoms = true;
-				}
-
-				// Check for duration/time information
-				if ( strpos( $content, 'شهر' ) !== false || strpos( $content, 'أسبوع' ) !== false ||
-					strpos( $content, 'يوم' ) !== false || strpos( $content, 'month' ) !== false ||
-					strpos( $content, 'week' ) !== false || strpos( $content, 'day' ) !== false ) {
-					$has_duration = true;
-				}
-
-				// Check for impact information
-				if ( strpos( $content, 'عمل' ) !== false || strpos( $content, 'حياة' ) !== false ||
-					strpos( $content, 'يومي' ) !== false || strpos( $content, 'work' ) !== false ||
-					strpos( $content, 'life' ) !== false || strpos( $content, 'daily' ) !== false ) {
-					$has_impact = true;
-				}
-			}
-		}
-
-		// Also check current message
-		$current_lower = strtolower( $current_message );
-		if ( strpos( $current_lower, 'أرق' ) !== false || strpos( $current_lower, 'نوم' ) !== false ||
-			strpos( $current_lower, 'حزن' ) !== false || strpos( $current_lower, 'اكتئاب' ) !== false ||
-			strpos( $current_lower, 'قلق' ) !== false || strpos( $current_lower, 'توتر' ) !== false ||
-			strpos( $current_lower, 'sleep' ) !== false || strpos( $current_lower, 'insomnia' ) !== false ||
-			strpos( $current_lower, 'sad' ) !== false || strpos( $current_lower, 'depression' ) !== false ||
-			strpos( $current_lower, 'anxiety' ) !== false || strpos( $current_lower, 'worry' ) !== false ) {
-			$has_symptoms = true;
-		}
-
-		// Consider we have sufficient info if we have symptoms and at least 2 user messages
-		return $has_symptoms && $user_messages >= 2;
-	}
-
-	/**
-	 * Determine if we should transition to final diagnosis phase
-	 * Server-side decision based on collected data only (no question limits)
-	 */
-	private function should_transition_to_final_phase( $conversation_history, $message ) {
-		// Transition when sufficient diagnostic information is available
-		return $this->has_sufficient_diagnostic_info( $conversation_history, $message );
-	}
-
-	/**
-	 * Process chat diagnosis using OpenAI - Two-Phase Architecture
-	 * Phase 1: Interview (conversational, no JSON)
-	 * Phase 2: Final Diagnosis (JSON only)
+	 * Process chat diagnosis using OpenAI - Simplified single-phase (matches api.html)
+	 * Sends system + history + user, gets plain text reply.
 	 */
 	private function process_chat_diagnosis( $message, $conversation_history ) {
 		// Get OpenAI settings
 		$api_key       = get_option( 'snks_ai_chatgpt_api_key' );
-		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-3.5-turbo' );
+		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-4.1-mini' );
 		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
+
 		if ( ! $api_key ) {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
 		}
 
-		$locale = 'ar';
-		
-		// Get available diagnoses with proper language support
-		global $wpdb;
-		$diagnoses      = $wpdb->get_results( "SELECT id, name, name_en, name_ar, description, description_en, description_ar FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
-		$diagnosis_list = array();
-		$diagnosis_details = array();
-		
-		foreach ( $diagnoses as $diagnosis ) {
-			// Use appropriate name and description based on language
-			$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-			$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
-	
-			// Simple list for quick reference
-			$diagnosis_list[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
-			
-			// Detailed information for better matching
-			$description_text = ! empty( $diagnosis_description ) ? $diagnosis_description : 'لا يوجد وصف متاح';
-			$diagnosis_details[] = sprintf(
-				"%d. %s (ID: %d)\n   %s: %s",
-				count( $diagnosis_details ) + 1,
-				$diagnosis_name,
-				$diagnosis->id,
-				'الوصف',
-				$description_text
-			);
-		}
-
-		// Count questions asked by AI so far (SERVER-SIDE COUNT - SOURCE OF TRUTH)
-		$ai_questions_count = 0;
-		foreach ( $conversation_history as $msg ) {
-			if ( $msg['role'] === 'assistant' && $this->is_question( $msg['content'] ) ) {
-				++$ai_questions_count;
-			}
-		}
-
-		// SERVER DECIDES: Should we transition to final diagnosis phase?
-		$should_complete = $this->should_transition_to_final_phase( $conversation_history, $message );
-		
-		if ( $should_complete ) {
-			// PHASE 2: Final Diagnosis Phase (JSON only)
-			return $this->process_final_diagnosis_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale );
-		} else {
-			// PHASE 1: Interview Phase (Conversational, no JSON)
-			return $this->process_interview_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale );
-		}
-	}
-
-	/**
-	 * Phase 1: Interview Phase - Conversational, no JSON
-	 * Purpose: Ask questions, collect data, maintain natural conversation
-	 */
-	private function process_interview_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale ) {
-		// Build conversation messages
-		$messages = array();
-		
-		// Prepare interview prompt - replace placeholders
-		$base_prompt = $system_prompt;
-		$enhanced_system_prompt = str_replace(
-			array( '{max_questions}', '{question_count}', '{min_questions}' ),
-			array( '', $ai_questions_count, '' ),
-			$base_prompt
-		);
-		
-		// Build diagnosis list for placeholder replacement
-		$diagnosis_names_only = array();
-		foreach ( $diagnoses as $diagnosis ) {
-			$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-			$diagnosis_names_only[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
-		}
-		$enhanced_system_prompt = str_replace( '{available_diagnoses}', implode( ', ', $diagnosis_names_only ), $enhanced_system_prompt );
-		
-		$available_diagnoses_detailed = "\n" . implode( "\n\n", $diagnosis_details );
-		$enhanced_system_prompt .= "\n\n" . $available_diagnoses_detailed;
-		
-		// IMPORTANT: Add explicit instruction that this is INTERVIEW phase - ask questions, NO JSON
-		$enhanced_system_prompt .= "\n\nملاحظة مهمة: أنت الآن في مرحلة المقابلة. يجب أن تسأل سؤالاً واحداً فقط بالعربية. لا تقدم أي تشخيص. لا تستخدم JSON. فقط اسأل سؤالاً واضحاً ومحدداً ينتهي بعلامة استفهام.";
-
-		// Sanitize system prompt (remove \r and \n characters)
-		$sanitized_system_prompt = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $enhanced_system_prompt ) : $enhanced_system_prompt;
-		$messages[] = array(
-			'role'    => 'system',
-			'content' => $sanitized_system_prompt,
-		);
-
-		// Add conversation history (limit to last 10 messages to avoid token limits)
+		// Sanitize conversation history (last 10) and current message
+		$clean_history = array();
 		$recent_history = array_slice( $conversation_history, -10 );
 		foreach ( $recent_history as $msg ) {
-			if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
-				// Sanitize Arabic text to prevent confusion in ChatGPT model
-				$sanitized_content = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $msg['content'] ) : $msg['content'];
-				$messages[] = array(
+			if ( isset( $msg['role'], $msg['content'] ) ) {
+				$clean_history[] = array(
 					'role'    => $msg['role'],
-					'content' => $sanitized_content,
+					'content' => function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $msg['content'] ) : $msg['content'],
 				);
 			}
 		}
 
-		// Add current message (sanitize Arabic text)
-		$sanitized_message = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $message ) : $message;
-		$messages[] = array(
-			'role'    => 'user',
-			'content' => $sanitized_message,
+		$clean_message = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $message ) : $message;
+		$clean_system  = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $system_prompt ) : $system_prompt;
+
+		$messages = array_merge(
+			array( array( 'role' => 'system', 'content' => $clean_system ) ),
+			$clean_history,
+			array( array( 'role' => 'user', 'content' => $clean_message ) )
 		);
 
-		// PHASE 1: Interview - NO response_format, expect plain text
 		$data = array(
 			'model'       => $model,
 			'messages'    => $messages,
 			'temperature' => 0.4,
-			// NO response_format in interview phase
 		);
 
-		// Prepare request data for logging
-		$request_data_for_log = array(
-			'url'     => 'https://api.openai.com/v1/chat/completions',
-			'method'  => 'POST',
-			'headers' => array(
-				'Authorization' => 'Bearer ' . $api_key,
-				'Content-Type'   => 'application/json',
-			),
-			'body'    => $data,
+		$response = wp_remote_post(
+			'https://api.openai.com/v1/chat/completions',
+			array(
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $api_key,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => wp_json_encode( $data ),
+				'timeout' => 30,
+			)
 		);
 
-		// Get user ID and session ID for logging
-		$user_id = get_current_user_id();
-		$session_id = null;
-		
-		// Generate session ID from conversation history or create one
-		if ( ! empty( $conversation_history ) ) {
-			// Use first message timestamp or create hash from conversation
-			$first_message = reset( $conversation_history );
-			if ( isset( $first_message['timestamp'] ) ) {
-				$session_id = 'chat_' . md5( $user_id . '_' . $first_message['timestamp'] );
-			} else {
-				$session_id = 'chat_' . md5( $user_id . '_' . time() );
-			}
-		} else {
-			$session_id = 'chat_' . md5( $user_id . '_' . time() );
+		if ( is_wp_error( $response ) ) {
+			return $response;
 		}
 
-		// Start timing
-		$start_time = microtime( true );
-
-		// Retry logic: attempt up to 3 times
-		$max_retries = 3;
-		$attempt = 0;
-		$response = null;
-		$result = null;
-		$last_error = null;
-
-		while ( $attempt < $max_retries ) {
-			$attempt++;
-			
-			$response = wp_remote_post(
-				'https://api.openai.com/v1/chat/completions',
-				array(
-					'headers' => array(
-						'Authorization' => 'Bearer ' . $api_key,
-						'Content-Type'  => 'application/json',
-					),
-					'body'    => json_encode( $data ),
-					'timeout' => 30,
-				)
-			);
-
-			// Check if request was successful
-			if ( ! is_wp_error( $response ) ) {
-				$response_code = wp_remote_retrieve_response_code( $response );
-				
-				// Check HTTP status code (2xx = success, others = error)
-				if ( $response_code >= 200 && $response_code < 300 ) {
-					$body   = wp_remote_retrieve_body( $response );
-					$result = json_decode( $body, true );
-
-					// Check if response contains valid content
-					if ( isset( $result['choices'][0]['message']['content'] ) ) {
-						// Success! Break out of retry loop
-						break;
-					} else {
-						// Invalid response structure
-						$last_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
-					}
-				} else {
-					// HTTP error status code
-					$last_error = new WP_Error( 'http_error', 'OpenAI API returned HTTP ' . $response_code );
-				}
-			} else {
-				// Request error
-				$last_error = $response;
-			}
-
-			// If this isn't the last attempt, wait before retrying
-			if ( $attempt < $max_retries ) {
-				// Wait before retry (exponential backoff: 1s, 2s)
-				sleep( $attempt );
-			}
+		$response_code = wp_remote_retrieve_response_code( $response );
+		if ( $response_code < 200 || $response_code >= 300 ) {
+			return new WP_Error( 'http_error', 'OpenAI API returned HTTP ' . $response_code );
 		}
 
-		// Calculate response time
-		$end_time = microtime( true );
-		$response_time_ms = intval( ( $end_time - $start_time ) * 1000 );
+		$body   = wp_remote_retrieve_body( $response );
+		$result = json_decode( $body, true );
 
-		// Prepare response data for logging
-		$response_data_for_log = null;
-		$log_error = null;
-
-		// If all retries failed, return error
-		if ( is_wp_error( $response ) || ! isset( $result['choices'][0]['message']['content'] ) ) {
-			$log_error = $last_error ? $last_error : new WP_Error( 'api_error', 'OpenAI API error after ' . $max_retries . ' attempts' );
-			
-			// Log the error
-			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
-				snks_log_chatgpt_request(
-					$request_data_for_log,
-					$log_error,
-					$model,
-					$user_id,
-					$session_id,
-					$response_time_ms
-				);
-			}
-			
-			$error_message = is_wp_error( $last_error ) ? $last_error->get_error_message() : 'فشل الحصول على استجابة من الذكاء الاصطناعي بعد ' . $max_retries . ' محاولات';
-			return new WP_Error( 'api_error', $error_message );
+		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
+			return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
 		}
 
-		$ai_response = $result['choices'][0]['message']['content'];
-
-		// Log successful request/response
-		if ( function_exists( 'snks_log_chatgpt_request' ) ) {
-			$response_data_for_log = $result;
-			snks_log_chatgpt_request(
-				$request_data_for_log,
-				$response_data_for_log,
-				$model,
-				$user_id,
-				$session_id,
-				$response_time_ms
-			);
-		}
-
-		// PHASE 1: Interview response is plain text (not JSON)
-		// Clean up the response - remove any accidental JSON artifacts
-		$clean_response = trim( $ai_response );
-		
-		// Check if ChatGPT signaled readiness for diagnosis
-		$has_readiness_marker = ( strpos( $clean_response, '[READY_FOR_DIAGNOSIS]' ) !== false );
-		
-		// Remove the marker from the response if present
-		if ( $has_readiness_marker ) {
-			$clean_response = str_replace( '[READY_FOR_DIAGNOSIS]', '', $clean_response );
-			$clean_response = trim( $clean_response );
-		}
-		
-		// If response looks like JSON, try to extract text from it (fallback)
-		if ( strpos( $clean_response, '{' ) === 0 ) {
-			$parsed = json_decode( $clean_response, true );
-			if ( $parsed && isset( $parsed['reasoning'] ) ) {
-				$clean_response = $parsed['reasoning'];
-			} elseif ( $parsed && isset( $parsed['message'] ) ) {
-				$clean_response = $parsed['message'];
-			}
-		}
-		
-		// If ChatGPT signaled readiness, transition to final phase
-		if ( $has_readiness_marker ) {
-			// Add the current assistant response (without marker) to conversation history
-			$updated_conversation_history = $conversation_history;
-			$updated_conversation_history[] = array(
-				'role' => 'assistant',
-				'content' => $clean_response,
-			);
-			
-			// Transition to final diagnosis phase immediately
-			return $this->process_final_diagnosis_phase( $message, $updated_conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale );
-		}
-		
-		// Ensure response is a question (interview phase requirement)
-		if ( ! $this->is_question( $clean_response ) ) {
-			// If not a question, append a question mark or add a follow-up question
-			if ( ! empty( $clean_response ) ) {
-				$clean_response = rtrim( $clean_response, '.،' ) . '؟';
-			} else {
-				$clean_response = 'هل يمكنك إخباري أكثر عن حالتك؟';
-			}
-		}
-
-		// Return plain text response for interview phase
-		return array(
-			'message'   => $clean_response,
-			'diagnosis' => array(
-				'completed' => false,
-			),
-		);
-	}
-
-	/**
-	 * Phase 2: Final Diagnosis Phase - JSON only
-	 * Purpose: Generate final diagnosis JSON when server decides to complete
-	 */
-	private function process_final_diagnosis_phase( $message, $conversation_history, $diagnoses, $ai_questions_count, $api_key, $model, $system_prompt, $diagnosis_details, $locale ) {
-		// Build final diagnosis messages
-		$messages = array();
-		
-		// Prepare final diagnosis prompt
-		$base_prompt = $system_prompt;
-		$final_prompt = str_replace( '{question_count}', $ai_questions_count, $base_prompt );
-		
-		$available_diagnoses_detailed = "\n" . implode( "\n\n", $diagnosis_details );
-		$final_prompt .= "\n\n" . $available_diagnoses_detailed;
-		
-		// IMPORTANT: Final phase instruction - JSON only, no questions
-		// Must include word "json" to satisfy OpenAI requirement for response_format: json_object
-		$final_prompt .= "\n\nملاحظة حرجة: أنت الآن في مرحلة التشخيص النهائي. يجب أن ترد بصيغة JSON فقط (JSON format required). لا تسأل أي أسئلة. استخدم المعلومات التي جمعتها من المحادثة لتقديم التشخيص النهائي. يجب أن يكون ردك JSON صحيح يحتوي على: ai_diagnosis, diagnosis, reasoning, status (يجب أن يكون 'complete'), question_count, therapist_summary, patient_summary.";
-
-		// Sanitize system prompt (remove \r and \n characters)
-		$sanitized_final_prompt = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $final_prompt ) : $final_prompt;
-		$messages[] = array(
-			'role'    => 'system',
-			'content' => $sanitized_final_prompt,
-		);
-
-		// Add full conversation history for final diagnosis
-		foreach ( $conversation_history as $msg ) {
-			if ( isset( $msg['role'] ) && isset( $msg['content'] ) ) {
-				// Sanitize Arabic text to prevent confusion in ChatGPT model
-				$sanitized_content = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $msg['content'] ) : $msg['content'];
-				$messages[] = array(
-					'role'    => $msg['role'],
-					'content' => $sanitized_content,
-				);
-			}
-		}
-
-		// Add current message (sanitize Arabic text)
-		$sanitized_message = function_exists( 'snks_sanitize_arabic_text' ) ? snks_sanitize_arabic_text( $message ) : $message;
-		$messages[] = array(
-			'role'    => 'user',
-			'content' => $sanitized_message,
-		);
-
-		// PHASE 2: Final Diagnosis - USE response_format: json_object
-		$data = array(
-			'model'           => $model,
-			'messages'        => $messages,
-			'temperature'     => 0.4,
-			'response_format' => array( 'type' => 'json_object' ),
-		);
-
-		// Prepare request data for logging
-		$request_data_for_log = array(
-			'url'     => 'https://api.openai.com/v1/chat/completions',
-			'method'  => 'POST',
-			'headers' => array(
-				'Authorization' => 'Bearer ' . $api_key,
-				'Content-Type'   => 'application/json',
-			),
-			'body'    => $data,
-		);
-
-		// Get user ID and session ID for logging
-		$user_id = get_current_user_id();
-		$session_id = null;
-		
-		if ( ! empty( $conversation_history ) ) {
-			$first_message = reset( $conversation_history );
-			if ( isset( $first_message['timestamp'] ) ) {
-				$session_id = 'chat_' . md5( $user_id . '_' . $first_message['timestamp'] );
-			} else {
-				$session_id = 'chat_' . md5( $user_id . '_' . time() );
-			}
-		} else {
-			$session_id = 'chat_' . md5( $user_id . '_' . time() );
-		}
-
-		// Start timing
-		$start_time = microtime( true );
-
-		// Retry logic: attempt up to 3 times
-		$max_retries = 3;
-		$attempt = 0;
-		$response = null;
-		$result = null;
-		$last_error = null;
-
-		while ( $attempt < $max_retries ) {
-			$attempt++;
-			
-			$response = wp_remote_post(
-				'https://api.openai.com/v1/chat/completions',
-				array(
-					'headers' => array(
-						'Authorization' => 'Bearer ' . $api_key,
-						'Content-Type'  => 'application/json',
-					),
-					'body'    => json_encode( $data ),
-					'timeout' => 60, // Increased timeout for final diagnosis
-				)
-			);
-
-			// Check if request was successful
-			if ( ! is_wp_error( $response ) ) {
-				$response_code = wp_remote_retrieve_response_code( $response );
-				
-				// Check HTTP status code (2xx = success, others = error)
-				if ( $response_code >= 200 && $response_code < 300 ) {
-					$body   = wp_remote_retrieve_body( $response );
-					$result = json_decode( $body, true );
-
-					// Check if response contains valid content
-					if ( isset( $result['choices'][0]['message']['content'] ) ) {
-						// Success! Break out of retry loop
-						break;
-					} else {
-						// Invalid response structure
-						$last_error = new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
-					}
-				} else {
-					// HTTP error status code
-					$last_error = new WP_Error( 'http_error', 'OpenAI API returned HTTP ' . $response_code );
-				}
-			} else {
-				// Request error
-				$last_error = $response;
-			}
-
-			// If this isn't the last attempt, wait before retrying
-			if ( $attempt < $max_retries ) {
-				// Wait before retry (exponential backoff: 1s, 2s)
-				sleep( $attempt );
-			}
-		}
-
-		// Calculate response time
-		$end_time = microtime( true );
-		$response_time_ms = intval( ( $end_time - $start_time ) * 1000 );
-
-		// Prepare response data for logging
-		$response_data_for_log = null;
-		$log_error = null;
-
-		// If all retries failed, return error
-		if ( is_wp_error( $response ) || ! isset( $result['choices'][0]['message']['content'] ) ) {
-			$log_error = $last_error ? $last_error : new WP_Error( 'api_error', 'OpenAI API error after ' . $max_retries . ' attempts' );
-			
-			if ( function_exists( 'snks_log_chatgpt_request' ) ) {
-				snks_log_chatgpt_request(
-					$request_data_for_log,
-					$log_error,
-					$model,
-					$user_id,
-					$session_id,
-					$response_time_ms
-				);
-			}
-			
-			$error_message = is_wp_error( $last_error ) ? $last_error->get_error_message() : 'فشل الحصول على استجابة من الذكاء الاصطناعي بعد ' . $max_retries . ' محاولات';
-			return new WP_Error( 'api_error', $error_message );
-		}
-
-		$ai_response = $result['choices'][0]['message']['content'];
-
-		// Log successful request/response
-		if ( function_exists( 'snks_log_chatgpt_request' ) ) {
-			$response_data_for_log = $result;
-			snks_log_chatgpt_request(
-				$request_data_for_log,
-				$response_data_for_log,
-				$model,
-				$user_id,
-				$session_id,
-				$response_time_ms
-			);
-		}
-
-		// PHASE 2: Parse JSON response
-		$response_data = json_decode( $ai_response, true );
-
-		if ( ! $response_data || ! is_array( $response_data ) ) {
-			return new WP_Error( 'invalid_json', 'Invalid JSON response from OpenAI API in final diagnosis phase' );
-		}
-
-		// Force status to complete (we're in final phase)
-		$response_data['status'] = 'complete';
-
-		// Validate diagnosis is in our list
-		$diagnosis_id          = null;
-		$diagnosis_name        = '';
-		$diagnosis_description = '';
-
-		if ( ! empty( $response_data['diagnosis'] ) ) {
-			foreach ( $diagnoses as $diagnosis ) {
-				$arabic_name  = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-				$english_name = ! empty( $diagnosis->name_en ) ? $diagnosis->name_en : $diagnosis->name;
-
-				$arabic_match  = stripos( $arabic_name, $response_data['diagnosis'] ) !== false;
-				$english_match = stripos( $english_name, $response_data['diagnosis'] ) !== false;
-
-				if ( $arabic_match || $english_match ) {
-					$diagnosis_id = $diagnosis->id;
-					$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-					$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
-					break;
-				}
-			}
-		}
-
-		// If no match found, use general assessment
-		if ( ! $diagnosis_id ) {
-			foreach ( $diagnoses as $diagnosis ) {
-				$name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
-				if ( stripos( $name, 'تقييم عام' ) !== false || stripos( $name, 'general' ) !== false ) {
-					$diagnosis_id = $diagnosis->id;
-					$diagnosis_name = $name;
-					$diagnosis_description = ! empty( $diagnosis->description_ar ) ? $diagnosis->description_ar : ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
-					break;
-				}
-			}
-		}
-
-		// Format response message
-		$confidence_text = '';
-		if ( isset( $response_data['confidence'] ) ) {
-			switch ( $response_data['confidence'] ) {
-				case 'high':
-					$confidence_text = ' (ثقة عالية)';
-					break;
-				case 'medium':
-					$confidence_text = ' (ثقة متوسطة)';
-					break;
-				case 'low':
-					$confidence_text = ' (ثقة منخفضة)';
-					break;
-			}
-		}
-
-		$message = "بناءً على محادثتنا، أعتقد أنك قد تعاني من **{$diagnosis_name}**{$confidence_text}.\n\n";
-		if ( isset( $response_data['reasoning'] ) && ! empty( $response_data['reasoning'] ) ) {
-			$message .= '**المنطق:** ' . $response_data['reasoning'] . "\n\n";
-		}
-		if ( ! empty( $diagnosis_description ) ) {
-			$message .= '**الوصف:** ' . $diagnosis_description . "\n\n";
-		}
-		$message .= 'لقد أكملت التشخيص ويمكنني الآن مساعدتك في العثور على معالجين متخصصين في هذا المجال.';
-
-		// Save diagnosis result to user meta if user is authenticated
-		$user_id = get_current_user_id();
-		if ( $user_id ) {
-			$diagnosis_data = array(
-				'diagnosis_id'          => $diagnosis_id,
-				'diagnosis_name'        => $diagnosis_name,
-				'diagnosis_description' => $diagnosis_description,
-				'confidence'            => $response_data['confidence'] ?? 'medium',
-				'reasoning'             => $response_data['reasoning'] ?? '',
-				'ai_diagnosis'          => $response_data['ai_diagnosis'] ?? '',
-				'therapist_summary'     => $response_data['therapist_summary'] ?? '',
-				'patient_summary'       => $response_data['patient_summary'] ?? '',
-				'conversation_history'  => $conversation_history,
-				'language'              => $locale,
-				'completed_at'          => current_time( 'mysql' ),
-			);
-
-			// Store the diagnosis result in user meta
-			update_user_meta( $user_id, 'ai_diagnosis_result', $diagnosis_data );
-
-			// Also store a history of all diagnosis results
-			$diagnosis_history = get_user_meta( $user_id, 'ai_diagnosis_history', true );
-			if ( ! is_array( $diagnosis_history ) ) {
-				$diagnosis_history = array();
-			}
-
-			$diagnosis_history[] = $diagnosis_data;
-
-			if ( count( $diagnosis_history ) > 10 ) {
-				$diagnosis_history = array_slice( $diagnosis_history, -10 );
-			}
-
-			update_user_meta( $user_id, 'ai_diagnosis_history', $diagnosis_history );
-		}
+		$reply = $result['choices'][0]['message']['content'];
 
 		return array(
-			'message'   => $message,
-			'diagnosis' => array(
-				'completed'   => true,
-				'id'          => $diagnosis_id,
-				'title'       => $diagnosis_name,
-				'description' => $diagnosis_description,
-				'confidence'  => $response_data['confidence'] ?? 'medium',
-				'reasoning'   => $response_data['reasoning'] ?? '',
-			),
+			'message'   => $reply,
+			'diagnosis' => null,
+			'completed' => false,
 		);
 	}
 
@@ -4638,23 +3894,6 @@ Best regards,
 		);
 
 		wp_send_json_success( $settings );
-	}
-
-
-
-	/**
-	 * Test Connection AJAX Handler
-	 */
-	public function test_connection_ajax() {
-
-		wp_send_json_success(
-			array(
-				'message'           => 'Connection successful',
-				'timestamp'         => current_time( 'mysql' ),
-				'wordpress_version' => get_bloginfo( 'version' ),
-				'plugin_active'     => true,
-			)
-		);
 	}
 
 	/**
