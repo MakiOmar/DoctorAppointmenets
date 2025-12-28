@@ -263,6 +263,94 @@ add_filter(
 		);
 		$allowed['title'] = true;
 		
+		// Allow input/checkbox elements for booking shortcodes
+		$allowed['input'] = array(
+			'type'        => true,
+			'name'        => true,
+			'value'       => true,
+			'id'          => true,
+			'class'       => true,
+			'checked'     => true,
+			'readonly'    => true,
+			'disabled'    => true,
+			'data-date'   => true,
+			'data-doctor' => true,
+			'data-patient'=> true,
+			'aria-label'  => true,
+			'style'       => true,
+		);
+
+		// Allow other form controls
+		$allowed['form'] = array(
+			'action'      => true,
+			'method'      => true,
+			'class'       => true,
+			'id'          => true,
+			'style'       => true,
+			'enctype'     => true,
+			'novalidate'  => true,
+			'target'      => true,
+			'autocomplete'=> true,
+		);
+		$allowed['textarea'] = array(
+			'name'        => true,
+			'id'          => true,
+			'class'       => true,
+			'style'       => true,
+			'rows'        => true,
+			'cols'        => true,
+			'placeholder' => true,
+			'required'    => true,
+			'readonly'    => true,
+			'disabled'    => true,
+		);
+		$allowed['select'] = array(
+			'name'        => true,
+			'id'          => true,
+			'class'       => true,
+			'style'       => true,
+			'multiple'    => true,
+			'size'        => true,
+			'required'    => true,
+			'disabled'    => true,
+		);
+		$allowed['option'] = array(
+			'value'     => true,
+			'selected'  => true,
+			'label'     => true,
+		);
+		$allowed['optgroup'] = array(
+			'label'    => true,
+			'disabled' => true,
+		);
+		$allowed['button'] = array(
+			'type'     => true,
+			'name'     => true,
+			'value'    => true,
+			'id'       => true,
+			'class'    => true,
+			'style'    => true,
+			'disabled' => true,
+			'aria-label' => true,
+		);
+		$allowed['label'] = array(
+			'for'    => true,
+			'class'  => true,
+			'style'  => true,
+		);
+		$allowed['fieldset'] = array(
+			'class' => true,
+			'style' => true,
+			'disabled' => true,
+		);
+		$allowed['legend'] = array(
+			'class' => true,
+			'style' => true,
+		);
+		$allowed['datalist'] = array(
+			'id' => true,
+		);
+		
 		return $allowed;
 	},
 	10,

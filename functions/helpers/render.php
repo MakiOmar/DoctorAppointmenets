@@ -1338,6 +1338,7 @@ function snks_doctor_rules( $user_id ) {
  * @return string
  */
 function snks_render_bookings( $_timetables, $tens ) {
+	
 	$days_sorted = array( 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri' );
 	// Check if there are no bookings.
 	if ( empty( $_timetables ) ) {
