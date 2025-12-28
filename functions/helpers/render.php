@@ -982,19 +982,26 @@ function snks_booking_item_template( $record ) {
  * @return bool
  */
 function snks_is_ai_session_booking( $record ) {
-	if ( ! $record || ! isset( $record->order_id ) || empty( $record->order_id ) ) {
+	if ( ! $record ) {
 		return false;
 	}
-	
-	$order = wc_get_order( $record->order_id );
-	if ( ! $order ) {
-		return false;
+
+	// Primary check: record settings flag
+	if ( isset( $record->settings ) && false !== strpos( $record->settings, 'ai_booking' ) ) {
+		return true;
 	}
-	
-	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
-	$is_ai_session = $order->get_meta( 'is_ai_session' );
-	
-	return $from_jalsah_ai || $is_ai_session;
+
+	// Fallback: order meta (kept for legacy data)
+	if ( isset( $record->order_id ) && ! empty( $record->order_id ) ) {
+		$order = wc_get_order( $record->order_id );
+		if ( $order ) {
+			$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+			$is_ai_session  = $order->get_meta( 'is_ai_session' );
+			return $from_jalsah_ai || $is_ai_session;
+		}
+	}
+
+	return false;
 }
 
 /**

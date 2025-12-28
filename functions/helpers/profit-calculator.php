@@ -543,47 +543,11 @@ function snks_is_ai_session( $session_data ) {
 		if ( $session && strpos( $session->settings, 'ai_booking' ) !== false ) {
 			return true;
 		}
-		
-		// Fallback to sessions_actions table for backward compatibility
-		$session_data = $wpdb->get_row( $wpdb->prepare(
-			"SELECT case_id FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
-			$session_data
-		) );
-		
-		if ( ! $session_data ) {
-			return false;
-		}
-		
-		$order = wc_get_order( $session_data->case_id );
-		
-		if ( ! $order ) {
-			return false;
-		}
-		
-		// Check for both AI session meta keys
-		$is_ai_session = $order->get_meta( 'is_ai_session' );
-		$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
-		
-		return $is_ai_session || $from_jalsah_ai;
-		
 	} elseif ( is_object( $session_data ) ) {
 		// Input is session object - check settings property first
 		if ( isset( $session_data->settings ) && strpos( $session_data->settings, 'ai_booking' ) !== false ) {
 			return true;
 		}
-		
-		// Fallback to order meta if available
-		if ( isset( $session_data->case_id ) && $session_data->case_id > 0 ) {
-			$order = wc_get_order( $session_data->case_id );
-			
-			if ( $order ) {
-				$is_ai_session = $order->get_meta( 'is_ai_session' );
-				$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
-				
-				return $is_ai_session || $from_jalsah_ai;
-			}
-		}
-		
 		return false;
 	}
 	
