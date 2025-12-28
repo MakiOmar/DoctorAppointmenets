@@ -17,6 +17,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const therapistRegistrationPasswordMode = ref('auto')
+  const disableChatCopyPaste = ref(true)
 
   // Getters
   const isBilingualEnabled = computed(() => bilingualEnabled.value)
@@ -30,6 +31,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const getAppointmentChangeTerms = computed(() => appointmentChangeTerms.value)
   const getTherapistRegistrationPasswordMode = computed(() => therapistRegistrationPasswordMode.value)
   const getSiteIconUrl = computed(() => siteIconUrl.value)
+  const isChatCopyPasteDisabled = computed(() => disableChatCopyPaste.value)
 
   // Helper function to update favicon
   const updateFavicon = (iconUrl) => {
@@ -70,6 +72,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showMoreButtonEnabled.value = settings.show_more_button_enabled ?? true
         appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
+        disableChatCopyPaste.value = settings.disable_chat_copy_paste ?? true
 
       } catch (e) {
         console.error('Failed to parse saved settings:', e)
@@ -83,6 +86,7 @@ export const useSettingsStore = defineStore('settings', () => {
       ratingsEnabled.value = true
       diagnosisResultsLimit.value = 10
       showMoreButtonEnabled.value = true
+      disableChatCopyPaste.value = true
     }
     
     isInitialized.value = true
@@ -130,6 +134,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showMoreButtonEnabled.value = settings.show_more_button_enabled ?? true
         appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
+        disableChatCopyPaste.value = settings.disable_chat_copy_paste ?? true
         
         // Update favicon if site icon URL is available
         if (siteIconUrl.value) {
@@ -171,6 +176,7 @@ export const useSettingsStore = defineStore('settings', () => {
         showMoreButtonEnabled.value = settings.show_more_button_enabled ?? true
         appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
+        disableChatCopyPaste.value = settings.disable_chat_copy_paste ?? true
         
         // Update favicon if site icon URL is available
         if (siteIconUrl.value) {
@@ -196,6 +202,7 @@ export const useSettingsStore = defineStore('settings', () => {
     isLoading,
     isInitialized,
     therapistRegistrationPasswordMode,
+    disableChatCopyPaste,
     
     // Getters
     isBilingualEnabled,
@@ -210,6 +217,7 @@ export const useSettingsStore = defineStore('settings', () => {
     getAppointmentChangeTerms,
     shouldShowLanguageSwitcher,
     getTherapistRegistrationPasswordMode,
+    isChatCopyPasteDisabled,
     
     // Actions
     loadSettings,

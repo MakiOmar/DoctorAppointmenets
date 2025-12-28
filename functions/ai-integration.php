@@ -3787,6 +3787,7 @@ Best regards,
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit'  => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
 			'show_more_button_enabled' => get_option( 'snks_ai_show_more_button_enabled', '1' ) === '1',
+			'disable_chat_copy_paste'  => get_option( 'snks_ai_disable_chat_copy_paste', '1' ) === '1',
 			'appointment_change_terms' => $current_language === 'ar'
 				? get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' )
 				: get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' ),
@@ -3839,6 +3840,7 @@ Best regards,
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit'  => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
 			'show_more_button_enabled' => get_option( 'snks_ai_show_more_button_enabled', '1' ) === '1',
+			'disable_chat_copy_paste'  => get_option( 'snks_ai_disable_chat_copy_paste', '1' ) === '1',
 			'appointment_change_terms' => $current_language === 'ar'
 				? get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' )
 				: get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' ),
@@ -3886,6 +3888,7 @@ Best regards,
 			'diagnosis_search_by_name' => get_option( 'snks_ai_diagnosis_search_by_name', '0' ) === '1',
 			'diagnosis_results_limit'  => intval( get_option( 'snks_ai_diagnosis_results_limit', 10 ) ),
 			'show_more_button_enabled' => get_option( 'snks_ai_show_more_button_enabled', '1' ) === '1',
+			'disable_chat_copy_paste'  => get_option( 'snks_ai_disable_chat_copy_paste', '1' ) === '1',
 			'appointment_change_terms' => $current_language === 'ar'
 				? get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' )
 				: get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' ),

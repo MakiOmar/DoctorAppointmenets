@@ -1,5 +1,9 @@
 <template>
-  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" ref="diagnosisContainer">
+  <div
+    :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+    :class="[$i18n.locale === 'ar' ? 'rtl' : 'ltr', copyPasteDisabled ? 'no-copy' : 'copy-allowed']"
+    ref="diagnosisContainer"
+  >
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
              <!-- Header -->
        <div class="text-center mb-8">
@@ -165,11 +169,12 @@
 </template>
 
 <script>
-import { ref, reactive, nextTick, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, nextTick, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import Swal from 'sweetalert2'
 
@@ -180,6 +185,7 @@ export default {
      const toast = useToast()
      const { t: $t, locale } = useI18n()
      const authStore = useAuthStore()
+    const settingsStore = useSettingsStore()
     
     const messages = ref([])
     const newMessage = ref('')
@@ -189,6 +195,7 @@ export default {
     const messageInput = ref(null)
     const diagnosisContainer = ref(null)
     const isLoadingDiagnosis = ref(false)
+    const copyPasteDisabled = computed(() => settingsStore.isChatCopyPasteDisabled ?? true)
     
          const diagnosisResult = reactive({
        title: '',
@@ -498,23 +505,45 @@ export default {
     }
 
     let cleanupCopyPaste = null
+    let stopCopyPasteWatch = null
+
+    const applyCopyPastePreference = () => {
+      // Clean any previous listeners
+      if (cleanupCopyPaste) {
+        cleanupCopyPaste()
+        cleanupCopyPaste = null
+      }
+
+      // Re-apply only when disabled
+      if (copyPasteDisabled.value) {
+        cleanupCopyPaste = preventCopyPaste()
+      }
+    }
 
     onMounted(async () => {
       // Always start with a fresh diagnosis session
       addWelcomeMessage()
       focusInput()
+
+      // Load settings (local immediately, remote in background) for copy/paste flag
+      settingsStore.initializeSettings()
+      settingsStore.loadSettings()
       
       // Wait for next tick to ensure DOM is ready
       await nextTick()
       
-      // Prevent copy-paste functionality
-      cleanupCopyPaste = preventCopyPaste()
+      // Apply copy-paste preference and react to future changes
+      applyCopyPastePreference()
+      stopCopyPasteWatch = watch(copyPasteDisabled, () => applyCopyPastePreference())
     })
 
     onUnmounted(() => {
       // Cleanup event listeners when component unmounts
       if (cleanupCopyPaste) {
         cleanupCopyPaste()
+      }
+      if (stopCopyPasteWatch) {
+        stopCopyPasteWatch()
       }
     })
 
@@ -532,7 +561,8 @@ export default {
        sendMessage,
        formatMessage,
        formatTime,
-       focusInput
+      focusInput,
+      copyPasteDisabled
      }
   }
 }
@@ -593,34 +623,31 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
-/* Prevent text selection on chat messages */
-.max-w-xs,
-.max-w-md,
-.card {
+/* Prevent text selection when copy/paste is disabled */
+.no-copy .max-w-xs,
+.no-copy .max-w-md,
+.no-copy .card {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
 }
 
-/* Prevent selection everywhere including input fields */
-input[type="text"],
-textarea {
+.no-copy input[type="text"],
+.no-copy textarea {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
 }
 
-/* Allow cursor in input field but prevent selection */
-input[type="text"]:focus,
-textarea:focus {
+.no-copy input[type="text"]:focus,
+.no-copy textarea:focus {
   cursor: text;
 }
 
-/* Prevent text selection on messages but allow cursor for input */
-.flex-1 p,
-.chat-message {
+.no-copy .flex-1 p,
+.no-copy .chat-message {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;

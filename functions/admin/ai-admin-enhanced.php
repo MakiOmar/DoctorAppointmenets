@@ -3283,6 +3283,7 @@ function snks_enhanced_ai_settings_page() {
 				error_log( 'Admin Settings Debug - Saved diagnosis_results_limit: ' . $saved_limit );
 				
 				update_option( 'snks_ai_show_more_button_enabled', isset( $_POST['show_more_button_enabled'] ) ? '1' : '0' );
+				update_option( 'snks_ai_disable_chat_copy_paste', isset( $_POST['disable_chat_copy_paste'] ) ? '1' : '0' );
 				
 				// Therapist AI Coupon Settings
 				update_option( 'snks_ai_therapist_ai_coupons_enabled', isset( $_POST['therapist_ai_coupons_enabled'] ) ? '1' : '0' );
@@ -3306,6 +3307,7 @@ function snks_enhanced_ai_settings_page() {
 	$diagnosis_search_by_name = get_option( 'snks_ai_diagnosis_search_by_name', '0' ); // Default to ID search
 	$diagnosis_results_limit = get_option( 'snks_ai_diagnosis_results_limit', 10 ); // Default to 10 results
 	$show_more_button_enabled = get_option( 'snks_ai_show_more_button_enabled', '1' ); // Default to enabled
+	$disable_chat_copy_paste = get_option( 'snks_ai_disable_chat_copy_paste', '1' ); // Default to disabled copy/paste
 	$therapist_ai_coupons_enabled = get_option( 'snks_ai_therapist_ai_coupons_enabled', '1' ); // Default to enabled
 	
 	// Appointment Change Terms Settings
@@ -3395,6 +3397,12 @@ function snks_enhanced_ai_settings_page() {
 					<label for="show_more_button_enabled">Enable "Show More" Button</label>
 					<input type="checkbox" id="show_more_button_enabled" name="show_more_button_enabled" value="1" <?php checked( $show_more_button_enabled, '1' ); ?>>
 					<p class="description">When enabled, shows a "Show More" button on diagnosis results page when there are more therapists than the limit. When disabled, all therapists will be shown at once.</p>
+				</div>
+
+				<div class="bilingual-field">
+					<label for="disable_chat_copy_paste">Disable copy/paste in chat input</label>
+					<input type="checkbox" id="disable_chat_copy_paste" name="disable_chat_copy_paste" value="1" <?php checked( $disable_chat_copy_paste, '1' ); ?>>
+					<p class="description">When enabled, prevents copying, cutting, and pasting inside the AI chat input to reduce data leakage.</p>
 				</div>
 				
 				<h3>Therapist Coupons</h3>
