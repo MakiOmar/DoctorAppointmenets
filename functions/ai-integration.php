@@ -800,9 +800,6 @@ class SNKS_AI_Integration {
 			case 'diagnoses':
 				$this->handle_diagnoses_endpoint( $method, $path );
 				break;
-			case 'diagnosis':
-				$this->handle_diagnosis_endpoint( $method, $path );
-				break;
 			case 'user-diagnosis-results':
 				$this->handle_user_diagnosis_results_endpoint( $method, $path );
 				break;
@@ -1071,23 +1068,6 @@ class SNKS_AI_Integration {
 					$this->get_ai_diagnosis( $path[1] );
 				} else {
 					$this->send_error( 'Invalid diagnoses endpoint', 404 );
-				}
-				break;
-			default:
-				$this->send_error( 'Method not allowed', 405 );
-		}
-	}
-
-	/**
-	 * Handle diagnosis endpoint
-	 */
-	private function handle_diagnosis_endpoint( $method, $path ) {
-		switch ( $method ) {
-			case 'POST':
-				if ( count( $path ) === 1 ) {
-					$this->process_diagnosis_data();
-				} else {
-					$this->send_error( 'Invalid endpoint', 404 );
 				}
 				break;
 			default:
@@ -3531,35 +3511,6 @@ Best regards,
 	}
 
 	/**
-	 * Process diagnosis data
-	 */
-	private function process_diagnosis_data() {
-		// Get the raw input
-		$raw_input = file_get_contents( 'php://input' );
-		$data      = json_decode( $raw_input, true );
-
-		// Validate required fields
-		if ( ! isset( $data['mood'] ) || ! isset( $data['selectedSymptoms'] ) ) {
-			$this->send_error( 'Mood and symptoms are required', 400 );
-		}
-
-		// Process the diagnosis
-		$diagnosis_id = $this->simulate_ai_diagnosis( $data );
-
-		// If no diagnosis found, return error
-		if ( $diagnosis_id === null ) {
-			$this->send_error( 'No suitable diagnosis found. Please try again with different symptoms.', 400 );
-		}
-
-		$response_data = array(
-			'diagnosis_id' => $diagnosis_id,
-			'message'      => 'Diagnosis processed successfully',
-		);
-
-		$this->send_success( $response_data );
-	}
-
-	/**
 	 * Process chat diagnosis using OpenAI
 	 */
 	/**
@@ -3621,14 +3572,14 @@ Best regards,
 
 		$response_code = wp_remote_retrieve_response_code( $response );
 		if ( $response_code < 200 || $response_code >= 300 ) {
-			return new WP_Error( 'http_error', 'OpenAI API returned HTTP ' . $response_code );
+			return new WP_Error( 'http_error', 'حدث خطأ من واجهة OpenAI برمز HTTP: ' . $response_code );
 		}
 
 		$body   = wp_remote_retrieve_body( $response );
 		$result = json_decode( $body, true );
 
 		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
-			return new WP_Error( 'invalid_response', 'Invalid response from OpenAI API' );
+			return new WP_Error( 'invalid_response', 'استجابة غير صالحة من واجهة OpenAI' );
 		}
 
 		$reply = $result['choices'][0]['message']['content'];
@@ -3638,164 +3589,6 @@ Best regards,
 			'diagnosis' => null,
 			'completed' => false,
 		);
-	}
-
-	/**
-	 * Simulate AI diagnosis based on form data
-	 */
-	private function simulate_ai_diagnosis( $data ) {
-		global $wpdb;
-
-		$mood     = $data['mood'];
-		$symptoms = $data['selectedSymptoms'];
-		$impact   = $data['impact'] ?? 'moderate';
-
-		// Get all available diagnoses from database
-		$all_diagnoses = $wpdb->get_results( "SELECT id, name, name_en FROM {$wpdb->prefix}snks_diagnoses ORDER BY id ASC" );
-
-		if ( empty( $all_diagnoses ) ) {
-			// If no diagnoses exist, return null
-			return null;
-		}
-
-		// Map symptoms to diagnosis keywords
-		$symptom_mapping = array(
-			// Anxiety-related symptoms
-			'anxiety'      => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
-			'panic'        => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
-			'worry'        => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
-			'fear'         => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
-			'nervous'      => array( 'anxiety', 'panic', 'worry', 'fear', 'nervous' ),
-
-			// Depression-related symptoms
-			'depression'   => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
-			'hopelessness' => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
-			'sadness'      => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
-			'worthless'    => array( 'depression', 'mood', 'sadness', 'hopelessness', 'worthless' ),
-
-			// Stress-related symptoms
-			'stress'       => array( 'stress', 'burnout', 'overwhelmed', 'pressure' ),
-			'overwhelmed'  => array( 'stress', 'burnout', 'overwhelmed', 'pressure' ),
-			'pressure'     => array( 'stress', 'burnout', 'overwhelmed', 'pressure' ),
-
-			// Trauma-related symptoms
-			'trauma'       => array( 'trauma', 'ptsd', 'flashback', 'nightmare' ),
-			'flashback'    => array( 'trauma', 'ptsd', 'flashback', 'nightmare' ),
-			'nightmare'    => array( 'trauma', 'ptsd', 'flashback', 'nightmare' ),
-
-			// Sleep-related symptoms
-			'insomnia'     => array( 'sleep', 'insomnia', 'restless' ),
-			'sleep'        => array( 'sleep', 'insomnia', 'restless' ),
-			'restless'     => array( 'sleep', 'insomnia', 'restless' ),
-
-			// Relationship issues
-			'relationship' => array( 'relationship', 'couple', 'family', 'marriage' ),
-			'couple'       => array( 'relationship', 'couple', 'family', 'marriage' ),
-			'family'       => array( 'relationship', 'couple', 'family', 'marriage' ),
-
-			// Eating disorders
-			'eating'       => array( 'eating', 'food', 'anorexia', 'bulimia' ),
-			'food'         => array( 'eating', 'food', 'anorexia', 'bulimia' ),
-
-			// Addiction
-			'addiction'    => array( 'addiction', 'substance', 'alcohol', 'drug' ),
-			'substance'    => array( 'addiction', 'substance', 'alcohol', 'drug' ),
-
-			// OCD
-			'obsession'    => array( 'ocd', 'obsession', 'compulsion', 'ritual' ),
-			'compulsion'   => array( 'ocd', 'obsession', 'compulsion', 'ritual' ),
-			'ritual'       => array( 'ocd', 'obsession', 'compulsion', 'ritual' ),
-
-			// Anger
-			'anger'        => array( 'anger', 'rage', 'irritable', 'aggressive' ),
-			'rage'         => array( 'anger', 'rage', 'irritable', 'aggressive' ),
-			'irritable'    => array( 'anger', 'rage', 'irritable', 'aggressive' ),
-
-			// Grief
-			'grief'        => array( 'grief', 'loss', 'bereavement', 'mourning' ),
-			'loss'         => array( 'grief', 'loss', 'bereavement', 'mourning' ),
-
-			// Self-esteem
-			'confidence'   => array( 'self-esteem', 'confidence', 'worth', 'value' ),
-			'worth'        => array( 'self-esteem', 'confidence', 'worth', 'value' ),
-			'value'        => array( 'self-esteem', 'confidence', 'worth', 'value' ),
-
-			// Work-life balance
-			'work'         => array( 'work', 'balance', 'career', 'professional' ),
-			'balance'      => array( 'work', 'balance', 'career', 'professional' ),
-			'career'       => array( 'work', 'balance', 'career', 'professional' ),
-
-			// Bipolar
-			'manic'        => array( 'bipolar', 'manic', 'mania', 'mood swing' ),
-			'mania'        => array( 'bipolar', 'manic', 'mania', 'mood swing' ),
-			'mood swing'   => array( 'bipolar', 'manic', 'mania', 'mood swing' ),
-
-			// Phobias
-			'phobia'       => array( 'phobia', 'fear', 'avoidance', 'panic' ),
-			'avoidance'    => array( 'phobia', 'fear', 'avoidance', 'panic' ),
-
-			// Personality disorders
-			'personality'  => array( 'personality', 'borderline', 'narcissistic', 'antisocial' ),
-			'borderline'   => array( 'personality', 'borderline', 'narcissistic', 'antisocial' ),
-			'narcissistic' => array( 'personality', 'borderline', 'narcissistic', 'antisocial' ),
-
-			// Child and adolescent
-			'child'        => array( 'child', 'adolescent', 'teen', 'youth' ),
-			'adolescent'   => array( 'child', 'adolescent', 'teen', 'youth' ),
-			'teen'         => array( 'child', 'adolescent', 'teen', 'youth' ),
-			'youth'        => array( 'child', 'adolescent', 'teen', 'youth' ),
-		);
-
-		// Find matching diagnoses based on symptoms
-		$matched_diagnoses = array();
-
-		foreach ( $symptoms as $symptom ) {
-			if ( isset( $symptom_mapping[ $symptom ] ) ) {
-				$keywords = $symptom_mapping[ $symptom ];
-
-				foreach ( $all_diagnoses as $diagnosis ) {
-					$diagnosis_name = strtolower( $diagnosis->name_en ?: $diagnosis->name );
-
-					foreach ( $keywords as $keyword ) {
-						if ( strpos( $diagnosis_name, $keyword ) !== false ) {
-							$matched_diagnoses[ $diagnosis->id ] = $diagnosis;
-							break 2; // Found a match for this diagnosis, move to next symptom
-						}
-					}
-				}
-			}
-		}
-
-		// If we found matches, return the first one
-		if ( ! empty( $matched_diagnoses ) ) {
-			$first_match = reset( $matched_diagnoses );
-			return intval( $first_match->id );
-		}
-
-		// If no specific matches found, return a general diagnosis based on mood
-		$mood_mapping = array(
-			'very_bad'  => array( 'depression', 'anxiety', 'stress' ),
-			'bad'       => array( 'stress', 'anxiety', 'depression' ),
-			'neutral'   => array( 'stress', 'work', 'relationship' ),
-			'good'      => array( 'work', 'relationship', 'self-esteem' ),
-			'very_good' => array( 'work', 'relationship', 'self-esteem' ),
-		);
-
-		if ( isset( $mood_mapping[ $mood ] ) ) {
-			$mood_keywords = $mood_mapping[ $mood ];
-
-			foreach ( $mood_keywords as $keyword ) {
-				foreach ( $all_diagnoses as $diagnosis ) {
-					$diagnosis_name = strtolower( $diagnosis->name_en ?: $diagnosis->name );
-					if ( strpos( $diagnosis_name, $keyword ) !== false ) {
-						return intval( $diagnosis->id );
-					}
-				}
-			}
-		}
-
-		// Final fallback: return the first available diagnosis
-		return intval( $all_diagnoses[0]->id );
 	}
 
 	/**
@@ -3843,9 +3636,113 @@ Best regards,
 	}
 
 	/**
+	 * Translate explicit English messages to Arabic for user-facing responses
+	 */
+	private function translate_message( $message ) {
+		// Exact message translations
+		$map = array(
+			'V2 Endpoint not found' => 'نقطة النهاية V2 غير موجودة',
+			'Endpoint not found' => 'النقطة غير موجودة',
+			'Method not allowed' => 'طريقة غير مسموح بها',
+			'Auth endpoint not found' => 'نقطة مصادقة غير موجودة',
+			'Invalid appointments endpoint' => 'نقطة مواعيد غير صالحة',
+			'Invalid appointment action' => 'إجراء موعد غير صالح',
+			'Invalid cart endpoint' => 'نقطة سلة غير صالحة',
+			'Invalid diagnoses endpoint' => 'نقطة تشخيص غير صالحة',
+			'Missing therapist_id' => 'معرّف المعالج مفقود',
+			'Invalid endpoint' => 'نقطة غير صالحة',
+			'Security check failed' => 'فشل التحقق الأمني',
+			'Password required' => 'كلمة المرور مطلوبة',
+			'Email and password required' => 'البريد الإلكتروني وكلمة المرور مطلوبان',
+			'WhatsApp number and password required' => 'رقم واتساب وكلمة المرور مطلوبان',
+			'Invalid credentials' => 'بيانات الدخول غير صحيحة',
+			'Access denied. Only patients and doctors can access this platform.' => 'الدخول مرفوض. يمكن للمرضى والأطباء فقط الوصول إلى المنصة.',
+			'Invalid JSON data' => 'بيانات JSON غير صالحة',
+			'User already exists and is verified. Please login instead.' => 'المستخدم موجود ومفعّل بالفعل، يرجى تسجيل الدخول.',
+			'An account with this username already exists. Please login instead.' => 'يوجد حساب بهذا اسم المستخدم، يرجى تسجيل الدخول.',
+			'An account with this email already exists. Please login instead.' => 'يوجد حساب بهذا البريد الإلكتروني، يرجى تسجيل الدخول.',
+			'An account with this WhatsApp number already exists. Please login instead.' => 'يوجد حساب بهذا رقم واتساب، يرجى تسجيل الدخول.',
+			'An account with this phone number already exists. Please login instead.' => 'يوجد حساب بهذا رقم الهاتف، يرجى تسجيل الدخول.',
+			'Verification code required' => 'رمز التحقق مطلوب',
+			'Email or WhatsApp number required' => 'البريد الإلكتروني أو رقم واتساب مطلوب',
+			'User not found' => 'المستخدم غير موجود',
+			'Email is already verified' => 'البريد الإلكتروني مفعل بالفعل',
+			'WhatsApp number is already verified' => 'رقم واتساب مفعل بالفعل',
+			'User not found with this WhatsApp number' => 'لا يوجد مستخدم بهذا رقم واتساب',
+			'WhatsApp number required' => 'رقم واتساب مطلوب',
+			'Reset code required' => 'رمز الاستعادة مطلوب',
+			'No reset code found. Please request a new one.' => 'لا يوجد رمز استعادة، يرجى طلب رمز جديد.',
+			'Reset code has expired. Please request a new one.' => 'انتهت صلاحية رمز الاستعادة، يرجى طلب رمز جديد.',
+			'Invalid reset code' => 'رمز الاستعادة غير صالح',
+			'Reset token required' => 'رمز الاستعادة مطلوب',
+			'New password required' => 'كلمة مرور جديدة مطلوبة',
+			'Password must be at least 6 characters long' => 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
+			'Invalid or expired reset token' => 'رمز الاستعادة غير صالح أو منتهي',
+			'Reset token has expired. Please request a new one.' => 'انتهت صلاحية رمز الاستعادة، يرجى طلب رمز جديد.',
+			'Therapist not found or not available on AI platform' => 'المعالج غير موجود أو غير متاح على منصة الذكاء الاصطناعي',
+			'Search query is required' => 'حقل البحث مطلوب',
+			'Therapist ID and date required' => 'معرّف المعالج والتاريخ مطلوبان',
+			'Unauthorized' => 'غير مصرح',
+			'Slot ID required' => 'معرّف الموعد مطلوب',
+			'Slot not available' => 'الموعد غير متاح',
+			'Added to cart' => 'تمت الإضافة إلى السلة',
+			'Cart is empty' => 'السلة فارغة',
+			'No valid sessions in cart' => 'لا توجد جلسات صالحة في السلة',
+			'Diagnosis not found' => 'التشخيص غير موجود',
+			'No token provided' => 'لم يتم تقديم رمز الوصول',
+			'Token expired. Please login again.' => 'انتهت صلاحية الرمز، يرجى تسجيل الدخول مجدداً.',
+			'Missing therapist_id or date' => 'معرّف المعالج أو التاريخ مفقود',
+			'v2 therapists endpoint placeholder' => 'نقطة معالجي v2 (placeholder)',
+			'Method not allowed or not implemented (v2)' => 'الطريقة غير مسموح بها أو غير مدعومة (v2)',
+			'Authentication required' => 'المصادقة مطلوبة',
+			'Appointment not found or access denied' => 'الموعد غير موجود أو غير مصرح به',
+			'Failed to cancel appointment' => 'فشل إلغاء الموعد',
+			'New appointment ID is required' => 'معرّف الموعد الجديد مطلوب',
+			'Current appointment not found or access denied' => 'الموعد الحالي غير موجود أو غير مصرح به',
+			'New appointment slot not found or not available' => 'الموعد الجديد غير موجود أو غير متاح',
+			'Message marked as read' => 'تم تعليم الرسالة كمقروءة',
+			'Profile updated successfully' => 'تم تحديث الملف الشخصي بنجاح',
+			'Password updated successfully' => 'تم تحديث كلمة المرور بنجاح',
+			'Date parameter is required' => 'معامل التاريخ مطلوب',
+		);
+
+		if ( isset( $map[ $message ] ) ) {
+			return $map[ $message ];
+		}
+
+		// Prefix-based translations for dynamic messages
+		$prefixes = array(
+			'Invalid token: ' => 'الرمز غير صالح: ',
+			'Verification process failed: ' => 'فشل التحقق: ',
+			'Resend verification process failed: ' => 'فشل إعادة إرسال التحقق: ',
+			'Failed to reschedule appointment: ' => 'فشلت إعادة جدولة الموعد: ',
+			'Password reset template is not configured. Please set it in Therapist Registration Settings.' => 'قالب إعادة تعيين كلمة المرور غير مهيأ، يرجى ضبطه في إعدادات تسجيل المعالج.',
+			'WhatsApp API configuration is incomplete. Please configure API URL, Access Token, and Phone Number ID.' => 'إعدادات واجهة واتساب غير مكتملة، يرجى ضبط رابط واجهة برمجة التطبيقات ورمز الوصول ومعرف رقم الهاتف.',
+			'Failed to send reset code via WhatsApp.' => 'فشل إرسال رمز الاستعادة عبر واتساب.',
+		);
+
+		foreach ( $prefixes as $english => $arabic ) {
+			if ( strpos( $message, $english ) === 0 ) {
+				return $arabic . trim( substr( $message, strlen( $english ) ) );
+			}
+		}
+
+		// Default: return original
+		return $message;
+	}
+
+	/**
 	 * Send success response
 	 */
 	private function send_success( $data ) {
+		// Localize top-level message if present
+		if ( is_string( $data ) ) {
+			$data = array( 'message' => $data );
+		}
+		if ( is_array( $data ) && isset( $data['message'] ) && is_string( $data['message'] ) ) {
+			$data['message'] = $this->translate_message( $data['message'] );
+		}
+
 		http_response_code( 200 );
 		echo json_encode(
 			array(
@@ -3860,6 +3757,8 @@ Best regards,
 	 * Send error response
 	 */
 	private function send_error( $message, $code = 400 ) {
+		$message = $this->translate_message( $message );
+
 		http_response_code( $code );
 		echo json_encode(
 			array(
