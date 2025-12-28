@@ -1692,7 +1692,7 @@ function snks_doctor_actions( $session ) {
 		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" data-is-ai-session="' . ( $is_ai_session ? '1' : '0' ) . '">';
 		
 		// Mark as Completed button - only show if not already completed
-		if ( ! $is_completed ) {
+		if ( $is_ai_session && ! $is_completed ) {
 			// Prepare button attributes
 			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
 			$button_class    = 'snks-button table-form-button snks-complete-session-btn';
