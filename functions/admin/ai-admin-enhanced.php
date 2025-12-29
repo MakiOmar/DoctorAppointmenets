@@ -2402,6 +2402,9 @@ function snks_enhanced_ai_chatgpt_page() {
 			$prompt_source = isset( $_POST['prompt_source'] ) ? sanitize_text_field( $_POST['prompt_source'] ) : 'custom';
 			$use_default_prompt = ( 'default' === $prompt_source ) ? '1' : '0';
 			update_option( 'snks_ai_chatgpt_use_default_prompt', $use_default_prompt );
+
+			$enable_chatgpt_logging = isset( $_POST['enable_chatgpt_logging'] ) ? '1' : '0';
+			update_option( 'snks_ai_chatgpt_logging_enabled', $enable_chatgpt_logging );
 			
 			echo '<div class="notice notice-success"><p>ChatGPT settings updated successfully!</p></div>';
 		}
@@ -2420,6 +2423,7 @@ function snks_enhanced_ai_chatgpt_page() {
 	$use_default_prompt  = get_option( 'snks_ai_chatgpt_use_default_prompt', '0' );
 	$custom_prompt_value = get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
 	$active_prompt       = snks_get_ai_chatgpt_prompt();
+	$enable_chatgpt_logging = get_option( 'snks_ai_chatgpt_logging_enabled', '0' );
 	?>
 	<div class="wrap">
 		<h1>ChatGPT Integration</h1>
@@ -2446,6 +2450,16 @@ function snks_enhanced_ai_chatgpt_page() {
 								<option value="gpt-4.1-turbo" <?php selected( $model, 'gpt-4.1-turbo' ); ?>>GPT-4.1 Turbo</option>
 								<option value="gpt-4.1-mini" <?php selected( $model, 'gpt-4.1-mini' ); ?>>GPT-4.1 Mini</option>
 							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="enable_chatgpt_logging">ChatGPT Logging</label></th>
+						<td>
+							<label>
+								<input type="checkbox" id="enable_chatgpt_logging" name="enable_chatgpt_logging" value="1" <?php checked( $enable_chatgpt_logging, '1' ); ?> />
+								<span><?php esc_html_e( 'Enable logging of ChatGPT API requests/responses (for debugging)', 'doctor-appointmenets' ); ?></span>
+							</label>
+							<p class="description"><?php esc_html_e( 'Turn off to stop storing ChatGPT request/response logs.', 'doctor-appointmenets' ); ?></p>
 						</td>
 					</tr>
 					<tr>

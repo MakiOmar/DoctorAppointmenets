@@ -3522,6 +3522,9 @@ Best regards,
 		$api_key       = get_option( 'snks_ai_chatgpt_api_key' );
 		$model         = get_option( 'snks_ai_chatgpt_model', 'gpt-4.1-mini' );
 		$system_prompt = function_exists( 'snks_get_ai_chatgpt_prompt' ) ? snks_get_ai_chatgpt_prompt() : get_option( 'snks_ai_chatgpt_prompt', snks_get_ai_chatgpt_default_prompt() );
+		$logging_enabled = get_option( 'snks_ai_chatgpt_logging_enabled', '0' ) === '1';
+		$log_user_id      = get_current_user_id() ?: null;
+		$endpoint         = 'https://api.openai.com/v1/chat/completions';
 
 		if ( ! $api_key ) {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
@@ -3553,36 +3556,67 @@ Best regards,
 			'messages'    => $messages,
 			'temperature' => 0.4,
 		);
-
-		$response = wp_remote_post(
-			'https://api.openai.com/v1/chat/completions',
-			array(
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-					'Content-Type'  => 'application/json',
-				),
-				'body'    => wp_json_encode( $data ),
-				'timeout' => 30,
-			)
+			
+		$log_request_data = array(
+			'url'     => $endpoint,
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type'  => 'application/json',
+			),
+			'body'    => $data,
 		);
 
+		$start_time = microtime( true );
+			$response = wp_remote_post(
+			$endpoint,
+				array(
+					'headers' => array(
+						'Authorization' => 'Bearer ' . $api_key,
+						'Content-Type'  => 'application/json',
+					),
+				'body'    => wp_json_encode( $data ),
+					'timeout' => 30,
+				)
+			);
+		$response_time_ms = (int) round( ( microtime( true ) - $start_time ) * 1000 );
+
 		if ( is_wp_error( $response ) ) {
+			if ( $logging_enabled && function_exists( 'snks_log_chatgpt_request' ) ) {
+				snks_log_chatgpt_request( $log_request_data, $response, $model, $log_user_id, null, $response_time_ms );
+			}
 			return $response;
 		}
 
 		$response_code = wp_remote_retrieve_response_code( $response );
 		if ( $response_code < 200 || $response_code >= 300 ) {
-			return new WP_Error( 'http_error', 'حدث خطأ من واجهة OpenAI برمز HTTP: ' . $response_code );
-		}
+			$http_error = new WP_Error( 'http_error', 'حدث خطأ من واجهة OpenAI برمز HTTP: ' . $response_code );
+			if ( $logging_enabled && function_exists( 'snks_log_chatgpt_request' ) ) {
+				$body_for_log = wp_remote_retrieve_body( $response );
+				$response_for_log = array(
+					'response_code' => $response_code,
+					'body'          => $body_for_log,
+				);
+				snks_log_chatgpt_request( $log_request_data, $response_for_log, $model, $log_user_id, null, $response_time_ms );
+			}
+			return $http_error;
+			}
 
-		$body   = wp_remote_retrieve_body( $response );
-		$result = json_decode( $body, true );
+					$body   = wp_remote_retrieve_body( $response );
+					$result = json_decode( $body, true );
 
 		if ( ! isset( $result['choices'][0]['message']['content'] ) ) {
+			if ( $logging_enabled && function_exists( 'snks_log_chatgpt_request' ) ) {
+				$response_for_log = is_array( $result ) ? $result : array( 'raw_body' => $body );
+				snks_log_chatgpt_request( $log_request_data, $response_for_log, $model, $log_user_id, null, $response_time_ms );
+			}
 			return new WP_Error( 'invalid_response', 'استجابة غير صالحة من واجهة OpenAI' );
 		}
 
 		$reply = $result['choices'][0]['message']['content'];
+
+		if ( $logging_enabled && function_exists( 'snks_log_chatgpt_request' ) ) {
+			snks_log_chatgpt_request( $log_request_data, $result, $model, $log_user_id, null, $response_time_ms );
+		}
 
 		return array(
 			'message'   => $reply,
