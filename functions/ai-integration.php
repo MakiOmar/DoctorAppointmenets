@@ -3526,6 +3526,35 @@ Best regards,
 		$log_user_id      = get_current_user_id() ?: null;
 		$endpoint         = 'https://api.openai.com/v1/chat/completions';
 
+		// Inject available diagnoses into the prompt (replaces {available_diagnoses})
+		global $wpdb;
+		$diagnoses          = $wpdb->get_results( "SELECT id, name, name_en, name_ar, description, description_en, description_ar FROM {$wpdb->prefix}snks_diagnoses ORDER BY name" );
+		$diagnosis_names    = array();
+		$diagnosis_details  = array();
+		$counter            = 1;
+
+		foreach ( $diagnoses as $diagnosis ) {
+			$diagnosis_name = ! empty( $diagnosis->name_ar ) ? $diagnosis->name_ar : $diagnosis->name;
+			$diagnosis_desc = ! empty( $diagnosis->description_ar )
+				? $diagnosis->description_ar
+				: ( ! empty( $diagnosis->description ) ? $diagnosis->description : '' );
+
+			$diagnosis_names[] = $diagnosis_name . ' (ID: ' . $diagnosis->id . ')';
+
+			$diagnosis_details[] = sprintf(
+				"%d. %s (ID: %d)\n   الوصف: %s",
+				$counter++,
+				$diagnosis_name,
+				$diagnosis->id,
+				! empty( $diagnosis_desc ) ? $diagnosis_desc : 'لا يوجد وصف متاح'
+			);
+		}
+
+		if ( ! empty( $diagnosis_names ) ) {
+			$system_prompt = str_replace( '{available_diagnoses}', implode( ', ', $diagnosis_names ), $system_prompt );
+			$system_prompt .= "\n\n" . implode( "\n\n", $diagnosis_details );
+		}
+
 		if ( ! $api_key ) {
 			return new WP_Error( 'no_api_key', 'OpenAI API key not configured' );
 		}
