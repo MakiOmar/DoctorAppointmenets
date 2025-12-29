@@ -349,11 +349,11 @@ export default {
            }
          })
 
-        if (response.data.success) {
-          const assistantMessage = response.data.data.message
-          const diagnosis = response.data.data.diagnosis
+         if (response.data.success) {
+           const assistantMessage = response.data.data.message
+           const diagnosis = response.data.data.diagnosis
 
-          // Attempt to parse JSON so we don't show raw JSON to the user
+          // Try to parse JSON-like responses to avoid showing raw JSON
           let parsed = null
           if (assistantMessage && typeof assistantMessage === 'string') {
             const trimmed = assistantMessage.trim()
@@ -379,7 +379,7 @@ export default {
 
           const isCompletedJson = normalizedDiagnosis && normalizedDiagnosis.status === 'complete'
 
-          // Choose what to show to the user (never raw JSON)
+          // Choose what to show (never show raw JSON)
           const assistantDisplay = isCompletedJson
             ? (locale.value === 'ar' ? 'جارٍ تحويلك إلى صفحة النتائج...' : 'Redirecting you to the results page...')
             : (typeof assistantMessage === 'string' ? assistantMessage : String(assistantMessage || ''))
@@ -397,50 +397,26 @@ export default {
             diagnosisResult.description = diagnosis.description
             diagnosisResult.diagnosisId = diagnosis.id
             diagnosisCompleted.value = true
-          } else if (isCompletedJson) {
-            // Use parsed JSON to mark completion and store details
-            diagnosisResult.title = normalizedDiagnosis.diagnosis || normalizedDiagnosis.aiDiagnosis || ''
-            diagnosisResult.description = normalizedDiagnosis.patientSummary || normalizedDiagnosis.reasoning || ''
-            diagnosisResult.diagnosisId = null
-            diagnosisCompleted.value = true
-          }
-
-          // Show SweetAlert with diagnosis result
-          const isArabic = locale.value === 'ar'
-
-          Swal.fire({
-            title: isArabic ? 'تم إكمال التشخيص' : 'Diagnosis Complete',
-            html: `
-              <div style="text-align: ${isArabic ? 'right' : 'left'}; direction: ${isArabic ? 'rtl' : 'ltr'};">
-                <h3 style="color: #2563eb; margin-bottom: 15px; font-size: 1.25rem; font-weight: 600;">
-                  ${diagnosisResult.title || (isArabic ? 'التشخيص' : 'Diagnosis')}
-                </h3>
-                <p style="color: #4b5563; line-height: 1.6; margin-bottom: 20px; font-size: 1rem;">
-                  ${diagnosisResult.description || (isArabic ? 'تم إكمال التقييم النفسي بنجاح' : 'Psychological assessment completed successfully')}
-                </p>
-                <p style="color: #6b7280; font-size: 0.875rem; margin-top: 15px;">
-                  ${isArabic ? 'سيتم توجيهك إلى صفحة النتائج قريباً...' : 'You will be redirected to the results page shortly...'}
-                </p>
-              </div>
-            `,
-            icon: 'success',
-            iconColor: '#10b981',
-            confirmButtonText: isArabic ? 'عرض النتائج' : 'View Results',
-            confirmButtonColor: '#2563eb',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showCancelButton: false,
-            timer: 7000, // Show for 7 seconds
-            timerProgressBar: true
-          }).then((result) => {
-            // Redirect when modal closes (either by timer or button click)
             if (diagnosisResult.diagnosisId) {
               router.push(`/diagnosis-results/${diagnosisResult.diagnosisId}`)
             } else {
               router.push('/therapists')
             }
-          })
-        } else {
+          } else if (isCompletedJson) {
+            // Handle JSON-only completion response from model
+            diagnosisResult.title = normalizedDiagnosis.diagnosis || normalizedDiagnosis.aiDiagnosis || ''
+            diagnosisResult.description = normalizedDiagnosis.patientSummary || normalizedDiagnosis.reasoning || ''
+            diagnosisResult.diagnosisId = null
+            diagnosisCompleted.value = true
+
+            // Redirect immediately without showing raw JSON
+            if (diagnosisResult.diagnosisId) {
+              router.push(`/diagnosis-results/${diagnosisResult.diagnosisId}`)
+            } else {
+              router.push('/therapists')
+            }
+           }
+         } else {
            throw new Error(response.data.data || 'Failed to get response')
          }
       } catch (error) {
