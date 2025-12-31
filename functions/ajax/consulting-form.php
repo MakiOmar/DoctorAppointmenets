@@ -31,19 +31,21 @@ function fetch_start_times_callback() {
 	global $wpdb;
 
 	// Start building the SQL query.
-	$sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
+    $sql = "SELECT * FROM {$wpdb->prefix}snks_provider_timetable 
         WHERE user_id = %d 
         AND period = %d 
         AND order_id = 0 
         AND session_status = 'waiting' 
-        AND DATE(date_time) = %s";
+        AND DATE(date_time) = %s
+        AND settings NOT LIKE %s"; // <-- exclude rows containing ai_booking
 
-	// Prepare the parameters for the query.
-	$query_params = array(
-		$user_id,
-		absint( $period ),
-		$date,
-	);
+    // Prepare the parameters for the query.
+    $query_params = array(
+        $user_id,
+        absint( $period ),
+        $date,
+        '%ai_booking%', // parameter for NOT LIKE
+    );
 
 	// Apply clinic conditions only if the attendance type is NOT online.
 	if ( $attendance_type !== 'online' ) {
