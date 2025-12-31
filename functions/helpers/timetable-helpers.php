@@ -686,70 +686,72 @@ function snks_delete_waiting_sessions_by_user_id( $user_id, $attendance_type = f
  * @return mixed
  */
 function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_type = 'both' ) {
-	global $wpdb;
-	//phpcs:disable
-	// Fetch doctor settings.
-	$doctor_settings = snks_doctor_settings( $user_id );
+    global $wpdb;
+    //phpcs:disable
+    // Fetch doctor settings.
+    $doctor_settings = snks_doctor_settings( $user_id );
 
-	// Calculate seconds before blocking.
-	$seconds_before_block = 0;
-	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
-		$number               = $doctor_settings['block_if_before_number'];
-		$unit                 = $doctor_settings['block_if_before_unit'];
-		$base                 = ( 'day' === $unit ) ? 24 : 1;
-		$seconds_before_block = $number * $base * 3600;
-	}
+    // Calculate seconds before blocking.
+    $seconds_before_block = 0;
+    if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+        $number               = $doctor_settings['block_if_before_number'];
+        $unit                 = $doctor_settings['block_if_before_unit'];
+        $base                 = ( 'day' === $unit ) ? 24 : 1;
+        $seconds_before_block = $number * $base * 3600;
+    }
 
-	// Calculate current and end datetime.
-	$current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
-	$end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
+    // Calculate current and end datetime.
+    $current_datetime = date_i18n( 'Y-m-d H:i:s', ( current_time( 'timestamp' ) + $seconds_before_block ) );
+    $end_datetime     = date_i18n( 'Y-m-d H:i:s', strtotime( $_for, strtotime( $current_datetime ) ) );
 
-	// Set the default order.
-	$_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
+    // Set the default order.
+    $_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 
-	// Fetch off-days from doctor settings.
-	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+    // Fetch off-days from doctor settings.
+    $off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 
-	// Prepare the off-days for SQL query.
-	$off_days_placeholder = '';
-	if ( ! empty( $off_days ) ) {
-		$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
-	}
+    // Prepare the off-days for SQL query.
+    $off_days_placeholder = '';
+    if ( ! empty( $off_days ) ) {
+        $off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
+    }
 
-	// Common query parameters.
-	$query_params = array(
-		$user_id,
-		$period,
-		$current_datetime,
-		$end_datetime,
-		'waiting',
-		0,
-	);
+    // Common query parameters.
+    $query_params = array(
+        $user_id,
+        $period,
+        $current_datetime,
+        $end_datetime,
+        'waiting',
+        0,
+        '%ai_booking%', // parameter for NOT LIKE
+    );
 
-	// Build the SQL query with dynamic conditions.
-	$attendance_condition       = ( 'both' === $attendance_type ) ? '' : $wpdb->prepare( 'AND attendance_type = %s', $attendance_type );
-	$off_days_condition         = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
-	$disabled_clinics_condition = '';
-	$enabled_clinics_condition  = '';
+    // Build the SQL query with dynamic conditions.
+    $attendance_condition       = ( 'both' === $attendance_type ) ? '' : $wpdb->prepare( 'AND attendance_type = %s', $attendance_type );
+    $off_days_condition         = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+    $disabled_clinics_condition = '';
+    $enabled_clinics_condition  = '';
 
-	// Apply clinic conditions only if attendance type is NOT online.
-	if ( $attendance_type !== 'online' ) {
-		// Fetch disabled clinics.
-		$disabled_clinics = snks_disabled_clinics( $user_id );
-		if ( ! empty( $disabled_clinics ) ) {
-			$disabled_clinics_placeholder = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
-			$disabled_clinics_condition   = "AND clinic NOT IN ({$disabled_clinics_placeholder})";
-		}
+    // Apply clinic conditions only if attendance type is NOT online.
+    if ( $attendance_type !== 'online' ) {
+        // Fetch disabled clinics.
+        $disabled_clinics = snks_disabled_clinics( $user_id );
+        if ( ! empty( $disabled_clinics ) ) {
+            $disabled_clinics_placeholder = implode( ',', array_fill( 0, count( $disabled_clinics ), '%s' ) );
+            $disabled_clinics_condition   = "AND clinic NOT IN ({$disabled_clinics_placeholder})";
+        }
 
-		// Fetch enabled clinics.
-		$enabled_clinics = snks_enabled_clinics( $user_id );
-		if ( ! empty( $enabled_clinics ) ) {
-			$enabled_clinics_placeholder = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
-			$enabled_clinics_condition   = "AND clinic IN ({$enabled_clinics_placeholder})";
-		}
-	}
+        // Fetch enabled clinics.
+        $enabled_clinics = snks_enabled_clinics( $user_id );
+        if ( ! empty( $enabled_clinics ) ) {
+            $enabled_clinics_placeholder = implode( ',', array_fill( 0, count( $enabled_clinics ), '%s' ) );
+            $enabled_clinics_condition   = "AND clinic IN ({$enabled_clinics_placeholder})";
+        }
+    }
 
-	$sql = "
+    // Add NOT LIKE condition for settings to exclude ai_booking
+    $sql = "
         SELECT *
         FROM {$wpdb->prefix}snks_provider_timetable timetable
         WHERE user_id = %d
@@ -757,6 +759,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
         AND date_time BETWEEN %s AND %s
         AND session_status = %s
         AND order_id = %d
+        AND settings NOT LIKE %s
         $attendance_condition
         $off_days_condition
         $disabled_clinics_condition
@@ -764,21 +767,19 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
         ORDER BY date_time {$_order}
     ";
 
-	// Merge off-days, disabled clinics, and enabled clinics into query params.
-	$query_params = array_merge( $query_params, $off_days );
+    // Merge off-days, disabled clinics, and enabled clinics into query params.
+    $query_params = array_merge( $query_params, $off_days );
 
-	// Add clinics only if attendance type is NOT online.
-	if ( $attendance_type !== 'online' ) {
-		$query_params = array_merge( $query_params, $disabled_clinics, $enabled_clinics );
-	}
+    if ( $attendance_type !== 'online' ) {
+        $query_params = array_merge( $query_params, $disabled_clinics, $enabled_clinics );
+    }
 
-	// Prepare and execute the query.
-	$_query  = $wpdb->prepare( $sql, $query_params );
-	$results = $wpdb->get_results( $_query );
+    // Prepare and execute the query.
+    $_query  = $wpdb->prepare( $sql, $query_params );
+    $results = $wpdb->get_results( $_query );
 
-	return $results;
+    return $results;
 }
-
 
 
 /**
