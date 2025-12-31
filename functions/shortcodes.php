@@ -1243,6 +1243,7 @@ add_shortcode(
 		echo '<table class="user-transactions" style="text-align: right; direction: rtl;">';
 		echo '<tr><th>النوع</th><th>المبلغ</th><th>تاريخ المعاملة</th><th>تفاصيل الجلسة</th></tr>';
 		foreach ( $transactions as $transaction ) {
+			teamlog( $transaction );
 			$timetable_id = $transaction->timetable_id;
 			if ( $timetable_id > 0 ) {
 				$order_id    = $wpdb->get_var(

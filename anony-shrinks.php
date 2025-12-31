@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.239
+ * Version: 1.0.240
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -324,14 +324,19 @@ add_filter(
 			'disabled' => true,
 		);
 		$allowed['button'] = array(
-			'type'     => true,
-			'name'     => true,
-			'value'    => true,
-			'id'       => true,
-			'class'    => true,
-			'style'    => true,
-			'disabled' => true,
-			'aria-label' => true,
+			'type'         => true,
+			'name'         => true,
+			'value'        => true,
+			'id'           => true,
+			'class'        => true,
+			'style'        => true,
+			'disabled'     => true,
+			'aria-label'   => true,
+			'data-coupon'  => true,
+			'data-coupon-type' => true,
+			'data-date-time' => true,
+			'data-attendance-type' => true,
+			'data-client-name' => true,
 		);
 		$allowed['label'] = array(
 			'for'    => true,
