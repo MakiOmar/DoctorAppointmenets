@@ -177,145 +177,6 @@ function snks_is_programme_enrolled() {
 	return false;
 }
 
-add_filter('pre_insert_user_data', 'validate_unique_phone_number', 10, 3);
-
-/**
- * التحقق من أن رقم الهاتف غير مكرر عند إنشاء أو تحديث مستخدم
- *
- * @param array|WP_Error $data بيانات المستخدم
- * @param bool $update هل هو تحديث أم إنشاء جديد
- * @param int|null $user_id معرف المستخدم
- * @return array|WP_Error
- * @throws Action_Exception
- */
-function validate_unique_phone_number($data, $update, $user_id) {
-    // رقم الهاتف المدخل
-    $phone_input = $_POST['billing_phone'] ?? '';
-
-    if (empty($phone_input)) {
-        return $data;
-    }
-
-    // آخر 9 أرقام فقط
-    $input_last9 = substr(preg_replace('/\D+/', '', $phone_input), -9);
-
-    if (strlen($input_last9) < 9) {
-        return handle_error('رقم الهاتف غير صالح.');
-    }
-
-    global $wpdb;
-
-    // فحص التكرار في قاعدة البيانات
-    $phone_error = check_phone_duplication($wpdb, $input_last9, $user_id);
-    if (is_wp_error($phone_error)) {
-        return handle_error($phone_error->get_error_message());
-    }
-
-    return $data;
-}
-
-/**
- * التعامل مع الخطأ: WP_Error أو Action_Exception حسب وجود reg-temp-phone
- *
- * @param string $msg رسالة الخطأ
- * @return WP_Error
- * @throws Action_Exception
- */
-function handle_error($msg) {
-    if (!empty($_POST['reg-temp-phone']) && class_exists('\Jet_Form_Builder\Exceptions\Action_Exception')) {
-        throw new \Jet_Form_Builder\Exceptions\Action_Exception($msg);
-    }
-    return new WP_Error('phone_validation_error', $msg);
-}
-
-/**
- * فحص تكرار رقم الهاتف واسم المستخدم باستخدام آخر 9 أرقام
- *
- * @param wpdb $wpdb كائن قاعدة البيانات
- * @param string $last9_digits آخر 9 أرقام
- * @param int|null $current_user_id معرف المستخدم الحالي لتجاهل نفسه عند التحديث
- * @return bool|WP_Error
- */
-function check_phone_duplication($wpdb, $last9_digits, $current_user_id = null) {
-    // ---------------------------
-    // 1) فحص billing_phone في usermeta
-    // ---------------------------
-    $phone_cleanup_sql = build_phone_cleanup_sql('meta_value');
-
-    $phone_exists_query = "
-        SELECT user_id
-        FROM {$wpdb->usermeta}
-        WHERE meta_key = 'billing_phone'
-          AND {$phone_cleanup_sql} = %s
-    ";
-
-    if ($current_user_id) {
-        $phone_exists_query .= $wpdb->prepare(" AND user_id <> %d", $current_user_id);
-    }
-
-    $phone_exists_query .= " LIMIT 1";
-
-    $phone_exists = $wpdb->get_var($wpdb->prepare($phone_exists_query, $last9_digits));
-
-    if ($phone_exists) {
-        return new WP_Error(
-            'duplicate_phone',
-            'يوجد حساب مسجّل بالفعل باستخدام رقم الهاتف هذا.'
-        );
-    }
-
-    // ---------------------------
-    // 2) فحص اسم المستخدم في users table
-    // ---------------------------
-    $username_cleanup_sql = build_phone_cleanup_sql('user_login');
-
-    $username_exists_query = "
-        SELECT ID
-        FROM {$wpdb->users}
-        WHERE {$username_cleanup_sql} = %s
-    ";
-
-    if ($current_user_id) {
-        $username_exists_query .= $wpdb->prepare(" AND ID <> %d", $current_user_id);
-    }
-
-    $username_exists_query .= " LIMIT 1";
-
-    $username_exists = $wpdb->get_var($wpdb->prepare($username_exists_query, $last9_digits));
-
-    if ($username_exists) {
-        return new WP_Error(
-            'duplicate_phone_username',
-            'رقم الهاتف هذا مستخدم بالفعل كاسم مستخدم.'
-        );
-    }
-
-    return true;
-}
-
-/**
- * بناء SQL لتنظيف رقم الهاتف أو اسم المستخدم واستخراج آخر 9 أرقام
- *
- * @param string $field_name اسم الحقل (meta_value أو user_login)
- * @return string SQL expression
- */
-function build_phone_cleanup_sql($field_name) {
-    return "RIGHT(
-                REPLACE(
-                    REPLACE(
-                        REPLACE(
-                            REPLACE(
-                                REPLACE(
-                                    REPLACE({$field_name}, '+', ''),
-                                ' ', ''),
-                            '-', ''),
-                        '(', ''),
-                    ')', ''),
-                '.', ''),
-                9
-            )";
-}
-
 /**
  * Register user
  *
@@ -655,62 +516,101 @@ add_action( 'jet-form-builder/custom-action/loguserin', 'custom_log_patient_in',
 
 add_action( 'jet-form-builder/custom-action/proccess_form_data', 'custom_process_user_registration', 10, 3 );
 
-/**
- * Processes the custom user registration form.
- *
- * @param array $request  The form data.
- * @throws \Jet_Form_Builder\Exceptions\Action_Exception Exception.
- */
 function custom_process_user_registration( $request ) {
 
-	// Sanitize form data.
-	$first_name = sanitize_text_field( wp_unslash( $request['billing_first_name'] ) );
-	$password   = '333333';
-	$phone      = sanitize_text_field( wp_unslash( $request['uname'] ) );
-	$user_id    = username_exists( $phone );
-	if ( empty( $_POST['reg-temp-phone'] ) ) {
-		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'رقم التليفون حقل إلزامي' );
-	}
-	if ( strlen( $phone ) < 5 ) {
-		throw new \Jet_Form_Builder\Exceptions\Action_Exception( 'يرجى إدخال رقم تليفون صحيح' );
-	}
-	// Check if the username (phone number) already exists.
-	if ( $user_id ) {
-		// Assign the user role (e.g., 'customer').
-		$user = get_user_by( 'ID', $user_id );
+    // Sanitize input
+    $first_name = sanitize_text_field( wp_unslash( $request['billing_first_name'] ?? '' ) );
+    $phone      = sanitize_text_field( wp_unslash( $request['uname'] ?? '' ) );
+    $password   = '333333';
 
-		// Log in the user after registration.
-		wp_set_current_user( $user_id );
-		wp_set_auth_cookie( $user_id );
-		do_action( 'wp_login', $phone, $user );
+    // ---------------------------
+    // 1) Field validation
+    // ---------------------------
+    if ( empty( $_POST['reg-temp-phone'] ) ) {
+        throw new Action_Exception( 'رقم التليفون حقل إلزامي' );
+    }
 
-		return true;
-	}
-	$email = "{$phone}@jalsah.app";
+    $last9 = substr( preg_replace( '/\D+/', '', $phone ), -9 );
 
-	// Register the user.
-	$user_id = wp_create_user( $phone, $password, $email );
+    if ( strlen( $last9 ) < 5 ) { // keep old min-length validation
+        throw new Action_Exception( 'يرجى إدخال رقم تليفون صحيح' );
+    }
 
-	if ( is_wp_error( $user_id ) ) {
-		throw new \Jet_Form_Builder\Exceptions\Action_Exception( esc_html( $user_id->get_error_message() ) );
-	}
+    global $wpdb;
 
-	// Update user meta fields.
-	update_user_meta( $user_id, 'billing_first_name', $first_name );
-	update_user_meta( $user_id, 'billing_phone', $phone );
-	update_user_meta( $user_id, 'billing_email', $email );
+    // ---------------------------
+    // 2) Check billing_phone duplicates
+    // ---------------------------
+    $phone_exists_sql = "
+        SELECT user_id
+        FROM {$wpdb->usermeta}
+        WHERE meta_key = 'billing_phone'
+          AND RIGHT( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(meta_value, '+',''),' ',''),
+            '-',''),'(',''),')',''),'.',''), 9 ) = %s
+        LIMIT 1
+    ";
+    $existing_user = $wpdb->get_var( $wpdb->prepare( $phone_exists_sql, $last9 ) );
 
-	// Assign the user role (e.g., 'customer').
-	$user = new WP_User( $user_id );
-	$user->set_role( 'customer' );
+    if ( $existing_user ) {
+        throw new Action_Exception( 'يوجد حساب مسجّل بالفعل باستخدام رقم الهاتف هذا.' );
+    }
 
-	// Log in the user after registration.
-	wp_set_current_user( $user_id );
-	wp_set_auth_cookie( $user_id );
-	do_action( 'wp_login', $phone, $user );
+    // ---------------------------
+    // 3) Check username duplicates
+    // ---------------------------
+    $username_exists_sql = "
+        SELECT ID
+        FROM {$wpdb->users}
+        WHERE RIGHT( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(user_login, '+',''),' ',''),
+            '-',''),'(',''),')',''),'.',''), 9 ) = %s
+        LIMIT 1
+    ";
+    $existing_user2 = $wpdb->get_var( $wpdb->prepare( $username_exists_sql, $last9 ) );
 
-	return true;
+    if ( $existing_user2 ) {
+        throw new Action_Exception( 'رقم الهاتف هذا مستخدم بالفعل كاسم مستخدم.' );
+    }
+
+    // ---------------------------
+    // 4) Check if username exists exactly (optional extra safety)
+    // ---------------------------
+    $exact_user = username_exists( $phone );
+    if ( $exact_user ) {
+        // Login existing user
+        $user = get_user_by( 'ID', $exact_user );
+        wp_set_current_user( $exact_user );
+        wp_set_auth_cookie( $exact_user );
+        do_action( 'wp_login', $phone, $user );
+        return true;
+    }
+
+    // ---------------------------
+    // 5) Create new user
+    // ---------------------------
+    $email = "{$phone}@jalsah.app";
+    $user_id = wp_create_user( $phone, $password, $email );
+
+    if ( is_wp_error( $user_id ) ) {
+        throw new Action_Exception( esc_html( $user_id->get_error_message() ) );
+    }
+
+    // Update user meta
+    update_user_meta( $user_id, 'billing_first_name', $first_name );
+    update_user_meta( $user_id, 'billing_phone', $phone );
+    update_user_meta( $user_id, 'billing_email', $email );
+
+    // Assign role
+    $user = new WP_User( $user_id );
+    $user->set_role( 'customer' );
+
+    // Log in user
+    wp_set_current_user( $user_id );
+    wp_set_auth_cookie( $user_id );
+    do_action( 'wp_login', $phone, $user );
+
+    return true;
 }
+
 
 
 /**
