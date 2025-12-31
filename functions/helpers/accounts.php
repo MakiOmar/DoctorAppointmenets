@@ -177,6 +177,145 @@ function snks_is_programme_enrolled() {
 	return false;
 }
 
+add_filter('pre_insert_user_data', 'validate_unique_phone_number', 10, 3);
+
+/**
+ * التحقق من أن رقم الهاتف غير مكرر عند إنشاء أو تحديث مستخدم
+ *
+ * @param array|WP_Error $data بيانات المستخدم
+ * @param bool $update هل هو تحديث أم إنشاء جديد
+ * @param int|null $user_id معرف المستخدم
+ * @return array|WP_Error
+ * @throws Action_Exception
+ */
+function validate_unique_phone_number($data, $update, $user_id) {
+    // رقم الهاتف المدخل
+    $phone_input = $_POST['billing_phone'] ?? '';
+
+    if (empty($phone_input)) {
+        return $data;
+    }
+
+    // آخر 9 أرقام فقط
+    $input_last9 = substr(preg_replace('/\D+/', '', $phone_input), -9);
+
+    if (strlen($input_last9) < 9) {
+        return handle_error('رقم الهاتف غير صالح.');
+    }
+
+    global $wpdb;
+
+    // فحص التكرار في قاعدة البيانات
+    $phone_error = check_phone_duplication($wpdb, $input_last9, $user_id);
+    if (is_wp_error($phone_error)) {
+        return handle_error($phone_error->get_error_message());
+    }
+
+    return $data;
+}
+
+/**
+ * التعامل مع الخطأ: WP_Error أو Action_Exception حسب وجود reg-temp-phone
+ *
+ * @param string $msg رسالة الخطأ
+ * @return WP_Error
+ * @throws Action_Exception
+ */
+function handle_error($msg) {
+    if (!empty($_POST['reg-temp-phone']) && class_exists('\Jet_Form_Builder\Exceptions\Action_Exception')) {
+        throw new \Jet_Form_Builder\Exceptions\Action_Exception($msg);
+    }
+    return new WP_Error('phone_validation_error', $msg);
+}
+
+/**
+ * فحص تكرار رقم الهاتف واسم المستخدم باستخدام آخر 9 أرقام
+ *
+ * @param wpdb $wpdb كائن قاعدة البيانات
+ * @param string $last9_digits آخر 9 أرقام
+ * @param int|null $current_user_id معرف المستخدم الحالي لتجاهل نفسه عند التحديث
+ * @return bool|WP_Error
+ */
+function check_phone_duplication($wpdb, $last9_digits, $current_user_id = null) {
+    // ---------------------------
+    // 1) فحص billing_phone في usermeta
+    // ---------------------------
+    $phone_cleanup_sql = build_phone_cleanup_sql('meta_value');
+
+    $phone_exists_query = "
+        SELECT user_id
+        FROM {$wpdb->usermeta}
+        WHERE meta_key = 'billing_phone'
+          AND {$phone_cleanup_sql} = %s
+    ";
+
+    if ($current_user_id) {
+        $phone_exists_query .= $wpdb->prepare(" AND user_id <> %d", $current_user_id);
+    }
+
+    $phone_exists_query .= " LIMIT 1";
+
+    $phone_exists = $wpdb->get_var($wpdb->prepare($phone_exists_query, $last9_digits));
+
+    if ($phone_exists) {
+        return new WP_Error(
+            'duplicate_phone',
+            'يوجد حساب مسجّل بالفعل باستخدام رقم الهاتف هذا.'
+        );
+    }
+
+    // ---------------------------
+    // 2) فحص اسم المستخدم في users table
+    // ---------------------------
+    $username_cleanup_sql = build_phone_cleanup_sql('user_login');
+
+    $username_exists_query = "
+        SELECT ID
+        FROM {$wpdb->users}
+        WHERE {$username_cleanup_sql} = %s
+    ";
+
+    if ($current_user_id) {
+        $username_exists_query .= $wpdb->prepare(" AND ID <> %d", $current_user_id);
+    }
+
+    $username_exists_query .= " LIMIT 1";
+
+    $username_exists = $wpdb->get_var($wpdb->prepare($username_exists_query, $last9_digits));
+
+    if ($username_exists) {
+        return new WP_Error(
+            'duplicate_phone_username',
+            'رقم الهاتف هذا مستخدم بالفعل كاسم مستخدم.'
+        );
+    }
+
+    return true;
+}
+
+/**
+ * بناء SQL لتنظيف رقم الهاتف أو اسم المستخدم واستخراج آخر 9 أرقام
+ *
+ * @param string $field_name اسم الحقل (meta_value أو user_login)
+ * @return string SQL expression
+ */
+function build_phone_cleanup_sql($field_name) {
+    return "RIGHT(
+                REPLACE(
+                    REPLACE(
+                        REPLACE(
+                            REPLACE(
+                                REPLACE(
+                                    REPLACE({$field_name}, '+', ''),
+                                ' ', ''),
+                            '-', ''),
+                        '(', ''),
+                    ')', ''),
+                '.', ''),
+                9
+            )";
+}
+
 /**
  * Register user
  *

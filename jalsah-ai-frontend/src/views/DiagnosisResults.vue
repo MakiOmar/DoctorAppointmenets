@@ -341,12 +341,6 @@ export default {
         // Use stored diagnosis data for simulation
         const data = JSON.parse(diagnosisData)
         simulateDiagnosisResult(data)
-      } else {
-        // Fallback to default
-        diagnosisResult.value = {
-          title: t('diagnosisResults.defaultTitle'),
-          description: t('diagnosisResults.defaultDescription')
-        }
       }
     }
 
@@ -367,11 +361,6 @@ export default {
               diagnosis = diagnosis.find(d => d.id == diagnosisId)
               
               if (!diagnosis) {
-                // Fallback to default
-                diagnosisResult.value = {
-                  title: t('diagnosisResults.defaultTitle'),
-                  description: t('diagnosisResults.defaultDescription')
-                }
                 return
               }
             }
@@ -391,12 +380,6 @@ export default {
               title: localizedName,
               description: localizedDescription
             }
-          } else {
-            // Fallback to default if API fails
-            diagnosisResult.value = {
-              title: t('diagnosisResults.defaultTitle'),
-              description: t('diagnosisResults.defaultDescription')
-            }
           }
         } else {
           // It's a diagnosis name, use it directly
@@ -414,12 +397,6 @@ export default {
           const decodedName = decodeURIComponent(diagnosisId)
           diagnosisResult.value = {
             title: decodedName,
-            description: t('diagnosisResults.defaultDescription')
-          }
-        } else {
-          // Fallback to default on error
-          diagnosisResult.value = {
-            title: t('diagnosisResults.defaultTitle'),
             description: t('diagnosisResults.defaultDescription')
           }
         }

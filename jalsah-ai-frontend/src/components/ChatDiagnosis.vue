@@ -360,6 +360,7 @@ export default {
             if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
               try {
                 parsed = JSON.parse(trimmed)
+              console.log('Diagnosis JSON response:', parsed)
               } catch (e) {
                 parsed = null
               }
@@ -370,6 +371,7 @@ export default {
           const normalizedDiagnosis = parsed && typeof parsed === 'object' ? {
             aiDiagnosis: parsed.ai_diagnosis || parsed.aidiagnosis || '',
             diagnosis: parsed.diagnosis || '',
+            diagnosisId: parsed.diagnosis_id || parsed.diagnosisId || null,
             reasoning: parsed.reasoning || '',
             status: parsed.status || '',
             questionCount: parsed.question_count || parsed.questioncount || null,
@@ -406,7 +408,7 @@ export default {
             // Handle JSON-only completion response from model
             diagnosisResult.title = normalizedDiagnosis.diagnosis || normalizedDiagnosis.aiDiagnosis || ''
             diagnosisResult.description = normalizedDiagnosis.patientSummary || normalizedDiagnosis.reasoning || ''
-            diagnosisResult.diagnosisId = null
+            diagnosisResult.diagnosisId = normalizedDiagnosis.diagnosisId || null
             diagnosisCompleted.value = true
 
             // Redirect immediately without showing raw JSON
