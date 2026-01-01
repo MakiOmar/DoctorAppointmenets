@@ -3642,6 +3642,38 @@ Best regards,
 		}
 
 		$reply = $result['choices'][0]['message']['content'];
+		// Decode AI JSON response into array
+		$reply_decoded = json_decode( $reply, true );
+
+		// Proceed only if JSON is valid
+		if ( json_last_error() === JSON_ERROR_NONE ) {
+
+			// Debug current user ID
+			$user_id = get_current_user_id();
+
+			if (
+				isset( $reply_decoded['status'] )
+				&& $reply_decoded['status'] === 'complete'
+				&& isset( $reply_decoded['diagnosis_id'] )
+				&& is_numeric( $reply_decoded['diagnosis_id'] )
+			) {
+
+				if ( $user_id ) {
+
+					$diagnosis_data = array(
+						'diagnosis_id'      => (int) $reply_decoded['diagnosis_id'],
+						'diagnosis_name'    => $reply_decoded['diagnosis'] ?? '',
+						'confidence'        => $reply_decoded['confidence'] ?? 'medium',
+						'reasoning'         => $reply_decoded['reasoning'] ?? '',
+						'therapist_summary' => $reply_decoded['therapist_summary'] ?? '',
+						'patient_summary'   => $reply_decoded['patient_summary'] ?? '',
+						'completed_at'      => current_time( 'mysql' ),
+					);
+
+					$updated = update_user_meta( $user_id, 'ai_diagnosis_result', $diagnosis_data );
+				}
+			}
+		}
 
 		if ( $logging_enabled && function_exists( 'snks_log_chatgpt_request' ) ) {
 			snks_log_chatgpt_request( $log_request_data, $result, $model, $log_user_id, null, $response_time_ms );
