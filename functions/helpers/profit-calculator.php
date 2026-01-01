@@ -257,7 +257,7 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 	}
 	
 	// Get session amount
-	$session_amount = $order->get_total();
+	$session_amount = $order->get_subtotal();
 
 	
 	// Get therapist and patient IDs
