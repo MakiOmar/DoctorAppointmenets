@@ -1218,7 +1218,7 @@ add_shortcode(
 		// For AI sessions, timetable_id is 0, so we need to join using ai_session_id instead
 		$transactions = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT t.*, s.*
+				"SELECT DISTINCT t.*, s.*
 				FROM $transactions_table t
 				LEFT JOIN $timetable_table s ON (
 					(t.timetable_id > 0 AND t.timetable_id = s.ID) 
