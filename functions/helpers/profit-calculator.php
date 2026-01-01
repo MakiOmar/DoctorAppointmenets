@@ -209,192 +209,17 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 }
 
 /**
- * Create AI earnings transaction from timetable session data
- * Called when session status is changed to 'completed' in timetable
- * 
- * @param object $timetable_session The timetable session object
- * @return array Result array with success status and message
- */
-function snks_create_ai_earnings_from_timetable( $timetable_session ) {
-	global $wpdb;
-	
-	// Check if it's an AI session
-	$is_ai_session = ( strpos( $timetable_session->settings, 'ai_booking' ) !== false );
-
-
-	
-	if ( ! $is_ai_session || ! $timetable_session->order_id ) {
-
-		return array(
-			'success' => false,
-			'message' => 'Not an AI session or missing order ID'
-		);
-	}
-	
-	// Check if transaction already exists for this specific session (by session_id, not just order_id)
-
-	$existing = $wpdb->get_var( $wpdb->prepare(
-		"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
-		 WHERE ai_session_id = %d AND transaction_type = 'add'",
-		$timetable_session->ID
-	) );
-
-	
-	if ( $existing > 0 ) {
-
-		return array(
-			'success' => false,
-			'message' => 'Earnings already created for this session'
-		);
-	}
-	
-	// Also check by order_id AND session_id as a secondary safeguard (to handle cases where session_id might not be set correctly)
-
-	$existing_by_order_and_session = $wpdb->get_var( $wpdb->prepare(
-		"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
-		 WHERE ai_order_id = %d AND ai_session_id = %d AND transaction_type = 'add'",
-		$timetable_session->order_id,
-		$timetable_session->ID
-	) );
-
-	
-	if ( $existing_by_order_and_session > 0 ) {
-
-		return array(
-			'success' => false,
-			'message' => 'Earnings already created for this session'
-		);
-	}
-	
-	// Get order details
-
-	$order = wc_get_order( $timetable_session->order_id );
-	if ( ! $order ) {
-
-		return array(
-			'success' => false,
-			'message' => 'Order not found'
-		);
-	}
-
-	
-	// Get therapist and patient IDs
-	$therapist_id = $timetable_session->user_id;
-	$patient_id = $timetable_session->client_id;
-
-	
-	if ( ! $therapist_id || ! $patient_id ) {
-
-		return array(
-			'success' => false,
-			'message' => 'Missing therapist or patient information'
-		);
-	}
-	
-	// Get session amount from order
-	$session_amount = $order->get_total();
-
-	
-	// Calculate profit
-
-	$profit_amount = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
-
-	
-	// Determine session type
-
-	$session_type = snks_is_first_session( $therapist_id, $patient_id );
-
-	
-	// Prepare session data for transaction
-	$session_data = array(
-		'session_id' => $timetable_session->ID, // Use timetable ID as session ID
-		'session_type' => $session_type,
-		'patient_id' => $patient_id,
-		'order_id' => $timetable_session->order_id,
-		'session_amount' => $session_amount
-	);
-	
-	// Add transaction
-
-
-	$transaction_id = snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_amount );
-
-	
-	if ( ! $transaction_id ) {
-
-
-		return array(
-			'success' => false,
-			'message' => 'Failed to create transaction'
-		);
-	}
-
-	
-	// Create or update session_actions entry with proper AI session metadata
-	$actions_table = $wpdb->prefix . 'snks_sessions_actions';
-	$existing_action = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
-		$timetable_session->ID,
-		$timetable_session->order_id
-	) );
-	
-	if ( $existing_action ) {
-		// Update existing entry with AI session type
-		$wpdb->update(
-			$actions_table,
-			array( 
-				'ai_session_type' => $session_type,
-				'session_status' => 'completed'
-			),
-			array( 'id' => $existing_action->id ),
-			array( '%s', '%s' ),
-			array( '%d' )
-		);
-	} else {
-		// Create new session_actions entry for AI session
-		$wpdb->insert(
-			$actions_table,
-			array(
-				'action_session_id' => $timetable_session->ID,
-				'case_id' => $timetable_session->order_id,
-				'therapist_id' => $therapist_id,
-				'patient_id' => $patient_id,
-				'ai_session_type' => $session_type,
-				'session_status' => 'completed',
-				'attendance' => 'yes',
-			),
-			array( '%d', '%d', '%d', '%d', '%s', '%s', '%s' )
-		);
-	}
-	
-	
-	return array(
-		'success' => true,
-		'transaction_id' => $transaction_id,
-		'message' => 'Earnings created successfully'
-	);
-}
-
-/**
  * Execute profit transfer for AI session
  * 
  * @param string $session_id The session ID
  * @return array Result array with success status and message
  */
-function snks_execute_ai_profit_transfer( $session_id ) {
-
-	
+function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 	global $wpdb;
-	
 	// Get session data
-
-	$session_data = $wpdb->get_row( $wpdb->prepare(
-		"SELECT * FROM {$wpdb->prefix}snks_sessions_actions WHERE action_session_id = %s",
-		$session_id
-	), ARRAY_A );
-	
-
-	
+	if ( ! $session_data ) {
+		$session_data = snks_get_session_action_with_timetable( $session_id );
+	}
 	if ( ! $session_data ) {
 
 		return array(
@@ -402,19 +227,9 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 			'message' => 'Session not found'
 		);
 	}
-	
-	// Check if profit already transferred (ai_session_type should be NULL initially)
 
-	if ( ! empty( $session_data['ai_session_type'] ) ) {
-
-		return array(
-			'success' => false,
-			'message' => 'Profit already transferred for this session'
-		);
-	}
-	
 	// Get session details from AI order
-	$order_id = $session_data['case_id'];
+	$order_id = $session_data['order_id'];
 
 	
 	$order = wc_get_order( $order_id );
@@ -424,14 +239,6 @@ function snks_execute_ai_profit_transfer( $session_id ) {
 		return array(
 			'success' => false,
 			'message' => 'Order not found'
-		);
-	}
-
-	// Profit must only be processed when the order is fully completed
-	if ( ! $order->has_status( 'completed' ) ) {
-		return array(
-			'success' => false,
-			'message' => 'Order not completed'
 		);
 	}
 	

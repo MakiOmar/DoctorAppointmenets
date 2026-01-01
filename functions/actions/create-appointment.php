@@ -45,11 +45,6 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 			$order->update_meta_data( 'ai_booking_notified', 1 );
 			$order->save();
 		}
-
-		// Process AI order completion (profit only when completed)
-		if ( $order->has_status( 'completed' ) ) {
-			$result = snks_process_ai_order_completion( $order_id );
-		}
 		
 		// Only redirect if this is not a manual admin completion
 		// Check if we're in admin area or if this is a manual status change

@@ -781,6 +781,36 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
     return $results;
 }
 
+/**
+ * Get session action with provider timetable
+ *
+ * @param int $session_id  Timetable ID (mapped to action_session_id)
+ * @return object|null
+ */
+function snks_get_session_action_with_timetable( int $session_id ): ?array {
+	global $wpdb;
+
+	$actions_table   = "{$wpdb->prefix}snks_sessions_actions";
+	$timetable_table = "{$wpdb->prefix}snks_provider_timetable";
+
+	return $wpdb->get_row(
+		$wpdb->prepare(
+			"
+			SELECT
+				a.*,
+				t.*
+			FROM {$actions_table} AS a
+			LEFT JOIN {$timetable_table} AS t
+				ON t.ID = a.action_session_id
+			WHERE a.action_session_id = %d
+			LIMIT 1
+			",
+			$session_id
+		),
+		ARRAY_A
+	);
+}
+
 
 /**
  * Get all bookable dates.

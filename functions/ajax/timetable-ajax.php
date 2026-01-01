@@ -597,16 +597,12 @@ function snks_handle_session_doctor_actions() {
 		
 		if ( ! $existing_transaction ) {
 			// Try to find sessions_actions entry and use existing profit transfer function
-			$actions_table = $wpdb->prefix . 'snks_sessions_actions';
-			$session_action = $wpdb->get_row( $wpdb->prepare(
-				"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
-				$session_id,
-				$session->order_id
-			) );
+
+			$session_action = snks_get_session_action_with_timetable( $session_id );
 			
 			if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
 				// Use existing profit transfer function
-				snks_execute_ai_profit_transfer( $session_action->action_session_id );
+				snks_execute_ai_profit_transfer( $session_action->action_session_id, $session_action );
 			} elseif ( function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
 				// Fallback: create earnings directly from timetable data
 				snks_create_ai_earnings_from_timetable( $session );
