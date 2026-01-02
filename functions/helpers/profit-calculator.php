@@ -172,14 +172,18 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 	global $wpdb;
 
 	$transaction_id = snks_get_transaction_by_user_timetable_type( $therapist_id, $session_data['session_id'] );
+	teamlog('------start-------');
+	teamlog($transaction_id);
 	if ( ! $transaction_id ) {
 		$transaction_id = snks_add_transaction( 
 			$therapist_id, 
-			0, // timetable_id (0 for AI sessions)
+			$session_data['session_id'], // timetable_id (0 for AI sessions)
 			'add', // transaction_type
-			$profit_amount 
+			$profit_amount ,
+			true
 		);
 	}
+	teamlog($transaction_id);
 	if ( $transaction_id ) {
 		// Calculate admin profit (website share)
 		$session_amount = $session_data['session_amount'] ?? 0;
@@ -203,7 +207,8 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			array( '%d' )
 		);
 		
-
+		teamlog($update_result);
+		teamlog('------end-------');
 		$log_result = snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
 		
 	}

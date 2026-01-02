@@ -120,7 +120,7 @@ function get_available_withdrawal_balance( $user_id ) {
  * @param string $transaction_type The type of transaction ('add' or 'withdraw').
  * @param float  $amount           The amount to be recorded.
  */
-function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amount ) {
+function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amount, $is_ai_session = false ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
 	//phpcs:disable
@@ -128,7 +128,8 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 		$table_name,
 		array(
 			'user_id'          => $user_id,
-			'timetable_id'     => $timetable_id,
+			'timetable_id'     => $is_ai_session ? 0 : $timetable_id,
+			'ai_session_id'    => $is_ai_session ? $timetable_id : 0,
 			'transaction_type' => $transaction_type,
 			'amount'           => $amount,
 			'transaction_time' => current_time( 'mysql' ),
