@@ -119,6 +119,7 @@ function get_available_withdrawal_balance( $user_id ) {
  * @param int    $timetable_id     The booking ID.
  * @param string $transaction_type The type of transaction ('add' or 'withdraw').
  * @param float  $amount           The amount to be recorded.
+ * @param bool   $is_ai_session    Whether this is an AI session transaction.
  */
 function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amount, $is_ai_session = false ) {
 	global $wpdb;
@@ -135,6 +136,7 @@ function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amou
 			'transaction_time' => current_time( 'mysql' ),
 		),
 		array(
+			'%d',
 			'%d',
 			'%d',
 			'%s',

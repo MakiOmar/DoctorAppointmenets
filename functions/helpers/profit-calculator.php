@@ -198,7 +198,8 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			'ai_session_amount' => $session_amount,
 			'ai_admin_profit' => round( $admin_profit, 2 )
 		);
-		
+		teamlog([$metadata,$session_data]);
+		teamlog($transaction_id);
 		$update_result = $wpdb->update(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
