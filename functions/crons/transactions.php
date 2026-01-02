@@ -630,3 +630,49 @@ function snks_get_latest_transaction_amount( $user_id ) {
 	}
 	return 0;
 }
+
+/**
+ * Get transactions by user_id, timetable_id, and transaction_type
+ *
+ * @param int    $user_id The ID of the user.
+ * @param int    $timetable_id The ID of the timetable/booking.
+ * @param string $transaction_type The type of transaction (e.g., 'add', 'withdraw').
+ * @return int|false Transaction ID if found, false otherwise.
+ */
+function snks_get_transaction_by_user_timetable_type( $user_id, $timetable_id, $transaction_type = 'add' ) {
+	global $wpdb;
+
+	// Sanitize and validate parameters.
+	$user_id       = absint( $user_id );
+	$timetable_id  = absint( $timetable_id );
+	$transaction_type = sanitize_text_field( $transaction_type );
+
+	// Bail early if user_id or timetable_id is not valid.
+	if ( 0 === $user_id || 0 === $timetable_id ) {
+		return false;
+	}
+
+	// Prepare the table name (with proper prefix).
+	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
+
+	//phpcs:disable
+	// Prepare the SQL query to get the first transaction ID matching the criteria.
+	$sql = $wpdb->prepare(
+		"SELECT id FROM {$table_name} 
+         WHERE user_id = %d 
+         AND timetable_id = %d
+         AND transaction_type = %s
+         ORDER BY transaction_time DESC
+         LIMIT 1",
+		$user_id,
+		$timetable_id,
+		$transaction_type
+	);
+
+	// Execute the query and get the result.
+	$transaction = $wpdb->get_row( $sql, ARRAY_A );
+	//phpcs:enable
+
+	// Return the transaction ID or false if not found.
+	return ! empty( $transaction ) ? (int) $transaction['id'] : false;
+}
