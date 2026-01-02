@@ -171,7 +171,7 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 	
 	global $wpdb;
 
-	$transaction_id = snks_get_transaction_by_user_timetable_type( $therapist_id, $session_data['session_id'] );
+	$transaction_id = snks_get_transaction_by_user_order_id( $therapist_id, $session_data['order_id'] );
 	teamlog('------start-------');
 	teamlog($transaction_id);
 	if ( ! $transaction_id ) {

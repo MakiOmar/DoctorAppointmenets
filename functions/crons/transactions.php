@@ -635,23 +635,23 @@ function snks_get_latest_transaction_amount( $user_id ) {
 }
 
 /**
- * Get transactions by user_id, timetable_id, and transaction_type
+ * Get the latest transaction ID by user_id, order_id, and transaction_type
  *
  * @param int    $user_id The ID of the user.
- * @param int    $timetable_id The ID of the timetable/booking.
+ * @param int    $order_id The order ID associated with the transaction.
  * @param string $transaction_type The type of transaction (e.g., 'add', 'withdraw').
  * @return int|false Transaction ID if found, false otherwise.
  */
-function snks_get_transaction_by_user_timetable_type( $user_id, $timetable_id, $transaction_type = 'add' ) {
+function snks_get_transaction_by_user_order_id( $user_id, $order_id, $transaction_type = 'add' ) {
 	global $wpdb;
 
 	// Sanitize and validate parameters.
 	$user_id       = absint( $user_id );
-	$timetable_id  = absint( $timetable_id );
+	$order_id      = absint( $order_id );
 	$transaction_type = sanitize_text_field( $transaction_type );
 
-	// Bail early if user_id or timetable_id is not valid.
-	if ( 0 === $user_id || 0 === $timetable_id ) {
+	// Bail early if user_id or order_id is not valid.
+	if ( 0 === $user_id || 0 === $order_id ) {
 		return false;
 	}
 
@@ -662,13 +662,13 @@ function snks_get_transaction_by_user_timetable_type( $user_id, $timetable_id, $
 	// Prepare the SQL query to get the first transaction ID matching the criteria.
 	$sql = $wpdb->prepare(
 		"SELECT id FROM {$table_name} 
-         WHERE user_id = %d 
-         AND timetable_id = %d
-         AND transaction_type = %s
-         ORDER BY transaction_time DESC
-         LIMIT 1",
+		 WHERE user_id = %d 
+		 AND ai_order_id = %d
+		 AND transaction_type = %s
+		 ORDER BY transaction_time DESC
+		 LIMIT 1",
 		$user_id,
-		$timetable_id,
+		$order_id,
 		$transaction_type
 	);
 
