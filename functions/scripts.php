@@ -696,6 +696,8 @@ add_action(
 			// Reinitialize checks after Jet popup is shown
 			$(window).on('jet-popup/show-event/after-show', function(){
 				debugLog('🎯 Jet popup shown - reinitializing session completion checks...');
+				$('.snks-activate-set-as-completed-btn').addClass('snks-complete-session-btn');
+				$('.snks-activate-send-message-btn').addClass('snks-send-message-btn');
 				applyDisabledButtonStyles();
 				initSessionCompletionCheck();
 				// Reattach completion handler
