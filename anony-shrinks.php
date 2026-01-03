@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.253
+ * Version: 1.0.254
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -1328,3 +1328,9 @@ add_filter(
 	10,
 	2
 );
+
+
+// Extend session to 30 days regardless of "Remember Me"
+add_filter('auth_cookie_expiration', function($expiration) {
+    return 2592000; // 30 days in seconds
+});
