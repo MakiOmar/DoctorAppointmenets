@@ -536,7 +536,7 @@ add_action(
 					}
 				});
 			}
-			
+			 
 			// Initialize checks on page load and immediately
 			function initializeSessionButtons() {
 				debugLog('🚀 Initializing session completion checks...');
@@ -705,6 +705,8 @@ add_action(
 			// Reinitialize checks after Jet popup content is rendered
 			$(window).on('jet-popup/render-content/render-custom-content', function(){
 				debugLog('📄 Jet popup content rendered - reinitializing session completion checks...');
+				$('.snks-activate-set-as-completed-btn').addClass('snks-complete-session-btn');
+				$('.snks-activate-send-message-btn').addClass('snks-send-message-btn');
 				applyDisabledButtonStyles();
 				initSessionCompletionCheck();
 				// Reattach completion handler

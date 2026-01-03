@@ -1695,7 +1695,7 @@ function snks_doctor_actions( $session ) {
 		if ( $is_ai_session && ! $is_completed ) {
 			// Prepare button attributes
 			$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
-			$button_class    = 'snks-button table-form-button snks-complete-session-btn';
+			$button_class    = 'snks-button table-form-button snks-activate-set-as-completed-btn';
 			if ( ! $is_session_ended ) {
 				$button_class .= ' snks-button-waiting';
 			}
@@ -1740,7 +1740,7 @@ function snks_doctor_actions( $session ) {
 			if ( ! $message_exists || $message_exists == 0 ) {
 				// Prepare button attributes based on session status
 				$button_disabled = $is_session_ended ? '' : 'disabled="disabled"';
-				$button_class    = 'snks-button snks-send-message-btn';
+				$button_class    = 'snks-button snks-activate-send-message-btn';
 				if ( ! $is_session_ended ) {
 					$button_class .= ' snks-button-waiting';
 				}
