@@ -1248,18 +1248,17 @@ class SNKS_AI_Integration {
 
 		// Verify nonce for security
 		if ( ! $this->verify_api_nonce( 'nonce', 'ai_register_nonce' ) ) {
-			$this->send_error( 'Security check failed', 401 );
+			$this->send_error( 'فشل التحقق الأمني', 401 );
 		}
 
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			$this->send_error( 'Invalid JSON data', 400 );
+			$this->send_error( 'بيانات JSON غير صالحة', 400 );
 		}
 
 		// Get therapist registration settings to check email requirement
 		$registration_settings = snks_get_therapist_registration_settings();
-		$locale                = $this->get_request_locale();
 
 		// Base required fields
 		$required_fields = array( 'first_name', 'last_name', 'whatsapp', 'password' );
@@ -1271,7 +1270,15 @@ class SNKS_AI_Integration {
 
 		foreach ( $required_fields as $field ) {
 			if ( ! isset( $data[ $field ] ) || empty( $data[ $field ] ) ) {
-				$this->send_error( "Field {$field} is required", 400 );
+				$field_names = array(
+					'first_name' => 'الاسم الأول',
+					'last_name'  => 'الاسم الأخير',
+					'whatsapp'   => 'رقم الواتساب',
+					'password'   => 'كلمة المرور',
+					'email'      => 'البريد الإلكتروني',
+				);
+				$field_name = $field_names[ $field ] ?? $field;
+				$this->send_error( "حقل {$field_name} مطلوب", 400 );
 			}
 		}
 
@@ -1285,28 +1292,19 @@ class SNKS_AI_Integration {
 		// 1) Field validation - matching custom_process_user_registration
 		// ---------------------------
 		if ( empty( $whatsapp_number ) ) {
-			$error_message = $locale === 'ar' 
-				? 'رقم التليفون حقل إلزامي' 
-				: 'Phone number is required';
-			$this->send_error( $error_message, 400 );
+			$this->send_error( 'رقم التليفون حقل إلزامي', 400 );
 		}
 
 		// Extract last 9 digits for comparison
 		$last9 = substr( preg_replace( '/\D+/', '', $whatsapp_number ), -9 );
 		
 		if ( strlen( $last9 ) < 5 ) {
-			$error_message = $locale === 'ar' 
-				? 'يرجى إدخال رقم تليفون صحيح' 
-				: 'Please enter a valid phone number';
-			$this->send_error( $error_message, 400 );
+			$this->send_error( 'يرجى إدخال رقم تليفون صحيح', 400 );
 		}
 
 		// Validate email format if provided
 		if ( ! empty( $email ) && ! is_email( $email ) ) {
-			$error_message = $locale === 'ar' 
-				? 'البريد الإلكتروني غير صحيح' 
-				: 'Invalid email address';
-			$this->send_error( $error_message, 400 );
+			$this->send_error( 'البريد الإلكتروني غير صحيح', 400 );
 		}
 
 		global $wpdb;
@@ -1496,17 +1494,11 @@ class SNKS_AI_Integration {
 		if ( ! $otp_success ) {
 			$error_message = '';
 			if ( $registration_settings['otp_method'] === 'sms' ) {
-				$error_message = $locale === 'ar' 
-					? 'فشل إرسال رمز التحقق عبر الرسائل القصيرة. الرجاء المحاولة مرة أخرى.' 
-					: 'Failed to send verification code via SMS. Please try again.';
+				$error_message = 'فشل إرسال رمز التحقق عبر الرسائل القصيرة. الرجاء المحاولة مرة أخرى.';
 			} elseif ( $registration_settings['otp_method'] === 'whatsapp' ) {
-				$error_message = $locale === 'ar' 
-					? 'فشل إرسال رمز التحقق عبر واتساب. الرجاء المحاولة مرة أخرى.' 
-					: 'Failed to send verification code via WhatsApp. Please try again.';
+				$error_message = 'فشل إرسال رمز التحقق عبر واتساب. الرجاء المحاولة مرة أخرى.';
 			} else {
-				$error_message = $locale === 'ar' 
-					? 'فشل إرسال البريد الإلكتروني للتحقق. الرجاء المحاولة مرة أخرى.' 
-					: 'Failed to send verification email. Please try again.';
+				$error_message = 'فشل إرسال البريد الإلكتروني للتحقق. الرجاء المحاولة مرة أخرى.';
 			}
 
 			$this->send_error( $error_message, 500 );
@@ -1515,17 +1507,11 @@ class SNKS_AI_Integration {
 		// Dynamic success message based on actual OTP method used
 		$success_message = '';
 		if ( $actual_otp_method === 'sms' ) {
-			$success_message = $locale === 'ar'
-				? 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق عبر الرسائل القصيرة.'
-				: 'Registration successful! Verification code sent via SMS.';
+			$success_message = 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق عبر الرسائل القصيرة.';
 		} elseif ( $actual_otp_method === 'whatsapp' ) {
-			$success_message = $locale === 'ar'
-				? 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق إلى واتساب.'
-				: 'Registration successful! Verification code sent via WhatsApp.';
+			$success_message = 'تم إنشاء الحساب بنجاح! تم إرسال رمز التحقق إلى واتساب.';
 		} else {
-			$success_message = $locale === 'ar'
-				? 'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على رمز التحقق.'
-				: 'Registration successful! Please check your email for verification code.';
+			$success_message = 'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني للحصول على رمز التحقق.';
 		}
 
 		$this->send_success(
@@ -1540,6 +1526,37 @@ class SNKS_AI_Integration {
 		);
 	}
 
+/**
+ * Handle existing AI user - similar to handle_existing_user but for AI registration
+ * Returns user object if allowed to proceed, null otherwise
+ */
+private function handle_existing_ai_user( $user_id, $phone, $data ) {
+	$user = get_user_by( 'ID', $user_id );
+	
+	if ( ! $user ) {
+		return null;
+	}
+
+	$roles = $user->roles;
+
+	// If user has customer role, allow update and re-verification
+	if ( in_array( 'customer', $roles, true ) ) {
+		// Check if user is already verified
+		$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
+		if ( $is_verified === '1' ) {
+			$this->send_error( 'المستخدم موجود بالفعل ومفعّل. الرجاء تسجيل الدخول بدلاً من ذلك.', 400 );
+		}
+
+		// Update existing user fields
+		$this->update_ai_user_fields( $user->ID, $data );
+		return $user;
+	}
+
+	// If user has other roles (doctor, clinic_manager, etc.), throw error
+	$this->send_error( 'رقم التليفون موجود بالفعل في النظام', 400 );
+	
+	return null; // This line won't be reached due to send_error, but added for clarity
+}
 	/**
 	 * Handle existing AI user - similar to handle_existing_user but for AI registration
 	 * Returns user object if allowed to proceed, null otherwise
