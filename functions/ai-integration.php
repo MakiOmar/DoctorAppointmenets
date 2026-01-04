@@ -1242,27 +1242,26 @@ class SNKS_AI_Integration {
 	}
 
 	/**
-	 * AI Register
+	 * AI Register with Enhanced Validation (matching custom_process_user_registration)
 	 */
 	private function ai_register() {
 
 		// Verify nonce for security
 		if ( ! $this->verify_api_nonce( 'nonce', 'ai_register_nonce' ) ) {
-
 			$this->send_error( 'Security check failed', 401 );
 		}
 
 		$data = json_decode( file_get_contents( 'php://input' ), true );
 
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
-
 			$this->send_error( 'Invalid JSON data', 400 );
 		}
 
 		// Get therapist registration settings to check email requirement
 		$registration_settings = snks_get_therapist_registration_settings();
+		$locale                = $this->get_request_locale();
 
-		// Base required fields (no phone field, conditional email)
+		// Base required fields
 		$required_fields = array( 'first_name', 'last_name', 'whatsapp', 'password' );
 
 		// Add email to required fields if it's required in settings
@@ -1272,138 +1271,170 @@ class SNKS_AI_Integration {
 
 		foreach ( $required_fields as $field ) {
 			if ( ! isset( $data[ $field ] ) || empty( $data[ $field ] ) ) {
-
 				$this->send_error( "Field {$field} is required", 400 );
 			}
 		}
 
-		// Check if user exists (by email if provided, otherwise by WhatsApp)
-		$existing_user   = null;
-		$user_identifier = '';
+		// Sanitize inputs
+		$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
+		$email           = ! empty( $data['email'] ) ? sanitize_email( $data['email'] ) : '';
+		$password        = $data['password'];
+		$billing_phone   = ! empty( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '';
 
-		if ( ! empty( $data['email'] ) ) {
-			$existing_user   = get_user_by( 'email', sanitize_email( $data['email'] ) );
-			$user_identifier = sanitize_email( $data['email'] );
-		} else {
-			// If no email, check by WhatsApp number in user meta with normalization (handles presence/absence of country code)
-			global $wpdb;
-			$whatsapp_number        = sanitize_text_field( $data['whatsapp'] );
-			$normalized_whatsapp_in = snks_normalize_phone_for_comparison( $whatsapp_number );
-
-			$potential_users = array();
-
-			if ( $normalized_whatsapp_in ) {
-				$potential_users = $wpdb->get_results(
-				$wpdb->prepare(
-						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
-					 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
-					 AND meta_value LIKE %s",
-						'%' . $wpdb->esc_like( $normalized_whatsapp_in ) . '%'
-				)
-			);
-			}
-
-			if ( ! empty( $potential_users ) ) {
-				foreach ( $potential_users as $row ) {
-					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp_in ) {
-						$existing_user = get_user_by( 'ID', $row->user_id );
-						break;
-					}
-				}
-			}
-
-			$user_identifier = $whatsapp_number;
+		// ---------------------------
+		// 1) Field validation - matching custom_process_user_registration
+		// ---------------------------
+		if ( empty( $whatsapp_number ) ) {
+			$error_message = $locale === 'ar' 
+				? 'رقم التليفون حقل إلزامي' 
+				: 'Phone number is required';
+			$this->send_error( $error_message, 400 );
 		}
 
-		if ( $existing_user ) {
-			// Check if user is already verified
-			$is_verified = get_user_meta( $existing_user->ID, 'ai_email_verified', true );
-			if ( $is_verified === '1' ) {
-				$this->send_error( 'User already exists and is verified. Please login instead.', 400 );
-			}
-
-			// Update existing user fields
-			$this->update_ai_user_fields( $existing_user->ID, $data );
-			$user = $existing_user;
-		} else {
-			// Create new user - use email if provided, otherwise create email from WhatsApp
-			$username = ! empty( $data['email'] ) ? sanitize_email( $data['email'] ) : sanitize_text_field( $data['whatsapp'] );
-
-			if ( ! empty( $data['email'] ) ) {
-				$email = sanitize_email( $data['email'] );
-			} else {
-				// Create email from WhatsApp number: +201234567890@jalsah.app
-				$clean_whatsapp = preg_replace( '/[^0-9+]/', '', $data['whatsapp'] );
-				$email          = $clean_whatsapp . '@jalsah.app';
-			}
-
-			// Enforce uniqueness across username, email, WhatsApp and billing phone before creating a new user
-			global $wpdb;
-
-			// Username
-			if ( $username && username_exists( $username ) ) {
-				$this->send_error( 'An account with this username already exists. Please login instead.', 400 );
-			}
-
-			// Email
-			if ( $email && email_exists( $email ) ) {
-				$this->send_error( 'An account with this email already exists. Please login instead.', 400 );
-			}
-
-			// WhatsApp (check both whatsapp and billing_whatsapp) with normalization (handles country code)
-			$whatsapp_number = sanitize_text_field( $data['whatsapp'] );
-			if ( $whatsapp_number ) {
-				$normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp_number );
-
-				$potential_whatsapp_users = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
-						 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
-						 AND meta_value LIKE %s",
-						'%' . $wpdb->esc_like( $normalized_whatsapp ) . '%'
-					)
-				);
-
-				if ( ! empty( $potential_whatsapp_users ) ) {
-					foreach ( $potential_whatsapp_users as $row ) {
-						if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
-							$this->send_error( 'An account with this WhatsApp number already exists. Please login instead.', 400 );
-						}
-					}
-				}
-			}
-
-			// Billing phone (optional, check normalized)
-			if ( ! empty( $data['phone'] ) ) {
-				$billing_phone     = sanitize_text_field( $data['phone'] );
-				$normalized_phone  = snks_normalize_phone_for_comparison( $billing_phone );
-				$potential_phone_users = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT user_id, meta_value FROM {$wpdb->usermeta}
-						 WHERE meta_key = 'billing_phone'
-						 AND meta_value LIKE %s",
-						'%' . $wpdb->esc_like( $normalized_phone ) . '%'
-					)
-				);
-
-				if ( ! empty( $potential_phone_users ) ) {
-					foreach ( $potential_phone_users as $row ) {
-						if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
-							$this->send_error( 'An account with this phone number already exists. Please login instead.', 400 );
-						}
-					}
-				}
-			}
-
-			$user_id = wp_create_user( $username, $data['password'], $email );
-			if ( is_wp_error( $user_id ) ) {
-				$this->send_error( $user_id->get_error_message(), 400 );
-			}
-
-			$user = get_user_by( 'ID', $user_id );
-			$user->set_role( 'customer' );
-			$this->update_ai_user_fields( $user_id, $data );
+		// Extract last 9 digits for comparison
+		$last9 = substr( preg_replace( '/\D+/', '', $whatsapp_number ), -9 );
+		
+		if ( strlen( $last9 ) < 5 ) {
+			$error_message = $locale === 'ar' 
+				? 'يرجى إدخال رقم تليفون صحيح' 
+				: 'Please enter a valid phone number';
+			$this->send_error( $error_message, 400 );
 		}
+
+		// Validate email format if provided
+		if ( ! empty( $email ) && ! is_email( $email ) ) {
+			$error_message = $locale === 'ar' 
+				? 'البريد الإلكتروني غير صحيح' 
+				: 'Invalid email address';
+			$this->send_error( $error_message, 400 );
+		}
+
+		global $wpdb;
+
+		// Build phone cleanup SQL
+		$phone_cleanup_sql = build_phone_cleanup_sql( 'meta_value' );
+
+		// ---------------------------
+		// 2) Check billing_phone duplicates - with role check
+		// ---------------------------
+		$existing_user_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT user_id
+				FROM {$wpdb->usermeta}
+				WHERE meta_key = 'billing_phone'
+				AND {$phone_cleanup_sql} = %s
+				LIMIT 1",
+				$last9
+			)
+		);
+
+		if ( $existing_user_id ) {
+			$existing_user = $this->handle_existing_ai_user( $existing_user_id, $whatsapp_number, $data );
+			if ( $existing_user ) {
+				$user = $existing_user;
+				goto send_verification; // Skip to verification code sending
+			}
+		}
+
+		// ---------------------------
+		// 3) Check username duplicates - with role check
+		// ---------------------------
+		$username_cleanup_sql = build_phone_cleanup_sql( 'user_login' );
+
+		$existing_user_id2 = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID
+				FROM {$wpdb->users}
+				WHERE {$username_cleanup_sql} = %s
+				LIMIT 1",
+				$last9
+			)
+		);
+
+		if ( $existing_user_id2 ) {
+			$existing_user = $this->handle_existing_ai_user( $existing_user_id2, $whatsapp_number, $data );
+			if ( $existing_user ) {
+				$user = $existing_user;
+				goto send_verification; // Skip to verification code sending
+			}
+		}
+
+		// ---------------------------
+		// 4) Check if username exists exactly - with role check
+		// ---------------------------
+		$exact_user_id = username_exists( $whatsapp_number );
+		if ( $exact_user_id ) {
+			$existing_user = $this->handle_existing_ai_user( $exact_user_id, $whatsapp_number, $data );
+			if ( $existing_user ) {
+				$user = $existing_user;
+				goto send_verification; // Skip to verification code sending
+			}
+		}
+
+		// ---------------------------
+		// 5) Check email uniqueness if provided
+		// ---------------------------
+		if ( ! empty( $email ) ) {
+			$email_user_id = email_exists( $email );
+			if ( $email_user_id ) {
+				$existing_user = $this->handle_existing_ai_user( $email_user_id, $whatsapp_number, $data );
+				if ( $existing_user ) {
+					$user = $existing_user;
+					goto send_verification; // Skip to verification code sending
+				}
+			}
+		}
+
+		// ---------------------------
+		// 6) Check WhatsApp meta duplicates - with role check
+		// ---------------------------
+		$whatsapp_user_id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT user_id
+				FROM {$wpdb->usermeta}
+				WHERE meta_key = 'whatsapp'
+				AND {$phone_cleanup_sql} = %s
+				LIMIT 1",
+				$last9
+			)
+		);
+
+		if ( $whatsapp_user_id ) {
+			$existing_user = $this->handle_existing_ai_user( $whatsapp_user_id, $whatsapp_number, $data );
+			if ( $existing_user ) {
+				$user = $existing_user;
+				goto send_verification; // Skip to verification code sending
+			}
+		}
+
+		// ---------------------------
+		// 7) Create new user
+		// ---------------------------
+		// Create email if not provided
+		if ( empty( $email ) ) {
+			$clean_whatsapp = preg_replace( '/[^0-9+]/', '', $whatsapp_number );
+			$email          = $clean_whatsapp . '@jalsah.app';
+		}
+
+		// Use WhatsApp as username
+		$username = $whatsapp_number;
+
+		$user_id = wp_create_user( $username, $password, $email );
+		
+		if ( is_wp_error( $user_id ) ) {
+			$this->send_error( wp_kses_post( $user_id->get_error_message() ), 400 );
+		}
+
+		$user = get_user_by( 'ID', $user_id );
+		$user->set_role( 'customer' );
+		
+		// Update user meta
+		$this->update_ai_user_fields( $user_id, $data );
+
+		// ---------------------------
+		// Send verification code
+		// ---------------------------
+		send_verification:
 
 		// Generate verification code - use random numbers only
 		$verification_code = '';
@@ -1421,43 +1452,43 @@ class SNKS_AI_Integration {
 		$contact_method    = '';
 		$actual_otp_method = '';
 
-		if ( $registration_settings['otp_method'] === 'sms' && ! empty( $data['whatsapp'] ) ) {
-			$contact_method    = $data['whatsapp'];
+		if ( $registration_settings['otp_method'] === 'sms' && ! empty( $whatsapp_number ) ) {
+			$contact_method    = $whatsapp_number;
 			$actual_otp_method = 'sms';
 			$message           = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
 
 			// Use existing WhySMS SMS service
-			$sms_result = send_sms_via_whysms( $data['whatsapp'], $message );
+			$sms_result = send_sms_via_whysms( $whatsapp_number, $message );
 
 			if ( ! is_wp_error( $sms_result ) ) {
 				$otp_success = true;
 			}
-		} elseif ( $registration_settings['otp_method'] === 'whatsapp' && ! empty( $data['whatsapp'] ) ) {
-			$contact_method    = $data['whatsapp'];
+		} elseif ( $registration_settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp_number ) ) {
+			$contact_method    = $whatsapp_number;
 			$actual_otp_method = 'whatsapp';
 			$message           = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
 
 			// Use WhatsApp Business API
-			$whatsapp_result = snks_send_whatsapp_message( $data['whatsapp'], $message, $registration_settings );
+			$whatsapp_result = snks_send_whatsapp_message( $whatsapp_number, $message, $registration_settings );
 
 			if ( $whatsapp_result && ! is_wp_error( $whatsapp_result ) ) {
 				$otp_success = true;
 			}
-		} elseif ( $registration_settings['otp_method'] === 'email' && ! empty( $data['email'] ) ) {
-			$contact_method    = $data['email'];
+		} elseif ( $registration_settings['otp_method'] === 'email' && ! empty( $email ) ) {
+			$contact_method    = $email;
 			$actual_otp_method = 'email';
 
 			// Send verification email using existing method
 			$otp_success = $this->send_verification_email( $user->ID, $verification_code );
 		} else {
 			// Fallback to email if no method matches or email is available
-			if ( ! empty( $data['email'] ) ) {
-				$contact_method    = $data['email'];
+			if ( ! empty( $email ) ) {
+				$contact_method    = $email;
 				$actual_otp_method = 'email';
 				$otp_success       = $this->send_verification_email( $user->ID, $verification_code );
 			} else {
 				// If no email available, use WhatsApp as contact method
-				$contact_method    = $data['whatsapp'];
+				$contact_method    = $whatsapp_number;
 				$actual_otp_method = 'whatsapp';
 			}
 		}
@@ -1465,18 +1496,21 @@ class SNKS_AI_Integration {
 		if ( ! $otp_success ) {
 			$error_message = '';
 			if ( $registration_settings['otp_method'] === 'sms' ) {
-				$error_message = 'Failed to send verification code via SMS. Please try again.';
+				$error_message = $locale === 'ar' 
+					? 'فشل إرسال رمز التحقق عبر الرسائل القصيرة. الرجاء المحاولة مرة أخرى.' 
+					: 'Failed to send verification code via SMS. Please try again.';
 			} elseif ( $registration_settings['otp_method'] === 'whatsapp' ) {
-				$error_message = 'Failed to send verification code via WhatsApp. Please try again.';
+				$error_message = $locale === 'ar' 
+					? 'فشل إرسال رمز التحقق عبر واتساب. الرجاء المحاولة مرة أخرى.' 
+					: 'Failed to send verification code via WhatsApp. Please try again.';
 			} else {
-				$error_message = 'Failed to send verification email. Please try again.';
+				$error_message = $locale === 'ar' 
+					? 'فشل إرسال البريد الإلكتروني للتحقق. الرجاء المحاولة مرة أخرى.' 
+					: 'Failed to send verification email. Please try again.';
 			}
 
 			$this->send_error( $error_message, 500 );
 		}
-
-		// Get locale for response message
-		$locale = $this->get_request_locale();
 
 		// Dynamic success message based on actual OTP method used
 		$success_message = '';
@@ -1504,6 +1538,45 @@ class SNKS_AI_Integration {
 				'requires_verification' => true,
 			)
 		);
+	}
+
+	/**
+	 * Handle existing AI user - similar to handle_existing_user but for AI registration
+	 * Returns user object if allowed to proceed, null otherwise
+	 */
+	private function handle_existing_ai_user( $user_id, $phone, $data ) {
+		$user  = get_user_by( 'ID', $user_id );
+		$locale = $this->get_request_locale();
+		
+		if ( ! $user ) {
+			return null;
+		}
+
+		$roles = $user->roles;
+
+		// If user has customer role, allow update and re-verification
+		if ( in_array( 'customer', $roles, true ) ) {
+			// Check if user is already verified
+			$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
+			if ( $is_verified === '1' ) {
+				$error_message = $locale === 'ar' 
+					? 'المستخدم موجود بالفعل ومفعّل. الرجاء تسجيل الدخول بدلاً من ذلك.' 
+					: 'User already exists and is verified. Please login instead.';
+				$this->send_error( $error_message, 400 );
+			}
+
+			// Update existing user fields
+			$this->update_ai_user_fields( $user->ID, $data );
+			return $user;
+		}
+
+		// If user has other roles (doctor, clinic_manager, etc.), throw error
+		$error_message = $locale === 'ar' 
+			? 'رقم التليفون موجود بالفعل في النظام' 
+			: 'Phone number already exists in the system';
+		$this->send_error( $error_message, 400 );
+		
+		return null; // This line won't be reached due to send_error, but added for clarity
 	}
 
 	/**
