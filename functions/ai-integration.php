@@ -1526,44 +1526,12 @@ class SNKS_AI_Integration {
 		);
 	}
 
-/**
- * Handle existing AI user - similar to handle_existing_user but for AI registration
- * Returns user object if allowed to proceed, null otherwise
- */
-private function handle_existing_ai_user( $user_id, $phone, $data ) {
-	$user = get_user_by( 'ID', $user_id );
-	
-	if ( ! $user ) {
-		return null;
-	}
-
-	$roles = $user->roles;
-
-	// If user has customer role, allow update and re-verification
-	if ( in_array( 'customer', $roles, true ) ) {
-		// Check if user is already verified
-		$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
-		if ( $is_verified === '1' ) {
-			$this->send_error( 'المستخدم موجود بالفعل ومفعّل. الرجاء تسجيل الدخول بدلاً من ذلك.', 400 );
-		}
-
-		// Update existing user fields
-		$this->update_ai_user_fields( $user->ID, $data );
-		return $user;
-	}
-
-	// If user has other roles (doctor, clinic_manager, etc.), throw error
-	$this->send_error( 'رقم التليفون موجود بالفعل في النظام', 400 );
-	
-	return null; // This line won't be reached due to send_error, but added for clarity
-}
 	/**
 	 * Handle existing AI user - similar to handle_existing_user but for AI registration
 	 * Returns user object if allowed to proceed, null otherwise
 	 */
 	private function handle_existing_ai_user( $user_id, $phone, $data ) {
-		$user  = get_user_by( 'ID', $user_id );
-		$locale = $this->get_request_locale();
+		$user = get_user_by( 'ID', $user_id );
 		
 		if ( ! $user ) {
 			return null;
@@ -1576,10 +1544,7 @@ private function handle_existing_ai_user( $user_id, $phone, $data ) {
 			// Check if user is already verified
 			$is_verified = get_user_meta( $user->ID, 'ai_email_verified', true );
 			if ( $is_verified === '1' ) {
-				$error_message = $locale === 'ar' 
-					? 'المستخدم موجود بالفعل ومفعّل. الرجاء تسجيل الدخول بدلاً من ذلك.' 
-					: 'User already exists and is verified. Please login instead.';
-				$this->send_error( $error_message, 400 );
+				$this->send_error( 'المستخدم موجود بالفعل ومفعّل. الرجاء تسجيل الدخول بدلاً من ذلك.', 400 );
 			}
 
 			// Update existing user fields
@@ -1588,13 +1553,11 @@ private function handle_existing_ai_user( $user_id, $phone, $data ) {
 		}
 
 		// If user has other roles (doctor, clinic_manager, etc.), throw error
-		$error_message = $locale === 'ar' 
-			? 'رقم التليفون موجود بالفعل في النظام' 
-			: 'Phone number already exists in the system';
-		$this->send_error( $error_message, 400 );
+		$this->send_error( 'رقم التليفون موجود بالفعل في النظام', 400 );
 		
 		return null; // This line won't be reached due to send_error, but added for clarity
 	}
+
 
 	/**
 	 * Handle user deletion - invalidate tokens and sessions
