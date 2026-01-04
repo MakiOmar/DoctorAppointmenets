@@ -1,0 +1,552 @@
+{
+  "shortcodes": [
+    {
+      "name": "snks_booking_url_button",
+      "elements": [
+        {
+          "tag": "button",
+          "customAttributes": [
+            "data-url"
+          ]
+        },
+        {
+          "tag": "div",
+          "customAttributes": []
+        }
+      ]
+    },
+    {
+      "name": "phone_input",
+      "elements": [
+        {
+          "tag": "a",
+          "class": "anony-dialling-code",
+          "customAttributes": [
+            "data-dial-code"
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "anony-dial-codes",
+          "customAttributes": []
+        },
+        {
+          "tag": "input",
+          "type": "tel",
+          "class": "anony_dial_phone",
+          "customAttributes": []
+        },
+        {
+          "tag": "button",
+          "class": "anony_dial_codes_selected_choice",
+          "customAttributes": []
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "class": "anony-filter-input",
+          "customAttributes": []
+        }
+      ]
+    },
+    {
+      "name": "custom_withdrawal_form",
+      "elements": [
+        {
+          "tag": "form",
+          "id": "withdrawal-settings-form",
+          "customAttributes": []
+        },
+        {
+          "tag": "div",
+          "class": "manual-withdrawal-button",
+          "customAttributes": [
+            "data-nonce"
+          ]
+        },
+        {
+          "tag": "input",
+          "type": "text",
+          "id": "otp_input",
+          "customAttributes": []
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "id": "send-otp",
+          "customAttributes": []
+        }
+      ]
+    },
+    {
+      "name": "consulting_session_table",
+      "elements": [
+        {
+          "tag": "table",
+          "customAttributes": []
+        }
+      ]
+    },
+    {
+      "name": "consulting_session_pricing_table",
+      "elements": [
+        {
+          "tag": "div",
+          "id": "price-break",
+          "customAttributes": []
+        },
+        {
+          "tag": "input",
+          "type": "hidden",
+          "id": "selected_doctor_url",
+          "customAttributes": []
+        },
+        {
+          "tag": "button",
+          "id": "snks-remove-coupon",
+          "class": "remove-coupon-btn",
+          "customAttributes": []
+        },
+        {
+          "tag": "svg",
+          "id": "pricing-details-toggle",
+          "customAttributes": []
+        }
+      ]
+    },
+    {
+      "name": "snks_bookings (Sessions List)",
+      "elements": [
+        {
+          "tag": "div",
+          "class": "snks-timetable-accordion-wrapper",
+          "customAttributes": [
+            "data-id"
+          ],
+          "description": "Wrapper for timetable accordion with date identifier"
+        },
+        {
+          "tag": "div",
+          "class": "snks-timetable-accordion",
+          "customAttributes": [
+            "data-id"
+          ],
+          "description": "Accordion header for timetables"
+        },
+        {
+          "tag": "div",
+          "class": "snks-timetable-accordion-content",
+          "customAttributes": [
+            "id"
+          ],
+          "description": "Accordion content container with date as id"
+        },
+        {
+          "tag": "div",
+          "class": "snks-booking-item-wrapper",
+          "customAttributes": [],
+          "description": "Wrapper for individual booking item"
+        },
+        {
+          "tag": "div",
+          "class": "snks-booking-item",
+          "customAttributes": [
+            "data-datetime",
+            "data-period",
+            "id"
+          ],
+          "description": "Individual booking item with session details"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox",
+          "class": "bulk-action-checkbox",
+          "customAttributes": [
+            "data-date",
+            "data-doctor",
+            "data-patient"
+          ],
+          "description": "Bulk action checkbox for sessions"
+        }
+      ]
+    },
+    {
+      "name": "Session Actions (JavaScript powered)",
+      "elements": [
+        {
+          "tag": "button",
+          "class": "snks-change",
+          "customAttributes": [
+            "data-title",
+            "data-id",
+            "data-time",
+            "data-date"
+          ],
+          "description": "Change/Edit appointment button"
+        },
+        {
+          "tag": "button",
+          "class": "details-button",
+          "customAttributes": [
+            "data-coupon",
+            "data-coupon-type",
+            "data-date-time",
+            "data-attendance-type",
+            "data-client-name"
+          ],
+          "description": "Transaction details button with coupon and session info"
+        },
+        {
+          "tag": "div",
+          "id": "iam-sure",
+          "customAttributes": [
+            "data-action",
+            "data-parent"
+          ],
+          "description": "Confirmation dialog with action and parent identifier"
+        },
+        {
+          "tag": "button",
+          "class": "snks-booking-bulk-action",
+          "customAttributes": [
+            "data-action",
+            "data-title"
+          ],
+          "description": "Bulk action button for sessions"
+        },
+        {
+          "tag": "select",
+          "id": "change-to-date",
+          "customAttributes": [
+            "data-date",
+            "data-time"
+          ],
+          "description": "Date change dropdown for appointment"
+        },
+        {
+          "tag": "button",
+          "class": "bulk-action-toggle-tip-close",
+          "customAttributes": [],
+          "description": "Close button for bulk action tip"
+        }
+      ]
+    },
+    {
+      "name": "Coupons Table (Transaction Details)",
+      "elements": [
+        {
+          "tag": "td",
+          "customAttributes": [
+            "data-label"
+          ],
+          "description": "Table cell with label for responsive display"
+        },
+        {
+          "tag": "button",
+          "class": "snks-delete-coupon",
+          "customAttributes": [
+            "data-id"
+          ],
+          "description": "Delete coupon button with coupon id"
+        }
+      ]
+    },
+    {
+      "name": "Therapist Registration",
+      "elements": [
+        {
+          "tag": "div",
+          "class": "file-upload-group",
+          "customAttributes": [
+            "data-field"
+          ],
+          "description": "File upload group for different document types"
+        },
+        {
+          "tag": "span",
+          "class": "english-tooltip",
+          "customAttributes": [
+            "data-tooltip"
+          ],
+          "description": "English translation tooltip for diagnoses"
+        },
+        {
+          "tag": "button",
+          "class": "remove-row-btn",
+          "customAttributes": [
+            "data-remove"
+          ],
+          "description": "Remove button for certificate/course rows"
+        }
+      ]
+    },
+    {
+      "name": "Add Sessions Script",
+      "elements": [
+        {
+          "tag": "select",
+          "customAttributes": [
+            "data-field-name"
+          ],
+          "description": "Form field selector by field name (used in jQuery)"
+        },
+        {
+          "tag": "input",
+          "customAttributes": [
+            "data-field-name"
+          ],
+          "description": "Form input field by field name"
+        }
+      ]
+    },
+    {
+      "name": "WhatsApp Notification Test Buttons",
+      "elements": [
+        {
+          "tag": "button",
+          "class": "test-whatsapp-notification",
+          "customAttributes": [
+            "data-template",
+            "data-params"
+          ],
+          "description": "Test button for WhatsApp notification with template name and JSON params"
+        }
+      ]
+    },
+    {
+      "name": "Doctor Actions Wrapper",
+      "elements": [
+        {
+          "tag": "div",
+          "class": "doctor-actions",
+          "customAttributes": [
+            "data-session-end",
+            "data-session-id",
+            "data-client-id",
+            "data-is-ai-session"
+          ],
+          "description": "Container for doctor action buttons with session info"
+        }
+      ]
+    },
+    {
+      "name": "Rochtah Slots Manager",
+      "elements": [
+        {
+          "tag": "button",
+          "class": "edit-template-btn",
+          "customAttributes": [
+            "data-day",
+            "data-day-name"
+          ],
+          "description": "Edit template button for day slots"
+        },
+        {
+          "tag": "select",
+          "class": "slot-start-time",
+          "customAttributes": [
+            "data-index"
+          ],
+          "description": "Slot start time selector with index"
+        },
+        {
+          "tag": "select",
+          "class": "slot-end-time",
+          "customAttributes": [
+            "data-index"
+          ],
+          "description": "Slot end time selector with index"
+        },
+        {
+          "tag": "button",
+          "class": "remove-slot-btn",
+          "customAttributes": [
+            "data-index"
+          ],
+          "description": "Remove slot button with slot index"
+        }
+      ]
+    },
+    {
+      "name": "Account Settings Scripts",
+      "elements": [
+        {
+          "tag": "form",
+          "customAttributes": [
+            "data-form-id"
+          ],
+          "description": "JetEngine form with form identifier"
+        },
+        {
+          "tag": "div",
+          "customAttributes": [
+            "data-id"
+          ],
+          "description": "Popup container with popup identifier"
+        }
+      ]
+    },
+    {
+      "name": "Fancy Upload (File Upload)",
+      "elements": [
+        {
+          "tag": "div",
+          "class": "anony-nice-uploader anony-nice-uploader-trigger",
+          "customAttributes": [
+            "data-target",
+            "data-current-avatar",
+            "id"
+          ],
+          "description": "Upload trigger with target field and current avatar URL"
+        },
+        {
+          "tag": "div",
+          "customAttributes": [
+            "data-filename"
+          ],
+          "description": "File remove element with filename attribute"
+        }
+      ]
+    },
+    {
+      "name": "Preview Timetable",
+      "elements": [
+        {
+          "tag": "tr",
+          "id": "timetable-tab-*",
+          "customAttributes": [
+            "data-target"
+          ],
+          "description": "Timetable preview tab row with target identifier"
+        },
+        {
+          "tag": "td",
+          "customAttributes": [
+            "data-label"
+          ],
+          "description": "Table cell with responsive label"
+        }
+      ]
+    },
+    {
+      "name": "Plugin Update Checker (Debug Bar)",
+      "elements": [
+        {
+          "tag": "div",
+          "class": "puc-debug-bar-panel-v4",
+          "customAttributes": [
+            "data-slug",
+            "data-uid",
+            "data-nonce",
+            "id"
+          ],
+          "description": "Debug bar panel with plugin metadata"
+        }
+      ]
+    },
+    {
+      "name": "Sessions Preview",
+      "elements": [
+        {
+          "tag": "target element",
+          "customAttributes": [
+            "data-target"
+          ],
+          "description": "Target selector for preview display toggle"
+        }
+      ]
+    },
+    {
+      "name": "My Booking Script",
+      "elements": [
+        {
+          "tag": "button/element",
+          "customAttributes": [
+            "data-testid",
+            "data-tooltip"
+          ],
+          "description": "Jitsi meeting elements with test IDs and tooltips"
+        }
+      ]
+    },
+    {
+      "name": "WooCommerce Checkout",
+      "elements": [
+        {
+          "tag": "button",
+          "id": "place_order",
+          "customAttributes": [
+            "data-value"
+          ],
+          "description": "Order button with text value"
+        }
+      ]
+    },
+    {
+      "name": "Duplicate Users Admin",
+      "elements": [
+        {
+          "tag": "form/element",
+          "customAttributes": [
+            "data-nonce"
+          ],
+          "description": "Admin form with security nonce"
+        }
+      ]
+    }
+  ],
+  "commonCustomAttributes": {
+    "data-id": "Element identifier (date, ID, parent identifier)",
+    "data-date": "Date value or formatted date string",
+    "data-time": "Time value or formatted time string",
+    "data-datetime": "Combined date and time value",
+    "data-action": "Action identifier (for bulk operations like delay, postpone, cancel)",
+    "data-title": "Action title for user feedback",
+    "data-parent": "Parent element identifier",
+    "data-period": "Session duration in minutes",
+    "data-doctor": "Doctor/Therapist user ID",
+    "data-patient": "Patient/Client user ID",
+    "data-coupon": "Coupon code text",
+    "data-coupon-type": "Coupon type identifier",
+    "data-attendance-type": "Attendance type (online/offline)",
+    "data-client-name": "Client full name",
+    "data-date-time": "Localized datetime string",
+    "data-dial-code": "Country dial code",
+    "data-nonce": "WordPress nonce for security",
+    "data-template": "Template identifier for notifications",
+    "data-params": "JSON parameters for template",
+    "data-field": "Form field identifier",
+    "data-field-name": "Form field name for jQuery selector",
+    "data-target": "Target element selector or field ID",
+    "data-current-avatar": "Current avatar URL",
+    "data-filename": "File name for identification",
+    "data-session-end": "Session end timestamp",
+    "data-session-id": "Session/Appointment ID",
+    "data-client-id": "Client ID",
+    "data-is-ai-session": "Flag indicating if session is AI-powered",
+    "data-day": "Day key or number",
+    "data-day-name": "Day name string",
+    "data-index": "Index for slot or element",
+    "data-form-id": "JetEngine form identifier",
+    "data-remove": "Remove action identifier",
+    "data-tooltip": "Tooltip text content",
+    "data-label": "Responsive table label",
+    "data-testid": "Testing identifier",
+    "data-slug": "Plugin slug",
+    "data-uid": "Unique identifier",
+    "data-value": "Element value",
+    "data-url-attr": "URL attribute",
+    "data-id-attr": "ID attribute"
+  },
+  "summary": {
+    "totalShortcodes": 23,
+    "totalCustomAttributes": 37,
+    "mostCommonAttribute": "data-id",
+    "primaryUse": "Session/Appointment management and user interactions",
+    "frameworks": [
+      "jQuery (for DOM manipulation and AJAX)",
+      "JetEngine (form builder)",
+      "WordPress (nonces and hooks)"
+    ]
+  }
+}
