@@ -1003,7 +1003,7 @@ export default {
       }, 200) // Give modal time to fully render
     }
 
-    const closeSessionModal = () => {
+    const closeSessionModal = (redirectUrl = null) => {
       showSessionModal.value = false
       // Stop logo hiding polling
       stopLogoHidePolling()
@@ -1014,6 +1014,11 @@ export default {
       }
       jitsiLoaded.value = false
       currentSessionId.value = null
+      
+      // Redirect if URL is provided
+      if (redirectUrl) {
+        router.push(redirectUrl)
+      }
     }
 
     const confirmCloseSessionModal = async () => {
@@ -1048,7 +1053,7 @@ export default {
         cancelButtonText: $t('common.cancel') || 'Cancel'
       })
       if (result.isConfirmed) {
-        closeSessionModal()
+        closeSessionModal('/appointments')
       }
     }
 
@@ -1300,18 +1305,12 @@ export default {
         
         sessionMeetAPI.value.addListener('videoConferenceLeft', () => {
           stopLogoHidePolling()
+          closeSessionModal('/appointments')
         })
         
         sessionMeetAPI.value.addListener('readyToClose', () => {
           stopLogoHidePolling()
-        })
-        
-        sessionMeetAPI.value.addListener('videoConferenceLeft', () => {
-          closeSessionModal()
-        })
-        
-        sessionMeetAPI.value.addListener('readyToClose', () => {
-          closeSessionModal()
+          closeSessionModal('/appointments')
         })
         
         // Set a timeout to show the meeting even if not fully loaded
