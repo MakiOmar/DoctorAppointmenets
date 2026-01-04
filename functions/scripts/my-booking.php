@@ -167,7 +167,7 @@ add_shortcode(
 					setTimeout(attemptAutoJoin, 2000);
 					<?php } ?>
 					
-					<?php if ( ! snks_is_patient() && ! empty( $room_id ) ) { ?>
+					<?php if ( ! empty( $room_id ) ) { ?>
 					//videoConferenceJoined
 					meetAPI.addListener('videoConferenceJoined', function(room){
 						// Perform nonce check.
@@ -205,8 +205,13 @@ add_shortcode(
 								console.log('Error disposing meeting:', e);
 							}
 						}
+						<?php if ( ! snks_is_patient() ) { ?>
 						// Redirect to account-setting page
 						window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+						<?php } else { ?>
+						// Redirect to account-setting page
+						window.location.href = '<?php echo esc_url( site_url( '/my-bookings' ) ); ?>';
+						<?php } ?>
 					});
 					
 					meetAPI.addListener('readyToClose', function() {
@@ -218,8 +223,13 @@ add_shortcode(
 								console.log('Error disposing meeting:', e);
 							}
 						}
-						// Redirect to account-setting page
-						window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+						<?php if ( ! snks_is_patient() ) { ?>
+							// Redirect to account-setting page
+							window.location.href = '<?php echo esc_url( site_url( '/account-setting' ) ); ?>';
+							<?php } else { ?>
+							// Redirect to account-setting page
+							window.location.href = '<?php echo esc_url( site_url( '/my-bookings' ) ); ?>';
+						<?php } ?>
 					});
 					
 					// Also monitor for Jitsi default interface and redirect immediately
