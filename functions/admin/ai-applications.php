@@ -320,103 +320,120 @@ function snks_enhanced_ai_applications_page() {
  * Approve therapist application and create minimal user account
  */
 function snks_approve_therapist_application( $application_id ) {
-	global $wpdb;
-	$table_name = $wpdb->prefix . 'therapist_applications';
-	
-	// Allow approving both pending and rejected applications
-	$application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d AND (status = 'pending' OR status = 'rejected')", $application_id ) );
-	if ( !$application ) {
-		return false;
-	}
-	
-	// Check if user already exists
-	$existing_user = get_user_by( 'email', $application->email );
-	if ( $existing_user ) {
-		$user_id = $existing_user->ID;
-	} else {
-		// Before creating a new user, enforce uniqueness across username, email, WhatsApp and billing phone
-		$phone    = ! empty( $application->phone ) ? sanitize_text_field( $application->phone ) : '';
-		$email    = ! empty( $application->email ) ? sanitize_email( $application->email ) : '';
-		$whatsapp = ! empty( $application->whatsapp ) ? sanitize_text_field( $application->whatsapp ) : '';
-
-		// Username (we use phone as username) - direct username check is enough here
-		if ( $phone && username_exists( $phone ) ) {
-			return new WP_Error( 'snks_username_exists', __( 'Cannot approve application: a user with this phone (username) already exists.', 'anony-shrinks' ) );
-		}
-
-		// Email
-		if ( $email && email_exists( $email ) ) {
-			return new WP_Error( 'snks_email_exists', __( 'Cannot approve application: a user with this email already exists.', 'anony-shrinks' ) );
-		}
-
-		// WhatsApp (check whatsapp, billing_whatsapp and billing_phone meta) with normalization
-		if ( $whatsapp ) {
-			$normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp );
-
-			$potential_whatsapp_users = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT user_id, meta_value FROM {$wpdb->usermeta}
-					 WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
-					 AND meta_value LIKE %s",
-					'%' . $wpdb->esc_like( $normalized_whatsapp ) . '%'
-				)
-			);
-
-			if ( ! empty( $potential_whatsapp_users ) ) {
-				foreach ( $potential_whatsapp_users as $row ) {
-					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
-						return new WP_Error( 'snks_whatsapp_exists', __( 'Cannot approve application: a user with this WhatsApp number already exists.', 'anony-shrinks' ) );
-					}
-				}
-			}
-		}
-
-		// Billing phone (normalize to handle presence/absence of country code)
-		if ( $phone ) {
-			$normalized_phone = snks_normalize_phone_for_comparison( $phone );
-
-			$potential_billing_phone_users = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT user_id, meta_value FROM {$wpdb->usermeta}
-					 WHERE meta_key = 'billing_phone'
-					 AND meta_value LIKE %s",
-					'%' . $wpdb->esc_like( $normalized_phone ) . '%'
-				)
-			);
-
-			if ( ! empty( $potential_billing_phone_users ) ) {
-				foreach ( $potential_billing_phone_users as $row ) {
-					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
-						return new WP_Error( 'snks_billing_phone_exists', __( 'Cannot approve application: a user with this billing phone already exists.', 'anony-shrinks' ) );
-		}
-				}
-			}
-		}
-
-		// Create new user with minimal data if all checks pass
-		$password = wp_generate_password( 8, false );
-		$user_id = wp_create_user( $application->phone, $password, $application->email );
-		if ( is_wp_error( $user_id ) ) {
-			return $user_id;
-		}
-	}
-	
-	$user = get_user_by( 'id', $user_id );
-	$user->set_role( 'doctor' );
-	
-	// Set only essential user meta for login purposes
-	update_user_meta( $user_id, 'billing_phone', $application->phone );
-	update_user_meta( $user_id, 'billing_email', $application->email );
-	update_user_meta( $user_id, 'first_name', $application->name );
-	update_user_meta( $user_id, 'billing_first_name', $application->name );
-	
-	// Update application status and link to user
-	$wpdb->update( $table_name, [
-		'status' => 'approved',
-		'user_id' => $user_id
-	], ['id' => $application_id] );
-	
-	return true;
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'therapist_applications';
+    
+    // Allow approving both pending and rejected applications
+    $application = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d AND (status = 'pending' OR status = 'rejected')", $application_id ) );
+    if ( !$application ) {
+        return false;
+    }
+    
+    $user_id = 0;
+    $is_new_user = false;
+    $linked_by = 'email'; // Track what we linked by
+    
+    // 1) Try to find existing user by email
+    $existing_user = get_user_by( 'email', $application->email );
+    if ( $existing_user ) {
+        $user_id = $existing_user->ID;
+        $linked_by = 'email';
+    } else {
+        // 2) Try to find by phone (username)
+        if ( ! empty( $application->phone ) ) {
+            $phone = sanitize_text_field( $application->phone );
+            $existing_by_phone = get_user_by( 'login', $phone );
+            if ( $existing_by_phone ) {
+                $user_id = $existing_by_phone->ID;
+                $linked_by = 'phone (username)';
+            }
+        }
+        
+        // 3) Try to find by WhatsApp
+        if ( ! $user_id && ! empty( $application->whatsapp ) ) {
+            $whatsapp = sanitize_text_field( $application->whatsapp );
+            $normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp );
+            
+            $potential_whatsapp_users = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT user_id, meta_value FROM {$wpdb->usermeta}
+                     WHERE meta_key IN ('whatsapp','billing_whatsapp','billing_phone')
+                     AND meta_value LIKE %s",
+                    '%' . $wpdb->esc_like( $normalized_whatsapp ) . '%'
+                )
+            );
+            
+            if ( ! empty( $potential_whatsapp_users ) ) {
+                foreach ( $potential_whatsapp_users as $row ) {
+                    if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
+                        $user_id = $row->user_id;
+                        $linked_by = 'WhatsApp number';
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // 4) Try to find by billing phone
+        if ( ! $user_id && ! empty( $application->phone ) ) {
+            $phone = sanitize_text_field( $application->phone );
+            $normalized_phone = snks_normalize_phone_for_comparison( $phone );
+            
+            $potential_billing_phone_users = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT user_id, meta_value FROM {$wpdb->usermeta}
+                     WHERE meta_key = 'billing_phone'
+                     AND meta_value LIKE %s",
+                    '%' . $wpdb->esc_like( $normalized_phone ) . '%'
+                )
+            );
+            
+            if ( ! empty( $potential_billing_phone_users ) ) {
+                foreach ( $potential_billing_phone_users as $row ) {
+                    if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
+                        $user_id = $row->user_id;
+                        $linked_by = 'billing phone';
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // 5) Create new user if none found
+        if ( ! $user_id ) {
+            if ( empty( $application->phone ) || empty( $application->email ) ) {
+                return new WP_Error( 'snks_missing_data', __( 'Cannot approve application: phone or email is missing.', 'anony-shrinks' ) );
+            }
+            
+            // Create new user with minimal data
+            $password = wp_generate_password( 8, false );
+            $user_id = wp_create_user( $application->phone, $password, $application->email );
+            if ( is_wp_error( $user_id ) ) {
+                return $user_id;
+            }
+            $is_new_user = true;
+        }
+    }
+    
+    // Set role and update meta for both new and existing users
+    $user = get_user_by( 'id', $user_id );
+    if ( $user ) {
+        $user->set_role( 'doctor' );
+        
+        // Set only essential user meta for login purposes
+        update_user_meta( $user_id, 'billing_phone', $application->phone );
+        update_user_meta( $user_id, 'billing_email', $application->email );
+        update_user_meta( $user_id, 'first_name', $application->name );
+        update_user_meta( $user_id, 'billing_first_name', $application->name );
+    }
+    
+    // Update application status and link to user
+    $wpdb->update( $table_name, [
+        'status' => 'approved',
+        'user_id' => $user_id
+    ], ['id' => $application_id] );
+    
+    return true;
 }
 
 /**
