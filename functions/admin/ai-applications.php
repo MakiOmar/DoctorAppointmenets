@@ -440,37 +440,28 @@ function snks_create_or_link_user_from_application( $application_id ) {
 	}
 	
 	$user_id = 0;
+	$is_new_user = false;
+	$linked_by = 'email'; // Track what we linked by
 	
 	// 1) Try to find existing user by email.
 	$existing_by_email = get_user_by( 'email', $application->email );
 	if ( $existing_by_email ) {
 		$user_id = $existing_by_email->ID;
-	}
-	
-	// 2) Create new user if none found.
-	if ( ! $user_id ) {
-		if ( empty( $application->phone ) ) {
-			return new WP_Error( 'snks_missing_phone', 'Application phone is missing, cannot create user.' );
+		$linked_by = 'email';
+	} else {
+		// 2) Try to find by phone (username)
+		if ( ! empty( $application->phone ) ) {
+			$phone = sanitize_text_field( $application->phone );
+			$existing_by_phone = get_user_by( 'login', $phone );
+			if ( $existing_by_phone ) {
+				$user_id = $existing_by_phone->ID;
+				$linked_by = 'phone (username)';
+			}
 		}
-		// Normalize values for checks
-		$phone    = sanitize_text_field( $application->phone );
-		$email    = sanitize_email( $application->email );
-		$whatsapp = ! empty( $application->whatsapp ) ? sanitize_text_field( $application->whatsapp ) : '';
-
-		// Enforce uniqueness across username, email, WhatsApp and billing phone
-
-		// Username (phone as username) - direct username check is enough here
-		if ( $phone && username_exists( $phone ) ) {
-			return new WP_Error( 'snks_username_exists', __( 'A user with this phone (username) already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
-		}
-
-		// Email
-		if ( $email && email_exists( $email ) ) {
-			return new WP_Error( 'snks_email_exists', __( 'A user with this email already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
-		}
-
-		// WhatsApp (check whatsapp, billing_whatsapp and billing_phone) with normalization
-		if ( $whatsapp ) {
+		
+		// 3) Try to find by WhatsApp
+		if ( ! $user_id && ! empty( $application->whatsapp ) ) {
+			$whatsapp = sanitize_text_field( $application->whatsapp );
 			$normalized_whatsapp = snks_normalize_phone_for_comparison( $whatsapp );
 
 			$potential_whatsapp_users = $wpdb->get_results(
@@ -485,14 +476,17 @@ function snks_create_or_link_user_from_application( $application_id ) {
 			if ( ! empty( $potential_whatsapp_users ) ) {
 				foreach ( $potential_whatsapp_users as $row ) {
 					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_whatsapp ) {
-						return new WP_Error( 'snks_whatsapp_exists', __( 'A user with this WhatsApp number already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
+						$user_id = $row->user_id;
+						$linked_by = 'WhatsApp number';
+						break;
 					}
 				}
 			}
 		}
-
-		// Billing phone (normalize to handle presence/absence of country code)
-		if ( $phone ) {
+		
+		// 4) Try to find by billing phone
+		if ( ! $user_id && ! empty( $application->phone ) ) {
+			$phone = sanitize_text_field( $application->phone );
 			$normalized_phone = snks_normalize_phone_for_comparison( $phone );
 
 			$potential_billing_phone_users = $wpdb->get_results(
@@ -507,21 +501,30 @@ function snks_create_or_link_user_from_application( $application_id ) {
 			if ( ! empty( $potential_billing_phone_users ) ) {
 				foreach ( $potential_billing_phone_users as $row ) {
 					if ( snks_normalize_phone_for_comparison( $row->meta_value ) === $normalized_phone ) {
-						return new WP_Error( 'snks_billing_phone_exists', __( 'A user with this billing phone already exists. Please link instead of creating a new user.', 'anony-shrinks' ) );
+						$user_id = $row->user_id;
+						$linked_by = 'billing phone';
+						break;
 					}
 				}
 			}
 		}
-
-		// All checks passed, safe to create new user
-		$password = wp_generate_password( 8, false );
-		$user_id  = wp_create_user( $application->phone, $password, $application->email );
-		if ( is_wp_error( $user_id ) ) {
-			return new WP_Error( 'snks_user_create_failed', 'Failed to create user: ' . $user_id->get_error_message() );
+		
+		// 5) Create new user if none found
+		if ( ! $user_id ) {
+			if ( empty( $application->phone ) ) {
+				return new WP_Error( 'snks_missing_phone', 'Application phone is missing, cannot create user.' );
+			}
+			
+			$password = wp_generate_password( 8, false );
+			$user_id  = wp_create_user( $application->phone, $password, $application->email );
+			if ( is_wp_error( $user_id ) ) {
+				return new WP_Error( 'snks_user_create_failed', 'Failed to create user: ' . $user_id->get_error_message() );
+			}
+			$is_new_user = true;
 		}
 	}
 	
-	// Ensure role is doctor
+	// Ensure role is doctor and update meta (for both new and existing users)
 	$user = get_user_by( 'id', $user_id );
 	if ( $user ) {
 		$user->set_role( 'doctor' );
@@ -543,7 +546,12 @@ function snks_create_or_link_user_from_application( $application_id ) {
 	);
 	
 	// Message reflects whether we reused or created.
-	$action_label = $existing_by_email ? 'linked' : 'created';
+	if ( $is_new_user ) {
+		$action_label = 'created';
+	} else {
+		$action_label = "linked (found by {$linked_by})";
+	}
+	
 	return sprintf(
 		'User #%d has been %s and linked to this application.',
 		$user_id,

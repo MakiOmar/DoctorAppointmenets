@@ -8,17 +8,17 @@
 //   API_TARGET: 'http://localhost/shrinks'
 // 
 // STAGING SERVER:
-//   API_TARGET: 'https://beforelive.jalsah.app'
+//   API_TARGET: 'https://jalsah.app'
 // 
 // ========================================
 
 export const ENVIRONMENT_CONFIG = {
   // Change this line to switch environments
-  API_TARGET: 'https://beforelive.jalsah.app', // ← CHANGE THIS LINE
+  API_TARGET: 'https://jalsah.app', // ← CHANGE THIS LINE
   
   // Other settings (usually don't need to change)
-  API_BASE_URL: 'https://beforelive.jalsah.app', // ← FIXED: Use full URL for production
-  MAIN_SITE_URL: 'https://beforelive.jalsah.app' // This will auto-update based on API_TARGET
+  API_BASE_URL: 'https://jalsah.app', // ← FIXED: Use full URL for production
+  MAIN_SITE_URL: 'https://jalsah.app' // This will auto-update based on API_TARGET
 };
 
 // Auto-update MAIN_SITE_URL based on API_TARGET

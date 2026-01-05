@@ -11,7 +11,7 @@ API_TARGET: 'http://localhost/shrinks', // ← Change this line
 
 ### For Staging Server:
 ```javascript
-API_TARGET: 'https://beforelive.jalsah.app', // ← Change this line
+API_TARGET: 'https://jalsah.app', // ← Change this line
 ```
 
 ## Steps:
@@ -28,7 +28,7 @@ API_TARGET: 'https://beforelive.jalsah.app', // ← Change this line
 // environment.js
 export const ENVIRONMENT_CONFIG = {
   API_TARGET: 'http://localhost/shrinks', // ← LOCAL
-  // API_TARGET: 'https://beforelive.jalsah.app', // ← STAGING
+  // API_TARGET: 'https://jalsah.app', // ← STAGING
 };
 ```
 
