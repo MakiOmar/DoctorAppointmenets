@@ -321,7 +321,7 @@ function snks_create_custom_timetable() {
 
 		wp_send_json_error( array( 'message' => 'عفواً لايمكن إدخال الموعد! لديك تداخل هنا: ' . implode( ', ', $conflicts_list ) ) );
 	}
-
+	$inserted = false;
 	// No conflicts, save the timetable.
 	$data = array();
 	foreach ( $expected_hours as $expected_hour ) {
@@ -353,9 +353,11 @@ function snks_create_custom_timetable() {
 		}
 		$inserting = $base;
 		unset( $inserting['date'] );
-		snks_insert_timetable( $inserting );
+		$inserted = snks_insert_timetable( $inserting );
 	}
-
+	if ( ! $inserted ) {
+		wp_send_json_error( array( 'message' => 'هناك خطأ ما أثناء حفظ الجدول!' ) );
+	}
 	// Update the timetable data.
 	$preview_timetables                 = snks_get_preview_timetable();
 	$preview_timetables[ $_req['day'] ] = array_merge( $preview_timetables[ $_req['day'] ], $data[ $_req['day'] ] );
