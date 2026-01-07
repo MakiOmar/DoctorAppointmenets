@@ -218,12 +218,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'SessionMessagesNotification',
   setup() {
     const { t, locale } = useI18n()
     const router = useRouter()
+    const authStore = useAuthStore()
     
     const showNotifications = ref(false)
     const loading = ref(false)
@@ -328,6 +330,11 @@ export default {
     }
     
     const loadMessages = async (limit = 5) => {
+      // Only call API if user is authenticated
+      if (!authStore.isAuthenticated) {
+        return
+      }
+      
       loading.value = true
       try {
         const response = await api.get('/api/ai/session-messages', {
@@ -383,6 +390,11 @@ export default {
     }
     
     const markAsRead = async (message) => {
+      // Only call API if user is authenticated
+      if (!authStore.isAuthenticated) {
+        return
+      }
+      
       if (message.is_read == 1 || message.is_read === true) {
         return
       }
@@ -429,14 +441,18 @@ export default {
       }
     }
     
-    // Auto-refresh every 20 seconds
+    // Auto-refresh every 20 seconds (only if authenticated)
     onMounted(() => {
-      loadMessages()
-      setInterval(() => {
-        if (!showNotifications.value) {
-          loadMessages()
-        }
-      }, 20000)
+      // Only load messages and set up polling if user is authenticated
+      if (authStore.isAuthenticated) {
+        loadMessages()
+        setInterval(() => {
+          // Check authentication again before each poll
+          if (authStore.isAuthenticated && !showNotifications.value) {
+            loadMessages()
+          }
+        }, 20000)
+      }
       
       // Add window resize listener
       window.addEventListener('resize', () => {

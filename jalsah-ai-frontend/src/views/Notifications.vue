@@ -224,12 +224,16 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'Notifications',
   setup() {
     const { locale } = useI18n()
+    const router = useRouter()
+    const authStore = useAuthStore()
     const loading = ref(true)
     const loadingMore = ref(false)
     const messages = ref([])
@@ -239,6 +243,13 @@ export default {
     const limit = 20
 
     const loadMessages = async (loadMore = false) => {
+      // Only call API if user is authenticated
+      if (!authStore.isAuthenticated) {
+        // Redirect to login if not authenticated
+        router.push('/login')
+        return
+      }
+      
       if (loadMore) {
         loadingMore.value = true
       } else {
@@ -290,6 +301,11 @@ export default {
     }
 
     const markAsRead = async (message) => {
+      // Only call API if user is authenticated
+      if (!authStore.isAuthenticated) {
+        return
+      }
+      
       if (message.is_read) return
 
       try {
