@@ -1235,18 +1235,51 @@ class SNKS_AI_Integration {
 
 		// Set country/currency cookies on login (frontend should pass country_code; fallback detects)
 		$country_code = isset( $data['country_code'] ) ? strtoupper( sanitize_text_field( $data['country_code'] ) ) : '';
+		
+		if ( empty( $country_code ) ) {
+			// Last resort: detect and set cookies (may call external IP API)
+			if ( function_exists( 'snks_get_country_code' ) ) {
+				$country_code = snks_get_country_code( true );
+			} else {
+				$country_code = 'EG'; // Default fallback
+			}
+		}
+		
+		// Always set cookies using same logic as snks_get_country_code()
 		if ( ! empty( $country_code ) ) {
+			// Handle IL_TO_EG conversion
 			if ( defined( 'IL_TO_EG' ) && IL_TO_EG && 'IL' === $country_code ) {
 				$country_code = 'EG';
 			}
-			$expire_time   = time() + DAY_IN_SECONDS;
-			$currency_code = $this->get_currency_code_by_country( $country_code );
-			setcookie( 'country_code', $country_code, $expire_time, '/' );
-			setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
-		} else {
-			// Last resort: detect and set cookies (may call external IP API)
-			if ( function_exists( 'snks_get_country_code' ) ) {
-				snks_get_country_code( true );
+			
+			$expire_time = time() + DAY_IN_SECONDS;
+			
+			// Get country currencies mapping
+			$country_codes = json_decode( COUNTRY_CURRENCIES, true );
+			
+			// Determine currency code (same logic as snks_get_country_code)
+			$europe_country_codes = array(
+				'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+				'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+				'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+				'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+			);
+			
+			if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
+				$currency_code = $country_codes[ $country_code ];
+			} else {
+				$currency_code = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
+			}
+			
+			if ( defined( 'IL_TO_EG' ) && IL_TO_EG && 'IL' === $country_code ) {
+				$currency_code = 'EGP';
+			}
+			
+			// Set cookies with proper parameters (must be called before any output)
+			if ( ! headers_sent() ) {
+				// Use standard setcookie format
+				setcookie( 'country_code', $country_code, $expire_time, '/', '', is_ssl(), false );
+				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/', '', is_ssl(), false );
 			}
 		}
 
@@ -2066,19 +2099,59 @@ Best regards,
 
 			// Set country/currency cookies on auto-login after verification
 			$country_code = isset( $data['country_code'] ) ? strtoupper( sanitize_text_field( $data['country_code'] ) ) : '';
+			
+			if ( empty( $country_code ) ) {
+				// Last resort: detect and set cookies (may call external IP API)
+				if ( function_exists( 'snks_get_country_code' ) ) {
+					$country_code = snks_get_country_code( true );
+				} else {
+					$country_code = 'EG'; // Default fallback
+				}
+			}
+			
+			// Always set cookies using same logic as snks_get_country_code()
 			if ( ! empty( $country_code ) ) {
+				// Handle IL_TO_EG conversion
 				if ( defined( 'IL_TO_EG' ) && IL_TO_EG && 'IL' === $country_code ) {
 					$country_code = 'EG';
 				}
-				$expire_time   = time() + DAY_IN_SECONDS;
-				$currency_code = $this->get_currency_code_by_country( $country_code );
-				setcookie( 'country_code', $country_code, $expire_time, '/' );
-				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
-			} else {
-				// Last resort: detect and set cookies (may call external IP API)
-				if ( function_exists( 'snks_get_country_code' ) ) {
-					snks_get_country_code( true );
+				
+				$expire_time = time() + DAY_IN_SECONDS;
+				
+				// Get country currencies mapping
+				$country_codes = json_decode( COUNTRY_CURRENCIES, true );
+				
+				// Determine currency code (same logic as snks_get_country_code)
+				$europe_country_codes = array(
+					'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+					'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+					'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+					'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+				);
+				
+				if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
+					$currency_code = $country_codes[ $country_code ];
+				} else {
+					$currency_code = in_array( $country_code, $europe_country_codes ) ? 'EUR' : 'USD';
 				}
+				
+				if ( defined( 'IL_TO_EG' ) && IL_TO_EG && 'IL' === $country_code ) {
+					$currency_code = 'EGP';
+				}
+				
+				// Set cookies with proper parameters for cross-origin support
+				// Use array format for PHP 7.3+ to support SameSite attribute
+				$cookie_params = array(
+					'expires'  => $expire_time,
+					'path'     => '/',
+					'domain'   => '',
+					'secure'   => is_ssl(),
+					'httponly' => false,
+					'samesite' => 'Lax'
+				);
+				
+				setcookie( 'country_code', $country_code, $cookie_params );
+				setcookie( 'ced_selected_currency', $currency_code, $cookie_params );
 			}
 
 			$this->send_success(
