@@ -1276,10 +1276,10 @@ class SNKS_AI_Integration {
 			}
 			
 			// Set cookies with proper parameters (must be called before any output)
+			// Use same format as snks_get_country_code() in helpers.php for consistency
 			if ( ! headers_sent() ) {
-				// Use standard setcookie format
-				setcookie( 'country_code', $country_code, $expire_time, '/', '', is_ssl(), false );
-				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/', '', is_ssl(), false );
+				setcookie( 'country_code', $country_code, $expire_time, '/' );
+				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
 			}
 		}
 
