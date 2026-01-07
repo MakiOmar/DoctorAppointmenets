@@ -2900,8 +2900,21 @@ Best regards,
 		// Get all available dates from timetable
 		$available_dates = $this->get_available_dates_from_timetable( $application->user_id );
 
-		// Get pricing
-		$pricing = $this->get_therapist_ai_price( $application->user_id );
+		// Get user country for pricing (get from request or detect)
+		$country_code = null;
+		// Try to get from request headers or params if available
+		if ( isset( $_SERVER['HTTP_X_COUNTRY_CODE'] ) ) {
+			$country_code = sanitize_text_field( $_SERVER['HTTP_X_COUNTRY_CODE'] );
+		}
+		if ( ! $country_code ) {
+			$country_code = snsk_ip_api_country( false );
+		}
+		if ( ! $country_code || $country_code === 'Unknown' ) {
+			$country_code = 'EG'; // Default to Egypt
+		}
+
+		// Get country-based pricing (default to 45 minutes for listing)
+		$pricing = $this->get_therapist_ai_price( $application->user_id, $country_code, 45 );
 
 		$result = array(
 			'id'                 => $application->user_id,
@@ -2962,6 +2975,15 @@ Best regards,
 
 		$public_bio = $locale === 'ar' ? $public_bio_ar : $public_bio_en;
 
+		// Get user country for pricing
+		$country_code = snsk_ip_api_country( false );
+		if ( ! $country_code || $country_code === 'Unknown' ) {
+			$country_code = 'EG'; // Default to Egypt
+		}
+
+		// Get country-based pricing (default to 45 minutes for listing)
+		$pricing = $this->get_therapist_ai_price( $therapist->ID, $country_code, 45 );
+
 		return array(
 			'id'             => $therapist->ID,
 			'name'           => $name,
@@ -2976,7 +2998,7 @@ Best regards,
 			'public_bio_ar'  => $public_bio_ar,
 			'certifications' => get_user_meta( $therapist->ID, 'ai_certifications', true ),
 			'earliest_slot'  => get_user_meta( $therapist->ID, 'ai_earliest_slot', true ),
-			'price'          => $this->get_therapist_ai_price( $therapist->ID ),
+			'price'          => $pricing,
 			'diagnoses'      => $diagnoses,
 		);
 	}
@@ -3042,58 +3064,180 @@ Best regards,
 	}
 
 	/**
-	 * Get Therapist AI Price
+	 * Get currency code by country code (follows main plugin logic)
+	 * 
+	 * @param string $country_code Country code (e.g., 'EG', 'SA', 'GB')
+	 * @return string Currency code (e.g., 'EGP', 'SAR', 'GBP')
 	 */
-	private function get_therapist_ai_price( $therapist_id ) {
+	private function get_currency_code_by_country( $country_code ) {
+		// Use the same COUNTRY_CURRENCIES constant as main plugin
+		$country_codes = defined( 'COUNTRY_CURRENCIES' ) ? json_decode( COUNTRY_CURRENCIES, true ) : array();
+		
+		// Europe country codes (same as main plugin)
+		$europe_country_codes = array(
+			'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+			'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+			'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+			'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+		);
+		
+		// Check if currency exchange plugin is available and cookie exists
+		if ( class_exists( 'Currency_Exchange_Dashboard' ) && isset( $_COOKIE['ced_selected_currency'] ) ) {
+			$selected_currency = sanitize_text_field( wp_unslash( $_COOKIE['ced_selected_currency'] ) );
+			return strtoupper( $selected_currency );
+		}
+		
+		// Determine currency from country code (same logic as main plugin)
+		if ( ! empty( $country_codes ) && isset( $country_codes[ $country_code ] ) ) {
+			return strtoupper( $country_codes[ $country_code ] );
+		}
+		
+		// Check if country is in Europe
+		if ( in_array( $country_code, $europe_country_codes, true ) ) {
+			return 'EUR';
+		}
+		
+		// Default fallback to USD (same as main plugin)
+		return 'USD';
+	}
+
+	/**
+	 * Get currency symbol by currency code
+	 * 
+	 * @param string $currency_code Currency code (e.g., 'EGP', 'GBP', 'EUR')
+	 * @return string Currency symbol (e.g., 'ج.م', 'GBP', '€')
+	 */
+	private function get_currency_symbol_by_code( $currency_code ) {
+		// Map currency codes to symbols (same as acrsw_currency function)
+		$currencies_labels = array(
+			'EGP' => 'ج.م',
+			'SAR' => 'ر.س',
+			'AED' => 'د.إ',
+			'KWD' => 'د.ك',
+			'QAR' => 'ر.ق',
+			'BHD' => 'د.ب',
+			'OMR' => 'ر.ع',
+			'EUR' => '€',
+			'USD' => 'USD',
+			'GBP' => 'GBP',
+			'CAD' => 'CAD',
+			'AUD' => 'AUD',
+		);
+		
+		$currency_code_upper = strtoupper( $currency_code );
+		
+		if ( isset( $currencies_labels[ $currency_code_upper ] ) ) {
+			return $currencies_labels[ $currency_code_upper ];
+		}
+		
+		// Fallback: return the currency code itself if not found
+		return $currency_code_upper;
+	}
+
+	/**
+	 * Get currency label by country code (backward compatibility)
+	 * Returns currency code, not symbol
+	 * 
+	 * @param string $country_code Country code (e.g., 'EG', 'SA', 'GB')
+	 * @return string Currency code (e.g., 'EGP', 'SAR', 'GBP')
+	 */
+	private function get_currency_by_country( $country_code ) {
+		return $this->get_currency_code_by_country( $country_code );
+	}
+
+	/**
+	 * Get Therapist AI Price with country-based pricing
+	 * 
+	 * @param int    $therapist_id Therapist ID
+	 * @param string $country_code Country code (optional, will detect if not provided)
+	 * @param int    $period Period in minutes (optional, defaults to 45)
+	 * @return array Price information with country-based price and currency
+	 */
+	private function get_therapist_ai_price( $therapist_id, $country_code = null, $period = 45 ) {
+		// Get country code if not provided
+		if ( ! $country_code ) {
+			$country_code = snsk_ip_api_country( false );
+			if ( ! $country_code || $country_code === 'Unknown' ) {
+				$country_code = 'EG'; // Default to Egypt
+			}
+		}
+		
+		// Normalize period to match pricing keys (45, 60, 90 or '45_minutes', '60_minutes', etc.)
+		$period_key = $period;
+		if ( is_numeric( $period ) ) {
+			$period_key = $period;
+		}
+
 		// Check if this is a demo therapist
 		$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
 
 		if ( $is_demo_doctor ) {
 			// For demo therapists, use the simple pricing fields
-			$price_45_min = get_user_meta( $therapist_id, 'price_45_min', true );
-			$price_60_min = get_user_meta( $therapist_id, 'price_60_min', true );
-			$price_90_min = get_user_meta( $therapist_id, 'price_90_min', true );
-
-			// Return pricing in the format expected by the frontend (45_minutes structure)
+			$price_meta_key = 'price_' . $period . '_min';
+			$price = get_user_meta( $therapist_id, $price_meta_key, true );
+			if ( empty( $price ) || ! is_numeric( $price ) ) {
+				$price = get_user_meta( $therapist_id, 'price_45_min', true );
+			}
+			$price = floatval( $price ) ?: 150;
+			
+			// Get currency code for country
+			$currency_code = $this->get_currency_code_by_country( $country_code );
+			
 			return array(
-				'countries' => array(),
-				'others'    => intval( $price_45_min ) ?: 150, // Default to 150 if not set
+				'price'        => $price,
+				'currency'     => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
+				'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ), // Symbol for display
+				'country_code' => $country_code,
+				'countries'    => array(),
+				'others'       => $price, // Keep for backward compatibility
 			);
 		} else {
 			// For regular therapists, use the main pricing system
-			$pricing = snks_doctor_online_pricings( $therapist_id );
+			$pricings = snks_doctor_online_pricings( $therapist_id );
 
-			// Check if 45_minutes pricing exists and has a valid 'others' value
-			if ( isset( $pricing['45_minutes'] ) && ! empty( $pricing['45_minutes']['others'] ) ) {
-				return $pricing['45_minutes'];
+			// Get price by country and period
+			if ( function_exists( 'get_price_by_period_and_country' ) ) {
+				$price = get_price_by_period_and_country( $period_key, $country_code, $pricings );
+			} else {
+				// Fallback: use 'others' price
+				if ( isset( $pricings[ $period_key ] ) && isset( $pricings[ $period_key ]['others'] ) ) {
+					$price = $pricings[ $period_key ]['others'];
+				} elseif ( isset( $pricings['45'] ) && isset( $pricings['45']['others'] ) ) {
+					$price = $pricings['45']['others'];
+				} else {
+					$price = 0;
+				}
 			}
-
-			// If no 45_minutes pricing, check for 60_minutes as fallback
-			if ( isset( $pricing['60_minutes'] ) && ! empty( $pricing['60_minutes']['others'] ) ) {
-				return $pricing['60_minutes'];
+			
+			// If still no price, try fallback methods
+			if ( ! $price || ! is_numeric( $price ) ) {
+				$price_meta_key = $period_key . '_minutes_pricing_others';
+				$price = get_user_meta( $therapist_id, $price_meta_key, true );
+				
+				if ( ! $price && $period_key != 45 ) {
+					$price = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+				}
 			}
-
-			// If no pricing is set up, check if therapist has any pricing fields set
-			$price_45_others = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
-			$price_60_others = get_user_meta( $therapist_id, '60_minutes_pricing_others', true );
-
-			if ( ! empty( $price_45_others ) ) {
-				return array(
-					'countries' => array(),
-					'others'    => intval( $price_45_others ),
-				);
-			}
-
-			// Check for 60_minutes_pricing_others as fallback
-			if ( ! empty( $price_60_others ) ) {
-				return array(
-					'countries' => array(),
-					'others'    => intval( $price_60_others ),
-				);
-			}
-
-			// If still no pricing is found, return empty array (will show "Contact for pricing")
-			return array();
+			
+			$price = floatval( $price ) ?: 0;
+			
+			// Get currency code for country
+			$currency_code = $this->get_currency_code_by_country( $country_code );
+			
+			// Get full pricing structure for backward compatibility
+			$pricing_structure = isset( $pricings[ $period_key ] ) ? $pricings[ $period_key ] : array(
+				'countries' => array(),
+				'others'    => $price,
+			);
+			
+			return array(
+				'price'          => $price,
+				'currency'       => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
+				'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ), // Symbol for display
+				'country_code'   => $country_code,
+				'countries'      => isset( $pricing_structure['countries'] ) ? $pricing_structure['countries'] : array(),
+				'others'         => isset( $pricing_structure['others'] ) ? $pricing_structure['others'] : $price,
+			);
 		}
 	}
 
@@ -3272,11 +3416,30 @@ Best regards,
 			$cart = array();
 		}
 
+		// Get user country
+		$country_code = get_user_meta( $user_id, 'billing_country', true );
+		if ( ! $country_code ) {
+			$country_code = snsk_ip_api_country( false );
+		}
+		if ( ! $country_code || $country_code === 'Unknown' ) {
+			$country_code = 'EG'; // Default to Egypt
+		}
+
+		// Get slot period (default to 45 if not set)
+		$period = isset( $slot->period ) && ! empty( $slot->period ) ? intval( $slot->period ) : 45;
+
+		// Get country-based pricing with currency
+		$pricing_info = $this->get_therapist_ai_price( $slot->user_id, $country_code, $period );
+
 		$cart[] = array(
 			'slot_id'      => $slot->ID,
 			'therapist_id' => $slot->user_id,
 			'date_time'    => $slot->date_time,
-			'price'        => $this->get_therapist_ai_price( $slot->user_id ),
+			'period'       => $period,
+			'country_code' => $country_code,
+			'price'        => floatval( $pricing_info['price'] ),
+			'currency'     => $pricing_info['currency'],
+			'pricing_info' => $pricing_info, // Store full pricing info for reference
 		);
 
 		update_user_meta( $user_id, 'ai_cart', $cart );
@@ -3404,11 +3567,38 @@ Best regards,
 			}
 		}
 
+		// Get user country from request or detect it
+		$country_code = null;
+		if ( isset( $data['country_code'] ) ) {
+			$country_code = sanitize_text_field( $data['country_code'] );
+		} else {
+			// Try to get from user meta (stored during registration)
+			$country_code = get_user_meta( $user_id, 'billing_country', true );
+			if ( ! $country_code ) {
+				// Detect country from IP
+				$country_code = snsk_ip_api_country( false );
+			}
+		}
+		
+		if ( ! $country_code || $country_code === 'Unknown' ) {
+			$country_code = 'EG'; // Default to Egypt
+		}
+
+		// Get slot period (default to 45 if not set)
+		$period = isset( $current_slot->period ) && ! empty( $current_slot->period ) ? intval( $current_slot->period ) : 45;
+
+		// Get country-based pricing with currency
+		$pricing_info = $this->get_therapist_ai_price( $therapist_id, $country_code, $period );
+
 		$cart[] = array(
 			'slot_id'      => $slot_id,
 			'therapist_id' => $therapist_id,
 			'date_time'    => $date_time,
-			'price'        => $this->get_therapist_ai_price( $therapist_id ),
+			'period'       => $period,
+			'country_code' => $country_code,
+			'price'        => floatval( $pricing_info['price'] ),
+			'currency'     => $pricing_info['currency'],
+			'pricing_info' => $pricing_info, // Store full pricing info for reference
 			'added_at'     => current_time( 'mysql' ),
 		);
 
@@ -4360,67 +4550,41 @@ Best regards,
 	}
 
 	/**
-	 * Get cart item price based on therapist and period
+	 * Get cart item price based on therapist, period, and country
 	 * 
-	 * @param object $item Cart item with user_id, period, and attendance_type
+	 * @param object $item Cart item with user_id, period, attendance_type, and country_code
 	 * @return float The price for this cart item
 	 */
 	private function get_cart_item_price( $item ) {
 		$therapist_id = isset( $item->user_id ) ? intval( $item->user_id ) : 0;
 		$period = isset( $item->period ) ? intval( $item->period ) : 45;
 		$attendance_type = isset( $item->attendance_type ) ? $item->attendance_type : 'online';
+		$country_code = isset( $item->country_code ) ? $item->country_code : null;
 		
 		if ( ! $therapist_id ) {
 			return 200.00; // Default fallback price
 		}
 		
-		// Check if this is a demo therapist
-		$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
-		
-		if ( $is_demo_doctor ) {
-			// For demo therapists, use the simple pricing fields
-			$price_meta_key = 'price_' . $period . '_min';
-			$price = get_user_meta( $therapist_id, $price_meta_key, true );
-			if ( ! empty( $price ) && is_numeric( $price ) ) {
-				return floatval( $price );
+		// Get country code if not provided
+		if ( ! $country_code ) {
+			// Try to get from user meta
+			$user_id = get_current_user_id();
+			if ( $user_id ) {
+				$country_code = get_user_meta( $user_id, 'billing_country', true );
 			}
-			// Fallback to 45 min price if period price not found
-			$price_45 = get_user_meta( $therapist_id, 'price_45_min', true );
-			if ( ! empty( $price_45 ) && is_numeric( $price_45 ) ) {
-				return floatval( $price_45 );
+			if ( ! $country_code ) {
+				$country_code = snsk_ip_api_country( false );
 			}
-			return 150.00; // Default for demo doctors
-		}
-		
-		// For regular therapists, use the main pricing system
-		$pricings = snks_doctor_online_pricings( $therapist_id );
-		
-		// Pricing array uses numeric period keys (e.g., 45, 60, 90)
-		// Check if pricing exists for this period
-		if ( isset( $pricings[ $period ] ) && isset( $pricings[ $period ]['others'] ) ) {
-			$price = $pricings[ $period ]['others'];
-			if ( ! empty( $price ) && is_numeric( $price ) ) {
-				return floatval( $price );
+			if ( ! $country_code || $country_code === 'Unknown' ) {
+				$country_code = 'EG'; // Default to Egypt
 			}
 		}
 		
-		// Fallback: Try to get price from user meta directly
-		$price_meta_key = $period . '_minutes_pricing_others';
-		$price = get_user_meta( $therapist_id, $price_meta_key, true );
-		if ( ! empty( $price ) && is_numeric( $price ) ) {
-			return floatval( $price );
-		}
+		// Use the new country-based pricing method
+		$pricing_info = $this->get_therapist_ai_price( $therapist_id, $country_code, $period );
+		$price = isset( $pricing_info['price'] ) ? floatval( $pricing_info['price'] ) : 200.00;
 		
-		// Try 45 minutes as fallback
-		if ( $period != 45 ) {
-			$price_45_meta = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
-			if ( ! empty( $price_45_meta ) && is_numeric( $price_45_meta ) ) {
-				return floatval( $price_45_meta );
-			}
-		}
-		
-		// Final fallback
-		return 200.00;
+		return $price > 0 ? $price : 200.00; // Final fallback
 	}
 
 	/**
@@ -4471,10 +4635,23 @@ Best regards,
 			$wpdb->query( $cleanup_query );
 		}
 
+		// Get user country for currency
+		$country_code = get_user_meta( $user_id, 'billing_country', true );
+		if ( ! $country_code ) {
+			$country_code = snsk_ip_api_country( false );
+		}
+		if ( ! $country_code || $country_code === 'Unknown' ) {
+			$country_code = 'EG'; // Default to Egypt
+		}
+		$currency_code = $this->get_currency_code_by_country( $country_code );
+
 		$total_price = 0;
 		foreach ( $valid_cart_items as $item ) {
 			$item_price   = $this->get_cart_item_price( $item );
 			$item->price  = floatval( $item_price );
+			$item->currency = $currency_code; // Add currency code to each item (e.g., 'GBP', 'EUR')
+			$item->currency_symbol = $this->get_currency_symbol_by_code( $currency_code ); // Add symbol for display
+			$item->country_code = $country_code; // Add country code
 			$total_price += $item_price;
 			
 			if ( ! empty( $item->profile_image ) ) {
@@ -4485,6 +4662,9 @@ Best regards,
 		return array(
 			'items' => $valid_cart_items,
 			'total' => round( $total_price, 2 ),
+			'currency' => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
+			'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ), // Symbol for display
+			'country_code' => $country_code,
 			'count' => count( $valid_cart_items ),
 		);
 	}

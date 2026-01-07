@@ -32,7 +32,7 @@
                 <p v-if="therapist.doctor_specialty" class="text-sm text-gray-600 mt-1">{{ therapist.doctor_specialty }}</p>
               </div>
               <div class="text-lg font-semibold text-primary-600">
-                {{ formatPrice(therapist.price?.others) }}
+                {{ formatPrice(therapist.price?.price || therapist.price?.others, therapist.price?.currency_symbol || getCurrencySymbol(therapist.price?.currency || settingsStore.userCurrencyCode)) }}
                 <span class="text-sm text-gray-500 font-normal">- 45 {{ $t('common.minutes') }}</span>
               </div>
             </div>
@@ -290,6 +290,7 @@ import StarRating from './StarRating.vue'
 import Lightbox from './Lightbox.vue'
 import Swal from 'sweetalert2'
 import { formatGregorianDate } from '@/utils/dateFormatter'
+import { formatPrice as formatPriceUtil, getCurrencySymbol } from '@/utils/currency'
 
 export default {
   name: 'TherapistCard',
@@ -329,6 +330,7 @@ export default {
     const { t, locale } = useI18n()
     const authStore = useAuthStore()
     const cartStore = useCartStore()
+    const settingsStore = useSettingsStore()
     const toast = useToast()
     const router = useRouter()
     
@@ -354,15 +356,29 @@ export default {
       return props.position || null
     })
 
-    // Format price with currency symbol
-    const formatPrice = (price) => {
+    // Format price with currency symbol - uses currency from pricing info or settings store
+    const formatPrice = (price, currencySymbol = null) => {
       if (!price || price === 0) {
         return locale.value === 'ar' ? 'اتصل للاستفسار' : 'Contact for pricing'
       }
       
-      // Use ج.م for Arabic, $ for English
-      const currencySymbol = locale.value === 'ar' ? 'ج.م' : '$'
-      return `${currencySymbol}${price}`
+      // Use currency symbol from parameter, or from therapist pricing, or map from currency code
+      let symbol = currencySymbol
+      if (!symbol && props.therapist?.price) {
+        // Try currency_symbol first, then map from currency code
+        symbol = props.therapist.price.currency_symbol || 
+                 getCurrencySymbol(props.therapist.price.currency)
+      }
+      if (!symbol) {
+        // Fallback to settings store currency code (map to symbol)
+        symbol = getCurrencySymbol(settingsStore.userCurrencyCode)
+      }
+      if (!symbol) {
+        symbol = 'ج.م' // Final fallback
+      }
+      
+      // Use the imported formatPrice utility
+      return formatPriceUtil(price, locale.value, symbol)
     }
 
     const loading = ref(false)
@@ -890,9 +906,12 @@ export default {
       
       try {
         // Use the cart store with new REST API
+        // Get user country from settings store
+        const countryCode = settingsStore.userCountryCode || 'EG'
         const result = await cartStore.addToCart({
           slot_id: slot.id,
-          user_id: authStore.user.id
+          user_id: authStore.user.id,
+          country_code: countryCode
         })
         
         
@@ -908,9 +927,12 @@ export default {
           const confirmed = await showDifferentTherapistConfirmation(t('therapistDetails.differentTherapistMessage'))
           if (confirmed) {
             // User confirmed, add to cart with confirmation
+            // Get user country from settings store
+            const countryCode = settingsStore.userCountryCode || 'EG'
             const confirmResult = await cartStore.addToCartWithConfirmation({
               slot_id: slot.id,
-              user_id: authStore.user.id
+              user_id: authStore.user.id,
+              country_code: countryCode
             })
             
             if (confirmResult.success) {
@@ -1365,6 +1387,7 @@ export default {
       currentDiagnosisDisplayOrder,
       therapistPosition,
       formatPrice,
+      getCurrencySymbol,
       formatEarliestSlot,
       formatTimeSlot,
       locale,

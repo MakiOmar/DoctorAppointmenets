@@ -363,7 +363,7 @@ function snks_create_custom_timetable() {
 	$preview_timetables[ $_req['day'] ] = array_merge( $preview_timetables[ $_req['day'] ], $data[ $_req['day'] ] );
 	snks_set_preview_timetable( $preview_timetables );
 
-	wp_send_json_success( array( 'message' => 'Timetable successfully created.' ) );
+	wp_send_json_success( array( 'message' => 'Timetable successfully created.', 'inserted' => $inserted ) );
 }
 add_action( 'wp_ajax_create_custom_timetable', 'snks_create_custom_timetable' );
 add_action( 'wp_ajax_nopriv_create_custom_timetable', 'snks_create_custom_timetable' );

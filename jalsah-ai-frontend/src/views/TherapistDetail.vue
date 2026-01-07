@@ -81,7 +81,7 @@
                   <span class="text-lg font-semibold text-gray-900">{{ $t('sessionPrice') }}</span>
                   <p class="text-sm text-gray-600">{{ $t('perSession') }}</p>
                 </div>
-                <span class="text-2xl font-bold text-gray-900">{{ formatPrice(200.00) }}</span>
+                <span class="text-2xl font-bold text-gray-900">{{ formatPrice(therapist?.price?.price || therapist?.price?.others || 200.00, $i18n.locale, therapist?.price?.currency_symbol || getCurrencySymbol(therapist?.price?.currency || settingsStore.userCurrencyCode)) }}</span>
               </div>
             </div>
 
@@ -142,7 +142,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '../stores/settings'
 import api from '../services/api'
-import { formatPrice } from '../utils/currency'
+import { formatPrice, getCurrencySymbol } from '../utils/currency'
 import BookingModal from '../components/BookingModal.vue'
 
 const { t } = useI18n()

@@ -78,7 +78,7 @@
                         </p>
                       </div>
                       <div class="text-right rtl:text-left">
-                        <p class="text-lg font-medium text-gray-900">{{ formatPrice(item.price || 200.00) }}</p>
+                        <p class="text-lg font-medium text-gray-900">{{ formatPrice(item.price || 200.00, $i18n.locale, item.currency_symbol || getCurrencySymbol(item.currency || settingsStore.userCurrencyCode)) }}</p>
                         <button
                           @click="removeItem(item.ID)"
                           class="text-sm text-red-600 hover:text-red-800 mt-1"
@@ -139,19 +139,19 @@
             <div class="space-y-4">
               <div class="flex justify-between">
                 <span class="text-gray-600">{{ $t('subtotal') }}</span>
-                <span class="text-gray-900">{{ formatPrice(cartStore.totalPrice) }}</span>
+                <span class="text-gray-900">{{ formatPrice(cartStore.totalPrice, $i18n.locale, getCartCurrency()) }}</span>
               </div>
               
               <!-- Coupon Discount -->
               <div v-if="appliedCoupon && appliedCoupon.discount > 0" class="flex justify-between text-green-600">
                 <span>{{ $t('cart.discount') }}</span>
-                <span>-{{ formatPrice(appliedCoupon.discount) }}</span>
+                <span>-{{ formatPrice(appliedCoupon.discount, $i18n.locale, getCartCurrency()) }}</span>
               </div>
               
               <div class="border-t border-gray-200 pt-4">
                 <div class="flex justify-between">
                   <span class="text-lg font-medium text-gray-900">{{ $t('total') }}</span>
-                  <span class="text-lg font-medium text-gray-900">{{ formatPrice(finalTotal) }}</span>
+                  <span class="text-lg font-medium text-gray-900">{{ formatPrice(finalTotal, $i18n.locale, getCartCurrency()) }}</span>
                 </div>
               </div>
             </div>
@@ -162,7 +162,7 @@
               class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.checkoutLoading">{{ $t('processing') }}...</span>
-              <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(finalTotal) }}</span>
+              <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(finalTotal, $i18n.locale, getCartCurrency()) }}</span>
             </button>
 
             <!-- Add More Bookings Button -->
@@ -191,7 +191,7 @@ import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
 import { useAuthStore } from '../stores/auth'
 import { useSettingsStore } from '../stores/settings'
-import { formatPrice } from '../utils/currency'
+import { formatPrice, getCurrencySymbol } from '../utils/currency'
 import api from '../services/api'
 
 const { t, locale } = useI18n()
@@ -215,6 +215,22 @@ const finalTotal = computed(() => {
   }
   return cartStore.totalPrice
 })
+
+// Get currency symbol from cart items or settings store
+const getCartCurrency = () => {
+  // Try to get currency symbol from first cart item
+  if (cartStore.cartItems.length > 0) {
+    const firstItem = cartStore.cartItems[0]
+    if (firstItem.currency_symbol) {
+      return firstItem.currency_symbol
+    }
+    if (firstItem.currency) {
+      return getCurrencySymbol(firstItem.currency)
+    }
+  }
+  // Fallback to settings store currency code (map to symbol)
+  return getCurrencySymbol(settingsStore.userCurrencyCode)
+}
 
 const formatDate = (dateTime) => {
   if (!dateTime) return ''

@@ -18,6 +18,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const isInitialized = ref(false)
   const therapistRegistrationPasswordMode = ref('auto')
   const disableChatCopyPaste = ref(true)
+  const userCountryCode = ref(null)
+  const userCurrencyCode = ref('EGP') // Store currency code (e.g., 'GBP', 'EUR'), not symbol
+  const userCurrency = ref('ج.م') // Keep for backward compatibility, but use currency_symbol when available
 
   // Getters
   const isBilingualEnabled = computed(() => bilingualEnabled.value)
@@ -32,6 +35,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const getTherapistRegistrationPasswordMode = computed(() => therapistRegistrationPasswordMode.value)
   const getSiteIconUrl = computed(() => siteIconUrl.value)
   const isChatCopyPasteDisabled = computed(() => disableChatCopyPaste.value)
+  const getUserCountryCode = computed(() => userCountryCode.value)
+  const getUserCurrencyCode = computed(() => userCurrencyCode.value)
+  const getUserCurrency = computed(() => userCurrency.value)
 
   // Helper function to update favicon
   const updateFavicon = (iconUrl) => {
@@ -73,6 +79,9 @@ export const useSettingsStore = defineStore('settings', () => {
         appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         disableChatCopyPaste.value = settings.disable_chat_copy_paste ?? true
+        userCountryCode.value = localStorage.getItem('user_country_code') || null
+        userCurrencyCode.value = localStorage.getItem('user_currency_code') || getCookie('ced_selected_currency') || 'EGP'
+        userCurrency.value = localStorage.getItem('user_currency') || 'ج.م' // Keep for backward compatibility
 
       } catch (e) {
         console.error('Failed to parse saved settings:', e)
@@ -89,10 +98,30 @@ export const useSettingsStore = defineStore('settings', () => {
       disableChatCopyPaste.value = true
     }
     
+    // Load user country from localStorage or cookie
+    userCountryCode.value = localStorage.getItem('user_country_code') || null
+    userCurrencyCode.value = localStorage.getItem('user_currency_code') || getCookie('ced_selected_currency') || 'EGP'
+    userCurrency.value = localStorage.getItem('user_currency') || 'ج.م' // Keep for backward compatibility
+    
     isInitialized.value = true
     
     // Try to load fresh settings from API in background
     loadSettingsFromAPI()
+    
+    // Detect user country if not set
+    if (!userCountryCode.value) {
+      detectUserCountry()
+    }
+  }
+
+  // Helper function to get cookie value
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) {
+      return parts.pop().split(';').shift()
+    }
+    return null
   }
 
   const loadSettingsFromAPI = async () => {
@@ -164,6 +193,102 @@ export const useSettingsStore = defineStore('settings', () => {
     return bilingualEnabled.value
   })
 
+  // Helper function to get client IP
+  const getClientIP = async () => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json')
+      const data = await response.json()
+      return data.ip
+    } catch (error) {
+      console.error('Failed to get client IP:', error)
+      return null
+    }
+  }
+
+  // Detect user country from IP
+  const detectUserCountry = async () => {
+    try {
+      const clientIP = await getClientIP()
+      const timestamp = Date.now()
+      const params = new URLSearchParams({
+        t: timestamp.toString()
+      })
+      
+      if (clientIP) {
+        params.append('ip', clientIP)
+      }
+      
+      const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?${params.toString()}`)
+      if (response.data && response.data.country_code) {
+        const countryCode = response.data.country_code.toUpperCase()
+        setUserCountry(countryCode)
+      }
+    } catch (error) {
+      console.error('Failed to detect user country:', error)
+      // Fallback to Egypt
+      setUserCountry('EG')
+    }
+  }
+
+  // Set user country and currency code (follows main plugin logic)
+  const setUserCountry = (countryCode) => {
+    userCountryCode.value = countryCode
+    localStorage.setItem('user_country_code', countryCode)
+    
+    // Check cookie first (set by main plugin backend)
+    const cookieCurrency = getCookie('ced_selected_currency')
+    if (cookieCurrency) {
+      userCurrencyCode.value = cookieCurrency.toUpperCase()
+      localStorage.setItem('user_currency_code', userCurrencyCode.value)
+      // Update symbol for backward compatibility
+      userCurrency.value = mapCurrencyCodeToSymbol(userCurrencyCode.value)
+      localStorage.setItem('user_currency', userCurrency.value)
+      return
+    }
+    
+    // Map country code to currency code (same as backend COUNTRY_CURRENCIES)
+    const countryCurrencyMap = {
+      'EG': 'EGP', 'SA': 'SAR', 'AE': 'AED', 'KW': 'KWD',
+      'QA': 'QAR', 'BH': 'BHD', 'OM': 'OMR', 'EU': 'EUR',
+      'US': 'USD', 'GB': 'GBP', 'CA': 'CAD', 'AU': 'AUD'
+    }
+    
+    // Europe country codes
+    const europeCountries = [
+      'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+      'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+      'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+      'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+    ]
+    
+    let currencyCode = 'EGP' // Default
+    
+    if (countryCurrencyMap[countryCode]) {
+      currencyCode = countryCurrencyMap[countryCode]
+    } else if (europeCountries.includes(countryCode)) {
+      currencyCode = 'EUR'
+    } else {
+      currencyCode = 'USD'
+    }
+    
+    userCurrencyCode.value = currencyCode
+    localStorage.setItem('user_currency_code', currencyCode)
+    
+    // Map currency code to symbol for backward compatibility
+    userCurrency.value = mapCurrencyCodeToSymbol(currencyCode)
+    localStorage.setItem('user_currency', userCurrency.value)
+  }
+
+  // Map currency code to symbol (same as backend)
+  const mapCurrencyCodeToSymbol = (currencyCode) => {
+    const currencySymbolMap = {
+      'EGP': 'ج.م', 'SAR': 'ر.س', 'AED': 'د.إ', 'KWD': 'د.ك',
+      'QAR': 'ر.ق', 'BHD': 'د.ب', 'OMR': 'ر.ع', 'EUR': '€',
+      'USD': 'USD', 'GBP': 'GBP', 'CAD': 'CAD', 'AUD': 'AUD'
+    }
+    return currencySymbolMap[currencyCode.toUpperCase()] || currencyCode
+  }
+
   const setSettings = (settings) => {
         bilingualEnabled.value = settings.bilingual_enabled ?? true
         defaultLanguage.value = settings.default_language ?? 'ar'
@@ -203,6 +328,9 @@ export const useSettingsStore = defineStore('settings', () => {
     isInitialized,
     therapistRegistrationPasswordMode,
     disableChatCopyPaste,
+    userCountryCode,
+    userCurrencyCode,
+    userCurrency,
     
     // Getters
     isBilingualEnabled,
@@ -218,11 +346,16 @@ export const useSettingsStore = defineStore('settings', () => {
     shouldShowLanguageSwitcher,
     getTherapistRegistrationPasswordMode,
     isChatCopyPasteDisabled,
+    getUserCountryCode,
+    getUserCurrencyCode,
+    getUserCurrency,
     
     // Actions
     loadSettings,
     initializeSettings,
     loadSettingsFromAPI,
-    setSettings
+    setSettings,
+    detectUserCountry,
+    setUserCountry
   }
 }) 

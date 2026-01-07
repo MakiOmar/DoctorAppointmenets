@@ -174,15 +174,15 @@
             <div class="border-t border-gray-200 pt-4">
               <div class="flex justify-between mb-2">
                 <span class="text-gray-600">Session Fee:</span>
-                <span class="font-medium">{{ formatPrice(getSessionPrice(), $i18n.locale) }}</span>
+                <span class="font-medium">{{ formatPrice(getSessionPrice(), $i18n.locale, getBookingCurrency()) }}</span>
               </div>
               <div class="flex justify-between mb-2">
                 <span class="text-gray-600">Platform Fee:</span>
-                <span class="font-medium">{{ formatPrice(5, $i18n.locale) }}</span>
+                <span class="font-medium">{{ formatPrice(5, $i18n.locale, getBookingCurrency()) }}</span>
               </div>
               <div class="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
                 <span>Total:</span>
-                <span>{{ formatPrice(getTotalPrice(), $i18n.locale) }}</span>
+                <span>{{ formatPrice(getTotalPrice(), $i18n.locale, getBookingCurrency()) }}</span>
               </div>
             </div>
 
@@ -221,14 +221,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
-import { formatPrice } from '@/utils/currency'
+import { formatPrice, getCurrencySymbol } from '@/utils/currency'
 export default {
   name: 'Booking',
   setup() {
     const route = useRoute()
     const router = useRouter()
     const toast = useToast()
+    const settingsStore = useSettingsStore()
     
     const loading = ref(true)
     const submitting = ref(false)
@@ -251,12 +253,27 @@ export default {
 
     const getSessionPrice = () => {
       if (!booking.value.sessionType) return 0
+      // Use price from pricing info (country-based) or fallback
+      const basePrice = therapist.value?.price?.price || therapist.value?.price?.others || 100
       const prices = {
-        '45': therapist.value?.price?.others || 100,
-        '60': (therapist.value?.price?.others || 100) * 1.33,
-        '90': (therapist.value?.price?.others || 100) * 2
+        '45': basePrice,
+        '60': basePrice * 1.33,
+        '90': basePrice * 2
       }
       return Math.round(prices[booking.value.sessionType])
+    }
+
+    // Get currency symbol for booking (from therapist pricing or settings)
+    const getBookingCurrency = () => {
+      if (therapist.value?.price?.currency_symbol) {
+        return therapist.value.price.currency_symbol
+      }
+      if (therapist.value?.price?.currency) {
+        return getCurrencySymbol(therapist.value.price.currency)
+      }
+      // Fallback to settings store
+      const settingsStore = useSettingsStore()
+      return getCurrencySymbol(settingsStore.userCurrencyCode)
     }
 
     const getTotalPrice = () => {
