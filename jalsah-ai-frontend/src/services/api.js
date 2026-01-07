@@ -32,6 +32,8 @@ const getBaseURL = () => {
 const api = axios.create({
   baseURL: getBaseURL(),
   timeout: 30000, // Increased to 30 seconds
+  // Ensure cookies (country_code, ced_selected_currency) are sent/received
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

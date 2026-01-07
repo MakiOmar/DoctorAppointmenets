@@ -1233,6 +1233,23 @@ class SNKS_AI_Integration {
 			$user_data['whatsapp'] = $whatsapp;
 		}
 
+		// Set country/currency cookies on login (frontend should pass country_code; fallback detects)
+		$country_code = isset( $data['country_code'] ) ? strtoupper( sanitize_text_field( $data['country_code'] ) ) : '';
+		if ( ! empty( $country_code ) ) {
+			if ( defined( 'IL_TO_EG' ) && IL_TO_EG && 'IL' === $country_code ) {
+				$country_code = 'EG';
+			}
+			$expire_time   = time() + DAY_IN_SECONDS;
+			$currency_code = $this->get_currency_code_by_country( $country_code );
+			setcookie( 'country_code', $country_code, $expire_time, '/' );
+			setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
+		} else {
+			// Last resort: detect and set cookies (may call external IP API)
+			if ( function_exists( 'snks_get_country_code' ) ) {
+				snks_get_country_code( true );
+			}
+		}
+
 		$this->send_success(
 			array(
 				'token' => $token,
@@ -2045,6 +2062,23 @@ Best regards,
 			$whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
 			if ( $whatsapp ) {
 				$user_data['whatsapp'] = $whatsapp;
+			}
+
+			// Set country/currency cookies on auto-login after verification
+			$country_code = isset( $data['country_code'] ) ? strtoupper( sanitize_text_field( $data['country_code'] ) ) : '';
+			if ( ! empty( $country_code ) ) {
+				if ( defined( 'IL_TO_EG' ) && IL_TO_EG && 'IL' === $country_code ) {
+					$country_code = 'EG';
+				}
+				$expire_time   = time() + DAY_IN_SECONDS;
+				$currency_code = $this->get_currency_code_by_country( $country_code );
+				setcookie( 'country_code', $country_code, $expire_time, '/' );
+				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
+			} else {
+				// Last resort: detect and set cookies (may call external IP API)
+				if ( function_exists( 'snks_get_country_code' ) ) {
+					snks_get_country_code( true );
+				}
 			}
 
 			$this->send_success(

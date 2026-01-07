@@ -246,6 +246,14 @@ export const useAuthStore = defineStore('auth', () => {
         locale: locale.value
       }
       
+      // Send country_code so backend can set country_code/ced_selected_currency cookies on auto-login
+      try {
+        const settingsStore = useSettingsStore()
+        requestData.country_code = settingsStore.userCountryCode || localStorage.getItem('user_country_code') || 'EG'
+      } catch (e) {
+        requestData.country_code = localStorage.getItem('user_country_code') || 'EG'
+      }
+      
       const response = await api.post('/api/ai/auth/verify', requestData)
       const { token: authToken, user: newUser } = response.data.data
       

@@ -622,6 +622,10 @@ export default {
         password: form.value.password
       }
       
+      // Always pass country_code so backend can set cookies (country_code, ced_selected_currency)
+      // selectedCountryCode is auto-detected on this page and defaults to 'EG'
+      credentials.country_code = selectedCountryCode.value || 'EG'
+      
       // Add email or WhatsApp based on settings
       if (requireEmail.value) {
         credentials.email = form.value.email
