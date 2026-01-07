@@ -65,6 +65,14 @@ export const useSettingsStore = defineStore('settings', () => {
     return null
   }
 
+  // Helper function to set cookie value (same format as backend: expires in 24 hours, path /)
+  const setCookie = (name, value, days = 1) => {
+    const expires = new Date()
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000))
+    const expiresStr = expires.toUTCString()
+    document.cookie = `${name}=${value}; expires=${expiresStr}; path=/`
+  }
+
   // Actions
   const initializeSettings = () => {
     if (isInitialized.value) return
@@ -356,6 +364,8 @@ export const useSettingsStore = defineStore('settings', () => {
     loadSettingsFromAPI,
     setSettings,
     detectUserCountry,
-    setUserCountry
+    setUserCountry,
+    getCookie,
+    setCookie
   }
 }) 

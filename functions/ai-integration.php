@@ -1293,12 +1293,19 @@ class SNKS_AI_Integration {
 			}
 		}
 
-		$this->send_success(
-			array(
-				'token' => $token,
-				'user'  => $user_data,
-			)
+		// Return cookie values in response so frontend can set them
+		$response_data = array(
+			'token' => $token,
+			'user'  => $user_data,
 		);
+		
+		// Add country and currency info to response if we have them
+		if ( ! empty( $country_code ) && ! empty( $currency_code ) ) {
+			$response_data['country_code'] = $country_code;
+			$response_data['currency_code'] = $currency_code;
+		}
+		
+		$this->send_success( $response_data );
 	}
 
 	/**
@@ -2164,13 +2171,20 @@ Best regards,
 				setcookie( 'ced_selected_currency', $currency_code, $cookie_params );
 			}
 
-			$this->send_success(
-				array(
-					'message' => $success_message,
-					'token'   => $token,
-					'user'    => $user_data,
-				)
+			// Return cookie values in response so frontend can set them
+			$response_data = array(
+				'message' => $success_message,
+				'token'   => $token,
+				'user'    => $user_data,
 			);
+			
+			// Add country and currency info to response if we have them
+			if ( ! empty( $country_code ) && ! empty( $currency_code ) ) {
+				$response_data['country_code'] = $country_code;
+				$response_data['currency_code'] = $currency_code;
+			}
+			
+			$this->send_success( $response_data );
 
 		} catch ( Exception $e ) {
 			$this->send_error( 'Verification process failed: ' . $e->getMessage(), 500 );

@@ -62,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Invalid response format from server')
       }
       
-      const { token: authToken, user: userData } = response.data.data
+      const { token: authToken, user: userData, country_code, currency_code } = response.data.data
       
       if (!authToken || !userData) {
         console.error('❌ Missing token or user data')
@@ -78,14 +78,24 @@ export const useAuthStore = defineStore('auth', () => {
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
+      // Set country_code and ced_selected_currency cookies if provided in response
+      if (country_code && currency_code) {
+        const settingsStore = useSettingsStore()
+        if (settingsStore.setCookie) {
+          settingsStore.setCookie('country_code', country_code, 1)
+          settingsStore.setCookie('ced_selected_currency', currency_code, 1)
+          // Also update settings store
+          settingsStore.setUserCountry(country_code)
+        }
+      } else {
+        // Fallback: detect country if not provided
+        const settingsStore = useSettingsStore()
+        await settingsStore.detectUserCountry()
+      }
       
       // Load cart after successful login
       const cartStore = useCartStore()
       cartStore.loadCart(userData.id)
-      
-      // Detect and store country code and currency after login
-      const settingsStore = useSettingsStore()
-      await settingsStore.detectUserCountry()
       
       // Setup periodic validation after successful login
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
@@ -255,7 +265,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       const response = await api.post('/api/ai/auth/verify', requestData)
-      const { token: authToken, user: newUser } = response.data.data
+      const { token: authToken, user: newUser, country_code, currency_code } = response.data.data
       
       token.value = authToken
       user.value = newUser
@@ -265,13 +275,24 @@ export const useAuthStore = defineStore('auth', () => {
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
+      // Set country_code and ced_selected_currency cookies if provided in response
+      if (country_code && currency_code) {
+        const settingsStore = useSettingsStore()
+        if (settingsStore.setCookie) {
+          settingsStore.setCookie('country_code', country_code, 1)
+          settingsStore.setCookie('ced_selected_currency', currency_code, 1)
+          // Also update settings store
+          settingsStore.setUserCountry(country_code)
+        }
+      } else {
+        // Fallback: detect country if not provided
+        const settingsStore = useSettingsStore()
+        await settingsStore.detectUserCountry()
+      }
+      
       // Load cart after successful verification
       const cartStore = useCartStore()
       cartStore.loadCart(newUser.id)
-      
-      // Detect and store country code and currency after verification
-      const settingsStore = useSettingsStore()
-      await settingsStore.detectUserCountry()
       
       // Setup periodic validation after successful verification
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
