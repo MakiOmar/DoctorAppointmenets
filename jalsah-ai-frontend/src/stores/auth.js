@@ -4,6 +4,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useCartStore } from './cart'
+import { useSettingsStore } from './settings'
 
 // Helper function to get nonce from WordPress
 const getNonce = async (action) => {
@@ -81,6 +82,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Load cart after successful login
       const cartStore = useCartStore()
       cartStore.loadCart(userData.id)
+      
+      // Detect and store country code and currency after login
+      const settingsStore = useSettingsStore()
+      await settingsStore.detectUserCountry()
       
       // Setup periodic validation after successful login
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
@@ -176,6 +181,10 @@ export const useAuthStore = defineStore('auth', () => {
       const cartStore = useCartStore()
       cartStore.loadCart(newUser.id)
       
+      // Detect and store country code and currency after registration
+      const settingsStore = useSettingsStore()
+      await settingsStore.detectUserCountry()
+      
       // Setup periodic validation after successful registration
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
       setupPeriodicValidation(api, 1) // 1 minute
@@ -252,6 +261,10 @@ export const useAuthStore = defineStore('auth', () => {
       const cartStore = useCartStore()
       cartStore.loadCart(newUser.id)
       
+      // Detect and store country code and currency after verification
+      const settingsStore = useSettingsStore()
+      await settingsStore.detectUserCountry()
+      
       // Setup periodic validation after successful verification
       const { setupPeriodicValidation } = await import('@/services/auth-interceptor')
       setupPeriodicValidation(api, 1) // 1 minute
@@ -326,6 +339,13 @@ export const useAuthStore = defineStore('auth', () => {
         // Load cart when user is loaded
         const cartStore = useCartStore()
         cartStore.loadCart(user.value.id)
+        
+        // Check and set country/currency if not already set
+        const settingsStore = useSettingsStore()
+        if (!settingsStore.userCountryCode) {
+          await settingsStore.detectUserCountry()
+        }
+        
         return true
       }
       
