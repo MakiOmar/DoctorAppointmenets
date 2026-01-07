@@ -43,17 +43,18 @@ function snks_calculated_price( $user_id, $country, $period, $attendance_type = 
  * @return mixed
  */
 function get_price_by_period_and_country( $period, $country_code, $data_array ) {
-	if ( is_array( $data_array ) && is_array( $data_array[ $period ]['countries'] ) ) {
+	$price = 0;
+	if ( !empty( $data_array ) && is_array( $data_array ) && isset( $data_array[ $period ] ) && is_array( $data_array[ $period ]['countries'] ) ) {
 		foreach ( $data_array[ $period ]['countries'] as $item ) {
 			if ( $item['country_code'] === $country_code ) {
 				return $item['price'];
 			}
 		}
-		return $data_array[ $period ]['others'];
-	} elseif ( is_numeric( $data_array[ $period ]['others'] ) ) {
-		return $data_array[ $period ]['others'];
+		$price = $data_array[ $period ]['others'];
+	} elseif ( isset( $data_array[ $period ] ) &&  !empty( $data_array ) && is_numeric( $data_array[ $period ]['others'] ) ) {
+		$price = $data_array[ $period ]['others'];
 	}
-	return 0;
+	return $price;
 }
 
 /**
