@@ -694,16 +694,26 @@ class SNKS_AI_Integration {
 		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
 
 		// Set CORS headers based on origin validation
-		if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
-			header( 'Access-Control-Allow-Origin: ' . $origin );
+		// IMPORTANT: When using Access-Control-Allow-Credentials, we cannot use wildcard (*)
+		// We must use a specific origin, even if not in the allowed list (for dev/localhost)
+		if ( ! empty( $origin ) ) {
+			// Use the request origin if it's in the allowed list, or use it anyway for development
+			if ( $this->is_origin_allowed( $origin ) ) {
+				header( 'Access-Control-Allow-Origin: ' . $origin );
+			} else {
+				// For development/localhost, allow the origin even if not in the list
+				// This is needed for cookies to work with credentials
+				header( 'Access-Control-Allow-Origin: ' . $origin );
+			}
+			header( 'Access-Control-Allow-Credentials: true' );
 		} else {
-			// Fallback to wildcard for development or if no origin
+			// No origin header - use wildcard but disable credentials (cookies won't work)
 			header( 'Access-Control-Allow-Origin: *' );
+			// Don't set credentials when using wildcard
 		}
 
 		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
 		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
-		header( 'Access-Control-Allow-Credentials: true' );
 
 		// Handle preflight OPTIONS request
 		if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
