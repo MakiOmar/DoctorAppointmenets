@@ -958,15 +958,34 @@ class SNKS_AI_Integration {
 				} elseif ( is_numeric( $path[1] ) ) {
 					if ( isset( $path[2] ) && $path[2] === 'details' ) {
 						// Call the therapist details REST API function
-						$request = new WP_REST_Request( 'GET', '/jalsah-ai/v1/therapists/' . $path[1] . '/details' );
-						$request->set_param( 'id', $path[1] );
+						if ( ! function_exists( 'snks_get_therapist_details_rest' ) ) {
+							$this->send_error( 'Therapist details function not found', 500 );
+							return;
+						}
+						
+						$therapist_id = intval( $path[1] );
+						
+						if ( ! $therapist_id ) {
+							$this->send_error( 'Invalid therapist ID', 400 );
+							return;
+						}
+						
+						// Create a request object with the therapist ID
+						$request = new WP_REST_Request( 'GET', '/jalsah-ai/v1/therapists/' . $therapist_id . '/details' );
+						$request->set_url_params( array( 'id' => $therapist_id ) );
+						$request->set_param( 'id', $therapist_id );
+						
 						$response = snks_get_therapist_details_rest( $request );
 
 						if ( is_wp_error( $response ) ) {
-							$this->send_error( $response->get_error_message(), $response->get_error_data()['status'] ?? 400 );
-						} else {
+							$error_data = $response->get_error_data();
+							$status_code = is_array( $error_data ) && isset( $error_data['status'] ) ? $error_data['status'] : 400;
+							$this->send_error( $response->get_error_message(), $status_code );
+						} elseif ( is_array( $response ) && isset( $response['data'] ) ) {
 							// Return the data directly without double-wrapping
 							$this->send_success( $response['data'] );
+						} else {
+							$this->send_error( 'Invalid response format', 500 );
 						}
 					} elseif ( isset( $path[2] ) && $path[2] === 'earliest-slot' ) {
 						$this->get_ai_therapist_earliest_slot( $path[1] );

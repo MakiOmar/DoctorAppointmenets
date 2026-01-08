@@ -33,7 +33,17 @@ add_action('rest_api_init', 'snks_register_therapist_details_rest_route');
  * REST API callback for therapist details
  */
 function snks_get_therapist_details_rest($request) {
-    $therapist_id = intval($request['id']);
+    // Handle both WP_REST_Request object and array
+    if ($request instanceof WP_REST_Request) {
+        $therapist_id = intval($request->get_param('id') ?: ($request['id'] ?? 0));
+    } else {
+        // Fallback for array access
+        $therapist_id = intval($request['id'] ?? 0);
+    }
+    
+    if (!$therapist_id) {
+        return new WP_Error('invalid_therapist_id', 'Invalid therapist ID', ['status' => 400]);
+    }
     
     // Check if therapist exists and has doctor role
     $therapist = get_user_by('ID', $therapist_id);
