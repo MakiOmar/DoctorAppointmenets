@@ -44,7 +44,18 @@ class SNKS_AI_Orders {
 				throw new Exception( 'Failed to get AI session product' );
 			}
 			
-			$session_price = $cart_item['price'] ?? SNKS_AI_Products::get_default_session_price();
+			// Use original_price for checkout/orders (not converted price for display)
+			// Fallback to price if original_price not available (backward compatibility)
+			if ( isset( $cart_item['original_price'] ) && is_numeric( $cart_item['original_price'] ) ) {
+				$session_price = floatval( $cart_item['original_price'] );
+			} elseif ( isset( $cart_item['pricing_info']['original_price'] ) ) {
+				$session_price = floatval( $cart_item['pricing_info']['original_price'] );
+			} elseif ( isset( $cart_item['price'] ) && is_numeric( $cart_item['price'] ) ) {
+				// Fallback to price if original_price not set (old format)
+				$session_price = floatval( $cart_item['price'] );
+			} else {
+				$session_price = SNKS_AI_Products::get_default_session_price();
+			}
 			
 			// Create a custom order item with the correct price
 			$item = new WC_Order_Item_Product();

@@ -3373,7 +3373,10 @@ Best regards,
 			// Get currency code for country (before conversion)
 			$currency_code = $this->get_currency_code_by_country( $country_code );
 			
-			// Use acrsw_currency to convert price (same as main plugin)
+			// Store original price (for checkout/orders)
+			$original_price = $price;
+			
+			// Use acrsw_currency to convert price for display (same as main plugin)
 			// This handles currency conversion based on ced_selected_currency cookie
 			if ( function_exists( 'acrsw_currency' ) ) {
 				list( $converted_price, $currency_label ) = acrsw_currency( $price, 'ج.م' );
@@ -3387,18 +3390,20 @@ Best regards,
 				}
 				
 				return array(
-					'price'          => $converted_price_float, // Numeric value for calculations
+					'price'          => $converted_price_float, // Converted price for display
 					'price_formatted' => $converted_price, // Formatted string for display
+					'original_price' => $original_price, // Original price in EGP (for checkout/orders)
 					'currency'       => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
 					'currency_symbol' => $currency_label, // Symbol from acrsw_currency (e.g., 'ج.م', 'ر.س')
 					'country_code'   => $country_code,
 					'countries'      => array(),
-					'others'         => $converted_price_float, // Keep for backward compatibility
+					'others'         => $converted_price_float, // Keep for backward compatibility (display)
 				);
 			} else {
 				// Fallback if acrsw_currency doesn't exist
 				return array(
 					'price'        => $price,
+					'original_price' => $price, // Same as price when no conversion
 					'currency'     => $currency_code,
 					'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ),
 					'country_code' => $country_code,
@@ -3439,7 +3444,10 @@ Best regards,
 			// Get currency code for country (before conversion)
 			$currency_code = $this->get_currency_code_by_country( $country_code );
 			
-			// Use acrsw_currency to convert price (same as main plugin)
+			// Store original price (for checkout/orders)
+			$original_price = $price;
+			
+			// Use acrsw_currency to convert price for display (same as main plugin)
 			// This handles currency conversion based on ced_selected_currency cookie
 			if ( function_exists( 'acrsw_currency' ) ) {
 				list( $converted_price, $currency_label ) = acrsw_currency( $price, 'ج.م' );
@@ -3455,17 +3463,18 @@ Best regards,
 				// Get full pricing structure for backward compatibility
 				$pricing_structure = isset( $pricings[ $period_key ] ) ? $pricings[ $period_key ] : array(
 					'countries' => array(),
-					'others'    => $price, // Keep original price in 'others' for reference
+					'others'    => $original_price, // Keep original price in 'others' for reference
 				);
 				
 				return array(
-					'price'          => $converted_price_float, // Numeric value for calculations
+					'price'          => $converted_price_float, // Converted price for display
 					'price_formatted' => $converted_price, // Formatted string for display
+					'original_price' => $original_price, // Original price in EGP (for checkout/orders)
 					'currency'       => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
 					'currency_symbol' => $currency_label, // Symbol from acrsw_currency (e.g., 'ج.م', 'ر.س')
 					'country_code'   => $country_code,
 					'countries'      => isset( $pricing_structure['countries'] ) ? $pricing_structure['countries'] : array(),
-					'others'         => $converted_price_float, // Converted price for backward compatibility
+					'others'         => $converted_price_float, // Converted price for backward compatibility (display)
 				);
 			} else {
 				// Fallback if acrsw_currency doesn't exist
@@ -3477,6 +3486,7 @@ Best regards,
 				
 				return array(
 					'price'          => $price,
+					'original_price' => $price, // Same as price when no conversion
 					'currency'       => $currency_code,
 					'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ),
 					'country_code'   => $country_code,
@@ -3683,7 +3693,8 @@ Best regards,
 			'date_time'    => $slot->date_time,
 			'period'       => $period,
 			'country_code' => $country_code,
-			'price'        => floatval( $pricing_info['price'] ),
+			'price'        => floatval( $pricing_info['price'] ), // Converted price for display
+			'original_price' => floatval( $pricing_info['original_price'] ), // Original price for checkout
 			'currency'     => $pricing_info['currency'],
 			'currency_symbol' => isset( $pricing_info['currency_symbol'] ) ? $pricing_info['currency_symbol'] : 'ج.م',
 			'pricing_info' => $pricing_info, // Store full pricing info for reference
@@ -3843,7 +3854,8 @@ Best regards,
 			'date_time'    => $date_time,
 			'period'       => $period,
 			'country_code' => $country_code,
-			'price'        => floatval( $pricing_info['price'] ),
+			'price'        => floatval( $pricing_info['price'] ), // Converted price for display
+			'original_price' => floatval( $pricing_info['original_price'] ), // Original price for checkout
 			'currency'     => $pricing_info['currency'],
 			'currency_symbol' => isset( $pricing_info['currency_symbol'] ) ? $pricing_info['currency_symbol'] : 'ج.م',
 			'pricing_info' => $pricing_info, // Store full pricing info for reference
@@ -3876,13 +3888,14 @@ Best regards,
 		foreach ( $cart as $item ) {
 			$slot = snks_get_timetable_by( 'ID', $item['slot_id'] );
 			if ( $slot && $slot->session_status === 'waiting' ) {
-				// Price is stored as float in cart items (converted price from get_therapist_ai_price)
-				// Fallback to pricing_info if direct price not available
-				if ( isset( $item['price'] ) && is_numeric( $item['price'] ) ) {
-					$price = floatval( $item['price'] );
-				} elseif ( isset( $item['pricing_info']['price'] ) ) {
-					$price = floatval( $item['pricing_info']['price'] );
+				// Use original_price for checkout/orders (not converted price)
+				// Fallback to pricing_info if direct original_price not available
+				if ( isset( $item['original_price'] ) && is_numeric( $item['original_price'] ) ) {
+					$price = floatval( $item['original_price'] );
+				} elseif ( isset( $item['pricing_info']['original_price'] ) ) {
+					$price = floatval( $item['pricing_info']['original_price'] );
 				} elseif ( isset( $item['pricing_info']['others'] ) ) {
+					// If others exists but no original_price, it might be old format - use it
 					$price = floatval( $item['pricing_info']['others'] );
 				} else {
 					$price = 0;
@@ -3893,7 +3906,8 @@ Best regards,
 					'slot_id'      => $slot->ID,
 					'therapist_id' => $slot->user_id,
 					'date_time'    => $slot->date_time,
-					'price'        => $price,
+					'price'        => $price, // Original price (for profit calculations)
+					'original_price' => $price, // Explicitly store original price
 				);
 			}
 		}
@@ -3914,12 +3928,15 @@ Best regards,
 		// Add AI session metadata for profit calculation
 		if ( ! empty( $session_data ) ) {
 			foreach ( $session_data as $session ) {
+				// Use original_price for profit calculations (not converted price)
+				$session_amount = isset( $session['original_price'] ) ? floatval( $session['original_price'] ) : ( isset( $session['price'] ) ? floatval( $session['price'] ) : 0 );
+				
 				$session_metadata = array(
 					'session_id'     => $session['session_id'] ?? '',
 					'therapist_id'   => $session['therapist_id'] ?? '',
 					'patient_id'     => $user_id,
 					'session_type'   => $session['session_type'] ?? 'first',
-					'session_amount' => $session['price'] ?? 0,
+					'session_amount' => $session_amount, // Original price in EGP (for profit calculations)
 				);
 				snks_add_ai_session_metadata( $order->get_id(), $session_metadata );
 			}
@@ -4827,6 +4844,7 @@ Best regards,
 		if ( ! $therapist_id ) {
 			// Return default pricing structure
 			$default_price = 200.00;
+			$original_price = $default_price;
 			if ( function_exists( 'acrsw_currency' ) ) {
 				list( $converted_price, $currency_label ) = acrsw_currency( $default_price, 'ج.م' );
 				$converted_price_float = floatval( str_replace( ',', '', $converted_price ) );
@@ -4838,6 +4856,7 @@ Best regards,
 				return array(
 					'price' => $converted_price_float,
 					'price_formatted' => $converted_price,
+					'original_price' => $original_price,
 					'currency' => $currency_code,
 					'currency_symbol' => $currency_label,
 					'country_code' => $country_code ?: 'EG',
@@ -4845,6 +4864,7 @@ Best regards,
 			}
 			return array(
 				'price' => $default_price,
+				'original_price' => $default_price,
 				'currency' => 'EGP',
 				'currency_symbol' => 'ج.م',
 				'country_code' => $country_code ?: 'EG',
@@ -4935,12 +4955,14 @@ Best regards,
 		}
 
 		$total_price = 0;
+		$total_original_price = 0; // For checkout/orders
 		$currency_code = 'EGP'; // Default
 		$currency_symbol = 'ج.م'; // Default
 		
 		foreach ( $valid_cart_items as $item ) {
 			$pricing_info = $this->get_cart_item_price( $item );
-			$item->price  = floatval( $pricing_info['price'] );
+			$item->price  = floatval( $pricing_info['price'] ); // Converted price for display
+			$item->original_price = floatval( $pricing_info['original_price'] ); // Original price for checkout
 			$item->currency = isset( $pricing_info['currency'] ) ? $pricing_info['currency'] : 'EGP';
 			$item->currency_symbol = isset( $pricing_info['currency_symbol'] ) ? $pricing_info['currency_symbol'] : 'ج.م';
 			$item->country_code = isset( $pricing_info['country_code'] ) ? $pricing_info['country_code'] : $country_code;
@@ -4951,7 +4973,8 @@ Best regards,
 				$currency_symbol = $item->currency_symbol;
 			}
 			
-			$total_price += $item->price;
+			$total_price += $item->price; // For display
+			$total_original_price += $item->original_price; // For checkout
 			
 			if ( ! empty( $item->profile_image ) ) {
 				$item->therapist_image_url = wp_get_attachment_image_url( $item->profile_image, 'thumbnail' );
@@ -4960,7 +4983,8 @@ Best regards,
 
 		return array(
 			'items' => $valid_cart_items,
-			'total' => round( $total_price, 2 ),
+			'total' => round( $total_price, 2 ), // Converted total for display
+			'total_original' => round( $total_original_price, 2 ), // Original total for checkout
 			'currency' => $currency_code, // Currency code from converted prices (e.g., 'GBP', 'EUR')
 			'currency_symbol' => $currency_symbol, // Symbol from converted prices (e.g., 'ج.م', 'ر.س')
 			'country_code' => $country_code,
@@ -4984,7 +5008,8 @@ Best regards,
 			array(
 				'success'     => true,
 				'data'        => $summary['items'],
-				'total_price' => $summary['total'],
+				'total_price' => $summary['total'], // Converted price for display
+				'total_original' => isset( $summary['total_original'] ) ? $summary['total_original'] : $summary['total'], // Original price for checkout
 				'item_count'  => $summary['count'],
 			),
 			200
@@ -5069,7 +5094,8 @@ Best regards,
 		$response = array(
 			'success'    => true,
 			'message'    => __( 'تمت إزالة العنصر من السلة.', 'anony-turn' ),
-			'cart_total' => $summary['total'],
+			'cart_total' => $summary['total'], // Converted price for display
+			'cart_total_original' => isset( $summary['total_original'] ) ? $summary['total_original'] : $summary['total'], // Original price for checkout
 			'item_count' => $summary['count'],
 		);
 
