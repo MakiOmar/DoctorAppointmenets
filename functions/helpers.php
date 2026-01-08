@@ -364,7 +364,8 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
                 }
 
                 // Store the country code in a cookie for 24 hours
-                snks_set_cookie_with_partitioned( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' );
+                // Use SameSite=None for cross-site compatibility (frontend on separate domain)
+                snks_set_cookie_with_partitioned( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/', '', null, false, 'None' );
 
                 // Determine stored currency
                 if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
@@ -377,7 +378,8 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
                     $stored_currency = 'EGP';
                 }
 
-                snks_set_cookie_with_partitioned( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' );
+                // Use SameSite=None for cross-site compatibility (frontend on separate domain)
+                snks_set_cookie_with_partitioned( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/', '', null, false, 'None' );
             }
 
             if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
@@ -418,7 +420,7 @@ function snsk_ip_api_country( $set_cookie = true ) {
  * @param bool   $httponly Whether cookie should be HTTP-only.
  * @param string $samesite SameSite attribute value (Lax, Strict, None).
  */
-function snks_set_cookie_with_partitioned( $name, $value, $expires = 0, $path = '/', $domain = '', $secure = null, $httponly = false, $samesite = 'Lax' ) {
+function snks_set_cookie_with_partitioned( $name, $value, $expires = 0, $path = '/', $domain = '', $secure = null, $httponly = false, $samesite = 'None' ) {
 	if ( headers_sent() ) {
 		return false;
 	}
@@ -426,6 +428,17 @@ function snks_set_cookie_with_partitioned( $name, $value, $expires = 0, $path = 
 	// Default secure to true if site is using SSL
 	if ( $secure === null ) {
 		$secure = is_ssl();
+	}
+	
+	// For cross-site cookies, SameSite=None REQUIRES Secure flag
+	// Browsers will reject SameSite=None cookies without Secure
+	if ( $samesite === 'None' ) {
+		// Force Secure=true when using SameSite=None (required by browsers)
+		// If site is not HTTPS, browser will reject the cookie, but we set it correctly
+		if ( ! $secure ) {
+			error_log( sprintf( '[Cookie Warning] Cookie %s with SameSite=None requires Secure flag. Setting Secure=true. Site must use HTTPS for cross-site cookies to work.', $name ) );
+		}
+		$secure = true; // Always set Secure when SameSite=None
 	}
 
 	// Build cookie header manually to include Partitioned attribute

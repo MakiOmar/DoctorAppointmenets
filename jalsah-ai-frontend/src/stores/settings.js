@@ -66,16 +66,24 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // Helper function to set cookie value (same format as backend: expires in 24 hours, path /)
-  // Includes Partitioned attribute for cross-site compatibility
+  // Includes Partitioned attribute and SameSite=None for cross-site compatibility
   const setCookie = (name, value, days = 1) => {
     const expires = new Date()
     expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000))
     const expiresStr = expires.toUTCString()
-    // Include Partitioned attribute for cross-site cookie support
-    // Add Secure flag if site is using HTTPS
+    // For cross-site cookies, we need SameSite=None and Secure
+    // SameSite=None requires Secure flag (must be HTTPS)
     const isSecure = window.location.protocol === 'https:'
-    const secureFlag = isSecure ? '; Secure' : ''
-    document.cookie = `${name}=${value}; expires=${expiresStr}; path=/; SameSite=Lax; Partitioned${secureFlag}`
+    
+    if (isSecure) {
+      // Cross-site cookies: SameSite=None, Secure, Partitioned
+      document.cookie = `${name}=${value}; expires=${expiresStr}; path=/; SameSite=None; Secure; Partitioned`
+    } else {
+      // If not HTTPS, we can't use SameSite=None (browsers reject it)
+      // Fall back to Lax, but warn that it won't work cross-site
+      console.warn(`[Cookie Warning] Cannot set cross-site cookie ${name} without HTTPS. SameSite=None requires Secure flag.`)
+      document.cookie = `${name}=${value}; expires=${expiresStr}; path=/; SameSite=Lax; Partitioned`
+    }
   }
 
   // Actions
@@ -243,9 +251,15 @@ export const useSettingsStore = defineStore('settings', () => {
     const pastDate = new Date(0).toUTCString()
     // Include Partitioned attribute when deleting cookies (match attributes used when setting)
     const isSecure = window.location.protocol === 'https:'
-    const secureFlag = isSecure ? '; Secure' : ''
-    document.cookie = `country_code=; expires=${pastDate}; path=/; Partitioned${secureFlag}`
-    document.cookie = `ced_selected_currency=; expires=${pastDate}; path=/; Partitioned${secureFlag}`
+    if (isSecure) {
+      // Match the attributes used when setting: SameSite=None, Secure, Partitioned
+      document.cookie = `country_code=; expires=${pastDate}; path=/; SameSite=None; Secure; Partitioned`
+      document.cookie = `ced_selected_currency=; expires=${pastDate}; path=/; SameSite=None; Secure; Partitioned`
+    } else {
+      // Fallback for non-HTTPS
+      document.cookie = `country_code=; expires=${pastDate}; path=/; SameSite=Lax; Partitioned`
+      document.cookie = `ced_selected_currency=; expires=${pastDate}; path=/; SameSite=Lax; Partitioned`
+    }
     
     // Reset state
     userCountryCode.value = null

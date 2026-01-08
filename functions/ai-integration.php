@@ -1316,10 +1316,11 @@ class SNKS_AI_Integration {
 			}
 			
 			// Set cookies with proper parameters (must be called before any output)
-			// Use helper function that includes Partitioned attribute
+			// Use helper function that includes Partitioned attribute and SameSite=None for cross-site
 			if ( ! headers_sent() && function_exists( 'snks_set_cookie_with_partitioned' ) ) {
-				snks_set_cookie_with_partitioned( 'country_code', $country_code, $expire_time, '/' );
-				snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/' );
+				// Use SameSite=None for cross-site compatibility (frontend on separate domain)
+				snks_set_cookie_with_partitioned( 'country_code', $country_code, $expire_time, '/', '', null, false, 'None' );
+				snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/', '', null, false, 'None' );
 			} elseif ( ! headers_sent() ) {
 				// Fallback if helper function doesn't exist
 				setcookie( 'country_code', $country_code, $expire_time, '/' );
@@ -2191,11 +2192,12 @@ Best regards,
 				}
 				
 				// Set cookies with proper parameters for cross-origin support
-				// Use helper function that includes Partitioned attribute
+				// Use helper function that includes Partitioned attribute and SameSite=None for cross-site
 				if ( function_exists( 'snks_set_cookie_with_partitioned' ) ) {
 					$secure = is_ssl();
-					snks_set_cookie_with_partitioned( 'country_code', $country_code, $expire_time, '/', '', $secure, false, 'Lax' );
-					snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/', '', $secure, false, 'Lax' );
+					// Use SameSite=None for cross-site compatibility (frontend on separate domain)
+					snks_set_cookie_with_partitioned( 'country_code', $country_code, $expire_time, '/', '', $secure, false, 'None' );
+					snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/', '', $secure, false, 'None' );
 				} else {
 					// Fallback: Use array format for PHP 7.3+ to support SameSite attribute
 					$cookie_params = array(
@@ -2204,7 +2206,7 @@ Best regards,
 						'domain'   => '',
 						'secure'   => is_ssl(),
 						'httponly' => false,
-						'samesite' => 'Lax'
+						'samesite' => 'None' // Changed to None for cross-site
 					);
 					
 					setcookie( 'country_code', $country_code, $cookie_params );
