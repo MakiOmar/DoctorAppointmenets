@@ -66,11 +66,16 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // Helper function to set cookie value (same format as backend: expires in 24 hours, path /)
+  // Includes Partitioned attribute for cross-site compatibility
   const setCookie = (name, value, days = 1) => {
     const expires = new Date()
     expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000))
     const expiresStr = expires.toUTCString()
-    document.cookie = `${name}=${value}; expires=${expiresStr}; path=/`
+    // Include Partitioned attribute for cross-site cookie support
+    // Add Secure flag if site is using HTTPS
+    const isSecure = window.location.protocol === 'https:'
+    const secureFlag = isSecure ? '; Secure' : ''
+    document.cookie = `${name}=${value}; expires=${expiresStr}; path=/; SameSite=Lax; Partitioned${secureFlag}`
   }
 
   // Actions
@@ -236,8 +241,11 @@ export const useSettingsStore = defineStore('settings', () => {
     
     // Clear cookies (set to empty and expire immediately)
     const pastDate = new Date(0).toUTCString()
-    document.cookie = `country_code=; expires=${pastDate}; path=/`
-    document.cookie = `ced_selected_currency=; expires=${pastDate}; path=/`
+    // Include Partitioned attribute when deleting cookies (match attributes used when setting)
+    const isSecure = window.location.protocol === 'https:'
+    const secureFlag = isSecure ? '; Secure' : ''
+    document.cookie = `country_code=; expires=${pastDate}; path=/; Partitioned${secureFlag}`
+    document.cookie = `ced_selected_currency=; expires=${pastDate}; path=/; Partitioned${secureFlag}`
     
     // Reset state
     userCountryCode.value = null

@@ -364,7 +364,7 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
                 }
 
                 // Store the country code in a cookie for 24 hours
-                setcookie( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' );
+                snks_set_cookie_with_partitioned( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/' );
 
                 // Determine stored currency
                 if ( in_array( $country_code, array_keys( $country_codes ), true ) ) {
@@ -377,7 +377,7 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
                     $stored_currency = 'EGP';
                 }
 
-                setcookie( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' );
+                snks_set_cookie_with_partitioned( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/' );
             }
 
             if ( defined('IL_TO_EG') && IL_TO_EG && 'IL' === $country_code ) {
@@ -404,6 +404,73 @@ function snsk_ip_api_country( $set_cookie = true ) {
 		return sanitize_text_field( wp_unslash( $_COOKIE['country_code'] ) ); // Return the cached country code.
 	}
 	return snks_get_country_code( $set_cookie );
+}
+
+/**
+ * Set cookie with Partitioned attribute for cross-site compatibility
+ *
+ * @param string $name Cookie name.
+ * @param string $value Cookie value.
+ * @param int    $expires Expiration timestamp.
+ * @param string $path Cookie path.
+ * @param string $domain Cookie domain (optional).
+ * @param bool   $secure Whether cookie should only be sent over HTTPS.
+ * @param bool   $httponly Whether cookie should be HTTP-only.
+ * @param string $samesite SameSite attribute value (Lax, Strict, None).
+ */
+function snks_set_cookie_with_partitioned( $name, $value, $expires = 0, $path = '/', $domain = '', $secure = null, $httponly = false, $samesite = 'Lax' ) {
+	if ( headers_sent() ) {
+		return false;
+	}
+
+	// Default secure to true if site is using SSL
+	if ( $secure === null ) {
+		$secure = is_ssl();
+	}
+
+	// Build cookie header manually to include Partitioned attribute
+	$cookie_parts = array(
+		sprintf( '%s=%s', rawurlencode( $name ), rawurlencode( $value ) ),
+	);
+
+	if ( $expires > 0 ) {
+		$cookie_parts[] = sprintf( 'expires=%s', gmdate( 'D, d M Y H:i:s \G\M\T', $expires ) );
+	}
+
+	if ( ! empty( $path ) ) {
+		$cookie_parts[] = sprintf( 'path=%s', $path );
+	}
+
+	if ( ! empty( $domain ) ) {
+		$cookie_parts[] = sprintf( 'domain=%s', $domain );
+	}
+
+	if ( $secure ) {
+		$cookie_parts[] = 'Secure';
+	}
+
+	if ( $httponly ) {
+		$cookie_parts[] = 'HttpOnly';
+	}
+
+	if ( ! empty( $samesite ) ) {
+		$cookie_parts[] = sprintf( 'SameSite=%s', $samesite );
+	}
+
+	// Add Partitioned attribute for cross-site compatibility
+	$cookie_parts[] = 'Partitioned';
+
+	$cookie_header = implode( '; ', $cookie_parts );
+	
+	// Use header() to set cookie with Partitioned attribute
+	// Note: We don't call setcookie() because it would overwrite our custom header
+	header( sprintf( 'Set-Cookie: %s', $cookie_header ), false );
+
+	// Manually set $_COOKIE superglobal for backward compatibility
+	// This allows PHP code to read the cookie value in the same request
+	$_COOKIE[ $name ] = $value;
+
+	return true;
 }
 
 add_action(

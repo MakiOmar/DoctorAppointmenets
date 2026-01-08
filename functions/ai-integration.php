@@ -1316,8 +1316,12 @@ class SNKS_AI_Integration {
 			}
 			
 			// Set cookies with proper parameters (must be called before any output)
-			// Use same format as snks_get_country_code() in helpers.php for consistency
-			if ( ! headers_sent() ) {
+			// Use helper function that includes Partitioned attribute
+			if ( ! headers_sent() && function_exists( 'snks_set_cookie_with_partitioned' ) ) {
+				snks_set_cookie_with_partitioned( 'country_code', $country_code, $expire_time, '/' );
+				snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/' );
+			} elseif ( ! headers_sent() ) {
+				// Fallback if helper function doesn't exist
 				setcookie( 'country_code', $country_code, $expire_time, '/' );
 				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
 			}
@@ -2187,18 +2191,25 @@ Best regards,
 				}
 				
 				// Set cookies with proper parameters for cross-origin support
-				// Use array format for PHP 7.3+ to support SameSite attribute
-				$cookie_params = array(
-					'expires'  => $expire_time,
-					'path'     => '/',
-					'domain'   => '',
-					'secure'   => is_ssl(),
-					'httponly' => false,
-					'samesite' => 'Lax'
-				);
-				
-				setcookie( 'country_code', $country_code, $cookie_params );
-				setcookie( 'ced_selected_currency', $currency_code, $cookie_params );
+				// Use helper function that includes Partitioned attribute
+				if ( function_exists( 'snks_set_cookie_with_partitioned' ) ) {
+					$secure = is_ssl();
+					snks_set_cookie_with_partitioned( 'country_code', $country_code, $expire_time, '/', '', $secure, false, 'Lax' );
+					snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/', '', $secure, false, 'Lax' );
+				} else {
+					// Fallback: Use array format for PHP 7.3+ to support SameSite attribute
+					$cookie_params = array(
+						'expires'  => $expire_time,
+						'path'     => '/',
+						'domain'   => '',
+						'secure'   => is_ssl(),
+						'httponly' => false,
+						'samesite' => 'Lax'
+					);
+					
+					setcookie( 'country_code', $country_code, $cookie_params );
+					setcookie( 'ced_selected_currency', $currency_code, $cookie_params );
+				}
 			}
 
 			// Return cookie values in response so frontend can set them
