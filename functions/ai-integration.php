@@ -3370,17 +3370,42 @@ Best regards,
 			}
 			$price = floatval( $price ) ?: 150;
 			
-			// Get currency code for country
+			// Get currency code for country (before conversion)
 			$currency_code = $this->get_currency_code_by_country( $country_code );
 			
-			return array(
-				'price'        => $price,
-				'currency'     => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
-				'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ), // Symbol for display
-				'country_code' => $country_code,
-				'countries'    => array(),
-				'others'       => $price, // Keep for backward compatibility
-			);
+			// Use acrsw_currency to convert price (same as main plugin)
+			// This handles currency conversion based on ced_selected_currency cookie
+			if ( function_exists( 'acrsw_currency' ) ) {
+				list( $converted_price, $currency_label ) = acrsw_currency( $price, 'ج.م' );
+				// Convert formatted string back to float for calculations, but keep formatted for display
+				$converted_price_float = floatval( str_replace( ',', '', $converted_price ) );
+				
+				// Get the actual currency code from cookie if currency exchange is active
+				if ( class_exists( 'Currency_Exchange_Dashboard' ) && isset( $_COOKIE['ced_selected_currency'] ) ) {
+					$selected_currency = sanitize_text_field( wp_unslash( $_COOKIE['ced_selected_currency'] ) );
+					$currency_code = strtoupper( $selected_currency );
+				}
+				
+				return array(
+					'price'          => $converted_price_float, // Numeric value for calculations
+					'price_formatted' => $converted_price, // Formatted string for display
+					'currency'       => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
+					'currency_symbol' => $currency_label, // Symbol from acrsw_currency (e.g., 'ج.م', 'ر.س')
+					'country_code'   => $country_code,
+					'countries'      => array(),
+					'others'         => $converted_price_float, // Keep for backward compatibility
+				);
+			} else {
+				// Fallback if acrsw_currency doesn't exist
+				return array(
+					'price'        => $price,
+					'currency'     => $currency_code,
+					'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ),
+					'country_code' => $country_code,
+					'countries'    => array(),
+					'others'       => $price,
+				);
+			}
 		} else {
 			// For regular therapists, use the main pricing system
 			$pricings = snks_doctor_online_pricings( $therapist_id );
@@ -3411,23 +3436,54 @@ Best regards,
 			
 			$price = floatval( $price ) ?: 0;
 			
-			// Get currency code for country
+			// Get currency code for country (before conversion)
 			$currency_code = $this->get_currency_code_by_country( $country_code );
 			
-			// Get full pricing structure for backward compatibility
-			$pricing_structure = isset( $pricings[ $period_key ] ) ? $pricings[ $period_key ] : array(
-				'countries' => array(),
-				'others'    => $price,
-			);
-			
-			return array(
-				'price'          => $price,
-				'currency'       => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
-				'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ), // Symbol for display
-				'country_code'   => $country_code,
-				'countries'      => isset( $pricing_structure['countries'] ) ? $pricing_structure['countries'] : array(),
-				'others'         => isset( $pricing_structure['others'] ) ? $pricing_structure['others'] : $price,
-			);
+			// Use acrsw_currency to convert price (same as main plugin)
+			// This handles currency conversion based on ced_selected_currency cookie
+			if ( function_exists( 'acrsw_currency' ) ) {
+				list( $converted_price, $currency_label ) = acrsw_currency( $price, 'ج.م' );
+				// Convert formatted string back to float for calculations, but keep formatted for display
+				$converted_price_float = floatval( str_replace( ',', '', $converted_price ) );
+				
+				// Get the actual currency code from cookie if currency exchange is active
+				if ( class_exists( 'Currency_Exchange_Dashboard' ) && isset( $_COOKIE['ced_selected_currency'] ) ) {
+					$selected_currency = sanitize_text_field( wp_unslash( $_COOKIE['ced_selected_currency'] ) );
+					$currency_code = strtoupper( $selected_currency );
+				}
+				
+				// Get full pricing structure for backward compatibility
+				$pricing_structure = isset( $pricings[ $period_key ] ) ? $pricings[ $period_key ] : array(
+					'countries' => array(),
+					'others'    => $price, // Keep original price in 'others' for reference
+				);
+				
+				return array(
+					'price'          => $converted_price_float, // Numeric value for calculations
+					'price_formatted' => $converted_price, // Formatted string for display
+					'currency'       => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
+					'currency_symbol' => $currency_label, // Symbol from acrsw_currency (e.g., 'ج.م', 'ر.س')
+					'country_code'   => $country_code,
+					'countries'      => isset( $pricing_structure['countries'] ) ? $pricing_structure['countries'] : array(),
+					'others'         => $converted_price_float, // Converted price for backward compatibility
+				);
+			} else {
+				// Fallback if acrsw_currency doesn't exist
+				// Get full pricing structure for backward compatibility
+				$pricing_structure = isset( $pricings[ $period_key ] ) ? $pricings[ $period_key ] : array(
+					'countries' => array(),
+					'others'    => $price,
+				);
+				
+				return array(
+					'price'          => $price,
+					'currency'       => $currency_code,
+					'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ),
+					'country_code'   => $country_code,
+					'countries'      => isset( $pricing_structure['countries'] ) ? $pricing_structure['countries'] : array(),
+					'others'         => isset( $pricing_structure['others'] ) ? $pricing_structure['others'] : $price,
+				);
+			}
 		}
 	}
 
@@ -3629,6 +3685,7 @@ Best regards,
 			'country_code' => $country_code,
 			'price'        => floatval( $pricing_info['price'] ),
 			'currency'     => $pricing_info['currency'],
+			'currency_symbol' => isset( $pricing_info['currency_symbol'] ) ? $pricing_info['currency_symbol'] : 'ج.م',
 			'pricing_info' => $pricing_info, // Store full pricing info for reference
 		);
 
@@ -3788,6 +3845,7 @@ Best regards,
 			'country_code' => $country_code,
 			'price'        => floatval( $pricing_info['price'] ),
 			'currency'     => $pricing_info['currency'],
+			'currency_symbol' => isset( $pricing_info['currency_symbol'] ) ? $pricing_info['currency_symbol'] : 'ج.م',
 			'pricing_info' => $pricing_info, // Store full pricing info for reference
 			'added_at'     => current_time( 'mysql' ),
 		);
@@ -3818,7 +3876,17 @@ Best regards,
 		foreach ( $cart as $item ) {
 			$slot = snks_get_timetable_by( 'ID', $item['slot_id'] );
 			if ( $slot && $slot->session_status === 'waiting' ) {
-				$price  = $item['price']['others'] ?? 0;
+				// Price is stored as float in cart items (converted price from get_therapist_ai_price)
+				// Fallback to pricing_info if direct price not available
+				if ( isset( $item['price'] ) && is_numeric( $item['price'] ) ) {
+					$price = floatval( $item['price'] );
+				} elseif ( isset( $item['pricing_info']['price'] ) ) {
+					$price = floatval( $item['pricing_info']['price'] );
+				} elseif ( isset( $item['pricing_info']['others'] ) ) {
+					$price = floatval( $item['pricing_info']['others'] );
+				} else {
+					$price = 0;
+				}
 				$total += $price;
 
 				$session_data[] = array(
@@ -4748,7 +4816,7 @@ Best regards,
 	 * Get cart item price based on therapist, period, and country
 	 * 
 	 * @param object $item Cart item with user_id, period, attendance_type, and country_code
-	 * @return float The price for this cart item
+	 * @return array Price information with converted price and currency (same format as get_therapist_ai_price)
 	 */
 	private function get_cart_item_price( $item ) {
 		$therapist_id = isset( $item->user_id ) ? intval( $item->user_id ) : 0;
@@ -4757,7 +4825,30 @@ Best regards,
 		$country_code = isset( $item->country_code ) ? $item->country_code : null;
 		
 		if ( ! $therapist_id ) {
-			return 200.00; // Default fallback price
+			// Return default pricing structure
+			$default_price = 200.00;
+			if ( function_exists( 'acrsw_currency' ) ) {
+				list( $converted_price, $currency_label ) = acrsw_currency( $default_price, 'ج.م' );
+				$converted_price_float = floatval( str_replace( ',', '', $converted_price ) );
+				$currency_code = 'EGP';
+				if ( class_exists( 'Currency_Exchange_Dashboard' ) && isset( $_COOKIE['ced_selected_currency'] ) ) {
+					$selected_currency = sanitize_text_field( wp_unslash( $_COOKIE['ced_selected_currency'] ) );
+					$currency_code = strtoupper( $selected_currency );
+				}
+				return array(
+					'price' => $converted_price_float,
+					'price_formatted' => $converted_price,
+					'currency' => $currency_code,
+					'currency_symbol' => $currency_label,
+					'country_code' => $country_code ?: 'EG',
+				);
+			}
+			return array(
+				'price' => $default_price,
+				'currency' => 'EGP',
+				'currency_symbol' => 'ج.م',
+				'country_code' => $country_code ?: 'EG',
+			);
 		}
 		
 		// Get country code if not provided
@@ -4775,11 +4866,15 @@ Best regards,
 			}
 		}
 		
-		// Use the new country-based pricing method
+		// Use the new country-based pricing method (with currency conversion)
 		$pricing_info = $this->get_therapist_ai_price( $therapist_id, $country_code, $period );
-		$price = isset( $pricing_info['price'] ) ? floatval( $pricing_info['price'] ) : 200.00;
 		
-		return $price > 0 ? $price : 200.00; // Final fallback
+		// Ensure we have a valid price
+		if ( ! isset( $pricing_info['price'] ) || $pricing_info['price'] <= 0 ) {
+			$pricing_info['price'] = 200.00;
+		}
+		
+		return $pricing_info;
 	}
 
 	/**
@@ -4838,16 +4933,25 @@ Best regards,
 		if ( ! $country_code || $country_code === 'Unknown' ) {
 			$country_code = 'EG'; // Default to Egypt
 		}
-		$currency_code = $this->get_currency_code_by_country( $country_code );
 
 		$total_price = 0;
+		$currency_code = 'EGP'; // Default
+		$currency_symbol = 'ج.م'; // Default
+		
 		foreach ( $valid_cart_items as $item ) {
-			$item_price   = $this->get_cart_item_price( $item );
-			$item->price  = floatval( $item_price );
-			$item->currency = $currency_code; // Add currency code to each item (e.g., 'GBP', 'EUR')
-			$item->currency_symbol = $this->get_currency_symbol_by_code( $currency_code ); // Add symbol for display
-			$item->country_code = $country_code; // Add country code
-			$total_price += $item_price;
+			$pricing_info = $this->get_cart_item_price( $item );
+			$item->price  = floatval( $pricing_info['price'] );
+			$item->currency = isset( $pricing_info['currency'] ) ? $pricing_info['currency'] : 'EGP';
+			$item->currency_symbol = isset( $pricing_info['currency_symbol'] ) ? $pricing_info['currency_symbol'] : 'ج.م';
+			$item->country_code = isset( $pricing_info['country_code'] ) ? $pricing_info['country_code'] : $country_code;
+			
+			// Use currency from first item (all items should have same currency after conversion)
+			if ( $total_price == 0 ) {
+				$currency_code = $item->currency;
+				$currency_symbol = $item->currency_symbol;
+			}
+			
+			$total_price += $item->price;
 			
 			if ( ! empty( $item->profile_image ) ) {
 				$item->therapist_image_url = wp_get_attachment_image_url( $item->profile_image, 'thumbnail' );
@@ -4857,8 +4961,8 @@ Best regards,
 		return array(
 			'items' => $valid_cart_items,
 			'total' => round( $total_price, 2 ),
-			'currency' => $currency_code, // Currency code (e.g., 'GBP', 'EUR')
-			'currency_symbol' => $this->get_currency_symbol_by_code( $currency_code ), // Symbol for display
+			'currency' => $currency_code, // Currency code from converted prices (e.g., 'GBP', 'EUR')
+			'currency_symbol' => $currency_symbol, // Symbol from converted prices (e.g., 'ج.م', 'ر.س')
 			'country_code' => $country_code,
 			'count' => count( $valid_cart_items ),
 		);
