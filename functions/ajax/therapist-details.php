@@ -47,22 +47,104 @@ function snks_get_therapist_details_rest($request) {
     
     // Check if therapist exists and has doctor role
     $therapist = get_user_by('ID', $therapist_id);
-    if (!$therapist || !in_array('doctor', $therapist->roles)) {
-        return new WP_Error('therapist_not_found', 'Therapist not found', ['status' => 404]);
+    
+    // Debug information
+    $debug_info = [
+        'therapist_id' => $therapist_id,
+        'user_exists' => $therapist ? true : false,
+    ];
+    
+    if (!$therapist) {
+        // User doesn't exist
+        $error_message = sprintf(
+            'Therapist user not found. Searched for user ID: %d',
+            $therapist_id
+        );
+        return new WP_Error(
+            'therapist_not_found', 
+            $error_message,
+            array_merge(['status' => 404], $debug_info)
+        );
+    }
+    
+    // Get user details for debugging
+    $user_name = $therapist->display_name ?: ($therapist->user_login ?: 'Unknown');
+    $user_roles = $therapist->roles ? implode(', ', $therapist->roles) : 'none';
+    $user_email = $therapist->user_email ?: 'no email';
+    
+    $debug_info['user_name'] = $user_name;
+    $debug_info['user_email'] = $user_email;
+    $debug_info['user_roles'] = $user_roles;
+    
+    if (!in_array('doctor', $therapist->roles)) {
+        // User exists but doesn't have doctor role
+        $error_message = sprintf(
+            'User found but does not have doctor role. User ID: %d, Name: %s, Email: %s, Roles: %s',
+            $therapist_id,
+            $user_name,
+            $user_email,
+            $user_roles
+        );
+        return new WP_Error(
+            'therapist_not_found', 
+            $error_message,
+            array_merge(['status' => 404], $debug_info)
+        );
     }
 
     // Get the therapist's application from custom table
     global $wpdb;
     $table_name = $wpdb->prefix . 'therapist_applications';
     
+    // First, check if any application exists (regardless of status)
+    $any_application = $wpdb->get_row($wpdb->prepare(
+        "SELECT id, name, name_en, status, email FROM $table_name WHERE user_id = %d LIMIT 1",
+        $therapist_id
+    ));
+    
+    if ($any_application) {
+        $debug_info['application_exists'] = true;
+        $debug_info['application_status'] = $any_application->status;
+        $debug_info['application_name'] = $any_application->name ?: ($any_application->name_en ?: 'Unknown');
+        $debug_info['application_email'] = $any_application->email ?: 'no email';
+    } else {
+        $debug_info['application_exists'] = false;
+    }
+    
+    // Now check for approved application
     $application = $wpdb->get_row($wpdb->prepare(
         "SELECT * FROM $table_name WHERE user_id = %d AND status = 'approved'",
         $therapist_id
     ));
 
     if (!$application) {
-        return new WP_Error('application_not_found', 'Therapist application not found', ['status' => 404]);
+        // Application not found or not approved
+        if ($any_application) {
+            $error_message = sprintf(
+                'Therapist application found but not approved. User ID: %d, Name: %s, Application Status: %s. Application Name: %s, Application Email: %s',
+                $therapist_id,
+                $user_name,
+                $any_application->status,
+                $debug_info['application_name'],
+                $debug_info['application_email']
+            );
+        } else {
+            $error_message = sprintf(
+                'Therapist application not found in database. User ID: %d, Name: %s, Email: %s',
+                $therapist_id,
+                $user_name,
+                $user_email
+            );
+        }
+        return new WP_Error(
+            'application_not_found', 
+            $error_message,
+            array_merge(['status' => 404], $debug_info)
+        );
     }
+    
+    // Add application name to debug info for successful lookups
+    $debug_info['application_name'] = $application->name ?: ($application->name_en ?: 'Unknown');
 
     // Get certificates
     $certificates = !empty($application->certificates) ? json_decode($application->certificates, true) : [];

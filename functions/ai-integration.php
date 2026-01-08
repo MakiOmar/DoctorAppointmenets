@@ -980,7 +980,18 @@ class SNKS_AI_Integration {
 						if ( is_wp_error( $response ) ) {
 							$error_data = $response->get_error_data();
 							$status_code = is_array( $error_data ) && isset( $error_data['status'] ) ? $error_data['status'] : 400;
-							$this->send_error( $response->get_error_message(), $status_code );
+							
+							// Extract debug information if available
+							$debug_info = null;
+							if ( is_array( $error_data ) && count( $error_data ) > 1 ) {
+								$debug_info = $error_data;
+								unset( $debug_info['status'] );
+								if ( empty( $debug_info ) ) {
+									$debug_info = null;
+								}
+							}
+							
+							$this->send_error( $response->get_error_message(), $status_code, $debug_info );
 						} elseif ( is_array( $response ) && isset( $response['data'] ) ) {
 							// Return the data directly without double-wrapping
 							$this->send_success( $response['data'] );
@@ -4244,16 +4255,21 @@ Best regards,
 	/**
 	 * Send error response
 	 */
-	private function send_error( $message, $code = 400 ) {
+	private function send_error( $message, $code = 400, $debug_data = null ) {
 		$message = $this->translate_message( $message );
 
-		http_response_code( $code );
-		echo json_encode(
-			array(
-				'success' => false,
-				'error'   => $message,
-			)
+		$response = array(
+			'success' => false,
+			'error'   => $message,
 		);
+		
+		// Include debug data if provided
+		if ( $debug_data !== null && is_array( $debug_data ) ) {
+			$response['debug'] = $debug_data;
+		}
+
+		http_response_code( $code );
+		echo json_encode( $response );
 		exit;
 	}
 
