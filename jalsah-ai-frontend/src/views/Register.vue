@@ -346,7 +346,6 @@ export default {
       if (whatsappInput.startsWith('0')) {
         const fullPhoneNumber = selectedCountry.dial_code + whatsappInput
         const errorMessage = t('auth.register.phoneValidation.startsWithZero')
-        console.log('Leading zero detected, error message:', errorMessage) // Debug log
         phoneValidationMessage.value = {
           type: 'error',
           title: errorMessage,
@@ -528,34 +527,17 @@ export default {
       }
     }
     
-    // Get client IP from external service
-    const getClientIP = async () => {
-      try {
-        const res = await fetch('https://api.ipify.org?format=json')
-        const data = await res.json()
-        return data.ip
-      } catch (error) {
-        return null
-      }
-    }
-
-    // Auto-detect user country
+    // Auto-detect user country (backend handles IP detection automatically)
     const detectUserCountry = async () => {
       try {
         isDetectingCountry.value = true
         
-        // First, get the client IP from external service
-        const clientIP = await getClientIP()
-        
-        // Add cache-busting parameter and IP parameter
+        // Backend endpoint automatically detects IP from server variables
+        // No need to fetch IP from external service (avoids CORS issues)
         const timestamp = Date.now()
         const params = new URLSearchParams({
           t: timestamp.toString()
         })
-        
-        if (clientIP) {
-          params.append('ip', clientIP)
-        }
         
         const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?${params.toString()}`)
         
@@ -597,7 +579,6 @@ export default {
       // Check if number starts with 0 (common mistake)
       if (cleanPhoneNumber.startsWith('0')) {
         const errorMessage = t('auth.register.phoneValidation.startsWithZero')
-        console.log('Validation: Leading zero detected, error message:', errorMessage) // Debug log
         return {
           isValid: false,
           error: errorMessage
@@ -785,7 +766,6 @@ export default {
       selectCountry,
       getSelectedCountryFlag,
       getSelectedCountryDial,
-      getClientIP,
       detectUserCountry
     }
   }

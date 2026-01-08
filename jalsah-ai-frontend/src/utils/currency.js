@@ -19,8 +19,8 @@ export function formatPrice(amount, locale = 'en', currency = null) {
   
   // Format number with locale
   const formattedNumber = numAmount.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
   })
   
   return `${formattedNumber} ${currencySymbol}`

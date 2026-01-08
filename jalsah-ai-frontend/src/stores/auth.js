@@ -78,20 +78,44 @@ export const useAuthStore = defineStore('auth', () => {
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
-      // Set country_code and ced_selected_currency cookies if provided in response
-      if (country_code && currency_code) {
-        const settingsStore = useSettingsStore()
-        if (settingsStore.setCookie) {
-          settingsStore.setCookie('country_code', country_code, 1)
-          settingsStore.setCookie('ced_selected_currency', currency_code, 1)
-          // Also update settings store
-          settingsStore.setUserCountry(country_code)
-        }
-      } else {
-        // Fallback: detect country if not provided
-        const settingsStore = useSettingsStore()
-        await settingsStore.detectUserCountry()
+      // After login, backend sets cookies (country_code, ced_selected_currency) server-side
+      // We need to read the actual cookie values and sync localStorage (backend is source of truth)
+      
+      // Clear old localStorage values first to ensure clean sync (prevents stale values)
+      localStorage.removeItem('user_country_code')
+      localStorage.removeItem('user_currency_code')
+      localStorage.removeItem('user_currency')
+      
+      const settingsStore = useSettingsStore()
+      
+      // Try to sync from cookies immediately (backend sets them in response headers)
+      let synced = settingsStore.syncFromCookies()
+      
+      // If cookies weren't available immediately, try again after a brief moment
+      if (!synced) {
+        // Use setTimeout as fallback in case cookies take a moment to be available
+        setTimeout(() => {
+          const retrySynced = settingsStore.syncFromCookies()
+          
+          if (!retrySynced) {
+            // If cookies still don't exist, check response values or detect
+            if (country_code && currency_code) {
+              // Use response values if cookies aren't set
+              if (settingsStore.setCookie) {
+                settingsStore.setCookie('country_code', country_code, 1)
+                settingsStore.setCookie('ced_selected_currency', currency_code, 1)
+                settingsStore.setUserCountry(country_code)
+              }
+            } else {
+              // Last resort: detect country
+              settingsStore.detectUserCountry().catch(console.error)
+            }
+          }
+        }, 50)
       }
+      
+      // Also validate sync to ensure everything is correct
+      await settingsStore.validateCountrySync()
       
       // Load cart after successful login
       const cartStore = useCartStore()
@@ -275,20 +299,38 @@ export const useAuthStore = defineStore('auth', () => {
       // Set token in API headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
       
-      // Set country_code and ced_selected_currency cookies if provided in response
-      if (country_code && currency_code) {
-        const settingsStore = useSettingsStore()
-        if (settingsStore.setCookie) {
-          settingsStore.setCookie('country_code', country_code, 1)
-          settingsStore.setCookie('ced_selected_currency', currency_code, 1)
-          // Also update settings store
-          settingsStore.setUserCountry(country_code)
-        }
-      } else {
-        // Fallback: detect country if not provided
-        const settingsStore = useSettingsStore()
-        await settingsStore.detectUserCountry()
+      // After verification, backend sets cookies (country_code, ced_selected_currency) server-side
+      // We need to read the actual cookie values and sync localStorage (backend is source of truth)
+      const settingsStore = useSettingsStore()
+      
+      // Try to sync from cookies immediately (backend sets them in response headers)
+      const synced = settingsStore.syncFromCookies()
+      
+      // If cookies weren't available immediately, try again after a brief moment
+      if (!synced) {
+        // Use setTimeout as fallback in case cookies take a moment to be available
+        setTimeout(() => {
+          const retrySynced = settingsStore.syncFromCookies()
+          
+          if (!retrySynced) {
+            // If cookies still don't exist, check response values or detect
+            if (country_code && currency_code) {
+              // Use response values if cookies aren't set
+              if (settingsStore.setCookie) {
+                settingsStore.setCookie('country_code', country_code, 1)
+                settingsStore.setCookie('ced_selected_currency', currency_code, 1)
+                settingsStore.setUserCountry(country_code)
+              }
+            } else {
+              // Last resort: detect country
+              settingsStore.detectUserCountry().catch(console.error)
+            }
+          }
+        }, 50)
       }
+      
+      // Also validate sync to ensure everything is correct
+      settingsStore.validateCountrySync().catch(console.error)
       
       // Load cart after successful verification
       const cartStore = useCartStore()

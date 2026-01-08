@@ -126,10 +126,14 @@ export const useSettingsStore = defineStore('settings', () => {
     // Try to load fresh settings from API in background
     loadSettingsFromAPI()
     
-    // Detect user country if not set
-    if (!userCountryCode.value) {
-      detectUserCountry()
-    }
+    // Validate country sync before detecting
+    validateCountrySync().then((synced) => {
+      // If sync was performed, detectUserCountry was already called
+      // Otherwise, detect if not set
+      if (!synced && !userCountryCode.value) {
+        detectUserCountry()
+      }
+    })
   }
 
   const loadSettingsFromAPI = async () => {
@@ -201,30 +205,15 @@ export const useSettingsStore = defineStore('settings', () => {
     return bilingualEnabled.value
   })
 
-  // Helper function to get client IP
-  const getClientIP = async () => {
-    try {
-      const response = await fetch('https://api.ipify.org?format=json')
-      const data = await response.json()
-      return data.ip
-    } catch (error) {
-      console.error('Failed to get client IP:', error)
-      return null
-    }
-  }
-
-  // Detect user country from IP
+  // Detect user country from IP (backend handles IP detection automatically)
   const detectUserCountry = async () => {
     try {
-      const clientIP = await getClientIP()
+      // Backend endpoint automatically detects IP from server variables
+      // No need to fetch IP from external service (avoids CORS issues)
       const timestamp = Date.now()
       const params = new URLSearchParams({
         t: timestamp.toString()
       })
-      
-      if (clientIP) {
-        params.append('ip', clientIP)
-      }
       
       const response = await api.get(`/wp-json/jalsah-ai/v1/user-country?${params.toString()}`)
       if (response.data && response.data.country_code) {
@@ -238,10 +227,82 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // Helper function to reset all country/currency related cookies and localStorage
+  const resetCountryCurrencyData = () => {
+    // Clear localStorage
+    localStorage.removeItem('user_country_code')
+    localStorage.removeItem('user_currency_code')
+    localStorage.removeItem('user_currency')
+    
+    // Clear cookies (set to empty and expire immediately)
+    const pastDate = new Date(0).toUTCString()
+    document.cookie = `country_code=; expires=${pastDate}; path=/`
+    document.cookie = `ced_selected_currency=; expires=${pastDate}; path=/`
+    
+    // Reset state
+    userCountryCode.value = null
+    userCurrencyCode.value = 'EGP'
+    userCurrency.value = 'ج.م'
+  }
+
+  // Validate and sync country code between localStorage and cookie
+  const validateCountrySync = async () => {
+    const localStorageCountry = localStorage.getItem('user_country_code')
+    const cookieCountry = getCookie('country_code')
+    
+    // Normalize values (handle null/undefined/empty)
+    const lsCountry = localStorageCountry ? localStorageCountry.toUpperCase() : null
+    const cookieCntry = cookieCountry ? cookieCountry.toUpperCase() : null
+    
+    // If both exist but don't match, reset and fetch again
+    if (lsCountry && cookieCntry && lsCountry !== cookieCntry) {
+      console.log('Country code mismatch detected. Resetting and fetching fresh data.')
+      console.log(`localStorage: ${lsCountry}, cookie: ${cookieCntry}`)
+      
+      // Reset all related data
+      resetCountryCurrencyData()
+      
+      // Fetch fresh country data from backend (will set everything fresh)
+      await detectUserCountry()
+      return true // Indicates a sync was performed
+    }
+    
+    // If localStorage exists but cookie doesn't, sync from localStorage
+    if (lsCountry && !cookieCntry) {
+      console.log('Cookie missing, syncing from localStorage')
+      setUserCountry(lsCountry)
+      return true
+    }
+    
+    // If cookie exists but localStorage doesn't, ONLY sync if user is authenticated
+    // This prevents syncing from stale cookies before login
+    if (cookieCntry && !lsCountry) {
+      // Check if user is authenticated (cookies should be fresh if user just logged in)
+      const isAuth = localStorage.getItem('jalsah_token') && localStorage.getItem('jalsah_user')
+      
+      // Only sync from cookie if user is authenticated (fresh cookies from login)
+      // Otherwise, wait for login to set fresh cookies
+      if (isAuth) {
+        console.log('localStorage missing, syncing from cookie (user authenticated)')
+        setUserCountry(cookieCntry)
+        return true
+      } else {
+        // Don't sync from potentially stale cookies if user is not authenticated
+        // Wait for login to set fresh cookies
+        return false
+      }
+    }
+    
+    return false // No sync needed, values match or both are null
+  }
+
   // Set user country and currency code (follows main plugin logic)
   const setUserCountry = (countryCode) => {
     userCountryCode.value = countryCode
     localStorage.setItem('user_country_code', countryCode)
+    
+    // Also set the country_code cookie to keep them in sync
+    setCookie('country_code', countryCode, 1)
     
     // Check cookie first (set by main plugin backend)
     const cookieCurrency = getCookie('ced_selected_currency')
@@ -282,6 +343,9 @@ export const useSettingsStore = defineStore('settings', () => {
     userCurrencyCode.value = currencyCode
     localStorage.setItem('user_currency_code', currencyCode)
     
+    // Set currency cookie
+    setCookie('ced_selected_currency', currencyCode, 1)
+    
     // Map currency code to symbol for backward compatibility
     userCurrency.value = mapCurrencyCodeToSymbol(currencyCode)
     localStorage.setItem('user_currency', userCurrency.value)
@@ -295,6 +359,60 @@ export const useSettingsStore = defineStore('settings', () => {
       'USD': 'USD', 'GBP': 'GBP', 'CAD': 'CAD', 'AUD': 'AUD'
     }
     return currencySymbolMap[currencyCode.toUpperCase()] || currencyCode
+  }
+
+  // Sync country and currency from cookies (used after backend sets cookies)
+  const syncFromCookies = () => {
+    const cookieCountry = getCookie('country_code')
+    const cookieCurrency = getCookie('ced_selected_currency')
+    
+    if (cookieCountry) {
+      // Update country from cookie (backend is source of truth)
+      userCountryCode.value = cookieCountry.toUpperCase()
+      localStorage.setItem('user_country_code', cookieCountry.toUpperCase())
+      
+      // Update currency from cookie if available
+      if (cookieCurrency) {
+        const currencyUpper = cookieCurrency.toUpperCase()
+        userCurrencyCode.value = currencyUpper
+        localStorage.setItem('user_currency_code', currencyUpper)
+        userCurrency.value = mapCurrencyCodeToSymbol(currencyUpper)
+        localStorage.setItem('user_currency', userCurrency.value)
+      } else {
+        // If no currency cookie, map from country
+        const countryCurrencyMap = {
+          'EG': 'EGP', 'SA': 'SAR', 'AE': 'AED', 'KW': 'KWD',
+          'QA': 'QAR', 'BH': 'BHD', 'OM': 'OMR', 'EU': 'EUR',
+          'US': 'USD', 'GB': 'GBP', 'CA': 'CAD', 'AU': 'AUD'
+        }
+        
+        const europeCountries = [
+          'AL', 'AD', 'AM', 'AT', 'AZ', 'BY', 'BE', 'BA', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE',
+          'FI', 'FR', 'GE', 'DE', 'GR', 'HU', 'IS', 'IE', 'IT', 'KZ', 'XK', 'LV', 'LI', 'LT',
+          'LU', 'MT', 'MD', 'MC', 'ME', 'NL', 'MK', 'NO', 'PL', 'PT', 'RO', 'RU', 'SM', 'RS',
+          'SK', 'SI', 'ES', 'SE', 'CH', 'TR', 'UA', 'GB', 'VA'
+        ]
+        
+        let currencyCode = 'EGP'
+        if (countryCurrencyMap[cookieCountry.toUpperCase()]) {
+          currencyCode = countryCurrencyMap[cookieCountry.toUpperCase()]
+        } else if (europeCountries.includes(cookieCountry.toUpperCase())) {
+          currencyCode = 'EUR'
+        } else {
+          currencyCode = 'USD'
+        }
+        
+        userCurrencyCode.value = currencyCode
+        localStorage.setItem('user_currency_code', currencyCode)
+        setCookie('ced_selected_currency', currencyCode, 1)
+        userCurrency.value = mapCurrencyCodeToSymbol(currencyCode)
+        localStorage.setItem('user_currency', userCurrency.value)
+      }
+      
+      return true
+    }
+    
+    return false
   }
 
   const setSettings = (settings) => {
@@ -365,6 +483,10 @@ export const useSettingsStore = defineStore('settings', () => {
     setSettings,
     detectUserCountry,
     setUserCountry,
+    validateCountrySync,
+    resetCountryCurrencyData,
+    syncFromCookies,
+    mapCurrencyCodeToSymbol,
     getCookie,
     setCookie
   }

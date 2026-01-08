@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 
 const routes = [
   {
@@ -167,8 +168,14 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  const settingsStore = useSettingsStore()
   
-
+  // Validate country sync on every navigation (non-blocking)
+  // This ensures localStorage and cookies stay in sync
+  // Run in background so it doesn't block navigation
+  settingsStore.validateCountrySync().catch(error => {
+    console.error('Error validating country sync:', error)
+  })
   
   // Check if authentication is required
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
