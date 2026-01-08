@@ -270,6 +270,7 @@ export default {
     auth: {
       loginSuccess: 'Login successful!',
       loginFailed: 'Login failed',
+      vpnDetected: 'VPN detected. Your location has changed. Please log in again for security.',
       registerSuccess: 'Registration successful! Please check your email for verification code.',
       whatsappSentTo: 'Verification code sent to WhatsApp: {contact}',
       registerFailed: 'Registration failed',

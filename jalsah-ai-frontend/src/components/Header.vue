@@ -233,10 +233,10 @@ export default {
     const shouldShowLanguageSwitcher = computed(() => settingsStore.shouldShowLanguageSwitcher)
 
     const logout = () => {
-      authStore.logout()
       userMenuOpen.value = false
       mobileMenuOpen.value = false
-      router.push('/login')
+      // logout() function now handles redirect internally
+      authStore.logout(true)
     }
 
     const handleClickOutside = (event) => {

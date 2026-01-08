@@ -268,6 +268,7 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // Validate and sync country code between localStorage and cookie
+  // This ensures cookies and localStorage always stay in sync
   const validateCountrySync = async () => {
     const localStorageCountry = localStorage.getItem('user_country_code')
     const cookieCountry = getCookie('country_code')
@@ -276,28 +277,29 @@ export const useSettingsStore = defineStore('settings', () => {
     const lsCountry = localStorageCountry ? localStorageCountry.toUpperCase() : null
     const cookieCntry = cookieCountry ? cookieCountry.toUpperCase() : null
     
-    // If both exist but don't match, reset and fetch again
+    // If both exist but don't match, use cookie as source of truth (backend sets cookies)
     if (lsCountry && cookieCntry && lsCountry !== cookieCntry) {
-      console.log('Country code mismatch detected. Resetting and fetching fresh data.')
+      console.log('Country code mismatch detected. Syncing from cookie (backend is source of truth).')
       console.log(`localStorage: ${lsCountry}, cookie: ${cookieCntry}`)
       
-      // Reset all related data
-      resetCountryCurrencyData()
-      
-      // Fetch fresh country data from backend (will set everything fresh)
-      await detectUserCountry()
+      // Sync from cookie (backend is source of truth)
+      setUserCountry(cookieCntry)
       return true // Indicates a sync was performed
     }
     
-    // If localStorage exists but cookie doesn't, sync from localStorage
+    // If localStorage exists but cookie doesn't, sync cookie from localStorage
     if (lsCountry && !cookieCntry) {
-      console.log('Cookie missing, syncing from localStorage')
-      setUserCountry(lsCountry)
+      console.log('Cookie missing, syncing cookie from localStorage')
+      setCookie('country_code', lsCountry, 1)
+      // Also ensure currency is synced
+      const lsCurrency = localStorage.getItem('user_currency_code')
+      if (lsCurrency) {
+        setCookie('ced_selected_currency', lsCurrency, 1)
+      }
       return true
     }
     
-    // If cookie exists but localStorage doesn't, ONLY sync if user is authenticated
-    // This prevents syncing from stale cookies before login
+    // If cookie exists but localStorage doesn't, sync localStorage from cookie
     if (cookieCntry && !lsCountry) {
       // Check if user is authenticated (cookies should be fresh if user just logged in)
       const isAuth = localStorage.getItem('jalsah_token') && localStorage.getItem('jalsah_user')
@@ -312,6 +314,35 @@ export const useSettingsStore = defineStore('settings', () => {
         // Don't sync from potentially stale cookies if user is not authenticated
         // Wait for login to set fresh cookies
         return false
+      }
+    }
+    
+    // If both exist and match, ensure currency is also synced
+    if (lsCountry && cookieCntry && lsCountry === cookieCntry) {
+      const cookieCurrency = getCookie('ced_selected_currency')
+      const lsCurrency = localStorage.getItem('user_currency_code')
+      
+      // Sync currency if there's a mismatch
+      if (cookieCurrency && lsCurrency && cookieCurrency.toUpperCase() !== lsCurrency.toUpperCase()) {
+        console.log('Currency mismatch detected. Syncing from cookie.')
+        const currencyUpper = cookieCurrency.toUpperCase()
+        userCurrencyCode.value = currencyUpper
+        localStorage.setItem('user_currency_code', currencyUpper)
+        userCurrency.value = mapCurrencyCodeToSymbol(currencyUpper)
+        localStorage.setItem('user_currency', userCurrency.value)
+        return true
+      } else if (cookieCurrency && !lsCurrency) {
+        // Cookie has currency but localStorage doesn't
+        const currencyUpper = cookieCurrency.toUpperCase()
+        userCurrencyCode.value = currencyUpper
+        localStorage.setItem('user_currency_code', currencyUpper)
+        userCurrency.value = mapCurrencyCodeToSymbol(currencyUpper)
+        localStorage.setItem('user_currency', userCurrency.value)
+        return true
+      } else if (!cookieCurrency && lsCurrency) {
+        // localStorage has currency but cookie doesn't
+        setCookie('ced_selected_currency', lsCurrency, 1)
+        return true
       }
     }
     
@@ -384,14 +415,20 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // Sync country and currency from cookies (used after backend sets cookies)
+  // This ensures cookies and localStorage stay in sync
   const syncFromCookies = () => {
     const cookieCountry = getCookie('country_code')
     const cookieCurrency = getCookie('ced_selected_currency')
     
     if (cookieCountry) {
+      const countryUpper = cookieCountry.toUpperCase()
+      
       // Update country from cookie (backend is source of truth)
-      userCountryCode.value = cookieCountry.toUpperCase()
-      localStorage.setItem('user_country_code', cookieCountry.toUpperCase())
+      userCountryCode.value = countryUpper
+      localStorage.setItem('user_country_code', countryUpper)
+      
+      // Ensure cookie is set (in case it was missing)
+      setCookie('country_code', countryUpper, 1)
       
       // Update currency from cookie if available
       if (cookieCurrency) {
@@ -400,8 +437,11 @@ export const useSettingsStore = defineStore('settings', () => {
         localStorage.setItem('user_currency_code', currencyUpper)
         userCurrency.value = mapCurrencyCodeToSymbol(currencyUpper)
         localStorage.setItem('user_currency', userCurrency.value)
+        
+        // Ensure currency cookie is set (in case it was missing)
+        setCookie('ced_selected_currency', currencyUpper, 1)
       } else {
-        // If no currency cookie, map from country
+        // If no currency cookie, map from country and set both cookie and localStorage
         const countryCurrencyMap = {
           'EG': 'EGP', 'SA': 'SAR', 'AE': 'AED', 'KW': 'KWD',
           'QA': 'QAR', 'BH': 'BHD', 'OM': 'OMR', 'EU': 'EUR',
@@ -416,9 +456,9 @@ export const useSettingsStore = defineStore('settings', () => {
         ]
         
         let currencyCode = 'EGP'
-        if (countryCurrencyMap[cookieCountry.toUpperCase()]) {
-          currencyCode = countryCurrencyMap[cookieCountry.toUpperCase()]
-        } else if (europeCountries.includes(cookieCountry.toUpperCase())) {
+        if (countryCurrencyMap[countryUpper]) {
+          currencyCode = countryCurrencyMap[countryUpper]
+        } else if (europeCountries.includes(countryUpper)) {
           currencyCode = 'EUR'
         } else {
           currencyCode = 'USD'
@@ -426,6 +466,10 @@ export const useSettingsStore = defineStore('settings', () => {
         
         userCurrencyCode.value = currencyCode
         localStorage.setItem('user_currency_code', currencyCode)
+        userCurrency.value = mapCurrencyCodeToSymbol(currencyCode)
+        localStorage.setItem('user_currency', userCurrency.value)
+        
+        // Set currency cookie to keep in sync
         setCookie('ced_selected_currency', currencyCode, 1)
         userCurrency.value = mapCurrencyCodeToSymbol(currencyCode)
         localStorage.setItem('user_currency', userCurrency.value)
