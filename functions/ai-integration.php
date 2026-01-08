@@ -2840,6 +2840,22 @@ Best regards,
 
 		$result = array();
 		foreach ( $applications as $application ) {
+			// Validate that the user exists before including in results
+			if ( ! empty( $application->user_id ) ) {
+				$user = get_user_by( 'ID', $application->user_id );
+				if ( ! $user ) {
+					// Log warning about invalid user_id but don't break
+					error_log( sprintf(
+						'[AI Integration] Therapist application ID %d has invalid user_id %d. Therapist name: %s (Application email: %s). This therapist will be skipped from listing.',
+						$application->id,
+						$application->user_id,
+						$application->name ?: ( $application->name_en ?: 'Unknown' ),
+						$application->email ?: 'no email'
+					) );
+					continue; // Skip this therapist
+				}
+			}
+			
 			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
 

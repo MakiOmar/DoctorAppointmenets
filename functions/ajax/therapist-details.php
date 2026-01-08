@@ -45,21 +45,52 @@ function snks_get_therapist_details_rest($request) {
         return new WP_Error('invalid_therapist_id', 'Invalid therapist ID', ['status' => 400]);
     }
     
-    // Check if therapist exists and has doctor role
-    $therapist = get_user_by('ID', $therapist_id);
+    // First, check if there's an application record with this user_id to get the therapist name
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'therapist_applications';
+    $application_check = $wpdb->get_row($wpdb->prepare(
+        "SELECT id, name, name_en, email, user_id, status FROM $table_name WHERE user_id = %d LIMIT 1",
+        $therapist_id
+    ));
     
     // Debug information
     $debug_info = [
         'therapist_id' => $therapist_id,
-        'user_exists' => $therapist ? true : false,
     ];
     
+    // If application exists, include therapist name in debug info
+    if ($application_check) {
+        $debug_info['application_id'] = $application_check->id;
+        $debug_info['therapist_name'] = $application_check->name ?: ($application_check->name_en ?: 'Unknown');
+        $debug_info['therapist_email'] = $application_check->email ?: 'no email';
+        $debug_info['application_status'] = $application_check->status;
+        $therapist_name_for_error = $debug_info['therapist_name'];
+    } else {
+        $therapist_name_for_error = 'Unknown';
+    }
+    
+    // Check if therapist exists and has doctor role
+    $therapist = get_user_by('ID', $therapist_id);
+    
+    $debug_info['user_exists'] = $therapist ? true : false;
+    
     if (!$therapist) {
-        // User doesn't exist
+        // User doesn't exist - include therapist name if we found it in application table
         $error_message = sprintf(
-            'Therapist user not found. Searched for user ID: %d',
+            'Therapist user not found. Therapist Name: %s, Searched for user ID: %d',
+            $therapist_name_for_error,
             $therapist_id
         );
+        
+        // Add additional context if application exists
+        if ($application_check) {
+            $error_message .= sprintf(
+                '. Application ID: %d exists in database but user ID %d does not exist in WordPress.',
+                $application_check->id,
+                $therapist_id
+            );
+        }
+        
         return new WP_Error(
             'therapist_not_found', 
             $error_message,
@@ -92,10 +123,8 @@ function snks_get_therapist_details_rest($request) {
         );
     }
 
-    // Get the therapist's application from custom table
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'therapist_applications';
-    
+    // Get the therapist's application from custom table (we already checked above, but now get full record)
+    // Use the global $wpdb that was already declared
     // First, check if any application exists (regardless of status)
     $any_application = $wpdb->get_row($wpdb->prepare(
         "SELECT id, name, name_en, status, email FROM $table_name WHERE user_id = %d LIMIT 1",
