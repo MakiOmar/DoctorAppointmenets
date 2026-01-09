@@ -7,9 +7,18 @@ export const useCartStore = defineStore('cart', () => {
   const loading = ref(false)
   const checkoutLoading = ref(false)
   const error = ref(null)
+  // Store totals from API response (more accurate than computing from items)
+  const apiTotalPrice = ref(0) // Converted price from API
+  const apiTotalOriginal = ref(0) // Original EGP price from API
 
   // Computed properties
+  // Prefer API total_price if available (more accurate), otherwise compute from items
   const totalPrice = computed(() => {
+    // Use API total if available and valid
+    if (apiTotalPrice.value > 0) {
+      return apiTotalPrice.value
+    }
+    // Fallback: compute from items
     return cartItems.value.reduce((total, item) => {
       const itemPrice = item.price ? parseFloat(item.price) : 200.00 // Use actual price or fallback
       return total + itemPrice
@@ -17,7 +26,13 @@ export const useCartStore = defineStore('cart', () => {
   })
 
   // Total in original EGP (for calculations - currency exchange is display only)
+  // Prefer API total_original if available (more accurate), otherwise compute from items
   const totalOriginalPrice = computed(() => {
+    // Use API total if available and valid
+    if (apiTotalOriginal.value > 0) {
+      return apiTotalOriginal.value
+    }
+    // Fallback: compute from items
     return cartItems.value.reduce((total, item) => {
       // Prefer original_price if available, fallback to price if not (backward compatibility)
       const itemPrice = item.original_price ? parseFloat(item.original_price) : 
@@ -44,8 +59,21 @@ export const useCartStore = defineStore('cart', () => {
       // The response format is different for the custom API
       if (response.data.success) {
         cartItems.value = response.data.data || []
+        // Store totals from API (more accurate than computing)
+        apiTotalPrice.value = Number(response.data.total_price || 0)
+        apiTotalOriginal.value = Number(response.data.total_original || response.data.total_price || 0)
+        
+        console.log('🔍 CART DEBUG - Loaded cart:', {
+          itemCount: cartItems.value.length,
+          apiTotalPrice: apiTotalPrice.value,
+          apiTotalOriginal: apiTotalOriginal.value,
+          computedTotalPrice: totalPrice.value,
+          computedTotalOriginal: totalOriginalPrice.value
+        })
       } else {
         cartItems.value = []
+        apiTotalPrice.value = 0
+        apiTotalOriginal.value = 0
       }
     } catch (err) {
       error.value = 'Failed to load cart'

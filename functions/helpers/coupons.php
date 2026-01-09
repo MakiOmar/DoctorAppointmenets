@@ -272,7 +272,16 @@ function snks_apply_coupon_to_amount( $code, $amount ) {
 	if ( 'fixed' === $coupon->discount_type ) {
 		$discount = floatval( $coupon->discount_value );
 	} elseif ( 'percent' === $coupon->discount_type ) {
+		// IMPORTANT: For percentage coupons, apply to the FULL amount (in original EGP)
+		// Currency exchange is display-only, so $amount is already in original EGP
 		$discount = ( $amount * floatval( $coupon->discount_value ) ) / 100;
+		error_log( sprintf(
+			'🔍 COUPON DEBUG - snks_apply_coupon_to_amount: code=%s, type=percent, value=%0.2f%%, amount=%0.2f, calculated_discount=%0.2f',
+			$code,
+			floatval( $coupon->discount_value ),
+			$amount,
+			$discount
+		) );
 	} else {
 		return array(
 			'valid'    => false,
@@ -285,6 +294,14 @@ function snks_apply_coupon_to_amount( $code, $amount ) {
 
 	$discount = min( $discount, $amount );
 	$final    = $amount - $discount;
+
+	error_log( sprintf(
+		'🔍 COUPON DEBUG - snks_apply_coupon_to_amount result: code=%s, amount=%0.2f, discount=%0.2f, final=%0.2f',
+		$code,
+		$amount,
+		$discount,
+		$final
+	) );
 
 	return array(
 		'valid'    => true,
@@ -556,18 +573,22 @@ function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
 	}
 
 	// Fallback to general coupon logic.
+	// NOTE: General coupons apply discount to the FULL amount (not just Jalsah fee)
 	$general = snks_apply_coupon_to_amount( $code, $amount );
 	if ( ! empty( $general['valid'] ) ) {
 		error_log( sprintf(
-			'AI-COUPON DEBUG: General coupon applied. code=%s, discount=%0.2f, final_total=%0.2f',
+			'🔍 COUPON DEBUG: General coupon applied. code=%s, type=%s, value=%0.2f, amount=%0.2f, discount=%0.2f, final_total=%0.2f',
 			$code,
+			$general['coupon']->discount_type ?? 'unknown',
+			$general['coupon']->discount_value ?? 0,
+			$amount,
 			$general['discount'],
 			$general['final']
 		) );
 		return array(
 			'valid'    => true,
 			'final'    => $general['final'],
-			'discount' => $general['discount'],
+			'discount' => $general['discount'], // Discount in original EGP
 			'coupon'   => $general['coupon'],
 			'message'  => $general['message'],
 			'source'   => 'general',

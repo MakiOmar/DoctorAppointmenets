@@ -146,6 +146,8 @@
               <div v-if="appliedCoupon && appliedCoupon.discount > 0" class="flex justify-between text-green-600">
                 <span>{{ $t('cart.discount') }}</span>
                 <span>-{{ formatPrice(appliedCoupon.discount, $i18n.locale, getCartCurrency()) }}</span>
+                <!-- DEBUG: Show original discount for troubleshooting -->
+                <span v-if="false" class="text-xs text-gray-400 ml-2">(Original: {{ appliedCoupon.discountOriginal }})</span>
               </div>
               
               <div class="border-t border-gray-200 pt-4">
@@ -347,6 +349,19 @@ const applyCoupon = async () => {
   couponLoading.value = true
   couponError.value = ''
   
+  // FRONTEND DEBUG: Log cart state before coupon application
+  console.log('🔍 COUPON DEBUG - Before apply:', {
+    totalPrice: cartStore.totalPrice,
+    totalOriginalPrice: cartStore.totalOriginalPrice,
+    cartItems: cartStore.cartItems.map(item => ({
+      id: item.ID,
+      price: item.price,
+      original_price: item.original_price,
+      currency: item.currency,
+      currency_symbol: item.currency_symbol
+    }))
+  })
+  
   try {
     // Get a nonce for the coupons action (works both logged-in and guests)
     let nonce = ''
@@ -386,13 +401,50 @@ const applyCoupon = async () => {
         payload.discount ?? Math.max(0, Number(cartStore.totalOriginalPrice) - finalPriceOriginal)
       )
       
+      // FRONTEND DEBUG: Log coupon calculation values
+      console.log('🔍 COUPON DEBUG - Frontend:', {
+        totalOriginalPrice: cartStore.totalOriginalPrice,
+        totalPrice: cartStore.totalPrice,
+        discountAmountOriginal: discountAmountOriginal,
+        finalPriceOriginal: finalPriceOriginal,
+        payload: payload
+      })
+      
       // Convert discount for display using the same ratio as the total conversion
       // Currency exchange is display-only, so we convert the discount proportionally
       let discountAmountDisplay = discountAmountOriginal
-      if (cartStore.totalOriginalPrice > 0 && cartStore.totalPrice !== cartStore.totalOriginalPrice) {
+      
+      // CRITICAL: Ensure we have valid values for conversion
+      if (cartStore.totalOriginalPrice > 0 && cartStore.totalPrice > 0 && cartStore.totalPrice !== cartStore.totalOriginalPrice) {
         // Calculate conversion ratio: converted_total / original_total
         const conversionRatio = cartStore.totalPrice / cartStore.totalOriginalPrice
-        discountAmountDisplay = discountAmountOriginal * conversionRatio
+        
+        // Validate conversion ratio is reasonable (between 0.01 and 100)
+        if (conversionRatio > 0.01 && conversionRatio < 100) {
+          discountAmountDisplay = discountAmountOriginal * conversionRatio
+          
+          console.log('🔍 COUPON DEBUG - Conversion:', {
+            conversionRatio: conversionRatio,
+            discountAmountOriginal: discountAmountOriginal,
+            discountAmountDisplay: discountAmountDisplay,
+            calculation: `${discountAmountOriginal} * ${conversionRatio} = ${discountAmountDisplay}`
+          })
+        } else {
+          console.error('🔍 COUPON DEBUG - Invalid conversion ratio:', conversionRatio, {
+            totalPrice: cartStore.totalPrice,
+            totalOriginalPrice: cartStore.totalOriginalPrice
+          })
+          // Fallback: don't convert if ratio is invalid
+          discountAmountDisplay = discountAmountOriginal
+        }
+      } else {
+        console.warn('🔍 COUPON DEBUG - No conversion needed:', {
+          totalPrice: cartStore.totalPrice,
+          totalOriginalPrice: cartStore.totalOriginalPrice,
+          reason: cartStore.totalPrice === cartStore.totalOriginalPrice ? 'prices match' : 'invalid values'
+        })
+        // If prices match, it means no currency conversion is active, so discount should match
+        discountAmountDisplay = discountAmountOriginal
       }
       
       appliedCoupon.value = {
@@ -402,6 +454,8 @@ const applyCoupon = async () => {
         finalPriceOriginal: finalPriceOriginal, // Original EGP final price
         type: payload.coupon_type || 'General'
       }
+      
+      console.log('🔍 COUPON DEBUG - Applied coupon:', appliedCoupon.value)
       couponCode.value = ''
     } else {
       const payload = response.data?.data || {}

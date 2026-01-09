@@ -314,9 +314,26 @@ function snks_apply_ai_coupon_ajax_handler() {
     $result  = null;
     $coupon  = null;
 
+    // BACKEND DEBUG: Log incoming coupon request
+    error_log( sprintf(
+        '🔍 COUPON DEBUG - Backend API: code=%s, amount=%0.2f, user_id=%d',
+        $code,
+        $amount,
+        $user_id
+    ) );
+
     $result = function_exists( 'snks_process_ai_coupon_application' )
         ? snks_process_ai_coupon_application( $code, $amount, $user_id )
         : array();
+
+    // BACKEND DEBUG: Log coupon processing result
+    error_log( sprintf(
+        '🔍 COUPON DEBUG - Backend Result: valid=%s, discount=%0.2f, final=%0.2f, source=%s',
+        $result['valid'] ? 'yes' : 'no',
+        $result['discount'] ?? 0,
+        $result['final'] ?? 0,
+        $result['source'] ?? 'unknown'
+    ) );
 
     if ( empty( $result ) || empty( $result['valid'] ) ) {
         wp_send_json_error( array( 'message' => $result['message'] ?? 'الكوبون غير صالح أو انتهى.' ) );
@@ -334,7 +351,7 @@ function snks_apply_ai_coupon_ajax_handler() {
         array(
             'message'     => $result['message'] ?? 'تم تطبيق الكوبون بنجاح.',
             'final_price' => $result['final'],
-            'discount'    => $result['discount'],
+            'discount'    => $result['discount'], // Original EGP discount
             'coupon_type' => $result['source'] ?? 'AI',
             'persisted'   => true,
         )
