@@ -33,12 +33,30 @@ export const useCartStore = defineStore('cart', () => {
       return apiTotalOriginal.value
     }
     // Fallback: compute from items
-    return cartItems.value.reduce((total, item) => {
-      // Prefer original_price if available, fallback to price if not (backward compatibility)
+    const computedTotal = cartItems.value.reduce((total, item) => {
+      // CRITICAL: Prefer original_price if available, but log warning if missing
+      if (!item.original_price && item.price) {
+        console.warn('🔍 CART DEBUG - Item missing original_price, using price as fallback:', {
+          itemId: item.ID,
+          price: item.price,
+          original_price: item.original_price
+        })
+      }
       const itemPrice = item.original_price ? parseFloat(item.original_price) : 
                        (item.price ? parseFloat(item.price) : 200.00)
       return total + itemPrice
     }, 0)
+    
+    // Log if we had to compute (API value was 0)
+    if (computedTotal > 0 && apiTotalOriginal.value === 0) {
+      console.warn('🔍 CART DEBUG - Computed totalOriginalPrice from items (API value was 0):', {
+        computed: computedTotal,
+        apiTotalOriginal: apiTotalOriginal.value,
+        itemCount: cartItems.value.length
+      })
+    }
+    
+    return computedTotal
   })
 
   const itemCount = computed(() => cartItems.value.length)
@@ -59,6 +77,21 @@ export const useCartStore = defineStore('cart', () => {
       // The response format is different for the custom API
       if (response.data.success) {
         cartItems.value = response.data.data || []
+        
+        // CRITICAL DEBUG: Log raw response to see what we're getting
+        console.log('🔍 CART DEBUG - Raw API response:', {
+          success: response.data.success,
+          total_price: response.data.total_price,
+          total_original: response.data.total_original,
+          item_count: response.data.item_count,
+          data_length: response.data.data?.length,
+          first_item: response.data.data?.[0] ? {
+            id: response.data.data[0].ID,
+            price: response.data.data[0].price,
+            original_price: response.data.data[0].original_price
+          } : null
+        })
+        
         // Store totals from API (more accurate than computing)
         // IMPORTANT: total_original is the original EGP price, total_price is converted for display
         apiTotalPrice.value = Number(response.data.total_price || 0)
@@ -67,24 +100,38 @@ export const useCartStore = defineStore('cart', () => {
         // CRITICAL: If total_original is not provided, try to compute from items
         if (apiTotalOriginal.value <= 0 && cartItems.value.length > 0) {
           // Fallback: sum original_price from items
-          apiTotalOriginal.value = cartItems.value.reduce((sum, item) => {
+          const computedOriginal = cartItems.value.reduce((sum, item) => {
             const origPrice = item.original_price ? parseFloat(item.original_price) : 0
+            if (!item.original_price && item.price) {
+              console.warn('🔍 CART DEBUG - Item missing original_price in API response:', {
+                itemId: item.ID,
+                price: item.price,
+                original_price: item.original_price
+              })
+            }
             return sum + origPrice
           }, 0)
+          
+          if (computedOriginal > 0) {
+            apiTotalOriginal.value = computedOriginal
+            console.log('🔍 CART DEBUG - Computed total_original from items:', computedOriginal)
+          }
         }
         
         // If still 0, use total_price as last resort (but log warning)
         if (apiTotalOriginal.value <= 0) {
-          console.warn('🔍 CART DEBUG - WARNING: total_original is 0, using total_price as fallback. This may cause coupon calculation errors!', {
+          console.error('🔍 CART DEBUG - ERROR: total_original is 0 after all attempts!', {
             total_price: apiTotalPrice.value,
             total_original: apiTotalOriginal.value,
+            response_total_original: response.data.total_original,
             items: cartItems.value.map(item => ({
               id: item.ID,
               price: item.price,
               original_price: item.original_price
             }))
           })
-          apiTotalOriginal.value = apiTotalPrice.value
+          // Don't use total_price as fallback - this will cause coupon calculation errors
+          // Instead, keep it as 0 and let the computed property handle it
         }
         
         console.log('🔍 CART DEBUG - Loaded cart:', {

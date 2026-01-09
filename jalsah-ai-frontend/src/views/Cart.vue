@@ -401,6 +401,12 @@ const applyCoupon = async () => {
       throw new Error('Nonce generation failed')
     }
 
+    // CRITICAL: Ensure cart is loaded before applying coupon
+    if (cartStore.cartItems.length === 0) {
+      console.warn('🔍 COUPON DEBUG - Cart is empty, loading cart first...')
+      await cartStore.loadCart(userId.value)
+    }
+    
     // Build form-encoded body for WordPress admin-ajax (AI-specific apply)
     // IMPORTANT: Send original EGP price for calculations (currency exchange is display-only)
     const originalAmount = cartStore.totalOriginalPrice
@@ -409,6 +415,8 @@ const applyCoupon = async () => {
     console.log('🔍 COUPON DEBUG - Sending to backend:', {
       totalPrice: cartStore.totalPrice,
       totalOriginalPrice: cartStore.totalOriginalPrice,
+      apiTotalPrice: cartStore.apiTotalPrice,
+      apiTotalOriginal: cartStore.apiTotalOriginal,
       sendingAmount: originalAmount,
       cartItems: cartStore.cartItems.map(item => ({
         id: item.ID,
@@ -417,12 +425,27 @@ const applyCoupon = async () => {
       }))
     })
     
-    if (originalAmount <= 0 || originalAmount === cartStore.totalPrice) {
-      console.error('🔍 COUPON DEBUG - ERROR: totalOriginalPrice is invalid or same as totalPrice!', {
+    // VALIDATION: Ensure we have valid original price
+    if (originalAmount <= 0) {
+      console.error('🔍 COUPON DEBUG - ERROR: totalOriginalPrice is 0 or invalid!', {
         totalPrice: cartStore.totalPrice,
         totalOriginalPrice: cartStore.totalOriginalPrice,
-        apiTotalOriginal: cartStore.apiTotalOriginal
+        apiTotalOriginal: cartStore.apiTotalOriginal,
+        cartItemCount: cartStore.cartItems.length
       })
+      couponError.value = 'Unable to calculate cart total. Please refresh the page.'
+      couponLoading.value = false
+      return
+    }
+    
+    if (originalAmount === cartStore.totalPrice) {
+      console.error('🔍 COUPON DEBUG - ERROR: totalOriginalPrice equals totalPrice (no currency conversion detected)!', {
+        totalPrice: cartStore.totalPrice,
+        totalOriginalPrice: cartStore.totalOriginalPrice,
+        apiTotalOriginal: cartStore.apiTotalOriginal,
+        warning: 'This suggests original_price is not being set correctly'
+      })
+      // Don't block, but log the warning - might be same currency
     }
     
     const body = new URLSearchParams()
