@@ -60,15 +60,43 @@ export const useCartStore = defineStore('cart', () => {
       if (response.data.success) {
         cartItems.value = response.data.data || []
         // Store totals from API (more accurate than computing)
+        // IMPORTANT: total_original is the original EGP price, total_price is converted for display
         apiTotalPrice.value = Number(response.data.total_price || 0)
-        apiTotalOriginal.value = Number(response.data.total_original || response.data.total_price || 0)
+        apiTotalOriginal.value = Number(response.data.total_original || 0)
+        
+        // CRITICAL: If total_original is not provided, try to compute from items
+        if (apiTotalOriginal.value <= 0 && cartItems.value.length > 0) {
+          // Fallback: sum original_price from items
+          apiTotalOriginal.value = cartItems.value.reduce((sum, item) => {
+            const origPrice = item.original_price ? parseFloat(item.original_price) : 0
+            return sum + origPrice
+          }, 0)
+        }
+        
+        // If still 0, use total_price as last resort (but log warning)
+        if (apiTotalOriginal.value <= 0) {
+          console.warn('🔍 CART DEBUG - WARNING: total_original is 0, using total_price as fallback. This may cause coupon calculation errors!', {
+            total_price: apiTotalPrice.value,
+            total_original: apiTotalOriginal.value,
+            items: cartItems.value.map(item => ({
+              id: item.ID,
+              price: item.price,
+              original_price: item.original_price
+            }))
+          })
+          apiTotalOriginal.value = apiTotalPrice.value
+        }
         
         console.log('🔍 CART DEBUG - Loaded cart:', {
           itemCount: cartItems.value.length,
           apiTotalPrice: apiTotalPrice.value,
           apiTotalOriginal: apiTotalOriginal.value,
           computedTotalPrice: totalPrice.value,
-          computedTotalOriginal: totalOriginalPrice.value
+          computedTotalOriginal: totalOriginalPrice.value,
+          responseData: {
+            total_price: response.data.total_price,
+            total_original: response.data.total_original
+          }
         })
       } else {
         cartItems.value = []
@@ -213,6 +241,8 @@ export const useCartStore = defineStore('cart', () => {
     loading,
     checkoutLoading,
     error,
+    apiTotalPrice,
+    apiTotalOriginal,
     
     // Computed
     totalPrice,

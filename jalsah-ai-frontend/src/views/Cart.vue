@@ -384,10 +384,32 @@ const applyCoupon = async () => {
 
     // Build form-encoded body for WordPress admin-ajax (AI-specific apply)
     // IMPORTANT: Send original EGP price for calculations (currency exchange is display-only)
+    const originalAmount = cartStore.totalOriginalPrice
+    
+    // CRITICAL DEBUG: Verify we're sending the correct original price
+    console.log('🔍 COUPON DEBUG - Sending to backend:', {
+      totalPrice: cartStore.totalPrice,
+      totalOriginalPrice: cartStore.totalOriginalPrice,
+      sendingAmount: originalAmount,
+      cartItems: cartStore.cartItems.map(item => ({
+        id: item.ID,
+        price: item.price,
+        original_price: item.original_price
+      }))
+    })
+    
+    if (originalAmount <= 0 || originalAmount === cartStore.totalPrice) {
+      console.error('🔍 COUPON DEBUG - ERROR: totalOriginalPrice is invalid or same as totalPrice!', {
+        totalPrice: cartStore.totalPrice,
+        totalOriginalPrice: cartStore.totalOriginalPrice,
+        apiTotalOriginal: cartStore.apiTotalOriginal
+      })
+    }
+    
     const body = new URLSearchParams()
     body.append('action', 'snks_apply_ai_coupon')
     body.append('code', couponCode.value.trim())
-    body.append('amount', String(cartStore.totalOriginalPrice)) // Use original price for calculations
+    body.append('amount', String(originalAmount)) // Use original price for calculations
     body.append('security', nonce)
 
     const response = await api.post('/wp-admin/admin-ajax.php', body, {

@@ -457,14 +457,76 @@ function snks_apply_ai_coupon( $code, $total_amount, $user_id = null ) {
 	
 	$coupon = $validation['coupon'];
 	
-	// Calculate actual Jalsah fee from cart items based on therapist profit settings
-	$jalsah_fee = 0;
+	// IMPORTANT: Recalculate actual cart total from items (ignore $total_amount parameter)
+	// This ensures we use original EGP prices, not converted prices
+	// Currency exchange is display-only - all calculations must use original EGP
+	$actual_cart_total = 0;
 	if ( $user_id && function_exists( 'snks_calculate_jalsah_fee_from_cart' ) ) {
-		$jalsah_fee = snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount );
+		// Calculate Jalsah fee from cart items (this reads original prices from database)
+		$jalsah_fee = snks_calculate_jalsah_fee_from_cart( $user_id, 0 );
+		
+		// Recalculate actual cart total from cart items (original EGP prices)
+		global $wpdb;
+		$cart_query = $wpdb->prepare(
+			"SELECT t.* FROM {$wpdb->prefix}snks_provider_timetable t
+			 WHERE t.client_id = %d AND t.session_status = 'waiting' AND t.order_id = 0 
+			 AND t.settings LIKE '%%ai_booking:in_cart%%'
+			 ORDER BY t.date_time ASC",
+			$user_id
+		);
+		$cart_items = $wpdb->get_results( $cart_query );
+		
+		foreach ( $cart_items as $item ) {
+			$therapist_id = isset( $item->user_id ) ? intval( $item->user_id ) : 0;
+			$period = isset( $item->period ) ? intval( $item->period ) : 45;
+			
+			if ( ! $therapist_id ) continue;
+			
+			// Get original price from database (same logic as snks_calculate_jalsah_fee_from_cart)
+			$is_demo_doctor = get_user_meta( $therapist_id, 'is_demo_doctor', true );
+			$item_price = 0;
+			
+			if ( $is_demo_doctor ) {
+				$price_meta_key = 'price_' . $period . '_min';
+				$item_price = get_user_meta( $therapist_id, $price_meta_key, true );
+				if ( empty( $item_price ) || ! is_numeric( $item_price ) ) {
+					$item_price = get_user_meta( $therapist_id, 'price_45_min', true );
+				}
+				$item_price = floatval( $item_price ) ?: 150.00;
+			} else {
+				if ( function_exists( 'snks_doctor_online_pricings' ) ) {
+					$pricings = snks_doctor_online_pricings( $therapist_id );
+					if ( isset( $pricings[ $period ] ) && isset( $pricings[ $period ]['others'] ) ) {
+						$item_price = floatval( $pricings[ $period ]['others'] );
+					}
+				}
+				if ( ! $item_price ) {
+					$price_meta_key = $period . '_minutes_pricing_others';
+					$item_price = get_user_meta( $therapist_id, $price_meta_key, true );
+				}
+				if ( ! $item_price && $period != 45 ) {
+					$item_price = get_user_meta( $therapist_id, '45_minutes_pricing_others', true );
+				}
+				$item_price = floatval( $item_price ) ?: 200.00;
+			}
+			
+			$actual_cart_total += $item_price;
+		}
+		
+		error_log( sprintf(
+			'🔍 COUPON DEBUG - snks_apply_ai_coupon: received_amount=%0.2f, actual_cart_total=%0.2f, jalsah_fee=%0.2f',
+			$total_amount,
+			$actual_cart_total,
+			$jalsah_fee
+		) );
 	} else {
 		// Fallback: use default 30% (conservative estimate for first sessions)
 		$jalsah_fee = $total_amount * 0.30;
+		$actual_cart_total = $total_amount; // Use provided amount as fallback
 	}
+	
+	// Use actual cart total (original EGP) instead of potentially converted $total_amount
+	$cart_total_for_calculation = $actual_cart_total > 0 ? $actual_cart_total : $total_amount;
 	
 	// Apply discount only to the Jalsah fee portion
 	$discount_amount = 0;
@@ -475,16 +537,27 @@ function snks_apply_ai_coupon( $code, $total_amount, $user_id = null ) {
 		$discount_amount = min( $coupon->discount_value, $jalsah_fee );
 	}
 	
-	// Calculate final amount: total - discount (discount only applies to Jalsah fee)
-	$final_amount = $total_amount - $discount_amount;
+	// Calculate final amount: actual cart total - discount (discount only applies to Jalsah fee)
+	$final_amount = max( 0, $cart_total_for_calculation - $discount_amount ); // Ensure non-negative
+	
+	error_log( sprintf(
+		'🔍 COUPON DEBUG - snks_apply_ai_coupon result: code=%s, received_amount=%0.2f, actual_cart_total=%0.2f, jalsah_fee=%0.2f, discount=%0.2f, final=%0.2f',
+		$code,
+		$total_amount,
+		$cart_total_for_calculation,
+		$jalsah_fee,
+		$discount_amount,
+		$final_amount
+	) );
 	
 	return array(
 		'valid' => true,
-		'discount_amount' => round( $discount_amount, 2 ),
-		'final_amount' => round( $final_amount, 2 ),
+		'discount_amount' => round( $discount_amount, 2 ), // Original EGP discount
+		'final_amount' => round( $final_amount, 2 ), // Original EGP final amount
 		'coupon' => $coupon,
 		'jalsah_fee' => round( $jalsah_fee, 2 ),
-		'discount_applied_to_fee' => true
+		'discount_applied_to_fee' => true,
+		'actual_cart_total' => round( $cart_total_for_calculation, 2 ) // For debugging
 	);
 }
 
