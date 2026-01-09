@@ -301,6 +301,9 @@ function snks_apply_ai_coupon_ajax_handler() {
     }
 
     $code   = sanitize_text_field( $_POST['code'] ?? '' );
+    // IMPORTANT: $amount should be the original EGP price (not converted)
+    // Currency exchange is display-only - all calculations must use original EGP prices
+    // Frontend should send totalOriginalPrice, not totalPrice (converted)
     $amount = floatval( $_POST['amount'] ?? 0 );
 
     if ( '' === $code || $amount <= 0 ) {

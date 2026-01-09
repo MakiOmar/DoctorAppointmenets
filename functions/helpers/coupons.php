@@ -456,8 +456,28 @@ function snks_calculate_jalsah_fee_from_cart( $user_id, $total_amount = 0 ) {
  *     @type string|null $source     Coupon source identifier.
  * }
  */
+/**
+ * Process AI coupon application logic for a given amount.
+ * 
+ * IMPORTANT: This function expects $amount to be in original EGP currency.
+ * Currency exchange is display-only - all calculations (discounts, orders, profits) 
+ * must use original EGP prices. The frontend should send totalOriginalPrice, not totalPrice.
+ * 
+ * @param string $code    Coupon code.
+ * @param float  $amount  Current cart total in original EGP (NOT converted currency).
+ * @param int    $user_id User ID.
+ * @return array {
+ *     @type bool        $valid      Whether coupon could be applied.
+ *     @type float       $final      Final total after discount (in original EGP).
+ *     @type float       $discount   Discount value (in original EGP).
+ *     @type object|null $coupon     Coupon object/record when available.
+ *     @type string      $message    User-friendly message.
+ *     @type string|null $source     Coupon source identifier.
+ * }
+ */
 function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
 	$code   = sanitize_text_field( trim( $code ) );
+	// Validate that amount is in original EGP (currency exchange is display-only)
 	$amount = floatval( $amount );
 
 	$response = array(

@@ -208,9 +208,21 @@ const appliedCoupon = ref(null)
 const couponLoading = ref(false)
 const couponError = ref('')
 
-// Calculate final total with coupon discount
+// Calculate final total with coupon discount (using original prices for calculations)
+// Note: Currency exchange is display-only, all calculations use original EGP prices
+const finalTotalOriginal = computed(() => {
+  if (appliedCoupon.value && appliedCoupon.value.discountOriginal > 0) {
+    return Math.max(0, cartStore.totalOriginalPrice - appliedCoupon.value.discountOriginal)
+  }
+  return cartStore.totalOriginalPrice
+})
+
+// Display version: convert final total for UI display
 const finalTotal = computed(() => {
+  // For display, we show the converted price
+  // The actual calculation uses original prices
   if (appliedCoupon.value && appliedCoupon.value.discount > 0) {
+    // Display converted discount
     return Math.max(0, cartStore.totalPrice - appliedCoupon.value.discount)
   }
   return cartStore.totalPrice
@@ -307,8 +319,12 @@ const removeItem = async (slotId) => {
 
 const proceedToPayment = async () => {
   if (!userId.value) return
+  // Send original discount amount for order creation (currency exchange is display-only)
   const couponPayload = appliedCoupon.value
-    ? { code: appliedCoupon.value.code, discount: appliedCoupon.value.discount }
+    ? { 
+        code: appliedCoupon.value.code, 
+        discount: appliedCoupon.value.discountOriginal || appliedCoupon.value.discount // Use original for calculations
+      }
     : null
   const result = await cartStore.checkout(userId.value, couponPayload)
   if (result.success) {
@@ -352,10 +368,11 @@ const applyCoupon = async () => {
     }
 
     // Build form-encoded body for WordPress admin-ajax (AI-specific apply)
+    // IMPORTANT: Send original EGP price for calculations (currency exchange is display-only)
     const body = new URLSearchParams()
     body.append('action', 'snks_apply_ai_coupon')
     body.append('code', couponCode.value.trim())
-    body.append('amount', String(cartStore.totalPrice))
+    body.append('amount', String(cartStore.totalOriginalPrice)) // Use original price for calculations
     body.append('security', nonce)
 
     const response = await api.post('/wp-admin/admin-ajax.php', body, {
@@ -364,13 +381,25 @@ const applyCoupon = async () => {
 
     if (response.data?.success) {
       const payload = response.data?.data || {}
-      const finalPrice = Number(payload.final_price ?? 0)
-      const discountAmount = Number(
-        payload.discount ?? Math.max(0, Number(cartStore.totalPrice) - finalPrice)
+      const finalPriceOriginal = Number(payload.final_price ?? 0) // Original EGP price after discount
+      const discountAmountOriginal = Number(
+        payload.discount ?? Math.max(0, Number(cartStore.totalOriginalPrice) - finalPriceOriginal)
       )
+      
+      // Convert discount for display using the same ratio as the total conversion
+      // Currency exchange is display-only, so we convert the discount proportionally
+      let discountAmountDisplay = discountAmountOriginal
+      if (cartStore.totalOriginalPrice > 0 && cartStore.totalPrice !== cartStore.totalOriginalPrice) {
+        // Calculate conversion ratio: converted_total / original_total
+        const conversionRatio = cartStore.totalPrice / cartStore.totalOriginalPrice
+        discountAmountDisplay = discountAmountOriginal * conversionRatio
+      }
+      
       appliedCoupon.value = {
         code: couponCode.value.trim(),
-        discount: discountAmount,
+        discount: discountAmountDisplay, // Converted discount for display
+        discountOriginal: discountAmountOriginal, // Original EGP discount for calculations
+        finalPriceOriginal: finalPriceOriginal, // Original EGP final price
         type: payload.coupon_type || 'General'
       }
       couponCode.value = ''

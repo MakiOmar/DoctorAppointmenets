@@ -265,8 +265,11 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 		);
 	}
 	
-	// Get session amount
-	$session_amount = $order->get_subtotal();
+	// Get session amount after coupon discounts are applied
+	// Use get_total() to get the final amount the customer actually paid (after discounts)
+	// This is the original EGP price after coupon discount (currency exchange is display-only)
+	// Profit calculations must be based on the actual amount paid, not the subtotal before discounts
+	$session_amount = $order->get_total();
 
 	
 	// Get therapist and patient IDs

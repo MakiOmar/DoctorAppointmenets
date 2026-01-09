@@ -16,6 +16,16 @@ export const useCartStore = defineStore('cart', () => {
     }, 0)
   })
 
+  // Total in original EGP (for calculations - currency exchange is display only)
+  const totalOriginalPrice = computed(() => {
+    return cartItems.value.reduce((total, item) => {
+      // Prefer original_price if available, fallback to price if not (backward compatibility)
+      const itemPrice = item.original_price ? parseFloat(item.original_price) : 
+                       (item.price ? parseFloat(item.price) : 200.00)
+      return total + itemPrice
+    }, 0)
+  })
+
   const itemCount = computed(() => cartItems.value.length)
 
   // Actions
@@ -178,6 +188,7 @@ export const useCartStore = defineStore('cart', () => {
     
     // Computed
     totalPrice,
+    totalOriginalPrice,
     itemCount,
     
     // Actions
