@@ -184,6 +184,27 @@ export const useCartStore = defineStore('cart', () => {
         // Optimistically remove the item locally
         cartItems.value = cartItems.value.filter(item => item.ID !== slotId)
         
+        // Update totals from API response (more accurate than computing)
+        if (response.data.cart_total !== undefined) {
+          apiTotalPrice.value = Number(response.data.cart_total || 0)
+        }
+        if (response.data.cart_total_original !== undefined) {
+          apiTotalOriginal.value = Number(response.data.cart_total_original || 0)
+        }
+        
+        // If totals are 0, reset them
+        if (response.data.item_count === 0) {
+          apiTotalPrice.value = 0
+          apiTotalOriginal.value = 0
+        }
+        
+        console.log('🔍 CART DEBUG - After remove:', {
+          itemCount: response.data.item_count,
+          apiTotalPrice: apiTotalPrice.value,
+          apiTotalOriginal: apiTotalOriginal.value,
+          responseData: response.data
+        })
+        
         return { success: true, data: response.data }
       } else {
         error.value = response.data?.error || 'Failed to remove from cart'

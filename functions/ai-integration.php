@@ -5054,24 +5054,38 @@ Best regards,
 		$coupon_response = null;
 		$stored_coupon   = get_user_meta( $user_id, 'snks_ai_applied_coupon', true );
 
+		// Get original total for coupon calculation (currency exchange is display-only)
+		$cart_total_original = isset( $summary['total_original'] ) ? $summary['total_original'] : $summary['total'];
+
 		if ( ! empty( $stored_coupon['code'] ) ) {
-			if ( $summary['total'] > 0 && function_exists( 'snks_process_ai_coupon_application' ) ) {
-				$recalc = snks_process_ai_coupon_application( $stored_coupon['code'], $summary['total'], $user_id );
+			if ( $cart_total_original > 0 && function_exists( 'snks_process_ai_coupon_application' ) ) {
+				// IMPORTANT: Use original EGP price for coupon calculation
+				$recalc = snks_process_ai_coupon_application( $stored_coupon['code'], $cart_total_original, $user_id );
 
 				if ( ! empty( $recalc['valid'] ) ) {
 					$persist = array(
 						'code'     => $stored_coupon['code'],
-						'discount' => $recalc['discount'],
+						'discount' => $recalc['discount'], // Original EGP discount
 						'saved_at' => time(),
 					);
 					update_user_meta( $user_id, 'snks_ai_applied_coupon', $persist );
 
+					// Convert discount for display (currency exchange is display-only)
+					$discount_display = $recalc['discount'];
+					if ( $summary['total'] > 0 && $cart_total_original > 0 && $summary['total'] != $cart_total_original ) {
+						// Calculate conversion ratio: converted_total / original_total
+						$conversion_ratio = $summary['total'] / $cart_total_original;
+						$discount_display = $recalc['discount'] * $conversion_ratio;
+					}
+
 					$coupon_response = array(
-						'code'        => $stored_coupon['code'],
-						'discount'    => $recalc['discount'],
-						'final_price' => $recalc['final'],
-						'message'     => $recalc['message'],
-						'source'      => $recalc['source'],
+						'code'             => $stored_coupon['code'],
+						'discount'         => round( $discount_display, 2 ), // Converted discount for display
+						'discount_original' => round( $recalc['discount'], 2 ), // Original EGP discount for calculations
+						'final_price'      => $recalc['final'], // Original EGP final price
+						'final_price_display' => isset( $summary['total'] ) ? max( 0, $summary['total'] - $discount_display ) : $recalc['final'], // Converted final price for display
+						'message'          => $recalc['message'],
+						'source'           => $recalc['source'],
 					);
 				} else {
 					delete_user_meta( $user_id, 'snks_ai_applied_coupon' );

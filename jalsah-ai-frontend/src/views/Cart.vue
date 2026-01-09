@@ -302,19 +302,38 @@ const removeItem = async (slotId) => {
 
   const summary = result.data || {}
 
+  // Reload cart to get fresh data with updated items and totals
+  await cartStore.loadCart(userId.value)
+
+  // Handle coupon recalculation from backend
   if (summary?.coupon) {
     if (summary.coupon.removed) {
       appliedCoupon.value = null
       couponError.value = summary.coupon.message || ''
     } else {
+      // Backend provides both converted (discount) and original (discount_original) amounts
+      const discountDisplay = Number(summary.coupon.discount || 0) // Converted for display
+      const discountOriginal = Number(summary.coupon.discount_original || summary.coupon.discount || 0) // Original EGP for calculations
+      
+      console.log('🔍 COUPON DEBUG - After remove item:', {
+        summary: summary,
+        discountDisplay: discountDisplay,
+        discountOriginal: discountOriginal,
+        cartTotal: cartStore.totalPrice,
+        cartTotalOriginal: cartStore.totalOriginalPrice
+      })
+      
       appliedCoupon.value = {
         code: summary.coupon.code,
-        discount: Number(summary.coupon.discount || 0),
+        discount: discountDisplay, // Converted discount for display
+        discountOriginal: discountOriginal, // Original EGP discount for calculations
+        finalPriceOriginal: Number(summary.coupon.final_price || 0), // Original EGP final price
         type: summary.coupon.source || 'AI'
       }
       couponError.value = ''
     }
   } else {
+    // No coupon in response means it was removed or doesn't exist
     appliedCoupon.value = null
   }
 }
