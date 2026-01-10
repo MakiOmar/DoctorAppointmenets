@@ -95,16 +95,15 @@
     <!-- Side Menu -->
     <Transition
       enter-active-class="transition-transform ease-out duration-300"
-      :enter-from-class="locale === 'ar' ? 'transform translate-x-full' : 'transform -translate-x-full'"
+      enter-from-class="transform -translate-x-full"
       enter-to-class="transform translate-x-0"
       leave-active-class="transition-transform ease-in duration-250"
       leave-from-class="transform translate-x-0"
-      :leave-to-class="locale === 'ar' ? 'transform translate-x-full' : 'transform -translate-x-full'"
+      leave-to-class="transform -translate-x-full"
     >
       <div
         v-if="mobileMenuOpen"
-        class="fixed top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 overflow-y-auto"
-        :class="locale === 'ar' ? 'right-0' : 'left-0'"
+        class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 overflow-y-auto"
         :dir="locale"
       >
         <!-- Side Menu Header with Close Button -->

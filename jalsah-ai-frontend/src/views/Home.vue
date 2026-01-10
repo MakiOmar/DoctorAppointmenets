@@ -8,7 +8,7 @@
       <!-- Overlay for better text readability -->
       <div class="absolute inset-0 bg-black bg-opacity-30"></div>
       
-      <div class="relative z-10 max-w-4xl mx-auto text-center">
+      <div class="relative z-10 max-w-[1200px] mx-auto text-center">
         <!-- Logo -->
         <div class="mb-8">
             <img 
@@ -36,7 +36,7 @@
           <!-- Registration Button (Right in RTL, icon after text) -->
           <router-link
             to="/register"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.registerButton') }}
@@ -146,45 +146,47 @@
       class="relative py-20 px-4 bg-cover bg-center bg-no-repeat"
       :style="{ backgroundImage: `url(/home/ai-background.png)` }"
     >
-      <div class="max-w-6xl mx-auto text-center">
-        <!-- AI Icon (Centered) -->
-        <div class="mb-8 flex justify-center">
-          <img 
-            v-if="aiIconExists"
-            src="/home/ai-icon.png" 
-            alt="AI" 
-            class="w-32 h-32 md:w-40 md:h-40"
-            @error="aiIconExists = false"
-          />
-          <div 
-            v-else
-            class="w-32 h-32 md:w-40 md:h-40 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
-          >
-            <span class="text-4xl font-bold text-white">AI</span>
+      <div class="max-w-[1200px] mx-auto">
+        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <!-- Image (Left side) -->
+          <div class="flex-shrink-0">
+            <img 
+              v-if="aiIconExists"
+              src="/home/ai-icon.png" 
+              alt="AI" 
+              class="w-32 h-32 md:w-40 md:h-40"
+              @error="aiIconExists = false"
+            />
+            <div 
+              v-else
+              class="w-32 h-32 md:w-40 md:h-40 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
+            >
+              <span class="text-4xl font-bold text-white">AI</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Text Content (Below icon, right-aligned) -->
-        <div class="text-white max-w-3xl mx-auto text-right">
-          <p class="text-lg md:text-xl leading-relaxed">
-            {{ $t('home.sections.ai.text') }}
-          </p>
+          <!-- Text Content (Right side, primary color) -->
+          <div class="flex-1 text-primary-500" :class="locale === 'ar' ? 'text-left' : 'text-right'">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.ai.text') }}
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Section 4: Certified Therapists Section -->
     <section class="bg-primary-500 py-20 px-4">
-      <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row md:flex-row-reverse items-center gap-8 md:gap-12">
-          <!-- Text Content (Left side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-white" :class="locale === 'ar' ? 'text-right' : 'text-left'">
+      <div class="max-w-[1200px] mx-auto">
+        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <!-- Text Content (Left side) -->
+          <div class="flex-1 text-white text-left">
             <p class="text-lg md:text-xl leading-relaxed">
               {{ $t('home.sections.certified.text') }}
             </p>
           </div>
 
-          <!-- Icon (Right side visually) -->
+          <!-- Icon (Right side) -->
           <div class="flex-shrink-0">
             <img 
               v-if="layer6Exists"
@@ -208,7 +210,7 @@
 
     <!-- Section 5: Prescription Service Section -->
     <section class="bg-secondary-500 py-20 px-4">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-[1200px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
@@ -241,9 +243,16 @@
 
     <!-- Section 6: Online Booking & Payment Section -->
     <section class="bg-white py-20 px-4">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-[1200px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-          <!-- Payment Icons (Left side visually, vertically stacked) -->
+          <!-- Text Content (Left side) -->
+          <div class="flex-1 text-primary-500 text-left">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.payment.text') }}
+            </p>
+          </div>
+
+          <!-- Payment Icons (Right side, vertically stacked) -->
           <div class="flex-shrink-0 flex flex-col gap-4 items-start">
             <!-- Globe Icon (Layer-10) -->
             <div>
@@ -282,20 +291,13 @@
               />
             </div>
           </div>
-
-          <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-primary-500 text-right">
-            <p class="text-lg md:text-xl leading-relaxed">
-              {{ $t('home.sections.payment.text') }}
-            </p>
-          </div>
         </div>
       </div>
     </section>
 
     <!-- Section 7: Secure Sessions Section -->
     <section class="bg-primary-500 py-20 px-4">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-[1200px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
@@ -328,7 +330,7 @@
 
     <!-- Footer -->
     <footer class="bg-primary-500 py-8 px-4">
-      <div class="max-w-6xl mx-auto text-center">
+      <div class="max-w-[1200px] mx-auto text-center">
         <p class="text-white text-sm md:text-base">
           {{ $t('home.sections.footer.copyright') }}
         </p>
