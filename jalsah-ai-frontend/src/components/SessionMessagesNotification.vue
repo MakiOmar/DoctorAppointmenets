@@ -3,26 +3,33 @@
     <!-- Notification Bell Icon -->
     <button
       @click="toggleNotifications"
-      class="relative p-2 rounded-full hover:bg-gray-100 transition-colors z-50"
-      :class="locale === 'ar' ? 'ml-4' : 'mr-4'"
+      class="relative p-2 text-white hover:opacity-80 transition-opacity z-50"
       style="pointer-events: auto; cursor: pointer;"
     >
-      <!-- Message Icon -->
-      <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Notification Icon -->
+      <img 
+        v-if="notificationIconExists" 
+        src="/home/Layer-27.png" 
+        alt="Notifications" 
+        class="w-6 h-6"
+      />
+      <svg 
+        v-else
+        class="w-6 h-6 text-white fill-current" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
       </svg>
       
       <!-- Badge -->
       <span
         v-if="unreadCount > 0"
-        class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-green-500 rounded-full"
+        class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] px-1"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
-      <span
-        v-else
-        class="absolute top-0 right-0 inline-flex items-center justify-center w-3 h-3 transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full"
-      ></span>
     </button>
 
     <!-- Notifications Dropdown -->
@@ -235,6 +242,7 @@ export default {
     const selectedMessage = ref(null)
     const showMessagePopup = ref(false)
     const notificationPosition = ref({})
+    const notificationIconExists = ref(true)
     
     const calculatePosition = () => {
       const button = document.querySelector('.relative button')
@@ -441,8 +449,21 @@ export default {
       }
     }
     
+    // Check if notification icon exists
+    const checkNotificationIconExists = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image()
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = src
+      })
+    }
+
     // Auto-refresh every 20 seconds (only if authenticated)
-    onMounted(() => {
+    onMounted(async () => {
+      // Check if notification icon exists
+      notificationIconExists.value = await checkNotificationIconExists('/home/Layer-27.png')
+      
       // Only load messages and set up polling if user is authenticated
       if (authStore.isAuthenticated) {
         loadMessages()
@@ -478,7 +499,8 @@ export default {
       closeMessagePopup,
       downloadAttachment,
       markAsRead,
-      formatDate
+      formatDate,
+      notificationIconExists
     }
   }
 }

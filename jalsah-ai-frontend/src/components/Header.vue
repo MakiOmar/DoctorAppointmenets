@@ -1,62 +1,46 @@
 <template>
-  <header class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+  <header class="sticky top-0 z-50 bg-primary-500 shadow-sm relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <!-- Logo -->
+        <!-- Left: Hamburger Menu -->
         <div class="flex items-center">
-          <router-link to="/" class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-              </svg>
-            </div>
-            <span class="text-xl font-bold text-gray-900">{{ $t('logo.text') }}</span>
-          </router-link>
+          <button
+            @click="mobileMenuOpen = !mobileMenuOpen"
+            class="hamburger-menu-button flex items-center space-x-2 text-white hover:opacity-80 transition-opacity p-2"
+            :class="locale === 'ar' ? 'space-x-reverse' : ''"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <span class="text-sm font-medium">{{ $t('nav.menu') }}</span>
+          </button>
         </div>
 
-        <!-- Navigation -->
-        <nav class="hidden md:flex items-center space-x-8">
-          <router-link 
-            to="/" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            :class="{ 'text-primary-600': $route.path === '/' }"
-          >
-            {{ $t('nav.home') }}
-          </router-link>
-          <router-link 
-            to="/therapists" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            :class="{ 'text-primary-600': $route.path === '/therapists' }"
-          >
-            {{ $t('nav.therapists') }}
-          </router-link>
-          <router-link 
-            to="/appointments" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            :class="{ 'text-primary-600': $route.path === '/appointments' }"
-          >
-            {{ $t('nav.appointments') }}
-          </router-link>
-          <router-link 
-            to="/notifications" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            :class="{ 'text-primary-600': $route.path === '/notifications' }"
-          >
-            {{ $t('nav.notifications') }}
-          </router-link>
-        </nav>
-
-        <!-- Right side -->
-        <div class="flex items-center space-x-4">
+        <!-- Right: Icons and Logo -->
+        <div class="flex items-center space-x-4" :class="locale === 'ar' ? 'space-x-reverse' : ''">
           <!-- Language Switcher -->
           <LanguageSwitcher v-if="shouldShowLanguageSwitcher" />
 
-          <!-- Cart Icon -->
+          <!-- Notification Icon with Badge -->
+          <SessionMessagesNotification v-if="isAuthenticated" />
+
+          <!-- Cart Icon with Badge -->
           <router-link 
             to="/cart" 
-            class="relative p-2 text-gray-700 hover:text-primary-600 transition-colors"
+            class="relative p-2 text-white hover:opacity-80 transition-opacity"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-6 h-6">
+            <img 
+              v-if="cartIconExists" 
+              src="/home/Layer-26.png" 
+              alt="Cart" 
+              class="w-6 h-6"
+            />
+            <svg 
+              v-else
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 48 48" 
+              class="w-6 h-6 text-white fill-current"
+            >
               <title>troley</title>
               <g id="troley-2" data-name="troley">
                 <path d="M15,39a3,3,0,1,0,3-3A3,3,0,0,0,15,39Zm4,0a1,1,0,1,1-1-1A1,1,0,0,1,19,39Z"/>
@@ -69,149 +53,184 @@
             </svg>
             <span 
               v-if="cartItemCount > 0"
-              class="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+              class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] px-1"
             >
-              {{ cartItemCount }}
+              {{ cartItemCount > 99 ? '99+' : cartItemCount }}
             </span>
           </router-link>
-          
-          <!-- Session Messages Notification -->
-          <SessionMessagesNotification v-if="isAuthenticated" />
 
-          <!-- User Menu -->
-          <div v-if="isAuthenticated" class="relative">
-            <button
-              @click="userMenuOpen = !userMenuOpen"
-              class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md p-2"
-            >
-              <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
+          <!-- Logo -->
+          <router-link to="/" class="flex items-center">
+            <img 
+              v-if="headerLogoExists"
+              src="/home/header-logo.png" 
+              :alt="$t('logo.text')" 
+              class="h-10 w-auto"
+            />
+            <span v-else class="text-xl font-bold text-white">{{ $t('logo.text') }}</span>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Hamburger Menu Dropdown -->
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0 transform -translate-y-2"
+        enter-to-class="opacity-100 transform translate-y-0"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100 transform translate-y-0"
+        leave-to-class="opacity-0 transform -translate-y-2"
+      >
+        <div
+          v-if="mobileMenuOpen"
+          class="hamburger-menu absolute top-16 left-0 right-0 bg-white shadow-xl border-t border-gray-200 max-h-[calc(100vh-4rem)] overflow-y-auto z-50"
+        >
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <!-- Authenticated User Menu -->
+            <template v-if="isAuthenticated">
+              <div class="space-y-1">
+                <router-link
+                  to="/"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.home') }}
+                </router-link>
+                <router-link
+                  to="/therapists"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/therapists' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.therapists') }}
+                </router-link>
+                <router-link
+                  to="/appointments"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/appointments' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.appointments') }}
+                </router-link>
+                <router-link
+                  to="/notifications"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/notifications' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.notifications') }}
+                </router-link>
+                
+                <!-- Smart Diagnosis Link -->
+                <router-link
+                  v-if="!loadingDiagnosis"
+                  :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ hasPreviousDiagnosis ? $t('nav.viewDiagnosisResults') : $t('nav.diagnosis') }}
+                </router-link>
+                <div
+                  v-else
+                  class="block px-4 py-3 text-gray-500"
+                >
+                  <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
+                    {{ $t('common.loading') }}
+                  </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-200 my-2"></div>
+
+                <!-- Profile and Logout -->
+                <router-link
+                  to="/profile"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/profile' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.profile') }}
+                </router-link>
+                <button
+                  @click="logout"
+                  class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-500 rounded-md transition-colors"
+                >
+                  {{ $t('nav.logout') }}
+                </button>
               </div>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
+            </template>
 
-            <!-- User Dropdown -->
-            <div
-              v-if="userMenuOpen"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
-            >
-              <router-link
-                to="/profile"
-                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                @click="userMenuOpen = false"
-              >
-                {{ $t('nav.profile') }}
-              </router-link>
-              <button
-                @click="logout"
-                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-              >
-                {{ $t('nav.logout') }}
-              </button>
-            </div>
+            <!-- Non-Authenticated User Menu -->
+            <template v-else>
+              <div class="space-y-1">
+                <router-link
+                  to="/"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.home') }}
+                </router-link>
+                <router-link
+                  to="/therapists"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  :class="{ 'bg-gray-50 text-primary-500': $route.path === '/therapists' }"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.therapists') }}
+                </router-link>
+                <div class="border-t border-gray-200 my-2"></div>
+                <router-link
+                  to="/login"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.login') }}
+                </router-link>
+                <router-link
+                  to="/register"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.register') }}
+                </router-link>
+                <router-link
+                  to="/therapist-register"
+                  class="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                  @click="mobileMenuOpen = false"
+                >
+                  {{ $t('nav.therapistRegister') }}
+                </router-link>
+              </div>
+            </template>
           </div>
-
-          <!-- Auth Buttons -->
-          <div v-else class="flex items-center space-x-4">
-            <router-link
-              to="/login"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            >
-              {{ $t('nav.login') }}
-            </router-link>
-            <router-link
-              to="/register"
-              class="bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              {{ $t('nav.register') }}
-            </router-link>
-            <router-link
-              to="/therapist-register"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
-            >
-              {{ $t('nav.therapistRegister') }}
-            </router-link>
-          </div>
-
-          <!-- Mobile menu button -->
-          <button
-            @click="mobileMenuOpen = !mobileMenuOpen"
-            class="md:hidden p-2 text-gray-700 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
         </div>
-      </div>
+      </Transition>
 
-      <!-- Mobile menu -->
-      <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 py-4">
-        <div class="space-y-2">
-          <router-link
-            to="/"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.home') }}
-          </router-link>
-          <router-link
-            to="/therapists"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.therapists') }}
-          </router-link>
-          <router-link
-            to="/appointments"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.appointments') }}
-          </router-link>
-        </div>
-
-        <!-- Mobile auth buttons -->
-        <div v-if="!isAuthenticated" class="mt-4 pt-4 border-t border-gray-200 space-y-2">
-          <router-link
-            to="/login"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.login') }}
-          </router-link>
-          <router-link
-            to="/register"
-            class="block px-3 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-md text-center"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.register') }}
-          </router-link>
-          <router-link
-            to="/therapist-register"
-            class="block px-3 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-            @click="mobileMenuOpen = false"
-          >
-            {{ $t('nav.therapistRegister') }}
-          </router-link>
-        </div>
-      </div>
     </div>
+
+    <!-- Click Outside to Close -->
+    <div
+      v-if="mobileMenuOpen"
+      @click="mobileMenuOpen = false"
+      class="fixed inset-0 bg-black bg-opacity-20 z-40"
+      style="top: 64px;"
+    ></div>
   </header>
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useSettingsStore } from '@/stores/settings'
+import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 import SessionMessagesNotification from './SessionMessagesNotification.vue'
+import api from '@/services/api'
 
 export default {
   name: 'Header',
@@ -224,30 +243,95 @@ export default {
     const authStore = useAuthStore()
     const cartStore = useCartStore()
     const settingsStore = useSettingsStore()
+    const { locale } = useI18n()
     
     const mobileMenuOpen = ref(false)
-    const userMenuOpen = ref(false)
+    const lastDiagnosisId = ref(null)
+    const loadingDiagnosis = ref(false)
+    const headerLogoExists = ref(true)
+    const cartIconExists = ref(true)
 
     const isAuthenticated = computed(() => authStore.isAuthenticated)
     const cartItemCount = computed(() => cartStore.itemCount)
     const shouldShowLanguageSwitcher = computed(() => settingsStore.shouldShowLanguageSwitcher)
+    
+    const hasPreviousDiagnosis = computed(() => {
+      return lastDiagnosisId.value !== null
+    })
 
     const logout = () => {
-      userMenuOpen.value = false
       mobileMenuOpen.value = false
-      // logout() function now handles redirect internally
       authStore.logout(true)
     }
 
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.relative')) {
-        userMenuOpen.value = false
+    // Fetch last diagnosis ID from API
+    const fetchLastDiagnosisId = async () => {
+      if (!authStore.user || !authStore.token) {
+        lastDiagnosisId.value = null
+        return
       }
+      
+      try {
+        loadingDiagnosis.value = true
+        const response = await api.get('/api/ai/user-diagnosis-results', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (response.data.success && response.data.data.current_diagnosis) {
+          const diagnosis = response.data.data.current_diagnosis
+          lastDiagnosisId.value = diagnosis.diagnosis_id
+        } else {
+          lastDiagnosisId.value = null
+        }
+      } catch (error) {
+        console.error('Error fetching last diagnosis:', error)
+        lastDiagnosisId.value = null
+      } finally {
+        loadingDiagnosis.value = false
+      }
+    }
+
+    // Watch for user changes and refetch diagnosis
+    watch(() => authStore.user, (newUser) => {
+      if (newUser) {
+        fetchLastDiagnosisId()
+      } else {
+        lastDiagnosisId.value = null
+      }
+    }, { immediate: true })
+
+    const handleClickOutside = (event) => {
+      // Close menu if clicking outside the header or menu
+      const header = document.querySelector('header')
+      const menu = event.target.closest('.hamburger-menu, .hamburger-menu-button')
+      if (header && !header.contains(event.target) && !menu) {
+        mobileMenuOpen.value = false
+      }
+    }
+
+    // Check if images exist (fallback handling)
+    const checkImageExists = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image()
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = src
+      })
     }
 
     onMounted(async () => {
       document.addEventListener('click', handleClickOutside)
       await settingsStore.loadSettings()
+      
+      // Check if images exist
+      headerLogoExists.value = await checkImageExists('/home/header-logo.png')
+      cartIconExists.value = await checkImageExists('/home/Layer-26.png')
+      
+      if (authStore.user) {
+        fetchLastDiagnosisId()
+      }
     })
 
     onUnmounted(() => {
@@ -255,13 +339,18 @@ export default {
     })
 
     return {
+      locale,
       mobileMenuOpen,
-      userMenuOpen,
       isAuthenticated,
       cartItemCount,
       shouldShowLanguageSwitcher,
-      logout
+      logout,
+      lastDiagnosisId,
+      hasPreviousDiagnosis,
+      loadingDiagnosis,
+      headerLogoExists,
+      cartIconExists
     }
   }
 }
-</script> 
+</script>

@@ -56,7 +56,9 @@ export default {
     register: 'Register',
     logout: 'Logout',
     language: 'Language',
-    therapistRegister: 'Therapist Registration'
+    therapistRegister: 'Therapist Registration',
+    menu: 'Menu',
+    viewDiagnosisResults: 'View Diagnosis Results'
   },
 
   // Logo
@@ -120,6 +122,35 @@ export default {
       step4: {
         title: 'Start Therapy',
         description: 'Join your session online and begin your healing journey'
+      }
+    },
+    sections: {
+      hero: {
+        welcome: 'Welcome to Jalsah Website',
+        subtitle: 'Directory of the best certified psychological therapists in Egypt',
+        loginButton: 'Sign In',
+        registerButton: 'Register New Account',
+        diagnosisButton: 'Start AI Diagnosis',
+        diagnosisResultsButton: 'Diagnosis Results',
+        therapistsButton: 'Browse Therapists'
+      },
+      ai: {
+        text: 'The directory\'s therapist database is linked to artificial intelligence, and through a short conversation with it, you will be able to choose the best possible therapist for your condition at the best price.'
+      },
+      certified: {
+        text: 'All therapists accepted in the directory are certified and qualified to deal with patients and psychological problems deeply, and with a high level of training. You can verify the certificates of any therapist yourself on the site before booking.'
+      },
+      prescription: {
+        text: 'With the (Prescription) service, you will be able to get a free consultation with the site\'s doctor alongside your sessions if your therapist is not authorized to write prescriptions.'
+      },
+      payment: {
+        text: 'You can book an online (video) session with the appropriate therapist from anywhere in the world. The site accepts payment via Visa and MasterCard, in addition to other payment methods available in Egypt.'
+      },
+      security: {
+        text: 'All sessions on the site take place internally via the global Jitsi call system, which supports DTLS-SRTP encryption of session content. For more security, you can use a pseudonym when registering and disclose your real name to the doctor if a medical prescription is requested.'
+      },
+      footer: {
+        copyright: 'All rights reserved for Jalsah website 2025'
       }
     }
   },
