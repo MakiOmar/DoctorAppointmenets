@@ -2,7 +2,7 @@
   <header class="sticky top-0 z-50 bg-primary-500 shadow-sm relative">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <!-- Left: Logo and Cart (visually left, first in normal order) -->
+        <!-- Left: Logo -->
         <div class="flex items-center gap-4">
           <!-- Logo -->
           <router-link to="/" class="flex items-center">
@@ -15,6 +15,12 @@
             />
             <span v-else class="text-xl font-bold text-white">{{ $t('logo.text') }}</span>
           </router-link>
+        </div>
+
+        <!-- Right: Language Switcher, Cart, Notification, and Hamburger Menu -->
+        <div class="flex items-center gap-4">
+          <!-- Language Switcher -->
+          <LanguageSwitcher v-if="shouldShowLanguageSwitcher" />
 
           <!-- Cart Icon with Badge -->
           <router-link 
@@ -51,12 +57,6 @@
               {{ cartItemCount > 99 ? '99+' : cartItemCount }}
             </span>
           </router-link>
-        </div>
-
-        <!-- Right: Language Switcher, Notification, and Hamburger Menu (visually right) -->
-        <div class="flex items-center gap-4">
-          <!-- Language Switcher -->
-          <LanguageSwitcher v-if="shouldShowLanguageSwitcher" />
 
           <!-- Notification Icon with Badge -->
           <SessionMessagesNotification v-if="isAuthenticated" />

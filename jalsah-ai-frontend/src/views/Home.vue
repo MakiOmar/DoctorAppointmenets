@@ -90,7 +90,7 @@
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
