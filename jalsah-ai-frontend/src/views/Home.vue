@@ -8,14 +8,14 @@
       <!-- Overlay for better text readability -->
       <div class="absolute inset-0 bg-black bg-opacity-30"></div>
       
-      <div class="relative z-10 max-w-[1200px] mx-auto text-center">
+      <div class="relative z-10 max-w-[960px] mx-auto text-center">
         <!-- Logo -->
         <div class="mb-8">
             <img 
               v-if="logoExists"
               src="/home/logo.png" 
               alt="Jalsah Logo" 
-              class="w-32 h-32 mx-auto mb-6"
+              class="h-32 mx-auto mb-6"
               @error="logoExists = false"
             />
           <div v-else class="w-32 h-32 mx-auto mb-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -44,7 +44,7 @@
               v-if="newUserIconExists"
               src="/home/new-user.png" 
               alt="Register" 
-              class="w-5 h-5"
+              class="h-5"
               @error="newUserIconExists = false"
             />
             <svg 
@@ -69,7 +69,7 @@
               v-if="signInIconExists"
               src="/home/sign-in-icon.png" 
               alt="Sign In" 
-              class="w-5 h-5"
+              class="h-5"
               @error="signInIconExists = false"
             />
             <svg 
@@ -99,7 +99,7 @@
               v-if="aiIconExists"
               src="/home/ai-icon.png" 
               alt="AI Diagnosis" 
-              class="w-5 h-5"
+              class="h-5"
               @error="aiIconExists = false"
             />
             <svg 
@@ -146,7 +146,7 @@
       class="relative py-20 px-4 bg-cover bg-center bg-no-repeat"
       :style="{ backgroundImage: `url(/home/ai-background.png)` }"
     >
-      <div class="max-w-[1200px] mx-auto">
+      <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Image (Left side) -->
           <div class="flex-shrink-0">
@@ -154,7 +154,7 @@
               v-if="aiIconExists"
               src="/home/ai-icon.png" 
               alt="AI" 
-              class="w-32 h-32 md:w-40 md:h-40"
+              class="h-32 md:h-40"
               @error="aiIconExists = false"
             />
             <div 
@@ -177,7 +177,7 @@
 
     <!-- Section 4: Certified Therapists Section -->
     <section class="bg-primary-500 py-20 px-4">
-      <div class="max-w-[1200px] mx-auto">
+      <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
           <div class="flex-1 text-white text-left">
@@ -192,7 +192,7 @@
               v-if="layer6Exists"
               src="/home/Layer-6.png" 
               alt="Certified" 
-              class="w-32 h-32 md:w-40 md:h-40"
+              class="h-32 md:h-40"
               @error="layer6Exists = false"
             />
             <div 
@@ -210,7 +210,7 @@
 
     <!-- Section 5: Prescription Service Section -->
     <section class="bg-secondary-500 py-20 px-4">
-      <div class="max-w-[1200px] mx-auto">
+      <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
@@ -218,7 +218,7 @@
               v-if="layer7Exists"
               src="/home/Layer-7.png" 
               alt="Prescription" 
-              class="w-32 h-32 md:w-40 md:h-40"
+              class="h-32 md:h-40"
               @error="layer7Exists = false"
             />
             <div 
@@ -243,7 +243,7 @@
 
     <!-- Section 6: Online Booking & Payment Section -->
     <section class="bg-white py-20 px-4">
-      <div class="max-w-[1200px] mx-auto">
+      <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
           <div class="flex-1 text-primary-500 text-left">
@@ -260,7 +260,7 @@
                 v-if="layer10Exists"
                 src="/home/Layer-10.png" 
                 alt="Global" 
-                class="w-24 h-24"
+                class="h-24"
                 @error="layer10Exists = false"
               />
               <div 
@@ -279,14 +279,14 @@
                 v-if="layer11Exists"
                 src="/home/Layer-11.png" 
                 alt="MasterCard" 
-                class="h-12 w-auto"
+                class="h-12"
                 @error="layer11Exists = false"
               />
               <img 
                 v-if="layer12Exists"
                 src="/home/Layer-12.png" 
                 alt="Visa" 
-                class="h-12 w-auto"
+                class="h-12"
                 @error="layer12Exists = false"
               />
             </div>
@@ -297,7 +297,7 @@
 
     <!-- Section 7: Secure Sessions Section -->
     <section class="bg-primary-500 py-20 px-4">
-      <div class="max-w-[1200px] mx-auto">
+      <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
@@ -305,7 +305,7 @@
               v-if="layer13Exists"
               src="/home/Layer-13.png" 
               alt="Security" 
-              class="w-32 h-32 md:w-40 md:h-40"
+              class="h-32 md:h-40"
               @error="layer13Exists = false"
             />
             <div 
@@ -330,7 +330,7 @@
 
     <!-- Footer -->
     <footer class="bg-primary-500 py-8 px-4">
-      <div class="max-w-[1200px] mx-auto text-center">
+      <div class="max-w-[960px] mx-auto text-center">
         <p class="text-white text-sm md:text-base">
           {{ $t('home.sections.footer.copyright') }}
         </p>

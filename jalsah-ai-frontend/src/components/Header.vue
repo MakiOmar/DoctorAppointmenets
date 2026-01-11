@@ -10,7 +10,7 @@
               v-if="headerLogoExists"
               src="/home/header-logo.png" 
               :alt="$t('logo.text')" 
-              class="h-10 w-auto"
+              class="h-10"
               @error="headerLogoExists = false"
             />
             <span v-else class="text-xl font-bold text-white">{{ $t('logo.text') }}</span>
@@ -25,7 +25,7 @@
               v-if="cartIconExists" 
               src="/home/Layer-26.png" 
               alt="Cart" 
-              class="w-6 h-6"
+              class="h-6"
               @error="cartIconExists = false"
             />
             <svg 
@@ -103,7 +103,7 @@
     >
       <div
         v-if="mobileMenuOpen"
-        class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 overflow-y-auto"
+        class="side-menu fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 overflow-y-auto"
         :dir="locale"
       >
         <!-- Side Menu Header with Close Button -->
@@ -380,7 +380,7 @@ export default {
     const handleClickOutside = (event) => {
       // Close menu if clicking outside the side menu
       // The backdrop handles closing, so this is mainly for ESC key or other edge cases
-      const sideMenu = event.target.closest('[class*="fixed top-0 right-0"]')
+      const sideMenu = event.target.closest('[class*="fixed top-0 left-0"]')
       const menuButton = event.target.closest('.hamburger-menu-button')
       if (!sideMenu && !menuButton && mobileMenuOpen.value) {
         mobileMenuOpen.value = false
