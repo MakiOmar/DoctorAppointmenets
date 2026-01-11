@@ -46,14 +46,14 @@
         <div v-if="matchedTherapists.length > 0" class="mb-6">
           <div class="flex flex-col lg:flex-row gap-4 items-center">
             
-                        <!-- Nearest Slot Button -->
-                        <div class="w-full lg:w-1/3">
+            <!-- Nearest Slot Button -->
+            <div class="w-full lg:w-1/3">
               <button
                 @click="setSorting('nearest')"
-                class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 :class="activeSort === 'nearest' 
-                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+                  ? 'bg-secondary-500 text-primary-500' 
+                  : 'bg-primary-500 text-white'"
               >
                 {{ $t('therapists.sorting.nearest') }}
               </button>
@@ -62,10 +62,10 @@
             <div class="w-full lg:w-1/3">
               <button
                 @click="setSorting('price-low')"
-                class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 :class="activeSort === 'price-low' 
-                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+                  ? 'bg-secondary-500 text-primary-500' 
+                  : 'bg-primary-500 text-white'"
               >
                 {{ $t('therapists.sorting.priceLow') }}
               </button>
@@ -74,10 +74,10 @@
             <div class="w-full lg:w-1/3">
               <button
                 @click="setSorting('best')"
-                class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 :class="activeSort === 'best' 
-                  ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+                  ? 'bg-secondary-500 text-primary-500' 
+                  : 'bg-primary-500 text-white'"
               >
                 {{ $t('therapists.sorting.best') }}
               </button>
@@ -111,7 +111,7 @@
         </div>
 
         <!-- Therapists List -->
-        <div v-else class="space-y-6">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <TherapistCard
             v-for="(therapist, index) in displayedTherapists" 
             :key="therapist.id"
@@ -120,11 +120,16 @@
             :diagnosis-id="route.params.diagnosisId"
             :position="therapist.originalPosition"
             :show-order-badge="true"
+            :card-variant="'diagnosis-results'"
             :open-therapist-id="openTherapistId"
             @click="viewTherapist"
             @book="bookAppointment"
             @show-details="handleShowDetails(therapist.id)"
             @hide-details="handleHideDetails()"
+            @open-about="handleOpenAbout"
+            @open-booking="handleOpenBooking"
+            @open-why="handleOpenWhy"
+            @open-certificates="handleOpenCertificates"
           />
           
           <!-- Show More Button -->
@@ -139,6 +144,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Popups -->
+    <AboutTherapistPopup
+      v-if="selectedTherapist"
+      :is-open="showAboutPopup"
+      :therapist="selectedTherapist"
+      @close="closeAboutPopup"
+      @update:isOpen="showAboutPopup = $event"
+      @open-certificates="handleOpenCertificates(selectedTherapist.id)"
+    />
+
+    <BookAppointmentPopup
+      v-if="selectedTherapist"
+      :is-open="showBookingPopup"
+      :therapist="selectedTherapist"
+      @close="closeBookingPopup"
+      @update:isOpen="showBookingPopup = $event"
+    />
+
+    <WhyThisTherapistPopup
+      v-if="selectedTherapist && route.params.diagnosisId"
+      :is-open="showWhyPopup"
+      :therapist="selectedTherapist"
+      :diagnosis-id="route.params.diagnosisId"
+      @close="closeWhyPopup"
+      @update:isOpen="showWhyPopup = $event"
+    />
+
+    <CertificatesPopup
+      v-if="selectedTherapist"
+      :is-open="showCertificatesPopup"
+      :therapist="selectedTherapist"
+      @close="closeCertificatesPopup"
+      @update:isOpen="showCertificatesPopup = $event"
+    />
   </div>
 </template>
 
@@ -151,12 +191,20 @@ import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 import TherapistCard from '@/components/TherapistCard.vue'
+import AboutTherapistPopup from '@/components/AboutTherapistPopup.vue'
+import BookAppointmentPopup from '@/components/BookAppointmentPopup.vue'
+import WhyThisTherapistPopup from '@/components/WhyThisTherapistPopup.vue'
+import CertificatesPopup from '@/components/CertificatesPopup.vue'
 
 export default {
   name: 'DiagnosisResults',
   components: {
     StarRating,
-    TherapistCard
+    TherapistCard,
+    AboutTherapistPopup,
+    BookAppointmentPopup,
+    WhyThisTherapistPopup,
+    CertificatesPopup
   },
   setup() {
     const router = useRouter()
@@ -176,6 +224,13 @@ export default {
     const openTherapistId = ref(null) // Track which therapist's details are currently open
     // Sorting controls - single active sort (same as therapists page)
     const activeSort = ref('') // Active sorting: '', 'best', 'price-low', 'nearest'
+    
+    // Popup states
+    const showAboutPopup = ref(false)
+    const showBookingPopup = ref(false)
+    const showWhyPopup = ref(false)
+    const showCertificatesPopup = ref(false)
+    const selectedTherapist = ref(null)
 
     // Computed property to get therapists with their original system positions
     const therapistsWithOriginalPositions = computed(() => {
@@ -557,6 +612,46 @@ export default {
       openTherapistId.value = null
     }
 
+    const handleOpenAbout = (therapistId) => {
+      selectedTherapist.value = matchedTherapists.value.find(t => t.id === therapistId)
+      showAboutPopup.value = true
+    }
+
+    const handleOpenBooking = (therapistId) => {
+      selectedTherapist.value = matchedTherapists.value.find(t => t.id === therapistId)
+      showBookingPopup.value = true
+    }
+
+    const handleOpenWhy = (therapistId) => {
+      selectedTherapist.value = matchedTherapists.value.find(t => t.id === therapistId)
+      showWhyPopup.value = true
+    }
+
+    const handleOpenCertificates = (therapistId) => {
+      selectedTherapist.value = matchedTherapists.value.find(t => t.id === therapistId)
+      showCertificatesPopup.value = true
+    }
+
+    const closeAboutPopup = () => {
+      showAboutPopup.value = false
+      selectedTherapist.value = null
+    }
+
+    const closeBookingPopup = () => {
+      showBookingPopup.value = false
+      selectedTherapist.value = null
+    }
+
+    const closeWhyPopup = () => {
+      showWhyPopup.value = false
+      selectedTherapist.value = null
+    }
+
+    const closeCertificatesPopup = () => {
+      showCertificatesPopup.value = false
+      selectedTherapist.value = null
+    }
+
     // Sorting button handlers (same as therapists page)
     const setSorting = (sortType) => {
       // If clicking the same sort, deactivate it (reset to default)
@@ -628,7 +723,21 @@ export default {
       showMoreTherapists,
       updateSorting,
       handleShowDetails,
-      handleHideDetails
+      handleHideDetails,
+      // Popups
+      showAboutPopup,
+      showBookingPopup,
+      showWhyPopup,
+      showCertificatesPopup,
+      selectedTherapist,
+      handleOpenAbout,
+      handleOpenBooking,
+      handleOpenWhy,
+      handleOpenCertificates,
+      closeAboutPopup,
+      closeBookingPopup,
+      closeWhyPopup,
+      closeCertificatesPopup
     }
   }
 }

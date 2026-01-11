@@ -37,10 +37,10 @@
           <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('price-low')"
-              class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+              class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               :class="activeSort === 'price-low' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+                ? 'bg-secondary-500 text-primary-500' 
+                : 'bg-primary-500 text-white'"
             >
               {{ $t('therapists.sorting.priceLow') }}
             </button>
@@ -50,10 +50,10 @@
           <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('nearest')"
-              class="w-full px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+              class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               :class="activeSort === 'nearest' 
-                ? 'border-primary-600 bg-primary-50 text-primary-700' 
-                : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
+                ? 'bg-secondary-500 text-primary-500' 
+                : 'bg-primary-500 text-white'"
             >
               {{ $t('therapists.sorting.nearest') }}
             </button>
@@ -72,19 +72,23 @@
       </div>
 
       <!-- Therapists List -->
-      <div v-else-if="displayedTherapists.length > 0" class="space-y-6">
+      <div v-else-if="displayedTherapists.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <TherapistCard
           v-for="(therapist, index) in displayedTherapists" 
           :key="therapist.id"
           :therapist="therapist"
           :position="therapist.originalPosition"
           :show-order-badge="false"
+          :card-variant="'therapists-page'"
           :settings-store="settingsStore"
           :open-therapist-id="openTherapistId"
           @click="viewTherapist"
           @book="bookAppointment"
           @show-details="handleShowDetails"
           @hide-details="handleHideDetails"
+          @open-about="handleOpenAbout"
+          @open-booking="handleOpenBooking"
+          @open-certificates="handleOpenCertificates"
         />
         
         <!-- Loading More Indicator -->
@@ -111,6 +115,32 @@
         <p class="text-gray-600">{{ $t('therapists.noResultsMessage') }}</p>
       </div>
     </div>
+
+    <!-- Popups -->
+    <AboutTherapistPopup
+      v-if="selectedTherapist"
+      :is-open="showAboutPopup"
+      :therapist="selectedTherapist"
+      @close="closeAboutPopup"
+      @update:isOpen="showAboutPopup = $event"
+      @open-certificates="handleOpenCertificates(selectedTherapist.id)"
+    />
+
+    <BookAppointmentPopup
+      v-if="selectedTherapist"
+      :is-open="showBookingPopup"
+      :therapist="selectedTherapist"
+      @close="closeBookingPopup"
+      @update:isOpen="showBookingPopup = $event"
+    />
+
+    <CertificatesPopup
+      v-if="selectedTherapist"
+      :is-open="showCertificatesPopup"
+      :therapist="selectedTherapist"
+      @close="closeCertificatesPopup"
+      @update:isOpen="showCertificatesPopup = $event"
+    />
   </div>
 </template>
 
@@ -123,12 +153,18 @@ import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 import TherapistCard from '@/components/TherapistCard.vue'
+import AboutTherapistPopup from '@/components/AboutTherapistPopup.vue'
+import BookAppointmentPopup from '@/components/BookAppointmentPopup.vue'
+import CertificatesPopup from '@/components/CertificatesPopup.vue'
 
 export default {
   name: 'Therapists',
   components: {
     StarRating,
-    TherapistCard
+    TherapistCard,
+    AboutTherapistPopup,
+    BookAppointmentPopup,
+    CertificatesPopup
   },
   setup() {
     const router = useRouter()
@@ -141,6 +177,12 @@ export default {
     const therapists = ref([])
     const diagnoses = ref([])
     const openTherapistId = ref(null)
+    
+    // Popup states
+    const showAboutPopup = ref(false)
+    const showBookingPopup = ref(false)
+    const showCertificatesPopup = ref(false)
+    const selectedTherapist = ref(null)
     
     // Pagination controls
     const initialLoadCount = ref(20) // Initial number of therapists to show
@@ -351,6 +393,36 @@ export default {
       openTherapistId.value = null
     }
 
+    const handleOpenAbout = (therapistId) => {
+      selectedTherapist.value = therapists.value.find(t => t.id === therapistId)
+      showAboutPopup.value = true
+    }
+
+    const handleOpenBooking = (therapistId) => {
+      selectedTherapist.value = therapists.value.find(t => t.id === therapistId)
+      showBookingPopup.value = true
+    }
+
+    const handleOpenCertificates = (therapistId) => {
+      selectedTherapist.value = therapists.value.find(t => t.id === therapistId)
+      showCertificatesPopup.value = true
+    }
+
+    const closeAboutPopup = () => {
+      showAboutPopup.value = false
+      selectedTherapist.value = null
+    }
+
+    const closeBookingPopup = () => {
+      showBookingPopup.value = false
+      selectedTherapist.value = null
+    }
+
+    const closeCertificatesPopup = () => {
+      showCertificatesPopup.value = false
+      selectedTherapist.value = null
+    }
+
     // Load more therapists function
     const loadMoreTherapists = () => {
       if (loadingMore.value || !hasMoreTherapists.value) return
@@ -425,7 +497,18 @@ export default {
       bookAppointment,
       handleShowDetails,
       handleHideDetails,
-      loadMoreTherapists
+      loadMoreTherapists,
+      // Popups
+      showAboutPopup,
+      showBookingPopup,
+      showCertificatesPopup,
+      selectedTherapist,
+      handleOpenAbout,
+      handleOpenBooking,
+      handleOpenCertificates,
+      closeAboutPopup,
+      closeBookingPopup,
+      closeCertificatesPopup
     }
   }
 }

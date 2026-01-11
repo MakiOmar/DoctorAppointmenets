@@ -3025,13 +3025,10 @@ Best regards,
 			$ai_bio = $bio; // Fallback to regular bio
 		}
 
-		// Get profile image URL
+		// Get profile image URL (full size)
 		$profile_image_url = '';
 		if ( $application->profile_image ) {
-			$profile_image_url = wp_get_attachment_image_url( $application->profile_image, 'medium' );
-			if ( ! $profile_image_url ) {
-				$profile_image_url = wp_get_attachment_url( $application->profile_image );
-			}
+			$profile_image_url = wp_get_attachment_url( $application->profile_image );
 		}
 
 		// Get certificates

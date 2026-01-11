@@ -40,7 +40,8 @@ export default {
     contact: 'تواصل',
     pleaseLogin: 'يرجى تسجيل الدخول أولاً',
     sessionExpired: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى',
-    minutes: 'دقيقة'
+    minutes: 'دقيقة',
+    order: 'الترتيب'
   },
 
   // Navigation
@@ -494,6 +495,14 @@ export default {
     }
   },
 
+  // Popups
+  popups: {
+    aboutTherapist: 'عن المعالج',
+    bookAppointment: 'حجز موعد',
+    whyThisTherapist: 'لماذا هذا المعالج',
+    viewCertificates: 'عرض الشهادات'
+  },
+
   // Therapists
   therapists: {
     title: 'ابحث عن معالجك',
@@ -934,7 +943,8 @@ export default {
     differentTherapistTitle: 'معالج مختلف',
     differentTherapistMessage: 'لديك مواعيد من معالج آخر في السلة. إضافة هذا الموعد سيقوم بتفريغ السلة للحجز مع معالج مختلف.',
     inCart: 'في السلة',
-    viewAllCertificates: 'عرض جميع الشهادات'
+    viewAllCertificates: 'عرض جميع الشهادات',
+    noSuitabilityMessage: 'لا توجد معلومات عناسبة متاحة لهذا المعالج'
   },
 
   // Certificates

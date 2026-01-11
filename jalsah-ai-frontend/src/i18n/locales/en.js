@@ -40,7 +40,8 @@ export default {
     contact: 'Contact',
     pleaseLogin: 'Please login first',
     sessionExpired: 'Session expired. Please login again',
-    minutes: 'minutes'
+    minutes: 'minutes',
+    order: 'Order'
   },
 
   // Navigation
@@ -488,6 +489,14 @@ export default {
         description: 'You may benefit from general mental health support. A qualified therapist can help you work through your concerns and improve your well-being.'
       }
     }
+  },
+
+  // Popups
+  popups: {
+    aboutTherapist: 'About Therapist',
+    bookAppointment: 'Book Appointment',
+    whyThisTherapist: 'Why This Therapist',
+    viewCertificates: 'View Certificates'
   },
 
   // Therapists
@@ -991,7 +1000,8 @@ export default {
     differentTherapistTitle: 'Different Therapist',
     differentTherapistMessage: 'You have appointments from another therapist in your cart. Adding this appointment will clear your cart to book with a different therapist.',
     inCart: 'In Cart',
-    viewAllCertificates: 'View all certificates'
+    viewAllCertificates: 'View all certificates',
+    noSuitabilityMessage: 'No suitability information available for this therapist'
   },
 
   // Certificates

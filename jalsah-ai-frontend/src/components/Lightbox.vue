@@ -29,28 +29,42 @@
              </svg>
            </button>
           
-                     <!-- Navigation Buttons -->
-           <button
-             @click="previousImage"
-             :disabled="images.length <= 1"
-             class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
-             :aria-label="$t('common.previous')"
-           >
-             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-             </svg>
-           </button>
-           
-           <button
-             @click="nextImage"
-             :disabled="images.length <= 1"
-             class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
-             :aria-label="$t('common.next')"
-           >
-             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-             </svg>
-           </button>
+          <!-- Navigation Buttons -->
+          <button
+            @click="previousImage"
+            :disabled="images.length <= 1"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
+            :aria-label="$t('common.previous')"
+          >
+            <img
+              v-if="leftChevronIconExists"
+              src="/left-chevron-icon.png"
+              alt="Previous"
+              class="w-6 h-6"
+              @error="leftChevronIconExists = false"
+            />
+            <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          </button>
+          
+          <button
+            @click="nextImage"
+            :disabled="images.length <= 1"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black bg-opacity-50 rounded-full p-3 z-20 disabled:opacity-30 disabled:cursor-not-allowed"
+            :aria-label="$t('common.next')"
+          >
+            <img
+              v-if="rightChevronIconExists"
+              src="/right-chevron-icon.png"
+              alt="Next"
+              class="w-6 h-6"
+              @error="rightChevronIconExists = false"
+            />
+            <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
           
           <!-- Image Container -->
           <div class="relative text-center">
@@ -101,6 +115,8 @@ export default {
   setup(props, { emit }) {
     const currentIndex = ref(props.initialIndex)
     const imageLoaded = ref(false)
+    const leftChevronIconExists = ref(true)
+    const rightChevronIconExists = ref(true)
     
     const currentImage = computed(() => {
       return props.images[currentIndex.value] || {}
@@ -167,6 +183,8 @@ export default {
       currentIndex,
       currentImage,
       imageLoaded,
+      leftChevronIconExists,
+      rightChevronIconExists,
       closeLightbox,
       nextImage,
       previousImage
