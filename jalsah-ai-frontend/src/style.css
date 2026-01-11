@@ -3,6 +3,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Emoji&display=swap');
 
+/* Custom Fonts */
+@font-face {
+    font-family: 'jalsah1';
+    src: url('/fonts/jalsah1/jalsah1.woff2') format('woff2'),
+         url('/fonts/jalsah1/jalsah1.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'jalsah2';
+    src: url('/fonts/jalsah2/jalsah2.woff2') format('woff2'),
+         url('/fonts/jalsah2/jalsah2.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -65,14 +84,17 @@
 @layer components {
   .btn-primary {
     @apply bg-primary-600 text-white px-4 py-2 rounded-md font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors;
+    font-family: 'jalsah2', sans-serif !important;
   }
 
   .btn-secondary {
     @apply bg-gray-200 text-gray-900 px-4 py-2 rounded-md font-medium hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors;
+    font-family: 'jalsah2', sans-serif !important;
   }
 
   .btn-outline {
     @apply border border-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors;
+    font-family: 'jalsah2', sans-serif !important;
   }
 
   .card {
@@ -102,19 +124,20 @@
     @apply text-right;
   }
 
+  /* Custom fonts - jalsah1 for general text, jalsah2 for buttons/links */
   /* Arabic font support */
   [dir="rtl"] {
-    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'jalsah1', 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 
-  /* Global font improvements */
+  /* Global font improvements - jalsah1 for general text */
   body {
-    font-family: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'jalsah1', 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  /* Ensure Cairo is used for Arabic text */
+  /* Ensure jalsah1 is used for Arabic text */
   [lang="ar"], [dir="rtl"] {
-    font-family: 'Cairo', sans-serif;
+    font-family: 'jalsah1', 'Cairo', sans-serif;
   }
 
   /* Font weight optimizations for Cairo */
@@ -144,12 +167,33 @@
 
   /* Improved typography for Arabic */
   [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6 {
-    font-family: 'Cairo', sans-serif;
+    font-family: 'jalsah1', 'Cairo', sans-serif;
     font-weight: 600;
   }
 
   [dir="rtl"] p, [dir="rtl"] span, [dir="rtl"] div {
-    font-family: 'Cairo', sans-serif;
+    font-family: 'jalsah1', 'Cairo', sans-serif;
+  }
+
+  /* Links use jalsah2 font (router-link renders as <a> tag) - must override RTL selectors */
+  a,
+  [dir="rtl"] button.hamburger-menu-button span,
+  [dir="rtl"] a,
+  [lang="ar"] a {
+    font-family: 'jalsah2', sans-serif !important;
+  }
+
+  /* All button elements use jalsah2 font - must override RTL selectors */
+  button,
+  [dir="rtl"] button,
+  [lang="ar"] button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline,
+  [dir="rtl"] .btn-primary,
+  [dir="rtl"] .btn-secondary,
+  [dir="rtl"] .btn-outline {
+    font-family: 'jalsah2', sans-serif !important;
   }
 
   /* Better line height for Arabic text */

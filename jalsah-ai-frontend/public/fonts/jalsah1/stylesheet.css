@@ -1,0 +1,8 @@
+@font-face {
+    font-family: 'jalsah1';
+    src: url('jalsah1.woff2') format('woff2'),
+         url('jalsah1.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}

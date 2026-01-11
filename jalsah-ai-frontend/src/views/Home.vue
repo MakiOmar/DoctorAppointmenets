@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-white">
     <!-- Section 2: Hero Section -->
     <section 
-      class="relative min-h-screen flex items-center justify-center px-4 py-20 bg-cover bg-center bg-no-repeat"
+      class="relative flex items-center justify-center px-4 py-20 bg-cover bg-center bg-no-repeat"
       :style="{ backgroundImage: `url(/home/background.png)` }"
     >
       <!-- Overlay for better text readability -->
@@ -90,7 +90,7 @@
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
@@ -124,7 +124,7 @@
           <!-- Therapists Button (Left in RTL, icon after text) -->
           <router-link
             to="/therapists"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.therapistsButton') }}
@@ -166,7 +166,7 @@
           </div>
 
           <!-- Text Content (Right side, primary color) -->
-          <div class="flex-1 text-primary-500" :class="locale === 'ar' ? 'text-left' : 'text-right'">
+          <div class="flex-1 text-primary-500 text-justify">
             <p class="text-lg md:text-xl leading-relaxed">
               {{ $t('home.sections.ai.text') }}
             </p>
@@ -180,7 +180,7 @@
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
-          <div class="flex-1 text-white text-left">
+          <div class="flex-1 text-white text-justify">
             <p class="text-lg md:text-xl leading-relaxed">
               {{ $t('home.sections.certified.text') }}
             </p>
@@ -232,7 +232,7 @@
           </div>
 
           <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-primary-500" :class="locale === 'ar' ? 'text-right' : 'text-left'">
+          <div class="flex-1 text-primary-500 text-justify">
             <p class="text-lg md:text-xl leading-relaxed">
               {{ $t('home.sections.prescription.text') }}
             </p>
@@ -246,14 +246,14 @@
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
-          <div class="flex-1 text-primary-500 text-left">
+          <div class="flex-1 text-primary-500 text-justify">
             <p class="text-lg md:text-xl leading-relaxed">
               {{ $t('home.sections.payment.text') }}
             </p>
           </div>
 
           <!-- Payment Icons (Right side, vertically stacked) -->
-          <div class="flex-shrink-0 flex flex-col gap-4 items-start">
+          <div class="flex-shrink-0 flex flex-col gap-4 items-center">
             <!-- Globe Icon (Layer-10) -->
             <div>
               <img 
@@ -319,7 +319,7 @@
           </div>
 
           <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-white" :class="locale === 'ar' ? 'text-right' : 'text-left'">
+          <div class="flex-1 text-white text-justify">
             <p class="text-lg md:text-xl leading-relaxed">
               {{ $t('home.sections.security.text') }}
             </p>

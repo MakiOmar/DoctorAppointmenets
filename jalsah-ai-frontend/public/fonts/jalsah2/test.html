@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>Font Test</title>
+
+    <!-- ربط ملف الستايل -->
+    <link rel="stylesheet" href="stylesheet.css">
+
+    <style>
+        body {
+            direction: rtl;
+            padding: 40px;
+            font-family: Arial, sans-serif;
+        }
+
+        .test-font {
+            font-family: 'jalsah2', sans-serif;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .fallback {
+            font-size: 48px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="test-font">
+        ده اختبار الخط الأساسي
+    </div>
+
+    <div class="test-font">
+        Jalsah – جلسة – 123456
+    </div>
+
+    <hr>
+
+    <div class="fallback">
+        ده نفس الكلام بخط افتراضي للمقارنة
+    </div>
+
+</body>
+</html>
