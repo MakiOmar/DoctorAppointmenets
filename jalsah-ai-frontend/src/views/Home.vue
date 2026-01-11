@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-white">
     <!-- Section 2: Hero Section -->
     <section 
-      class="relative flex items-center justify-center px-4 py-20 bg-cover bg-center bg-no-repeat"
+      class="relative flex items-center justify-center px-4 py-8 md:py-20 bg-cover bg-center bg-no-repeat"
       :style="{ backgroundImage: `url(/home/background.png)` }"
     >
       <!-- Overlay for better text readability -->
@@ -15,7 +15,7 @@
               v-if="logoExists"
               src="/home/logo.png" 
               alt="Jalsah Logo" 
-              class="h-32 mx-auto mb-6"
+              class="h-20 md:h-32 mx-auto mb-6"
               @error="logoExists = false"
             />
           <div v-else class="w-32 h-32 mx-auto mb-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -36,7 +36,7 @@
           <!-- Registration Button (Right in RTL, icon after text) -->
           <router-link
             to="/register"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-base"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.registerButton') }}
@@ -61,7 +61,7 @@
           <!-- Login Button (Left in RTL, icon after text) -->
           <router-link
             to="/login"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-base"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.loginButton') }}
@@ -90,7 +90,7 @@
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[25px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
@@ -124,7 +124,7 @@
           <!-- Therapists Button (Left in RTL, icon after text) -->
           <router-link
             to="/therapists"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[25px]"
+            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.therapistsButton') }}
@@ -147,7 +147,14 @@
       :style="{ backgroundImage: `url(/home/ai-background.png)` }"
     >
       <div class="max-w-[960px] mx-auto">
-        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+        <div class="flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12">
+          <!-- Text Content (Right side, primary color) -->
+          <div class="flex-1 text-primary-500 text-justify">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.ai.text') }}
+            </p>
+          </div>
+
           <!-- Image (Left side) -->
           <div class="flex-shrink-0">
             <img 
@@ -163,13 +170,6 @@
             >
               <span class="text-4xl font-bold text-white">AI</span>
             </div>
-          </div>
-
-          <!-- Text Content (Right side, primary color) -->
-          <div class="flex-1 text-primary-500 text-justify">
-            <p class="text-lg md:text-xl leading-relaxed">
-              {{ $t('home.sections.ai.text') }}
-            </p>
           </div>
         </div>
       </div>
@@ -212,6 +212,13 @@
     <section class="bg-secondary-500 py-20 px-4">
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <!-- Text Content (Right side visually, right-aligned for RTL) -->
+          <div class="flex-1 text-primary-500 text-justify">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.prescription.text') }}
+            </p>
+          </div>
+
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
             <img 
@@ -229,13 +236,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
               </svg>
             </div>
-          </div>
-
-          <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-primary-500 text-justify">
-            <p class="text-lg md:text-xl leading-relaxed">
-              {{ $t('home.sections.prescription.text') }}
-            </p>
           </div>
         </div>
       </div>
@@ -299,6 +299,13 @@
     <section class="bg-primary-500 py-20 px-4">
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <!-- Text Content (Right side visually, right-aligned for RTL) -->
+          <div class="flex-1 text-white text-justify">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.security.text') }}
+            </p>
+          </div>
+
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
             <img 
@@ -316,13 +323,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
             </div>
-          </div>
-
-          <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-white text-justify">
-            <p class="text-lg md:text-xl leading-relaxed">
-              {{ $t('home.sections.security.text') }}
-            </p>
           </div>
         </div>
       </div>
