@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-6">
     <!-- Introductory Text -->
-    <p class="text-white text-center text-sm">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
+    <p class="text-secondary-500 text-center text-[25px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
 
     <!-- Nearest Available Appointment Section -->
     <div v-if="nearestSlot" class="space-y-4">
       <!-- Section Title -->
-      <div class="bg-secondary-500 rounded-lg px-4 py-2 text-center">
+      <div class="bg-secondary-500 rounded-lg px-4 py-2 text-center w-[300px] mx-auto">
         <h3 class="text-primary-500 font-bold text-sm">{{ $t('therapistDetails.nearestAvailable') }}</h3>
       </div>
 
@@ -27,25 +27,25 @@
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
             {{ $t('common.loading') }}
           </span>
-          <span v-else>{{ $t('therapistDetails.bookThisAppointment') }}</span>
+          <span class="font-jalsah2 text-[20px] font-semibold" v-else>{{ $t('therapistDetails.bookThisAppointment') }}</span>
         </button>
       </div>
 
       <!-- Added to Cart Status -->
       <div v-else class="bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="text-[#00740b] font-medium font-jalsah2">{{ $t('therapistDetails.addedToCart') }}</span>
-          <span class="text-primary-500 text-sm font-medium font-jalsah2">{{ formatTimeSlot(nearestSlot.time) }}</span>
+          <span class="text-[#00740b] text-[20px] font-jalsah2">{{ $t('therapistDetails.addedToCart') }}</span>
+          <span class="text-primary-500 text-[20px] font-jalsah2">{{ formatTimeSlot(nearestSlot.time) }}</span>
         </div>
         <button
           @click="removeNearestFromCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="text-[#b50000] hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
+          class="text-[#b50000] hover:text-[#b50000] font-medium  disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
+          <span v-if="cartLoading[nearestSlot.id]" class="flex items-center text-[20px]">
             <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
           </span>
-          <span v-else>{{ $t('common.delete') }}</span>
+          <span class="font-jalsah2 text-[20px] font-semibold" v-else>{{ $t('common.delete') }}</span>
         </button>
       </div>
     </div>
@@ -56,7 +56,7 @@
     <!-- Other Appointments Section -->
     <div v-if="otherDates.length > 0" class="space-y-4">
       <!-- Section Title -->
-      <div class="bg-secondary-500 rounded-lg px-4 py-2 text-center">
+      <div class="bg-secondary-500 rounded-lg px-4 py-2 text-center w-[300px] mx-auto">
         <h3 class="text-primary-500 font-bold text-sm">{{ $t('therapistDetails.otherAppointments') }}</h3>
       </div>
 
@@ -82,7 +82,7 @@
             v-for="date in visibleDates"
             :key="date.value"
             @click="selectDate(date)"
-            class="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-w-[100px]"
+            class="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-w-[60px]"
             :class="selectedDate?.value === date.value
               ? 'bg-secondary-500 text-primary-500'
               : 'bg-white text-primary-500 hover:bg-gray-50 border border-primary-500'"
@@ -116,7 +116,7 @@
       <div v-if="selectedDate && otherTimeSlots.length > 0" class="h-px bg-white"></div>
 
       <!-- Timezone Note -->
-      <p v-if="selectedDate && otherTimeSlots.length > 0" class="text-white text-center text-xs">({{ $t('therapistDetails.allAppointmentsEgyptTime') }})</p>
+      <p v-if="selectedDate && otherTimeSlots.length > 0" class="text-white text-center text-[20px] font-jalsah2 font-semibold">({{ $t('therapistDetails.allAppointmentsEgyptTime') }})</p>
 
       <!-- Time Slots -->
       <div v-if="selectedDate && otherTimeSlots.length > 0" class="space-y-2">
@@ -144,18 +144,18 @@
             class="w-full bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between"
           >
             <div class="flex items-center gap-2">
-              <span class="text-[#00740b] font-medium">{{ $t('therapistDetails.addedToCart') }}</span>
-              <span class="text-primary-500 text-sm font-medium">{{ formatTimeSlot(slot.time) }}</span>
+              <span class="text-[#00740b] text-[20px] font-jalsah2">{{ $t('therapistDetails.addedToCart') }}</span>
+              <span class="text-primary-500 text-[20px] font-jalsah2">{{ formatTimeSlot(slot.time) }}</span>
             </div>
             <button
               @click="removeFromCart(slot)"
               :disabled="cartLoading[slot.id]"
-              class="text-[#b50000] hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              class="text-[#b50000] hover:text-[#b50000] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span v-if="cartLoading[slot.id]" class="flex items-center">
+              <span v-if="cartLoading[slot.id]" class="flex items-center text-[20px]">
                 <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
               </span>
-              <span v-else>{{ $t('common.delete') }}</span>
+              <span class="font-jalsah2 text-[20px] font-semibold " v-else>{{ $t('common.delete') }}</span>
             </button>
           </div>
         </div>
@@ -212,7 +212,7 @@ export default {
     const cartLoading = ref({})
     const dateScrollIndex = ref(0)
     const dateScrollContainer = ref(null)
-    const datesPerView = 3
+    const datesPerView = 4
 
     const getNearestSlotInfo = () => {
       if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date && props.therapist.earliest_slot_data.time) {

@@ -499,7 +499,7 @@ export default {
   popups: {
     aboutTherapist: 'عن المعالج',
     bookAppointment: 'حجز موعد',
-    whyThisTherapist: 'لماذا هذا المعالج',
+    whyThisTherapist: 'لماذا المعالج من الأفضل في تشخصيك ؟',
     viewCertificates: 'عرض الشهادات'
   },
 

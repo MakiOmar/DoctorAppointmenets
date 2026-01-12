@@ -180,7 +180,7 @@
   [dir="rtl"] button.hamburger-menu-button span,
   [dir="rtl"] a,
   [lang="ar"] a {
-    font-family: 'jalsah2', sans-serif !important;
+    font-family: 'jalsah2', sans-serif;
   }
 
   /* All button elements use jalsah2 font - must override RTL selectors */
@@ -193,7 +193,7 @@
   [dir="rtl"] .btn-primary,
   [dir="rtl"] .btn-secondary,
   [dir="rtl"] .btn-outline {
-    font-family: 'jalsah2', sans-serif !important;
+    font-family: 'jalsah2', sans-serif;
   }
 
   /* Better line height for Arabic text */

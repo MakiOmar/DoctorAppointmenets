@@ -69,7 +69,7 @@
       <button
         v-if="cardVariant === 'therapists-page'"
         @click.stop="handleOpenAbout"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-sm hover:bg-secondary-400 transition-colors"
+        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-[20px] hover:bg-secondary-400 transition-colors"
         :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
       >
         <img
@@ -95,7 +95,7 @@
       <button
         v-if="cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage"
         @click.stop="handleOpenWhy"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-sm hover:bg-secondary-400 transition-colors"
+        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
         :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
       >
         <img
@@ -126,7 +126,7 @@
         <button
           v-if="therapist.certificates && therapist.certificates.length > 0"
           @click.stop="handleOpenCertificates"
-          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-4 py-3 font-medium text-sm hover:bg-primary-600 transition-colors border-r border-white"
+          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-4 py-3 font-medium text-[20px] hover:bg-primary-600 transition-colors border-r border-white"
           :class="locale === 'ar' ? 'flex-row border-l border-r-0' : 'flex-row border-r border-l-0'"
         >
           <img
@@ -151,7 +151,7 @@
         <!-- Book Appointment Button -->
         <button
           @click.stop="handleOpenBooking"
-          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-4 py-3 font-medium text-sm hover:bg-primary-600 transition-colors"
+          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-4 py-3 font-medium text-[20px] hover:bg-primary-600 transition-colors"
           :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
         >
           <img
