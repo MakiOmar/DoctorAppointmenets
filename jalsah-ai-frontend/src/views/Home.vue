@@ -211,16 +211,9 @@
     <!-- Section 5: Prescription Service Section -->
     <section class="bg-secondary-500 py-20 px-4">
       <div class="max-w-[960px] mx-auto">
-        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-          <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-primary-500 text-justify">
-            <p class="text-lg md:text-xl leading-relaxed">
-              {{ $t('home.sections.prescription.text') }}
-            </p>
-          </div>
-
-          <!-- Icon (Left side visually) -->
-          <div class="flex-shrink-0">
+        <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
+            <!-- Icon (Left side visually) -->
+            <div class="flex-shrink-0">
             <img 
               v-if="layer7Exists"
               src="/home/Layer-7.png" 
@@ -237,6 +230,13 @@
               </svg>
             </div>
           </div>
+          <!-- Text Content (Right side visually, right-aligned for RTL) -->
+          <div class="flex-1 text-primary-500 text-justify">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.prescription.text') }}
+            </p>
+          </div>
+
         </div>
       </div>
     </section>
@@ -298,14 +298,7 @@
     <!-- Section 7: Secure Sessions Section -->
     <section class="bg-primary-500 py-20 px-4">
       <div class="max-w-[960px] mx-auto">
-        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-          <!-- Text Content (Right side visually, right-aligned for RTL) -->
-          <div class="flex-1 text-white text-justify">
-            <p class="text-lg md:text-xl leading-relaxed">
-              {{ $t('home.sections.security.text') }}
-            </p>
-          </div>
-
+        <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
           <div class="flex-shrink-0">
             <img 
@@ -323,6 +316,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
             </div>
+          </div>
+          <!-- Text Content (Right side visually, right-aligned for RTL) -->
+          <div class="flex-1 text-white text-justify">
+            <p class="text-lg md:text-xl leading-relaxed">
+              {{ $t('home.sections.security.text') }}
+            </p>
           </div>
         </div>
       </div>
