@@ -21,7 +21,7 @@
         <button
           @click="addNearestToCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="bg-white text-primary-500 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="bg-white text-primary-500 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
         >
           <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
@@ -34,13 +34,13 @@
       <!-- Added to Cart Status -->
       <div v-else class="bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="text-[#00740b] font-medium">{{ $t('therapistDetails.addedToCart') }}</span>
-          <span class="text-primary-500 text-sm font-medium">{{ formatTimeSlot(nearestSlot.time) }}</span>
+          <span class="text-[#00740b] font-medium font-jalsah2">{{ $t('therapistDetails.addedToCart') }}</span>
+          <span class="text-primary-500 text-sm font-medium font-jalsah2">{{ formatTimeSlot(nearestSlot.time) }}</span>
         </div>
         <button
           @click="removeNearestFromCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="text-[#b50000] hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          class="text-[#b50000] hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
         >
           <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
             <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
@@ -89,7 +89,10 @@
           >
             <div class="text-center">
               <div class="font-semibold">{{ date.day }}</div>
-              <div class="text-xs mt-1">{{ date.date }}</div>
+              <div class="text-xs mt-1">
+                <div>{{ getDateDay(date.date) }}</div>
+                <div>{{ getDateMonth(date.date) }}</div>
+              </div>
             </div>
           </button>
         </div>
@@ -338,6 +341,20 @@ export default {
         month: 'short', 
         day: 'numeric' 
       })
+    }
+
+    const getDateDay = (dateString) => {
+      if (!dateString) return ''
+      // Split by space and get the first part (day number)
+      const parts = dateString.trim().split(/\s+/)
+      return parts[0] || ''
+    }
+
+    const getDateMonth = (dateString) => {
+      if (!dateString) return ''
+      // Split by space and get everything after the first part (month name)
+      const parts = dateString.trim().split(/\s+/)
+      return parts.slice(1).join(' ') || ''
     }
 
     const hasAvailableSlots = (dateKey) => {
@@ -739,6 +756,8 @@ export default {
       dateScrollContainer,
       formatTimeSlot,
       formatFullDate,
+      getDateDay,
+      getDateMonth,
       selectDate,
       scrollDatesLeft,
       scrollDatesRight,

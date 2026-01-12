@@ -427,4 +427,15 @@ body [data-testid*="logo"] {
 [dir="rtl"] .side-menu {
   left: 0 !important;
   right: auto !important;
-} 
+}
+
+/* Font utility classes */
+@layer utilities {
+  .font-jalsah1 {
+    font-family: 'jalsah1', 'Cairo', sans-serif !important;
+  }
+
+  .font-jalsah2 {
+    font-family: 'jalsah2', sans-serif !important;
+  }
+}
