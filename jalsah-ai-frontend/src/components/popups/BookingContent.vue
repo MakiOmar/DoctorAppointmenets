@@ -33,11 +33,14 @@
 
       <!-- Added to Cart Status -->
       <div v-else class="bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between">
-        <span class="text-[#00740b] font-medium">{{ $t('therapistDetails.addedToCart') }}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-[#00740b] font-medium">{{ $t('therapistDetails.addedToCart') }}</span>
+          <span class="text-primary-500 text-sm font-medium">{{ formatTimeSlot(nearestSlot.time) }}</span>
+        </div>
         <button
           @click="removeNearestFromCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="text-red-500 hover:text-red-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          class="text-red-500 hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
             <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-1"></div>
@@ -102,8 +105,11 @@
         </button>
       </div>
 
+      <!-- Divider -->
+      <div v-if="selectedDate && otherTimeSlots.length > 0" class="h-px bg-white"></div>
+
       <!-- Timezone Note -->
-      <p class="text-white text-center text-xs">({{ $t('therapistDetails.allAppointmentsEgyptTime') }})</p>
+      <p v-if="selectedDate && otherTimeSlots.length > 0" class="text-white text-center text-xs">({{ $t('therapistDetails.allAppointmentsEgyptTime') }})</p>
 
       <!-- Time Slots -->
       <div v-if="selectedDate && otherTimeSlots.length > 0" class="space-y-2">
@@ -130,11 +136,14 @@
             v-else
             class="w-full bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between"
           >
-            <span class="text-[#00740b] font-medium">{{ $t('therapistDetails.addedToCart') }}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-[#00740b] font-medium">{{ $t('therapistDetails.addedToCart') }}</span>
+              <span class="text-primary-500 text-sm font-medium">{{ formatTimeSlot(slot.time) }}</span>
+            </div>
             <button
               @click="removeFromCart(slot)"
               :disabled="cartLoading[slot.id]"
-              class="text-red-500 hover:text-red-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              class="text-red-500 hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="cartLoading[slot.id]" class="flex items-center">
                 <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-1"></div>
@@ -146,7 +155,7 @@
       </div>
 
       <!-- No Time Slots -->
-      <div v-else-if="selectedDate && otherTimeSlots.length === 0" class="text-center py-8 text-white">
+      <div v-else-if="selectedDate && !loadingDates && otherTimeSlots.length === 0" class="text-center py-8 text-white">
         {{ $t('therapistDetails.noTimeSlots') }}
       </div>
     </div>
