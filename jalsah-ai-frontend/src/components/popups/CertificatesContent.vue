@@ -22,7 +22,7 @@
         class="bg-white rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
         @click="openLightbox(index)"
       >
-        <div class="w-full h-48">
+        <div class="w-full">
           <img
             v-if="cert.is_image"
             :src="cert.thumbnail_url || cert.url"
