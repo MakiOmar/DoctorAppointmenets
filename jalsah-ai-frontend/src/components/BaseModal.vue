@@ -18,7 +18,10 @@
         
         <!-- Modal Content -->
         <div
-          class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          :class="[
+            'relative rounded-lg shadow-xl max-w-[480px] w-full max-h-[90vh] overflow-hidden flex flex-col',
+            customBgColor || 'bg-white'
+          ]"
           :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           @click.stop
         >
@@ -113,6 +116,10 @@ export default {
     showCartIcon: {
       type: Boolean,
       default: true
+    },
+    customBgColor: {
+      type: String,
+      default: null
     }
   },
   emits: ['close', 'update:isOpen'],

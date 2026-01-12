@@ -65,7 +65,33 @@
 
     <!-- Action Buttons Section -->
     <div class="bg-white">
-      <!-- Why This Therapist Button (only on diagnosis results, top row) -->
+      <!-- About Therapist Button (only on therapists page, after price section) -->
+      <button
+        v-if="cardVariant === 'therapists-page'"
+        @click.stop="handleOpenAbout"
+        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-sm hover:bg-secondary-400 transition-colors"
+        :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
+      >
+        <img
+          v-if="infoIconExists"
+          src="/info-icon.png"
+          alt="About"
+          class="h-4"
+          @error="infoIconExists = false"
+        />
+        <svg
+          v-else
+          class="h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        {{ $t('popups.aboutTherapist') }}
+      </button>
+
+      <!-- Why This Therapist Button (only on diagnosis results, after price section) -->
       <button
         v-if="cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage"
         @click.stop="handleOpenWhy"
@@ -91,8 +117,8 @@
         {{ $t('popups.whyThisTherapist') }}
       </button>
 
-      <!-- Divider for Why button (if shown) -->
-      <div v-if="cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage" class="h-px bg-secondary-300"></div>
+      <!-- Divider for About/Why buttons (if shown) -->
+      <div v-if="(cardVariant === 'therapists-page') || (cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage)" class="h-px bg-secondary-300"></div>
 
       <!-- Bottom Row Buttons (Certificates and Book) -->
       <div class="flex" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
@@ -147,32 +173,6 @@
           {{ $t('popups.bookAppointment') }}
         </button>
       </div>
-
-      <!-- About Therapist Button (only on therapists page, if needed) -->
-      <button
-        v-if="cardVariant === 'therapists-page'"
-        @click.stop="handleOpenAbout"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-sm hover:bg-secondary-400 transition-colors border-t border-secondary-300"
-        :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
-      >
-        <img
-          v-if="infoIconExists"
-          src="/info-icon.png"
-          alt="About"
-          class="h-4"
-          @error="infoIconExists = false"
-        />
-        <svg
-          v-else
-          class="h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        {{ $t('popups.aboutTherapist') }}
-      </button>
     </div>
 
     <!-- Lightbox Component -->
