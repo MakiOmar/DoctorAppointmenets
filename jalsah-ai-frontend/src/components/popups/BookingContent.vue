@@ -40,10 +40,10 @@
         <button
           @click="removeNearestFromCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="text-red-500 hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          class="text-[#b50000] hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
-            <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-1"></div>
+            <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
           </span>
           <span v-else>{{ $t('common.delete') }}</span>
         </button>
@@ -61,21 +61,23 @@
       </div>
 
       <!-- Date Picker with Navigation -->
-      <div class="relative">
-        <!-- Left Arrow -->
+      <div class="relative flex items-center justify-center">
+        <!-- Previous Arrow (Left side) -->
         <button
           v-if="dateScrollIndex > 0"
           @click="scrollDatesLeft"
-          class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-primary-500 text-white rounded-full p-2 hover:bg-primary-600 transition-colors"
+          class="absolute left-0 top-1/2 -translate-y-1/2 z-10 hover:opacity-80 transition-opacity"
           :class="locale === 'ar' ? 'left-auto right-0' : 'left-0 right-auto'"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="locale === 'ar' ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'"></path>
-          </svg>
+          <img 
+            :src="locale === 'ar' ? '/right-chevron-icon.png' : '/left-chevron-icon.png'"
+            :alt="locale === 'ar' ? 'Next' : 'Previous'"
+            class="h-6"
+          />
         </button>
 
         <!-- Date Cards -->
-        <div class="flex overflow-x-auto gap-3 px-10 scrollbar-hide" ref="dateScrollContainer">
+        <div class="flex gap-3 justify-center px-10" ref="dateScrollContainer">
           <button
             v-for="date in visibleDates"
             :key="date.value"
@@ -83,7 +85,7 @@
             class="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-w-[100px]"
             :class="selectedDate?.value === date.value
               ? 'bg-secondary-500 text-primary-500'
-              : 'bg-white text-primary-500 hover:bg-gray-50'"
+              : 'bg-white text-primary-500 hover:bg-gray-50 border border-primary-500'"
           >
             <div class="text-center">
               <div class="font-semibold">{{ date.day }}</div>
@@ -92,16 +94,18 @@
           </button>
         </div>
 
-        <!-- Right Arrow -->
+        <!-- Next Arrow (Right side) -->
         <button
           v-if="dateScrollIndex < maxDateScrollIndex"
           @click="scrollDatesRight"
-          class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-primary-500 text-white rounded-full p-2 hover:bg-primary-600 transition-colors"
-          :class="locale === 'ar' ? 'right-auto left-0' : 'right-0 left-auto'"
+          class="absolute right-0 top-1/2 -translate-y-1/2 z-10 hover:opacity-80 transition-opacity"
+          :class="locale === 'ar' ? 'right-auto' : 'right-0 left-auto'"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="locale === 'ar' ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'"></path>
-          </svg>
+          <img 
+            :src="locale === 'ar' ? '/left-chevron-icon.png' : '/right-chevron-icon.png'"
+            :alt="locale === 'ar' ? 'Previous' : 'Next'"
+            class="h-6"
+          />
         </button>
       </div>
 
@@ -143,10 +147,10 @@
             <button
               @click="removeFromCart(slot)"
               :disabled="cartLoading[slot.id]"
-              class="text-red-500 hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              class="text-[#b50000] hover:text-[#b50000] font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="cartLoading[slot.id]" class="flex items-center">
-                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-red-500 mr-1"></div>
+                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
               </span>
               <span v-else>{{ $t('common.delete') }}</span>
             </button>
@@ -205,7 +209,7 @@ export default {
     const cartLoading = ref({})
     const dateScrollIndex = ref(0)
     const dateScrollContainer = ref(null)
-    const datesPerView = 4
+    const datesPerView = 3
 
     const getNearestSlotInfo = () => {
       if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date && props.therapist.earliest_slot_data.time) {
