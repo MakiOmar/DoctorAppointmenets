@@ -17,7 +17,7 @@
           class="flex-shrink-0"
           :class="locale === 'ar' ? 'mr-2' : 'ml-2'"
         >
-        <div class="absolute top-[-8px] left-0 w-[7rem] h-[7rem] flex items-center justify-center z-[99]">
+        <div class="absolute top-[-8px] left-0 w-[7rem] h-[7rem] flex items-center justify-center z-[9]">
 
             <img
               v-if="orderBadgeIconExists"

@@ -61,13 +61,13 @@
       </div>
 
       <!-- Date Picker with Navigation -->
-      <div class="relative flex items-center justify-center">
+      <div class="flex items-center justify-center gap-2">
         <!-- Previous Arrow (Left side) -->
         <button
-          v-if="dateScrollIndex > 0"
+          v-if="maxDateScrollIndex > 0"
           @click="scrollDatesLeft"
-          class="absolute left-0 top-1/2 -translate-y-1/2 z-10 hover:opacity-80 transition-opacity"
-          :class="locale === 'ar' ? 'left-auto right-0' : 'left-0 right-auto'"
+          :disabled="dateScrollIndex === 0"
+          class="flex-shrink-0 z-10 hover:opacity-80 transition-opacity order-1 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <img 
             :src="locale === 'ar' ? '/right-chevron-icon.png' : '/left-chevron-icon.png'"
@@ -76,33 +76,41 @@
           />
         </button>
 
-        <!-- Date Cards -->
-        <div class="flex gap-3 justify-center px-10" ref="dateScrollContainer">
-          <button
-            v-for="date in visibleDates"
-            :key="date.value"
-            @click="selectDate(date)"
-            class="flex-shrink-0 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-w-[60px]"
-            :class="selectedDate?.value === date.value
-              ? 'bg-secondary-500 text-primary-500'
-              : 'bg-white text-primary-500 hover:bg-gray-50 border border-primary-500'"
+        <!-- Date Cards Container (with overflow hidden) -->
+        <div class="flex-1 overflow-x-hidden" :class="locale === 'ar' ? 'order-2' : 'order-2'">
+          <div 
+            class="flex gap-3 justify-center px-2" 
+            ref="dateScrollContainer"
+            @touchstart="handleTouchStart"
+            @touchmove="handleTouchMove"
+            @touchend="handleTouchEnd"
           >
-            <div class="text-center">
-              <div class="font-semibold">{{ date.day }}</div>
-              <div class="text-xs mt-1">
-                <div>{{ getDateDay(date.date) }}</div>
-                <div>{{ getDateMonth(date.date) }}</div>
+            <button
+              v-for="date in visibleDates"
+              :key="date.value"
+              @click="selectDate(date)"
+              class="flex-shrink-0 px-0 py-3 rounded-lg text-sm font-medium transition-colors w-[65px]"
+              :class="selectedDate?.value === date.value
+                ? 'bg-secondary-500 text-primary-500'
+                : 'bg-white text-primary-500 hover:bg-gray-50 border border-primary-500'"
+            >
+              <div class="text-center">
+                <div class="font-semibold">{{ date.day }}</div>
+                <div class="text-xs mt-1">
+                  <div>{{ getDateDay(date.date) }}</div>
+                  <div>{{ getDateMonth(date.date) }}</div>
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
 
         <!-- Next Arrow (Right side) -->
         <button
-          v-if="dateScrollIndex < maxDateScrollIndex"
+          v-if="maxDateScrollIndex > 0"
           @click="scrollDatesRight"
-          class="absolute right-0 top-1/2 -translate-y-1/2 z-10 hover:opacity-80 transition-opacity"
-          :class="locale === 'ar' ? 'right-auto' : 'right-0 left-auto'"
+          :disabled="dateScrollIndex >= maxDateScrollIndex"
+          class="flex-shrink-0 z-10 hover:opacity-80 transition-opacity order-3 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <img 
             :src="locale === 'ar' ? '/left-chevron-icon.png' : '/right-chevron-icon.png'"
@@ -181,7 +189,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
@@ -212,7 +220,23 @@ export default {
     const cartLoading = ref({})
     const dateScrollIndex = ref(0)
     const dateScrollContainer = ref(null)
-    const datesPerView = 4
+    
+    // Window width ref for reactivity
+    const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 768)
+    
+    // Responsive dates per view: 3 on mobile, 4 on desktop
+    const datesPerView = computed(() => {
+      if (windowWidth.value < 768) {
+        return 3
+      }
+      return 4
+    })
+    
+    // Touch navigation state
+    const touchStartX = ref(0)
+    const touchStartY = ref(0)
+    const touchEndX = ref(0)
+    const touchEndY = ref(0)
 
     const getNearestSlotInfo = () => {
       if (props.therapist.earliest_slot_data && props.therapist.earliest_slot_data.date && props.therapist.earliest_slot_data.time) {
@@ -264,12 +288,12 @@ export default {
 
     const visibleDates = computed(() => {
       const start = dateScrollIndex.value
-      const end = start + datesPerView
+      const end = start + datesPerView.value
       return otherDates.value.slice(start, end)
     })
 
     const maxDateScrollIndex = computed(() => {
-      return Math.max(0, otherDates.value.length - datesPerView)
+      return Math.max(0, otherDates.value.length - datesPerView.value)
     })
 
     const otherTimeSlots = computed(() => {
@@ -575,6 +599,38 @@ export default {
         dateScrollIndex.value++
       }
     }
+    
+    // Touch navigation handlers
+    const handleTouchStart = (e) => {
+      touchStartX.value = e.touches[0].clientX
+      touchStartY.value = e.touches[0].clientY
+    }
+    
+    const handleTouchMove = (e) => {
+      // Allow default scrolling behavior
+    }
+    
+    const handleTouchEnd = (e) => {
+      touchEndX.value = e.changedTouches[0].clientX
+      touchEndY.value = e.changedTouches[0].clientY
+      handleSwipe()
+    }
+    
+    const handleSwipe = () => {
+      const deltaX = touchStartX.value - touchEndX.value
+      const deltaY = touchStartY.value - touchEndY.value
+      
+      // Only handle horizontal swipes (ignore vertical scrolling)
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          // Swipe left - go to next
+          scrollDatesRight()
+        } else {
+          // Swipe right - go to previous
+          scrollDatesLeft()
+        }
+      }
+    }
 
     const showDifferentTherapistConfirmation = async (message) => {
       const result = await Swal.fire({
@@ -723,6 +779,17 @@ export default {
       }
     }
 
+    // Handle window resize to update dates per view
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        windowWidth.value = window.innerWidth
+        // Reset scroll index if needed when switching between mobile/desktop
+        if (dateScrollIndex.value > maxDateScrollIndex.value) {
+          dateScrollIndex.value = Math.max(0, maxDateScrollIndex.value)
+        }
+      }
+    }
+    
     // Load dates on mount
     onMounted(async () => {
       initializeNearestSlot()
@@ -731,6 +798,13 @@ export default {
       if (nearestSlot.value) {
         await checkNearestSlotCartStatus()
       }
+      
+      // Add resize listener to update dates per view on window resize
+      window.addEventListener('resize', handleResize)
+    })
+    
+    onUnmounted(() => {
+      window.removeEventListener('resize', handleResize)
     })
 
     // Watch for cart updates to refresh slot status
@@ -761,6 +835,9 @@ export default {
       selectDate,
       scrollDatesLeft,
       scrollDatesRight,
+      handleTouchStart,
+      handleTouchMove,
+      handleTouchEnd,
       addToCart,
       removeFromCart,
       addNearestToCart,

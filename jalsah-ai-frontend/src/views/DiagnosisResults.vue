@@ -3,31 +3,24 @@
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Diagnosis Result Header -->
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-4">
-          {{ $t('diagnosisResults.title') }}
-        </h1>
-        <p class="text-lg text-gray-600 mb-6">
-          {{ $t('diagnosisResults.subtitle') }}
-        </p>
-        
-        <!-- Diagnosis Result Card -->
-        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">
-            {{ diagnosisResult.title }}
-          </h2>
-          <p class="text-gray-600 mb-4">
-            {{ diagnosisResult.description }}
+      <div class="mb-8">
+        <div class="max-w-2xl mx-auto bg-[#F8F6F1] rounded-2xl border border-[#EEDEC4] p-8 text-center">
+          <!-- Main Title -->
+          <h1 class="text-3xl font-bold mb-4 font-jalsah1 text-center" style="color: #162E52;">
+            {{ $t('diagnosisResults.title') }}
+          </h1>
+          <!-- Subtitle -->
+          <p class="text-lg font-jalsah1" style="color: #9F8F75;" v-if="diagnosisResult.title_en || diagnosisResult.title_ar">
+            <span v-if="diagnosisResult.title_en" class="font-jalsah2">{{ diagnosisResult.title_en }}</span>
+            <span v-if="diagnosisResult.title_en && diagnosisResult.title_ar"> – </span>
+            <span v-if="diagnosisResult.title_ar" class="font-jalsah1">{{ diagnosisResult.title_ar }}</span>
           </p>
+
+
           <div class="flex justify-center">
             <button
               @click="rediagnose"
-              class="btn-secondary"
+              class="btn-secondary bg-primary-500 text-white text-[20px] font-medium"
             >
               {{ $t('diagnosisResults.rediagnose') }}
             </button>
@@ -37,20 +30,27 @@
 
       <!-- Matched Therapists Section -->
       <div class="mb-8">
-        <!-- Section Heading -->
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">
-          {{ $t('diagnosisResults.matchedTherapists') }}
-        </h2>
-        
         <!-- Sorting Controls -->
-        <div v-if="matchedTherapists.length > 0" class="mb-6">
+        <div v-if="matchedTherapists.length > 0" class="mb-6 bg-white rounded-[10px] p-4">
           <div class="flex flex-col lg:flex-row gap-4 items-center">
             
+            <!-- Best Button (Reset to Default) -->
+            <div class="w-full lg:w-1/3">
+              <button
+                @click="setSorting('best')"
+                class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
+                :class="activeSort === 'best' || activeSort === '' 
+                  ? 'bg-secondary-500 text-primary-500' 
+                  : 'bg-primary-500 text-white'"
+              >
+                {{ $t('therapists.sorting.bestSimple') }}
+              </button>
+            </div>
             <!-- Nearest Slot Button -->
             <div class="w-full lg:w-1/3">
               <button
                 @click="setSorting('nearest')"
-                class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
                 :class="activeSort === 'nearest' 
                   ? 'bg-secondary-500 text-primary-500' 
                   : 'bg-primary-500 text-white'"
@@ -62,24 +62,12 @@
             <div class="w-full lg:w-1/3">
               <button
                 @click="setSorting('price-low')"
-                class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
                 :class="activeSort === 'price-low' 
                   ? 'bg-secondary-500 text-primary-500' 
                   : 'bg-primary-500 text-white'"
               >
                 {{ $t('therapists.sorting.priceLow') }}
-              </button>
-            </div>
-            <!-- The Best Button -->
-            <div class="w-full lg:w-1/3">
-              <button
-                @click="setSorting('best')"
-                class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                :class="activeSort === 'best' 
-                  ? 'bg-secondary-500 text-primary-500' 
-                  : 'bg-primary-500 text-white'"
-              >
-                {{ $t('therapists.sorting.best') }}
               </button>
             </div>
 
@@ -217,6 +205,8 @@ export default {
     const matchedTherapists = ref([])
     const diagnosisResult = ref({
       title: '',
+      title_en: '',
+      title_ar: '',
       description: ''
     })
     const showAllTherapists = ref(false)
@@ -293,10 +283,11 @@ export default {
       
       let sorted = [...filtered]
 
-      // Apply active sorting (same logic as therapists page)
+      // Apply active sorting
       switch (activeSort.value) {
         case 'best':
-          // Sort by frontend_order (order 1 first, then order 2, etc.)
+        case '':
+          // Default sorting (reset to original order) - use frontend_order
           sorted.sort((a, b) => {
             return a.frontendOrder - b.frontendOrder
           })
@@ -423,16 +414,22 @@ export default {
             // Use the localized name from the backend, with fallback to manual localization
             let localizedName = diagnosis.name
             let localizedDescription = diagnosis.description
+            let nameEn = diagnosis.name_en || diagnosis.name
+            let nameAr = diagnosis.name_ar || diagnosis.name
             
             // If backend didn't provide localized name, handle it on frontend
             if (diagnosis.name_en && diagnosis.name_ar) {
               const currentLocale = locale.value || 'en'
               localizedName = currentLocale === 'ar' ? diagnosis.name_ar : diagnosis.name_en
               localizedDescription = currentLocale === 'ar' ? (diagnosis.description_ar || diagnosis.description) : (diagnosis.description_en || diagnosis.description)
+              nameEn = diagnosis.name_en
+              nameAr = diagnosis.name_ar
             }
             
             diagnosisResult.value = {
               title: localizedName,
+              title_en: nameEn,
+              title_ar: nameAr,
               description: localizedDescription
             }
           }
@@ -441,6 +438,8 @@ export default {
           const decodedName = decodeURIComponent(diagnosisId)
           diagnosisResult.value = {
             title: decodedName,
+            title_en: decodedName,
+            title_ar: decodedName,
             description: t('diagnosisResults.defaultDescription')
           }
         }
@@ -452,6 +451,8 @@ export default {
           const decodedName = decodeURIComponent(diagnosisId)
           diagnosisResult.value = {
             title: decodedName,
+            title_en: decodedName,
+            title_ar: decodedName,
             description: t('diagnosisResults.defaultDescription')
           }
         }
@@ -480,7 +481,12 @@ export default {
         description = t('diagnosisResults.simulatedResults.general.description')
       }
       
-      diagnosisResult.value = { title, description }
+      diagnosisResult.value = { 
+        title, 
+        title_en: title,
+        title_ar: title,
+        description 
+      }
     }
 
     const loadMatchedTherapists = async () => {
@@ -654,8 +660,8 @@ export default {
 
     // Sorting button handlers (same as therapists page)
     const setSorting = (sortType) => {
-      // If clicking the same sort, deactivate it (reset to default)
-      if (activeSort.value === sortType) {
+      // If clicking 'best' or clicking the same sort, reset to default (empty string)
+      if (sortType === 'best' || activeSort.value === sortType) {
         activeSort.value = ''
         return
       }

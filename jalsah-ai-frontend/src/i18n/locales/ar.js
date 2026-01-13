@@ -452,7 +452,7 @@ export default {
 
   // Diagnosis Results
   diagnosisResults: {
-    title: 'نتائج تشخيصك',
+    title: 'التقييم المبدئي لحالتك حسب الذكاء الاصطناعي',
     subtitle: 'بناءً على إجاباتك، إليك ما وجدناه والمعالجون الذين يمكنهم المساعدة',
     rediagnose: 'أعد التشخيص',
     matchedTherapists: 'المعالجون المطابقون لك',
@@ -505,8 +505,8 @@ export default {
 
   // Therapists
   therapists: {
-    title: 'ابحث عن معالجك',
-    subtitle: 'تصفح معالجينا المؤهلين وابحث عن المطابقة المثالية لاحتياجاتك',
+    title: 'تصفح كل المعالجين',
+    subtitle: 'اختر المعالج المناسب لنفسك',
     loading: 'جاري تحميل المعالجين...',
     bioDefault: 'معالج محترف متخصص في الصحة النفسية والرفاهية.',
     whyBestForDiagnosis: 'لماذا هذا المعالج هو الأفضل لتشخيصك؟',
@@ -522,9 +522,10 @@ export default {
     specializations: 'التخصصات',
     sortBy: 'ترتيب حسب',
     sorting: {
-      best: 'الأفضل',
-      priceLow: 'السعر الأقل',
-      nearest: 'أقرب موعد'
+      best: 'رتب حسب الأفضل لحالتك عن طريق الذكاء الاصطناعي',
+      bestSimple: 'رتب حسب الأفضل',
+      priceLow: 'رتب حسب الأقل سعر',
+      nearest: 'رتب حسب أقرب موعد متاح للحجز'
     },
     loadingMore: 'جاري تحميل المزيد...',
     allLoaded: 'تم تحميل جميع المعالجين',

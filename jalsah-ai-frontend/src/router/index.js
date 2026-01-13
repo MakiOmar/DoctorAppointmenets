@@ -36,8 +36,7 @@ const routes = [
   {
     path: '/therapists',
     name: 'Therapists',
-    component: () => import('@/views/Therapists.vue'),
-    meta: { requiresAuth: true, roles: ['customer'] }
+    component: () => import('@/views/Therapists.vue')
   },
   {
     path: '/therapist/:id',

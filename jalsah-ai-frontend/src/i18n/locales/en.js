@@ -519,6 +519,7 @@ export default {
     sortBy: 'Sort by',
     sorting: {
       best: 'The Best',
+      bestSimple: 'Sort by Best',
       priceLow: 'Lowest Price',
       nearest: 'Nearest Slot'
     },

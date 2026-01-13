@@ -143,8 +143,7 @@
 
     <!-- Section 3: AI Integration Section -->
     <section 
-      class="relative py-20 px-4 bg-cover bg-center bg-no-repeat"
-      :style="{ backgroundImage: `url(/home/ai-background.png)` }"
+      class="relative py-10 px-4 bg-cover bg-center bg-no-repeat md:h-auto h-[400px] ai-integration-section"
     >
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12">
@@ -176,7 +175,7 @@
     </section>
 
     <!-- Section 4: Certified Therapists Section -->
-    <section class="bg-primary-500 py-20 px-4">
+    <section class="bg-primary-500 py-10 px-4 md:h-auto h-[400px]">
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
@@ -209,7 +208,7 @@
     </section>
 
     <!-- Section 5: Prescription Service Section -->
-    <section class="bg-secondary-500 py-20 px-4">
+    <section class="bg-secondary-500 py-10 px-4 md:h-auto h-[400px]">
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
             <!-- Icon (Left side visually) -->
@@ -242,7 +241,7 @@
     </section>
 
     <!-- Section 6: Online Booking & Payment Section -->
-    <section class="bg-white py-20 px-4">
+    <section class="bg-white py-10 px-4 md:h-auto h-[400px]">
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
@@ -279,14 +278,14 @@
                 v-if="layer11Exists"
                 src="/home/Layer-11.png" 
                 alt="MasterCard" 
-                class="h-12"
+                class="h-[1.3rem]"
                 @error="layer11Exists = false"
               />
               <img 
                 v-if="layer12Exists"
                 src="/home/Layer-12.png" 
                 alt="Visa" 
-                class="h-12"
+                class="h-[1.3rem]"
                 @error="layer12Exists = false"
               />
             </div>
@@ -296,7 +295,7 @@
     </section>
 
     <!-- Section 7: Secure Sessions Section -->
-    <section class="bg-primary-500 py-20 px-4">
+    <section class="bg-primary-500 py-10 px-4 md:h-auto h-[400px]">
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
@@ -328,9 +327,9 @@
     </section>
 
     <!-- Footer -->
-    <footer class="bg-primary-500 py-8 px-4">
+    <footer class="bg-white py-4 px-4">
       <div class="max-w-[960px] mx-auto text-center">
-        <p class="text-white text-sm md:text-base">
+        <p class="text-primary-500 text-sm md:text-base">
           {{ $t('home.sections.footer.copyright') }}
         </p>
       </div>
@@ -461,3 +460,17 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* AI Integration Section - Mobile background */
+.ai-integration-section {
+  background-image: url(/home/ai-background-mobile.png);
+}
+
+/* AI Integration Section - Desktop background */
+@media (min-width: 768px) {
+  .ai-integration-section {
+    background-image: url(/home/ai-background.png);
+  }
+}
+</style>

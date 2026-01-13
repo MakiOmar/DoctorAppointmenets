@@ -4,10 +4,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+        <h1 class="text-3xl font-bold text-primary-500 mb-4 text-center">
           {{ $t('therapists.title') }}
         </h1>
-        <p class="text-lg text-gray-600">
+        <p class="text-[25px] text-secondary-500 text-center font-jalsah2 font-medium">
           {{ $t('therapists.subtitle') }}
         </p>
       </div>
@@ -22,40 +22,62 @@
                 v-model="searchQuery"
                 type="text"
                 :placeholder="$t('therapists.filters.searchPlaceholder')"
-                class="input-field w-full pr-10"
-                :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'"
+                class="w-full px-[10px] rounded-lg bg-[#D1B289] text-[#162E52] placeholder-[#162E52] focus:outline-none focus:ring-2 focus:ring-[#162E52] focus:ring-opacity-50"
+                style="font-family: 'jalsah2', sans-serif; font-size: 22px;"
               />
-              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" :class="$i18n.locale === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3'">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+              <div class="absolute inset-y-0 left-[20px] pl-4 flex items-center pointer-events-none">
+                <img 
+                  src="/search-icon.png" 
+                  alt="Search" 
+                  class="h-5"
+                />
               </div>
             </div>
           </div>
           
-          <!-- Lowest Price Button -->
+          <!-- The Best Button (Redirects to Diagnosis Results) -->
           <div class="w-full lg:w-1/3">
-            <button
-              @click="setSorting('price-low')"
-              class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="activeSort === 'price-low' 
-                ? 'bg-secondary-500 text-primary-500' 
-                : 'bg-primary-500 text-white'"
+            <router-link
+              v-if="!loadingDiagnosis"
+              :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
+              class="block w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors text-center bg-primary-500 text-white hover:opacity-90"
             >
-              {{ $t('therapists.sorting.priceLow') }}
-            </button>
+              {{ $t('therapists.sorting.best') }}
+            </router-link>
+            <div
+              v-else
+              class="w-full px-4 py-2 rounded-lg text-[20px] font-medium bg-primary-500 text-white opacity-75 text-center"
+            >
+              <div class="inline-flex items-center gap-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {{ $t('common.loading') }}
+              </div>
+            </div>
           </div>
           
           <!-- Nearest Slot Button -->
           <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('nearest')"
-              class="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
               :class="activeSort === 'nearest' 
                 ? 'bg-secondary-500 text-primary-500' 
                 : 'bg-primary-500 text-white'"
             >
               {{ $t('therapists.sorting.nearest') }}
+            </button>
+          </div>
+          
+          <!-- Lowest Price Button -->
+          <div class="w-full lg:w-1/3">
+            <button
+              @click="setSorting('price-low')"
+              class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
+              :class="activeSort === 'price-low' 
+                ? 'bg-secondary-500 text-primary-500' 
+                : 'bg-primary-500 text-white'"
+            >
+              {{ $t('therapists.sorting.priceLow') }}
             </button>
           </div>
         </div>
@@ -72,7 +94,7 @@
       </div>
 
       <!-- Therapists List -->
-      <div v-else-if="displayedTherapists.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-else-if="displayedTherapists.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
         <TherapistCard
           v-for="(therapist, index) in displayedTherapists" 
           :key="therapist.id"
@@ -149,6 +171,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from
 import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
@@ -171,12 +194,15 @@ export default {
     const route = useRoute()
     const toast = useToast()
     const { t } = useI18n()
+    const authStore = useAuthStore()
     const settingsStore = useSettingsStore()
     
     const loading = ref(true)
     const therapists = ref([])
     const diagnoses = ref([])
     const openTherapistId = ref(null)
+    const lastDiagnosisId = ref(null)
+    const loadingDiagnosis = ref(false)
     
     // Popup states
     const showAboutPopup = ref(false)
@@ -192,6 +218,11 @@ export default {
     
     // Sorting controls - single active sort
     const activeSort = ref('') // Active sorting: '', 'price-low', 'nearest'
+    
+    // Computed property to check if user has a previous diagnosis
+    const hasPreviousDiagnosis = computed(() => {
+      return lastDiagnosisId.value !== null
+    })
 
     // Search query for therapist names
     const searchQuery = ref('')
@@ -376,6 +407,35 @@ export default {
         console.error('Error loading diagnoses:', error)
       }
     }
+    
+    // Fetch last diagnosis ID from API
+    const fetchLastDiagnosisId = async () => {
+      if (!authStore.user || !authStore.token) {
+        lastDiagnosisId.value = null
+        return
+      }
+      
+      try {
+        loadingDiagnosis.value = true
+        const response = await api.get('/api/ai/user-diagnosis-results', {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        if (response.data.success && response.data.data.current_diagnosis) {
+          const diagnosis = response.data.data.current_diagnosis
+          lastDiagnosisId.value = diagnosis.diagnosis_id
+        } else {
+          lastDiagnosisId.value = null
+        }
+      } catch (error) {
+        console.error('Error fetching last diagnosis:', error)
+        lastDiagnosisId.value = null
+      } finally {
+        loadingDiagnosis.value = false
+      }
+    }
 
     const viewTherapist = (therapistId) => {
       router.push(`/therapist/${therapistId}`)
@@ -463,10 +523,24 @@ export default {
         loadTherapists()
       }, 500) // 500ms delay
     })
+    
+    // Watch for user changes and refetch diagnosis
+    watch(() => authStore.user, (newUser) => {
+      if (newUser) {
+        fetchLastDiagnosisId()
+      } else {
+        lastDiagnosisId.value = null
+      }
+    }, { immediate: true })
 
     onMounted(() => {
       loadTherapists()
       loadDiagnoses()
+      
+      // Fetch diagnosis if user is authenticated
+      if (authStore.user) {
+        fetchLastDiagnosisId()
+      }
       
       // Add scroll event listener for infinite scroll
       window.addEventListener('scroll', handleScroll)
@@ -498,6 +572,10 @@ export default {
       handleShowDetails,
       handleHideDetails,
       loadMoreTherapists,
+      // Diagnosis
+      lastDiagnosisId,
+      hasPreviousDiagnosis,
+      loadingDiagnosis,
       // Popups
       showAboutPopup,
       showBookingPopup,
