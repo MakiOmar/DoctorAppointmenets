@@ -59,7 +59,7 @@ export default {
     language: 'اللغة',
     therapistRegister: 'تسجيل المعالج',
     menu: 'القائمة',
-    viewDiagnosisResults: 'نتائج التشخيص'
+    viewDiagnosisResults: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي'
   },
 
   // Logo
@@ -132,7 +132,7 @@ export default {
         loginButton: 'تسجيل الدخول',
         registerButton: 'تسجيل حساب جديد',
         diagnosisButton: 'ابدأ التشخيص الذكي',
-        diagnosisResultsButton: 'نتائج التشخيص',
+        diagnosisResultsButton: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي',
         therapistsButton: 'تصفح كل المعالجين'
       },
       ai: {
@@ -498,9 +498,9 @@ export default {
   // Popups
   popups: {
     aboutTherapist: 'عن المعالج',
-    bookAppointment: 'حجز موعد',
+    bookAppointment: 'حجز موعد أونلاين',
     whyThisTherapist: 'لماذا المعالج من الأفضل في تشخصيك ؟',
-    viewCertificates: 'عرض الشهادات'
+    viewCertificates: 'عرض شهادات المعالج'
   },
 
   // Therapists

@@ -88,14 +88,14 @@
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-8 py-1 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
+            class="flex items-center justify-center gap-3 px-1 py-2 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity w-[250px] text-[14px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
             {{ hasPreviousDiagnosis ? $t('home.sections.hero.diagnosisResultsButton') : $t('home.sections.hero.diagnosisButton') }}
             <img 
               v-if="aiIconExists"
-              src="/home/ai-icon.png" 
+              src="/home/ai-icon-white.png" 
               alt="AI Diagnosis" 
               class="h-5"
               @error="aiIconExists = false"
@@ -259,15 +259,27 @@
             </p>
           </div>
 
-          <!-- Payment Icons (Right side, vertically stacked) -->
-          <div class="flex-shrink-0 flex flex-col gap-4 items-center">
-            <!-- Globe Icon (Layer-10) -->
+          <!-- Payment Icons (Right side) -->
+          <div class="flex-shrink-0 flex flex-row md:flex-col gap-4 items-center">
+            <!-- Payment Method Icons - Mobile: Left, Desktop: Below globe -->
+            <!-- Visa (Layer-12) - Mobile: First, Desktop: Hidden (shown in separate div) -->
+            <div class="flex md:hidden">
+              <img 
+                v-if="layer12Exists"
+                src="/home/Layer-12.png" 
+                alt="Visa" 
+                class="h-[32px]"
+                @error="layer12Exists = false"
+              />
+            </div>
+
+            <!-- Globe Icon (Layer-10) - Mobile: Middle, Desktop: Top -->
             <div>
               <img 
                 v-if="layer10Exists"
                 src="/home/Layer-10.png" 
                 alt="Global" 
-                class="h-24"
+                class="h-[93px]"
                 @error="layer10Exists = false"
               />
               <div 
@@ -280,21 +292,32 @@
               </div>
             </div>
 
-            <!-- Payment Method Icons (Below globe: Layer-11 and Layer-12) -->
-            <div class="flex gap-4">
+            <!-- Payment Method Icons - Desktop: Below globe (both icons) -->
+            <div class="hidden md:flex gap-4">
               <img 
                 v-if="layer11Exists"
                 src="/home/Layer-11.png" 
                 alt="MasterCard" 
-                class="h-[1.3rem]"
+                class="h-[22px]"
                 @error="layer11Exists = false"
               />
               <img 
                 v-if="layer12Exists"
                 src="/home/Layer-12.png" 
                 alt="Visa" 
-                class="h-[1.3rem]"
+                class="h-[32px]"
                 @error="layer12Exists = false"
+              />
+            </div>
+
+            <!-- MasterCard (Layer-11) - Mobile: Right, Desktop: Hidden (shown in separate div) -->
+            <div class="flex md:hidden">
+              <img 
+                v-if="layer11Exists"
+                src="/home/Layer-11.png" 
+                alt="MasterCard" 
+                class="h-[22px]"
+                @error="layer11Exists = false"
               />
             </div>
           </div>

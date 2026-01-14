@@ -45,7 +45,7 @@
     </div>
 
     <!-- Therapist Photo Section -->
-    <div class="relative w-full" :style="{ height: '300px' }">
+    <div class="relative w-full therapist-photo-section">
       <img 
         :src="therapistPhotoUrl" 
         :alt="therapist.name"
@@ -69,7 +69,7 @@
       <button
         v-if="cardVariant === 'therapists-page'"
         @click.stop="handleOpenAbout"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-[20px] hover:bg-secondary-400 transition-colors"
+        class="w-full flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-3 font-medium text-[20px] hover:bg-secondary-400 transition-colors"
         :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
       >
         <img
@@ -91,31 +91,31 @@
         {{ $t('popups.aboutTherapist') }}
       </button>
 
-      <!-- Why This Therapist Button (only on diagnosis results, after price section) -->
-      <button
-        v-if="cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage"
-        @click.stop="handleOpenWhy"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-300 text-primary-500 px-4 py-3 font-medium text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
-        :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
+    <!-- Why This Therapist Button (only on diagnosis results, after price section) -->
+    <button
+      v-if="cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage"
+      @click.stop="handleOpenWhy"
+      class="w-full relative flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-1 font-medium text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
+      :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
+    >
+      <img
+        v-if="infoIconExists"
+        src="/info-icon.png"
+        alt="Why"
+        class="h-[25px] absolute left-[10px]"
+        @error="infoIconExists = false"
+      />
+      <svg
+        v-else
+        class="h-4 absolute left-[10px]"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
       >
-        <img
-          v-if="infoIconExists"
-          src="/info-icon.png"
-          alt="Why"
-          class="h-4"
-          @error="infoIconExists = false"
-        />
-        <svg
-          v-else
-          class="h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        {{ $t('popups.whyThisTherapist') }}
-      </button>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      {{ $t('popups.whyThisTherapist') }}
+    </button>
 
       <!-- Divider for About/Why buttons (if shown) -->
       <div v-if="(cardVariant === 'therapists-page') || (cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage)" class="h-px bg-secondary-300"></div>
@@ -126,7 +126,7 @@
         <button
           v-if="therapist.certificates && therapist.certificates.length > 0"
           @click.stop="handleOpenCertificates"
-          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-4 py-3 font-medium text-[20px] hover:bg-primary-600 transition-colors border-r border-white"
+          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 font-medium text-[17px] hover:bg-primary-600 transition-colors border-r border-white font-jalsah1"
           :class="locale === 'ar' ? 'flex-row border-l border-r-0' : 'flex-row border-r border-l-0'"
         >
           <img
@@ -151,7 +151,7 @@
         <!-- Book Appointment Button -->
         <button
           @click.stop="handleOpenBooking"
-          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-4 py-3 font-medium text-[20px] hover:bg-primary-600 transition-colors"
+          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 font-medium text-[17px] hover:bg-primary-600 transition-colors font-jalsah1"
           :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
         >
           <img
@@ -364,6 +364,19 @@ export default {
   overflow: initial;
   width: 300px;
   max-width: 300px;
+}
+
+/* Photo section should always be square relative to card width */
+.therapist-photo-section {
+  aspect-ratio: 1 / 1;
+}
+
+/* Mobile: Full width on screens ≤480px */
+@media (max-width: 480px) {
+  .therapist-card {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .specialty-text {
