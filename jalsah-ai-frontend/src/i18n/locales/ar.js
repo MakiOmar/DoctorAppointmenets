@@ -133,7 +133,7 @@ export default {
         registerButton: 'تسجيل حساب جديد',
         diagnosisButton: 'ابدأ التشخيص الذكي',
         diagnosisResultsButton: 'نتائج التشخيص',
-        therapistsButton: 'تصفح المعالجين'
+        therapistsButton: 'تصفح كل المعالجين'
       },
       ai: {
         text: 'قاعدة بيانات المعالجين بالدليل مرتبطة بالذكاء الاصطناعي، وعن طريق محادثه قصيره معه ستتمكن من اختيار أفضل معالج ممكن لحالتك وبأفضل سعر'

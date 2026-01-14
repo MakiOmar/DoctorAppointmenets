@@ -11,7 +11,7 @@
         v-if="notificationIconExists" 
         src="/home/Layer-27.png" 
         alt="Notifications" 
-        class="h-6"
+        class="h-5 sm:h-6"
         @error="notificationIconExists = false"
       />
       <svg 

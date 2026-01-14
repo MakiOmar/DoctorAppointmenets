@@ -3,65 +3,38 @@
     <!-- Section 2: Hero Section -->
     <section 
       class="relative flex items-center justify-center px-4 py-8 md:py-20 bg-cover bg-center bg-no-repeat"
-      :style="{ backgroundImage: `url(/home/background.png)` }"
+      :style="heroSectionStyle"
     >
-      <!-- Overlay for better text readability -->
-      <div class="absolute inset-0 bg-black bg-opacity-30"></div>
       
       <div class="relative z-10 max-w-[960px] mx-auto text-center">
         <!-- Logo -->
-        <div class="mb-8">
+        <div>
             <img 
               v-if="logoExists"
               src="/home/logo.png" 
               alt="Jalsah Logo" 
-              class="h-20 md:h-32 mx-auto mb-6"
+              class="h-[7rem] md:h-32 mx-auto"
               @error="logoExists = false"
             />
-          <div v-else class="w-32 h-32 mx-auto mb-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+          <div v-else class="w-32 h-32 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center">
             <span class="text-4xl font-bold text-white">{{ $t('logo.text') }}</span>
           </div>
         </div>
 
         <!-- Welcome Text -->
-        <h1 class="text-3xl md:text-5xl font-bold text-white mb-4">
+        <h1 class="text-[1.4rem] md:text-5xl font-bold text-white">
           {{ $t('home.sections.hero.welcome') }}
         </h1>
-        <p class="text-lg md:text-xl text-white mb-12 max-w-2xl mx-auto">
+        <p class="text-[1.4rem] md:text-xl text-white mb-2 max-w-2xl mx-auto font-jalsah2">
           {{ $t('home.sections.hero.subtitle') }}
         </p>
 
         <!-- Action Buttons - Conditional based on auth state -->
         <div v-if="!authStore.isAuthenticated" class="flex flex-col sm:flex-row gap-4 justify-center items-center" dir="rtl">
-          <!-- Registration Button (Right in RTL, icon after text) -->
-          <router-link
-            to="/register"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-base"
-            :dir="locale === 'ar' ? 'rtl' : 'ltr'"
-          >
-            {{ $t('home.sections.hero.registerButton') }}
-            <img 
-              v-if="newUserIconExists"
-              src="/home/new-user.png" 
-              alt="Register" 
-              class="h-5"
-              @error="newUserIconExists = false"
-            />
-            <svg 
-              v-else
-              class="w-5 h-5" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-            </svg>
-          </router-link>
-
           <!-- Login Button (Left in RTL, icon after text) -->
           <router-link
             to="/login"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-base"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-base"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.loginButton') }}
@@ -82,6 +55,31 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
             </svg>
           </router-link>
+
+          <!-- Registration Button (Right in RTL, icon after text) -->
+          <router-link
+            to="/register"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-base"
+            :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+          >
+            <img 
+              v-if="newUserIconExists"
+              src="/home/new-user.png" 
+              alt="Register" 
+              class="h-5"
+              @error="newUserIconExists = false"
+            />
+            <svg 
+              v-else
+              class="w-5 h-5" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+            {{ $t('home.sections.hero.registerButton') }}
+          </router-link>
         </div>
 
         <!-- Authenticated User Buttons -->
@@ -90,7 +88,7 @@
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-primary-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-[25px]"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
@@ -115,7 +113,7 @@
           
           <div
             v-else
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg opacity-75 min-w-[200px]"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg opacity-75 min-w-[250px]"
           >
             <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-500"></div>
             {{ $t('common.loading') }}
@@ -124,7 +122,7 @@
           <!-- Therapists Button (Left in RTL, icon after text) -->
           <router-link
             to="/therapists"
-            class="flex items-center justify-center gap-3 px-8 py-4 bg-secondary-500 text-primary-500 font-semibold rounded-lg hover:opacity-90 transition-opacity min-w-[200px] text-[20px] md:text-[25px]"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.therapistsButton') }}
@@ -144,6 +142,7 @@
     <!-- Section 3: AI Integration Section -->
     <section 
       class="relative py-10 px-4 bg-cover bg-center bg-no-repeat md:h-auto h-[400px] ai-integration-section"
+      :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12">
@@ -160,7 +159,7 @@
               v-if="aiIconExists"
               src="/home/ai-icon.png" 
               alt="AI" 
-              class="h-32 md:h-40"
+              class="h-[133px] md:h-40"
               @error="aiIconExists = false"
             />
             <div 
@@ -175,7 +174,10 @@
     </section>
 
     <!-- Section 4: Certified Therapists Section -->
-    <section class="bg-primary-500 py-10 px-4 md:h-auto h-[400px]">
+    <section 
+      class="bg-primary-500 py-10 px-[1.5rem] md:h-auto h-[400px]"
+      :style="squareSectionStyle"
+    >
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
@@ -191,7 +193,7 @@
               v-if="layer6Exists"
               src="/home/Layer-6.png" 
               alt="Certified" 
-              class="h-32 md:h-40"
+              class="h-[127px] md:h-40"
               @error="layer6Exists = false"
             />
             <div 
@@ -208,7 +210,10 @@
     </section>
 
     <!-- Section 5: Prescription Service Section -->
-    <section class="bg-secondary-500 py-10 px-4 md:h-auto h-[400px]">
+    <section 
+      class="bg-secondary-500 py-10 px-[1.5rem] md:h-auto h-[400px]"
+      :style="squareSectionStyle"
+    >
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
             <!-- Icon (Left side visually) -->
@@ -217,7 +222,7 @@
               v-if="layer7Exists"
               src="/home/Layer-7.png" 
               alt="Prescription" 
-              class="h-32 md:h-40"
+              class="h-[149px] md:h-40"
               @error="layer7Exists = false"
             />
             <div 
@@ -241,7 +246,10 @@
     </section>
 
     <!-- Section 6: Online Booking & Payment Section -->
-    <section class="bg-white py-10 px-4 md:h-auto h-[400px]">
+    <section 
+      class="bg-white py-10 px-[1.5rem] md:h-auto h-[400px]"
+      :style="squareSectionStyle"
+    >
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <!-- Text Content (Left side) -->
@@ -295,7 +303,10 @@
     </section>
 
     <!-- Section 7: Secure Sessions Section -->
-    <section class="bg-primary-500 py-10 px-4 md:h-auto h-[400px]">
+    <section 
+      class="bg-primary-500 py-10 px-[1.5rem] md:h-auto h-[400px]"
+      :style="squareSectionStyle"
+    >
       <div class="max-w-[960px] mx-auto">
         <div class="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-12">
           <!-- Icon (Left side visually) -->
@@ -304,7 +315,7 @@
               v-if="layer13Exists"
               src="/home/Layer-13.png" 
               alt="Security" 
-              class="h-32 md:h-40"
+              class="h-[106px] md:h-40"
               @error="layer13Exists = false"
             />
             <div 
@@ -338,7 +349,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
@@ -350,6 +361,7 @@ export default {
     const { locale } = useI18n()
     const lastDiagnosisId = ref(null)
     const loadingDiagnosis = ref(false)
+    const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 0)
     
     // Image existence flags - start as false, check in onMounted
     const logoExists = ref(false)
@@ -367,6 +379,37 @@ export default {
     const hasPreviousDiagnosis = computed(() => {
       return lastDiagnosisId.value !== null
     })
+    
+    // Computed property for hero section style - square on mobile (≤480px)
+    const heroSectionStyle = computed(() => {
+      const baseStyle = {
+        backgroundImage: `url(/home/background.png)`
+      }
+      
+      // For screens 480px or less, make it square (height = width)
+      if (windowWidth.value <= 480) {
+        baseStyle.height = `${windowWidth.value}px`
+      }
+      
+      return baseStyle
+    })
+    
+    // Computed property for square sections style - square on mobile (≤480px)
+    const squareSectionStyle = computed(() => {
+      const baseStyle = {}
+      
+      // For screens 480px or less, make it square (height = width)
+      if (windowWidth.value <= 480) {
+        baseStyle.height = `${windowWidth.value}px`
+      }
+      
+      return baseStyle
+    })
+    
+    // Handle window resize to update width
+    const handleResize = () => {
+      windowWidth.value = window.innerWidth
+    }
     
     // Fetch last diagnosis ID from API
     const fetchLastDiagnosisId = async () => {
@@ -422,6 +465,12 @@ export default {
     }
 
     onMounted(async () => {
+      // Initialize window width
+      windowWidth.value = window.innerWidth
+      
+      // Add resize listener
+      window.addEventListener('resize', handleResize)
+      
       // Check if images exist
       logoExists.value = await checkImageExists('/home/logo.png')
       signInIconExists.value = await checkImageExists('/home/sign-in-icon.png')
@@ -439,6 +488,11 @@ export default {
       }
     })
     
+    onUnmounted(() => {
+      // Remove resize listener
+      window.removeEventListener('resize', handleResize)
+    })
+    
     return {
       authStore,
       locale,
@@ -446,6 +500,8 @@ export default {
       hasPreviousDiagnosis,
       loadingDiagnosis,
       handleNavigationClick,
+      heroSectionStyle,
+      squareSectionStyle,
       logoExists,
       signInIconExists,
       newUserIconExists,
