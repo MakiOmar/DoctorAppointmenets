@@ -69,7 +69,7 @@
       <button
         v-if="cardVariant === 'therapists-page'"
         @click.stop="handleOpenAbout"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-3 font-medium text-[20px] hover:bg-secondary-400 transition-colors"
+        class="w-full flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-3 font-medium text-[20px] hover:bg-secondary-400 transition-colors font-jalsah1"
         :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
       >
         <img
@@ -312,7 +312,10 @@ export default {
     }
 
     const handleOpenCertificates = () => {
-      emit('open-certificates', props.therapist.id)
+      // Open lightbox directly with first certificate image
+      if (certificateImages.value && certificateImages.value.length > 0) {
+        openLightbox(0)
+      }
     }
 
     // Lightbox handlers
@@ -362,8 +365,8 @@ export default {
   background: white;
   border-radius: 0.5rem;
   overflow: initial;
-  width: 300px;
-  max-width: 300px;
+  width: 350px;
+  max-width: 350px;
 }
 
 /* Photo section should always be square relative to card width */

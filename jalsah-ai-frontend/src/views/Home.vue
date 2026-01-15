@@ -22,10 +22,10 @@
         </div>
 
         <!-- Welcome Text -->
-        <h1 class="text-[1.4rem] md:text-5xl font-bold text-white">
+        <h1 class="text-[1.4rem] md:text-5xl md:leading-tight font-bold text-white">
           {{ $t('home.sections.hero.welcome') }}
         </h1>
-        <p class="text-[1.4rem] md:text-xl text-white mb-2 max-w-2xl mx-auto font-jalsah2">
+        <p class="text-[1.4rem] md:text-xl text-white my-2 max-w-2xl mx-auto font-jalsah2">
           {{ $t('home.sections.hero.subtitle') }}
         </p>
 
@@ -141,7 +141,7 @@
 
     <!-- Section 3: AI Integration Section -->
     <section 
-      class="relative py-10 px-4 bg-cover bg-center bg-no-repeat md:h-auto h-[400px] ai-integration-section"
+      class="flex items-center justify-center relative py-10 px-4 bg-cover bg-center bg-no-repeat md:h-[240px] h-[400px] ai-integration-section"
       :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
@@ -175,7 +175,7 @@
 
     <!-- Section 4: Certified Therapists Section -->
     <section 
-      class="bg-primary-500 py-10 px-[1.5rem] md:h-auto h-[400px]"
+      class="flex items-center justify-center bg-primary-500 py-10 px-[1.5rem] md:h-[240px] h-[400px]"
       :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
@@ -211,7 +211,7 @@
 
     <!-- Section 5: Prescription Service Section -->
     <section 
-      class="bg-secondary-500 py-10 px-[1.5rem] md:h-auto h-[400px]"
+      class="flex items-center justify-center bg-secondary-500 py-10 px-[1.5rem] md:h-[240px] h-[400px]"
       :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
@@ -247,7 +247,7 @@
 
     <!-- Section 6: Online Booking & Payment Section -->
     <section 
-      class="bg-white py-10 px-[1.5rem] md:h-auto h-[400px]"
+      class="flex items-center justify-center bg-white py-10 px-[1.5rem] md:h-[240px] h-[400px]"
       :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
@@ -327,7 +327,7 @@
 
     <!-- Section 7: Secure Sessions Section -->
     <section 
-      class="bg-primary-500 py-10 px-[1.5rem] md:h-auto h-[400px]"
+      class="flex items-center justify-center bg-primary-500 py-10 px-[1.5rem] md:h-[240px] h-[400px]"
       :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
