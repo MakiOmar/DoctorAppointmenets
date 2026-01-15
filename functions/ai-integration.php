@@ -4178,6 +4178,7 @@ Best regards,
 					$diagnosis_data = array(
 						'diagnosis_id'      => (int) $reply_decoded['diagnosis_id'],
 						'diagnosis_name'    => $reply_decoded['diagnosis'] ?? '',
+						'ai_diagnosis'      => $reply_decoded['ai_diagnosis'] ?? '',
 						'confidence'        => $reply_decoded['confidence'] ?? 'medium',
 						'reasoning'         => $reply_decoded['reasoning'] ?? '',
 						'therapist_summary' => $reply_decoded['therapist_summary'] ?? '',

@@ -176,6 +176,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import StarRating from '@/components/StarRating.vue'
 import TherapistCard from '@/components/TherapistCard.vue'
@@ -200,6 +201,7 @@ export default {
     const toast = useToast()
     const { t, locale } = useI18n()
     const settingsStore = useSettingsStore()
+    const authStore = useAuthStore()
     
     const loading = ref(true)
     const matchedTherapists = ref([])
@@ -230,7 +232,7 @@ export default {
       
       return matchedTherapists.value.map((therapist) => {
         // Get the frontend_order from the diagnosis data
-        const diagnosis = therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString())
+        const diagnosis = diagnosisId ? therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString()) : null
         const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
         
         
@@ -395,43 +397,111 @@ export default {
         
         // Check if diagnosisId is numeric (ID) or string (name)
         if (/^\d+$/.test(diagnosisId)) {
-          // It's a numeric ID, try to load from API
-          const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
+          // First, try to load ai_diagnosis from user meta if user is authenticated
+          let nameEn = ''
+          let nameAr = ''
+          let useAiDiagnosis = false
           
-          if (response.data.success && response.data.data) {
-            let diagnosis = response.data.data
-            
-            // Check if the response is an array (list of diagnoses) or a single diagnosis
-            if (Array.isArray(diagnosis)) {
-              // Find the specific diagnosis by ID
-              diagnosis = diagnosis.find(d => d.id == diagnosisId)
+          if (authStore.user && authStore.token) {
+            try {
+              const userDiagnosisResponse = await api.get('/api/ai/user-diagnosis-results', {
+                headers: {
+                  'Authorization': `Bearer ${authStore.token}`
+                }
+              })
               
-              if (!diagnosis) {
-                return
+              if (userDiagnosisResponse.data.success && userDiagnosisResponse.data.data.current_diagnosis) {
+                const userDiagnosis = userDiagnosisResponse.data.data.current_diagnosis
+                
+                // Use ai_diagnosis if it exists (it's just a text label, no need to match diagnosis_id)
+                if (userDiagnosis.ai_diagnosis) {
+                  const aiDiagnosis = userDiagnosis.ai_diagnosis.trim()
+                  
+                  // Parse ai_diagnosis which may be in format "Arabic – English" or single language
+                  const parts = aiDiagnosis.split('–').map(p => p.trim())
+                  
+                  if (parts.length >= 2) {
+                    // Format: "Arabic – English"
+                    nameAr = parts[0]
+                    nameEn = parts[1]
+                  } else {
+                    // Single language - try to detect if it's Arabic or English
+                    const hasArabic = /[\u0600-\u06FF]/.test(aiDiagnosis)
+                    if (hasArabic) {
+                      nameAr = aiDiagnosis
+                      nameEn = aiDiagnosis // Use same for both if only Arabic provided
+                    } else {
+                      nameEn = aiDiagnosis
+                      nameAr = aiDiagnosis // Use same for both if only English provided
+                    }
+                  }
+                  
+                  useAiDiagnosis = true
+                }
+              }
+            } catch (userDiagnosisError) {
+              // Silently fail - will fall back to system diagnosis
+              console.warn('Could not load user diagnosis result:', userDiagnosisError)
+            }
+          }
+          
+          // If ai_diagnosis is not available, load system diagnosis as fallback
+          if (!useAiDiagnosis) {
+            const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
+            
+            if (response.data.success && response.data.data) {
+              let diagnosis = response.data.data
+              
+              // Check if the response is an array (list of diagnoses) or a single diagnosis
+              if (Array.isArray(diagnosis)) {
+                // Find the specific diagnosis by ID
+                diagnosis = diagnosis.find(d => d.id == diagnosisId)
+                
+                if (!diagnosis) {
+                  return
+                }
+              }
+              
+              // Use the localized name from the backend, with fallback to manual localization
+              nameEn = diagnosis.name_en || diagnosis.name
+              nameAr = diagnosis.name_ar || diagnosis.name
+              
+              // If backend didn't provide localized name, handle it on frontend
+              if (diagnosis.name_en && diagnosis.name_ar) {
+                nameEn = diagnosis.name_en
+                nameAr = diagnosis.name_ar
               }
             }
-            
-            // Use the localized name from the backend, with fallback to manual localization
-            let localizedName = diagnosis.name
-            let localizedDescription = diagnosis.description
-            let nameEn = diagnosis.name_en || diagnosis.name
-            let nameAr = diagnosis.name_ar || diagnosis.name
-            
-            // If backend didn't provide localized name, handle it on frontend
-            if (diagnosis.name_en && diagnosis.name_ar) {
-              const currentLocale = locale.value || 'en'
-              localizedName = currentLocale === 'ar' ? diagnosis.name_ar : diagnosis.name_en
-              localizedDescription = currentLocale === 'ar' ? (diagnosis.description_ar || diagnosis.description) : (diagnosis.description_en || diagnosis.description)
-              nameEn = diagnosis.name_en
-              nameAr = diagnosis.name_ar
+          }
+          
+          // Determine localized name and description
+          const currentLocale = locale.value || 'en'
+          const localizedName = currentLocale === 'ar' ? nameAr : nameEn
+          
+          // Load description from system diagnosis (always use system description)
+          let localizedDescription = ''
+          try {
+            const response = await api.get(`/api/ai/diagnoses/${diagnosisId}`)
+            if (response.data.success && response.data.data) {
+              let diagnosis = response.data.data
+              if (Array.isArray(diagnosis)) {
+                diagnosis = diagnosis.find(d => d.id == diagnosisId)
+              }
+              if (diagnosis) {
+                localizedDescription = currentLocale === 'ar' 
+                  ? (diagnosis.description_ar || diagnosis.description) 
+                  : (diagnosis.description_en || diagnosis.description)
+              }
             }
-            
-            diagnosisResult.value = {
-              title: localizedName,
-              title_en: nameEn,
-              title_ar: nameAr,
-              description: localizedDescription
-            }
+          } catch (error) {
+            console.warn('Could not load diagnosis description:', error)
+          }
+          
+          diagnosisResult.value = {
+            title: localizedName,
+            title_en: nameEn,
+            title_ar: nameAr,
+            description: localizedDescription
           }
         } else {
           // It's a diagnosis name, use it directly
