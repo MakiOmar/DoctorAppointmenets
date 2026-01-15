@@ -11,9 +11,7 @@
           </h1>
           <!-- Subtitle -->
           <p class="text-lg font-jalsah1" style="color: #9F8F75;" v-if="diagnosisResult.title_en || diagnosisResult.title_ar">
-            <span v-if="diagnosisResult.title_en" class="font-jalsah2">{{ diagnosisResult.title_en }}</span>
-            <span v-if="diagnosisResult.title_en && diagnosisResult.title_ar"> – </span>
-            <span v-if="diagnosisResult.title_ar" class="font-jalsah1">{{ diagnosisResult.title_ar }}</span>
+            <span v-if="diagnosisResult.title_ar" class="font-jalsah2">{{ diagnosisResult.title_ar }}</span>
           </p>
 
 

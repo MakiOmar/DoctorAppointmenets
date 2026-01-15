@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { resolve, join, dirname } from 'path'
 import { ENVIRONMENT_CONFIG } from './environment.js'
-import { writeFileSync, copyFileSync } from 'fs'
+import { writeFileSync, copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
 
 export default defineConfig({
   plugins: [
@@ -75,6 +75,58 @@ RewriteRule . /index.html [L]
         } catch (error) {
           console.warn('⚠️ Could not copy countries-codes-and-flags.json:', error.message)
           console.log('✅ Generated .htaccess and web.config for SPA routing')
+        }
+
+        // Recursive copy function for directories
+        const copyRecursiveSync = (src, dest) => {
+          const exists = existsSync(src)
+          const stats = exists && statSync(src)
+          const isDirectory = exists && stats.isDirectory()
+          
+          if (isDirectory) {
+            if (!existsSync(dest)) {
+              mkdirSync(dest, { recursive: true })
+            }
+            readdirSync(src).forEach(childItemName => {
+              copyRecursiveSync(join(src, childItemName), join(dest, childItemName))
+            })
+          } else {
+            const destDir = dirname(dest)
+            if (!existsSync(destDir)) {
+              mkdirSync(destDir, { recursive: true })
+            }
+            copyFileSync(src, dest)
+          }
+        }
+
+        // Copy fonts folder recursively to dist folder
+        try {
+          const fontsSource = 'public/fonts'
+          const fontsDest = 'dist/fonts'
+          
+          if (existsSync(fontsSource)) {
+            copyRecursiveSync(fontsSource, fontsDest)
+            console.log('✅ Copied fonts folder to dist folder')
+          } else {
+            console.warn('⚠️ Fonts folder not found at:', fontsSource)
+          }
+        } catch (error) {
+          console.error('❌ Error copying fonts folder:', error.message)
+        }
+
+        // Copy home folder recursively to dist folder
+        try {
+          const homeSource = 'public/home'
+          const homeDest = 'dist/home'
+          
+          if (existsSync(homeSource)) {
+            copyRecursiveSync(homeSource, homeDest)
+            console.log('✅ Copied home folder to dist folder')
+          } else {
+            console.warn('⚠️ Home folder not found at:', homeSource)
+          }
+        } catch (error) {
+          console.error('❌ Error copying home folder:', error.message)
         }
       }
     }

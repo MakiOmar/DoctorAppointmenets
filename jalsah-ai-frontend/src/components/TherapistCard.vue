@@ -304,6 +304,13 @@ export default {
     }
 
     const handleOpenBooking = () => {
+      // Check if user is authenticated
+      if (!authStore.isAuthenticated) {
+        // Redirect to login page if not authenticated
+        router.push('/login')
+        return
+      }
+      // If authenticated, emit the event to open booking popup
       emit('open-booking', props.therapist.id)
     }
 
