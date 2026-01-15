@@ -55,7 +55,7 @@
         </router-link>
 
         <!-- Introductory Text -->
-        <p class="text-secondary-500 text-left text-[25px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
+        <p class="text-secondary-500 text-left text-[18px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
         <!-- Close Button -->
 
         <button

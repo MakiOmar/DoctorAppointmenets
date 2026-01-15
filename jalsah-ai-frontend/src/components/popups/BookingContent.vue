@@ -3,14 +3,14 @@
     <!-- Nearest Available Appointment Section -->
     <div v-if="nearestSlot" class="space-y-4">
       <!-- Section Title -->
-      <div class="bg-secondary-500 rounded-lg px-4 py-2 text-center w-[300px] mx-auto">
-        <h3 class="text-primary-500 font-bold text-sm">{{ $t('therapistDetails.nearestAvailable') }}</h3>
+      <div class="bg-[#bfbfbf] rounded-lg px-4 py-2 text-center w-[300px] mx-auto">
+        <h3 class="text-primary-500 text-sm">{{ $t('therapistDetails.nearestAvailable') }}</h3>
       </div>
 
       <!-- Date and Time Display -->
       <div class="text-white text-center space-y-1">
-        <div class="text-lg font-semibold">{{ formatFullDate(nearestSlot.date) }}</div>
-        <div class="text-lg font-semibold">{{ formatTimeSlot(nearestSlot.time) }} {{ $t('dateTime.egyptTime') }}</div>
+        <div class="text-lg">{{ formatFullDate(nearestSlot.date) }}</div>
+        <div class="text-lg">{{ formatTimeSlot(nearestSlot.time) }} {{ $t('dateTime.egyptTime') }}</div>
       </div>
 
       <!-- Booking Button or Status -->
@@ -18,13 +18,13 @@
         <button
           @click="addNearestToCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="bg-white text-primary-500 px-6 py-1 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
+          class="bg-white text-primary-500 px-6 py-1 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
         >
           <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
             {{ $t('common.loading') }}
           </span>
-          <span class="font-jalsah2 text-[20px] font-semibold" v-else>{{ $t('therapistDetails.bookThisAppointment') }}</span>
+          <span class="font-jalsah2 text-[20px]" v-else>{{ $t('therapistDetails.bookThisAppointment') }}</span>
         </button>
       </div>
 
@@ -36,12 +36,12 @@
           <button
             @click="removeNearestFromCart"
             :disabled="cartLoading[nearestSlot.id]"
-            class="text-[#b50000] hover:text-[#b50000] font-medium  disabled:opacity-50 disabled:cursor-not-allowed"
+            class="text-[#b50000] hover:text-[#b50000]  disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="cartLoading[nearestSlot.id]" class="flex items-center text-[20px]">
               <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
             </span>
-            <span class="font-jalsah2 text-[20px] font-semibold" v-else>{{ $t('common.delete') }}</span>
+            <span class="font-jalsah2 text-[20px]" v-else>{{ $t('common.delete') }}</span>
           </button>
         </div>
 
@@ -54,8 +54,8 @@
     <!-- Other Appointments Section -->
     <div v-if="otherDates.length > 0" class="space-y-4">
       <!-- Section Title -->
-      <div class="bg-secondary-500 rounded-lg px-4 py-2 text-center w-[300px] mx-auto">
-        <h3 class="text-primary-500 font-bold text-sm">{{ $t('therapistDetails.otherAppointments') }}</h3>
+      <div class="bg-[#bfbfbf] rounded-lg px-4 py-2 text-center w-[300px] mx-auto">
+        <h3 class="text-primary-500 text-sm">{{ $t('therapistDetails.otherAppointments') }}</h3>
       </div>
 
       <!-- Date Picker with Navigation -->
@@ -87,7 +87,7 @@
               v-for="date in visibleDates"
               :key="date.value"
               @click="selectDate(date)"
-              class="flex-shrink-0 px-0 py-3 rounded-lg text-sm font-medium transition-colors w-[65px]"
+              class="flex-shrink-0 px-0 py-3 rounded-lg text-sm transition-colors w-[65px]"
               :class="selectedDate?.value === date.value
                 ? 'bg-secondary-500 text-primary-500'
                 : 'bg-white text-primary-500 hover:bg-gray-50 border border-primary-500'"
@@ -122,7 +122,7 @@
       <div v-if="selectedDate && otherTimeSlots.length > 0" class="h-px bg-white"></div>
 
       <!-- Timezone Note -->
-      <p v-if="selectedDate && otherTimeSlots.length > 0" class="text-white text-center text-[20px] font-jalsah2 font-semibold">({{ $t('therapistDetails.allAppointmentsEgyptTime') }})</p>
+      <p v-if="selectedDate && otherTimeSlots.length > 0" class="text-white text-center text-[20px] font-jalsah2">({{ $t('therapistDetails.allAppointmentsEgyptTime') }})</p>
 
       <!-- Time Slots -->
       <div v-if="selectedDate && otherTimeSlots.length > 0" class="space-y-2">
@@ -135,7 +135,7 @@
             v-if="!slot.inCart"
             @click="addToCart(slot)"
             :disabled="cartLoading[slot.id]"
-            class="w-full px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-white text-primary-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full px-4 py-3 rounded-lg text-sm transition-colors bg-white text-primary-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="cartLoading[slot.id]" class="flex items-center justify-center">
               <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
@@ -155,12 +155,12 @@
               <button
                 @click="removeFromCart(slot)"
                 :disabled="cartLoading[slot.id]"
-                class="text-[#b50000] hover:text-[#b50000] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                class="text-[#b50000] hover:text-[#b50000] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="cartLoading[slot.id]" class="flex items-center text-[20px]">
                   <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
                 </span>
-                <span class="font-jalsah2 text-[20px] font-semibold " v-else>{{ $t('common.delete') }}</span>
+                <span class="font-jalsah2 text-[20px] " v-else>{{ $t('common.delete') }}</span>
               </button>
               </div>
           </div>

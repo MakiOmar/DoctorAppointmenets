@@ -7,8 +7,8 @@
       <div class="flex items-center justify-center" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
         <!-- Name and Specialty -->
         <div class="flex flex-col items-end">
-          <h3 class="text-xl font-bold text-white mb-1">{{ therapist.name }}</h3>
-          <p v-if="therapist.doctor_specialty" class="text-sm text-secondary-500 specialty-text">{{ therapist.doctor_specialty }}</p>
+          <h3 class="text-[1.55rem] text-white" style="line-height: 1.75rem;">{{ therapist.name }}</h3>
+          <p v-if="therapist.doctor_specialty" class="text-[1rem] mt-1 text-secondary-500 specialty-text">{{ therapist.doctor_specialty }}</p>
         </div>
         
         <!-- Order Badge (only on diagnosis results) -->
@@ -30,14 +30,14 @@
               v-else
               class="bg-secondary-300 text-primary-500 w-16 h-16 rounded-full flex items-center justify-center font-bold"
             >
-              <span class="text-lg">{{ therapistPosition }}</span>
+              <span class="text-[1.55rem] font-jalsah1">{{ therapistPosition }}</span>
             </div>
             <div
               v-if="orderBadgeIconExists"
               class="absolute inset-0 flex items-center justify-center font-bold"
               style="pointer-events: none;"
             >
-              <span class="text-lg text-primary-500">{{ therapistPosition }}</span>
+              <span class="text-[1.55rem] font-jalsah1 text-primary-500">{{ therapistPosition }}</span>
             </div>
           </div>
         </div>
@@ -56,10 +56,10 @@
 
     <!-- Session Details Section (Dark Blue Band) -->
     <div class="bg-primary-500 text-white px-4 py-3 text-center">
-      <div class="text-lg font-semibold">
-        {{ formatPrice(therapist.price?.price || therapist.price?.others, therapist.price?.currency_symbol || getCurrencySymbol(therapist.price?.currency || settingsStore.userCurrencyCode)) }}
+      <div class="text-[1.55rem]">
+        <span>45 {{ $t('common.minutes') }}</span>  
         <span class="mx-2">|</span>
-        <span>45 {{ $t('common.minutes') }}</span>
+        {{ formatPrice(therapist.price?.price || therapist.price?.others, therapist.price?.currency_symbol || getCurrencySymbol(therapist.price?.currency || settingsStore.userCurrencyCode)) }}
       </div>
     </div>
 
@@ -69,15 +69,16 @@
       <button
         v-if="cardVariant === 'therapists-page'"
         @click.stop="handleOpenAbout"
-        class="w-full flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-3 font-medium text-[20px] hover:bg-secondary-400 transition-colors font-jalsah1"
-        :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
+        class="w-full flex-row flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-2 py-1 text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
+        style="line-height: 1.8rem;"
       >
         <img
           v-if="infoIconExists"
           src="/info-icon.png"
           alt="About"
-          class="h-4"
+          class="h-[25px] absolute left-[30px]"
           @error="infoIconExists = false"
+
         />
         <svg
           v-else
@@ -95,7 +96,7 @@
     <button
       v-if="cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage"
       @click.stop="handleOpenWhy"
-      class="w-full relative flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-1 font-medium text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
+      class="w-full relative flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-4 py-1 text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
       :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
     >
       <img
@@ -116,24 +117,20 @@
       </svg>
       {{ $t('popups.whyThisTherapist') }}
     </button>
-
-      <!-- Divider for About/Why buttons (if shown) -->
-      <div v-if="(cardVariant === 'therapists-page') || (cardVariant === 'diagnosis-results' && diagnosisId && suitabilityMessage)" class="h-px bg-secondary-300"></div>
-
       <!-- Bottom Row Buttons (Certificates and Book) -->
       <div class="flex" :class="locale === 'ar' ? 'flex-row-reverse' : 'flex-row'">
         <!-- View Certificates Button -->
         <button
           v-if="therapist.certificates && therapist.certificates.length > 0"
           @click.stop="handleOpenCertificates"
-          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 font-medium text-[17px] hover:bg-primary-600 transition-colors border-r border-white font-jalsah1"
-          :class="locale === 'ar' ? 'flex-row border-l border-r-0' : 'flex-row border-r border-l-0'"
+          class="flex-1 flex-row flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 text-[17px] hover:bg-primary-600 transition-colors border-l border-l-1 border-white font-jalsah1"
+          style="line-height: 1.8rem;"
         >
           <img
             v-if="certificateIconExists"
             src="/certificate-icon.png"
             alt="Certificates"
-            class="h-4"
+            class="h-[1.4rem]"
             @error="certificateIconExists = false"
           />
           <svg
@@ -151,14 +148,14 @@
         <!-- Book Appointment Button -->
         <button
           @click.stop="handleOpenBooking"
-          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 font-medium text-[17px] hover:bg-primary-600 transition-colors font-jalsah1"
+          class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 text-[17px] hover:bg-primary-600 transition-colors font-jalsah1"
           :class="locale === 'ar' ? 'flex-row' : 'flex-row'"
         >
           <img
             v-if="calendarIconExists"
             src="/calendar-icon.png"
             alt="Book"
-            class="h-4"
+            class="h-[1.4rem]"
             @error="calendarIconExists = false"
           />
           <svg

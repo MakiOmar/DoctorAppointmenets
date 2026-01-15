@@ -12,7 +12,6 @@
             <img 
               v-if="logoExists"
               src="/home/logo.png" 
-              alt="Jalsah Logo" 
               class="h-[7rem] md:h-32 mx-auto"
               @error="logoExists = false"
             />

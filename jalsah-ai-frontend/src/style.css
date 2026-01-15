@@ -26,6 +26,83 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safari Zoom Fix - Prevent text inflation on zoom */
+html {
+  /* Prevent iOS Safari from inflating text size when zooming */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* Ensure body also respects text size adjustment */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Prevent text selection issues on zoom */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent text inflation on all elements when zooming */
+* {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* This targets iOS Safari specifically */
+  html, body, * {
+    /* Force no text size adjustment on iOS */
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+  
+  /* Ensure containers expand properly on zoom */
+  section, div, article, main {
+    /* Allow containers to grow with content */
+    min-height: 0;
+    /* Prevent fixed heights from causing overflow */
+    box-sizing: border-box;
+  }
+}
+
+/* Better image rendering for high DPI displays and zoom */
+img {
+  /* Use high-quality image rendering for better scaling */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: auto;
+  /* Ensure images scale properly and maintain aspect ratio */
+  max-width: 100%;
+  height: auto;
+  /* Prevent blurriness on zoom */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Better scaling algorithm */
+  -ms-interpolation-mode: bicubic;
+}
+
+/* iOS Safari Zoom Fix - Container overflow handling */
+/* Prevent horizontal overflow on zoom while allowing vertical scroll */
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Ensure text containers handle zoom properly */
+h1, h2, h3, h4, h5, h6, p {
+  /* Prevent text from being cut off */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* Ensure text doesn't overflow container */
+  max-width: 100%;
+}
+
 /* RTL Support */
 [dir="rtl"] {
   direction: rtl;
@@ -168,7 +245,6 @@
   /* Improved typography for Arabic */
   [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6 {
     font-family: 'jalsah1', 'Cairo', sans-serif;
-    font-weight: 600;
   }
 
   [dir="rtl"] p, [dir="rtl"] span, [dir="rtl"] div {

@@ -4,7 +4,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-primary-500 mb-4 text-center">
+        <h1 class="text-3xl font-bold text-primary-500 mb-1 text-center">
           {{ $t('therapists.title') }}
         </h1>
         <p class="text-[25px] text-secondary-500 text-center font-jalsah2 font-medium">
@@ -14,9 +14,8 @@
 
       <!-- Search and Sorting -->
       <div class="card mb-8">
-        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
-          <!-- Search Filter -->
-          <div class="w-full lg:w-1/3">
+        <!-- Search Filter -->
+        <div class="w-full lg:w-1/3 mb-5">
             <div class="relative">
               <input
                 v-model="searchQuery"
@@ -34,6 +33,7 @@
               </div>
             </div>
           </div>
+        <div class="flex flex-col-reverse sm:flex-col lg:flex-row lg:items-center gap-4">
           
           <!-- The Best Button (Redirects to Diagnosis Results) -->
           <div class="w-full lg:w-1/3">

@@ -506,7 +506,7 @@ export default {
   // Therapists
   therapists: {
     title: 'تصفح كل المعالجين',
-    subtitle: 'اختر المعالج المناسب لنفسك',
+    subtitle: 'اختر المعالج المناسب بنفسك',
     loading: 'جاري تحميل المعالجين...',
     bioDefault: 'معالج محترف متخصص في الصحة النفسية والرفاهية.',
     whyBestForDiagnosis: 'لماذا هذا المعالج هو الأفضل لتشخيصك؟',
@@ -522,7 +522,7 @@ export default {
     specializations: 'التخصصات',
     sortBy: 'ترتيب حسب',
     sorting: {
-      best: 'رتب حسب الأفضل لحالتك عن طريق الذكاء الاصطناعي',
+      best: 'رتب بالذكاء الإصطناعي حسب حالتك',
       bestSimple: 'رتب حسب الأفضل',
       priceLow: 'رتب حسب الأقل سعر',
       nearest: 'رتب حسب أقرب موعد متاح للحجز'
@@ -939,7 +939,7 @@ export default {
     addedToCart: 'تمت الإضافة للسلة',
     canBookMultipleSessions: 'يمكنك حجز أكثر من جلسة في نفس الوقت',
     allAppointmentsEgyptTime: 'جميع المواعيد بتوقيت مصر',
-    loadingDates: 'جاري تحميل التواريخ المتاحة...',
+    loadingDates: 'جاري تحميل المواعيد المتاحة...',
     loadingTimes: 'جاري تحميل الأوقات المتاحة...',
     availableTimes: 'الأوقات المتاحة',
     noTimeSlots: 'لا توجد أوقات متاحة لهذا التاريخ',

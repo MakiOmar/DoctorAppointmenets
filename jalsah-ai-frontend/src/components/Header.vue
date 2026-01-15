@@ -8,7 +8,6 @@
           <router-link to="/" class="flex items-center">
             <img 
               src="/home/header-logo.png" 
-              :alt="$t('logo.text')" 
               class="h-8 sm:h-10"
             />
           </router-link>
@@ -25,11 +24,11 @@
             <img 
               src="/home/Layer-26.png" 
               alt="Cart" 
-              class="h-5 sm:h-6"
+              class="h-[1.4rem]"
             />
             <span 
               v-if="cartItemCount > 0"
-              class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center min-w-[16px] sm:min-w-[20px] px-0.5 sm:px-1"
+              class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center min-w-[16px] sm:min-w-[20px] px-0.5 sm:px-1"
             >
               {{ cartItemCount > 99 ? '99+' : cartItemCount }}
             </span>
@@ -83,7 +82,7 @@
       >
         <!-- Side Menu Header with Close Button -->
         <div class="sticky top-0 bg-primary-500 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-primary-600 z-10">
-          <h2 class="text-lg sm:text-xl font-bold text-white">{{ $t('nav.menu') }}</h2>
+          <h2 class="text-lg sm:text-xl text-white">{{ $t('nav.menu') }}</h2>
           <button
             @click="mobileMenuOpen = false"
             class="p-1.5 sm:p-2 text-white hover:bg-primary-600 rounded-md transition-colors"
