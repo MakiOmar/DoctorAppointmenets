@@ -1,8 +1,5 @@
 <template>
   <div class="space-y-6">
-    <!-- Introductory Text -->
-    <p class="text-secondary-500 text-center text-[25px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
-
     <!-- Nearest Available Appointment Section -->
     <div v-if="nearestSlot" class="space-y-4">
       <!-- Section Title -->
@@ -21,7 +18,7 @@
         <button
           @click="addNearestToCart"
           :disabled="cartLoading[nearestSlot.id]"
-          class="bg-white text-primary-500 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
+          class="bg-white text-primary-500 px-6 py-1 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-jalsah2"
         >
           <span v-if="cartLoading[nearestSlot.id]" class="flex items-center">
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 mr-2"></div>
@@ -32,21 +29,22 @@
       </div>
 
       <!-- Added to Cart Status -->
-      <div v-else class="bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between">
+      <div v-else class="bg-secondary-500 rounded-lg px-4 py-1 flex items-center justify-between w-[300px] mx-auto">
+        <span class="text-primary-500 text-[20px] font-jalsah1 leading-tight">{{ formatTimeSlot(nearestSlot.time) }}</span>
         <div class="flex items-center gap-2">
           <span class="text-[#00740b] text-[20px] font-jalsah2">{{ $t('therapistDetails.addedToCart') }}</span>
-          <span class="text-primary-500 text-[20px] font-jalsah2">{{ formatTimeSlot(nearestSlot.time) }}</span>
+          <button
+            @click="removeNearestFromCart"
+            :disabled="cartLoading[nearestSlot.id]"
+            class="text-[#b50000] hover:text-[#b50000] font-medium  disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span v-if="cartLoading[nearestSlot.id]" class="flex items-center text-[20px]">
+              <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
+            </span>
+            <span class="font-jalsah2 text-[20px] font-semibold" v-else>{{ $t('common.delete') }}</span>
+          </button>
         </div>
-        <button
-          @click="removeNearestFromCart"
-          :disabled="cartLoading[nearestSlot.id]"
-          class="text-[#b50000] hover:text-[#b50000] font-medium  disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span v-if="cartLoading[nearestSlot.id]" class="flex items-center text-[20px]">
-            <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
-          </span>
-          <span class="font-jalsah2 text-[20px] font-semibold" v-else>{{ $t('common.delete') }}</span>
-        </button>
+
       </div>
     </div>
 
@@ -149,22 +147,22 @@
           <!-- Added to Cart Status -->
           <div
             v-else
-            class="w-full bg-secondary-500 rounded-lg px-4 py-3 flex items-center justify-between"
+            class="bg-secondary-500 rounded-lg px-4 py-1 flex items-center justify-between w-[300px] mx-auto"
           >
+            <span class="text-primary-500 text-[20px] font-jalsah1 leading-tight">{{ formatTimeSlot(slot.time) }}</span>
             <div class="flex items-center gap-2">
               <span class="text-[#00740b] text-[20px] font-jalsah2">{{ $t('therapistDetails.addedToCart') }}</span>
-              <span class="text-primary-500 text-[20px] font-jalsah2">{{ formatTimeSlot(slot.time) }}</span>
-            </div>
-            <button
-              @click="removeFromCart(slot)"
-              :disabled="cartLoading[slot.id]"
-              class="text-[#b50000] hover:text-[#b50000] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="cartLoading[slot.id]" class="flex items-center text-[20px]">
-                <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
-              </span>
-              <span class="font-jalsah2 text-[20px] font-semibold " v-else>{{ $t('common.delete') }}</span>
-            </button>
+              <button
+                @click="removeFromCart(slot)"
+                :disabled="cartLoading[slot.id]"
+                class="text-[#b50000] hover:text-[#b50000] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="cartLoading[slot.id]" class="flex items-center text-[20px]">
+                  <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#b50000] mr-1"></div>
+                </span>
+                <span class="font-jalsah2 text-[20px] font-semibold " v-else>{{ $t('common.delete') }}</span>
+              </button>
+              </div>
           </div>
         </div>
       </div>

@@ -54,7 +54,10 @@
           </span>
         </router-link>
 
+        <!-- Introductory Text -->
+        <p class="text-secondary-500 text-left text-[25px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
         <!-- Close Button -->
+
         <button
           @click="handleClose"
           class="z-10
@@ -106,7 +109,7 @@
 
     <!-- Content Slot (Dark Blue Background) -->
     <div 
-      class="therapist-popup-content bg-primary-500 p-6 min-h-[400px]" 
+      class="therapist-popup-content bg-primary-500 px-6 min-h-[400px]" 
       :dir="locale === 'ar' ? 'rtl' : 'ltr'"
     >
       <slot></slot>

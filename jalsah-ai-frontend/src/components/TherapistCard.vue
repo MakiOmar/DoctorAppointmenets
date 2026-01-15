@@ -365,8 +365,8 @@ export default {
   background: white;
   border-radius: 0.5rem;
   overflow: initial;
-  width: 350px;
-  max-width: 350px;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Photo section should always be square relative to card width */
@@ -374,8 +374,8 @@ export default {
   aspect-ratio: 1 / 1;
 }
 
-/* Mobile: Full width on screens ≤480px */
-@media (max-width: 480px) {
+/* Desktop: Remove fixed width, let grid control the width */
+@media (min-width: 481px) {
   .therapist-card {
     width: 100%;
     max-width: 100%;

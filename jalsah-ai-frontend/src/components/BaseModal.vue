@@ -19,7 +19,7 @@
         <!-- Modal Content -->
         <div
           :class="[
-            'relative rounded-lg shadow-xl max-w-[480px] w-full max-h-[90vh] overflow-hidden flex flex-col',
+            'relative rounded-lg shadow-xl max-w-[480px] w-full max-h-[90vh] overflow-hidden flex flex-col pb-4',
             customBgColor || 'bg-white'
           ]"
           :dir="locale === 'ar' ? 'rtl' : 'ltr'"
