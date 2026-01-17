@@ -12,7 +12,7 @@
           class="w-32 h-32 rounded-lg"
           :class="therapist.photo ? 'object-cover' : 'object-contain bg-gray-100 p-4'"
         />
-        <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm font-medium">
+        <div class="absolute top-2 right-2 bg-primary-600 text-white px-2 py-1 rounded-full text-sm">
           {{ therapist.price?.others || $t('common.contact') }}
         </div>
       </div>
@@ -22,7 +22,7 @@
         <!-- Top Section: Name, Rating, Bio -->
         <div class="space-y-4">
           <div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ therapist.name }}</h3>
+            <h3 class="text-xl text-gray-900 mb-2">{{ therapist.name }}</h3>
             
             <div v-if="settingsStore && settingsStore.isRatingsEnabled" class="flex items-center gap-2">
               <StarRating :rating="therapist.rating || 0" />
@@ -39,7 +39,7 @@
             <button
               v-if="therapist.bio && therapist.bio.length > 160"
               type="button"
-              class="text-xs font-medium text-primary-600 hover:text-primary-700 focus:outline-none"
+              class="text-xs text-primary-600 hover:text-primary-700 focus:outline-none"
               @click.stop="isBioExpanded = !isBioExpanded"
             >
               {{ isBioExpanded ? 'عرض أقل' : 'اقرأ المزيد' }}
@@ -109,7 +109,7 @@
     <div v-else-if="details" class="space-y-6">
       <!-- Debug Information -->
       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-        <h4 class="text-sm font-semibold text-yellow-800 mb-2">Debug Info:</h4>
+        <h4 class="text-sm text-yellow-800 mb-2">Debug Info:</h4>
         <p class="text-xs text-yellow-700">Details loaded: {{ !!details }}</p>
         <p class="text-xs text-yellow-700">Certificates exists: {{ !!details.certificates }}</p>
         <p class="text-xs text-yellow-700">Certificates is array: {{ Array.isArray(details.certificates) }}</p>
@@ -119,7 +119,7 @@
       
       <!-- Certificates Section -->
       <div v-if="details.certificates && details.certificates.length > 0" class="bg-gray-50 rounded-lg p-4">
-        <h4 class="text-lg font-semibold text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
+        <h4 class="text-lg text-gray-900 mb-4">{{ $t('therapistDetails.certificates') }}</h4>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div 
             v-for="(cert, index) in details.certificates" 
@@ -153,7 +153,7 @@
         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <h4 class="text-lg font-semibold text-gray-900 mb-2">{{ $t('therapistDetails.noCertificates') }}</h4>
+        <h4 class="text-lg text-gray-900 mb-2">{{ $t('therapistDetails.noCertificates') }}</h4>
         <p class="text-gray-600">{{ $t('therapistDetails.noCertificatesMessage') }}</p>
       </div>
     </div>
@@ -176,7 +176,7 @@
             <svg class="w-24 h-24 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ currentCertificate.name }}</h3>
+            <h3 class="text-xl text-gray-900 mb-2">{{ currentCertificate.name }}</h3>
             <p class="text-gray-600 mb-4">{{ currentCertificate.size }}</p>
             <a :href="currentCertificate.url" download class="btn-primary">
               {{ $t('therapistDetails.downloadFile') }}

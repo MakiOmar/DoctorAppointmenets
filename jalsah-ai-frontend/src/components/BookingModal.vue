@@ -8,7 +8,7 @@
       <div class="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b">
-          <h3 class="text-xl font-semibold text-gray-900">
+          <h3 class="text-xl text-gray-900">
             {{ $t('bookAppointment') }}
           </h3>
           <button
@@ -25,14 +25,14 @@
         <div class="p-6">
           <!-- Step 1: Date Selection -->
           <div v-if="currentStep === 1" class="space-y-4">
-            <h4 class="text-lg font-medium text-gray-900">{{ $t('selectDate') }}</h4>
+            <h4 class="text-lg text-gray-900">{{ $t('selectDate') }}</h4>
             
             <!-- Calendar -->
             <div class="grid grid-cols-7 gap-1">
               <!-- Day headers -->
               <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" 
                    :key="day" 
-                   class="p-2 text-center text-sm font-medium text-gray-500">
+                   class="p-2 text-center text-sm text-gray-500">
                 {{ day }}
               </div>
               
@@ -54,7 +54,7 @@
                 @click="nextStep"
                 :disabled="!selectedDate"
                 :class="[
-                  'px-4 py-2 rounded-lg font-medium transition-colors',
+                  'px-4 py-2 rounded-lg transition-colors',
                   selectedDate ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 ]"
               >
@@ -66,7 +66,7 @@
           <!-- Step 2: Time Selection -->
           <div v-if="currentStep === 2" class="space-y-4">
             <div class="flex items-center justify-between">
-              <h4 class="text-lg font-medium text-gray-900">
+              <h4 class="text-lg text-gray-900">
                 {{ $t('selectTime') }} - {{ formatSelectedDate }}
               </h4>
               <button
@@ -116,7 +116,7 @@
                 @click="addToCart"
                 :disabled="!selectedTimeSlot || addingToCart"
                 :class="[
-                  'px-4 py-2 rounded-lg font-medium transition-colors',
+                  'px-4 py-2 rounded-lg transition-colors',
                   selectedTimeSlot && !addingToCart 
                     ? 'bg-blue-500 text-white hover:bg-blue-600' 
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

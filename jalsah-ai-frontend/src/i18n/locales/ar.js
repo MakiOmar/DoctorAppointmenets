@@ -132,7 +132,7 @@ export default {
         loginButton: 'تسجيل الدخول',
         registerButton: 'تسجيل حساب جديد',
         diagnosisButton: 'ابدأ التشخيص الذكي',
-        diagnosisResultsButton: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي',
+        diagnosisResultsButton: 'إختر عن طريق الذكاء الإصطناعي',
         therapistsButton: 'تصفح كل المعالجين'
       },
       ai: {

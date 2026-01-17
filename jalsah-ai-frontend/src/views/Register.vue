@@ -3,7 +3,7 @@
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <div class="flex justify-center">
         <div class="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
-          <span class="text-white font-bold text-xl">{{ $t('logo.text') }}</span>
+          <span class="text-white text-xl">{{ $t('logo.text') }}</span>
         </div>
       </div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -223,7 +223,7 @@
             <button
               type="submit"
               :disabled="loading || !isFormValid"
-              class="w-full btn-primary py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full btn-primary py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="loading" class="flex items-center justify-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

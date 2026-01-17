@@ -3,7 +3,7 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $t('shoppingCart') }}</h1>
+        <h1 class="text-3xl text-gray-900 mb-2">{{ $t('shoppingCart') }}</h1>
         <p class="text-gray-600">{{ $t('cartDescription') }}</p>
       </div>
 
@@ -22,7 +22,7 @@
             </svg>
           </div>
           <div class="mr-3 rtl:ml-3 rtl:mr-0">
-            <h3 class="text-sm font-medium text-red-800">{{ $t('errorLoadingCart') }}</h3>
+            <h3 class="text-sm text-red-800">{{ $t('errorLoadingCart') }}</h3>
             <p class="mt-2 text-sm text-red-700">{{ cartStore.error }}</p>
           </div>
         </div>
@@ -33,7 +33,7 @@
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">{{ $t('emptyCart') }}</h3>
+        <h3 class="mt-2 text-sm text-gray-900">{{ $t('emptyCart') }}</h3>
         <p class="mt-1 text-sm text-gray-500">{{ $t('emptyCartDescription') }}</p>
       </div>
 
@@ -43,7 +43,7 @@
         <div class="lg:col-span-2">
           <div class="bg-white shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-              <h2 class="text-lg font-medium text-gray-900">{{ $t('appointments') }} ({{ cartStore.itemCount }})</h2>
+              <h2 class="text-lg text-gray-900">{{ $t('appointments') }} ({{ cartStore.itemCount }})</h2>
             </div>
             <div class="divide-y divide-gray-200">
               <div v-for="item in cartStore.cartItems" :key="item.ID" class="p-6">
@@ -67,7 +67,7 @@
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h3 class="text-lg font-medium text-gray-900">
+                        <h3 class="text-lg text-gray-900">
                           {{ item.therapist_name_en || item.therapist_name }}
                         </h3>
                         <p class="text-sm text-gray-500">
@@ -78,7 +78,7 @@
                         </p>
                       </div>
                       <div class="text-right rtl:text-left">
-                        <p class="text-lg font-medium text-gray-900">{{ formatPrice(item.price || 200.00, $i18n.locale, item.currency_symbol || getCurrencySymbol(item.currency || settingsStore.userCurrencyCode)) }}</p>
+                        <p class="text-lg text-gray-900">{{ formatPrice(item.price || 200.00, $i18n.locale, item.currency_symbol || getCurrencySymbol(item.currency || settingsStore.userCurrencyCode)) }}</p>
                         <button
                           @click="removeItem(item.ID)"
                           class="text-sm text-red-600 hover:text-red-800 mt-1"
@@ -97,7 +97,7 @@
         <!-- Order Summary -->
         <div class="lg:col-span-1">
           <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">{{ $t('orderSummary') }}</h2>
+            <h2 class="text-lg text-gray-900 mb-4">{{ $t('orderSummary') }}</h2>
             
             <!-- Coupon Form -->
             <div v-if="!appliedCoupon" class="mb-4">
@@ -124,7 +124,7 @@
             <div v-if="appliedCoupon" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm font-medium text-green-800">{{ $t('cart.appliedCoupon') }}</p>
+                  <p class="text-sm text-green-800">{{ $t('cart.appliedCoupon') }}</p>
                   <p class="text-sm text-green-600">{{ appliedCoupon.code }}</p>
                 </div>
                 <button
@@ -152,8 +152,8 @@
               
               <div class="border-t border-gray-200 pt-4">
                 <div class="flex justify-between">
-                  <span class="text-lg font-medium text-gray-900">{{ $t('total') }}</span>
-                  <span class="text-lg font-medium text-gray-900">{{ formatPrice(finalTotal, $i18n.locale, getCartCurrency()) }}</span>
+                  <span class="text-lg text-gray-900">{{ $t('total') }}</span>
+                  <span class="text-lg text-gray-900">{{ formatPrice(finalTotal, $i18n.locale, getCartCurrency()) }}</span>
                 </div>
               </div>
             </div>
@@ -161,7 +161,7 @@
             <button
               @click="proceedToPayment"
               :disabled="cartStore.checkoutLoading || cartStore.itemCount === 0"
-              class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.checkoutLoading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(finalTotal, $i18n.locale, getCartCurrency()) }}</span>
@@ -170,14 +170,14 @@
             <!-- Add More Bookings Button -->
             <button
               @click="addMoreBookings"
-              class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-300"
+              class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300"
             >
               {{ $t('cart.addMoreBookings') }}
             </button>
             
             <!-- Appointment Change Terms -->
             <div v-if="settingsStore.getAppointmentChangeTerms" class="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 class="text-sm font-medium text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
+              <h3 class="text-sm text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
               <p class="text-sm text-gray-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
             </div>
           </div>

@@ -9,7 +9,7 @@
     <!-- Error State -->
     <div v-else-if="error" class="text-center py-12">
       <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h3 class="text-lg font-medium text-red-800 mb-2">{{ $t('errorLoadingTherapist') }}</h3>
+        <h3 class="text-lg text-red-800 mb-2">{{ $t('errorLoadingTherapist') }}</h3>
         <p class="text-red-700">{{ error }}</p>
         <button @click="loadTherapist" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
           {{ $t('retry') }}
@@ -41,7 +41,7 @@
 
           <!-- Therapist Info -->
           <div class="flex-1">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <h1 class="text-3xl text-gray-900 mb-2">
               {{ therapist.name_en || therapist.name }}
             </h1>
             
@@ -49,7 +49,7 @@
             <div v-if="settingsStore && settingsStore.isRatingsEnabled" class="flex items-center mb-4">
               <div class="flex items-center">
                 <span class="text-yellow-400 text-xl">★</span>
-                <span class="ml-2 text-lg font-medium text-gray-900">{{ therapist.rating || 5.0 }}</span>
+                <span class="ml-2 text-lg text-gray-900">{{ therapist.rating || 5.0 }}</span>
               </div>
               <span class="mx-3 text-gray-300">•</span>
               <span class="text-gray-600">{{ therapist.total_ratings || 0 }} {{ $t('reviews') }}</span>
@@ -62,7 +62,7 @@
 
             <!-- Specializations -->
             <div v-if="therapist.diagnoses && therapist.diagnoses.length > 0" class="mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ $t('specializations') }}</h3>
+              <h3 class="text-lg text-gray-900 mb-3">{{ $t('specializations') }}</h3>
               <div class="flex flex-wrap gap-2">
                 <span
                   v-for="diagnosis in therapist.diagnoses"
@@ -78,17 +78,17 @@
             <div class="mb-6">
               <div class="flex items-center justify-between bg-gray-50 rounded-lg p-4">
                 <div>
-                  <span class="text-lg font-semibold text-gray-900">{{ $t('sessionPrice') }}</span>
+                  <span class="text-lg text-gray-900">{{ $t('sessionPrice') }}</span>
                   <p class="text-sm text-gray-600">{{ $t('perSession') }}</p>
                 </div>
-                <span class="text-2xl font-bold text-gray-900">{{ formatPrice(therapist?.price?.price || therapist?.price?.others || 200.00, $i18n.locale, therapist?.price?.currency_symbol || getCurrencySymbol(therapist?.price?.currency || settingsStore.userCurrencyCode)) }}</span>
+                <span class="text-2xl text-gray-900">{{ formatPrice(therapist?.price?.price || therapist?.price?.others || 200.00, $i18n.locale, therapist?.price?.currency_symbol || getCurrencySymbol(therapist?.price?.currency || settingsStore.userCurrencyCode)) }}</span>
               </div>
             </div>
 
             <!-- Book Now Button -->
             <button
               @click="openBookingModal"
-              class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
+              class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg"
             >
               {{ $t('bookNow') }}
             </button>
@@ -98,7 +98,7 @@
 
       <!-- Certificates Section -->
       <div v-if="therapist.certificates && therapist.certificates.length > 0" class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">{{ $t('certificates') }}</h2>
+        <h2 class="text-2xl text-gray-900 mb-6">{{ $t('certificates') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
             v-for="certificate in therapist.certificates"

@@ -17,7 +17,7 @@
       <div v-else-if="therapist" class="max-w-4xl mx-auto">
         <!-- Page Title -->
         <div class="mb-8">
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">
+          <h1 class="text-3xl text-gray-900 mb-2">
             {{ $t('therapistAppointment.title') }}
           </h1>
           <p class="text-gray-600">

@@ -4,10 +4,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-primary-500 mb-1 text-center">
+        <h1 class="text-3xl text-primary-500 mb-1 text-center">
           {{ $t('therapists.title') }}
         </h1>
-        <p class="text-[25px] text-secondary-500 text-center font-jalsah2 font-medium">
+        <p class="text-[25px] text-secondary-500 text-center font-jalsah2">
           {{ $t('therapists.subtitle') }}
         </p>
       </div>
@@ -40,13 +40,13 @@
             <router-link
               v-if="!loadingDiagnosis"
               :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-              class="block w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors text-center bg-primary-500 text-white hover:opacity-90"
+              class="block w-full px-4 py-2 rounded-lg text-[20px] transition-colors text-center bg-primary-500 text-white hover:opacity-90"
             >
               {{ $t('therapists.sorting.best') }}
             </router-link>
             <div
               v-else
-              class="w-full px-4 py-2 rounded-lg text-[20px] font-medium bg-primary-500 text-white opacity-75 text-center"
+              class="w-full px-4 py-2 rounded-lg text-[20px] bg-primary-500 text-white opacity-75 text-center"
             >
               <div class="inline-flex items-center gap-2">
                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -59,7 +59,7 @@
           <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('nearest')"
-              class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
+              class="w-full px-4 py-2 rounded-lg text-[20px] transition-colors"
               :class="activeSort === 'nearest' 
                 ? 'bg-secondary-500 text-primary-500' 
                 : 'bg-primary-500 text-white'"
@@ -72,7 +72,7 @@
           <div class="w-full lg:w-1/3">
             <button
               @click="setSorting('price-low')"
-              class="w-full px-4 py-2 rounded-lg text-[20px] font-medium transition-colors"
+              class="w-full px-4 py-2 rounded-lg text-[20px] transition-colors"
               :class="activeSort === 'price-low' 
                 ? 'bg-secondary-500 text-primary-500' 
                 : 'bg-primary-500 text-white'"
@@ -133,7 +133,7 @@
         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
         </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('therapists.noResults') }}</h3>
+        <h3 class="text-lg text-gray-900 mb-2">{{ $t('therapists.noResults') }}</h3>
         <p class="text-gray-600">{{ $t('therapists.noResultsMessage') }}</p>
       </div>
     </div>

@@ -3,7 +3,7 @@
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <div class="flex justify-center">
         <div class="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
-          <span class="text-white font-bold text-xl">{{ $t('logo.text') }}</span>
+          <span class="text-white text-xl">{{ $t('logo.text') }}</span>
         </div>
       </div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -160,7 +160,7 @@
             <button
               type="submit"
               :disabled="loading"
-              class="w-full btn-primary py-3 text-base font-medium"
+              class="w-full btn-primary py-3 text-base"
             >
               <span v-if="loading" class="flex items-center justify-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -184,7 +184,7 @@
         <div class="mt-3">
           <!-- Modal Header -->
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-medium text-gray-900">
+            <h3 class="text-lg text-gray-900">
               {{ $t('verification.forgotPasswordTitle') }}
             </h3>
             <button @click="closeForgotPasswordModal" class="text-gray-400 hover:text-gray-600">
@@ -202,7 +202,7 @@
             
             <!-- WhatsApp Input with Country Selector -->
             <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm text-gray-700 mb-2">
                 {{ $t('auth.login.whatsapp') }}
               </label>
               <div class="flex">
@@ -278,7 +278,7 @@
             <button
               @click="sendForgotPasswordCode"
               :disabled="!forgotPasswordForm.whatsapp || forgotPasswordLoading"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="forgotPasswordLoading" class="flex items-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -298,7 +298,7 @@
             </p>
             
             <div class="mb-4">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm text-gray-700 mb-2">
                 {{ $t('verification.verifyCode') }}
               </label>
               <input
@@ -313,7 +313,7 @@
             <button
               @click="verifyForgotPasswordCode"
               :disabled="!forgotPasswordForm.code || forgotPasswordLoading"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="forgotPasswordLoading" class="flex items-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -333,7 +333,7 @@
             </p>
             
                    <div class="mb-4">
-                     <label class="block text-sm font-medium text-gray-700 mb-2">
+                     <label class="block text-sm text-gray-700 mb-2">
                        {{ $t('verification.newPassword') }}
                      </label>
                      <input
@@ -350,7 +350,7 @@
                    </div>
 
                    <div class="mb-4">
-                     <label class="block text-sm font-medium text-gray-700 mb-2">
+                     <label class="block text-sm text-gray-700 mb-2">
                        {{ $t('verification.confirmNewPassword') }}
                      </label>
                      <input
@@ -372,7 +372,7 @@
             <button
               @click="resetPassword"
               :disabled="!forgotPasswordForm.newPassword || !forgotPasswordForm.confirmPassword || forgotPasswordLoading || forgotPasswordForm.newPassword !== forgotPasswordForm.confirmPassword"
-              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="forgotPasswordLoading" class="flex items-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

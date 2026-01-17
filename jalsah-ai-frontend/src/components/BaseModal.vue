@@ -69,7 +69,7 @@
               </svg>
               <span
                 v-if="cartItemCount > 0"
-                class="absolute -top-1 -right-1 bg-secondary-500 text-primary-500 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] px-1"
+                class="absolute -top-1 -right-1 bg-secondary-500 text-primary-500 text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] px-1"
               >
                 {{ cartItemCount > 99 ? '99+' : cartItemCount }}
               </span>

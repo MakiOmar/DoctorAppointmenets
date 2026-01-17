@@ -7,7 +7,7 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
              <!-- Header -->
        <div class="text-center mb-8">
-         <h1 class="text-3xl font-bold text-gray-900 mb-4">
+         <h1 class="text-3xl text-gray-900 mb-4">
            {{ $t('chatDiagnosis.title') }}
          </h1>
          <p class="text-lg text-gray-600">
@@ -65,7 +65,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <p class="text-lg font-medium">{{ $t('chatDiagnosis.welcome.title') }}</p>
+              <p class="text-lg">{{ $t('chatDiagnosis.welcome.title') }}</p>
               <p class="text-sm mt-2">{{ $t('chatDiagnosis.welcome.description') }}</p>
             </div>
 
@@ -155,7 +155,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">{{ $t('chatDiagnosis.completion.title') }}</h2>
+            <h2 class="text-2xl text-gray-900 mb-4">{{ $t('chatDiagnosis.completion.title') }}</h2>
             <p class="text-lg text-gray-600 mb-6">{{ $t('chatDiagnosis.completion.message') }}</p>
             <div class="flex justify-center">
               <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>

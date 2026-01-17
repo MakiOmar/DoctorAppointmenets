@@ -2,12 +2,12 @@
   <div class="doctor-dashboard">
     <div class="container mx-auto px-4 py-8">
       <div class="bg-white rounded-lg shadow-lg p-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Doctor Dashboard</h1>
+        <h1 class="text-3xl text-gray-800 mb-6">Doctor Dashboard</h1>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <!-- Profile Card -->
           <div class="bg-blue-50 rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-blue-800 mb-4">Profile</h2>
+            <h2 class="text-xl text-blue-800 mb-4">Profile</h2>
             <div class="space-y-2">
               <p><strong>Name:</strong> {{ user?.first_name }} {{ user?.last_name }}</p>
               <p><strong>Email:</strong> {{ user?.email }}</p>
@@ -20,9 +20,9 @@
 
           <!-- Appointments Card -->
           <div class="bg-green-50 rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-green-800 mb-4">Today's Appointments</h2>
+            <h2 class="text-xl text-green-800 mb-4">Today's Appointments</h2>
             <div class="text-center">
-              <div class="text-3xl font-bold text-green-600">{{ todayAppointments }}</div>
+              <div class="text-3xl text-green-600">{{ todayAppointments }}</div>
               <p class="text-green-700">Appointments</p>
             </div>
             <button class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">
@@ -32,9 +32,9 @@
 
           <!-- Earnings Card -->
           <div class="bg-purple-50 rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-purple-800 mb-4">This Month</h2>
+            <h2 class="text-xl text-purple-800 mb-4">This Month</h2>
             <div class="text-center">
-              <div class="text-3xl font-bold text-purple-600">{{ formatPrice(monthlyEarnings, 'en') }}</div>
+              <div class="text-3xl text-purple-600">{{ formatPrice(monthlyEarnings, 'en') }}</div>
               <p class="text-purple-700">Earnings</p>
             </div>
             <button class="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full">
@@ -45,7 +45,7 @@
 
         <!-- Recent Appointments -->
         <div class="mt-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Appointments</h2>
+          <h2 class="text-2xl text-gray-800 mb-4">Recent Appointments</h2>
           <div class="bg-white border rounded-lg overflow-hidden">
             <div class="p-4 border-b bg-gray-50">
               <p class="text-gray-600">No recent appointments to display</p>
@@ -55,7 +55,7 @@
 
         <!-- Quick Actions -->
         <div class="mt-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+          <h2 class="text-2xl text-gray-800 mb-4">Quick Actions</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button class="bg-indigo-600 text-white p-4 rounded-lg hover:bg-indigo-700 transition-colors">
               <div class="text-center">

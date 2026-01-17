@@ -46,7 +46,7 @@
           <span
             v-if="cartItemCount > 0"
             class="absolute -top-1 -right-1
-                  bg-secondary-500 text-white text-xs font-bold
+                  bg-secondary-500 text-white text-xs
                   rounded-full h-5 min-w-[20px]
                   flex items-center justify-center px-1"
           >
@@ -91,11 +91,11 @@
             v-if="headerStyle === 'dark'"
             class="bg-white rounded-lg px-6 py-3 inline-block mx-auto"
           >
-            <h2 class="text-xl font-bold text-primary-500 text-center">{{ title }}</h2>
+            <h2 class="text-xl text-primary-500 text-center">{{ title }}</h2>
           </div>
           <h2 
             v-else
-            class="text-xl font-bold text-center"
+            class="text-xl text-center"
             :class="headerStyle === 'white' ? 'text-gray-900' : 'text-white'"
           >
             {{ title }}

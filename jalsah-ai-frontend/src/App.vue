@@ -9,7 +9,7 @@
     >
       <div class="bg-white rounded-lg p-6 shadow-lg flex items-center space-x-3">
         <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
-        <span class="text-gray-700 font-medium">{{ $t('common.loading') }}</span>
+        <span class="text-gray-700">{{ $t('common.loading') }}</span>
       </div>
     </div>
     

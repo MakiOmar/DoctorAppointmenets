@@ -3,11 +3,11 @@
 
     
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <h1 class="text-3xl font-bold text-gray-900 mb-8">{{ $t('appointmentsPage.title') }}</h1>
+              <h1 class="text-3xl text-gray-900 mb-8">{{ $t('appointmentsPage.title') }}</h1>
 
       <!-- Session Instructions -->
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-        <h3 class="text-lg font-medium text-blue-900 mb-3">{{ $t('session.instructions') }}</h3>
+        <h3 class="text-lg text-blue-900 mb-3">{{ $t('session.instructions') }}</h3>
         <ul class="space-y-2 text-sm text-blue-800">
           <li class="flex items-start space-x-2 rtl:space-x-reverse">
             <svg class="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -42,7 +42,7 @@
                 activeTab === tab.id
                   ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 text-sm'
               ]"
             >
               {{ tab.name }}
@@ -50,7 +50,7 @@
                 v-if="tab.count !== undefined"
                 :class="[
                   activeTab === tab.id ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-900',
-                  'ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium'
+                  'ml-2 py-0.5 px-2.5 rounded-full text-xs'
                 ]"
               >
                 {{ tab.count }}
@@ -91,7 +91,7 @@
 
               <!-- Details -->
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                <h3 class="text-lg text-gray-900 mb-2">
                   {{ appointment.therapist?.name }}
                 </h3>
                 <div class="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
@@ -125,7 +125,7 @@
                 @click="joinSession(appointment.id)"
                 :disabled="appointment.status !== 'completed' && !appointment.therapist_joined"
                 :class="[
-                  'text-sm px-4 py-2 rounded-lg font-medium transition-colors',
+                  'text-sm px-4 py-2 rounded-lg transition-colors',
                   (appointment.status === 'completed' || appointment.therapist_joined)
                     ? 'btn-primary' 
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
@@ -182,7 +182,7 @@
           <div v-if="appointment.session_link" class="mt-4 p-3 bg-blue-50 rounded-lg">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-blue-900">{{ $t('appointmentsPage.sessionLinkAvailable') }}</p>
+                <p class="text-sm text-blue-900">{{ $t('appointmentsPage.sessionLinkAvailable') }}</p>
                 <p class="text-xs text-blue-700">{{ $t('appointmentsPage.sessionLinkMessage') }}</p>
               </div>
               <a 
@@ -202,7 +202,7 @@
           <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('appointmentsPage.noAppointments') }}</h3>
+          <h3 class="text-lg text-gray-900 mb-2">{{ $t('appointmentsPage.noAppointments') }}</h3>
           <p class="text-gray-600 mb-6">
             {{ activeTab === 'upcoming' ? $t('appointmentsPage.noUpcoming') : 
                $t('appointmentsPage.noPast') }}
@@ -232,7 +232,7 @@
           <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('prescription.noPrescriptions') || 'No Prescriptions' }}</h3>
+          <h3 class="text-lg text-gray-900 mb-2">{{ $t('prescription.noPrescriptions') || 'No Prescriptions' }}</h3>
           <p class="text-gray-600">{{ $t('prescription.noPrescriptionsMessage') || 'You don\'t have any prescription requests or completed prescriptions yet.' }}</p>
         </div>
       </div>
@@ -243,13 +243,13 @@
       <div class="relative top-8 mx-auto w-11/12 max-w-6xl bg-white rounded-lg shadow-xl">
         <!-- Modal Header -->
         <div class="flex items-center justify-between px-4 py-3 border-b">
-          <h3 class="text-lg font-medium text-gray-900">{{ $t('session.meetingRoom') }}</h3>
+          <h3 class="text-lg text-gray-900">{{ $t('session.meetingRoom') }}</h3>
           <div class="flex items-center space-x-2 rtl:space-x-reverse">
             <!-- Exit Session Button -->
             <button 
               v-if="jitsiLoaded"
               @click="exitSession"
-              class="bg-red-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+              class="bg-red-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-red-700 transition-colors"
             >
               {{ $t('session.exitSession') }}
             </button>
@@ -277,7 +277,7 @@
     <div v-if="showCancelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3 text-center">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('appointmentsPage.cancelTitle') }}</h3>
+          <h3 class="text-lg text-gray-900 mb-4">{{ $t('appointmentsPage.cancelTitle') }}</h3>
           <p class="text-sm text-gray-600 mb-6">
             {{ $t('appointmentsPage.cancelMessage') }}
           </p>
@@ -312,7 +312,7 @@
       <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div class="mb-4">
           <div class="flex justify-between items-center">
-            <h3 class="text-lg font-medium text-gray-900">{{ $t('prescription.bookFreeAppointment') }}</h3>
+            <h3 class="text-lg text-gray-900">{{ $t('prescription.bookFreeAppointment') }}</h3>
             <button @click="closeRochtahModal" class="text-gray-400 hover:text-gray-600">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -390,7 +390,7 @@
     <div v-if="showBookingConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3 text-center">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('prescription.confirmBooking') }}</h3>
+          <h3 class="text-lg text-gray-900 mb-4">{{ $t('prescription.confirmBooking') }}</h3>
           <p class="text-sm text-gray-600 mb-6">
             {{ $t('prescription.confirmBookingMessage') }}
           </p>
@@ -424,7 +424,7 @@
     <div v-if="showRochtahSessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-medium text-gray-900">{{ $t('prescription.rochtahSession') || 'Rochtah Session' }}</h3>
+          <h3 class="text-xl text-gray-900">{{ $t('prescription.rochtahSession') || 'Rochtah Session' }}</h3>
           <button 
             @click="closeRochtahSessionModal"
             class="text-gray-400 hover:text-gray-600"
@@ -479,12 +479,12 @@
         <div class="p-6">
           <!-- Modal Header -->
           <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-semibold text-gray-900">
+            <h3 class="text-xl text-gray-900">
               {{ $t('prescription.prescriptionDetails') }}
             </h3>
             <button 
               @click="closePrescriptionModal"
-              class="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+              class="text-gray-400 hover:text-gray-600 text-2xl"
             >
               ×
             </button>
@@ -593,7 +593,7 @@
       <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
       <!-- Modal Header -->
       <div class="flex items-center justify-between mb-6">
-        <h3 class="text-xl font-semibold text-gray-900">
+        <h3 class="text-xl text-gray-900">
           {{ $t('appointmentsPage.bookWithSameTherapist') }} - {{ selectedTherapist.name }}
         </h3>
         <button
@@ -617,13 +617,13 @@
         <div v-else-if="availableDates.length > 0" class="space-y-4">
           <!-- Date Carousel -->
           <div>
-            <h4 class="text-lg font-medium text-gray-900 mb-3">{{ $t('therapistDetails.selectDate') }}</h4>
+            <h4 class="text-lg text-gray-900 mb-3">{{ $t('therapistDetails.selectDate') }}</h4>
             <div class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
               <button
                 v-for="date in availableDates"
                 :key="date.value"
                 @click="selectDate(date)"
-                class="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors"
+                class="flex-shrink-0 px-4 py-2 rounded-lg border text-sm transition-colors"
                 :class="selectedDate?.value === date.value 
                   ? 'border-primary-600 bg-primary-50 text-primary-700' 
                   : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'"
@@ -673,7 +673,7 @@
                   <button
                     @click="removeFromCart(slot)"
                     :disabled="cartLoading[slot.slot_id]"
-                    class="ml-2 text-red-600 hover:text-red-800 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="ml-2 text-red-600 hover:text-red-800 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Remove from cart"
                   >
                     <span v-if="cartLoading[slot.slot_id]" class="flex items-center">
@@ -914,7 +914,7 @@ export default {
         'cancelled': 'text-red-600 bg-red-100',
         'no_show': 'text-gray-600 bg-gray-100'
       }
-      return `px-2 py-1 rounded-full text-xs font-medium ${classMap[status] || ''}`
+      return `px-2 py-1 rounded-full text-xs ${classMap[status] || ''}`
     }
 
     const canJoinSession = (appointment) => {

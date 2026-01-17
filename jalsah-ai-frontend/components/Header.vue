@@ -10,7 +10,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
               </svg>
             </div>
-            <span class="text-xl font-bold text-gray-900">{{ $t('logo.text') }}</span>
+            <span class="text-xl text-gray-900">{{ $t('logo.text') }}</span>
           </router-link>
         </div>
 
@@ -18,28 +18,28 @@
         <nav class="hidden md:flex items-center space-x-8">
           <router-link 
             to="/" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm transition-colors"
             :class="{ 'text-primary-600': $route.path === '/' }"
           >
             {{ $t('nav.home') }}
           </router-link>
           <router-link 
             to="/therapists" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm transition-colors"
             :class="{ 'text-primary-600': $route.path === '/therapists' }"
           >
             {{ $t('nav.therapists') }}
           </router-link>
           <router-link 
             to="/diagnosis" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm transition-colors"
             :class="{ 'text-primary-600': $route.path === '/diagnosis' }"
           >
             {{ $t('nav.diagnosis') }}
           </router-link>
           <router-link 
             to="/appointments" 
-            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+            class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm transition-colors"
             :class="{ 'text-primary-600': $route.path === '/appointments' }"
           >
             {{ $t('nav.appointments') }}
@@ -116,19 +116,19 @@
           <div v-else class="flex items-center space-x-4">
             <router-link
               to="/login"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm transition-colors"
             >
               {{ $t('nav.login') }}
             </router-link>
             <router-link
               to="/register"
-              class="bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              class="bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded-md text-sm transition-colors"
             >
               {{ $t('nav.register') }}
             </router-link>
             <router-link
               to="/therapist-register"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+              class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm transition-colors"
             >
               {{ $t('nav.therapistRegister') }}
             </router-link>

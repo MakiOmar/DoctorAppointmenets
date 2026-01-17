@@ -16,20 +16,20 @@
               @error="logoExists = false"
             />
           <div v-else class="w-32 h-32 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-            <span class="text-4xl font-bold text-white">{{ $t('logo.text') }}</span>
+            <span class="text-4xl text-white">{{ $t('logo.text') }}</span>
           </div>
         </div>
 
         <!-- Welcome Text -->
-        <h1 class="text-[1.4rem] md:text-5xl md:leading-tight font-bold text-white">
+        <h1 class="text-[1.4rem] md:text-5xl md:leading-tight text-white">
           {{ $t('home.sections.hero.welcome') }}
         </h1>
-        <p class="text-[1.4rem] md:text-xl text-white my-2 max-w-2xl mx-auto font-jalsah2">
+        <p class="text-[1.4rem] md:text-xl text-white mb-2 max-w-2xl mx-auto font-jalsah2" style="line-height: 1.3rem;">
           {{ $t('home.sections.hero.subtitle') }}
         </p>
 
         <!-- Action Buttons - Conditional based on auth state -->
-        <div v-if="!authStore.isAuthenticated" class="flex flex-col sm:flex-row gap-4 justify-center items-center" dir="rtl">
+        <div v-if="!authStore.isAuthenticated" class="flex flex-col sm:flex-row gap-3 mt-[40px] justify-center items-center" dir="rtl">
           <!-- Login Button (Left in RTL, icon after text) -->
           <router-link
             to="/login"
@@ -82,12 +82,12 @@
         </div>
 
         <!-- Authenticated User Buttons -->
-        <div v-else class="flex flex-col sm:flex-row gap-4 justify-center items-center" dir="rtl">
+        <div v-else class="flex flex-col sm:flex-row gap-3 justify-center mt-[40px] items-center" dir="rtl">
           <!-- Smart Diagnosis Button (Right in RTL, icon after text) -->
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-1 py-2 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity w-[250px] text-[14px] md:text-[25px]"
+            class="flex items-center justify-center gap-3 px-1 py-2 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity w-[250px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
@@ -96,7 +96,7 @@
               v-if="aiIconExists"
               src="/home/ai-icon-white.png" 
               alt="AI Diagnosis" 
-              class="h-5"
+              class="h-7"
               @error="aiIconExists = false"
             />
             <svg 
@@ -121,12 +121,12 @@
           <!-- Therapists Button (Left in RTL, icon after text) -->
           <router-link
             to="/therapists"
-            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
+            class="flex items-center justify-center gap-3 px-8 py-2 bg-secondary-500 text-primary-500 rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.therapistsButton') }}
             <svg 
-              class="w-5 h-5" 
+              class="w-7 h-7" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -165,7 +165,7 @@
               v-else
               class="w-32 h-32 md:w-40 md:h-40 bg-white bg-opacity-20 rounded-full flex items-center justify-center"
             >
-              <span class="text-4xl font-bold text-white">AI</span>
+              <span class="text-4xl text-white">AI</span>
             </div>
           </div>
         </div>

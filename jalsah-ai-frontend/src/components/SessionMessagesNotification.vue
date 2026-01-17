@@ -27,7 +27,7 @@
       <!-- Badge -->
       <span
         v-if="unreadCount > 0"
-        class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] px-1"
+        class="absolute -top-1 -right-1 bg-secondary-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px] px-1"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
@@ -42,7 +42,7 @@
     >
       <!-- Header -->
       <div class="px-4 py-3 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900">{{ $t('messages.title') }}</h3>
+        <h3 class="text-lg text-gray-900">{{ $t('messages.title') }}</h3>
       </div>
 
       <!-- Loading State -->
@@ -73,7 +73,7 @@
             
             <!-- Message Content -->
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900">
+              <p class="text-sm text-gray-900">
                 {{ message.sender_name || 'معالج' }}
               </p>
               <p class="text-xs text-gray-500 mb-1">
@@ -106,7 +106,7 @@
         <!-- See All Button -->
         <router-link
           to="/notifications"
-          class="block w-full py-3 text-center text-sm font-medium text-primary-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
+          class="block w-full py-3 text-center text-sm text-primary-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
           @click="showNotifications = false"
         >
           {{ $t('messages.seeAll') }}
@@ -142,7 +142,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h3 class="text-lg font-semibold text-gray-900">
+            <h3 class="text-lg text-gray-900">
               {{ $t('messages.title') }}
             </h3>
             <p class="text-sm text-gray-500">
@@ -173,7 +173,7 @@
 
           <!-- Attachments -->
           <div v-if="selectedMessage.attachments && selectedMessage.attachments.length > 0" class="mt-6">
-            <h4 class="text-sm font-medium text-gray-900 mb-3">
+            <h4 class="text-sm text-gray-900 mb-3">
               {{ $t('messages.attachments') }}
             </h4>
             <div class="space-y-2">
@@ -190,7 +190,7 @@
                 </div>
                 <button
                   @click="downloadAttachment(attachment)"
-                  class="px-3 py-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors flex-shrink-0"
+                  class="px-3 py-1 text-xs text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors flex-shrink-0"
                   :class="locale === 'ar' ? 'mr-2' : 'ml-2'"
                 >
                   {{ $t('messages.download') }}
@@ -211,7 +211,7 @@
         <div class="flex justify-end p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
           <button
             @click="closeMessagePopup"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            class="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
             {{ $t('common.close') }}
           </button>

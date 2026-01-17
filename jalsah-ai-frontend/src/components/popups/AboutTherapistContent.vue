@@ -9,7 +9,7 @@
     <!-- Error State -->
     <div v-else-if="error" class="text-center py-12">
       <p class="text-red-300 mb-4">{{ error }}</p>
-      <button @click="loadTherapistDetails" class="bg-white text-primary-500 px-4 py-2 rounded-lg font-medium hover:bg-gray-100">
+      <button @click="loadTherapistDetails" class="bg-white text-primary-500 px-4 py-2 rounded-lg hover:bg-gray-100">
         {{ $t('common.retry') }}
       </button>
     </div>

@@ -14,7 +14,7 @@
               </svg>
             </button>
             <div>
-              <h1 class="text-xl font-semibold text-gray-900">{{ $t('session.title') }}</h1>
+              <h1 class="text-xl text-gray-900">{{ $t('session.title') }}</h1>
               <p v-if="sessionData" class="text-sm text-gray-600">{{ $t('session.with') }} {{ sessionData.therapist_name }}</p>
             </div>
           </div>
@@ -23,7 +23,7 @@
           <div class="flex items-center space-x-3 rtl:space-x-reverse">
             <div class="flex items-center space-x-2 rtl:space-x-reverse">
               <div class="w-2 h-2 rounded-full" :class="statusColor"></div>
-              <span class="text-sm font-medium" :class="statusTextColor">{{ sessionStatus }}</span>
+              <span class="text-sm" :class="statusTextColor">{{ sessionStatus }}</span>
             </div>
             
             <!-- Timer -->
@@ -51,7 +51,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('session.error') }}</h3>
+        <h3 class="text-lg text-gray-900 mb-2">{{ $t('session.error') }}</h3>
         <p class="text-gray-600 mb-4">{{ error }}</p>
         <button
           @click="loadSession"
@@ -70,7 +70,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('session.notFound') }}</h3>
+        <h3 class="text-lg text-gray-900 mb-2">{{ $t('session.notFound') }}</h3>
         <p class="text-gray-600 mb-4">{{ $t('session.notFoundDescription') }}</p>
         <router-link to="/appointments" class="btn-primary px-4 py-2">
           {{ $t('session.backToAppointments') }}
@@ -121,7 +121,7 @@
       <!-- Session Actions -->
       <div class="bg-white rounded-lg shadow-sm border mb-6">
         <div class="p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('session.actions') }}</h3>
+          <h3 class="text-lg text-gray-900 mb-4">{{ $t('session.actions') }}</h3>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <!-- Join Session Button (for patients) -->
@@ -214,7 +214,7 @@
              <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
            </div>
-           <h3 class="text-lg font-medium text-gray-900">{{ $t('session.meetingRoom') }}</h3>
+           <h3 class="text-lg text-gray-900">{{ $t('session.meetingRoom') }}</h3>
            <button
              @click="closeMeetingRoom"
              class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
@@ -233,7 +233,7 @@
             <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full bg-gray-900">
               <div class="text-center text-white">
                 <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <p class="text-lg font-medium">{{ $t('session.loadingMeeting') }}</p>
+                <p class="text-lg">{{ $t('session.loadingMeeting') }}</p>
                 <p class="text-sm text-gray-400 mt-2">{{ $t('session.connecting') }}</p>
                 
                 <!-- Manual show button after 5 seconds -->

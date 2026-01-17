@@ -4,7 +4,7 @@
     
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Profile page -->
-      <h1 class="text-3xl font-bold text-gray-900 mb-8">{{ $t('profile.title') }}</h1>
+      <h1 class="text-3xl text-gray-900 mb-8">{{ $t('profile.title') }}</h1>
 
       <div v-if="loading" class="text-center py-12">
         <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -17,7 +17,7 @@
         <!-- Profile Information -->
         <div class="md:col-span-2">
           <div class="card">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.personalInfo') }}</h2>
+            <h2 class="text-xl text-gray-900 mb-6">{{ $t('profile.personalInfo') }}</h2>
             
             <form @submit.prevent="updateProfile" class="space-y-6">
               <div class="grid md:grid-cols-2 gap-4">
@@ -159,7 +159,7 @@
 
           <!-- Change Password -->
           <div class="card mt-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.changePassword') }}</h2>
+            <h2 class="text-xl text-gray-900 mb-6">{{ $t('profile.changePassword') }}</h2>
             
             <form @submit.prevent="changePassword" class="space-y-6">
               <div>
@@ -216,7 +216,7 @@
         <div class="md:col-span-1">
           <!-- Account Summary -->
           <div class="card mt-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ $t('profile.accountSummary') }}</h2>
+            <h2 class="text-xl text-gray-900 mb-6">{{ $t('profile.accountSummary') }}</h2>
             <div class="space-y-4">
               <div class="flex justify-between">
                 <span class="text-gray-600">{{ $t('profile.memberSince') }}</span>

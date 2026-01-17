@@ -27,7 +27,7 @@
           {{ $t('common.back') }}
         </button>
         
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+        <h1 class="text-3xl text-gray-900 mb-2">
           {{ $t('reschedule.title') }}
         </h1>
         <p class="text-gray-600">
@@ -37,7 +37,7 @@
       
       <!-- Current Appointment Info -->
       <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('reschedule.currentAppointment') }}</h2>
+        <h2 class="text-xl text-gray-900 mb-4">{{ $t('reschedule.currentAppointment') }}</h2>
         
         <div class="grid md:grid-cols-2 gap-4">
           <div>
@@ -61,11 +61,11 @@
       
       <!-- New Appointment Selection -->
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ $t('reschedule.selectNewTime') }}</h2>
+        <h2 class="text-xl text-gray-900 mb-4">{{ $t('reschedule.selectNewTime') }}</h2>
         
         <!-- Date Selection -->
         <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm text-gray-700 mb-2">
             {{ $t('reschedule.selectDate') }}
           </label>
           <div class="flex space-x-2 overflow-x-auto pb-2">
@@ -74,7 +74,7 @@
               :key="date.date"
               @click="selectDate(date)"
               :class="[
-                'px-4 py-2 rounded-lg border text-sm font-medium whitespace-nowrap',
+                'px-4 py-2 rounded-lg border text-sm whitespace-nowrap',
                 date.isSelected
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : date.isAvailable
@@ -90,7 +90,7 @@
         
         <!-- Time Slots -->
         <div v-if="selectedDate && availableSlots.length > 0">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm text-gray-700 mb-2">
             {{ $t('reschedule.selectTime') }} ( جميع المواعيد بتوقيت مصر )
           </label>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -99,7 +99,7 @@
               :key="slot.slot_id"
               @click="selectTimeSlot(slot)"
               :class="[
-                'p-3 rounded-lg border text-sm font-medium',
+                'p-3 rounded-lg border text-sm',
                 selectedTimeSlot?.slot_id === slot.slot_id
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-gray-300 text-gray-700 hover:border-blue-300'
@@ -128,7 +128,7 @@
               <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
             </svg>
             <div>
-              <p class="text-sm font-medium text-yellow-800">{{ $t('reschedule.alreadyRescheduledTitle') }}</p>
+              <p class="text-sm text-yellow-800">{{ $t('reschedule.alreadyRescheduledTitle') }}</p>
               <p class="text-sm text-yellow-700">{{ $t('reschedule.alreadyRescheduledMessage') }}</p>
             </div>
           </div>
@@ -140,7 +140,7 @@
             @click="rescheduleAppointment"
             :disabled="!selectedTimeSlot || rescheduling || !canReschedule"
             :class="[
-              'w-full py-3 px-4 rounded-lg font-medium transition-colors',
+              'w-full py-3 px-4 rounded-lg transition-colors',
               selectedTimeSlot && !rescheduling && canReschedule
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'

@@ -3,7 +3,7 @@
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <div class="flex justify-center">
         <div class="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
-          <span class="text-white font-bold text-xl">{{ $t('logo.text') }}</span>
+          <span class="text-white text-xl">{{ $t('logo.text') }}</span>
         </div>
       </div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -133,7 +133,7 @@
             <p class="text-sm text-gray-600">
               {{ verificationMethod === 'whatsapp' ? $t('verification.whatsappSentTo') : $t('verification.emailSentTo') }}
             </p>
-            <p class="text-lg font-medium text-gray-900" :dir="verificationMethod === 'whatsapp' ? 'ltr' : 'auto'" :style="verificationMethod === 'whatsapp' ? 'text-align: center; direction: ltr;' : ''">{{ contact }}</p>
+            <p class="text-lg text-gray-900" :dir="verificationMethod === 'whatsapp' ? 'ltr' : 'auto'" :style="verificationMethod === 'whatsapp' ? 'text-align: center; direction: ltr;' : ''">{{ contact }}</p>
             <button
               type="button"
               @click="changeContact"
@@ -166,7 +166,7 @@
             <button
               type="submit"
               :disabled="loading || !isFormValid"
-              class="w-full btn-primary py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full btn-primary py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="loading" class="flex items-center justify-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -188,7 +188,7 @@
           <button
             @click="resendCode"
             :disabled="resendLoading || resendCooldown > 0"
-            class="mt-2 text-sm font-medium text-primary-600 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="mt-2 text-sm text-primary-600 hover:text-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="resendLoading">{{ $t('verification.sending') }}</span>
             <span v-else-if="resendCooldown > 0">{{ $t('verification.resendIn', { seconds: resendCooldown }) }}</span>
@@ -198,7 +198,7 @@
 
         <!-- Back to Login -->
         <div class="mt-6 text-center">
-          <router-link to="/login" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+          <router-link to="/login" class="text-sm text-primary-600 hover:text-primary-500">
             {{ $t('verification.backToLogin') }}
           </router-link>
         </div>
@@ -714,11 +714,11 @@ export default {
 }
 
 .form-label {
-  @apply block text-sm font-medium text-gray-700;
+  @apply block text-sm text-gray-700;
 }
 
 .btn-primary {
-  @apply relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+  @apply relative w-full flex justify-center py-2 px-4 border border-transparent text-sm rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
 }
 
 /* Emoji fonts are imported globally in style.css */

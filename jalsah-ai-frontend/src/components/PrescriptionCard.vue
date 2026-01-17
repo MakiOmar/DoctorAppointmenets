@@ -1,7 +1,7 @@
 <template>
   <div v-if="prescriptionRequests.length > 0 || completedPrescriptions.length > 0" class="mb-8">
     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-      <h3 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+      <h3 class="text-lg text-blue-900 mb-4 flex items-center">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
@@ -18,7 +18,7 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
               <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-              <span class="text-blue-800 text-sm font-medium">{{ t('prescription.prescriptionRequested').replace('{name}', request.therapist_name) || 'Prescription Requested' }}</span>
+              <span class="text-blue-800 text-sm">{{ t('prescription.prescriptionRequested').replace('{name}', request.therapist_name) || 'Prescription Requested' }}</span>
             </div>
           </div>
           
@@ -26,22 +26,22 @@
           <div class="flex items-center justify-between">
             <div class="text-sm">
               <div v-if="request.status === 'confirmed' && request.booking_date && request.booking_date !== '0000-00-00'" class="mb-2">
-                <div class="text-gray-700 font-medium">
+                <div class="text-gray-700">
                   📅 {{ formatDate(request.booking_date) }}
                 </div>
-                <div class="text-gray-700 font-medium">
+                <div class="text-gray-700">
                   🕐 {{ formatTime(request.booking_time) }}
                 </div>
               </div>
               <div v-if="request.status === 'pending'">
-                <span class="text-orange-600 font-medium">
+                <span class="text-orange-600">
                   {{ t('prescription.pending') || 'Pending' }}
                 </span>
                 <div class="text-xs text-red-600 mt-1" v-if="request.days_until_expiry !== undefined && request.days_until_expiry >= 0">
                   ⚠️ {{ t('prescription.expiryWarning') || 'يجب إتمام الحجز قبل' }} {{ formatDate(request.expiry_date) }}
                 </div>
               </div>
-              <span v-else-if="request.status === 'confirmed'" class="text-green-600 font-medium">
+              <span v-else-if="request.status === 'confirmed'" class="text-green-600">
                 {{ t('prescription.confirmed') }}
               </span>
               <span v-else class="text-gray-600">
@@ -62,7 +62,7 @@
                 @click="$emit('join-meeting', request.id)"
                 :disabled="!canJoinRochtahSession(request)"
                 :class="[
-                  'text-sm px-4 py-2 rounded-lg font-medium transition-colors',
+                  'text-sm px-4 py-2 rounded-lg transition-colors',
                   canJoinRochtahSession(request)
                     ? 'btn-success'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
@@ -85,7 +85,7 @@
         
         <!-- Completed Prescriptions Section -->
         <div v-if="completedPrescriptions.length > 0" class="mt-6">
-          <h4 class="text-md font-semibold text-blue-900 mb-3 flex items-center">
+          <h4 class="text-md text-blue-900 mb-3 flex items-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -102,7 +102,7 @@
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center">
                   <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  <span class="text-green-800 text-sm font-medium">{{ t('prescription.prescriptionRequested').replace('{name}', prescription.therapist_name || '') || 'Prescription Ready' }}</span>
+                  <span class="text-green-800 text-sm">{{ t('prescription.prescriptionRequested').replace('{name}', prescription.therapist_name || '') || 'Prescription Ready' }}</span>
                 </div>
               </div>
               
@@ -111,20 +111,20 @@
                 <div class="text-sm">
                   <!-- Show original session date/time if available -->
                   <div v-if="prescription.date_time || prescription.starts" class="mb-2">
-                    <div v-if="prescription.date_time" class="text-gray-700 font-medium">
+                    <div v-if="prescription.date_time" class="text-gray-700">
                       📅 {{ formatDate(prescription.date_time) }}
                     </div>
-                    <div v-if="prescription.starts" class="text-gray-700 font-medium">
+                    <div v-if="prescription.starts" class="text-gray-700">
                       🕐 {{ formatTime(prescription.starts) }}
                     </div>
                   </div>
                   
                   <!-- Show booking date/time if available -->
                   <div v-if="prescription.booking_date && prescription.booking_date !== '0000-00-00'" class="mb-2">
-                    <div class="text-gray-700 font-medium">
+                    <div class="text-gray-700">
                       📅 {{ formatDate(prescription.booking_date) }}
                     </div>
-                    <div v-if="prescription.booking_time" class="text-gray-700 font-medium">
+                    <div v-if="prescription.booking_time" class="text-gray-700">
                       🕐 {{ formatTime(prescription.booking_time) }}
                     </div>
                   </div>
@@ -141,7 +141,7 @@
                     <span class="text-gray-900">{{ formatDate(prescription.prescribed_at) }}</span>
                   </div>
                   
-                  <span class="text-green-600 font-medium">
+                  <span class="text-green-600">
                     {{ t('prescription.confirmed') }}
                   </span>
                 </div>

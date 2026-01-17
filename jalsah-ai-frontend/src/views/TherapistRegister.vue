@@ -106,7 +106,7 @@
             
             <!-- OTP Verification Step -->
             <div v-if="showOtpStep" class="otp-verification-section border-t pt-4 mt-4">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">تحقق من رمز التأكيد</h3>
+              <h3 class="text-lg text-gray-900 mb-4">تحقق من رمز التأكيد</h3>
               <p class="text-sm text-gray-600 mb-4">
                 تم إرسال رمز التحقق إلى: {{ contactMethod }}
               </p>

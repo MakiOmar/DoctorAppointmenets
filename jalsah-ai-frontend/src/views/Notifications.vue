@@ -3,7 +3,7 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">{{ $t('messages.title') }}</h1>
+        <h1 class="text-3xl text-gray-900">{{ $t('messages.title') }}</h1>
         <p class="mt-2 text-gray-600">{{ $t('messages.subtitle') }}</p>
       </div>
 
@@ -40,7 +40,7 @@
                     </svg>
                   </div>
                   <div>
-                    <h3 class="text-sm font-medium text-gray-900">
+                    <h3 class="text-sm text-gray-900">
                       {{ message.sender_name || 'معالج' }}
                     </h3>
                     <p class="text-xs text-gray-500">
@@ -115,7 +115,7 @@
         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
         </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('messages.noMessages') }}</h3>
+        <h3 class="text-lg text-gray-900 mb-2">{{ $t('messages.noMessages') }}</h3>
         <p class="text-gray-500">{{ $t('messages.noMessagesDescription') }}</p>
       </div>
     </div>
@@ -147,7 +147,7 @@
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-lg font-medium text-gray-900">
+                  <h3 class="text-lg text-gray-900">
                     {{ selectedMessage.sender_name || 'معالج' }}
                   </h3>
                   <p class="text-sm text-gray-500">
@@ -177,7 +177,7 @@
 
             <!-- Attachments -->
             <div v-if="selectedMessage.attachments && selectedMessage.attachments.length > 0">
-              <h4 class="text-sm font-medium text-gray-900 mb-3">{{ $t('messages.attachments') }}</h4>
+              <h4 class="text-sm text-gray-900 mb-3">{{ $t('messages.attachments') }}</h4>
               <div class="grid grid-cols-1 gap-3">
                 <div
                   v-for="attachment in selectedMessage.attachments"
@@ -191,13 +191,13 @@
                       </svg>
                     </div>
                     <div>
-                      <p class="text-sm font-medium text-gray-900">{{ attachment.name }}</p>
+                      <p class="text-sm text-gray-900">{{ attachment.name }}</p>
                       <p class="text-xs text-gray-500">{{ attachment.type }}</p>
                     </div>
                   </div>
                   <button
                     @click="downloadAttachment(attachment)"
-                    class="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                    class="text-primary-600 hover:text-primary-700 text-sm"
                   >
                     {{ $t('messages.download') }}
                   </button>
@@ -210,7 +210,7 @@
           <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               @click="closeMessagePopup"
-              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm transition-colors"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:w-auto sm:text-sm transition-colors"
             >
               {{ $t('common.close') }}
             </button>

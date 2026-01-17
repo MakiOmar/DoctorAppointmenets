@@ -3,7 +3,7 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $t('checkout') }}</h1>
+        <h1 class="text-3xl text-gray-900 mb-2">{{ $t('checkout') }}</h1>
         <p class="text-gray-600">{{ $t('completeYourBooking') }}</p>
       </div>
 
@@ -22,7 +22,7 @@
             </svg>
           </div>
         </div>
-        <h3 class="mt-4 text-lg font-medium text-gray-900">{{ $t('orderCreated') }}</h3>
+        <h3 class="mt-4 text-lg text-gray-900">{{ $t('orderCreated') }}</h3>
         <p class="mt-2 text-gray-600">{{ $t('redirectingToPayment') }}</p>
         <div class="mt-4">
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
@@ -38,7 +38,7 @@
             </svg>
           </div>
           <div class="mr-3 rtl:ml-3 rtl:mr-0">
-            <h3 class="text-sm font-medium text-red-800">{{ $t('errorLoadingCheckout') }}</h3>
+            <h3 class="text-sm text-red-800">{{ $t('errorLoadingCheckout') }}</h3>
             <p class="mt-2 text-sm text-red-700">{{ cartStore.error }}</p>
           </div>
         </div>
@@ -49,10 +49,10 @@
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">{{ $t('emptyCart') }}</h3>
+        <h3 class="mt-2 text-sm text-gray-900">{{ $t('emptyCart') }}</h3>
         <p class="mt-1 text-sm text-gray-500">{{ $t('emptyCartDescription') }}</p>
         <div class="mt-6">
-          <router-link to="/therapists" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+          <router-link to="/therapists" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm rounded-md text-white bg-blue-600 hover:bg-blue-700">
             {{ $t('browseTherapists') }}
           </router-link>
         </div>
@@ -63,7 +63,7 @@
         <!-- Order Summary -->
         <div class="lg:col-span-2">
           <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">{{ $t('orderSummary') }}</h2>
+            <h2 class="text-lg text-gray-900 mb-4">{{ $t('orderSummary') }}</h2>
             
             <!-- Appointments List -->
             <div class="space-y-4 mb-6">
@@ -105,7 +105,7 @@
 
             <!-- Payment Method -->
             <div class="border-t border-gray-200 pt-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">{{ $t('paymentMethod') }}</h3>
+              <h3 class="text-lg text-gray-900 mb-4">{{ $t('paymentMethod') }}</h3>
               <div class="space-y-3">
                 <div class="flex items-center">
                   <input
@@ -116,7 +116,7 @@
                     v-model="paymentMethod"
                     class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <label for="cash" class="mr-3 rtl:ml-3 rtl:mr-0 text-sm font-medium text-gray-700">
+                  <label for="cash" class="mr-3 rtl:ml-3 rtl:mr-0 text-sm text-gray-700">
                     {{ $t('cashPayment') }}
                   </label>
                 </div>
@@ -129,7 +129,7 @@
                     v-model="paymentMethod"
                     class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <label for="card" class="mr-3 rtl:ml-3 rtl:mr-0 text-sm font-medium text-gray-700">
+                  <label for="card" class="mr-3 rtl:ml-3 rtl:mr-0 text-sm text-gray-700">
                     {{ $t('cardPayment') }}
                   </label>
                 </div>
@@ -141,7 +141,7 @@
         <!-- Payment Summary -->
         <div class="lg:col-span-1">
           <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">{{ $t('paymentSummary') }}</h2>
+            <h2 class="text-lg text-gray-900 mb-4">{{ $t('paymentSummary') }}</h2>
             
             <div class="space-y-4">
               <div class="flex justify-between">
@@ -151,8 +151,8 @@
               
               <div class="border-t border-gray-200 pt-4">
                 <div class="flex justify-between">
-                  <span class="text-lg font-medium text-gray-900">{{ $t('total') }}</span>
-                  <span class="text-lg font-medium text-gray-900">{{ formatPrice(cartStore.totalPrice, $i18n.locale, getCartCurrency()) }}</span>
+                  <span class="text-lg text-gray-900">{{ $t('total') }}</span>
+                  <span class="text-lg text-gray-900">{{ formatPrice(cartStore.totalPrice, $i18n.locale, getCartCurrency()) }}</span>
                 </div>
               </div>
             </div>
@@ -160,7 +160,7 @@
             <button
               @click="processPayment"
               :disabled="cartStore.loading || !paymentMethod"
-              class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.loading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('completePayment') }}</span>
@@ -174,7 +174,7 @@
             
             <!-- Appointment Change Terms -->
             <div v-if="settingsStore.getAppointmentChangeTerms" class="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 class="text-sm font-medium text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
+              <h3 class="text-sm text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
               <p class="text-sm text-gray-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
             </div>
           </div>

@@ -28,13 +28,13 @@
             />
             <div
               v-else
-              class="bg-secondary-300 text-primary-500 w-16 h-16 rounded-full flex items-center justify-center font-bold"
+              class="bg-secondary-300 text-primary-500 w-16 h-16 rounded-full flex items-center justify-center"
             >
               <span class="text-[1.55rem] font-jalsah1">{{ therapistPosition }}</span>
             </div>
             <div
               v-if="orderBadgeIconExists"
-              class="absolute inset-0 flex items-center justify-center font-bold"
+              class="absolute inset-0 flex items-center justify-center"
               style="pointer-events: none;"
             >
               <span class="text-[1.55rem] font-jalsah1 text-primary-500">{{ therapistPosition }}</span>
