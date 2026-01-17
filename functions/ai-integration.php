@@ -3127,6 +3127,7 @@ Best regards,
 			'public_bio_en'      => $application->ai_bio_en,
 			'public_bio_ar'      => $application->ai_bio,
 			'doctor_specialty'   => $application->doctor_specialty,
+			'role'               => $application->role, // Include role for specialty display logic
 			'certifications'     => $application->ai_certifications,
 			'earliest_slot'      => $application->ai_earliest_slot,
 			'earliest_slot_data' => $earliest_slot_data,

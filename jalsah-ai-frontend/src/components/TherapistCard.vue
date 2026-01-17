@@ -307,10 +307,6 @@ export default {
       return formatPriceUtil(price, locale.value, currencySymbol)
     }
 
-    const getCurrencySymbol = (currencyCode) => {
-      return getCurrencySymbol(currencyCode)
-    }
-
     // Get currency symbol for therapist price display
     // Priority: 1) User's selected currency from settings (most important - user's choice)
     //           2) currency_symbol from API (if available and matches user's currency)

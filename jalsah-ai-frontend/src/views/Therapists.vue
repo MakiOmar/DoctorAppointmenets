@@ -14,8 +14,9 @@
 
       <!-- Search and Sorting -->
       <div class="card mb-8">
-        <!-- Search Filter -->
-        <div class="w-full lg:w-1/3 mb-5">
+        <div class="flex flex-col-reverse sm:flex-col lg:flex-row lg:items-center gap-4">
+          <!-- Search Filter -->
+          <div class="w-full lg:w-1/3">
             <div class="relative">
               <input
                 v-model="searchQuery"
@@ -33,8 +34,6 @@
               </div>
             </div>
           </div>
-        <div class="flex flex-col-reverse sm:flex-col lg:flex-row lg:items-center gap-4">
-          
           <!-- The Best Button (Redirects to Diagnosis Results) -->
           <div class="w-full lg:w-1/3">
             <router-link
