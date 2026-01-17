@@ -3,6 +3,7 @@
     :is-open="isOpen"
     :title="null"
     header-style="dark"
+    :show-full-header="true"
     @close="handleClose"
     @update:isOpen="handleUpdateIsOpen"
   >

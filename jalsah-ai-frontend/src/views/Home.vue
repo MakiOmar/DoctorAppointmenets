@@ -15,9 +15,6 @@
               class="h-[7rem] md:h-32 mx-auto"
               @error="logoExists = false"
             />
-          <div v-else class="w-32 h-32 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-            <span class="text-4xl text-white">{{ $t('logo.text') }}</span>
-          </div>
         </div>
 
         <!-- Welcome Text -->

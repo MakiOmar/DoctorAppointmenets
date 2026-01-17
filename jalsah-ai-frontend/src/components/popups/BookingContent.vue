@@ -621,11 +621,11 @@ export default {
       // Only handle horizontal swipes (ignore vertical scrolling)
       if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
         if (deltaX > 0) {
-          // Swipe left - go to next
-          scrollDatesRight()
-        } else {
-          // Swipe right - go to previous
+          // Swipe left - go to previous (inverse of arrow direction)
           scrollDatesLeft()
+        } else {
+          // Swipe right - go to next (inverse of arrow direction)
+          scrollDatesRight()
         }
       }
     }

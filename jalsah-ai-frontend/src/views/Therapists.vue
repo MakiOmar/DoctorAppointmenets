@@ -68,8 +68,8 @@
                 v-model="searchQuery"
                 type="text"
                 :placeholder="$t('therapists.filters.searchPlaceholder')"
-                class="w-full px-[10px] rounded-lg bg-[#D1B289] text-[#162E52] placeholder-[#162E52] focus:outline-none focus:ring-2 focus:ring-[#162E52] focus:ring-opacity-50"
-                style="font-family: 'jalsah2', sans-serif; font-size: 22px;"
+                class="w-full px-[10px] py-2  text-[22px] md:text-[20px] rounded-lg bg-[#D1B289] text-[#162E52] placeholder-[#162E52] focus:outline-none focus:ring-2 focus:ring-[#162E52] focus:ring-opacity-50"
+                style="font-family: 'jalsah2', sans-serif;"
               />
               <div class="absolute inset-y-0 left-[20px] pl-4 flex items-center pointer-events-none">
                 <img 

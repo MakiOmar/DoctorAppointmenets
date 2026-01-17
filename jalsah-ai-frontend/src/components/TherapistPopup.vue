@@ -14,8 +14,9 @@
         :class="headerStyle === 'white' ? 'bg-white' : 'bg-primary-500'"
       >
       <div class="relative flex items-center justify-between px-4 pt-4">
-        <!-- Cart Icon with Badge -->
+        <!-- Cart Icon with Badge (only for booking popup) -->
         <router-link
+          v-if="showFullHeader"
           to="/cart"
           class="relative p-2 text-white hover:opacity-80 transition-opacity"
           >
@@ -54,8 +55,11 @@
           </span>
         </router-link>
 
-        <!-- Introductory Text -->
-        <p class="text-secondary-500 text-left text-[18px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
+        <!-- Spacer for non-booking popups (to push close button to the right) -->
+        <div v-else></div>
+
+        <!-- Introductory Text (only for booking popup) -->
+        <p v-if="showFullHeader" class="text-secondary-500 text-left text-[18px] font-jalsah2">({{ $t('therapistDetails.canBookMultipleSessions') }})</p>
         <!-- Close Button -->
 
         <button
@@ -141,6 +145,10 @@ export default {
       type: String,
       default: 'dark', // 'dark' (dark blue with white title bar) or 'white' (white header)
       validator: (value) => ['dark', 'white'].includes(value)
+    },
+    showFullHeader: {
+      type: Boolean,
+      default: false // If true, shows cart icon and booking text. If false, only shows close button.
     }
   },
   emits: ['close', 'update:isOpen'],
