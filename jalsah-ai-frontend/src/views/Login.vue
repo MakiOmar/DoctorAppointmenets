@@ -169,7 +169,7 @@
                 </svg>
                 {{ $t('auth.login.signingIn') }}
               </span>
-              <span v-else>{{ $t('auth.login.signIn') }}</span>
+              <span class="flex items-center justify-center" v-else>{{ $t('auth.login.signIn') }}</span>
             </button>
           </div>
         </form>

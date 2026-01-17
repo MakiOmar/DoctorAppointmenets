@@ -59,7 +59,7 @@
       <div class="text-[1.55rem]">
         <span>45 {{ $t('common.minutes') }}</span>  
         <span class="mx-2">|</span>
-        {{ formatPrice(therapist.price?.price || therapist.price?.others, therapist.price?.currency_symbol || getCurrencySymbol(therapist.price?.currency || settingsStore.userCurrencyCode)) }}
+        {{ formatPrice(therapist.price?.price || therapist.price?.others, getTherapistCurrencySymbol()) }}
       </div>
     </div>
 
@@ -295,6 +295,27 @@ export default {
       return getCurrencySymbol(currencyCode)
     }
 
+    // Get currency symbol for therapist price display
+    // Priority: 1) User's selected currency from settings (most important - user's choice)
+    //           2) currency_symbol from API (if available and matches user's currency)
+    //           3) currency code from API converted to symbol
+    const getTherapistCurrencySymbol = () => {
+      // CRITICAL: Always use user's selected currency from settings store
+      // The price is already converted correctly, we just need the right symbol
+      // User may have manually selected a currency different from their country
+      const userCurrencyCode = settingsStore.userCurrencyCode || 'EGP'
+      
+      // If therapist price has currency_symbol and it matches user's currency, use it
+      // Otherwise, convert user's currency code to symbol
+      if (props.therapist?.price?.currency_symbol && 
+          props.therapist?.price?.currency === userCurrencyCode) {
+        return props.therapist.price.currency_symbol
+      }
+      
+      // Always use user's currency code to get symbol
+      return getCurrencySymbol(userCurrencyCode)
+    }
+
     // Action handlers
     const handleOpenAbout = () => {
       emit('open-about', props.therapist.id)
@@ -336,6 +357,7 @@ export default {
       locale,
       formatPrice,
       getCurrencySymbol,
+      getTherapistCurrencySymbol,
       currentDiagnosisDisplayOrder,
       therapistPosition,
       suitabilityMessage,

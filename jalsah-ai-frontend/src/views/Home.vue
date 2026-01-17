@@ -24,7 +24,7 @@
         <h1 class="text-[1.4rem] md:text-5xl md:leading-tight text-white">
           {{ $t('home.sections.hero.welcome') }}
         </h1>
-        <p class="text-[1.4rem] md:text-xl text-white mb-2 max-w-2xl mx-auto font-jalsah2" style="line-height: 1.3rem;">
+        <p class="text-[1.4rem] md:text-xl text-white mb-2 md:mt-2 max-w-2xl mx-auto font-jalsah2" style="line-height: 1.3rem;">
           {{ $t('home.sections.hero.subtitle') }}
         </p>
 
@@ -87,7 +87,7 @@
           <router-link
             v-if="!loadingDiagnosis"
             :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-            class="flex items-center justify-center gap-3 px-1 py-2 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity w-[250px] text-[20px] md:text-[25px]"
+            class="flex items-center justify-center gap-3 px-1 py-2 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity w-[250px] md:w-[280px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             @click="handleNavigationClick"
           >
@@ -112,7 +112,7 @@
           
           <div
             v-else
-            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg opacity-75 min-w-[250px]"
+            class="flex items-center justify-center gap-3 px-8 py-2 bg-secondary-500 text-primary-500 rounded-lg opacity-75 min-w-[250px] md:w-[280px] text-[20px] md:text-[25px]"
           >
             <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-500"></div>
             {{ $t('common.loading') }}
@@ -140,7 +140,7 @@
 
     <!-- Section 3: AI Integration Section -->
     <section 
-      class="flex items-center justify-center relative py-10 px-4 bg-cover bg-center bg-no-repeat md:h-[240px] h-[400px] ai-integration-section"
+      class="flex items-center justify-center relative py-10 px-4 bg-cover bg-cover bg-no-repeat md:h-[240px] h-[400px] ai-integration-section"
       :style="squareSectionStyle"
     >
       <div class="max-w-[960px] mx-auto">
