@@ -14,28 +14,35 @@
 
       <!-- Search and Sorting -->
       <div class="card mb-8">
-        <div class="flex flex-col-reverse sm:flex-col lg:flex-row lg:items-center gap-4">
-          <!-- Search Filter -->
-          <div class="w-full lg:w-1/3">
-            <div class="relative">
-              <input
-                v-model="searchQuery"
-                type="text"
-                :placeholder="$t('therapists.filters.searchPlaceholder')"
-                class="w-full px-[10px] rounded-lg bg-[#D1B289] text-[#162E52] placeholder-[#162E52] focus:outline-none focus:ring-2 focus:ring-[#162E52] focus:ring-opacity-50"
-                style="font-family: 'jalsah2', sans-serif; font-size: 22px;"
-              />
-              <div class="absolute inset-y-0 left-[20px] pl-4 flex items-center pointer-events-none">
-                <img 
-                  src="/search-icon.png" 
-                  alt="Search" 
-                  class="h-5"
-                />
-              </div>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Nearest Slot Button (Order 2 - Top Left) -->
+          <div class="order-2 lg:!order-2">
+            <button
+              @click="setSorting('nearest')"
+              class="w-full px-4 py-2 rounded-lg text-[20px] transition-colors"
+              :class="activeSort === 'nearest' 
+                ? 'bg-secondary-500 text-primary-500' 
+                : 'bg-primary-500 text-white'"
+            >
+              {{ $t('therapists.sorting.nearest') }}
+            </button>
           </div>
-          <!-- The Best Button (Redirects to Diagnosis Results) -->
-          <div class="w-full lg:w-1/3">
+          
+          <!-- Lowest Price Button (Order 3 - Top Right) -->
+          <div class="order-3 lg:!order-3">
+            <button
+              @click="setSorting('price-low')"
+              class="w-full px-4 py-2 rounded-lg text-[20px] transition-colors"
+              :class="activeSort === 'price-low' 
+                ? 'bg-secondary-500 text-primary-500' 
+                : 'bg-primary-500 text-white'"
+            >
+              {{ $t('therapists.sorting.priceLow') }}
+            </button>
+          </div>
+          
+          <!-- The Best Button (Order 4 - Bottom Left) -->
+          <div class="order-4 lg:!order-4">
             <router-link
               v-if="!loadingDiagnosis"
               :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
@@ -54,30 +61,24 @@
             </div>
           </div>
           
-          <!-- Nearest Slot Button -->
-          <div class="w-full lg:w-1/3">
-            <button
-              @click="setSorting('nearest')"
-              class="w-full px-4 py-2 rounded-lg text-[20px] transition-colors"
-              :class="activeSort === 'nearest' 
-                ? 'bg-secondary-500 text-primary-500' 
-                : 'bg-primary-500 text-white'"
-            >
-              {{ $t('therapists.sorting.nearest') }}
-            </button>
-          </div>
-          
-          <!-- Lowest Price Button -->
-          <div class="w-full lg:w-1/3">
-            <button
-              @click="setSorting('price-low')"
-              class="w-full px-4 py-2 rounded-lg text-[20px] transition-colors"
-              :class="activeSort === 'price-low' 
-                ? 'bg-secondary-500 text-primary-500' 
-                : 'bg-primary-500 text-white'"
-            >
-              {{ $t('therapists.sorting.priceLow') }}
-            </button>
+          <!-- Search Filter (Order 5 - Bottom Right / Last Element) -->
+          <div class="order-5 lg:!order-5">
+            <div class="relative">
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="$t('therapists.filters.searchPlaceholder')"
+                class="w-full px-[10px] rounded-lg bg-[#D1B289] text-[#162E52] placeholder-[#162E52] focus:outline-none focus:ring-2 focus:ring-[#162E52] focus:ring-opacity-50"
+                style="font-family: 'jalsah2', sans-serif; font-size: 22px;"
+              />
+              <div class="absolute inset-y-0 left-[20px] pl-4 flex items-center pointer-events-none">
+                <img 
+                  src="/search-icon.png" 
+                  alt="Search" 
+                  class="h-5"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
