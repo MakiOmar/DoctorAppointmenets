@@ -365,6 +365,7 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
 
                 // Store the country code in a cookie for 24 hours
                 // Use SameSite=None for cross-site compatibility (frontend on separate domain)
+                // Note: snks_set_cookie_with_partitioned now automatically deletes old cookies first
                 snks_set_cookie_with_partitioned( 'country_code', $country_code, time() + DAY_IN_SECONDS, '/', '', null, false, 'None' );
 
                 // Determine stored currency
@@ -379,6 +380,7 @@ function snks_get_country_code( $set_cookie = true, $custom_ip = null ) {
                 }
 
                 // Use SameSite=None for cross-site compatibility (frontend on separate domain)
+                // Note: snks_set_cookie_with_partitioned now automatically deletes old cookies first
                 snks_set_cookie_with_partitioned( 'ced_selected_currency', $stored_currency, time() + DAY_IN_SECONDS, '/', '', null, false, 'None' );
             }
 
@@ -409,6 +411,78 @@ function snsk_ip_api_country( $set_cookie = true ) {
 }
 
 /**
+ * Delete cookie with all possible attribute combinations to prevent duplicates
+ * This ensures old cookies with different attributes are removed before setting new ones
+ *
+ * @param string $name Cookie name.
+ * @param string $path Cookie path.
+ * @param string $domain Cookie domain (optional).
+ */
+function snks_delete_cookie_all_combinations( $name, $path = '/', $domain = '' ) {
+	if ( headers_sent() ) {
+		return false;
+	}
+
+	$past_time = time() - 3600; // Set expiration to past time to delete
+	
+	// Delete cookie with all possible attribute combinations
+	$combinations = array(
+		// Secure + SameSite=None + Partitioned
+		array( 'secure' => true, 'samesite' => 'None', 'partitioned' => true ),
+		// Secure + SameSite=None (no Partitioned)
+		array( 'secure' => true, 'samesite' => 'None', 'partitioned' => false ),
+		// Secure + SameSite=Lax + Partitioned
+		array( 'secure' => true, 'samesite' => 'Lax', 'partitioned' => true ),
+		// Secure + SameSite=Lax (no Partitioned)
+		array( 'secure' => true, 'samesite' => 'Lax', 'partitioned' => false ),
+		// Not Secure + SameSite=Lax
+		array( 'secure' => false, 'samesite' => 'Lax', 'partitioned' => false ),
+		// Not Secure (no SameSite)
+		array( 'secure' => false, 'samesite' => '', 'partitioned' => false ),
+		// Secure (no SameSite)
+		array( 'secure' => true, 'samesite' => '', 'partitioned' => false ),
+	);
+	
+	foreach ( $combinations as $combo ) {
+		$cookie_parts = array(
+			sprintf( '%s=', rawurlencode( $name ) ), // Empty value to delete
+		);
+		
+		$cookie_parts[] = sprintf( 'expires=%s', gmdate( 'D, d M Y H:i:s \G\M\T', $past_time ) );
+		
+		if ( ! empty( $path ) ) {
+			$cookie_parts[] = sprintf( 'path=%s', $path );
+		}
+		
+		if ( ! empty( $domain ) ) {
+			$cookie_parts[] = sprintf( 'domain=%s', $domain );
+		}
+		
+		if ( $combo['secure'] ) {
+			$cookie_parts[] = 'Secure';
+		}
+		
+		if ( ! empty( $combo['samesite'] ) ) {
+			$cookie_parts[] = sprintf( 'SameSite=%s', $combo['samesite'] );
+		}
+		
+		if ( $combo['partitioned'] ) {
+			$cookie_parts[] = 'Partitioned';
+		}
+		
+		$cookie_header = implode( '; ', $cookie_parts );
+		header( sprintf( 'Set-Cookie: %s', $cookie_header ), false );
+	}
+	
+	// Also try standard setcookie() deletion (for cookies set without custom attributes)
+	setcookie( $name, '', $past_time, $path, $domain );
+	setcookie( $name, '', $past_time, $path, $domain, true ); // With Secure
+	setcookie( $name, '', $past_time, $path, $domain, false, true ); // With HttpOnly
+	
+	return true;
+}
+
+/**
  * Set cookie with Partitioned attribute for cross-site compatibility
  *
  * @param string $name Cookie name.
@@ -424,6 +498,10 @@ function snks_set_cookie_with_partitioned( $name, $value, $expires = 0, $path = 
 	if ( headers_sent() ) {
 		return false;
 	}
+
+	// CRITICAL: Delete existing cookies with all possible attribute combinations first
+	// This prevents duplicate cookies when attributes change (e.g., Secure flag, SameSite, Partitioned)
+	snks_delete_cookie_all_combinations( $name, $path, $domain );
 
 	// Default secure to true if site is using SSL
 	if ( $secure === null ) {
