@@ -8,7 +8,7 @@
         <!-- Name and Specialty -->
         <div class="flex flex-col items-end">
           <h3 class="text-[1.55rem] text-white" style="line-height: 1.75rem;">{{ therapist.name }}</h3>
-          <p v-if="therapist.doctor_specialty" class="text-[1rem] mt-1 text-secondary-500 specialty-text">{{ therapist.doctor_specialty }}</p>
+          <p v-if="displaySpecialty" class="text-[1rem] mt-1 text-secondary-500 specialty-text">{{ displaySpecialty }}</p>
         </div>
         
         <!-- Order Badge (only on diagnosis results) -->
@@ -286,9 +286,25 @@ export default {
         }))
     })
 
+    // Display specialty based on role
+    // If role is 'psychiatrist' → show 'طبيب نفسي'
+    // If role is 'clinical_psychologist' → show 'أخصائي نفسي إكلينيكي'
+    // Otherwise fallback to doctor_specialty
+    const displaySpecialty = computed(() => {
+      if (props.therapist?.role === 'psychiatrist') {
+        return 'طبيب نفسي'
+      }
+      if (props.therapist?.role === 'clinical_psychologist') {
+        return 'أخصائي نفسي إكلينيكي'
+      }
+      // Fallback to doctor_specialty if role is not set
+      return props.therapist?.doctor_specialty || ''
+    })
+
     // Format functions
     const formatPrice = (price, currencySymbol) => {
-      return formatPriceUtil(price, currencySymbol)
+      // formatPriceUtil expects (amount, locale, currency) - pass locale from i18n and currencySymbol as the currency parameter
+      return formatPriceUtil(price, locale.value, currencySymbol)
     }
 
     const getCurrencySymbol = (currencyCode) => {
@@ -363,6 +379,7 @@ export default {
       suitabilityMessage,
       therapistPhotoUrl,
       certificateImages,
+      displaySpecialty,
       // Icons
       orderBadgeIconExists,
       infoIconExists,
