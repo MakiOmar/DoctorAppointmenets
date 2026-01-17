@@ -1323,6 +1323,11 @@ class SNKS_AI_Integration {
 				snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/', '', null, false, 'None' );
 			} elseif ( ! headers_sent() ) {
 				// Fallback if helper function doesn't exist
+				// Delete old cookies first to prevent duplicates
+				if ( function_exists( 'snks_delete_cookie_all_combinations' ) ) {
+					snks_delete_cookie_all_combinations( 'country_code', '/' );
+					snks_delete_cookie_all_combinations( 'ced_selected_currency', '/' );
+				}
 				setcookie( 'country_code', $country_code, $expire_time, '/' );
 				setcookie( 'ced_selected_currency', $currency_code, $expire_time, '/' );
 			}
@@ -2200,6 +2205,12 @@ Best regards,
 					snks_set_cookie_with_partitioned( 'ced_selected_currency', $currency_code, $expire_time, '/', '', $secure, false, 'None' );
 				} else {
 					// Fallback: Use array format for PHP 7.3+ to support SameSite attribute
+					// Delete old cookies first to prevent duplicates
+					if ( function_exists( 'snks_delete_cookie_all_combinations' ) ) {
+						snks_delete_cookie_all_combinations( 'country_code', '/' );
+						snks_delete_cookie_all_combinations( 'ced_selected_currency', '/' );
+					}
+					
 					$cookie_params = array(
 						'expires'  => $expire_time,
 						'path'     => '/',
