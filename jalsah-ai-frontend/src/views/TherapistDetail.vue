@@ -67,7 +67,7 @@
                 <span
                   v-for="diagnosis in therapist.diagnoses"
                   :key="diagnosis.id"
-                  class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                  class="px-3 py-1 bg-primary-100 text-blue-800 text-sm rounded-full"
                 >
                   {{ diagnosis.name_en || diagnosis.name }}
                 </span>
@@ -88,7 +88,7 @@
             <!-- Book Now Button -->
             <button
               @click="openBookingModal"
-              class="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg"
+              class="w-full md:w-auto px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-lg"
             >
               {{ $t('bookNow') }}
             </button>

@@ -64,7 +64,7 @@
     </div>
 
     <!-- Action Buttons Section -->
-    <div class="bg-white">
+    <div class="bg-white relative">
       <!-- About Therapist Button (only on therapists page, after price section) -->
       <button
         v-if="cardVariant === 'therapists-page'"
@@ -76,7 +76,7 @@
           v-if="infoIconExists"
           src="/info-icon.png"
           alt="About"
-          class="h-[25px] absolute left-[30px]"
+          class="h-[25px] absolute left-[25px]"
           @error="infoIconExists = false"
 
         />

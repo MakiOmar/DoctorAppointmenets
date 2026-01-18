@@ -1,16 +1,16 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-6xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl text-gray-900 mb-2">{{ $t('shoppingCart') }}</h1>
-        <p class="text-gray-600">{{ $t('cartDescription') }}</p>
+        <h1 class="text-3xl text-primary-500 mb-2 text-center">{{ $t('shoppingCart') }}</h1>
+        <p class="text-primary-600 text-center">{{ $t('cartDescription') }}</p>
       </div>
 
       <!-- Loading State -->
       <div v-if="cartStore.loading" class="text-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-        <p class="mt-4 text-gray-600">{{ $t('loadingCart') }}</p>
+        <p class="mt-4 text-primary-600">{{ $t('loadingCart') }}</p>
       </div>
 
       <!-- Error State -->
@@ -70,8 +70,8 @@
                         <h3 class="text-lg text-gray-900">
                           {{ item.therapist_name_en || item.therapist_name }}
                         </h3>
-                        <p class="text-sm text-gray-500">
-                          {{ formatDate(item.date_time) }} at {{ formatTime(item.starts) }}
+                          <p class="text-sm text-gray-500">
+                            {{ formatDate(item.date_time) }} <br> {{ formatTime(item.starts) }} {{ $t('dateTime.egyptTime') }}
                         </p>
                         <p class="text-sm text-gray-500">
                           {{ $t('duration') }}: {{ item.period }} {{ $t('minutes') }}
@@ -81,7 +81,7 @@
                         <p class="text-lg text-gray-900">{{ formatPrice(item.price || 200.00, $i18n.locale, item.currency_symbol || getCurrencySymbol(item.currency || settingsStore.userCurrencyCode)) }}</p>
                         <button
                           @click="removeItem(item.ID)"
-                          class="text-sm text-red-600 hover:text-red-800 mt-1"
+                          class="text-[1.2rem] w-full text-red-600 hover:text-red-800 mt-1"
                         >
                           {{ $t('remove') }}
                         </button>
@@ -111,7 +111,7 @@
                 <button
                   @click="applyCoupon"
                   :disabled="couponLoading || !couponCode.trim()"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   <span v-if="couponLoading">{{ $t('common.loading') }}</span>
                   <span v-else>{{ $t('cart.applyCoupon') }}</span>
@@ -138,7 +138,7 @@
 
             <div class="space-y-4">
               <div class="flex justify-between">
-                <span class="text-gray-600">{{ $t('subtotal') }}</span>
+                <span class="text-primary-600">{{ $t('subtotal') }}</span>
                 <span class="text-gray-900">{{ formatPrice(cartStore.totalPrice, $i18n.locale, getCartCurrency()) }}</span>
               </div>
               
@@ -161,24 +161,25 @@
             <button
               @click="proceedToPayment"
               :disabled="cartStore.checkoutLoading || cartStore.itemCount === 0"
-              class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              class="w-full mt-6 bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.checkoutLoading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('proceedToPayment') }} {{ formatPrice(finalTotal, $i18n.locale, getCartCurrency()) }}</span>
             </button>
 
             <!-- Add More Bookings Button -->
+             <!--
             <button
               @click="addMoreBookings"
-              class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300"
+              class="w-full mt-3 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors border border-gray-300 text-[20px]"
             >
               {{ $t('cart.addMoreBookings') }}
             </button>
-            
+            -->
             <!-- Appointment Change Terms -->
             <div v-if="settingsStore.getAppointmentChangeTerms" class="mt-6 p-4 bg-gray-50 rounded-lg">
               <h3 class="text-sm text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
-              <p class="text-sm text-gray-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
+              <p class="text-sm text-primary-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
             </div>
           </div>
         </div>
@@ -283,12 +284,17 @@ const formatDate = (dateTime) => {
 
 const formatTime = (time) => {
   if (!time) return ''
-  // Force Gregorian calendar by using 'en-US' locale for time formatting
-  return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+  // Format time with 12-hour format
+  const formattedTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
   })
+  // Replace AM/PM with translations from i18n
+  return formattedTime
+    .replace(/\s*AM\s*/i, ` ${t('dateTime.am')} `)
+    .replace(/\s*PM\s*/i, ` ${t('dateTime.pm')} `)
+    .trim()
 }
 
 const removeItem = async (slotId) => {

@@ -1,17 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+  <div class="min-h-screen bg-gray-50 flex flex-col py-12 sm:px-6 lg:px-8" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="flex justify-center">
-        <div class="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
-          <span class="text-white text-xl">{{ $t('logo.text') }}</span>
-        </div>
-      </div>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
         {{ $t('auth.register.title') }}
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
         {{ $t('auth.register.or') }}
-        <router-link to="/login" class="font-medium text-primary-600 hover:text-primary-500">
+        <router-link to="/login" class="text-[1.5rem] text-secondary-600 hover:text-primary-500">
           {{ $t('auth.register.signInToExisting') }}
         </router-link>
       </p>
@@ -81,7 +76,7 @@
                   type="button"
                   @click="toggleCountryDropdown"
                   :disabled="isDetectingCountry"
-                  class="w-32 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
+                  class="w-22 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
                   style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
                 >
                   <span class="flex items-center">
@@ -137,7 +132,7 @@
               type="tel"
               required
               dir="ltr"
-                class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                class="flex-1 px-3 py-3 border border-gray-300 rounded-l-md rounded-r-none border-l-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
               :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': whatsappDialCodeError }"
               :placeholder="$t('auth.register.whatsappPlaceholder')"
                 autocomplete="tel"
@@ -212,9 +207,9 @@
             />
             <label for="terms" class="ml-2 block text-sm text-gray-900">
               {{ $t('auth.register.agreeTo') }}
-              <a href="#" class="text-primary-600 hover:text-primary-500">{{ $t('auth.register.termsOfService') }}</a>
+              <a href="#" class="text-primary-600 hover:text-primary-500 font-jalsah1">{{ $t('auth.register.termsOfService') }}</a>
               {{ $t('auth.register.and') }}
-              <a href="#" class="text-primary-600 hover:text-primary-500">{{ $t('auth.register.privacyPolicy') }}</a>
+              <a href="#" class="text-primary-600 hover:text-primary-500 font-jalsah1">{{ $t('auth.register.privacyPolicy') }}</a>
               <span class="text-red-500">*</span>
             </label>
           </div>
@@ -223,7 +218,7 @@
             <button
               type="submit"
               :disabled="loading || !isFormValid"
-              class="w-full btn-primary py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full btn-primary py-3 flex text-base items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="loading" class="flex items-center justify-center">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

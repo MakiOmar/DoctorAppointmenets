@@ -17,7 +17,7 @@
           <!-- Prescription Request Header -->
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
-              <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+              <div class="w-3 h-3 bg-primary-500 rounded-full mr-3"></div>
               <span class="text-blue-800 text-sm">{{ t('prescription.prescriptionRequested').replace('{name}', request.therapist_name) || 'Prescription Requested' }}</span>
             </div>
           </div>
@@ -253,7 +253,7 @@ export default {
 
 <style scoped>
 .btn-primary {
-  @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors;
+  @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors;
 }
 
 .btn-secondary {

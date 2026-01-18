@@ -187,7 +187,7 @@
             </div>
 
             <!-- Important Notes -->
-            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div class="mt-6 p-4 bg-primary-50 rounded-lg">
               <h4 class="font-medium text-blue-900 mb-2">Important Information</h4>
               <ul class="text-sm text-blue-800 space-y-1">
                 <li>• Sessions are conducted via secure video call</li>

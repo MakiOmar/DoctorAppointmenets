@@ -76,7 +76,7 @@
               :class="[
                 'px-4 py-2 rounded-lg border text-sm whitespace-nowrap',
                 date.isSelected
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-blue-500 bg-primary-50 text-blue-700'
                   : date.isAvailable
                   ? 'border-gray-300 text-gray-700 hover:border-blue-300'
                   : 'border-gray-200 text-gray-400 cursor-not-allowed'
@@ -101,7 +101,7 @@
               :class="[
                 'p-3 rounded-lg border text-sm',
                 selectedTimeSlot?.slot_id === slot.slot_id
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-blue-500 bg-primary-50 text-blue-700'
                   : 'border-gray-300 text-gray-700 hover:border-blue-300'
               ]"
             >
@@ -142,7 +142,7 @@
             :class="[
               'w-full py-3 px-4 rounded-lg transition-colors',
               selectedTimeSlot && !rescheduling && canReschedule
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             ]"
           >

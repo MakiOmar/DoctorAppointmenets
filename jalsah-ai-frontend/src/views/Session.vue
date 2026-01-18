@@ -240,7 +240,7 @@
                 <button 
                   v-if="showManualButton"
                   @click="forceShowMeeting"
-                  class="mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  class="mt-6 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
                   {{ $t('session.showMeeting') }}
                 </button>
@@ -306,7 +306,7 @@ const statusColor = computed(() => {
     'pending': 'bg-yellow-400',
     'confirmed': 'bg-green-400',
     'open': 'bg-green-400', // Treat 'open' as 'confirmed' for AI sessions
-    'completed': 'bg-blue-400',
+    'completed': 'bg-primary-400',
     'cancelled': 'bg-red-400',
     'no_show': 'bg-gray-400'
   }

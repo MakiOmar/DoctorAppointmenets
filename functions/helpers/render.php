@@ -866,12 +866,13 @@ function snks_booking_item_template( $record ) {
 		),
 
 	);
+	$is_ai_session = snks_is_ai_session_booking( $record );
 	//phpcs:disable
 	?>
-	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" data-period="<?php echo esc_attr( $record->period ) ?>" class="snks-booking-item {status_class}">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" data-period="<?php echo esc_attr( $record->period ) ?>" class="snks-booking-item {status_class} <?php echo $is_ai_session ? ' ai-session' : ''; ?>">
 		<div class="anony-grid-row">
-			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px">
-				<?php if ( ! snks_is_ai_session_booking( $record ) ) : ?>
+			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px;<?php echo $is_ai_session ? ' background-color: #1b612e!important;border-color: #1b612e!important;' : ''; ?>">
+				<?php if ( ! $is_ai_session ) : ?>
 				<input type="checkbox" class="bulk-action-checkbox" name="bulk-action[]" data-date="<?php echo snks_localize_time( gmdate( 'Y-m-d h:i a', strtotime( str_replace(' ', 'T', $record->date_time ) ) ) ); ?>" data-doctor="<?php echo $record->user_id; ?>" data-patient="<?php echo $record->client_id; ?>" value="<?php echo $record->ID; ?>">
 				<?php endif; ?>
 
@@ -879,10 +880,9 @@ function snks_booking_item_template( $record ) {
 					<strong style="font-size:20px;margin-left:5px">{attandance_type}</strong>
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
-				<?php if ( snks_is_ai_session_booking( $record ) ) : ?>
+				<?php if ( $is_ai_session ) : ?>
 				<div class="ai-session-flag" style="position:absolute;top:-20px;right:0;display: flex;align-items: center;background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-					<span style="margin-right: 5px;">🤖</span>
-					<span>AI</span>
+					محولة
 				</div>
 				<?php endif; ?>
 			</div>
@@ -1068,7 +1068,7 @@ function template_str_replace( $record ) {
 	if ( $is_ai_session ) {
 		$diagnosis_result = get_user_meta( $record->client_id, 'ai_diagnosis_result', true );
 		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
-			$diagnosis_name = $diagnosis_result['diagnosis_name'];
+			$diagnosis_name = $diagnosis_result['ai_diagnosis'];
 		} else {
 			$diagnosis_name = 'غير متوفر';
 		}

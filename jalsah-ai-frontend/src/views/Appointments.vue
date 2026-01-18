@@ -3,10 +3,10 @@
 
     
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <h1 class="text-3xl text-gray-900 mb-8">{{ $t('appointmentsPage.title') }}</h1>
+              <h1 class="text-3xl text-primary-500 mb-8 text-center">{{ $t('appointmentsPage.title') }}</h1>
 
       <!-- Session Instructions -->
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+      <div class="bg-primary-50 border border-blue-200 rounded-lg p-6 mb-8">
         <h3 class="text-lg text-blue-900 mb-3">{{ $t('session.instructions') }}</h3>
         <ul class="space-y-2 text-sm text-blue-800">
           <li class="flex items-start space-x-2 rtl:space-x-reverse">
@@ -42,7 +42,7 @@
                 activeTab === tab.id
                   ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                'whitespace-nowrap py-2 px-1 border-b-2 text-sm'
+                'whitespace-nowrap py-2 px-1 border-b-2 text-[1.2rem]'
               ]"
             >
               {{ tab.name }}
@@ -134,7 +134,7 @@
                 <span v-if="appointment.status === 'completed' || appointment.therapist_joined">
                   {{ $t('appointmentsPage.joinSession') }}
                 </span>
-                <span v-else class="flex items-center">
+                <span v-else class="flex items-center justify-center">
                   <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -144,6 +144,7 @@
               </button>
 
               <!-- Testing: Simulate Therapist Join (non-production only) -->
+              <!--
               <button
                 v-if="showSimulate && !appointment.therapist_joined && canJoinSession(appointment)"
                 @click="simulateTherapistJoin(appointment)"
@@ -152,7 +153,7 @@
               >
                 Simulate Join
               </button>
-
+-->
               <!-- For Upcoming Sessions -->
               <template v-if="activeTab === 'upcoming'">
                 <!-- Reschedule Button -->
@@ -170,7 +171,7 @@
                 <!-- Book a new appointment with the same therapist -->
                 <button 
                   @click="bookWithSameTherapist(appointment)"
-                  class="btn-primary text-sm"
+                  class="btn-primary text-[1.2rem] flex items-center justify-center"
                 >
                   {{ $t('appointmentsPage.bookWithSameTherapist') }}
                 </button>
@@ -179,7 +180,7 @@
           </div>
 
           <!-- Session Link (if available) -->
-          <div v-if="appointment.session_link" class="mt-4 p-3 bg-blue-50 rounded-lg">
+          <div v-if="appointment.session_link" class="mt-4 p-3 bg-primary-50 rounded-lg">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm text-blue-900">{{ $t('appointmentsPage.sessionLinkAvailable') }}</p>
@@ -437,7 +438,7 @@
         
         <div v-if="rochtahMeetingDetails" class="space-y-4">
           <!-- Session Info -->
-          <div class="bg-blue-50 p-4 rounded-lg">
+          <div class="bg-primary-50 p-4 rounded-lg">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
                 <span class="font-medium text-gray-700">{{ $t('appointmentsPage.date') }}:</span>
@@ -492,7 +493,7 @@
 
           <div v-if="selectedPrescription" class="space-y-4">
             <!-- Basic Info -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-primary-50 rounded-lg">
               <div>
                 <span class="font-medium text-gray-700">{{ $t('prescription.prescribedBy') }}:</span>
                 <div class="text-gray-900">{{ selectedPrescription.prescribed_by_name }}</div>
@@ -910,7 +911,7 @@ export default {
         'pending': 'text-yellow-600 bg-yellow-100',
         'confirmed': 'text-green-600 bg-green-100',
         'open': 'text-green-600 bg-green-100', // Map 'open' to 'confirmed' styling
-        'completed': 'text-blue-600 bg-blue-100',
+        'completed': 'text-blue-600 bg-primary-100',
         'cancelled': 'text-red-600 bg-red-100',
         'no_show': 'text-gray-600 bg-gray-100'
       }

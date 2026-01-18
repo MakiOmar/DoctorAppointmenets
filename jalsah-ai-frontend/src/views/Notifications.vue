@@ -20,7 +20,7 @@
           :key="message.id"
           @click="openMessagePopup(message)"
           class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-          :class="!message.is_read ? 'ring-2 ring-blue-100 bg-blue-50' : ''"
+          :class="!message.is_read ? 'ring-2 ring-blue-100 bg-primary-50' : ''"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">

@@ -674,6 +674,11 @@ add_action(
 			}
 			.snks-appointment-button{
 				border-top-left-radius:20px;border-bottom-left-radius:20px;
+			}.ai-session .snks-appointment-button{
+				background-color: #1b612e!important;
+			}
+			.ai-session.snks-disabled .snks-appointment-button{
+				background-color: #3d885f!important;
 			}
 			.snks-disabled .snks-appointment-button {
 				background-color: #3d7288!important;

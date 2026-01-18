@@ -6,14 +6,14 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <!-- Profile Card -->
-          <div class="bg-blue-50 rounded-lg p-6">
+          <div class="bg-primary-50 rounded-lg p-6">
             <h2 class="text-xl text-blue-800 mb-4">Profile</h2>
             <div class="space-y-2">
               <p><strong>Name:</strong> {{ user?.first_name }} {{ user?.last_name }}</p>
               <p><strong>Email:</strong> {{ user?.email }}</p>
               <p><strong>Role:</strong> {{ user?.role }}</p>
             </div>
-            <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <button class="mt-4 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700">
               Edit Profile
             </button>
           </div>

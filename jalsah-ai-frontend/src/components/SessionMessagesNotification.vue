@@ -60,7 +60,7 @@
           :key="message.id"
           @click="openMessage(message)"
           class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-          :class="!message.is_read ? 'bg-blue-50' : ''"
+          :class="!message.is_read ? 'bg-primary-50' : ''"
         >
           <div class="flex items-start">
             <!-- Unread Indicator -->

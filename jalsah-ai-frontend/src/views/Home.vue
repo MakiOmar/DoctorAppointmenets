@@ -21,7 +21,7 @@
         <h1 class="text-[1.4rem] md:text-5xl md:leading-tight text-white">
           {{ $t('home.sections.hero.welcome') }}
         </h1>
-        <p class="text-[1.4rem] md:text-xl text-white mb-2 md:mt-2 max-w-2xl mx-auto font-jalsah2" style="line-height: 1.3rem;">
+        <p class="text-[1.4rem] md:text-[2.2rem] text-white mb-2 md:mt-4 max-w-2xl mx-auto font-jalsah2" style="line-height: 1.3rem;">
           {{ $t('home.sections.hero.subtitle') }}
         </p>
 
@@ -30,7 +30,7 @@
           <!-- Login Button (Left in RTL, icon after text) -->
           <router-link
             to="/login"
-            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-base"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-secondary-500 text-primary-500 rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             {{ $t('home.sections.hero.loginButton') }}
@@ -55,7 +55,7 @@
           <!-- Registration Button (Right in RTL, icon after text) -->
           <router-link
             to="/register"
-            class="flex items-center justify-center gap-3 px-8 py-1 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-base"
+            class="flex items-center justify-center gap-3 px-8 py-1 bg-primary-500 text-white rounded-lg hover:opacity-90 transition-opacity min-w-[250px] text-[20px] md:text-[25px]"
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
           >
             <img 
@@ -548,7 +548,7 @@ export default {
 /* AI Integration Section - Desktop background */
 @media (min-width: 768px) {
   .ai-integration-section {
-    background-image: url(/home/ai-background.png);
+    background-image: url(/home/ai-background.jpg);
   }
 }
 </style>

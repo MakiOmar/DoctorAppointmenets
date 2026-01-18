@@ -2,7 +2,7 @@
   <TherapistPopup
     :is-open="isOpen"
     :title="$t('therapists.whyBestForDiagnosis')"
-    header-style="white"
+    header-style="dark"
     @close="handleClose"
     @update:isOpen="handleUpdateIsOpen"
   >

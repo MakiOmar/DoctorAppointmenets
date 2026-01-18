@@ -52,7 +52,7 @@
         <h3 class="mt-2 text-sm text-gray-900">{{ $t('emptyCart') }}</h3>
         <p class="mt-1 text-sm text-gray-500">{{ $t('emptyCartDescription') }}</p>
         <div class="mt-6">
-          <router-link to="/therapists" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm rounded-md text-white bg-blue-600 hover:bg-blue-700">
+          <router-link to="/therapists" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm rounded-md text-white bg-primary-600 hover:bg-primary-700">
             {{ $t('browseTherapists') }}
           </router-link>
         </div>
@@ -160,7 +160,7 @@
             <button
               @click="processPayment"
               :disabled="cartStore.loading || !paymentMethod"
-              class="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              class="w-full mt-6 bg-primary-600 text-white py-3 px-4 rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="cartStore.loading">{{ $t('processing') }}...</span>
               <span v-else>{{ $t('completePayment') }}</span>

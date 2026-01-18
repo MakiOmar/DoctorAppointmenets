@@ -90,7 +90,7 @@
 
 
         <!-- Title Bar (if title is provided) -->
-        <div v-if="title" class="pt-16 pb-4 px-6" :class="headerStyle === 'white' ? '' : 'text-center'">
+        <div v-if="title" class="pt-4 pb-4 px-6" :class="headerStyle === 'white' ? '' : 'text-center'">
           <div 
             v-if="headerStyle === 'dark'"
             class="bg-white rounded-lg px-6 py-3 inline-block mx-auto"

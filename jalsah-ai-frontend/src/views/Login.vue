@@ -1,17 +1,13 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
+  <div class="min-h-screen bg-gray-50 flex flex-col py-12 sm:px-6 lg:px-8" :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" :class="$i18n.locale === 'ar' ? 'rtl' : 'ltr'">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="flex justify-center">
-        <div class="w-12 h-12 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-lg flex items-center justify-center">
-          <span class="text-white text-xl">{{ $t('logo.text') }}</span>
-        </div>
-      </div>
+
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
         {{ $t('auth.login.title') }}
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
         {{ $t('auth.login.or') }}
-        <router-link to="/register" class="font-medium text-primary-600 hover:text-primary-500">
+        <router-link to="/register" class="text-[1.5rem] text-secondary-600 hover:text-primary-500">
           {{ $t('auth.login.createAccount') }}
         </router-link>
       </p>
@@ -47,7 +43,7 @@
                   type="button"
                   @click="toggleCountryDropdown"
                   :disabled="isDetectingCountry"
-                  class="w-32 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
+                  class="w-22 px-3 py-3 border border-gray-300 rounded-r-md bg-white text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed h-12"
                   style="font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;"
                 >
                   <span class="flex items-center">
@@ -96,7 +92,6 @@
                   </div>
                 </div>
               </div>
-
               <input
                 id="whatsapp"
                 v-model="form.whatsapp"
@@ -104,7 +99,7 @@
                 required
                 @input="onWhatsAppInput"
                 @blur="onWhatsAppBlur"
-                class="flex-1 px-3 py-3 border rounded-l-md rounded-r-none border-r-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
+                class="flex-1 px-3 py-3 border rounded-l-md rounded-r-none border-l-0 focus:outline-none focus:ring-primary-500 focus:border-primary-500 h-12"
                 :class="{
                   'border-gray-300': !whatsappDialCodeError,
                   'border-red-300 focus:border-red-500 focus:ring-red-500': whatsappDialCodeError
@@ -149,7 +144,7 @@
             </div>
 
             <div class="text-sm">
-              <a href="#" @click.prevent="openForgotPasswordModal" class="font-medium text-primary-600 hover:text-primary-500">
+              <a href="#" @click.prevent="openForgotPasswordModal" class="font-medium text-primary-600 hover:text-primary-500 text-[1.1rem]">
                 {{ $t('auth.login.forgotPassword') }}
               </a>
             </div>
@@ -382,16 +377,6 @@
                 {{ $t('verification.sending') }}
               </span>
               <span v-else>{{ $t('verification.resetPassword') }}</span>
-            </button>
-          </div>
-
-          <!-- Back to Login Button -->
-          <div class="mt-4 text-center">
-            <button
-              @click="closeForgotPasswordModal"
-              class="text-sm text-primary-600 hover:text-primary-500"
-            >
-              {{ $t('verification.backToLogin') }}
             </button>
           </div>
         </div>

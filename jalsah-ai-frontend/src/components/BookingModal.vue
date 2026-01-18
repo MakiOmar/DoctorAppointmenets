@@ -42,7 +42,7 @@
                    @click="selectDate(date)"
                    :class="[
                      'p-2 text-center cursor-pointer rounded-lg transition-colors',
-                     date.isSelected ? 'bg-blue-500 text-white' : 
+                     date.isSelected ? 'bg-primary-500 text-white' : 
                      date.isAvailable ? 'hover:bg-gray-100' : 'text-gray-300 cursor-not-allowed'
                    ]">
                 {{ date.day }}
@@ -55,7 +55,7 @@
                 :disabled="!selectedDate"
                 :class="[
                   'px-4 py-2 rounded-lg transition-colors',
-                  selectedDate ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  selectedDate ? 'bg-primary-500 text-white hover:bg-primary-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 ]"
               >
                 {{ $t('next') }}
@@ -92,8 +92,8 @@
                 :class="[
                   'p-3 rounded-lg border text-center transition-colors',
                   selectedTimeSlot?.slot_id === slot.slot_id 
-                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                    ? 'border-blue-500 bg-primary-50 text-blue-700' 
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-primary-50'
                 ]"
               >
                 {{ slot.formatted_time }}
@@ -118,7 +118,7 @@
                 :class="[
                   'px-4 py-2 rounded-lg transition-colors',
                   selectedTimeSlot && !addingToCart 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                    ? 'bg-primary-500 text-white hover:bg-primary-600' 
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 ]"
               >

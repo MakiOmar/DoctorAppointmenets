@@ -7,6 +7,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const bilingualEnabled = ref(true)
   const defaultLanguage = ref('ar')
   const siteTitle = ref('جلسة الذكية - دعم الصحة النفسية')
+  const siteTitleAr = ref('جلسة الذكية - دعم الصحة النفسية')
   const siteDescription = ref('دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.')
   const siteIconUrl = ref('')
   const ratingsEnabled = ref(true)
@@ -39,20 +40,13 @@ export const useSettingsStore = defineStore('settings', () => {
   const getUserCurrencyCode = computed(() => userCurrencyCode.value)
   const getUserCurrency = computed(() => userCurrency.value)
 
-  // Helper function to update favicon
-  const updateFavicon = (iconUrl) => {
-    if (!iconUrl) return
-    
-    // Remove existing favicon links
-    const existingLinks = document.querySelectorAll('link[rel*="icon"]')
-    existingLinks.forEach(link => link.remove())
-    
-    // Create new favicon link
-    const link = document.createElement('link')
-    link.rel = 'icon'
-    link.type = 'image/x-icon'
-    link.href = iconUrl
-    document.head.appendChild(link)
+  // Helper function to update document title
+  const updateDocumentTitle = () => {
+    if (siteTitleAr.value) {
+      document.title = siteTitleAr.value
+    } else if (siteTitle.value) {
+      document.title = siteTitle.value
+    }
   }
 
   // Helper function to get cookie value
@@ -98,11 +92,10 @@ export const useSettingsStore = defineStore('settings', () => {
         bilingualEnabled.value = settings.bilingual_enabled ?? true
         defaultLanguage.value = settings.default_language ?? 'ar'
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
+        siteTitleAr.value = settings.site_title_ar ?? settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+        updateDocumentTitle()
         siteIconUrl.value = settings.site_icon_url ?? ''
-        if (siteIconUrl.value) {
-          updateFavicon(siteIconUrl.value)
-        }
         ratingsEnabled.value = settings.ratings_enabled ?? true
         diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
         diagnosisResultsLimit.value = settings.diagnosis_results_limit ?? 10
@@ -180,7 +173,9 @@ export const useSettingsStore = defineStore('settings', () => {
         bilingualEnabled.value = settings.bilingual_enabled ?? true
         defaultLanguage.value = settings.default_language ?? 'ar'
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
+        siteTitleAr.value = settings.site_title_ar ?? settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+        updateDocumentTitle()
         siteIconUrl.value = settings.site_icon_url ?? ''
         ratingsEnabled.value = settings.ratings_enabled ?? true
         diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
@@ -189,11 +184,6 @@ export const useSettingsStore = defineStore('settings', () => {
         appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         disableChatCopyPaste.value = settings.disable_chat_copy_paste ?? true
-        
-        // Update favicon if site icon URL is available
-        if (siteIconUrl.value) {
-          updateFavicon(siteIconUrl.value)
-        }
         
         // Save to localStorage
         localStorage.setItem('jalsah_settings', JSON.stringify(settings))
@@ -485,7 +475,9 @@ export const useSettingsStore = defineStore('settings', () => {
         bilingualEnabled.value = settings.bilingual_enabled ?? true
         defaultLanguage.value = settings.default_language ?? 'ar'
         siteTitle.value = settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
+        siteTitleAr.value = settings.site_title_ar ?? settings.site_title ?? 'جلسة الذكية - دعم الصحة النفسية'
         siteDescription.value = settings.site_description ?? 'دعم الصحة النفسية والجلسات العلاجية المدعومة بالذكاء الاصطناعي.'
+        updateDocumentTitle()
         siteIconUrl.value = settings.site_icon_url ?? ''
         ratingsEnabled.value = settings.ratings_enabled ?? true
         diagnosisSearchByName.value = settings.diagnosis_search_by_name ?? false
@@ -494,11 +486,6 @@ export const useSettingsStore = defineStore('settings', () => {
         appointmentChangeTerms.value = settings.appointment_change_terms ?? ''
         therapistRegistrationPasswordMode.value = settings.therapist_registration_password_mode ?? 'auto'
         disableChatCopyPaste.value = settings.disable_chat_copy_paste ?? true
-        
-        // Update favicon if site icon URL is available
-        if (siteIconUrl.value) {
-          updateFavicon(siteIconUrl.value)
-        }
         
         // Save to localStorage
         localStorage.setItem('jalsah_settings', JSON.stringify(settings))
@@ -509,6 +496,7 @@ export const useSettingsStore = defineStore('settings', () => {
     bilingualEnabled,
     defaultLanguage,
     siteTitle,
+    siteTitleAr,
     siteDescription,
     siteIconUrl,
     ratingsEnabled,

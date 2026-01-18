@@ -15,7 +15,7 @@
          </p>
          
          <!-- Question Counter -->
-         <div v-if="messages.length > 1" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+         <div v-if="messages.length > 1" class="mt-4 p-3 bg-primary-50 border border-blue-200 rounded-lg">
            <div class="flex items-center justify-center space-x-2" :class="$i18n.locale === 'ar' ? 'space-x-reverse' : 'space-x-2'">
              <svg class="h-4 w-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

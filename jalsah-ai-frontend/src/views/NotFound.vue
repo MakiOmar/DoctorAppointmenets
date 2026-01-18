@@ -12,7 +12,7 @@
         <div class="space-y-4">
           <router-link
             to="/"
-            class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            class="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
           >
             {{ $t('notFound.goHome') }}
           </router-link>
