@@ -46,20 +46,23 @@ export default {
 
   // Navigation
   nav: {
-    home: 'الرئيسية',
+    home: 'الصفحة الرئيسية',
     therapists: 'المعالجون',
+    therapistsSubtitle: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الإصطناعي',
     diagnosis: 'التشخيص',
     appointments: 'حجوزاتي',
     notifications: 'الرسائل',
     profile: 'الملف الشخصي',
     cart: 'السلة',
     login: 'تسجيل الدخول',
-    register: 'إنشاء حساب',
+    register: 'تسجيل حساب جديد',
     logout: 'تسجيل الخروج',
     language: 'اللغة',
     therapistRegister: 'تسجيل المعالج',
     menu: 'القائمة',
-    viewDiagnosisResults: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي'
+    viewDiagnosisResults: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي',
+    customerService: 'خدمة العملاء',
+    termsAndConditions: 'الشروط والأحكام وسياسة الإستخدام والإسترجاع'
   },
 
   // Logo

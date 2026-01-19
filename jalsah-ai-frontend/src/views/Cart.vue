@@ -178,7 +178,6 @@
             -->
             <!-- Appointment Change Terms -->
             <div v-if="settingsStore.getAppointmentChangeTerms" class="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 class="text-sm text-gray-900 mb-2">{{ $t('appointmentChangeTerms') }}</h3>
               <p class="text-sm text-primary-600 leading-relaxed">{{ settingsStore.getAppointmentChangeTerms }}</p>
             </div>
           </div>

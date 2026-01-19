@@ -1063,7 +1063,7 @@ function snks_get_appointment_change_terms( $locale = null ) {
 	if ( $locale === 'ar' ) {
 		// Force refresh cache for this option
 		wp_cache_delete( 'snks_ai_appointment_change_terms_ar', 'options' );
-		return get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+		return get_option( 'snks_ai_appointment_change_terms_ar', 'يرجى العلم أنه يمكنك تغيير موعد الحجز مره واحده فقط بعد الحجز بحد أقصى 24 ساعة قبل موعد الجلسة المحجوزه، ولا يمكن تغييرها بعد ذلك، كمان أن قيمة الحجز غير مستردة.' );
 	} else {
 		// Force refresh cache for this option
 		wp_cache_delete( 'snks_ai_appointment_change_terms_en', 'options' );

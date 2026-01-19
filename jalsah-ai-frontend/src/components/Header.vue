@@ -99,6 +99,7 @@
           <!-- Authenticated User Menu -->
           <template v-if="isAuthenticated">
             <div class="space-y-1">
+              <!-- Home -->
               <router-link
                 to="/"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -110,17 +111,8 @@
                 </svg>
                 <span>{{ $t('nav.home') }}</span>
               </router-link>
-              <router-link
-                to="/therapists"
-                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
-                :class="[{ 'bg-gray-50 text-primary-500': $route.path === '/therapists' }, locale === 'ar' ? 'flex-row-reverse' : '']"
-                @click="mobileMenuOpen = false"
-              >
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-                <span>{{ $t('nav.therapists') }}</span>
-              </router-link>
+              
+              <!-- My Appointments -->
               <router-link
                 to="/appointments"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -132,6 +124,43 @@
                 </svg>
                 <span>{{ $t('nav.appointments') }}</span>
               </router-link>
+              
+              <!-- Therapists -->
+              <router-link
+                to="/therapists"
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                :class="[{ 'bg-gray-50 text-primary-500': $route.path === '/therapists' }, locale === 'ar' ? 'flex-row-reverse' : '']"
+                @click="mobileMenuOpen = false"
+              >
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <span>{{ $t('nav.therapists') }}</span>
+              </router-link>
+              
+              <!-- AI Recommended Therapists -->
+              <router-link
+                v-if="!loadingDiagnosis"
+                :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                :class="locale === 'ar' ? 'flex-row-reverse' : ''"
+                @click="mobileMenuOpen = false"
+              >
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                <span>{{ $t('nav.therapistsSubtitle') }}</span>
+              </router-link>
+              <div
+                v-else
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-500"
+                :class="locale === 'ar' ? 'flex-row-reverse' : ''"
+              >
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 flex-shrink-0"></div>
+                <span>{{ $t('common.loading') }}</span>
+              </div>
+              
+              <!-- Messages -->
               <router-link
                 to="/notifications"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -144,32 +173,7 @@
                 <span>{{ $t('nav.notifications') }}</span>
               </router-link>
               
-              <!-- Smart Diagnosis Link -->
-              <router-link
-                v-if="!loadingDiagnosis"
-                :to="hasPreviousDiagnosis ? `/diagnosis-results/${lastDiagnosisId}` : '/diagnosis'"
-                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
-                :class="locale === 'ar' ? 'flex-row-reverse' : ''"
-                @click="mobileMenuOpen = false"
-              >
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                </svg>
-                <span>{{ hasPreviousDiagnosis ? $t('nav.viewDiagnosisResults') : $t('nav.diagnosis') }}</span>
-              </router-link>
-              <div
-                v-else
-                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-500"
-                :class="locale === 'ar' ? 'flex-row-reverse' : ''"
-              >
-                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500 flex-shrink-0"></div>
-                <span>{{ $t('common.loading') }}</span>
-              </div>
-
-              <!-- Divider -->
-              <div class="border-t border-gray-200 my-3 sm:my-4"></div>
-
-              <!-- Profile and Logout -->
+              <!-- Profile -->
               <router-link
                 to="/profile"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -181,6 +185,34 @@
                 </svg>
                 <span>{{ $t('nav.profile') }}</span>
               </router-link>
+              
+              <!-- Customer Service -->
+              <a
+                href="#"
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                :class="locale === 'ar' ? 'flex-row-reverse' : ''"
+                @click="mobileMenuOpen = false"
+              >
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span>{{ $t('nav.customerService') }}</span>
+              </a>
+              
+              <!-- Terms and Conditions -->
+              <a
+                href="#"
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                :class="locale === 'ar' ? 'flex-row-reverse' : ''"
+                @click="mobileMenuOpen = false"
+              >
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>{{ $t('nav.termsAndConditions') }}</span>
+              </a>
+              
+              <!-- Logout -->
               <button
                 @click="logout"
                 class="flex items-center gap-2.5 sm:gap-3 w-full text-right px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-red-500 rounded-md transition-colors"
@@ -197,6 +229,7 @@
           <!-- Non-Authenticated User Menu -->
           <template v-else>
             <div class="space-y-1">
+              <!-- Home -->
               <router-link
                 to="/"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -208,6 +241,8 @@
                 </svg>
                 <span>{{ $t('nav.home') }}</span>
               </router-link>
+              
+              <!-- Therapists -->
               <router-link
                 to="/therapists"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -219,7 +254,8 @@
                 </svg>
                 <span>{{ $t('nav.therapists') }}</span>
               </router-link>
-              <div class="border-t border-gray-200 my-3 sm:my-4"></div>
+              
+              <!-- Login -->
               <router-link
                 to="/login"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -231,6 +267,8 @@
                 </svg>
                 <span>{{ $t('nav.login') }}</span>
               </router-link>
+              
+              <!-- Register -->
               <router-link
                 to="/register"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
@@ -242,17 +280,19 @@
                 </svg>
                 <span>{{ $t('nav.register') }}</span>
               </router-link>
-              <router-link
-                to="/therapist-register"
+              
+              <!-- Customer Service -->
+              <a
+                href="#"
                 class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
                 :class="locale === 'ar' ? 'flex-row-reverse' : ''"
                 @click="mobileMenuOpen = false"
               >
                 <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path>
                 </svg>
-                <span>{{ $t('nav.therapistRegister') }}</span>
-              </router-link>
+                <span>{{ $t('nav.customerService') }}</span>
+              </a>
             </div>
           </template>
         </div>

@@ -48,8 +48,9 @@ export default {
   nav: {
     home: 'Home',
     therapists: 'Therapists',
+    therapistsSubtitle: 'Browse therapists most suitable for your condition through AI',
     diagnosis: 'Diagnosis',
-    appointments: 'Appointments',
+    appointments: 'My Appointments',
     notifications: 'Messages',
     profile: 'Profile',
     cart: 'Cart',
@@ -59,7 +60,9 @@ export default {
     language: 'Language',
     therapistRegister: 'Therapist Registration',
     menu: 'Menu',
-    viewDiagnosisResults: 'View Diagnosis Results'
+    viewDiagnosisResults: 'View Diagnosis Results',
+    customerService: 'Customer Service',
+    termsAndConditions: 'Terms and Conditions, Usage and Return Policy'
   },
 
   // Logo

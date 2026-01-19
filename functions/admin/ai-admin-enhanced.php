@@ -3329,7 +3329,7 @@ function snks_enhanced_ai_settings_page() {
 	
 	// Appointment Change Terms Settings
 	$appointment_change_terms_en = get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
-	$appointment_change_terms_ar = get_option( 'snks_ai_appointment_change_terms_ar', 'يمكنك تغيير موعدك مرة واحدة فقط قبل الموعد الحالي بـ 24 ساعة فقط، وليس بعد ذلك. تغيير الموعد مجاني.' );
+	$appointment_change_terms_ar = get_option( 'snks_ai_appointment_change_terms_ar', 'يرجى العلم أنه يمكنك تغيير موعد الحجز مره واحده فقط بعد الحجز بحد أقصى 24 ساعة قبل موعد الجلسة المحجوزه، ولا يمكن تغييرها بعد ذلك، كمان أن قيمة الحجز غير مستردة.' );
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
