@@ -350,13 +350,24 @@ export default {
           break
       }
 
-      // Reassign sequential positions (1, 2, 3...) after filtering and sorting
-      // This ensures that if therapists with lower frontend_order are filtered out,
-      // the remaining therapists will show sequential ordering starting from 1
-      return sorted.map((therapist, index) => ({
-        ...therapist,
-        originalPosition: index + 1
-      }))
+      // Reassign sequential positions (1, 2, 3...) ONLY when sorting by "best"
+      // For other sorting types, preserve the original frontend_order from database
+      if (activeSort.value === 'best' || activeSort.value === '') {
+        // Sequential ordering for "best" sorting
+        return sorted.map((therapist, index) => ({
+          ...therapist,
+          originalPosition: index + 1
+        }))
+      } else {
+        // Keep original frontend_order from database for other sorting types
+        // The originalPosition was already set correctly in therapistsWithOriginalPositions
+        // based on frontendOrder (handles 0 values correctly)
+        return sorted.map(therapist => ({
+          ...therapist
+          // originalPosition is already set correctly from the initial mapping
+          // and represents the database frontend_order value
+        }))
+      }
     })
 
     // Computed property to get displayed therapists based on limit
