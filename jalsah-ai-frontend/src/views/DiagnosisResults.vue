@@ -97,7 +97,7 @@
         </div>
 
         <!-- Therapists List -->
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else class="therapists-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <TherapistCard
             v-for="(therapist, index) in displayedTherapists" 
             :key="therapist.id"
@@ -228,19 +228,25 @@ export default {
       
       const diagnosisId = route.params.diagnosisId
       
-      return matchedTherapists.value.map((therapist) => {
+      const result = matchedTherapists.value.map((therapist, index) => {
         // Get the frontend_order from the diagnosis data
         const diagnosis = diagnosisId ? therapist.diagnoses?.find(d => d.id.toString() === diagnosisId.toString()) : null
         const frontendOrder = parseInt(diagnosis?.frontend_order || '0')
+        const displayOrder = parseInt(diagnosis?.display_order || '0')
         
-        
+        // Preserve original backend order - use index as the primary sort key for "best" sorting
+        // since backend already returns them in correct order by frontend_order
+        // frontendOrder is used for display badge, but original index preserves backend order
         return {
           ...therapist,
-          originalPosition: frontendOrder || 1, // Use frontend_order from API, fallback to 1
-          displayOrder: parseInt(diagnosis?.display_order || '0'), // Keep display_order for sorting
-          frontendOrder: frontendOrder || 1 // Add frontendOrder property for sorting
+          originalPosition: frontendOrder > 0 ? frontendOrder : (index + 1), // For badge display
+          displayOrder: displayOrder, // Keep display_order for secondary sorting
+          frontendOrder: frontendOrder > 0 ? frontendOrder : 999999, // Use 999999 for 0 values to push them to end
+          originalIndex: index // Preserve original backend order index for stable sorting
         }
       })
+      
+      return result
     })
 
     // Helper function to get earliest slot time (same as therapists page)
@@ -287,10 +293,24 @@ export default {
       switch (activeSort.value) {
         case 'best':
         case '':
-          // Default sorting (reset to original order) - use frontend_order
+          // Default sorting (reset to original backend order) - preserve the order from backend
+          // Backend already returns therapists sorted by frontend_order ASC, display_order ASC, name ASC
+          // So we use originalIndex to maintain that order after filtering
           sorted.sort((a, b) => {
-            return a.frontendOrder - b.frontendOrder
+            // Primary sort: frontendOrder (but treat 0 as 999999 to push to end)
+            const orderA = a.frontendOrder > 0 ? a.frontendOrder : 999999
+            const orderB = b.frontendOrder > 0 ? b.frontendOrder : 999999
+            if (orderA !== orderB) {
+              return orderA - orderB
+            }
+            // Secondary sort: displayOrder (if frontendOrder is same or both 0)
+            if (a.displayOrder !== b.displayOrder) {
+              return a.displayOrder - b.displayOrder
+            }
+            // Tertiary sort: originalIndex (preserve backend order as final tiebreaker)
+            return a.originalIndex - b.originalIndex
           })
+          
           break
           
         case 'price-low':
@@ -312,9 +332,20 @@ export default {
           break
           
         default:
-          // Default sorting (no specific sorting applied) - use frontend_order
+          // Default sorting (no specific sorting applied) - preserve backend order
           sorted.sort((a, b) => {
-            return a.frontendOrder - b.frontendOrder
+            // Primary sort: frontendOrder (but treat 0 as 999999 to push to end)
+            const orderA = a.frontendOrder > 0 ? a.frontendOrder : 999999
+            const orderB = b.frontendOrder > 0 ? b.frontendOrder : 999999
+            if (orderA !== orderB) {
+              return orderA - orderB
+            }
+            // Secondary sort: displayOrder (if frontendOrder is same or both 0)
+            if (a.displayOrder !== b.displayOrder) {
+              return a.displayOrder - b.displayOrder
+            }
+            // Tertiary sort: originalIndex (preserve backend order as final tiebreaker)
+            return a.originalIndex - b.originalIndex
           })
           break
       }
@@ -354,8 +385,7 @@ export default {
       }
       
       // Otherwise, show limited therapists (respecting the limit)
-      const limited = sortedTherapists.value.slice(0, limit)
-      return limited
+      return sortedTherapists.value.slice(0, limit)
     })
 
     // Computed property to check if there are more therapists to show
@@ -831,6 +861,8 @@ export default {
   direction: rtl;
   text-align: right;
 }
+
+/* RTL grid order fix is now in global style.css for better specificity */
 
 .rtl .space-x-reverse > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 1;

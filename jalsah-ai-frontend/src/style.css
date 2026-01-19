@@ -357,14 +357,6 @@ h1, h2, h3, h4, h5, h6, p {
     flex-direction: row;
   }
 
-  /* RTL grid adjustments */
-  [dir="rtl"] .grid-cols-2 > *:nth-child(odd) {
-    order: 2;
-  }
-
-  [dir="rtl"] .grid-cols-2 > *:nth-child(even) {
-    order: 1;
-  }
 
   /* RTL absolute positioning */
   [dir="rtl"] .right-0 {
