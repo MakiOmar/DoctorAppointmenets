@@ -18,8 +18,53 @@
 defined( 'ABSPATH' ) || exit;
 
 $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+
+// Check if this is an AI order
+$is_ai_order = $order->get_meta( 'from_jalsah_ai' ) === '1';
 ?>
-<form id="order_review" method="post">
+<?php if ( $is_ai_order ) : ?>
+<style>
+	/* AI Order Styling */
+	body {
+		background-color: rgb(17, 33, 69) !important;
+	}
+	body #price-break, body #checkout-wrapper {
+		background-color: rgb(17, 33, 69) !important;
+	}
+	
+	#place_order {
+		background-color: rgb(197, 164, 130) !important;
+		color: rgb(17, 33, 69) !important;
+	}
+	
+	#place_order:hover {
+		background-color: rgb(180, 150, 115) !important;
+		color: rgb(17, 33, 69) !important;
+	}
+	
+	/* Payment method labels */
+	.wc_payment_methods .wc_payment_method label {
+		color: rgb(17, 33, 69) !important;
+	}
+	
+	.wc_payment_methods .wc_payment_method > label {
+		color: rgb(17, 33, 69) !important;
+	}
+	
+	/* Payment method radio button labels */
+	.wc_payment_methods .payment_method label[for^="payment_method"] {
+		color: rgb(17, 33, 69) !important;
+	}
+	
+	/* Payment box background for better contrast */
+	#payment {
+		background-color: rgba(255, 255, 255, 0.95);
+		padding: 20px;
+		border-radius: 8px;
+	}
+</style>
+<?php endif; ?>
+<form id="order_review" method="post"<?php echo $is_ai_order ? ' class="ai-order-pay"' : ''; ?>>
 
 	<?php
 	$order_type = $order->get_meta( 'order_type' );
@@ -46,8 +91,6 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 	}
 	//phpcs:disable
 	
-	// Check if this is an AI order
-	$is_ai_order = $order->get_meta( 'from_jalsah_ai' ) === '1';
 	if ( ! $is_ai_order ) {
 		// Use AI session pricing table for AI orders
 		//echo ai_session_pricing_table_shortcode( $form_data );
@@ -90,13 +133,6 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 				?>
 			</ul>
 		<?php endif; ?>
-		<?php if ( $is_ai_order ) : ?>
-		<div class="form-row" style="margin-bottom: 20px;">
-			<a href="<?php echo esc_url( snks_ai_get_primary_frontend_url() . '/cart' ); ?>" class="button" style="background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;">
-				<?php echo esc_html__( 'العودة إلى السلة', 'woocommerce' ); ?>
-			</a>
-		</div>
-		<?php endif; ?>
 		
 		<div class="form-row">
 			<input type="hidden" name="woocommerce_pay" value="1" />
@@ -111,5 +147,12 @@ $totals = $order->get_order_item_totals(); // phpcs:ignore WordPress.WP.GlobalVa
 
 			<?php wp_nonce_field( 'woocommerce-pay', 'woocommerce-pay-nonce' ); ?>
 		</div>
+		<?php if ( $is_ai_order ) : ?>
+		<div class="form-row" style="margin-bottom: 20px;text-align: center;">
+			<a href="<?php echo esc_url( snks_ai_get_primary_frontend_url() . '/cart' ); ?>" class="button" style="background-color: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;">
+				<?php echo esc_html__( 'العودة إلى السلة', 'woocommerce' ); ?>
+			</a>
+		</div>
+		<?php endif; ?>
 	</div>
 </form>
