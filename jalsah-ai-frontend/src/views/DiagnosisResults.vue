@@ -350,7 +350,13 @@ export default {
           break
       }
 
-      return sorted
+      // Reassign sequential positions (1, 2, 3...) after filtering and sorting
+      // This ensures that if therapists with lower frontend_order are filtered out,
+      // the remaining therapists will show sequential ordering starting from 1
+      return sorted.map((therapist, index) => ({
+        ...therapist,
+        originalPosition: index + 1
+      }))
     })
 
     // Computed property to get displayed therapists based on limit

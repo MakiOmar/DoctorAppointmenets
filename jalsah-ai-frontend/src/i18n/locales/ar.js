@@ -509,7 +509,7 @@ export default {
     subtitle: 'اختر المعالج المناسب بنفسك',
     loading: 'جاري تحميل المعالجين...',
     bioDefault: 'معالج محترف متخصص في الصحة النفسية والرفاهية.',
-    whyBestForDiagnosis: 'لماذا هذا المعالج هو الأفضل لتشخيصك؟',
+    whyBestForDiagnosis: 'لماذا المعالج من الأفضل في تشخيصك؟',
     bookSession: 'احجز جلسة',
     viewProfile: 'عرض الملف الشخصي',
     viewDetails: 'عرض التفاصيل',

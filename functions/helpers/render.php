@@ -937,7 +937,7 @@ function snks_booking_item_template( $record ) {
 						<img class="anony-padding-5" src="/wp-content/uploads/2024/08/card.png"/>
 					</div>
 					<div class="anony-grid-col anony-grid-col-9 anony-flex flex-h-center flex-v-center snks-secondary-bg" style="margin-top:4px;">
-						<span style="color:#024059;font-size:18px;font-weight:bold">التشخيص: {diagnosis}</span>
+						<span style="color:#024059;font-size:18px;font-weight:bold">{diagnosis}</span>
 					</div>
 				</div>
 				<!--/diagnosis-->
