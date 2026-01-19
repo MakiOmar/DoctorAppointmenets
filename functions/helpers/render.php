@@ -1065,12 +1065,27 @@ function template_str_replace( $record ) {
 	
 	// Get diagnosis for AI sessions
 	$diagnosis_name = '';
+	$diagnosis_display = '';
 	if ( $is_ai_session ) {
 		$diagnosis_result = get_user_meta( $record->client_id, 'ai_diagnosis_result', true );
 		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
 			$diagnosis_name = $diagnosis_result['ai_diagnosis'];
+			// Create clickable link with popup trigger
+			$diagnosis_display = sprintf(
+				'<a href="#" class="snks-diagnosis-popup-trigger" data-diagnosis-name="%s" data-session-id="%d" style="color: #024059; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+					<span>تقييم الـ ai</span>
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+						<circle cx="12" cy="12" r="10"></circle>
+						<line x1="12" y1="16" x2="12" y2="12"></line>
+						<line x1="12" y1="8" x2="12.01" y2="8"></line>
+					</svg>
+				</a>',
+				esc_attr( $diagnosis_name ),
+				$record->ID
+			);
 		} else {
 			$diagnosis_name = 'غير متوفر';
+			$diagnosis_display = esc_html( $diagnosis_name );
 		}
 	} else {
 		// Hide diagnosis row for non-AI sessions
@@ -1115,7 +1130,7 @@ function template_str_replace( $record ) {
 			// Show timer for AI sessions that are too early
 			( $is_ai_session && $is_too_early ) ? '<span class="snks-apointment-timer"></span>' : '',
 			$status_class,
-			esc_html( $diagnosis_name ),
+			$diagnosis_display ? $diagnosis_display : esc_html( $diagnosis_name ),
 		),
 		$template
 	);
@@ -1188,12 +1203,27 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	
 	// Get diagnosis for AI sessions (from patient's perspective)
 	$diagnosis_name = '';
+	$diagnosis_display = '';
 	if ( $is_ai_session && isset( $client_id ) ) {
 		$diagnosis_result = get_user_meta( $client_id, 'ai_diagnosis_result', true );
 		if ( $diagnosis_result && isset( $diagnosis_result['diagnosis_name'] ) ) {
 			$diagnosis_name = $diagnosis_result['diagnosis_name'];
+			// Create clickable link with popup trigger
+			$diagnosis_display = sprintf(
+				'<a href="#" class="snks-diagnosis-popup-trigger" data-diagnosis-name="%s" data-session-id="%d" style="color: #024059; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+					<span>تقييم الـ ai</span>
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+						<circle cx="12" cy="12" r="10"></circle>
+						<line x1="12" y1="16" x2="12" y2="12"></line>
+						<line x1="12" y1="8" x2="12.01" y2="8"></line>
+					</svg>
+				</a>',
+				esc_attr( $diagnosis_name ),
+				$record->ID
+			);
 		} else {
 			$diagnosis_name = 'غير متوفر';
+			$diagnosis_display = esc_html( $diagnosis_name );
 		}
 	} else {
 		// Hide diagnosis row for non-AI sessions
@@ -1233,7 +1263,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'<span class="snks-apointment-timer"></span>',
 			$_class,
 			$patient_edit,
-			esc_html( $diagnosis_name ),
+			$diagnosis_display ? $diagnosis_display : esc_html( $diagnosis_name ),
 		),
 		$template
 	);
@@ -1946,6 +1976,43 @@ add_action(
 		return;
 	}
 );
+
+// Add JavaScript for diagnosis popup triggers
+add_action(
+	'wp_footer',
+	function () {
+		?>
+		<script>
+		(function() {
+			// Handle clicks on diagnosis popup triggers (works with event delegation for dynamically added content)
+			document.addEventListener('click', function(e) {
+				// Check if click is on the trigger link or any of its children
+				var trigger = e.target.closest('.snks-diagnosis-popup-trigger');
+				if (trigger) {
+					e.preventDefault();
+					e.stopPropagation();
+					var diagnosisName = trigger.getAttribute('data-diagnosis-name');
+					if (diagnosisName && typeof Swal !== 'undefined') {
+						Swal.fire({
+							title: 'التشخيص',
+							html: '<div style="text-align: right; direction: rtl; font-size: 16px; padding: 10px;">' + 
+							      diagnosisName.replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
+							      '</div>',
+							icon: 'info',
+							confirmButtonText: 'حسناً',
+							confirmButtonColor: '#024059',
+							width: '500px'
+						});
+					}
+				}
+			});
+		})();
+		</script>
+		<?php
+	},
+	999
+);
+
 /**
  * Org styles
  *
