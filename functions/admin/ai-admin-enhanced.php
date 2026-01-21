@@ -3406,7 +3406,7 @@ function snks_enhanced_ai_settings_page() {
 				
 				<div class="bilingual-field">
 					<label for="diagnosis_results_limit">Diagnosis Results Limit</label>
-					<input type="number" id="diagnosis_results_limit" name="diagnosis_results_limit" value="<?php echo esc_attr( $diagnosis_results_limit ); ?>" min="1" max="50" class="small-text">
+					<input type="number" id="diagnosis_results_limit" name="diagnosis_results_limit" value="<?php echo esc_attr( $diagnosis_results_limit ); ?>" min="0" max="50" class="small-text">
 					<p class="description">Maximum number of therapists to show on diagnosis results page. Set to 0 for unlimited results. Recommended: 10-20 for optimal user experience.</p>
 				</div>
 				
