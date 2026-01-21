@@ -699,7 +699,7 @@ export default {
 
   // Appointments Page
   appointmentsPage: {
-    title: 'مواعيدي',
+    title: 'حجوزاتي',
     loading: 'جاري تحميل المواعيد...',
     booking: 'جاري الحجز...',
     tabs: {

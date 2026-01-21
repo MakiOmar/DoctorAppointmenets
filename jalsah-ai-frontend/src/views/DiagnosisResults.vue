@@ -275,12 +275,54 @@ export default {
       return isNaN(slotDate.getTime()) ? 999999 : slotDate.getTime()
     }
 
-    // Computed property to sort therapists (same logic as therapists page)
-    const sortedTherapists = computed(() => {
+    // Computed property to calculate "best" order positions (sequential 1, 2, 3...)
+    // This is used to preserve the original order badge regardless of current sorting
+    const therapistsWithBestOrder = computed(() => {
       if (!therapistsWithOriginalPositions.value.length) return []
       
       // Filter out therapists with no available slots
       let filtered = therapistsWithOriginalPositions.value.filter(therapist => {
+        return therapist.earliest_slot_data && 
+               therapist.earliest_slot_data.date && 
+               therapist.earliest_slot_data.time
+      })
+      
+      // Sort by "best" order (frontend_order, display_order, originalIndex)
+      let bestSorted = [...filtered]
+      bestSorted.sort((a, b) => {
+        // Primary sort: frontendOrder (but treat 0 as 999999 to push to end)
+        const orderA = a.frontendOrder > 0 ? a.frontendOrder : 999999
+        const orderB = b.frontendOrder > 0 ? b.frontendOrder : 999999
+        if (orderA !== orderB) {
+          return orderA - orderB
+        }
+        // Secondary sort: displayOrder (if frontendOrder is same or both 0)
+        if (a.displayOrder !== b.displayOrder) {
+          return a.displayOrder - b.displayOrder
+        }
+        // Tertiary sort: originalIndex (preserve backend order as final tiebreaker)
+        return a.originalIndex - b.originalIndex
+      })
+      
+      // Create a map of therapist ID to best order position
+      const bestOrderMap = new Map()
+      bestSorted.forEach((therapist, index) => {
+        bestOrderMap.set(therapist.id, index + 1)
+      })
+      
+      // Add bestOrderPosition to each therapist
+      return therapistsWithOriginalPositions.value.map(therapist => ({
+        ...therapist,
+        bestOrderPosition: bestOrderMap.get(therapist.id) || 999999
+      }))
+    })
+
+    // Computed property to sort therapists (same logic as therapists page)
+    const sortedTherapists = computed(() => {
+      if (!therapistsWithBestOrder.value.length) return []
+      
+      // Filter out therapists with no available slots
+      let filtered = therapistsWithBestOrder.value.filter(therapist => {
         // Check if therapist has available slots
         return therapist.earliest_slot_data && 
                therapist.earliest_slot_data.date && 
@@ -350,24 +392,12 @@ export default {
           break
       }
 
-      // Reassign sequential positions (1, 2, 3...) ONLY when sorting by "best"
-      // For other sorting types, preserve the original frontend_order from database
-      if (activeSort.value === 'best' || activeSort.value === '') {
-        // Sequential ordering for "best" sorting
-        return sorted.map((therapist, index) => ({
-          ...therapist,
-          originalPosition: index + 1
-        }))
-      } else {
-        // Keep original frontend_order from database for other sorting types
-        // The originalPosition was already set correctly in therapistsWithOriginalPositions
-        // based on frontendOrder (handles 0 values correctly)
-        return sorted.map(therapist => ({
-          ...therapist
-          // originalPosition is already set correctly from the initial mapping
-          // and represents the database frontend_order value
-        }))
-      }
+      // Always use bestOrderPosition for badge display, regardless of current sorting
+      // This preserves the original "best" order number (1, 2, 3, 4...) even when sorted differently
+      return sorted.map(therapist => ({
+        ...therapist,
+        originalPosition: therapist.bestOrderPosition || 999999
+      }))
     })
 
     // Computed property to get displayed therapists based on limit
@@ -806,6 +836,12 @@ export default {
     // Watch for settings changes and reload if needed
     watch(() => settingsStore.isInitialized, (newVal) => {
       // Settings have been initialized
+    })
+
+    // Watch for sorting changes to reset show all state
+    // This ensures newly shown items follow the current sorting rule
+    watch(activeSort, () => {
+      updateSorting()
     })
 
     // Watch for when therapists are loaded to auto-click first therapist
