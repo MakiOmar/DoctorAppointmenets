@@ -37,7 +37,7 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 		)
 	);
 	// If previous appointment is reset.
-	if ( $updated ) {
+	if ( $updated !== false ) {
 		$status        = 'waiting';
 		$new_timetable = snks_get_timetable_by( 'ID', absint( $new_booking_id ) );
 		$new_date      = gmdate( 'Y-m-d', strtotime( $new_timetable->date_time ) );
@@ -49,6 +49,7 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				$status = 'closed';
 			}
 		}
+		$old_updated = false;
 		if ( 'postponed' !== $booking->session_status ) {
 			$old_updated = snks_update_timetable(
 				$booking->ID,
@@ -76,7 +77,7 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 					'notification_1hr_sent'  => 0,
 				)
 			);
-			if ( $updated ) {
+			if ( $updated !== false ) {
 				snks_close_others( $new_timetable );
 				if ( snks_is_patient() ) {
 					$main_order->update_meta_data( 'booking-edited', '1' );
