@@ -344,13 +344,6 @@ add_action(
 	}
 );
 
-
-/**
- * Function for `woocommerce_payment_complete` action-hook.
- *
- * @param int $order_id Order's ID.
- * @return void
- */
 add_action(
 	'woocommerce_thankyou',
 	function ( $order_id ) {
@@ -370,7 +363,22 @@ add_action(
 				exit;
 			}
 		}
-
+	},
+	5  // Higher priority to run before other hooks
+);
+/**
+ * Function for `woocommerce_payment_complete` action-hook.
+ *
+ * @param int $order_id Order's ID.
+ * @return void
+ */
+add_action(
+	'woocommerce_payment_complete',
+	function ( $order_id ) {
+		$order      = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
 		$order_type = $order->get_meta( 'order_type' );
 		if ( 'edit-fees' === $order_type && ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) ) {
 			$connected_order = $order->get_meta( 'connected_order' );
