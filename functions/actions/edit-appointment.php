@@ -369,7 +369,7 @@ add_action(
 				exit;
 			}
 		}
-		
+
 		$order_type = $order->get_meta( 'order_type' );
 		if ( 'edit-fees' === $order_type && ( $order->has_status( 'completed' ) || $order->has_status( 'processing' ) ) ) {
 			$connected_order = $order->get_meta( 'connected_order' );
@@ -379,11 +379,23 @@ add_action(
 			$old_booking_id = $order->get_meta( 'booking_id' );
 			$new_booking_id = $order->get_meta( 'new_booking_id' );
 			$booking        = snks_get_timetable_by( 'ID', absint( $old_booking_id ) );
+			if ( ! $booking ) {
+				return;
+			}
 			$main_order     = wc_get_order( absint( $connected_order ) );
 			if ( ! $main_order ) {
 				return;
 			}
 			snks_apply_booking_edit( $booking, $main_order, $new_booking_id, false );
+			
+			// Add profit crediting for edit fees
+			$edit_fee = $order->get_meta( 'session_price' );
+			$doctor_id = $booking->user_id;
+			snks_add_transaction( $doctor_id, $new_booking_id, 'add', $edit_fee );
+			snks_log_transaction( $doctor_id, $edit_fee, 'add' );
+			$order->update_meta_data( 'doctor_edit_earning', $edit_fee );
+			$order->save();
+			
 			do_action( 'snks_patient_edit_booking' );
 			wp_safe_redirect( home_url( '/my-bookings' ) );
 			exit;
