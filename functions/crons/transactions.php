@@ -122,6 +122,9 @@ function get_available_withdrawal_balance( $user_id ) {
  * @param bool   $is_ai_session    Whether this is an AI session transaction.
  */
 function snks_add_transaction( $user_id, $timetable_id, $transaction_type, $amount, $is_ai_session = false ) {
+	if ( $amount < 1 ) {
+		return false;
+	}
 	global $wpdb;
 	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
 	//phpcs:disable
