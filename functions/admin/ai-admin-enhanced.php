@@ -1045,6 +1045,73 @@ function snks_get_user_info_ajax() {
 add_action( 'wp_ajax_snks_get_user_info', 'snks_get_user_info_ajax' );
 
 /**
+ * AJAX handler for editing diagnosis
+ */
+add_action( 'wp_ajax_snks_edit_diagnosis', 'snks_edit_diagnosis_ajax' );
+function snks_edit_diagnosis_ajax() {
+	// Verify nonce
+	if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'edit_diagnosis' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Security check failed. Please refresh the page and try again.', 'anony-shrinks' ) ) );
+	}
+	
+	// Check user capabilities
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => __( 'You do not have permission to perform this action.', 'anony-shrinks' ) ) );
+	}
+	
+	global $wpdb;
+	
+	// Get and validate input
+	$diagnosis_id = isset( $_POST['diagnosis_id'] ) ? intval( $_POST['diagnosis_id'] ) : 0;
+	$name_en = isset( $_POST['name_en'] ) ? sanitize_text_field( $_POST['name_en'] ) : '';
+	$name_ar = isset( $_POST['name_ar'] ) ? sanitize_text_field( $_POST['name_ar'] ) : '';
+	$description_en = isset( $_POST['description_en'] ) ? sanitize_textarea_field( $_POST['description_en'] ) : '';
+	$description_ar = isset( $_POST['description_ar'] ) ? sanitize_textarea_field( $_POST['description_ar'] ) : '';
+	
+	// Validate required fields
+	if ( empty( $diagnosis_id ) ) {
+		wp_send_json_error( array( 'message' => __( 'Diagnosis ID is required.', 'anony-shrinks' ) ) );
+	}
+	
+	if ( empty( $name_en ) && empty( $name_ar ) ) {
+		wp_send_json_error( array( 'message' => __( 'At least one diagnosis name (English or Arabic) is required.', 'anony-shrinks' ) ) );
+	}
+	
+	// Check if diagnosis exists
+	$existing = $wpdb->get_row( $wpdb->prepare(
+		"SELECT id FROM {$wpdb->prefix}snks_diagnoses WHERE id = %d",
+		$diagnosis_id
+	) );
+	
+	if ( ! $existing ) {
+		wp_send_json_error( array( 'message' => __( 'Diagnosis not found.', 'anony-shrinks' ) ) );
+	}
+	
+	// Update diagnosis
+	$result = $wpdb->update(
+		$wpdb->prefix . 'snks_diagnoses',
+		array(
+			'name_en' => $name_en,
+			'name_ar' => $name_ar,
+			'description_en' => $description_en,
+			'description_ar' => $description_ar,
+		),
+		array( 'id' => $diagnosis_id ),
+		array( '%s', '%s', '%s', '%s' ),
+		array( '%d' )
+	);
+	
+	if ( false === $result ) {
+		wp_send_json_error( array( 'message' => __( 'Failed to update diagnosis. Please try again.', 'anony-shrinks' ) ) );
+	}
+	
+	wp_send_json_success( array( 
+		'message' => __( 'Diagnosis updated successfully!', 'anony-shrinks' ),
+		'diagnosis_id' => $diagnosis_id
+	) );
+}
+
+/**
  * Enhanced Diagnoses Page
  */
 function snks_enhanced_ai_diagnoses_page() {
@@ -1312,9 +1379,8 @@ function snks_enhanced_ai_diagnoses_page() {
 				<h2>Edit Diagnosis</h2>
 				<button type="button" onclick="hideEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
 			</div>
-			<form method="post">
+			<form id="edit-diagnosis-form" method="post">
 				<?php wp_nonce_field( 'edit_diagnosis' ); ?>
-				<input type="hidden" name="action" value="edit_diagnosis">
 				<input type="hidden" name="diagnosis_id" id="edit_diagnosis_id">
 				
 				<table class="form-table">
@@ -1346,8 +1412,13 @@ function snks_enhanced_ai_diagnoses_page() {
 					</tr>
 				</table>
 				
-				<?php submit_button( 'Update Diagnosis' ); ?>
-				<button type="button" class="button" onclick="hideEditModal()">Cancel</button>
+				<div style="display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+					<button type="submit" id="save-diagnosis-btn" class="button button-primary" style="min-width: 120px; padding: 8px 20px; font-size: 14px; font-weight: 600;">
+						<span class="save-btn-text"><?php esc_html_e( 'Save Changes', 'anony-shrinks' ); ?></span>
+						<span class="save-btn-loading" style="display: none;"><?php esc_html_e( 'Saving...', 'anony-shrinks' ); ?></span>
+					</button>
+					<button type="button" class="button" onclick="hideEditModal()" style="min-width: 100px;"><?php esc_html_e( 'Cancel', 'anony-shrinks' ); ?></button>
+				</div>
 			</form>
 		</div>
 	</div>
@@ -1357,6 +1428,10 @@ function snks_enhanced_ai_diagnoses_page() {
 	#edit-diagnosis-modal {
 		display: none !important;
 		visibility: hidden !important;
+		padding: 30px !important;
+		min-width: 600px;
+		max-width: 600px!important;
+		margin: 0 auto;
 	}
 	
 	#modal-backdrop {
@@ -1371,6 +1446,46 @@ function snks_enhanced_ai_diagnoses_page() {
 	
 	#modal-backdrop.show {
 		display: block !important;
+	}
+	
+	/* Save button styling */
+	#save-diagnosis-btn {
+		background-color: #0073aa !important;
+		border-color: #0073aa !important;
+		color: #fff !important;
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+	
+	#save-diagnosis-btn:hover:not(:disabled) {
+		background-color: #005a87 !important;
+		border-color: #005a87 !important;
+	}
+	
+	#save-diagnosis-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+	
+	/* Form table styling */
+	#edit-diagnosis-modal .form-table {
+		margin-top: 0;
+	}
+	
+	#edit-diagnosis-modal .form-table th {
+		width: 150px;
+		padding: 15px 10px 15px 0;
+		vertical-align: top;
+	}
+	
+	#edit-diagnosis-modal .form-table td {
+		padding: 15px 0;
+	}
+	
+	#edit-diagnosis-modal .form-table input[type="text"],
+	#edit-diagnosis-modal .form-table textarea {
+		width: 100%;
+		max-width: 400px;
 	}
 	</style>
 	
@@ -1405,30 +1520,117 @@ function snks_enhanced_ai_diagnoses_page() {
 		try {
 			document.getElementById('edit-diagnosis-modal').classList.remove('show');
 			document.getElementById('modal-backdrop').classList.remove('show');
+			// Reset form
+			var form = document.querySelector('#edit-diagnosis-modal form');
+			if (form) {
+				form.reset();
+			}
 		} catch (error) {
 			console.error('Error hiding modal:', error);
 		}
 	}
 	
-	// Close modal when clicking outside
-	document.addEventListener('click', function(event) {
-		var modal = document.getElementById('edit-diagnosis-modal');
-		var backdrop = document.getElementById('modal-backdrop');
-		if (event.target === modal || event.target === backdrop) {
-			hideEditModal();
-		}
-	});
-	
-	// Close modal with Escape key
-	document.addEventListener('keydown', function(event) {
-		if (event.key === 'Escape') {
-			hideEditModal();
-		}
-	});
-	
-	// Ensure modal is hidden on page load
+	// Handle form submission with AJAX
 	document.addEventListener('DOMContentLoaded', function() {
 		hideEditModal();
+		
+		var editForm = document.getElementById('edit-diagnosis-form');
+		if (editForm) {
+			editForm.addEventListener('submit', function(e) {
+				e.preventDefault();
+				
+				var form = e.target;
+				var saveBtn = document.getElementById('save-diagnosis-btn');
+				var saveBtnText = saveBtn.querySelector('.save-btn-text');
+				var saveBtnLoading = saveBtn.querySelector('.save-btn-loading');
+				
+				// Validate form
+				var nameEn = document.getElementById('edit_name_en').value.trim();
+				var nameAr = document.getElementById('edit_name_ar').value.trim();
+				var diagnosisId = document.getElementById('edit_diagnosis_id').value;
+				
+				if (!diagnosisId) {
+					alert('Error: Diagnosis ID is missing. Please refresh the page and try again.');
+					return;
+				}
+				
+				if (!nameEn && !nameAr) {
+					alert('Please enter at least one diagnosis name (English or Arabic).');
+					document.getElementById('edit_name_en').focus();
+					return;
+				}
+				
+				// Disable button and show loading state
+				saveBtn.disabled = true;
+				saveBtnText.style.display = 'none';
+				saveBtnLoading.style.display = 'inline';
+				
+				// Prepare form data
+				var formData = new FormData(form);
+				formData.append('action', 'snks_edit_diagnosis');
+				
+				// Send AJAX request
+				fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+					method: 'POST',
+					body: formData
+				})
+				.then(function(response) {
+					return response.json();
+				})
+				.then(function(data) {
+					// Re-enable button
+					saveBtn.disabled = false;
+					saveBtnText.style.display = 'inline';
+					saveBtnLoading.style.display = 'none';
+					
+					if (data.success) {
+						// Show success message
+						alert(data.data.message || 'Diagnosis updated successfully!');
+						
+						// Hide modal
+						hideEditModal();
+						
+						// Reload page to show updated data
+						window.location.reload();
+					} else {
+						// Show error message
+						alert(data.data.message || 'Failed to update diagnosis. Please try again.');
+					}
+				})
+				.catch(function(error) {
+					console.error('Error:', error);
+					
+					// Re-enable button
+					saveBtn.disabled = false;
+					saveBtnText.style.display = 'inline';
+					saveBtnLoading.style.display = 'none';
+					
+					alert('An error occurred while saving. Please try again.');
+				});
+			});
+		}
+		
+		// Close modal when clicking outside
+		var modal = document.getElementById('edit-diagnosis-modal');
+		var backdrop = document.getElementById('modal-backdrop');
+		
+		if (backdrop) {
+			backdrop.addEventListener('click', function(event) {
+				if (event.target === backdrop) {
+					hideEditModal();
+				}
+			});
+		}
+		
+		// Close modal with Escape key
+		document.addEventListener('keydown', function(event) {
+			if (event.key === 'Escape') {
+				var modal = document.getElementById('edit-diagnosis-modal');
+				if (modal && modal.classList.contains('show')) {
+					hideEditModal();
+				}
+			}
+		});
 	});
 	
 	// Also ensure modal is hidden when page is ready
