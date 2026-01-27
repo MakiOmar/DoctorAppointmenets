@@ -509,3 +509,13 @@ body [data-testid*="logo"] {
     font-family: 'jalsah2', sans-serif !important;
   }
 }
+
+@media screen and (max-width: 373px) {
+  /* Mobile specific styles */
+  .text-\[17px\] {
+    font-size: 0.7rem;
+  }
+  .text-\[18px\] {
+    font-size: 0.8rem;
+  }
+}
