@@ -779,7 +779,7 @@ function snks_generate_rochtah_meeting_link( $booking_id ) {
 	$room_name = 'rochtah_' . $booking_id . '_' . time();
 	
 	// Create the Jitsi meeting URL
-	$meeting_url = 'https://s.jalsah.app/' . $room_name;
+	$meeting_url = 'https://jitsiserver.jalsah.app/' . $room_name;
 	
 	return array(
 		'room_name' => $room_name,
@@ -817,7 +817,7 @@ function snks_get_rochtah_meeting_details( $booking_id ) {
 	
 	// If room_name is empty, extract it from the meeting URL
 	if ( empty( $room_name ) && ! empty( $meeting_link ) ) {
-		// Extract room name from URL like: https://s.jalsah.app/rochtah_8_1761465857
+		// Extract room name from URL like: https://jitsiserver.jalsah.app/rochtah_8_1761465857
 		if ( preg_match( '/rochtah_\d+_\d+/', $meeting_link, $matches ) ) {
 			$room_name = $matches[0];
 		}

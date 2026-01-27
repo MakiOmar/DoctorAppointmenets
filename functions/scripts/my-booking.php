@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_enqueue_scripts',
 	function () {
-		wp_enqueue_script( 'meeting-script', 'https://s.jalsah.app/external_api.js', array(), time(), false );
+		wp_enqueue_script( 'meeting-script', 'https://jitsiserver.jalsah.app/external_api.js', array(), time(), false );
 	}
 );
 add_shortcode(
@@ -126,7 +126,7 @@ add_shortcode(
 								//TOOLBAR_BUTTONS: ['microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 'fodeviceselection', 'hangup', 'profile', 'chat', 'recording', 'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'feedback', 'stats', 'tileview'],
 							}
 					}
-					meetAPI = new JitsiMeetExternalAPI("s.jalsah.app", options);
+					meetAPI = new JitsiMeetExternalAPI("jitsiserver.jalsah.app", options);
 
 					
 					meetAPI.executeCommand('displayName', '<?php echo esc_html( $name ); ?>');

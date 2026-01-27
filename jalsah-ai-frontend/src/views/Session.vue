@@ -813,7 +813,7 @@ const initializeJitsiMeeting = () => {
   
   // Load Jitsi external API script
   const script = document.createElement('script')
-  script.src = 'https://s.jalsah.app/external_api.js'
+  script.src = 'https://jitsiserver.jalsah.app/external_api.js'
   script.onload = () => {
     
     setTimeout(() => {
@@ -890,7 +890,7 @@ const startJitsiMeeting = () => {
      
      // Try the main Jitsi server first
      try {
-       meetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
+       meetAPI.value = new JitsiMeetExternalAPI("jitsiserver.jalsah.app", options)
      } catch (serverError) {
        console.warn('⚠️ Main server failed, trying fallback:', serverError)
        // Fallback to meet.jit.si if main server fails

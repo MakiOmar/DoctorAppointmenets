@@ -1250,7 +1250,7 @@ export default {
         
         // Load Jitsi external API script
         const script = document.createElement('script')
-        script.src = 'https://s.jalsah.app/external_api.js'
+        script.src = 'https://jitsiserver.jalsah.app/external_api.js'
         script.onload = () => {
           setTimeout(() => {
             startSessionJitsiMeeting()
@@ -1336,7 +1336,7 @@ export default {
       try {
         // Try the main Jitsi server first
         try {
-          sessionMeetAPI.value = new JitsiMeetExternalAPI("s.jalsah.app", options)
+          sessionMeetAPI.value = new JitsiMeetExternalAPI("jitsiserver.jalsah.app", options)
         } catch (serverError) {
           console.warn('⚠️ Main server failed, trying fallback:', serverError)
           // Fallback to meet.jit.si if main server fails
@@ -1966,7 +1966,7 @@ export default {
       
       // Load Jitsi external API script
       const script = document.createElement('script')
-      script.src = 'https://s.jalsah.app/external_api.js'
+      script.src = 'https://jitsiserver.jalsah.app/external_api.js'
       script.onload = () => {
         setTimeout(() => {
           initializeRochtahJitsiMeeting()
@@ -2050,7 +2050,7 @@ export default {
         // Try the main Jitsi server first
         let meetAPI
         try {
-          meetAPI = new JitsiMeetExternalAPI("s.jalsah.app", options)
+          meetAPI = new JitsiMeetExternalAPI("jitsiserver.jalsah.app", options)
         } catch (serverError) {
           console.warn('⚠️ Main server failed, trying fallback:', serverError)
           // Fallback to meet.jit.si if main server fails

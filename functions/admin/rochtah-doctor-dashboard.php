@@ -1076,7 +1076,7 @@ function snks_rochtah_doctor_dashboard() {
 		
 		// Load Jitsi external API script
 		const script = document.createElement('script');
-		script.src = 'https://s.jalsah.app/external_api.js';
+		script.src = 'https://jitsiserver.jalsah.app/external_api.js';
 		script.onload = () => {
 			console.log('Jitsi external API loaded from main server');
 			setTimeout(() => {
@@ -1177,7 +1177,7 @@ function snks_rochtah_doctor_dashboard() {
 			
 			// Try the main Jitsi server first
 			try {
-				doctorMeetingAPI = new JitsiMeetExternalAPI("s.jalsah.app", options);
+				doctorMeetingAPI = new JitsiMeetExternalAPI("jitsiserver.jalsah.app", options);
 				console.log('Connected to main Jitsi server');
 			} catch (serverError) {
 				console.warn('Main server failed, trying fallback:', serverError);

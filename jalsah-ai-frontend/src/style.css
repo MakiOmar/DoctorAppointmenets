@@ -461,7 +461,7 @@ h1, h2, h3, h4, h5, h6, p {
 iframe[id*="jitsi"],
 iframe[src*="jitsi"],
 iframe[src*="meet.jit.si"],
-iframe[src*="s.jalsah.app"] {
+iframe[src*="jitsiserver.jalsah.app"] {
   /* These selectors target the iframe containers */
 }
 
