@@ -168,37 +168,68 @@ function snks_calculate_session_profit( $session_amount, $therapist_id, $patient
  * @return int|false Transaction ID on success, false on failure
  */
 function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_amount ) {
-	
+	$transaction_exists = snks_get_transaction_by_ai_session_id_with_amount( $session_data['session_id'] );
+	if ( $transaction_exists ) {
+		// Transaction already exists for this session ID and amount
+		return $transaction_exists;
+	}
 	global $wpdb;
 
-	$transaction_id = snks_get_transaction_by_user_order_id( $therapist_id, $session_data['order_id'] );
+	$transaction_id = snks_get_transaction_by_user_order_id(
+		$therapist_id,
+		$session_data['order_id']
+	);
+
+	$session_amount = $session_data['session_amount'] ?? 0;
+	$admin_profit   = round( $session_amount - $profit_amount, 2 );
+
+	$metadata = array(
+		'user_id'           => $therapist_id,
+		'amount'            => $profit_amount,
+		'ai_session_id'     => $session_data['session_id'] ?? 0,
+		'ai_session_type'   => $session_data['session_type'] ?? 'first',
+		'ai_patient_id'     => $session_data['patient_id'] ?? 0,
+		'ai_order_id'       => $session_data['order_id'] ?? 0,
+		'ai_session_amount' => $session_amount,
+		'ai_admin_profit'   => $admin_profit,
+	);
 	if ( $transaction_id ) {
-		// Calculate admin profit (website share)
-		$session_amount = $session_data['session_amount'] ?? 0;
-		$admin_profit = $session_amount - $profit_amount;
-		
-		// Add AI session metadata to the transaction
-		$metadata = array(
-			'ai_session_id' => $session_data['session_id'] ?? 0,
-			'ai_session_type' => $session_data['session_type'] ?? 'first',
-			'ai_patient_id' => $session_data['patient_id'] ?? 0,
-			'ai_order_id' => $session_data['order_id'] ?? 0,
-			'ai_session_amount' => $session_amount,
-			'ai_admin_profit' => round( $admin_profit, 2 )
-		);
-		$update_result = $wpdb->update(
+
+		// ✅ Update existing transaction
+		$wpdb->update(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
 			array( 'id' => $transaction_id ),
-			array( '%d', '%s', '%d', '%d', '%f', '%f' ),
+			array( '%d', '%d', '%d', '%s', '%d', '%d', '%f', '%f' ),
 			array( '%d' )
 		);
-		
-		$log_result = snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
-		
+
+		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
+
+		return $transaction_id;
+
+	} else {
+
+		// ✅ Insert new transaction
+		$inserted = $wpdb->insert(
+			$wpdb->prefix . 'snks_booking_transactions',
+			$metadata,
+			array( '%d', '%d', '%d', '%s', '%d', '%d', '%f', '%f' )
+		);
+		teamlog('Transaction id : ' . $inserted);
+		teamlog( 'wpdb last_error: ' . $wpdb->last_error );
+		teamlog( 'wpdb last_query: ' . $wpdb->last_query );
+		if ( ! $inserted ) {
+			teamlog( 'Failed to insert AI session transaction' );
+			return false;
+		}
+
+		$new_transaction_id = $wpdb->insert_id;
+
+		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
+
+		return $new_transaction_id;
 	}
-	
-	return $transaction_id;
 }
 
 /**
@@ -208,6 +239,13 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
  * @return array Result array with success status and message
  */
 function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
+	if ( ! $session_id ) {
+		return array(
+			'success' => false,
+			'message' => 'Invalid session ID'
+		);
+	}
+	teamlog("Executing AI profit transfer for session_id={$session_id}" );
 	global $wpdb;
 	// Get session data
 	if ( ! $session_data ) {
@@ -287,8 +325,8 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 		'order_id' => $order_id,
 		'session_amount' => $session_amount
 	);
+	teamlog($session_data_for_transaction );
 
-	
 	// Add transaction
 
 	$transaction_id = snks_add_ai_session_transaction( $therapist_id, $session_data_for_transaction, $profit_amount );

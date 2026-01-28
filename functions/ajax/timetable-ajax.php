@@ -579,39 +579,6 @@ function snks_handle_session_doctor_actions() {
 		wp_send_json_error( 'Failed to update session status.' );
 	}
 	
-	// If this is an AI session, create earnings transaction
-	if ( $update_result && $session->order_id > 0 && strpos( $session->settings, 'ai_booking' ) !== false ) {
-		// Check if earnings transaction already exists for this specific session
-		$existing_transaction = $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
-			 WHERE ai_session_id = %d AND transaction_type = 'add'",
-			$session_id
-		) );
-		
-		// Also check by order_id as secondary safeguard
-		if ( ! $existing_transaction ) {
-			$existing_transaction = $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
-				 WHERE ai_order_id = %d AND transaction_type = 'add'",
-				$session->order_id
-			) );
-		}
-		
-		if ( ! $existing_transaction ) {
-			// Try to find sessions_actions entry and use existing profit transfer function
-
-			$session_action = snks_get_session_action_with_timetable( $session_id );
-			
-			if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
-				// Use existing profit transfer function
-				snks_execute_ai_profit_transfer( $session_action->action_session_id, $session_action );
-			} elseif ( function_exists( 'snks_create_ai_earnings_from_timetable' ) ) {
-				// Fallback: create earnings directly from timetable data
-				snks_create_ai_earnings_from_timetable( $session );
-			}
-		}
-	}
-	
 	// If attendance is provided, set it
 	if ( ! empty( $attendance ) ) {
 		$actions_table = $wpdb->prefix . 'snks_sessions_actions';
@@ -642,7 +609,35 @@ function snks_handle_session_doctor_actions() {
 				}
 			}
 		}
-		
+		$transfered = false;
+		// If this is an AI session, create earnings transaction
+		if ( $update_result && $session->order_id > 0 && strpos( $session->settings, 'ai_booking' ) !== false ) {
+			// Check if earnings transaction already exists for this specific session
+			$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+				WHERE ai_session_id = %d AND transaction_type = 'add'",
+				$session_id
+			) );
+			
+			// Also check by order_id as secondary safeguard
+			if ( ! $existing_transaction ) {
+				$existing_transaction = $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}snks_booking_transactions 
+					WHERE ai_order_id = %d AND transaction_type = 'add'",
+					$session->order_id
+				) );
+			}
+			if ( ! $existing_transaction ) {
+				// Try to find sessions_actions entry and use existing profit transfer function
+			
+				$session_action = snks_get_session_action_with_timetable( $session_id );
+				if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
+					// Use existing profit transfer function
+					$transfered = snks_execute_ai_profit_transfer( $session_action['action_session_id'], $session_action );
+				}
+			}
+		}
+
 		// Send email to admin if patient did not attend
 		if ( $attendance === 'no' ) {
 			$admin_email = get_option( 'admin_email' );

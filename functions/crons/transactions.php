@@ -682,3 +682,37 @@ function snks_get_transaction_by_user_order_id( $user_id, $order_id, $transactio
 	// Return the transaction ID or false if not found.
 	return ! empty( $transaction ) ? (int) $transaction['id'] : false;
 }
+
+/**
+ * Get latest transaction ID by AI session ID where amount is not zero
+ *
+ * @param int $ai_session_id AI session ID.
+ * @return int|false Transaction ID if found, false otherwise.
+ */
+function snks_get_transaction_by_ai_session_id_with_amount( $ai_session_id ) {
+	global $wpdb;
+
+	$ai_session_id = absint( $ai_session_id );
+
+	if ( 0 === $ai_session_id ) {
+		return false;
+	}
+
+	$table_name = $wpdb->prefix . TRNS_TABLE_NAME;
+
+	//phpcs:disable
+	$sql = $wpdb->prepare(
+		"SELECT id
+		 FROM {$table_name}
+		 WHERE ai_session_id = %d
+		   AND amount <> 0
+		 ORDER BY transaction_time DESC
+		 LIMIT 1",
+		$ai_session_id
+	);
+
+	$transaction = $wpdb->get_row( $sql, ARRAY_A );
+	//phpcs:enable
+
+	return ! empty( $transaction ) ? (int) $transaction['id'] : false;
+}
