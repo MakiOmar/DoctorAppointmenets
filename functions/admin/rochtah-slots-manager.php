@@ -21,6 +21,54 @@ function snks_rochtah_slots_manager() {
 	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_rochtah' ) ) {
 		wp_die( 'You do not have permission to access this page.' );
 	}
+	// Toggle slot status (activate/deactivate)
+	if (
+		isset( $_GET['action'], $_GET['slot_id'] )
+		&& in_array( $_GET['action'], array( 'deactivate_slot', 'activate_slot' ), true )
+	) {
+		$slot_id = intval( $_GET['slot_id'] );
+		$action  = sanitize_key( $_GET['action'] );
+
+		if ( $slot_id > 0 && wp_verify_nonce( $_GET['_wpnonce'], $action . '_' . $slot_id ) ) {
+
+			$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+
+			// Safety: do not deactivate booked slots
+			if ( $action === 'deactivate_slot' ) {
+				$current_bookings = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT current_bookings FROM $rochtah_appointments_table WHERE id = %d",
+						$slot_id
+					)
+				);
+
+				if ( intval( $current_bookings ) > 0 ) {
+					wp_safe_redirect( admin_url( 'admin.php?page=rochtah-slots-manager&toggle_error=booked' ) );
+					exit;
+				}
+			}
+
+			$new_status = ( $action === 'deactivate_slot' ) ? 'inactive' : 'active';
+
+			$updated = $wpdb->update(
+				$rochtah_appointments_table,
+				array( 'status' => $new_status ),
+				array( 'id' => $slot_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+
+			if ( false !== $updated ) {
+				wp_safe_redirect(
+					admin_url( 'admin.php?page=rochtah-slots-manager&toggled=' . $new_status )
+				);
+				exit;
+			}
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=rochtah-slots-manager&toggle_error=invalid' ) );
+		exit;
+	}
 
 	// Handle form submissions
 	if ( isset( $_POST['action'] ) && wp_verify_nonce( $_POST['rochtah_slots_manager_nonce'], 'rochtah_slots_manager_action' ) ) {
@@ -141,6 +189,22 @@ function snks_rochtah_slots_manager() {
 	?>
 	<div class="wrap">
 		<h1>Rochtah Slots Manager</h1>
+		<?php if ( isset( $_GET['toggled'] ) && $_GET['toggled'] === 'inactive' ) : ?>
+			<div class="notice notice-success"><p>Slot deactivated (set inactive).</p></div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['toggled'] ) && $_GET['toggled'] === 'active' ) : ?>
+			<div class="notice notice-success"><p>Slot restored (set active).</p></div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['toggle_error'] ) && $_GET['toggle_error'] === 'booked' ) : ?>
+			<div class="notice notice-error"><p>Cannot deactivate a slot that has bookings.</p></div>
+		<?php endif; ?>
+
+		<?php if ( isset( $_GET['toggle_error'] ) && $_GET['toggle_error'] === 'invalid' ) : ?>
+			<div class="notice notice-error"><p>Invalid toggle request.</p></div>
+		<?php endif; ?>
+
 
 		<!-- Publishing Status -->
 		<div class="card" style="margin-top: 20px;">
@@ -210,7 +274,9 @@ function snks_rochtah_slots_manager() {
 			// Use same is_template condition check
 			$published_slots = $wpdb->get_results(
 				"SELECT * FROM $rochtah_appointments_table 
-				WHERE $is_template_condition slot_date >= CURDATE() AND slot_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+				WHERE $is_template_condition slot_date >= CURDATE() 
+				AND slot_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+				AND status IN ('active','inactive')
 				ORDER BY slot_date ASC, start_time ASC"
 			);
 			?>
@@ -224,11 +290,13 @@ function snks_rochtah_slots_manager() {
 							<th>Time</th>
 							<th>Status</th>
 							<th>Bookings</th>
+							<th>Actions</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php foreach ( $published_slots as $slot ) : ?>
-							<tr>
+							<tr style="<?php echo ( $slot->status === 'inactive' ) ? 'opacity:0.55;' : ''; ?>">
+
 								<td><?php echo esc_html( $slot->slot_date ); ?></td>
 								<td><?php echo esc_html( $slot->day_of_week ); ?></td>
 								<td><?php echo esc_html( date( 'g:i A', strtotime( $slot->start_time ) ) ); ?> - <?php echo esc_html( date( 'g:i A', strtotime( $slot->end_time ) ) ); ?></td>
@@ -236,8 +304,33 @@ function snks_rochtah_slots_manager() {
 									<span class="status-<?php echo esc_attr( $slot->status ); ?>">
 										<?php echo esc_html( ucfirst( $slot->status ) ); ?>
 									</span>
+									<?php if ( $slot->status === 'inactive' ) : ?>
+										<span style="margin-left:8px; padding:2px 6px; background:#eee; border-radius:10px; font-size:12px;">Hidden</span>
+									<?php endif; ?>
 								</td>
+
 								<td><?php echo esc_html( $slot->current_bookings ); ?></td>
+								<td>
+									<?php
+										$slot_id = intval( $slot->id );
+										$is_inactive = ( $slot->status === 'inactive' );
+
+										$toggle_action = $is_inactive ? 'activate_slot' : 'deactivate_slot';
+										$toggle_label  = $is_inactive ? 'Restore' : 'Deactivate';
+
+										$toggle_url = wp_nonce_url(
+											admin_url( 'admin.php?page=rochtah-slots-manager&action=' . $toggle_action . '&slot_id=' . $slot_id ),
+											$toggle_action . '_' . $slot_id
+										);
+									?>
+									<a href="<?php echo esc_url( $toggle_url ); ?>"
+									class="button button-small <?php echo $is_inactive ? 'button-primary' : 'button-secondary'; ?>"
+									onclick="return confirm('<?php echo esc_js( $is_inactive ? 'Restore this slot (set active)?' : 'Deactivate this slot (set inactive)?' ); ?>');">
+										<?php echo esc_html( $toggle_label ); ?>
+									</a>
+								</td>
+
+
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -426,27 +519,18 @@ function snks_publish_rochtah_slots_from_templates() {
 		
 		$template_slots = $day_templates[ $day_of_week ];
 		
-		// Check if slots already exist for this date
-		$existing_slots = $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM $rochtah_appointments_table 
-			WHERE $is_template_condition slot_date = %s",
-			$target_date
-		) );
-		
-		// Skip if slots already exist for this date
-		if ( $existing_slots > 0 ) {
-			continue;
-		}
 		
 		// Create slots for this date based on template
 		foreach ( $template_slots as $template_slot ) {
 			// Check if this specific slot already exists
 			$slot_exists = $wpdb->get_var( $wpdb->prepare(
 				"SELECT COUNT(*) FROM $rochtah_appointments_table 
-				WHERE $is_template_condition slot_date = %s AND start_time = %s",
+				WHERE $is_template_condition slot_date = %s AND start_time = %s AND end_time = %s",
 				$target_date,
-				$template_slot['start_time']
+				$template_slot['start_time'],
+				$template_slot['end_time']
 			) );
+
 			
 			if ( $slot_exists > 0 ) {
 				continue;
