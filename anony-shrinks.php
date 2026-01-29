@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.293
+ * Version: 1.0.294
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
@@ -598,7 +598,9 @@ function plugin_activation_hook() {
 	if ( function_exists( 'snks_add_rochtah_doctor_joined_column' ) ) {
 		snks_add_rochtah_doctor_joined_column();
 	}
-	
+	if ( function_exists( 'snks_add_rochtah_doctor_joined_column' ) ) {
+		snks_add_created_updated_columns();
+	}
 	// Create AI tables
 	do_action( 'snks_create_ai_tables' );
 	do_action( 'snks_add_ai_meta_fields' );

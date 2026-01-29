@@ -67,8 +67,9 @@ add_action(
 		if ( empty( $column_exists ) ) {
 			// If the column doesn't exist, add it.
 			$wpdb->query(
-				"ALTER TABLE $table_name ADD COLUMN settings VARCHAR(255) NOT NULL"
+				"ALTER TABLE $table_name ADD COLUMN settings VARCHAR(255) NOT NULL DEFAULT ''"
 			);
+
 		}
         //phpcs:enable
 	}
@@ -113,3 +114,39 @@ function snks_add_whatsapp_notification_columns() {
 	//phpcs:enable
 }
 add_action( 'admin_init', 'snks_add_whatsapp_notification_columns' );
+
+
+/**
+ * Add created_at / updated_at columns
+ */
+function snks_add_created_updated_columns() {
+	global $wpdb;
+
+	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+
+	$columns_to_add = array(
+		'created_at' => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+		'updated_at' => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+	);
+
+	//phpcs:disable
+	foreach ( $columns_to_add as $column_name => $column_definition ) {
+		$column_exists = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+				 WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s',
+				$table_name,
+				$column_name,
+				$wpdb->dbname
+			)
+		);
+
+		if ( empty( $column_exists ) ) {
+			$wpdb->query(
+				"ALTER TABLE $table_name ADD COLUMN $column_name $column_definition"
+			);
+		}
+	}
+	//phpcs:enable
+}
+
