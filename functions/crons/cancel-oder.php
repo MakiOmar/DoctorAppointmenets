@@ -98,3 +98,55 @@ function snks_auto_cancel_wc_orders() {
 }
 
 add_action( 'autocancel_wc_orders_event', 'snks_auto_cancel_wc_orders' );
+
+
+/**
+ * Add 30 min interval for WP-Cron
+ */
+add_filter('cron_schedules', function ($schedules) {
+    if (!isset($schedules['every_30_minutes'])) {
+        $schedules['every_30_minutes'] = array(
+            'interval' => 30 * 60,
+            'display'  => __('Every 30 Minutes'),
+        );
+    }
+    return $schedules;
+});
+
+/**
+ * Schedule event on admin_init (matches your current pattern)
+ */
+add_action('admin_init', function () {
+    if (!wp_next_scheduled('snks_reset_pending_sessions_cron')) {
+        wp_schedule_event(time(), 'every_30_minutes', 'snks_reset_pending_sessions_cron');
+    }
+});
+
+add_action('snks_reset_pending_sessions_cron', 'snks_reset_pending_sessions_to_waiting');
+
+/**
+ * Reset session_status from pending -> waiting
+ * when client_id=0 and order_id=0
+ */
+function snks_reset_pending_sessions_to_waiting() {
+    global $wpdb;
+
+    $table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+
+    // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $wpdb->query(
+        $wpdb->prepare(
+            "UPDATE {$table_name}
+             SET session_status = %s
+             WHERE session_status = %s
+               AND client_id = %d
+               AND order_id = %d",
+            'waiting',
+            'pending',
+            0,
+            0
+        )
+    );
+    // phpcs:enable
+}
+
