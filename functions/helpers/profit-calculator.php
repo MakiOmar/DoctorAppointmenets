@@ -185,6 +185,7 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 
 	$metadata = array(
 		'user_id'           => $therapist_id,
+		'transaction_type'  => 'add',
 		'amount'            => $profit_amount,
 		'ai_session_id'     => $session_data['session_id'] ?? 0,
 		'ai_session_type'   => $session_data['session_type'] ?? 'first',
@@ -196,14 +197,16 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 	if ( $transaction_id ) {
 
 		// ✅ Update existing transaction
-		$wpdb->update(
+		$updated = $wpdb->update(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
 			array( 'id' => $transaction_id ),
-			array( '%d', '%d', '%d', '%s', '%d', '%d', '%f', '%f' ),
+			array( '%d','%s', '%f', '%d', '%s', '%d', '%d', '%f', '%f' ),
 			array( '%d' )
 		);
-
+		if ( ! $updated ) {
+			return false;
+		}
 		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
 
 		return $transaction_id;
@@ -214,13 +217,11 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'snks_booking_transactions',
 			$metadata,
-			array( '%d', '%d', '%d', '%s', '%d', '%d', '%f', '%f' )
+			array( '%d', '%s', '%f', '%d', '%s', '%d', '%d', '%f', '%f' )
 		);
-		teamlog('Transaction id : ' . $inserted);
-		teamlog( 'wpdb last_error: ' . $wpdb->last_error );
-		teamlog( 'wpdb last_query: ' . $wpdb->last_query );
-		if ( ! $inserted ) {
-			teamlog( 'Failed to insert AI session transaction' );
+
+		if ( false === $inserted ) {
+
 			return false;
 		}
 
