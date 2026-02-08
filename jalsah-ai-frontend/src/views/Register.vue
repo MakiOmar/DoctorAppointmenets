@@ -580,56 +580,16 @@ export default {
         }
       }
       
-      // Get expected length based on country
-      let expectedLength = 10 // default
-      switch (countryCode) {
-        case 'SA':
-        case 'AE':
-          expectedLength = 9
-          break
-        case 'EG':
-          expectedLength = 10
-          break
-        case 'US':
-        case 'CA':
-          expectedLength = 10
-          break
-      }
-      
-      // Check length constraints with specific messages
-      if (cleanPhoneNumber.length !== expectedLength) {
-        return {
-          isValid: false,
-          error: t('auth.register.phoneValidation.invalidLength', { 
-            expected: expectedLength, 
-            actual: cleanPhoneNumber.length 
-          })
-        }
-      }
-      
+      // Validate using country-specific regex (length and format are defined per country in validation_pattern)
       const fullPhoneNumber = country.dial_code + cleanPhoneNumber
       const pattern = new RegExp(country.validation_pattern)
       
       if (!pattern.test(fullPhoneNumber)) {
-        // Get specific error message based on country
-        let specificError = t('auth.register.phoneValidation.specificErrors.default')
-        
-        switch (countryCode) {
-          case 'SA':
-            specificError = t('auth.register.phoneValidation.specificErrors.saudiArabia')
-            break
-          case 'AE':
-            specificError = t('auth.register.phoneValidation.specificErrors.uae')
-            break
-          case 'EG':
-            specificError = t('auth.register.phoneValidation.specificErrors.egypt')
-            break
-        }
-        
-        return { 
-          isValid: false, 
-          error: specificError
-        }
+        // Use optional per-country message from JSON (validation_message_en / validation_message_ar), else generic default
+        const isArabic = locale.value === 'ar'
+        const customMessage = isArabic ? country.validation_message_ar : country.validation_message_en
+        const error = (customMessage && customMessage.trim()) ? customMessage : t('auth.register.phoneValidation.invalidFormatForCountry')
+        return { isValid: false, error }
       }
       
       return { isValid: true, error: null }

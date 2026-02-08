@@ -240,12 +240,7 @@ export default {
         invalidCharacters: 'Phone number contains invalid characters',
         missingDigits: 'Phone number is missing required digits',
         wrongPrefix: 'Phone number has incorrect prefix for this country',
-        specificErrors: {
-          saudiArabia: 'Saudi phone numbers must start with 5 and be 9 digits (excluding country code)',
-          uae: 'UAE phone numbers must start with 5 and be 9 digits (excluding country code)',
-          egypt: 'Egypt phone numbers must start with 10, 11, 12, 15, or 16 and be 10 digits (excluding country code)',
-          default: 'Please check the phone number format for your country'
-        },
+        invalidFormatForCountry: 'Please check the phone number format for your country',
         startsWithZero: 'Phone number should not start with 0 (remove the leading 0)',
         invalidLength: 'Phone number should be {expected} digits long, you entered {actual} digits'
       },

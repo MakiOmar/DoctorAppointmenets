@@ -475,40 +475,14 @@ export default {
         return { isValid: false, error: t('auth.register.phoneValidation.invalidCharacters') }
       }
 
-      // Get expected length based on country (mirror Register.vue)
-      let expectedLength = 10
-      switch (countryCode) {
-        case 'SA':
-        case 'AE':
-          expectedLength = 9
-          break
-        case 'EG':
-          expectedLength = 10
-          break
-        case 'US':
-        case 'CA':
-          expectedLength = 10
-          break
-      }
-
-      if (cleanNumber.length !== expectedLength) {
-        return { isValid: false, error: t('auth.register.phoneValidation.invalidLength', { expected: expectedLength, actual: cleanNumber.length }) }
-      }
-
-      // Check pattern against full number (with dial code)
+      // Validate using country regex; error message from JSON (validation_message_en/ar) or generic default
       const fullPhoneNumber = country.dial_code + cleanNumber
       const pattern = new RegExp(country.validation_pattern)
       if (!pattern.test(fullPhoneNumber)) {
-        // Return specific error based on country
-        if (countryCode === 'SA') {
-          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.saudiArabia') }
-        } else if (countryCode === 'AE') {
-          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.uae') }
-        } else if (countryCode === 'EG') {
-          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.egypt') }
-        } else {
-          return { isValid: false, error: t('auth.register.phoneValidation.specificErrors.default') }
-        }
+        const isArabic = locale.value === 'ar'
+        const customMessage = isArabic ? country.validation_message_ar : country.validation_message_en
+        const error = (customMessage && customMessage.trim()) ? customMessage : t('auth.register.phoneValidation.invalidFormatForCountry')
+        return { isValid: false, error }
       }
 
       return { isValid: true, error: null }
