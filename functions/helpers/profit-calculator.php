@@ -204,7 +204,7 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 			array( '%d','%s', '%f', '%d', '%s', '%d', '%d', '%f', '%f' ),
 			array( '%d' )
 		);
-		if ( ! $updated ) {
+		if ( false === $updated ) {
 			return false;
 		}
 		snks_log_transaction( $therapist_id, $profit_amount, 'ai_session_profit' );
