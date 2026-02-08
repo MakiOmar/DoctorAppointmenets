@@ -7817,3 +7817,313 @@ function snks_get_rochtah_meeting_details_rest( $request ) {
 add_action( 'delete_user', function( $user_id ) {
 	SNKS_AI_Integration::handle_user_deletion( $user_id );
 });
+
+function snks_ai_orders_truthy_values() {
+	return array( '1', 'true', 'yes' );
+}
+
+function snks_get_ai_order_filter_value() {
+	if ( empty( $_GET['snks_ai_order_filter'] ) ) {
+		return '';
+	}
+
+	$value = sanitize_text_field( wp_unslash( $_GET['snks_ai_order_filter'] ) );
+	return in_array( $value, array( 'ai', 'non_ai' ), true ) ? $value : '';
+}
+
+/**
+ * Add AI filter dropdown to HPOS orders list table.
+ */
+function snks_render_ai_orders_filter_dropdown( $order_type, $which = '' ) {
+	if ( 'shop_order' !== $order_type ) {
+		return;
+	}
+
+	$selected = snks_get_ai_order_filter_value();
+	?>
+	<select name="snks_ai_order_filter" id="snks-ai-order-filter">
+		<option value=""><?php esc_html_e( 'All orders', 'anony-turn' ); ?></option>
+		<option value="ai" <?php selected( $selected, 'ai' ); ?>><?php esc_html_e( 'AI orders', 'anony-turn' ); ?></option>
+		<option value="non_ai" <?php selected( $selected, 'non_ai' ); ?>><?php esc_html_e( 'Non-AI orders', 'anony-turn' ); ?></option>
+	</select>
+	<?php
+}
+add_action( 'woocommerce_order_list_table_restrict_manage_orders', 'snks_render_ai_orders_filter_dropdown', 10, 2 );
+
+/**
+ * Apply AI filter to HPOS order query.
+ */
+function snks_apply_ai_orders_filter_query_args( $args ) {
+	$filter = snks_get_ai_order_filter_value();
+	if ( '' === $filter ) {
+		return $args;
+	}
+
+	$truthy = snks_ai_orders_truthy_values();
+	$meta_query = isset( $args['meta_query'] ) ? (array) $args['meta_query'] : array();
+
+	if ( 'ai' === $filter ) {
+		$meta_query[] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'from_jalsah_ai',
+				'value'   => $truthy,
+				'compare' => 'IN',
+			),
+			array(
+				'key'     => 'is_ai_session',
+				'value'   => $truthy,
+				'compare' => 'IN',
+			),
+		);
+	} else {
+		$meta_query[] = array(
+			'relation' => 'AND',
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => 'from_jalsah_ai',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'from_jalsah_ai',
+					'value'   => $truthy,
+					'compare' => 'NOT IN',
+				),
+			),
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => 'is_ai_session',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'is_ai_session',
+					'value'   => $truthy,
+					'compare' => 'NOT IN',
+				),
+			),
+		);
+	}
+
+	$args['meta_query'] = $meta_query;
+	return $args;
+}
+add_filter( 'woocommerce_shop_order_list_table_prepare_items_query_args', 'snks_apply_ai_orders_filter_query_args' );
+
+function snks_get_ai_user_filter_value() {
+	if ( empty( $_GET['snks_ai_user_filter'] ) ) {
+		return '';
+	}
+
+	$value = sanitize_text_field( wp_unslash( $_GET['snks_ai_user_filter'] ) );
+	return in_array( $value, array( 'ai', 'non_ai' ), true ) ? $value : '';
+}
+
+/**
+ * Add AI filter dropdown to users list table.
+ */
+function snks_render_ai_users_filter_dropdown( $which = '' ) {
+	if ( ! function_exists( 'get_current_screen' ) ) {
+		return;
+	}
+
+	$screen = get_current_screen();
+	if ( ! $screen || 'users' !== $screen->id ) {
+		return;
+	}
+
+	if ( 'top' !== $which ) {
+		return;
+	}
+
+	$selected = snks_get_ai_user_filter_value();
+	?>
+	<select name="snks_ai_user_filter" id="snks-ai-user-filter">
+		<option value=""><?php esc_html_e( 'All users', 'anony-turn' ); ?></option>
+		<option value="ai" <?php selected( $selected, 'ai' ); ?>><?php esc_html_e( 'AI users', 'anony-turn' ); ?></option>
+		<option value="non_ai" <?php selected( $selected, 'non_ai' ); ?>><?php esc_html_e( 'Non-AI users', 'anony-turn' ); ?></option>
+	</select>
+	<?php
+	submit_button( __( 'Filter', 'anony-turn' ), '', 'filter_action', false, array( 'id' => 'snks-ai-users-filter-submit' ) );
+	?>
+	<?php
+}
+add_action( 'restrict_manage_users', 'snks_render_ai_users_filter_dropdown' );
+
+/**
+ * Apply AI users filter to admin users query.
+ */
+function snks_apply_ai_users_filter_query( $query ) {
+	if ( ! is_admin() || ! function_exists( 'get_current_screen' ) ) {
+		return;
+	}
+
+	$screen = get_current_screen();
+
+	if ( ! $screen || 'users' !== $screen->id ) {
+		return;
+	}
+
+	$filter = snks_get_ai_user_filter_value();
+
+	if ( '' === $filter ) {
+		return;
+	}
+					
+	$truthy = snks_ai_orders_truthy_values();
+	$meta_query = (array) $query->get( 'meta_query' );
+	
+	if ( 'ai' === $filter ) {
+		$meta_query[] = array(
+			'key'     => 'registered_from_jalsah_ai',
+			'value'   => $truthy,
+			'compare' => 'IN',
+		);
+	} else {
+		$meta_query[] = array(
+			'relation' => 'OR',
+			array(
+				'key'     => 'registered_from_jalsah_ai',
+				'compare' => 'NOT EXISTS',
+			),
+			array(
+				'key'     => 'registered_from_jalsah_ai',
+				'value'   => $truthy,
+				'compare' => 'NOT IN',
+			),
+		);
+	}
+
+	$query->set( 'meta_query', $meta_query );
+}
+add_action( 'pre_get_users', 'snks_apply_ai_users_filter_query' );
+
+/**
+ * Add AI badge column beside username in Users list table.
+ */
+function snks_add_ai_user_flag_column( $columns ) {
+	$new_columns = array();
+
+	foreach ( $columns as $key => $label ) {
+		$new_columns[ $key ] = $label;
+		if ( 'username' === $key ) {
+			$new_columns['snks_ai_flag'] = __( 'AI Status', 'anony-turn' );
+		}
+	}
+
+	return $new_columns;
+}
+add_filter( 'manage_users_columns', 'snks_add_ai_user_flag_column', 999 );
+add_filter( 'manage_users-network_columns', 'snks_add_ai_user_flag_column', 999 );
+add_filter( 'manage_site-users-network_columns', 'snks_add_ai_user_flag_column', 999 );
+
+function snks_render_ai_user_flag_column( $output, $column_name, $user_id ) {
+	if ( 'snks_ai_flag' !== $column_name ) {
+		return $output;
+	}
+
+	if ( SNKS_AI_Integration::is_ai_patient( $user_id ) ) {
+		return '<span class="snks-ai-user-badge">AI</span>';
+	}
+
+	return '-------';
+}
+add_filter( 'manage_users_custom_column', 'snks_render_ai_user_flag_column', 10, 3 );
+
+function snks_ai_users_list_badge_styles() {
+	if ( ! function_exists( 'get_current_screen' ) ) {
+		return;
+	}
+
+	$screen = get_current_screen();
+	if ( ! $screen || 'users' !== $screen->id ) {
+		return;
+	}
+
+	?>
+	<style>
+		.column-snks_ai_flag {
+			width: 100px;
+			min-width: 100px;
+			white-space: nowrap;
+			text-align: center;
+		}
+		.column-snks_ai_flag th {
+            text-align: center;
+        }
+		.snks-ai-user-badge {
+			display: inline-block;
+			padding: 1px 6px;
+			border-radius: 3px;
+			background: #1b612e;
+			color: #fff;
+			font-size: 10px;
+			font-weight: 700;
+			line-height: 1.4;
+			vertical-align: middle;
+		}
+	</style>
+	<?php
+}
+add_action( 'admin_head', 'snks_ai_users_list_badge_styles' );
+
+function snks_ai_users_list_show_flag_column( $hidden, $screen ) {
+	if ( $screen && in_array( $screen->id, array( 'users', 'users-network', 'site-users-network' ), true ) ) {
+		$hidden = array_diff( $hidden, array( 'snks_ai_flag' ) );
+	}
+
+	return $hidden;
+}
+add_filter( 'default_hidden_columns', 'snks_ai_users_list_show_flag_column', 10, 2 );
+
+function snks_is_ai_order_flagged( $order ) {
+	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+		return false;
+	}
+
+	$truthy        = snks_ai_orders_truthy_values();
+	$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
+	$is_ai_session  = $order->get_meta( 'is_ai_session' );
+
+	return in_array( (string) $from_jalsah_ai, $truthy, true )
+		|| in_array( (string) $is_ai_session, $truthy, true );
+}
+
+function snks_add_ai_order_row_class( $classes, $order ) {
+	if ( snks_is_ai_order_flagged( $order ) ) {
+		$classes[] = 'snks-ai-order';
+	}
+	return $classes;
+}
+add_filter( 'woocommerce_shop_order_list_table_order_css_classes', 'snks_add_ai_order_row_class', 10, 2 );
+
+function snks_ai_orders_list_badge_styles() {
+	if ( ! function_exists( 'wc_get_page_screen_id' ) ) {
+		return;
+	}
+
+	$screen = get_current_screen();
+	if ( ! $screen || $screen->id !== wc_get_page_screen_id( 'shop_order' ) ) {
+		return;
+	}
+
+	?>
+	<style>
+		.snks-ai-order td.column-order_number strong::after {
+			content: "AI";
+			display: inline-block;
+			margin-left: 6px;
+			padding: 1px 6px;
+			border-radius: 3px;
+			background: #1b612e;
+			color: #fff;
+			font-size: 10px;
+			font-weight: 700;
+			line-height: 1.4;
+			vertical-align: middle;
+		}
+	</style>
+	<?php
+}
+add_action( 'admin_head', 'snks_ai_orders_list_badge_styles' );
