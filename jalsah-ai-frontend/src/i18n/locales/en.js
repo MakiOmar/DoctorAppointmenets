@@ -252,6 +252,38 @@ export default {
     }
   },
 
+  // Switch User (admin login as patient)
+  switchUser: {
+    title: 'Switch User',
+    adminLogin: {
+      subtitle: 'Log in with an administrator account to switch to a patient.',
+      email: 'Email',
+      emailPlaceholder: 'Admin email',
+      password: 'Password',
+      passwordPlaceholder: 'Admin password',
+      submit: 'Log in'
+    },
+    accessDenied: 'Access denied. Only administrators can use this page.',
+    backToLogin: 'Use different account',
+    switchForm: {
+      title: 'Login as Patient',
+      subtitle: 'Search for a patient and enter your admin password to switch.',
+      searchPlaceholder: 'Search by name or email...',
+      selectUser: 'Select a user',
+      adminPassword: 'Your admin password',
+      adminPasswordPlaceholder: 'Re-enter your password',
+      submit: 'Switch to user',
+      logout: 'Back'
+    },
+    success: 'Switched to patient successfully.',
+    errors: {
+      invalidPassword: 'Invalid admin password.',
+      userNotFound: 'User not found or not a patient.',
+      accessDenied: 'Access denied.',
+      generic: 'Something went wrong. Please try again.'
+    }
+  },
+
   // Verification
   verification: {
     title: 'Verify Your Code',

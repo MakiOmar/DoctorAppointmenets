@@ -123,6 +123,7 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/profile/([^/]+)/?$', 'index.php?ai_endpoint=profile/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/profile/?$', 'index.php?ai_endpoint=profile', 'top' );
 		add_rewrite_rule( '^api/ai/auth/([^/]+)/?$', 'index.php?ai_endpoint=auth/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/users/search/?$', 'index.php?ai_endpoint=users/search', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
 		// Add rewrite rule for v2 endpoints
@@ -831,6 +832,12 @@ class SNKS_AI_Integration {
 			case 'session-messages':
 				$this->handle_session_messages_endpoint( $method, $path );
 				break;
+			case 'users':
+				$this->handle_users_endpoint( $method, $path );
+				break;
+			case 'switch-user':
+				$this->handle_switch_user_endpoint( $method );
+				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
 		}
@@ -1223,8 +1230,8 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 
-		// Check if user is a patient (customer) or doctor
-		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
+		// Check if user is a patient (customer), doctor, or administrator (for switch-user page)
+		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager', 'administrator' );
 		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
 
 			$this->send_error( 'Access denied. Only patients and doctors can access this platform.', 403 );
@@ -6639,6 +6646,100 @@ Best regards,
 		} else {
 			$this->send_error( 'Method not allowed', 405 );
 		}
+	}
+
+	/**
+	 * Handle users endpoint (admin-only: search patients for switch-user)
+	 */
+	private function handle_users_endpoint( $method, $path ) {
+		if ( $method !== 'GET' ) {
+			$this->send_error( 'Method not allowed', 405 );
+			return;
+		}
+		$admin_id = $this->verify_jwt_token();
+		if ( ! user_can( $admin_id, 'manage_options' ) ) {
+			$this->send_error( 'Access denied', 403 );
+			return;
+		}
+		if ( count( $path ) < 2 || $path[1] !== 'search' ) {
+			$this->send_error( 'Invalid endpoint', 404 );
+			return;
+		}
+		$q = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
+		if ( strlen( $q ) < 1 ) {
+			$this->send_success( array() );
+			return;
+		}
+		$users = get_users(
+			array(
+				'role'           => 'customer',
+				'search'         => '*' . $q . '*',
+				'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+				'number'         => 20,
+				'orderby'        => 'display_name',
+			)
+		);
+		$result = array();
+		foreach ( $users as $user ) {
+			$result[] = array(
+				'id'           => $user->ID,
+				'display_name' => $user->display_name,
+				'user_email'   => $user->user_email,
+				'whatsapp'     => get_user_meta( $user->ID, 'billing_whatsapp', true ),
+			);
+		}
+		$this->send_success( $result );
+	}
+
+	/**
+	 * Handle switch-user endpoint (admin logs in as patient after password confirmation)
+	 */
+	private function handle_switch_user_endpoint( $method ) {
+		if ( $method !== 'POST' ) {
+			$this->send_error( 'Method not allowed', 405 );
+			return;
+		}
+		$admin_id = $this->verify_jwt_token();
+		if ( ! user_can( $admin_id, 'manage_options' ) ) {
+			$this->send_error( 'Access denied', 403 );
+			return;
+		}
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		if ( ! is_array( $data ) || ! isset( $data['user_id'] ) || ! isset( $data['admin_password'] ) ) {
+			$this->send_error( 'user_id and admin_password required', 400 );
+			return;
+		}
+		$user_id         = absint( $data['user_id'] );
+		$admin_password  = $data['admin_password'];
+		$admin = get_user_by( 'ID', $admin_id );
+		if ( ! $admin || ! wp_check_password( $admin_password, $admin->user_pass ) ) {
+			$this->send_error( 'Invalid admin password', 401 );
+			return;
+		}
+		$target = get_user_by( 'ID', $user_id );
+		if ( ! $target || ! in_array( 'customer', (array) $target->roles, true ) ) {
+			$this->send_error( 'User not found or not a patient', 404 );
+			return;
+		}
+		$token = $this->generate_jwt_token( $target->ID );
+		$user_data = array(
+			'id'         => $target->ID,
+			'email'      => $target->user_email,
+			'first_name' => get_user_meta( $target->ID, 'billing_first_name', true ),
+			'last_name'  => get_user_meta( $target->ID, 'billing_last_name', true ),
+			'role'       => $target->roles[0],
+			'roles'      => $target->roles,
+		);
+		$whatsapp = get_user_meta( $target->ID, 'billing_whatsapp', true );
+		if ( $whatsapp ) {
+			$user_data['whatsapp'] = $whatsapp;
+		}
+		$this->send_success(
+			array(
+				'token' => $token,
+				'user'  => $user_data,
+			)
+		);
 	}
 }
 

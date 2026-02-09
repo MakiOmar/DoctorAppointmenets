@@ -111,6 +111,11 @@ const routes = [
     component: () => import('@/views/TherapistRegister.vue')
   },
   {
+    path: '/switch-user',
+    name: 'SwitchUser',
+    component: () => import('@/views/SwitchUser.vue')
+  },
+  {
     path: '/verify',
     name: 'Verification',
     component: () => import('@/views/EmailVerification.vue'),

@@ -533,6 +533,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Set session from switch-user: store token and user (e.g. after admin switches to patient).
+   * Does not redirect; caller should navigate.
+   */
+  const setSession = (authToken, userData) => {
+    if (!authToken || !userData) return
+    token.value = authToken
+    user.value = userData
+    localStorage.setItem('jalsah_token', authToken)
+    localStorage.setItem('jalsah_user', JSON.stringify(userData))
+    api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+  }
+
   const verifyEmail = async (verificationData) => {
     loading.value = true
     try {
@@ -806,6 +819,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
+    setSession,
     verifyEmail,
     resendVerification,
     loadUser,

@@ -256,6 +256,38 @@ export default {
     }
   },
 
+  // Switch User (admin login as patient)
+  switchUser: {
+    title: 'تبديل المستخدم',
+    adminLogin: {
+      subtitle: 'سجّل الدخول بحساب مدير للتبديل إلى مريض.',
+      email: 'البريد الإلكتروني',
+      emailPlaceholder: 'بريد المدير',
+      password: 'كلمة المرور',
+      passwordPlaceholder: 'كلمة مرور المدير',
+      submit: 'تسجيل الدخول'
+    },
+    accessDenied: 'تم رفض الوصول. فقط المديرون يمكنهم استخدام هذه الصفحة.',
+    backToLogin: 'استخدام حساب آخر',
+    switchForm: {
+      title: 'الدخول كمريض',
+      subtitle: 'ابحث عن مريض وأدخل كلمة مرور المدير للتبديل.',
+      searchPlaceholder: 'البحث بالاسم أو البريد...',
+      selectUser: 'اختر مستخدماً',
+      adminPassword: 'كلمة مرور المدير',
+      adminPasswordPlaceholder: 'أعد إدخال كلمة المرور',
+      submit: 'التبديل إلى المستخدم',
+      logout: 'رجوع'
+    },
+    success: 'تم التبديل إلى المريض بنجاح.',
+    errors: {
+      invalidPassword: 'كلمة مرور المدير غير صحيحة.',
+      userNotFound: 'المستخدم غير موجود أو ليس مريضاً.',
+      accessDenied: 'تم رفض الوصول.',
+      generic: 'حدث خطأ. يرجى المحاولة مرة أخرى.'
+    }
+  },
+
   // Verification
   verification: {
     title: 'تحقق من رمز التأكيد',
