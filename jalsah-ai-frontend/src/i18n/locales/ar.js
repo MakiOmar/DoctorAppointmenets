@@ -259,6 +259,10 @@ export default {
   // Switch User (admin login as patient)
   switchUser: {
     title: 'تبديل المستخدم',
+    revertBar: {
+      message: 'أنت تشاهد الحساب كمريض.',
+      button: 'العودة إلى حساب المدير'
+    },
     adminLogin: {
       subtitle: 'سجّل الدخول بحساب مدير للتبديل إلى مريض.',
       email: 'البريد الإلكتروني',
@@ -271,8 +275,8 @@ export default {
     backToLogin: 'استخدام حساب آخر',
     switchForm: {
       title: 'الدخول كمريض',
-      subtitle: 'ابحث عن مريض وأدخل كلمة مرور المدير للتبديل.',
-      searchPlaceholder: 'البحث بالاسم أو البريد...',
+      subtitle: 'ابحث عن مريض برقم الواتساب وأدخل كلمة مرور المدير للتبديل.',
+      searchPlaceholder: 'البحث برقم الواتساب...',
       selectUser: 'اختر مستخدماً',
       adminPassword: 'كلمة مرور المدير',
       adminPasswordPlaceholder: 'أعد إدخال كلمة المرور',

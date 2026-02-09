@@ -893,6 +893,9 @@ class SNKS_AI_Integration {
 				} elseif ( $path[1] === 'reset-password' ) {
 
 					$this->ai_reset_password();
+				} elseif ( count( $path ) > 1 && $path[1] === 'admin-login' ) {
+
+					$this->ai_admin_login();
 				} else {
 
 					$this->send_error( 'Auth endpoint not found', 404 );
@@ -1230,8 +1233,8 @@ class SNKS_AI_Integration {
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 
-		// Check if user is a patient (customer), doctor, or administrator (for switch-user page)
-		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager', 'administrator' );
+		// Check if user is a patient (customer) or doctor (administrators use /api/ai/auth/admin-login for switch-user)
+		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
 		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
 
 			$this->send_error( 'Access denied. Only patients and doctors can access this platform.', 403 );
@@ -1353,6 +1356,62 @@ class SNKS_AI_Integration {
 		}
 		
 		$this->send_success( $response_data );
+	}
+
+	/**
+	 * Admin login for switch-user page only. Accepts email + password; allows only administrators.
+	 */
+	private function ai_admin_login() {
+		$data = json_decode( file_get_contents( 'php://input' ), true );
+		if ( ! is_array( $data ) ) {
+			$this->send_error( 'Invalid request', 400 );
+			return;
+		}
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_admin_login_nonce', $data ) ) {
+			$this->send_error( 'Security check failed', 401 );
+			return;
+		}
+		if ( empty( $data['email'] ) || empty( $data['password'] ) ) {
+			$this->send_error( 'Email and password required', 400 );
+			return;
+		}
+
+		$user = get_user_by( 'email', sanitize_email( $data['email'] ) );
+		if ( ! $user ) {
+			$this->send_error( 'Invalid credentials', 401 );
+			return;
+		}
+
+		if ( ! wp_check_password( $data['password'], $user->user_pass ) ) {
+			$this->send_error( 'Invalid credentials', 401 );
+			return;
+		}
+
+		if ( ! user_can( $user->ID, 'manage_options' ) ) {
+			$this->send_error( 'Access denied. Administrator account required.', 403 );
+			return;
+		}
+
+		$token = $this->generate_jwt_token( $user->ID );
+		$user_data = array(
+			'id'         => $user->ID,
+			'email'      => $user->user_email,
+			'first_name' => get_user_meta( $user->ID, 'billing_first_name', true ),
+			'last_name'  => get_user_meta( $user->ID, 'billing_last_name', true ),
+			'role'       => $user->roles[0],
+			'roles'      => $user->roles,
+		);
+		$whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+		if ( $whatsapp ) {
+			$user_data['whatsapp'] = $whatsapp;
+		}
+
+		$this->send_success(
+			array(
+				'token' => $token,
+				'user'  => $user_data,
+			)
+		);
 	}
 
 	/**
@@ -6656,43 +6715,72 @@ Best regards,
 			$this->send_error( 'Method not allowed', 405 );
 			return;
 		}
+	
 		$admin_id = $this->verify_jwt_token();
 		if ( ! user_can( $admin_id, 'manage_options' ) ) {
 			$this->send_error( 'Access denied', 403 );
 			return;
 		}
+	
 		if ( count( $path ) < 2 || $path[1] !== 'search' ) {
 			$this->send_error( 'Invalid endpoint', 404 );
 			return;
 		}
+	
 		$q = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
-		if ( strlen( $q ) < 1 ) {
+		$q = preg_replace( '/[^0-9+]/', '', $q );
+	
+		if ( $q === '' ) {
 			$this->send_success( array() );
 			return;
 		}
-		$users = get_users(
-			array(
-				'role'           => 'customer',
-				'search'         => '*' . $q . '*',
-				'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
-				'number'         => 20,
-				'orderby'        => 'display_name',
-			)
+	
+		global $wpdb;
+	
+		$like = '%' . $wpdb->esc_like( $q ) . '%';
+	
+		// Capabilities meta key is prefix + 'capabilities'
+		$caps_key = $wpdb->prefix . 'capabilities';
+	
+		// If you want to enforce "customer" role, keep this join.
+		// If you want to search ALL users regardless of role, remove the caps join + where.
+		$sql = "
+			SELECT
+				u.ID AS id,
+				u.display_name,
+				u.user_email,
+				um.meta_value AS whatsapp
+			FROM {$wpdb->users} u
+			INNER JOIN {$wpdb->usermeta} um
+				ON um.user_id = u.ID
+				AND um.meta_key = 'billing_whatsapp'
+			INNER JOIN {$wpdb->usermeta} caps
+				ON caps.user_id = u.ID
+				AND caps.meta_key = %s
+			WHERE
+				um.meta_value LIKE %s
+				AND caps.meta_value LIKE %s
+			ORDER BY u.display_name ASC
+			LIMIT 20
+		";
+	
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				$sql,
+				$caps_key,
+				$like,
+				'%"customer"%'
+			),
+			ARRAY_A
 		);
-		$result = array();
-		foreach ( $users as $user ) {
-			$result[] = array(
-				'id'           => $user->ID,
-				'display_name' => $user->display_name,
-				'user_email'   => $user->user_email,
-				'whatsapp'     => get_user_meta( $user->ID, 'billing_whatsapp', true ),
-			);
-		}
-		$this->send_success( $result );
+	
+		// If you removed the role enforcement above, also remove the last %s argument.
+	
+		$this->send_success( $rows ? $rows : array() );
 	}
-
+	
 	/**
-	 * Handle switch-user endpoint (admin logs in as patient after password confirmation)
+	 * Handle switch-user endpoint (admin already logged in; switch session to patient)
 	 */
 	private function handle_switch_user_endpoint( $method ) {
 		if ( $method !== 'POST' ) {
@@ -6705,18 +6793,12 @@ Best regards,
 			return;
 		}
 		$data = json_decode( file_get_contents( 'php://input' ), true );
-		if ( ! is_array( $data ) || ! isset( $data['user_id'] ) || ! isset( $data['admin_password'] ) ) {
-			$this->send_error( 'user_id and admin_password required', 400 );
+		if ( ! is_array( $data ) || ! isset( $data['user_id'] ) ) {
+			$this->send_error( 'user_id required', 400 );
 			return;
 		}
-		$user_id         = absint( $data['user_id'] );
-		$admin_password  = $data['admin_password'];
-		$admin = get_user_by( 'ID', $admin_id );
-		if ( ! $admin || ! wp_check_password( $admin_password, $admin->user_pass ) ) {
-			$this->send_error( 'Invalid admin password', 401 );
-			return;
-		}
-		$target = get_user_by( 'ID', $user_id );
+		$user_id = absint( $data['user_id'] );
+		$target  = get_user_by( 'ID', $user_id );
 		if ( ! $target || ! in_array( 'customer', (array) $target->roles, true ) ) {
 			$this->send_error( 'User not found or not a patient', 404 );
 			return;

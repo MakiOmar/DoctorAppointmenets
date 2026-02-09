@@ -513,6 +513,13 @@ export const useAuthStore = defineStore('auth', () => {
     // Clear sessionStorage
     sessionStorage.clear()
     
+    // Clear switch-user context so bar does not show after logout
+    localStorage.removeItem('jalsah_admin_token')
+    localStorage.removeItem('jalsah_admin_user')
+    if (typeof switchUserMode !== 'undefined') {
+      switchUserMode.value = false
+    }
+    
     // Remove authorization header
     delete api.defaults.headers.common['Authorization']
     
@@ -544,6 +551,41 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('jalsah_token', authToken)
     localStorage.setItem('jalsah_user', JSON.stringify(userData))
     api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+  }
+
+  /** True when current session is a patient view after admin switched user (revert available). */
+  const switchUserMode = ref(
+    typeof localStorage !== 'undefined' && !!localStorage.getItem('jalsah_admin_token')
+  )
+
+  /**
+   * Save current (admin) token and user before switching to patient. Call before setSession(patientToken, patientUser).
+   */
+  const saveAdminContextBeforeSwitch = () => {
+    if (!token.value || !user.value) return
+    localStorage.setItem('jalsah_admin_token', token.value)
+    localStorage.setItem('jalsah_admin_user', JSON.stringify(user.value))
+    switchUserMode.value = true
+  }
+
+  /**
+   * Revert from patient view back to admin session. Clears switch-user context.
+   */
+  const revertToAdmin = () => {
+    const adminToken = localStorage.getItem('jalsah_admin_token')
+    const adminUser = localStorage.getItem('jalsah_admin_user')
+    if (!adminToken || !adminUser) {
+      switchUserMode.value = false
+      return
+    }
+    try {
+      const userData = JSON.parse(adminUser)
+      setSession(adminToken, userData)
+    } finally {
+      localStorage.removeItem('jalsah_admin_token')
+      localStorage.removeItem('jalsah_admin_user')
+      switchUserMode.value = false
+    }
   }
 
   const verifyEmail = async (verificationData) => {
@@ -816,10 +858,13 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     loading,
     isAuthenticated,
+    switchUserMode,
     login,
     register,
     logout,
     setSession,
+    saveAdminContextBeforeSwitch,
+    revertToAdmin,
     verifyEmail,
     resendVerification,
     loadUser,

@@ -135,19 +135,6 @@
                 </button>
               </div>
             </div>
-            <!-- Admin password confirmation -->
-            <div>
-              <label for="switch-user-admin-password" class="form-label">{{ $t('switchUser.switchForm.adminPassword') }}</label>
-              <input
-                id="switch-user-admin-password"
-                v-model="switchForm.adminPassword"
-                type="password"
-                required
-                class="input-field"
-                :placeholder="$t('switchUser.switchForm.adminPasswordPlaceholder')"
-                autocomplete="current-password"
-              />
-            </div>
             <div class="flex gap-3">
               <button
                 type="button"
@@ -159,7 +146,7 @@
               <button
                 type="submit"
                 class="btn-primary flex-1"
-                :disabled="!selectedUser || !switchForm.adminPassword || switchLoading"
+                :disabled="!selectedUser || switchLoading"
               >
                 <span v-if="switchLoading" class="flex items-center justify-center">
                   <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -201,7 +188,6 @@ const searchResults = ref([])
 const searchLoading = ref(false)
 const searchDebounce = ref(null)
 const selectedUser = ref(null)
-const switchForm = ref({ adminPassword: '' })
 const switchLoading = ref(false)
 
 const isAdmin = () => {
@@ -262,22 +248,31 @@ async function handleAdminLogin() {
   adminLoading.value = true
   accessDenied.value = false
   try {
-    const credentials = {
+    // Get nonce for admin-login (separate from main AI login)
+    const nonceRes = await api.get('/api/ai/nonce', { params: { action: 'ai_admin_login_nonce' } })
+    const nonce = nonceRes.data?.success && nonceRes.data?.data?.nonce
+      ? nonceRes.data.data.nonce
+      : null
+
+    const res = await api.post('/api/ai/auth/admin-login', {
       email: adminForm.value.email,
       password: adminForm.value.password,
-      country_code: 'EG'
-    }
-    const result = await authStore.login(credentials)
-    if (result === true) {
-      if (!isAdmin()) {
-        toast.error(t('switchUser.accessDenied'))
-        accessDenied.value = true
-        authStore.logout(false)
-      }
+      nonce: nonce
+    })
+
+    if (res.data?.success && res.data?.data?.token && res.data?.data?.user) {
+      // Admin-login endpoint only succeeds for administrators; no role check needed
+      authStore.setSession(res.data.data.token, res.data.data.user)
+    } else {
+      toast.error(t('switchUser.errors.generic'))
     }
   } catch (error) {
     const msg = error.response?.data?.error || error.message
-    toast.error(msg)
+    if (error.response?.status === 403) {
+      toast.error(t('switchUser.accessDenied'))
+    } else {
+      toast.error(msg || t('switchUser.errors.generic'))
+    }
   } finally {
     adminLoading.value = false
   }
@@ -287,19 +282,18 @@ function handleBackToLogin() {
   accessDenied.value = false
   authStore.logout(false)
   selectedUser.value = null
-  switchForm.value.adminPassword = ''
   searchResults.value = []
 }
 
 async function handleSwitchUser() {
-  if (!selectedUser.value?.id || !switchForm.value.adminPassword) return
+  if (!selectedUser.value?.id) return
   switchLoading.value = true
   try {
     const res = await api.post('/api/ai/switch-user', {
-      user_id: selectedUser.value.id,
-      admin_password: switchForm.value.adminPassword
+      user_id: selectedUser.value.id
     })
     if (res.data?.success && res.data?.data?.token && res.data?.data?.user) {
+      authStore.saveAdminContextBeforeSwitch()
       authStore.setSession(res.data.data.token, res.data.data.user)
       toast.success(t('switchUser.success'))
       router.push('/appointments')
@@ -308,9 +302,7 @@ async function handleSwitchUser() {
     }
   } catch (error) {
     const msg = error.response?.data?.error || error.message
-    if (error.response?.status === 401) {
-      toast.error(t('switchUser.errors.invalidPassword'))
-    } else if (error.response?.status === 404) {
+    if (error.response?.status === 404) {
       toast.error(t('switchUser.errors.userNotFound'))
     } else {
       toast.error(msg || t('switchUser.errors.generic'))
