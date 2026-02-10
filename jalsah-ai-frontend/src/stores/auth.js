@@ -569,7 +569,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Revert from patient view back to admin session. Clears switch-user context.
+   * Revert from patient view back to admin: end customer session, restore admin session, clear switch-user context.
    */
   const revertToAdmin = () => {
     const adminToken = localStorage.getItem('jalsah_admin_token')
@@ -578,6 +578,16 @@ export const useAuthStore = defineStore('auth', () => {
       switchUserMode.value = false
       return
     }
+    // 1. Completely end the customer session (log them out)
+    user.value = null
+    token.value = null
+    localStorage.removeItem('jalsah_token')
+    localStorage.removeItem('jalsah_user')
+    sessionStorage.clear()
+    delete api.defaults.headers.common['Authorization']
+    const cartStore = useCartStore()
+    cartStore.clearCart()
+    // 2. Re-log the administrator
     try {
       const userData = JSON.parse(adminUser)
       setSession(adminToken, userData)

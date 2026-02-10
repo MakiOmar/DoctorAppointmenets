@@ -36,6 +36,7 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import Header from '@/components/Header.vue'
 
@@ -47,6 +48,7 @@ export default {
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    const { switchUserMode } = storeToRefs(authStore)
     const isNavigating = ref(false)
 
     // Show loading immediately when navigation starts
@@ -79,7 +81,7 @@ export default {
 
     return {
       isNavigating,
-      switchUserMode: authStore.switchUserMode,
+      switchUserMode,
       handleRevertToAdmin
     }
   }
