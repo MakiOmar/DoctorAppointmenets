@@ -243,6 +243,36 @@ add_action(
 add_action(
 	'woocommerce_admin_order_data_after_billing_address',
 	function ( $order ) {
+		// <!-- AI: show access country under billing details -->
+		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+		$is_ai_order = ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 );
+		if ( $is_ai_order ) {
+			$country_code = (string) $order->get_meta( 'ai_access_country_code', true );
+			$country_name = (string) $order->get_meta( 'ai_access_country_name', true );
+			$country_ip   = (string) $order->get_meta( 'ai_access_ip', true );
+
+			// Fallback: compute from order IP if not stored yet.
+			if ( empty( $country_code ) && class_exists( 'WC_Geolocation' ) ) {
+				$ip = (string) $order->get_customer_ip_address();
+				if ( ! empty( $ip ) ) {
+					$geo = WC_Geolocation::geolocate_ip( $ip, true, false );
+					if ( is_array( $geo ) && ! empty( $geo['country'] ) ) {
+						$country_code = strtoupper( (string) $geo['country'] );
+						$country_ip   = $ip;
+						if ( function_exists( 'WC' ) && WC()->countries && is_array( WC()->countries->countries ) ) {
+							$country_name = (string) ( WC()->countries->countries[ $country_code ] ?? '' );
+						}
+					}
+				}
+			}
+
+			$country_label = $country_name ? $country_name : ( $country_code ? $country_code : '-' );
+			echo '<p><!-- AI access country --><strong>' . esc_html__( 'AI Access Country:', 'woocommerce' ) . '</strong> ' . esc_html( $country_label ) . '</p>';
+			if ( ! empty( $country_ip ) ) {
+				echo '<p><!-- AI access IP --><strong>' . esc_html__( 'AI Access IP:', 'woocommerce' ) . '</strong> ' . esc_html( $country_ip ) . '</p>';
+			}
+		}
+
 		$booking_id = $order->get_meta( 'booking_id', true );
 		$html       = '';
 		if ( ! empty( $booking_id ) ) {

@@ -8273,6 +8273,22 @@ function snks_is_ai_order_flagged( $order ) {
 		|| in_array( (string) $is_ai_session, $truthy, true );
 }
 
+/**
+ * Disable WooCommerce order-received (customer processing / completed) emails for AI orders.
+ *
+ * @param bool    $enabled Whether the email is enabled.
+ * @param WC_Order $order  The order object.
+ * @return bool
+ */
+function snks_disable_woo_order_received_email_for_ai( $enabled, $order ) {
+	if ( $order && snks_is_ai_order_flagged( $order ) ) {
+		return false;
+	}
+	return $enabled;
+}
+add_filter( 'woocommerce_email_enabled_customer_processing_order', 'snks_disable_woo_order_received_email_for_ai', 10, 2 );
+add_filter( 'woocommerce_email_enabled_customer_completed_order', 'snks_disable_woo_order_received_email_for_ai', 10, 2 );
+
 function snks_add_ai_order_row_class( $classes, $order ) {
 	if ( snks_is_ai_order_flagged( $order ) ) {
 		$classes[] = 'snks-ai-order';

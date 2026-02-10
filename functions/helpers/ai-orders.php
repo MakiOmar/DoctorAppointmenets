@@ -266,10 +266,90 @@ class SNKS_AI_Orders {
 		if ( ! $order ) {
 			return;
 		}
+
+		$patient_id = absint( $order->get_customer_id() );
+		$patient    = $patient_id ? get_user_by( 'ID', $patient_id ) : null;
 		
 		// Send email notification to customer
 		$customer_email = $order->get_billing_email();
 		$customer_name = $order->get_billing_first_name();
+
+		// Prefer the real patient name from billing meta when available
+		if ( $patient_id ) {
+			$patient_first_name = get_user_meta( $patient_id, 'billing_first_name', true );
+			$patient_last_name  = get_user_meta( $patient_id, 'billing_last_name', true );
+			$billing_full_name  = trim( $patient_first_name . ' ' . $patient_last_name );
+			if ( ! empty( $billing_full_name ) ) {
+				$customer_name = $billing_full_name;
+			}
+		}
+
+		// Collect extended AI booking info (used for admin notification + order screen).
+		$patient_username = $patient ? $patient->user_login : '';
+		$patient_whatsapp = '';
+		if ( $patient_id && function_exists( 'snks_get_user_whatsapp' ) ) {
+			$patient_whatsapp = (string) snks_get_user_whatsapp( $patient_id );
+		}
+		if ( empty( $patient_whatsapp ) && $patient_id ) {
+			$patient_whatsapp = (string) get_user_meta( $patient_id, 'billing_whatsapp', true );
+		}
+		if ( empty( $patient_whatsapp ) ) {
+			$patient_whatsapp = (string) $order->get_billing_phone();
+		}
+
+		$country_data = self::get_order_access_country_data( $order );
+
+		// Persist country (best-effort) so it’s visible in admin even if GeoIP changes later.
+		if ( ! empty( $country_data['code'] ) ) {
+			if ( ! $order->get_meta( 'ai_access_country_code', true ) ) {
+				$order->update_meta_data( 'ai_access_country_code', $country_data['code'] );
+			}
+			if ( ! $order->get_meta( 'ai_access_country_name', true ) ) {
+				$order->update_meta_data( 'ai_access_country_name', $country_data['name'] );
+			}
+			if ( ! empty( $country_data['ip'] ) && ! $order->get_meta( 'ai_access_ip', true ) ) {
+				$order->update_meta_data( 'ai_access_ip', $country_data['ip'] );
+			}
+			$order->save();
+		}
+
+		$appointments_lines = array();
+		foreach ( $order->get_items() as $item ) {
+			if ( ! is_a( $item, 'WC_Order_Item_Product' ) ) {
+				continue;
+			}
+
+			$therapist_id = absint( $item->get_meta( 'therapist_id', true ) );
+			$doctor       = $therapist_id ? get_user_by( 'ID', $therapist_id ) : null;
+
+			$appointment_id = absint( $item->get_meta( 'appointment_id', true ) );
+			if ( ! $appointment_id ) {
+				$appointment_id = absint( $item->get_meta( 'slot_id', true ) );
+			}
+
+			$doctor_username = $doctor ? $doctor->user_login : '';
+			$doctor_name     = $doctor ? $doctor->display_name : '';
+			if ( $therapist_id && function_exists( 'snks_get_therapist_name' ) ) {
+				$doctor_name = (string) snks_get_therapist_name( $therapist_id );
+			}
+
+			$session_date  = (string) $item->get_meta( 'session_date', true );
+			$session_time  = (string) $item->get_meta( 'session_time', true );
+			$session_price = (float) $item->get_total();
+
+			$patient_appointment_number_with_doctor = self::count_patient_appointments_with_doctor( $patient_id, $therapist_id );
+
+			$appointments_lines[] = sprintf(
+				'- Appointment #%1$s | Doctor: %2$s (@%3$s) | Date: %4$s %5$s | Price: %6$s | Patient # with doctor: %7$s',
+				$appointment_id ? $appointment_id : '-',
+				$doctor_name ? $doctor_name : '-',
+				$doctor_username ? $doctor_username : '-',
+				$session_date ? $session_date : '-',
+				$session_time ? $session_time : '-',
+				self::format_price_plain( $session_price ),
+				$patient_appointment_number_with_doctor ? $patient_appointment_number_with_doctor : 0
+			);
+		}
 		
 		$subject = 'تأكيد حجز الجلسة - منصة جلسة AI';
 		$message = sprintf(
@@ -295,20 +375,112 @@ class SNKS_AI_Orders {
 		$admin_email = get_option( 'admin_email' );
 		$admin_subject = 'طلب جديد - منصة جلسة AI';
 		$admin_message = sprintf(
-			'تم استلام طلب جديد:
+			'تم استلام طلب جديد (AI):
 
 رقم الطلب: %s
-العميل: %s
+اسم المريض: %s
+واتساب المريض: %s
+بلد الوصول (من IP): %s
+IP: %s
+اسم مستخدم المريض: %s
 البريد الإلكتروني: %s
 عدد الجلسات: %s
-إجمالي المبلغ: %s',
+إجمالي المبلغ: %s
+
+تفاصيل المواعيد:
+%s',
 			$order_id,
 			$customer_name,
+			$patient_whatsapp ? $patient_whatsapp : '-',
+			! empty( $country_data['name'] ) ? $country_data['name'] : ( ! empty( $country_data['code'] ) ? $country_data['code'] : '-' ),
+			! empty( $country_data['ip'] ) ? $country_data['ip'] : '-',
+			$patient_username ? $patient_username : '-',
 			$customer_email,
 			$order->get_meta( 'ai_appointments_count' ),
-			$order->get_formatted_order_total()
+			$order->get_formatted_order_total(),
+			! empty( $appointments_lines ) ? implode( "\n", $appointments_lines ) : '-'
 		);
 		
 		wp_mail( $admin_email, $admin_subject, $admin_message );
 	}
-} 
+
+	/**
+	 * Get customer access country from order IP (best-effort).
+	 *
+	 * @param WC_Order $order WooCommerce order.
+	 * @return array{ip:string,code:string,name:string}
+	 */
+	private static function get_order_access_country_data( $order ) {
+		$ip = (string) $order->get_customer_ip_address();
+		if ( empty( $ip ) ) {
+			$ip = (string) $order->get_meta( '_customer_ip_address', true );
+		}
+
+		$country_code = '';
+		if ( ! empty( $ip ) && class_exists( 'WC_Geolocation' ) ) {
+			$geo = WC_Geolocation::geolocate_ip( $ip, true, false );
+			if ( is_array( $geo ) && ! empty( $geo['country'] ) ) {
+				$country_code = strtoupper( (string) $geo['country'] );
+			}
+		}
+
+		$country_name = '';
+		if ( ! empty( $country_code ) && function_exists( 'WC' ) && WC()->countries && is_array( WC()->countries->countries ) ) {
+			$country_name = (string) ( WC()->countries->countries[ $country_code ] ?? '' );
+		}
+
+		return array(
+			'ip'   => $ip,
+			'code' => $country_code,
+			'name' => $country_name,
+		);
+	}
+
+	/**
+	 * Count patient's appointments with a specific doctor.
+	 *
+	 * Note: Uses the sessions actions table, which is populated for AI sessions at creation time.
+	 *
+	 * @param int $patient_id Patient user ID.
+	 * @param int $doctor_id Doctor user ID.
+	 * @return int
+	 */
+	private static function count_patient_appointments_with_doctor( $patient_id, $doctor_id ) {
+		global $wpdb;
+
+		$patient_id = absint( $patient_id );
+		$doctor_id  = absint( $doctor_id );
+
+		if ( ! $patient_id || ! $doctor_id ) {
+			return 0;
+		}
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}snks_sessions_actions WHERE therapist_id = %d AND patient_id = %d",
+				$doctor_id,
+				$patient_id
+			)
+		);
+
+		return absint( $count );
+	}
+
+	/**
+	 * Format WooCommerce price as plain text (no HTML).
+	 *
+	 * @param float $amount Amount.
+	 * @return string
+	 */
+	private static function format_price_plain( $amount ) {
+		$amount = (float) $amount;
+		if ( ! function_exists( 'wc_price' ) ) {
+			return (string) $amount;
+		}
+
+		$formatted = wc_price( $amount ); // Returns HTML by default.
+		$formatted = wp_strip_all_tags( (string) $formatted );
+
+		return html_entity_decode( $formatted, ENT_QUOTES, 'UTF-8' );
+	}
+}
