@@ -417,10 +417,10 @@ IP: %s
 		}
 
 		$country_code = '';
-		if ( ! empty( $ip ) && class_exists( 'WC_Geolocation' ) ) {
-			$geo = WC_Geolocation::geolocate_ip( $ip, true, false );
-			if ( is_array( $geo ) && ! empty( $geo['country'] ) ) {
-				$country_code = strtoupper( (string) $geo['country'] );
+		if ( ! empty( $ip ) && function_exists( 'snks_get_country_code' ) ) {
+			$detected_code = snks_get_country_code( false, $ip );
+			if ( ! empty( $detected_code ) && 'Unknown' !== $detected_code ) {
+				$country_code = strtoupper( (string) $detected_code );
 			}
 		}
 

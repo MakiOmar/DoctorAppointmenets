@@ -243,42 +243,49 @@ add_action(
 add_action(
 	'woocommerce_admin_order_data_after_billing_address',
 	function ( $order ) {
-		// <!-- AI: show access country under billing details -->
-		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-		$is_ai_order = ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 );
-		if ( $is_ai_order ) {
-			$country_code = (string) $order->get_meta( 'ai_access_country_code', true );
-			$country_name = (string) $order->get_meta( 'ai_access_country_name', true );
-			$country_ip   = (string) $order->get_meta( 'ai_access_ip', true );
 
-			// Fallback: compute from order IP if not stored yet.
-			if ( empty( $country_code ) && class_exists( 'WC_Geolocation' ) ) {
-				$ip = (string) $order->get_customer_ip_address();
-				if ( ! empty( $ip ) ) {
-					$geo = WC_Geolocation::geolocate_ip( $ip, true, false );
-					if ( is_array( $geo ) && ! empty( $geo['country'] ) ) {
-						$country_code = strtoupper( (string) $geo['country'] );
-						$country_ip   = $ip;
-						if ( function_exists( 'WC' ) && WC()->countries && is_array( WC()->countries->countries ) ) {
-							$country_name = (string) ( WC()->countries->countries[ $country_code ] ?? '' );
-						}
+		// --- Access Country / IP (AI meta preferred, fallback to order IP geolocation) ---
+
+		// Read AI meta (may be empty if not an AI order)
+		$country_code = (string) $order->get_meta( 'ai_access_country_code', true );
+		$country_name = (string) $order->get_meta( 'ai_access_country_name', true );
+		$country_ip   = (string) $order->get_meta( 'ai_access_ip', true );
+
+		// If no AI meta available, fallback to external IP API (order/customer IP).
+		if ( empty( $country_code ) && empty( $country_name ) ) {
+			$ip = (string) $order->get_customer_ip_address();
+			if ( empty( $ip ) ) {
+				$ip = (string) $order->get_meta( '_customer_ip_address', true );
+			}
+
+			if ( ! empty( $ip ) && function_exists( 'snks_get_country_code' ) ) {
+				$detected_code = snks_get_country_code( false, $ip );
+				if ( ! empty( $detected_code ) && 'Unknown' !== $detected_code ) {
+					$country_code = strtoupper( (string) $detected_code );
+					$country_ip   = $ip;
+
+					if ( function_exists( 'WC' ) && WC()->countries && is_array( WC()->countries->countries ) ) {
+						$country_name = (string) ( WC()->countries->countries[ $country_code ] ?? '' );
 					}
 				}
 			}
-
-			$country_label = $country_name ? $country_name : ( $country_code ? $country_code : '-' );
-			echo '<p><!-- AI access country --><strong>' . esc_html__( 'AI Access Country:', 'woocommerce' ) . '</strong> ' . esc_html( $country_label ) . '</p>';
-			if ( ! empty( $country_ip ) ) {
-				echo '<p><!-- AI access IP --><strong>' . esc_html__( 'AI Access IP:', 'woocommerce' ) . '</strong> ' . esc_html( $country_ip ) . '</p>';
-			}
 		}
+
+		$country_label = $country_name ? $country_name : ( $country_code ? $country_code : '-' );
+
+		echo '<p><!-- Access country --><strong>' . esc_html__( 'Access Country:', 'woocommerce' ) . '</strong> ' . esc_html( $country_label ) . '</p>';
+
+		if ( ! empty( $country_ip ) ) {
+			echo '<p><!-- Access IP --><strong>' . esc_html__( 'Access IP:', 'woocommerce' ) . '</strong> ' . esc_html( $country_ip ) . '</p>';
+		}
+
+		// --- Your existing booking/edit-fees block (unchanged) ---
 
 		$booking_id = $order->get_meta( 'booking_id', true );
 		$html       = '';
+
 		if ( ! empty( $booking_id ) ) {
-			ob_start();
 			$html .= '<p><strong>Booking ID:</strong> ' . esc_html( $booking_id ) . '</p>';
-			ob_end_clean();
 		}
 
 		$meta_data = $order->get_meta_data();
@@ -286,14 +293,18 @@ add_action(
 		if ( $meta_data ) {
 			foreach ( $meta_data as $meta ) {
 				if ( 'order_type' === $meta->key && 'edit-fees' === $meta->value ) {
-					$html .= 'Connected Order: <a href="/wp-admin/post.php?post=' . $order->get_meta( 'connected_order' ) . '&action=edit">' . $order->get_meta( 'connected_order' ) . '</a><br>';
-					$html .= 'Doctor ID: <a href="/wp-admin/user-edit.php?user_id=' . $order->get_meta( '_user_id' ) . '">' . $order->get_meta( '_user_id' ) . '</a><br>';
-					$html .= 'Old Booking ID: ' . $order->get_meta( 'booking_id' ) . '<br>';
-					$html .= 'New Booking ID: ' . $order->get_meta( 'new_booking_id' ) . '<br>';
-					$html .= 'Order Type: ' . $order->get_meta( 'order_type' ) . '<br>';
+					$connected_order = $order->get_meta( 'connected_order' );
+					$user_id         = $order->get_meta( '_user_id' );
+
+					$html .= 'Connected Order: <a href="/wp-admin/post.php?post=' . esc_attr( $connected_order ) . '&action=edit">' . esc_html( $connected_order ) . '</a><br>';
+					$html .= 'Doctor ID: <a href="/wp-admin/user-edit.php?user_id=' . esc_attr( $user_id ) . '">' . esc_html( $user_id ) . '</a><br>';
+					$html .= 'Old Booking ID: ' . esc_html( $order->get_meta( 'booking_id' ) ) . '<br>';
+					$html .= 'New Booking ID: ' . esc_html( $order->get_meta( 'new_booking_id' ) ) . '<br>';
+					$html .= 'Order Type: ' . esc_html( $order->get_meta( 'order_type' ) ) . '<br>';
 				}
 			}
 		}
+
 		echo wp_kses_post( $html );
 	}
 );
