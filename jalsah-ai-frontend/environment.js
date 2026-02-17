@@ -14,10 +14,13 @@
 
 export const ENVIRONMENT_CONFIG = {
   // Change this line to switch environments
-  API_TARGET: 'https://jalsah.app', // ← CHANGE THIS LINE
+  // LOCAL:  'http://localhost/shrinks'
+  // LIVE:   'https://jalsah.app'
+  API_TARGET: 'https://jalsah.app',
   
-  // Other settings (usually don't need to change)
-  API_BASE_URL: 'https://jalsah.app', // ← FIXED: Use full URL for production
+  // For the built app, use the live domain as base;
+  // requests use paths like /api/ai/..., so this becomes https://jalsah.app/api/ai/...
+  API_BASE_URL: 'https://jalsah.app',
   MAIN_SITE_URL: 'https://jalsah.app' // This will auto-update based on API_TARGET
 };
 

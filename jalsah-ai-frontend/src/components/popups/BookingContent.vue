@@ -277,12 +277,8 @@ export default {
       }
     }
 
-    const otherDates = computed(() => {
-      const nearestInfo = getNearestSlotInfo()
-      if (!nearestInfo) return availableDates.value
-
-      return availableDates.value.filter(date => date.value !== nearestInfo.date)
-    })
+    // Include nearest slot day in Other Appointments so user can pick other slots on that day
+    const otherDates = computed(() => availableDates.value)
 
     const visibleDates = computed(() => {
       const start = dateScrollIndex.value

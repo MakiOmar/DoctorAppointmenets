@@ -58,6 +58,11 @@ class SNKS_AI_Integration {
 	private $jwt_secret;
 	private $jwt_algorithm = 'HS256';
 
+	/** Used to attach earliest-slot debug to API response when ?debug_earliest=1 (live server). */
+	private $debug_earliest_avail  = null;
+	private $debug_earliest_derive = null;
+	private $debug_earliest_included = false;
+
 	public function __construct() {
 		$this->jwt_secret    = defined( 'JWT_SECRET' ) ? JWT_SECRET : 'your-secret-key';
 		$this->jwt_algorithm = 'HS256';
@@ -3158,11 +3163,11 @@ Best regards,
 			}
 		);
 
-		// Get the actual earliest slot from timetable
-		$earliest_slot_data = $this->get_earliest_slot_from_timetable( $application->user_id );
-
-		// Get all available dates from timetable
+		// Get all available dates from timetable (single source of truth)
 		$available_dates = $this->get_available_dates_from_timetable( $application->user_id );
+
+		// Derive earliest slot from the same dataset so it always matches available_dates
+		$earliest_slot_data = $this->derive_earliest_slot_from_available_dates( $available_dates );
 
 		// Get user country for pricing (get from request or detect)
 		$country_code = null;
@@ -3206,6 +3211,16 @@ Best regards,
 			'frontend_order'     => isset( $application->frontend_order ) ? intval( $application->frontend_order ) : intval( $application->id ),
 			'display_order'      => isset( $application->display_order ) ? intval( $application->display_order ) : intval( $application->id ),
 		);
+
+		// Expose debug in API for live server when ?debug_earliest=1 (only on first therapist)
+		if ( ! empty( $_REQUEST['debug_earliest'] ) && ! $this->debug_earliest_included ) {
+			$result['_debug_earliest'] = array(
+				'avail'   => $this->debug_earliest_avail,
+				'derive'  => $this->debug_earliest_derive,
+				'payload' => $debug_payload,
+			);
+			$this->debug_earliest_included = true;
+		}
 
 		return $result;
 	}
@@ -5857,8 +5872,50 @@ Best regards,
 		
 		// Convert map to array and return
 		$available_dates = array_values( $dates_map );
-		
+
 		return $available_dates;
+	}
+
+	/**
+	 * Derive earliest slot from available_dates so it always matches the booking form data.
+	 *
+	 * @param array $available_dates Result from get_available_dates_from_timetable().
+	 * @return array|null Same shape as get_earliest_slot_from_timetable(), or null if no slots.
+	 */
+	private function derive_earliest_slot_from_available_dates( $available_dates ) {
+		if ( ! is_array( $available_dates ) || empty( $available_dates ) ) {
+			return null;
+		}
+
+		// Sort by date so first date is earliest
+		usort( $available_dates, function ( $a, $b ) {
+			return strcmp( $a['date'], $b['date'] );
+		} );
+
+		$first_date = $available_dates[0];
+		$date_key   = $first_date['date'];
+		$slots      = isset( $first_date['slots'] ) && is_array( $first_date['slots'] ) ? $first_date['slots'] : array();
+		if ( empty( $slots ) ) {
+			return null;
+		}
+
+		// Earliest time on this date (slot with smallest 'time')
+		usort( $slots, function ( $a, $b ) {
+			return strcmp( $a['time'], $b['time'] );
+		} );
+		$first_slot = $slots[0];
+
+		$result = array(
+			'id'              => isset( $first_slot['slot_id'] ) ? (int) $first_slot['slot_id'] : 0,
+			'date'            => $date_key,
+			'time'            => $first_slot['time'],
+			'end_time'        => isset( $first_slot['end_time'] ) ? $first_slot['end_time'] : '',
+			'period'          => isset( $first_slot['period'] ) ? $first_slot['period'] : 45,
+			'clinic'          => isset( $first_slot['clinic'] ) ? $first_slot['clinic'] : '',
+			'attendance_type' => isset( $first_slot['attendance_type'] ) ? $first_slot['attendance_type'] : 'online',
+		);
+
+		return $result;
 	}
 
 	/**
