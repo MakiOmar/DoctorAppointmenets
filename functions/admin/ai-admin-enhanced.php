@@ -3519,20 +3519,19 @@ function snks_jalsah_ai_open_slots_page() {
 	// Selected date from form (sanitized)
 	$search_date = isset( $_GET['search_date'] ) ? sanitize_text_field( $_GET['search_date'] ) : '';
 
-	$slots = array();
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	$slots             = array();
 	if ( $search_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $search_date ) ) {
-		// Fetch open AI bookings for the selected date (booked = client_id > 0, session_status = 'open')
+		// Fetch open AI bookings for the selected date. Therapist name from application; patient name from billing meta in loop.
 		$slots = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.ID AS booking_id,
 				t.date_time,
 				t.client_id AS patient_id,
 				t.user_id AS therapist_id,
 				t.order_id,
-				patient.display_name AS patient_name,
-				therapist.display_name AS therapist_name
+				ta.name AS therapist_name
 			FROM {$timetable_table} t
-			LEFT JOIN {$wpdb->users} patient ON t.client_id = patient.ID
-			LEFT JOIN {$wpdb->users} therapist ON t.user_id = therapist.ID
+			LEFT JOIN {$applications_table} ta ON t.user_id = ta.user_id
 			WHERE t.session_status = 'open'
 				AND t.client_id > 0
 				AND t.settings LIKE %s
@@ -3542,9 +3541,20 @@ function snks_jalsah_ai_open_slots_page() {
 			$search_date
 		) );
 
-		// Enrich each slot with session price (order total) and total orders for the patient
+		// Enrich each slot: patient name (billing first+last), session price, total orders for patient
 		if ( $slots ) {
 			foreach ( $slots as $slot ) {
+				// Patient name: billing first name + last name (user meta)
+				$first = get_user_meta( (int) $slot->patient_id, 'billing_first_name', true );
+				$last  = get_user_meta( (int) $slot->patient_id, 'billing_last_name', true );
+				$slot->patient_name = trim( $first . ' ' . $last ) ?: '—';
+
+				// Therapist name fallback if no application record
+				if ( empty( $slot->therapist_name ) ) {
+					$therapist_user = get_user_by( 'ID', (int) $slot->therapist_id );
+					$slot->therapist_name = $therapist_user ? $therapist_user->display_name : '—';
+				}
+
 				// Session price: from WooCommerce order (HPOS or legacy)
 				$session_price = null;
 				if ( ! empty( $slot->order_id ) ) {
@@ -3606,7 +3616,7 @@ function snks_jalsah_ai_open_slots_page() {
 						<?php foreach ( $slots as $slot ) : ?>
 							<tr>
 								<td><?php echo esc_html( $slot->booking_id ); ?></td>
-								<td><?php echo esc_html( $slot->patient_name ?: '—' ); ?></td>
+								<td><?php echo esc_html( $slot->patient_name ); ?></td>
 								<td><?php echo esc_html( $slot->therapist_name ?: '—' ); ?></td>
 								<td><?php echo esc_html( $slot->date_time ? gmdate( 'H:i', strtotime( $slot->date_time ) ) : '—' ); ?></td>
 								<td><?php echo $slot->session_price !== null ? esc_html( number_format_i18n( $slot->session_price, 2 ) ) . ' ' . ( function_exists( 'get_woocommerce_currency_symbol' ) ? esc_html( get_woocommerce_currency_symbol() ) : '' ) : '—'; ?></td>
