@@ -3571,12 +3571,20 @@ function snks_jalsah_ai_open_slots_page() {
 				}
 				$slot->session_price = $session_price;
 
-				// Total Jalsah AI orders for this patient
-				$total_orders = $wpdb->get_var( $wpdb->prepare(
-					"SELECT COUNT(*) FROM {$orders_table} WHERE customer_id = %d AND from_jalsah_ai = 1",
-					(int) $slot->patient_id
-				) );
-				$slot->total_patient_orders = (int) $total_orders;
+				// Total Jalsah AI orders for this patient (from_jalsah_ai is stored in order meta, not wc_orders column)
+				$ai_orders = function_exists( 'wc_get_orders' ) ? wc_get_orders( array(
+					'customer_id' => (int) $slot->patient_id,
+					'limit'       => -1,
+					'return'      => 'ids',
+					'meta_query'  => array(
+						array(
+							'key'     => 'from_jalsah_ai',
+							'value'   => array( '1', 'true', 'yes', true, 1 ),
+							'compare' => 'IN',
+						),
+					),
+				) ) : array();
+				$slot->total_patient_orders = is_array( $ai_orders ) ? count( $ai_orders ) : 0;
 			}
 		}
 	}
