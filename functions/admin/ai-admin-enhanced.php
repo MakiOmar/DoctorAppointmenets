@@ -3571,12 +3571,15 @@ function snks_jalsah_ai_open_slots_page() {
 				}
 				$slot->session_price = $session_price;
 
-				// Total Jalsah AI orders for this patient (from_jalsah_ai is stored in order meta, not wc_orders column)
-				$ai_orders = function_exists( 'wc_get_orders' ) ? wc_get_orders( array(
+				// Total Jalsah AI orders for this patient. Use same countable statuses as WooCommerce customer history
+				// (completed, processing, on-hold, pending) so the number matches the order edit page.
+				$countable_statuses = array( 'wc-completed', 'wc-processing', 'wc-on-hold', 'wc-pending' );
+				$ai_orders         = function_exists( 'wc_get_orders' ) ? wc_get_orders( array(
 					'customer_id' => (int) $slot->patient_id,
-					'limit'       => -1,
-					'return'      => 'ids',
-					'meta_query'  => array(
+					'status'     => $countable_statuses,
+					'limit'      => -1,
+					'return'     => 'ids',
+					'meta_query' => array(
 						array(
 							'key'     => 'from_jalsah_ai',
 							'value'   => array( '1', 'true', 'yes', true, 1 ),
