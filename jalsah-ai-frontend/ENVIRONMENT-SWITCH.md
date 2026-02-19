@@ -6,7 +6,7 @@ To switch environments, just edit **ONE FILE**: `environment.js`
 
 ### For Local Development:
 ```javascript
-API_TARGET: 'http://localhost/shrinks', // ← Change this line
+API_TARGET: 'https://jalsah.app', // ← Change this line
 ```
 
 ### For Staging Server:
@@ -27,7 +27,7 @@ API_TARGET: 'https://jalsah.app', // ← Change this line
 ```javascript
 // environment.js
 export const ENVIRONMENT_CONFIG = {
-  API_TARGET: 'http://localhost/shrinks', // ← LOCAL
+  API_TARGET: 'https://jalsah.app', // ← LOCAL
   // API_TARGET: 'https://jalsah.app', // ← STAGING
 };
 ```

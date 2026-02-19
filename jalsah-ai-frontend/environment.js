@@ -5,7 +5,7 @@
 // To switch environments, just change the value below:
 // 
 // LOCAL DEVELOPMENT:
-//   API_TARGET: 'http://localhost/shrinks'
+//   API_TARGET: 'https://jalsah.app'
 // 
 // STAGING SERVER:
 //   API_TARGET: 'https://jalsah.app'
@@ -14,7 +14,7 @@
 
 export const ENVIRONMENT_CONFIG = {
   // Change this line to switch environments
-  // LOCAL:  'http://localhost/shrinks'
+  // LOCAL:  'https://jalsah.app'
   // LIVE:   'https://jalsah.app'
   API_TARGET: 'https://jalsah.app',
   

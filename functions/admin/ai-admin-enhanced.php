@@ -157,6 +157,15 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
+		__( 'Open Slots', 'shrinks' ),
+		__( 'Open Slots', 'shrinks' ),
+		'manage_options',
+		'jalsah-ai-open-slots',
+		'snks_jalsah_ai_open_slots_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
 		'General Settings',
 		'General Settings',
 		'manage_options',
@@ -3491,6 +3500,127 @@ function snks_enhanced_ai_rochtah_page() {
 	});
 	</script>
 
+	<?php
+}
+
+/**
+ * Jalsah AI Open Slots admin page.
+ * Search by date and list booked appointments (timetable slots) with status "open".
+ * Displays: Booking ID, patient name, therapist name, session time, session price, total orders per patient.
+ */
+function snks_jalsah_ai_open_slots_page() {
+	global $wpdb;
+
+	snks_load_ai_admin_styles();
+
+	$timetable_table = $wpdb->prefix . 'snks_provider_timetable';
+	$orders_table   = $wpdb->prefix . 'wc_orders';
+
+	// Selected date from form (sanitized)
+	$search_date = isset( $_GET['search_date'] ) ? sanitize_text_field( $_GET['search_date'] ) : '';
+
+	$slots = array();
+	if ( $search_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $search_date ) ) {
+		// Fetch open AI bookings for the selected date (booked = client_id > 0, session_status = 'open')
+		$slots = $wpdb->get_results( $wpdb->prepare(
+			"SELECT t.ID AS booking_id,
+				t.date_time,
+				t.client_id AS patient_id,
+				t.user_id AS therapist_id,
+				t.order_id,
+				patient.display_name AS patient_name,
+				therapist.display_name AS therapist_name
+			FROM {$timetable_table} t
+			LEFT JOIN {$wpdb->users} patient ON t.client_id = patient.ID
+			LEFT JOIN {$wpdb->users} therapist ON t.user_id = therapist.ID
+			WHERE t.session_status = 'open'
+				AND t.client_id > 0
+				AND t.settings LIKE %s
+				AND DATE(t.date_time) = %s
+			ORDER BY t.date_time ASC",
+			'%ai_booking%',
+			$search_date
+		) );
+
+		// Enrich each slot with session price (order total) and total orders for the patient
+		if ( $slots ) {
+			foreach ( $slots as $slot ) {
+				// Session price: from WooCommerce order (HPOS or legacy)
+				$session_price = null;
+				if ( ! empty( $slot->order_id ) ) {
+					$order = function_exists( 'wc_get_order' ) ? wc_get_order( (int) $slot->order_id ) : null;
+					if ( $order && is_a( $order, 'WC_Order' ) ) {
+						$session_price = (float) $order->get_total();
+					} else {
+						$row = $wpdb->get_row( $wpdb->prepare(
+							"SELECT total_amount FROM {$orders_table} WHERE id = %d",
+							(int) $slot->order_id
+						) );
+						$session_price = $row ? (float) $row->total_amount : null;
+					}
+				}
+				$slot->session_price = $session_price;
+
+				// Total Jalsah AI orders for this patient
+				$total_orders = $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$orders_table} WHERE customer_id = %d AND from_jalsah_ai = 1",
+					(int) $slot->patient_id
+				) );
+				$slot->total_patient_orders = (int) $total_orders;
+			}
+		}
+	}
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'Jalsah AI Open Slots', 'shrinks' ); ?></h1>
+
+		<div class="card">
+			<h2><?php esc_html_e( 'Search by Date', 'shrinks' ); ?></h2>
+			<form method="get" class="snks-open-slots-search">
+				<input type="hidden" name="page" value="jalsah-ai-open-slots">
+				<p>
+					<label for="search_date"><?php esc_html_e( 'Date', 'shrinks' ); ?></label>
+					<input type="date" id="search_date" name="search_date" value="<?php echo esc_attr( $search_date ); ?>" required>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Search', 'shrinks' ); ?></button>
+				</p>
+				<p class="description"><?php esc_html_e( 'Select a date to view open (booked) Jalsah AI slots for that day.', 'shrinks' ); ?></p>
+			</form>
+		</div>
+
+		<?php if ( $search_date ) : ?>
+		<div class="card">
+			<h2><?php esc_html_e( 'Open Slots', 'shrinks' ); ?> — <?php echo esc_html( $search_date ); ?></h2>
+			<?php if ( ! empty( $slots ) ) : ?>
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Booking ID', 'shrinks' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Patient Name', 'shrinks' ); ?></th>
+							<th scope="col"><?php esc_html_e( "Therapist's Name", 'shrinks' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Session Time', 'shrinks' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Session Price', 'shrinks' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Total Orders (Patient)', 'shrinks' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $slots as $slot ) : ?>
+							<tr>
+								<td><?php echo esc_html( $slot->booking_id ); ?></td>
+								<td><?php echo esc_html( $slot->patient_name ?: '—' ); ?></td>
+								<td><?php echo esc_html( $slot->therapist_name ?: '—' ); ?></td>
+								<td><?php echo esc_html( $slot->date_time ? gmdate( 'H:i', strtotime( $slot->date_time ) ) : '—' ); ?></td>
+								<td><?php echo $slot->session_price !== null ? esc_html( number_format_i18n( $slot->session_price, 2 ) ) . ' ' . ( function_exists( 'get_woocommerce_currency_symbol' ) ? esc_html( get_woocommerce_currency_symbol() ) : '' ) : '—'; ?></td>
+								<td><?php echo esc_html( $slot->total_patient_orders ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p><?php esc_html_e( 'No open slots found for this date.', 'shrinks' ); ?></p>
+			<?php endif; ?>
+		</div>
+		<?php endif; ?>
+	</div>
 	<?php
 }
 
