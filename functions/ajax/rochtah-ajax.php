@@ -40,14 +40,12 @@ function snks_handle_rochtah_request() {
 		wp_send_json_error( 'All fields are required' );
 	}
 	
-	// Check if Rochtah is enabled
-	$rochtah_enabled = get_option( 'snks_rochtah_enabled', '0' );
-	if ( ! $rochtah_enabled ) {
+	// Check if Rochtah is enabled (canonical option with fallback)
+	if ( ! function_exists( 'snks_rochtah_is_enabled' ) || ! snks_rochtah_is_enabled() ) {
 		wp_send_json_error( 'Rochtah service is not available' );
 	}
-	
-	// Check available days
-	$available_days = get_option( 'snks_rochtah_available_days', array() );
+	// Check available days (canonical option with fallback)
+	$available_days = function_exists( 'snks_rochtah_get_available_days' ) ? snks_rochtah_get_available_days() : array();
 	$day_of_week = date( 'l', strtotime( $preferred_date ) );
 	if ( ! in_array( $day_of_week, $available_days ) ) {
 		wp_send_json_error( 'Selected date is not available for Rochtah consultations' );

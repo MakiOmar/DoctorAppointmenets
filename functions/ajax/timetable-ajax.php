@@ -1050,56 +1050,96 @@ function snks_book_session_rochtah_appointment() {
 	if ( $existing_appointment ) {
 		wp_send_json_error( 'You already have a Roshta appointment booked.' );
 	}
-	
-	// Book the slot
+
+	$payment_enabled = get_option( 'snks_rochtah_payment_enabled', '0' ) === '1';
+	$user_id = get_current_user_id();
+
+	if ( $payment_enabled && class_exists( 'WooCommerce' ) && class_exists( 'SNKS_AI_Products' ) ) {
+		$product_id = SNKS_AI_Products::get_rochtah_product_id();
+		$price      = SNKS_AI_Products::get_rochtah_price();
+		if ( $product_id && $price > 0 ) {
+			$order = wc_create_order();
+			$order->set_customer_id( $user_id );
+			$product = wc_get_product( $product_id );
+			if ( $product ) {
+				$order->add_product( $product, 1 );
+				$order->set_total( $price );
+				$order->update_meta_data( 'is_rochtah_order', true );
+				$order->update_meta_data( 'rochtah_booking_id', $request_id );
+				$order->update_meta_data( 'rochtah_booking_date', $date );
+				$order->update_meta_data( 'rochtah_booking_time', $slot->starts );
+				$order->update_meta_data( 'rochtah_slot_id', $slot_id );
+				$order->set_status( 'pending' );
+				$order->save();
+				$order_id = $order->get_id();
+				$wpdb->update(
+					$rochtah_bookings_table,
+					array(
+						'booking_date' => $date,
+						'booking_time' => $slot->starts,
+						'appointment_id' => $slot_id,
+						'order_id'     => $order_id,
+						'updated_at'   => current_time( 'mysql' ),
+					),
+					array( 'id' => $request_id ),
+					array( '%s', '%s', '%d', '%d', '%s' ),
+					array( '%d' )
+				);
+				wp_send_json_success( array(
+					'requires_payment' => true,
+					'checkout_url'     => $order->get_checkout_payment_url(),
+					'message'         => __( 'Proceed to payment to confirm your appointment.', 'shrinks' ),
+					'appointment_id'   => $slot_id,
+					'appointment_date' => $date,
+					'appointment_time' => gmdate( 'h:i a', strtotime( $slot->starts ) ),
+				) );
+			}
+		}
+	}
+
+	// Free flow: book the slot and confirm immediately
 	$update_result = $wpdb->update(
 		$table_name,
 		array(
-			'client_id' => get_current_user_id(),
-			'settings' => $slot->settings . 'ai_booking:booked'
+			'client_id' => $user_id,
+			'settings'  => $slot->settings . 'ai_booking:booked',
 		),
-		array(
-			'ID' => $slot_id
-		),
+		array( 'ID' => $slot_id ),
 		array( '%d', '%s' ),
 		array( '%d' )
 	);
-	
+
 	if ( $update_result === false ) {
 		wp_send_json_error( 'Failed to book appointment.' );
 	}
-	
-	// Update Roshta request status
+
 	$update_request = $wpdb->update(
 		$rochtah_bookings_table,
 		array(
-			'status' => 'confirmed',
+			'status'         => 'confirmed',
 			'appointment_id' => $slot_id,
-			'booking_date' => $date,
-			'booking_time' => $slot->starts,
-			'updated_at' => current_time( 'mysql' )
+			'booking_date'   => $date,
+			'booking_time'   => $slot->starts,
+			'updated_at'     => current_time( 'mysql' ),
 		),
-		array(
-			'id' => $request_id
-		),
+		array( 'id' => $request_id ),
 		array( '%s', '%d', '%s', '%s', '%s' ),
 		array( '%d' )
 	);
-	
+
 	if ( $update_request === false ) {
 		wp_send_json_error( 'Failed to update request status.' );
 	}
 
-	
 	if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
-		$notification_result = snks_send_rosheta_appointment_notification( $request_id );
+		snks_send_rosheta_appointment_notification( $request_id );
 	}
-	
+
 	wp_send_json_success( array(
-		'message' => 'تم حجز موعد روشتا بنجاح! سيتم إعلامك بموعد الجلسة.',
-		'appointment_id' => $slot_id,
+		'message'          => 'تم حجز موعد روشتا بنجاح! سيتم إعلامك بموعد الجلسة.',
+		'appointment_id'   => $slot_id,
 		'appointment_date' => $date,
-		'appointment_time' => gmdate( 'h:i a', strtotime( $slot->starts ) )
+		'appointment_time' => gmdate( 'h:i a', strtotime( $slot->starts ) ),
 	) );
 }
 

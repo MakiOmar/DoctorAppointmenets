@@ -1456,6 +1456,10 @@ add_action(
 								},
 								success: function(response) {
 									if (response.success) {
+										if (response.data && response.data.requires_payment && response.data.checkout_url) {
+											window.location.href = response.data.checkout_url;
+											return;
+										}
 										Swal.fire({
 											title: 'تم الحجز بنجاح!',
 											text: response.data.message,

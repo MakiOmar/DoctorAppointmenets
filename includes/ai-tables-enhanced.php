@@ -59,6 +59,7 @@ function snks_create_enhanced_ai_tables() {
 		whatsapp_activation_sent TINYINT(1) DEFAULT 0,
 		whatsapp_appointment_sent TINYINT(1) DEFAULT 0,
 		appointment_id BIGINT(20) NULL,
+		order_id BIGINT(20) NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
@@ -214,6 +215,19 @@ function snks_add_enhanced_ai_meta_fields() {
 
 	if ( empty( $column_exists ) ) {
 		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD COLUMN attachment_ids TEXT NULL" );
+	}
+
+	// Add order_id column to rochtah_bookings table if it doesn't exist (for paid Rochtah)
+	$order_id_exists = $wpdb->get_results( $wpdb->prepare(
+		"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+		WHERE TABLE_NAME = %s AND COLUMN_NAME = %s AND TABLE_SCHEMA = %s",
+		$rochtah_bookings_table,
+		'order_id',
+		$wpdb->dbname
+	) );
+	if ( empty( $order_id_exists ) ) {
+		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD COLUMN order_id BIGINT(20) NULL" );
+		$wpdb->query( "ALTER TABLE $rochtah_bookings_table ADD KEY order_id (order_id)" );
 	}
 
 	// Add slot_date and is_template columns to rochtah_appointments table if they don't exist

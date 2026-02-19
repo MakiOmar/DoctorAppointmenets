@@ -423,8 +423,8 @@ function snks_populate_ai_test_data( $customer_id, $doctor_id ) {
 	$results[] = "✅ Created test notifications";
 	
 	// 11. Set Rochtah settings
-	update_option( 'snks_rochtah_enabled', '1' );
-	update_option( 'snks_rochtah_available_days', array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ) );
+	update_option( 'snks_ai_rochtah_enabled', '1' );
+	update_option( 'snks_ai_rochtah_available_days', serialize( array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday' ) ) );
 	$results[] = "✅ Rochtah settings configured";
 	
 	// 12. Set AI email settings

@@ -467,6 +467,98 @@ IP: %s
 	}
 
 	/**
+	 * Process Rochtah order on payment completion: confirm booking, optionally reserve timetable slot, send notifications.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return bool True if order was a Rochtah order and was processed.
+	 */
+	public static function process_rochtah_order_payment( $order_id ) {
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return false;
+		}
+		$is_rochtah = $order->get_meta( 'is_rochtah_order' );
+		if ( $is_rochtah !== true && $is_rochtah !== '1' && $is_rochtah !== 1 ) {
+			return false;
+		}
+		$booking_id = (int) $order->get_meta( 'rochtah_booking_id' );
+		if ( ! $booking_id ) {
+			return false;
+		}
+		global $wpdb;
+		$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
+		$booking = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM $rochtah_bookings_table WHERE id = %d",
+			$booking_id
+		) );
+		if ( ! $booking || $booking->status === 'confirmed' ) {
+			return true;
+		}
+		$slot_id = (int) $order->get_meta( 'rochtah_slot_id' );
+		$date    = $order->get_meta( 'rochtah_booking_date' );
+		$time    = $order->get_meta( 'rochtah_booking_time' );
+		if ( ! $date ) {
+			$date = $booking->booking_date;
+		}
+		if ( ! $time ) {
+				$time = $booking->booking_time;
+		}
+		if ( $slot_id > 0 && defined( 'TIMETABLE_TABLE_NAME' ) ) {
+			$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
+			$slot       = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM $table_name WHERE ID = %d AND (client_id = 0 OR client_id IS NULL)",
+				$slot_id
+			) );
+			if ( $slot ) {
+				$wpdb->update(
+					$table_name,
+					array(
+						'client_id' => $order->get_customer_id(),
+						'settings'  => $slot->settings . 'ai_booking:booked',
+					),
+					array( 'ID' => $slot_id ),
+					array( '%d', '%s' ),
+					array( '%d' )
+				);
+			}
+		}
+		$wpdb->update(
+			$rochtah_bookings_table,
+			array(
+				'status'         => 'confirmed',
+				'booking_date'   => $date,
+				'booking_time'   => $time,
+				'appointment_id' => $slot_id > 0 ? $slot_id : $booking->appointment_id,
+				'updated_at'     => current_time( 'mysql' ),
+			),
+			array( 'id' => $booking_id ),
+			array( '%s', '%s', '%s', '%d', '%s' ),
+			array( '%d' )
+		);
+		$current_user = get_userdata( $order->get_customer_id() );
+		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
+		foreach ( $rochtah_doctors as $doctor ) {
+			if ( function_exists( 'snks_create_ai_notification' ) ) {
+				snks_create_ai_notification(
+					$doctor->ID,
+					'rochtah_appointment_booked',
+					__( 'Rochtah Appointment Booked', 'shrinks' ),
+					sprintf(
+						__( 'Patient %1$s has booked a Rochtah consultation for %2$s at %3$s', 'shrinks' ),
+						$current_user ? $current_user->display_name : '',
+						$date,
+						$time
+					)
+				);
+			}
+		}
+		if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
+			snks_send_rosheta_appointment_notification( $booking_id );
+		}
+		return true;
+	}
+
+	/**
 	 * Format WooCommerce price as plain text (no HTML).
 	 *
 	 * @param float $amount Amount.

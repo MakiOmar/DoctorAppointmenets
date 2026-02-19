@@ -6898,6 +6898,10 @@ function snks_process_ai_order_payment( $order_id ) {
 	$order = wc_get_order( $order_id );
 
 	if ( $order ) {
+		// Rochtah paid booking: confirm appointment and send notifications
+		if ( class_exists( 'SNKS_AI_Orders' ) ) {
+			SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
+		}
 		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
 
 		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
@@ -6914,6 +6918,9 @@ function snks_process_ai_order_status_change( $order_id, $old_status, $new_statu
 		$order = wc_get_order( $order_id );
 
 		if ( $order ) {
+			if ( class_exists( 'SNKS_AI_Orders' ) ) {
+				SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
+			}
 			$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
 
 			if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
@@ -7837,10 +7844,16 @@ function snks_get_rochtah_available_slots_rest( $request ) {
 	}
 
 	$available_slots = snks_get_rochtah_available_slots_for_patient();
+	$payment_enabled = get_option( 'snks_rochtah_payment_enabled', '0' ) === '1';
+	$price           = $payment_enabled && class_exists( 'SNKS_AI_Products' ) ? SNKS_AI_Products::get_rochtah_price() : 0;
+	$currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'EGP';
 
 	return array(
-		'success' => true,
-		'data'    => $available_slots,
+		'success'         => true,
+		'data'            => $available_slots,
+		'payment_enabled' => $payment_enabled,
+		'price'           => (float) $price,
+		'currency'        => $currency,
 	);
 }
 
@@ -7901,7 +7914,7 @@ function snks_book_rochtah_appointment_rest( $request ) {
 
 	// Verify the request belongs to the current user
 	$rochtah_bookings_table = $wpdb->prefix . 'snks_rochtah_bookings';
-	$request                = $wpdb->get_row(
+	$rochtah_booking        = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT * FROM $rochtah_bookings_table WHERE id = %d AND patient_id = %d AND status = 'pending'",
 			$request_id,
@@ -7909,7 +7922,7 @@ function snks_book_rochtah_appointment_rest( $request ) {
 		)
 	);
 
-	if ( ! $request ) {
+	if ( ! $rochtah_booking ) {
 		return new WP_Error( 'request_not_found', 'Prescription request not found or already booked', array( 'status' => 404 ) );
 	}
 
@@ -7931,7 +7944,59 @@ function snks_book_rochtah_appointment_rest( $request ) {
 		return new WP_Error( 'slot_unavailable', 'This time slot is no longer available', array( 'status' => 409 ) );
 	}
 
-	// Update the booking with the selected date and time
+	$payment_enabled = get_option( 'snks_rochtah_payment_enabled', '0' ) === '1';
+
+	if ( $payment_enabled && class_exists( 'WooCommerce' ) ) {
+		// Paid flow: create order, store slot in order meta, confirm booking on payment complete
+		$product_id = class_exists( 'SNKS_AI_Products' ) ? SNKS_AI_Products::get_rochtah_product_id() : 0;
+		if ( ! $product_id ) {
+			return new WP_Error( 'rochtah_product_missing', 'Rochtah product not configured. Please contact support.', array( 'status' => 500 ) );
+		}
+		$price = class_exists( 'SNKS_AI_Products' ) ? SNKS_AI_Products::get_rochtah_price() : 0;
+		if ( $price <= 0 ) {
+			return new WP_Error( 'rochtah_price_invalid', 'Rochtah price is not set. Please contact support.', array( 'status' => 500 ) );
+		}
+		$order = wc_create_order();
+		$order->set_customer_id( $user_id );
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			return new WP_Error( 'rochtah_product_invalid', 'Product not found.', array( 'status' => 500 ) );
+		}
+		$order->add_product( $product, 1 );
+		$order->set_total( $price );
+		$order->update_meta_data( 'is_rochtah_order', true );
+		$order->update_meta_data( 'rochtah_booking_id', $request_id );
+		$order->update_meta_data( 'rochtah_booking_date', $selected_date );
+		$order->update_meta_data( 'rochtah_booking_time', $selected_time );
+		$order->set_status( 'pending' );
+		$order->save();
+		$order_id = $order->get_id();
+		$wpdb->update(
+			$rochtah_bookings_table,
+			array(
+				'booking_date' => $selected_date,
+				'booking_time' => $selected_time,
+				'order_id'     => $order_id,
+			),
+			array( 'id' => $request_id ),
+			array( '%s', '%s', '%d' ),
+			array( '%d' )
+		);
+		error_log( 'Rochtah paid order created: ' . $order_id . ' for booking ' . $request_id );
+		return array(
+			'success'         => true,
+			'requires_payment' => true,
+			'data'            => array(
+				'message'      => __( 'Proceed to payment to confirm your appointment.', 'shrinks' ),
+				'checkout_url'  => $order->get_checkout_payment_url(),
+				'booking_id'    => $request_id,
+				'date'          => $selected_date,
+				'time'          => $selected_time,
+			),
+		);
+	}
+
+	// Free flow: confirm booking immediately
 	$result = $wpdb->update(
 		$rochtah_bookings_table,
 		array(
@@ -7945,7 +8010,6 @@ function snks_book_rochtah_appointment_rest( $request ) {
 	);
 
 	if ( $result !== false ) {
-		// Send notification to Rochtah doctors
 		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
 		foreach ( $rochtah_doctors as $doctor ) {
 			snks_create_ai_notification(
@@ -7960,22 +8024,9 @@ function snks_book_rochtah_appointment_rest( $request ) {
 				)
 			);
 		}
-
-		// Send WhatsApp notification to patient
 		if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                
-			}
-			$notification_result = snks_send_rosheta_appointment_notification( $request_id );
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                
-			}
-		} else {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                
-			}
+			snks_send_rosheta_appointment_notification( $request_id );
 		}
-
 		error_log( 'Booking update successful' );
 		return array(
 			'success' => true,
@@ -7986,12 +8037,10 @@ function snks_book_rochtah_appointment_rest( $request ) {
 				'time'       => $selected_time,
 			),
 		);
-	} else {
-		error_log( 'Booking update failed' );
-		return new WP_Error( 'booking_failed', 'Failed to book appointment. Please try again.', array( 'status' => 500 ) );
 	}
 
-	error_log( '=== ROCHTAH BOOKING DEBUG END ===' );
+	error_log( 'Booking update failed' );
+	return new WP_Error( 'booking_failed', 'Failed to book appointment. Please try again.', array( 'status' => 500 ) );
 }
 
 /**

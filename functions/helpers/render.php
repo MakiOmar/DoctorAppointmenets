@@ -1640,10 +1640,21 @@ function snks_render_rochtah_section( $rochtah_requests ) {
 		$output .= '<div class="rochtah-request" style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">';
 		$output .= '<p style="margin: 0 0 8px 0;"><strong>الجلسة:</strong> ' . $session_date . ' - ' . $session_time . '</p>';
 		$output .= '<p style="margin: 0 0 8px 0;"><strong>المعالج:</strong> ' . $therapist_name . '</p>';
-		$output .= '<p style="margin: 0 0 15px 0; color: #666;">تم إرسال طلب روشتا من معالجك. يمكنك الآن حجز استشارة مجانية لمدة 15 دقيقة مع طبيب نفسي لوصف الدواء المناسب.</p>';
-		
+		$rochtah_payment_enabled = get_option( 'snks_rochtah_payment_enabled', '0' ) === '1';
+		$rochtah_price           = get_option( 'snks_rochtah_price', 0 );
+		$rochtah_price           = is_numeric( $rochtah_price ) ? floatval( $rochtah_price ) : 0;
+		$rochtah_currency        = function_exists( 'get_woocommerce_currency' ) ? get_woocommerce_currency() : 'ج.م';
+		if ( $rochtah_payment_enabled && $rochtah_price > 0 ) {
+			$output .= '<p style="margin: 0 0 15px 0; color: #666;">تم إرسال طلب روشتا من معالجك. يمكنك الآن حجز استشارة لمدة 15 دقيقة مع طبيب نفسي لوصف الدواء المناسب.</p>';
+			$output .= '<p style="margin: 0 0 10px 0; font-weight: bold;">السعر: ' . esc_html( $rochtah_price . ' ' . $rochtah_currency ) . '</p>';
+		} else {
+			$output .= '<p style="margin: 0 0 15px 0; color: #666;">تم إرسال طلب روشتا من معالجك. يمكنك الآن حجز استشارة مجانية لمدة 15 دقيقة مع طبيب نفسي لوصف الدواء المناسب.</p>';
+		}
 		if ( $request->status === 'pending' ) {
-			$output .= '<button class="snks-button book-rochtah-btn" data-request-id="' . $request->id . '" style="background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">حجز موعد مجاني</button>';
+			$btn_text = $rochtah_payment_enabled && $rochtah_price > 0
+				? 'حجز الموعد - ' . $rochtah_price . ' ' . $rochtah_currency
+				: 'حجز موعد مجاني';
+			$output .= '<button class="snks-button book-rochtah-btn" data-request-id="' . esc_attr( $request->id ) . '" style="background: #007cba; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">' . esc_html( $btn_text ) . '</button>';
 		} elseif ( $request->status === 'confirmed' ) {
 			$output .= '<p style="margin: 0; color: #28a745;"><strong>تم حجز الموعد بنجاح!</strong></p>';
 		}

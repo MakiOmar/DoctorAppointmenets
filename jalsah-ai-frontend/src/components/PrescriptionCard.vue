@@ -49,13 +49,14 @@
               </span>
             </div>
             
-            <div class="flex space-x-2">
+            <div class="flex items-center space-x-2">
+              <span v-if="request.status === 'pending' && rochtahPaymentEnabled && Number(rochtahPrice) > 0" class="text-sm text-gray-700">{{ Number(rochtahPrice) }} {{ rochtahCurrency }}</span>
               <button 
                 v-if="request.status === 'pending'"
                 @click="$emit('book-appointment', request.id)"
                 class="btn-primary text-sm px-4 py-2"
               >
-                {{ t('prescription.bookFreeAppointment') || 'Book Free Appointment' }}
+                {{ rochtahPaymentEnabled && Number(rochtahPrice) > 0 ? (t('prescription.proceedToPayment') || 'Proceed to Payment') : (t('prescription.bookFreeAppointment') || 'Book Free Appointment') }}
               </button>
               <button 
                 v-if="request.status === 'confirmed'"
@@ -179,6 +180,18 @@ export default {
     completedPrescriptions: {
       type: Array,
       default: () => []
+    },
+    rochtahPaymentEnabled: {
+      type: Boolean,
+      default: false
+    },
+    rochtahPrice: {
+      type: [Number, String],
+      default: 0
+    },
+    rochtahCurrency: {
+      type: String,
+      default: 'EGP'
     }
   },
   emits: ['book-appointment', 'view-appointment', 'join-meeting', 'view-prescription'],

@@ -3098,7 +3098,10 @@ function snks_enhanced_ai_rochtah_page() {
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_rochtah_settings' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_rochtah_settings' ) ) {
 			update_option( 'snks_ai_rochtah_enabled', isset( $_POST['enabled'] ) ? '1' : '0' );
-			update_option( 'snks_ai_rochtah_available_days', serialize( $_POST['available_days'] ) );
+			update_option( 'snks_ai_rochtah_available_days', serialize( isset( $_POST['available_days'] ) ? (array) $_POST['available_days'] : array() ) );
+			update_option( 'snks_rochtah_payment_enabled', isset( $_POST['rochtah_payment_enabled'] ) ? '1' : '0' );
+			$rochtah_price = isset( $_POST['rochtah_price'] ) ? floatval( $_POST['rochtah_price'] ) : 0;
+			update_option( 'snks_rochtah_price', $rochtah_price );
 			
 			echo '<div class="notice notice-success"><p>Rochtah settings updated successfully!</p></div>';
 		}
@@ -3197,6 +3200,9 @@ function snks_enhanced_ai_rochtah_page() {
 	
 	$enabled = get_option( 'snks_ai_rochtah_enabled', '0' );
 	$available_days = unserialize( get_option( 'snks_ai_rochtah_available_days', serialize( array() ) ) );
+	$rochtah_payment_enabled = get_option( 'snks_rochtah_payment_enabled', '0' );
+	$rochtah_price = get_option( 'snks_rochtah_price', 0 );
+	$rochtah_price = is_numeric( $rochtah_price ) ? floatval( $rochtah_price ) : 0;
 	
 	$days = array(
 		'monday' => 'Monday',
@@ -3247,6 +3253,14 @@ function snks_enhanced_ai_rochtah_page() {
 						<th><label for="enabled">Enable Rochtah</label></th>
 						<td><input type="checkbox" id="enabled" name="enabled" value="1" <?php checked( $enabled, '1' ); ?>></td>
 					</tr>
+					<tr>
+						<th><label for="rochtah_payment_enabled">Enable payment for Rochtah service</label></th>
+						<td><input type="checkbox" id="rochtah_payment_enabled" name="rochtah_payment_enabled" value="1" <?php checked( $rochtah_payment_enabled, '1' ); ?>></td>
+					</tr>
+					<tr class="rochtah-price-row" style="<?php echo $rochtah_payment_enabled === '1' ? '' : 'display:none;'; ?>">
+						<th><label for="rochtah_price">Rochtah consultation price (EGP)</label></th>
+						<td><input type="number" id="rochtah_price" name="rochtah_price" value="<?php echo esc_attr( $rochtah_price ); ?>" min="0" step="0.01" class="small-text"></td>
+					</tr>
 				</table>
 				
 				<h3>Available Days</h3>
@@ -3260,6 +3274,15 @@ function snks_enhanced_ai_rochtah_page() {
 				
 				<?php submit_button( 'Save Settings' ); ?>
 			</form>
+			<script>
+			(function() {
+				var cb = document.getElementById('rochtah_payment_enabled');
+				var row = document.querySelector('.rochtah-price-row');
+				if (cb && row) {
+					cb.addEventListener('change', function() { row.style.display = this.checked ? '' : 'none'; });
+				}
+			})();
+			</script>
 		</div>
 		
 		<div class="card">

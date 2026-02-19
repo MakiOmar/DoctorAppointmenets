@@ -286,6 +286,9 @@
         <PrescriptionCard 
           :prescription-requests="prescriptionRequests"
           :completed-prescriptions="completedPrescriptions"
+          :rochtah-payment-enabled="rochtahPaymentEnabled"
+          :rochtah-price="rochtahPrice"
+          :rochtah-currency="rochtahCurrency"
           @book-appointment="showRochtahBookingModal"
           @view-appointment="viewRochtahAppointment"
           @join-meeting="joinRochtahMeeting"
@@ -377,7 +380,7 @@
       <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div class="mb-4">
           <div class="flex justify-between items-center">
-            <h3 class="text-lg text-gray-900">{{ $t('prescription.bookFreeAppointment') }}</h3>
+            <h3 class="text-lg text-gray-900">{{ rochtahPaymentEnabled && rochtahPrice > 0 ? ($t('prescription.bookAppointment') || 'Book appointment') : $t('prescription.bookFreeAppointment') }}</h3>
             <button @click="closeRochtahModal" class="text-gray-400 hover:text-gray-600">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -385,6 +388,7 @@
             </button>
           </div>
           <p class="text-sm text-gray-600 mt-2">(جميع المواعيد بتوقيت مصر)</p>
+          <p v-if="rochtahPaymentEnabled && rochtahPrice > 0" class="text-sm font-medium text-gray-700 mt-1">{{ rochtahPrice }} {{ rochtahCurrency }}</p>
         </div>
 
         <!-- Loading State -->
@@ -445,7 +449,7 @@
               </svg>
               {{ $t('appointmentsPage.booking') }}
             </span>
-            <span v-else>{{ $t('prescription.bookAppointment') }}</span>
+            <span v-else>{{ rochtahPaymentEnabled && rochtahPrice > 0 ? ($t('prescription.proceedToPayment') || 'Proceed to Payment') : $t('prescription.bookAppointment') }}</span>
           </button>
         </div>
       </div>
@@ -826,6 +830,9 @@ export default {
     const availableSlots = ref([])
     const selectedSlot = ref(null)
     const currentRequestId = ref(null)
+    const rochtahPaymentEnabled = ref(false)
+    const rochtahPrice = ref(0)
+    const rochtahCurrency = ref('EGP')
     
     // Booking modal state
     const showBookingModal = ref(false)
@@ -1764,7 +1771,7 @@ export default {
       }
     }, { immediate: true })
 
-    // Load prescription requests
+    // Load prescription requests and payment settings for Rochtah
     const loadPrescriptionRequests = async () => {
       try {
         const response = await api.get('/wp-json/jalsah-ai/v1/prescription-requests', {
@@ -1774,8 +1781,24 @@ export default {
           }
         })
         prescriptionRequests.value = response.data.data || []
+        if (prescriptionRequests.value.length > 0) {
+          try {
+            const slotsRes = await api.get('/wp-json/jalsah-ai/v1/rochtah-available-slots', {
+              params: { request_id: prescriptionRequests.value[0].id }
+            })
+            if (slotsRes.data.success) {
+              rochtahPaymentEnabled.value = !!slotsRes.data.payment_enabled
+              rochtahPrice.value = parseFloat(slotsRes.data.price) || 0
+              rochtahCurrency.value = slotsRes.data.currency || 'EGP'
+            }
+          } catch (_) {
+            // Ignore; payment refs stay default
+          }
+        } else {
+          rochtahPaymentEnabled.value = false
+          rochtahPrice.value = 0
+        }
       } catch (error) {
-        // Don't log aborted requests (they're cancelled intentionally)
         if (error.code !== 'ECONNABORTED') {
           console.error('Error loading prescription requests:', error)
         }
@@ -1819,12 +1842,9 @@ export default {
             const dateB = new Date(`${b.date} ${b.time}`)
             return dateA - dateB
           })
-          
-          // Debug: Log sorted slots
-          console.log('[Rochtah Frontend] Total slots after sort:', availableSlots.value.length)
-          availableSlots.value.slice(0, 5).forEach((slot, index) => {
-            console.log(`[Rochtah Frontend] Slot ${index}:`, slot.date, slot.time)
-          })
+          rochtahPaymentEnabled.value = !!response.data.payment_enabled
+          rochtahPrice.value = parseFloat(response.data.price) || 0
+          rochtahCurrency.value = response.data.currency || 'EGP'
         } else {
           toast.error(response.data.message || 'Failed to load available slots')
         }
@@ -1842,6 +1862,8 @@ export default {
       selectedSlot.value = null
       availableSlots.value = []
       currentRequestId.value = null
+      rochtahPaymentEnabled.value = false
+      rochtahPrice.value = 0
     }
 
     // Select a time slot
@@ -1878,16 +1900,14 @@ export default {
         })
         
         if (response.data.success) {
-          toast.success(response.data.data.message || 'Appointment booked successfully')
-          
-          // Close modals
+          if (response.data.requires_payment && response.data.data?.checkout_url) {
+            window.location.href = response.data.data.checkout_url
+            return
+          }
+          toast.success(response.data.data?.message || 'Appointment booked successfully')
           showBookingConfirmModal.value = false
           closeRochtahModal()
-          
-          // Reload prescription requests
           await loadPrescriptionRequests()
-          
-          // Reload appointments to show the new Rochtah appointment
           await loadAppointments()
         } else {
           toast.error(response.data.message || 'Failed to book appointment')
@@ -2266,7 +2286,10 @@ export default {
       selectedPrescription,
       bookRochtahAppointment,
       confirmRochtahBooking,
-      viewRochtahAppointment
+      viewRochtahAppointment,
+      rochtahPaymentEnabled,
+      rochtahPrice,
+      rochtahCurrency
     }
   }
 }

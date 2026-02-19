@@ -10,6 +10,49 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Get whether Rochtah service is enabled (canonical: snks_ai_rochtah_enabled, fallback: snks_rochtah_enabled).
+ *
+ * @return bool
+ */
+function snks_rochtah_is_enabled() {
+	$v = get_option( 'snks_ai_rochtah_enabled', null );
+	if ( $v === null || $v === '' ) {
+		$v = get_option( 'snks_rochtah_enabled', '0' );
+	}
+	return $v === '1' || $v === true;
+}
+
+/**
+ * Get Rochtah available days (canonical: snks_ai_rochtah_available_days, fallback: snks_rochtah_available_days).
+ *
+ * @return array
+ */
+function snks_rochtah_get_available_days() {
+	$v = get_option( 'snks_ai_rochtah_available_days', null );
+	if ( $v !== null && $v !== '' ) {
+		$days = is_string( $v ) ? @unserialize( $v ) : $v;
+		if ( is_array( $days ) && ! empty( $days ) ) {
+			return snks_rochtah_normalize_day_names( $days );
+		}
+	}
+	$v = get_option( 'snks_rochtah_available_days', array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ) );
+	$days = is_array( $v ) ? $v : ( is_string( $v ) ? (array) @unserialize( $v ) : array() );
+	return snks_rochtah_normalize_day_names( $days );
+}
+
+/**
+ * Normalize day names to match date('l') output (e.g. Monday).
+ *
+ * @param array $days Day names (may be lowercase from form).
+ * @return array
+ */
+function snks_rochtah_normalize_day_names( $days ) {
+	return array_map( function( $d ) {
+		return is_string( $d ) ? ucfirst( strtolower( $d ) ) : $d;
+	}, $days );
+}
+
+/**
  * Add prescription button to AI session bookings
  */
 function snks_add_ai_prescription_button( $session_id, $session_data ) {
@@ -189,9 +232,11 @@ add_action( 'wp_ajax_ai_prescription_request', 'snks_handle_ai_prescription_requ
 function snks_get_next_rochtah_slot() {
 	global $wpdb;
 	
-	// Get Rochtah available days
-	$available_days = get_option( 'snks_rochtah_available_days', array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ) );
-	
+	// Get Rochtah available days (canonical option with fallback)
+	$available_days = snks_rochtah_get_available_days();
+	if ( empty( $available_days ) ) {
+		$available_days = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' );
+	}
 	// Start from tomorrow
 	$current_date = current_time( 'Y-m-d' );
 	$next_date = date( 'Y-m-d', strtotime( '+1 day', strtotime( $current_date ) ) );
@@ -525,7 +570,10 @@ function snks_get_rochtah_available_slots_for_patient() {
 	global $wpdb;
 	
 	// Get Rochtah available days
-	$available_days = get_option( 'snks_rochtah_available_days', array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ) );
+	$available_days = snks_rochtah_get_available_days();
+	if ( empty( $available_days ) ) {
+		$available_days = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' );
+	}
 	
 	$available_slots = array();
 	$slot_count = 0;
