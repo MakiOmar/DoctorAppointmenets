@@ -91,6 +91,15 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
+		__( 'AI Patients', 'shrinks' ),
+		__( 'AI Patients', 'shrinks' ),
+		'manage_options',
+		'jalsah-ai-patients',
+		'snks_jalsah_ai_patients_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
 		'Sessions & Attendance',
 		'Sessions & Attendance',
 		'manage_options',
@@ -3908,6 +3917,152 @@ function snks_enhanced_ai_email_page() {
 				
 				<?php submit_button( 'Save Settings' ); ?>
 			</form>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * AI Patients Page – create Jalsah AI patient from dashboard or mark existing user as AI patient.
+ */
+function snks_jalsah_ai_patients_page() {
+	snks_load_ai_admin_styles();
+
+	$notice = null;
+	$notice_type = 'success';
+
+	// Handle form submission
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'add_ai_patient' ) {
+		if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'add_ai_patient' ) ) {
+			$notice = __( 'Security check failed. Please try again.', 'shrinks' );
+			$notice_type = 'error';
+		} else {
+			$email     = isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '';
+			$first     = isset( $_POST['first_name'] ) ? sanitize_text_field( $_POST['first_name'] ) : '';
+			$last      = isset( $_POST['last_name'] ) ? sanitize_text_field( $_POST['last_name'] ) : '';
+			$phone     = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
+
+			if ( ! is_email( $email ) ) {
+				$notice = __( 'Please enter a valid email address.', 'shrinks' );
+				$notice_type = 'error';
+			} else {
+				$existing = get_user_by( 'email', $email );
+				if ( $existing ) {
+					// Mark existing user as AI patient
+					update_user_meta( $existing->ID, 'registered_from_jalsah_ai', '1' );
+					update_user_meta( $existing->ID, 'registration_source', 'jalsah_ai' );
+					update_user_meta( $existing->ID, 'ai_registration_date', current_time( 'mysql' ) );
+					update_user_meta( $existing->ID, 'ai_cart', wp_json_encode( array() ) );
+					if ( $first !== '' ) {
+						update_user_meta( $existing->ID, 'billing_first_name', $first );
+						update_user_meta( $existing->ID, 'first_name', $first );
+					}
+					if ( $last !== '' ) {
+						update_user_meta( $existing->ID, 'billing_last_name', $last );
+						update_user_meta( $existing->ID, 'last_name', $last );
+					}
+					if ( $phone !== '' ) {
+						update_user_meta( $existing->ID, 'billing_phone', $phone );
+						update_user_meta( $existing->ID, 'whatsapp', $phone );
+						update_user_meta( $existing->ID, 'billing_whatsapp', $phone );
+					}
+					$display = trim( $first . ' ' . $last ) ?: $existing->display_name;
+					if ( $display !== $existing->display_name ) {
+						wp_update_user( array( 'ID' => $existing->ID, 'display_name' => $display ) );
+					}
+					$notice = sprintf(
+						/* translators: %s: user display name or email */
+						__( 'User %s marked as Jalsah AI patient.', 'shrinks' ),
+						esc_html( $existing->display_name ?: $email )
+					);
+				} else {
+					// Create new user
+					$base_username = sanitize_user( substr( $email, 0, strpos( $email, '@' ) ), true );
+					$base_username = $base_username ? $base_username : 'ai_patient';
+					$username = $base_username;
+					$suffix = 0;
+					while ( username_exists( $username ) ) {
+						$suffix++;
+						$username = $base_username . '_' . $suffix;
+					}
+					$password = wp_generate_password( 12, true );
+					$user_id  = wp_create_user( $username, $password, $email );
+					if ( is_wp_error( $user_id ) ) {
+						$notice = $user_id->get_error_message();
+						$notice_type = 'error';
+					} else {
+						$user = get_user_by( 'ID', $user_id );
+						$user->set_role( 'customer' );
+						update_user_meta( $user_id, 'registered_from_jalsah_ai', '1' );
+						update_user_meta( $user_id, 'registration_source', 'jalsah_ai' );
+						update_user_meta( $user_id, 'ai_registration_date', current_time( 'mysql' ) );
+						update_user_meta( $user_id, 'ai_cart', wp_json_encode( array() ) );
+						update_user_meta( $user_id, 'billing_email', $email );
+						if ( $first !== '' ) {
+							update_user_meta( $user_id, 'billing_first_name', $first );
+							update_user_meta( $user_id, 'first_name', $first );
+						}
+						if ( $last !== '' ) {
+							update_user_meta( $user_id, 'billing_last_name', $last );
+							update_user_meta( $user_id, 'last_name', $last );
+						}
+						if ( $phone !== '' ) {
+							update_user_meta( $user_id, 'billing_phone', $phone );
+							update_user_meta( $user_id, 'whatsapp', $phone );
+							update_user_meta( $user_id, 'billing_whatsapp', $phone );
+						}
+						$display_name = trim( $first . ' ' . $last ) ?: $email;
+						wp_update_user( array( 'ID' => $user_id, 'display_name' => $display_name ) );
+						$notice = sprintf(
+							/* translators: %s: new user display name or email */
+							__( 'Jalsah AI patient created: %s', 'shrinks' ),
+							esc_html( $display_name )
+						);
+					}
+				}
+			}
+		}
+	}
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'AI Patients', 'shrinks' ); ?></h1>
+		<?php if ( $notice ) : ?>
+			<div class="notice notice-<?php echo esc_attr( $notice_type ); ?> is-dismissible"><p><?php echo esc_html( $notice ); ?></p></div>
+		<?php endif; ?>
+
+		<div class="card">
+			<h2><?php esc_html_e( 'Add Jalsah AI patient', 'shrinks' ); ?></h2>
+			<form method="post">
+				<?php wp_nonce_field( 'add_ai_patient' ); ?>
+				<input type="hidden" name="action" value="add_ai_patient">
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="email"><?php esc_html_e( 'Email', 'shrinks' ); ?> <span class="required">*</span></label></th>
+						<td><input type="email" id="email" name="email" value="<?php echo esc_attr( isset( $_POST['email'] ) ? sanitize_email( $_POST['email'] ) : '' ); ?>" class="regular-text" required></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="first_name"><?php esc_html_e( 'First name', 'shrinks' ); ?></label></th>
+						<td><input type="text" id="first_name" name="first_name" value="<?php echo esc_attr( isset( $_POST['first_name'] ) ? sanitize_text_field( $_POST['first_name'] ) : '' ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="last_name"><?php esc_html_e( 'Last name', 'shrinks' ); ?></label></th>
+						<td><input type="text" id="last_name" name="last_name" value="<?php echo esc_attr( isset( $_POST['last_name'] ) ? sanitize_text_field( $_POST['last_name'] ) : '' ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="phone"><?php esc_html_e( 'Phone / WhatsApp', 'shrinks' ); ?></label></th>
+						<td><input type="text" id="phone" name="phone" value="<?php echo esc_attr( isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '' ); ?>" class="regular-text"></td>
+					</tr>
+				</table>
+				<p class="description"><?php esc_html_e( 'If a user with this email already exists, they will be marked as an AI patient. Otherwise a new customer account will be created.', 'shrinks' ); ?></p>
+				<?php submit_button( __( 'Add patient', 'shrinks' ) ); ?>
+			</form>
+		</div>
+
+		<div class="card">
+			<h2><?php esc_html_e( 'Quick actions', 'shrinks' ); ?></h2>
+			<p>
+				<a href="<?php echo esc_url( admin_url( 'users.php?meta_key=registration_source&meta_value=jalsah_ai' ) ); ?>" class="button"><?php esc_html_e( 'View AI Users', 'shrinks' ); ?></a>
+			</p>
 		</div>
 	</div>
 	<?php
