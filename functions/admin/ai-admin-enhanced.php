@@ -3948,11 +3948,12 @@ function snks_jalsah_ai_patients_page() {
 			} else {
 				$existing = get_user_by( 'email', $email );
 				if ( $existing ) {
-					// Mark existing user as AI patient
+					// Mark existing user as AI patient. Pre-verify so they can log in without WhatsApp OTP.
 					update_user_meta( $existing->ID, 'registered_from_jalsah_ai', '1' );
 					update_user_meta( $existing->ID, 'registration_source', 'jalsah_ai' );
 					update_user_meta( $existing->ID, 'ai_registration_date', current_time( 'mysql' ) );
 					update_user_meta( $existing->ID, 'ai_cart', wp_json_encode( array() ) );
+					update_user_meta( $existing->ID, 'ai_email_verified', '1' );
 					if ( $first !== '' ) {
 						update_user_meta( $existing->ID, 'billing_first_name', $first );
 						update_user_meta( $existing->ID, 'first_name', $first );
@@ -3997,6 +3998,7 @@ function snks_jalsah_ai_patients_page() {
 						update_user_meta( $user_id, 'registration_source', 'jalsah_ai' );
 						update_user_meta( $user_id, 'ai_registration_date', current_time( 'mysql' ) );
 						update_user_meta( $user_id, 'ai_cart', wp_json_encode( array() ) );
+						update_user_meta( $user_id, 'ai_email_verified', '1' ); // Pre-verified; no WhatsApp OTP required.
 						update_user_meta( $user_id, 'billing_email', $email );
 						if ( $first !== '' ) {
 							update_user_meta( $user_id, 'billing_first_name', $first );
@@ -4053,7 +4055,7 @@ function snks_jalsah_ai_patients_page() {
 						<td><input type="text" id="phone" name="phone" value="<?php echo esc_attr( isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '' ); ?>" class="regular-text"></td>
 					</tr>
 				</table>
-				<p class="description"><?php esc_html_e( 'If a user with this email already exists, they will be marked as an AI patient. Otherwise a new customer account will be created.', 'shrinks' ); ?></p>
+				<p class="description"><?php esc_html_e( 'If a user with this email already exists, they will be marked as an AI patient. Otherwise a new customer account will be created. Dashboard-created patients are pre-verified and can log in without WhatsApp OTP.', 'shrinks' ); ?></p>
 				<?php submit_button( __( 'Add patient', 'shrinks' ) ); ?>
 			</form>
 		</div>
