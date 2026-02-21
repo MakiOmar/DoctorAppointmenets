@@ -351,7 +351,9 @@ class SNKS_AI_Orders {
 			);
 		}
 		
-		$subject = 'تأكيد حجز الجلسة - منصة جلسة AI';
+		$subject           = 'تأكيد حجز الجلسة - منصة جلسة AI';
+		$order_total_plain = self::format_price_plain( (float) $order->get_total() );
+		$mail_headers      = array( 'Content-Type: text/html; charset=UTF-8' );
 		$message = sprintf(
 			'مرحباً %s،
 
@@ -366,10 +368,10 @@ class SNKS_AI_Orders {
 فريق منصة جلسة AI',
 			$customer_name,
 			$order_id,
-			$order->get_formatted_order_total()
+			$order_total_plain
 		);
 		
-		wp_mail( $customer_email, $subject, $message );
+		wp_mail( $customer_email, $subject, self::wrap_rtl_email_html( $message ), $mail_headers );
 		
 		// Send notification to admin
 		$admin_email = get_option( 'admin_email' );
@@ -397,11 +399,11 @@ IP: %s
 			$patient_username ? $patient_username : '-',
 			$customer_email,
 			$order->get_meta( 'ai_appointments_count' ),
-			$order->get_formatted_order_total(),
+			$order_total_plain,
 			! empty( $appointments_lines ) ? implode( "\n", $appointments_lines ) : '-'
 		);
 		
-		wp_mail( $admin_email, $admin_subject, $admin_message );
+		wp_mail( $admin_email, $admin_subject, self::wrap_rtl_email_html( $admin_message ), $mail_headers );
 	}
 
 	/**
@@ -574,5 +576,17 @@ IP: %s
 		$formatted = wp_strip_all_tags( (string) $formatted );
 
 		return html_entity_decode( $formatted, ENT_QUOTES, 'UTF-8' );
+	}
+
+	/**
+	 * Wrap plain text email in an RTL-friendly HTML template.
+	 *
+	 * @param string $message Plain text email body.
+	 * @return string
+	 */
+	private static function wrap_rtl_email_html( $message ) {
+		$body = nl2br( esc_html( (string) $message ) );
+
+		return '<!DOCTYPE html><html lang="ar" dir="rtl"><body style="margin:0;padding:16px;background:#ffffff;color:#111827;font-family:Tahoma,Arial,sans-serif;line-height:1.8;direction:rtl;text-align:right;"><div dir="rtl" style="direction:rtl;text-align:right;word-break:break-word;">' . $body . '</div></body></html>';
 	}
 }
