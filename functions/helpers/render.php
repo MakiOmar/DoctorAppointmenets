@@ -1478,6 +1478,10 @@ function snks_render_bookings( $_timetables, $tens ) {
 									?>
 								</div>
 								<?php } ?>
+								<!-- Policy notice: no direct therapist–client contact; use customer service only -->
+								<p class="snks-booking-policy-hint" style="margin: 10px 0 0; padding: 8px 10px; background: #fff8e6; border-right: 4px solid #024059; border-radius: 4px; font-size: 13px; color: #333; direction: rtl; text-align: right;">
+									<?php esc_html_e( 'تنويه: في حالة طلب العميل الرقم الشخصي للمعالج يجب ابلاغه ان ذلك ضد قوانين الموقع وان ادارة الموقع تمنع التواصل المباشر بين المعالج والعميل، ويجب التواصل فقط من خلال خدمة العملاء.', 'shrinks' ); ?>
+								</p>
 							</div>
 						<?php endforeach; ?>
 					</div>
@@ -1885,7 +1889,12 @@ function snks_render_sessions_listing( $tense ) {
 					$output .= '</div>';
 				}
 			}
-			
+
+			// Policy notice: no direct therapist–client contact; use customer service only.
+			$output .= '<p class="snks-booking-policy-hint" style="margin: 10px 0 0; padding: 8px 10px; background: #fff8e6; border-right: 4px solid #024059; border-radius: 4px; font-size: 13px; color: #333; direction: rtl; text-align: right;">';
+			$output .= esc_html__( 'تنويه: في حالة طلب العميل الرقم الشخصي للمعالج يجب ابلاغه ان ذلك ضد قوانين الموقع وان ادارة الموقع تمنع التواصل المباشر بين المعالج والعميل، ويجب التواصل فقط من خلال خدمة العملاء.', 'shrinks' );
+			$output .= '</p>';
+
 			$output .= '</div>';
 
 		}
