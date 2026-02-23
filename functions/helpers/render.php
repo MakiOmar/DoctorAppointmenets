@@ -1537,7 +1537,7 @@ function snks_generate_the_bookings( $past, $current_timetables ) {
 	<?php if( snks_is_patient() ) { ?>
 		<div class="anony-center-text">
 			<p>هل لديك مشاكل تقنية؟ اضغط هنا</p>
-			<a href="https://wa.me/201127145676" traget="_blank" title="خدمة عملاء جلسة" style="text-align: center;display: flex;"><img style="max-width: 150px;" src="http://localhost/shrinks/wp-content/uploads/2025/04/IMG_2418.png" alt="خدمة عملاء جلسة"></a>
+			<a href="https://wa.me/201127145676" traget="_blank" title="خدمة عملاء جلسة" style="text-align: center;display: flex;"><img style="max-width: 150px;" src="https://jalsah.app/wp-content/uploads/2025/04/IMG_2418.png" alt="خدمة عملاء جلسة"></a>
 		</div>
 	<?php
 	}
