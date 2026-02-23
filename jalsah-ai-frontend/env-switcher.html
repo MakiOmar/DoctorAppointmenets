@@ -130,7 +130,7 @@
 
         <div class="env-card" onclick="switchToLocal()">
             <div class="env-title">🏠 Local Development</div>
-            <div class="env-url">https://jalsah.app</div>
+            <div class="env-url">http://localhost/shrinks</div>
             <div class="env-description">
                 Connect to your local WordPress installation for development and testing.
                 Use this when working on local features or debugging.
@@ -139,7 +139,7 @@
 
         <div class="env-card" onclick="switchToStaging()">
             <div class="env-title">🚀 Staging Server</div>
-            <div class="env-url">https://jalsah.app</div>
+            <div class="env-url">http://localhost/shrinks</div>
             <div class="env-description">
                 Connect to the staging server for testing with real data and production-like environment.
                 Use this for integration testing and staging deployments.
@@ -175,25 +175,25 @@
             // Check if we can detect the current environment
             fetch('/api/ai/auth', { method: 'OPTIONS' })
                 .then(() => {
-                    status.innerHTML = '🔍 Current: Staging Server (https://jalsah.app)';
+                    status.innerHTML = '🔍 Current: Staging Server (http://localhost/shrinks)';
                     status.className = 'status current';
                 })
                 .catch(() => {
-                    status.innerHTML = '🔍 Current: Local Development (https://jalsah.app)';
+                    status.innerHTML = '🔍 Current: Local Development (http://localhost/shrinks)';
                     status.className = 'status current';
                 });
         }
 
         function switchToLocal() {
-            if (confirm('Switch to Local Development environment?\n\nThis will:\n• Change API target to https://jalsah.app\n• Require server restart\n• Require cache clearing')) {
-                updateViteConfig('https://jalsah.app');
+            if (confirm('Switch to Local Development environment?\n\nThis will:\n• Change API target to http://localhost/shrinks\n• Require server restart\n• Require cache clearing')) {
+                updateViteConfig('http://localhost/shrinks');
                 showInstructions('local');
             }
         }
 
         function switchToStaging() {
-            if (confirm('Switch to Staging Server environment?\n\nThis will:\n• Change API target to https://jalsah.app\n• Require server restart\n• Require cache clearing')) {
-                updateViteConfig('https://jalsah.app');
+            if (confirm('Switch to Staging Server environment?\n\nThis will:\n• Change API target to http://localhost/shrinks\n• Require server restart\n• Require cache clearing')) {
+                updateViteConfig('http://localhost/shrinks');
                 showInstructions('staging');
             }
         }
@@ -205,16 +205,16 @@
             
             const status = document.getElementById('currentStatus');
             if (target.includes('localhost')) {
-                status.innerHTML = '✅ Switched to: Local Development (https://jalsah.app)';
+                status.innerHTML = '✅ Switched to: Local Development (http://localhost/shrinks)';
             } else {
-                status.innerHTML = '✅ Switched to: Staging Server (https://jalsah.app)';
+                status.innerHTML = '✅ Switched to: Staging Server (http://localhost/shrinks)';
             }
             status.className = 'status current';
         }
 
         function showInstructions(environment) {
             const envName = environment === 'local' ? 'Local Development' : 'Staging Server';
-            const envUrl = environment === 'local' ? 'https://jalsah.app' : 'https://jalsah.app';
+            const envUrl = environment === 'local' ? 'http://localhost/shrinks' : 'http://localhost/shrinks';
             
             alert(`✅ Environment switched to ${envName}!\n\n📋 Next steps:\n\n1. Stop the development server (Ctrl+C)\n2. Restart with: npm run dev\n3. Clear browser cache\n4. Test login to verify environment\n\n🎯 Expected console output:\nProxy target: ${envUrl}`);
         }
@@ -238,8 +238,8 @@
         }
 
         function resetToDefault() {
-            if (confirm('Reset to default Local Development environment?\n\nThis will:\n• Change API target back to https://jalsah.app\n• Require server restart\n• Require cache clearing')) {
-                updateViteConfig('https://jalsah.app');
+            if (confirm('Reset to default Local Development environment?\n\nThis will:\n• Change API target back to http://localhost/shrinks\n• Require server restart\n• Require cache clearing')) {
+                updateViteConfig('http://localhost/shrinks');
                 showInstructions('local');
             }
         }

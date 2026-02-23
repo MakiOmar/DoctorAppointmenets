@@ -13,8 +13,8 @@
         <div class="text-lg">{{ formatTimeSlot(nearestSlot.time) }} {{ $t('dateTime.egyptTime') }}</div>
       </div>
 
-      <!-- Booking Button or Status -->
-      <div v-if="!nearestSlot.inCart" class="flex justify-center">
+      <!-- Booking Button or Status (hidden in view-only mode) -->
+      <div v-if="!viewOnly && !nearestSlot.inCart" class="flex justify-center">
         <button
           @click="addNearestToCart"
           :disabled="cartLoading[nearestSlot.id]"
@@ -28,7 +28,12 @@
         </button>
       </div>
 
-      <!-- Added to Cart Status -->
+      <!-- View-only: Login to book message -->
+      <div v-else-if="viewOnly" class="flex justify-center">
+        <p class="text-white/90 text-[18px] font-jalsah2">{{ $t('browseTherapists.loginToBook') }}</p>
+      </div>
+
+      <!-- Added to Cart Status (authenticated users only) -->
       <div v-else class="bg-secondary-500 rounded-lg px-4 py-1 flex items-center justify-between w-[300px] mx-auto">
         <span class="text-primary-500 text-[20px] font-jalsah1 leading-tight">{{ formatTimeSlot(nearestSlot.time) }}</span>
         <div class="flex items-center gap-2">
@@ -131,8 +136,15 @@
           :key="slot.id || slot.value"
           class="w-full"
         >
+          <!-- View-only: show slot as read-only -->
+          <div
+            v-if="viewOnly"
+            class="w-full px-4 py-3 rounded-lg text-sm bg-white/80 text-primary-500 font-jalsah2"
+          >
+            {{ formatTimeSlot(slot.time) }}
+          </div>
           <button
-            v-if="!slot.inCart"
+            v-else-if="!slot.inCart"
             @click="addToCart(slot)"
             :disabled="cartLoading[slot.id]"
             class="w-full px-4 py-3 rounded-lg text-sm transition-colors bg-white text-primary-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -203,6 +215,11 @@ export default {
     therapist: {
       type: Object,
       required: true
+    },
+    /** When true, shows available slots without add-to-cart or submit actions (for visitors) */
+    viewOnly: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props) {

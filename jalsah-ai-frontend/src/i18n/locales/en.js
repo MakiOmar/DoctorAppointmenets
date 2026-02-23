@@ -582,6 +582,17 @@ export default {
     noResultsMessage: 'Try adjusting your search criteria or browse all therapists'
   },
 
+  // Browse Therapists (visitors page)
+  browseTherapists: {
+    title: 'Browse Therapists',
+    subtitle: 'View available therapists within your budget',
+    loginToBook: 'Login to book an appointment',
+    viewAvailability: 'View availability',
+    priceRequired: 'Please provide a price in the URL (e.g. ?price=200)',
+    noResults: 'No therapists found within this price range',
+    loading: 'Loading therapists...'
+  },
+
   // Date and Time
   dateTime: {
     am: 'AM',

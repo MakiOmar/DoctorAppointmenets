@@ -39,6 +39,12 @@ const routes = [
     component: () => import('@/views/Therapists.vue')
   },
   {
+    path: '/browse-therapists',
+    name: 'BrowseTherapists',
+    component: () => import('@/views/BrowseTherapists.vue'),
+    meta: { guest: false }
+  },
+  {
     path: '/therapist/:id',
     name: 'TherapistDetail',
     component: () => import('@/views/TherapistDetail.vue'),

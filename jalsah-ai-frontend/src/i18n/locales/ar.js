@@ -586,6 +586,17 @@ export default {
     noResultsMessage: 'جرب تعديل معايير البحث أو تصفح جميع المعالجين'
   },
 
+  // Browse Therapists (visitors page)
+  browseTherapists: {
+    title: 'تصفح المعالجين',
+    subtitle: 'عرض المعالجين المتاحين ضمن ميزانيتك',
+    loginToBook: 'سجّل الدخول لحجز موعد',
+    viewAvailability: 'عرض المواعيد المتاحة',
+    priceRequired: 'يرجى إضافة السعر في الرابط (مثال: ?price=200)',
+    noResults: 'لم يتم العثور على معالجين ضمن نطاق السعر هذا',
+    loading: 'جاري تحميل المعالجين...'
+  },
+
   // Therapist Detail
   therapistDetail: {
     backToTherapists: 'العودة للمعالجين',

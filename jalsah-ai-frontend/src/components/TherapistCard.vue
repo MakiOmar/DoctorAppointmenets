@@ -65,9 +65,9 @@
 
     <!-- Action Buttons Section -->
     <div class="bg-white relative">
-      <!-- About Therapist Button (only on therapists page, after price section) -->
+      <!-- About Therapist Button (therapists page and browse page) -->
       <button
-        v-if="cardVariant === 'therapists-page'"
+        v-if="cardVariant === 'therapists-page' || cardVariant === 'browse'"
         @click.stop="handleOpenAbout"
         class="w-full flex-row flex items-center justify-center gap-2 bg-secondary-500 text-primary-500 px-2 py-1 text-[18px] hover:bg-secondary-400 transition-colors font-jalsah1"
         style="line-height: 1.8rem;"
@@ -145,7 +145,7 @@
           {{ $t('popups.viewCertificates') }}
         </button>
 
-        <!-- Book Appointment Button -->
+        <!-- Book Appointment / View Availability Button -->
         <button
           @click.stop="handleOpenBooking"
           class="flex-1 flex items-center justify-center gap-2 bg-primary-500 text-white px-2 py-1 text-[17px] hover:bg-primary-600 transition-colors font-jalsah1"
@@ -154,7 +154,7 @@
           <img
             v-if="calendarIconExists"
             src="/calendar-icon.png"
-            alt="Book"
+            :alt="viewOnlyBooking ? 'View' : 'Book'"
             class="h-[1.4rem]"
             @error="calendarIconExists = false"
           />
@@ -167,7 +167,7 @@
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
-          {{ $t('popups.bookAppointment') }}
+          {{ viewOnlyBooking ? $t('browseTherapists.viewAvailability') : $t('popups.bookAppointment') }}
         </button>
       </div>
     </div>
@@ -228,7 +228,12 @@ export default {
     cardVariant: {
       type: String,
       default: 'therapists-page',
-      validator: (value) => ['therapists-page', 'diagnosis-results'].includes(value)
+      validator: (value) => ['therapists-page', 'diagnosis-results', 'browse'].includes(value)
+    },
+    /** When true, shows "View availability" instead of "Book" (for visitors browse page) */
+    viewOnlyBooking: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['click', 'book', 'show-details', 'hide-details', 'open-about', 'open-booking', 'open-why', 'open-certificates'],

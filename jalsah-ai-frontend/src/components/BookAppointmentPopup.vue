@@ -9,6 +9,7 @@
   >
     <BookingContent
       :therapist="therapist"
+      :view-only="viewOnly"
     />
   </TherapistPopup>
 </template>
@@ -31,6 +32,11 @@ export default {
     therapist: {
       type: Object,
       required: true
+    },
+    /** When true, shows slots without add-to-cart (for visitors) */
+    viewOnly: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['close', 'update:isOpen'],
