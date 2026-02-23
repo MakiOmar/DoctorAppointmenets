@@ -5,23 +5,23 @@
 // To switch environments, just change the value below:
 // 
 // LOCAL DEVELOPMENT:
-//   API_TARGET: 'http://localhost/shrinks'
+//   API_TARGET: 'https://jalsah.app'
 // 
 // STAGING SERVER:
-//   API_TARGET: 'http://localhost/shrinks'
+//   API_TARGET: 'https://jalsah.app'
 // 
 // ========================================
 
 export const ENVIRONMENT_CONFIG = {
   // Change this line to switch environments
-  // LOCAL:  'http://localhost/shrinks'
-  // LIVE:   'http://localhost/shrinks'
-  API_TARGET: 'http://localhost/shrinks',
+  // LOCAL:  'https://jalsah.app'
+  // LIVE:   'https://jalsah.app'
+  API_TARGET: 'https://jalsah.app',
   
   // For the built app, use the live domain as base;
-  // requests use paths like /api/ai/..., so this becomes http://localhost/shrinks/api/ai/...
-  API_BASE_URL: 'http://localhost/shrinks',
-  MAIN_SITE_URL: 'http://localhost/shrinks' // This will auto-update based on API_TARGET
+  // requests use paths like /api/ai/..., so this becomes https://jalsah.app/api/ai/...
+  API_BASE_URL: 'https://jalsah.app',
+  MAIN_SITE_URL: 'https://jalsah.app' // This will auto-update based on API_TARGET
 };
 
 // Auto-update MAIN_SITE_URL based on API_TARGET
