@@ -116,6 +116,7 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/session-messages/(\d+)/read/?$', 'index.php?ai_endpoint=session-messages/$matches[1]/read', 'top' );
 		add_rewrite_rule( '^api/ai/session-messages/?$', 'index.php?ai_endpoint=session-messages', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/search/?$', 'index.php?ai_endpoint=therapists/search', 'top' );
+		add_rewrite_rule( '^api/ai/therapists/browse/?$', 'index.php?ai_endpoint=therapists/browse', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/by-diagnosis/(\d+)/?$', 'index.php?ai_endpoint=therapists/by-diagnosis/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/([^/]+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]/$matches[2]', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/(\d+)/?$', 'index.php?ai_endpoint=therapists/$matches[1]', 'top' );
@@ -970,6 +971,8 @@ class SNKS_AI_Integration {
 					$this->get_ai_therapists();
 				} elseif ( $path[1] === 'search' ) {
 					$this->get_ai_therapists_search();
+				} elseif ( $path[1] === 'browse' ) {
+					$this->get_ai_therapists_browse();
 				} elseif ( is_numeric( $path[1] ) ) {
 					if ( isset( $path[2] ) && $path[2] === 'details' ) {
 						// Call the therapist details REST API function
@@ -2953,6 +2956,59 @@ Best regards,
 			
 			$result[] = $this->format_ai_therapist_from_application( $application );
 		}
+
+		$this->send_success( $result );
+	}
+
+	/**
+	 * Get AI Therapists for Browse Page (visitors, no auth required)
+	 * Filters by price <= provided URL query variable, sorted by price ascending.
+	 *
+	 * @return void
+	 */
+	private function get_ai_therapists_browse() {
+		$max_price = isset( $_GET['price'] ) ? floatval( $_GET['price'] ) : 0;
+		if ( $max_price <= 0 ) {
+			$this->send_error( __( 'Price query parameter is required and must be a positive number.', 'anony-shrinks' ), 400 );
+			return;
+		}
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'therapist_applications';
+
+		// Get all approved therapists enabled for AI platform.
+		$query = "SELECT * FROM $table_name 
+			WHERE status = 'approved' AND show_on_ai_site = 1 
+			ORDER BY id ASC";
+
+		$applications = $wpdb->get_results( $query );
+		$result      = array();
+
+		foreach ( $applications as $application ) {
+			if ( empty( $application->user_id ) ) {
+				continue;
+			}
+			$user = get_user_by( 'ID', $application->user_id );
+			if ( ! $user ) {
+				continue;
+			}
+
+			$formatted = $this->format_ai_therapist_from_application( $application );
+			$price_val = isset( $formatted['price']['original_price'] ) ? floatval( $formatted['price']['original_price'] ) : floatval( $formatted['price']['others'] ?? 0 );
+			if ( $price_val <= $max_price ) {
+				$result[] = $formatted;
+			}
+		}
+
+		// Sort by price ascending (lowest to highest).
+		usort(
+			$result,
+			function ( $a, $b ) {
+				$price_a = isset( $a['price']['original_price'] ) ? floatval( $a['price']['original_price'] ) : floatval( $a['price']['others'] ?? 0 );
+				$price_b = isset( $b['price']['original_price'] ) ? floatval( $b['price']['original_price'] ) : floatval( $b['price']['others'] ?? 0 );
+				return $price_a <=> $price_b;
+			}
+		);
 
 		$this->send_success( $result );
 	}

@@ -1155,10 +1155,10 @@ function snks_rochtah_doctor_dashboard() {
 				SHOW_WATERMARK_FOR_GUESTS: false,
 				SHOW_POWERED_BY: false,
 				DISPLAY_WELCOME_FOOTER: false,
-				JITSI_WATERMARK_LINK: 'https://jalsah.app',
+				JITSI_WATERMARK_LINK: 'http://localhost/shrinks',
 				PROVIDER_NAME: 'Jalsah',
-				DEFAULT_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
-				DEFAULT_WELCOME_PAGE_LOGO_URL: 'https://jalsah.app/wp-content/uploads/2024/08/watermark.svg',
+				DEFAULT_LOGO_URL: 'http://localhost/shrinks/wp-content/uploads/2024/08/watermark.svg',
+				DEFAULT_WELCOME_PAGE_LOGO_URL: 'http://localhost/shrinks/wp-content/uploads/2024/08/watermark.svg',
 				TOOLBAR_ALWAYS_VISIBLE: true,
 				TOOLBAR_BUTTONS: [
 					'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen', 

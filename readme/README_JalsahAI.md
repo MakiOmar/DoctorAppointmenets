@@ -1,7 +1,7 @@
 # 🧐 Jalsah AI Appointment System
 
 **Domain**: [https://jalsah-ai.app](https://jalsah-ai.app)  
-**Connected To**: [https://jalsah.app](https://jalsah.app) via **JWT & API**
+**Connected To**: [http://localhost/shrinks](http://localhost/shrinks) via **JWT & API**
 
 ---
 

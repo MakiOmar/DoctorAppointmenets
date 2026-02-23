@@ -50,7 +50,7 @@ add_shortcode(
 		<?php if ( 'yes' === $atts['with-styles'] ) { ?>
 			<style>
 				.snks-profile-image-wrapper.one .snks-profile-placeholder {
-					background-image: url('https://jalsah.app/wp-content/uploads/2024/09/profileplaceholder.png');
+					background-image: url('http://localhost/shrinks/wp-content/uploads/2024/09/profileplaceholder.png');
 					background-size: contain;
 					background-repeat: no-repeat;
 					background-position: center;
@@ -117,7 +117,7 @@ add_shortcode(
 				}
 				.has-preview.anony-nice-uploader::after, .snks-profile-image-wrapper.one .snks-profile-placeholder:after{
 					content:'';
-					background-image: url(https://jalsah.app/wp-content/uploads/2024/09/edit.png);
+					background-image: url(http://localhost/shrinks/wp-content/uploads/2024/09/edit.png);
 					background-size: contain;
 					background-repeat: no-repeat;
 					background-position: center;
@@ -130,7 +130,7 @@ add_shortcode(
 					right: auto;
 				}
 				.snks-profile-image-wrapper.one .snks-profile-placeholder:after{
-					background-image: url(https://jalsah.app/wp-content/uploads/2024/09/edit2.png);
+					background-image: url(http://localhost/shrinks/wp-content/uploads/2024/09/edit2.png);
 					bottom: auto;
 					left: auto;
 					margin: initial;
