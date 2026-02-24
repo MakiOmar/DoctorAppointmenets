@@ -149,7 +149,7 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/profile/?$', 'index.php?ai_endpoint=profile', 'top' );
 		add_rewrite_rule( '^api/ai/auth/([^/]+)/?$', 'index.php?ai_endpoint=auth/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/users/search/?$', 'index.php?ai_endpoint=users/search', 'top' );
-		add_rewrite_rule( '^api/ai/manual-booking/([^/]+)/?$', 'index.php?ai_endpoint=manual-booking/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/manual-bookingmanual-booking/([^/]+)/?$', 'index.php?ai_endpoint=manual-booking/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/manual-booking/?$', 'index.php?ai_endpoint=manual-booking', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
@@ -7193,10 +7193,40 @@ Best regards,
 						}
 					}
 				}
-				if ( $result['success'] ) {
+
+				// #region agent log
+				try {
+					$__snks_debug_payload = array(
+						'sessionId'    => 'dc83cc',
+						'runId'        => 'pre-fix-submit',
+						'hypothesisId' => 'H4',
+						'location'     => 'functions/ai-integration.php:handle_manual_booking_endpoint',
+						'message'      => 'Manual booking submit result',
+						'data'         => array(
+							'success'      => isset( $result['success'] ) ? (bool) $result['success'] : null,
+							'message'      => isset( $result['message'] ) ? (string) $result['message'] : null,
+							'orderId'      => isset( $result['order_id'] ) ? (int) $result['order_id'] : null,
+							'patientId'    => isset( $input['patient_id'] ) ? (int) $input['patient_id'] : null,
+							'therapistId'  => isset( $input['therapist_id'] ) ? (int) $input['therapist_id'] : null,
+							'slotId'       => isset( $input['slot_id'] ) ? (int) $input['slot_id'] : null,
+							'mode'         => isset( $mode ) ? $mode : null,
+						),
+						'timestamp'    => (int) round( microtime( true ) * 1000 ),
+					);
+					@file_put_contents(
+						dirname( __DIR__ ) . '/debug-dc83cc.log',
+						wp_json_encode( $__snks_debug_payload ) . "\n",
+						FILE_APPEND
+					);
+				} catch ( Exception $e ) {
+					// Swallow logging errors silently.
+				}
+				// #endregion
+
+				if ( ! empty( $result['success'] ) ) {
 					$this->send_success( $result );
 				} else {
-					$this->send_error( $result['message'], 400 );
+					$this->send_error( isset( $result['message'] ) ? $result['message'] : 'Unknown booking error', 400 );
 				}
 				return;
 
@@ -7327,8 +7357,13 @@ function snks_ai_order_thankyou_redirect( $order_id ) {
 	$order = wc_get_order( $order_id );
 
 	if ( $order ) {
-		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+		$is_ai_order       = $order->get_meta( 'from_jalsah_ai' );
+		$is_manual_booking = $order->get_meta( 'admin_manual_booking' );
+
+		$is_ai          = in_array( $is_ai_order, array( 'true', true, '1', 1 ), true );
+		$is_manual      = in_array( $is_manual_booking, array( 'true', true, '1', 1 ), true );
+
+		if ( $is_ai && ! $is_manual ) {
 			// Redirect AI orders to the frontend appointments page
 			$frontend_url = snks_ai_get_primary_frontend_url();
 			wp_redirect( $frontend_url . '/appointments' );
@@ -7566,9 +7601,13 @@ function snks_ai_auto_login_handler() {
 		// Check if order is already paid/completed - if so, redirect to appointments
 		$order = wc_get_order( $order_id );
 		if ( $order ) {
-			$order_status = $order->get_status();
+			$order_status      = $order->get_status();
+			$is_manual_booking = $order->get_meta( 'admin_manual_booking' );
+			$is_manual         = in_array( $is_manual_booking, array( 'true', true, '1', 1 ), true );
+
 			// If order is completed or processing, redirect to frontend appointments
-			if ( in_array( $order_status, array( 'completed', 'processing' ), true ) ) {
+			// Skip redirect for admin/manual bookings.
+			if ( ! $is_manual && in_array( $order_status, array( 'completed', 'processing' ), true ) ) {
 				$frontend_url = snks_ai_get_primary_frontend_url();
 				wp_redirect( $frontend_url . '/appointments' );
 				exit;

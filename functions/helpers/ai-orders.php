@@ -236,7 +236,8 @@ class SNKS_AI_Orders {
 		$order->update_meta_data( '_main_price', $session_amount );
 
 		$order->calculate_totals();
-		$order->set_status( 'completed' );
+		// For admin manual bookings, keep order in 'processing' state instead of 'completed'.
+		$order->set_status( 'processing' );
 		$order->save();
 
 		return $order;

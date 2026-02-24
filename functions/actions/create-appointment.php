@@ -36,9 +36,17 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 	}
 	
 	// Handle AI orders separately
-	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-	
-	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+	$is_ai_order       = $order->get_meta( 'from_jalsah_ai' );
+	$is_manual_booking = $order->get_meta( 'admin_manual_booking' );
+
+	$is_ai     = in_array( $is_ai_order, array( 'true', true, '1', 1 ), true );
+	$is_manual = in_array( $is_manual_booking, array( 'true', true, '1', 1 ), true );
+
+	if ( $is_ai ) {
+		// For admin/manual bookings, do not redirect to appointments here.
+		if ( $is_manual ) {
+			return;
+		}
 		// Send booking notifications as soon as the order is processing (no profit yet)
 		if ( $order->has_status( 'processing' ) && class_exists( 'SNKS_AI_Orders' ) && ! $order->get_meta( 'ai_booking_notified' ) ) {
 			SNKS_AI_Orders::process_ai_order_payment( $order_id );
