@@ -39,15 +39,26 @@ function snks_jalsah_ai_manual_booking_page() {
 				$new_slot_id = isset( $_POST['slot_id'] ) ? absint( $_POST['slot_id'] ) : 0;
 				$result = snks_process_admin_change_appointment( $existing_id, $new_slot_id );
 			} else {
-				$patient_id   = isset( $_POST['patient_id'] ) ? absint( $_POST['patient_id'] ) : 0;
-				$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
-				$slot_id      = isset( $_POST['slot_id'] ) ? absint( $_POST['slot_id'] ) : 0;
-				$country_code = isset( $_POST['country_code'] ) ? sanitize_text_field( $_POST['country_code'] ) : 'EG';
-				$amount       = isset( $_POST['amount'] ) ? sanitize_text_field( $_POST['amount'] ) : null;
+				$patient_id      = isset( $_POST['patient_id'] ) ? absint( $_POST['patient_id'] ) : 0;
+				$therapist_id    = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+				$slot_id         = isset( $_POST['slot_id'] ) ? absint( $_POST['slot_id'] ) : 0;
+				$country_code    = isset( $_POST['country_code'] ) ? sanitize_text_field( $_POST['country_code'] ) : 'EG';
+				$amount          = isset( $_POST['amount'] ) ? sanitize_text_field( $_POST['amount'] ) : null;
 				$amount_override = ( $amount !== '' && is_numeric( $amount ) && floatval( $amount ) > 0 ) ? floatval( $amount ) : null;
-				$first_name   = isset( $_POST['patient_first_name'] ) ? sanitize_text_field( $_POST['patient_first_name'] ) : '';
-				$last_name    = isset( $_POST['patient_last_name'] ) ? sanitize_text_field( $_POST['patient_last_name'] ) : '';
+				$first_name      = isset( $_POST['patient_first_name'] ) ? sanitize_text_field( $_POST['patient_first_name'] ) : '';
+				$last_name       = isset( $_POST['patient_last_name'] ) ? sanitize_text_field( $_POST['patient_last_name'] ) : '';
+				$payment_method  = isset( $_POST['payment_method'] ) ? sanitize_text_field( $_POST['payment_method'] ) : '';
+
 				$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
+
+				// Save payment method on order meta if booking succeeded.
+				if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {
+					$order = wc_get_order( $result['order_id'] );
+					if ( $order ) {
+						$order->update_meta_data( 'admin_manual_payment_method', $payment_method );
+						$order->save();
+					}
+				}
 			}
 
 			$notice = $result['message'];
@@ -76,6 +87,17 @@ function snks_jalsah_ai_manual_booking_page() {
 	// Country dropdown is populated per selected therapist via AJAX (see loadCountries).
 	// Initial state: no therapist selected.
 	$countries_placeholder = array( '' => __( '— Select therapist first —', 'shrinks' ) );
+
+	// Load countries JSON for patient phone (same source as frontend registration).
+	$phone_countries = array();
+	$countries_json_path = plugin_dir_path( __FILE__ ) . '../../jalsah-ai-frontend/countries-codes-and-flags.json';
+	if ( file_exists( $countries_json_path ) ) {
+		$json_raw = file_get_contents( $countries_json_path );
+		$decoded  = json_decode( $json_raw, true );
+		if ( is_array( $decoded ) ) {
+			$phone_countries = $decoded;
+		}
+	}
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Manual Booking', 'shrinks' ); ?></h1>
@@ -101,13 +123,49 @@ function snks_jalsah_ai_manual_booking_page() {
 						<th><label for="patient_search"><?php esc_html_e( 'Patient', 'shrinks' ); ?> <span class="required">*</span></label></th>
 						<td>
 							<div style="position: relative;">
-								<input type="text" id="patient_search" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the phone number', 'shrinks' ); ?>" autocomplete="off">
+								<div style="display:flex; gap:8px; align-items:center;">
+									<div id="patient_phone_country_wrapper" style="position:relative;">
+										<select id="patient_phone_country" name="patient_phone_country" style="min-width:170px; display:none;">
+											<?php
+											$default_country_code = 'EG';
+											if ( ! empty( $phone_countries ) && is_array( $phone_countries ) ) :
+												foreach ( $phone_countries as $country ) :
+													$code      = isset( $country['country_code'] ) ? $country['country_code'] : '';
+													$name_en   = isset( $country['name_en'] ) ? $country['name_en'] : $code;
+													$dial_code = isset( $country['dial_code'] ) ? $country['dial_code'] : '';
+													$flag      = isset( $country['flag'] ) ? $country['flag'] : '';
+													if ( ! $code || ! $dial_code ) {
+														continue;
+													}
+													?>
+													<option value="<?php echo esc_attr( $code ); ?>" data-dial="<?php echo esc_attr( $dial_code ); ?>" data-flag="<?php echo esc_attr( $flag ); ?>" <?php selected( $code, $default_country_code ); ?>>
+														<?php echo esc_html( $name_en . ' ' . $dial_code ); ?>
+													</option>
+													<?php
+												endforeach;
+											endif;
+											?>
+										</select>
+										<button type="button" id="patient_phone_country_button" class="button" style="min-width:180px; display:flex; align-items:center; justify-content:space-between; font-family: 'Noto Color Emoji','Segoe UI Emoji','Apple Color Emoji',sans-serif;">
+											<span id="patient_phone_country_button_label"></span>
+											<span class="dashicons dashicons-arrow-down-alt2"></span>
+										</button>
+										<div id="patient_phone_country_dropdown" style="display:none; position:absolute; top:100%; left:0; right:auto; margin-top:2px; background:#fff; border:1px solid #8c8f94; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,.15); max-height:260px; width:260px; z-index:200;">
+											<div style="padding:6px 8px;">
+												<input type="text" id="patient_phone_country_search" placeholder="<?php esc_attr_e( 'Search countries...', 'shrinks' ); ?>" style="width:100%; padding:4px 6px; font-size:12px; border:1px solid #ccd0d4; border-radius:3px;">
+											</div>
+											<div id="patient_phone_country_list" style="max-height:210px; overflow-y:auto;"></div>
+										</div>
+									</div>
+									<input type="text" id="patient_search" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the phone number', 'shrinks' ); ?>" autocomplete="off">
+								</div>
 								<div id="patient_results" class="snks-patient-dropdown" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:2px; background:#fff; border:1px solid #8c8f94; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,.15); max-height:220px; overflow-y:auto; z-index:100;"></div>
 							</div>
 							<input type="hidden" name="patient_id" id="patient_id" required>
 							<span id="patient_display" style="margin-right: 10px; font-weight:500;"></span>
 							<button type="button" id="patient_clear_btn" class="button button-small" style="display:none;"><?php esc_html_e( 'Clear', 'shrinks' ); ?></button>
-							<p class="description"><?php esc_html_e( 'Enter phone number to search existing patient or create a new one (password: 123456).', 'shrinks' ); ?></p>
+							<span id="patient_search_loading" class="spinner" style="float:none; margin-left:6px; display:none;"></span>
+							<p class="description"><?php esc_html_e( 'Enter phone number (with country) to search existing patient or create a new one (password: 12345678).', 'shrinks' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -162,6 +220,17 @@ function snks_jalsah_ai_manual_booking_page() {
 							<span id="calculated_price"></span>
 						</td>
 					</tr>
+					<tr>
+						<th><label for="payment_method"><?php esc_html_e( 'Payment method', 'shrinks' ); ?></label></th>
+						<td>
+							<select name="payment_method" id="payment_method">
+								<option value=""><?php esc_html_e( 'Select payment method', 'shrinks' ); ?></option>
+								<option value="instapay"><?php esc_html_e( 'InstaPay', 'shrinks' ); ?></option>
+								<option value="wallet"><?php esc_html_e( 'Wallet', 'shrinks' ); ?></option>
+								<option value="bank_transfer"><?php esc_html_e( 'Bank transfer', 'shrinks' ); ?></option>
+							</select>
+						</td>
+					</tr>
 				</table>
 				<?php submit_button( __( 'Book Appointment', 'shrinks' ) ); ?>
 			</form>
@@ -181,6 +250,7 @@ function snks_jalsah_ai_manual_booking_page() {
 						<td>
 							<input type="text" id="change_search" class="regular-text" placeholder="<?php esc_attr_e( 'Patient email, phone, or booking ID...', 'shrinks' ); ?>">
 							<button type="button" id="change_search_btn" class="button"><?php esc_html_e( 'Search', 'shrinks' ); ?></button>
+							<span id="change_search_loading" class="spinner" style="float:none; margin:0 0 0 6px; display:none;"></span>
 							<div id="change_results" style="margin-top: 10px;"></div>
 						</td>
 					</tr>
@@ -200,6 +270,14 @@ function snks_jalsah_ai_manual_booking_page() {
 		<?php endif; ?>
 	</div>
 
+	<style>
+		/* Override default .spinner visibility so loading indicators show when active */
+		#patient_search_loading.is-active,
+		#change_search_loading.is-active {
+			visibility: visible !important;
+			display: inline-block !important;
+		}
+	</style>
 	<script>
 	jQuery(function($) {
 		var therapistId = $('#therapist_id');
@@ -207,6 +285,11 @@ function snks_jalsah_ai_manual_booking_page() {
 		var slotSelect = $('#slot_id');
 		var countrySelect = $('#country_code');
 		var amountInput = $('#amount');
+		var phoneCountrySelect = $('#patient_phone_country');
+		var phoneCountryButton = $('#patient_phone_country_button');
+		var phoneCountryDropdown = $('#patient_phone_country_dropdown');
+		var phoneCountrySearch = $('#patient_phone_country_search');
+		var phoneCountryList = $('#patient_phone_country_list');
 
 		var therapistsData = <?php echo wp_json_encode( array_map( function( $t ) {
 			$name = $t->name ?: $t->name_en ?: '';
@@ -214,6 +297,82 @@ function snks_jalsah_ai_manual_booking_page() {
 			$phone = $t->phone ?: $t->whatsapp ?: '';
 			return array( 'id' => (int) $t->user_id, 'name' => $name, 'name_en' => $name_en, 'phone' => $phone );
 		}, $therapists ) ); ?>;
+
+		// Countries data for phone validation (same JSON as frontend registration).
+		window.snksPhoneCountries = <?php echo wp_json_encode( $phone_countries ); ?> || [];
+
+		function getLocalizedCountries() {
+			var list = window.snksPhoneCountries || [];
+			var lang = (document.documentElement.lang || '').toLowerCase();
+			var isArabic = lang.indexOf('ar') === 0;
+			return list.map(function(c) {
+				return {
+					code: c.country_code,
+					name: isArabic ? (c.name_ar || c.name_en || c.country_code) : (c.name_en || c.name_ar || c.country_code),
+					dial: c.dial_code,
+					flag: c.flag || '🏳️'
+				};
+			});
+		}
+
+		function renderPhoneCountryButton() {
+			var currentCode = phoneCountrySelect.val() || 'EG';
+			var countries = getLocalizedCountries();
+			var selected = countries.find(function(c) { return c.code === currentCode; }) || countries[0];
+			if (!selected) return;
+			phoneCountryButton.find('#patient_phone_country_button_label').text(selected.flag + ' ' + selected.dial);
+		}
+
+		function renderPhoneCountryList(filter) {
+			var countries = getLocalizedCountries();
+			var q = (filter || '').toLowerCase();
+			if (q) {
+				countries = countries.filter(function(c) {
+					return c.name.toLowerCase().indexOf(q) !== -1 ||
+						(c.dial && c.dial.indexOf(q) !== -1) ||
+						(c.code && c.code.toLowerCase().indexOf(q) !== -1);
+				});
+			}
+			phoneCountryList.empty();
+			if (!countries.length) {
+				phoneCountryList.append('<div style="padding:8px 10px; color:#646970;"><?php echo esc_js( __( 'No match', 'shrinks' ) ); ?></div>');
+				return;
+			}
+			countries.forEach(function(c) {
+				var row = $('<div class="snks-country-row" data-code="' + c.code + '" style="padding:6px 10px; cursor:pointer; display:flex; align-items:center; border-bottom:1px solid #f0f0f0;"></div>');
+				var label = '<span style="margin-right:6px;">' + c.flag + '</span>' +
+					'<span style="flex:1;">' + c.name + '</span>' +
+					'<span style="color:#777; font-size:11px; margin-left:6px;">' + (c.dial || '') + '</span>';
+				row.html(label);
+				row.on('mouseenter', function() { $(this).css('background','#f6f7f7'); });
+				row.on('mouseleave', function() { $(this).css('background',''); });
+				row.on('click', function() {
+					var code = $(this).data('code');
+					phoneCountrySelect.val(code);
+					renderPhoneCountryButton();
+					phoneCountryDropdown.hide();
+				});
+				phoneCountryList.append(row);
+			});
+		}
+
+		// Initialize phone country UI
+		renderPhoneCountryButton();
+		renderPhoneCountryList('');
+
+		phoneCountryButton.on('click', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			phoneCountryDropdown.toggle();
+			if (phoneCountryDropdown.is(':visible')) {
+				phoneCountrySearch.val('').focus();
+				renderPhoneCountryList('');
+			}
+		});
+
+		phoneCountrySearch.on('input', function() {
+			renderPhoneCountryList($(this).val());
+		});
 
 		function filterTherapists(q) {
 			q = (q || '').trim();
@@ -350,7 +509,8 @@ function snks_jalsah_ai_manual_booking_page() {
 				period: period
 			}, function(res) {
 				if (res.success && res.data) {
-					$('#calculated_price').text('<?php echo esc_js( __( 'Price:', 'shrinks' ) ); ?> ' + res.data.original_price + ' ' + (res.data.currency_symbol || ''));
+					var countryName = $('#country_code option:selected').text() || '';
+					$('#calculated_price').text(countryName + ' ' + res.data.original_price + ' ' + (res.data.currency_symbol || ''));
 				}
 			});
 		}
@@ -359,9 +519,42 @@ function snks_jalsah_ai_manual_booking_page() {
 		slotSelect.on('change', updatePrice);
 		countrySelect.on('change', updatePrice);
 
+		// Phone validation using same rules as frontend registration.
+		function validatePhoneNumber(phoneNumber, countryCode) {
+			if (!window.snksPhoneCountries || !window.snksPhoneCountries.length) {
+				return { isValid: true, error: null };
+			}
+			var country = window.snksPhoneCountries.find(function(c) { return c.country_code === countryCode; });
+			if (!country || !country.validation_pattern) {
+				return { isValid: true, error: null };
+			}
+			var cleanPhone = String(phoneNumber || '').replace(/[\s\-\(\)]/g, '');
+			if (!cleanPhone || !/^\d+$/.test(cleanPhone)) {
+				return { isValid: false, error: '<?php echo esc_js( __( 'Phone number must contain digits only.', 'shrinks' ) ); ?>' };
+			}
+			if (cleanPhone.charAt(0) === '0') {
+				return { isValid: false, error: '<?php echo esc_js( __( 'Remove leading zero from the phone number.', 'shrinks' ) ); ?>' };
+			}
+			var fullPhone = (country.dial_code || '') + cleanPhone;
+			var pattern = new RegExp(country.validation_pattern);
+			if (!pattern.test(fullPhone)) {
+				var isArabic = document.documentElement.lang && document.documentElement.lang.toLowerCase().indexOf('ar') === 0;
+				var customMessage = isArabic ? country.validation_message_ar : country.validation_message_en;
+				var fallback = '<?php echo esc_js( __( 'Please enter a valid phone number for the selected country.', 'shrinks' ) ); ?>';
+				return { isValid: false, error: (customMessage && customMessage.trim()) ? customMessage : fallback };
+			}
+			return { isValid: true, error: null };
+		}
+
 		var patientSearchTimer;
+		// Restrict patient search (phone) to digits only; keep input type="text".
 		$('#patient_search').on('input', function() {
-			var q = $(this).val().trim();
+			var $input = $(this);
+			var raw = $input.val().replace(/\D/g, '');
+			if (raw !== $input.val()) {
+				$input.val(raw);
+			}
+			var q = raw;
 			if (q.length < 2) {
 				$('#patient_id').val('');
 				$('#patient_display').text('');
@@ -369,16 +562,27 @@ function snks_jalsah_ai_manual_booking_page() {
 				$('#patient_last_name').val('');
 				$('#patient_results').hide().empty();
 				$('#patient_clear_btn').hide();
+				$('#patient_search_loading').removeClass('is-active').hide();
 				return;
 			}
 			$('#patient_results').hide().empty();
 			clearTimeout(patientSearchTimer);
+			$('#patient_search_loading').addClass('is-active').show();
 			patientSearchTimer = setTimeout(function() {
+				// Build full phone with country dial code for searching/creation.
+				var countryCode = phoneCountrySelect.val() || 'EG';
+				if (window.snksPhoneCountries && window.snksPhoneCountries.length) {
+					var country = window.snksPhoneCountries.find(function(c) { return c.country_code === countryCode; });
+					if (country && country.dial_code) {
+						q = country.dial_code + raw.replace(/[\s\-\(\)]/g, '');
+					}
+				}
 				$.post(ajaxurl, {
 					action: 'snks_manual_booking_search_patient',
 					nonce: '<?php echo esc_js( wp_create_nonce( 'manual_booking' ) ); ?>',
 					q: q
 				}, function(res) {
+					$('#patient_search_loading').removeClass('is-active').hide();
 					var $results = $('#patient_results');
 					$results.empty();
 					if (res.success && res.data && res.data.length) {
@@ -428,7 +632,30 @@ function snks_jalsah_ai_manual_booking_page() {
 			$('#patient_last_name').val('');
 			$('#patient_search').val('').focus();
 			$('#patient_results').hide().empty();
+			$('#patient_search_loading').removeClass('is-active').hide();
 			$(this).hide();
+		});
+
+		// Validate phone on submit for new patients (when we will auto-create a user).
+		$('#snks-manual-booking-form').on('submit', function(e) {
+			var patientId = $('#patient_id').val();
+			var phoneRaw  = $('#patient_search').val().trim();
+			var countryCode = phoneCountrySelect.val() || 'EG';
+			// If existing patient is selected, skip phone validation here.
+			if (!patientId) {
+				if (!phoneRaw) {
+					e.preventDefault();
+					alert('<?php echo esc_js( __( 'Please enter the patient phone number.', 'shrinks' ) ); ?>');
+					return false;
+				}
+				var result = validatePhoneNumber(phoneRaw, countryCode);
+				if (!result.isValid) {
+					e.preventDefault();
+					alert(result.error);
+					return false;
+				}
+			}
+			return true;
 		});
 
 		$(document).on('click', function(e) {
@@ -438,17 +665,22 @@ function snks_jalsah_ai_manual_booking_page() {
 			if (!$(e.target).closest('#therapist_search, #therapist_results').length) {
 				$('#therapist_results').hide();
 			}
+			if (!$(e.target).closest('#patient_phone_country_wrapper').length) {
+				phoneCountryDropdown.hide();
+			}
 		});
 
 		<?php if ( 'change' === $active_tab ) : ?>
 		var changeTherapistId = null;
 		var preselectId = <?php echo $preselect_booking_id ? (int) $preselect_booking_id : 0; ?>;
 		if (preselectId) {
+			$('#change_search_loading').addClass('is-active').show();
 			$.post(ajaxurl, {
 				action: 'snks_manual_booking_search_appointments',
 				nonce: '<?php echo esc_js( wp_create_nonce( 'manual_booking' ) ); ?>',
 				q: String(preselectId)
 			}, function(res) {
+				$('#change_search_loading').removeClass('is-active').hide();
 				if (res.success && res.data && res.data.length) {
 					var a = res.data[0];
 					changeTherapistId = a.therapist_id;
@@ -462,11 +694,13 @@ function snks_jalsah_ai_manual_booking_page() {
 		$('#change_search_btn').on('click', function() {
 			var q = $('#change_search').val();
 			if (!q || q.length < 1) return;
+			$('#change_search_loading').addClass('is-active').show();
 			$.post(ajaxurl, {
 				action: 'snks_manual_booking_search_appointments',
 				nonce: '<?php echo esc_js( wp_create_nonce( 'manual_booking' ) ); ?>',
 				q: q
 			}, function(res) {
+				$('#change_search_loading').removeClass('is-active').hide();
 				var div = $('#change_results');
 				if (res.success && res.data && res.data.length) {
 					var html = '<table class="widefat"><thead><tr><th><?php echo esc_js( __( 'Select', 'shrinks' ) ); ?></th><th><?php echo esc_js( __( 'ID', 'shrinks' ) ); ?></th><th><?php echo esc_js( __( 'Patient', 'shrinks' ) ); ?></th><th><?php echo esc_js( __( 'Therapist', 'shrinks' ) ); ?></th><th><?php echo esc_js( __( 'Date/Time', 'shrinks' ) ); ?></th></tr></thead><tbody>';
@@ -520,7 +754,7 @@ function snks_jalsah_ai_manual_booking_page() {
 
 /**
  * Create a patient (customer) user from phone number for manual booking.
- * Username and email are derived from phone; password defaults to 123456.
+ * Username and email are derived from phone; password defaults to 12345678.
  *
  * @param string $phone Phone number (stored as-is in billing_phone).
  * @return int|WP_Error User ID on success, WP_Error on failure.
@@ -533,7 +767,7 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 		return new WP_Error( 'invalid_phone', __( 'Please enter a valid phone number (at least 5 digits).', 'shrinks' ) );
 	}
 
-	$base_login = 'phone_' . $digits;
+	$base_login = $digits;
 	$base_email = $digits . '@jalsah.app';
 	$login = $base_login;
 	$email = $base_email;
@@ -544,7 +778,7 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 		$email = $digits . '_' . $suffix . '@jalsah.app';
 	}
 
-	$default_password = '123456';
+	$default_password = '12345678';
 	$display_name = sprintf( /* translators: %s: phone number */ __( 'Patient %s', 'shrinks' ), $phone );
 
 	$user_id = wp_insert_user( array(
@@ -836,7 +1070,7 @@ function snks_ajax_manual_booking_search_appointments() {
 				$like
 			) );
 			$by_meta = $wpdb->get_col( $wpdb->prepare(
-				"SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ('billing_phone','whatsapp') AND meta_value LIKE %s",
+				"SELECT user_id FROM {$wpdb->usermeta} WHERE meta_key IN ('billing_phone','billing_email','whatsapp') AND meta_value LIKE %s",
 				$like
 			) );
 			$patient_ids = array_unique( array_merge( (array) $by_email, (array) $by_meta ) );
