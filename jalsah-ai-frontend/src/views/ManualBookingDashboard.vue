@@ -195,8 +195,8 @@
         <span v-if="countriesLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
       </div>
 
-      <!-- Amount override (optional) -->
-      <div>
+      <!-- Amount override (optional) - hidden for now -->
+      <div v-if="false">
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.amount') }}</label>
         <input v-model="amountOverride" type="text" class="w-full rounded border border-gray-300 px-3 py-2" />
         <p v-if="errors?.amount" class="mt-1 text-sm text-red-600">{{ errors?.amount }}</p>
