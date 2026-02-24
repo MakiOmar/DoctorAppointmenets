@@ -12,10 +12,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Frontend Manual Booking dashboard shortcode.
+ * Renders the same UI as the admin page, but on the frontend, restricted to admins and secretaries.
+ */
+function snks_jalsah_ai_manual_booking_dashboard_shortcode() {
+	if ( ! is_user_logged_in() ) {
+		return '<p>' . esc_html__( 'You must be logged in to access this page.', 'shrinks' ) . '</p>';
+	}
+
+	$current_user = wp_get_current_user();
+	$roles        = is_object( $current_user ) ? (array) $current_user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
+		return '<p>' . esc_html__( 'You do not have permission to access this page.', 'shrinks' ) . '</p>';
+	}
+
+	ob_start();
+	// Reuse the admin page renderer (capability check inside will also pass for allowed roles).
+	snks_jalsah_ai_manual_booking_page();
+	$content = ob_get_clean();
+
+	return '<div class="snks-ai-frontend-dashboard snks-manual-booking-dashboard">' . $content . '</div>';
+}
+add_shortcode( 'snks_manual_booking_dashboard', 'snks_jalsah_ai_manual_booking_dashboard_shortcode' );
+
+/**
  * Manual Booking admin page callback.
  */
 function snks_jalsah_ai_manual_booking_page() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	$current_user = wp_get_current_user();
+	$roles        = is_object( $current_user ) ? (array) $current_user->roles : array();
+	$allowed      = current_user_can( 'manage_options' ) || in_array( 'secretary', $roles, true );
+
+	if ( ! $allowed ) {
 		wp_die( esc_html__( 'You do not have permission to access this page.', 'shrinks' ) );
 	}
 
@@ -282,6 +310,10 @@ function snks_jalsah_ai_manual_booking_page() {
 		}
 	</style>
 	<script>
+	// Ensure ajaxurl is available on frontend as well as in admin.
+	if (typeof ajaxurl === 'undefined') {
+		var ajaxurl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+	}
 	jQuery(function($) {
 		var therapistId = $('#therapist_id');
 		var bookingDate = $('#booking_date');
@@ -837,19 +869,47 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 }
 
 /**
- * AJAX: Search patient by phone (or email). If no user found and input is a phone number, create the user.
+ * Return therapists list for manual booking dropdown (used by REST and admin page).
+ *
+ * @return array List of { user_id, name, name_en, phone, whatsapp }.
  */
-function snks_ajax_manual_booking_search_patient() {
-	check_ajax_referer( 'manual_booking', 'nonce' );
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+function snks_manual_booking_data_therapists() {
+	global $wpdb;
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	$rows = $wpdb->get_results(
+		"SELECT ta.user_id, ta.name, ta.name_en, ta.phone, ta.whatsapp 
+		 FROM {$applications_table} ta 
+		 WHERE ta.status = 'approved' AND ta.show_on_ai_site = 1 
+		 ORDER BY ta.name ASC"
+	);
+	$result = array();
+	foreach ( (array) $rows as $t ) {
+		$phone = $t->phone ?: ( $t->whatsapp ?: '' );
+		if ( empty( $phone ) ) {
+			$phone = get_user_meta( $t->user_id, 'billing_phone', true ) ?: '';
+		}
+		$result[] = array(
+			'user_id'  => (int) $t->user_id,
+			'name'     => $t->name ?: '',
+			'name_en'  => $t->name_en ?: '',
+			'phone'    => $phone,
+			'whatsapp' => $t->whatsapp ?: '',
+		);
 	}
+	return $result;
+}
 
-	$q = isset( $_POST['q'] ) ? sanitize_text_field( $_POST['q'] ) : '';
+/**
+ * Return search-patient data for manual booking (used by AJAX and REST).
+ *
+ * @param string $q Search query (phone digits or email).
+ * @return array List of patient items (id, email, name, first_name, last_name).
+ */
+function snks_manual_booking_data_search_patient( $q ) {
+	$q = sanitize_text_field( $q );
 	if ( strlen( $q ) < 2 ) {
-		wp_send_json_success( array() );
+		return array();
 	}
-
 	global $wpdb;
 	$like = '%' . $wpdb->esc_like( $q ) . '%';
 	$caps_key = $wpdb->get_blog_prefix() . 'capabilities';
@@ -906,30 +966,38 @@ function snks_ajax_manual_booking_search_patient() {
 			);
 		}
 	}
+	return $result;
+}
 
+/**
+ * AJAX: Search patient by phone (or email). If no user found and input is a phone number, create the user.
+ */
+function snks_ajax_manual_booking_search_patient() {
+	check_ajax_referer( 'manual_booking', 'nonce' );
+	$user = wp_get_current_user();
+	$roles = is_object( $user ) ? (array) $user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+	}
+	$q = isset( $_POST['q'] ) ? sanitize_text_field( $_POST['q'] ) : '';
+	$result = snks_manual_booking_data_search_patient( $q );
 	wp_send_json_success( $result );
 }
 add_action( 'wp_ajax_snks_manual_booking_search_patient', 'snks_ajax_manual_booking_search_patient' );
 
 /**
- * AJAX: Get available future dates for therapist (dates that have at least one available slot).
- * Includes today if there are still future slots today.
+ * Return available future dates for a therapist (used by AJAX and REST).
+ *
+ * @param int $therapist_id Therapist user ID.
+ * @return array List of { date, label }.
  */
-function snks_ajax_manual_booking_get_available_dates() {
-	check_ajax_referer( 'manual_booking', 'nonce' );
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
-	}
-
-	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+function snks_manual_booking_data_available_dates( $therapist_id ) {
+	$therapist_id = absint( $therapist_id );
 	if ( ! $therapist_id ) {
-		wp_send_json_success( array() );
-		return;
+		return array();
 	}
-
 	global $wpdb;
 	$table = $wpdb->prefix . 'snks_provider_timetable';
-	// Distinct dates that have at least one slot in the future (date_time > NOW()).
 	$dates = $wpdb->get_col( $wpdb->prepare(
 		"SELECT DISTINCT DATE(date_time) AS d
 		 FROM {$table}
@@ -944,7 +1012,6 @@ function snks_ajax_manual_booking_get_available_dates() {
 		 LIMIT 60",
 		$therapist_id
 	) );
-
 	$today = current_time( 'Y-m-d' );
 	$result = array();
 	foreach ( (array) $dates as $d ) {
@@ -953,25 +1020,38 @@ function snks_ajax_manual_booking_get_available_dates() {
 			: wp_date( 'D j M Y', strtotime( $d ) );
 		$result[] = array( 'date' => $d, 'label' => $label );
 	}
+	return $result;
+}
+
+/**
+ * AJAX: Get available future dates for therapist (dates that have at least one available slot).
+ */
+function snks_ajax_manual_booking_get_available_dates() {
+	check_ajax_referer( 'manual_booking', 'nonce' );
+	$user = wp_get_current_user();
+	$roles = is_object( $user ) ? (array) $user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+	}
+	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+	$result = snks_manual_booking_data_available_dates( $therapist_id );
 	wp_send_json_success( $result );
 }
 add_action( 'wp_ajax_snks_manual_booking_get_available_dates', 'snks_ajax_manual_booking_get_available_dates' );
 
 /**
- * AJAX: Get available slots for therapist and date.
+ * Return available slots for therapist and date (used by AJAX and REST).
+ *
+ * @param int    $therapist_id Therapist user ID.
+ * @param string $date         Date Y-m-d.
+ * @return array List of { slot_id, time, formatted_time, period } or empty on invalid params.
  */
-function snks_ajax_manual_booking_get_slots() {
-	check_ajax_referer( 'manual_booking', 'nonce' );
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
-	}
-
-	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
-	$date         = isset( $_POST['date'] ) ? sanitize_text_field( $_POST['date'] ) : '';
+function snks_manual_booking_data_slots( $therapist_id, $date ) {
+	$therapist_id = absint( $therapist_id );
+	$date = sanitize_text_field( $date );
 	if ( ! $therapist_id || ! $date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
-		wp_send_json_error( array( 'message' => 'Invalid params' ) );
+		return array();
 	}
-
 	global $wpdb;
 	$slots = $wpdb->get_results( $wpdb->prepare(
 		"SELECT ID as slot_id, starts, period 
@@ -985,7 +1065,6 @@ function snks_ajax_manual_booking_get_slots() {
 		$therapist_id,
 		$date
 	) );
-
 	$current_time = current_time( 'H:i:s' );
 	$is_today = ( $date === current_time( 'Y-m-d' ) );
 	$result = array();
@@ -1006,27 +1085,61 @@ function snks_ajax_manual_booking_get_slots() {
 			'period'         => isset( $s->period ) ? $s->period : 45,
 		);
 	}
+	return $result;
+}
+
+/**
+ * AJAX: Get available slots for therapist and date.
+ */
+function snks_ajax_manual_booking_get_slots() {
+	check_ajax_referer( 'manual_booking', 'nonce' );
+	$user = wp_get_current_user();
+	$roles = is_object( $user ) ? (array) $user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+	}
+	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+	$date = isset( $_POST['date'] ) ? sanitize_text_field( $_POST['date'] ) : '';
+	$result = snks_manual_booking_data_slots( $therapist_id, $date );
 	wp_send_json_success( $result );
 }
 add_action( 'wp_ajax_snks_manual_booking_get_slots', 'snks_ajax_manual_booking_get_slots' );
+
+/**
+ * Return price for therapist, country, period (used by AJAX and REST).
+ *
+ * @param int    $therapist_id  Therapist user ID.
+ * @param string $country_code  Country code.
+ * @param int    $period        Session period minutes.
+ * @return array Pricing array or empty on invalid therapist.
+ */
+function snks_manual_booking_data_price( $therapist_id, $country_code = 'EG', $period = 45 ) {
+	$therapist_id = absint( $therapist_id );
+	if ( ! $therapist_id ) {
+		return array();
+	}
+	$country_code = sanitize_text_field( $country_code ) ?: 'EG';
+	$period = absint( $period ) ?: 45;
+	return snks_get_ai_therapist_price( $therapist_id, $country_code, $period );
+}
 
 /**
  * AJAX: Get price for therapist, country, period.
  */
 function snks_ajax_manual_booking_get_price() {
 	check_ajax_referer( 'manual_booking', 'nonce' );
-	if ( ! current_user_can( 'manage_options' ) ) {
+	$user = wp_get_current_user();
+	$roles = is_object( $user ) ? (array) $user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
 		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
 	}
-
 	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
 	$country_code = isset( $_POST['country_code'] ) ? sanitize_text_field( $_POST['country_code'] ) : 'EG';
-	$period       = isset( $_POST['period'] ) ? absint( $_POST['period'] ) : 45;
-	if ( ! $therapist_id ) {
+	$period = isset( $_POST['period'] ) ? absint( $_POST['period'] ) : 45;
+	$pricing = snks_manual_booking_data_price( $therapist_id, $country_code, $period );
+	if ( empty( $pricing ) ) {
 		wp_send_json_error( array( 'message' => 'Invalid params' ) );
 	}
-
-	$pricing = snks_get_ai_therapist_price( $therapist_id, $country_code, $period );
 	wp_send_json_success( $pricing );
 }
 add_action( 'wp_ajax_snks_manual_booking_get_price', 'snks_ajax_manual_booking_get_price' );
@@ -1079,20 +1192,17 @@ function snks_manual_booking_therapist_pricing_countries( $therapist_id ) {
 }
 
 /**
- * AJAX: Get countries from selected therapist's pricing (for country dropdown).
+ * Return therapist countries with price (used by AJAX and REST).
+ *
+ * @param int $therapist_id Therapist user ID.
+ * @return array List of { code, name, price, currency_symbol }.
  */
-function snks_ajax_manual_booking_get_therapist_countries() {
-	check_ajax_referer( 'manual_booking', 'nonce' );
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
-	}
-	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+function snks_manual_booking_data_therapist_countries( $therapist_id ) {
+	$therapist_id = absint( $therapist_id );
 	if ( ! $therapist_id ) {
-		wp_send_json_success( array() );
-		return;
+		return array();
 	}
 	$list = snks_manual_booking_therapist_pricing_countries( $therapist_id );
-	// If therapist has "others" price but no specific countries, show "Others" only.
 	$has_others = get_user_meta( $therapist_id, '45_minutes_pricing_others', true ) !== ''
 		|| get_user_meta( $therapist_id, '60_minutes_pricing_others', true ) !== ''
 		|| get_user_meta( $therapist_id, '90_minutes_pricing_others', true ) !== '';
@@ -1101,32 +1211,43 @@ function snks_ajax_manual_booking_get_therapist_countries() {
 	} elseif ( $has_others ) {
 		$list[] = array( 'code' => 'OTHERS', 'name' => __( 'Other countries', 'shrinks' ) );
 	}
-	// Add price (45 min) and currency to each country for display in dropdown.
 	$period = 45;
 	foreach ( $list as &$item ) {
 		$pricing = snks_get_ai_therapist_price( $therapist_id, $item['code'], $period );
-		$item['price']            = isset( $pricing['original_price'] ) ? $pricing['original_price'] : 0;
-		$item['currency_symbol']  = isset( $pricing['currency_symbol'] ) ? $pricing['currency_symbol'] : ( isset( $pricing['currency'] ) ? $pricing['currency'] : 'EGP' );
+		$item['price']           = isset( $pricing['original_price'] ) ? $pricing['original_price'] : 0;
+		$item['currency_symbol'] = isset( $pricing['currency_symbol'] ) ? $pricing['currency_symbol'] : ( isset( $pricing['currency'] ) ? $pricing['currency'] : 'EGP' );
 	}
 	unset( $item );
+	return $list;
+}
+
+/**
+ * AJAX: Get countries from selected therapist's pricing (for country dropdown).
+ */
+function snks_ajax_manual_booking_get_therapist_countries() {
+	check_ajax_referer( 'manual_booking', 'nonce' );
+	$user = wp_get_current_user();
+	$roles = is_object( $user ) ? (array) $user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+	}
+	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+	$list = snks_manual_booking_data_therapist_countries( $therapist_id );
 	wp_send_json_success( $list );
 }
 add_action( 'wp_ajax_snks_manual_booking_get_therapist_countries', 'snks_ajax_manual_booking_get_therapist_countries' );
 
 /**
- * AJAX: Search appointments for change mode.
+ * Return search-appointments data for change-appointment mode (used by AJAX and REST).
+ *
+ * @param string $q Search query (booking ID, phone, email).
+ * @return array List of { booking_id, patient_id, therapist_id, patient_name, therapist_name, date_time }.
  */
-function snks_ajax_manual_booking_search_appointments() {
-	check_ajax_referer( 'manual_booking', 'nonce' );
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
-	}
-
-	$q = isset( $_POST['q'] ) ? sanitize_text_field( $_POST['q'] ) : '';
+function snks_manual_booking_data_search_appointments( $q ) {
+	$q = sanitize_text_field( $q );
 	if ( strlen( $q ) < 1 ) {
-		wp_send_json_success( array() );
+		return array();
 	}
-
 	global $wpdb;
 	$timetable_table = $wpdb->prefix . 'snks_provider_timetable';
 	$applications_table = $wpdb->prefix . 'therapist_applications';
@@ -1199,6 +1320,21 @@ function snks_ajax_manual_booking_search_appointments() {
 			'date_time'     => $r->date_time,
 		);
 	}
+	return $result;
+}
+
+/**
+ * AJAX: Search appointments for change mode.
+ */
+function snks_ajax_manual_booking_search_appointments() {
+	check_ajax_referer( 'manual_booking', 'nonce' );
+	$user = wp_get_current_user();
+	$roles = is_object( $user ) ? (array) $user->roles : array();
+	if ( ! current_user_can( 'manage_options' ) && ! in_array( 'secretary', $roles, true ) ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+	}
+	$q = isset( $_POST['q'] ) ? sanitize_text_field( $_POST['q'] ) : '';
+	$result = snks_manual_booking_data_search_appointments( $q );
 	wp_send_json_success( $result );
 }
 add_action( 'wp_ajax_snks_manual_booking_search_appointments', 'snks_ajax_manual_booking_search_appointments' );

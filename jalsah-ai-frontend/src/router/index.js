@@ -96,7 +96,7 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true, roles: ['customer'] }
+    meta: { requiresAuth: true, roles: ['customer', 'administrator', 'secretary'] }
   },
   {
     path: '/notifications',
@@ -120,6 +120,12 @@ const routes = [
     path: '/switch-user',
     name: 'SwitchUser',
     component: () => import('@/views/SwitchUser.vue')
+  },
+  {
+    path: '/manual-booking',
+    name: 'ManualBooking',
+    component: () => import('@/views/ManualBookingDashboard.vue'),
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
   },
   {
     path: '/verify',

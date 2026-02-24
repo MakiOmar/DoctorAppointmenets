@@ -10,14 +10,14 @@ const __dirname = path.dirname(__filename);
 // Environment configurations
 const environments = {
   local: {
-    VITE_API_TARGET: 'https://jalsah.app',
+    VITE_API_TARGET: 'http://localhost/shrinks',
     VITE_API_BASE_URL: '/api',
-    VITE_MAIN_SITE_URL: 'https://jalsah.app'
+    VITE_MAIN_SITE_URL: 'http://localhost/shrinks'
   },
   staging: {
-    VITE_API_TARGET: 'https://jalsah.app',
+    VITE_API_TARGET: 'http://localhost/shrinks',
     VITE_API_BASE_URL: '/api',
-    VITE_MAIN_SITE_URL: 'https://jalsah.app'
+    VITE_MAIN_SITE_URL: 'http://localhost/shrinks'
   }
 };
 
@@ -62,7 +62,7 @@ function showCurrentEnv() {
     }
   } else {
     console.log('🏠 Current Environment: LOCAL DEVELOPMENT (default)');
-    console.log('🎯 API Target: https://jalsah.app');
+    console.log('🎯 API Target: http://localhost/shrinks');
   }
 }
 
@@ -105,7 +105,7 @@ function main() {
         console.log('3. Clear browser cache');
         console.log('4. Test login to verify environment');
         console.log('\n🎯 Expected console output:');
-        console.log('Proxy target: https://jalsah.app');
+        console.log('Proxy target: http://localhost/shrinks');
       }
       break;
       
@@ -118,7 +118,7 @@ function main() {
         console.log('3. Clear browser cache');
         console.log('4. Test login to verify environment');
         console.log('\n🎯 Expected console output:');
-        console.log('Proxy target: https://jalsah.app');
+        console.log('Proxy target: http://localhost/shrinks');
       }
       break;
       

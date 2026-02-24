@@ -149,6 +149,8 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/profile/?$', 'index.php?ai_endpoint=profile', 'top' );
 		add_rewrite_rule( '^api/ai/auth/([^/]+)/?$', 'index.php?ai_endpoint=auth/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/users/search/?$', 'index.php?ai_endpoint=users/search', 'top' );
+		add_rewrite_rule( '^api/ai/manual-booking/([^/]+)/?$', 'index.php?ai_endpoint=manual-booking/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/manual-booking/?$', 'index.php?ai_endpoint=manual-booking', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
 		// Add rewrite rule for v2 endpoints
@@ -863,6 +865,9 @@ class SNKS_AI_Integration {
 			case 'switch-user':
 				$this->handle_switch_user_endpoint( $method );
 				break;
+			case 'manual-booking':
+				$this->handle_manual_booking_endpoint( $method, $path );
+				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
 		}
@@ -1202,6 +1207,23 @@ class SNKS_AI_Integration {
 	 * AI Login
 	 */
 	private function ai_login() {
+		// #region agent log
+		$debug_log = function ( $message, $data = array(), $hypothesis_id = 'H1' ) {
+			$payload = array_merge(
+				array(
+					'sessionId'     => '9aa8ea',
+					'timestamp'      => round( microtime( true ) * 1000 ),
+					'location'       => 'ai_login',
+					'message'        => $message,
+					'hypothesisId'   => $hypothesis_id,
+					'runId'          => 'login',
+				),
+				$data
+			);
+			$path = dirname( __DIR__ ) . '/debug-9aa8ea.log';
+			@file_put_contents( $path, wp_json_encode( $payload ) . "\n", FILE_APPEND | LOCK_EX );
+		};
+		// #endregion
 
 		// Verify nonce for security
 		if ( ! $this->verify_api_nonce( 'nonce', 'ai_login_nonce' ) ) {
@@ -1219,6 +1241,15 @@ class SNKS_AI_Integration {
 		// Get therapist registration settings to check email requirement
 		$registration_settings = snks_get_therapist_registration_settings();
 
+		// #region agent log
+		$debug_log( 'Login request', array(
+			'request_keys'        => is_array( $data ) ? array_keys( $data ) : array(),
+			'require_email'       => ! empty( $registration_settings['require_email'] ),
+			'has_email_key'       => is_array( $data ) && isset( $data['email'] ),
+			'has_whatsapp_key'    => is_array( $data ) && isset( $data['whatsapp'] ),
+		), 'H1' );
+		// #endregion
+
 		$user         = null;
 		$login_method = '';
 
@@ -1230,17 +1261,28 @@ class SNKS_AI_Integration {
 			}
 			$user         = get_user_by( 'email', sanitize_email( $data['email'] ) );
 			$login_method = 'email';
+			// #region agent log
+			if ( ! $user && ! empty( $data['email'] ) ) {
+				$by_login = get_user_by( 'login', sanitize_text_field( $data['email'] ) );
+				$debug_log( 'Email lookup failed; tried username fallback', array(
+					'user_found_by_login' => (bool) $by_login,
+					'login_method'         => $login_method,
+				), 'H1' );
+			}
+			// #endregion
 		} else {
 			// WhatsApp login is used
 			if ( ! isset( $data['whatsapp'] ) ) {
 				$this->send_error( 'WhatsApp number and password required', 400 );
 			}
 
-			// Find user by WhatsApp number
+			$identifier = sanitize_text_field( $data['whatsapp'] );
+
+			// Find user by WhatsApp number first
 			$users = get_users(
 				array(
 					'meta_key'   => 'billing_whatsapp',
-					'meta_value' => sanitize_text_field( $data['whatsapp'] ),
+					'meta_value' => $identifier,
 					'number'     => 1,
 				)
 			);
@@ -1248,23 +1290,64 @@ class SNKS_AI_Integration {
 			if ( ! empty( $users ) ) {
 				$user = $users[0];
 			}
+
+			// Fallback: dashboard-created users (e.g. secretary, admin) often have no billing_whatsapp.
+			// Allow login by email or username so they can use the same form.
+			if ( ! $user && ! empty( $identifier ) ) {
+				if ( strpos( $identifier, '@' ) !== false ) {
+					$user = get_user_by( 'email', sanitize_email( $identifier ) );
+				}
+				if ( ! $user ) {
+					$user = get_user_by( 'login', $identifier );
+				}
+			}
+
 			$login_method = 'whatsapp';
 		}
 
+		// #region agent log
+		$debug_log( 'After user lookup', array(
+			'user_found'   => (bool) $user,
+			'user_id'      => $user ? $user->ID : null,
+			'login_method' => $login_method,
+		), 'H1' );
+		// #endregion
+
 		if ( ! $user ) {
+			// #region agent log
+			$debug_log( 'Error branch', array( 'error_branch' => 'user_not_found' ), 'H1' );
+			// #endregion
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 
-		if ( ! wp_check_password( $data['password'], $user->user_pass ) ) {
+		$password_ok = wp_check_password( $data['password'], $user->user_pass );
+		// #region agent log
+		$debug_log( 'Password check', array( 'password_ok' => $password_ok ), 'H2' );
+		// #endregion
 
+		if ( ! $password_ok ) {
+
+			// #region agent log
+			$debug_log( 'Error branch', array( 'error_branch' => 'password_fail' ), 'H2' );
+			// #endregion
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 
-		// Check if user is a patient (customer) or doctor (administrators use /api/ai/auth/admin-login for switch-user)
-		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager' );
+		// #region agent log
+		$debug_log( 'Before role check', array(
+			'user_roles'   => $user->roles,
+			'roles_type'   => gettype( $user->roles ),
+		), 'H3' );
+		// #endregion
+
+		// Check if user has one of the allowed roles for the AI frontend
+		// Allow: patients, doctors, clinic managers, administrators, and secretaries
+		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager', 'administrator', 'secretary' );
 		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
-
-			$this->send_error( 'Access denied. Only patients and doctors can access this platform.', 403 );
+			// #region agent log
+			$debug_log( 'Error branch', array( 'error_branch' => 'role_denied' ), 'H3' );
+			// #endregion
+			$this->send_error( 'Access denied. Only authorized users can access this platform.', 403 );
 		}
 
 		// Check if AI patient needs email verification
@@ -6605,33 +6688,44 @@ Best regards,
 					return;
 				}
 
-				// Get WhatsApp number and country code
+				// Get WhatsApp number and country code (fallback to billing_whatsapp for dashboard-created users)
 				$whatsapp_full = get_user_meta( $user_id, 'whatsapp', true );
+				if ( empty( $whatsapp_full ) ) {
+					$whatsapp_full = get_user_meta( $user_id, 'billing_whatsapp', true );
+				}
 				$whatsapp_country_code = get_user_meta( $user_id, 'whatsapp_country_code', true );
 				
 				
 				// Split WhatsApp number if it contains country code
-				$whatsapp_number = $whatsapp_full;
+				$whatsapp_number   = $whatsapp_full;
+				$detected_dial     = '';
 				if ( ! empty( $whatsapp_country_code ) && strpos( $whatsapp_full, $whatsapp_country_code ) === 0 ) {
 					$whatsapp_number = substr( $whatsapp_full, strlen( $whatsapp_country_code ) );
 				} else {
 					// Fallback: try to detect common country codes for existing users
-					$common_codes = ['+20', '+966', '+971', '+974', '+973', '+965', '+968', '+962', '+961', '+970'];
+					$common_codes = array( '+20', '+966', '+971', '+974', '+973', '+965', '+968', '+962', '+961', '+970' );
 					foreach ( $common_codes as $code ) {
 						if ( strpos( $whatsapp_full, $code ) === 0 ) {
 							$whatsapp_number = substr( $whatsapp_full, strlen( $code ) );
+							$detected_dial   = $code;
 							break;
 						}
 					}
 				}
-				
+				if ( empty( $whatsapp_country_code ) && ! empty( $detected_dial ) ) {
+					$whatsapp_country_code = $detected_dial;
+				}
+
+				$first_name = $user->first_name ?: get_user_meta( $user_id, 'billing_first_name', true );
+				$last_name  = $user->last_name ?: get_user_meta( $user_id, 'billing_last_name', true );
+
 				$profile_data = array(
-					'id' => $user->ID,
-					'first_name' => $user->first_name,
-					'last_name' => $user->last_name,
-					'email' => $user->user_email,
-					'phone' => get_user_meta( $user_id, 'phone', true ),
-					'whatsapp' => $whatsapp_number,
+					'id'                   => $user->ID,
+					'first_name'           => $first_name,
+					'last_name'            => $last_name,
+					'email'                => $user->user_email,
+					'phone'                => get_user_meta( $user_id, 'phone', true ),
+					'whatsapp'             => $whatsapp_number,
 					'whatsapp_country_code' => $whatsapp_country_code,
 					'date_of_birth' => get_user_meta( $user_id, 'date_of_birth', true ),
 					'emergency_phone' => get_user_meta( $user_id, 'emergency_phone', true ),
@@ -6648,11 +6742,13 @@ Best regards,
 				$data = json_decode( file_get_contents( 'php://input' ), true );
 				
 				if ( isset( $data['first_name'] ) ) {
-					wp_update_user( array( 'ID' => $user_id, 'first_name' => $data['first_name'] ) );
+					wp_update_user( array( 'ID' => $user_id, 'first_name' => sanitize_text_field( $data['first_name'] ) ) );
+					update_user_meta( $user_id, 'billing_first_name', sanitize_text_field( $data['first_name'] ) );
 				}
-				
+
 				if ( isset( $data['last_name'] ) ) {
-					wp_update_user( array( 'ID' => $user_id, 'last_name' => $data['last_name'] ) );
+					wp_update_user( array( 'ID' => $user_id, 'last_name' => sanitize_text_field( $data['last_name'] ) ) );
+					update_user_meta( $user_id, 'billing_last_name', sanitize_text_field( $data['last_name'] ) );
 				}
 				
 				if ( isset( $data['email'] ) ) {
@@ -6967,6 +7063,146 @@ Best regards,
 				'user'  => $user_data,
 			)
 		);
+	}
+
+	/**
+	 * Handle manual-booking API (admin/secretary only). JWT required.
+	 * Sub-actions: therapists, search-patient, available-dates, slots, therapist-countries, price, search-appointments, submit.
+	 */
+	private function handle_manual_booking_endpoint( $method, $path ) {
+		$user_id = $this->verify_jwt_token();
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			$this->send_error( 'User not found', 403 );
+			return;
+		}
+		$roles = (array) $user->roles;
+		if ( ! in_array( 'administrator', $roles, true ) && ! in_array( 'secretary', $roles, true ) ) {
+			$this->send_error( 'Forbidden', 403 );
+			return;
+		}
+		wp_set_current_user( $user_id );
+
+		$sub = isset( $path[1] ) ? $path[1] : '';
+		$input = array();
+		if ( $method === 'POST' ) {
+			$raw = file_get_contents( 'php://input' );
+			$input = json_decode( $raw, true );
+			if ( ! is_array( $input ) ) {
+				$input = array();
+			}
+		}
+
+		switch ( $sub ) {
+			case 'therapists':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$this->send_success( snks_manual_booking_data_therapists() );
+				return;
+
+			case 'search-patient':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$q = isset( $input['q'] ) ? $input['q'] : '';
+				$this->send_success( snks_manual_booking_data_search_patient( $q ) );
+				return;
+
+			case 'available-dates':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$therapist_id = isset( $_GET['therapist_id'] ) ? absint( $_GET['therapist_id'] ) : 0;
+				$this->send_success( snks_manual_booking_data_available_dates( $therapist_id ) );
+				return;
+
+			case 'slots':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$therapist_id = isset( $_GET['therapist_id'] ) ? absint( $_GET['therapist_id'] ) : 0;
+				$date = isset( $_GET['date'] ) ? sanitize_text_field( $_GET['date'] ) : '';
+				$this->send_success( snks_manual_booking_data_slots( $therapist_id, $date ) );
+				return;
+
+			case 'therapist-countries':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$therapist_id = isset( $_GET['therapist_id'] ) ? absint( $_GET['therapist_id'] ) : 0;
+				$this->send_success( snks_manual_booking_data_therapist_countries( $therapist_id ) );
+				return;
+
+			case 'price':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$therapist_id  = isset( $_GET['therapist_id'] ) ? absint( $_GET['therapist_id'] ) : 0;
+				$country_code  = isset( $_GET['country_code'] ) ? sanitize_text_field( $_GET['country_code'] ) : 'EG';
+				$period         = isset( $_GET['period'] ) ? absint( $_GET['period'] ) : 45;
+				$pricing = snks_manual_booking_data_price( $therapist_id, $country_code, $period );
+				if ( empty( $pricing ) ) {
+					$this->send_error( 'Invalid params', 400 );
+					return;
+				}
+				$this->send_success( $pricing );
+				return;
+
+			case 'search-appointments':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$q = isset( $input['q'] ) ? $input['q'] : '';
+				$this->send_success( snks_manual_booking_data_search_appointments( $q ) );
+				return;
+
+			case 'submit':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$mode = isset( $input['mode'] ) ? sanitize_text_field( $input['mode'] ) : 'new';
+				if ( $mode === 'change' ) {
+					$existing_id = isset( $input['existing_booking_id'] ) ? absint( $input['existing_booking_id'] ) : 0;
+					$new_slot_id = isset( $input['slot_id'] ) ? absint( $input['slot_id'] ) : 0;
+					$result = snks_process_admin_change_appointment( $existing_id, $new_slot_id );
+				} else {
+					$patient_id     = isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0;
+					$therapist_id   = isset( $input['therapist_id'] ) ? absint( $input['therapist_id'] ) : 0;
+					$slot_id        = isset( $input['slot_id'] ) ? absint( $input['slot_id'] ) : 0;
+					$country_code   = isset( $input['country_code'] ) ? sanitize_text_field( $input['country_code'] ) : 'EG';
+					$amount         = isset( $input['amount'] ) ? $input['amount'] : null;
+					$amount_override = ( $amount !== '' && $amount !== null && is_numeric( $amount ) && floatval( $amount ) > 0 ) ? floatval( $amount ) : null;
+					$first_name     = isset( $input['patient_first_name'] ) ? sanitize_text_field( $input['patient_first_name'] ) : '';
+					$last_name      = isset( $input['patient_last_name'] ) ? sanitize_text_field( $input['patient_last_name'] ) : '';
+					$payment_method = isset( $input['payment_method'] ) ? sanitize_text_field( $input['payment_method'] ) : '';
+					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
+					if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {
+						$order = wc_get_order( $result['order_id'] );
+						if ( $order ) {
+							$order->update_meta_data( 'admin_manual_payment_method', $payment_method );
+							$order->save();
+						}
+					}
+				}
+				if ( $result['success'] ) {
+					$this->send_success( $result );
+				} else {
+					$this->send_error( $result['message'], 400 );
+				}
+				return;
+
+			default:
+				$this->send_error( 'Endpoint not found', 404 );
+		}
 	}
 }
 

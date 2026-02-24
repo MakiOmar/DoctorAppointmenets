@@ -20,7 +20,7 @@ This guide explains how to export your local WordPress data and import it into t
 
 2. **Access the export tool** in your browser
    ```
-   https://jalsah.app/export-local-data.php
+   http://localhost/shrinks/export-local-data.php
    ```
 
 3. **Choose export type**:
@@ -135,7 +135,7 @@ This guide explains how to export your local WordPress data and import it into t
 
 ```bash
 # 1. Export from local
-# Access: https://jalsah.app/export-local-data.php
+# Access: http://localhost/shrinks/export-local-data.php
 # Download: local-data-export-2024-01-15-14-30-00.json
 
 # 2. Upload to online server
