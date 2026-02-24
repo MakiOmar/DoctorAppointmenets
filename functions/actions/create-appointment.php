@@ -104,6 +104,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					$order->update_meta_data( 'doctor_pricings', snks_doctor_pricings( $timetable->user_id, $timetable->attendance_type ) );
 					$order->save();
 					// Patient.
+					$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable->ID ) : 'www.jalsah.link';
 					if ( 'online' === $timetable->attendance_type ) {
 						$message = sprintf(
 							'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
@@ -111,7 +112,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 							localize_date_to_arabic( $timetable->day ),
 							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
 							snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) ),
-							'www.jalsah.link'
+							$meeting_link
 						);
 					} else {
 						$message = sprintf(
@@ -120,7 +121,7 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 							localize_date_to_arabic( $timetable->day ),
 							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
 							snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) ),
-							'www.jalsah.link'
+							$meeting_link
 						);
 					}
 					send_sms_via_whysms( $order->get_billing_phone(), $message );

@@ -55,6 +55,9 @@ if ( ! function_exists( 'snks_get_ai_chatgpt_prompt' ) ) {
  */
 class SNKS_AI_Integration {
 
+	/** @var SNKS_AI_Integration|null Singleton instance. */
+	private static $instance = null;
+
 	private $jwt_secret;
 	private $jwt_algorithm = 'HS256';
 
@@ -63,11 +66,27 @@ class SNKS_AI_Integration {
 	private $debug_earliest_derive = null;
 	private $debug_earliest_included = false;
 
+	/**
+	 * Get singleton instance.
+	 *
+	 * @return SNKS_AI_Integration
+	 */
+	public static function get_instance() {
+		if ( self::$instance === null ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
 	public function __construct() {
 		$this->jwt_secret    = defined( 'JWT_SECRET' ) ? JWT_SECRET : 'your-secret-key';
 		$this->jwt_algorithm = 'HS256';
 
 		$this->init_hooks();
+
+		if ( self::$instance === null ) {
+			self::$instance = $this;
+		}
 	}
 
 	/**
@@ -3479,6 +3498,19 @@ Best regards,
 	 */
 	private function get_currency_by_country( $country_code ) {
 		return $this->get_currency_code_by_country( $country_code );
+	}
+
+	/**
+	 * Get Therapist AI Price with country-based pricing (public wrapper for admin/external use).
+	 *
+	 * @param int    $therapist_id Therapist ID.
+	 * @param string $country_code Country code (optional, will detect if not provided).
+	 * @param int    $period Period in minutes (optional, defaults to 45).
+	 * @return array Price information with country-based price and currency.
+	 */
+	public static function get_therapist_price_for_country( $therapist_id, $country_code = null, $period = 45 ) {
+		$instance = self::get_instance();
+		return $instance->get_therapist_ai_price( $therapist_id, $country_code, $period );
 	}
 
 	/**

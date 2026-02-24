@@ -175,6 +175,24 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
+		__( 'Manual Booking', 'shrinks' ),
+		__( 'Manual Booking', 'shrinks' ),
+		'manage_options',
+		'jalsah-ai-manual-booking',
+		'snks_jalsah_ai_manual_booking_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Admin Bookings', 'shrinks' ),
+		__( 'Admin Bookings', 'shrinks' ),
+		'manage_options',
+		'jalsah-ai-admin-bookings',
+		'snks_jalsah_ai_admin_bookings_page'
+	);
+
+	add_submenu_page(
+		'jalsah-ai-management',
 		'General Settings',
 		'General Settings',
 		'manage_options',

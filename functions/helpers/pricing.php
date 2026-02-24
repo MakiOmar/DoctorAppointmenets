@@ -35,6 +35,26 @@ function snks_calculated_price( $user_id, $country, $period, $attendance_type = 
 }
 
 /**
+ * Get AI therapist price for country (for admin manual booking).
+ *
+ * @param int    $therapist_id Therapist ID.
+ * @param string $country_code Country code.
+ * @param int    $period Period in minutes (default 45).
+ * @return array Price info with 'price', 'original_price', 'currency', etc.
+ */
+function snks_get_ai_therapist_price( $therapist_id, $country_code, $period = 45 ) {
+	if ( class_exists( 'SNKS_AI_Integration' ) && method_exists( 'SNKS_AI_Integration', 'get_therapist_price_for_country' ) ) {
+		return SNKS_AI_Integration::get_therapist_price_for_country( $therapist_id, $country_code, $period );
+	}
+	return array(
+		'price'         => 0,
+		'original_price' => 0,
+		'currency'      => 'EGP',
+		'country_code'   => $country_code,
+	);
+}
+
+/**
  * Get country price by period
  *
  * @param string $period Period.

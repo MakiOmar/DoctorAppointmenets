@@ -378,6 +378,10 @@ require_once SNKS_DIR . 'functions/ai-integration.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
 require_once SNKS_DIR . 'functions/admin/ai-applications.php';
+require_once SNKS_DIR . 'functions/helpers/meeting-shortlink.php';
+require_once SNKS_DIR . 'functions/helpers/admin-manual-booking.php';
+require_once SNKS_DIR . 'functions/admin/manual-booking-admin.php';
+require_once SNKS_DIR . 'functions/admin/admin-bookings-dashboard.php';
 // Include bilingual migration if available (optional helper)
 if ( file_exists( SNKS_DIR . 'functions/admin/bilingual-migration.php' ) ) {
 require_once SNKS_DIR . 'functions/admin/bilingual-migration.php';
@@ -670,6 +674,12 @@ function plugin_activation_hook() {
 			}
 		}, 20 );
 	}
+
+	// Register meeting shortlink rewrite and flush rules so /j/{token} works.
+	if ( function_exists( 'snks_register_meeting_shortlink_rewrite' ) ) {
+		snks_register_meeting_shortlink_rewrite();
+	}
+	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'plugin_activation_hook' );
 

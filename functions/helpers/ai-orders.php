@@ -165,6 +165,82 @@ class SNKS_AI_Orders {
 		
 		return $order;
 	}
+
+	/**
+	 * Create admin manual order for a single slot.
+	 *
+	 * @param int    $patient_id     Patient user ID.
+	 * @param int    $slot_id        Timetable slot ID.
+	 * @param float  $session_amount Session price (original_price in EGP).
+	 * @param string $country_code   Country code for order meta.
+	 * @return WC_Order|false Order object or false on failure.
+	 */
+	public static function create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code = 'EG' ) {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return false;
+		}
+
+		$user = get_userdata( $patient_id );
+		if ( ! $user ) {
+			return false;
+		}
+
+		global $wpdb;
+		$slot = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+			$slot_id
+		) );
+		if ( ! $slot ) {
+			return false;
+		}
+
+		$product_id = SNKS_AI_Products::get_ai_session_product_id();
+		if ( ! $product_id ) {
+			return false;
+		}
+
+		$order = wc_create_order();
+		$therapist_id = (int) $slot->user_id;
+		$doctor_name  = $therapist_id && function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( $therapist_id ) : get_the_title( $therapist_id );
+
+		$item = new WC_Order_Item_Product();
+		$item->set_props( array(
+			'name'       => sprintf( 'جلسة علاج نفسي - %s - %s %s', $doctor_name, $slot->date_time, $slot->starts ),
+			'quantity'   => 1,
+			'product_id' => $product_id,
+		) );
+		$item->set_total( $session_amount );
+		$item->set_subtotal( $session_amount );
+		$item->add_meta_data( 'therapist_id', $therapist_id );
+		$item->add_meta_data( 'session_date', $slot->date_time );
+		$item->add_meta_data( 'session_time', $slot->starts );
+		$item->add_meta_data( 'session_duration', $slot->period ? $slot->period : SNKS_AI_Products::get_session_duration() );
+		$item->add_meta_data( 'is_ai_session', true );
+		$item->add_meta_data( 'slot_id', $slot_id );
+		$item->add_meta_data( '_line_total', $session_amount );
+		$item->add_meta_data( '_line_subtotal', $session_amount );
+		$order->add_item( $item );
+
+		$order->set_billing_email( $user->user_email );
+		$order->set_billing_first_name( get_user_meta( $patient_id, 'billing_first_name', true ) ?: $user->display_name );
+		$order->set_billing_last_name( get_user_meta( $patient_id, 'billing_last_name', true ) );
+		$order->set_billing_phone( get_user_meta( $patient_id, 'billing_phone', true ) );
+		$order->set_customer_id( $patient_id );
+
+		$order->update_meta_data( 'from_jalsah_ai', true );
+		$order->update_meta_data( 'ai_user_id', $patient_id );
+		$order->update_meta_data( 'ai_appointments_count', 1 );
+		$order->update_meta_data( 'ai_total_amount', $session_amount );
+		$order->update_meta_data( 'admin_manual_booking', 1 );
+		$order->update_meta_data( 'ai_access_country_code', $country_code );
+		$order->update_meta_data( '_main_price', $session_amount );
+
+		$order->calculate_totals();
+		$order->set_status( 'completed' );
+		$order->save();
+
+		return $order;
+	}
 	
 	/**
 	 * Process AI order payment
@@ -211,9 +287,66 @@ class SNKS_AI_Orders {
 	}
 	
 	/**
-	 * Book appointment slot
+	 * Book appointment slot (public for admin manual booking).
+	 *
+	 * @param int $slot_id   Timetable slot ID.
+	 * @param int $order_id  WooCommerce order ID.
+	 * @param int $patient_id Patient user ID.
+	 * @param string $settings_append Optional string to append to settings (e.g. 'admin_manual_booking:1').
+	 * @return int|false Rows affected or false.
+	 */
+	public static function book_slot_for_order( $slot_id, $order_id, $patient_id, $settings_append = '' ) {
+		global $wpdb;
+
+		$slot = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+			$slot_id
+		) );
+
+		if ( ! $slot ) {
+			return false;
+		}
+
+		$settings = 'ai_booking:completed';
+		if ( ! empty( $settings_append ) ) {
+			$settings .= ' ' . $settings_append;
+		}
+
+		$result = $wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			array(
+				'session_status' => 'open',
+				'client_id'      => $patient_id,
+				'order_id'       => $order_id,
+				'settings'       => $settings,
+			),
+			array( 'ID' => $slot_id ),
+			array( '%s', '%d', '%d', '%s' ),
+			array( '%d' )
+		);
+
+		if ( $result ) {
+			$appointment_data = array(
+				'is_ai_session' => true,
+				'order_id'      => $order_id,
+				'therapist_id'  => $slot->user_id,
+				'patient_id'    => $patient_id,
+				'slot_id'       => $slot_id,
+				'session_date'  => $slot->date_time,
+				'session_status' => 'open',
+				'settings'      => $settings,
+			);
+			do_action( 'snks_appointment_created', $slot_id, $appointment_data );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Book appointment slot (internal - used by process_ai_order_payment).
 	 */
 	private static function book_appointment_slot( $slot_id, $order_id, $patient_id ) {
+		return self::book_slot_for_order( $slot_id, $order_id, $patient_id, '' );
 		global $wpdb;
 		
 		// Get slot details before updating
@@ -258,9 +391,11 @@ class SNKS_AI_Orders {
 	}
 	
 	/**
-	 * Send AI order notifications
+	 * Send AI order notifications (email to patient and admin).
+	 *
+	 * @param int $order_id WooCommerce order ID.
 	 */
-	private static function send_ai_order_notifications( $order_id ) {
+	public static function send_ai_order_notifications( $order_id ) {
 		$order = wc_get_order( $order_id );
 		
 		if ( ! $order ) {
@@ -354,6 +489,23 @@ class SNKS_AI_Orders {
 		$subject           = 'تأكيد حجز الجلسة - منصة جلسة AI';
 		$order_total_plain = self::format_price_plain( (float) $order->get_total() );
 		$mail_headers      = array( 'Content-Type: text/html; charset=UTF-8' );
+
+		// Build meeting links for each appointment.
+		$meeting_links = array();
+		foreach ( $order->get_items() as $item ) {
+			if ( ! is_a( $item, 'WC_Order_Item_Product' ) ) {
+				continue;
+			}
+			$slot_id = absint( $item->get_meta( 'slot_id', true ) );
+			if ( ! $slot_id ) {
+				$slot_id = absint( $item->get_meta( 'appointment_id', true ) );
+			}
+			if ( $slot_id && function_exists( 'snks_get_meeting_shortlink' ) ) {
+				$meeting_links[] = snks_get_meeting_shortlink( $slot_id );
+			}
+		}
+		$meeting_link_text = ! empty( $meeting_links ) ? implode( "\n", $meeting_links ) : '';
+
 		$message = sprintf(
 			'مرحباً %s،
 
@@ -362,13 +514,15 @@ class SNKS_AI_Orders {
 رقم الطلب: %s
 إجمالي المبلغ: %s
 
-سيتم إرسال تفاصيل الجلسة قبل موعدها.
+رابط الدخول للجلسة (بدون تسجيل دخول):
+%s
 
 شكراً لك،
 فريق منصة جلسة AI',
 			$customer_name,
 			$order_id,
-			$order_total_plain
+			$order_total_plain,
+			$meeting_link_text ? $meeting_link_text : __( 'سيتم إرسال رابط الجلسة قبل موعدها.', 'shrinks' )
 		);
 		
 		wp_mail( $customer_email, $subject, self::wrap_rtl_email_html( $message ), $mail_headers );
