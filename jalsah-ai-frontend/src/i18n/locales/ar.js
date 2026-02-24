@@ -925,6 +925,61 @@ export default {
     logoutSuccess: 'تم تسجيل الخروج بنجاح'
   },
 
+  // Manual Booking (admin/secretary)
+  manualBooking: {
+    title: 'الحجز اليدوي',
+    newBooking: 'حجز جديد',
+    changeAppointment: 'تغيير موعد',
+    enterPhone: 'أدخل رقم الهاتف',
+    phoneDigits: 'أرقام فقط',
+    searchCountries: 'البحث عن دولة...',
+    searchTherapist: 'ابحث عن المعالج بالاسم أو الهاتف',
+    noMatch: 'لا توجد نتائج',
+    clear: 'مسح',
+    firstName: 'الاسم الأول',
+    lastName: 'اسم العائلة',
+    therapist: 'المعالج',
+    selectTherapist: 'اختر المعالج',
+    date: 'التاريخ',
+    selectDate: 'اختر التاريخ',
+    slot: 'الوقت',
+    selectSlot: 'اختر الوقت',
+    country: 'الدولة (السعر)',
+    selectCountry: 'اختر الدولة',
+    amount: 'المبلغ (اختياري)',
+    paymentMethod: 'طريقة الدفع',
+    paymentInstaPay: 'إنستا باي',
+    paymentWallet: 'المحفظة',
+    paymentBank: 'تحويل بنكي',
+    createBooking: 'إنشاء الحجز',
+    searchAppointment: 'البحث بالبريد أو الهاتف أو رقم الحجز',
+    searchPlaceholder: 'البريد، الهاتف أو رقم الحجز',
+    selectNewSlot: 'اختر التاريخ والوقت الجديد',
+    confirmChange: 'تأكيد التغيير',
+    noSlots: 'لا توجد أوقات متاحة',
+    validation: {
+      patientRequired: 'يرجى البحث عن المريض واختياره من القائمة',
+      firstNameRequired: 'الاسم الأول مطلوب',
+      lastNameRequired: 'اسم العائلة مطلوب',
+      therapistRequired: 'يرجى اختيار المعالج',
+      dateRequired: 'يرجى اختيار التاريخ',
+      slotRequired: 'يرجى اختيار الوقت',
+      countryRequired: 'يرجى اختيار الدولة',
+      phoneMinLength: 'رقم الهاتف يجب أن يكون 5 أرقام على الأقل',
+      amountInvalid: 'المبلغ يجب أن يكون رقماً صحيحاً'
+    },
+    messages: {
+      searchFailed: 'فشل البحث',
+      loadDatesFailed: 'فشل تحميل التواريخ أو الدول',
+      loadSlotsFailed: 'فشل تحميل الأوقات',
+      loadTherapistsFailed: 'فشل تحميل المعالجين',
+      bookingSuccess: 'تم إنشاء الحجز بنجاح',
+      bookingFailed: 'فشل إنشاء الحجز',
+      changeSuccess: 'تم تغيير الموعد بنجاح',
+      changeFailed: 'فشل تغيير الموعد'
+    }
+  },
+
   // Therapist Register
   therapistRegister: {
     title: 'تسجيل المعالج',

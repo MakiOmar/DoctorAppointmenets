@@ -936,6 +936,61 @@ export default {
     loadingPrescriptions: 'Loading prescriptions...'
   },
 
+  // Manual Booking (admin/secretary)
+  manualBooking: {
+    title: 'Manual Booking',
+    newBooking: 'New booking',
+    changeAppointment: 'Change appointment',
+    enterPhone: 'Enter the phone number',
+    phoneDigits: 'Digits only',
+    searchCountries: 'Search countries...',
+    searchTherapist: 'Search therapist by name or phone',
+    noMatch: 'No match',
+    clear: 'Clear',
+    firstName: 'First name',
+    lastName: 'Last name',
+    therapist: 'Therapist',
+    selectTherapist: 'Select therapist',
+    date: 'Date',
+    selectDate: 'Select date',
+    slot: 'Time slot',
+    selectSlot: 'Select slot',
+    country: 'Country (price)',
+    selectCountry: 'Select country',
+    amount: 'Amount (optional override)',
+    paymentMethod: 'Payment method',
+    paymentInstaPay: 'InstaPay',
+    paymentWallet: 'Wallet',
+    paymentBank: 'Bank transfer',
+    createBooking: 'Create booking',
+    searchAppointment: 'Search by email, phone or booking ID',
+    searchPlaceholder: 'Email, phone or booking ID',
+    selectNewSlot: 'Select new date and time',
+    confirmChange: 'Confirm change',
+    noSlots: 'No slots available',
+    validation: {
+      patientRequired: 'Please search and select a patient from the list',
+      firstNameRequired: 'First name is required',
+      lastNameRequired: 'Last name is required',
+      therapistRequired: 'Please select a therapist',
+      dateRequired: 'Please select a date',
+      slotRequired: 'Please select a time slot',
+      countryRequired: 'Please select a country',
+      phoneMinLength: 'Phone number must be at least 5 digits',
+      amountInvalid: 'Amount must be a valid number'
+    },
+    messages: {
+      searchFailed: 'Search failed',
+      loadDatesFailed: 'Failed to load dates or countries',
+      loadSlotsFailed: 'Failed to load slots',
+      loadTherapistsFailed: 'Failed to load therapists',
+      bookingSuccess: 'Booking created successfully',
+      bookingFailed: 'Booking failed',
+      changeSuccess: 'Appointment changed successfully',
+      changeFailed: 'Change failed'
+    }
+  },
+
   // Profile
   profile: {
     title: 'My Profile',

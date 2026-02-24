@@ -1,7 +1,7 @@
 <template>
   <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="max-w-4xl mx-auto px-4 py-8">
     <h1 class="text-2xl font-semibold text-primary-500 mb-6">
-      {{ $t('manualBooking.title', 'Manual Booking') }}
+      {{ $t('manualBooking.title') }}
     </h1>
 
     <!-- Tabs -->
@@ -12,7 +12,7 @@
         :class="activeTab === 'new' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
         @click="activeTab = 'new'"
       >
-        {{ $t('manualBooking.newBooking', 'New booking') }}
+        {{ $t('manualBooking.newBooking') }}
       </button>
       <button
         type="button"
@@ -20,7 +20,7 @@
         :class="activeTab === 'change' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
         @click="activeTab = 'change'"
       >
-        {{ $t('manualBooking.changeAppointment', 'Change appointment') }}
+        {{ $t('manualBooking.changeAppointment') }}
       </button>
     </div>
 
@@ -28,7 +28,7 @@
     <form v-if="activeTab === 'new'" class="space-y-4" @submit.prevent="submitNewBooking">
       <!-- Patient: country + phone -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.enterPhone', 'Enter the phone number') }}</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.enterPhone') }}</label>
         <div class="flex rounded-md shadow-sm">
           <div class="relative flex-1 flex">
             <button
@@ -43,7 +43,7 @@
               <input
                 v-model="patientCountrySearch"
                 type="text"
-                placeholder="Search..."
+                :placeholder="$t('manualBooking.searchCountries')"
                 class="w-full px-2 py-1 border-b text-sm"
               />
               <button
@@ -54,7 +54,7 @@
                 @click="selectPatientCountry(c); showPatientCountryDropdown = false"
               >
                 <span class="mr-2">{{ c.flag }}</span>
-                <span>{{ c.name }}</span>
+                <span>{{ $i18n.locale === 'ar' && c.name_ar ? c.name_ar : (c.name_en || c.name) }}</span>
                 <span class="text-gray-400 text-xs ml-1">{{ c.dial_code }}</span>
               </button>
             </div>
@@ -63,7 +63,8 @@
               type="text"
               inputmode="numeric"
               class="flex-1 rounded-r-md border border-gray-300 px-3 py-2"
-              :placeholder="$t('manualBooking.phoneDigits', 'Digits only')"
+              :class="{ 'border-red-500': errors?.phone }"
+              :placeholder="$t('manualBooking.phoneDigits')"
               @input="onPatientPhoneInput"
             />
           </div>
@@ -71,6 +72,7 @@
             <span v-if="patientSearchLoading" class="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full" />
           </div>
         </div>
+        <p v-if="errors?.phone" class="mt-1 text-sm text-red-600">{{ errors?.phone }}</p>
         <!-- Patient search results -->
         <div v-if="patientSearchResults.length > 0" class="mt-1 border rounded bg-white shadow-lg max-h-40 overflow-y-auto">
           <button
@@ -88,73 +90,126 @@
       <!-- First / Last name -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.firstName', 'First name') }} *</label>
-          <input v-model="patientFirstName" type="text" required class="w-full rounded border border-gray-300 px-3 py-2" />
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.firstName') }} *</label>
+          <input v-model="patientFirstName" type="text" class="w-full rounded border px-3 py-2" :class="errors?.firstName ? 'border-red-500' : 'border-gray-300'" />
+          <p v-if="errors?.firstName" class="mt-1 text-sm text-red-600">{{ errors?.firstName }}</p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.lastName', 'Last name') }} *</label>
-          <input v-model="patientLastName" type="text" required class="w-full rounded border border-gray-300 px-3 py-2" />
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.lastName') }} *</label>
+          <input v-model="patientLastName" type="text" class="w-full rounded border px-3 py-2" :class="errors?.lastName ? 'border-red-500' : 'border-gray-300'" />
+          <p v-if="errors?.lastName" class="mt-1 text-sm text-red-600">{{ errors?.lastName }}</p>
         </div>
       </div>
 
-      <!-- Therapist -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.therapist', 'Therapist') }}</label>
-        <select v-model="selectedTherapistId" class="w-full rounded border border-gray-300 px-3 py-2" @change="onTherapistChange">
-          <option value="">— {{ $t('manualBooking.selectTherapist', 'Select therapist') }} —</option>
-          <option v-for="t in therapists" :key="t.user_id" :value="t.user_id">
-            {{ t.name || t.name_en || t.user_id }}
-          </option>
-        </select>
-        <span v-if="therapistsLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
+      <!-- Therapist: searchable select (search inside dropdown, same as dashboard) -->
+      <div ref="therapistDropdownRef">
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.therapist') }}</label>
+        <div class="flex gap-2 items-stretch">
+          <div class="relative flex-1">
+            <button
+              type="button"
+              class="w-full rounded border px-3 py-2 text-left flex items-center justify-between min-h-[42px]"
+              :class="errors?.therapist ? 'border-red-500' : 'border-gray-300'"
+              @click="showTherapistDropdown = !showTherapistDropdown"
+            >
+              <span v-if="selectedTherapistDisplay" class="truncate">{{ selectedTherapistDisplay }}</span>
+              <span v-else class="text-gray-500">{{ $t('manualBooking.searchTherapist') }}</span>
+              <span class="flex items-center gap-2 shrink-0 ml-2">
+                <span v-if="therapistsLoading" class="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </button>
+            <div
+              v-if="showTherapistDropdown"
+              class="absolute z-20 mt-1 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
+            >
+              <div class="p-2 border-b border-gray-200">
+                <input
+                  v-model="therapistSearch"
+                  type="text"
+                  class="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                  :placeholder="$t('manualBooking.searchTherapist')"
+                  @click.stop
+                />
+              </div>
+              <div class="max-h-52 overflow-y-auto">
+                <button
+                  v-for="t in filteredTherapists"
+                  :key="t.user_id"
+                  type="button"
+                  class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 border-b border-gray-100 last:border-0"
+                  @click="selectTherapist(t)"
+                >
+                  {{ t.name || t.name_en || t.user_id }}<span v-if="t.phone"> — {{ t.phone }}</span>
+                </button>
+                <p v-if="filteredTherapists.length === 0" class="px-3 py-2 text-sm text-gray-500">{{ $t('manualBooking.noMatch') }}</p>
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="selectedTherapistId"
+            type="button"
+            class="rounded border border-gray-300 px-3 py-2 text-sm text-primary-600 hover:bg-gray-50 shrink-0"
+            @click="clearTherapist"
+          >
+            {{ $t('manualBooking.clear') }}
+          </button>
+        </div>
+        <p v-if="errors?.therapist" class="mt-1 text-sm text-red-600">{{ errors?.therapist }}</p>
       </div>
 
       <!-- Date -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date', 'Date') }}</label>
-        <select v-model="selectedDate" class="w-full rounded border border-gray-300 px-3 py-2" @change="onDateChange">
-          <option value="">— {{ $t('manualBooking.selectDate', 'Select date') }} —</option>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
+        <select v-model="selectedDate" class="w-full rounded border px-3 py-2" :class="errors?.date ? 'border-red-500' : 'border-gray-300'" @change="onDateChange">
+          <option value="">— {{ $t('manualBooking.selectDate') }} —</option>
           <option v-for="d in availableDates" :key="d.date" :value="d.date">{{ d.label }}</option>
         </select>
+        <p v-if="errors?.date" class="mt-1 text-sm text-red-600">{{ errors?.date }}</p>
         <span v-if="datesLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
       </div>
 
       <!-- Slot -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot', 'Time slot') }}</label>
-        <select v-model="selectedSlotId" class="w-full rounded border border-gray-300 px-3 py-2">
-          <option value="">— {{ $t('manualBooking.selectSlot', 'Select slot') }} —</option>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
+        <select v-model="selectedSlotId" class="w-full rounded border px-3 py-2" :class="errors?.slot ? 'border-red-500' : 'border-gray-300'">
+          <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
           <option v-for="s in slots" :key="s.slot_id" :value="s.slot_id">{{ s.formatted_time }}</option>
         </select>
+        <p v-if="errors?.slot" class="mt-1 text-sm text-red-600">{{ errors?.slot }}</p>
         <span v-if="slotsLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
       </div>
 
       <!-- Country (pricing) -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.country', 'Country (price)') }}</label>
-        <select v-model="selectedCountryCode" class="w-full rounded border border-gray-300 px-3 py-2">
-          <option value="">— {{ $t('manualBooking.selectCountry', 'Select country') }} —</option>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.country') }}</label>
+        <select v-model="selectedCountryCode" class="w-full rounded border px-3 py-2" :class="errors?.country ? 'border-red-500' : 'border-gray-300'">
+          <option value="">— {{ $t('manualBooking.selectCountry') }} —</option>
           <option v-for="c in therapistCountries" :key="c.code" :value="c.code">
             {{ c.name }} — {{ c.price }} {{ c.currency_symbol }}
           </option>
         </select>
+        <p v-if="errors?.country" class="mt-1 text-sm text-red-600">{{ errors?.country }}</p>
         <span v-if="countriesLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
       </div>
 
       <!-- Amount override (optional) -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.amount', 'Amount (optional override)') }}</label>
-        <input v-model="amountOverride" type="text" class="w-full rounded border border-gray-300 px-3 py-2" placeholder="" />
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.amount') }}</label>
+        <input v-model="amountOverride" type="text" class="w-full rounded border border-gray-300 px-3 py-2" />
+        <p v-if="errors?.amount" class="mt-1 text-sm text-red-600">{{ errors?.amount }}</p>
       </div>
 
       <!-- Payment method -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.paymentMethod', 'Payment method') }}</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.paymentMethod') }}</label>
         <select v-model="paymentMethod" class="w-full rounded border border-gray-300 px-3 py-2">
           <option value="">—</option>
-          <option value="InstaPay">InstaPay</option>
-          <option value="Wallet">Wallet</option>
-          <option value="Bank transfer">Bank transfer</option>
+          <option value="InstaPay">{{ $t('manualBooking.paymentInstaPay') }}</option>
+          <option value="Wallet">{{ $t('manualBooking.paymentWallet') }}</option>
+          <option value="Bank transfer">{{ $t('manualBooking.paymentBank') }}</option>
         </select>
       </div>
 
@@ -162,10 +217,10 @@
         <button
           type="submit"
           class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50"
-          :disabled="submitLoading || !patientId || !selectedTherapistId || !selectedSlotId || !selectedCountryCode || !patientFirstName.trim() || !patientLastName.trim()"
+          :disabled="submitLoading"
         >
           <span v-if="submitLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
-          {{ $t('manualBooking.createBooking', 'Create booking') }}
+          {{ $t('manualBooking.createBooking') }}
         </button>
       </div>
     </form>
@@ -173,13 +228,13 @@
     <!-- Change appointment -->
     <div v-else class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.searchAppointment', 'Search by email, phone or booking ID') }}</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.searchAppointment') }}</label>
         <div class="flex gap-2">
           <input
             v-model="changeSearchQuery"
             type="text"
             class="flex-1 rounded border border-gray-300 px-3 py-2"
-            :placeholder="$t('manualBooking.searchPlaceholder', 'Email, phone or booking ID')"
+            :placeholder="$t('manualBooking.searchPlaceholder')"
             @input="onChangeSearchInput"
           />
           <span v-if="changeSearchLoading" class="flex items-center animate-spin h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
@@ -199,19 +254,19 @@
 
       <template v-if="selectedAppointment">
         <div class="border-t pt-4 mt-4">
-          <p class="text-sm text-gray-600 mb-2">{{ $t('manualBooking.selectNewSlot', 'Select new date and time') }}</p>
+          <p class="text-sm text-gray-600 mb-2">{{ $t('manualBooking.selectNewSlot') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date', 'Date') }}</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
               <select v-model="changeSelectedDate" class="w-full rounded border border-gray-300 px-3 py-2" @change="onChangeDateChange">
-                <option value="">— {{ $t('manualBooking.selectDate', 'Select date') }} —</option>
+                <option value="">— {{ $t('manualBooking.selectDate') }} —</option>
                 <option v-for="d in changeAvailableDates" :key="d.date" :value="d.date">{{ d.label }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot', 'Time slot') }}</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
               <select v-model="changeSelectedSlotId" class="w-full rounded border border-gray-300 px-3 py-2">
-                <option value="">— {{ $t('manualBooking.selectSlot', 'Select slot') }} —</option>
+                <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
                 <option v-for="s in changeSlots" :key="s.slot_id" :value="s.slot_id">{{ s.formatted_time }}</option>
               </select>
             </div>
@@ -224,7 +279,7 @@
               @click="submitChangeAppointment"
             >
               <span v-if="changeSubmitLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
-              {{ $t('manualBooking.confirmChange', 'Confirm change') }}
+              {{ $t('manualBooking.confirmChange') }}
             </button>
           </div>
         </div>
@@ -234,12 +289,80 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'vue-toastification'
+import { useI18n } from 'vue-i18n'
 import manualBookingApi from '@/services/manualBooking'
 
 const toast = useToast()
+const { t } = useI18n()
 const activeTab = ref('new')
+
+// Validation errors (translated)
+const errors = ref({
+  phone: '',
+  firstName: '',
+  lastName: '',
+  therapist: '',
+  date: '',
+  slot: '',
+  country: '',
+  amount: ''
+})
+
+function clearErrors() {
+  errors.value = {
+    phone: '',
+    firstName: '',
+    lastName: '',
+    therapist: '',
+    date: '',
+    slot: '',
+    country: '',
+    amount: ''
+  }
+}
+
+function validateNewBooking() {
+  clearErrors()
+  let valid = true
+  if (!patientId.value) {
+    errors.value.phone = t('manualBooking.validation.patientRequired')
+    valid = false
+  }
+  if (!patientFirstName.value.trim()) {
+    errors.value.firstName = t('manualBooking.validation.firstNameRequired')
+    valid = false
+  }
+  if (!patientLastName.value.trim()) {
+    errors.value.lastName = t('manualBooking.validation.lastNameRequired')
+    valid = false
+  }
+  if (!selectedTherapistId.value) {
+    errors.value.therapist = t('manualBooking.validation.therapistRequired')
+    valid = false
+  }
+  if (!selectedDate.value) {
+    errors.value.date = t('manualBooking.validation.dateRequired')
+    valid = false
+  }
+  if (!selectedSlotId.value) {
+    errors.value.slot = t('manualBooking.validation.slotRequired')
+    valid = false
+  }
+  if (!selectedCountryCode.value) {
+    errors.value.country = t('manualBooking.validation.countryRequired')
+    valid = false
+  }
+  if (amountOverride.value && amountOverride.value.trim() !== '') {
+    const num = parseFloat(amountOverride.value)
+    if (isNaN(num) || num < 0) {
+      errors.value.amount = t('manualBooking.validation.amountInvalid')
+      valid = false
+    }
+  }
+  return valid
+}
 
 // —— New booking ——
 const patientPhoneDigits = ref('')
@@ -255,6 +378,9 @@ const patientFirstName = ref('')
 const patientLastName = ref('')
 const therapists = ref([])
 const therapistsLoading = ref(false)
+const therapistSearch = ref('')
+const showTherapistDropdown = ref(false)
+const therapistDropdownRef = ref(null)
 const selectedTherapistId = ref('')
 const availableDates = ref([])
 const datesLoading = ref(false)
@@ -283,6 +409,45 @@ const filteredPatientCountries = computed(() => {
   ).slice(0, 50)
 })
 
+const filteredTherapists = computed(() => {
+  const q = therapistSearch.value.trim().toLowerCase()
+  if (!q) {
+    return therapists.value
+  }
+  return therapists.value.filter(t => {
+    const name = (t.name || t.name_en || '').toLowerCase()
+    const phone = (t.phone || t.whatsapp || '').toString().toLowerCase()
+    return name.includes(q) || phone.includes(q)
+  })
+})
+
+const selectedTherapistDisplay = computed(() => {
+  if (!selectedTherapistId.value) return ''
+  const t = therapists.value.find(t => t.user_id === selectedTherapistId.value)
+  if (!t) return ''
+  const name = t.name || t.name_en || String(t.user_id)
+  return t.phone ? `${name} — ${t.phone}` : name
+})
+
+function selectTherapist(t) {
+  selectedTherapistId.value = t.user_id
+  showTherapistDropdown.value = false
+  therapistSearch.value = ''
+  onTherapistChange()
+}
+
+function clearTherapist() {
+  selectedTherapistId.value = ''
+  showTherapistDropdown.value = false
+  therapistSearch.value = ''
+  selectedDate.value = ''
+  selectedSlotId.value = ''
+  selectedCountryCode.value = ''
+  availableDates.value = []
+  slots.value = []
+  therapistCountries.value = []
+}
+
 function onPatientPhoneInput(e) {
   const v = (e.target?.value || '').replace(/\D/g, '')
   patientPhoneDigits.value = v
@@ -300,7 +465,7 @@ function onPatientPhoneInput(e) {
       patientSearchResults.value = Array.isArray(data) ? data : []
     } catch (err) {
       patientSearchResults.value = []
-      toast.error(err.response?.data?.error || 'Search failed')
+      toast.error(err.response?.data?.error || t('manualBooking.messages.searchFailed'))
     } finally {
       patientSearchLoading.value = false
     }
@@ -334,7 +499,7 @@ function onTherapistChange() {
     therapistCountries.value = Array.isArray(countries) ? countries : []
     if (therapistCountries.value.length) selectedCountryCode.value = therapistCountries.value[0].code
   }).catch(() => {
-    toast.error('Failed to load dates or countries')
+    toast.error(t('manualBooking.messages.loadDatesFailed'))
   }).finally(() => {
     datesLoading.value = false
     countriesLoading.value = false
@@ -347,10 +512,13 @@ function onDateChange() {
   slotsLoading.value = true
   manualBookingApi.getSlots(selectedTherapistId.value, selectedDate.value).then(data => {
     slots.value = Array.isArray(data) ? data : []
-  }).catch(() => toast.error('Failed to load slots')).finally(() => { slotsLoading.value = false })
+  }).catch(() => toast.error(t('manualBooking.messages.loadSlotsFailed'))).finally(() => { slotsLoading.value = false })
 }
 
 async function submitNewBooking() {
+  if (!validateNewBooking()) {
+    return
+  }
   const payload = {
     mode: 'new',
     patient_id: patientId.value,
@@ -361,13 +529,15 @@ async function submitNewBooking() {
     patient_last_name: patientLastName.value.trim(),
     payment_method: paymentMethod.value || ''
   }
-  if (amountOverride.value && !isNaN(parseFloat(amountOverride.value))) {
-    payload.amount = parseFloat(amountOverride.value)
+  if (amountOverride.value && amountOverride.value.trim() !== '') {
+    const num = parseFloat(amountOverride.value)
+    if (!isNaN(num) && num > 0) payload.amount = num
   }
   submitLoading.value = true
+  clearErrors()
   try {
     const result = await manualBookingApi.submit(payload)
-    toast.success(result?.message || 'Booking created. Order #' + (result?.order_id || ''))
+    toast.success(result?.message || t('manualBooking.messages.bookingSuccess') + (result?.order_id ? ' #' + result.order_id : ''))
     patientId.value = null
     patientFirstName.value = ''
     patientLastName.value = ''
@@ -382,7 +552,7 @@ async function submitNewBooking() {
     slots.value = []
     therapistCountries.value = []
   } catch (err) {
-    toast.error(err.response?.data?.error || 'Booking failed')
+    toast.error(err.response?.data?.error || t('manualBooking.messages.bookingFailed'))
   } finally {
     submitLoading.value = false
   }
@@ -412,7 +582,7 @@ function onChangeSearchInput() {
       changeSearchResults.value = Array.isArray(data) ? data : []
     }).catch(() => {
       changeSearchResults.value = []
-      toast.error('Search failed')
+      toast.error(t('manualBooking.messages.searchFailed'))
     }).finally(() => { changeSearchLoading.value = false })
   }, 400)
 }
@@ -448,7 +618,7 @@ async function submitChangeAppointment() {
       existing_booking_id: selectedAppointment.value.booking_id,
       slot_id: changeSelectedSlotId.value
     })
-    toast.success(result?.message || 'Appointment changed')
+    toast.success(result?.message || t('manualBooking.messages.changeSuccess'))
     selectedAppointment.value = null
     changeSearchQuery.value = ''
     changeSearchResults.value = []
@@ -457,19 +627,26 @@ async function submitChangeAppointment() {
     changeSlots.value = []
     changeSelectedSlotId.value = ''
   } catch (err) {
-    toast.error(err.response?.data?.error || 'Change failed')
+    toast.error(err.response?.data?.error || t('manualBooking.messages.changeFailed'))
   } finally {
     changeSubmitLoading.value = false
   }
 }
 
+function handleClickOutsideTherapist(e) {
+  if (showTherapistDropdown.value && therapistDropdownRef.value && !therapistDropdownRef.value.contains(e.target)) {
+    showTherapistDropdown.value = false
+  }
+}
+
 onMounted(async () => {
+  document.addEventListener('click', handleClickOutsideTherapist)
   therapistsLoading.value = true
   try {
     const data = await manualBookingApi.getTherapists()
     therapists.value = Array.isArray(data) ? data : []
   } catch (e) {
-    toast.error('Failed to load therapists')
+    toast.error(t('manualBooking.messages.loadTherapistsFailed'))
   } finally {
     therapistsLoading.value = false
   }
@@ -487,5 +664,9 @@ onMounted(async () => {
       { country_code: 'SA', name_en: 'Saudi Arabia', dial_code: '+966', flag: '🇸🇦' }
     ]
   }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutsideTherapist)
 })
 </script>
