@@ -191,7 +191,10 @@ function snks_jalsah_ai_manual_booking_page() {
 					<tr>
 						<th><label for="booking_date"><?php esc_html_e( 'Date', 'shrinks' ); ?> <span class="required">*</span></label></th>
 						<td>
-							<input type="date" name="booking_date" id="booking_date" required min="<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>">
+							<select name="booking_date" id="booking_date" required>
+								<option value=""><?php esc_html_e( '— Select therapist first —', 'shrinks' ); ?></option>
+							</select>
+							<span id="dates_loading" style="display:none; margin-left:6px;"><?php esc_html_e( 'Loading...', 'shrinks' ); ?></span>
 						</td>
 					</tr>
 					<tr>
@@ -411,7 +414,7 @@ function snks_jalsah_ai_manual_booking_page() {
 						$results.hide().empty();
 						$('#therapist_clear_btn').show();
 						loadCountries();
-						loadSlots();
+						loadAvailableDates();
 						updatePrice();
 					});
 					$results.append(row);
@@ -434,13 +437,43 @@ function snks_jalsah_ai_manual_booking_page() {
 			$('#therapist_results').hide().empty();
 			$(this).hide();
 			resetCountries();
-			loadSlots();
+			resetDates();
 		});
 
 		function resetCountries() {
 			var html = '<option value=""><?php echo esc_js( __( '— Select therapist first —', 'shrinks' ) ); ?></option>';
 			countrySelect.html(html);
 			$('#calculated_price').text('');
+		}
+
+		function resetDates() {
+			bookingDate.html('<option value=""><?php echo esc_js( __( '— Select therapist first —', 'shrinks' ) ); ?></option>');
+			slotSelect.html('<option value=""><?php echo esc_js( __( '— Select date and therapist first —', 'shrinks' ) ); ?></option>');
+		}
+
+		function loadAvailableDates() {
+			var tid = therapistId.val();
+			if (!tid) {
+				resetDates();
+				return;
+			}
+			$('#dates_loading').show();
+			bookingDate.html('<option value=""><?php echo esc_js( __( '— Loading dates —', 'shrinks' ) ); ?></option>');
+			slotSelect.html('<option value=""><?php echo esc_js( __( '— Select date first —', 'shrinks' ) ); ?></option>');
+			$.post(ajaxurl, {
+				action: 'snks_manual_booking_get_available_dates',
+				nonce: '<?php echo esc_js( wp_create_nonce( 'manual_booking' ) ); ?>',
+				therapist_id: tid
+			}, function(res) {
+				$('#dates_loading').hide();
+				var html = '<option value=""><?php echo esc_js( __( '— Select date —', 'shrinks' ) ); ?></option>';
+				if (res.success && res.data && res.data.length) {
+					res.data.forEach(function(o) {
+						html += '<option value="' + (o.date || '').replace(/"/g, '&quot;') + '">' + (o.label || o.date || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</option>';
+					});
+				}
+				bookingDate.html(html);
+			});
 		}
 
 		function loadCountries() {
@@ -457,7 +490,11 @@ function snks_jalsah_ai_manual_booking_page() {
 				if (res.success && res.data && res.data.length) {
 					var html = '<option value=""><?php echo esc_js( __( '— Select —', 'shrinks' ) ); ?></option>';
 					res.data.forEach(function(c) {
-						html += '<option value="' + (c.code || '').replace(/"/g, '&quot;') + '">' + (c.name || c.code || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</option>';
+						var label = (c.name || c.code || '');
+						if (c.price != null && c.price !== '') {
+							label += ' — ' + c.price + ' ' + (c.currency_symbol || '');
+						}
+						html += '<option value="' + (c.code || '').replace(/"/g, '&quot;') + '">' + label.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</option>';
 					});
 					countrySelect.html(html);
 				} else {
@@ -875,6 +912,52 @@ function snks_ajax_manual_booking_search_patient() {
 add_action( 'wp_ajax_snks_manual_booking_search_patient', 'snks_ajax_manual_booking_search_patient' );
 
 /**
+ * AJAX: Get available future dates for therapist (dates that have at least one available slot).
+ * Includes today if there are still future slots today.
+ */
+function snks_ajax_manual_booking_get_available_dates() {
+	check_ajax_referer( 'manual_booking', 'nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ) );
+	}
+
+	$therapist_id = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
+	if ( ! $therapist_id ) {
+		wp_send_json_success( array() );
+		return;
+	}
+
+	global $wpdb;
+	$table = $wpdb->prefix . 'snks_provider_timetable';
+	// Distinct dates that have at least one slot in the future (date_time > NOW()).
+	$dates = $wpdb->get_col( $wpdb->prepare(
+		"SELECT DISTINCT DATE(date_time) AS d
+		 FROM {$table}
+		 WHERE user_id = %d
+		 AND session_status = 'waiting'
+		 AND order_id = 0
+		 AND (client_id = 0 OR client_id IS NULL)
+		 AND (settings NOT LIKE '%%ai_booking:booked%%' OR settings = '' OR settings IS NULL)
+		 AND (settings NOT LIKE '%%ai_booking:in_cart%%' OR settings = '' OR settings IS NULL)
+		 AND date_time > NOW()
+		 ORDER BY d ASC
+		 LIMIT 60",
+		$therapist_id
+	) );
+
+	$today = current_time( 'Y-m-d' );
+	$result = array();
+	foreach ( (array) $dates as $d ) {
+		$label = ( $d === $today )
+			? sprintf( __( 'Today — %s', 'shrinks' ), wp_date( 'j M Y', strtotime( $d ) ) )
+			: wp_date( 'D j M Y', strtotime( $d ) );
+		$result[] = array( 'date' => $d, 'label' => $label );
+	}
+	wp_send_json_success( $result );
+}
+add_action( 'wp_ajax_snks_manual_booking_get_available_dates', 'snks_ajax_manual_booking_get_available_dates' );
+
+/**
  * AJAX: Get available slots for therapist and date.
  */
 function snks_ajax_manual_booking_get_slots() {
@@ -1018,6 +1101,14 @@ function snks_ajax_manual_booking_get_therapist_countries() {
 	} elseif ( $has_others ) {
 		$list[] = array( 'code' => 'OTHERS', 'name' => __( 'Other countries', 'shrinks' ) );
 	}
+	// Add price (45 min) and currency to each country for display in dropdown.
+	$period = 45;
+	foreach ( $list as &$item ) {
+		$pricing = snks_get_ai_therapist_price( $therapist_id, $item['code'], $period );
+		$item['price']            = isset( $pricing['original_price'] ) ? $pricing['original_price'] : 0;
+		$item['currency_symbol']  = isset( $pricing['currency_symbol'] ) ? $pricing['currency_symbol'] : ( isset( $pricing['currency'] ) ? $pricing['currency'] : 'EGP' );
+	}
+	unset( $item );
 	wp_send_json_success( $list );
 }
 add_action( 'wp_ajax_snks_manual_booking_get_therapist_countries', 'snks_ajax_manual_booking_get_therapist_countries' );
