@@ -246,7 +246,6 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 			'message' => 'Invalid session ID'
 		);
 	}
-	teamlog("Executing AI profit transfer for session_id={$session_id}" );
 	global $wpdb;
 	// Get session data
 	if ( ! $session_data ) {
@@ -326,7 +325,6 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 		'order_id' => $order_id,
 		'session_amount' => $session_amount
 	);
-	teamlog($session_data_for_transaction );
 
 	// Add transaction
 
