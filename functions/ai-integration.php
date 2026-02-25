@@ -5734,18 +5734,27 @@ Best regards,
 		$wpdb->query( 'START TRANSACTION' );
 
 		try {
-			// Make the old slot available again by clearing client_id, order_id, and settings
-			// Remove any booking-related settings to make it available for new bookings
+			// Make the old slot available again: clear booking data and reset notification/state columns.
 			$free_old_slot_result = $wpdb->update(
 				$wpdb->prefix . 'snks_provider_timetable',
 				array(
-					'client_id'      => 0,
-					'order_id'       => 0,
-					'session_status' => 'waiting',
-					'settings'       => '', // Clear settings to make slot available for booking
+					'client_id'                             => 0,
+					'order_id'                              => 0,
+					'session_status'                        => 'waiting',
+					'settings'                              => '',
+					'notification_24hr_sent'                => 0,
+					'notification_1hr_sent'                 => 0,
+					'whatsapp_new_session_sent'             => 0,
+					'whatsapp_doctor_notified'              => 0,
+					'whatsapp_rosheta_activated'            => 0,
+					'whatsapp_rosheta_booked'               => 0,
+					'whatsapp_doctor_reminded'              => 0,
+					'whatsapp_patient_now_sent'             => 0,
+					'whatsapp_appointment_changed'          => 0,
+					'whatsapp_therapist_appointment_changed' => 0,
 				),
 				array( 'ID' => $appointment_id ),
-				array( '%d', '%d', '%s', '%s' ),
+				array( '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d' ),
 				array( '%d' )
 			);
 

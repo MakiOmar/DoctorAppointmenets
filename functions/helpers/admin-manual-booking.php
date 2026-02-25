@@ -157,17 +157,27 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 	$wpdb->query( 'START TRANSACTION' );
 
 	try {
-		// Release old slot.
+		// Release old slot and reset all notification/state columns to initial state.
 		$wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			array(
-				'session_status' => 'waiting',
-				'client_id'      => 0,
-				'order_id'       => 0,
-				'settings'       => str_replace( 'admin_manual_booking:1', '', $old_slot->settings ),
+				'session_status'                      => 'waiting',
+				'client_id'                           => 0,
+				'order_id'                            => 0,
+				'settings'                            => str_replace( 'admin_manual_booking:1', '', $old_slot->settings ),
+				'notification_24hr_sent'              => 0,
+				'notification_1hr_sent'               => 0,
+				'whatsapp_new_session_sent'           => 0,
+				'whatsapp_doctor_notified'             => 0,
+				'whatsapp_rosheta_activated'          => 0,
+				'whatsapp_rosheta_booked'             => 0,
+				'whatsapp_doctor_reminded'            => 0,
+				'whatsapp_patient_now_sent'           => 0,
+				'whatsapp_appointment_changed'        => 0,
+				'whatsapp_therapist_appointment_changed' => 0,
 			),
 			array( 'ID' => $existing_booking_id ),
-			array( '%s', '%d', '%d', '%s' ),
+			array( '%s', '%d', '%d', '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d' ),
 			array( '%d' )
 		);
 
