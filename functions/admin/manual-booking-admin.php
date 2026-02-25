@@ -1260,9 +1260,8 @@ function snks_manual_booking_data_search_appointments( $q ) {
 		$by_booking = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.ID as booking_id, t.client_id as patient_id, t.user_id as therapist_id, t.date_time
 			 FROM {$timetable_table} t
-			 WHERE t.ID = %d AND t.session_status = 'open' AND t.settings LIKE %s",
-			$numeric,
-			'%admin_manual_booking%'
+			 WHERE t.ID = %d AND t.session_status = 'open' AND t.client_id > 0 AND t.order_id > 0",
+			$numeric
 		) );
 		if ( $by_booking ) {
 			$rows = $by_booking;
@@ -1293,9 +1292,10 @@ function snks_manual_booking_data_search_appointments( $q ) {
 			$rows = $wpdb->get_results( $wpdb->prepare(
 				"SELECT t.ID as booking_id, t.client_id as patient_id, t.user_id as therapist_id, t.date_time
 				 FROM {$timetable_table} t
-				 WHERE t.client_id IN ($placeholders) AND t.session_status = 'open' 
-				 AND t.settings LIKE %s ORDER BY t.date_time DESC LIMIT 20",
-				array_merge( $patient_ids, array( '%admin_manual_booking%' ) )
+				 WHERE t.client_id IN ($placeholders) AND t.session_status = 'open'
+				 AND t.client_id > 0 AND t.order_id > 0
+				 ORDER BY t.date_time DESC LIMIT 20",
+				$patient_ids
 			) );
 		}
 	}

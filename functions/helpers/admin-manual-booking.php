@@ -209,6 +209,18 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 		// Send notification with new meeting link.
 		SNKS_AI_Orders::send_ai_order_notifications( $order_id );
 
+		// Send WhatsApp appointment-change notifications and set timetable flags on the new slot.
+		$old_date = date( 'Y-m-d', strtotime( $old_slot->date_time ) );
+		$old_time = $old_slot->starts;
+		$new_date = date( 'Y-m-d', strtotime( $new_slot->date_time ) );
+		$new_time = $new_slot->starts;
+		if ( function_exists( 'snks_send_appointment_change_notification' ) ) {
+			snks_send_appointment_change_notification( $new_slot_id, $old_date, $old_time, $new_date, $new_time, $patient_id );
+		}
+		if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) ) {
+			snks_send_therapist_appointment_change_notification( $new_slot_id, $old_date, $old_time, $new_date, $new_time, $patient_id );
+		}
+
 		return array( 'success' => true, 'message' => __( 'تم تغيير الموعد بنجاح.', 'shrinks' ) );
 	} catch ( Exception $e ) {
 		$wpdb->query( 'ROLLBACK' );

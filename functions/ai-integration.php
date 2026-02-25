@@ -5795,7 +5795,7 @@ Best regards,
 				snks_send_appointment_change_notification( $new_appointment_id, $old_date, $old_time, $new_date, $new_time, $user_id );
 			}
 			
-			// Send therapist notification about appointment change (pass patient_id fallback)
+			// Send therapist notification about appointment change; use new slot ID so both flags are set on the new timetable row.
 			if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) ) {
 				// Extract old appointment details
 				$old_date = date( 'Y-m-d', strtotime( $current_appointment->date_time ) );
@@ -5805,7 +5805,7 @@ Best regards,
 				$new_date = date( 'Y-m-d', strtotime( $new_appointment->date_time ) );
 				$new_time = $new_appointment->starts;
 				
-				snks_send_therapist_appointment_change_notification( $appointment_id, $old_date, $old_time, $new_date, $new_time, $user_id );
+				snks_send_therapist_appointment_change_notification( $new_appointment_id, $old_date, $old_time, $new_date, $new_time, $user_id );
 			}
 
 			$this->send_success(
