@@ -249,14 +249,14 @@
           <span class="animate-spin inline-block h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
           <p class="mt-2">{{ $t('common.loading') }}</p>
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200">
+        <table v-else class="min-w-full divide-y divide-gray-200 table-fixed">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableMeetingLink') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[180px] max-w-[180px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.actions') }}</th>
             </tr>
@@ -295,13 +295,13 @@
                   </button>
                 </span>
               </td>
-              <td class="px-3 py-2 text-sm max-w-[200px]">
-                <span class="inline-flex items-center gap-1 truncate">
-                  <span class="truncate">{{ row.meeting_link || '—' }}</span>
+              <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 180px;">
+                <div class="flex items-center gap-1 min-w-0">
+                  <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
                   <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
-                </span>
+                </div>
               </td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center gap-1">
@@ -750,7 +750,7 @@ function goToChangeBooking(row) {
     therapist_name: row.therapist_name,
     date_time: row.date_time
   }
-  changeSearchQuery.value = ''
+  changeSearchQuery.value = String(row.session_id)
   changeSearchResults.value = []
   changeSelectedDate.value = ''
   changeSelectedSlotId.value = ''
