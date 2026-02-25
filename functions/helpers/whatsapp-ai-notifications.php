@@ -290,22 +290,22 @@ function snks_get_therapist_name( $therapist_id ) {
  */
 function snks_send_new_session_notification( $session_id ) {
 	global $wpdb;
-	
+
 	$session = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
 			$session_id
 		)
 	);
-	
+
 	if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
 		return false;
 	}
-	
+
 	// Detect admin manual booking sessions (created via manual booking flow).
 	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
-	
-	// For admin manual bookings, log the notification instead of sending WhatsApp (always, before any other checks).
+
+	// For admin manual bookings, log the notification instead of sending WhatsApp (always, before any checks).
 	if ( $is_manual_booking ) {
 		if ( $session->whatsapp_new_session_sent ) {
 			return true;
@@ -317,6 +317,7 @@ function snks_send_new_session_notification( $session_id ) {
 		$date           = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
 		$time           = gmdate( 'h:i a', strtotime( $session->date_time ) );
 		$manual_template = get_option( 'snks_template_manual_booking', '' );
+		$meeting_link    = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '';
 		$log_payload     = array(
 			'context'       => 'manual_booking_new_session',
 			'session_id'    => $session_id,
@@ -327,13 +328,11 @@ function snks_send_new_session_notification( $session_id ) {
 			'day'           => $day_name,
 			'date'          => $date,
 			'time'          => $time,
+			'meeting_link'  => $meeting_link,
 			'template_used' => $manual_template ? $manual_template : ( isset( $settings['template_new_session'] ) ? $settings['template_new_session'] : 'new_session' ),
 		);
-		if ( function_exists( 'teamlog' ) ) {
-			teamlog( $log_payload );
-		} else {
-			error_log( 'Jalsah manual booking WhatsApp (patient): ' . wp_json_encode( $log_payload ) );
-		}
+		// Always log manual booking WhatsApp notifications to PHP error_log (no real WhatsApp sent).
+		error_log( 'Jalsah manual booking WhatsApp (patient): ' . wp_json_encode( $log_payload ) );
 		$wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			array( 'whatsapp_new_session_sent' => 1 ),
@@ -403,22 +402,22 @@ function snks_send_new_session_notification( $session_id ) {
  */
 function snks_send_doctor_new_booking_notification( $session_id ) {
 	global $wpdb;
-	
+
 	$session = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
 			$session_id
 		)
 	);
-	
+
 	if ( ! $session || ! snks_is_ai_session( $session_id ) ) {
 		return false;
 	}
-	
+
 	// Detect admin manual booking sessions (created via manual booking flow).
 	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
-	
-	// For admin manual bookings, log the notification instead of sending WhatsApp (always, before any other checks).
+
+	// For admin manual bookings, log the notification instead of sending WhatsApp (always, before any checks).
 	if ( $is_manual_booking ) {
 		if ( $session->whatsapp_doctor_notified ) {
 			return true;
@@ -432,6 +431,7 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 		$date            = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
 		$time            = gmdate( 'h:i a', strtotime( $session->date_time ) );
 		$manual_template = get_option( 'snks_template_manual_booking', '' );
+		$meeting_link    = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '';
 		$log_payload     = array(
 			'context'       => 'manual_booking_doctor_new',
 			'session_id'    => $session_id,
@@ -442,13 +442,11 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 			'day'           => $day_name,
 			'date'          => $date,
 			'time'          => $time,
+			'meeting_link'  => $meeting_link,
 			'template_used' => $manual_template ? $manual_template : ( isset( $settings['template_doctor_new'] ) ? $settings['template_doctor_new'] : 'doctor_new' ),
 		);
-		if ( function_exists( 'teamlog' ) ) {
-			teamlog( $log_payload );
-		} else {
-			error_log( 'Jalsah manual booking WhatsApp (doctor): ' . wp_json_encode( $log_payload ) );
-		}
+		// Always log manual booking WhatsApp notifications to PHP error_log (no real WhatsApp sent).
+		error_log( 'Jalsah manual booking WhatsApp (doctor): ' . wp_json_encode( $log_payload ) );
 		$wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
 			array( 'whatsapp_doctor_notified' => 1 ),
@@ -682,10 +680,10 @@ function snks_handle_ai_appointment_notifications( $slot_id, $appointment_data )
 	if ( empty( $appointment_data['is_ai_session'] ) ) {
 		return;
 	}
-	
+
 	// Send patient notification
 	snks_send_new_session_notification( $slot_id );
-	
+
 	// Send doctor notification
 	snks_send_doctor_new_booking_notification( $slot_id );
 }

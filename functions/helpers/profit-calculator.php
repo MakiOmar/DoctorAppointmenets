@@ -38,13 +38,6 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 		
 		// If individual settings have valid values (greater than 0), use them
 		if ( $first_percentage > 0 && $subsequent_percentage > 0 ) {
-			error_log( sprintf(
-				'AI-PROFIT DEBUG: Using ACTIVE INDIVIDUAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f, is_active=%d',
-				$therapist_id,
-				$first_percentage,
-				$subsequent_percentage,
-				$individual_settings['is_active']
-			) );
 			return $individual_settings;
 		} else {
 			// Individual settings are active but missing values, use global settings
@@ -54,12 +47,6 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 					'subsequent_session_percentage' => floatval( $global_settings['default_subsequent_percentage'] ),
 			'is_active' => 1
 		);
-				error_log( sprintf(
-					'AI-PROFIT DEBUG: Using GLOBAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (individual settings active but missing values)',
-					$therapist_id,
-					$settings['first_session_percentage'],
-					$settings['subsequent_session_percentage']
-				) );
 				return $settings;
 			}
 		}
@@ -72,21 +59,8 @@ function snks_get_therapist_profit_settings( $therapist_id ) {
 			'subsequent_session_percentage' => floatval( $global_settings['default_subsequent_percentage'] ),
 			'is_active' => 1
 		);
-		error_log( sprintf(
-			'AI-PROFIT DEBUG: Using GLOBAL profit settings for therapist_id=%d: first=%0.2f, subsequent=%0.2f (individual settings %s)',
-			$therapist_id,
-			$settings['first_session_percentage'],
-			$settings['subsequent_session_percentage'],
-			$individual_settings ? 'exist but are inactive' : 'do not exist'
-		) );
 	return $settings;
 	}
-	
-	// If global settings are not configured, return error/warning (no hardcoded fallback)
-	error_log( sprintf(
-		'AI-PROFIT ERROR: No profit settings configured for therapist_id=%d. Global settings not found. Please configure global profit settings.',
-		$therapist_id
-	) );
 	
 	// Return empty array to indicate no settings available (caller should handle this)
 	return array(

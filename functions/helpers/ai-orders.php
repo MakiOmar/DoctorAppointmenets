@@ -398,7 +398,6 @@ class SNKS_AI_Orders {
 	 */
 	public static function send_ai_order_notifications( $order_id ) {
 		$order = wc_get_order( $order_id );
-		
 		if ( ! $order ) {
 			return;
 		}

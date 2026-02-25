@@ -7194,35 +7194,6 @@ Best regards,
 					}
 				}
 
-				// #region agent log
-				try {
-					$__snks_debug_payload = array(
-						'sessionId'    => 'dc83cc',
-						'runId'        => 'pre-fix-submit',
-						'hypothesisId' => 'H4',
-						'location'     => 'functions/ai-integration.php:handle_manual_booking_endpoint',
-						'message'      => 'Manual booking submit result',
-						'data'         => array(
-							'success'      => isset( $result['success'] ) ? (bool) $result['success'] : null,
-							'message'      => isset( $result['message'] ) ? (string) $result['message'] : null,
-							'orderId'      => isset( $result['order_id'] ) ? (int) $result['order_id'] : null,
-							'patientId'    => isset( $input['patient_id'] ) ? (int) $input['patient_id'] : null,
-							'therapistId'  => isset( $input['therapist_id'] ) ? (int) $input['therapist_id'] : null,
-							'slotId'       => isset( $input['slot_id'] ) ? (int) $input['slot_id'] : null,
-							'mode'         => isset( $mode ) ? $mode : null,
-						),
-						'timestamp'    => (int) round( microtime( true ) * 1000 ),
-					);
-					@file_put_contents(
-						dirname( __DIR__ ) . '/debug-dc83cc.log',
-						wp_json_encode( $__snks_debug_payload ) . "\n",
-						FILE_APPEND
-					);
-				} catch ( Exception $e ) {
-					// Swallow logging errors silently.
-				}
-				// #endregion
-
 				if ( ! empty( $result['success'] ) ) {
 					$this->send_success( $result );
 				} else {
@@ -7251,16 +7222,21 @@ add_action( 'woocommerce_order_status_changed', 'snks_process_ai_order_status_ch
 function snks_process_ai_order_payment( $order_id ) {
 	$order = wc_get_order( $order_id );
 
-	if ( $order ) {
-		// Rochtah paid booking: confirm appointment and send notifications
-		if ( class_exists( 'SNKS_AI_Orders' ) ) {
-			SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
-		}
-		$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+	if ( ! $order ) {
+		return;
+	}
+	// Admin manual bookings are processed only in snks_process_admin_manual_booking (single book_slot + notifications).
+	if ( $order->get_meta( 'admin_manual_booking' ) ) {
+		return;
+	}
+	// Rochtah paid booking: confirm appointment and send notifications
+	if ( class_exists( 'SNKS_AI_Orders' ) ) {
+		SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
+	}
+	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
 
-		if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
-			SNKS_AI_Orders::process_ai_order_payment( $order_id );
-		}
+	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+		SNKS_AI_Orders::process_ai_order_payment( $order_id );
 	}
 }
 
@@ -7268,19 +7244,23 @@ function snks_process_ai_order_payment( $order_id ) {
  * Process AI orders on status change
  */
 function snks_process_ai_order_status_change( $order_id, $old_status, $new_status ) {
-	if ( in_array( $new_status, array( 'completed', 'processing' ) ) ) {
-		$order = wc_get_order( $order_id );
-
-		if ( $order ) {
-			if ( class_exists( 'SNKS_AI_Orders' ) ) {
-				SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
-			}
-			$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-
-			if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
-				SNKS_AI_Orders::process_ai_order_payment( $order_id );
-			}
-		}
+	if ( ! in_array( $new_status, array( 'completed', 'processing' ), true ) ) {
+		return;
+	}
+	$order = wc_get_order( $order_id );
+	if ( ! $order ) {
+		return;
+	}
+	// Admin manual bookings are processed only in snks_process_admin_manual_booking.
+	if ( $order->get_meta( 'admin_manual_booking' ) ) {
+		return;
+	}
+	if ( class_exists( 'SNKS_AI_Orders' ) ) {
+		SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
+	}
+	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
+	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+		SNKS_AI_Orders::process_ai_order_payment( $order_id );
 	}
 }
 
