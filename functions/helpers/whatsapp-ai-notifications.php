@@ -302,6 +302,9 @@ function snks_send_new_session_notification( $session_id ) {
 		return false;
 	}
 	
+	// Detect admin manual booking sessions (created via manual booking flow).
+	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
+	
 	// Check if notification already sent
 	if ( $session->whatsapp_new_session_sent ) {
 		return false;
@@ -326,7 +329,39 @@ function snks_send_new_session_notification( $session_id ) {
 	$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
 	$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
 	
-	// Send WhatsApp template
+	// For admin manual bookings, log the notification instead of sending WhatsApp.
+	if ( $is_manual_booking ) {
+		$manual_template = get_option( 'snks_template_manual_booking', '' );
+		$log_payload     = array(
+			'context'        => 'manual_booking_new_session',
+			'session_id'     => $session_id,
+			'patient_id'     => $session->client_id,
+			'doctor_id'      => $session->user_id,
+			'patient_phone'  => $patient_phone,
+			'doctor_name'    => $doctor_name,
+			'day'            => $day_name,
+			'date'           => $date,
+			'time'           => $time,
+			'template_used'  => $manual_template ?: $settings['template_new_session'],
+		);
+
+		if ( function_exists( 'teamlog' ) ) {
+			teamlog( $log_payload );
+		}
+
+		// Mark as sent to avoid duplicate notifications for the same session.
+		$wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			array( 'whatsapp_new_session_sent' => 1 ),
+			array( 'ID' => $session_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return true;
+	}
+	
+	// Send WhatsApp template for non-manual AI sessions.
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
 		$settings['template_new_session'],
@@ -373,6 +408,9 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 		return false;
 	}
 	
+	// Detect admin manual booking sessions (created via manual booking flow).
+	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
+	
 	// Check if notification already sent
 	if ( $session->whatsapp_doctor_notified ) {
 		return false;
@@ -402,12 +440,44 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 	$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
 	$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
 	
-	// Send WhatsApp template
+	// For admin manual bookings, log the notification instead of sending WhatsApp.
+	if ( $is_manual_booking ) {
+		$manual_template = get_option( 'snks_template_manual_booking', '' );
+		$log_payload     = array(
+			'context'        => 'manual_booking_doctor_new',
+			'session_id'     => $session_id,
+			'patient_id'     => $session->client_id,
+			'doctor_id'      => $session->user_id,
+			'doctor_phone'   => $doctor_phone,
+			'patient_name'   => $patient_name,
+			'day'            => $day_name,
+			'date'           => $date,
+			'time'           => $time,
+			'template_used'  => $manual_template ?: $settings['template_doctor_new'],
+		);
+
+		if ( function_exists( 'teamlog' ) ) {
+			teamlog( $log_payload );
+		}
+
+		// Mark as sent to avoid duplicate notifications for the same session.
+		$wpdb->update(
+			$wpdb->prefix . 'snks_provider_timetable',
+			array( 'whatsapp_doctor_notified' => 1 ),
+			array( 'ID' => $session_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		return true;
+	}
+	
+	// Send WhatsApp template for non-manual AI sessions.
 	$result = snks_send_whatsapp_template_message(
 		$doctor_phone,
 		$settings['template_doctor_new'],
 		array( 
-			'patient' => $patient_name, 
+			'patient' => $patient_name,
 			'day' => $day_name, 
 			'date' => $date, 
 			'time' => $time 
