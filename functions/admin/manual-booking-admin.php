@@ -1376,6 +1376,113 @@ function snks_manual_booking_data_list_bookings() {
 }
 
 /**
+ * Return bookings for a given phone: if phone belongs to a therapist, return that therapist's bookings;
+ * if it belongs to a patient, return that patient's bookings. Applies to any booking type (manual or AI).
+ *
+ * @param string $phone Phone number (digits, optional country code).
+ * @return array{role: string, bookings: array} role is 'therapist'|'patient', bookings same shape as list_bookings with added 'booking_type' (manual|ai).
+ */
+function snks_manual_booking_data_bookings_by_phone( $phone ) {
+	$phone = preg_replace( '/\D/', '', sanitize_text_field( $phone ) );
+	if ( strlen( $phone ) < 5 ) {
+		return array( 'role' => '', 'bookings' => array() );
+	}
+
+	global $wpdb;
+	$timetable_table   = $wpdb->prefix . 'snks_provider_timetable';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+	$like = '%' . $wpdb->esc_like( $phone ) . '%';
+
+	// Prefer therapist: match therapist_applications.phone or .whatsapp, or user billing_phone/whatsapp for that user.
+	$therapist_id = $wpdb->get_var( $wpdb->prepare(
+		"SELECT ta.user_id FROM {$applications_table} ta
+		 WHERE ta.status = 'approved'
+		 AND ( ta.phone LIKE %s OR ta.whatsapp LIKE %s )
+		 LIMIT 1",
+		$like,
+		$like
+	) );
+	if ( ! $therapist_id ) {
+		$therapist_id = $wpdb->get_var( $wpdb->prepare(
+			"SELECT u.ID FROM {$wpdb->users} u
+			 INNER JOIN {$applications_table} ta ON ta.user_id = u.ID AND ta.status = 'approved'
+			 INNER JOIN {$wpdb->usermeta} m ON m.user_id = u.ID AND m.meta_key IN ('billing_phone','billing_whatsapp','whatsapp') AND m.meta_value LIKE %s
+			 LIMIT 1",
+			$like
+		) );
+	}
+
+	if ( $therapist_id ) {
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time, t.settings
+			 FROM {$timetable_table} t
+			 WHERE t.session_status = 'open' AND t.client_id > 0 AND t.order_id > 0 AND t.user_id = %d
+			 ORDER BY t.date_time DESC
+			 LIMIT 100",
+			$therapist_id
+		) );
+		$role = 'therapist';
+	} else {
+		$patient_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT user_id FROM {$wpdb->usermeta}
+			 WHERE meta_key IN ('billing_phone','billing_whatsapp','whatsapp') AND meta_value LIKE %s
+			 LIMIT 5",
+			$like
+		) );
+		$patient_ids = array_filter( array_map( 'absint', $patient_ids ) );
+		if ( empty( $patient_ids ) ) {
+			return array( 'role' => '', 'bookings' => array() );
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $patient_ids ), '%d' ) );
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time, t.settings
+			 FROM {$timetable_table} t
+			 WHERE t.session_status = 'open' AND t.client_id > 0 AND t.order_id > 0 AND t.client_id IN ($placeholders)
+			 ORDER BY t.date_time DESC
+			 LIMIT 100",
+			$patient_ids
+		) );
+		$role = 'patient';
+	}
+
+	if ( ! is_array( $rows ) ) {
+		return array( 'role' => $role, 'bookings' => array() );
+	}
+
+	$result = array();
+	foreach ( $rows as $r ) {
+		$order_id = (int) $r->order_id;
+		$order = $order_id ? wc_get_order( $order_id ) : null;
+		$session_price = $order ? (float) $order->get_total() : 0;
+		$payment_method = $order ? (string) $order->get_meta( 'admin_manual_payment_method' ) : '';
+		$therapist_name = $wpdb->get_var( $wpdb->prepare(
+			"SELECT name FROM {$applications_table} WHERE user_id = %d LIMIT 1",
+			(int) $r->therapist_id
+		) );
+		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
+		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
+		$patient_name  = trim( $patient_first . ' ' . $patient_last ) ?: '—';
+		$booking_type  = ( strpos( $r->settings, 'admin_manual_booking' ) !== false ) ? 'manual' : 'ai';
+
+		$result[] = array(
+			'order_id'       => $order_id,
+			'session_id'     => (int) $r->booking_id,
+			'therapist_name' => $therapist_name ?: '—',
+			'session_price'  => $session_price,
+			'meeting_link'   => $meeting_link,
+			'payment_method' => $payment_method ?: '—',
+			'patient_id'     => (int) $r->patient_id,
+			'patient_name'   => $patient_name,
+			'therapist_id'   => (int) $r->therapist_id,
+			'date_time'      => $r->date_time,
+			'booking_type'   => $booking_type,
+		);
+	}
+	return array( 'role' => $role, 'bookings' => $result );
+}
+
+/**
  * AJAX: Search appointments for change mode.
  */
 function snks_ajax_manual_booking_search_appointments() {

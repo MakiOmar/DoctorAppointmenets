@@ -30,6 +30,14 @@
       >
         {{ $t('manualBooking.manageBookings') }}
       </button>
+      <button
+        type="button"
+        class="px-4 py-2 font-medium"
+        :class="activeTab === 'searchByPhone' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
+        @click="activeTab = 'searchByPhone'"
+      >
+        {{ $t('manualBooking.searchByPhone') }}
+      </button>
     </div>
 
     <!-- New booking -->
@@ -326,6 +334,121 @@
         <p v-if="!manageBookingsLoading && manageBookings.length === 0" class="p-6 text-center text-gray-500">
           {{ $t('manualBooking.noBookings') }}
         </p>
+      </div>
+    </div>
+
+    <!-- Search by phone -->
+    <div v-else-if="activeTab === 'searchByPhone'" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.phoneNumber') }}</label>
+        <div class="flex gap-2">
+          <input
+            v-model="searchByPhoneQuery"
+            type="text"
+            inputmode="tel"
+            class="flex-1 rounded border border-gray-300 px-3 py-2"
+            :placeholder="$t('manualBooking.phonePlaceholder')"
+            @keydown.enter.prevent="runSearchByPhone"
+          />
+          <button
+            type="button"
+            class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="searchByPhoneLoading || !searchByPhoneQuery.trim()"
+            @click="runSearchByPhone"
+          >
+            <span v-if="searchByPhoneLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
+            {{ $t('manualBooking.search') }}
+          </button>
+        </div>
+        <p v-if="searchByPhoneError" class="mt-1 text-sm text-red-600">{{ searchByPhoneError }}</p>
+      </div>
+      <div v-if="searchByPhoneResult !== null" class="overflow-x-auto border rounded bg-white">
+        <p v-if="searchByPhoneResult.role" class="px-4 py-2 bg-gray-50 text-sm text-gray-600 border-b">
+          {{ searchByPhoneResult.role === 'therapist' ? $t('manualBooking.bookingsForTherapist') : $t('manualBooking.bookingsForPatient') }}
+        </p>
+        <div v-if="searchByPhoneResult.bookings.length === 0" class="p-6 text-center text-gray-500">
+          {{ $t('manualBooking.noBookingsFound') }}
+        </div>
+        <table v-else class="min-w-full divide-y divide-gray-200 table-fixed">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableType') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[180px] max-w-[180px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr v-for="row in searchByPhoneResult.bookings" :key="row.session_id" class="hover:bg-gray-50">
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ row.order_id }}</span>
+                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(String(row.order_id))">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ row.session_id }}</span>
+                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(String(row.session_id))">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span :class="row.booking_type === 'manual' ? 'text-amber-600 font-medium' : 'text-gray-700'">
+                  {{ row.booking_type === 'manual' ? $t('manualBooking.typeManual') : $t('manualBooking.typeAi') }}
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ row.therapist_name }}</span>
+                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.therapist_name)">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ formatPrice(row.session_price) }}</span>
+                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatPrice(row.session_price))">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 180px;">
+                <div class="flex items-center gap-1 min-w-0">
+                  <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
+                  <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </div>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ row.payment_method }}</span>
+                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.payment_method)">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <button
+                  type="button"
+                  class="px-2 py-1 rounded border border-primary-500 text-primary-600 text-xs hover:bg-primary-50"
+                  @click="goToChangeBooking(row)"
+                >
+                  {{ $t('manualBooking.changeBooking') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -743,6 +866,29 @@ async function submitNewBooking() {
 // —— Manage bookings ——
 const manageBookings = ref([])
 const manageBookingsLoading = ref(false)
+
+// —— Search by phone ——
+const searchByPhoneQuery = ref('')
+const searchByPhoneLoading = ref(false)
+const searchByPhoneResult = ref(null)
+const searchByPhoneError = ref('')
+
+async function runSearchByPhone() {
+  const phone = searchByPhoneQuery.value.trim()
+  if (!phone) return
+  searchByPhoneError.value = ''
+  searchByPhoneLoading.value = true
+  searchByPhoneResult.value = null
+  try {
+    const data = await manualBookingApi.getBookingsByPhone(phone)
+    searchByPhoneResult.value = { role: data?.role ?? '', bookings: Array.isArray(data?.bookings) ? data.bookings : [] }
+  } catch (err) {
+    searchByPhoneError.value = err.response?.data?.error || t('manualBooking.messages.searchFailed')
+    searchByPhoneResult.value = { role: '', bookings: [] }
+  } finally {
+    searchByPhoneLoading.value = false
+  }
+}
 
 async function loadManageBookings() {
   manageBookingsLoading.value = true

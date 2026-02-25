@@ -7181,6 +7181,15 @@ Best regards,
 				$this->send_success( snks_manual_booking_data_list_bookings() );
 				return;
 
+			case 'bookings-by-phone':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$phone = isset( $input['phone'] ) ? $input['phone'] : '';
+				$this->send_success( snks_manual_booking_data_bookings_by_phone( $phone ) );
+				return;
+
 			case 'submit':
 				if ( $method !== 'POST' ) {
 					$this->send_error( 'Method not allowed', 405 );

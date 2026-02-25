@@ -30,6 +30,9 @@ export default {
   listBookings() {
     return api.get(BASE + '/list-bookings').then(r => r.data?.data ?? r.data)
   },
+  getBookingsByPhone(phone) {
+    return api.post(BASE + '/bookings-by-phone', { phone }).then(r => r.data?.data ?? r.data)
+  },
   submit(payload) {
     return api.post(BASE + '/submit', payload).then(r => r.data?.data ?? r.data)
   }
