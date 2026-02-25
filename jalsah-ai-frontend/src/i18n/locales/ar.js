@@ -972,6 +972,7 @@ export default {
     tableOrderId: 'رقم الطلب',
     tableSessionId: 'رقم الجلسة',
     tableTherapistName: 'المعالج',
+    tablePatientName: 'المريض',
     tableSessionPrice: 'السعر',
     tableMeetingLink: 'رابط الجلسة',
     tablePaymentMethod: 'طريقة الدفع',

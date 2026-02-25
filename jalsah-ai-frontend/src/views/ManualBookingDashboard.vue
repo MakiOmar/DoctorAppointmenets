@@ -375,7 +375,7 @@
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableType') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ searchByPhoneResult.role === 'therapist' ? $t('manualBooking.tablePatientName') : $t('manualBooking.tableTherapistName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[180px] max-w-[180px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
@@ -407,8 +407,8 @@
               </td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center gap-1">
-                  <span>{{ row.therapist_name }}</span>
-                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.therapist_name)">
+                  <span>{{ searchByPhoneResult.role === 'therapist' ? row.patient_name : row.therapist_name }}</span>
+                  <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(searchByPhoneResult.role === 'therapist' ? row.patient_name : row.therapist_name)">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                 </span>

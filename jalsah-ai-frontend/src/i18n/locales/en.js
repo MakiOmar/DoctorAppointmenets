@@ -983,6 +983,7 @@ export default {
     tableOrderId: 'Order ID',
     tableSessionId: 'Session ID',
     tableTherapistName: 'Therapist',
+    tablePatientName: 'Patient',
     tableSessionPrice: 'Price',
     tableMeetingLink: 'Jitsi link',
     tablePaymentMethod: 'Payment',
