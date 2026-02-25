@@ -1005,6 +1005,9 @@ export default {
       bookingFailed: 'Booking failed',
       changeSuccess: 'Appointment changed successfully',
       changeFailed: 'Change failed'
+    },
+    successDialog: {
+      dateTime: 'Date & time'
     }
   },
 

@@ -994,6 +994,9 @@ export default {
       bookingFailed: 'فشل إنشاء الحجز',
       changeSuccess: 'تم تغيير الموعد بنجاح',
       changeFailed: 'فشل تغيير الموعد'
+    },
+    successDialog: {
+      dateTime: 'التاريخ والوقت'
     }
   },
 

@@ -418,6 +418,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
+import Swal from 'sweetalert2'
 import manualBookingApi from '@/services/manualBooking'
 
 const toast = useToast()
@@ -710,7 +711,15 @@ async function submitNewBooking() {
   clearErrors()
   try {
     const result = await manualBookingApi.submit(payload)
-    toast.success(result?.message || t('manualBooking.messages.bookingSuccess') + (result?.order_id ? ' #' + result.order_id : ''))
+    const therapistName = therapists.value.find(th => String(th.user_id) === String(selectedTherapistId.value))?.name || therapists.value.find(th => String(th.user_id) === String(selectedTherapistId.value))?.name_en || '—'
+    const selectedSlot = slots.value.find(s => String(s.slot_id) === String(selectedSlotId.value))
+    const dateTimeStr = selectedDate.value && selectedSlot?.formatted_time ? `${selectedDate.value} ${selectedSlot.formatted_time}` : (selectedDate.value || '—')
+    const bookingId = result?.order_id ?? '—'
+    await Swal.fire({
+      icon: 'success',
+      title: t('manualBooking.messages.bookingSuccess'),
+      html: `<div class="text-left"><p class="mb-2"><strong>${t('manualBooking.tableOrderId')}:</strong> #${bookingId}</p><p class="mb-2"><strong>${t('manualBooking.successDialog.dateTime')}:</strong> ${dateTimeStr}</p><p><strong>${t('manualBooking.tableTherapistName')}:</strong> ${therapistName}</p></div>`
+    })
     patientId.value = null
     patientFirstName.value = ''
     patientLastName.value = ''
@@ -863,7 +872,15 @@ async function submitChangeAppointment() {
       existing_booking_id: selectedAppointment.value.booking_id,
       slot_id: changeSelectedSlotId.value
     })
-    toast.success(result?.message || t('manualBooking.messages.changeSuccess'))
+    const therapistName = selectedAppointment.value.therapist_name || '—'
+    const newSlot = changeSlots.value.find(s => String(s.slot_id) === String(changeSelectedSlotId.value))
+    const dateTimeStr = changeSelectedDate.value && newSlot?.formatted_time ? `${changeSelectedDate.value} ${newSlot.formatted_time}` : (changeSelectedDate.value || '—')
+    const newSessionId = changeSelectedSlotId.value
+    await Swal.fire({
+      icon: 'success',
+      title: t('manualBooking.messages.changeSuccess'),
+      html: `<div class="text-left"><p class="mb-2"><strong>${t('manualBooking.tableSessionId')}:</strong> #${newSessionId}</p><p class="mb-2"><strong>${t('manualBooking.successDialog.dateTime')}:</strong> ${dateTimeStr}</p><p><strong>${t('manualBooking.tableTherapistName')}:</strong> ${therapistName}</p></div>`
+    })
     resetChangeAppointmentState()
   } catch (err) {
     toast.error(err.response?.data?.error || t('manualBooking.messages.changeFailed'))
