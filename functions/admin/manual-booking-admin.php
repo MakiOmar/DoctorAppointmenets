@@ -1324,6 +1324,54 @@ function snks_manual_booking_data_search_appointments( $q ) {
 }
 
 /**
+ * Return list of manual bookings for manage tab (order_id, session_id, therapist_name, session_price, meeting_link, payment_method).
+ *
+ * @return array List of manual booking rows.
+ */
+function snks_manual_booking_data_list_bookings() {
+	global $wpdb;
+	$timetable_table = $wpdb->prefix . 'snks_provider_timetable';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+
+	$rows = $wpdb->get_results(
+		"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time
+		 FROM {$timetable_table} t
+		 WHERE t.session_status = 'open' AND t.settings LIKE '%admin_manual_booking%' AND t.order_id > 0
+		 ORDER BY t.date_time DESC
+		 LIMIT 100"
+	);
+	if ( ! is_array( $rows ) ) {
+		return array();
+	}
+
+	$result = array();
+	foreach ( $rows as $r ) {
+		$order_id = (int) $r->order_id;
+		$order = $order_id ? wc_get_order( $order_id ) : null;
+		$session_price = $order ? (float) $order->get_total() : 0;
+		$payment_method = $order ? (string) $order->get_meta( 'admin_manual_payment_method' ) : '';
+		$therapist_name = $wpdb->get_var( $wpdb->prepare(
+			"SELECT name FROM {$applications_table} WHERE user_id = %d LIMIT 1",
+			(int) $r->therapist_id
+		) );
+		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+
+		$result[] = array(
+			'order_id'       => $order_id,
+			'session_id'     => (int) $r->booking_id,
+			'therapist_name' => $therapist_name ?: '—',
+			'session_price'  => $session_price,
+			'meeting_link'   => $meeting_link,
+			'payment_method' => $payment_method ?: '—',
+			'patient_id'     => (int) $r->patient_id,
+			'therapist_id'   => (int) $r->therapist_id,
+			'date_time'      => $r->date_time,
+		);
+	}
+	return $result;
+}
+
+/**
  * AJAX: Search appointments for change mode.
  */
 function snks_ajax_manual_booking_search_appointments() {

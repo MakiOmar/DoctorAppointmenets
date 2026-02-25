@@ -149,7 +149,7 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/profile/?$', 'index.php?ai_endpoint=profile', 'top' );
 		add_rewrite_rule( '^api/ai/auth/([^/]+)/?$', 'index.php?ai_endpoint=auth/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/users/search/?$', 'index.php?ai_endpoint=users/search', 'top' );
-		add_rewrite_rule( '^api/ai/manual-bookingmanual-booking/([^/]+)/?$', 'index.php?ai_endpoint=manual-booking/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/manual-booking/([^/]+)/?$', 'index.php?ai_endpoint=manual-booking/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/manual-booking/?$', 'index.php?ai_endpoint=manual-booking', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
@@ -7162,6 +7162,14 @@ Best regards,
 				}
 				$q = isset( $input['q'] ) ? $input['q'] : '';
 				$this->send_success( snks_manual_booking_data_search_appointments( $q ) );
+				return;
+
+			case 'list-bookings':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$this->send_success( snks_manual_booking_data_list_bookings() );
 				return;
 
 			case 'submit':

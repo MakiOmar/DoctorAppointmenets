@@ -27,6 +27,9 @@ export default {
   searchAppointments(q) {
     return api.post(BASE + '/search-appointments', { q }).then(r => r.data?.data ?? r.data)
   },
+  listBookings() {
+    return api.get(BASE + '/list-bookings').then(r => r.data?.data ?? r.data)
+  },
   submit(payload) {
     return api.post(BASE + '/submit', payload).then(r => r.data?.data ?? r.data)
   }
