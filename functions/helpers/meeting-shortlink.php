@@ -144,10 +144,26 @@ function snks_resolve_meeting_token( $token ) {
 }
 
 /**
+ * Get base URL for meeting links (WhatsApp, SMS, etc.). Uses first Frontend URL from settings when available.
+ *
+ * @return string Base URL without trailing slash.
+ */
+function snks_get_meeting_link_base() {
+	if ( function_exists( 'snks_ai_get_primary_frontend_url' ) ) {
+		$base = snks_ai_get_primary_frontend_url();
+		if ( ! empty( $base ) ) {
+			return untrailingslashit( $base );
+		}
+	}
+	return untrailingslashit( home_url() );
+}
+
+/**
  * Generate or retrieve meeting shortlink for a timetable.
+ * Uses the first Frontend URL from general settings as base when set (for WhatsApp and other notifications).
  *
  * @param int $timetable_id Timetable (slot) ID.
- * @return string Full shortlink URL.
+ * @return string Full shortlink URL (frontend /meeting/{token} when Frontend URLs is set).
  */
 function snks_get_meeting_shortlink( $timetable_id ) {
 	$timetable_id = absint( $timetable_id );
@@ -163,7 +179,7 @@ function snks_get_meeting_shortlink( $timetable_id ) {
 	// Find existing token for this timetable.
 	$token = array_search( $timetable_id, $tokens, true );
 	if ( false !== $token ) {
-		return home_url( '/meeting/' . $token );
+		return snks_get_meeting_link_base() . '/meeting/' . $token;
 	}
 
 	// Generate new token.
@@ -172,7 +188,7 @@ function snks_get_meeting_shortlink( $timetable_id ) {
 	update_option( 'snks_meeting_tokens', $tokens );
 
 	// Return frontend AI meeting URL so the link opens inside the app.
-	return home_url( '/meeting/' . $token );
+	return snks_get_meeting_link_base() . '/meeting/' . $token;
 }
 
 /**

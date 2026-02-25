@@ -1,5 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-900 flex flex-col">
+  <!-- Full viewport so Jitsi gets correct dimensions (no app header on this route) -->
+  <div class="fixed inset-0 bg-gray-900 flex flex-col z-0">
     <!-- Loading state -->
     <div
       v-if="status === 'loading'"
@@ -27,17 +28,17 @@
       </div>
     </div>
 
-    <!-- Jitsi meeting container (full viewport when ready) -->
+    <!-- Jitsi meeting container: full viewport so iframe sizes correctly -->
     <div
       v-show="status === 'ready'"
       id="meeting-guest"
-      class="w-full flex-1 min-h-0"
+      class="absolute inset-0 w-full h-full"
     ></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from 'vue-toastification'
@@ -186,8 +187,9 @@ onMounted(async () => {
     }
 
     await loadScript(JITSI_SCRIPT_URL)
-    initJitsi(roomName, displayName)
     status.value = 'ready'
+    await nextTick()
+    initJitsi(roomName, displayName)
   } catch (err) {
     status.value = 'error'
     const msg = err.response?.data?.message || err.response?.data?.code || err.message

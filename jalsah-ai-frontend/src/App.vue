@@ -1,6 +1,7 @@
 <template>
   <div id="app" class="min-h-screen bg-gray-50 font-sans" :class="{ 'pb-16': switchUserMode }">
-    <Header />
+    <!-- Hide header on full-screen meeting room so Jitsi can use the full viewport -->
+    <Header v-if="!isMeetingRoute" />
 
     <!-- Navigation Loading Overlay -->
     <div
@@ -34,8 +35,8 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import Header from '@/components/Header.vue'
@@ -47,9 +48,11 @@ export default {
   },
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const authStore = useAuthStore()
     const { switchUserMode } = storeToRefs(authStore)
     const isNavigating = ref(false)
+    const isMeetingRoute = computed(() => route.name === 'MeetingRoom')
 
     // Show loading immediately when navigation starts
     router.beforeEach((to, from, next) => {
@@ -82,7 +85,8 @@ export default {
     return {
       isNavigating,
       switchUserMode,
-      handleRevertToAdmin
+      handleRevertToAdmin,
+      isMeetingRoute
     }
   }
 }
