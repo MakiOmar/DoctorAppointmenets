@@ -943,6 +943,7 @@ export default {
     changeAppointment: 'Change appointment',
     enterPhone: 'Enter the phone number',
     phoneDigits: 'Digits only',
+    searchPatient: 'Search',
     searchCountries: 'Search countries...',
     searchTherapist: 'Search therapist by name or phone',
     noMatch: 'No match',
@@ -980,6 +981,7 @@ export default {
       amountInvalid: 'Amount must be a valid number'
     },
     messages: {
+      noPatientsFound: 'No patients found.',
       searchFailed: 'Search failed',
       loadDatesFailed: 'Failed to load dates or countries',
       loadSlotsFailed: 'Failed to load slots',

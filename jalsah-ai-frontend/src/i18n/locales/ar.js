@@ -932,6 +932,7 @@ export default {
     changeAppointment: 'تغيير موعد',
     enterPhone: 'أدخل رقم الهاتف',
     phoneDigits: 'أرقام فقط',
+    searchPatient: 'بحث',
     searchCountries: 'البحث عن دولة...',
     searchTherapist: 'ابحث عن المعالج بالاسم أو الهاتف',
     noMatch: 'لا توجد نتائج',
@@ -969,6 +970,7 @@ export default {
       amountInvalid: 'المبلغ يجب أن يكون رقماً صحيحاً'
     },
     messages: {
+      noPatientsFound: 'لم يتم العثور على مرضى.',
       searchFailed: 'فشل البحث',
       loadDatesFailed: 'فشل تحميل التواريخ أو الدول',
       loadSlotsFailed: 'فشل تحميل الأوقات',

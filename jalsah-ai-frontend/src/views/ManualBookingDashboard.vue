@@ -66,9 +66,18 @@
               :class="{ 'border-red-500': errors?.phone }"
               :placeholder="$t('manualBooking.phoneDigits')"
               @input="onPatientPhoneInput"
+              @blur="onPatientPhoneBlur"
             />
           </div>
-          <div class="ml-2 flex items-center">
+          <div class="ml-2 flex items-center gap-2">
+            <button
+              type="button"
+              class="px-3 py-2 rounded-md border border-primary-500 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="patientSearchLoading || !patientPhoneDigits.trim()"
+              @click="runPatientSearch"
+            >
+              {{ $t('manualBooking.searchPatient') || 'Search' }}
+            </button>
             <span v-if="patientSearchLoading" class="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full" />
           </div>
         </div>
@@ -295,7 +304,7 @@ import { useI18n } from 'vue-i18n'
 import manualBookingApi from '@/services/manualBooking'
 
 const toast = useToast()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const activeTab = ref('new')
 
 // Validation errors (translated)
@@ -372,7 +381,6 @@ const patientCountries = ref([])
 const selectedPatientCountryCode = ref('EG')
 const patientSearchResults = ref([])
 const patientSearchLoading = ref(false)
-const patientSearchDebounce = ref(null)
 const patientId = ref(null)
 const patientFirstName = ref('')
 const patientLastName = ref('')
@@ -448,28 +456,76 @@ function clearTherapist() {
   therapistCountries.value = []
 }
 
+// Same phone validation as registration (auth.register.phoneValidation)
+function validatePhoneNumber(phoneNumber, countryCode) {
+  const country = patientCountries.value.find(c => c.country_code === countryCode)
+  if (!country || !country.validation_pattern) {
+    return { isValid: true, error: null }
+  }
+  let cleanPhoneNumber = (phoneNumber || '').replace(/[\s\-\(\)]/g, '')
+  if (!/^\d+$/.test(cleanPhoneNumber)) {
+    return { isValid: false, error: t('auth.register.phoneValidation.invalidCharacters') }
+  }
+  if (cleanPhoneNumber.startsWith('0')) {
+    return { isValid: false, error: t('auth.register.phoneValidation.startsWithZero') }
+  }
+  const fullPhoneNumber = (country.dial_code || '') + cleanPhoneNumber
+  const pattern = new RegExp(country.validation_pattern)
+  if (!pattern.test(fullPhoneNumber)) {
+    const isArabic = locale.value === 'ar'
+    const customMessage = isArabic ? country.validation_message_ar : country.validation_message_en
+    const error = (customMessage && customMessage.trim()) ? customMessage : t('auth.register.phoneValidation.invalidFormatForCountry')
+    return { isValid: false, error }
+  }
+  return { isValid: true, error: null }
+}
+
 function onPatientPhoneInput(e) {
   const v = (e.target?.value || '').replace(/\D/g, '')
   patientPhoneDigits.value = v
-  if (patientSearchDebounce.value) clearTimeout(patientSearchDebounce.value)
-  if (v.length < 2) {
-    patientSearchResults.value = []
+  patientSearchResults.value = []
+  if (errors.value.phone) errors.value.phone = ''
+}
+
+function onPatientPhoneBlur() {
+  if (!patientPhoneDigits.value || !patientPhoneDigits.value.trim()) {
+    if (errors.value.phone) errors.value.phone = ''
     return
   }
+  const validation = validatePhoneNumber(patientPhoneDigits.value, selectedPatientCountryCode.value)
+  if (!validation.isValid) {
+    errors.value.phone = validation.error
+  } else if (errors.value.phone) {
+    errors.value.phone = ''
+  }
+}
+
+async function runPatientSearch() {
+  const digits = patientPhoneDigits.value.trim()
+  if (!digits) {
+    errors.value.phone = t('manualBooking.validation.patientRequired')
+    return
+  }
+  const validation = validatePhoneNumber(digits, selectedPatientCountryCode.value)
+  if (!validation.isValid) {
+    errors.value.phone = validation.error
+    toast.error(validation.error)
+    return
+  }
+  errors.value.phone = ''
   patientSearchLoading.value = true
-  patientSearchDebounce.value = setTimeout(async () => {
-    try {
-      const dial = selectedPatientCountry.value?.dial_code?.replace('+', '') || '20'
-      const q = dial + v
-      const data = await manualBookingApi.searchPatient(q)
-      patientSearchResults.value = Array.isArray(data) ? data : []
-    } catch (err) {
-      patientSearchResults.value = []
-      toast.error(err.response?.data?.error || t('manualBooking.messages.searchFailed'))
-    } finally {
-      patientSearchLoading.value = false
-    }
-  }, 300)
+  patientSearchResults.value = []
+  try {
+    const dial = selectedPatientCountry.value?.dial_code?.replace('+', '') || '20'
+    const q = dial + digits
+    const data = await manualBookingApi.searchPatient(q)
+    patientSearchResults.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    patientSearchResults.value = []
+    toast.error(err.response?.data?.error || t('manualBooking.messages.searchFailed'))
+  } finally {
+    patientSearchLoading.value = false
+  }
 }
 function selectPatient(p) {
   patientId.value = p.id
