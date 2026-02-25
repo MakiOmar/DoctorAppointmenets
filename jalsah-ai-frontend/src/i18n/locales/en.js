@@ -981,6 +981,9 @@ export default {
     noBookings: 'No manual bookings found.',
     copied: 'Copied',
     copyFailed: 'Copy failed',
+    currentAppointment: 'Current appointment',
+    patient: 'Patient',
+    currentDate: 'Current date & time',
     validation: {
       patientRequired: 'Please search and select a patient from the list',
       firstNameRequired: 'First name is required',

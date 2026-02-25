@@ -357,6 +357,28 @@
       </div>
 
       <template v-if="selectedAppointment">
+        <!-- Current appointment details (being edited) -->
+        <div class="border rounded bg-gray-50 p-4 mt-4">
+          <h3 class="text-sm font-medium text-gray-700 mb-2">{{ $t('manualBooking.currentAppointment') }}</h3>
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div>
+              <dt class="text-gray-500">{{ $t('manualBooking.tableSessionId') }}</dt>
+              <dd class="font-medium">{{ selectedAppointment.booking_id }}</dd>
+            </div>
+            <div>
+              <dt class="text-gray-500">{{ $t('manualBooking.patient') }}</dt>
+              <dd class="font-medium">{{ selectedAppointment.patient_name || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-gray-500">{{ $t('manualBooking.therapist') }}</dt>
+              <dd class="font-medium">{{ selectedAppointment.therapist_name || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-gray-500">{{ $t('manualBooking.currentDate') }}</dt>
+              <dd class="font-medium">{{ formatDateTime(selectedAppointment.date_time) }}</dd>
+            </div>
+          </dl>
+        </div>
         <div class="border-t pt-4 mt-4">
           <p class="text-sm text-gray-600 mb-2">{{ $t('manualBooking.selectNewSlot') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -746,7 +768,7 @@ function goToChangeBooking(row) {
     booking_id: row.session_id,
     patient_id: row.patient_id,
     therapist_id: row.therapist_id,
-    patient_name: '—',
+    patient_name: row.patient_name || '—',
     therapist_name: row.therapist_name,
     date_time: row.date_time
   }
@@ -816,6 +838,22 @@ function formatDateTime(s) {
   const d = new Date(s)
   return d.toLocaleString()
 }
+
+function resetChangeAppointmentState() {
+  if (changeSearchDebounce.value) {
+    clearTimeout(changeSearchDebounce.value)
+    changeSearchDebounce.value = null
+  }
+  selectedAppointment.value = null
+  changeSearchQuery.value = ''
+  changeSearchResults.value = []
+  changeSearchLoading.value = false
+  changeAvailableDates.value = []
+  changeSelectedDate.value = ''
+  changeSlots.value = []
+  changeSelectedSlotId.value = ''
+}
+
 async function submitChangeAppointment() {
   if (!selectedAppointment.value || !changeSelectedSlotId.value) return
   changeSubmitLoading.value = true
@@ -826,13 +864,7 @@ async function submitChangeAppointment() {
       slot_id: changeSelectedSlotId.value
     })
     toast.success(result?.message || t('manualBooking.messages.changeSuccess'))
-    selectedAppointment.value = null
-    changeSearchQuery.value = ''
-    changeSearchResults.value = []
-    changeAvailableDates.value = []
-    changeSelectedDate.value = ''
-    changeSlots.value = []
-    changeSelectedSlotId.value = ''
+    resetChangeAppointmentState()
   } catch (err) {
     toast.error(err.response?.data?.error || t('manualBooking.messages.changeFailed'))
   } finally {

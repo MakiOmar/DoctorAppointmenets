@@ -970,6 +970,9 @@ export default {
     noBookings: 'لا توجد حجوزات يدوية.',
     copied: 'تم النسخ',
     copyFailed: 'فشل النسخ',
+    currentAppointment: 'الموعد الحالي',
+    patient: 'المريض',
+    currentDate: 'التاريخ والوقت الحالي',
     validation: {
       patientRequired: 'يرجى البحث عن المريض واختياره من القائمة',
       firstNameRequired: 'الاسم الأول مطلوب',

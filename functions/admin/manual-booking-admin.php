@@ -1355,6 +1355,9 @@ function snks_manual_booking_data_list_bookings() {
 			(int) $r->therapist_id
 		) );
 		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
+		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
+		$patient_name  = trim( $patient_first . ' ' . $patient_last ) ?: '—';
 
 		$result[] = array(
 			'order_id'       => $order_id,
@@ -1364,6 +1367,7 @@ function snks_manual_booking_data_list_bookings() {
 			'meeting_link'   => $meeting_link,
 			'payment_method' => $payment_method ?: '—',
 			'patient_id'     => (int) $r->patient_id,
+			'patient_name'   => $patient_name,
 			'therapist_id'   => (int) $r->therapist_id,
 			'date_time'      => $r->date_time,
 		);
