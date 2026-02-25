@@ -3,7 +3,7 @@
  * Meeting Room Shortlink Helper
  *
  * Provides token-based shortlinks for Jitsi meeting rooms.
- * URL format: /j/{token} - accessible without login.
+ * URL format: /meeting/{token} (frontend AI) or /j/{token} (redirects to /meeting/). No login required.
  *
  * @package Shrinks
  */
@@ -33,7 +33,7 @@ function snks_add_meeting_token_query_var( $vars ) {
 add_filter( 'query_vars', 'snks_add_meeting_token_query_var' );
 
 /**
- * Handle meeting shortlink requests - render Jitsi room without login.
+ * Handle meeting shortlink requests - redirect to frontend AI meeting route.
  */
 function snks_handle_meeting_shortlink_redirect() {
 	$token = get_query_var( 'snks_meeting_token' );
@@ -59,11 +59,75 @@ function snks_handle_meeting_shortlink_redirect() {
 		wp_die( esc_html__( 'هذه الجلسة غير مؤهلة للدخول.', 'shrinks' ), esc_html__( 'خطأ', 'shrinks' ), array( 'response' => 403 ) );
 	}
 
-	// Render the meeting room page (no login required).
-	snks_render_guest_meeting_room( $timetable_id, $timetable );
+	// Redirect to frontend AI meeting route so the Jitsi room opens inside the app.
+	wp_safe_redirect( home_url( '/meeting/' . sanitize_text_field( $token ) ) );
 	exit;
 }
 add_action( 'template_redirect', 'snks_handle_meeting_shortlink_redirect' );
+
+/**
+ * Register REST route for resolving meeting token (used by frontend meeting page).
+ */
+function snks_register_meeting_by_token_rest_route() {
+	register_rest_route(
+		'jalsah-ai/v1',
+		'/meeting-by-token',
+		array(
+			'methods'             => 'GET',
+			'callback'            => 'snks_rest_meeting_by_token',
+			'permission_callback' => '__return_true',
+			'args'                => array(
+				'token' => array(
+					'required'          => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		)
+	);
+}
+add_action( 'rest_api_init', 'snks_register_meeting_by_token_rest_route' );
+
+/**
+ * REST callback: resolve token and return room details for frontend Jitsi.
+ *
+ * @param WP_REST_Request $request Request with token param.
+ * @return WP_REST_Response|WP_Error
+ */
+function snks_rest_meeting_by_token( $request ) {
+	$token = $request->get_param( 'token' );
+	$timetable_id = snks_resolve_meeting_token( $token );
+	if ( ! $timetable_id ) {
+		return new WP_Error( 'invalid_token', __( 'رابط الجلسة غير صالح أو منتهي الصلاحية.', 'shrinks' ), array( 'status' => 404 ) );
+	}
+
+	$timetable = snks_get_timetable_by( 'ID', $timetable_id );
+	if ( ! $timetable ) {
+		return new WP_Error( 'session_not_found', __( 'الجلسة غير موجودة.', 'shrinks' ), array( 'status' => 404 ) );
+	}
+
+	if ( $timetable->session_status === 'cancelled' ) {
+		return new WP_Error( 'session_cancelled', __( 'تم إلغاء هذه الجلسة.', 'shrinks' ), array( 'status' => 410 ) );
+	}
+	if ( empty( $timetable->attendance_type ) || 'online' !== $timetable->attendance_type ) {
+		return new WP_Error( 'session_not_online', __( 'هذه الجلسة غير مؤهلة للدخول.', 'shrinks' ), array( 'status' => 403 ) );
+	}
+
+	$display_name = __( 'مشارك', 'shrinks' );
+	if ( ! empty( $timetable->client_id ) ) {
+		$first = get_user_meta( $timetable->client_id, 'billing_first_name', true );
+		$last  = get_user_meta( $timetable->client_id, 'billing_last_name', true );
+		$display_name = trim( $first . ' ' . $last ) ?: $display_name;
+	}
+
+	$room_name = (int) $timetable_id . ' جلسة';
+
+	return rest_ensure_response( array(
+		'timetable_id'  => (int) $timetable_id,
+		'room_name'     => $room_name,
+		'display_name' => $display_name,
+	) );
+}
 
 /**
  * Resolve token to timetable ID.
@@ -99,7 +163,7 @@ function snks_get_meeting_shortlink( $timetable_id ) {
 	// Find existing token for this timetable.
 	$token = array_search( $timetable_id, $tokens, true );
 	if ( false !== $token ) {
-		return home_url( '/j/' . $token );
+		return home_url( '/meeting/' . $token );
 	}
 
 	// Generate new token.
@@ -107,7 +171,8 @@ function snks_get_meeting_shortlink( $timetable_id ) {
 	$tokens[ $token ] = $timetable_id;
 	update_option( 'snks_meeting_tokens', $tokens );
 
-	return home_url( '/j/' . $token );
+	// Return frontend AI meeting URL so the link opens inside the app.
+	return home_url( '/meeting/' . $token );
 }
 
 /**

@@ -145,6 +145,13 @@ const routes = [
     component: () => import('@/views/EmailVerification.vue'),
     meta: { guest: true }
   },
+  // Meeting room by token (manual booking / shortlink; no login required, works for guests and logged-in users)
+  {
+    path: '/meeting/:token',
+    name: 'MeetingRoom',
+    component: () => import('@/views/MeetingRoom.vue'),
+    meta: {}
+  },
   // Catch-all route for API endpoints that might be accessed as frontend routes
   {
     path: '/api/ai/:pathMatch(.*)*',
