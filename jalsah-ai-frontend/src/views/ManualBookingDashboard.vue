@@ -1,5 +1,5 @@
 <template>
-  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="max-w-4xl mx-auto px-4 py-8">
+  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="font-jalsah1 max-w-4xl mx-auto px-4 py-8">
     <h1 class="text-2xl font-semibold text-primary-500 mb-6">
       {{ $t('manualBooking.title') }}
     </h1>
@@ -1072,3 +1072,10 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutsideTherapist)
 })
 </script>
+
+<style scoped>
+.font-jalsah1,
+.font-jalsah1 button {
+  font-family: 'jalsah1', 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+</style>
