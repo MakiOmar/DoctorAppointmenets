@@ -366,6 +366,19 @@
         <p v-if="searchByPhoneResult.role" class="px-4 py-2 bg-gray-50 text-sm text-gray-600 border-b">
           {{ searchByPhoneResult.role === 'therapist' ? $t('manualBooking.bookingsForTherapist') : $t('manualBooking.bookingsForPatient') }}
         </p>
+        <div
+          v-if="searchByPhoneResult.role === 'therapist' && searchByPhoneResult.therapist_settings"
+          class="px-4 py-3 bg-gray-50 border-b text-xs sm:text-sm text-gray-700 space-y-1"
+        >
+          <div class="flex justify-between gap-4">
+            <span class="font-medium">{{ $t('manualBooking.blockIfBeforeNumber') }}</span>
+            <span>{{ searchByPhoneResult.therapist_settings.block_if_before_number || '—' }}</span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span class="font-medium">{{ $t('manualBooking.formDaysCount') }}</span>
+            <span>{{ searchByPhoneResult.therapist_settings.form_days_count || '—' }}</span>
+          </div>
+        </div>
         <div v-if="searchByPhoneResult.bookings.length === 0" class="p-6 text-center text-gray-500">
           {{ $t('manualBooking.noBookingsFound') }}
         </div>
@@ -881,7 +894,11 @@ async function runSearchByPhone() {
   searchByPhoneResult.value = null
   try {
     const data = await manualBookingApi.getBookingsByPhone(phone)
-    searchByPhoneResult.value = { role: data?.role ?? '', bookings: Array.isArray(data?.bookings) ? data.bookings : [] }
+    searchByPhoneResult.value = {
+      role: data?.role ?? '',
+      bookings: Array.isArray(data?.bookings) ? data.bookings : [],
+      therapist_settings: data?.therapist_settings || null
+    }
   } catch (err) {
     searchByPhoneError.value = err.response?.data?.error || t('manualBooking.messages.searchFailed')
     searchByPhoneResult.value = { role: '', bookings: [] }

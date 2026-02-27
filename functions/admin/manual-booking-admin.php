@@ -1380,7 +1380,7 @@ function snks_manual_booking_data_list_bookings() {
  * if it belongs to a patient, return that patient's bookings. Applies to any booking type (manual or AI).
  *
  * @param string $phone Phone number (digits, optional country code).
- * @return array{role: string, bookings: array} role is 'therapist'|'patient', bookings same shape as list_bookings with added 'booking_type' (manual|ai).
+ * @return array{role: string, bookings: array, therapist_settings?: array} role is 'therapist'|'patient', bookings same shape as list_bookings with added 'booking_type' (manual|ai). When role is 'therapist', therapist_settings contains selected doctor settings.
  */
 function snks_manual_booking_data_bookings_by_phone( $phone ) {
 	$phone = preg_replace( '/\D/', '', sanitize_text_field( $phone ) );
@@ -1412,7 +1412,16 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 		) );
 	}
 
+	$therapist_settings = array();
 	if ( $therapist_id ) {
+		if ( function_exists( 'snks_doctor_settings' ) ) {
+			$doctor_settings   = snks_doctor_settings( $therapist_id );
+			$therapist_settings = array(
+				'block_if_before_number' => isset( $doctor_settings['block_if_before_number'] ) ? $doctor_settings['block_if_before_number'] : '',
+				'form_days_count'        => isset( $doctor_settings['form_days_count'] ) ? $doctor_settings['form_days_count'] : '',
+			);
+		}
+
 		$rows = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time, t.settings
 			 FROM {$timetable_table} t
@@ -1446,7 +1455,11 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 	}
 
 	if ( ! is_array( $rows ) ) {
-		return array( 'role' => $role, 'bookings' => array() );
+		return array(
+			'role'              => $role,
+			'bookings'          => array(),
+			'therapist_settings' => $therapist_settings,
+		);
 	}
 
 	$result = array();
@@ -1479,7 +1492,11 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 			'booking_type'   => $booking_type,
 		);
 	}
-	return array( 'role' => $role, 'bookings' => $result );
+	return array(
+		'role'              => $role,
+		'bookings'          => $result,
+		'therapist_settings' => $therapist_settings,
+	);
 }
 
 /**
