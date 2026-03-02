@@ -372,7 +372,7 @@
         >
           <div class="flex justify-between gap-4">
             <span class="font-medium">{{ $t('manualBooking.blockIfBeforeNumber') }}</span>
-            <span>{{ searchByPhoneResult.therapist_settings.block_if_before_number || '—' }}</span>
+            <span>{{ formatBlockIfBefore(searchByPhoneResult.therapist_settings) }}</span>
           </div>
           <div class="flex justify-between gap-4">
             <span class="font-medium">{{ $t('manualBooking.formDaysCount') }}</span>
@@ -928,6 +928,15 @@ function copyCell(text) {
   }).catch(() => {
     toast.error(t('manualBooking.copyFailed') || 'Copy failed')
   })
+}
+
+function formatBlockIfBefore(settings) {
+  if (!settings) return '—'
+  const num = settings.block_if_before_number
+  const unit = (settings.block_if_before_unit || '').toLowerCase()
+  if (!num && !unit) return '—'
+  const label = unit === 'day' ? t('manualBooking.unitDay') : (unit === 'hour' ? t('manualBooking.unitHour') : unit)
+  return [num, label].filter(Boolean).join(' ')
 }
 
 function formatPrice(price) {

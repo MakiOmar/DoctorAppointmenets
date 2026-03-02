@@ -1415,9 +1415,10 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 	$therapist_settings = array();
 	if ( $therapist_id ) {
 		if ( function_exists( 'snks_doctor_settings' ) ) {
-			$doctor_settings   = snks_doctor_settings( $therapist_id );
+			$doctor_settings    = snks_doctor_settings( $therapist_id );
 			$therapist_settings = array(
 				'block_if_before_number' => isset( $doctor_settings['block_if_before_number'] ) ? $doctor_settings['block_if_before_number'] : '',
+				'block_if_before_unit'   => isset( $doctor_settings['block_if_before_unit'] ) ? $doctor_settings['block_if_before_unit'] : '',
 				'form_days_count'        => isset( $doctor_settings['form_days_count'] ) ? $doctor_settings['form_days_count'] : '',
 			);
 		}
