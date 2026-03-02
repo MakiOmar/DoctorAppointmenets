@@ -839,7 +839,8 @@ function get_bank_list() {
 	);
 }
 /**
- * Create or update a custom log file called 'team-log.log' in WordPress.
+ * Create or update a custom log file on a daily basis.
+ * Logs are written to wp-content/team-log-YYYY-MM-DD.log (one file per day).
  *
  * @param string $message The message to be logged.
  */
@@ -855,8 +856,9 @@ function teamlog( $message ) {
 		WP_Filesystem();
 	}
 
-	// Set the log file path inside the wp-content directory.
-	$log_file_path = WP_CONTENT_DIR . '/team-log.log';
+	// Daily log file: team-log-YYYY-MM-DD.log
+	$date_suffix   = current_time( 'Y-m-d' );
+	$log_file_path = WP_CONTENT_DIR . '/team-log-' . $date_suffix . '.log';
 
 	// Format the log entry with a timestamp.
 	$log_entry = '[' . current_time( 'Y-m-d H:i:s' ) . '] ' . print_r( $message, true ) . PHP_EOL;

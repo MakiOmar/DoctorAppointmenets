@@ -897,6 +897,27 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = fal
 								'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
 							);
 
+							// Log closed slots generated from off_days for debugging timetable status issues.
+							if ( function_exists( 'teamlog' ) && 'closed' === $base['session_status'] ) {
+								teamlog(
+									array(
+										'context'      => 'timetable_status_debug',
+										'event'        => 'generate_closed_slot',
+										'source'       => 'snks_generate_timetable',
+										'user_id'      => $user_id,
+										'date'         => $date,
+										'day'          => $day,
+										'date_time'    => $formatted_date_time,
+										'base_hour'    => $details['appointment_hour'],
+										'starts'       => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
+										'ends'         => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
+										'period'       => $expected_hour['min'],
+										'attendance'   => $details['appointment_attendance_type'],
+										'off_days'     => $off_days,
+									)
+								);
+							}
+
 							if ( 'both' !== $details['appointment_attendance_type'] ) {
 								$data[ sanitize_text_field( $day ) ][] = $base;
 							} else {
@@ -1148,6 +1169,37 @@ function snks_get_off_days( $user_id = false ) {
 	$off_days = str_replace( ' ', '', $off_days );
 	return explode( ',', $off_days );
 }
+
+/**
+ * Log changes to off_days user meta for debugging timetable/off-days issues.
+ *
+ * This helps track when a therapist's off days are modified, which can explain
+ * why future slots were generated as closed or became available again.
+ */
+add_action(
+	'updated_user_meta',
+	function ( $meta_id, $object_id, $meta_key, $_meta_value ) {
+		if ( 'off_days' !== $meta_key || ! function_exists( 'teamlog' ) ) {
+			return;
+		}
+
+		$raw_value = get_user_meta( $object_id, 'off_days', true );
+
+		teamlog(
+			array(
+				'context'   => 'timetable_status_debug',
+				'event'     => 'off_days_updated',
+				'source'    => 'updated_user_meta',
+				'user_id'   => $object_id,
+				'meta_id'   => $meta_id,
+				'meta_key'  => $meta_key,
+				'off_days'  => $raw_value,
+			)
+		);
+	},
+	10,
+	4
+);
 
 /**
  * Render conflicts

@@ -318,6 +318,26 @@ function snks_close_others( $booked_session ) {
 				$starts
 			)
 		);
+
+		// Log closing other slots for 30-minute booking.
+		if ( function_exists( 'teamlog' ) ) {
+			teamlog(
+				array(
+					'context'       => 'timetable_status_debug',
+					'event'         => 'close_others',
+					'source'        => 'snks_close_others',
+					'period'        => (int) $period,
+					'user_id'       => isset( $booked_session->user_id ) ? $booked_session->user_id : null,
+					'booked_id'     => isset( $booked_session->ID ) ? $booked_session->ID : null,
+					'date_time'     => $date_time,
+					'base_hour'     => $base_hour,
+					'starts'        => $starts,
+					'ends'          => $ends,
+					'rows_affected' => $wpdb->rows_affected,
+					'mode'          => '30_minutes',
+				)
+			);
+		}
 	} else {
 		// Handle 45 or 60-minute booking.
 		$wpdb->query(
@@ -332,6 +352,26 @@ function snks_close_others( $booked_session ) {
 				$base_hour
 			)
 		);
+
+		// Log closing other slots for 45/60-minute booking.
+		if ( function_exists( 'teamlog' ) ) {
+			teamlog(
+				array(
+					'context'       => 'timetable_status_debug',
+					'event'         => 'close_others',
+					'source'        => 'snks_close_others',
+					'period'        => (int) $period,
+					'user_id'       => isset( $booked_session->user_id ) ? $booked_session->user_id : null,
+					'booked_id'     => isset( $booked_session->ID ) ? $booked_session->ID : null,
+					'date_time'     => $date_time,
+					'base_hour'     => $base_hour,
+					'starts'        => $starts,
+					'ends'          => $ends,
+					'rows_affected' => $wpdb->rows_affected,
+					'mode'          => '45_or_60_minutes',
+				)
+			);
+		}
 	}
 	//phpcs:enable
 }
@@ -360,6 +400,22 @@ function snks_waiting_others( $booked_timetable ) {
             $booked_timetable->base_hour
         )
     );
+
+	// Log resetting other slots back to waiting for debugging timetable status issues.
+	if ( function_exists( 'teamlog' ) ) {
+		teamlog(
+			array(
+				'context'       => 'timetable_status_debug',
+				'event'         => 'waiting_others',
+				'source'        => 'snks_waiting_others',
+				'user_id'       => isset( $booked_timetable->user_id ) ? $booked_timetable->user_id : null,
+				'booked_id'     => isset( $booked_timetable->ID ) ? $booked_timetable->ID : null,
+				'date_time'     => $booked_timetable->date_time,
+				'base_hour'     => $booked_timetable->base_hour,
+				'rows_affected' => $wpdb->rows_affected,
+			)
+		);
+	}
     // phpcs:enable.
 }
 
@@ -519,7 +575,28 @@ function snks_insert_timetable( $data, $user_id = false ) {
     if ( $wpdb->last_error ) {
         return false; // Return false if there was an error.
     } else {
-        return $wpdb->insert_id; // Return the inserted record ID.
+		// Log closed slots on insert for debugging timetable status issues.
+		if ( function_exists( 'teamlog' ) && isset( $data['session_status'] ) && 'closed' === $data['session_status'] ) {
+			teamlog(
+				array(
+					'context'      => 'timetable_status_debug',
+					'event'        => 'insert_closed_slot',
+					'source'       => 'snks_insert_timetable',
+					'insert_id'    => $wpdb->insert_id,
+					'user_id'      => isset( $data['user_id'] ) ? $data['user_id'] : $user_id,
+					'date_time'    => isset( $data['date_time'] ) ? $data['date_time'] : null,
+					'day'          => isset( $data['day'] ) ? $data['day'] : null,
+					'base_hour'    => isset( $data['base_hour'] ) ? $data['base_hour'] : null,
+					'starts'       => isset( $data['starts'] ) ? $data['starts'] : null,
+					'ends'         => isset( $data['ends'] ) ? $data['ends'] : null,
+					'period'       => isset( $data['period'] ) ? $data['period'] : null,
+					'attendance'   => isset( $data['attendance_type'] ) ? $data['attendance_type'] : null,
+					'session_status' => $data['session_status'],
+				)
+			);
+		}
+
+		return $wpdb->insert_id; // Return the inserted record ID.
     }
 }
 
@@ -533,7 +610,18 @@ function snks_insert_timetable( $data, $user_id = false ) {
 function snks_update_timetable( $id, $data ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
-	
+
+	// Capture previous session data when we are about to change session_status.
+	$previous_session = null;
+	if ( isset( $data['session_status'] ) ) {
+		$previous_session = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT ID, user_id, date_time, day, base_hour, starts, ends, period, attendance_type, session_status, order_id, client_id FROM {$table_name} WHERE ID = %d",
+				$id
+			)
+		);
+	}
+
 	// Check if session_status is being changed to 'completed' for AI sessions
 	$is_status_change_to_completed = isset( $data['session_status'] ) && $data['session_status'] === 'completed';
 	
@@ -555,7 +643,43 @@ function snks_update_timetable( $id, $data ) {
 		)
 	);
 	//phpcs:enable.
-	
+
+	// Log transitions to or from 'closed' for debugging timetable status issues.
+	if ( $updated && isset( $data['session_status'] ) && function_exists( 'teamlog' ) ) {
+		$new_session = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT ID, user_id, date_time, day, base_hour, starts, ends, period, attendance_type, session_status, order_id, client_id FROM {$table_name} WHERE ID = %d",
+				$id
+			)
+		);
+
+		$old_status = $previous_session ? $previous_session->session_status : null;
+		$new_status = $data['session_status'];
+
+		if ( 'closed' === $new_status || 'closed' === $old_status ) {
+			teamlog(
+				array(
+					'context'        => 'timetable_status_debug',
+					'event'          => 'update_session_status',
+					'source'         => 'snks_update_timetable',
+					'id'             => $id,
+					'old_status'     => $old_status,
+					'new_status'     => $new_status,
+					'user_id'        => $new_session ? $new_session->user_id : ( $previous_session ? $previous_session->user_id : null ),
+					'date_time'      => $new_session ? $new_session->date_time : ( $previous_session ? $previous_session->date_time : null ),
+					'day'            => $new_session ? $new_session->day : ( $previous_session ? $previous_session->day : null ),
+					'base_hour'      => $new_session ? $new_session->base_hour : ( $previous_session ? $previous_session->base_hour : null ),
+					'starts'         => $new_session ? $new_session->starts : ( $previous_session ? $previous_session->starts : null ),
+					'ends'           => $new_session ? $new_session->ends : ( $previous_session ? $previous_session->ends : null ),
+					'period'         => $new_session ? $new_session->period : ( $previous_session ? $previous_session->period : null ),
+					'attendance'     => $new_session ? $new_session->attendance_type : ( $previous_session ? $previous_session->attendance_type : null ),
+					'order_id'       => $new_session ? $new_session->order_id : ( $previous_session ? $previous_session->order_id : null ),
+					'client_id'      => $new_session ? $new_session->client_id : ( $previous_session ? $previous_session->client_id : null ),
+				)
+			);
+		}
+	}
+
 	// After successful update, trigger earnings creation for AI sessions
 	if ( $updated && $is_status_change_to_completed && $current_session ) {
 		if ( $current_session->order_id > 0 && strpos( $current_session->settings, 'ai_booking' ) !== false ) {
