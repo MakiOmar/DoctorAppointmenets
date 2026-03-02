@@ -826,7 +826,7 @@ export default {
     leaveMeeting: 'مغادرة الجلسة',
     stayInMeeting: 'البقاء في الجلسة',
     prescription: 'روشتة',
-    prescriptionRequested: 'لقد طلب معالجك، {name}، وصفة طبية لك. يرجى إنشاء موعد مجاني مع طبيبنا النفسي لمتابعة أدويتك إلى جانب جلساتك.',
+    prescriptionRequested: 'لقد طلب معالجك خدمة روشتة لك، يرجى حجز موعد مع الطبيب النفسي الخاص بالموقع لمتابعة الأدوية بجانب جلساتك مع المعالج.',
     prescriptionServices: 'خدمات الروشتة',
     bookFreeAppointment: 'احجز موعد مجاني',
     bookAppointment: 'احجز موعد',
@@ -883,7 +883,8 @@ export default {
     reasonForReferral: 'سبب الإحالة',
     prescriptionText: 'الروشتة',
     noPrescriptions: 'لا توجد روشتات متاحة',
-    loadingPrescriptions: 'جاري تحميل الروشتات...'
+    loadingPrescriptions: 'جاري تحميل الروشتات...',
+    proceedToPayment: 'حجز موعد روشتة'
   },
 
   // Profile
