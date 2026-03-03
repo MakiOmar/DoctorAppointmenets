@@ -956,7 +956,9 @@ function snks_manual_booking_data_search_patient( $q ) {
 			$u = get_userdata( $new_user_id );
 			$first = $u ? get_user_meta( $u->ID, 'billing_first_name', true ) : '';
 			$last  = $u ? get_user_meta( $u->ID, 'billing_last_name', true ) : '';
-			$name = $u ? ( trim( $first . ' ' . $last ) ?: $u->display_name ) : sprintf( __( 'Patient %s', 'shrinks' ), $q );
+			// For auto-created patients, use the raw phone as name so the frontend can
+			// prepend the desired localized label (e.g. "إنشاء مريض جديد - {phone}").
+			$name = $u ? ( trim( $first . ' ' . $last ) ?: $u->display_name ) : $q;
 			$result[] = array(
 				'id'         => (int) $new_user_id,
 				'email'      => $u ? $u->user_email : '',

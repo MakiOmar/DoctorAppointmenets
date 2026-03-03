@@ -107,23 +107,21 @@
             class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
             @click="selectPatient(p)"
           >
-            {{ p.name || p.email }} {{ p.first_name || p.last_name ? `(${p.first_name} ${p.last_name})` : '' }}
+            <template v-if="p.is_new">
+              {{ 'إنشاء مريض جديد' }} - {{ p.name || p.email }}
+            </template>
+            <template v-else>
+              {{ p.name || p.email }} {{ p.first_name || p.last_name ? `(${p.first_name} ${p.last_name})` : '' }}
+            </template>
           </button>
         </div>
       </div>
 
-      <!-- First / Last name -->
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.firstName') }} *</label>
-          <input v-model="patientFirstName" type="text" class="w-full rounded border px-3 py-2" :class="errors?.firstName ? 'border-red-500' : 'border-gray-300'" />
-          <p v-if="errors?.firstName" class="mt-1 text-sm text-red-600">{{ errors?.firstName }}</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.lastName') }} *</label>
-          <input v-model="patientLastName" type="text" class="w-full rounded border px-3 py-2" :class="errors?.lastName ? 'border-red-500' : 'border-gray-300'" />
-          <p v-if="errors?.lastName" class="mt-1 text-sm text-red-600">{{ errors?.lastName }}</p>
-        </div>
+      <!-- Full name -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.firstName') }} *</label>
+        <input v-model="patientFirstName" type="text" class="w-full rounded border px-3 py-2" :class="errors?.firstName ? 'border-red-500' : 'border-gray-300'" />
+        <p v-if="errors?.firstName" class="mt-1 text-sm text-red-600">{{ errors?.firstName }}</p>
       </div>
 
       <!-- Therapist: searchable select (search inside dropdown, same as dashboard) -->
@@ -684,10 +682,6 @@ function validateNewBooking() {
     errors.value.firstName = t('manualBooking.validation.firstNameRequired')
     valid = false
   }
-  if (!patientLastName.value.trim()) {
-    errors.value.lastName = t('manualBooking.validation.lastNameRequired')
-    valid = false
-  }
   if (!selectedTherapistId.value) {
     errors.value.therapist = t('manualBooking.validation.therapistRequired')
     valid = false
@@ -870,8 +864,11 @@ async function runPatientSearch() {
 }
 function selectPatient(p) {
   patientId.value = p.id
-  patientFirstName.value = p.first_name || ''
-  patientLastName.value = p.last_name || ''
+  const first = p.first_name || ''
+  const last = p.last_name || ''
+  const combined = `${first} ${last}`.trim()
+  patientFirstName.value = combined || p.name || p.email || ''
+  patientLastName.value = last || ''
   patientSearchResults.value = []
   if (p.is_new) {
     toast.success(t('manualBooking.successDialog.newPatient'))
@@ -919,14 +916,22 @@ async function submitNewBooking() {
   if (!validateNewBooking()) {
     return
   }
+  const fullName = patientFirstName.value.trim()
+  let firstNameForPayload = ''
+  let lastNameForPayload = ''
+  if (fullName) {
+    const parts = fullName.split(' ')
+    firstNameForPayload = parts.shift() || ''
+    lastNameForPayload = (parts.join(' ').trim()) || firstNameForPayload
+  }
   const payload = {
     mode: 'new',
     patient_id: patientId.value,
     therapist_id: selectedTherapistId.value,
     slot_id: selectedSlotId.value,
     country_code: selectedCountryCode.value,
-    patient_first_name: patientFirstName.value.trim(),
-    patient_last_name: patientLastName.value.trim(),
+    patient_first_name: firstNameForPayload,
+    patient_last_name: lastNameForPayload,
     payment_method: paymentMethod.value || ''
   }
   if (amountOverride.value && amountOverride.value.trim() !== '') {
