@@ -848,7 +848,8 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 	}
 
 	$default_password = '12345678';
-	$display_name = sprintf( /* translators: %s: phone number */ __( 'Patient %s', 'shrinks' ), $phone );
+	// Use raw phone as display name for auto-created patients to avoid prefixed labels.
+	$display_name = $digits;
 
 	$user_id = wp_insert_user( array(
 		'user_login'   => $login,
@@ -939,7 +940,11 @@ function snks_manual_booking_data_search_patient( $q ) {
 	foreach ( $users as $u ) {
 		$first = get_user_meta( $u->id, 'billing_first_name', true );
 		$last  = get_user_meta( $u->id, 'billing_last_name', true );
-		$name  = trim( $first . ' ' . $last ) ?: $u->display_name;
+		$phone = get_user_meta( $u->id, 'billing_phone', true );
+		$name  = trim( $first . ' ' . $last );
+		if ( $name === '' ) {
+			$name = $phone !== '' ? $phone : $u->display_name;
+		}
 		$result[] = array(
 			'id'         => $u->id,
 			'email'      => $u->email,
@@ -956,9 +961,10 @@ function snks_manual_booking_data_search_patient( $q ) {
 			$u = get_userdata( $new_user_id );
 			$first = $u ? get_user_meta( $u->ID, 'billing_first_name', true ) : '';
 			$last  = $u ? get_user_meta( $u->ID, 'billing_last_name', true ) : '';
-			// For auto-created patients, use the raw phone as name so the frontend can
+			$phone = $u ? get_user_meta( $u->ID, 'billing_phone', true ) : '';
+			// For auto-created patients, always use the raw phone as name so the frontend can
 			// prepend the desired localized label (e.g. "إنشاء مريض جديد - {phone}").
-			$name = $u ? ( trim( $first . ' ' . $last ) ?: $u->display_name ) : $q;
+			$name = $phone !== '' ? $phone : preg_replace( '/\D/', '', $q );
 			$result[] = array(
 				'id'         => (int) $new_user_id,
 				'email'      => $u ? $u->user_email : '',
