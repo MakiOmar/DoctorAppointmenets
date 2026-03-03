@@ -421,6 +421,22 @@ function snks_load_ai_admin_styles() {
 		box-sizing: border-box !important;
 	}
 	
+	/* Ensure Jalsah AI admin dashboard cards span full viewport width (including Rochtah Slots Manager) */
+	.wp-admin .toplevel_page_jalsah-ai-management .wrap .card,
+	.wp-admin .jalsah-ai_page_jalsah-ai-open-slots .wrap .card,
+	.wp-admin .jalsah-ai_page_jalsah-ai-manual-booking .wrap .card,
+	.wp-admin .jalsah-ai_page_jalsah-ai-admin-bookings .wrap .card,
+	.wp-admin .jalsah-ai_page_jalsah-ai-settings .wrap .card,
+	.wp-admin .jalsah-ai-management_page_rochtah-slots-manager .wrap .card,
+	/* Fallback for any other Jalsah AI subpages, including any rochtah-related slugs under Jalsah AI */
+	.wp-admin body[class*="jalsah-ai_page_"] .wrap .card,
+	.wp-admin body[class*="jalsah-ai-management_page_rochtah-slots-manager"] .wrap .card {
+		width: 100% !important;
+		max-width: none !important;
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+	}
+	
 	/* Stats grid */
 	.stats-grid {
 		display: grid;

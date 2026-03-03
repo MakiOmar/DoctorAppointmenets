@@ -21,6 +21,11 @@ function snks_rochtah_slots_manager() {
 	if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'manage_rochtah' ) ) {
 		wp_die( 'You do not have permission to access this page.' );
 	}
+
+	// Load unified Jalsah AI admin styles if available
+	if ( function_exists( 'snks_load_ai_admin_styles' ) ) {
+		snks_load_ai_admin_styles();
+	}
 	// Toggle slot status (activate/deactivate)
 	if (
 		isset( $_GET['action'], $_GET['slot_id'] )
