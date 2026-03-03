@@ -169,7 +169,7 @@ function phone_input_cb( $atts ) {
 		$atts,
 		'phone_input'
 	);
-	$response = wp_remote_get( 'http://localhost/shrinks/wp-content/uploads/2024/09/countires-codes-and-flags.json' );
+	$response = wp_remote_get( 'https://jalsah.app/wp-content/uploads/2024/09/countires-codes-and-flags.json' );
 
 	if ( is_wp_error( $response ) ) {
 		// Handle the error appropriately.

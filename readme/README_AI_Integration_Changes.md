@@ -250,7 +250,7 @@ composer install
 
 ### Environment Variables
 - `JWT_SECRET` - Optional, defaults to WordPress auth salt
-- API base URL: `http://localhost/shrinks/api/ai/`
+- API base URL: `https://jalsah.app/api/ai/`
 
 ### Admin Configuration
 - Access via WordPress admin → Jalsah AI

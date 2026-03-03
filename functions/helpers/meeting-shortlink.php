@@ -262,7 +262,7 @@ function snks_render_guest_meeting_room( $timetable_id, $timetable ) {
 					SHOW_BRAND_WATERMARK: true,
 					SHOW_POWERED_BY: false,
 					DISPLAY_WELCOME_FOOTER: false,
-					JITSI_WATERMARK_LINK: 'http://localhost/shrinks',
+					JITSI_WATERMARK_LINK: 'https://jalsah.app',
 					PROVIDER_NAME: 'Jalsah'
 				}
 			};

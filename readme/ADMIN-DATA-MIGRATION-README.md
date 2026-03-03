@@ -94,7 +94,7 @@ Import data from a previously exported JSON file:
 
 1. **Access Local WordPress Admin**
    ```
-   http://localhost/shrinks/wp-admin/tools.php?page=jalsah-data-migration
+   https://jalsah.app/wp-admin/tools.php?page=jalsah-data-migration
    ```
 
 2. **Choose Export Type**
