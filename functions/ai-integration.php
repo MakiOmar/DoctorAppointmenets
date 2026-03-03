@@ -6639,8 +6639,11 @@ Best regards,
 	}
 	/**
 	 * Generate auto-login URL for main website
+	 *
+	 * Made public & static so it can be reused
+	 * by external flows such as Rochtah bookings.
 	 */
-	private function generate_auto_login_url( $user_id, $order_id ) {
+	public static function generate_auto_login_url( $user_id, $order_id ) {
 		$user = get_userdata( $user_id );
 		if ( ! $user ) {
 			return '';
@@ -7259,9 +7262,13 @@ function snks_process_ai_order_payment( $order_id ) {
 	if ( class_exists( 'SNKS_AI_Orders' ) ) {
 		SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
 	}
-	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
 
-	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+	// Only process standard AI session orders here (exclude Rochtah)
+	$is_ai_order      = $order->get_meta( 'from_jalsah_ai' );
+	$is_rochtah_order = $order->get_meta( 'is_rochtah_order' );
+
+	if ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 )
+		&& ( $is_rochtah_order !== true && $is_rochtah_order !== '1' && $is_rochtah_order !== 1 ) ) {
 		SNKS_AI_Orders::process_ai_order_payment( $order_id );
 	}
 }
@@ -7281,11 +7288,17 @@ function snks_process_ai_order_status_change( $order_id, $old_status, $new_statu
 	if ( $order->get_meta( 'admin_manual_booking' ) ) {
 		return;
 	}
+
 	if ( class_exists( 'SNKS_AI_Orders' ) ) {
 		SNKS_AI_Orders::process_rochtah_order_payment( $order_id );
 	}
-	$is_ai_order = $order->get_meta( 'from_jalsah_ai' );
-	if ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 ) {
+
+	// Only process standard AI session orders here (exclude Rochtah)
+	$is_ai_order      = $order->get_meta( 'from_jalsah_ai' );
+	$is_rochtah_order = $order->get_meta( 'is_rochtah_order' );
+
+	if ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 )
+		&& ( $is_rochtah_order !== true && $is_rochtah_order !== '1' && $is_rochtah_order !== 1 ) ) {
 		SNKS_AI_Orders::process_ai_order_payment( $order_id );
 	}
 }
@@ -8333,13 +8346,27 @@ function snks_book_rochtah_appointment_rest( $request ) {
 		}
 		$order->add_product( $product, 1 );
 		$order->set_total( $price );
+
+		// Mark as Rochtah + AI-origin order for reporting/filters
 		$order->update_meta_data( 'is_rochtah_order', true );
+		$order->update_meta_data( 'from_jalsah_ai', true );
+		$order->update_meta_data( 'ai_user_id', $user_id );
+		$order->update_meta_data( 'ai_total_amount', $price );
+
+		// Store Rochtah-specific metadata
 		$order->update_meta_data( 'rochtah_booking_id', $request_id );
 		$order->update_meta_data( 'rochtah_booking_date', $selected_date );
 		$order->update_meta_data( 'rochtah_booking_time', $selected_time );
 		$order->set_status( 'pending' );
 		$order->save();
+
 		$order_id = $order->get_id();
+
+		// Generate auto-login URL so payment page logs the user in automatically
+		$auto_login_url = '';
+		if ( class_exists( 'SNKS_AI_Integration' ) && method_exists( 'SNKS_AI_Integration', 'generate_auto_login_url' ) ) {
+			$auto_login_url = SNKS_AI_Integration::generate_auto_login_url( $user_id, $order_id );
+		}
 		$wpdb->update(
 			$rochtah_bookings_table,
 			array(
@@ -8352,15 +8379,17 @@ function snks_book_rochtah_appointment_rest( $request ) {
 			array( '%d' )
 		);
 		error_log( 'Rochtah paid order created: ' . $order_id . ' for booking ' . $request_id );
+
 		return array(
-			'success'         => true,
+			'success'          => true,
 			'requires_payment' => true,
-			'data'            => array(
-				'message'      => __( 'Proceed to payment to confirm your appointment.', 'shrinks' ),
-				'checkout_url'  => $order->get_checkout_payment_url(),
-				'booking_id'    => $request_id,
-				'date'          => $selected_date,
-				'time'          => $selected_time,
+			'data'             => array(
+				'message'        => __( 'Proceed to payment to confirm your appointment.', 'shrinks' ),
+				'checkout_url'   => $order->get_checkout_payment_url(),
+				'auto_login_url' => $auto_login_url,
+				'booking_id'     => $request_id,
+				'date'           => $selected_date,
+				'time'           => $selected_time,
 			),
 		);
 	}

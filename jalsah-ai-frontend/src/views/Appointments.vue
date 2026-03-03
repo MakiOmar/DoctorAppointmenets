@@ -1900,10 +1900,15 @@ export default {
         })
         
         if (response.data.success) {
-          if (response.data.requires_payment && response.data.data?.checkout_url) {
-            window.location.href = response.data.data.checkout_url
-            return
+          if (response.data.requires_payment && response.data.data) {
+            // Prefer auto-login URL so the user is logged in before payment
+            const redirectUrl = response.data.data.auto_login_url || response.data.data.checkout_url
+            if (redirectUrl) {
+              window.location.href = redirectUrl
+              return
+            }
           }
+
           toast.success(response.data.data?.message || 'Appointment booked successfully')
           showBookingConfirmModal.value = false
           closeRochtahModal()
