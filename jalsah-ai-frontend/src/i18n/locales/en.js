@@ -62,7 +62,8 @@ export default {
     menu: 'Menu',
     viewDiagnosisResults: 'View Diagnosis Results',
     customerService: 'Customer Service',
-    termsAndConditions: 'Terms and Conditions, Usage and Return Policy'
+    termsAndConditions: 'Terms and Conditions, Usage and Return Policy',
+    manualBooking: 'Manual booking / bookings management'
   },
 
   // Logo
@@ -973,6 +974,8 @@ export default {
     searchByPhone: 'Search by phone',
     phoneNumber: 'Phone number',
     phonePlaceholder: 'Enter phone (with or without country code)',
+    searchTargetPatient: 'Search for patient',
+    searchTargetTherapist: 'Search for therapist',
     search: 'Search',
     tableType: 'Type',
     typeManual: 'Manual',

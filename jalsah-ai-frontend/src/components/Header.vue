@@ -125,6 +125,20 @@
                 <span>{{ $t('nav.appointments') }}</span>
               </router-link>
               
+              <!-- Manual Booking / Bookings Management (secretary only) -->
+              <router-link
+                v-if="isSecretary"
+                to="/manual-booking"
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                :class="[{ 'bg-gray-50 text-primary-500': $route.path === '/manual-booking' }, locale === 'ar' ? 'flex-row-reverse' : '']"
+                @click="mobileMenuOpen = false"
+              >
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M5 11h14M5 19h14a2 2 0 002-2v-6H3v6a2 2 0 002 2z" />
+                </svg>
+                <span>{{ $t('nav.manualBooking') }}</span>
+              </router-link>
+              
               <!-- Therapists -->
               <router-link
                 to="/therapists"
@@ -332,6 +346,11 @@ export default {
     const loadingDiagnosis = ref(false)
 
     const isAuthenticated = computed(() => authStore.isAuthenticated)
+    const userRole = computed(() => authStore.user?.role || null)
+    const userRoles = computed(() => authStore.user?.roles || [])
+    const isSecretary = computed(() => {
+      return userRole.value === 'secretary' || userRoles.value.includes('secretary')
+    })
     const cartItemCount = computed(() => cartStore.itemCount)
     
     const hasPreviousDiagnosis = computed(() => {
@@ -427,6 +446,7 @@ export default {
       locale,
       mobileMenuOpen,
       isAuthenticated,
+      isSecretary,
       cartItemCount,
       logout,
       lastDiagnosisId,

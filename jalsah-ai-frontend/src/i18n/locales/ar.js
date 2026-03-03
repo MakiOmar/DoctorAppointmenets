@@ -62,7 +62,8 @@ export default {
     menu: 'القائمة',
     viewDiagnosisResults: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي',
     customerService: 'خدمة العملاء',
-    termsAndConditions: 'الشروط والأحكام وسياسة الإستخدام والإسترجاع'
+    termsAndConditions: 'الشروط والأحكام وسياسة الإستخدام والإسترجاع',
+    manualBooking: 'إدارة الحجوزات اليدوية'
   },
 
   // Logo
@@ -963,6 +964,8 @@ export default {
     searchByPhone: 'البحث بالهاتف',
     phoneNumber: 'رقم الهاتف',
     phonePlaceholder: 'أدخل رقم الهاتف (مع أو بدون كود الدولة)',
+    searchTargetPatient: 'البحث عن مريض',
+    searchTargetTherapist: 'البحث عن معالج',
     search: 'بحث',
     tableType: 'النوع',
     typeManual: 'يدوي',

@@ -341,7 +341,29 @@
     <div v-else-if="activeTab === 'searchByPhone'" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.phoneNumber') }}</label>
-        <div class="flex gap-2">
+        <!-- Search target selector (patient / therapist) -->
+        <div class="mb-2 flex gap-6 text-sm">
+          <label class="inline-flex items-center gap-2">
+            <input
+              v-model="searchByPhoneMode"
+              type="radio"
+              class="text-primary-500 focus:ring-primary-500"
+              value="patient"
+            >
+            <span>{{ $t('manualBooking.searchTargetPatient') }}</span>
+          </label>
+          <label class="inline-flex items-center gap-2">
+            <input
+              v-model="searchByPhoneMode"
+              type="radio"
+              class="text-primary-500 focus:ring-primary-500"
+              value="therapist"
+            >
+            <span>{{ $t('manualBooking.searchTargetTherapist') }}</span>
+          </label>
+        </div>
+        <!-- Patient search by phone -->
+        <div v-if="searchByPhoneMode === 'patient'" class="flex gap-2">
           <input
             v-model="searchByPhoneQuery"
             type="text"
@@ -354,6 +376,71 @@
             type="button"
             class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="searchByPhoneLoading || !searchByPhoneQuery.trim()"
+            @click="runSearchByPhone"
+          >
+            <span v-if="searchByPhoneLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
+            {{ $t('manualBooking.search') }}
+          </button>
+        </div>
+        <!-- Therapist search using dropdown (same UX as new booking therapist selector) -->
+        <div v-else class="flex gap-2 items-stretch" ref="searchTherapistDropdownRef">
+          <div class="relative flex-1">
+            <button
+              type="button"
+              class="w-full rounded border px-3 py-2 text-left flex items-center justify-between min-h-[42px]"
+              :class="searchByPhoneSelectedTherapistId ? 'border-gray-300' : 'border-gray-300'"
+              @click="showSearchTherapistDropdown = !showSearchTherapistDropdown"
+            >
+              <span v-if="selectedSearchByPhoneTherapistDisplay" class="truncate">{{ selectedSearchByPhoneTherapistDisplay }}</span>
+              <span v-else class="text-gray-500">{{ $t('manualBooking.searchTherapist') }}</span>
+              <span class="flex items-center gap-2 shrink-0 ml-2">
+                <span v-if="therapistsLoading" class="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </button>
+            <div
+              v-if="showSearchTherapistDropdown"
+              class="absolute z-20 mt-1 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
+            >
+              <div class="p-2 border-b border-gray-200">
+                <input
+                  v-model="searchByPhoneTherapistSearch"
+                  type="text"
+                  class="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                  :placeholder="$t('manualBooking.searchTherapist')"
+                  @click.stop
+                />
+              </div>
+              <div class="max-h-52 overflow-y-auto">
+                <button
+                  v-for="t in filteredTherapistsForSearchByPhone"
+                  :key="t.user_id"
+                  type="button"
+                  class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 border-b border-gray-100 last:border-0"
+                  @click="selectSearchByPhoneTherapist(t)"
+                >
+                  {{ t.name || t.name_en || t.user_id }}<span v-if="t.phone"> — {{ t.phone }}</span>
+                </button>
+                <p v-if="filteredTherapistsForSearchByPhone.length === 0" class="px-3 py-2 text-sm text-gray-500">
+                  {{ $t('manualBooking.noMatch') }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="searchByPhoneSelectedTherapistId"
+            type="button"
+            class="rounded border border-gray-300 px-3 py-2 text-sm text-primary-600 hover:bg-gray-50 shrink-0"
+            @click="clearSearchByPhoneTherapist"
+          >
+            {{ $t('manualBooking.clear') }}
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="searchByPhoneLoading || !searchByPhoneSelectedTherapistId"
             @click="runSearchByPhone"
           >
             <span v-if="searchByPhoneLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
@@ -881,17 +968,77 @@ const manageBookings = ref([])
 const manageBookingsLoading = ref(false)
 
 // —— Search by phone ——
+const searchByPhoneMode = ref('patient')
 const searchByPhoneQuery = ref('')
 const searchByPhoneLoading = ref(false)
 const searchByPhoneResult = ref(null)
 const searchByPhoneError = ref('')
+const searchByPhoneSelectedTherapistId = ref('')
+const searchByPhoneTherapistSearch = ref('')
+const showSearchTherapistDropdown = ref(false)
+const searchTherapistDropdownRef = ref(null)
+
+const filteredTherapistsForSearchByPhone = computed(() => {
+  const q = searchByPhoneTherapistSearch.value.trim().toLowerCase()
+  if (!q) {
+    return therapists.value
+  }
+  return therapists.value.filter(t => {
+    const name = (t.name || t.name_en || '').toLowerCase()
+    const phone = (t.phone || t.whatsapp || '').toString().toLowerCase()
+    return name.includes(q) || phone.includes(q)
+  })
+})
+
+const selectedSearchByPhoneTherapistDisplay = computed(() => {
+  if (!searchByPhoneSelectedTherapistId.value) return ''
+  const t = therapists.value.find(t => t.user_id === searchByPhoneSelectedTherapistId.value)
+  if (!t) return ''
+  const name = t.name || t.name_en || String(t.user_id)
+  return t.phone ? `${name} — ${t.phone}` : name
+})
+
+function selectSearchByPhoneTherapist(t) {
+  searchByPhoneSelectedTherapistId.value = t.user_id
+  showSearchTherapistDropdown.value = false
+  searchByPhoneTherapistSearch.value = ''
+}
+
+function clearSearchByPhoneTherapist() {
+  searchByPhoneSelectedTherapistId.value = ''
+  searchByPhoneTherapistSearch.value = ''
+  showSearchTherapistDropdown.value = false
+}
 
 async function runSearchByPhone() {
-  const phone = searchByPhoneQuery.value.trim()
-  if (!phone) return
   searchByPhoneError.value = ''
-  searchByPhoneLoading.value = true
   searchByPhoneResult.value = null
+
+  let phone = ''
+
+  if (searchByPhoneMode.value === 'patient') {
+    phone = searchByPhoneQuery.value.trim()
+    if (!phone) {
+      searchByPhoneError.value = t('manualBooking.validation.phoneMinLength')
+      return
+    }
+  } else {
+    if (!searchByPhoneSelectedTherapistId.value) {
+      searchByPhoneError.value = t('manualBooking.validation.therapistRequired')
+      toast.error(t('manualBooking.validation.therapistRequired'))
+      return
+    }
+    const therapist = therapists.value.find(th => String(th.user_id) === String(searchByPhoneSelectedTherapistId.value))
+    const therapistPhone = (therapist?.phone || therapist?.whatsapp || '').toString().trim()
+    if (!therapistPhone) {
+      searchByPhoneError.value = t('manualBooking.messages.searchFailed')
+      toast.error(t('manualBooking.messages.searchFailed'))
+      return
+    }
+    phone = therapistPhone
+  }
+
+  searchByPhoneLoading.value = true
   try {
     const data = await manualBookingApi.getBookingsByPhone(phone)
     searchByPhoneResult.value = {
@@ -1064,6 +1211,9 @@ async function submitChangeAppointment() {
 function handleClickOutsideTherapist(e) {
   if (showTherapistDropdown.value && therapistDropdownRef.value && !therapistDropdownRef.value.contains(e.target)) {
     showTherapistDropdown.value = false
+  }
+  if (showSearchTherapistDropdown.value && searchTherapistDropdownRef.value && !searchTherapistDropdownRef.value.contains(e.target)) {
+    showSearchTherapistDropdown.value = false
   }
 }
 
