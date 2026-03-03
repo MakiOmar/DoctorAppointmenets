@@ -382,7 +382,7 @@ function snks_save_rochtah_prescription() {
 		wp_send_json_error( 'Failed to save prescription' );
 	}
 }
-add_action( 'wp_ajax_save_prescription', 'snks_save_rochtah_prescription' ); 
+add_action( 'wp_ajax_save_rochtah_prescription', 'snks_save_rochtah_prescription' ); 
 
 add_action('wp_ajax_nopriv_register_therapist', 'snks_ajax_register_therapist');
 function snks_ajax_register_therapist() {
