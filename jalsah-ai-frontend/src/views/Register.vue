@@ -163,15 +163,18 @@
               v-model="form.password"
               type="password"
               required
-              @blur="validatePasswordMatch"
+              @blur="onPasswordBlur"
               class="input-field"
               :class="{
-                'border-red-300 focus:border-red-500 focus:ring-red-500': passwordMismatchError
+                'border-red-300 focus:border-red-500 focus:ring-red-500': passwordMismatchError || passwordLengthError
               }"
               :placeholder="$t('auth.register.createPassword')"
               minlength="8"
             />
-            <p class="mt-1 text-sm text-gray-500">
+            <p v-if="!passwordLengthError" class="mt-1 text-sm text-gray-500">
+              {{ $t('auth.register.passwordHint') }}
+            </p>
+            <p v-else class="mt-1 text-sm text-red-600">
               {{ $t('auth.register.passwordHint') }}
             </p>
           </div>
@@ -297,8 +300,9 @@ export default {
 
     const loading = computed(() => authStore.loading)
     
-    // Password mismatch error - shown when user focuses out of confirm password field
+    // Password validation errors
     const passwordMismatchError = ref(false)
+    const passwordLengthError = ref(false)
     
     // WhatsApp dial code error - shown when user includes dial code in input
     const whatsappDialCodeError = ref(false)
@@ -313,6 +317,17 @@ export default {
       } else {
         passwordMismatchError.value = false
       }
+    }
+    
+    const validatePasswordLength = () => {
+      const pwd = form.value.password || ''
+      // Show error only when user has typed something but it is shorter than 8 chars
+      passwordLengthError.value = pwd.length > 0 && pwd.length < 8
+    }
+    
+    const onPasswordBlur = () => {
+      validatePasswordLength()
+      validatePasswordMatch()
     }
     
     // Function to validate WhatsApp number doesn't include dial code
@@ -597,6 +612,8 @@ export default {
 
     const handleRegister = async () => {
       if (!isFormValid.value) {
+        validatePasswordLength()
+        validatePasswordMatch()
         return
       }
 
