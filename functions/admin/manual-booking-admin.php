@@ -963,6 +963,7 @@ function snks_manual_booking_data_search_patient( $q ) {
 				'name'       => $name,
 				'first_name' => $first,
 				'last_name'  => $last,
+				'is_new'     => true,
 			);
 		}
 	}

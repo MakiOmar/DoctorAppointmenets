@@ -1015,7 +1015,8 @@ export default {
       changeFailed: 'فشل تغيير الموعد'
     },
     successDialog: {
-      dateTime: 'التاريخ والوقت'
+      dateTime: 'التاريخ والوقت',
+      newPatient: 'إنشاء مريض جديد'
     }
   },
 

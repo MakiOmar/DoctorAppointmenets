@@ -1025,7 +1025,8 @@ export default {
       changeFailed: 'Change failed'
     },
     successDialog: {
-      dateTime: 'Date & time'
+      dateTime: 'Date & time',
+      newPatient: 'New patient created'
     }
   },
 

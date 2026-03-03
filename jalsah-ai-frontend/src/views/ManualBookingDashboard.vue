@@ -873,6 +873,9 @@ function selectPatient(p) {
   patientFirstName.value = p.first_name || ''
   patientLastName.value = p.last_name || ''
   patientSearchResults.value = []
+  if (p.is_new) {
+    toast.success(t('manualBooking.successDialog.newPatient'))
+  }
 }
 function selectPatientCountry(c) {
   selectedPatientCountryCode.value = c.country_code
