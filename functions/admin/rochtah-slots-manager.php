@@ -70,8 +70,25 @@ function snks_rochtah_slots_manager() {
 		exit;
 	}
 
-	// Handle form submissions
-	if ( isset( $_POST['action'] ) && wp_verify_nonce( $_POST['rochtah_slots_manager_nonce'], 'rochtah_slots_manager_action' ) ) {
+	// Handle Rochtah general settings (Enable Rochtah, payment, price, publish window)
+	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_rochtah_settings' && ! empty( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'update_rochtah_settings' ) ) {
+		update_option( 'snks_ai_rochtah_enabled', isset( $_POST['enabled'] ) ? '1' : '0' );
+		update_option( 'snks_rochtah_payment_enabled', isset( $_POST['rochtah_payment_enabled'] ) ? '1' : '0' );
+		$rochtah_price = isset( $_POST['rochtah_price'] ) ? floatval( $_POST['rochtah_price'] ) : 0;
+		update_option( 'snks_rochtah_price', $rochtah_price );
+		$publish_weeks = isset( $_POST['rochtah_publish_weeks'] ) ? intval( $_POST['rochtah_publish_weeks'] ) : 3;
+		if ( $publish_weeks <= 0 ) {
+			$publish_weeks = 1;
+		}
+		if ( $publish_weeks > 12 ) {
+			$publish_weeks = 12;
+		}
+		update_option( 'snks_rochtah_publish_weeks', $publish_weeks );
+		echo '<div class="notice notice-success is-dismissible"><p>Rochtah settings updated successfully.</p></div>';
+	}
+
+	// Handle form submissions (day templates, publish, bulk status updates)
+	if ( isset( $_POST['action'] ) && ! empty( $_POST['rochtah_slots_manager_nonce'] ) && wp_verify_nonce( $_POST['rochtah_slots_manager_nonce'], 'rochtah_slots_manager_action' ) ) {
 		if ( $_POST['action'] === 'save_day_template' ) {
 			$day = sanitize_text_field( $_POST['day'] );
 			// Use wp_unslash on raw POST to avoid breaking JSON with added slashes; do not over-sanitize structured JSON
@@ -120,13 +137,73 @@ function snks_rochtah_slots_manager() {
 				echo '<div class="notice notice-success"><p>Day template saved successfully!</p></div>';
 			}
 		} elseif ( $_POST['action'] === 'publish_slots_manual' ) {
-			// Manual publish - publish next 3 weeks
+			// Manual publish - publish next configured window
 			$published = snks_publish_rochtah_slots_from_templates();
 			if ( $published ) {
 				echo '<div class="notice notice-success"><p>Slots published successfully! Published ' . $published . ' slots.</p></div>';
 				update_option( 'snks_rochtah_last_publish_date', current_time( 'Y-m-d' ) );
 			} else {
 				echo '<div class="notice notice-error"><p>No slots were published. Please check your day templates.</p></div>';
+			}
+		} elseif ( $_POST['action'] === 'bulk_update_slots' ) {
+			$bulk_action = isset( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : '';
+			$slot_ids    = isset( $_POST['slot_ids'] ) ? (array) $_POST['slot_ids'] : array();
+
+			if ( empty( $bulk_action ) || ! in_array( $bulk_action, array( 'activate', 'deactivate' ), true ) ) {
+				echo '<div class="notice notice-error"><p>Please choose a valid bulk action.</p></div>';
+			} elseif ( empty( $slot_ids ) ) {
+				echo '<div class="notice notice-error"><p>Please select at least one slot.</p></div>';
+			} else {
+				global $wpdb;
+				$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
+
+				$new_status      = ( 'activate' === $bulk_action ) ? 'active' : 'inactive';
+				$updated_count   = 0;
+				$skipped_booked  = 0;
+
+				foreach ( $slot_ids as $raw_id ) {
+					$slot_id = intval( $raw_id );
+					if ( $slot_id <= 0 ) {
+						continue;
+					}
+
+					// When deactivating, do not deactivate slots that already have bookings
+					if ( 'inactive' === $new_status ) {
+						$current_bookings = $wpdb->get_var(
+							$wpdb->prepare(
+								"SELECT current_bookings FROM $rochtah_appointments_table WHERE id = %d",
+								$slot_id
+							)
+						);
+
+						if ( intval( $current_bookings ) > 0 ) {
+							$skipped_booked++;
+							continue;
+						}
+					}
+
+					$updated = $wpdb->update(
+						$rochtah_appointments_table,
+						array( 'status' => $new_status ),
+						array( 'id' => $slot_id ),
+						array( '%s' ),
+						array( '%d' )
+					);
+
+					if ( false !== $updated ) {
+						$updated_count += (int) $updated;
+					}
+				}
+
+				if ( $updated_count > 0 ) {
+					echo '<div class="notice notice-success"><p>Bulk action completed. Updated ' . intval( $updated_count ) . ' slot(s).</p></div>';
+				} else {
+					echo '<div class="notice notice-warning"><p>No slots were updated.</p></div>';
+				}
+
+				if ( $skipped_booked > 0 ) {
+					echo '<div class="notice notice-info"><p>Skipped ' . intval( $skipped_booked ) . ' slot(s) because they already have bookings.</p></div>';
+				}
 			}
 		}
 	}
@@ -141,6 +218,20 @@ function snks_rochtah_slots_manager() {
 			echo '<div class="notice notice-success"><p>Template deleted successfully!</p></div>';
 		}
 	}
+
+	// Rochtah general settings (used by paid prescription and publish window)
+	$rochtah_enabled = get_option( 'snks_ai_rochtah_enabled', '0' );
+	$rochtah_payment_enabled = get_option( 'snks_rochtah_payment_enabled', '0' );
+	$rochtah_price = get_option( 'snks_rochtah_price', 0 );
+	$rochtah_price = is_numeric( $rochtah_price ) ? floatval( $rochtah_price ) : 0;
+	$rochtah_publish_weeks = get_option( 'snks_rochtah_publish_weeks', 3 );
+	$rochtah_publish_weeks = is_numeric( $rochtah_publish_weeks ) ? intval( $rochtah_publish_weeks ) : 3;
+	if ( $rochtah_publish_weeks <= 0 ) {
+		$rochtah_publish_weeks = 1;
+	} elseif ( $rochtah_publish_weeks > 12 ) {
+		$rochtah_publish_weeks = 12;
+	}
+	$rochtah_publish_days = snks_rochtah_get_publish_days();
 
 	$days = array(
 		'Monday' => 'Monday',
@@ -172,8 +263,8 @@ function snks_rochtah_slots_manager() {
 		$days_since_publish = floor( ( $current_timestamp - $last_publish_timestamp ) / DAY_IN_SECONDS );
 	}
 
-	// Check if should publish (3 weeks = 21 days)
-	$should_publish = ( $days_since_publish >= 21 );
+	// Check if should publish (based on configured window)
+	$should_publish = ( $days_since_publish >= $rochtah_publish_days );
 
 	// Get published slots count
 	$rochtah_appointments_table = $wpdb->prefix . 'snks_rochtah_appointments';
@@ -205,6 +296,52 @@ function snks_rochtah_slots_manager() {
 			<div class="notice notice-error"><p>Invalid toggle request.</p></div>
 		<?php endif; ?>
 
+		<!-- Rochtah General Settings (Enable, payment, price) -->
+		<div class="card" style="margin-top: 20px;">
+			<h2>Rochtah Settings</h2>
+			<form method="post">
+				<?php wp_nonce_field( 'update_rochtah_settings' ); ?>
+				<input type="hidden" name="action" value="update_rochtah_settings">
+				<table class="form-table">
+					<tr>
+						<th><label for="rochtah_enabled">Enable Rochtah</label></th>
+						<td><input type="checkbox" id="rochtah_enabled" name="enabled" value="1" <?php checked( $rochtah_enabled, '1' ); ?>></td>
+					</tr>
+					<tr>
+						<th><label for="rochtah_payment_enabled">Enable payment for Rochtah service</label></th>
+						<td><input type="checkbox" id="rochtah_payment_enabled" name="rochtah_payment_enabled" value="1" <?php checked( $rochtah_payment_enabled, '1' ); ?>></td>
+					</tr>
+					<tr class="rochtah-price-row" style="<?php echo $rochtah_payment_enabled === '1' ? '' : 'display:none;'; ?>">
+						<th><label for="rochtah_price">Rochtah consultation price (EGP)</label></th>
+						<td><input type="number" id="rochtah_price" name="rochtah_price" value="<?php echo esc_attr( $rochtah_price ); ?>" min="0" step="0.01" class="small-text"></td>
+					</tr>
+					<tr>
+						<th><label for="rochtah_publish_weeks">Publish window (weeks)</label></th>
+						<td>
+							<input type="number"
+							       id="rochtah_publish_weeks"
+							       name="rochtah_publish_weeks"
+							       value="<?php echo esc_attr( $rochtah_publish_weeks ); ?>"
+							       min="1"
+							       max="12"
+							       step="1"
+							       class="small-text">
+							<p class="description">
+								How many weeks ahead to publish slots when running the publisher (manual or automatic).
+							</p>
+						</td>
+					</tr>
+				</table>
+				<?php submit_button( 'Save Rochtah Settings' ); ?>
+			</form>
+			<script>
+			(function() {
+				var cb = document.getElementById('rochtah_payment_enabled');
+				var row = document.querySelector('.rochtah-price-row');
+				if (cb && row) { cb.addEventListener('change', function() { row.style.display = this.checked ? '' : 'none'; }); }
+			})();
+			</script>
+		</div>
 
 		<!-- Publishing Status -->
 		<div class="card" style="margin-top: 20px;">
@@ -223,20 +360,37 @@ function snks_rochtah_slots_manager() {
 					<p style="margin: 0;"><strong>⚠️ Ready to Publish:</strong> It's been <?php echo esc_html( $days_since_publish ); ?> days since last publish. You should publish new slots now!</p>
 				</div>
 			<?php else : ?>
-				<p style="color: #28a745;"><strong>✓ OK:</strong> Next publish in <?php echo esc_html( 21 - $days_since_publish ); ?> days.</p>
+				<?php $days_remaining = max( 0, $rochtah_publish_days - $days_since_publish ); ?>
+				<p style="color: #28a745;">
+					<strong>✓ OK:</strong>
+					Next publish in
+					<?php echo esc_html( $days_remaining ); ?>
+					day<?php echo $days_remaining === 1 ? '' : 's'; ?>.
+				</p>
 			<?php endif; ?>
 
 			<form method="post" style="margin-top: 15px;">
 				<?php wp_nonce_field( 'rochtah_slots_manager_action', 'rochtah_slots_manager_nonce' ); ?>
 				<input type="hidden" name="action" value="publish_slots_manual">
-				<?php submit_button( 'Publish Slots Now (Next 3 Weeks)', 'primary', '', false ); ?>
+				<?php
+				$publish_label_weeks = max( 1, intval( $rochtah_publish_weeks ) );
+				$button_label        = sprintf(
+					'Publish Slots Now (Next %d Week%s)',
+					$publish_label_weeks,
+					$publish_label_weeks === 1 ? '' : 's'
+				);
+				submit_button( $button_label, 'primary', '', false );
+				?>
 			</form>
 		</div>
 
 		<!-- Day Templates -->
 		<div class="card" style="margin-top: 20px;">
 			<h2>Day Template Slots</h2>
-			<p class="description">Configure time slots for each day of the week. These templates will be used to automatically publish slots every 3 weeks.</p>
+			<p class="description">
+				Configure time slots for each day of the week. These templates will be used to automatically publish slots
+				for the next <?php echo esc_html( $rochtah_publish_weeks ); ?> week<?php echo $rochtah_publish_weeks === 1 ? '' : 's'; ?>.
+			</p>
 			
 			<?php foreach ( $days as $day_key => $day_name ) : 
 				$day_template = isset( $day_templates[ $day_key ] ) ? $day_templates[ $day_key ] : array();
@@ -282,59 +436,89 @@ function snks_rochtah_slots_manager() {
 			?>
 			
 			<?php if ( $published_slots ) : ?>
-				<table class="wp-list-table widefat fixed striped">
-					<thead>
-						<tr>
-							<th>Date</th>
-							<th>Day</th>
-							<th>Time</th>
-							<th>Status</th>
-							<th>Bookings</th>
-							<th>Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php foreach ( $published_slots as $slot ) : ?>
-							<tr style="<?php echo ( $slot->status === 'inactive' ) ? 'opacity:0.55;' : ''; ?>">
-
-								<td><?php echo esc_html( $slot->slot_date ); ?></td>
-								<td><?php echo esc_html( $slot->day_of_week ); ?></td>
-								<td><?php echo esc_html( date( 'g:i A', strtotime( $slot->start_time ) ) ); ?> - <?php echo esc_html( date( 'g:i A', strtotime( $slot->end_time ) ) ); ?></td>
-								<td>
-									<span class="status-<?php echo esc_attr( $slot->status ); ?>">
-										<?php echo esc_html( ucfirst( $slot->status ) ); ?>
-									</span>
-									<?php if ( $slot->status === 'inactive' ) : ?>
-										<span style="margin-left:8px; padding:2px 6px; background:#eee; border-radius:10px; font-size:12px;">Hidden</span>
-									<?php endif; ?>
-								</td>
-
-								<td><?php echo esc_html( $slot->current_bookings ); ?></td>
-								<td>
-									<?php
-										$slot_id = intval( $slot->id );
-										$is_inactive = ( $slot->status === 'inactive' );
-
-										$toggle_action = $is_inactive ? 'activate_slot' : 'deactivate_slot';
-										$toggle_label  = $is_inactive ? 'Restore' : 'Deactivate';
-
-										$toggle_url = wp_nonce_url(
-											admin_url( 'admin.php?page=rochtah-slots-manager&action=' . $toggle_action . '&slot_id=' . $slot_id ),
-											$toggle_action . '_' . $slot_id
-										);
-									?>
-									<a href="<?php echo esc_url( $toggle_url ); ?>"
-									class="button button-small <?php echo $is_inactive ? 'button-primary' : 'button-secondary'; ?>"
-									onclick="return confirm('<?php echo esc_js( $is_inactive ? 'Restore this slot (set active)?' : 'Deactivate this slot (set inactive)?' ); ?>');">
-										<?php echo esc_html( $toggle_label ); ?>
-									</a>
-								</td>
-
-
+				<form method="post">
+					<?php wp_nonce_field( 'rochtah_slots_manager_action', 'rochtah_slots_manager_nonce' ); ?>
+					<input type="hidden" name="action" value="bulk_update_slots">
+					<div style="margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+						<select name="bulk_action">
+							<option value=""><?php esc_html_e( 'Bulk actions', 'shrinks' ); ?></option>
+							<option value="activate"><?php esc_html_e( 'Activate selected slots', 'shrinks' ); ?></option>
+							<option value="deactivate"><?php esc_html_e( 'Deactivate selected slots', 'shrinks' ); ?></option>
+						</select>
+						<?php submit_button( __( 'Apply', 'shrinks' ), 'secondary', 'apply-bulk', false ); ?>
+					</div>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th style="width:30px;">
+									<input type="checkbox" id="rochtah-select-all-slots">
+								</th>
+								<th>Date</th>
+								<th>Day</th>
+								<th>Time</th>
+								<th>Status</th>
+								<th>Bookings</th>
+								<th>Actions</th>
 							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							<?php foreach ( $published_slots as $slot ) : ?>
+								<tr style="<?php echo ( $slot->status === 'inactive' ) ? 'opacity:0.55;' : ''; ?>">
+
+									<td>
+										<input type="checkbox" name="slot_ids[]" value="<?php echo esc_attr( intval( $slot->id ) ); ?>" class="rochtah-slot-checkbox">
+									</td>
+									<td><?php echo esc_html( $slot->slot_date ); ?></td>
+									<td><?php echo esc_html( $slot->day_of_week ); ?></td>
+									<td><?php echo esc_html( date( 'g:i A', strtotime( $slot->start_time ) ) ); ?> - <?php echo esc_html( date( 'g:i A', strtotime( $slot->end_time ) ) ); ?></td>
+									<td>
+										<span class="status-<?php echo esc_attr( $slot->status ); ?>">
+											<?php echo esc_html( ucfirst( $slot->status ) ); ?>
+										</span>
+										<?php if ( $slot->status === 'inactive' ) : ?>
+											<span style="margin-left:8px; padding:2px 6px; background:#eee; border-radius:10px; font-size:12px;">Hidden</span>
+										<?php endif; ?>
+									</td>
+
+									<td><?php echo esc_html( $slot->current_bookings ); ?></td>
+									<td>
+										<?php
+											$slot_id = intval( $slot->id );
+											$is_inactive = ( $slot->status === 'inactive' );
+
+											$toggle_action = $is_inactive ? 'activate_slot' : 'deactivate_slot';
+											$toggle_label  = $is_inactive ? 'Restore' : 'Deactivate';
+
+											$toggle_url = wp_nonce_url(
+												admin_url( 'admin.php?page=rochtah-slots-manager&action=' . $toggle_action . '&slot_id=' . $slot_id ),
+												$toggle_action . '_' . $slot_id
+											);
+										?>
+										<a href="<?php echo esc_url( $toggle_url ); ?>"
+										class="button button-small <?php echo $is_inactive ? 'button-primary' : 'button-secondary'; ?>"
+										onclick="return confirm('<?php echo esc_js( $is_inactive ? 'Restore this slot (set active)?' : 'Deactivate this slot (set inactive)?' ); ?>');">
+											<?php echo esc_html( $toggle_label ); ?>
+										</a>
+									</td>
+
+
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</form>
+				<script>
+				(function() {
+					var selectAll = document.getElementById('rochtah-select-all-slots');
+					if (!selectAll) return;
+					selectAll.addEventListener('change', function() {
+						var checkboxes = document.querySelectorAll('.rochtah-slot-checkbox');
+						for (var i = 0; i < checkboxes.length; i++) {
+							checkboxes[i].checked = selectAll.checked;
+						}
+					});
+				})();
+				</script>
 			<?php else : ?>
 				<p>No published slots found for the next 30 days.</p>
 			<?php endif; ?>
@@ -484,8 +668,26 @@ function snks_rochtah_slots_manager() {
 }
 
 /**
+ * Get number of days to publish based on configured weeks.
+ *
+ * @return int
+ */
+function snks_rochtah_get_publish_days() {
+	$publish_weeks = get_option( 'snks_rochtah_publish_weeks', 3 );
+	$publish_weeks = is_numeric( $publish_weeks ) ? intval( $publish_weeks ) : 3;
+
+	if ( $publish_weeks <= 0 ) {
+		$publish_weeks = 1;
+	} elseif ( $publish_weeks > 12 ) {
+		$publish_weeks = 12;
+	}
+
+	return $publish_weeks * 7;
+}
+
+/**
  * Publish rochtah slots from day templates
- * Creates slots for the next 3 weeks based on day templates
+ * Creates slots for the next N days (derived from configured weeks) based on day templates
  */
 function snks_publish_rochtah_slots_from_templates() {
 	global $wpdb;
@@ -505,10 +707,11 @@ function snks_publish_rochtah_slots_from_templates() {
 	
 	$slots_published = 0;
 	
-	// Publish slots for the next 3 weeks (21 days)
+	// Publish slots for the configured window (default 3 weeks)
+	$publish_days  = snks_rochtah_get_publish_days();
 	$current_date = current_time( 'Y-m-d' );
 	
-	for ( $day_offset = 0; $day_offset < 21; $day_offset++ ) {
+	for ( $day_offset = 0; $day_offset < $publish_days; $day_offset++ ) {
 		$target_date = date( 'Y-m-d', strtotime( "+$day_offset days", strtotime( $current_date ) ) );
 		$day_of_week = date( 'l', strtotime( $target_date ) );
 		
@@ -584,12 +787,13 @@ function snks_check_and_publish_rochtah_slots() {
 		return;
 	}
 	
-	// Check if 3 weeks (21 days) have passed
+	// Check if the configured window has passed since last publish
 	$last_publish_timestamp = strtotime( $last_publish_date );
 	$current_timestamp = current_time( 'timestamp' );
 	$days_since_publish = floor( ( $current_timestamp - $last_publish_timestamp ) / DAY_IN_SECONDS );
 	
-	if ( $days_since_publish >= 21 ) {
+	$publish_days = snks_rochtah_get_publish_days();
+	if ( $days_since_publish >= $publish_days ) {
 		$published = snks_publish_rochtah_slots_from_templates();
 		if ( $published ) {
 			update_option( 'snks_rochtah_last_publish_date', current_time( 'Y-m-d' ) );

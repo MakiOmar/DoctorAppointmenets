@@ -157,15 +157,6 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
-		'Rochtah Integration',
-		'Rochtah',
-		'manage_options',
-		'jalsah-ai-rochtah',
-		'snks_enhanced_ai_rochtah_page'
-	);
-
-	add_submenu_page(
-		'jalsah-ai-management',
 		__( 'Open Slots', 'shrinks' ),
 		__( 'Open Slots', 'shrinks' ),
 		'manage_options',
@@ -3123,26 +3114,22 @@ function snks_get_chatgpt_log_details_ajax() {
 // WhatsApp Integration Page removed - all settings now in Therapist Registration Settings
 
 /**
- * Rochtah Integration Page
+ * Rochtah Integration Page (retired: settings moved to Rochtah Slots Manager).
+ * Redirects to rochtah-slots-manager. Write prescription link now goes to rochtah-doctor-dashboard.
  */
 function snks_enhanced_ai_rochtah_page() {
+	wp_safe_redirect( admin_url( 'admin.php?page=rochtah-slots-manager' ) );
+	exit;
+}
+
+/**
+ * Legacy Rochtah page content (no longer used; kept for reference).
+ * @internal
+ */
+function _snks_enhanced_ai_rochtah_page_legacy() {
 	snks_load_ai_admin_styles();
-	
 	global $wpdb;
-	
-	// Handle settings updates
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'update_rochtah_settings' ) {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'update_rochtah_settings' ) ) {
-			update_option( 'snks_ai_rochtah_enabled', isset( $_POST['enabled'] ) ? '1' : '0' );
-			update_option( 'snks_ai_rochtah_available_days', serialize( isset( $_POST['available_days'] ) ? (array) $_POST['available_days'] : array() ) );
-			update_option( 'snks_rochtah_payment_enabled', isset( $_POST['rochtah_payment_enabled'] ) ? '1' : '0' );
-			$rochtah_price = isset( $_POST['rochtah_price'] ) ? floatval( $_POST['rochtah_price'] ) : 0;
-			update_option( 'snks_rochtah_price', $rochtah_price );
-			
-			echo '<div class="notice notice-success"><p>Rochtah settings updated successfully!</p></div>';
-		}
-	}
-	
+
 	// Handle appointment addition
 	if ( isset( $_POST['action'] ) && $_POST['action'] === 'add_appointment' ) {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'add_rochtah_appointment' ) ) {
@@ -3462,7 +3449,7 @@ function snks_enhanced_ai_rochtah_page() {
 								<td><?php echo esc_html( $booking->therapist_name ); ?></td>
 								<td><?php echo esc_html( $booking->diagnosis_name ); ?></td>
 								<td>
-									<a href="<?php echo admin_url( 'admin.php?page=jalsah-ai-rochtah&action=write_prescription&id=' . $booking->id ); ?>" class="button button-small">Write Prescription</a>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=rochtah-doctor-dashboard' ) ); ?>" class="button button-small">Write Prescription</a>
 								</td>
 							</tr>
 						<?php endforeach; ?>

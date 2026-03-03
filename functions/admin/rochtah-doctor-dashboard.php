@@ -731,6 +731,21 @@ function snks_rochtah_doctor_dashboard() {
 								<label style="font-weight: bold; display: block; margin-bottom: 8px;">Prescribed At:</label>
 								<div style="background-color: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e5e7eb;">${data.prescribed_at || 'Not prescribed yet'}</div>
 							</div>
+							${(data.attachments && data.attachments.length) ? (function() {
+								var esc = function(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+								var escUrl = function(s) { return (s || '#').replace(/"/g,'&quot;'); };
+								return '<div style="margin-bottom: 20px;"><label style="font-weight: bold; display: block; margin-bottom: 8px;">المرفقات / Attachments:</label><div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">' +
+									data.attachments.map(function(att) {
+										var url = escUrl(att.url);
+										var name = esc(att.name || '');
+										if (att.is_image && att.thumbnail) {
+											var thumb = escUrl(att.thumbnail);
+											return '<a href="' + url + '" target="_blank" rel="noopener" style="display: block; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: center;"><img src="' + thumb + '" alt="" style="width: 100%; height: 80px; object-fit: cover;"><span style="display: block; padding: 6px; font-size: 11px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + name + '</span></a>';
+										}
+										return '<a href="' + url + '" target="_blank" rel="noopener" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; color: #6366f1; min-height: 80px;"><svg style="width: 32px; height: 32px; margin-bottom: 6px; color: #6b7280;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span style="font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">' + (name || 'File') + '</span></a>';
+									}).join('') +
+								'</div></div>';
+							})() : ''}
 						</form>
 					`;
 					
