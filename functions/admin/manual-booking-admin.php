@@ -943,7 +943,17 @@ function snks_manual_booking_data_search_patient( $q ) {
 		$phone = get_user_meta( $u->id, 'billing_phone', true );
 		$name  = trim( $first . ' ' . $last );
 		if ( $name === '' ) {
-			$name = $phone !== '' ? $phone : $u->display_name;
+			if ( $phone !== '' ) {
+				$name = $phone;
+			} else {
+				// Backward compatibility: many auto-created patients had display_name like "Patient 2010...".
+				// Strip the "Patient " prefix and use just the digits when possible.
+				if ( preg_match( '/^Patient\s+(\d+)$/', $u->display_name, $m ) ) {
+					$name = $m[1];
+				} else {
+					$name = $u->display_name;
+				}
+			}
 		}
 		$result[] = array(
 			'id'         => $u->id,
