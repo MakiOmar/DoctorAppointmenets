@@ -260,10 +260,10 @@ function snks_save_rochtah_prescription() {
 	}
 	
 	$booking_id = intval( $_POST['booking_id'] );
-	$prescription_text = sanitize_textarea_field( $_POST['prescription_text'] );
-	$medications = sanitize_textarea_field( $_POST['medications'] );
-	$dosage_instructions = sanitize_textarea_field( $_POST['dosage_instructions'] );
-	$doctor_notes = sanitize_textarea_field( $_POST['doctor_notes'] );
+	$prescription_text = isset( $_POST['prescription_text'] ) ? sanitize_textarea_field( $_POST['prescription_text'] ) : '';
+	$medications = isset( $_POST['medications'] ) ? sanitize_textarea_field( $_POST['medications'] ) : '';
+	$dosage_instructions = isset( $_POST['dosage_instructions'] ) ? sanitize_textarea_field( $_POST['dosage_instructions'] ) : '';
+	$doctor_notes = isset( $_POST['doctor_notes'] ) ? sanitize_textarea_field( $_POST['doctor_notes'] ) : '';
 	
 	// Handle file uploads
 	$attachment_ids = array();

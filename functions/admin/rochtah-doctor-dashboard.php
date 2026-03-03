@@ -512,8 +512,8 @@ function snks_rochtah_doctor_dashboard() {
 						<div style="text-align: right; direction: rtl;">
 							${referralInfo}
 							<div style="margin-bottom: 20px;">
-								<label for="prescription_text" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">نص الروشتة:</label>
-								<textarea id="prescription_text" style="width: 100%; height: 180px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." required onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
+								<label for="prescription_text_modal" style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">نص الروشتة (اختياري):</label>
+								<textarea id="prescription_text_modal" style="width: 100%; height: 180px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; resize: vertical; font-family: inherit; transition: border-color 0.2s;" placeholder="اكتب نص الروشتة هنا..." onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e5e7eb'"></textarea>
 							</div>
 							<div style="margin-bottom: 15px;">
 						<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #374151;">المرفقات (اختياري):</label>
@@ -617,13 +617,10 @@ function snks_rochtah_doctor_dashboard() {
 				}
 			},
 			preConfirm: () => {
-				const prescriptionText = document.getElementById('prescription_text').value.trim();
+				// Use modal-specific id so we read from the SweetAlert content, not the main page form
+				const prescriptionTextEl = document.getElementById('prescription_text_modal');
+				const prescriptionText = prescriptionTextEl ? prescriptionTextEl.value.trim() : '';
 				const files = document.getElementById('prescription_files').files;
-				
-				if (!prescriptionText) {
-					Swal.showValidationMessage('يرجى إدخال نص الروشتة');
-					return false;
-				}
 				
 				return { 
 					prescription_text: prescriptionText,
@@ -636,7 +633,7 @@ function snks_rochtah_doctor_dashboard() {
 				var formData = new FormData();
 				formData.append('action', 'save_rochtah_prescription');
 				formData.append('booking_id', bookingId);
-				formData.append('prescription_text', result.value.prescription_text);
+				formData.append('prescription_text', result.value.prescription_text || '');
 				formData.append('nonce', '<?php echo esc_html( wp_create_nonce( 'save_prescription' ) ); ?>');
 				
 				// Add files
