@@ -825,7 +825,7 @@ function snks_jalsah_ai_manual_booking_page() {
  * Create a patient (customer) user from phone number for manual booking.
  * Username and email are derived from phone; password defaults to 12345678.
  *
- * @param string $phone Phone number (stored as-is in billing_phone).
+ * @param string $phone Phone number (digits with or without +; stored with full dial code e.g. +201026795573).
  * @return int|WP_Error User ID on success, WP_Error on failure.
  */
 function snks_manual_booking_create_patient_from_phone( $phone ) {
@@ -835,6 +835,9 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 	if ( strlen( $digits ) < 5 ) {
 		return new WP_Error( 'invalid_phone', __( 'Please enter a valid phone number (at least 5 digits).', 'shrinks' ) );
 	}
+
+	// Store phone/WhatsApp with full dial code (e.g. +201026795573) for consistency.
+	$phone_to_store = '+' . $digits;
 
 	$base_login = $digits;
 	$base_email = $digits . '@jalsah.app';
@@ -863,8 +866,8 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 		return $user_id;
 	}
 
-	update_user_meta( $user_id, 'billing_phone', $phone );
-	update_user_meta( $user_id, 'whatsapp', $phone );
+	update_user_meta( $user_id, 'billing_phone', $phone_to_store );
+	update_user_meta( $user_id, 'whatsapp', $phone_to_store );
 
 	return $user_id;
 }
@@ -1374,26 +1377,46 @@ function snks_manual_booking_data_list_bookings() {
 		$order = $order_id ? wc_get_order( $order_id ) : null;
 		$session_price = $order ? (float) $order->get_total() : 0;
 		$payment_method = $order ? (string) $order->get_meta( 'admin_manual_payment_method' ) : '';
-		$therapist_name = $wpdb->get_var( $wpdb->prepare(
-			"SELECT name FROM {$applications_table} WHERE user_id = %d LIMIT 1",
+		$therapist_row = $wpdb->get_row( $wpdb->prepare(
+			"SELECT name, phone, whatsapp FROM {$applications_table} WHERE user_id = %d LIMIT 1",
 			(int) $r->therapist_id
-		) );
+		), ARRAY_A );
+		$therapist_name  = ( $therapist_row && ! empty( $therapist_row['name'] ) ) ? $therapist_row['name'] : '—';
+		$therapist_phone = '';
+		if ( $therapist_row && ( ! empty( $therapist_row['phone'] ) || ! empty( $therapist_row['whatsapp'] ) ) ) {
+			$therapist_phone = ! empty( $therapist_row['phone'] ) ? $therapist_row['phone'] : $therapist_row['whatsapp'];
+		}
+		if ( '' === $therapist_phone && (int) $r->therapist_id ) {
+			$therapist_phone = get_user_meta( $r->therapist_id, 'billing_phone', true ) ?: '';
+		}
 		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
 		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
 		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
+		$patient_whatsapp = '';
+		if ( (int) $r->patient_id ) {
+			$patient_whatsapp = get_user_meta( $r->patient_id, 'whatsapp', true );
+			if ( '' === $patient_whatsapp ) {
+				$patient_whatsapp = get_user_meta( $r->patient_id, 'billing_whatsapp', true );
+			}
+			if ( '' === $patient_whatsapp ) {
+				$patient_whatsapp = get_user_meta( $r->patient_id, 'billing_phone', true );
+			}
+		}
 		$patient_name  = trim( $patient_first . ' ' . $patient_last ) ?: '—';
 
 		$result[] = array(
-			'order_id'       => $order_id,
-			'session_id'     => (int) $r->booking_id,
-			'therapist_name' => $therapist_name ?: '—',
-			'session_price'  => $session_price,
-			'meeting_link'   => $meeting_link,
-			'payment_method' => $payment_method ?: '—',
-			'patient_id'     => (int) $r->patient_id,
-			'patient_name'   => $patient_name,
-			'therapist_id'   => (int) $r->therapist_id,
-			'date_time'      => $r->date_time,
+			'order_id'        => $order_id,
+			'session_id'      => (int) $r->booking_id,
+			'therapist_name'  => $therapist_name,
+			'therapist_phone' => $therapist_phone,
+			'session_price'   => $session_price,
+			'meeting_link'    => $meeting_link,
+			'payment_method'  => $payment_method ?: '—',
+			'patient_id'      => (int) $r->patient_id,
+			'patient_name'    => $patient_name,
+			'patient_whatsapp' => $patient_whatsapp,
+			'therapist_id'    => (int) $r->therapist_id,
+			'date_time'       => $r->date_time,
 		);
 	}
 	return $result;
@@ -1493,28 +1516,48 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 		$order = $order_id ? wc_get_order( $order_id ) : null;
 		$session_price = $order ? (float) $order->get_total() : 0;
 		$payment_method = $order ? (string) $order->get_meta( 'admin_manual_payment_method' ) : '';
-		$therapist_name = $wpdb->get_var( $wpdb->prepare(
-			"SELECT name FROM {$applications_table} WHERE user_id = %d LIMIT 1",
+		$therapist_row = $wpdb->get_row( $wpdb->prepare(
+			"SELECT name, phone, whatsapp FROM {$applications_table} WHERE user_id = %d LIMIT 1",
 			(int) $r->therapist_id
-		) );
+		), ARRAY_A );
+		$therapist_name  = ( $therapist_row && ! empty( $therapist_row['name'] ) ) ? $therapist_row['name'] : '—';
+		$therapist_phone = '';
+		if ( $therapist_row && ( ! empty( $therapist_row['phone'] ) || ! empty( $therapist_row['whatsapp'] ) ) ) {
+			$therapist_phone = ! empty( $therapist_row['phone'] ) ? $therapist_row['phone'] : $therapist_row['whatsapp'];
+		}
+		if ( '' === $therapist_phone && (int) $r->therapist_id ) {
+			$therapist_phone = get_user_meta( $r->therapist_id, 'billing_phone', true ) ?: '';
+		}
 		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
 		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
 		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
+		$patient_whatsapp = '';
+		if ( (int) $r->patient_id ) {
+			$patient_whatsapp = get_user_meta( $r->patient_id, 'whatsapp', true );
+			if ( '' === $patient_whatsapp ) {
+				$patient_whatsapp = get_user_meta( $r->patient_id, 'billing_whatsapp', true );
+			}
+			if ( '' === $patient_whatsapp ) {
+				$patient_whatsapp = get_user_meta( $r->patient_id, 'billing_phone', true );
+			}
+		}
 		$patient_name  = trim( $patient_first . ' ' . $patient_last ) ?: '—';
 		$booking_type  = ( strpos( $r->settings, 'admin_manual_booking' ) !== false ) ? 'manual' : 'ai';
 
 		$result[] = array(
-			'order_id'       => $order_id,
-			'session_id'     => (int) $r->booking_id,
-			'therapist_name' => $therapist_name ?: '—',
-			'session_price'  => $session_price,
-			'meeting_link'   => $meeting_link,
-			'payment_method' => $payment_method ?: '—',
-			'patient_id'     => (int) $r->patient_id,
-			'patient_name'   => $patient_name,
-			'therapist_id'   => (int) $r->therapist_id,
-			'date_time'      => $r->date_time,
-			'booking_type'   => $booking_type,
+			'order_id'         => $order_id,
+			'session_id'       => (int) $r->booking_id,
+			'therapist_name'   => $therapist_name,
+			'therapist_phone'  => $therapist_phone,
+			'session_price'   => $session_price,
+			'meeting_link'    => $meeting_link,
+			'payment_method'  => $payment_method ?: '—',
+			'patient_id'      => (int) $r->patient_id,
+			'patient_name'    => $patient_name,
+			'patient_whatsapp' => $patient_whatsapp,
+			'therapist_id'    => (int) $r->therapist_id,
+			'date_time'       => $r->date_time,
+			'booking_type'    => $booking_type,
 		);
 	}
 	return array(

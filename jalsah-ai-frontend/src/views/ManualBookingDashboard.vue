@@ -1,5 +1,5 @@
 <template>
-  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="font-jalsah1 max-w-4xl mx-auto px-4 py-8">
+  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="font-jalsah1 max-w-6xl mx-auto px-4 py-8">
     <h1 class="text-2xl font-semibold text-primary-500 mb-6">
       {{ $t('manualBooking.title') }}
     </h1>
@@ -261,8 +261,10 @@
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientWhatsapp') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[180px] max-w-[180px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[260px] max-w-[260px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.actions') }}</th>
             </tr>
@@ -295,13 +297,41 @@
               </td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center gap-1">
+                  <span>{{ row.therapist_phone || '—' }}</span>
+                  <button
+                    v-if="row.therapist_phone"
+                    type="button"
+                    class="p-0.5 rounded hover:bg-gray-200"
+                    title="Copy"
+                    @click="copyCell(row.therapist_phone)"
+                  >
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ row.patient_whatsapp || '—' }}</span>
+                  <button
+                    v-if="row.patient_whatsapp"
+                    type="button"
+                    class="p-0.5 rounded hover:bg-gray-200"
+                    title="Copy"
+                    @click="copyCell(row.patient_whatsapp)"
+                  >
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
                   <span>{{ formatPrice(row.session_price) }}</span>
                   <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatPrice(row.session_price))">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                 </span>
               </td>
-              <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 180px;">
+              <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
                 <div class="flex items-center gap-1 min-w-0">
                   <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
                   <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
@@ -474,8 +504,9 @@
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableType') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ searchByPhoneResult.role === 'therapist' ? $t('manualBooking.tablePatientName') : $t('manualBooking.tableTherapistName') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[180px] max-w-[180px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[260px] max-w-[260px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.actions') }}</th>
             </tr>
@@ -513,13 +544,27 @@
               </td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center gap-1">
+                  <span>{{ row.therapist_phone || '—' }}</span>
+                  <button
+                    v-if="row.therapist_phone"
+                    type="button"
+                    class="p-0.5 rounded hover:bg-gray-200"
+                    title="Copy"
+                    @click="copyCell(row.therapist_phone)"
+                  >
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
                   <span>{{ formatPrice(row.session_price) }}</span>
                   <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatPrice(row.session_price))">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                 </span>
               </td>
-              <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 180px;">
+              <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
                 <div class="flex items-center gap-1 min-w-0">
                   <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
                   <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
