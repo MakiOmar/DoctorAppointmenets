@@ -10,9 +10,9 @@ const __dirname = path.dirname(__filename);
 // Environment configurations
 const environments = {
   local: {
-    VITE_API_TARGET: 'https://jalsah.app',
+    VITE_API_TARGET: 'http://localhost/shrinks',
     VITE_API_BASE_URL: '/api',
-    VITE_MAIN_SITE_URL: 'https://jalsah.app'
+    VITE_MAIN_SITE_URL: 'http://localhost/shrinks'
   },
   staging: {
     VITE_API_TARGET: 'https://jalsah.app',

@@ -7120,6 +7120,7 @@ Best regards,
 					return;
 				}
 				$q = isset( $input['q'] ) ? $input['q'] : '';
+				teamlog( 'handle_manual_booking_endpoint:search-patient', $q );
 				$this->send_success( snks_manual_booking_data_search_patient( $q ) );
 				return;
 

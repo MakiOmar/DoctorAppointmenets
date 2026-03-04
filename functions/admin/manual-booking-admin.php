@@ -911,28 +911,6 @@ function snks_manual_booking_data_search_patient( $q ) {
 	if ( strlen( $q ) < 2 ) {
 		return array();
 	}
-
-	// #region agent log
-	$snks_debug_log_path = dirname( __DIR__, 2 ) . '/debug-4643a2.log';
-	@file_put_contents(
-		$snks_debug_log_path,
-		wp_json_encode(
-			array(
-				'sessionId'    => '4643a2',
-				'runId'        => 'pre-fix-1',
-				'hypothesisId' => 'H1',
-				'location'     => 'functions/admin/manual-booking-admin.php:snks_manual_booking_data_search_patient:entry',
-				'message'      => 'search_patient_entry',
-				'data'         => array(
-					'q_len' => strlen( $q ),
-				),
-				'timestamp'    => round( microtime( true ) * 1000 ),
-			)
-		) . "\n",
-		FILE_APPEND
-	);
-	// #endregion agent log
-
 	global $wpdb;
 	$like = '%' . $wpdb->esc_like( $q ) . '%';
 	$caps_key = $wpdb->get_blog_prefix() . 'capabilities';
@@ -981,34 +959,6 @@ function snks_manual_booking_data_search_patient( $q ) {
 			}
 		}
 
-		// #region agent log
-		$display_name = isset( $display_name ) ? $display_name : $u->display_name;
-		$name_source  = ( $first || $last ) ? 'billing_name' : ( $phone ? 'billing_phone' : 'fallback' );
-		$tail_digits  = preg_replace( '/\D+/', '', (string) $name );
-		$tail         = $tail_digits !== '' ? substr( $tail_digits, -3 ) : '';
-		@file_put_contents(
-			$snks_debug_log_path,
-			wp_json_encode(
-				array(
-					'sessionId'    => '4643a2',
-					'runId'        => 'pre-fix-1',
-					'hypothesisId' => 'H2',
-					'location'     => 'functions/admin/manual-booking-admin.php:snks_manual_booking_data_search_patient:user_row',
-					'message'      => 'search_patient_user_row',
-					'data'         => array(
-						'user_id'        => (int) $u->id,
-						'name_source'    => $name_source,
-						'name_len'       => strlen( (string) $name ),
-						'name_tail'      => $tail,
-						'display_prefix' => substr( (string) $display_name, 0, 10 ),
-					),
-					'timestamp'    => round( microtime( true ) * 1000 ),
-				)
-			) . "\n",
-			FILE_APPEND
-		);
-		// #endregion agent log
-
 		$result[] = array(
 			'id'         => $u->id,
 			'email'      => $u->email,
@@ -1029,29 +979,6 @@ function snks_manual_booking_data_search_patient( $q ) {
 			// For auto-created patients, always use the raw phone as name so the frontend can
 			// prepend the desired localized label (e.g. "إنشاء مريض جديد - {phone}").
 			$name = $phone !== '' ? $phone : preg_replace( '/\D/', '', $q );
-
-			// #region agent log
-			$tail = preg_replace( '/^\d+(\d{3})$/', '$1', preg_replace( '/\D/', '', (string) $name ) );
-			@file_put_contents(
-				$snks_debug_log_path,
-				wp_json_encode(
-					array(
-						'sessionId'    => '4643a2',
-						'runId'        => 'pre-fix-1',
-						'hypothesisId' => 'H3',
-						'location'     => 'functions/admin/manual-booking-admin.php:snks_manual_booking_data_search_patient:new_user',
-						'message'      => 'search_patient_new_user',
-						'data'         => array(
-							'user_id'   => (int) $new_user_id,
-							'name_len'  => strlen( (string) $name ),
-							'name_tail' => $tail,
-						),
-						'timestamp'    => round( microtime( true ) * 1000 ),
-					)
-				) . "\n",
-				FILE_APPEND
-			);
-			// #endregion agent log
 
 			$result[] = array(
 				'id'         => (int) $new_user_id,

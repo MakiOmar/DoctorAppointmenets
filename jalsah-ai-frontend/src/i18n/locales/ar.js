@@ -939,7 +939,7 @@ export default {
     searchTherapist: 'ابحث عن المعالج بالاسم أو الهاتف',
     noMatch: 'لا توجد نتائج',
     clear: 'مسح',
-    firstName: 'الاسم الأول',
+    firstName: 'الاسم الكامل',
     lastName: 'اسم العائلة',
     therapist: 'المعالج',
     selectTherapist: 'اختر المعالج',
@@ -994,7 +994,7 @@ export default {
     currentDate: 'التاريخ والوقت الحالي',
     validation: {
       patientRequired: 'يرجى البحث عن المريض واختياره من القائمة',
-      firstNameRequired: 'الاسم الأول مطلوب',
+      firstNameRequired: 'الاسم الكامل مطلوب',
       lastNameRequired: 'اسم العائلة مطلوب',
       therapistRequired: 'يرجى اختيار المعالج',
       dateRequired: 'يرجى اختيار التاريخ',

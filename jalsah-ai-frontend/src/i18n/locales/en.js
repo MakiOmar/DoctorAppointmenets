@@ -949,7 +949,7 @@ export default {
     searchTherapist: 'Search therapist by name or phone',
     noMatch: 'No match',
     clear: 'Clear',
-    firstName: 'First name',
+    firstName: 'Full name',
     lastName: 'Last name',
     therapist: 'Therapist',
     selectTherapist: 'Select therapist',
@@ -1004,7 +1004,7 @@ export default {
     currentDate: 'Current date & time',
     validation: {
       patientRequired: 'Please search and select a patient from the list',
-      firstNameRequired: 'First name is required',
+      firstNameRequired: 'Full name is required',
       lastNameRequired: 'Last name is required',
       therapistRequired: 'Please select a therapist',
       dateRequired: 'Please select a date',
