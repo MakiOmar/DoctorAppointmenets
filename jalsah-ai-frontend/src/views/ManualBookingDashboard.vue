@@ -38,6 +38,14 @@
       >
         {{ $t('manualBooking.searchByPhone') }}
       </button>
+      <button
+        type="button"
+        class="px-4 py-2 font-medium"
+        :class="activeTab === 'availabilityCopy' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
+        @click="activeTab = 'availabilityCopy'"
+      >
+        {{ $t('manualBooking.availabilityCopy') }}
+      </button>
     </div>
 
     <!-- New booking -->
@@ -617,8 +625,99 @@
       </div>
     </div>
 
+    <!-- Availability copy -->
+    <div v-else-if="activeTab === 'availabilityCopy'" class="space-y-4">
+      <!-- Therapist selector -->
+      <div ref="availabilityTherapistDropdownRef">
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.therapist') }}</label>
+        <div class="flex gap-2 items-stretch">
+          <div class="relative flex-1">
+            <button
+              type="button"
+              class="w-full rounded border px-3 py-2 text-left flex items-center justify-between min-h-[42px]"
+              :class="'border-gray-300'"
+              @click="showAvailabilityTherapistDropdown = !showAvailabilityTherapistDropdown"
+            >
+              <span v-if="availabilitySelectedTherapistDisplay" class="truncate">{{ availabilitySelectedTherapistDisplay }}</span>
+              <span v-else class="text-gray-500">{{ $t('manualBooking.searchTherapist') }}</span>
+              <span class="flex items-center gap-2 shrink-0 ml-2">
+                <span v-if="therapistsLoading" class="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </button>
+            <div
+              v-if="showAvailabilityTherapistDropdown"
+              class="absolute z-20 mt-1 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
+            >
+              <div class="p-2 border-b border-gray-200">
+                <input
+                  v-model="availabilityTherapistSearch"
+                  type="text"
+                  class="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                  :placeholder="$t('manualBooking.searchTherapist')"
+                  @click.stop
+                />
+              </div>
+              <div class="max-h-52 overflow-y-auto">
+                <button
+                  v-for="t in filteredTherapistsForAvailability"
+                  :key="t.user_id"
+                  type="button"
+                  class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 border-b border-gray-100 last:border-0"
+                  @click="selectAvailabilityTherapist(t)"
+                >
+                  {{ t.name || t.name_en || t.user_id }}<span v-if="t.phone"> — {{ t.phone }}</span>
+                </button>
+                <p v-if="filteredTherapistsForAvailability.length === 0" class="px-3 py-2 text-sm text-gray-500">{{ $t('manualBooking.noMatch') }}</p>
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="availabilitySelectedTherapistId"
+            type="button"
+            class="rounded border border-gray-300 px-3 py-2 text-sm text-primary-600 hover:bg-gray-50 shrink-0"
+            @click="clearAvailabilityTherapist"
+          >
+            {{ $t('manualBooking.clear') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Date -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
+        <select
+          v-model="availabilitySelectedDate"
+          class="w-full rounded border border-gray-300 px-3 py-2"
+          :disabled="!availabilitySelectedTherapistId"
+          @change="onAvailabilityDateChange"
+        >
+          <option value="">— {{ $t('manualBooking.selectDate') }} —</option>
+          <option v-for="d in availabilityDates" :key="d.date" :value="d.date">{{ d.label }}</option>
+        </select>
+        <span v-if="availabilityDatesLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
+      </div>
+
+      <div v-if="availabilityHeading" class="rounded border border-gray-200 bg-white p-4">
+        <p class="text-sm font-medium text-gray-800 whitespace-pre-line">{{ availabilityHeading }}</p>
+        <p v-if="availabilitySlotsLoading" class="mt-2 text-sm text-gray-500">{{ $t('common.loading') }}</p>
+        <p v-else-if="availabilitySelectedDate && !availabilitySlotsText" class="mt-2 text-sm text-gray-500">{{ $t('manualBooking.noSlots') }}</p>
+        <pre class="mt-3 text-sm text-gray-700 whitespace-pre-wrap font-jalsah1">{{ availabilitySlotsText || '—' }}</pre>
+        <button
+          type="button"
+          class="mt-3 px-3 py-2 rounded border border-primary-500 bg-primary-500 text-white text-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!availabilityCopyText"
+          @click="copyCell(availabilityCopyText)"
+        >
+          {{ $t('manualBooking.copyAvailability') }}
+        </button>
+      </div>
+    </div>
+
     <!-- Change appointment -->
-    <div v-else class="space-y-4">
+    <div v-else-if="activeTab === 'change'" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.searchAppointment') }}</label>
         <div class="flex gap-2">
@@ -1053,6 +1152,57 @@ const searchByPhoneTherapistSearch = ref('')
 const showSearchTherapistDropdown = ref(false)
 const searchTherapistDropdownRef = ref(null)
 
+// —— Availability copy ——
+const availabilityTherapistSearch = ref('')
+const showAvailabilityTherapistDropdown = ref(false)
+const availabilityTherapistDropdownRef = ref(null)
+const availabilitySelectedTherapistId = ref('')
+const availabilityDates = ref([])
+const availabilitySelectedDate = ref('')
+const availabilitySlots = ref([])
+const availabilitySlotsLoading = ref(false)
+const availabilityDatesLoading = ref(false)
+
+const filteredTherapistsForAvailability = computed(() => {
+  const q = availabilityTherapistSearch.value.trim().toLowerCase()
+  if (!q) {
+    return therapists.value
+  }
+  return therapists.value.filter(t => {
+    const name = (t.name || t.name_en || '').toLowerCase()
+    const phone = (t.phone || t.whatsapp || '').toString().toLowerCase()
+    return name.includes(q) || phone.includes(q)
+  })
+})
+
+const availabilitySelectedTherapistDisplay = computed(() => {
+  if (!availabilitySelectedTherapistId.value) return ''
+  const th = therapists.value.find(t => String(t.user_id) === String(availabilitySelectedTherapistId.value))
+  if (!th) return ''
+  const name = th.name || th.name_en || String(th.user_id)
+  return th.phone ? `${name} — ${th.phone}` : name
+})
+
+const availabilityHeading = computed(() => {
+  if (!availabilitySelectedTherapistId.value || !availabilitySelectedDate.value) return ''
+  const th = therapists.value.find(t => String(t.user_id) === String(availabilitySelectedTherapistId.value))
+  const therapistName = th?.name || th?.name_en || '—'
+  const date = availabilitySelectedDate.value
+  const dayName = formatArabicDayName(date)
+  return `المواعيد المتاحه للمعالج ${therapistName} ليوم ${dayName} الموافق ${date}`
+})
+
+const availabilitySlotsText = computed(() => {
+  if (!availabilitySlots.value.length) return ''
+  return availabilitySlots.value.map(s => s.formatted_time || s.time || '').filter(Boolean).join('\n')
+})
+
+const availabilityCopyText = computed(() => {
+  if (!availabilityHeading.value) return ''
+  if (!availabilitySlotsText.value) return availabilityHeading.value
+  return `${availabilityHeading.value}\n${availabilitySlotsText.value}`
+})
+
 const filteredTherapistsForSearchByPhone = computed(() => {
   const q = searchByPhoneTherapistSearch.value.trim().toLowerCase()
   if (!q) {
@@ -1083,6 +1233,60 @@ function clearSearchByPhoneTherapist() {
   searchByPhoneSelectedTherapistId.value = ''
   searchByPhoneTherapistSearch.value = ''
   showSearchTherapistDropdown.value = false
+}
+
+function selectAvailabilityTherapist(t) {
+  availabilitySelectedTherapistId.value = t.user_id
+  showAvailabilityTherapistDropdown.value = false
+  availabilityTherapistSearch.value = ''
+  onAvailabilityTherapistChange()
+}
+
+function clearAvailabilityTherapist() {
+  availabilitySelectedTherapistId.value = ''
+  showAvailabilityTherapistDropdown.value = false
+  availabilityTherapistSearch.value = ''
+  availabilitySelectedDate.value = ''
+  availabilityDates.value = []
+  availabilitySlots.value = []
+}
+
+function onAvailabilityTherapistChange() {
+  availabilitySelectedDate.value = ''
+  availabilitySlots.value = []
+  availabilityDates.value = []
+  if (!availabilitySelectedTherapistId.value) return
+  availabilityDatesLoading.value = true
+  manualBookingApi.getAvailableDates(availabilitySelectedTherapistId.value).then(data => {
+    availabilityDates.value = Array.isArray(data) ? data : []
+  }).catch(() => {
+    toast.error(t('manualBooking.messages.loadDatesFailed'))
+  }).finally(() => {
+    availabilityDatesLoading.value = false
+  })
+}
+
+function onAvailabilityDateChange() {
+  availabilitySlots.value = []
+  if (!availabilitySelectedDate.value || !availabilitySelectedTherapistId.value) return
+  availabilitySlotsLoading.value = true
+  manualBookingApi.getSlots(availabilitySelectedTherapistId.value, availabilitySelectedDate.value).then(data => {
+    const allSlots = Array.isArray(data) ? data : []
+    availabilitySlots.value = allSlots.filter(s => Number(s.period || 45) === 45)
+  }).catch(() => {
+    toast.error(t('manualBooking.messages.loadSlotsFailed'))
+  }).finally(() => {
+    availabilitySlotsLoading.value = false
+  })
+}
+
+function formatArabicDayName(dateStr) {
+  try {
+    const d = new Date(`${dateStr}T00:00:00`)
+    return new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(d)
+  } catch (_) {
+    return dateStr
+  }
 }
 
 async function runSearchByPhone() {
@@ -1119,7 +1323,8 @@ async function runSearchByPhone() {
     searchByPhoneResult.value = {
       role: data?.role ?? '',
       bookings: Array.isArray(data?.bookings) ? data.bookings : [],
-      therapist_settings: data?.therapist_settings || null
+      therapist_settings: data?.therapist_settings || null,
+      patient_name: data?.patient_name || ''
     }
   } catch (err) {
     searchByPhoneError.value = err.response?.data?.error || t('manualBooking.messages.searchFailed')
@@ -1289,6 +1494,9 @@ function handleClickOutsideTherapist(e) {
   }
   if (showSearchTherapistDropdown.value && searchTherapistDropdownRef.value && !searchTherapistDropdownRef.value.contains(e.target)) {
     showSearchTherapistDropdown.value = false
+  }
+  if (showAvailabilityTherapistDropdown.value && availabilityTherapistDropdownRef.value && !availabilityTherapistDropdownRef.value.contains(e.target)) {
+    showAvailabilityTherapistDropdown.value = false
   }
 }
 
