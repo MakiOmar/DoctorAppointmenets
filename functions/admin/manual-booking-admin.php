@@ -1503,11 +1503,18 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 	}
 
 	if ( ! is_array( $rows ) ) {
-		return array(
-			'role'              => $role,
-			'bookings'          => array(),
+		$out = array(
+			'role'               => $role,
+			'bookings'           => array(),
 			'therapist_settings' => $therapist_settings,
 		);
+		if ( $role === 'patient' && ! empty( $patient_ids ) ) {
+			$first_patient_id = (int) $patient_ids[0];
+			$first = get_user_meta( $first_patient_id, 'billing_first_name', true );
+			$last  = get_user_meta( $first_patient_id, 'billing_last_name', true );
+			$out['patient_name'] = trim( $first . ' ' . $last ) ?: '—';
+		}
+		return $out;
 	}
 
 	$result = array();
@@ -1560,11 +1567,18 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 			'booking_type'    => $booking_type,
 		);
 	}
-	return array(
-		'role'              => $role,
-		'bookings'          => $result,
+	$out = array(
+		'role'               => $role,
+		'bookings'           => $result,
 		'therapist_settings' => $therapist_settings,
 	);
+	if ( $role === 'patient' && ! empty( $patient_ids ) ) {
+		$first_patient_id = (int) $patient_ids[0];
+		$first = get_user_meta( $first_patient_id, 'billing_first_name', true );
+		$last  = get_user_meta( $first_patient_id, 'billing_last_name', true );
+		$out['patient_name'] = trim( $first . ' ' . $last ) ?: '—';
+	}
+	return $out;
 }
 
 /**
