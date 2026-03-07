@@ -12,6 +12,86 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Ensure a slot exists for therapist at date+time. Finds existing or creates new.
+ * Used when admin selects "create new slot" with custom date and base hour.
+ *
+ * @param int    $therapist_id Therapist user ID.
+ * @param string $date         Date Y-m-d.
+ * @param string $time         Start time (HH:MM or HH:MM:SS).
+ * @return int|false Slot ID on success, false on failure.
+ */
+function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
+	$therapist_id = absint( $therapist_id );
+	$date         = sanitize_text_field( $date );
+	$time         = sanitize_text_field( $time );
+	if ( ! $therapist_id || ! $date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+		return false;
+	}
+	// Normalize time to HH:MM:SS.
+	if ( preg_match( '/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $time, $m ) ) {
+		$time = sprintf( '%02d:%02d:%02d', (int) $m[1], (int) $m[2], isset( $m[3] ) ? (int) $m[3] : 0 );
+	} else {
+		return false;
+	}
+
+	global $wpdb;
+	$table = $wpdb->prefix . 'snks_provider_timetable';
+
+	// Find existing available slot.
+	$existing = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT ID FROM {$table}
+			 WHERE user_id = %d AND DATE(date_time) = %s AND starts = %s
+			 AND session_status = 'waiting' AND order_id = 0
+			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
+			 LIMIT 1",
+			$therapist_id,
+			$date,
+			$time,
+			'%ai_booking:booked%',
+			'%ai_booking:in_cart%'
+		)
+	);
+	if ( $existing ) {
+		return (int) $existing->ID;
+	}
+
+	// Create new slot. 45-minute session.
+	$date_time = $date . ' ' . $time;
+	$ts        = strtotime( $date_time );
+	if ( false === $ts || $ts < time() ) {
+		return false;
+	}
+	$day_name = gmdate( 'l', $ts );
+	$ends_ts  = strtotime( '+45 minutes', $ts );
+	$ends     = gmdate( 'H:i:s', $ends_ts );
+
+	$insert = array(
+		'user_id'         => $therapist_id,
+		'client_id'       => 0,
+		'session_status'  => 'waiting',
+		'day'             => $day_name,
+		'base_hour'       => $time,
+		'period'          => 45,
+		'date_time'       => gmdate( 'Y-m-d H:i:s', $ts ),
+		'starts'          => $time,
+		'ends'            => $ends,
+		'clinic'          => '',
+		'attendance_type' => 'online',
+		'order_id'        => 0,
+		'settings'        => '',
+	);
+
+	$inserted = $wpdb->insert( $table, $insert );
+	if ( ! $inserted || $wpdb->last_error ) {
+		return false;
+	}
+	return (int) $wpdb->insert_id;
+}
+
+/**
  * Process admin manual booking (new appointment).
  *
  * @param int    $patient_id     Patient user ID.

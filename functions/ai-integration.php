@@ -7208,12 +7208,18 @@ Best regards,
 					$patient_id     = isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0;
 					$therapist_id   = isset( $input['therapist_id'] ) ? absint( $input['therapist_id'] ) : 0;
 					$slot_id        = isset( $input['slot_id'] ) ? absint( $input['slot_id'] ) : 0;
+					$date           = isset( $input['date'] ) ? sanitize_text_field( $input['date'] ) : '';
+					$time           = isset( $input['time'] ) ? sanitize_text_field( $input['time'] ) : '';
 					$country_code   = isset( $input['country_code'] ) ? sanitize_text_field( $input['country_code'] ) : 'EG';
 					$amount         = isset( $input['amount'] ) ? $input['amount'] : null;
 					$amount_override = ( $amount !== '' && $amount !== null && is_numeric( $amount ) && floatval( $amount ) > 0 ) ? floatval( $amount ) : null;
 					$first_name     = isset( $input['patient_first_name'] ) ? sanitize_text_field( $input['patient_first_name'] ) : '';
 					$last_name      = isset( $input['patient_last_name'] ) ? sanitize_text_field( $input['patient_last_name'] ) : '';
 					$payment_method = isset( $input['payment_method'] ) ? sanitize_text_field( $input['payment_method'] ) : '';
+					// New slot mode: create or find slot from date+time when slot_id not provided.
+					if ( ! $slot_id && $date && $time && function_exists( 'snks_manual_booking_ensure_slot' ) ) {
+						$slot_id = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );
+					}
 					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
 					if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {
 						$order = wc_get_order( $result['order_id'] );

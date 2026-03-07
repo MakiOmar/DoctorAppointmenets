@@ -988,6 +988,8 @@ export default {
     formDaysCount: 'Number of days shown in the booking form',
     unitHour: 'hour',
     unitDay: 'day',
+    slotModeExisting: 'Use existing slots',
+    slotModeNew: 'Create new slot',
     tableOrderId: 'Order ID',
     tableSessionId: 'Session ID',
     tableTherapistName: 'Therapist',

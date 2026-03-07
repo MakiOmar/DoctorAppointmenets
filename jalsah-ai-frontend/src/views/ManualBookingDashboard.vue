@@ -191,8 +191,30 @@
         <p v-if="errors?.therapist" class="mt-1 text-sm text-red-600">{{ errors?.therapist }}</p>
       </div>
 
-      <!-- Date -->
-      <div>
+      <!-- Slot mode selector -->
+      <div class="flex items-center gap-6">
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input
+            v-model="bookingSlotMode"
+            type="radio"
+            value="existing"
+            class="text-primary-500 focus:ring-primary-500"
+          >
+          <span>{{ $t('manualBooking.slotModeExisting') }}</span>
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input
+            v-model="bookingSlotMode"
+            type="radio"
+            value="new"
+            class="text-primary-500 focus:ring-primary-500"
+          >
+          <span>{{ $t('manualBooking.slotModeNew') }}</span>
+        </label>
+      </div>
+
+      <!-- Date (existing slot) -->
+      <div v-if="bookingSlotMode === 'existing'">
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
         <select v-model="selectedDate" class="w-full rounded border px-3 py-2" :class="errors?.date ? 'border-red-500' : 'border-gray-300'" @change="onDateChange">
           <option value="">— {{ $t('manualBooking.selectDate') }} —</option>
@@ -202,8 +224,20 @@
         <span v-if="datesLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
       </div>
 
-      <!-- Slot -->
-      <div>
+      <!-- Date (new slot): any future date -->
+      <div v-else>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
+        <input
+          v-model="newSlotDate"
+          type="date"
+          class="w-full rounded border px-3 py-2 border-gray-300"
+          :min="newSlotDateMin"
+          @change="onNewSlotDateChange"
+        >
+      </div>
+
+      <!-- Slot (existing slot) -->
+      <div v-if="bookingSlotMode === 'existing'">
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
         <select v-model="selectedSlotId" class="w-full rounded border px-3 py-2" :class="errors?.slot ? 'border-red-500' : 'border-gray-300'">
           <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
@@ -211,6 +245,16 @@
         </select>
         <p v-if="errors?.slot" class="mt-1 text-sm text-red-600">{{ errors?.slot }}</p>
         <span v-if="slotsLoading" class="ml-2 animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full inline-block" />
+      </div>
+
+      <!-- Slot (new slot): fixed base hours 8:15, 9:15, etc. -->
+      <div v-else>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
+        <select v-model="newSlotTime" class="w-full rounded border px-3 py-2" :class="errors?.slot ? 'border-red-500' : 'border-gray-300'">
+          <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
+          <option v-for="t in baseTimeOptions" :key="t" :value="t">{{ formatTimeAmPm(t) }}</option>
+        </select>
+        <p v-if="errors?.slot" class="mt-1 text-sm text-red-600">{{ errors?.slot }}</p>
       </div>
 
       <!-- Country (pricing) -->
@@ -856,7 +900,8 @@ function validateNewBooking() {
     errors.value.date = t('manualBooking.validation.dateRequired')
     valid = false
   }
-  if (!selectedSlotId.value) {
+  const slotValid = bookingSlotMode.value === 'new' ? newSlotTime.value : selectedSlotId.value
+  if (!slotValid) {
     errors.value.slot = t('manualBooking.validation.slotRequired')
     valid = false
   }
@@ -903,6 +948,9 @@ const selectedCountryCode = ref('')
 const amountOverride = ref('')
 const paymentMethod = ref('')
 const submitLoading = ref(false)
+const bookingSlotMode = ref('existing')
+const newSlotDate = ref('')
+const newSlotTime = ref('')
 
 const selectedPatientCountry = computed(() => {
   return patientCountries.value.find(c => c.country_code === selectedPatientCountryCode.value) || patientCountries.value[0]
@@ -951,6 +999,8 @@ function clearTherapist() {
   therapistSearch.value = ''
   selectedDate.value = ''
   selectedSlotId.value = ''
+  newSlotDate.value = ''
+  newSlotTime.value = ''
   selectedCountryCode.value = ''
   availableDates.value = []
   slots.value = []
@@ -1047,6 +1097,8 @@ function selectPatientCountry(c) {
 function onTherapistChange() {
   selectedDate.value = ''
   selectedSlotId.value = ''
+  newSlotDate.value = ''
+  newSlotTime.value = ''
   selectedCountryCode.value = ''
   availableDates.value = []
   slots.value = []
@@ -1078,6 +1130,11 @@ function onDateChange() {
   }).catch(() => toast.error(t('manualBooking.messages.loadSlotsFailed'))).finally(() => { slotsLoading.value = false })
 }
 
+function onNewSlotDateChange() {
+  selectedDate.value = newSlotDate.value || ''
+  newSlotTime.value = ''
+}
+
 async function submitNewBooking() {
   if (!validateNewBooking()) {
     return
@@ -1094,11 +1151,16 @@ async function submitNewBooking() {
     mode: 'new',
     patient_id: patientId.value,
     therapist_id: selectedTherapistId.value,
-    slot_id: selectedSlotId.value,
     country_code: selectedCountryCode.value,
     patient_first_name: firstNameForPayload,
     patient_last_name: lastNameForPayload,
     payment_method: paymentMethod.value || ''
+  }
+  if (bookingSlotMode.value === 'new') {
+    payload.date = selectedDate.value
+    payload.time = newSlotTime.value
+  } else {
+    payload.slot_id = selectedSlotId.value
   }
   if (amountOverride.value && amountOverride.value.trim() !== '') {
     const num = parseFloat(amountOverride.value)
@@ -1109,8 +1171,8 @@ async function submitNewBooking() {
   try {
     const result = await manualBookingApi.submit(payload)
     const therapistName = therapists.value.find(th => String(th.user_id) === String(selectedTherapistId.value))?.name || therapists.value.find(th => String(th.user_id) === String(selectedTherapistId.value))?.name_en || '—'
-    const selectedSlot = slots.value.find(s => String(s.slot_id) === String(selectedSlotId.value))
-    const dateTimeStr = selectedDate.value && selectedSlot?.formatted_time ? `${selectedDate.value} ${selectedSlot.formatted_time}` : (selectedDate.value || '—')
+    const slotLabel = bookingSlotMode.value === 'new' ? formatTimeAmPm(newSlotTime.value) : slots.value.find(s => String(s.slot_id) === String(selectedSlotId.value))?.formatted_time
+    const dateTimeStr = selectedDate.value && slotLabel ? `${selectedDate.value} ${slotLabel}` : (selectedDate.value || '—')
     const bookingId = result?.order_id ?? '—'
     await Swal.fire({
       icon: 'success',
@@ -1124,6 +1186,8 @@ async function submitNewBooking() {
     selectedTherapistId.value = ''
     selectedDate.value = ''
     selectedSlotId.value = ''
+    newSlotDate.value = ''
+    newSlotTime.value = ''
     selectedCountryCode.value = ''
     amountOverride.value = ''
     paymentMethod.value = ''
@@ -1201,6 +1265,24 @@ const availabilityCopyText = computed(() => {
   if (!availabilityHeading.value) return ''
   if (!availabilitySlotsText.value) return availabilityHeading.value
   return `${availabilityHeading.value}\n${availabilitySlotsText.value}`
+})
+
+// Base times for new slot mode: 00:00 (midnight) to 11:15 PM at 15-min intervals
+const baseTimeOptions = (() => {
+  const options = []
+  for (let h = 0; h <= 23; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      if (h === 23 && m > 15) break
+      options.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`)
+    }
+  }
+  return options
+})()
+
+// New slot mode: min = today, allow any future date
+const newSlotDateMin = computed(() => {
+  const today = new Date()
+  return today.toISOString().slice(0, 10)
 })
 
 const filteredTherapistsForSearchByPhone = computed(() => {
@@ -1364,6 +1446,15 @@ function formatBlockIfBefore(settings) {
   if (!num && !unit) return '—'
   const label = unit === 'day' ? t('manualBooking.unitDay') : (unit === 'hour' ? t('manualBooking.unitHour') : unit)
   return [num, label].filter(Boolean).join(' ')
+}
+
+function formatTimeAmPm(time) {
+  if (!time) return ''
+  const [h, m] = time.split(':')
+  if (h == null || m == null) return time
+  const d = new Date()
+  d.setHours(Number(h), Number(m), 0, 0)
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
 function formatPrice(price) {

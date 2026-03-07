@@ -978,6 +978,8 @@ export default {
     formDaysCount: 'عدد الأيام التي تظهر في نموذج الحجز',
     unitHour: 'ساعة',
     unitDay: 'يوم',
+    slotModeExisting: 'استخدام المواعيد المتاحة',
+    slotModeNew: 'إنشاء موعد جديد',
     tableOrderId: 'رقم الطلب',
     tableSessionId: 'رقم الجلسة',
     tableTherapistName: 'المعالج',
