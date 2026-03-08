@@ -7219,6 +7219,10 @@ Best regards,
 					// New slot mode: create or find slot from date+time when slot_id not provided.
 					if ( ! $slot_id && $date && $time && function_exists( 'snks_manual_booking_ensure_slot' ) ) {
 						$slot_id = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );
+						if ( ! $slot_id && function_exists( 'snks_manual_booking_ensure_slot_last_error' ) && snks_manual_booking_ensure_slot_last_error() === 'overlap' ) {
+							$this->send_error( __( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ), 400 );
+							return;
+						}
 					}
 					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
 					if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {

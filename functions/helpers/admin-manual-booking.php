@@ -12,8 +12,45 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Last error set by snks_manual_booking_ensure_slot when it returns false (e.g. 'overlap').
+ * Used by the API to return a specific error message.
+ *
+ * @var string|null
+ */
+$snks_manual_booking_ensure_slot_last_error = null;
+
+/**
+ * Return the last error reason from snks_manual_booking_ensure_slot (e.g. 'overlap' or null).
+ *
+ * @return string|null
+ */
+function snks_manual_booking_ensure_slot_last_error() {
+	global $snks_manual_booking_ensure_slot_last_error;
+	return $snks_manual_booking_ensure_slot_last_error;
+}
+
+/**
+ * Convert time string HH:MM:SS or HH:MM to minutes since midnight.
+ *
+ * @param string $time Time string.
+ * @return int Minutes since midnight, or -1 on invalid.
+ */
+function snks_manual_booking_time_to_minutes( $time ) {
+	if ( preg_match( '/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', trim( $time ), $m ) ) {
+		$h = (int) $m[1];
+		$min = (int) $m[2];
+		if ( $h < 0 || $h > 23 || $min < 0 || $min > 59 ) {
+			return -1;
+		}
+		return $h * 60 + $min;
+	}
+	return -1;
+}
+
+/**
  * Ensure a slot exists for therapist at date+time. Finds existing or creates new.
  * Used when admin selects "create new slot" with custom date and base hour.
+ * Does not create a slot if it would overlap an existing slot (any period).
  *
  * @param int    $therapist_id Therapist user ID.
  * @param string $date         Date Y-m-d.
@@ -21,6 +58,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return int|false Slot ID on success, false on failure.
  */
 function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
+	global $wpdb, $snks_manual_booking_ensure_slot_last_error;
+
+	$snks_manual_booking_ensure_slot_last_error = null;
+
 	$therapist_id = absint( $therapist_id );
 	$date         = sanitize_text_field( $date );
 	$time         = sanitize_text_field( $time );
@@ -34,10 +75,9 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		return false;
 	}
 
-	global $wpdb;
 	$table = $wpdb->prefix . 'snks_provider_timetable';
 
-	// Find existing available slot.
+	// Find existing available slot at exact same start time.
 	$existing = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT ID FROM {$table}
@@ -56,6 +96,38 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	);
 	if ( $existing ) {
 		return (int) $existing->ID;
+	}
+
+	// Check overlap with any existing slot (any status) for this therapist and date.
+	// New slot would be [newStart, newStart+45) in minutes; overlap if newStart < existingEnd && existingStart < newEnd.
+	$new_start_min = snks_manual_booking_time_to_minutes( $time );
+	if ( $new_start_min < 0 ) {
+		return false;
+	}
+	$new_end_min = $new_start_min + 45;
+
+	$all_slots = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT starts, period FROM {$table}
+			 WHERE user_id = %d AND DATE(date_time) = %s
+			 ORDER BY starts ASC",
+			$therapist_id,
+			$date
+		)
+	);
+	if ( is_array( $all_slots ) ) {
+		foreach ( $all_slots as $row ) {
+			$existing_start_min = snks_manual_booking_time_to_minutes( $row->starts );
+			if ( $existing_start_min < 0 ) {
+				continue;
+			}
+			$period = isset( $row->period ) && (int) $row->period > 0 ? (int) $row->period : 45;
+			$existing_end_min = $existing_start_min + $period;
+			if ( $new_start_min < $existing_end_min && $existing_start_min < $new_end_min ) {
+				$snks_manual_booking_ensure_slot_last_error = 'overlap';
+				return false;
+			}
+		}
 	}
 
 	// Create new slot. 45-minute session.
