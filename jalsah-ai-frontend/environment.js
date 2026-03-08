@@ -13,7 +13,7 @@
 //
 // - When building for production (`npm run build`, `npm run preview`):
 //     - API_TARGET    => https://jalsah.app
-//     - API_BASE_URL  => /api   (frontend talks to /api on https://jalsah.app)
+//     - API_BASE_URL  => https://jalsah.app (API requests go to jalsah.app; use when SPA is on jalsah.online)
 //     - MAIN_SITE_URL => https://jalsah.app
 //
 // The Vite config reads these values to:
@@ -25,7 +25,8 @@ const npmCommand = process.env.npm_lifecycle_event || '';
 const isDevCommand = npmCommand === 'dev' || process.env.NODE_ENV === 'development';
 
 const API_TARGET = isDevCommand ? 'http://localhost/shrinks' : 'https://jalsah.app';
-const API_BASE_URL = '/api';
+// Production: full origin so SPA (e.g. on jalsah.online) hits jalsah.app for API. Dev: /api for proxy.
+const API_BASE_URL = isDevCommand ? '/api' : 'https://jalsah.app';
 const MAIN_SITE_URL = isDevCommand ? 'http://localhost/shrinks' : 'https://jalsah.app';
 
 export const ENVIRONMENT_CONFIG = {
