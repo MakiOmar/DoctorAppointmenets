@@ -21,9 +21,15 @@ const getBaseURL = () => {
     return ''
   }
   
-  // In production, use the configured base URL or current domain
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL
+  // In production: paths already start with /api (e.g. /api/ai/auth).
+  // If VITE_API_BASE_URL is exactly '/api', using it as baseURL would produce /api + /api/ai/... = double /api and 404.
+  // Use empty string so requests go to same origin with path /api/ai/... correctly.
+  const envBase = import.meta.env.VITE_API_BASE_URL
+  if (envBase === '/api' || envBase === '') {
+    return ''
+  }
+  if (envBase) {
+    return envBase
   }
   
   return window.location.origin
