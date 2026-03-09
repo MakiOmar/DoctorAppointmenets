@@ -5,7 +5,7 @@
     </h1>
 
     <!-- Tabs -->
-    <div class="flex border-b border-gray-200 mb-6 max-w-2xl mx-auto">
+    <div class="flex border-b border-gray-200 mb-6 max-w-4xl mx-auto">
       <button
         type="button"
         class="px-4 py-2 font-medium"
