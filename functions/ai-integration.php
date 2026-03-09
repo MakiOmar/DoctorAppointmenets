@@ -6050,6 +6050,12 @@ Best regards,
 			);
 		}
 		
+		// Remove global excluded booking dates (e.g. holidays).
+		$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+		foreach ( $global_excluded as $excluded_date ) {
+			unset( $dates_map[ $excluded_date ] );
+		}
+		
 		// Convert map to array and return
 		$available_dates = array_values( $dates_map );
 
@@ -6294,6 +6300,11 @@ Best regards,
 				'isSelected'  => false,
 			);
 		}
+		// Exclude global excluded booking dates (e.g. holidays).
+		$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+		$formatted_dates = array_values( array_filter( $formatted_dates, function ( $item ) use ( $global_excluded ) {
+			return ! in_array( $item['date'], $global_excluded, true );
+		} ) );
 
 		$this->send_success(
 			array(
@@ -6318,9 +6329,19 @@ Best regards,
 		$doctor_settings = snks_doctor_settings( $therapist_id );
 		$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
 
-		// Check if the requested date is in off_days
+		// Check if the requested date is in off_days or global excluded (e.g. holidays).
 		if ( in_array( $date, $off_days, true ) ) {
-			// Return empty results if the date is an off day
+			$this->send_success(
+				array(
+					'available_slots' => array(),
+					'therapist_id'    => $therapist_id,
+					'date'           => $date,
+				)
+			);
+			return;
+		}
+		$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+		if ( in_array( $date, $global_excluded, true ) ) {
 			$this->send_success(
 				array(
 					'available_slots' => array(),

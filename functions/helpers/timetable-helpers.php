@@ -831,8 +831,11 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
     // Set the default order.
     $_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 
-    // Fetch off-days from doctor settings.
+    // Fetch off-days from doctor settings and merge with global excluded booking dates (e.g. holidays).
     $off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
+    $off_days = array_map( 'trim', $off_days );
+    $global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+    $off_days = array_values( array_unique( array_filter( array_merge( $off_days, $global_excluded ) ) ) );
 
     // Prepare the off-days for SQL query.
     $off_days_placeholder = '';

@@ -1039,9 +1039,13 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 		 LIMIT 60",
 		$therapist_id
 	) );
+	$dates = (array) $dates;
+	// Exclude global excluded booking dates (e.g. holidays).
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+	$dates = array_values( array_diff( $dates, $global_excluded ) );
 	$today = current_time( 'Y-m-d' );
 	$result = array();
-	foreach ( (array) $dates as $d ) {
+	foreach ( $dates as $d ) {
 		$label = ( $d === $today )
 			? sprintf( __( 'Today — %s', 'shrinks' ), wp_date( 'j M Y', strtotime( $d ) ) )
 			: wp_date( 'D j M Y', strtotime( $d ) );

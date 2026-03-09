@@ -288,6 +288,30 @@ add_action( 'admin_menu', 'snks_add_enhanced_ai_admin_menu', 20 );
 add_action( 'admin_menu', 'snks_add_bulk_diagnosis_assignment_menu', 21 );
 
 /**
+ * Enqueue Flatpickr for excluded booking dates on General Settings page.
+ */
+function snks_enqueue_flatpickr_for_excluded_dates( $hook_suffix ) {
+	// Load on General Settings or any Jalsah AI page (hook contains jalsah-ai-settings or jalsah-ai).
+	$is_jalsah = ( is_string( $hook_suffix ) && ( strpos( $hook_suffix, 'jalsah-ai-settings' ) !== false || strpos( $hook_suffix, 'jalsah-ai-management' ) !== false ) )
+		|| ( isset( $_GET['page'] ) && sanitize_text_field( wp_unslash( $_GET['page'] ) ) === 'jalsah-ai-settings' );
+	if ( ! $is_jalsah ) {
+		return;
+	}
+	$plugin_url = defined( 'SNKS_URI' ) ? SNKS_URI : plugin_dir_url( dirname( __FILE__, 2 ) );
+	$local_css  = defined( 'SNKS_DIR' ) ? SNKS_DIR . 'jalsah-ai-frontend/node_modules/flatpickr/dist/flatpickr.min.css' : '';
+	$local_js   = defined( 'SNKS_DIR' ) ? SNKS_DIR . 'jalsah-ai-frontend/node_modules/flatpickr/dist/flatpickr.min.js' : '';
+	$use_local  = $local_css && $local_js && file_exists( $local_css ) && file_exists( $local_js );
+	if ( $use_local ) {
+		wp_enqueue_style( 'flatpickr', $plugin_url . 'jalsah-ai-frontend/node_modules/flatpickr/dist/flatpickr.min.css', array(), '4.6.13' );
+		wp_enqueue_script( 'flatpickr', $plugin_url . 'jalsah-ai-frontend/node_modules/flatpickr/dist/flatpickr.min.js', array(), '4.6.13', true );
+	} else {
+		wp_enqueue_style( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css', array(), '4.6.13' );
+		wp_enqueue_script( 'flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js', array(), '4.6.13', true );
+	}
+}
+add_action( 'admin_enqueue_scripts', 'snks_enqueue_flatpickr_for_excluded_dates' );
+
+/**
  * Load AI Admin Styles
  */
 function snks_load_ai_admin_styles() {
@@ -3715,6 +3739,21 @@ function snks_enhanced_ai_settings_page() {
 				update_option( 'snks_ai_appointment_change_terms_en', sanitize_textarea_field( $_POST['appointment_change_terms_en'] ) );
 				update_option( 'snks_ai_appointment_change_terms_ar', sanitize_textarea_field( $_POST['appointment_change_terms_ar'] ) );
 				
+				// Excluded booking dates (holidays): comma-separated or newline-separated Y-m-d.
+				$excluded_dates_raw = isset( $_POST['excluded_booking_dates'] ) ? sanitize_textarea_field( wp_unslash( $_POST['excluded_booking_dates'] ) ) : '';
+				$excluded_dates_saved = array();
+				if ( $excluded_dates_raw !== '' ) {
+					$lines = preg_split( '/[\s,]+/', $excluded_dates_raw, -1, PREG_SPLIT_NO_EMPTY );
+					$lines = array_map( 'trim', $lines );
+					foreach ( $lines as $line ) {
+						if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $line ) && DateTime::createFromFormat( 'Y-m-d', $line ) ) {
+							$excluded_dates_saved[] = $line;
+						}
+					}
+					$excluded_dates_saved = array_values( array_unique( $excluded_dates_saved ) );
+				}
+				update_option( 'snks_booking_excluded_dates', $excluded_dates_saved );
+				
 				echo '<div class="notice notice-success"><p>General settings updated successfully!</p></div>';
 			}
 		}
@@ -3736,6 +3775,10 @@ function snks_enhanced_ai_settings_page() {
 	// Appointment Change Terms Settings
 	$appointment_change_terms_en = get_option( 'snks_ai_appointment_change_terms_en', 'You can only change your appointment once before the current appointment by 24 hours only, not after. Change appointment is free.' );
 	$appointment_change_terms_ar = get_option( 'snks_ai_appointment_change_terms_ar', 'يرجى العلم أنه يمكنك تغيير موعد الحجز مره واحده فقط بعد الحجز بحد أقصى 24 ساعة قبل موعد الجلسة المحجوزه، ولا يمكن تغييرها بعد ذلك، كمان أن قيمة الحجز غير مستردة.' );
+	// Excluded booking dates (holidays) for all booking forms.
+	$excluded_booking_dates = get_option( 'snks_booking_excluded_dates', array() );
+	$excluded_booking_dates = is_array( $excluded_booking_dates ) ? $excluded_booking_dates : array();
+	$excluded_booking_dates_text = implode( "\n", $excluded_booking_dates );
 	?>
 	<div class="wrap">
 		<h1>General Settings</h1>
@@ -3850,8 +3893,36 @@ function snks_enhanced_ai_settings_page() {
 					<p class="description">Terms and conditions for changing appointments in Arabic. This will be displayed under cart items.</p>
 				</div>
 				
+				<h3><?php esc_html_e( 'Excluded Booking Dates (Holidays)', 'shrinks' ); ?></h3>
+				<div class="bilingual-field">
+					<label for="excluded_booking_dates_input"><?php esc_html_e( 'Dates to exclude from all booking forms', 'shrinks' ); ?></label>
+					<input type="text" id="excluded_booking_dates_input" class="regular-text" readonly placeholder="<?php esc_attr_e( 'Click to select dates...', 'shrinks' ); ?>" value="<?php echo esc_attr( implode( ', ', $excluded_booking_dates ) ); ?>" style="cursor: pointer; background: #fff;">
+					<input type="hidden" id="excluded_booking_dates" name="excluded_booking_dates" value="<?php echo esc_attr( implode( ',', $excluded_booking_dates ) ); ?>">
+					<p class="description"><?php esc_html_e( 'Click the field above to select multiple dates. These dates are excluded from the main plugin booking form, AI therapist booking, manual booking, and Rochtah forms. Use for official holidays when no sessions are offered.', 'shrinks' ); ?></p>
+				</div>
+				
 				<?php submit_button( 'Save Settings' ); ?>
 			</form>
+			<?php
+			// Init Flatpickr with fresh data (after POST processed) so saved values display correctly on reload.
+			$excluded_dates_js = wp_json_encode( $excluded_booking_dates );
+			?>
+			<script>
+			document.addEventListener('DOMContentLoaded',function(){
+				var d=<?php echo $excluded_dates_js; ?>,i,h,fp,pad=function(n){return n<10?'0'+n:''+n;},f=function(){
+					i=document.getElementById('excluded_booking_dates_input');
+					h=document.getElementById('excluded_booking_dates');
+					if(!i||!h||typeof flatpickr==='undefined')return false;
+					fp=flatpickr(i,{mode:'multiple',dateFormat:'Y-m-d',defaultDate:d,onChange:function(s,str){h.value=(str||'').replace(/\s*,\s*/g,',');}});
+					if(d.length){i.value=d.join(', ');h.value=d.join(',');}
+					var form=i.closest('form');
+					if(form){form.addEventListener('submit',function(){if(fp){if(fp.selectedDates&&fp.selectedDates.length){var dates=fp.selectedDates.map(function(x){return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());});h.value=dates.join(',');}else{h.value='';}}});}
+					return true;
+				};
+				var t=0,r=function(){if(f())return;if(t++<40)setTimeout(r,100);};
+				r();
+			});
+			</script>
 		</div>
 		
 		<div class="card">

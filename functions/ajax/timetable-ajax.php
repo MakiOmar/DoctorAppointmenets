@@ -880,9 +880,12 @@ function snks_get_session_rochtah_available_dates() {
 	$available_dates = array();
 	$current_date = current_time( 'Y-m-d' );
 	
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
 	for ( $i = 1; $i <= 30; $i++ ) {
 		$check_date = date( 'Y-m-d', strtotime( $current_date . ' +' . $i . ' days' ) );
-		
+		if ( in_array( $check_date, $global_excluded, true ) ) {
+			continue;
+		}
 		// Check if the doctor has any available slots on this date
 		$table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
 		$slots = $wpdb->get_results( $wpdb->prepare(

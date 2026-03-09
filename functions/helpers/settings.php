@@ -1171,6 +1171,27 @@ function snks_get_off_days( $user_id = false ) {
 }
 
 /**
+ * Get global excluded booking dates (e.g. official holidays).
+ * These dates are excluded from all booking forms (main, AI therapist, manual booking, Rochtah).
+ *
+ * @return array Array of Y-m-d date strings, sanitized and deduplicated.
+ */
+function snks_get_global_excluded_booking_dates() {
+	$raw = get_option( 'snks_booking_excluded_dates', array() );
+	if ( ! is_array( $raw ) ) {
+		return array();
+	}
+	$out = array();
+	foreach ( $raw as $d ) {
+		$d = is_string( $d ) ? trim( $d ) : '';
+		if ( $d !== '' && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $d ) ) {
+			$out[] = $d;
+		}
+	}
+	return array_values( array_unique( $out ) );
+}
+
+/**
  * Log changes to off_days user meta for debugging timetable/off-days issues.
  *
  * This helps track when a therapist's off days are modified, which can explain

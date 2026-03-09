@@ -241,9 +241,13 @@ function snks_get_next_rochtah_slot() {
 	$current_date = current_time( 'Y-m-d' );
 	$next_date = date( 'Y-m-d', strtotime( '+1 day', strtotime( $current_date ) ) );
 	
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
 	// Look for next available slot in the next 7 days
 	for ( $i = 0; $i < 7; $i++ ) {
 		$check_date = date( 'Y-m-d', strtotime( "+$i days", strtotime( $next_date ) ) );
+		if ( in_array( $check_date, $global_excluded, true ) ) {
+			continue;
+		}
 		$day_of_week = date( 'l', strtotime( $check_date ) );
 		
 		if ( in_array( $day_of_week, $available_days ) ) {
@@ -579,9 +583,13 @@ function snks_get_rochtah_available_slots_for_patient() {
 	$slot_count = 0;
 	$max_slots = 50; // Limit to 50 slots maximum
 	
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
 	// Look for available slots in the next 30 days (increased from 7 days to show more future slots)
 	for ( $i = 1; $i <= 30; $i++ ) {
 		$check_date = date( 'Y-m-d', strtotime( "+$i days" ) );
+		if ( in_array( $check_date, $global_excluded, true ) ) {
+			continue;
+		}
 		$day_of_week = date( 'l', strtotime( $check_date ) );
 		
 		if ( in_array( $day_of_week, $available_days ) ) {
