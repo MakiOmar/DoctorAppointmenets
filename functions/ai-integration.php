@@ -7203,7 +7203,9 @@ Best regards,
 					$this->send_error( 'Method not allowed', 405 );
 					return;
 				}
-				$this->send_success( snks_manual_booking_data_list_bookings() );
+				$page = isset( $_GET['page'] ) ? max( 1, absint( $_GET['page'] ) ) : 1;
+				$per_page = isset( $_GET['per_page'] ) ? max( 1, min( 500, absint( $_GET['per_page'] ) ) ) : 100;
+				$this->send_success( snks_manual_booking_data_list_bookings( $page, $per_page ) );
 				return;
 
 			case 'bookings-by-phone':

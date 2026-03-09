@@ -27,8 +27,8 @@ export default {
   searchAppointments(q) {
     return api.post(BASE + '/search-appointments', { q }).then(r => r.data?.data ?? r.data)
   },
-  listBookings() {
-    return api.get(BASE + '/list-bookings').then(r => r.data?.data ?? r.data)
+  listBookings(page = 1, perPage = 100) {
+    return api.get(BASE + '/list-bookings', { params: { page, per_page: perPage } }).then(r => r.data?.data ?? r.data)
   },
   getBookingsByPhone(phone) {
     return api.post(BASE + '/bookings-by-phone', { phone }).then(r => r.data?.data ?? r.data)

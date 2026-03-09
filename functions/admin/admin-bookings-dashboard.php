@@ -29,7 +29,8 @@ function snks_jalsah_ai_admin_bookings_page() {
 	$search_patient = isset( $_GET['search_patient'] ) ? sanitize_text_field( $_GET['search_patient'] ) : '';
 	$search_therapist = isset( $_GET['search_therapist'] ) ? absint( $_GET['search_therapist'] ) : 0;
 
-	$where = array( "t.session_status = 'open'", "t.client_id > 0", "t.settings LIKE '%admin_manual_booking%'" );
+	// Include both past (completed) and future (open) bookings.
+	$where = array( "t.session_status IN ('open', 'completed')", "t.client_id > 0", "t.settings LIKE '%admin_manual_booking%'" );
 	$params = array();
 
 	if ( $search_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $search_date ) ) {
@@ -49,12 +50,22 @@ function snks_jalsah_ai_admin_bookings_page() {
 		$params[] = $search_therapist;
 	}
 
+	$per_page = 100;
+	$paged = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
+	$offset = ( $paged - 1 ) * $per_page;
+
 	$where_sql = implode( ' AND ', $where );
+	$count_query = "SELECT COUNT(*) FROM {$timetable_table} t WHERE {$where_sql}";
+	$total = ! empty( $params ) ? $wpdb->get_var( $wpdb->prepare( $count_query, $params ) ) : $wpdb->get_var( $count_query );
+	$total = (int) $total;
+
 	$query = "SELECT t.ID as booking_id, t.client_id as patient_id, t.user_id as therapist_id, t.date_time, t.order_id
 		FROM {$timetable_table} t
 		WHERE {$where_sql}
 		ORDER BY t.date_time DESC
-		LIMIT 200";
+		LIMIT %d OFFSET %d";
+	$params[] = $per_page;
+	$params[] = $offset;
 
 	if ( ! empty( $params ) ) {
 		$query = $wpdb->prepare( $query, $params );
@@ -156,6 +167,51 @@ function snks_jalsah_ai_admin_bookings_page() {
 				</table>
 			<?php else : ?>
 				<p><?php esc_html_e( 'No admin bookings found.', 'shrinks' ); ?></p>
+			<?php endif; ?>
+
+			<?php
+			$total_pages = $per_page > 0 ? (int) ceil( $total / $per_page ) : 1;
+			if ( $total_pages > 1 ) :
+				$base_url = add_query_arg(
+					array_filter( array(
+						'page'          => 'jalsah-ai-admin-bookings',
+						'search_date'   => $search_date ?: null,
+						'search_patient' => $search_patient ?: null,
+						'search_therapist' => $search_therapist ?: null,
+					) ),
+					admin_url( 'admin.php' )
+				);
+				?>
+				<div class="tablenav bottom" style="margin-top: 16px;">
+					<div class="tablenav-pages">
+						<span class="displaying-num"><?php
+							/* translators: %d: number of items */
+							echo esc_html( sprintf( _n( '%d item', '%d items', $total, 'shrinks' ), $total ) );
+						?></span>
+						<span class="pagination-links">
+							<?php if ( $paged > 1 ) : ?>
+								<a class="first-page button" href="<?php echo esc_url( add_query_arg( 'paged', 1, $base_url ) ); ?>">&laquo;</a>
+								<a class="prev-page button" href="<?php echo esc_url( add_query_arg( 'paged', max( 1, $paged - 1 ), $base_url ) ); ?>">&lsaquo;</a>
+							<?php else : ?>
+								<span class="tablenav-pages-navspan button disabled">&laquo;</span>
+								<span class="tablenav-pages-navspan button disabled">&lsaquo;</span>
+							<?php endif; ?>
+							<span class="paging-input">
+								<?php
+								/* translators: 1: current page, 2: total pages */
+								echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'shrinks' ), $paged, $total_pages ) );
+								?>
+							</span>
+							<?php if ( $paged < $total_pages ) : ?>
+								<a class="next-page button" href="<?php echo esc_url( add_query_arg( 'paged', min( $total_pages, $paged + 1 ), $base_url ) ); ?>">&rsaquo;</a>
+								<a class="last-page button" href="<?php echo esc_url( add_query_arg( 'paged', $total_pages, $base_url ) ); ?>">&raquo;</a>
+							<?php else : ?>
+								<span class="tablenav-pages-navspan button disabled">&rsaquo;</span>
+								<span class="tablenav-pages-navspan button disabled">&raquo;</span>
+							<?php endif; ?>
+						</span>
+					</div>
+				</div>
 			<?php endif; ?>
 		</div>
 	</div>

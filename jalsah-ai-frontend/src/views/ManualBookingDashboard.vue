@@ -312,6 +312,7 @@
             <tr>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableDateTime') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientWhatsapp') }}</th>
@@ -335,6 +336,14 @@
                 <span class="inline-flex items-center gap-1">
                   <span>{{ row.session_id }}</span>
                   <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(String(row.session_id))">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ formatDateTime(row.date_time) }}</span>
+                  <button v-if="row.date_time" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatDateTime(row.date_time))">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                 </span>
@@ -414,6 +423,30 @@
         <p v-if="!manageBookingsLoading && manageBookings.length === 0" class="p-6 text-center text-gray-500">
           {{ $t('manualBooking.noBookings') }}
         </p>
+        <!-- Pagination -->
+        <div v-if="manageBookingsTotal > manageBookingsPerPage" class="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+          <span class="text-sm text-gray-600">
+            {{ $t('manualBooking.showing') }} {{ (manageBookingsPage - 1) * manageBookingsPerPage + 1 }}-{{ Math.min(manageBookingsPage * manageBookingsPerPage, manageBookingsTotal) }} {{ $t('manualBooking.of') }} {{ manageBookingsTotal }}
+          </span>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="manageBookingsPage <= 1"
+              @click="loadManageBookings(manageBookingsPage - 1)"
+            >
+              {{ $t('common.previous') }}
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="manageBookingsPage >= manageBookingsTotalPages"
+              @click="loadManageBookings(manageBookingsPage + 1)"
+            >
+              {{ $t('common.next') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1204,6 +1237,10 @@ async function submitNewBooking() {
 // —— Manage bookings ——
 const manageBookings = ref([])
 const manageBookingsLoading = ref(false)
+const manageBookingsPage = ref(1)
+const manageBookingsTotal = ref(0)
+const manageBookingsPerPage = 100
+const manageBookingsTotalPages = computed(() => Math.ceil(manageBookingsTotal.value / manageBookingsPerPage) || 1)
 
 // —— Search by phone ——
 const searchByPhoneMode = ref('patient')
@@ -1416,13 +1453,22 @@ async function runSearchByPhone() {
   }
 }
 
-async function loadManageBookings() {
+async function loadManageBookings(page = 1) {
   manageBookingsLoading.value = true
   try {
-    const data = await manualBookingApi.listBookings()
-    manageBookings.value = Array.isArray(data) ? data : []
+    const data = await manualBookingApi.listBookings(page, manageBookingsPerPage)
+    if (data && typeof data === 'object' && 'rows' in data) {
+      manageBookings.value = Array.isArray(data.rows) ? data.rows : []
+      manageBookingsTotal.value = Number(data.total) || 0
+      manageBookingsPage.value = page
+    } else {
+      manageBookings.value = Array.isArray(data) ? data : []
+      manageBookingsTotal.value = manageBookings.value.length
+      manageBookingsPage.value = 1
+    }
   } catch (err) {
     manageBookings.value = []
+    manageBookingsTotal.value = 0
     toast.error(t('manualBooking.messages.searchFailed'))
   } finally {
     manageBookingsLoading.value = false

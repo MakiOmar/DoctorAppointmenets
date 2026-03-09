@@ -1356,23 +1356,36 @@ function snks_manual_booking_data_search_appointments( $q ) {
 
 /**
  * Return list of manual bookings for manage tab (order_id, session_id, therapist_name, session_price, meeting_link, payment_method).
+ * Includes both past (completed) and future (open) bookings with pagination.
  *
- * @return array List of manual booking rows.
+ * @param int $page    Page number (1-based).
+ * @param int $per_page Number of results per page (default 100).
+ * @return array{rows: array, total: int} rows = list of booking rows, total = total count.
  */
-function snks_manual_booking_data_list_bookings() {
+function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 	global $wpdb;
 	$timetable_table = $wpdb->prefix . 'snks_provider_timetable';
 	$applications_table = $wpdb->prefix . 'therapist_applications';
 
-	$rows = $wpdb->get_results(
+	$page = max( 1, absint( $page ) );
+	$per_page = max( 1, min( 500, absint( $per_page ) ) );
+	$offset = ( $page - 1 ) * $per_page;
+
+	$where = "t.session_status IN ('open', 'completed') AND t.settings LIKE '%admin_manual_booking%' AND t.client_id > 0";
+	$count_query = "SELECT COUNT(*) FROM {$timetable_table} t WHERE {$where}";
+	$total = (int) $wpdb->get_var( $count_query );
+
+	$rows = $wpdb->get_results( $wpdb->prepare(
 		"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time
 		 FROM {$timetable_table} t
-		 WHERE t.session_status = 'open' AND t.settings LIKE '%admin_manual_booking%' AND t.order_id > 0
+		 WHERE {$where}
 		 ORDER BY t.date_time DESC
-		 LIMIT 100"
-	);
+		 LIMIT %d OFFSET %d",
+		$per_page,
+		$offset
+	) );
 	if ( ! is_array( $rows ) ) {
-		return array();
+		return array( 'rows' => array(), 'total' => 0 );
 	}
 
 	$result = array();
@@ -1423,7 +1436,7 @@ function snks_manual_booking_data_list_bookings() {
 			'date_time'       => $r->date_time,
 		);
 	}
-	return $result;
+	return array( 'rows' => $result, 'total' => $total );
 }
 
 /**
