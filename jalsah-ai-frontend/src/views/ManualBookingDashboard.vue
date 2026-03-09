@@ -1,11 +1,11 @@
 <template>
-  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="font-jalsah1 max-w-6xl mx-auto px-4 py-8">
+  <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="font-jalsah1 mx-auto px-4 py-8">
     <h1 class="text-2xl font-semibold text-primary-500 mb-6">
       {{ $t('manualBooking.title') }}
     </h1>
 
     <!-- Tabs -->
-    <div class="flex border-b border-gray-200 mb-6">
+    <div class="flex border-b border-gray-200 mb-6 max-w-2xl mx-auto">
       <button
         type="button"
         class="px-4 py-2 font-medium"
@@ -49,7 +49,7 @@
     </div>
 
     <!-- New booking -->
-    <form v-if="activeTab === 'new'" class="space-y-4" @submit.prevent="submitNewBooking">
+    <form v-if="activeTab === 'new'" class="space-y-4 max-w-2xl mx-auto" @submit.prevent="submitNewBooking">
       <!-- Patient: country + phone -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.enterPhone') }}</label>
@@ -451,7 +451,7 @@
     </div>
 
     <!-- Search by phone -->
-    <div v-else-if="activeTab === 'searchByPhone'" class="space-y-4">
+    <div v-else-if="activeTab === 'searchByPhone'" class="space-y-4 mx-auto">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.phoneNumber') }}</label>
         <!-- Search target selector (patient / therapist) -->
@@ -594,6 +594,7 @@
             <tr>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableDateTime') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableType') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ searchByPhoneResult.role === 'therapist' ? $t('manualBooking.tablePatientName') : $t('manualBooking.tableTherapistName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
@@ -618,6 +619,14 @@
                 <span class="inline-flex items-center gap-1">
                   <span>{{ row.session_id }}</span>
                   <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(String(row.session_id))">
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ formatDateTime(row.date_time) }}</span>
+                  <button v-if="row.date_time" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatDateTime(row.date_time))">
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                 </span>
@@ -699,6 +708,30 @@
             </tr>
           </tbody>
         </table>
+        <!-- Search by phone pagination -->
+        <div v-if="searchByPhoneTotal > searchByPhonePerPage" class="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+          <span class="text-sm text-gray-600">
+            {{ $t('manualBooking.showing') }} {{ (searchByPhonePage - 1) * searchByPhonePerPage + 1 }}-{{ Math.min(searchByPhonePage * searchByPhonePerPage, searchByPhoneTotal) }} {{ $t('manualBooking.of') }} {{ searchByPhoneTotal }}
+          </span>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="searchByPhonePage <= 1"
+              @click="runSearchByPhone(searchByPhonePage - 1)"
+            >
+              {{ $t('common.previous') }}
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              :disabled="searchByPhonePage >= searchByPhoneTotalPages"
+              @click="runSearchByPhone(searchByPhonePage + 1)"
+            >
+              {{ $t('common.next') }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1252,6 +1285,11 @@ const searchByPhoneSelectedTherapistId = ref('')
 const searchByPhoneTherapistSearch = ref('')
 const showSearchTherapistDropdown = ref(false)
 const searchTherapistDropdownRef = ref(null)
+const searchByPhonePage = ref(1)
+const searchByPhoneTotal = ref(0)
+const searchByPhonePerPage = 100
+const searchByPhoneLastPhone = ref('')
+const searchByPhoneTotalPages = computed(() => Math.ceil(searchByPhoneTotal.value / searchByPhonePerPage) || 1)
 
 // —— Availability copy ——
 const availabilityTherapistSearch = ref('')
@@ -1408,46 +1446,62 @@ function formatArabicDayName(dateStr) {
   }
 }
 
-async function runSearchByPhone() {
-  searchByPhoneError.value = ''
-  searchByPhoneResult.value = null
+async function runSearchByPhone(page) {
+  // If page is passed (pagination), use last search phone; otherwise resolve from form
+  const isPagination = typeof page === 'number'
+  let phone = isPagination ? searchByPhoneLastPhone.value : ''
 
-  let phone = ''
+  if (!isPagination) {
+    searchByPhoneError.value = ''
+    searchByPhoneResult.value = null
 
-  if (searchByPhoneMode.value === 'patient') {
-    phone = searchByPhoneQuery.value.trim()
-    if (!phone) {
-      searchByPhoneError.value = t('manualBooking.validation.phoneMinLength')
-      return
+    if (searchByPhoneMode.value === 'patient') {
+      phone = searchByPhoneQuery.value.trim()
+      if (!phone) {
+        searchByPhoneError.value = t('manualBooking.validation.phoneMinLength')
+        return
+      }
+    } else {
+      if (!searchByPhoneSelectedTherapistId.value) {
+        searchByPhoneError.value = t('manualBooking.validation.therapistRequired')
+        toast.error(t('manualBooking.validation.therapistRequired'))
+        return
+      }
+      const therapist = therapists.value.find(th => String(th.user_id) === String(searchByPhoneSelectedTherapistId.value))
+      const therapistPhone = (therapist?.phone || therapist?.whatsapp || '').toString().trim()
+      if (!therapistPhone) {
+        searchByPhoneError.value = t('manualBooking.messages.searchFailed')
+        toast.error(t('manualBooking.messages.searchFailed'))
+        return
+      }
+      phone = therapistPhone
     }
-  } else {
-    if (!searchByPhoneSelectedTherapistId.value) {
-      searchByPhoneError.value = t('manualBooking.validation.therapistRequired')
-      toast.error(t('manualBooking.validation.therapistRequired'))
-      return
-    }
-    const therapist = therapists.value.find(th => String(th.user_id) === String(searchByPhoneSelectedTherapistId.value))
-    const therapistPhone = (therapist?.phone || therapist?.whatsapp || '').toString().trim()
-    if (!therapistPhone) {
-      searchByPhoneError.value = t('manualBooking.messages.searchFailed')
-      toast.error(t('manualBooking.messages.searchFailed'))
-      return
-    }
-    phone = therapistPhone
+    searchByPhoneLastPhone.value = phone
+    page = 1
+  } else if (!searchByPhoneLastPhone.value) {
+    return
   }
 
   searchByPhoneLoading.value = true
   try {
-    const data = await manualBookingApi.getBookingsByPhone(phone)
+    const data = await manualBookingApi.getBookingsByPhone(phone, page, searchByPhonePerPage)
+    const total = Number(data?.total) ?? (Array.isArray(data?.bookings) ? data.bookings.length : 0)
+    searchByPhoneTotal.value = total
+    searchByPhonePage.value = page
     searchByPhoneResult.value = {
       role: data?.role ?? '',
       bookings: Array.isArray(data?.bookings) ? data.bookings : [],
+      total,
       therapist_settings: data?.therapist_settings || null,
       patient_name: data?.patient_name || ''
     }
   } catch (err) {
-    searchByPhoneError.value = err.response?.data?.error || t('manualBooking.messages.searchFailed')
-    searchByPhoneResult.value = { role: '', bookings: [] }
+    if (!isPagination) {
+      searchByPhoneError.value = err.response?.data?.error || t('manualBooking.messages.searchFailed')
+      searchByPhoneResult.value = { role: '', bookings: [], total: 0 }
+    } else {
+      toast.error(err.response?.data?.error || t('manualBooking.messages.searchFailed'))
+    }
   } finally {
     searchByPhoneLoading.value = false
   }

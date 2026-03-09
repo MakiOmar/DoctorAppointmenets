@@ -7214,7 +7214,9 @@ Best regards,
 					return;
 				}
 				$phone = isset( $input['phone'] ) ? $input['phone'] : '';
-				$this->send_success( snks_manual_booking_data_bookings_by_phone( $phone ) );
+				$page = isset( $input['page'] ) ? max( 1, absint( $input['page'] ) ) : 1;
+				$per_page = isset( $input['per_page'] ) ? max( 1, min( 500, absint( $input['per_page'] ) ) ) : 100;
+				$this->send_success( snks_manual_booking_data_bookings_by_phone( $phone, $page, $per_page ) );
 				return;
 
 			case 'submit':

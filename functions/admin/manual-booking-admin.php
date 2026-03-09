@@ -1442,15 +1442,22 @@ function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 /**
  * Return bookings for a given phone: if phone belongs to a therapist, return that therapist's bookings;
  * if it belongs to a patient, return that patient's bookings. Applies to any booking type (manual or AI).
+ * Includes both past (completed) and future (open) bookings with pagination.
  *
- * @param string $phone Phone number (digits, optional country code).
- * @return array{role: string, bookings: array, therapist_settings?: array} role is 'therapist'|'patient', bookings same shape as list_bookings with added 'booking_type' (manual|ai). When role is 'therapist', therapist_settings contains selected doctor settings.
+ * @param string $phone    Phone number (digits, optional country code).
+ * @param int    $page     Page number (1-based).
+ * @param int    $per_page Results per page (default 100).
+ * @return array{role: string, bookings: array, total: int, therapist_settings?: array, patient_name?: string}
  */
-function snks_manual_booking_data_bookings_by_phone( $phone ) {
+function snks_manual_booking_data_bookings_by_phone( $phone, $page = 1, $per_page = 100 ) {
 	$phone = preg_replace( '/\D/', '', sanitize_text_field( $phone ) );
 	if ( strlen( $phone ) < 5 ) {
-		return array( 'role' => '', 'bookings' => array() );
+		return array( 'role' => '', 'bookings' => array(), 'total' => 0 );
 	}
+
+	$page = max( 1, absint( $page ) );
+	$per_page = max( 1, min( 500, absint( $per_page ) ) );
+	$offset = ( $page - 1 ) * $per_page;
 
 	global $wpdb;
 	$timetable_table   = $wpdb->prefix . 'snks_provider_timetable';
@@ -1477,6 +1484,9 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 	}
 
 	$therapist_settings = array();
+	$patient_ids = array();
+	$role = '';
+
 	if ( $therapist_id ) {
 		if ( function_exists( 'snks_doctor_settings' ) ) {
 			$doctor_settings    = snks_doctor_settings( $therapist_id );
@@ -1486,14 +1496,18 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 				'form_days_count'        => isset( $doctor_settings['form_days_count'] ) ? $doctor_settings['form_days_count'] : '',
 			);
 		}
-
+		$where = "t.session_status IN ('open', 'completed') AND t.client_id > 0 AND t.user_id = %d";
+		$count_query = "SELECT COUNT(*) FROM {$timetable_table} t WHERE {$where}";
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $therapist_id ) );
 		$rows = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time, t.settings
 			 FROM {$timetable_table} t
-			 WHERE t.session_status = 'open' AND t.client_id > 0 AND t.order_id > 0 AND t.user_id = %d
+			 WHERE {$where}
 			 ORDER BY t.date_time DESC
-			 LIMIT 100",
-			$therapist_id
+			 LIMIT %d OFFSET %d",
+			$therapist_id,
+			$per_page,
+			$offset
 		) );
 		$role = 'therapist';
 	} else {
@@ -1505,16 +1519,19 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 		) );
 		$patient_ids = array_filter( array_map( 'absint', $patient_ids ) );
 		if ( empty( $patient_ids ) ) {
-			return array( 'role' => '', 'bookings' => array() );
+			return array( 'role' => '', 'bookings' => array(), 'total' => 0 );
 		}
 		$placeholders = implode( ',', array_fill( 0, count( $patient_ids ), '%d' ) );
+		$where = "t.session_status IN ('open', 'completed') AND t.client_id > 0 AND t.client_id IN ($placeholders)";
+		$count_query = "SELECT COUNT(*) FROM {$timetable_table} t WHERE {$where}";
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $patient_ids ) );
 		$rows = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time, t.settings
 			 FROM {$timetable_table} t
-			 WHERE t.session_status = 'open' AND t.client_id > 0 AND t.order_id > 0 AND t.client_id IN ($placeholders)
+			 WHERE {$where}
 			 ORDER BY t.date_time DESC
-			 LIMIT 100",
-			$patient_ids
+			 LIMIT %d OFFSET %d",
+			array_merge( $patient_ids, array( $per_page, $offset ) )
 		) );
 		$role = 'patient';
 	}
@@ -1523,6 +1540,7 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 		$out = array(
 			'role'               => $role,
 			'bookings'           => array(),
+			'total'               => 0,
 			'therapist_settings' => $therapist_settings,
 		);
 		if ( $role === 'patient' && ! empty( $patient_ids ) ) {
@@ -1587,6 +1605,7 @@ function snks_manual_booking_data_bookings_by_phone( $phone ) {
 	$out = array(
 		'role'               => $role,
 		'bookings'           => $result,
+		'total'              => $total,
 		'therapist_settings' => $therapist_settings,
 	);
 	if ( $role === 'patient' && ! empty( $patient_ids ) ) {

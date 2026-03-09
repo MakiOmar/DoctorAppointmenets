@@ -30,8 +30,8 @@ export default {
   listBookings(page = 1, perPage = 100) {
     return api.get(BASE + '/list-bookings', { params: { page, per_page: perPage } }).then(r => r.data?.data ?? r.data)
   },
-  getBookingsByPhone(phone) {
-    return api.post(BASE + '/bookings-by-phone', { phone }).then(r => r.data?.data ?? r.data)
+  getBookingsByPhone(phone, page = 1, perPage = 100) {
+    return api.post(BASE + '/bookings-by-phone', { phone, page, per_page: perPage }).then(r => r.data?.data ?? r.data)
   },
   submit(payload) {
     return api.post(BASE + '/submit', payload).then(r => r.data?.data ?? r.data)
