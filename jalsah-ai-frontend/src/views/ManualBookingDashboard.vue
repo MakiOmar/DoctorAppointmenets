@@ -33,6 +33,14 @@
       <button
         type="button"
         class="px-4 py-2 font-medium"
+        :class="activeTab === 'openSlots' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
+        @click="activeTab = 'openSlots'"
+      >
+        {{ $t('manualBooking.openSlots') }}
+      </button>
+      <button
+        type="button"
+        class="px-4 py-2 font-medium"
         :class="activeTab === 'searchByPhone' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
         @click="activeTab = 'searchByPhone'"
       >
@@ -447,6 +455,168 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Open slots (Jalsah AI booked slots by date) -->
+    <div v-else-if="activeTab === 'openSlots'" class="space-y-4 mx-auto">
+      <div class="flex flex-wrap items-end gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
+          <input
+            v-model="openSlotsDate"
+            type="date"
+            class="rounded border border-gray-300 px-3 py-2"
+            @keydown.enter.prevent="loadOpenSlots(1)"
+          />
+        </div>
+        <button
+          type="button"
+          class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="openSlotsLoading || !openSlotsDate"
+          @click="loadOpenSlots(1)"
+        >
+          <span v-if="openSlotsLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
+          {{ $t('manualBooking.search') }}
+        </button>
+      </div>
+      <div class="overflow-x-auto border rounded bg-white">
+        <div v-if="openSlotsLoading" class="p-8 text-center text-gray-500">
+          <span class="animate-spin inline-block h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+          <p class="mt-2">{{ $t('common.loading') }}</p>
+        </div>
+        <template v-else>
+          <table class="min-w-full divide-y divide-gray-200 table-fixed">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionId') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableDateTime') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientWhatsapp') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[260px] max-w-[260px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="row in openSlots" :key="row.session_id" class="hover:bg-gray-50">
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.order_id }}</span>
+                    <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(String(row.order_id))">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.session_id }}</span>
+                    <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(String(row.session_id))">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ formatDateTime(row.date_time) }}</span>
+                    <button v-if="row.date_time" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatDateTime(row.date_time))">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.therapist_name }}</span>
+                    <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.therapist_name)">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.therapist_phone || '—' }}</span>
+                    <button v-if="row.therapist_phone" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.therapist_phone)">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.patient_whatsapp || '—' }}</span>
+                    <button v-if="row.patient_whatsapp" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.patient_whatsapp)">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ formatPrice(row.session_price) }}</span>
+                    <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(formatPrice(row.session_price))">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
+                  <div class="flex items-center gap-1 min-w-0">
+                    <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
+                    <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.payment_method || '—' }}</span>
+                    <button type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.payment_method)">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <button
+                    type="button"
+                    class="px-2 py-1 rounded border border-primary-500 text-primary-600 text-xs hover:bg-primary-50"
+                    @click="goToChangeBooking(row)"
+                  >
+                    {{ $t('manualBooking.changeBooking') }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-if="openSlots.length === 0 && openSlotsDate" class="p-6 text-center text-gray-500">
+            {{ $t('manualBooking.noOpenSlots') }}
+          </p>
+          <p v-if="!openSlotsDate" class="p-6 text-center text-gray-500">
+            {{ $t('manualBooking.selectDateToViewOpenSlots') }}
+          </p>
+          <div v-if="openSlotsTotal > openSlotsPerPage" class="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <span class="text-sm text-gray-600">
+              {{ $t('manualBooking.showing') }} {{ (openSlotsPage - 1) * openSlotsPerPage + 1 }}-{{ Math.min(openSlotsPage * openSlotsPerPage, openSlotsTotal) }} {{ $t('manualBooking.of') }} {{ openSlotsTotal }}
+            </span>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="openSlotsPage <= 1"
+                @click="loadOpenSlots(openSlotsPage - 1)"
+              >
+                {{ $t('common.previous') }}
+              </button>
+              <button
+                type="button"
+                class="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="openSlotsPage >= openSlotsTotalPages"
+                @click="loadOpenSlots(openSlotsPage + 1)"
+              >
+                {{ $t('common.next') }}
+              </button>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -1275,6 +1445,15 @@ const manageBookingsTotal = ref(0)
 const manageBookingsPerPage = 100
 const manageBookingsTotalPages = computed(() => Math.ceil(manageBookingsTotal.value / manageBookingsPerPage) || 1)
 
+// —— Open slots ——
+const openSlotsDate = ref('')
+const openSlots = ref([])
+const openSlotsLoading = ref(false)
+const openSlotsPage = ref(1)
+const openSlotsTotal = ref(0)
+const openSlotsPerPage = 100
+const openSlotsTotalPages = computed(() => Math.ceil(openSlotsTotal.value / openSlotsPerPage) || 1)
+
 // —— Search by phone ——
 const searchByPhoneMode = ref('patient')
 const searchByPhoneQuery = ref('')
@@ -1504,6 +1683,32 @@ async function runSearchByPhone(page) {
     }
   } finally {
     searchByPhoneLoading.value = false
+  }
+}
+
+async function loadOpenSlots(page = 1) {
+  if (!openSlotsDate.value) {
+    toast.error(t('manualBooking.validation.dateRequired'))
+    return
+  }
+  openSlotsLoading.value = true
+  try {
+    const data = await manualBookingApi.getOpenSlots(openSlotsDate.value, page, openSlotsPerPage)
+    if (data && typeof data === 'object' && 'rows' in data) {
+      openSlots.value = Array.isArray(data.rows) ? data.rows : []
+      openSlotsTotal.value = Number(data.total) || 0
+      openSlotsPage.value = page
+    } else {
+      openSlots.value = Array.isArray(data) ? data : []
+      openSlotsTotal.value = openSlots.value.length
+      openSlotsPage.value = 1
+    }
+  } catch (err) {
+    openSlots.value = []
+    openSlotsTotal.value = 0
+    toast.error(err.response?.data?.error || t('manualBooking.messages.searchFailed'))
+  } finally {
+    openSlotsLoading.value = false
   }
 }
 

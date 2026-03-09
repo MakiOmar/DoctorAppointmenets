@@ -7208,6 +7208,17 @@ Best regards,
 				$this->send_success( snks_manual_booking_data_list_bookings( $page, $per_page ) );
 				return;
 
+			case 'open-slots':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$date = isset( $_GET['date'] ) ? sanitize_text_field( $_GET['date'] ) : '';
+				$page = isset( $_GET['page'] ) ? max( 1, absint( $_GET['page'] ) ) : 1;
+				$per_page = isset( $_GET['per_page'] ) ? max( 1, min( 500, absint( $_GET['per_page'] ) ) ) : 100;
+				$this->send_success( snks_manual_booking_data_open_slots( $date, $page, $per_page ) );
+				return;
+
 			case 'bookings-by-phone':
 				if ( $method !== 'POST' ) {
 					$this->send_error( 'Method not allowed', 405 );

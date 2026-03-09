@@ -1440,6 +1440,96 @@ function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 }
 
 /**
+ * Return open (booked) Jalsah AI slots for a given date. Same row shape as list_bookings for consistent table display.
+ *
+ * @param string $date     Date in Y-m-d format.
+ * @param int    $page     Page number (1-based).
+ * @param int    $per_page Results per page (default 100).
+ * @return array{rows: array, total: int}
+ */
+function snks_manual_booking_data_open_slots( $date, $page = 1, $per_page = 100 ) {
+	if ( ! $date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+		return array( 'rows' => array(), 'total' => 0 );
+	}
+
+	global $wpdb;
+	$timetable_table   = $wpdb->prefix . 'snks_provider_timetable';
+	$applications_table = $wpdb->prefix . 'therapist_applications';
+
+	$page = max( 1, absint( $page ) );
+	$per_page = max( 1, min( 500, absint( $per_page ) ) );
+	$offset = ( $page - 1 ) * $per_page;
+
+	$where = "t.session_status = 'open' AND t.client_id > 0 AND t.settings LIKE '%ai_booking%' AND DATE(t.date_time) = %s";
+	$count_query = "SELECT COUNT(*) FROM {$timetable_table} t WHERE {$where}";
+	$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $date ) );
+
+	$rows = $wpdb->get_results( $wpdb->prepare(
+		"SELECT t.ID AS booking_id, t.order_id, t.client_id AS patient_id, t.user_id AS therapist_id, t.date_time
+		 FROM {$timetable_table} t
+		 WHERE {$where}
+		 ORDER BY t.date_time ASC
+		 LIMIT %d OFFSET %d",
+		$date,
+		$per_page,
+		$offset
+	) );
+	if ( ! is_array( $rows ) ) {
+		return array( 'rows' => array(), 'total' => 0 );
+	}
+
+	$result = array();
+	foreach ( $rows as $r ) {
+		$order_id = (int) $r->order_id;
+		$order = $order_id ? wc_get_order( $order_id ) : null;
+		$session_price = $order ? (float) $order->get_total() : 0;
+		$payment_method = $order ? (string) $order->get_meta( 'admin_manual_payment_method' ) : '';
+		$therapist_row = $wpdb->get_row( $wpdb->prepare(
+			"SELECT name, phone, whatsapp FROM {$applications_table} WHERE user_id = %d LIMIT 1",
+			(int) $r->therapist_id
+		), ARRAY_A );
+		$therapist_name  = ( $therapist_row && ! empty( $therapist_row['name'] ) ) ? $therapist_row['name'] : '—';
+		$therapist_phone = '';
+		if ( $therapist_row && ( ! empty( $therapist_row['phone'] ) || ! empty( $therapist_row['whatsapp'] ) ) ) {
+			$therapist_phone = ! empty( $therapist_row['phone'] ) ? $therapist_row['phone'] : $therapist_row['whatsapp'];
+		}
+		if ( '' === $therapist_phone && (int) $r->therapist_id ) {
+			$therapist_phone = get_user_meta( $r->therapist_id, 'billing_phone', true ) ?: '';
+		}
+		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
+		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
+		$patient_whatsapp = '';
+		if ( (int) $r->patient_id ) {
+			$patient_whatsapp = get_user_meta( $r->patient_id, 'whatsapp', true );
+			if ( '' === $patient_whatsapp ) {
+				$patient_whatsapp = get_user_meta( $r->patient_id, 'billing_whatsapp', true );
+			}
+			if ( '' === $patient_whatsapp ) {
+				$patient_whatsapp = get_user_meta( $r->patient_id, 'billing_phone', true );
+			}
+		}
+		$patient_name = trim( $patient_first . ' ' . $patient_last ) ?: '—';
+
+		$result[] = array(
+			'order_id'         => $order_id,
+			'session_id'       => (int) $r->booking_id,
+			'therapist_name'   => $therapist_name,
+			'therapist_phone'  => $therapist_phone,
+			'session_price'    => $session_price,
+			'meeting_link'     => $meeting_link,
+			'payment_method'   => $payment_method ?: '—',
+			'patient_id'       => (int) $r->patient_id,
+			'patient_name'     => $patient_name,
+			'patient_whatsapp' => $patient_whatsapp,
+			'therapist_id'     => (int) $r->therapist_id,
+			'date_time'        => $r->date_time,
+		);
+	}
+	return array( 'rows' => $result, 'total' => $total );
+}
+
+/**
  * Return bookings for a given phone: if phone belongs to a therapist, return that therapist's bookings;
  * if it belongs to a patient, return that patient's bookings. Applies to any booking type (manual or AI).
  * Includes both past (completed) and future (open) bookings with pagination.
