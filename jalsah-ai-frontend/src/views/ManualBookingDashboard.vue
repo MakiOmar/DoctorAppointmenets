@@ -1130,6 +1130,7 @@ import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
 import manualBookingApi from '@/services/manualBooking'
+import api from '@/services/api'
 
 const toast = useToast()
 const { t, locale } = useI18n()
@@ -1644,14 +1645,28 @@ function clearAvailabilityTherapist() {
   availabilitySlots.value = []
 }
 
+// Use same API and params as therapist booking form (form_days_count, off_days, block_if_before, attendance_type)
 function onAvailabilityTherapistChange() {
   availabilitySelectedDate.value = ''
   availabilitySlots.value = []
   availabilityDates.value = []
   if (!availabilitySelectedTherapistId.value) return
   availabilityDatesLoading.value = true
-  manualBookingApi.getAvailableDates(availabilitySelectedTherapistId.value).then(data => {
-    availabilityDates.value = Array.isArray(data) ? data : []
+  api.get('/api/ai/therapist-available-dates', {
+    params: {
+      therapist_id: availabilitySelectedTherapistId.value,
+      attendance_type: 'online'
+    }
+  }).then(response => {
+    const list = response?.data?.data?.available_dates || response?.data?.available_dates || []
+    availabilityDates.value = (Array.isArray(list) ? list : []).map((item) => {
+      const dateStr = typeof item === 'object' && item?.date ? item.date : item
+      const d = dateStr ? new Date(dateStr + 'T00:00:00') : null
+      const label = !d || isNaN(d.getTime())
+        ? dateStr
+        : d.toLocaleDateString(locale.value === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+      return { date: dateStr, label }
+    })
   }).catch(() => {
     toast.error(t('manualBooking.messages.loadDatesFailed'))
   }).finally(() => {
@@ -1659,13 +1674,20 @@ function onAvailabilityTherapistChange() {
   })
 }
 
+// Use same API and params as therapist booking form (period 45, online only, block_if_before, etc.)
 function onAvailabilityDateChange() {
   availabilitySlots.value = []
   if (!availabilitySelectedDate.value || !availabilitySelectedTherapistId.value) return
   availabilitySlotsLoading.value = true
-  manualBookingApi.getSlots(availabilitySelectedTherapistId.value, availabilitySelectedDate.value).then(data => {
-    const allSlots = Array.isArray(data) ? data : []
-    availabilitySlots.value = allSlots.filter(s => Number(s.period || 45) === 45)
+  api.get('/api/ai/therapist-availability', {
+    params: {
+      therapist_id: availabilitySelectedTherapistId.value,
+      date: availabilitySelectedDate.value,
+      attendance_type: 'online'
+    }
+  }).then(response => {
+    const list = response?.data?.data?.available_slots || response?.data?.available_slots || []
+    availabilitySlots.value = Array.isArray(list) ? list : []
   }).catch(() => {
     toast.error(t('manualBooking.messages.loadSlotsFailed'))
   }).finally(() => {
