@@ -4,68 +4,70 @@
       {{ $t('manualBooking.title') }}
     </h1>
 
-    <!-- Tabs -->
-    <div class="flex border-b border-gray-200 mb-6 max-w-4xl mx-auto">
-      <button
-        type="button"
-        class="px-4 py-2 font-medium"
-        :class="activeTab === 'new' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
-        @click="activeTab = 'new'"
-      >
-        {{ $t('manualBooking.newBooking') }}
-      </button>
-      <button
-        type="button"
-        class="px-4 py-2 font-medium"
-        :class="activeTab === 'change' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
-        @click="activeTab = 'change'"
-      >
-        {{ $t('manualBooking.changeAppointment') }}
-      </button>
-      <button
-        type="button"
-        class="px-4 py-2 font-medium"
-        :class="activeTab === 'manage' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
-        @click="activeTab = 'manage'; loadManageBookings()"
-      >
-        {{ $t('manualBooking.manageBookings') }}
-      </button>
-      <button
-        type="button"
-        class="px-4 py-2 font-medium"
-        :class="activeTab === 'openSlots' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
-        @click="activeTab = 'openSlots'"
-      >
-        {{ $t('manualBooking.openSlots') }}
-      </button>
-      <button
-        type="button"
-        class="px-4 py-2 font-medium"
-        :class="activeTab === 'searchByPhone' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
-        @click="activeTab = 'searchByPhone'"
-      >
-        {{ $t('manualBooking.searchByPhone') }}
-      </button>
-      <button
-        type="button"
-        class="px-4 py-2 font-medium"
-        :class="activeTab === 'availabilityCopy' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-gray-500'"
-        @click="activeTab = 'availabilityCopy'"
-      >
-        {{ $t('manualBooking.availabilityCopy') }}
-      </button>
+    <!-- Tabs: horizontal scroll on mobile so all tabs stay in one row -->
+    <div class="max-w-4xl mx-auto mb-6 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto border-b border-gray-200 manual-booking-tabs-scroll">
+      <div class="flex flex-nowrap gap-0 min-w-max sm:min-w-0">
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'new' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'new'"
+        >
+          {{ $t('manualBooking.newBooking') }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'change' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'change'"
+        >
+          {{ $t('manualBooking.changeAppointment') }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'manage' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'manage'; loadManageBookings()"
+        >
+          {{ $t('manualBooking.manageBookings') }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'openSlots' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'openSlots'"
+        >
+          {{ $t('manualBooking.openSlots') }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'searchByPhone' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'searchByPhone'"
+        >
+          {{ $t('manualBooking.searchByPhone') }}
+        </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'availabilityCopy' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'availabilityCopy'"
+        >
+          {{ $t('manualBooking.availabilityCopy') }}
+        </button>
+      </div>
     </div>
 
     <!-- New booking -->
     <form v-if="activeTab === 'new'" class="space-y-4 max-w-2xl mx-auto" @submit.prevent="submitNewBooking">
-      <!-- Patient: country + phone -->
+      <!-- Patient: country + phone (stack search button on mobile for cleaner layout) -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.enterPhone') }}</label>
-        <div class="flex rounded-md shadow-sm">
-          <div class="relative flex-1 flex">
+        <div class="flex flex-col gap-2 sm:flex-row sm:gap-0">
+          <div class="relative flex flex-1 min-w-0 rounded-md shadow-sm">
             <button
               type="button"
-              class="inline-flex items-center px-3 rounded-l-md border border-gray-300 bg-gray-50 text-sm"
+              class="inline-flex items-center px-3 rounded-l-md border border-gray-300 bg-gray-50 text-sm shrink-0"
               @click="showPatientCountryDropdown = !showPatientCountryDropdown"
             >
               <span class="mr-1">{{ selectedPatientCountry?.flag }}</span>
@@ -94,23 +96,23 @@
               v-model="patientPhoneDigits"
               type="text"
               inputmode="numeric"
-              class="flex-1 rounded-r-md border border-gray-300 px-3 py-2"
+              class="flex-1 min-w-0 rounded-r-md border border-gray-300 px-3 py-2.5 sm:py-2"
               :class="{ 'border-red-500': errors?.phone }"
               :placeholder="$t('manualBooking.phoneDigits')"
               @input="onPatientPhoneInput"
               @blur="onPatientPhoneBlur"
             />
           </div>
-          <div class="ml-2 flex items-center gap-2">
+          <div class="flex items-center gap-2 sm:ml-2 shrink-0">
             <button
               type="button"
-              class="px-3 py-2 rounded-md border border-primary-500 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-md border border-primary-500 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed min-h-[42px] sm:min-h-0"
               :disabled="patientSearchLoading || !patientPhoneDigits.trim()"
               @click="runPatientSearch"
             >
               {{ $t('manualBooking.searchPatient') || 'Search' }}
             </button>
-            <span v-if="patientSearchLoading" class="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full" />
+            <span v-if="patientSearchLoading" class="animate-spin h-5 w-5 border-2 border-primary-500 border-t-transparent rounded-full shrink-0" />
           </div>
         </div>
         <p v-if="errors?.phone" class="mt-1 text-sm text-red-600">{{ errors?.phone }}</p>
@@ -199,25 +201,25 @@
         <p v-if="errors?.therapist" class="mt-1 text-sm text-red-600">{{ errors?.therapist }}</p>
       </div>
 
-      <!-- Slot mode selector -->
-      <div class="flex items-center gap-6">
-        <label class="inline-flex items-center gap-2 text-sm">
+      <!-- Slot mode selector (stack on mobile, larger touch targets) -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+        <label class="inline-flex items-center gap-3 py-2.5 px-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 touch-manipulation">
           <input
             v-model="bookingSlotMode"
             type="radio"
             value="existing"
-            class="text-primary-500 focus:ring-primary-500"
+            class="w-4 h-4 text-primary-500 focus:ring-primary-500 shrink-0"
           >
-          <span>{{ $t('manualBooking.slotModeExisting') }}</span>
+          <span class="text-sm">{{ $t('manualBooking.slotModeExisting') }}</span>
         </label>
-        <label class="inline-flex items-center gap-2 text-sm">
+        <label class="inline-flex items-center gap-3 py-2.5 px-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 touch-manipulation">
           <input
             v-model="bookingSlotMode"
             type="radio"
             value="new"
-            class="text-primary-500 focus:ring-primary-500"
+            class="w-4 h-4 text-primary-500 focus:ring-primary-500 shrink-0"
           >
-          <span>{{ $t('manualBooking.slotModeNew') }}</span>
+          <span class="text-sm">{{ $t('manualBooking.slotModeNew') }}</span>
         </label>
       </div>
 
@@ -310,12 +312,12 @@
 
     <!-- Manage manual bookings -->
     <div v-else-if="activeTab === 'manage'" class="space-y-4">
-      <div class="overflow-x-auto border rounded bg-white">
+      <div class="manual-booking-table-wrapper overflow-x-auto border rounded bg-white -mx-4 sm:mx-0">
         <div v-if="manageBookingsLoading" class="p-8 text-center text-gray-500">
           <span class="animate-spin inline-block h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
           <p class="mt-2">{{ $t('common.loading') }}</p>
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200 table-fixed">
+        <table v-else class="manual-booking-table min-w-full divide-y divide-gray-200 w-full">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
@@ -480,13 +482,13 @@
           {{ $t('manualBooking.search') }}
         </button>
       </div>
-      <div class="overflow-x-auto border rounded bg-white">
+      <div class="manual-booking-table-wrapper overflow-x-auto border rounded bg-white -mx-4 sm:mx-0">
         <div v-if="openSlotsLoading" class="p-8 text-center text-gray-500">
           <span class="animate-spin inline-block h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
           <p class="mt-2">{{ $t('common.loading') }}</p>
         </div>
         <template v-else>
-          <table class="min-w-full divide-y divide-gray-200 table-fixed">
+          <table class="manual-booking-table min-w-full divide-y divide-gray-200 w-full">
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
@@ -732,7 +734,7 @@
         </div>
         <p v-if="searchByPhoneError" class="mt-1 text-sm text-red-600">{{ searchByPhoneError }}</p>
       </div>
-      <div v-if="searchByPhoneResult !== null" class="overflow-x-auto border rounded bg-white">
+      <div v-if="searchByPhoneResult !== null" class="manual-booking-table-wrapper overflow-x-auto border rounded bg-white -mx-4 sm:mx-0">
         <p v-if="searchByPhoneResult.role" class="px-4 py-2 bg-gray-50 text-sm text-gray-600 border-b">
           {{ searchByPhoneResult.role === 'therapist' ? $t('manualBooking.bookingsForTherapist') : $t('manualBooking.bookingsForPatient') }}
         </p>
@@ -759,7 +761,7 @@
         <div v-if="searchByPhoneResult.bookings.length === 0" class="p-6 text-center text-gray-500">
           {{ $t('manualBooking.noBookingsFound') }}
         </div>
-        <table v-else class="min-w-full divide-y divide-gray-200 table-fixed">
+        <table v-else class="manual-booking-table min-w-full divide-y divide-gray-200 w-full">
           <thead class="bg-gray-50">
             <tr>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableOrderId') }}</th>
@@ -1048,25 +1050,25 @@
         </div>
         <div class="border-t pt-4 mt-4">
           <p class="text-sm text-gray-600 mb-2">{{ $t('manualBooking.selectNewSlot') }}</p>
-          <!-- Slot mode: existing slot vs new slot (same as new booking) -->
-          <div class="flex items-center gap-6 mb-4">
-            <label class="inline-flex items-center gap-2 text-sm">
+          <!-- Slot mode: existing slot vs new slot (stack on mobile, larger touch targets) -->
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6 mb-4">
+            <label class="inline-flex items-center gap-3 py-2.5 px-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 touch-manipulation">
               <input
                 v-model="changeSlotMode"
                 type="radio"
                 value="existing"
-                class="text-primary-500 focus:ring-primary-500"
+                class="w-4 h-4 text-primary-500 focus:ring-primary-500 shrink-0"
               >
-              <span>{{ $t('manualBooking.slotModeExisting') }}</span>
+              <span class="text-sm">{{ $t('manualBooking.slotModeExisting') }}</span>
             </label>
-            <label class="inline-flex items-center gap-2 text-sm">
+            <label class="inline-flex items-center gap-3 py-2.5 px-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 active:bg-gray-100 touch-manipulation">
               <input
                 v-model="changeSlotMode"
                 type="radio"
                 value="new"
-                class="text-primary-500 focus:ring-primary-500"
+                class="w-4 h-4 text-primary-500 focus:ring-primary-500 shrink-0"
               >
-              <span>{{ $t('manualBooking.slotModeNew') }}</span>
+              <span class="text-sm">{{ $t('manualBooking.slotModeNew') }}</span>
             </label>
           </div>
           <!-- Existing slot: date dropdown + slot dropdown -->
@@ -2009,5 +2011,44 @@ onUnmounted(() => {
 .font-jalsah1,
 .font-jalsah1 button {
   font-family: 'jalsah1', 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Tabs: horizontal scroll on mobile, subtle scrollbar */
+.manual-booking-tabs-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+.manual-booking-tabs-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.manual-booking-tabs-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+/* Tables: responsive horizontal scroll on mobile */
+.manual-booking-table-wrapper {
+  -webkit-overflow-scrolling: touch;
+}
+.manual-booking-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+.manual-booking-table-wrapper::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+/* Force table to have minimum width so it scrolls horizontally on small screens */
+.manual-booking-table {
+  min-width: 880px;
+  table-layout: auto;
+}
+@media (max-width: 640px) {
+  .manual-booking-table th,
+  .manual-booking-table td {
+    padding: 0.5rem 0.375rem;
+    font-size: 0.8125rem;
+  }
+  .manual-booking-table th {
+    white-space: nowrap;
+  }
 }
 </style>
