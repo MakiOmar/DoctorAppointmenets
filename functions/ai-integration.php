@@ -7239,6 +7239,26 @@ Best regards,
 				if ( $mode === 'change' ) {
 					$existing_id = isset( $input['existing_booking_id'] ) ? absint( $input['existing_booking_id'] ) : 0;
 					$new_slot_id = isset( $input['slot_id'] ) ? absint( $input['slot_id'] ) : 0;
+					// New-slot mode: no slot_id but date + time — ensure slot then change (same as new booking).
+					if ( ! $new_slot_id ) {
+						$date = isset( $input['date'] ) ? sanitize_text_field( $input['date'] ) : '';
+						$time = isset( $input['time'] ) ? sanitize_text_field( $input['time'] ) : '';
+						if ( $date && $time && function_exists( 'snks_manual_booking_ensure_slot' ) ) {
+							global $wpdb;
+							$existing_slot = $wpdb->get_row( $wpdb->prepare(
+								"SELECT user_id FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d AND session_status = 'open' AND client_id > 0",
+								$existing_id
+							) );
+							if ( $existing_slot ) {
+								$therapist_id = (int) $existing_slot->user_id;
+								$new_slot_id  = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );
+								if ( ! $new_slot_id && function_exists( 'snks_manual_booking_ensure_slot_last_error' ) && snks_manual_booking_ensure_slot_last_error() === 'overlap' ) {
+									$this->send_error( __( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ), 400 );
+									return;
+								}
+							}
+						}
+					}
 					$result = snks_process_admin_change_appointment( $existing_id, $new_slot_id );
 				} else {
 					$patient_id     = isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0;

@@ -1048,7 +1048,29 @@
         </div>
         <div class="border-t pt-4 mt-4">
           <p class="text-sm text-gray-600 mb-2">{{ $t('manualBooking.selectNewSlot') }}</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Slot mode: existing slot vs new slot (same as new booking) -->
+          <div class="flex items-center gap-6 mb-4">
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input
+                v-model="changeSlotMode"
+                type="radio"
+                value="existing"
+                class="text-primary-500 focus:ring-primary-500"
+              >
+              <span>{{ $t('manualBooking.slotModeExisting') }}</span>
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input
+                v-model="changeSlotMode"
+                type="radio"
+                value="new"
+                class="text-primary-500 focus:ring-primary-500"
+              >
+              <span>{{ $t('manualBooking.slotModeNew') }}</span>
+            </label>
+          </div>
+          <!-- Existing slot: date dropdown + slot dropdown -->
+          <div v-if="changeSlotMode === 'existing'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
               <select v-model="changeSelectedDate" class="w-full rounded border border-gray-300 px-3 py-2" @change="onChangeDateChange">
@@ -1064,11 +1086,30 @@
               </select>
             </div>
           </div>
+          <!-- New slot: date input + time dropdown (same logic as new booking) -->
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
+              <input
+                v-model="changeNewSlotDate"
+                type="date"
+                class="w-full rounded border border-gray-300 px-3 py-2"
+                :min="changeNewSlotDateMin"
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
+              <select v-model="changeNewSlotTime" class="w-full rounded border border-gray-300 px-3 py-2">
+                <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
+                <option v-for="t in baseTimeOptions" :key="t" :value="t">{{ formatTimeAmPm(t) }}</option>
+              </select>
+            </div>
+          </div>
           <div class="mt-4">
             <button
               type="button"
               class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50"
-              :disabled="changeSubmitLoading || !changeSelectedSlotId"
+              :disabled="changeSubmitLoading || !changeSlotValid"
               @click="submitChangeAppointment"
             >
               <span v-if="changeSubmitLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
@@ -1539,6 +1580,20 @@ const newSlotDateMin = computed(() => {
   return today.toISOString().slice(0, 10)
 })
 
+// Change tab: same min date for new slot
+const changeNewSlotDateMin = computed(() => {
+  const today = new Date()
+  return today.toISOString().slice(0, 10)
+})
+
+// Change tab: valid if existing slot selected or (new slot with date + time)
+const changeSlotValid = computed(() => {
+  if (changeSlotMode.value === 'existing') {
+    return !!changeSelectedSlotId.value
+  }
+  return !!(changeNewSlotDate.value && changeNewSlotTime.value)
+})
+
 const filteredTherapistsForSearchByPhone = computed(() => {
   const q = searchByPhoneTherapistSearch.value.trim().toLowerCase()
   if (!q) {
@@ -1797,10 +1852,13 @@ const changeSearchResults = ref([])
 const changeSearchLoading = ref(false)
 const changeSearchDebounce = ref(null)
 const selectedAppointment = ref(null)
+const changeSlotMode = ref('existing')
 const changeAvailableDates = ref([])
 const changeSelectedDate = ref('')
 const changeSlots = ref([])
 const changeSelectedSlotId = ref('')
+const changeNewSlotDate = ref('')
+const changeNewSlotTime = ref('')
 const changeSubmitLoading = ref(false)
 
 function onChangeSearchInput() {
@@ -1821,8 +1879,11 @@ function onChangeSearchInput() {
 }
 function selectAppointment(a) {
   selectedAppointment.value = a
+  changeSlotMode.value = 'existing'
   changeSelectedDate.value = ''
   changeSelectedSlotId.value = ''
+  changeNewSlotDate.value = ''
+  changeNewSlotTime.value = ''
   changeSlots.value = []
   if (!a.therapist_id) return
   manualBookingApi.getAvailableDates(a.therapist_id).then(data => {
@@ -1849,6 +1910,7 @@ function resetChangeAppointmentState() {
     changeSearchDebounce.value = null
   }
   selectedAppointment.value = null
+  changeSlotMode.value = 'existing'
   changeSearchQuery.value = ''
   changeSearchResults.value = []
   changeSearchLoading.value = false
@@ -1856,21 +1918,36 @@ function resetChangeAppointmentState() {
   changeSelectedDate.value = ''
   changeSlots.value = []
   changeSelectedSlotId.value = ''
+  changeNewSlotDate.value = ''
+  changeNewSlotTime.value = ''
 }
 
 async function submitChangeAppointment() {
-  if (!selectedAppointment.value || !changeSelectedSlotId.value) return
+  if (!selectedAppointment.value || !changeSlotValid.value) return
+  const payload = {
+    mode: 'change',
+    existing_booking_id: selectedAppointment.value.booking_id
+  }
+  if (changeSlotMode.value === 'new') {
+    payload.date = changeNewSlotDate.value
+    payload.time = changeNewSlotTime.value
+  } else {
+    payload.slot_id = changeSelectedSlotId.value
+  }
   changeSubmitLoading.value = true
   try {
-    const result = await manualBookingApi.submit({
-      mode: 'change',
-      existing_booking_id: selectedAppointment.value.booking_id,
-      slot_id: changeSelectedSlotId.value
-    })
+    const result = await manualBookingApi.submit(payload)
     const therapistName = selectedAppointment.value.therapist_name || '—'
-    const newSlot = changeSlots.value.find(s => String(s.slot_id) === String(changeSelectedSlotId.value))
-    const dateTimeStr = changeSelectedDate.value && newSlot?.formatted_time ? `${changeSelectedDate.value} ${newSlot.formatted_time}` : (changeSelectedDate.value || '—')
-    const newSessionId = changeSelectedSlotId.value
+    let dateTimeStr = '—'
+    let newSessionId = '—'
+    if (changeSlotMode.value === 'new') {
+      dateTimeStr = changeNewSlotDate.value && changeNewSlotTime.value ? `${changeNewSlotDate.value} ${formatTimeAmPm(changeNewSlotTime.value)}` : (changeNewSlotDate.value || '—')
+      newSessionId = result?.slot_id ?? '—'
+    } else {
+      const newSlot = changeSlots.value.find(s => String(s.slot_id) === String(changeSelectedSlotId.value))
+      dateTimeStr = changeSelectedDate.value && newSlot?.formatted_time ? `${changeSelectedDate.value} ${newSlot.formatted_time}` : (changeSelectedDate.value || '—')
+      newSessionId = changeSelectedSlotId.value
+    }
     await Swal.fire({
       icon: 'success',
       title: t('manualBooking.messages.changeSuccess'),

@@ -373,7 +373,7 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 			snks_send_therapist_appointment_change_notification( $new_slot_id, $old_date, $old_time, $new_date, $new_time, $patient_id );
 		}
 
-		return array( 'success' => true, 'message' => __( 'تم تغيير الموعد بنجاح.', 'shrinks' ) );
+		return array( 'success' => true, 'message' => __( 'تم تغيير الموعد بنجاح.', 'shrinks' ), 'slot_id' => $new_slot_id );
 	} catch ( Exception $e ) {
 		$wpdb->query( 'ROLLBACK' );
 		return array( 'success' => false, 'message' => $e->getMessage() );
