@@ -1001,6 +1001,7 @@ export default {
     tablePatientName: 'Patient',
     tablePatientWhatsapp: 'Patient WhatsApp',
     tableSessionPrice: 'Price',
+    tableTotalOrdersPatient: 'Total Orders (Patient)',
     tableMeetingLink: 'Jitsi link',
     tablePaymentMethod: 'Payment',
     actions: 'Actions',

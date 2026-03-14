@@ -991,6 +991,7 @@ export default {
     tablePatientName: 'المريض',
     tablePatientWhatsapp: 'واتساب المريض',
     tableSessionPrice: 'السعر',
+    tableTotalOrdersPatient: 'إجمالي الطلبات (المريض)',
     tableMeetingLink: 'رابط الجلسة',
     tablePaymentMethod: 'طريقة الدفع',
     actions: 'إجراءات',

@@ -1511,19 +1511,40 @@ function snks_manual_booking_data_open_slots( $date, $page = 1, $per_page = 100 
 		}
 		$patient_name = trim( $patient_first . ' ' . $patient_last ) ?: '—';
 
+		// Total Jalsah AI orders for this patient (same query as dashboard Open Slots page).
+		$total_patient_orders = 0;
+		if ( (int) $r->patient_id && function_exists( 'wc_get_orders' ) ) {
+			$countable_statuses = array( 'wc-completed', 'wc-processing', 'wc-on-hold', 'wc-pending' );
+			$ai_orders = wc_get_orders( array(
+				'customer_id' => (int) $r->patient_id,
+				'status'      => $countable_statuses,
+				'limit'       => -1,
+				'return'      => 'ids',
+				'meta_query'  => array(
+					array(
+						'key'     => 'from_jalsah_ai',
+						'value'   => array( '1', 'true', 'yes', true, 1 ),
+						'compare' => 'IN',
+					),
+				),
+			) );
+			$total_patient_orders = is_array( $ai_orders ) ? count( $ai_orders ) : 0;
+		}
+
 		$result[] = array(
-			'order_id'         => $order_id,
-			'session_id'       => (int) $r->booking_id,
-			'therapist_name'   => $therapist_name,
-			'therapist_phone'  => $therapist_phone,
-			'session_price'    => $session_price,
-			'meeting_link'     => $meeting_link,
-			'payment_method'   => $payment_method ?: '—',
-			'patient_id'       => (int) $r->patient_id,
-			'patient_name'     => $patient_name,
-			'patient_whatsapp' => $patient_whatsapp,
-			'therapist_id'     => (int) $r->therapist_id,
-			'date_time'        => $r->date_time,
+			'order_id'              => $order_id,
+			'session_id'            => (int) $r->booking_id,
+			'therapist_name'        => $therapist_name,
+			'therapist_phone'       => $therapist_phone,
+			'session_price'         => $session_price,
+			'meeting_link'          => $meeting_link,
+			'payment_method'        => $payment_method ?: '—',
+			'patient_id'            => (int) $r->patient_id,
+			'patient_name'          => $patient_name,
+			'patient_whatsapp'      => $patient_whatsapp,
+			'therapist_id'          => (int) $r->therapist_id,
+			'date_time'             => $r->date_time,
+			'total_patient_orders'  => $total_patient_orders,
 		);
 	}
 	return array( 'rows' => $result, 'total' => $total );

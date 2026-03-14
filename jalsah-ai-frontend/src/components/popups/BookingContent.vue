@@ -224,6 +224,7 @@ export default {
     }
   },
   setup(props) {
+    const router = useRouter()
     const { locale, t } = useI18n()
     const cartStore = useCartStore()
     const authStore = useAuthStore()
