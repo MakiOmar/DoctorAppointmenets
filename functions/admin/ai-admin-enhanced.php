@@ -3576,7 +3576,7 @@ function snks_jalsah_ai_open_slots_page() {
 	$applications_table = $wpdb->prefix . 'therapist_applications';
 	$slots             = array();
 	if ( $search_date && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $search_date ) ) {
-		// Fetch open AI bookings for the selected date. Therapist name from application; patient name from billing meta in loop.
+		// Fetch open AI bookings for the selected date.
 		$slots = $wpdb->get_results( $wpdb->prepare(
 			"SELECT t.ID AS booking_id,
 				t.date_time,
