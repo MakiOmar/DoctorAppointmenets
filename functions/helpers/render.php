@@ -1478,10 +1478,15 @@ function snks_render_bookings( $_timetables, $tens ) {
 									?>
 								</div>
 								<?php } ?>
-								<!-- Policy notice: no direct therapist–client contact; use customer service only -->
+								<?php
+								// Policy notice: doctors only, AI bookings only.
+								$is_ai_booking = isset( $data->settings ) && strpos( $data->settings, 'ai_booking' ) !== false;
+								if ( $is_ai_booking ) :
+									?>
 								<p class="snks-booking-policy-hint" style="margin: 10px 0 0; padding: 8px 10px; background: #fff8e6; border-right: 4px solid #024059; border-radius: 4px; font-size: 13px; color: #333; direction: rtl; text-align: right;">
 									<?php esc_html_e( 'تنويه: في حالة طلب العميل الرقم الشخصي للمعالج يجب ابلاغه ان ذلك ضد قوانين الموقع وان ادارة الموقع تمنع التواصل المباشر بين المعالج والعميل، ويجب التواصل فقط من خلال خدمة العملاء.', 'shrinks' ); ?>
 								</p>
+								<?php endif; ?>
 							</div>
 						<?php endforeach; ?>
 					</div>
@@ -1890,10 +1895,13 @@ function snks_render_sessions_listing( $tense ) {
 				}
 			}
 
-			// Policy notice: no direct therapist–client contact; use customer service only.
-			$output .= '<p class="snks-booking-policy-hint" style="margin: 10px 0 0; padding: 8px 10px; background: #fff8e6; border-right: 4px solid #024059; border-radius: 4px; font-size: 13px; color: #333; direction: rtl; text-align: right;">';
-			$output .= esc_html__( 'تنويه: في حالة طلب العميل الرقم الشخصي للمعالج يجب ابلاغه ان ذلك ضد قوانين الموقع وان ادارة الموقع تمنع التواصل المباشر بين المعالج والعميل، ويجب التواصل فقط من خلال خدمة العملاء.', 'shrinks' );
-			$output .= '</p>';
+			// Policy notice: doctors only, AI bookings only.
+			$is_ai_booking = isset( $session->settings ) && strpos( $session->settings, 'ai_booking' ) !== false;
+			if ( snks_is_doctor() && $is_ai_booking ) {
+				$output .= '<p class="snks-booking-policy-hint" style="margin: 10px 0 0; padding: 8px 10px; background: #fff8e6; border-right: 4px solid #024059; border-radius: 4px; font-size: 13px; color: #333; direction: rtl; text-align: right;">';
+				$output .= esc_html__( 'تنويه: في حالة طلب العميل الرقم الشخصي للمعالج يجب ابلاغه ان ذلك ضد قوانين الموقع وان ادارة الموقع تمنع التواصل المباشر بين المعالج والعميل، ويجب التواصل فقط من خلال خدمة العملاء.', 'shrinks' );
+				$output .= '</p>';
+			}
 
 			$output .= '</div>';
 
