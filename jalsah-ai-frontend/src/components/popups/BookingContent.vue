@@ -200,6 +200,7 @@
 
 <script>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
@@ -660,7 +661,7 @@ export default {
 
     const addToCart = async (slot) => {
       if (!authStore.isAuthenticated) {
-        toast.error(t('common.pleaseLogin'))
+        router.push('/login')
         return
       }
       
@@ -712,7 +713,7 @@ export default {
 
     const removeFromCart = async (slot) => {
       if (!authStore.isAuthenticated) {
-        toast.error(t('common.pleaseLogin'))
+        router.push('/login')
         return
       }
       

@@ -189,7 +189,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import { useSettingsStore } from '@/stores/settings'
 import { useToast } from 'vue-toastification'
-import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import Lightbox from './Lightbox.vue'
 import { formatPrice as formatPriceUtil, getCurrencySymbol } from '@/utils/currency'
@@ -243,7 +242,6 @@ export default {
     const cartStore = useCartStore()
     const settingsStore = useSettingsStore()
     const toast = useToast()
-    const router = useRouter()
 
     // Icon existence refs
     const orderBadgeIconExists = ref(true)
@@ -339,13 +337,7 @@ export default {
     }
 
     const handleOpenBooking = () => {
-      // Check if user is authenticated
-      if (!authStore.isAuthenticated) {
-        // Redirect to login page if not authenticated
-        router.push('/login')
-        return
-      }
-      // If authenticated, emit the event to open booking popup
+      // Always open the booking form; redirect to login only when user tries to add to cart (handled in BookingContent)
       emit('open-booking', props.therapist.id)
     }
 
