@@ -961,7 +961,7 @@ export default {
     confirmChange: 'تأكيد التغيير',
     noSlots: 'لا توجد أوقات متاحة',
     manageBookings: 'إدارة الحجوزات اليدوية',
-    openSlots: 'المواعيد المفتوحة',
+    openSlots: 'المواعيد المحجوزة',
     noOpenSlots: 'لا توجد مواعيد مفتوحة لهذا التاريخ.',
     selectDateToViewOpenSlots: 'اختر التاريخ ثم انقر بحث لعرض مواعيد جلسة AI المفتوحة (المحجوزة).',
     searchByPhone: 'البحث بالهاتف',
