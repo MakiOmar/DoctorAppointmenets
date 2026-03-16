@@ -6721,10 +6721,10 @@ Best regards,
 					return;
 				}
 
-				// Get WhatsApp number and country code (fallback to billing_whatsapp for dashboard-created users)
-				$whatsapp_full = get_user_meta( $user_id, 'whatsapp', true );
+				// Get WhatsApp number and country code (prefer billing_whatsapp so it always matches login number)
+				$whatsapp_full = get_user_meta( $user_id, 'billing_whatsapp', true );
 				if ( empty( $whatsapp_full ) ) {
-					$whatsapp_full = get_user_meta( $user_id, 'billing_whatsapp', true );
+					$whatsapp_full = get_user_meta( $user_id, 'whatsapp', true );
 				}
 				$whatsapp_country_code = get_user_meta( $user_id, 'whatsapp_country_code', true );
 				
