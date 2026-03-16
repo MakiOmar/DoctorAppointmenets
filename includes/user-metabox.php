@@ -168,3 +168,83 @@ function snks_ensure_rochtah_doctor_role( $user_id, $role, $old_roles ) {
 	}
 }
 add_action( 'set_user_role', 'snks_ensure_rochtah_doctor_role', 10, 3 );
+
+/**
+ * Add general WhatsApp login field for patients and secretaries.
+ *
+ * This controls the WhatsApp number used for AI login flows (patients + secretary).
+ * It updates both `billing_whatsapp` and `whatsapp` user meta so all existing
+ * WhatsApp-based login and notification logic continues to work.
+ *
+ * @param WP_User $user User object.
+ * @return void
+ */
+function snks_ai_whatsapp_login_field( $user ) {
+	// Only show for patients (customers) and secretaries.
+	$roles = is_array( $user->roles ) ? $user->roles : array();
+	if ( ! array_intersect( array( 'customer', 'secretary' ), $roles ) ) {
+		return;
+	}
+
+	// Prefer billing_whatsapp, fall back to whatsapp.
+	$whatsapp = get_user_meta( $user->ID, 'billing_whatsapp', true );
+	if ( '' === $whatsapp ) {
+		$whatsapp = get_user_meta( $user->ID, 'whatsapp', true );
+	}
+	?>
+	<h2><?php esc_html_e( 'AI WhatsApp Login', 'shrinks' ); ?></h2>
+	<table class="form-table">
+		<tr>
+			<th>
+				<label for="ai_whatsapp_login"><?php esc_html_e( 'WhatsApp number used for login', 'shrinks' ); ?></label>
+			</th>
+			<td>
+				<input
+					type="text"
+					name="ai_whatsapp_login"
+					id="ai_whatsapp_login"
+					value="<?php echo esc_attr( $whatsapp ); ?>"
+					class="regular-text"
+					placeholder="+201234567890"
+				/>
+				<p class="description">
+					<?php esc_html_e( 'This WhatsApp number will be used for AI WhatsApp login and related notifications. Include country code (e.g., +201234567890).', 'shrinks' ); ?>
+				</p>
+			</td>
+		</tr>
+	</table>
+	<?php
+}
+add_action( 'show_user_profile', 'snks_ai_whatsapp_login_field' );
+add_action( 'edit_user_profile', 'snks_ai_whatsapp_login_field' );
+
+/**
+ * Save general WhatsApp login field for patients and secretaries.
+ *
+ * @param int $user_id User ID.
+ * @return void
+ */
+function snks_save_ai_whatsapp_login_field( $user_id ) {
+	if ( ! current_user_can( 'edit_user', $user_id ) ) {
+		return;
+	}
+
+	$user = get_userdata( $user_id );
+	if ( ! $user || ! isset( $_POST['ai_whatsapp_login'] ) ) {
+		return;
+	}
+
+	$roles = is_array( $user->roles ) ? $user->roles : array();
+	if ( ! array_intersect( array( 'customer', 'secretary' ), $roles ) ) {
+		return;
+	}
+
+	$whatsapp = sanitize_text_field( wp_unslash( $_POST['ai_whatsapp_login'] ) );
+
+	// Store in both fields used by AI login / notifications.
+	update_user_meta( $user_id, 'billing_whatsapp', $whatsapp );
+	update_user_meta( $user_id, 'whatsapp', $whatsapp );
+}
+add_action( 'personal_options_update', 'snks_save_ai_whatsapp_login_field' );
+add_action( 'edit_user_profile_update', 'snks_save_ai_whatsapp_login_field' );
+
