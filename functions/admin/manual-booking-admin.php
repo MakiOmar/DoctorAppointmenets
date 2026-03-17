@@ -868,6 +868,8 @@ function snks_manual_booking_create_patient_from_phone( $phone ) {
 
 	update_user_meta( $user_id, 'billing_phone', $phone_to_store );
 	update_user_meta( $user_id, 'whatsapp', $phone_to_store );
+	// Keep WhatsApp login consistent with the AI login flow (which prefers billing_whatsapp).
+	update_user_meta( $user_id, 'billing_whatsapp', $phone_to_store );
 
 	return $user_id;
 }

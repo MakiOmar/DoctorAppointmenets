@@ -325,6 +325,7 @@
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableDateTime') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientWhatsapp') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[260px] max-w-[260px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
@@ -375,6 +376,20 @@
                     class="p-0.5 rounded hover:bg-gray-200"
                     title="Copy"
                     @click="copyCell(row.therapist_phone)"
+                  >
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  </button>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span class="inline-flex items-center gap-1">
+                  <span>{{ row.patient_name || '—' }}</span>
+                  <button
+                    v-if="row.patient_name"
+                    type="button"
+                    class="p-0.5 rounded hover:bg-gray-200"
+                    title="Copy"
+                    @click="copyCell(row.patient_name)"
                   >
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
@@ -496,6 +511,7 @@
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableDateTime') }}</th>
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistName') }}</th>
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTherapistPhone') }}</th>
+                <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientName') }}</th>
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientWhatsapp') }}</th>
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableTotalOrdersPatient') }}</th>
@@ -542,6 +558,14 @@
                   <span class="inline-flex items-center gap-1">
                     <span>{{ row.therapist_phone || '—' }}</span>
                     <button v-if="row.therapist_phone" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.therapist_phone)">
+                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-sm">
+                  <span class="inline-flex items-center gap-1">
+                    <span>{{ row.patient_name || '—' }}</span>
+                    <button v-if="row.patient_name" type="button" class="p-0.5 rounded hover:bg-gray-200" title="Copy" @click="copyCell(row.patient_name)">
                       <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     </button>
                   </span>
