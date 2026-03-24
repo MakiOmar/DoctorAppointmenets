@@ -1442,7 +1442,8 @@ function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 }
 
 /**
- * Return open (booked) Jalsah AI slots for a given date. Same row shape as list_bookings for consistent table display.
+ * Return booked Jalsah AI slots (open + completed) for a given date.
+ * Same row shape as list_bookings for consistent table display.
  *
  * @param string $date     Date in Y-m-d format.
  * @param int    $page     Page number (1-based).
@@ -1462,7 +1463,7 @@ function snks_manual_booking_data_open_slots( $date, $page = 1, $per_page = 100 
 	$per_page = max( 1, min( 500, absint( $per_page ) ) );
 	$offset = ( $page - 1 ) * $per_page;
 
-	$where = "t.session_status = 'open' AND t.client_id > 0 AND t.settings LIKE '%ai_booking%' AND DATE(t.date_time) = %s";
+	$where = "t.session_status IN ('open', 'completed') AND t.client_id > 0 AND t.settings LIKE '%ai_booking%' AND DATE(t.date_time) = %s";
 	$count_query = "SELECT COUNT(*) FROM {$timetable_table} t WHERE {$where}";
 	$total = (int) $wpdb->get_var( $wpdb->prepare( $count_query, $date ) );
 

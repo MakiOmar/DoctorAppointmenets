@@ -418,12 +418,15 @@
                 </span>
               </td>
               <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
-                <div class="flex items-center gap-1 min-w-0">
-                  <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
-                  <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                  </button>
-                </div>
+                <button
+                  v-if="row.meeting_link"
+                  type="button"
+                  class="px-2 py-1 rounded border border-gray-300 text-xs hover:bg-gray-100"
+                  @click="copyCell(row.meeting_link)"
+                >
+                  نسخ رابط الجلسة
+                </button>
+                <span v-else>—</span>
               </td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center gap-1">
@@ -590,12 +593,15 @@
                   <span>{{ row.total_patient_orders != null ? row.total_patient_orders : '—' }}</span>
                 </td>
                 <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
-                  <div class="flex items-center gap-1 min-w-0">
-                    <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
-                    <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
-                      <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                    </button>
-                  </div>
+                  <button
+                    v-if="row.meeting_link"
+                    type="button"
+                    class="px-2 py-1 rounded border border-gray-300 text-xs hover:bg-gray-100"
+                    @click="copyCell(row.meeting_link)"
+                  >
+                    نسخ رابط الجلسة
+                  </button>
+                  <span v-else>—</span>
                 </td>
                 <td class="px-3 py-2 text-sm">
                   <span class="inline-flex items-center gap-1">
@@ -881,12 +887,15 @@
                 </span>
               </td>
               <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
-                <div class="flex items-center gap-1 min-w-0">
-                  <span class="min-w-0 break-all">{{ row.meeting_link || '—' }}</span>
-                  <button v-if="row.meeting_link" type="button" class="p-0.5 rounded hover:bg-gray-200 shrink-0" title="Copy" @click="copyCell(row.meeting_link)">
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                  </button>
-                </div>
+                <button
+                  v-if="row.meeting_link"
+                  type="button"
+                  class="px-2 py-1 rounded border border-gray-300 text-xs hover:bg-gray-100"
+                  @click="copyCell(row.meeting_link)"
+                >
+                  نسخ رابط الجلسة
+                </button>
+                <span v-else>—</span>
               </td>
               <td class="px-3 py-2 text-sm">
                 <span class="inline-flex items-center gap-1">
