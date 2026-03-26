@@ -75,6 +75,74 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		return false;
 	}
 
+	// Respect therapist visibility settings.
+	$doctor_settings = snks_doctor_settings( $therapist_id );
+	$attendance_type = isset( $doctor_settings['attendance_type'] ) ? (string) $doctor_settings['attendance_type'] : 'online';
+	if ( 'offline' === $attendance_type ) {
+		$snks_manual_booking_ensure_slot_last_error = 'attendance_type_offline';
+		return false;
+	}
+
+	// Only allow creating 45-minute slots.
+	$allow_45 = ! empty( $doctor_settings['45_minutes'] ) && ( 'on' === $doctor_settings['45_minutes'] || 'true' === (string) $doctor_settings['45_minutes'] );
+	if ( ! $allow_45 ) {
+		$snks_manual_booking_ensure_slot_last_error = 'period_45_disabled';
+		return false;
+	}
+
+	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', (string) $doctor_settings['off_days'] ) : array();
+	$off_days = array_map( 'trim', $off_days );
+	$off_days = array_filter( $off_days );
+	if ( in_array( $date, $off_days, true ) ) {
+		$snks_manual_booking_ensure_slot_last_error = 'off_day';
+		return false;
+	}
+
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+	if ( in_array( $date, $global_excluded, true ) ) {
+		$snks_manual_booking_ensure_slot_last_error = 'global_excluded_date';
+		return false;
+	}
+
+	$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
+	if ( $days_count > 90 ) {
+		$days_count = 90;
+	}
+	$today = current_time( 'Y-m-d' );
+	$max_date_ts = strtotime( $today . ' +' . $days_count . ' days' );
+	$max_date = $max_date_ts ? wp_date( 'Y-m-d', $max_date_ts ) : $today;
+	if ( $date > $max_date ) {
+		$snks_manual_booking_ensure_slot_last_error = 'outside_form_days_count';
+		return false;
+	}
+
+	// Apply block_if_before_number.
+	$seconds_before_block = 0;
+	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
+		$number = $doctor_settings['block_if_before_number'];
+		$unit   = $doctor_settings['block_if_before_unit'];
+		$base   = ( 'day' === $unit ) ? 24 : 1;
+		$seconds_before_block = $number * $base * 3600;
+	}
+
+	$date_time = $date . ' ' . $time;
+	$requested_ts = strtotime( $date_time );
+	if ( false === $requested_ts ) {
+		return false;
+	}
+
+	if ( $seconds_before_block > 0 ) {
+		$adjusted_current_datetime = date_i18n(
+			'Y-m-d H:i:s',
+			( current_time( 'timestamp' ) + $seconds_before_block )
+		);
+		$adjusted_ts = strtotime( $adjusted_current_datetime );
+		if ( false !== $adjusted_ts && $requested_ts < $adjusted_ts ) {
+			$snks_manual_booking_ensure_slot_last_error = 'blocked_if_before';
+			return false;
+		}
+	}
+
 	$table = $wpdb->prefix . 'snks_provider_timetable';
 
 	// Find existing available slot at exact same start time.
@@ -83,7 +151,9 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 			"SELECT ID FROM {$table}
 			 WHERE user_id = %d AND DATE(date_time) = %s AND starts = %s
 			 AND session_status = 'waiting' AND order_id = 0
+			 AND period = 45 AND attendance_type = 'online'
 			 AND (client_id = 0 OR client_id IS NULL)
+			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
 			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
 			 LIMIT 1",
@@ -91,7 +161,8 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 			$date,
 			$time,
 			'%ai_booking:booked%',
-			'%ai_booking:in_cart%'
+			'%ai_booking:in_cart%',
+			'%ai_booking:rescheduled_old_slot%'
 		)
 	);
 	if ( $existing ) {
@@ -131,8 +202,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	}
 
 	// Create new slot. 45-minute session.
-	$date_time = $date . ' ' . $time;
-	$ts        = strtotime( $date_time );
+	$ts = $requested_ts;
 	if ( false === $ts || $ts < time() ) {
 		return false;
 	}

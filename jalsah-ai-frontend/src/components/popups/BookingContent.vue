@@ -662,7 +662,8 @@ export default {
 
     const addToCart = async (slot) => {
       if (!authStore.isAuthenticated) {
-        router.push('/login')
+        // Guests should register first when trying to add appointments to cart.
+        router.push('/register')
         return
       }
       
@@ -714,7 +715,8 @@ export default {
 
     const removeFromCart = async (slot) => {
       if (!authStore.isAuthenticated) {
-        router.push('/login')
+        // Keep flow consistent: route guests to registration.
+        router.push('/register')
         return
       }
       
