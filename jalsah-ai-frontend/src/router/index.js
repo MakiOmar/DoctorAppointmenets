@@ -152,6 +152,13 @@ const routes = [
     component: () => import('@/views/MeetingRoom.vue'),
     meta: {}
   },
+  // Rochtah meeting page (opened as a dedicated page, not a modal)
+  {
+    path: '/rochtah-meeting/:bookingId',
+    name: 'RochtahMeetingRoom',
+    component: () => import('@/views/RochtahMeetingRoom.vue'),
+    meta: { requiresAuth: true }
+  },
   // Catch-all route for API endpoints that might be accessed as frontend routes
   {
     path: '/api/ai/:pathMatch(.*)*',

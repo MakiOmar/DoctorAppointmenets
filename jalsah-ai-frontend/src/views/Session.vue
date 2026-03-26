@@ -201,54 +201,6 @@
 
     </div>
 
-         <!-- Meeting Room Modal -->
-     <div
-       v-if="showMeetingRoom"
-       class="fixed inset-0 z-50 bg-black bg-opacity-90"
-     >
-       <!-- Header -->
-       <div class="absolute top-0 left-0 right-0 z-10 bg-white bg-opacity-95 backdrop-blur-sm border-b border-gray-200">
-         <div class="flex items-center justify-between p-4">
-           <div class="flex items-center space-x-3 rtl:space-x-reverse">
-             <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-             <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-             <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-           </div>
-           <h3 class="text-lg text-gray-900">{{ $t('session.meetingRoom') }}</h3>
-           <button
-             @click="closeMeetingRoom"
-             class="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
-           >
-             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-             </svg>
-           </button>
-         </div>
-       </div>
-       
-       <!-- Meeting Container -->
-       <div class="pt-16 h-full">
-         <div id="meeting" class="w-full h-full" style="min-height: calc(100vh - 4rem);">
-                       <!-- Loading state while Jitsi loads -->
-            <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full bg-gray-900">
-              <div class="text-center text-white">
-                <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <p class="text-lg">{{ $t('session.loadingMeeting') }}</p>
-                <p class="text-sm text-gray-400 mt-2">{{ $t('session.connecting') }}</p>
-                
-                <!-- Manual show button after 5 seconds -->
-                <button 
-                  v-if="showManualButton"
-                  @click="forceShowMeeting"
-                  class="mt-6 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-                >
-                  {{ $t('session.showMeeting') }}
-                </button>
-              </div>
-            </div>
-         </div>
-       </div>
-     </div>
   </div>
 </template>
 
@@ -548,10 +500,22 @@ const joinSession = async () => {
   try {
     // Notify backend that patient joined the session
     await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/patient-join`)
-    
-    // Show the meeting room modal within our frontend
-    showMeetingRoom.value = true
-    
+
+    // Open Jitsi on dedicated page (no modal).
+    const meetingLink = sessionData.value?.session_link
+    const meetingMatch = meetingLink ? String(meetingLink).match(/\/meeting\/([a-zA-Z0-9_-]+)/) : null
+    if (meetingMatch?.[1]) {
+      router.push({
+        name: 'MeetingRoom',
+        params: { token: meetingMatch[1] },
+        query: { returnUrl: '/appointments' }
+      })
+    } else if (meetingLink) {
+      window.location.href = meetingLink
+    } else {
+      router.push('/appointments')
+    }
+
     toast.success(t('session.joined'))
   } catch (err) {
     console.error('Error joining session:', err)
@@ -571,10 +535,22 @@ const startMeeting = async () => {
     
     // Notify backend that therapist is starting the meeting
     await notifyTherapistJoined(sessionData.value.ID)
-    
-    // Show the meeting room modal within our frontend
-    showMeetingRoom.value = true
-    
+
+    // Open Jitsi on dedicated page (no modal).
+    const meetingLink = sessionData.value?.session_link
+    const meetingMatch = meetingLink ? String(meetingLink).match(/\/meeting\/([a-zA-Z0-9_-]+)/) : null
+    if (meetingMatch?.[1]) {
+      router.push({
+        name: 'MeetingRoom',
+        params: { token: meetingMatch[1] },
+        query: { returnUrl: '/doctor' }
+      })
+    } else if (meetingLink) {
+      window.location.href = meetingLink
+    } else {
+      router.push('/doctor')
+    }
+
     toast.success(t('session.meetingStarted'))
   } catch (err) {
     console.error('Error starting meeting:', err)

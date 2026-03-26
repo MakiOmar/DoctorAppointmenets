@@ -3901,7 +3901,7 @@ Best regards,
 							'photo' => $photo_url,
 						),
 						'notes'            => '',
-						'session_link'     => null,
+						'session_link'     => function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $appointment->ID ) : null,
 						'therapist_joined' => $therapist_joined,
 					);
 				}
@@ -6504,6 +6504,7 @@ Best regards,
 			'therapist_joined'    => $therapist_joined,
 			'order_id'            => $session->order_id,
 			'settings'            => $session->settings,
+			'session_link'       => function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : null,
 		);
 
 		return new WP_REST_Response(

@@ -1,5 +1,4 @@
 <template>
-  <!-- Full viewport so Jitsi gets correct dimensions (no app header on this route) -->
   <div class="fixed inset-0 bg-gray-900 flex flex-col z-0">
     <!-- Error state -->
     <div
@@ -20,14 +19,14 @@
     <!-- Jitsi meeting container: full viewport so iframe sizes correctly -->
     <div
       v-show="status !== 'error'"
-      id="meeting-guest"
+      id="meeting-rochtah"
       class="absolute inset-0 w-full h-full"
     ></div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from 'vue-toastification'
@@ -41,6 +40,7 @@ const authStore = useAuthStore()
 const status = ref('ready') // 'ready' | 'error'
 const errorMessage = ref('')
 const meetAPI = ref(null)
+
 let logoHideInterval = null
 let hasRedirected = false
 
@@ -57,12 +57,14 @@ const safeReturnUrl = computed(() => {
   return '/appointments'
 })
 
-function hideJitsiLogo(containerId = '#meeting-guest', apiInstance = null) {
+function hideJitsiLogo(containerId = '#meeting-rochtah') {
   try {
     const meetingContainer = document.querySelector(containerId)
     if (!meetingContainer) return
+
     const iframe = meetingContainer.querySelector('iframe')
     if (!iframe) return
+
     try {
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
       if (iframeDoc) {
@@ -71,6 +73,7 @@ function hideJitsiLogo(containerId = '#meeting-guest', apiInstance = null) {
           [class*="watermark"], [class*="jitsi-logo"], [id*="watermark"], [id*="jitsi-logo"],
           .powered-by, [class*="poweredby"] { display: none !important; visibility: hidden !important; }
         `
+
         let style = iframeDoc.getElementById('jalsah-hide-logo-style')
         if (!style) {
           style = iframeDoc.createElement('style')
@@ -82,14 +85,14 @@ function hideJitsiLogo(containerId = '#meeting-guest', apiInstance = null) {
         }
       }
     } catch (e) {
-      // CORS / cross-origin iframe
+      // CORS / cross-origin iframe - ignore.
     }
   } catch (err) {
     // ignore
   }
 }
 
-function startLogoHidePolling(containerId = '#meeting-guest') {
+function startLogoHidePolling(containerId = '#meeting-rochtah') {
   if (logoHideInterval) return
   logoHideInterval = setInterval(() => hideJitsiLogo(containerId), 500)
 }
@@ -115,25 +118,8 @@ function loadScript(src) {
   })
 }
 
-async function markUserJoined(timetableId) {
-  // Best-effort: meeting links can be opened by guests, so JWT might not exist.
-  if (!timetableId) return
-
-  try {
-    const role = authStore.user?.role
-    const isTherapist = role === 'doctor' || role === 'therapist'
-    const endpoint = isTherapist
-      ? `/wp-json/jalsah-ai/v1/session/${timetableId}/therapist-join`
-      : `/wp-json/jalsah-ai/v1/session/${timetableId}/patient-join`
-
-    await api.post(endpoint)
-  } catch (e) {
-    // Ignore join notifications failures (e.g., user is a guest / token missing).
-  }
-}
-
-function initJitsi(roomName, displayName, timetableId) {
-  const meetingContainer = document.querySelector('#meeting-guest')
+function initJitsi(roomName, displayName) {
+  const meetingContainer = document.querySelector('#meeting-rochtah')
   if (!meetingContainer) {
     throw new Error('Meeting container not found')
   }
@@ -153,7 +139,7 @@ function initJitsi(roomName, displayName, timetableId) {
     },
     interfaceConfigOverwrite: {
       prejoinPageEnabled: false,
-      APP_NAME: 'Jalsah AI',
+      APP_NAME: 'Jalsah Rochtah',
       DEFAULT_BACKGROUND: '#1a1a1a',
       SHOW_JITSI_WATERMARK: false,
       HIDE_DEEP_LINKING_LOGO: true,
@@ -173,59 +159,54 @@ function initJitsi(roomName, displayName, timetableId) {
   meetAPI.value.executeCommand('displayName', displayName || 'مشارك')
 
   meetAPI.value.addListener('videoConferenceJoined', () => {
-    startLogoHidePolling('#meeting-guest')
-    setTimeout(() => hideJitsiLogo('#meeting-guest', meetAPI.value), 500)
-    setTimeout(() => hideJitsiLogo('#meeting-guest', meetAPI.value), 1500)
-
-    // Notify backend (patient/therapist join tracking) - best-effort.
-    void markUserJoined(timetableId)
+    startLogoHidePolling('#meeting-rochtah')
+    setTimeout(() => hideJitsiLogo('#meeting-rochtah'), 500)
+    setTimeout(() => hideJitsiLogo('#meeting-rochtah'), 1500)
+    setTimeout(() => hideJitsiLogo('#meeting-rochtah'), 3000)
   })
 
-  meetAPI.value.addListener('videoConferenceLeft', () => {
+  const redirectBack = () => {
     stopLogoHidePolling()
     if (!hasRedirected) {
       hasRedirected = true
       router.push(safeReturnUrl.value)
     }
-  })
+  }
 
-  meetAPI.value.addListener('readyToClose', () => {
-    stopLogoHidePolling()
-    if (!hasRedirected) {
-      hasRedirected = true
-      router.push(safeReturnUrl.value)
-    }
-  })
+  meetAPI.value.addListener('videoConferenceLeft', redirectBack)
+  meetAPI.value.addListener('readyToClose', redirectBack)
 }
 
 onMounted(async () => {
-  const token = route.params.token
-  if (!token) {
+  const bookingId = route.params.bookingId
+  if (!bookingId) {
     status.value = 'error'
     errorMessage.value = 'رابط غير صالح.'
     return
   }
 
   try {
-    const { data } = await api.get('/wp-json/jalsah-ai/v1/meeting-by-token', {
-      params: { token }
+    const { data } = await api.get('/wp-json/jalsah-ai/v1/rochtah-meeting-details', {
+      params: { booking_id: bookingId }
     })
+
     const roomName = data?.room_name
-    const displayName = data?.display_name
-    const timetableId = data?.timetable_id
     if (!roomName) {
       status.value = 'error'
-      errorMessage.value = data?.message || 'رابط الجلسة غير صالح أو منتهي الصلاحية.'
+      errorMessage.value = data?.message || 'تعذر العثور على غرفة الاجتماع.'
       return
     }
 
+    const displayName =
+      authStore.user?.name || authStore.user?.username || authStore.user?.email || 'مشارك'
+
     await loadScript(JITSI_SCRIPT_URL)
     await nextTick()
-    initJitsi(roomName, displayName, timetableId)
+    initJitsi(roomName, displayName)
   } catch (err) {
     status.value = 'error'
-    const msg = err.response?.data?.message || err.response?.data?.code || err.message
-    errorMessage.value = typeof msg === 'string' ? msg : 'رابط الجلسة غير صالح أو منتهي الصلاحية.'
+    const msg = err?.response?.data?.message || err?.response?.data?.code || err?.message
+    errorMessage.value = typeof msg === 'string' ? msg : 'تعذر بدء اجتماع الروشتا.'
     toast.error(errorMessage.value)
   }
 })
@@ -236,8 +217,9 @@ onBeforeUnmount(() => {
     try {
       meetAPI.value.dispose()
     } catch (e) {
-      console.warn('Error disposing Jitsi meeting', e)
+      console.warn('Error disposing rochtah meeting', e)
     }
   }
 })
 </script>
+

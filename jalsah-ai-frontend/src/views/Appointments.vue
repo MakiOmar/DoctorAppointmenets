@@ -186,7 +186,7 @@
               <!-- Join Session Button - Available for both upcoming and previous appointments -->
               <button 
                 v-if="canJoinSession(appointment)"
-                @click="joinSession(appointment.id)"
+                @click="joinSession(appointment)"
                 :disabled="appointment.status !== 'completed' && !appointment.therapist_joined"
                 :class="[
                   'text-sm px-4 py-2 rounded-lg transition-colors',
@@ -252,7 +252,6 @@
               </div>
               <a 
                 :href="appointment.session_link" 
-                target="_blank"
                 class="btn-primary text-sm"
               >
                 {{ $t('appointmentsPage.joinNow') }}
@@ -302,41 +301,6 @@
           </svg>
           <h3 class="text-lg text-gray-900 mb-2">{{ $t('prescription.noPrescriptions') || 'No Prescriptions' }}</h3>
           <p class="text-gray-600">{{ $t('prescription.noPrescriptionsMessage') || 'You don\'t have any prescription requests or completed prescriptions yet.' }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Session Modal -->
-    <div v-if="showSessionModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-8 mx-auto w-11/12 max-w-6xl bg-white rounded-lg shadow-xl">
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between px-4 py-3 border-b">
-          <h3 class="text-lg text-gray-900">{{ $t('session.meetingRoom') }}</h3>
-          <div class="flex items-center space-x-2 rtl:space-x-reverse">
-            <!-- Exit Session Button -->
-            <button 
-              v-if="jitsiLoaded"
-              @click="exitSession"
-              class="bg-red-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-red-700 transition-colors"
-            >
-              {{ $t('session.exitSession') }}
-            </button>
-          </div>
-        </div>
-        <!-- Modal Body -->
-        <div class="w-full relative" style="height: 80vh;">
-          <!-- Jitsi Meeting Container (always rendered) -->
-          <div id="session-meeting" class="w-full h-full" :class="{ 'hidden': !jitsiLoaded }"></div>
-          <!-- Loading State -->
-          <div v-if="!jitsiLoaded" class="flex items-center justify-center h-full absolute inset-0">
-            <div class="text-center">
-              <svg class="animate-spin h-12 w-12 text-primary-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p class="text-gray-600">{{ $t('session.loadingMeeting') }}</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -483,59 +447,6 @@
               class="btn-outline"
             >
               {{ $t('common.no') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Rochtah Session Modal -->
-    <div v-if="showRochtahSessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl text-gray-900">{{ $t('prescription.rochtahSession') || 'Rochtah Session' }}</h3>
-          <button 
-            @click="closeRochtahSessionModal"
-            class="text-gray-400 hover:text-gray-600"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-        
-        <div v-if="rochtahMeetingDetails" class="space-y-4">
-          <!-- Session Info -->
-          <div class="bg-primary-50 p-4 rounded-lg">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span class="font-medium text-gray-700">{{ $t('appointmentsPage.date') }}:</span>
-                <span class="text-gray-900">{{ formatDate(rochtahMeetingDetails.booking_date) }}</span>
-              </div>
-              <div>
-                <span class="font-medium text-gray-700">{{ $t('appointmentsPage.time') }}:</span>
-                <span class="text-gray-900">{{ formatTime(rochtahMeetingDetails.booking_time) }}</span>
-              </div>
-              <div>
-                <span class="font-medium text-gray-700">{{ $t('prescription.roomName') || 'Room' }}:</span>
-                <span class="text-gray-900">{{ rochtahMeetingDetails.room_name }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Meeting Room -->
-          <div class="bg-gray-900 rounded-lg overflow-hidden" style="height: 600px;">
-            <div id="rochtah-meeting" class="w-full h-full"></div>
-          </div>
-          
-          <!-- Meeting Controls -->
-          <div class="flex justify-center space-x-4">
-            <!-- Start button is hidden as meeting auto-starts when modal opens -->
-            <button 
-              @click="closeRochtahSessionModal"
-              class="btn-outline px-6 py-3"
-            >
-              {{ $t('common.close') }}
             </button>
           </div>
         </div>
@@ -1063,17 +974,27 @@ export default {
       return appointmentTime - now > 24 * 60 * 60 * 1000
     }
 
-    const joinSession = async (appointmentId) => {
-      // Open session with direct Jitsi integration
-      currentSessionId.value = appointmentId
-      showSessionModal.value = true
-      jitsiLoaded.value = false
-      
-      // Wait for modal to be rendered before initializing Jitsi
-      await nextTick()
-      setTimeout(() => {
-        initializeSessionJitsi()
-      }, 200) // Give modal time to fully render
+    const joinSession = async (appointment) => {
+      const meetingLink = appointment?.session_link
+      if (!meetingLink) {
+        toast.error('Meeting link not available')
+        return
+      }
+
+      // `snks_get_meeting_shortlink()` returns a full URL like: {base}/meeting/{token}
+      // We extract `{token}` and open the dedicated meeting route (no modal).
+      const meetingMatch = String(meetingLink).match(/\/meeting\/([a-zA-Z0-9_-]+)/)
+      if (meetingMatch?.[1]) {
+        router.push({
+          name: 'MeetingRoom',
+          params: { token: meetingMatch[1] },
+          query: { returnUrl: '/appointments' }
+        })
+        return
+      }
+
+      // Fallback: open the link as-is (full page navigation).
+      window.location.href = meetingLink
     }
 
     const closeSessionModal = (redirectUrl = null) => {
@@ -1927,39 +1848,17 @@ export default {
 
     // Join Rochtah meeting
     const joinRochtahMeeting = async (requestId) => {
-      try {
-        // Get the prescription request to find the booking ID
-        const request = prescriptionRequests.value.find(r => r.id === requestId)
-        if (!request || !request.booking_id) {
-          toast.error('No booking found for this appointment')
-          return
-        }
-
-        // Get meeting details
-        const response = await api.get('/wp-json/jalsah-ai/v1/rochtah-meeting-details', {
-          params: {
-            booking_id: request.booking_id
-          }
-        })
-
-        if (response.data.success) {
-          const meetingDetails = response.data.data
-          
-          // Store meeting details for the session modal
-          rochtahMeetingDetails.value = meetingDetails
-          showRochtahSessionModal.value = true
-          
-          // Auto-start the meeting when modal opens
-          setTimeout(() => {
-            startRochtahMeeting()
-          }, 300) // Small delay to ensure modal is rendered
-        } else {
-          toast.error(response.data.message || 'Failed to get meeting details')
-        }
-      } catch (error) {
-        toast.error('Failed to join meeting')
-        console.error('Error joining Rochtah meeting:', error)
+      const request = prescriptionRequests.value.find(r => r.id === requestId)
+      if (!request || !request.booking_id) {
+        toast.error('No booking found for this appointment')
+        return
       }
+
+      // Open as a dedicated page (no modal, no custom loading overlay).
+      router.push({
+        path: `/rochtah-meeting/${request.booking_id}`,
+        query: { returnUrl: '/appointments' }
+      })
     }
 
     // Close Rochtah session modal and cleanup
