@@ -117,9 +117,6 @@ if ( ! function_exists( 'snks_wc_analytics_manual_booking_bootstrap' ) ) {
 				if ( ! current_user_can( 'manage_woocommerce' ) && ! current_user_can( 'view_woocommerce_reports' ) ) {
 					return;
 				}
-				if ( ! wp_script_is( 'wc-admin-app', 'registered' ) ) {
-					return;
-				}
 				$path = SNKS_DIR . 'assets/js/wc-analytics-manual-booking-filter.js';
 				if ( ! is_readable( $path ) ) {
 					return;
@@ -128,9 +125,25 @@ if ( ! function_exists( 'snks_wc_analytics_manual_booking_bootstrap' ) ) {
 				if ( false === $js ) {
 					return;
 				}
-				wp_add_inline_script( 'wc-admin-app', $js, 'before' );
+				/*
+				 * Do not use wp_add_inline_script( 'wc-admin-app', ..., 'before' ): WooCommerce uses the same slot for
+				 * window.wcAdminFeatures; stacking another "before" on that handle can prevent features from loading (TypeError:
+				 * window.wcAdminFeatures is undefined). Attach after wp-i18n so wp.hooks and wp.i18n exist, still before wc-admin-app runs.
+				 */
+				$anchor_handles = array( 'wp-i18n', 'wp-hooks', 'wc-components', 'wc-admin-layout' );
+				$anchor         = '';
+				foreach ( $anchor_handles as $handle ) {
+					if ( wp_script_is( $handle, 'enqueued' ) ) {
+						$anchor = $handle;
+						break;
+					}
+				}
+				if ( ! $anchor ) {
+					return;
+				}
+				wp_add_inline_script( $anchor, $js, 'after' );
 			},
-			20
+			100
 		);
 	}
 	add_action( 'woocommerce_init', 'snks_wc_analytics_manual_booking_bootstrap' );
