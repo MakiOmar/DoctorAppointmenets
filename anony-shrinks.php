@@ -381,6 +381,7 @@ require_once SNKS_DIR . 'functions/admin/ai-applications.php';
 require_once SNKS_DIR . 'functions/helpers/meeting-shortlink.php';
 require_once SNKS_DIR . 'functions/helpers/admin-manual-booking.php';
 require_once SNKS_DIR . 'functions/admin/manual-booking-admin.php';
+require_once SNKS_DIR . 'functions/admin/woocommerce-analytics-manual-booking.php';
 require_once SNKS_DIR . 'functions/admin/admin-bookings-dashboard.php';
 // Include bilingual migration if available (optional helper)
 if ( file_exists( SNKS_DIR . 'functions/admin/bilingual-migration.php' ) ) {

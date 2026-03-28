@@ -2545,6 +2545,11 @@ function snks_enhanced_ai_analytics_page() {
 	$total_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1" );
 	// Include both 'completed' and 'processing' statuses for AI orders
 	$completed_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1 AND status IN ('completed', 'processing')" );
+
+	$manual_booking_totals = function_exists( 'snks_get_manual_booking_report_totals' ) ? snks_get_manual_booking_report_totals() : array(
+		'count'     => 0,
+		'net_total' => 0.0,
+	);
 	
 	// Get retention data
 	$retention_data = $wpdb->get_results( "
@@ -2594,6 +2599,21 @@ function snks_enhanced_ai_analytics_page() {
 					<div class="stat-item">
 						<h3><?php echo $total_ai_orders > 0 ? round( ( $completed_ai_orders / $total_ai_orders ) * 100, 1 ) : 0; ?>%</h3>
 						<p>Completion Rate</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="card">
+				<h2><?php esc_html_e( 'Admin manual bookings', 'shrinks' ); ?></h2>
+				<p><?php esc_html_e( 'All-time totals from WooCommerce order analytics data for orders created via Manual Booking (order meta: admin_manual_booking). Net total uses the same net amounts as Analytics order stats.', 'shrinks' ); ?></p>
+				<div class="stats-grid">
+					<div class="stat-item">
+						<h3><?php echo esc_html( number_format_i18n( (int) $manual_booking_totals['count'] ) ); ?></h3>
+						<p><?php esc_html_e( 'Orders', 'shrinks' ); ?></p>
+					</div>
+					<div class="stat-item">
+						<h3><?php echo function_exists( 'wc_price' ) ? wp_kses_post( wc_price( $manual_booking_totals['net_total'] ) ) : esc_html( (string) $manual_booking_totals['net_total'] ); ?></h3>
+						<p><?php esc_html_e( 'Net total', 'shrinks' ); ?></p>
 					</div>
 				</div>
 			</div>
