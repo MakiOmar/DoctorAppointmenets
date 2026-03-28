@@ -762,9 +762,6 @@ export default {
     viewDetails: 'عرض التفاصيل',
     bookWithSameTherapist: 'حجز جلسة جديدة مع نفس المعالج',
     appointmentBooked: 'تم حجز الموعد بنجاح',
-    sessionLinkAvailable: 'رابط الجلسة متاح',
-    sessionLinkMessage: 'انقر على الرابط أدناه للانضمام إلى جلستك',
-    joinNow: 'انضم الآن',
     noAppointments: 'لا توجد مواعيد',
     noUpcoming: 'ليس لديك مواعيد قادمة.',
     noPast: 'ليس لديك مواعيد سابقة.',
@@ -853,7 +850,7 @@ export default {
   // Prescription
   prescription: {
     prescriptionServices: 'خدمات الروشتة',
-    prescriptionRequested: 'لقد طلب معالجك، {name}، وصفة طبية لك. يرجى إنشاء موعد مجاني مع طبيبنا النفسي لمتابعة أدويتك إلى جانب جلساتك.',
+    prescriptionRequested: 'لقد طلب معالجك، {name}، وصفة طبية لك. يرجى إنشاء موعد  مع طبيبنا النفسي لمتابعة أدويتك إلى جانب جلساتك.',
     completedPrescriptions: 'الروشتات الخاصة بي',
     bookFreeAppointment: 'احجز موعد مجاني',
     bookAppointment: 'احجز موعد',

@@ -242,22 +242,6 @@
               </template>
             </div>
           </div>
-
-          <!-- Session Link (if available) -->
-          <div v-if="appointment.session_link" class="mt-4 p-3 bg-primary-50 rounded-lg">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-blue-900">{{ $t('appointmentsPage.sessionLinkAvailable') }}</p>
-                <p class="text-xs text-blue-700">{{ $t('appointmentsPage.sessionLinkMessage') }}</p>
-              </div>
-              <a 
-                :href="appointment.session_link" 
-                class="btn-primary text-sm"
-              >
-                {{ $t('appointmentsPage.joinNow') }}
-              </a>
-            </div>
-          </div>
         </div>
         </div>
 
