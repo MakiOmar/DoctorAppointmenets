@@ -3,9 +3,9 @@
     <!-- Hide header on full-screen meeting room so Jitsi can use the full viewport -->
     <Header v-if="!isMeetingRoute" />
 
-    <!-- Navigation Loading Overlay -->
+    <!-- Navigation loading overlay (kept below full-screen meeting routes so Jitsi is never covered) -->
     <div
-      v-if="isNavigating"
+      v-if="isNavigating && !isMeetingRoute"
       class="fixed inset-0 bg-black bg-opacity-20 z-50 flex items-center justify-center"
     >
       <div class="bg-white rounded-lg p-6 shadow-lg flex items-center space-x-3">
@@ -52,16 +52,26 @@ export default {
     const authStore = useAuthStore()
     const { switchUserMode } = storeToRefs(authStore)
     const isNavigating = ref(false)
-    const isMeetingRoute = computed(() => route.name === 'MeetingRoom')
+    const isMeetingRoute = computed(() =>
+      route.name === 'MeetingRoom' || route.name === 'RochtahMeetingRoom'
+    )
 
-    // Show loading immediately when navigation starts
+    // Show loading when navigation starts (skip on meeting pages — avoids race with Jitsi + z-index on slow devices)
     router.beforeEach((to, from, next) => {
-      isNavigating.value = true
+      if (to.name === 'MeetingRoom' || to.name === 'RochtahMeetingRoom') {
+        isNavigating.value = false
+      } else {
+        isNavigating.value = true
+      }
       next()
     })
 
     // Hide loading when navigation completes
-    router.afterEach(() => {
+    router.afterEach((to) => {
+      if (to.name === 'MeetingRoom' || to.name === 'RochtahMeetingRoom') {
+        isNavigating.value = false
+        return
+      }
       setTimeout(() => {
         isNavigating.value = false
       }, 100)

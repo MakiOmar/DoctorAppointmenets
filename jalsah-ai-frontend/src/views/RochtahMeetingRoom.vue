@@ -1,5 +1,8 @@
 <template>
-  <div class="fixed inset-0 bg-gray-900 flex flex-col z-0">
+  <div
+    class="fixed inset-0 bg-gray-900 flex flex-col z-[100] min-h-[100dvh] min-h-[100vh]"
+    style="min-height: -webkit-fill-available"
+  >
     <!-- Error state -->
     <div
       v-if="status === 'error'"
@@ -20,7 +23,7 @@
     <div
       v-show="status !== 'error'"
       id="meeting-rochtah"
-      class="absolute inset-0 w-full h-full"
+      class="absolute inset-0 w-full h-full min-h-0"
     ></div>
   </div>
 </template>
@@ -43,8 +46,82 @@ const meetAPI = ref(null)
 
 let logoHideInterval = null
 let hasRedirected = false
+let onResizeBound = null
 
 const JITSI_SCRIPT_URL = 'https://jitsiserver.jalsah.app/external_api.js'
+
+function jitsiApiReady() {
+  return typeof window.JitsiMeetExternalAPI === 'function'
+}
+
+function loadJitsiScript(src, timeoutMs = 12000) {
+  return new Promise((resolve, reject) => {
+    if (jitsiApiReady()) {
+      resolve()
+      return
+    }
+
+    const appendFresh = () => {
+      const script = document.createElement('script')
+      script.src = src
+      script.async = true
+      script.onload = () => {
+        if (jitsiApiReady()) {
+          resolve()
+        } else {
+          reject(new Error('Jitsi script loaded but API missing'))
+        }
+      }
+      script.onerror = () => reject(new Error('Failed to load Jitsi script'))
+      document.head.appendChild(script)
+    }
+
+    const existing = document.querySelector(`script[src="${src}"]`)
+    if (existing) {
+      const start = Date.now()
+      const poll = setInterval(() => {
+        if (jitsiApiReady()) {
+          clearInterval(poll)
+          resolve()
+        } else if (Date.now() - start > timeoutMs) {
+          clearInterval(poll)
+          try {
+            existing.remove()
+          } catch (e) {
+            // ignore
+          }
+          appendFresh()
+        }
+      }, 80)
+      return
+    }
+
+    appendFresh()
+  })
+}
+
+function getContainerPixelSize(containerEl) {
+  const rect = containerEl.getBoundingClientRect()
+  let w = Math.floor(rect.width)
+  let h = Math.floor(rect.height)
+  if (w < 200 || h < 200) {
+    w = Math.max(w, window.innerWidth || 0, 320)
+    h = Math.max(h, window.innerHeight || 0, 400)
+  }
+  return { width: w, height: h }
+}
+
+function syncJitsiIframeSize() {
+  const api = meetAPI.value
+  const container = document.querySelector('#meeting-rochtah')
+  if (!api || !container) return
+  const { width, height } = getContainerPixelSize(container)
+  const iframe = typeof api.getIFrame === 'function' ? api.getIFrame() : container.querySelector('iframe')
+  if (iframe && iframe.style) {
+    iframe.style.width = `${width}px`
+    iframe.style.height = `${height}px`
+  }
+}
 
 const safeReturnUrl = computed(() => {
   const returnUrlParam = route.query.returnUrl
@@ -104,31 +181,19 @@ function stopLogoHidePolling() {
   }
 }
 
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve()
-      return
-    }
-    const script = document.createElement('script')
-    script.src = src
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Jitsi script'))
-    document.head.appendChild(script)
-  })
-}
-
 function initJitsi(roomName, displayName) {
   const meetingContainer = document.querySelector('#meeting-rochtah')
   if (!meetingContainer) {
     throw new Error('Meeting container not found')
   }
 
+  const { width, height } = getContainerPixelSize(meetingContainer)
+
   const options = {
     parentNode: meetingContainer,
     roomName,
-    width: '100%',
-    height: '100%',
+    width,
+    height,
     configOverwrite: {
       prejoinPageEnabled: false,
       startWithAudioMuted: false,
@@ -157,6 +222,11 @@ function initJitsi(roomName, displayName) {
 
   meetAPI.value = new JitsiMeetExternalAPI('jitsiserver.jalsah.app', options)
   meetAPI.value.executeCommand('displayName', displayName || 'مشارك')
+
+  syncJitsiIframeSize()
+  onResizeBound = () => syncJitsiIframeSize()
+  window.addEventListener('resize', onResizeBound, { passive: true })
+  window.addEventListener('orientationchange', onResizeBound, { passive: true })
 
   meetAPI.value.addListener('videoConferenceJoined', () => {
     startLogoHidePolling('#meeting-rochtah')
@@ -200,8 +270,9 @@ onMounted(async () => {
     const displayName =
       authStore.user?.name || authStore.user?.username || authStore.user?.email || 'مشارك'
 
-    await loadScript(JITSI_SCRIPT_URL)
+    await loadJitsiScript(JITSI_SCRIPT_URL)
     await nextTick()
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
     initJitsi(roomName, displayName)
   } catch (err) {
     status.value = 'error'
@@ -212,6 +283,11 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (onResizeBound) {
+    window.removeEventListener('resize', onResizeBound)
+    window.removeEventListener('orientationchange', onResizeBound)
+    onResizeBound = null
+  }
   stopLogoHidePolling()
   if (meetAPI.value && typeof meetAPI.value.dispose === 'function') {
     try {
