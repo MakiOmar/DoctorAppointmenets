@@ -150,45 +150,19 @@ add_action(
 		}
 		$_req = isset( $_POST ) ? wp_unslash( $_POST ) : array();
 		// Verify the nonce.
-		if ( isset( $_req['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( $_req['nonce'] ), 'insert_timetable_nonce' ) ) {
+		$nonce = isset( $_req['nonce'] ) ? sanitize_text_field( $_req['nonce'] ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'insert_timetable_nonce' ) ) {
 			wp_send_json_error( 'Invalid nonce.' );
 		}
 		$user_id            = snks_get_settings_doctor_id();
 		$preview_timetables = snks_get_preview_timetable();
-		$errors             = array();
-		snks_delete_waiting_sessions_by_user_id( $user_id );
-		if ( $preview_timetables && ! empty( $preview_timetables ) ) {
-			foreach ( $preview_timetables as $day_preview_timetable ) {
-				foreach ( $day_preview_timetable as $data ) {
-					$dtime = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
+		$sync_result        = snks_sync_preview_timetables_to_db( $user_id, $preview_timetables );
 
-					$ordered = snks_timetable_with_order_exists( $dtime, $data['user_id'] );
-					if ( $ordered ) {
-						continue;
-					}
-					$exists            = snks_timetable_exists( $user_id, $dtime, $data['day'], $data['starts'], $data['ends'] );
-					$data['date_time'] = $dtime;
-					unset( $data['date'] );
-
-					if ( empty( $exists ) ) {
-						snks_insert_timetable( $data );
-					} else {
-						foreach ( $exists as $timetable ) {
-							//phpcs:disable
-							if (  ( ! in_array( $timetable->session_status, array( 'open' ), true ) ) && $data['attendance_type'] != $timetable->session_status ) {
-								//phpcs:enable
-								snks_insert_timetable( $data );
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
 		wp_send_json(
 			array(
-				'resp'   => true,
-				'errors' => $errors,
+				'resp'    => $sync_result['success'],
+				'summary' => $sync_result['summary'],
+				'errors'  => $sync_result['errors'],
 			),
 		);
 

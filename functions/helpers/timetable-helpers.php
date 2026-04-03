@@ -766,7 +766,519 @@ function snks_delete_timetable( $id ) {
 	return false;
 }
 
+/**
+ * Build a stable timetable slot key for sync operations.
+ *
+ * @param array|object $row Timetable row.
+ * @param bool         $include_attendance Whether to include attendance type.
+ * @return string
+ */
+function snks_get_timetable_slot_sync_key( $row, $include_attendance = true ) {
+	$row = (array) $row;
 
+	$parts = array(
+		isset( $row['user_id'] ) ? absint( $row['user_id'] ) : 0,
+		isset( $row['date_time'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( $row['date_time'] ) ) : '',
+		isset( $row['day'] ) ? sanitize_text_field( $row['day'] ) : '',
+		isset( $row['starts'] ) ? sanitize_text_field( $row['starts'] ) : '',
+		isset( $row['ends'] ) ? sanitize_text_field( $row['ends'] ) : '',
+	);
+
+	if ( $include_attendance ) {
+		$parts[] = isset( $row['attendance_type'] ) ? sanitize_text_field( $row['attendance_type'] ) : '';
+	}
+
+	return implode( '|', $parts );
+}
+
+/**
+ * Build a stable timetable datetime key for sync decisions.
+ *
+ * @param array|object $row Timetable row.
+ * @return string
+ */
+function snks_get_timetable_datetime_sync_key( $row ) {
+	$row = (array) $row;
+
+	return implode(
+		'|',
+		array(
+			isset( $row['user_id'] ) ? absint( $row['user_id'] ) : 0,
+			isset( $row['date_time'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( $row['date_time'] ) ) : '',
+		)
+	);
+}
+
+/**
+ * Create a compact snapshot for sync logging and response payloads.
+ *
+ * @param array|object $row Timetable row.
+ * @return array
+ */
+function snks_get_timetable_sync_snapshot( $row ) {
+	$row = (array) $row;
+
+	return array(
+		'id'              => isset( $row['ID'] ) ? absint( $row['ID'] ) : 0,
+		'user_id'         => isset( $row['user_id'] ) ? absint( $row['user_id'] ) : 0,
+		'date_time'       => isset( $row['date_time'] ) ? gmdate( 'Y-m-d H:i:s', strtotime( $row['date_time'] ) ) : '',
+		'day'             => isset( $row['day'] ) ? sanitize_text_field( $row['day'] ) : '',
+		'starts'          => isset( $row['starts'] ) ? sanitize_text_field( $row['starts'] ) : '',
+		'ends'            => isset( $row['ends'] ) ? sanitize_text_field( $row['ends'] ) : '',
+		'period'          => isset( $row['period'] ) ? absint( $row['period'] ) : 0,
+		'base_hour'       => isset( $row['base_hour'] ) ? sanitize_text_field( $row['base_hour'] ) : '',
+		'attendance_type' => isset( $row['attendance_type'] ) ? sanitize_text_field( $row['attendance_type'] ) : '',
+		'session_status'  => isset( $row['session_status'] ) ? sanitize_text_field( $row['session_status'] ) : '',
+		'order_id'        => isset( $row['order_id'] ) ? absint( $row['order_id'] ) : 0,
+		'client_id'       => isset( $row['client_id'] ) ? absint( $row['client_id'] ) : 0,
+	);
+}
+
+/**
+ * Check whether a waiting row is safe to replace during preview sync.
+ *
+ * @param array|object $row Timetable row.
+ * @return bool
+ */
+function snks_is_syncable_waiting_timetable_row( $row ) {
+	$row = (array) $row;
+
+	$session_status = isset( $row['session_status'] ) ? sanitize_text_field( $row['session_status'] ) : '';
+	$order_id       = isset( $row['order_id'] ) ? absint( $row['order_id'] ) : 0;
+	$client_id      = isset( $row['client_id'] ) ? absint( $row['client_id'] ) : 0;
+	$settings       = isset( $row['settings'] ) ? (string) $row['settings'] : '';
+
+	if ( 'waiting' !== $session_status ) {
+		return false;
+	}
+
+	if ( $order_id > 0 || $client_id > 0 ) {
+		return false;
+	}
+
+	if ( false !== strpos( $settings, 'ai_booking:in_cart' ) || false !== strpos( $settings, 'ai_booking:booked' ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Check whether a closed row can be restored during preview sync.
+ *
+ * @param array|object $row Timetable row.
+ * @return bool
+ */
+function snks_is_reopenable_closed_timetable_row( $row ) {
+	$row = (array) $row;
+
+	$session_status = isset( $row['session_status'] ) ? sanitize_text_field( $row['session_status'] ) : '';
+	$order_id       = isset( $row['order_id'] ) ? absint( $row['order_id'] ) : 0;
+	$client_id      = isset( $row['client_id'] ) ? absint( $row['client_id'] ) : 0;
+	$settings       = isset( $row['settings'] ) ? (string) $row['settings'] : '';
+
+	if ( 'closed' !== $session_status ) {
+		return false;
+	}
+
+	if ( $order_id > 0 || $client_id > 0 ) {
+		return false;
+	}
+
+	if ( false !== strpos( $settings, 'ai_booking:in_cart' ) || false !== strpos( $settings, 'ai_booking:booked' ) ) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Normalize one preview timetable row before syncing.
+ *
+ * @param array $data Preview row.
+ * @param int   $user_id User ID.
+ * @return array|WP_Error
+ */
+function snks_normalize_preview_timetable_row( $data, $user_id ) {
+	if ( ! is_array( $data ) ) {
+		return new WP_Error( 'invalid_preview_row', 'Preview row must be an array.' );
+	}
+
+	$date_time = isset( $data['date_time'] ) ? strtotime( $data['date_time'] ) : false;
+	if ( false === $date_time ) {
+		return new WP_Error( 'invalid_preview_date', 'Preview row has an invalid date_time value.' );
+	}
+
+	$normalized = array(
+		'user_id'         => absint( $user_id ),
+		'session_status'  => ! empty( $data['session_status'] ) ? sanitize_text_field( $data['session_status'] ) : 'waiting',
+		'day'             => isset( $data['day'] ) ? sanitize_text_field( $data['day'] ) : '',
+		'base_hour'       => isset( $data['base_hour'] ) ? sanitize_text_field( $data['base_hour'] ) : '',
+		'period'          => isset( $data['period'] ) ? absint( $data['period'] ) : 0,
+		'date_time'       => gmdate( 'Y-m-d H:i:s', $date_time ),
+		'starts'          => isset( $data['starts'] ) ? sanitize_text_field( $data['starts'] ) : '',
+		'ends'            => isset( $data['ends'] ) ? sanitize_text_field( $data['ends'] ) : '',
+		'clinic'          => isset( $data['clinic'] ) ? sanitize_text_field( $data['clinic'] ) : '',
+		'attendance_type' => isset( $data['attendance_type'] ) ? sanitize_text_field( $data['attendance_type'] ) : '',
+	);
+
+	$required_fields = array( 'day', 'base_hour', 'period', 'starts', 'ends', 'attendance_type' );
+	foreach ( $required_fields as $field ) {
+		if ( empty( $normalized[ $field ] ) ) {
+			return new WP_Error( 'missing_preview_field', sprintf( 'Preview row is missing %s.', $field ) );
+		}
+	}
+
+	return $normalized;
+}
+
+/**
+ * Fetch waiting rows that are safe for preview sync replacement.
+ *
+ * @param int $user_id User ID.
+ * @return array
+ */
+function snks_get_syncable_waiting_timetables_by_user_id( $user_id ) {
+	global $wpdb;
+
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	$user_id    = absint( $user_id );
+
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT *
+			FROM {$table_name}
+			WHERE user_id = %d
+			AND session_status = %s
+			AND order_id = %d
+			AND ( client_id = 0 OR client_id IS NULL )
+			AND ( settings NOT LIKE %s OR settings = '' OR settings IS NULL )
+			AND ( settings NOT LIKE %s OR settings = '' OR settings IS NULL )",
+			$user_id,
+			'waiting',
+			0,
+			'%ai_booking:in_cart%',
+			'%ai_booking:booked%'
+		)
+	);
+	// phpcs:enable
+}
+
+/**
+ * Fetch user timetable rows for a sync date window.
+ *
+ * @param int         $user_id User ID.
+ * @param string|bool $from Start datetime.
+ * @param string|bool $to End datetime.
+ * @return array
+ */
+function snks_get_user_timetables_for_sync_window( $user_id, $from = false, $to = false ) {
+	global $wpdb;
+
+	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	$user_id    = absint( $user_id );
+
+	if ( $from && $to ) {
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT *
+				FROM {$table_name}
+				WHERE user_id = %d
+				AND date_time BETWEEN %s AND %s
+				ORDER BY date_time ASC",
+				$user_id,
+				$from,
+				$to
+			)
+		);
+		// phpcs:enable
+	}
+
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT *
+			FROM {$table_name}
+			WHERE user_id = %d
+			ORDER BY date_time ASC",
+			$user_id
+		)
+	);
+	// phpcs:enable
+}
+
+/**
+ * Sync preview timetable rows into the database safely.
+ *
+ * @param int|false        $user_id User ID.
+ * @param array|false|null $preview_timetables Preview timetable rows.
+ * @return array
+ */
+function snks_sync_preview_timetables_to_db( $user_id = false, $preview_timetables = false ) {
+	if ( ! $user_id ) {
+		$user_id = snks_get_settings_doctor_id();
+	}
+
+	$user_id = absint( $user_id );
+
+	$result = array(
+		'success'   => true,
+		'inserted'  => array(),
+		'updated'   => array(),
+		'deleted'   => array(),
+		'skipped'   => array(),
+		'preserved' => array(),
+		'errors'    => array(),
+		'summary'   => array(),
+	);
+
+	if ( ! $user_id ) {
+		$result['errors'][] = array(
+			'reason' => 'invalid_user',
+		);
+		$result['success']  = false;
+		$result['summary']  = array(
+			'inserted'  => 0,
+			'updated'   => 0,
+			'deleted'   => 0,
+			'skipped'   => 0,
+			'preserved' => 0,
+			'errors'    => 1,
+		);
+
+		return $result;
+	}
+
+	if ( false === $preview_timetables ) {
+		$preview_timetables = snks_get_preview_timetable( $user_id );
+	}
+
+	$desired_rows       = array();
+	$date_times         = array();
+	$validation_failed  = false;
+
+	if ( is_array( $preview_timetables ) ) {
+		foreach ( $preview_timetables as $day_preview_timetable ) {
+			if ( ! is_array( $day_preview_timetable ) ) {
+				continue;
+			}
+
+			foreach ( $day_preview_timetable as $data ) {
+				$normalized = snks_normalize_preview_timetable_row( $data, $user_id );
+
+				if ( is_wp_error( $normalized ) ) {
+					$result['errors'][] = array(
+						'reason' => $normalized->get_error_message(),
+						'slot'   => is_array( $data ) ? $data : array(),
+					);
+					$validation_failed  = true;
+					continue;
+				}
+
+				$key = snks_get_timetable_slot_sync_key( $normalized );
+				if ( isset( $desired_rows[ $key ] ) ) {
+					$result['skipped'][] = array(
+						'reason' => 'duplicate_preview_slot',
+						'slot'   => snks_get_timetable_sync_snapshot( $normalized ),
+					);
+					continue;
+				}
+
+				$desired_rows[ $key ] = $normalized;
+				$date_times[]         = $normalized['date_time'];
+			}
+		}
+	} elseif ( ! empty( $preview_timetables ) ) {
+		$result['errors'][] = array(
+			'reason' => 'invalid_preview_payload',
+		);
+		$validation_failed  = true;
+	}
+
+	if ( $validation_failed ) {
+		$result['success'] = false;
+		$result['summary'] = array(
+			'inserted'  => 0,
+			'updated'   => 0,
+			'deleted'   => 0,
+			'skipped'   => count( $result['skipped'] ),
+			'preserved' => 0,
+			'errors'    => count( $result['errors'] ),
+		);
+
+		return $result;
+	}
+
+	$existing_syncable_waiting_rows = snks_get_syncable_waiting_timetables_by_user_id( $user_id );
+	$existing_syncable_by_key       = array();
+
+	foreach ( $existing_syncable_waiting_rows as $existing_row ) {
+		$existing_syncable_by_key[ snks_get_timetable_slot_sync_key( $existing_row ) ] = $existing_row;
+	}
+
+	$existing_window_rows   = array();
+	$existing_window_by_key = array();
+	$existing_full_by_key   = array();
+	$open_datetime_keys     = array();
+
+	if ( ! empty( $date_times ) ) {
+		sort( $date_times );
+		$existing_window_rows = snks_get_user_timetables_for_sync_window( $user_id, reset( $date_times ), end( $date_times ) );
+
+		foreach ( $existing_window_rows as $existing_row ) {
+			$time_key = snks_get_timetable_slot_sync_key( $existing_row, false );
+			$full_key = snks_get_timetable_slot_sync_key( $existing_row );
+			$datetime_key = snks_get_timetable_datetime_sync_key( $existing_row );
+			if ( ! isset( $existing_window_by_key[ $time_key ] ) ) {
+				$existing_window_by_key[ $time_key ] = array();
+			}
+
+			$existing_window_by_key[ $time_key ][] = $existing_row;
+
+			if ( ! isset( $existing_full_by_key[ $full_key ] ) ) {
+				$existing_full_by_key[ $full_key ] = array();
+			}
+
+			$existing_full_by_key[ $full_key ][] = $existing_row;
+
+			if ( isset( $existing_row->session_status ) && 'open' === $existing_row->session_status ) {
+				$open_datetime_keys[ $datetime_key ] = true;
+			}
+		}
+	}
+
+	$protected_time_keys = array();
+
+	foreach ( $desired_rows as $desired_row ) {
+		$time_key        = snks_get_timetable_slot_sync_key( $desired_row, false );
+		$datetime_key    = snks_get_timetable_datetime_sync_key( $desired_row );
+		$same_time_rows  = isset( $existing_window_by_key[ $time_key ] ) ? $existing_window_by_key[ $time_key ] : array();
+		$has_open_at_time = isset( $open_datetime_keys[ $datetime_key ] );
+
+		foreach ( $same_time_rows as $existing_row ) {
+			if ( snks_is_reopenable_closed_timetable_row( $existing_row ) && ! $has_open_at_time ) {
+				continue;
+			}
+
+			if ( ! snks_is_syncable_waiting_timetable_row( $existing_row ) ) {
+				$protected_time_keys[ $time_key ] = true;
+				break;
+			}
+		}
+	}
+
+	foreach ( $existing_syncable_waiting_rows as $existing_row ) {
+		$full_key = snks_get_timetable_slot_sync_key( $existing_row );
+		$time_key = snks_get_timetable_slot_sync_key( $existing_row, false );
+
+		if ( isset( $protected_time_keys[ $time_key ] ) || ! isset( $desired_rows[ $full_key ] ) ) {
+			$deleted = snks_delete_timetable( $existing_row->ID );
+
+			if ( $deleted ) {
+				$result['deleted'][] = array(
+					'id'     => absint( $existing_row->ID ),
+					'reason' => isset( $protected_time_keys[ $time_key ] ) ? 'protected_existing_slot' : 'not_in_preview',
+					'slot'   => snks_get_timetable_sync_snapshot( $existing_row ),
+				);
+			} else {
+				$result['errors'][] = array(
+					'reason' => 'delete_failed',
+					'slot'   => snks_get_timetable_sync_snapshot( $existing_row ),
+				);
+			}
+		}
+	}
+
+	foreach ( $desired_rows as $full_key => $desired_row ) {
+		$time_key      = snks_get_timetable_slot_sync_key( $desired_row, false );
+		$datetime_key  = snks_get_timetable_datetime_sync_key( $desired_row );
+		$has_open_at_time = isset( $open_datetime_keys[ $datetime_key ] );
+
+		if ( isset( $protected_time_keys[ $time_key ] ) ) {
+			$result['preserved'][] = array(
+				'reason' => 'protected_existing_slot',
+				'slot'   => snks_get_timetable_sync_snapshot( $desired_row ),
+			);
+			continue;
+		}
+
+		if ( isset( $existing_syncable_by_key[ $full_key ] ) ) {
+			$result['preserved'][] = array(
+				'id'     => absint( $existing_syncable_by_key[ $full_key ]->ID ),
+				'reason' => 'already_waiting',
+				'slot'   => snks_get_timetable_sync_snapshot( $desired_row ),
+			);
+			continue;
+		}
+
+		if ( isset( $existing_full_by_key[ $full_key ] ) ) {
+			foreach ( $existing_full_by_key[ $full_key ] as $existing_row ) {
+				if ( snks_is_reopenable_closed_timetable_row( $existing_row ) && ! $has_open_at_time ) {
+					$updated = snks_update_timetable(
+						$existing_row->ID,
+						array(
+							'session_status' => 'waiting',
+							'client_id'      => 0,
+							'order_id'       => 0,
+						)
+					);
+
+					if ( $updated ) {
+						$result['updated'][] = array(
+							'id'     => absint( $existing_row->ID ),
+							'reason' => 'reopened_closed_without_open_match',
+							'slot'   => snks_get_timetable_sync_snapshot(
+								array_merge(
+									(array) $existing_row,
+									array(
+										'session_status' => 'waiting',
+										'client_id'      => 0,
+										'order_id'       => 0,
+									)
+								)
+							),
+						);
+					} else {
+						$result['errors'][] = array(
+							'reason' => 'reopen_closed_failed',
+							'slot'   => snks_get_timetable_sync_snapshot( $existing_row ),
+						);
+					}
+
+					continue 2;
+				}
+			}
+		}
+
+		$inserted = snks_insert_timetable( $desired_row, $user_id );
+
+		if ( $inserted ) {
+			$result['inserted'][] = array(
+				'id'   => absint( $inserted ),
+				'slot' => snks_get_timetable_sync_snapshot( $desired_row ),
+			);
+		} else {
+			$result['errors'][] = array(
+				'reason' => 'insert_failed',
+				'slot'   => snks_get_timetable_sync_snapshot( $desired_row ),
+			);
+		}
+	}
+
+	$result['success'] = empty( $result['errors'] );
+	$result['summary'] = array(
+		'inserted'  => count( $result['inserted'] ),
+		'updated'   => count( $result['updated'] ),
+		'deleted'   => count( $result['deleted'] ),
+		'skipped'   => count( $result['skipped'] ),
+		'preserved' => count( $result['preserved'] ),
+		'errors'    => count( $result['errors'] ),
+	);
+
+	return $result;
+}
 
 /**
  * Deletes all records in the wpds_snks_provider_timetable table for a given user ID

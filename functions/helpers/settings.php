@@ -272,37 +272,9 @@ function snks_doctor_settings( $user_id = false ) {
  * @return array $errors Array of timetables that failed to insert.
  */
 function snks_insert_preview_timetables( $user_id = false ) {
-	$preview_timetables = snks_get_preview_timetable( $user_id );
-	$errors             = array();
+	$sync_result = snks_sync_preview_timetables_to_db( $user_id );
 
-	if ( $preview_timetables && ! empty( $preview_timetables ) ) {
-		foreach ( $preview_timetables as $preview_timetable ) {
-			foreach ( $preview_timetable as $data ) {
-				$dtime = gmdate( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
-
-				$inserting = array(
-					'user_id'         => $data['user_id'],
-					'session_status'  => $data['session_status'],
-					'day'             => $data['day'],
-					'base_hour'       => $data['base_hour'],
-					'period'          => $data['period'],
-					'date_time'       => $dtime,
-					'starts'          => $data['starts'],
-					'ends'            => $data['ends'],
-					'clinic'          => $data['clinic'],
-					'attendance_type' => $data['attendance_type'],
-				);
-
-				$inserted = snks_insert_timetable( $inserting );
-
-				if ( ! $inserted ) {
-					$errors[] = $data;
-				}
-			}
-		}
-	}
-
-	return $errors;
+	return $sync_result['errors'];
 }
 
 /**
