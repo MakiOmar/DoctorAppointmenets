@@ -470,6 +470,119 @@ add_action(
 							}
 							// Perform nonce check.
 							var nonce     = '<?php echo esc_html( wp_create_nonce( 'insert_timetable_nonce' ) ); ?>';
+							$.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+								data: {
+									nonce  : nonce,
+									action : 'insert_timetable',
+								},
+								success: function(response) {
+									var translateInsertTimetableMessage = function(message) {
+										var translations = {
+											'Invalid nonce.': 'رمز التحقق غير صالح.',
+											'Doctor only.': 'هذا الإجراء متاح للطبيب فقط.',
+											'Failed to save timetable.': 'تعذر حفظ الجدول.',
+											'Connection error while saving timetable.': 'حدث خطأ أثناء الاتصال بالخادم.',
+											'invalid_user': 'تعذر تحديد مقدم الخدمة المطلوب.',
+											'invalid_preview_payload': 'بيانات الجدول التجريبية غير صالحة.',
+											'delete_failed': 'تعذر حذف أحد المواعيد القديمة.',
+											'insert_failed': 'تعذر إضافة أحد المواعيد الجديدة.',
+											'duplicate_preview_slot': 'يوجد موعد مكرر في بيانات المعاينة.',
+											'protected_existing_slot': 'يوجد موعد محجوز أو محمي في نفس التوقيت.',
+											'already_waiting': 'هذا الموعد متاح بالفعل.',
+											'reopened_closed_without_open_match': 'تمت إعادة فتح موعد مغلق لعدم وجود موعد مفتوح بنفس التوقيت.',
+											'reopen_closed_failed': 'تعذر إعادة فتح موعد مغلق.',
+											'invalid_preview_row': 'أحد صفوف المعاينة غير صالح.',
+											'invalid_preview_date': 'يوجد موعد بتاريخ أو وقت غير صالح في المعاينة.',
+											'missing_preview_field': 'توجد بيانات ناقصة في أحد مواعيد المعاينة.'
+										};
+
+										return translations[message] || message || 'تعذر حفظ الجدول.';
+									};
+
+									var summary        = response && response.summary ? response.summary : {};
+									var errors         = response && Array.isArray( response.errors ) ? response.errors : [];
+									var summaryRows    = [];
+									var wpErrorMessage = '';
+									var firstError     = '';
+									var successHtml    = '';
+									var errorHtml      = '';
+
+									if ( typeof summary.inserted !== 'undefined' ) {
+										summaryRows.push( 'تمت الإضافة: ' + summary.inserted );
+									}
+
+									if ( typeof summary.updated !== 'undefined' ) {
+										summaryRows.push( 'تم التحديث: ' + summary.updated );
+									}
+
+									if ( typeof summary.deleted !== 'undefined' ) {
+										summaryRows.push( 'تم الحذف: ' + summary.deleted );
+									}
+
+									if ( typeof summary.preserved !== 'undefined' ) {
+										summaryRows.push( 'تم الإبقاء: ' + summary.preserved );
+									}
+
+									if ( typeof summary.skipped !== 'undefined' ) {
+										summaryRows.push( 'تم التخطي: ' + summary.skipped );
+									}
+
+									if ( typeof summary.errors !== 'undefined' ) {
+										summaryRows.push( 'عدد الأخطاء: ' + summary.errors );
+									}
+
+									if ( response && response.success === false ) {
+										wpErrorMessage = typeof response.data === 'string' ? translateInsertTimetableMessage( response.data ) : 'تعذر حفظ الجدول.';
+										$("#insert-timetable-msg").text( wpErrorMessage );
+										Swal.fire({
+											title: 'تعذر حفظ الجدول',
+											text: wpErrorMessage,
+											icon: 'error',
+											confirmButtonText: 'موافق'
+										});
+										return;
+									}
+
+									if ( response && response.resp ) {
+										successHtml = summaryRows.length ? '<div style="text-align:right;">' + summaryRows.join('<br>') + '</div>' : '';
+										Swal.fire({
+											title: 'تم الحفظ بنجاح!',
+											html: successHtml,
+											icon: 'success',
+											confirmButtonText: 'موافق'
+										});
+										return;
+									}
+
+									firstError = errors.length && errors[0].reason ? translateInsertTimetableMessage( errors[0].reason ) : 'تعذر حفظ الجدول.';
+									errorHtml  = summaryRows.length ? '<div style="text-align:right; margin-bottom: 10px;">' + summaryRows.join('<br>') + '</div>' : '';
+
+									if ( errors.length ) {
+										errorHtml += '<div style="text-align:right;">أول خطأ: ' + firstError + '</div>';
+									}
+
+									$("#insert-timetable-msg").text( firstError );
+									Swal.fire({
+										title: 'تعذر حفظ الجدول',
+										html: errorHtml || firstError,
+										icon: 'error',
+										confirmButtonText: 'موافق'
+									});
+								},
+								error: function() {
+									var message = 'حدث خطأ أثناء الاتصال بالخادم.';
+									$("#insert-timetable-msg").text( message );
+									Swal.fire({
+										title: 'تعذر حفظ الجدول',
+										text: message,
+										icon: 'error',
+										confirmButtonText: 'موافق'
+									});
+								}
+							});
+							return;
 							// Send AJAX request.
 							$.ajax({
 								type: 'POST',
@@ -479,6 +592,76 @@ add_action(
 									action   : 'insert_timetable',
 								},
 								success: function(response) {
+									var summary        = response && response.summary ? response.summary : {};
+									var errors         = response && Array.isArray( response.errors ) ? response.errors : [];
+									var summaryRows    = [];
+									var wpErrorMessage = '';
+									var firstError     = '';
+									var successHtml    = '';
+									var errorHtml      = '';
+
+									if ( typeof summary.inserted !== 'undefined' ) {
+										summaryRows.push( 'Inserted: ' + summary.inserted );
+									}
+
+									if ( typeof summary.updated !== 'undefined' ) {
+										summaryRows.push( 'Updated: ' + summary.updated );
+									}
+
+									if ( typeof summary.deleted !== 'undefined' ) {
+										summaryRows.push( 'Deleted: ' + summary.deleted );
+									}
+
+									if ( typeof summary.preserved !== 'undefined' ) {
+										summaryRows.push( 'Preserved: ' + summary.preserved );
+									}
+
+									if ( typeof summary.skipped !== 'undefined' ) {
+										summaryRows.push( 'Skipped: ' + summary.skipped );
+									}
+
+									if ( typeof summary.errors !== 'undefined' ) {
+										summaryRows.push( 'Errors: ' + summary.errors );
+									}
+
+									if ( response && response.success === false ) {
+										wpErrorMessage = typeof response.data === 'string' ? response.data : 'Failed to save timetable.';
+										$("#insert-timetable-msg").text( wpErrorMessage );
+										Swal.fire({
+											title: 'Failed To Save',
+											text: wpErrorMessage,
+											icon: 'error',
+											confirmButtonText: 'OK'
+										});
+										return;
+									}
+
+									if ( response && response.resp ) {
+										successHtml = summaryRows.length ? '<div style="text-align:left;">' + summaryRows.join('<br>') + '</div>' : '';
+										Swal.fire({
+											title: 'Saved Successfully!',
+											html: successHtml,
+											icon: 'success',
+											confirmButtonText: 'OK'
+										});
+										return;
+									}
+
+									firstError = errors.length && errors[0].reason ? errors[0].reason : 'Failed to save timetable.';
+									errorHtml  = summaryRows.length ? '<div style="text-align:left; margin-bottom: 10px;">' + summaryRows.join('<br>') + '</div>' : '';
+
+									if ( errors.length ) {
+										errorHtml += '<div style="text-align:left;">First error: ' + firstError + '</div>';
+									}
+
+									$("#insert-timetable-msg").text( firstError );
+									Swal.fire({
+										title: 'Failed To Save',
+										html: errorHtml || firstError,
+										icon: 'error',
+										confirmButtonText: 'OK'
+									});
+									return;
 									if ( response.resp ) {
 										Swal.fire({
 											title: 'تم الحفظ بنجاح!',
