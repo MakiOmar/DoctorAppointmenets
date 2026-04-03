@@ -24,6 +24,18 @@ function snks_manual_secretary_meta_name_key() {
 }
 
 /**
+ * WooCommerce order statuses included in the manual-booking secretary report (table, totals, CSV, dropdown).
+ *
+ * @return string[]
+ */
+function snks_manual_booking_report_order_statuses() {
+	return apply_filters(
+		'snks_manual_booking_report_order_statuses',
+		array( 'processing', 'completed' )
+	);
+}
+
+/**
  * Whether order meta indicates an admin manual booking (aligned with analytics helper).
  *
  * @param WC_Order $order Order.
@@ -39,7 +51,7 @@ function snks_order_is_admin_manual_booking( $order ) {
 
 /**
  * Order count and sum of order totals for the report filters (date range + meta_query).
- * Paginates to avoid loading every order at once; applies the same manual-booking guard as the table.
+ * Paginates to avoid loading every order at once; applies the same manual-booking guard and statuses as the table.
  *
  * @param string $date_created `wc_get_orders` date_created range (timestamps joined by ...).
  * @param array  $meta_query   Meta query for the report.
@@ -61,7 +73,7 @@ function snks_manual_booking_secretary_report_aggregate_period( $date_created, $
 				'return'       => 'objects',
 				'orderby'      => 'date',
 				'order'        => 'DESC',
-				'status'       => 'any',
+				'status'       => snks_manual_booking_report_order_statuses(),
 				'meta_query'   => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				'date_created' => $date_created,
 			)
@@ -120,7 +132,7 @@ function snks_manual_booking_distinct_secretary_ids() {
 				'page'       => $page,
 				'paginate'   => false,
 				'return'     => 'objects',
-				'status'     => 'any',
+				'status'     => snks_manual_booking_report_order_statuses(),
 				'orderby'    => 'date',
 				'order'      => 'DESC',
 				'meta_query' => array( $manual_meta ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
@@ -210,12 +222,13 @@ function snks_manual_booking_secretary_report_page() {
 	}
 
 	$args = array(
-		'limit'    => $per_page,
-		'page'     => $paged,
-		'paginate' => true,
-		'orderby'  => 'date',
-		'order'    => 'DESC',
-		'return'   => 'objects',
+		'limit'      => $per_page,
+		'page'       => $paged,
+		'paginate'   => true,
+		'orderby'    => 'date',
+		'order'      => 'DESC',
+		'return'     => 'objects',
+		'status'     => snks_manual_booking_report_order_statuses(),
 		'meta_query' => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 	);
 
@@ -249,7 +262,7 @@ function snks_manual_booking_secretary_report_page() {
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Manual bookings by secretary', 'shrinks' ); ?></h1>
-		<p class="description"><?php esc_html_e( 'WooCommerce orders created via Manual Booking, filtered by date and optional secretary.', 'shrinks' ); ?></p>
+		<p class="description"><?php esc_html_e( 'WooCommerce orders created via Manual Booking with status Processing or Completed, filtered by date and optional secretary.', 'shrinks' ); ?></p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="snks-secretary-report-filters" style="margin: 1em 0;">
 			<input type="hidden" name="page" value="jalsah-ai-manual-booking-secretary-report" />
@@ -426,11 +439,12 @@ function snks_manual_booking_secretary_report_send_csv() {
 
 	$orders = wc_get_orders(
 		array(
-			'limit'      => -1,
-			'orderby'    => 'date',
-			'order'      => 'DESC',
-			'return'     => 'objects',
-			'meta_query' => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			'limit'        => -1,
+			'orderby'      => 'date',
+			'order'        => 'DESC',
+			'return'       => 'objects',
+			'status'       => snks_manual_booking_report_order_statuses(),
+			'meta_query'   => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			'date_created' => $d1->getTimestamp() . '...' . $d2->getTimestamp(),
 		)
 	);
