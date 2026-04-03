@@ -38,6 +38,60 @@ function snks_order_is_admin_manual_booking( $order ) {
 }
 
 /**
+ * Order count and sum of order totals for the report filters (date range + meta_query).
+ * Paginates to avoid loading every order at once; applies the same manual-booking guard as the table.
+ *
+ * @param string $date_created `wc_get_orders` date_created range (timestamps joined by ...).
+ * @param array  $meta_query   Meta query for the report.
+ * @return array{ count: int, total: float }
+ */
+function snks_manual_booking_secretary_report_aggregate_period( $date_created, $meta_query ) {
+	$count     = 0;
+	$total     = 0.0;
+	$page      = 1;
+	$per       = 200;
+	$max_pages = (int) apply_filters( 'snks_manual_booking_report_aggregate_max_pages', 500 );
+
+	while ( $page <= $max_pages ) {
+		$orders = wc_get_orders(
+			array(
+				'limit'        => $per,
+				'page'         => $page,
+				'paginate'     => false,
+				'return'       => 'objects',
+				'orderby'      => 'date',
+				'order'        => 'DESC',
+				'status'       => 'any',
+				'meta_query'   => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'date_created' => $date_created,
+			)
+		);
+
+		if ( empty( $orders ) ) {
+			break;
+		}
+
+		foreach ( $orders as $order ) {
+			if ( ! snks_order_is_admin_manual_booking( $order ) ) {
+				continue;
+			}
+			++$count;
+			$total += (float) $order->get_total();
+		}
+
+		if ( count( $orders ) < $per ) {
+			break;
+		}
+		++$page;
+	}
+
+	return array(
+		'count' => $count,
+		'total' => $total,
+	);
+}
+
+/**
  * Distinct secretary user IDs that appear on manual booking orders.
  * Uses wc_get_orders + the same manual-booking check as the report so HPOS/CPT and meta storage match.
  *
@@ -169,6 +223,8 @@ function snks_manual_booking_secretary_report_page() {
 
 	$result = wc_get_orders( $args );
 
+	$period_stats = snks_manual_booking_secretary_report_aggregate_period( $args['date_created'], $meta_query );
+
 	$secretary_ids = snks_manual_booking_distinct_secretary_ids();
 	sort( $secretary_ids );
 
@@ -220,6 +276,32 @@ function snks_manual_booking_secretary_report_page() {
 			<button type="submit" class="button button-primary" style="margin-left:1em;"><?php esc_html_e( 'Filter', 'shrinks' ); ?></button>
 			<a class="button" style="margin-left:0.5em;" href="<?php echo esc_url( $export_url ); ?>"><?php esc_html_e( 'Export CSV', 'shrinks' ); ?></a>
 		</form>
+
+		<div class="snks-secretary-report-period-summary" style="margin: 1em 0; padding: 12px 16px; background: #f6f7f7; border: 1px solid #c3c4c7; border-radius: 4px; max-width: 640px;">
+			<p style="margin: 0 0 8px; font-weight: 600;">
+				<?php
+				printf(
+					/* translators: 1: start date (Y-m-d), 2: end date (Y-m-d) */
+					esc_html__( 'Period summary (%1$s – %2$s)', 'shrinks' ),
+					esc_html( $date_from ),
+					esc_html( $date_to )
+				);
+				?>
+			</p>
+			<p style="margin: 0 0 4px;">
+				<?php
+				printf(
+					/* translators: %d: number of orders */
+					esc_html__( 'Total orders: %d', 'shrinks' ),
+					(int) $period_stats['count']
+				);
+				?>
+			</p>
+			<p style="margin: 0;">
+				<?php esc_html_e( 'Orders total (sum):', 'shrinks' ); ?>
+				<?php echo wp_kses_post( wc_price( $period_stats['total'] ) ); ?>
+			</p>
+		</div>
 
 		<?php if ( empty( $result->orders ) ) : ?>
 			<p><?php esc_html_e( 'No orders match these filters.', 'shrinks' ); ?></p>
