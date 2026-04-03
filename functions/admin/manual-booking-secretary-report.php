@@ -38,42 +38,62 @@ function snks_order_is_admin_manual_booking( $order ) {
 }
 
 /**
- * Distinct secretary user IDs that appear on manual booking orders (best-effort).
+ * Distinct secretary user IDs that appear on manual booking orders.
+ * Uses wc_get_orders + the same manual-booking check as the report so HPOS/CPT and meta storage match.
  *
  * @return int[]
  */
 function snks_manual_booking_distinct_secretary_ids() {
-	global $wpdb;
-
-	$key_uid = snks_manual_secretary_meta_user_id_key();
-	$key_man = 'admin_manual_booking';
-
-	if ( class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled() ) {
-		$m   = $wpdb->prefix . 'wc_orders_meta';
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT CAST(u.meta_value AS UNSIGNED) FROM {$m} u
-				INNER JOIN {$m} m ON m.order_id = u.order_id AND m.meta_key = %s
-					AND m.meta_value IN ('1','true','yes')
-				WHERE u.meta_key = %s AND u.meta_value REGEXP '^[0-9]+$' AND CAST(u.meta_value AS UNSIGNED) > 0",
-				$key_man,
-				$key_uid
-			)
-		);
-	} else {
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT CAST(u.meta_value AS UNSIGNED) FROM {$wpdb->postmeta} u
-				INNER JOIN {$wpdb->postmeta} m ON m.post_id = u.post_id AND m.meta_key = %s
-					AND m.meta_value IN ('1','true','yes')
-				WHERE u.meta_key = %s AND u.meta_value REGEXP '^[0-9]+$' AND CAST(u.meta_value AS UNSIGNED) > 0",
-				$key_man,
-				$key_uid
-			)
-		);
+	if ( ! function_exists( 'wc_get_orders' ) ) {
+		return array();
 	}
 
-	return array_map( 'absint', array_filter( (array) $ids ) );
+	$per_page  = 200;
+	$max_pages = (int) apply_filters( 'snks_manual_booking_secretary_ids_max_pages', 250 );
+	$ids       = array();
+	$page      = 1;
+
+	$manual_meta = array(
+		'key'     => 'admin_manual_booking',
+		'value'   => array( '1', 'true', 'yes' ),
+		'compare' => 'IN',
+	);
+
+	while ( $page <= $max_pages ) {
+		$orders = wc_get_orders(
+			array(
+				'limit'      => $per_page,
+				'page'       => $page,
+				'paginate'   => false,
+				'return'     => 'objects',
+				'status'     => 'any',
+				'orderby'    => 'date',
+				'order'      => 'DESC',
+				'meta_query' => array( $manual_meta ), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			)
+		);
+
+		if ( empty( $orders ) ) {
+			break;
+		}
+
+		foreach ( $orders as $order ) {
+			if ( ! snks_order_is_admin_manual_booking( $order ) ) {
+				continue;
+			}
+			$sid = absint( $order->get_meta( snks_manual_secretary_meta_user_id_key() ) );
+			if ( $sid > 0 ) {
+				$ids[ $sid ] = true;
+			}
+		}
+
+		if ( count( $orders ) < $per_page ) {
+			break;
+		}
+		++$page;
+	}
+
+	return array_map( 'absint', array_keys( $ids ) );
 }
 
 /**
@@ -128,8 +148,10 @@ function snks_manual_booking_secretary_report_page() {
 	);
 	if ( $sec_filter > 0 ) {
 		$meta_query[] = array(
-			'key'   => snks_manual_secretary_meta_user_id_key(),
-			'value' => (string) $sec_filter,
+			'key'     => snks_manual_secretary_meta_user_id_key(),
+			'value'   => $sec_filter,
+			'compare' => '=',
+			'type'    => 'NUMERIC',
 		);
 	}
 
@@ -313,8 +335,10 @@ function snks_manual_booking_secretary_report_send_csv() {
 	);
 	if ( $sec_filter > 0 ) {
 		$meta_query[] = array(
-			'key'   => snks_manual_secretary_meta_user_id_key(),
-			'value' => (string) $sec_filter,
+			'key'     => snks_manual_secretary_meta_user_id_key(),
+			'value'   => $sec_filter,
+			'compare' => '=',
+			'type'    => 'NUMERIC',
 		);
 	}
 
