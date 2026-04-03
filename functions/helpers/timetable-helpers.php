@@ -297,6 +297,11 @@ function snks_close_others( $booked_session ) {
 	$starts    = $booked_session->starts;       // Start time (e.g., '2:15:00').
 	$ends      = $booked_session->ends;           // End time (e.g., '2:45:00').
 	$period    = $booked_session->period;       // Period (e.g., 30, 45, 60).
+	$user_id   = isset( $booked_session->user_id ) ? absint( $booked_session->user_id ) : 0;
+
+	if ( ! $user_id ) {
+		return;
+	}
 
 	// Close sessions based on the booking rules.
 	if ( $period == 30 ) {
@@ -307,12 +312,14 @@ function snks_close_others( $booked_session ) {
                  SET session_status = 'closed'
                  WHERE DATE(date_time) = DATE(%s)
 				 AND order_id = 0
+				   AND user_id = %d
                    AND base_hour = %s
                    AND NOT (
                      (starts = %s OR ends = %s) AND period = 30
                    )
                    AND session_status = 'waiting'",
 				$date_time,
+				$user_id,
 				$base_hour,
 				$ends,
 				$starts
@@ -346,9 +353,11 @@ function snks_close_others( $booked_session ) {
                  SET session_status = 'closed'
                  WHERE DATE(date_time) = DATE(%s)
 				 AND order_id = 0
+                 AND user_id = %d
                  AND base_hour = %s
                  AND session_status = 'waiting'",
 				$date_time,
+				$user_id,
 				$base_hour
 			)
 		);
@@ -386,6 +395,11 @@ function snks_close_others( $booked_session ) {
 function snks_waiting_others( $booked_timetable ) {
 	global $wpdb;
 	$table_name = $wpdb->prefix . 'snks_provider_timetable';
+	$user_id    = isset( $booked_timetable->user_id ) ? absint( $booked_timetable->user_id ) : 0;
+
+	if ( ! $user_id ) {
+		return;
+	}
 
     // phpcs:disable.
     $wpdb->query(
@@ -393,10 +407,12 @@ function snks_waiting_others( $booked_timetable ) {
             "UPDATE $table_name
              SET session_status = 'waiting'
              WHERE DATE(date_time) = DATE(%s)
+               AND user_id = %d
                AND base_hour = %s
                AND order_id = 0
-			   AND session_status != 'open'",
+			   AND session_status IN ( 'waiting', 'pending', 'closed' )",
             $booked_timetable->date_time,
+            $user_id,
             $booked_timetable->base_hour
         )
     );

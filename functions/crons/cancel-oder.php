@@ -57,9 +57,7 @@ function snks_auto_cancel_wc_orders() {
 	foreach ( $orders as $order ) {
 		$date     = new DateTime( $order->get_date_created(), wp_timezone() );
 		$now      = current_datetime();
-		$interval = $date->diff( $now );
-
-		$minutes_diff = $interval->format( '%i' );
+		$minutes_diff = (int) floor( ( $now->getTimestamp() - $date->getTimestamp() ) / MINUTE_IN_SECONDS );
 		if ( $minutes_diff > ( CANCELL_AFTER - 1 ) ) {
 			$order->set_status( 'cancelled', 'Cancelled for missing payment' );
 			$order->save();
@@ -72,7 +70,7 @@ function snks_auto_cancel_wc_orders() {
 
 			$timetable = snks_get_timetable_by( 'ID', absint( $booking_id ) );
 			if ( ( ! $timetable || 'open' === $timetable->session_status ) && ! $edit_order ) {
-				return;
+				continue;
 			}
 			if ( ! $edit_order ) {
 				$updated = snks_update_timetable(
@@ -134,19 +132,34 @@ function snks_reset_pending_sessions_to_waiting() {
     $table_name = $wpdb->prefix . TIMETABLE_TABLE_NAME;
 
     // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $wpdb->query(
+    $pending_sessions = $wpdb->get_results(
         $wpdb->prepare(
-            "UPDATE {$table_name}
-             SET session_status = %s
+            "SELECT *
+             FROM {$table_name}
              WHERE session_status = %s
                AND client_id = %d
                AND order_id = %d",
-            'waiting',
             'pending',
             0,
             0
         )
     );
     // phpcs:enable
-}
 
+    if ( empty( $pending_sessions ) ) {
+        return;
+    }
+
+    foreach ( $pending_sessions as $pending_session ) {
+        $updated = snks_update_timetable(
+            $pending_session->ID,
+            array(
+                'session_status' => 'waiting',
+            )
+        );
+
+        if ( false !== $updated ) {
+            snks_waiting_others( $pending_session );
+        }
+    }
+}
