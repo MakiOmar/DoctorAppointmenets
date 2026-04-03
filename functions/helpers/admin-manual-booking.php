@@ -437,7 +437,7 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 		$new_date = date( 'Y-m-d', strtotime( $new_slot->date_time ) );
 		$new_time = $new_slot->starts;
 		if ( function_exists( 'snks_send_appointment_change_notification' ) ) {
-			snks_send_appointment_change_notification( $new_slot_id, $old_date, $old_time, $new_date, $new_time, $patient_id );
+			snks_send_appointment_change_notification( $new_slot_id, $old_date, $old_time, $new_date, $new_time, $patient_id, true );
 		}
 		if ( function_exists( 'snks_send_therapist_appointment_change_notification' ) ) {
 			snks_send_therapist_appointment_change_notification( $new_slot_id, $old_date, $old_time, $new_date, $new_time, $patient_id );

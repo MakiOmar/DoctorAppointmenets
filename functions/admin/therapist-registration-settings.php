@@ -194,7 +194,9 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_template_patient_rem_now', sanitize_text_field( $_POST['template_patient_rem_now'] ?? 'patient_rem_now' ) );
 		update_option( 'snks_template_doctor_rem', sanitize_text_field( $_POST['template_doctor_rem'] ?? 'doctor_rem' ) );
 		update_option( 'snks_template_edit2', sanitize_text_field( $_POST['template_edit2'] ?? 'edit2' ) );
+		update_option( 'snks_template_edit3', sanitize_text_field( $_POST['template_edit3'] ?? 'edit3' ) );
 		update_option( 'snks_template_edit', sanitize_text_field( $_POST['template_edit'] ?? 'edit' ) );
+		update_option( 'snks_template_manual_new_session', sanitize_text_field( $_POST['template_manual_new_session'] ?? 'manual_new_session' ) );
 		update_option( 'snks_template_password', sanitize_text_field( $_POST['template_password'] ?? 'password' ) );
 		// Note: Button URL removed - OTP messages should not have buttons
 		
@@ -356,6 +358,16 @@ function snks_therapist_registration_settings_page() {
 					</tr>
 					<tr>
 						<th scope="row">
+							<label for="template_manual_new_session">Manual booking — new session (patient)</label>
+						</th>
+						<td>
+							<input type="text" name="template_manual_new_session" id="template_manual_new_session" value="<?php echo esc_attr( get_option( 'snks_template_manual_new_session', 'manual_new_session' ) ); ?>" class="regular-text" placeholder="manual_new_session">
+							<button type="button" class="button test-whatsapp-notification" data-template="manual_new_session" data-params='{"doctor": "د. أحمد محمد", "day": "الاثنين", "date": "2025-10-21", "time": "10:00 ص", "jitsi": "https://example.com/meeting"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Admin manual booking only | <code>{{doctor}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{jitsi}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
 							<label for="template_doctor_new">New Booking (Doctor)</label>
 						</th>
 						<td>
@@ -462,6 +474,16 @@ function snks_therapist_registration_settings_page() {
 							<input type="text" name="template_edit2" id="template_edit2" value="<?php echo esc_attr( get_option( 'snks_template_edit2', 'edit2' ) ); ?>" class="regular-text" placeholder="edit2">
 						<button type="button" class="button test-whatsapp-notification" data-template="edit2" data-params='{"day": "الثلاثاء", "date": "2025-10-22", "time": "02:00 م", "day2": "الأربعاء", "date2": "2025-10-23", "time2": "03:00 م"}' style="margin-right: 10px;">اختبار</button>
 						<p class="description">Patient notification | <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{day2}}</code>, <code>{{date2}}</code>, <code>{{time2}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_edit3">Appointment change — patient (manual reschedule)</label>
+						</th>
+						<td>
+							<input type="text" name="template_edit3" id="template_edit3" value="<?php echo esc_attr( get_option( 'snks_template_edit3', 'edit3' ) ); ?>" class="regular-text" placeholder="edit3">
+							<button type="button" class="button test-whatsapp-notification" data-template="edit3" data-params='{"day": "الثلاثاء", "date": "2025-10-22", "time": "02:00 م", "day2": "الأربعاء", "date2": "2025-10-23", "time2": "03:00 م"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">When the secretary reschedules from manual booking (any original source) | same variables as patient change above</p>
 						</td>
 					</tr>
 					<tr>

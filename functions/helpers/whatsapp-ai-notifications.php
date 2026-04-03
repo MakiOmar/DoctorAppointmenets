@@ -24,7 +24,9 @@ function snks_get_whatsapp_notification_settings() {
 		'template_patient_rem_now' => get_option( 'snks_template_patient_rem_now', 'patient_rem_now' ),
 		'template_doctor_rem' => get_option( 'snks_template_doctor_rem', 'doctor_rem' ),
 		'template_edit2' => get_option( 'snks_template_edit2', 'edit2' ),
+		'template_edit3' => get_option( 'snks_template_edit3', 'edit3' ),
 		'template_edit' => get_option( 'snks_template_edit', 'edit' ),
+		'template_manual_new_session' => get_option( 'snks_template_manual_new_session', 'manual_new_session' ),
         // New: Rosheta/Prescription related
         'template_rosheta_doctor' => get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ),
         'template_prescription1' => get_option( 'snks_template_prescription1', 'prescription1' ),
@@ -302,82 +304,53 @@ function snks_send_new_session_notification( $session_id ) {
 		return false;
 	}
 
-	// Detect admin manual booking sessions (created via manual booking flow).
-	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
-
-	// For admin manual bookings, log the notification instead of sending WhatsApp (always, before any checks).
-	if ( $is_manual_booking ) {
-		if ( $session->whatsapp_new_session_sent ) {
-			return true;
-		}
-		$settings       = snks_get_whatsapp_notification_settings();
-		$patient_phone  = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $session->client_id ) : '';
-		$doctor_name    = function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( $session->user_id ) : '';
-		$day_name       = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
-		$date           = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
-		$time           = gmdate( 'h:i a', strtotime( $session->date_time ) );
-		$manual_template = get_option( 'snks_template_manual_booking', '' );
-		$meeting_link    = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '';
-		$log_payload     = array(
-			'context'       => 'manual_booking_new_session',
-			'session_id'    => $session_id,
-			'patient_id'    => $session->client_id,
-			'doctor_id'     => $session->user_id,
-			'patient_phone' => $patient_phone,
-			'doctor_name'   => $doctor_name,
-			'day'           => $day_name,
-			'date'          => $date,
-			'time'          => $time,
-			'meeting_link'  => $meeting_link,
-			'template_used' => $manual_template ? $manual_template : ( isset( $settings['template_new_session'] ) ? $settings['template_new_session'] : 'new_session' ),
-		);
-		// Always log manual booking WhatsApp notifications to PHP error_log (no real WhatsApp sent).
-		error_log( 'Jalsah manual booking WhatsApp (patient): ' . wp_json_encode( $log_payload ) );
-		$wpdb->update(
-			$wpdb->prefix . 'snks_provider_timetable',
-			array( 'whatsapp_new_session_sent' => 1 ),
-			array( 'ID' => $session_id ),
-			array( '%d' ),
-			array( '%d' )
-		);
-		return true;
-	}
-	
 	// Check if notification already sent
 	if ( $session->whatsapp_new_session_sent ) {
 		return false;
 	}
-	
+
+	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
+
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' ) {
 		return false;
 	}
-	
-	// Get patient phone
+
 	$patient_phone = snks_get_user_whatsapp( $session->client_id );
 	if ( ! $patient_phone ) {
 		return false;
 	}
-	
-	// Get doctor name from therapist application/profile
+
 	$doctor_name = snks_get_therapist_name( $session->user_id );
-	
-	// Format date and time
-	$day_name = snks_get_arabic_day_name( $session->date_time );
-	$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
-	$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
-	
-	// Send WhatsApp template for non-manual AI sessions.
-	$result = snks_send_whatsapp_template_message(
-		$patient_phone,
-		$settings['template_new_session'],
-		array( 
-			'doctor' => $doctor_name, 
-			'day' => $day_name, 
-			'date' => $date, 
-			'time' => $time 
-		)
-	);
+	$day_name    = snks_get_arabic_day_name( $session->date_time );
+	$date        = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
+	$time        = gmdate( 'h:i a', strtotime( $session->date_time ) );
+
+	if ( $is_manual_booking ) {
+		$jitsi = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '';
+		$result = snks_send_whatsapp_template_message(
+			$patient_phone,
+			$settings['template_manual_new_session'],
+			array(
+				'doctor' => $doctor_name,
+				'day'    => $day_name,
+				'date'   => $date,
+				'time'   => $time,
+				'jitsi'  => $jitsi,
+			)
+		);
+	} else {
+		$result = snks_send_whatsapp_template_message(
+			$patient_phone,
+			$settings['template_new_session'],
+			array(
+				'doctor' => $doctor_name,
+				'day'    => $day_name,
+				'date'   => $date,
+				'time'   => $time,
+			)
+		);
+	}
 	
 	// Mark as sent
 	if ( ! is_wp_error( $result ) ) {
@@ -414,87 +387,41 @@ function snks_send_doctor_new_booking_notification( $session_id ) {
 		return false;
 	}
 
-	// Detect admin manual booking sessions (created via manual booking flow).
-	$is_manual_booking = isset( $session->settings ) && strpos( (string) $session->settings, 'admin_manual_booking:1' ) !== false;
-
-	// For admin manual bookings, log the notification instead of sending WhatsApp (always, before any checks).
-	if ( $is_manual_booking ) {
-		if ( $session->whatsapp_doctor_notified ) {
-			return true;
-		}
-		$settings        = snks_get_whatsapp_notification_settings();
-		$doctor_phone    = function_exists( 'snks_get_user_whatsapp' ) ? snks_get_user_whatsapp( $session->user_id ) : '';
-		$patient_first   = get_user_meta( $session->client_id, 'billing_first_name', true );
-		$patient_last    = get_user_meta( $session->client_id, 'billing_last_name', true );
-		$patient_name    = trim( $patient_first . ' ' . $patient_last ) ?: 'المريض';
-		$day_name        = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
-		$date            = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
-		$time            = gmdate( 'h:i a', strtotime( $session->date_time ) );
-		$manual_template = get_option( 'snks_template_manual_booking', '' );
-		$meeting_link    = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '';
-		$log_payload     = array(
-			'context'       => 'manual_booking_doctor_new',
-			'session_id'    => $session_id,
-			'patient_id'    => $session->client_id,
-			'doctor_id'     => $session->user_id,
-			'doctor_phone'  => $doctor_phone,
-			'patient_name'  => $patient_name,
-			'day'           => $day_name,
-			'date'          => $date,
-			'time'          => $time,
-			'meeting_link'  => $meeting_link,
-			'template_used' => $manual_template ? $manual_template : ( isset( $settings['template_doctor_new'] ) ? $settings['template_doctor_new'] : 'doctor_new' ),
-		);
-		// Always log manual booking WhatsApp notifications to PHP error_log (no real WhatsApp sent).
-		error_log( 'Jalsah manual booking WhatsApp (doctor): ' . wp_json_encode( $log_payload ) );
-		$wpdb->update(
-			$wpdb->prefix . 'snks_provider_timetable',
-			array( 'whatsapp_doctor_notified' => 1 ),
-			array( 'ID' => $session_id ),
-			array( '%d' ),
-			array( '%d' )
-		);
-		return true;
-	}
-	
 	// Check if notification already sent
 	if ( $session->whatsapp_doctor_notified ) {
 		return false;
 	}
-	
+
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' ) {
 		return false;
 	}
-	
-	// Get doctor phone
+
 	$doctor_phone = snks_get_user_whatsapp( $session->user_id );
 	if ( ! $doctor_phone ) {
 		return false;
 	}
-	
-	// Get patient name
+
 	$patient_first_name = get_user_meta( $session->client_id, 'billing_first_name', true );
-	$patient_last_name = get_user_meta( $session->client_id, 'billing_last_name', true );
-	$patient_name = trim( $patient_first_name . ' ' . $patient_last_name );
+	$patient_last_name  = get_user_meta( $session->client_id, 'billing_last_name', true );
+	$patient_name       = trim( $patient_first_name . ' ' . $patient_last_name );
 	if ( empty( $patient_name ) ) {
 		$patient_name = 'المريض';
 	}
-	
-	// Format date and time
+
 	$day_name = snks_get_arabic_day_name( $session->date_time );
-	$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
-	$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
-	
-	// Send WhatsApp template for non-manual AI sessions.
+	$date     = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
+	$time     = gmdate( 'h:i a', strtotime( $session->date_time ) );
+
+	// Manual and website AI bookings use the same doctor_new template (per approved copy).
 	$result = snks_send_whatsapp_template_message(
 		$doctor_phone,
 		$settings['template_doctor_new'],
-		array( 
+		array(
 			'patient' => $patient_name,
-			'day' => $day_name, 
-			'date' => $date, 
-			'time' => $time 
+			'day'     => $day_name,
+			'date'    => $date,
+			'time'    => $time,
 		)
 	);
 	
@@ -823,9 +750,11 @@ function snks_send_doctor_midnight_reminders() {
  * @param string $old_time Old appointment time (H:i:s format).
  * @param string $new_date New appointment date (Y-m-d format).
  * @param string $new_time New appointment time (H:i:s format).
+ * @param int    $fallback_patient_id Patient ID if session row lacks client_id.
+ * @param bool   $from_manual_admin_reschedule When true, patient template is edit3 (manual secretary reschedule).
  * @return bool
  */
-function snks_send_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time, $fallback_patient_id = 0 ) {
+function snks_send_appointment_change_notification( $session_id, $old_date, $old_time, $new_date, $new_time, $fallback_patient_id = 0, $from_manual_admin_reschedule = false ) {
 	global $wpdb;
 	
 	$settings = snks_get_whatsapp_notification_settings();
@@ -869,19 +798,19 @@ function snks_send_appointment_change_notification( $session_id, $old_date, $old
 	$new_formatted_date = date( 'Y-m-d', strtotime( $new_date ) );
 	$new_formatted_time = gmdate( 'h:i a', strtotime( $new_time ) );
 	
-    
-	
+	$patient_template = $from_manual_admin_reschedule ? $settings['template_edit3'] : $settings['template_edit2'];
+
 	// Send WhatsApp template
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,
-		$settings['template_edit2'],
-		array( 
-			'day' => $old_day_name,
-			'date' => $old_formatted_date,
-			'time' => $old_formatted_time,
-			'day2' => $new_day_name,
+		$patient_template,
+		array(
+			'day'   => $old_day_name,
+			'date'  => $old_formatted_date,
+			'time'  => $old_formatted_time,
+			'day2'  => $new_day_name,
 			'date2' => $new_formatted_date,
-			'time2' => $new_formatted_time
+			'time2' => $new_formatted_time,
 		)
 	);
 	
