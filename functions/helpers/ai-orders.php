@@ -169,13 +169,18 @@ class SNKS_AI_Orders {
 	/**
 	 * Create admin manual order for a single slot.
 	 *
-	 * @param int    $patient_id     Patient user ID.
-	 * @param int    $slot_id        Timetable slot ID.
-	 * @param float  $session_amount Session price (original_price in EGP).
-	 * @param string $country_code   Country code for order meta.
+	 * Order meta for secretary (manual bookings only):
+	 * - snks_manual_secretary_user_id (int) Acting WordPress user who created the booking.
+	 * - snks_manual_secretary_name (string) Display name snapshot at booking time.
+	 *
+	 * @param int         $patient_id          Patient user ID.
+	 * @param int         $slot_id             Timetable slot ID.
+	 * @param float       $session_amount      Session price (original_price in EGP).
+	 * @param string      $country_code        Country code for order meta.
+	 * @param int|null    $secretary_user_id   Secretary user ID; null uses get_current_user_id(); 0 means unknown.
 	 * @return WC_Order|false Order object or false on failure.
 	 */
-	public static function create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code = 'EG' ) {
+	public static function create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code = 'EG', $secretary_user_id = null ) {
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return false;
 		}
@@ -234,6 +239,23 @@ class SNKS_AI_Orders {
 		$order->update_meta_data( 'admin_manual_booking', 1 );
 		$order->update_meta_data( 'ai_access_country_code', $country_code );
 		$order->update_meta_data( '_main_price', $session_amount );
+
+		if ( null === $secretary_user_id ) {
+			$secretary_user_id = get_current_user_id();
+		}
+		$secretary_user_id = absint( $secretary_user_id );
+		if ( $secretary_user_id > 0 ) {
+			$sec_user = get_userdata( $secretary_user_id );
+			$sec_name = '';
+			if ( $sec_user ) {
+				$sec_name = $sec_user->display_name ? (string) $sec_user->display_name : (string) $sec_user->user_login;
+			}
+			$order->update_meta_data( 'snks_manual_secretary_user_id', $secretary_user_id );
+			$order->update_meta_data( 'snks_manual_secretary_name', sanitize_text_field( $sec_name ) );
+		} else {
+			$order->update_meta_data( 'snks_manual_secretary_user_id', 0 );
+			$order->update_meta_data( 'snks_manual_secretary_name', '' );
+		}
 
 		$order->calculate_totals();
 		// For admin manual bookings, keep order in 'processing' state instead of 'completed'.
