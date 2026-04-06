@@ -20,6 +20,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 $snks_manual_booking_ensure_slot_last_error = null;
 
 /**
+ * Overlapping timetable rows collected when last ensure_slot failed with overlap.
+ *
+ * @var array<int, array<string, mixed>>
+ */
+$snks_manual_booking_ensure_slot_overlapping_slots = array();
+
+/**
  * Return the last error reason from snks_manual_booking_ensure_slot (e.g. 'overlap' or null).
  *
  * @return string|null
@@ -27,6 +34,16 @@ $snks_manual_booking_ensure_slot_last_error = null;
 function snks_manual_booking_ensure_slot_last_error() {
 	global $snks_manual_booking_ensure_slot_last_error;
 	return $snks_manual_booking_ensure_slot_last_error;
+}
+
+/**
+ * Overlapping slots from the last snks_manual_booking_ensure_slot call that failed with overlap.
+ *
+ * @return array<int, array{slot_id:int,date:string,starts:string,ends:string,order_id:int,session_status:string}>
+ */
+function snks_manual_booking_ensure_slot_overlapping_slots() {
+	global $snks_manual_booking_ensure_slot_overlapping_slots;
+	return is_array( $snks_manual_booking_ensure_slot_overlapping_slots ) ? $snks_manual_booking_ensure_slot_overlapping_slots : array();
 }
 
 /**
@@ -58,9 +75,10 @@ function snks_manual_booking_time_to_minutes( $time ) {
  * @return int|false Slot ID on success, false on failure.
  */
 function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
-	global $wpdb, $snks_manual_booking_ensure_slot_last_error;
+	global $wpdb, $snks_manual_booking_ensure_slot_last_error, $snks_manual_booking_ensure_slot_overlapping_slots;
 
-	$snks_manual_booking_ensure_slot_last_error = null;
+	$snks_manual_booking_ensure_slot_last_error        = null;
+	$snks_manual_booking_ensure_slot_overlapping_slots = array();
 
 	$therapist_id = absint( $therapist_id );
 	$date         = sanitize_text_field( $date );
@@ -179,13 +197,14 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 
 	$all_slots = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT starts, period FROM {$table}
+			"SELECT ID, starts, ends, period, date_time, order_id, session_status FROM {$table}
 			 WHERE user_id = %d AND DATE(date_time) = %s
 			 ORDER BY starts ASC",
 			$therapist_id,
 			$date
 		)
 	);
+	$overlap_rows = array();
 	if ( is_array( $all_slots ) ) {
 		foreach ( $all_slots as $row ) {
 			$existing_start_min = snks_manual_booking_time_to_minutes( $row->starts );
@@ -195,10 +214,47 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 			$period = isset( $row->period ) && (int) $row->period > 0 ? (int) $row->period : 45;
 			$existing_end_min = $existing_start_min + $period;
 			if ( $new_start_min < $existing_end_min && $existing_start_min < $new_end_min ) {
-				$snks_manual_booking_ensure_slot_last_error = 'overlap';
-				return false;
+				$slot_id = 0;
+				if ( isset( $row->ID ) ) {
+					$slot_id = absint( $row->ID );
+				} elseif ( isset( $row->id ) ) {
+					$slot_id = absint( $row->id );
+				}
+				if ( $slot_id < 1 ) {
+					continue;
+				}
+				$date_part = $date;
+				if ( ! empty( $row->date_time ) && preg_match( '/^(\d{4}-\d{2}-\d{2})/', (string) $row->date_time, $dm ) ) {
+					$date_part = $dm[1];
+				}
+				$starts_raw = isset( $row->starts ) ? trim( (string) $row->starts ) : '';
+				$ends_raw   = isset( $row->ends ) ? trim( (string) $row->ends ) : '';
+				if ( strlen( $starts_raw ) >= 5 ) {
+					$starts_disp = substr( $starts_raw, 0, 5 );
+				} else {
+					$starts_disp = $starts_raw;
+				}
+				if ( strlen( $ends_raw ) >= 5 ) {
+					$ends_disp = substr( $ends_raw, 0, 5 );
+				} else {
+					$end_min_calc = $existing_start_min + $period;
+					$ends_disp    = sprintf( '%02d:%02d', (int) floor( $end_min_calc / 60 ) % 24, $end_min_calc % 60 );
+				}
+				$overlap_rows[ $slot_id ] = array(
+					'slot_id'          => $slot_id,
+					'date'             => sanitize_text_field( $date_part ),
+					'starts'           => sanitize_text_field( $starts_disp ),
+					'ends'             => sanitize_text_field( $ends_disp ),
+					'order_id'         => isset( $row->order_id ) ? absint( $row->order_id ) : 0,
+					'session_status'   => isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '',
+				);
 			}
 		}
+	}
+	if ( ! empty( $overlap_rows ) ) {
+		$snks_manual_booking_ensure_slot_last_error        = 'overlap';
+		$snks_manual_booking_ensure_slot_overlapping_slots = array_values( $overlap_rows );
+		return false;
 	}
 
 	// Create new slot. 45-minute session.

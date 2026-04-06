@@ -1037,6 +1037,12 @@ export default {
     successDialog: {
       dateTime: 'Date & time',
       newPatient: 'New patient created'
+    },
+    overlap: {
+      title: 'Overlapping appointments',
+      intro: 'The following sessions overlap your selected time. Please choose another time.',
+      ok: 'OK',
+      statusLabel: 'Session status'
     }
   },
 

@@ -4642,6 +4642,9 @@ Best regards,
 		// Include debug data if provided
 		if ( $debug_data !== null && is_array( $debug_data ) ) {
 			$response['debug'] = $debug_data;
+			if ( isset( $debug_data['overlapping_slots'] ) ) {
+				$response['overlapping_slots'] = $debug_data['overlapping_slots'];
+			}
 		}
 
 		http_response_code( $code );
@@ -7254,7 +7257,12 @@ Best regards,
 								$therapist_id = (int) $existing_slot->user_id;
 								$new_slot_id  = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );
 								if ( ! $new_slot_id && function_exists( 'snks_manual_booking_ensure_slot_last_error' ) && snks_manual_booking_ensure_slot_last_error() === 'overlap' ) {
-									$this->send_error( __( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ), 400 );
+									$overlap_payload = function_exists( 'snks_manual_booking_ensure_slot_overlapping_slots' ) ? snks_manual_booking_ensure_slot_overlapping_slots() : array();
+									$this->send_error(
+										__( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ),
+										400,
+										array( 'overlapping_slots' => $overlap_payload )
+									);
 									return;
 								}
 							}
@@ -7277,7 +7285,12 @@ Best regards,
 					if ( ! $slot_id && $date && $time && function_exists( 'snks_manual_booking_ensure_slot' ) ) {
 						$slot_id = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );
 						if ( ! $slot_id && function_exists( 'snks_manual_booking_ensure_slot_last_error' ) && snks_manual_booking_ensure_slot_last_error() === 'overlap' ) {
-							$this->send_error( __( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ), 400 );
+							$overlap_payload = function_exists( 'snks_manual_booking_ensure_slot_overlapping_slots' ) ? snks_manual_booking_ensure_slot_overlapping_slots() : array();
+							$this->send_error(
+								__( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ),
+								400,
+								array( 'overlapping_slots' => $overlap_payload )
+							);
 							return;
 						}
 					}

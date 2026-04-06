@@ -1452,6 +1452,49 @@ function onNewSlotDateChange() {
   newSlotTime.value = ''
 }
 
+function escapeOverlapHtml(str) {
+  if (str == null || str === '') return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+/** @returns {Promise<boolean>} true if overlap Swal was shown */
+async function showOverlapErrorIfPresent(err) {
+  const slots = err?.response?.data?.overlapping_slots
+  if (!Array.isArray(slots) || slots.length === 0) {
+    return false
+  }
+  const lines = slots.map((s) => {
+    const sid = Number(s.slot_id) || 0
+    const oid = s.order_id
+      ? `<span class="block mt-1"><strong>${t('manualBooking.tableOrderId')}:</strong> #${Number(s.order_id)}</span>`
+      : ''
+    const st = s.session_status
+      ? `<span class="block mt-1 text-gray-600"><strong>${t('manualBooking.overlap.statusLabel')}:</strong> ${escapeOverlapHtml(String(s.session_status))}</span>`
+      : ''
+    return `<li class="mb-3 pb-3 border-b border-gray-200 last:border-0"><strong>${t('manualBooking.tableSessionId')}:</strong> #${sid}<br/><strong>${t('manualBooking.tableDateTime')}:</strong> ${escapeOverlapHtml(String(s.date))} · ${escapeOverlapHtml(String(s.starts))} – ${escapeOverlapHtml(String(s.ends))}${oid}${st}</li>`
+  }).join('')
+  await Swal.fire({
+    icon: 'warning',
+    title: t('manualBooking.overlap.title'),
+    html: `<p class="text-sm mb-3">${t('manualBooking.overlap.intro')}</p><ul class="text-sm list-none p-0 m-0">${lines}</ul>`,
+    confirmButtonText: t('manualBooking.overlap.ok'),
+    width: '34rem',
+    didOpen: (popup) => {
+      if (locale.value === 'ar') {
+        const el = popup.querySelector('.swal2-popup')
+        if (el) {
+          el.setAttribute('dir', 'rtl')
+        }
+      }
+    }
+  })
+  return true
+}
+
 async function submitNewBooking() {
   if (!validateNewBooking()) {
     return
@@ -1512,7 +1555,10 @@ async function submitNewBooking() {
     slots.value = []
     therapistCountries.value = []
   } catch (err) {
-    toast.error(err.response?.data?.error || t('manualBooking.messages.bookingFailed'))
+    const shown = await showOverlapErrorIfPresent(err)
+    if (!shown) {
+      toast.error(err.response?.data?.error || t('manualBooking.messages.bookingFailed'))
+    }
   } finally {
     submitLoading.value = false
   }
@@ -2016,7 +2062,10 @@ async function submitChangeAppointment() {
     })
     resetChangeAppointmentState()
   } catch (err) {
-    toast.error(err.response?.data?.error || t('manualBooking.messages.changeFailed'))
+    const shown = await showOverlapErrorIfPresent(err)
+    if (!shown) {
+      toast.error(err.response?.data?.error || t('manualBooking.messages.changeFailed'))
+    }
   } finally {
     changeSubmitLoading.value = false
   }
