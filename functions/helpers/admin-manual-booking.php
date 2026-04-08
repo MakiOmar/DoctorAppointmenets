@@ -369,11 +369,8 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 		return array( 'success' => false, 'message' => __( 'فشل ربط الموعد بالطلب.', 'shrinks' ) );
 	}
 
-	// Create earnings immediately (admin confirmed payment).
+	// Therapist AI profit is credited when the session is marked completed (same as non-manual AI), not at booking time.
 	// Session action and order meta (ai_therapist_id, ai_user_id) are set by snks_handle_ai_appointment_creation on snks_appointment_created.
-	if ( function_exists( 'snks_execute_ai_profit_transfer' ) ) {
-		snks_execute_ai_profit_transfer( $slot_id );
-	}
 
 	// Send notifications.
 	SNKS_AI_Orders::send_ai_order_notifications( $order->get_id() );

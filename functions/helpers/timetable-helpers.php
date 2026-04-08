@@ -724,12 +724,12 @@ function snks_update_timetable( $id, $data ) {
 				}
 				
 				if ( ! $existing_transaction ) {
-					// Try to find sessions_actions entry and use existing profit transfer function
-					$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+					// Try to find sessions_actions entry and use existing profit transfer function.
+					// case_id stores patient_id (see snks_create_ai_session_action), not order_id.
+					$actions_table  = $wpdb->prefix . 'snks_sessions_actions';
 					$session_action = $wpdb->get_row( $wpdb->prepare(
-						"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
-						$id,
-						$updated_session->order_id
+						"SELECT * FROM {$actions_table} WHERE action_session_id = %d LIMIT 1",
+						$id
 					) );
 					
 					if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {

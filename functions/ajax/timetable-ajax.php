@@ -97,12 +97,11 @@ add_action(
 			}
 			
 			if ( ! $existing_transaction ) {
-				// Try to find sessions_actions entry and use existing profit transfer function
-				$actions_table = $wpdb->prefix . 'snks_sessions_actions';
+				// case_id in snks_sessions_actions is patient_id, not order_id; match by timetable slot id only.
+				$actions_table  = $wpdb->prefix . 'snks_sessions_actions';
 				$session_action = $wpdb->get_row( $wpdb->prepare(
-					"SELECT * FROM {$actions_table} WHERE action_session_id = %d AND case_id = %d",
-					$session_id,
-					$session->order_id
+					"SELECT * FROM {$actions_table} WHERE action_session_id = %d LIMIT 1",
+					$session_id
 				) );
 				
 				if ( $session_action && function_exists( 'snks_execute_ai_profit_transfer' ) ) {
