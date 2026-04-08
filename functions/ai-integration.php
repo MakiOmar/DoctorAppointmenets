@@ -5188,29 +5188,15 @@ Best regards,
 		$valid_cart_items = array();
 
 		foreach ( $cart_items as $item ) {
-			if ( preg_match( '/ai_booking:in_cart:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $item->settings, $matches ) ) {
-				$cart_timestamp     = $matches[1];
-				$cart_time          = strtotime( $cart_timestamp );
-				$current_time_stamp = strtotime( $current_time );
-
-				if ( ( $current_time_stamp - $cart_time ) > 1800 ) {
-					$expired_slot_ids[] = $item->ID;
-					continue;
-				}
+			if ( snks_ai_is_cart_hold_expired( $item->settings, $current_time ) ) {
+				$expired_slot_ids[] = (int) $item->ID;
+				continue;
 			}
-
 			$valid_cart_items[] = $item;
 		}
 
 		if ( $cleanup_expired && ! empty( $expired_slot_ids ) ) {
-			$placeholders  = implode( ',', array_fill( 0, count( $expired_slot_ids ), '%d' ) );
-			$cleanup_query = $wpdb->prepare(
-				"UPDATE {$wpdb->prefix}snks_provider_timetable 
-				 SET client_id = 0, settings = '' 
-				 WHERE ID IN ($placeholders) AND settings LIKE '%ai_booking:in_cart%'",
-				$expired_slot_ids
-			);
-			$wpdb->query( $cleanup_query );
+			snks_ai_release_cart_rows( $expired_slot_ids );
 		}
 
 		// Get user country for currency
@@ -7317,6 +7303,140 @@ Best regards,
 	}
 }
 
+/**
+ * Seconds before an AI in-cart timetable row is treated as expired (default 30 minutes).
+ *
+ * @return int
+ */
+function snks_ai_cart_hold_seconds() {
+	return (int) apply_filters( 'snks_ai_cart_hold_seconds', 1800 );
+}
+
+/**
+ * Parse cart-added timestamp from timetable settings (ai_booking:in_cart:Y-m-d H:i:s).
+ *
+ * @param string $settings Row settings value.
+ * @return string|null MySQL datetime string or null if not matched.
+ */
+function snks_ai_parse_cart_settings_timestamp( $settings ) {
+	if ( ! is_string( $settings ) || $settings === '' ) {
+		return null;
+	}
+	if ( preg_match( '/ai_booking:in_cart:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $settings, $matches ) ) {
+		return $matches[1];
+	}
+	return null;
+}
+
+/**
+ * Whether an in-cart hold in settings is expired relative to WordPress local time.
+ *
+ * @param string      $settings           Timetable settings column.
+ * @param string|null $current_time_mysql Optional current time mysql string (default current_time).
+ * @return bool True if parsed timestamp is older than hold window.
+ */
+function snks_ai_is_cart_hold_expired( $settings, $current_time_mysql = null ) {
+	$cart_ts = snks_ai_parse_cart_settings_timestamp( $settings );
+	if ( ! $cart_ts ) {
+		return false;
+	}
+	$current = $current_time_mysql ? $current_time_mysql : current_time( 'mysql' );
+	$cart_t  = strtotime( $cart_ts );
+	$now_t   = strtotime( $current );
+	if ( false === $cart_t || false === $now_t ) {
+		return false;
+	}
+	return ( $now_t - $cart_t ) > snks_ai_cart_hold_seconds();
+}
+
+/**
+ * Find all timetable row IDs that are AI in-cart and past the hold window (for cron).
+ *
+ * @return int[]
+ */
+function snks_ai_find_expired_in_cart_row_ids() {
+	global $wpdb;
+
+	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$rows = $wpdb->get_results(
+		"SELECT ID, settings FROM {$wpdb->prefix}snks_provider_timetable
+		 WHERE session_status = 'waiting' AND order_id = 0 AND client_id > 0
+		 AND settings LIKE '%ai_booking:in_cart:%'"
+	);
+	// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+	$current = current_time( 'mysql' );
+	$ids     = array();
+	foreach ( $rows as $row ) {
+		if ( snks_ai_is_cart_hold_expired( $row->settings, $current ) ) {
+			$ids[] = (int) $row->ID;
+		}
+	}
+	return $ids;
+}
+
+/**
+ * Release AI cart holds on timetable rows (clear client and settings).
+ *
+ * @param int[] $ids Timetable primary keys.
+ * @return int Number of rows updated (sum of chunks).
+ */
+function snks_ai_release_cart_rows( array $ids ) {
+	if ( empty( $ids ) ) {
+		return 0;
+	}
+	global $wpdb;
+
+	$chunk_size = max( 1, (int) apply_filters( 'snks_ai_release_cart_chunk_size', 500 ) );
+	$ids        = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+	if ( empty( $ids ) ) {
+		return 0;
+	}
+
+	$total = 0;
+	foreach ( array_chunk( $ids, $chunk_size ) as $chunk ) {
+		$placeholders = implode( ',', array_fill( 0, count( $chunk ), '%d' ) );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPlaceholder
+		$sql = $wpdb->prepare(
+			"UPDATE {$wpdb->prefix}snks_provider_timetable
+			 SET client_id = 0, settings = ''
+			 WHERE ID IN ($placeholders) AND settings LIKE '%%ai_booking:in_cart%%'",
+			$chunk
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPlaceholder
+		$rows = $wpdb->query( $sql );
+		if ( false !== $rows ) {
+			$total += (int) $rows;
+		}
+	}
+	return $total;
+}
+
+/**
+ * Schedule cart cleanup cron job (every 5 minutes after one-time migration from hourly).
+ */
+function snks_schedule_cart_cleanup() {
+	if ( '1' !== (string) get_option( 'snks_ai_cart_cleanup_cron_v2', '' ) ) {
+		wp_clear_scheduled_hook( 'jalsah_ai_cleanup_expired_cart' );
+		update_option( 'snks_ai_cart_cleanup_cron_v2', '1', false );
+	}
+	if ( ! wp_next_scheduled( 'jalsah_ai_cleanup_expired_cart' ) ) {
+		wp_schedule_event( time(), 'every_5_minutes', 'jalsah_ai_cleanup_expired_cart' );
+	}
+}
+
+/**
+ * Clean up expired cart items (older than hold window).
+ */
+function snks_cleanup_expired_cart_items() {
+	$expired_ids = snks_ai_find_expired_in_cart_row_ids();
+	if ( empty( $expired_ids ) ) {
+		return;
+	}
+	snks_ai_release_cart_rows( $expired_ids );
+	error_log( 'Jalsah AI: Cleaned up ' . count( $expired_ids ) . ' expired cart items' );
+}
+
 // Initialize AI Integration
 $ai_integration = new SNKS_AI_Integration();
 
@@ -7381,58 +7501,6 @@ function snks_process_ai_order_status_change( $order_id, $old_status, $new_statu
 	if ( ( $is_ai_order === 'true' || $is_ai_order === true || $is_ai_order === '1' || $is_ai_order === 1 )
 		&& ( $is_rochtah_order !== true && $is_rochtah_order !== '1' && $is_rochtah_order !== 1 ) ) {
 		SNKS_AI_Orders::process_ai_order_payment( $order_id );
-	}
-}
-
-/**
- * Schedule cart cleanup cron job
- */
-function snks_schedule_cart_cleanup() {
-	if ( ! wp_next_scheduled( 'jalsah_ai_cleanup_expired_cart' ) ) {
-		wp_schedule_event( time(), 'hourly', 'jalsah_ai_cleanup_expired_cart' );
-	}
-}
-
-/**
- * Clean up expired cart items (older than 30 minutes)
- */
-function snks_cleanup_expired_cart_items() {
-	global $wpdb;
-
-	$current_time = current_time( 'mysql' );
-	$expired_time = date( 'Y-m-d H:i:s', strtotime( $current_time . ' -30 minutes' ) );
-
-	// Find expired cart items
-	$expired_query = $wpdb->prepare(
-		"SELECT ID FROM {$wpdb->prefix}snks_provider_timetable 
-		 WHERE settings LIKE %s AND settings LIKE %s",
-		'%ai_booking:in_cart%',
-		'%' . $expired_time . '%'
-	);
-
-	$expired_items = $wpdb->get_results( $expired_query );
-
-	if ( ! empty( $expired_items ) ) {
-		$expired_ids  = array_map(
-			function ( $item ) {
-				return $item->ID;
-			},
-			$expired_items
-		);
-		$placeholders = implode( ',', array_fill( 0, count( $expired_ids ), '%d' ) );
-
-		// Clean up expired items
-		$cleanup_query = $wpdb->prepare(
-			"UPDATE {$wpdb->prefix}snks_provider_timetable 
-			 SET client_id = 0, settings = '' 
-			 WHERE ID IN ($placeholders) AND settings LIKE '%ai_booking:in_cart%'",
-			$expired_ids
-		);
-
-		$result = $wpdb->query( $cleanup_query );
-
-		// Log cleanup activity
-		error_log( 'Jalsah AI: Cleaned up ' . count( $expired_ids ) . ' expired cart items' );
 	}
 }
 
