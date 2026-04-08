@@ -572,27 +572,10 @@ function snks_process_ai_coupon_application( $code, $amount, $user_id ) {
 		);
 	}
 
-	// Fallback to general coupon logic.
-	// NOTE: General coupons apply discount to the FULL amount (not just Jalsah fee)
-	$general = snks_apply_coupon_to_amount( $code, $amount );
-	if ( ! empty( $general['valid'] ) ) {
-		error_log( sprintf(
-			'🔍 COUPON DEBUG: General coupon applied. code=%s, type=%s, value=%0.2f, amount=%0.2f, discount=%0.2f, final_total=%0.2f',
-			$code,
-			$general['coupon']->discount_type ?? 'unknown',
-			$general['coupon']->discount_value ?? 0,
-			$amount,
-			$general['discount'],
-			$general['final']
-		) );
-		return array(
-			'valid'    => true,
-			'final'    => $general['final'],
-			'discount' => $general['discount'], // Discount in original EGP
-			'coupon'   => $general['coupon'],
-			'message'  => $general['message'],
-			'source'   => 'general',
-		);
+	// Therapist-defined "general" coupons (non-AI) must not apply to AI cart/checkout.
+	if ( $coupon_check && empty( $coupon_check->is_ai_coupon ) ) {
+		$response['message'] = __( 'هذا الكوبون غير مخصص لجلسات الذكاء الاصطناعي.', 'anony-turn' );
+		return $response;
 	}
 
 	return $response;
