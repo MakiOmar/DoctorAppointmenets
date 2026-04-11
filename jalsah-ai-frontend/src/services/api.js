@@ -203,7 +203,10 @@ api.interceptors.response.use(
         toast.error('Network error. Please check your internet connection.')
       }
     } else if (error.response?.data?.error) {
-      toast.error(error.response.data.error)
+      // Callers can set skipGlobalErrorToast (e.g. manual booking) to show SweetAlert2 instead.
+      if (!config?.skipGlobalErrorToast) {
+        toast.error(error.response.data.error)
+      }
     } else {
       toast.error('An error occurred. Please try again.')
     }

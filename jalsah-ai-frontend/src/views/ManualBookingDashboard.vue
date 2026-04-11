@@ -240,10 +240,12 @@
         <input
           v-model="newSlotDate"
           type="date"
-          class="w-full rounded border px-3 py-2 border-gray-300"
+          class="w-full rounded border px-3 py-2"
+          :class="errors?.date ? 'border-red-500' : 'border-gray-300'"
           :min="newSlotDateMin"
           @change="onNewSlotDateChange"
         >
+        <p v-if="errors?.date" class="mt-1 text-sm text-red-600">{{ errors?.date }}</p>
       </div>
 
       <!-- Slot (existing slot) -->
@@ -1112,17 +1114,28 @@
           <div v-if="changeSlotMode === 'existing'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
-              <select v-model="changeSelectedDate" class="w-full rounded border border-gray-300 px-3 py-2" @change="onChangeDateChange">
+              <select
+                v-model="changeSelectedDate"
+                class="w-full rounded border px-3 py-2"
+                :class="changeErrors?.date ? 'border-red-500' : 'border-gray-300'"
+                @change="onChangeDateChange"
+              >
                 <option value="">— {{ $t('manualBooking.selectDate') }} —</option>
                 <option v-for="d in changeAvailableDates" :key="d.date" :value="d.date">{{ d.label }}</option>
               </select>
+              <p v-if="changeErrors?.date" class="mt-1 text-sm text-red-600">{{ changeErrors?.date }}</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
-              <select v-model="changeSelectedSlotId" class="w-full rounded border border-gray-300 px-3 py-2">
+              <select
+                v-model="changeSelectedSlotId"
+                class="w-full rounded border px-3 py-2"
+                :class="changeErrors?.slot ? 'border-red-500' : 'border-gray-300'"
+              >
                 <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
                 <option v-for="s in changeSlots" :key="s.slot_id" :value="s.slot_id">{{ s.formatted_time }}</option>
               </select>
+              <p v-if="changeErrors?.slot" class="mt-1 text-sm text-red-600">{{ changeErrors?.slot }}</p>
             </div>
           </div>
           <!-- New slot: date input + time dropdown (same logic as new booking) -->
@@ -1132,23 +1145,30 @@
               <input
                 v-model="changeNewSlotDate"
                 type="date"
-                class="w-full rounded border border-gray-300 px-3 py-2"
+                class="w-full rounded border px-3 py-2"
+                :class="changeErrors?.date ? 'border-red-500' : 'border-gray-300'"
                 :min="changeNewSlotDateMin"
               >
+              <p v-if="changeErrors?.date" class="mt-1 text-sm text-red-600">{{ changeErrors?.date }}</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.slot') }}</label>
-              <select v-model="changeNewSlotTime" class="w-full rounded border border-gray-300 px-3 py-2">
+              <select
+                v-model="changeNewSlotTime"
+                class="w-full rounded border px-3 py-2"
+                :class="changeErrors?.slot ? 'border-red-500' : 'border-gray-300'"
+              >
                 <option value="">— {{ $t('manualBooking.selectSlot') }} —</option>
                 <option v-for="t in baseTimeOptions" :key="t" :value="t">{{ formatTimeAmPm(t) }}</option>
               </select>
+              <p v-if="changeErrors?.slot" class="mt-1 text-sm text-red-600">{{ changeErrors?.slot }}</p>
             </div>
           </div>
           <div class="mt-4">
             <button
               type="button"
               class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50"
-              :disabled="changeSubmitLoading || !changeSlotValid"
+              :disabled="changeSubmitLoading || !selectedAppointment"
               @click="submitChangeAppointment"
             >
               <span v-if="changeSubmitLoading" class="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 align-middle" />
@@ -1162,7 +1182,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
@@ -1213,14 +1233,24 @@ function validateNewBooking() {
     errors.value.therapist = t('manualBooking.validation.therapistRequired')
     valid = false
   }
-  if (!selectedDate.value) {
-    errors.value.date = t('manualBooking.validation.dateRequired')
-    valid = false
-  }
-  const slotValid = bookingSlotMode.value === 'new' ? newSlotTime.value : selectedSlotId.value
-  if (!slotValid) {
-    errors.value.slot = t('manualBooking.validation.slotRequired')
-    valid = false
+  if (bookingSlotMode.value === 'existing') {
+    if (!selectedDate.value) {
+      errors.value.date = t('manualBooking.validation.dateRequired')
+      valid = false
+    }
+    if (!selectedSlotId.value) {
+      errors.value.slot = t('manualBooking.validation.slotRequired')
+      valid = false
+    }
+  } else {
+    if (!newSlotDate.value) {
+      errors.value.date = t('manualBooking.validation.dateRequired')
+      valid = false
+    }
+    if (!newSlotTime.value) {
+      errors.value.slot = t('manualBooking.validation.slotRequired')
+      valid = false
+    }
   }
   if (!selectedCountryCode.value) {
     errors.value.country = t('manualBooking.validation.countryRequired')
@@ -1234,6 +1264,40 @@ function validateNewBooking() {
     }
   }
   return valid
+}
+
+const changeErrors = ref({ date: '', slot: '' })
+
+function clearChangeErrors() {
+  changeErrors.value = { date: '', slot: '' }
+}
+
+function validateChangeForm() {
+  clearChangeErrors()
+  if (!selectedAppointment.value) {
+    return false
+  }
+  let ok = true
+  if (changeSlotMode.value === 'existing') {
+    if (!changeSelectedDate.value) {
+      changeErrors.value.date = t('manualBooking.validation.dateRequired')
+      ok = false
+    }
+    if (!changeSelectedSlotId.value) {
+      changeErrors.value.slot = t('manualBooking.validation.slotRequired')
+      ok = false
+    }
+  } else {
+    if (!changeNewSlotDate.value) {
+      changeErrors.value.date = t('manualBooking.validation.dateRequired')
+      ok = false
+    }
+    if (!changeNewSlotTime.value) {
+      changeErrors.value.slot = t('manualBooking.validation.slotRequired')
+      ok = false
+    }
+  }
+  return ok
 }
 
 // —— New booking ——
@@ -1268,6 +1332,11 @@ const submitLoading = ref(false)
 const bookingSlotMode = ref('existing')
 const newSlotDate = ref('')
 const newSlotTime = ref('')
+
+watch(bookingSlotMode, () => {
+  errors.value.date = ''
+  errors.value.slot = ''
+})
 
 const selectedPatientCountry = computed(() => {
   return patientCountries.value.find(c => c.country_code === selectedPatientCountryCode.value) || patientCountries.value[0]
@@ -1495,6 +1564,32 @@ async function showOverlapErrorIfPresent(err) {
   return true
 }
 
+/**
+ * SweetAlert2 for booking API errors (after overlap-specific dialog). Submit uses skipGlobalErrorToast so this is the primary server error UI.
+ */
+async function showManualBookingErrorSwal(err, fallbackMessage) {
+  const overlapShown = await showOverlapErrorIfPresent(err)
+  if (overlapShown) {
+    return
+  }
+  const msg = err?.response?.data?.error || fallbackMessage
+  await Swal.fire({
+    icon: 'error',
+    title: t('manualBooking.messages.errorTitle'),
+    text: msg,
+    confirmButtonText: t('manualBooking.overlap.ok'),
+    width: '32rem',
+    didOpen: (popup) => {
+      if (locale.value === 'ar') {
+        const el = popup.querySelector('.swal2-popup')
+        if (el) {
+          el.setAttribute('dir', 'rtl')
+        }
+      }
+    }
+  })
+}
+
 async function submitNewBooking() {
   if (!validateNewBooking()) {
     return
@@ -1517,7 +1612,7 @@ async function submitNewBooking() {
     payment_method: paymentMethod.value || ''
   }
   if (bookingSlotMode.value === 'new') {
-    payload.date = selectedDate.value
+    payload.date = newSlotDate.value
     payload.time = newSlotTime.value
   } else {
     payload.slot_id = selectedSlotId.value
@@ -1531,8 +1626,9 @@ async function submitNewBooking() {
   try {
     const result = await manualBookingApi.submit(payload)
     const therapistName = therapists.value.find(th => String(th.user_id) === String(selectedTherapistId.value))?.name || therapists.value.find(th => String(th.user_id) === String(selectedTherapistId.value))?.name_en || '—'
+    const dateForDisplay = bookingSlotMode.value === 'new' ? newSlotDate.value : selectedDate.value
     const slotLabel = bookingSlotMode.value === 'new' ? formatTimeAmPm(newSlotTime.value) : slots.value.find(s => String(s.slot_id) === String(selectedSlotId.value))?.formatted_time
-    const dateTimeStr = selectedDate.value && slotLabel ? `${selectedDate.value} ${slotLabel}` : (selectedDate.value || '—')
+    const dateTimeStr = dateForDisplay && slotLabel ? `${dateForDisplay} ${slotLabel}` : (dateForDisplay || '—')
     const bookingId = result?.order_id ?? '—'
     await Swal.fire({
       icon: 'success',
@@ -1555,10 +1651,7 @@ async function submitNewBooking() {
     slots.value = []
     therapistCountries.value = []
   } catch (err) {
-    const shown = await showOverlapErrorIfPresent(err)
-    if (!shown) {
-      toast.error(err.response?.data?.error || t('manualBooking.messages.bookingFailed'))
-    }
+    await showManualBookingErrorSwal(err, t('manualBooking.messages.bookingFailed'))
   } finally {
     submitLoading.value = false
   }
@@ -1670,14 +1763,6 @@ const newSlotDateMin = computed(() => {
 const changeNewSlotDateMin = computed(() => {
   const today = new Date()
   return today.toISOString().slice(0, 10)
-})
-
-// Change tab: valid if existing slot selected or (new slot with date + time)
-const changeSlotValid = computed(() => {
-  if (changeSlotMode.value === 'existing') {
-    return !!changeSelectedSlotId.value
-  }
-  return !!(changeNewSlotDate.value && changeNewSlotTime.value)
 })
 
 const filteredTherapistsForSearchByPhone = computed(() => {
@@ -1968,6 +2053,10 @@ const changeNewSlotDate = ref('')
 const changeNewSlotTime = ref('')
 const changeSubmitLoading = ref(false)
 
+watch(changeSlotMode, () => {
+  clearChangeErrors()
+})
+
 function onChangeSearchInput() {
   if (changeSearchDebounce.value) clearTimeout(changeSearchDebounce.value)
   if (!changeSearchQuery.value.trim()) {
@@ -1992,6 +2081,7 @@ function selectAppointment(a) {
   changeNewSlotDate.value = ''
   changeNewSlotTime.value = ''
   changeSlots.value = []
+  clearChangeErrors()
   if (!a.therapist_id) return
   manualBookingApi.getAvailableDates(a.therapist_id).then(data => {
     changeAvailableDates.value = Array.isArray(data) ? data : []
@@ -2027,10 +2117,16 @@ function resetChangeAppointmentState() {
   changeSelectedSlotId.value = ''
   changeNewSlotDate.value = ''
   changeNewSlotTime.value = ''
+  clearChangeErrors()
 }
 
 async function submitChangeAppointment() {
-  if (!selectedAppointment.value || !changeSlotValid.value) return
+  if (!selectedAppointment.value) {
+    return
+  }
+  if (!validateChangeForm()) {
+    return
+  }
   const payload = {
     mode: 'change',
     existing_booking_id: selectedAppointment.value.booking_id
@@ -2062,10 +2158,7 @@ async function submitChangeAppointment() {
     })
     resetChangeAppointmentState()
   } catch (err) {
-    const shown = await showOverlapErrorIfPresent(err)
-    if (!shown) {
-      toast.error(err.response?.data?.error || t('manualBooking.messages.changeFailed'))
-    }
+    await showManualBookingErrorSwal(err, t('manualBooking.messages.changeFailed'))
   } finally {
     changeSubmitLoading.value = false
   }

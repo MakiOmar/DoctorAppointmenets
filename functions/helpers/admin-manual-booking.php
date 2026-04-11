@@ -84,12 +84,14 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	$date         = sanitize_text_field( $date );
 	$time         = sanitize_text_field( $time );
 	if ( ! $therapist_id || ! $date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+		$snks_manual_booking_ensure_slot_last_error = 'invalid_params';
 		return false;
 	}
 	// Normalize time to HH:MM:SS.
 	if ( preg_match( '/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $time, $m ) ) {
 		$time = sprintf( '%02d:%02d:%02d', (int) $m[1], (int) $m[2], isset( $m[3] ) ? (int) $m[3] : 0 );
 	} else {
+		$snks_manual_booking_ensure_slot_last_error = 'invalid_time';
 		return false;
 	}
 
@@ -146,6 +148,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	$date_time = $date . ' ' . $time;
 	$requested_ts = strtotime( $date_time );
 	if ( false === $requested_ts ) {
+		$snks_manual_booking_ensure_slot_last_error = 'invalid_datetime';
 		return false;
 	}
 
@@ -260,6 +263,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	// Create new slot. 45-minute session.
 	$ts = $requested_ts;
 	if ( false === $ts || $ts < time() ) {
+		$snks_manual_booking_ensure_slot_last_error = 'past_slot';
 		return false;
 	}
 	$day_name = gmdate( 'l', $ts );
@@ -284,9 +288,48 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 
 	$inserted = $wpdb->insert( $table, $insert );
 	if ( ! $inserted || $wpdb->last_error ) {
+		$snks_manual_booking_ensure_slot_last_error = 'db_insert';
 		return false;
 	}
 	return (int) $wpdb->insert_id;
+}
+
+/**
+ * Localized explanation for the last failed snks_manual_booking_ensure_slot call (excluding overlap).
+ *
+ * @return string Empty string if no specific reason.
+ */
+function snks_manual_booking_ensure_slot_failure_message() {
+	$reason = snks_manual_booking_ensure_slot_last_error();
+	if ( ! $reason || 'overlap' === $reason ) {
+		return '';
+	}
+	switch ( $reason ) {
+		case 'invalid_params':
+			return __( 'تاريخ أو معالج غير صالح.', 'shrinks' );
+		case 'invalid_time':
+			return __( 'صيغة الوقت غير صالحة.', 'shrinks' );
+		case 'invalid_datetime':
+			return __( 'التاريخ والوقت غير صالحين.', 'shrinks' );
+		case 'attendance_type_offline':
+			return __( 'هذا المعالج يقدم جلسات حضورية فقط؛ لا يمكن إنشاء موعد أونلاين.', 'shrinks' );
+		case 'period_45_disabled':
+			return __( 'جلسات 45 دقيقة أونلاين غير مفعّلة لهذا المعالج.', 'shrinks' );
+		case 'off_day':
+			return __( 'هذا اليوم مُعلّم كيوم عطلة للمعالج.', 'shrinks' );
+		case 'global_excluded_date':
+			return __( 'هذا التاريخ مستبعد من الحجز (عطلة رسمية أو إعداد عام).', 'shrinks' );
+		case 'outside_form_days_count':
+			return __( 'التاريخ خارج نطاق الأيام المتاحة في إعدادات المعالج.', 'shrinks' );
+		case 'blocked_if_before':
+			return __( 'الوقت المختار أبكر من الحد الأدنى المسموح للحجز لهذا المعالج.', 'shrinks' );
+		case 'past_slot':
+			return __( 'لا يمكن حجز موعد في وقت مضى.', 'shrinks' );
+		case 'db_insert':
+			return __( 'تعذر حفظ الموعد في قاعدة البيانات. حاول مرة أخرى.', 'shrinks' );
+		default:
+			return __( 'تعذر إنشاء الموعد. راجع التاريخ والوقت وإعدادات المعالج.', 'shrinks' );
+	}
 }
 
 /**
@@ -309,7 +352,18 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 	$slot_id      = absint( $slot_id );
 
 	if ( ! $patient_id || ! $therapist_id || ! $slot_id ) {
-		return array( 'success' => false, 'message' => __( 'معطيات ناقصة.', 'shrinks' ) );
+		$missing = array();
+		if ( ! $patient_id ) {
+			$missing[] = __( 'المريض', 'shrinks' );
+		}
+		if ( ! $therapist_id ) {
+			$missing[] = __( 'المعالج', 'shrinks' );
+		}
+		if ( ! $slot_id ) {
+			$missing[] = __( 'الموعد / خانة الوقت', 'shrinks' );
+		}
+		/* translators: %s: comma-separated list of missing fields */
+		return array( 'success' => false, 'message' => sprintf( __( 'بيانات ناقصة: %s.', 'shrinks' ), implode( '، ', $missing ) ) );
 	}
 
 	$patient = get_userdata( $patient_id );
@@ -396,7 +450,14 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 	$new_slot_id         = absint( $new_slot_id );
 
 	if ( ! $existing_booking_id || ! $new_slot_id ) {
-		return array( 'success' => false, 'message' => __( 'معطيات ناقصة.', 'shrinks' ) );
+		$missing = array();
+		if ( ! $existing_booking_id ) {
+			$missing[] = __( 'الموعد الحالي', 'shrinks' );
+		}
+		if ( ! $new_slot_id ) {
+			$missing[] = __( 'الموعد الجديد', 'shrinks' );
+		}
+		return array( 'success' => false, 'message' => sprintf( __( 'بيانات ناقصة: %s.', 'shrinks' ), implode( '، ', $missing ) ) );
 	}
 
 	$old_slot = $wpdb->get_row( $wpdb->prepare(

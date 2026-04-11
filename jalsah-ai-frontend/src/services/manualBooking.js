@@ -37,6 +37,8 @@ export default {
     return api.post(BASE + '/bookings-by-phone', { phone, page, per_page: perPage }).then(r => r.data?.data ?? r.data)
   },
   submit(payload) {
-    return api.post(BASE + '/submit', payload).then(r => r.data?.data ?? r.data)
+    return api
+      .post(BASE + '/submit', payload, { skipGlobalErrorToast: true })
+      .then(r => r.data?.data ?? r.data)
   }
 }

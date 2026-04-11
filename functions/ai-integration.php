@@ -7254,6 +7254,19 @@ Best regards,
 							}
 						}
 					}
+					if ( ! $existing_id ) {
+						$this->send_error( __( 'يرجى اختيار الموعد الحالي من نتائج البحث.', 'shrinks' ), 400 );
+						return;
+					}
+					if ( ! $new_slot_id ) {
+						$fail_detail = function_exists( 'snks_manual_booking_ensure_slot_failure_message' ) ? snks_manual_booking_ensure_slot_failure_message() : '';
+						if ( $fail_detail ) {
+							$this->send_error( $fail_detail, 400 );
+						} else {
+							$this->send_error( __( 'يرجى اختيار موعد جديد من القائمة، أو إدخال تاريخ ووقت صالحين.', 'shrinks' ), 400 );
+						}
+						return;
+					}
 					$result = snks_process_admin_change_appointment( $existing_id, $new_slot_id );
 				} else {
 					$patient_id     = isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0;
@@ -7279,6 +7292,26 @@ Best regards,
 							);
 							return;
 						}
+					}
+					if ( ! $slot_id ) {
+						if ( ! $patient_id ) {
+							$this->send_error( __( 'يرجى اختيار المريض.', 'shrinks' ), 400 );
+							return;
+						}
+						if ( ! $therapist_id ) {
+							$this->send_error( __( 'يرجى اختيار المعالج.', 'shrinks' ), 400 );
+							return;
+						}
+						if ( $date && $time ) {
+							$fail_detail = function_exists( 'snks_manual_booking_ensure_slot_failure_message' ) ? snks_manual_booking_ensure_slot_failure_message() : '';
+							$this->send_error(
+								$fail_detail ? $fail_detail : __( 'تعذر إنشاء الموعد في التاريخ والوقت المحددين.', 'shrinks' ),
+								400
+							);
+							return;
+						}
+						$this->send_error( __( 'يرجى اختيار خانة وقت من القائمة، أو إدخال تاريخ ووقت لإنشاء موعد جديد.', 'shrinks' ), 400 );
+						return;
 					}
 					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
 					if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {

@@ -1021,6 +1021,7 @@ export default {
       loadTherapistsFailed: 'فشل تحميل المعالجين',
       bookingSuccess: 'تم إنشاء الحجز بنجاح',
       bookingFailed: 'فشل إنشاء الحجز',
+      errorTitle: 'تعذر إتمام الطلب',
       changeSuccess: 'تم تغيير الموعد بنجاح',
       changeFailed: 'فشل تغيير الموعد'
     },

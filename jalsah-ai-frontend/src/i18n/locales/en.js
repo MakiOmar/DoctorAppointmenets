@@ -1031,6 +1031,7 @@ export default {
       loadTherapistsFailed: 'Failed to load therapists',
       bookingSuccess: 'Booking created successfully',
       bookingFailed: 'Booking failed',
+      errorTitle: 'Could not complete the request',
       changeSuccess: 'Appointment changed successfully',
       changeFailed: 'Change failed'
     },
