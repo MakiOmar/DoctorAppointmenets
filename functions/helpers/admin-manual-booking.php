@@ -136,32 +136,14 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		return false;
 	}
 
-	// Apply block_if_before_number.
-	$seconds_before_block = 0;
-	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
-		$number = $doctor_settings['block_if_before_number'];
-		$unit   = $doctor_settings['block_if_before_unit'];
-		$base   = ( 'day' === $unit ) ? 24 : 1;
-		$seconds_before_block = $number * $base * 3600;
-	}
+	// Manual booking new-slot creation intentionally ignores block_if_before_number / block_if_before_unit
+	// so admins can book inside the therapist's public cutoff window when needed.
 
-	$date_time = $date . ' ' . $time;
+	$date_time    = $date . ' ' . $time;
 	$requested_ts = strtotime( $date_time );
 	if ( false === $requested_ts ) {
 		$snks_manual_booking_ensure_slot_last_error = 'invalid_datetime';
 		return false;
-	}
-
-	if ( $seconds_before_block > 0 ) {
-		$adjusted_current_datetime = date_i18n(
-			'Y-m-d H:i:s',
-			( current_time( 'timestamp' ) + $seconds_before_block )
-		);
-		$adjusted_ts = strtotime( $adjusted_current_datetime );
-		if ( false !== $adjusted_ts && $requested_ts < $adjusted_ts ) {
-			$snks_manual_booking_ensure_slot_last_error = 'blocked_if_before';
-			return false;
-		}
 	}
 
 	$table = $wpdb->prefix . 'snks_provider_timetable';
