@@ -183,14 +183,14 @@ function snks_send_session_notifications() {
 
 /**
  * Sends notifications for users with open bookings tomorrow.
+ * Runs on hourly cron; only sends after 9:00 (site local time) to avoid early-morning pushes.
  */
 function send_booking_notifications() {
 	global $wpdb;
 	$table = $wpdb->prefix . 'snks_provider_timetable'; // Ensure table prefix is used.
 
-	// Ensure function runs only between 23:00 and 23:59.
 	$current_hour = (int) current_time( 'H' );
-	if ( $current_hour < 23 ) {
+	if ( $current_hour < 9 ) {
 		return;
 	}
 
