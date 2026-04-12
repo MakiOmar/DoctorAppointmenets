@@ -48,6 +48,14 @@ add_action(
 
 		$user_id = $timetable->user_id;
 
+		$slot_date       = gmdate( 'Y-m-d', strtotime( $timetable->date_time ) );
+		$blocked_booking = snks_get_doctor_booking_blocked_dates( $user_id );
+		if ( in_array( $slot_date, $blocked_booking, true ) ) {
+			WC()->cart->empty_cart();
+			wp_safe_redirect( add_query_arg( 'error', 'slot-unavailable', $doctor_url ) );
+			exit;
+		}
+
 		// Validate user ID against timetable data.
 		if ( absint( $user_id ) !== absint( $_req['user-id'] ) ) {
 			WC()->cart->empty_cart();

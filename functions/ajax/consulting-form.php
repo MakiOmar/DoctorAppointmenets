@@ -28,6 +28,15 @@ function fetch_start_times_callback() {
 	$period          = sanitize_text_field( $_request['period'] );
 	$_order          = ! empty( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'ASC';
 
+	if ( in_array( $date, snks_get_doctor_booking_blocked_dates( absint( $user_id ) ), true ) ) {
+		wp_send_json(
+			array(
+				'resp' => '',
+			)
+		);
+		die;
+	}
+
 	global $wpdb;
 
 	// Start building the SQL query.

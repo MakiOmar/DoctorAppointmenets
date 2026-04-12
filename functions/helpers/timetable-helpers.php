@@ -1329,6 +1329,20 @@ function snks_delete_waiting_sessions_by_user_id( $user_id, $attendance_type = f
 
 
 /**
+ * Dates excluded from patient booking for a doctor (off_days + global excludes such as holidays).
+ *
+ * @param int $user_id Doctor user ID.
+ * @return array Y-m-d date strings.
+ */
+function snks_get_doctor_booking_blocked_dates( $user_id ) {
+	$doctor_settings = snks_doctor_settings( absint( $user_id ) );
+	$off_days        = isset( $doctor_settings['off_days'] ) ? explode( ',', (string) $doctor_settings['off_days'] ) : array();
+	$off_days        = array_map( 'trim', $off_days );
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+	return array_values( array_unique( array_filter( array_merge( $off_days, $global_excluded ) ) ) );
+}
+
+/**
  * Get bookable dates
  *
  * @param int    $user_id User's ID.
@@ -1359,11 +1373,7 @@ function get_bookable_dates( $user_id, $period, $_for = '+1 month', $attendance_
     // Set the default order.
     $_order = ! empty( $_GET['order'] ) ? sanitize_text_field( $_GET['order'] ) : 'ASC';
 
-    // Fetch off-days from doctor settings and merge with global excluded booking dates (e.g. holidays).
-    $off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', $doctor_settings['off_days'] ) : array();
-    $off_days = array_map( 'trim', $off_days );
-    $global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
-    $off_days = array_values( array_unique( array_filter( array_merge( $off_days, $global_excluded ) ) ) );
+    $off_days = snks_get_doctor_booking_blocked_dates( $user_id );
 
     // Prepare the off-days for SQL query.
     $off_days_placeholder = '';

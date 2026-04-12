@@ -820,7 +820,6 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = fal
 	$data               = array();
 	$week_days          = array_keys( $app_settings );
 	$appointments_dates = snks_group_by( 'day', snks_generate_appointments_dates( $week_days, $offset, $days_count ) );
-	$off_days           = snks_get_off_days();
 	foreach ( $appointments_dates as $day => $dates_details ) {
 		// Day settings ( e.g. SAT ).
 		$day_settings = $app_settings[ $day ];
@@ -855,9 +854,10 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = fal
 						
 						if ( $is_future_time || $is_future_date ) {
 							$formatted_date_time = $date_time->format('Y-m-d h:i a');
+							// Off days are excluded in booking queries and date pickers, not by marking slots closed.
 							$base = array(
 								'user_id'         => $user_id,
-								'session_status'  => in_array( $date, $off_days, true ) ? 'closed' : 'waiting',
+								'session_status'  => 'waiting',
 								'day'             => sanitize_text_field( $day ),
 								'base_hour'       => sanitize_text_field( $details['appointment_hour'] ),
 								'period'          => sanitize_text_field( $expected_hour['min'] ),
@@ -868,27 +868,6 @@ function snks_generate_timetable( $offset = 0, $days_count = 90 , $user_id = fal
 								'clinic'          => sanitize_text_field( $details['appointment_clinic'] ),
 								'attendance_type' => sanitize_text_field( $details['appointment_attendance_type'] ),
 							);
-
-							// Log closed slots generated from off_days for debugging timetable status issues.
-							if ( function_exists( 'teamlog' ) && 'closed' === $base['session_status'] ) {
-								teamlog(
-									array(
-										'context'      => 'timetable_status_debug',
-										'event'        => 'generate_closed_slot',
-										'source'       => 'snks_generate_timetable',
-										'user_id'      => $user_id,
-										'date'         => $date,
-										'day'          => $day,
-										'date_time'    => $formatted_date_time,
-										'base_hour'    => $details['appointment_hour'],
-										'starts'       => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
-										'ends'         => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
-										'period'       => $expected_hour['min'],
-										'attendance'   => $details['appointment_attendance_type'],
-										'off_days'     => $off_days,
-									)
-								);
-							}
 
 							if ( 'both' !== $details['appointment_attendance_type'] ) {
 								$data[ sanitize_text_field( $day ) ][] = $base;
