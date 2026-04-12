@@ -190,7 +190,7 @@ function send_booking_notifications() {
 	$table = $wpdb->prefix . 'snks_provider_timetable'; // Ensure table prefix is used.
 
 	$current_hour = (int) current_time( 'H' );
-	if ( $current_hour < 9 ) {
+	if ( $current_hour < 20 ) {
 		return;
 	}
 
