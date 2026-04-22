@@ -590,57 +590,128 @@ function snks_get_ai_session_withdrawal_balance( $therapist_id ) {
  */
 function snks_process_ai_session_withdrawal( $therapist_id, $amount, $withdrawal_method = 'wallet' ) {
 	global $wpdb;
-	
-	// Get available balance
+
+	$therapist_id = absint( $therapist_id );
+	$amount       = (float) $amount;
+
+	if ( $therapist_id < 1 || $amount < 1 ) {
+		return array(
+			'success' => false,
+			'message' => 'Invalid withdrawal request',
+		);
+	}
+
 	$available_balance = snks_get_ai_session_withdrawal_balance( $therapist_id );
-	
 	if ( $amount > $available_balance ) {
 		return array(
 			'success' => false,
-			'message' => 'Insufficient balance for withdrawal'
+			'message' => 'Insufficient balance for withdrawal',
 		);
 	}
-	
-	// Get therapist details
+
 	$therapist = get_user_by( 'ID', $therapist_id );
 	if ( ! $therapist ) {
 		return array(
 			'success' => false,
-			'message' => 'Therapist not found'
+			'message' => 'Therapist not found',
 		);
 	}
-	
-	// Process withdrawal using existing system
-	$withdrawal_result = process_user_withdrawal( $therapist_id, $amount, $withdrawal_method );
-	
-	if ( $withdrawal_result['success'] ) {
-		// Mark AI transactions as processed for withdrawal
-		$wpdb->query( $wpdb->prepare(
-			"UPDATE {$wpdb->prefix}snks_booking_transactions 
-			 SET processed_for_withdrawal = 1 
-			 WHERE user_id = %d AND ai_session_id IS NOT NULL 
-			 AND transaction_type = 'add' AND processed_for_withdrawal = 0
-			 LIMIT %d",
-			$therapist_id,
-			ceil( $amount / 100 ) // Approximate number of transactions to mark
-		) );
-		
-		// Log the withdrawal
-		snks_log_transaction( $therapist_id, 'withdrawal', $amount, "AI Session Withdrawal via {$withdrawal_method}" );
-		
-		return array(
-			'success' => true,
-			'message' => 'Withdrawal processed successfully',
-			'withdrawal_id' => $withdrawal_result['withdrawal_id'] ?? null,
-			'amount' => $amount,
-			'method' => $withdrawal_method
-		);
-	} else {
+
+	$table_name = $wpdb->prefix . ( defined( 'TRNS_TABLE_NAME' ) ? TRNS_TABLE_NAME : 'snks_booking_transactions' );
+	$mysql_lock  = 'snks_wd_u' . $therapist_id;
+
+	if ( ! function_exists( 'snks_withdrawal_get_lock' ) || ! snks_withdrawal_get_lock( $mysql_lock, 20 ) ) {
 		return array(
 			'success' => false,
-			'message' => 'Withdrawal failed: ' . ( $withdrawal_result['message'] ?? 'Unknown error' )
+			'message' => 'Another withdrawal is in progress for this user. Please try again shortly.',
 		);
 	}
+
+	//phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+	$wpdb->query( 'START TRANSACTION' );
+
+	$locked_rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT id, amount FROM {$table_name}
+			WHERE user_id = %d
+				AND ai_session_id IS NOT NULL
+				AND transaction_type = 'add'
+				AND processed_for_withdrawal = 0
+			ORDER BY id ASC
+			FOR UPDATE",
+			$therapist_id
+		),
+		ARRAY_A
+	);
+
+	$fifo_ids       = array();
+	$covered        = 0;
+	foreach ( (array) $locked_rows as $row ) {
+		$fifo_ids[] = (int) $row['id'];
+		$covered   += (float) $row['amount'];
+		if ( $covered >= $amount ) {
+			break;
+		}
+	}
+
+	if ( empty( $fifo_ids ) || $covered < $amount ) {
+		$wpdb->query( 'ROLLBACK' );
+		snks_withdrawal_release_lock( $mysql_lock );
+		//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		return array(
+			'success' => false,
+			'message' => 'Insufficient balance for withdrawal',
+		);
+	}
+
+	$withdrawal_id = snks_add_transaction( $therapist_id, 0, 'withdraw', $amount );
+	if ( ! $withdrawal_id ) {
+		$wpdb->query( 'ROLLBACK' );
+		snks_withdrawal_release_lock( $mysql_lock );
+		//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		return array(
+			'success' => false,
+			'message' => 'Could not record withdrawal',
+		);
+	}
+
+	$placeholders = implode( ',', array_fill( 0, count( $fifo_ids ), '%d' ) );
+	$sql          = "UPDATE {$table_name}
+		SET processed_for_withdrawal = 1
+		WHERE user_id = %d
+			AND transaction_type = 'add'
+			AND processed_for_withdrawal = 0
+			AND id IN ({$placeholders})";
+	$params       = array_merge( array( $therapist_id ), $fifo_ids );
+	//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+	$updated = $wpdb->query( $wpdb->prepare( $sql, ...$params ) );
+	//phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
+
+	if ( false === $updated || (int) $updated !== count( $fifo_ids ) ) {
+		$wpdb->query( 'ROLLBACK' );
+		snks_withdrawal_release_lock( $mysql_lock );
+		//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		return array(
+			'success' => false,
+			'message' => 'Could not finalize withdrawal',
+		);
+	}
+
+	$wpdb->query( 'COMMIT' );
+	snks_withdrawal_release_lock( $mysql_lock );
+	//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+	if ( function_exists( 'snks_log_transaction' ) ) {
+		snks_log_transaction( $therapist_id, $amount, 'withdraw' );
+	}
+
+	return array(
+		'success'       => true,
+		'message'       => 'Withdrawal processed successfully',
+		'withdrawal_id' => (int) $withdrawal_id,
+		'amount'        => $amount,
+		'method'        => $withdrawal_method,
+	);
 }
 
 /**

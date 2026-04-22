@@ -110,7 +110,34 @@ function get_available_withdrawal_balance( $user_id ) {
 	);
 }
 
+/**
+ * Acquire a MySQL advisory lock for withdrawal serialization (per key).
+ *
+ * @param string $lock_name Lock name (max 64 chars for MySQL).
+ * @param int    $timeout   Seconds to wait for the lock.
+ * @return bool True if lock acquired.
+ */
+function snks_withdrawal_get_lock( $lock_name, $timeout = 15 ) {
+	global $wpdb;
 
+	$lock_name = substr( (string) $lock_name, 0, 64 );
+	$got       = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, %d )', $lock_name, absint( $timeout ) ) );
+
+	return 1 === $got;
+}
+
+/**
+ * Release a MySQL advisory lock acquired with snks_withdrawal_get_lock().
+ *
+ * @param string $lock_name Same name passed to snks_withdrawal_get_lock().
+ * @return void
+ */
+function snks_withdrawal_release_lock( $lock_name ) {
+	global $wpdb;
+
+	$lock_name = substr( (string) $lock_name, 0, 64 );
+	$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_name ) );
+}
 
 /**
  * Add a transaction (add or withdraw) to the booking transactions table.
@@ -195,86 +222,135 @@ function process_user_withdrawal( $user, $current_day_of_week, $current_day_of_m
 		( 'weekly_withdrawal' === $withdrawal_option && 0 === absint( $current_day_of_week ) ) ||
 		( 'monthly_withdrawal' === $withdrawal_option && 1 === absint( $current_day_of_month ) ) || $manual ) {
 
-		// Get the eligible balance for withdrawal.
-		$available_balance = get_available_withdrawal_balance( $user_id );
-		$withdraw_amount   = $available_balance['total_amount'];
+		$mysql_lock = 'snks_wd_u' . absint( $user_id );
+		if ( ! snks_withdrawal_get_lock( $mysql_lock, 20 ) ) {
+			return array(
+				'success' => false,
+				'msg'     => 'عفواً، جاري معالجة سحب سابق لهذا الحساب، يرجى الانتظار قليلاً والمحاولة مرة أخرى',
+			);
+		}
 
-		if ( $withdraw_amount > 25 || 25 === $withdraw_amount ) {
-			$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
-			if ( ! $withdrawal_id ) {
-				return array(
-					'success' => false,
-					'msg'     => 'عفواً، ولكن هناك خطأ ما يرجى المحاولة مرة أخرى',
-				);
-			}
+		$today_start = current_time( 'Y-m-d 00:00:00' );
 
-			$output_data = null;
-			$output_type = '';
+		//phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( 'START TRANSACTION' );
 
-			$sheet_amount = $withdraw_amount - 12;
-			// Generate withdrawal data and files based on the method.
-			if ( 'bank_account' === $withdrawal_method ) {
-				$output_data = array( snks_bank_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
-				$output_type = 'bank';
-			} elseif ( 'meza_card' === $withdrawal_method ) {
-				$output_data = array( snks_meza_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
-				$output_type = 'meza';
-			} elseif ( 'wallet' === $withdrawal_method ) {
-				$output_data = array( snks_wallet_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
-				$output_type = 'wallet';
-			}
-			if ( ! empty( $output_data ) ) {
-				$generated = snks_generate_xlsx( $output_data, $output_type );
-				if ( $generated ) {
-					snks_update_processed_withdrawals( $withdrawal_id );
-				}
-			}
-			// 2025-04-21 00:00:00
-			//phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
-			//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			// Mark the eligible "add" transactions as processed.
-			$transaction_ids = $available_balance['transaction_ids'];
+		$locked_rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"
+				SELECT id, amount
+				FROM {$table_name}
+				WHERE user_id = %d
+					AND transaction_type = 'add'
+					AND processed_for_withdrawal = 0
+					AND transaction_time < %s
+				FOR UPDATE
+				",
+				$user_id,
+				$today_start
+			),
+			ARRAY_A
+		);
 
-			if ( ! empty( $transaction_ids ) ) {
-				$placeholders = implode( ',', array_fill( 0, count( $transaction_ids ), '%d' ) );
+		$withdraw_amount   = 0;
+		$transaction_ids   = array();
+		foreach ( (array) $locked_rows as $row ) {
+			$withdraw_amount  += (float) $row['amount'];
+			$transaction_ids[] = (int) $row['id'];
+		}
 
-				// Prepare the query dynamically using IN (...).
-				$sql = "
-					UPDATE $table_name
-					SET processed_for_withdrawal = 1
-					WHERE user_id = %d
-						AND transaction_type = 'add'
-						AND processed_for_withdrawal = 0
-						AND id IN ($placeholders)
-				";
-
-				$params = array_merge( array( $user_id ), $transaction_ids );
-				//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
-				$result = $wpdb->query( $wpdb->prepare( $sql, ...$params ) );
-				//phpcs:enable
-			} else {
-				$result = 0;
-			}
-			// Check if the query was successful.
-			if ( false !== $result && $result > 0 ) {
-				// Log the transaction only if rows were updated.
-				snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
-				return array(
-					'success' => true,
-					'msg'     => 'ًتهانينا، تم إرسال طلب السحب بنجاح',
-				);
-			} else {
-				return array(
-					'success' => false,
-					'msg'     => 'عفواً، ليس لديك معاملات قابلة للسحب حالياً',
-				);
-			}
-		} else {
+		if ( $withdraw_amount < 25 && 25 !== $withdraw_amount ) {
+			$wpdb->query( 'ROLLBACK' );
+			snks_withdrawal_release_lock( $mysql_lock );
+			//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			//phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			return array(
 				'success' => false,
 				'msg'     => 'عفواً، غير متاح السحب لأقل من 25 جنيهاً',
 			);
 		}
+
+		if ( empty( $transaction_ids ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			snks_withdrawal_release_lock( $mysql_lock );
+			//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			//phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return array(
+				'success' => false,
+				'msg'     => 'عفواً، ليس لديك معاملات قابلة للسحب حالياً',
+			);
+		}
+
+		$withdrawal_id = snks_add_transaction( $user_id, 0, 'withdraw', $withdraw_amount );
+		if ( ! $withdrawal_id ) {
+			$wpdb->query( 'ROLLBACK' );
+			snks_withdrawal_release_lock( $mysql_lock );
+			//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			//phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return array(
+				'success' => false,
+				'msg'     => 'عفواً، ولكن هناك خطأ ما يرجى المحاولة مرة أخرى',
+			);
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $transaction_ids ), '%d' ) );
+		$sql          = "
+			UPDATE {$table_name}
+			SET processed_for_withdrawal = 1
+			WHERE user_id = %d
+				AND transaction_type = 'add'
+				AND processed_for_withdrawal = 0
+				AND id IN ({$placeholders})
+		";
+		$params = array_merge( array( $user_id ), $transaction_ids );
+		//phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+		$result = $wpdb->query( $wpdb->prepare( $sql, ...$params ) );
+		//phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
+
+		if ( false === $result || (int) $result !== count( $transaction_ids ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			snks_withdrawal_release_lock( $mysql_lock );
+			//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+			//phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return array(
+				'success' => false,
+				'msg'     => 'عفواً، ولكن هناك خطأ ما يرجى المحاولة مرة أخرى',
+			);
+		}
+
+		$wpdb->query( 'COMMIT' );
+		//phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery
+		//phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		snks_withdrawal_release_lock( $mysql_lock );
+
+		$output_data = null;
+		$output_type = '';
+
+		$sheet_amount = $withdraw_amount - 12;
+		// Generate withdrawal data and files based on the method.
+		if ( 'bank_account' === $withdrawal_method ) {
+			$output_data = array( snks_bank_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
+			$output_type = 'bank';
+		} elseif ( 'meza_card' === $withdrawal_method ) {
+			$output_data = array( snks_meza_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
+			$output_type = 'meza';
+		} elseif ( 'wallet' === $withdrawal_method ) {
+			$output_data = array( snks_wallet_method_xlsx( $user_id, $sheet_amount, $withdrawal_settings ) );
+			$output_type = 'wallet';
+		}
+		if ( ! empty( $output_data ) ) {
+			$generated = snks_generate_xlsx( $output_data, $output_type );
+			if ( $generated ) {
+				snks_update_processed_withdrawals( $withdrawal_id );
+			}
+		}
+
+		snks_log_transaction( $user_id, $withdraw_amount, 'withdraw' );
+		return array(
+			'success' => true,
+			'msg'     => 'ًتهانينا، تم إرسال طلب السحب بنجاح',
+		);
 	}
 }
 
@@ -289,23 +365,30 @@ function process_withdrawals_batch() {
 	if ( $current_time < '23:59:59' && $current_time > '09:00:00' ) {
 		return;
 	}
-	// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
-	$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
-	$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
 
-	// Get the transient offset for batch processing (50 users at a time).
-	$offset = get_transient( 'withdrawal_offset' );
-	if ( false === $offset ) {
-		$offset = 0;
+	// Avoid overlapping batch runs (e.g. concurrent crons).
+	if ( ! snks_withdrawal_get_lock( 'snks_wd_batch', 3 ) ) {
+		return;
 	}
 
-	$table_name   = $wpdb->prefix . TRNS_TABLE_NAME;
-	$current_date = SNKS_CURRENT_TIME;
-	//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	// Query 50 users with eligible transactions.
-	$users = $wpdb->get_results(
-		$wpdb->prepare(
-			"
+	try {
+		// Get the current day of the week (1 = Monday, 7 = Sunday) and the day of the month.
+		$current_day_of_week  = current_time( 'w' ); // 0 for Sunday through 6 for Saturday.
+		$current_day_of_month = current_time( 'j' ); // Day of the month (1-31).
+
+		// Get the transient offset for batch processing (50 users at a time).
+		$offset = get_transient( 'withdrawal_offset' );
+		if ( false === $offset ) {
+			$offset = 0;
+		}
+
+		$table_name   = $wpdb->prefix . TRNS_TABLE_NAME;
+		$current_date = SNKS_CURRENT_TIME;
+		//phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// Query 50 users with eligible transactions.
+		$users = $wpdb->get_results(
+			$wpdb->prepare(
+				"
             SELECT user_id 
             FROM $table_name 
             WHERE transaction_type = 'add' 
@@ -313,26 +396,28 @@ function process_withdrawals_batch() {
 			AND processed_for_withdrawal = 0
             LIMIT 50 OFFSET %d
             ",
-			$current_date,
-			$offset
-		)
-	);
-	// Process each user using the helper function.
-	foreach ( $users as $user ) {
-		process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
-	}
+				$current_date,
+				$offset
+			)
+		);
+		// Process each user using the helper function.
+		foreach ( $users as $user ) {
+			process_user_withdrawal( $user, $current_day_of_week, $current_day_of_month, $current_date, $table_name );
+		}
 
-	// Update the offset for the next batch of users.
-	if ( count( $users ) > 0 ) {
-		$offset += 50;
-		set_transient( 'withdrawal_offset', $offset, 15 * MINUTE_IN_SECONDS );
-	} else {
-		delete_transient( 'withdrawal_offset' );
+		// Update the offset for the next batch of users.
+		if ( count( $users ) > 0 ) {
+			$offset += 50;
+			set_transient( 'withdrawal_offset', $offset, 15 * MINUTE_IN_SECONDS );
+		} else {
+			delete_transient( 'withdrawal_offset' );
+		}
+	} finally {
+		snks_withdrawal_release_lock( 'snks_wd_batch' );
 	}
 }
 
 add_action( 'snks_process_withdrawals_event', 'process_withdrawals_batch' );
-add_action( 'wp', 'process_withdrawals_batch' );
 
 /**
  * Rotate the log file if it exceeds the maximum size using WP_Filesystem.
