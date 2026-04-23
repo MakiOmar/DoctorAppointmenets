@@ -321,7 +321,7 @@ function snks_manual_booking_ensure_slot_failure_message() {
  * @param int    $therapist_id   Therapist user ID.
  * @param int    $slot_id        Available timetable slot ID.
  * @param string $country_code   Country code for pricing.
- * @param float  $amount_override Optional manual amount override.
+ * @param float|null $amount_override Optional session price (EGP); when set, used as order total and for profit on completion instead of therapist country price.
  * @param string $first_name     Patient first name (billing).
  * @param string $last_name      Patient last name (billing).
  * @return array{success:bool, message:string, order_id?:int}
