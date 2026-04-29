@@ -169,4 +169,10 @@ graph TD;
 
 ---
 
+## 15. White-label (partner domain + this WordPress backend)
+
+For hosting the SPA on another domain, CORS (`snks_ai_frontend_urls`), partner registration, and partner-specific therapist pricing overrides, see **[README_White_Label_Jalsah_AI.md](./README_White_Label_Jalsah_AI.md)**.
+
+---
+
 # End of Integration Plan 
