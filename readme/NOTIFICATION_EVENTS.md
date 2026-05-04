@@ -151,6 +151,13 @@ These events use `snks_ai_notifications` (and optional WhatsApp via `snks_send_w
 
 - **Jalsah AI → Direct conversations:** window days, digest hour, max upload bytes, allowed MIME list, optional Jalsah frontend base URL (`snks_jalsah_ai_frontend_url`), optional WhatsApp template name for “conversation started”.
 
+### Live thread updates (low server load)
+
+- `GET /api/ai/direct-conversations/feed?summary=1` — returns only `unread_count` and `newest_incoming_message_id` (COUNT + MAX). Clients poll this on an interval and call the full feed when either value changes.
+- Full `GET .../feed` responses also include `newest_incoming_message_id` so the client can sync its poll signature after a full load.
+- `GET /api/ai/direct-conversations/{id}/messages?since_id={lastMessageId}` — returns rows with `id > since_id` (incremental). Omit `since_id` for a full thread (up to the usual limit).
+- Therapist hub (WordPress): AJAX action `snks_direct_conv_thread_since` with `conversation_id` and `since_id` for the same incremental fetch.
+
 ---
 
 ## Summary

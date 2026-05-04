@@ -49,11 +49,14 @@
 </template>
 
 <script>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+
+const POLL_MS_VISIBLE = 12000
+const POLL_MS_HIDDEN = 45000
 
 export default {
   name: 'DirectConversation',
@@ -68,6 +71,7 @@ export default {
     const scrollBox = ref(null)
     const fileRef = ref(null)
     const pendingFile = ref(null)
+    let pollTimer = null
 
     const conversationId = () => parseInt(route.params.id, 10)
 
@@ -76,7 +80,37 @@ export default {
       return uid && parseInt(m.sender_user_id, 10) === parseInt(uid, 10)
     }
 
+    const maxThreadId = () => {
+      let max = 0
+      for (const m of thread.value) {
+        const id = parseInt(m.id, 10) || 0
+        if (id > max) max = id
+      }
+      return max
+    }
+
+    const isNearBottom = () => {
+      const el = scrollBox.value
+      if (!el) return true
+      return el.scrollHeight - el.scrollTop - el.clientHeight < 120
+    }
+
+    const scrollToEnd = () => {
+      const el = scrollBox.value
+      if (el) {
+        el.scrollTop = el.scrollHeight
+      }
+    }
+
+    const mergeMessages = (incoming) => {
+      if (!incoming.length) return
+      const byId = new Map(thread.value.map((m) => [m.id, m]))
+      incoming.forEach((m) => byId.set(m.id, m))
+      thread.value = Array.from(byId.values()).sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10))
+    }
+
     const load = async () => {
+      stopPoll()
       loading.value = true
       try {
         const id = conversationId()
@@ -90,14 +124,75 @@ export default {
         console.error(e)
       } finally {
         loading.value = false
+        startPoll()
       }
     }
 
-    const scrollToEnd = () => {
-      const el = scrollBox.value
-      if (el) {
-        el.scrollTop = el.scrollHeight
+    const pollOnce = async () => {
+      if (!authStore.isAuthenticated) return
+      const id = conversationId()
+      if (!id) return
+      const since = maxThreadId()
+      if (since < 1) return
+      try {
+        const res = await api.get(`/api/ai/direct-conversations/${id}/messages`, {
+          params: { since_id: since },
+        })
+        if (!res.data.success) return
+        const incoming = res.data.data.messages || []
+        if (!incoming.length) return
+        const stick = isNearBottom()
+        mergeMessages(incoming)
+        await nextTick()
+        if (stick) scrollToEnd()
+      } catch (e) {
+        console.error(e)
       }
+    }
+
+    const stopPoll = () => {
+      if (pollTimer) {
+        clearTimeout(pollTimer)
+        pollTimer = null
+      }
+    }
+
+    const schedulePoll = () => {
+      stopPoll()
+      const delay = document.hidden ? POLL_MS_HIDDEN : POLL_MS_VISIBLE
+      pollTimer = setTimeout(async () => {
+        pollTimer = null
+        await pollOnce()
+        if (conversationId()) {
+          schedulePoll()
+        }
+      }, delay)
+    }
+
+    const startPoll = () => {
+      stopPoll()
+      if (!authStore.isAuthenticated || !conversationId()) return
+      pollTimer = setTimeout(async () => {
+        pollTimer = null
+        await pollOnce()
+        schedulePoll()
+      }, 2500)
+    }
+
+    const onVisibility = () => {
+      stopPoll()
+      if (loading.value || !conversationId()) return
+      // Quick catch-up when returning to the tab; hidden tab uses longer spacing via schedulePoll.
+      pollTimer = setTimeout(async () => {
+        pollTimer = null
+        await pollOnce()
+        schedulePoll()
+      }, 400)
+    }
+
+    const formatDate = (d) => {
+      if (!d) return ''
+      return new Date(d).toLocaleString()
     }
 
     const onFile = () => {
@@ -129,7 +224,13 @@ export default {
           attachment_ids: attachmentIds,
         })
         draft.value = ''
-        await load()
+        await pollOnce()
+        if (!thread.value.length || maxThreadId() === 0) {
+          await load()
+        } else {
+          await nextTick()
+          scrollToEnd()
+        }
       } catch (e) {
         console.error(e)
       } finally {
@@ -137,13 +238,19 @@ export default {
       }
     }
 
-    const formatDate = (d) => {
-      if (!d) return ''
-      return new Date(d).toLocaleString()
-    }
+    onMounted(() => {
+      load()
+      document.addEventListener('visibilitychange', onVisibility)
+    })
 
-    onMounted(load)
-    watch(() => route.params.id, load)
+    onUnmounted(() => {
+      stopPoll()
+      document.removeEventListener('visibilitychange', onVisibility)
+    })
+
+    watch(() => route.params.id, () => {
+      load()
+    })
 
     return {
       thread,

@@ -7039,17 +7039,44 @@ Best regards,
 		}
 
 		if ( 'feed' === $sub && 'GET' === $method ) {
+			global $wpdb;
+			$t = snks_direct_conversations_tables();
+
+			// Lightweight poll: one COUNT + one MAX — skip heavy inbox query until something changes.
+			if ( isset( $_GET['summary'] ) && '1' === (string) $_GET['summary'] ) {
+				$newest = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT MAX(m.id) FROM {$t['msg']} m WHERE m.recipient_user_id = %d",
+						(int) $user_id
+					)
+				);
+				$this->send_success(
+					array(
+						'unread_count'                 => snks_direct_conversations_unread_count( (int) $user_id ),
+						'newest_incoming_message_id'  => $newest ? (int) $newest : 0,
+					)
+				);
+				return;
+			}
+
 			$limit  = isset( $_GET['limit'] ) ? absint( $_GET['limit'] ) : 5;
 			$offset = isset( $_GET['offset'] ) ? absint( $_GET['offset'] ) : 0;
 			$rows   = snks_direct_conversations_inbox_feed( (int) $user_id, $limit, $offset );
 			foreach ( $rows as $m ) {
 				snks_direct_conversations_format_message_row( $m );
 			}
+			$newest_incoming = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT MAX(m.id) FROM {$t['msg']} m WHERE m.recipient_user_id = %d",
+					(int) $user_id
+				)
+			);
 			$this->send_success(
 				array(
-					'messages'     => $rows,
-					'unread_count' => snks_direct_conversations_unread_count( (int) $user_id ),
-					'has_more'     => count( $rows ) === $limit,
+					'messages'                    => $rows,
+					'unread_count'                => snks_direct_conversations_unread_count( (int) $user_id ),
+					'has_more'                    => count( $rows ) === $limit,
+					'newest_incoming_message_id'  => $newest_incoming ? (int) $newest_incoming : 0,
 				)
 			);
 			return;
@@ -7103,7 +7130,12 @@ Best regards,
 				return;
 			}
 			if ( 'GET' === $method ) {
-				$list = snks_direct_conversations_thread_messages( $cid, (int) $user_id, 200, 0 );
+				$since = isset( $_GET['since_id'] ) ? absint( $_GET['since_id'] ) : 0;
+				if ( $since > 0 ) {
+					$list = snks_direct_conversations_thread_messages_since( $cid, (int) $user_id, $since, 50 );
+				} else {
+					$list = snks_direct_conversations_thread_messages( $cid, (int) $user_id, 200, 0 );
+				}
 				$this->send_success( array( 'messages' => $list ) );
 				return;
 			}

@@ -481,6 +481,48 @@ function snks_direct_conversations_thread_messages( $conversation_id, $user_id, 
 }
 
 /**
+ * Messages newer than a given id (for incremental / low-traffic polling).
+ *
+ * @param int $conversation_id Conversation ID.
+ * @param int $user_id         Participant.
+ * @param int $after_id        Return rows with id > this (0 = full thread up to limit).
+ * @param int $limit           Max rows (capped).
+ * @return array<int,object>
+ */
+function snks_direct_conversations_thread_messages_since( $conversation_id, $user_id, $after_id = 0, $limit = 50 ) {
+	global $wpdb;
+	$t = snks_direct_conversations_tables();
+
+	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", (int) $conversation_id ) );
+	if ( ! $conv ) {
+		return array();
+	}
+	if ( (int) $conv->therapist_user_id !== (int) $user_id && (int) $conv->patient_user_id !== (int) $user_id ) {
+		return array();
+	}
+
+	$after_id = absint( $after_id );
+	$limit    = min( 100, max( 1, absint( $limit ) ) );
+
+	if ( $after_id < 1 ) {
+		return snks_direct_conversations_thread_messages( $conversation_id, $user_id, $limit, 0 );
+	}
+
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$t['msg']} WHERE conversation_id = %d AND id > %d ORDER BY id ASC LIMIT %d",
+			(int) $conversation_id,
+			$after_id,
+			$limit
+		)
+	);
+	foreach ( $rows as $r ) {
+		snks_direct_conversations_format_message_row( $r );
+	}
+	return $rows;
+}
+
+/**
  * List conversations for therapist with last message preview.
  *
  * @param int $therapist_user_id Therapist ID.

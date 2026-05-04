@@ -222,7 +222,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
@@ -332,19 +332,22 @@ export default {
       showNotifications.value = !showNotifications.value
       if (showNotifications.value) {
         calculatePosition()
-        if (messages.value.length === 0) {
-          await loadMessages()
+        // One full feed when opening the panel (not on a timer); summary poll stays lightweight.
+        if (authStore.isAuthenticated) {
+          await loadMessages(5, true)
         }
       }
     }
     
-    const loadMessages = async (limit = 5) => {
+    const loadMessages = async (limit = 5, silent = false) => {
       // Only call API if user is authenticated
       if (!authStore.isAuthenticated) {
         return
       }
       
-      loading.value = true
+      if (!silent) {
+        loading.value = true
+      }
       try {
         const response = await api.get('/api/ai/direct-conversations/feed', {
           params: {
@@ -357,11 +360,83 @@ export default {
           messages.value = response.data.data.messages || []
           unreadCount.value = response.data.data.unread_count || 0
           hasMore.value = response.data.data.has_more || false
+          const nid = response.data.data.newest_incoming_message_id
+          if (nid !== undefined && nid !== null) {
+            feedSigInitialized = true
+            lastFeedSig = {
+              unread: unreadCount.value,
+              newest: nid
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading messages:', error)
       } finally {
-        loading.value = false
+        if (!silent) {
+          loading.value = false
+        }
+      }
+    }
+
+    /** Lightweight poll: COUNT + MAX only; full feed loaded when something changed. */
+    let feedPollTimer = null
+    let feedSigInitialized = false
+    let lastFeedSig = { unread: -1, newest: -1 }
+    const FEED_SUMMARY_MS_VISIBLE = 18000
+    const FEED_SUMMARY_MS_HIDDEN = 90000
+
+    const clearFeedPoll = () => {
+      if (feedPollTimer) {
+        clearTimeout(feedPollTimer)
+        feedPollTimer = null
+      }
+    }
+
+    const scheduleFeedPoll = () => {
+      clearFeedPoll()
+      const delay = document.hidden ? FEED_SUMMARY_MS_HIDDEN : FEED_SUMMARY_MS_VISIBLE
+      feedPollTimer = setTimeout(async () => {
+        feedPollTimer = null
+        if (!authStore.isAuthenticated) {
+          scheduleFeedPoll()
+          return
+        }
+        try {
+          const response = await api.get('/api/ai/direct-conversations/feed', {
+            params: { summary: 1 }
+          })
+          if (!response.data.success) {
+            scheduleFeedPoll()
+            return
+          }
+          const d = response.data.data
+          const unread = d.unread_count ?? 0
+          const newest = d.newest_incoming_message_id ?? 0
+          if (!feedSigInitialized) {
+            feedSigInitialized = true
+            lastFeedSig = { unread, newest }
+            unreadCount.value = unread
+            scheduleFeedPoll()
+            return
+          }
+          const changed =
+            lastFeedSig.unread !== unread || lastFeedSig.newest !== newest
+          if (changed) {
+            await loadMessages(5, true)
+          }
+          unreadCount.value = unread
+          lastFeedSig = { unread, newest }
+        } catch (e) {
+          console.error('Feed summary poll:', e)
+        }
+        scheduleFeedPoll()
+      }, delay)
+    }
+
+    const onFeedVisibility = () => {
+      clearFeedPoll()
+      if (authStore.isAuthenticated) {
+        scheduleFeedPoll()
       }
     }
     
@@ -461,28 +536,28 @@ export default {
       })
     }
 
-    // Auto-refresh every 20 seconds (only if authenticated)
     onMounted(async () => {
       // Check if notification icon exists
       notificationIconExists.value = await checkNotificationIconExists('/home/Layer-27.png')
       
-      // Only load messages and set up polling if user is authenticated
       if (authStore.isAuthenticated) {
-        loadMessages()
-        setInterval(() => {
-          // Check authentication again before each poll
-          if (authStore.isAuthenticated && !showNotifications.value) {
-            loadMessages()
-          }
-        }, 20000)
+        await loadMessages()
+        scheduleFeedPoll()
       }
       
+      document.addEventListener('visibilitychange', onFeedVisibility)
+
       // Add window resize listener
       window.addEventListener('resize', () => {
         if (showNotifications.value) {
           calculatePosition()
         }
       })
+    })
+
+    onUnmounted(() => {
+      clearFeedPoll()
+      document.removeEventListener('visibilitychange', onFeedVisibility)
     })
     
     return {

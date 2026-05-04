@@ -2,6 +2,13 @@
 (function ($) {
 	'use strict';
 
+	// Incremental thread polling: visible tab ~12s, background tab slower to reduce load.
+	var THREAD_MS_VISIBLE = 12000;
+	var THREAD_MS_HIDDEN = 45000;
+	var BADGE_MS_VISIBLE = 60000;
+	var BADGE_MS_HIDDEN = 120000;
+	var THREAD_FIRST_POLL_MS = 2500;
+
 	function post(action, extra) {
 		return $.ajax({
 			url: snksDirectConvHub.ajaxUrl,
@@ -24,11 +31,22 @@
 		}
 	}
 
+	function isNearBottom($el, threshold) {
+		var el = $el[0];
+		if (!el) {
+			return true;
+		}
+		threshold = threshold || 120;
+		return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+	}
+
 	function initHub($root) {
 		var i18n = snksDirectConvHub.i18n;
 		var state = {
 			conversationId: 0,
 			patientId: 0,
+			lastMessageId: 0,
+			threadPollTimer: null,
 		};
 
 		var $bar = $('<div class="snks-dc-hub-bar"></div>');
@@ -79,6 +97,75 @@
 			});
 		}
 
+		var badgeTimer = null;
+		function scheduleBadgeRefresh() {
+			if (badgeTimer) {
+				clearTimeout(badgeTimer);
+				badgeTimer = null;
+			}
+			var delay = document.hidden ? BADGE_MS_HIDDEN : BADGE_MS_VISIBLE;
+			badgeTimer = setTimeout(function () {
+				badgeTimer = null;
+				refreshBadge();
+				scheduleBadgeRefresh();
+			}, delay);
+		}
+
+		function stopThreadPoller() {
+			if (state.threadPollTimer) {
+				clearTimeout(state.threadPollTimer);
+				state.threadPollTimer = null;
+			}
+		}
+
+		function threadPollTick() {
+			state.threadPollTimer = null;
+			if (!state.conversationId || !$panel.is(':visible')) {
+				return;
+			}
+			var delay = document.hidden ? THREAD_MS_HIDDEN : THREAD_MS_VISIBLE;
+			post('snks_direct_conv_thread_since', {
+				conversation_id: state.conversationId,
+				since_id: state.lastMessageId,
+			})
+				.done(function (res) {
+					if (!res || !res.success || !res.data || !res.data.messages || !res.data.messages.length) {
+						return;
+					}
+					var stickToBottom = isNearBottom($msgs);
+					res.data.messages.forEach(function (m) {
+						var mid = parseInt(m.id, 10) || 0;
+						if (mid && $msgs.find('.snks-dc-hub-msg[data-msg-id="' + mid + '"]').length) {
+							return;
+						}
+						var mine = parseInt(m.sender_user_id, 10) === parseInt(window.snksDcCurrentUserId || 0, 10);
+						var $m = $('<div class="snks-dc-hub-msg"></div>');
+						$m.attr('data-msg-id', mid || '');
+						$m.addClass(mine ? 'snks-out' : 'snks-in');
+						$m.text(m.message || m.body || '');
+						$msgs.append($m);
+						if (mid > state.lastMessageId) {
+							state.lastMessageId = mid;
+						}
+					});
+					if (stickToBottom) {
+						scrollBottom($msgs);
+					}
+				})
+				.always(function () {
+					if (!state.conversationId || !$panel.is(':visible')) {
+						return;
+					}
+					var nextDelay = document.hidden ? THREAD_MS_HIDDEN : THREAD_MS_VISIBLE;
+					state.threadPollTimer = setTimeout(threadPollTick, nextDelay);
+				});
+		}
+
+		function startThreadPoller() {
+			stopThreadPoller();
+			state.threadPollTimer = setTimeout(threadPollTick, THREAD_FIRST_POLL_MS);
+		}
+
 		function loadDropdown() {
 			post('snks_direct_conv_recent', { limit: 10 }).done(function (res) {
 				$dd.empty();
@@ -101,7 +188,9 @@
 		}
 
 		function loadThread(cid, title) {
+			stopThreadPoller();
 			state.conversationId = cid;
+			state.lastMessageId = 0;
 			$panel.find('.snks-dc-thread-title').text(title || 'Conversation');
 			$panel.show();
 			post('snks_direct_conv_thread', { conversation_id: cid }).done(function (res) {
@@ -109,13 +198,19 @@
 				if (res && res.success && res.data && res.data.messages) {
 					res.data.messages.forEach(function (m) {
 						var mine = parseInt(m.sender_user_id, 10) === parseInt(window.snksDcCurrentUserId || 0, 10);
+						var mid = parseInt(m.id, 10) || 0;
 						var $m = $('<div class="snks-dc-hub-msg"></div>');
+						$m.attr('data-msg-id', mid || '');
 						$m.addClass(mine ? 'snks-out' : 'snks-in');
 						$m.text(m.message || m.body || '');
 						$msgs.append($m);
+						if (mid > state.lastMessageId) {
+							state.lastMessageId = mid;
+						}
 					});
 					scrollBottom($msgs);
 				}
+				startThreadPoller();
 			});
 		}
 
@@ -185,7 +280,35 @@
 					$compose.find('textarea').val('');
 					$compose.find('.snks-dc-file').val('');
 					if (state.conversationId) {
-						loadThread(state.conversationId, $panel.find('.snks-dc-thread-title').text());
+						// One incremental fetch after send (server already has our message).
+						post('snks_direct_conv_thread_since', {
+							conversation_id: state.conversationId,
+							since_id: state.lastMessageId,
+						}).done(function (r) {
+							if (r && r.success && r.data && r.data.messages && r.data.messages.length) {
+								var stickToBottom = isNearBottom($msgs);
+								r.data.messages.forEach(function (m) {
+									var mid = parseInt(m.id, 10) || 0;
+									if (mid && $msgs.find('.snks-dc-hub-msg[data-msg-id="' + mid + '"]').length) {
+										return;
+									}
+									var mine = parseInt(m.sender_user_id, 10) === parseInt(window.snksDcCurrentUserId || 0, 10);
+									var $m = $('<div class="snks-dc-hub-msg"></div>');
+									$m.attr('data-msg-id', mid || '');
+									$m.addClass(mine ? 'snks-out' : 'snks-in');
+									$m.text(m.message || m.body || '');
+									$msgs.append($m);
+									if (mid > state.lastMessageId) {
+										state.lastMessageId = mid;
+									}
+								});
+								if (stickToBottom) {
+									scrollBottom($msgs);
+								}
+							} else {
+								loadThread(state.conversationId, $panel.find('.snks-dc-thread-title').text());
+							}
+						});
 					}
 					refreshBadge();
 				});
@@ -220,10 +343,14 @@
 			}
 		});
 
+		document.addEventListener('visibilitychange', function () {
+			scheduleBadgeRefresh();
+		});
+
 		window.snksDcCurrentUserId = snksDirectConvHub.currentUserId || 0;
 
 		refreshBadge();
-		setInterval(refreshBadge, 60000);
+		scheduleBadgeRefresh();
 
 		var params = new URLSearchParams(window.location.search);
 		var dc = params.get('snks_dc');

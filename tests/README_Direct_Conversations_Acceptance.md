@@ -24,6 +24,8 @@ Run after deployment and **flush permalinks** (Settings → Permalinks → Save)
 ## Patient (Jalsah AI)
 
 - [ ] Bell loads `/api/ai/direct-conversations/feed` (JWT).
+- [ ] Background refresh uses `GET .../feed?summary=1` (COUNT + MAX only); full feed loads when summary changes or when opening the bell.
+- [ ] Thread view uses `GET .../messages?since_id=<lastId>` for incremental updates (no full thread on every tick).
 - [ ] Opening an item navigates to `/direct-conversations/:id` and can send/reply.
 - [ ] `/notifications` uses the same feed and mark-read endpoint.
 

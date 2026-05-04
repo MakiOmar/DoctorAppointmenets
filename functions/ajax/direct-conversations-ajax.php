@@ -68,6 +68,23 @@ function snks_ajax_snks_direct_conv_thread() {
 	wp_send_json_success( array( 'messages' => $list ) );
 }
 
+add_action( 'wp_ajax_snks_direct_conv_thread_since', 'snks_ajax_snks_direct_conv_thread_since' );
+/**
+ * Incremental thread fetch (id > since_id) to reduce payload vs full reload.
+ *
+ * @return void
+ */
+function snks_ajax_snks_direct_conv_thread_since() {
+	snks_direct_conv_ajax_guard();
+	$cid      = isset( $_POST['conversation_id'] ) ? absint( $_POST['conversation_id'] ) : 0;
+	$since_id = isset( $_POST['since_id'] ) ? absint( $_POST['since_id'] ) : 0;
+	if ( ! $cid ) {
+		wp_send_json_error( array( 'message' => 'Missing conversation_id' ), 400 );
+	}
+	$list = snks_direct_conversations_thread_messages_since( $cid, get_current_user_id(), $since_id, 50 );
+	wp_send_json_success( array( 'messages' => $list ) );
+}
+
 add_action( 'wp_ajax_snks_direct_conv_send', 'snks_ajax_snks_direct_conv_send' );
 function snks_ajax_snks_direct_conv_send() {
 	snks_direct_conv_ajax_guard();

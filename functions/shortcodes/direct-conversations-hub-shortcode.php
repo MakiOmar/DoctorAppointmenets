@@ -27,13 +27,13 @@ function snks_therapist_conversations_hub_shortcode() {
 		'snks-therapist-conv-hub',
 		SNKS_URI . 'assets/css/snks-therapist-conversations-hub.css',
 		array(),
-		'1.0.0'
+		'1.0.1'
 	);
 	wp_enqueue_script(
 		'snks-therapist-conv-hub',
 		SNKS_URI . 'assets/js/snks-therapist-conversations-hub.js',
 		array( 'jquery' ),
-		'1.0.0',
+		'1.0.1',
 		true
 	);
 	wp_localize_script(
