@@ -1297,7 +1297,9 @@ export default {
     attachments: 'المرفقات',
     markAsRead: 'تحديد كمقروءة',
     alreadyRead: 'تم القراءة',
-    download: 'تحميل'
+    download: 'تحميل',
+    typeHere: 'اكتب رسالتك…',
+    send: 'إرسال'
   },
 
   // Appointment Change Terms

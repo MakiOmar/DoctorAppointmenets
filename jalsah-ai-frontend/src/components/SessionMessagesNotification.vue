@@ -346,7 +346,7 @@ export default {
       
       loading.value = true
       try {
-        const response = await api.get('/api/ai/session-messages', {
+        const response = await api.get('/api/ai/direct-conversations/feed', {
           params: {
             limit: limit,
             offset: 0
@@ -367,15 +367,16 @@ export default {
     
     
     const openMessage = async (message) => {
-      // Mark as read if not already read
       if (message.is_read == 0 || message.is_read === false || !message.is_read) {
         await markAsRead(message)
       }
-      
-      // Show message popup
+      showNotifications.value = false
+      if (message.conversation_id) {
+        router.push(`/direct-conversations/${message.conversation_id}`)
+        return
+      }
       selectedMessage.value = message
       showMessagePopup.value = true
-      showNotifications.value = false // Close dropdown
     }
     
     const closeMessagePopup = () => {
@@ -409,7 +410,7 @@ export default {
       }
       
       try {
-        await api.post(`/api/ai/session-messages/${message.id}/read`)
+        await api.post(`/api/ai/direct-conversations/message/${message.id}/read`)
         
         // Find and update the message in the messages array to ensure reactivity
         const messageIndex = messages.value.findIndex(m => m.id === message.id)

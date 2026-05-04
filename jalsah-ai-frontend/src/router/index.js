@@ -104,6 +104,12 @@ const routes = [
     component: () => import('@/views/Notifications.vue'),
     meta: { requiresAuth: true, roles: ['customer'] }
   },
+  {
+    path: '/direct-conversations/:id',
+    name: 'DirectConversation',
+    component: () => import('@/views/DirectConversation.vue'),
+    meta: { requiresAuth: true, roles: ['customer', 'doctor', 'clinic_manager'] }
+  },
   // Doctor routes
   {
     path: '/doctor',

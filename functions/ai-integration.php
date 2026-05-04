@@ -134,6 +134,11 @@ class SNKS_AI_Integration {
 		// Add rewrite rules for API endpoints - more specific patterns first
 		add_rewrite_rule( '^api/ai/session-messages/(\d+)/read/?$', 'index.php?ai_endpoint=session-messages/$matches[1]/read', 'top' );
 		add_rewrite_rule( '^api/ai/session-messages/?$', 'index.php?ai_endpoint=session-messages', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/message/(\d+)/read/?$', 'index.php?ai_endpoint=direct-conversations/message/$matches[1]/read', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/upload/?$', 'index.php?ai_endpoint=direct-conversations/upload', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/feed/?$', 'index.php?ai_endpoint=direct-conversations/feed', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/start/?$', 'index.php?ai_endpoint=direct-conversations/start', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/(\d+)/messages/?$', 'index.php?ai_endpoint=direct-conversations/$matches[1]/messages', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/search/?$', 'index.php?ai_endpoint=therapists/search', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/browse/?$', 'index.php?ai_endpoint=therapists/browse', 'top' );
 		add_rewrite_rule( '^api/ai/therapists/by-diagnosis/(\d+)/?$', 'index.php?ai_endpoint=therapists/by-diagnosis/$matches[1]', 'top' );
@@ -858,6 +863,9 @@ class SNKS_AI_Integration {
 				break;
 			case 'session-messages':
 				$this->handle_session_messages_endpoint( $method, $path );
+				break;
+			case 'direct-conversations':
+				$this->handle_direct_conversations_endpoint( $method, $path );
 				break;
 			case 'users':
 				$this->handle_users_endpoint( $method, $path );
@@ -6969,6 +6977,160 @@ Best regards,
 		} else {
 			$this->send_error( 'Method not allowed', 405 );
 		}
+	}
+
+	/**
+	 * Direct therapist–patient conversations (JWT).
+	 *
+	 * @param string $method HTTP method.
+	 * @param array  $path   Path segments after direct-conversations.
+	 * @return void
+	 */
+	private function handle_direct_conversations_endpoint( $method, $path ) {
+		$user_id = $this->verify_jwt_token();
+		if ( ! function_exists( 'snks_direct_conversations_is_doctor_user' ) ) {
+			$this->send_error( 'Service unavailable', 503 );
+			return;
+		}
+		$is_doc = snks_direct_conversations_is_doctor_user( (int) $user_id );
+		$is_pat = snks_direct_conversations_is_customer_user( (int) $user_id );
+		if ( ! $is_doc && ! $is_pat ) {
+			$this->send_error( 'Forbidden', 403 );
+			return;
+		}
+
+		$sub = isset( $path[1] ) ? $path[1] : '';
+
+		if ( 'upload' === $sub && 'POST' === $method ) {
+			if ( empty( $_FILES['file'] ) ) {
+				$this->send_error( 'No file', 400 );
+				return;
+			}
+			$file = $_FILES['file'];
+			$max  = snks_direct_conversations_get_max_upload_bytes();
+			if ( ! empty( $file['size'] ) && (int) $file['size'] > $max ) {
+				$this->send_error( 'File too large', 400 );
+				return;
+			}
+			$allowed = snks_direct_conversations_get_allowed_mimes();
+			$check   = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'] );
+			$mime    = isset( $check['type'] ) ? $check['type'] : '';
+			if ( $allowed && ( ! $mime || ! in_array( $mime, $allowed, true ) ) ) {
+				$this->send_error( 'File type not allowed', 400 );
+				return;
+			}
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+			require_once ABSPATH . 'wp-admin/includes/media.php';
+			$_FILES['snks_dc_upload_jwt'] = $file;
+			$aid = media_handle_upload( 'snks_dc_upload_jwt', 0 );
+			if ( is_wp_error( $aid ) ) {
+				$this->send_error( $aid->get_error_message(), 400 );
+				return;
+			}
+			$this->send_success(
+				array(
+					'id'   => (int) $aid,
+					'name' => get_the_title( $aid ),
+					'url'  => wp_get_attachment_url( $aid ),
+				)
+			);
+			return;
+		}
+
+		if ( 'feed' === $sub && 'GET' === $method ) {
+			$limit  = isset( $_GET['limit'] ) ? absint( $_GET['limit'] ) : 5;
+			$offset = isset( $_GET['offset'] ) ? absint( $_GET['offset'] ) : 0;
+			$rows   = snks_direct_conversations_inbox_feed( (int) $user_id, $limit, $offset );
+			foreach ( $rows as $m ) {
+				snks_direct_conversations_format_message_row( $m );
+			}
+			$this->send_success(
+				array(
+					'messages'     => $rows,
+					'unread_count' => snks_direct_conversations_unread_count( (int) $user_id ),
+					'has_more'     => count( $rows ) === $limit,
+				)
+			);
+			return;
+		}
+
+		if ( 'start' === $sub && 'POST' === $method && $is_doc ) {
+			$data = json_decode( (string) file_get_contents( 'php://input' ), true );
+			if ( ! is_array( $data ) || empty( $data['patient_user_id'] ) ) {
+				$this->send_error( 'patient_user_id required', 400 );
+				return;
+			}
+			$pid = absint( $data['patient_user_id'] );
+			$body = isset( $data['body'] ) ? sanitize_textarea_field( wp_unslash( $data['body'] ) ) : '';
+			$att  = isset( $data['attachment_ids'] ) && is_array( $data['attachment_ids'] ) ? array_map( 'absint', $data['attachment_ids'] ) : array();
+			if ( '' === trim( $body ) && empty( $att ) ) {
+				$this->send_error( 'Message or attachment required', 400 );
+				return;
+			}
+			$conv = snks_direct_conversations_get_or_create( (int) $user_id, $pid );
+			if ( ! $conv ) {
+				$this->send_error( 'Could not create conversation', 500 );
+				return;
+			}
+			$res = snks_direct_conversations_insert_message( (int) $conv->id, (int) $user_id, 'therapist', $body, $att );
+			if ( is_wp_error( $res ) ) {
+				$this->send_error( $res->get_error_message(), 400 );
+				return;
+			}
+			$this->send_success( array( 'message_id' => (int) $res, 'conversation_id' => (int) $conv->id ) );
+			return;
+		}
+
+		if ( 'message' === $sub && isset( $path[2] ) && 'read' === ( $path[3] ?? '' ) && 'POST' === $method ) {
+			$mid = absint( $path[2] );
+			snks_direct_conversations_mark_read( $mid, (int) $user_id );
+			$this->send_success( array( 'message' => 'ok' ) );
+			return;
+		}
+
+		$cid = absint( $sub );
+		if ( $cid > 0 && isset( $path[2] ) && 'messages' === $path[2] ) {
+			global $wpdb;
+			$t   = snks_direct_conversations_tables();
+			$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $cid ) );
+			if ( ! $conv ) {
+				$this->send_error( 'Not found', 404 );
+				return;
+			}
+			if ( (int) $conv->therapist_user_id !== (int) $user_id && (int) $conv->patient_user_id !== (int) $user_id ) {
+				$this->send_error( 'Forbidden', 403 );
+				return;
+			}
+			if ( 'GET' === $method ) {
+				$list = snks_direct_conversations_thread_messages( $cid, (int) $user_id, 200, 0 );
+				$this->send_success( array( 'messages' => $list ) );
+				return;
+			}
+			if ( 'POST' === $method ) {
+				$data = json_decode( (string) file_get_contents( 'php://input' ), true );
+				if ( ! is_array( $data ) ) {
+					$this->send_error( 'Invalid JSON', 400 );
+					return;
+				}
+				$body = isset( $data['body'] ) ? sanitize_textarea_field( wp_unslash( $data['body'] ) ) : '';
+				$att  = isset( $data['attachment_ids'] ) && is_array( $data['attachment_ids'] ) ? array_map( 'absint', $data['attachment_ids'] ) : array();
+				if ( '' === trim( $body ) && empty( $att ) ) {
+					$this->send_error( 'Message or attachment required', 400 );
+					return;
+				}
+				$stype = $is_doc ? 'therapist' : 'patient';
+				$res   = snks_direct_conversations_insert_message( $cid, (int) $user_id, $stype, $body, $att );
+				if ( is_wp_error( $res ) ) {
+					$this->send_error( $res->get_error_message(), 400 );
+					return;
+				}
+				$this->send_success( array( 'message_id' => (int) $res ) );
+				return;
+			}
+		}
+
+		$this->send_error( 'Invalid direct-conversations endpoint', 404 );
 	}
 
 	/**

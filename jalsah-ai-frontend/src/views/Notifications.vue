@@ -259,7 +259,7 @@ export default {
       }
 
       try {
-        const response = await api.get('/api/ai/session-messages', {
+        const response = await api.get('/api/ai/direct-conversations/feed', {
           params: {
             limit: limit,
             offset: offset.value
@@ -291,9 +291,12 @@ export default {
     }
 
     const openMessagePopup = async (message) => {
-      selectedMessage.value = message
-      // Automatically mark as read when popup opens
       await markAsRead(message)
+      if (message.conversation_id) {
+        router.push(`/direct-conversations/${message.conversation_id}`)
+        return
+      }
+      selectedMessage.value = message
     }
 
     const closeMessagePopup = () => {
@@ -309,7 +312,7 @@ export default {
       if (message.is_read) return
 
       try {
-        await api.post(`/api/ai/session-messages/${message.id}/read`)
+        await api.post(`/api/ai/direct-conversations/message/${message.id}/read`)
         message.is_read = true
       } catch (error) {
         console.error('Error marking message as read:', error)

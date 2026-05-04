@@ -345,22 +345,36 @@ function snks_track_ai_event( $event_type, $data = array() ) {
 
 /**
  * Create AI notification
+ *
+ * @param int         $user_id User ID.
+ * @param string      $type    Notification type slug.
+ * @param string      $title   Title.
+ * @param string      $message Body text.
+ * @param string|null $link_url Optional deep link (column added by direct conversations migration).
  */
-function snks_create_ai_notification( $user_id, $type, $title, $message ) {
+function snks_create_ai_notification( $user_id, $type, $title, $message, $link_url = null ) {
 	global $wpdb;
-	
+
+	if ( null !== $link_url && '' !== $link_url && function_exists( 'snks_maybe_add_ai_notification_link_column' ) ) {
+		snks_maybe_add_ai_notification_link_column();
+	}
+
 	$notifications_table = $wpdb->prefix . 'snks_ai_notifications';
-	
-	$wpdb->insert(
-		$notifications_table,
-		array(
-			'user_id' => $user_id,
-			'type' => $type,
-			'title' => $title,
-			'message' => $message,
-		),
-		array( '%d', '%s', '%s', '%s' )
+
+	$row = array(
+		'user_id' => $user_id,
+		'type'    => $type,
+		'title'   => $title,
+		'message' => $message,
 	);
+	$fmt = array( '%d', '%s', '%s', '%s' );
+
+	if ( null !== $link_url && '' !== $link_url ) {
+		$row['link_url'] = $link_url;
+		$fmt[]           = '%s';
+	}
+
+	$wpdb->insert( $notifications_table, $row, $fmt );
 }
 
 /**

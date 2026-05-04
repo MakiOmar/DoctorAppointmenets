@@ -126,6 +126,33 @@ This document lists all WhatsApp notification events in the DoctorAppointments p
 
 ---
 
+## Direct therapist–patient conversations (in-app + optional WhatsApp)
+
+These events use `snks_ai_notifications` (and optional WhatsApp via `snks_send_whatsapp_template_message`). Logic lives in `functions/direct-conversations/snks-direct-conversations.php`.
+
+### In-app types (`snks_ai_notifications.type`)
+
+| Type | When | Notes |
+|------|------|--------|
+| `direct_conversation_started` | Exactly when the **first** message in a thread is stored (conversation + first row in `wp_snks_direct_conversation_messages`) | Recipient is the **other** participant. **No** further immediate rows for later messages in the same `conversation_id`. |
+| `direct_conversation_daily_digest` | Once per calendar day per user, at the scheduled digest hour, **only if** the user has **unread** messages whose `created_at` falls within the configured lookback window (default 3 days, option `snks_conversation_unread_summary_days`) | Older unread messages outside the window are **not** counted and do not trigger the digest. |
+
+### WhatsApp (optional)
+
+- **Conversation started:** If `snks_ai_notifications_enabled` is on and option `snks_whatsapp_template_direct_conversation` is set to a valid template name, WhatsApp is sent to the recipient’s number (`snks_get_user_whatsapp`) with body parameters `name`, `link` (same rules as in-app: **first message only**).
+- **Digest:** In-app only by default (no WhatsApp digest unless extended later).
+
+### Cron
+
+- Hook: `snks_direct_conversations_daily_digest` (daily; next run derived from `snks_direct_conv_digest_hour` in site timezone).
+- Handler: `snks_direct_conversations_run_daily_digest()`.
+
+### Admin settings
+
+- **Jalsah AI → Direct conversations:** window days, digest hour, max upload bytes, allowed MIME list, optional Jalsah frontend base URL (`snks_jalsah_ai_frontend_url`), optional WhatsApp template name for “conversation started”.
+
+---
+
 ## Summary
 
 ### Notification Flow Overview:

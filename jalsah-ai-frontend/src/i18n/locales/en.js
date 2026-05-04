@@ -1289,7 +1289,9 @@ export default {
     attachments: 'Attachments',
     markAsRead: 'Mark as read',
     alreadyRead: 'Already read',
-    download: 'Download'
+    download: 'Download',
+    typeHere: 'Type your message…',
+    send: 'Send'
   },
 
   // Appointment Change Terms

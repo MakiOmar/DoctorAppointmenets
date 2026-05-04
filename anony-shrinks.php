@@ -426,6 +426,7 @@ require_once SNKS_DIR . 'includes/transaction-table.php';
 require_once SNKS_DIR . 'includes/coupons-tables.php';
 require_once SNKS_DIR . 'includes/ai-tables.php';
 require_once SNKS_DIR . 'includes/session-messages-table.php';
+require_once SNKS_DIR . 'includes/direct-conversations-table.php';
 
 // AI table creation hooks will be registered on init to ensure all functions are loaded
 
@@ -645,6 +646,17 @@ function plugin_activation_hook() {
 	}
 	if ( function_exists( 'snks_create_rochtah_doctor_role' ) ) {
 		snks_create_rochtah_doctor_role();
+	}
+
+	$dc_table_file = plugin_dir_path( __FILE__ ) . 'includes/direct-conversations-table.php';
+	if ( file_exists( $dc_table_file ) ) {
+		require_once $dc_table_file;
+	}
+	if ( function_exists( 'snks_create_direct_conversations_tables' ) ) {
+		snks_create_direct_conversations_tables();
+	}
+	if ( function_exists( 'snks_direct_conversations_register_defaults' ) ) {
+		snks_direct_conversations_register_defaults();
 	}
 	
 	// Ensure AI profit system database structure is complete
