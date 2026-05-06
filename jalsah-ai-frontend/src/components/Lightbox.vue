@@ -17,7 +17,7 @@
         <div class="absolute inset-0 bg-black bg-opacity-75"></div>
         
         <!-- Lightbox Content -->
-        <div class="relative z-10 max-w-4xl max-h-[90vh] mx-4" @click.stop>
+        <div class="relative z-10 w-[min(92vw,1100px)] max-h-[90vh] mx-4" @click.stop>
                      <!-- Close Button -->
            <button
              @click="closeLightbox"
@@ -71,7 +71,7 @@
             <img
               :src="currentImage.url"
               :alt="currentImage.name || currentImage.alt || 'Certificate'"
-              class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl inline-block"
+              class="w-full max-h-[88vh] object-contain rounded-lg shadow-2xl inline-block"
               @load="imageLoaded = true"
               @error="imageLoaded = false"
             />

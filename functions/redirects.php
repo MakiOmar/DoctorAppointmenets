@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || die();
 add_action(
 	'template_redirect',
 	function () {
-		if ( is_admin() || ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+		if ( is_admin() || wp_doing_ajax() || ! isset( $_SERVER['REQUEST_METHOD'] ) || 'POST' === $_SERVER['REQUEST_METHOD'] || ( isset( $_GET['action'] ) && 'elementor' === $_GET['action'] ) || isset( $_GET['elementor-preview'] ) )  {
 			return;
 		}
 		

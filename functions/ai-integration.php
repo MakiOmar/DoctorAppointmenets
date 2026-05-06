@@ -135,6 +135,7 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/session-messages/(\d+)/read/?$', 'index.php?ai_endpoint=session-messages/$matches[1]/read', 'top' );
 		add_rewrite_rule( '^api/ai/session-messages/?$', 'index.php?ai_endpoint=session-messages', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/message/(\d+)/read/?$', 'index.php?ai_endpoint=direct-conversations/message/$matches[1]/read', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/(\d+)/read/?$', 'index.php?ai_endpoint=direct-conversations/$matches[1]/read', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/upload/?$', 'index.php?ai_endpoint=direct-conversations/upload', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/feed/?$', 'index.php?ai_endpoint=direct-conversations/feed', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/start/?$', 'index.php?ai_endpoint=direct-conversations/start', 'top' );
@@ -7061,7 +7062,12 @@ Best regards,
 
 			$limit  = isset( $_GET['limit'] ) ? absint( $_GET['limit'] ) : 5;
 			$offset = isset( $_GET['offset'] ) ? absint( $_GET['offset'] ) : 0;
-			$rows   = snks_direct_conversations_inbox_feed( (int) $user_id, $limit, $offset );
+			// Patient notifications should list one latest row per conversation and only therapist-originated messages.
+			if ( $is_pat ) {
+				$rows = snks_direct_conversations_inbox_feed_latest_per_conversation( (int) $user_id, $limit, $offset, 'therapist' );
+			} else {
+				$rows = snks_direct_conversations_inbox_feed( (int) $user_id, $limit, $offset );
+			}
 			foreach ( $rows as $m ) {
 				snks_direct_conversations_format_message_row( $m );
 			}
@@ -7117,6 +7123,17 @@ Best regards,
 		}
 
 		$cid = absint( $sub );
+		if ( $cid > 0 && isset( $path[2] ) && 'read' === $path[2] && 'POST' === $method ) {
+			$marked = snks_direct_conversations_mark_conversation_read( $cid, (int) $user_id );
+			$this->send_success(
+				array(
+					'message'      => 'ok',
+					'marked_count' => (int) $marked,
+				)
+			);
+			return;
+		}
+
 		if ( $cid > 0 && isset( $path[2] ) && 'messages' === $path[2] ) {
 			global $wpdb;
 			$t   = snks_direct_conversations_tables();

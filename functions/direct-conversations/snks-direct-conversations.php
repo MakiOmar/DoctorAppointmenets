@@ -331,6 +331,33 @@ function snks_direct_conversations_mark_read( $message_id, $recipient_user_id ) 
 }
 
 /**
+ * Mark all unread messages in one conversation as read for recipient.
+ *
+ * @param int $conversation_id    Conversation ID.
+ * @param int $recipient_user_id  Recipient user ID.
+ * @return int Number of affected rows.
+ */
+function snks_direct_conversations_mark_conversation_read( $conversation_id, $recipient_user_id ) {
+	global $wpdb;
+	$t = snks_direct_conversations_tables();
+
+	$result = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$t['msg']}
+			SET is_read = 1, read_at = %s
+			WHERE conversation_id = %d
+				AND recipient_user_id = %d
+				AND is_read = 0",
+			current_time( 'mysql' ),
+			(int) $conversation_id,
+			(int) $recipient_user_id
+		)
+	);
+
+	return max( 0, (int) $result );
+}
+
+/**
  * Unread count for user (all time, for UI badge).
  *
  * @param int $user_id User ID.
@@ -400,6 +427,59 @@ function snks_direct_conversations_inbox_feed( $user_id, $limit = 5, $offset = 0
 		LEFT JOIN {$wpdb->usermeta} fn ON fn.user_id = m.sender_user_id AND fn.meta_key = 'first_name'
 		LEFT JOIN {$wpdb->usermeta} ln ON ln.user_id = m.sender_user_id AND ln.meta_key = 'last_name'
 		WHERE m.recipient_user_id = %d
+		ORDER BY m.created_at DESC
+		LIMIT %d OFFSET %d",
+		$locale,
+		$locale,
+		(int) $user_id,
+		(int) $limit,
+		(int) $offset
+	);
+
+	return $wpdb->get_results( $sql );
+}
+
+/**
+ * Latest incoming message per conversation for recipient.
+ * Useful for notifications list to avoid duplicate rows per therapist.
+ *
+ * @param int    $user_id           Recipient user ID.
+ * @param int    $limit             Limit.
+ * @param int    $offset            Offset.
+ * @param string $sender_type_filter Optional sender type filter.
+ * @return array<int,object>
+ */
+function snks_direct_conversations_inbox_feed_latest_per_conversation( $user_id, $limit = 5, $offset = 0, $sender_type_filter = '' ) {
+	global $wpdb;
+	$t      = snks_direct_conversations_tables();
+	$locale = function_exists( 'snks_get_current_language' ) ? snks_get_current_language() : 'ar';
+	$where_sender = '';
+	if ( 'therapist' === $sender_type_filter || 'patient' === $sender_type_filter ) {
+		$where_sender = $wpdb->prepare( ' AND m1.sender_type = %s', $sender_type_filter );
+	}
+
+	$sql = $wpdb->prepare(
+		"SELECT m.id, m.conversation_id, m.body AS message, m.attachment_ids, m.is_read, m.created_at, m.sender_user_id, m.sender_type,
+			CASE
+				WHEN m.sender_type = 'therapist' AND ta.id IS NOT NULL THEN
+					CASE WHEN %s = 'ar' AND ta.name IS NOT NULL AND ta.name != '' THEN ta.name
+						WHEN %s = 'en' AND ta.name_en IS NOT NULL AND ta.name_en != '' THEN ta.name_en
+						ELSE ta.name END
+				WHEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, '')) != ' ' THEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, ''))
+				WHEN u.display_name != '' THEN u.display_name
+				ELSE u.user_login
+			END AS sender_name
+		FROM {$t['msg']} m
+		INNER JOIN (
+			SELECT m1.conversation_id, MAX(m1.id) AS latest_id
+			FROM {$t['msg']} m1
+			WHERE m1.recipient_user_id = %d {$where_sender}
+			GROUP BY m1.conversation_id
+		) latest ON latest.latest_id = m.id
+		LEFT JOIN {$wpdb->users} u ON u.ID = m.sender_user_id
+		LEFT JOIN {$wpdb->prefix}therapist_applications ta ON ta.user_id = m.sender_user_id AND ta.status = 'approved'
+		LEFT JOIN {$wpdb->usermeta} fn ON fn.user_id = m.sender_user_id AND fn.meta_key = 'first_name'
+		LEFT JOIN {$wpdb->usermeta} ln ON ln.user_id = m.sender_user_id AND ln.meta_key = 'last_name'
 		ORDER BY m.created_at DESC
 		LIMIT %d OFFSET %d",
 		$locale,
@@ -550,6 +630,49 @@ function snks_direct_conversations_list_for_therapist( $therapist_user_id, $limi
 			(int) $limit
 		)
 	);
+}
+
+/**
+ * Recent patients who booked with therapist (for quick new-message start).
+ *
+ * @param int $therapist_user_id Therapist user ID.
+ * @param int $limit             Max rows.
+ * @return array<int,object>
+ */
+function snks_direct_conversations_recent_booked_patients_for_therapist( $therapist_user_id, $limit = 20 ) {
+	global $wpdb;
+	$t                = snks_direct_conversations_tables();
+	$therapist_user_id = absint( $therapist_user_id );
+	$limit            = min( 100, max( 1, absint( $limit ) ) );
+	$tt               = $wpdb->prefix . 'snks_provider_timetable';
+	$um               = $wpdb->usermeta;
+	$users            = $wpdb->users;
+
+	$sql = $wpdb->prepare(
+		"SELECT p.client_id AS patient_user_id,
+			MAX(p.date_time) AS last_booked_at,
+			c.id AS conversation_id,
+			CASE
+				WHEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, '')) != ' ' THEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, ''))
+				WHEN u.display_name != '' THEN u.display_name
+				ELSE u.user_login
+			END AS patient_name
+		FROM {$tt} p
+		LEFT JOIN {$users} u ON u.ID = p.client_id
+		LEFT JOIN {$um} fn ON fn.user_id = p.client_id AND fn.meta_key = 'first_name'
+		LEFT JOIN {$um} ln ON ln.user_id = p.client_id AND ln.meta_key = 'last_name'
+		LEFT JOIN {$t['conv']} c ON c.therapist_user_id = p.user_id AND c.patient_user_id = p.client_id
+		WHERE p.user_id = %d
+			AND p.client_id > 0
+			AND p.session_status != 'cancelled'
+		GROUP BY p.client_id
+		ORDER BY last_booked_at DESC
+		LIMIT %d",
+		$therapist_user_id,
+		$limit
+	);
+
+	return $wpdb->get_results( $sql );
 }
 
 /**

@@ -1291,7 +1291,9 @@ export default {
     alreadyRead: 'Already read',
     download: 'Download',
     typeHere: 'Type your message…',
-    send: 'Send'
+    send: 'Send',
+    attach: 'Attach File',
+    dropzoneHint: 'Click to select a file'
   },
 
   // Appointment Change Terms

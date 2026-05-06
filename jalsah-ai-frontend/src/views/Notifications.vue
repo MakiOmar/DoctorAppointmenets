@@ -290,8 +290,38 @@ export default {
       loadMessages(true)
     }
 
+    const markConversationAsRead = async (conversationId) => {
+      if (!authStore.isAuthenticated || !conversationId) return
+      try {
+        const response = await api.post(`/api/ai/direct-conversations/${conversationId}/read`)
+        const markedCount = Number(response?.data?.data?.marked_count || 0)
+        if (markedCount > 0) {
+          messages.value = messages.value.map((msg) => {
+            if (parseInt(msg.conversation_id, 10) === parseInt(conversationId, 10)) {
+              return { ...msg, is_read: 1 }
+            }
+            return msg
+          })
+          window.dispatchEvent(
+            new CustomEvent('snks-direct-conversation-read', {
+              detail: {
+                conversationId: parseInt(conversationId, 10),
+                markedCount
+              }
+            })
+          )
+        }
+      } catch (error) {
+        console.error('Error marking conversation as read:', error)
+      }
+    }
+
     const openMessagePopup = async (message) => {
-      await markAsRead(message)
+      if (message.conversation_id) {
+        await markConversationAsRead(message.conversation_id)
+      } else {
+        await markAsRead(message)
+      }
       if (message.conversation_id) {
         router.push(`/direct-conversations/${message.conversation_id}`)
         return
@@ -377,6 +407,7 @@ export default {
       openMessagePopup,
       closeMessagePopup,
       markAsRead,
+      markConversationAsRead,
       formatDate,
       downloadAttachment
     }

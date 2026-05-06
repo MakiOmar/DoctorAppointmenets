@@ -12,28 +12,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 add_shortcode( 'snks_therapist_conversations_hub', 'snks_therapist_conversations_hub_shortcode' );
+add_action( 'wp_enqueue_scripts', 'snks_therapist_conversations_hub_maybe_enqueue_assets', 30 );
 
 /**
- * Shortcode callback.
+ * Enqueue hub assets globally for logged-in therapists.
+ * Needed when shortcode is rendered later inside JetPopup AJAX content.
  *
- * @return string
+ * @return void
  */
-function snks_therapist_conversations_hub_shortcode() {
-	if ( ! is_user_logged_in() || ! snks_is_doctor() ) {
-		return '<p class="snks-dc-hub-login-hint">' . esc_html__( 'Please log in as a therapist to view conversations.', 'anony-shrinks' ) . '</p>';
+function snks_therapist_conversations_hub_maybe_enqueue_assets() {
+	if ( is_admin() || ! is_user_logged_in() || ! snks_is_doctor() ) {
+		return;
 	}
 
 	wp_enqueue_style(
 		'snks-therapist-conv-hub',
 		SNKS_URI . 'assets/css/snks-therapist-conversations-hub.css',
 		array(),
-		'1.0.1'
+		time()
 	);
 	wp_enqueue_script(
 		'snks-therapist-conv-hub',
 		SNKS_URI . 'assets/js/snks-therapist-conversations-hub.js',
 		array( 'jquery' ),
-		'1.0.1',
+		time(),
 		true
 	);
 	wp_localize_script(
@@ -44,16 +46,33 @@ function snks_therapist_conversations_hub_shortcode() {
 			'nonce'         => wp_create_nonce( 'snks_direct_conv_nonce' ),
 			'currentUserId' => get_current_user_id(),
 			'i18n'          => array(
-				'title'       => __( 'Messages', 'anony-shrinks' ),
-				'viewAll'     => __( 'View all conversations', 'anony-shrinks' ),
-				'placeholder' => __( 'Type a message…', 'anony-shrinks' ),
-				'send'        => __( 'Send', 'anony-shrinks' ),
-				'attach'      => __( 'Attach file', 'anony-shrinks' ),
-				'noUnread'    => __( 'No unread messages', 'anony-shrinks' ),
-				'unread'      => __( 'Unread messages', 'anony-shrinks' ),
+				'title'              => __( 'الرسائل', 'anony-shrinks' ),
+				'viewAll'            => __( 'عرض كل المحادثات', 'anony-shrinks' ),
+				'placeholder'        => __( 'اكتب رسالة...', 'anony-shrinks' ),
+				'send'               => __( 'إرسال', 'anony-shrinks' ),
+				'attach'             => __( 'إرفاق ملف', 'anony-shrinks' ),
+				'noUnread'           => __( 'لا توجد رسائل غير مقروءة', 'anony-shrinks' ),
+				'noBookedPatients'   => __( 'لا يوجد مرضى لديهم حجز حديث', 'anony-shrinks' ),
+				'bookedPatientsTab'  => __( 'قائمة المرضى', 'anony-shrinks' ),
+				'unreadTab'          => __( 'غير المقروءة', 'anony-shrinks' ),
+				'newConversation'    => __( 'محادثة جديدة', 'anony-shrinks' ),
+				'patientFallback'    => __( 'مريض', 'anony-shrinks' ),
 			),
 		)
 	);
+}
 
-	return '<div id="snks-therapist-conversations-hub" class="snks-dc-hub" data-nonce="' . esc_attr( wp_create_nonce( 'snks_direct_conv_nonce' ) ) . '"></div>';
+/**
+ * Shortcode callback.
+ *
+ * @return string
+ */
+function snks_therapist_conversations_hub_shortcode() {
+	if ( ! is_user_logged_in() || ! snks_is_doctor() ) {
+		return '<p class="snks-dc-hub-login-hint">' . esc_html__( 'يرجى تسجيل الدخول كمعالج لعرض المحادثات.', 'anony-shrinks' ) . '</p>';
+	}
+
+	snks_therapist_conversations_hub_maybe_enqueue_assets();
+
+	return '<div class="snks-dc-hub" data-nonce="' . esc_attr( wp_create_nonce( 'snks_direct_conv_nonce' ) ) . '"></div>';
 }

@@ -1299,7 +1299,9 @@ export default {
     alreadyRead: 'تم القراءة',
     download: 'تحميل',
     typeHere: 'اكتب رسالتك…',
-    send: 'إرسال'
+    send: 'إرسال',
+    attach: 'إرفاق ملف',
+    dropzoneHint: 'اضغط لاختيار ملف'
   },
 
   // Appointment Change Terms

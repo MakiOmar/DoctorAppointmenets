@@ -7,14 +7,14 @@
 //
 // Behavior:
 // - When running `npm run dev` (Vite dev server):
-//     - API_TARGET    => http://localhost/shrinks
+//     - API_TARGET    => https://beforelive.jalsah.app
 //     - API_BASE_URL  => /api   (frontend talks to /api, Vite proxies to API_TARGET)
-//     - MAIN_SITE_URL => http://localhost/shrinks
+//     - MAIN_SITE_URL => https://beforelive.jalsah.app
 //
 // - When building for production (`npm run build`, `npm run preview`):
-//     - API_TARGET    => https://jalsah.app
-//     - API_BASE_URL  => https://jalsah.app (API requests go to jalsah.app; use when SPA is on jalsah.online)
-//     - MAIN_SITE_URL => https://jalsah.app
+//     - API_TARGET    => https://beforelive.jalsah.app
+//     - API_BASE_URL  => https://beforelive.jalsah.app (API requests go to beforelive.jalsah.app; use when SPA is on jalsah.online)
+//     - MAIN_SITE_URL => https://beforelive.jalsah.app
 //
 // The Vite config reads these values to:
 // - Configure the dev server proxy target (API_TARGET)
@@ -24,10 +24,10 @@
 const npmCommand = process.env.npm_lifecycle_event || '';
 const isDevCommand = npmCommand === 'dev' || process.env.NODE_ENV === 'development';
 
-const API_TARGET = isDevCommand ? 'http://localhost/shrinks' : 'https://jalsah.app';
-// Production: full origin so SPA (e.g. on jalsah.online) hits jalsah.app for API. Dev: /api for proxy.
-const API_BASE_URL = isDevCommand ? '/api' : 'https://jalsah.app';
-const MAIN_SITE_URL = isDevCommand ? 'http://localhost/shrinks' : 'https://jalsah.app';
+const API_TARGET = isDevCommand ? 'https://beforelive.jalsah.app' : 'https://beforelive.jalsah.app';
+// Production: full origin so SPA (e.g. on jalsah.online) hits beforelive.jalsah.app for API. Dev: /api for proxy.
+const API_BASE_URL = isDevCommand ? '/api' : 'https://beforelive.jalsah.app';
+const MAIN_SITE_URL = isDevCommand ? 'https://beforelive.jalsah.app' : 'https://beforelive.jalsah.app';
 
 export const ENVIRONMENT_CONFIG = {
   API_TARGET,

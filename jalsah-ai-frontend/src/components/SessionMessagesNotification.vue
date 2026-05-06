@@ -441,8 +441,31 @@ export default {
     }
     
     
+    const markConversationAsRead = async (conversationId) => {
+      if (!authStore.isAuthenticated || !conversationId) return 0
+      try {
+        const response = await api.post(`/api/ai/direct-conversations/${conversationId}/read`)
+        const markedCount = Number(response?.data?.data?.marked_count || 0)
+        if (markedCount > 0) {
+          unreadCount.value = Math.max(0, unreadCount.value - markedCount)
+          messages.value = messages.value.map((msg) => {
+            if (parseInt(msg.conversation_id, 10) === parseInt(conversationId, 10)) {
+              return { ...msg, is_read: 1 }
+            }
+            return msg
+          })
+        }
+        return markedCount
+      } catch (error) {
+        console.error('Error marking conversation as read:', error)
+        return 0
+      }
+    }
+
     const openMessage = async (message) => {
-      if (message.is_read == 0 || message.is_read === false || !message.is_read) {
+      if (message.conversation_id) {
+        await markConversationAsRead(message.conversation_id)
+      } else if (message.is_read == 0 || message.is_read === false || !message.is_read) {
         await markAsRead(message)
       }
       showNotifications.value = false
@@ -536,6 +559,22 @@ export default {
       })
     }
 
+    const onConversationRead = (event) => {
+      const markedCount = Number(event?.detail?.markedCount || 0)
+      const conversationId = Number(event?.detail?.conversationId || 0)
+      if (markedCount > 0) {
+        unreadCount.value = Math.max(0, unreadCount.value - markedCount)
+      }
+      if (conversationId > 0) {
+        messages.value = messages.value.map((msg) => {
+          if (parseInt(msg.conversation_id, 10) === conversationId) {
+            return { ...msg, is_read: 1 }
+          }
+          return msg
+        })
+      }
+    }
+
     onMounted(async () => {
       // Check if notification icon exists
       notificationIconExists.value = await checkNotificationIconExists('/home/Layer-27.png')
@@ -546,6 +585,7 @@ export default {
       }
       
       document.addEventListener('visibilitychange', onFeedVisibility)
+      window.addEventListener('snks-direct-conversation-read', onConversationRead)
 
       // Add window resize listener
       window.addEventListener('resize', () => {
@@ -558,6 +598,7 @@ export default {
     onUnmounted(() => {
       clearFeedPoll()
       document.removeEventListener('visibilitychange', onFeedVisibility)
+      window.removeEventListener('snks-direct-conversation-read', onConversationRead)
     })
     
     return {
@@ -576,6 +617,7 @@ export default {
       closeMessagePopup,
       downloadAttachment,
       markAsRead,
+      markConversationAsRead,
       formatDate,
       notificationIconExists
     }

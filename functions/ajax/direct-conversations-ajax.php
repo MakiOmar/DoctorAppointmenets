@@ -49,6 +49,20 @@ function snks_ajax_snks_direct_conv_recent() {
 	wp_send_json_success( array( 'messages' => $rows ) );
 }
 
+add_action( 'wp_ajax_snks_direct_conv_booked_patients', 'snks_ajax_snks_direct_conv_booked_patients' );
+/**
+ * Recent patients who booked with current therapist.
+ *
+ * @return void
+ */
+function snks_ajax_snks_direct_conv_booked_patients() {
+	snks_direct_conv_ajax_guard();
+	$uid   = get_current_user_id();
+	$limit = isset( $_POST['limit'] ) ? min( 50, max( 1, absint( $_POST['limit'] ) ) ) : 20;
+	$rows  = snks_direct_conversations_recent_booked_patients_for_therapist( $uid, $limit );
+	wp_send_json_success( array( 'patients' => $rows ) );
+}
+
 add_action( 'wp_ajax_snks_direct_conv_list', 'snks_ajax_snks_direct_conv_list' );
 function snks_ajax_snks_direct_conv_list() {
 	snks_direct_conv_ajax_guard();
