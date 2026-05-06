@@ -54,6 +54,7 @@ function snks_direct_conversations_settings_page() {
 		update_option( 'snks_direct_conv_digest_hour', max( 0, min( 23, absint( $_POST['snks_direct_conv_digest_hour'] ?? 20 ) ) ) );
 		update_option( 'snks_jalsah_ai_frontend_url', esc_url_raw( wp_unslash( $_POST['snks_jalsah_ai_frontend_url'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_direct_conversation', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_direct_conversation'] ?? '' ) ) );
+		update_option( 'snks_whatsapp_template_direct_conversation_digest', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_direct_conversation_digest'] ?? '' ) ) );
 		snks_direct_conversations_reschedule_digest_cron();
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'anony-shrinks' ) . '</p></div>';
 	}
@@ -64,6 +65,7 @@ function snks_direct_conversations_settings_page() {
 	$hour   = (int) get_option( 'snks_direct_conv_digest_hour', 20 );
 	$appurl = (string) get_option( 'snks_jalsah_ai_frontend_url', '' );
 	$watpl  = (string) get_option( 'snks_whatsapp_template_direct_conversation', '' );
+	$wadig  = (string) get_option( 'snks_whatsapp_template_direct_conversation_digest', '' );
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Direct conversations', 'anony-shrinks' ); ?></h1>
@@ -99,6 +101,13 @@ function snks_direct_conversations_settings_page() {
 					<td>
 						<input name="snks_whatsapp_template_direct_conversation" id="snks_whatsapp_template_direct_conversation" type="text" value="<?php echo esc_attr( $watpl ); ?>" class="regular-text" />
 						<p class="description"><?php esc_html_e( 'Optional. Must match your WhatsApp Cloud API template. Body parameters: name, link.', 'anony-shrinks' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="snks_whatsapp_template_direct_conversation_digest"><?php esc_html_e( 'WhatsApp template name (daily unread digest)', 'anony-shrinks' ); ?></label></th>
+					<td>
+						<input name="snks_whatsapp_template_direct_conversation_digest" id="snks_whatsapp_template_direct_conversation_digest" type="text" value="<?php echo esc_attr( $wadig ); ?>" class="regular-text" />
+						<p class="description"><?php esc_html_e( 'Optional. Sent once daily when user has unread direct messages older than the configured day threshold. Body parameters: count, days, link.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 			</table>

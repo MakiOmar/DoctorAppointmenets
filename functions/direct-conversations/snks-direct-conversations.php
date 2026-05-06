@@ -296,8 +296,9 @@ function snks_direct_conversations_insert_message( $conversation_id, $sender_use
 	}
 
 	$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$t['msg']} WHERE conversation_id = %d", $conversation_id ) );
-	if ( 1 === $count ) {
-		snks_direct_conversations_notify_conversation_started( $recipient, $conversation_id, $sender_user_id );
+	// Conversation-start notification is patient-only and only when therapist sends first message.
+	if ( 1 === $count && 'therapist' === $sender_type ) {
+		snks_direct_conversations_notify_conversation_started( (int) $conv->patient_user_id, $conversation_id, $sender_user_id );
 	}
 
 	return $mid;
@@ -389,6 +390,26 @@ function snks_direct_conversations_unread_in_digest_window( $user_id ) {
 	return (int) $wpdb->get_var(
 		$wpdb->prepare(
 			"SELECT COUNT(*) FROM {$t['msg']} WHERE recipient_user_id = %d AND is_read = 0 AND created_at >= ( NOW() - INTERVAL %d DAY )",
+			(int) $user_id,
+			$days
+		)
+	);
+}
+
+/**
+ * Unread messages older than configured threshold (days).
+ *
+ * @param int $user_id User ID.
+ * @return int Count of unread old messages.
+ */
+function snks_direct_conversations_unread_older_than_threshold( $user_id ) {
+	global $wpdb;
+	$t    = snks_direct_conversations_tables();
+	$days = snks_direct_conversations_get_summary_days();
+
+	return (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$t['msg']} WHERE recipient_user_id = %d AND is_read = 0 AND created_at <= ( NOW() - INTERVAL %d DAY )",
 			(int) $user_id,
 			$days
 		)
@@ -707,8 +728,8 @@ function snks_direct_conversations_run_daily_digest() {
 		if ( $uid <= 0 ) {
 			continue;
 		}
-		$n = snks_direct_conversations_unread_in_digest_window( $uid );
-		if ( $n <= 0 ) {
+		$n_window = snks_direct_conversations_unread_in_digest_window( $uid );
+		if ( $n_window <= 0 ) {
 			continue;
 		}
 
@@ -731,10 +752,10 @@ function snks_direct_conversations_run_daily_digest() {
 			_n(
 				'You have %1$d unread message in the last %2$d days.',
 				'You have %1$d unread messages in the last %2$d days.',
-				$n,
+				$n_window,
 				'anony-shrinks'
 			),
-			$n,
+			$n_window,
 			$days
 		);
 		if ( snks_direct_conversations_is_doctor_user( $uid ) ) {
@@ -744,6 +765,30 @@ function snks_direct_conversations_run_daily_digest() {
 		}
 
 		snks_create_ai_notification( $uid, SNKS_DIRECT_CONV_NOTIF_DIGEST, $title, $message, $link );
+
+		// Optional WhatsApp daily digest for unread messages older than threshold.
+		$old_unread = snks_direct_conversations_unread_older_than_threshold( $uid );
+		if ( $old_unread <= 0 ) {
+			continue;
+		}
+		$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
+		$tpl        = (string) get_option( 'snks_whatsapp_template_direct_conversation_digest', '' );
+		if ( ! $wa_enabled || '' === $tpl || ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
+			continue;
+		}
+		$phone = snks_get_user_whatsapp( $uid );
+		if ( ! $phone ) {
+			continue;
+		}
+		snks_send_whatsapp_template_message(
+			$phone,
+			$tpl,
+			array(
+				'count' => (string) $old_unread,
+				'days'  => (string) $days,
+				'link'  => $link,
+			)
+		);
 	}
 }
 
