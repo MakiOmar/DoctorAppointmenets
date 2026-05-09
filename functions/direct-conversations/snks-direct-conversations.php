@@ -14,6 +14,33 @@ define( 'SNKS_DIRECT_CONV_NOTIF_STARTED', 'direct_conversation_started' );
 define( 'SNKS_DIRECT_CONV_NOTIF_DIGEST', 'direct_conversation_daily_digest' );
 
 /**
+ * WhatsApp template option: therapist (e.g. chat_th), no named body variables.
+ *
+ * @return string
+ */
+function snks_dc_wa_tpl_therapist() {
+	return (string) get_option( 'snks_whatsapp_template_dc_therapist', '' );
+}
+
+/**
+ * WhatsApp template: patient receives first therapist message (e.g. chat_pt1); body {{chat_link}}.
+ *
+ * @return string
+ */
+function snks_dc_wa_tpl_patient_first() {
+	return (string) get_option( 'snks_whatsapp_template_dc_patient_first', '' );
+}
+
+/**
+ * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}}.
+ *
+ * @return string
+ */
+function snks_dc_wa_tpl_patient_digest() {
+	return (string) get_option( 'snks_whatsapp_template_dc_patient_digest', '' );
+}
+
+/**
  * Table names.
  *
  * @return array{conv:string,msg:string}
@@ -219,19 +246,49 @@ function snks_direct_conversations_notify_conversation_started( $recipient_user_
 	}
 
 	$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
-	$tpl        = (string) get_option( 'snks_whatsapp_template_direct_conversation', '' );
-	if ( $wa_enabled && $tpl && function_exists( 'snks_get_user_whatsapp' ) && function_exists( 'snks_send_whatsapp_template_message' ) ) {
-		$phone = snks_get_user_whatsapp( $recipient_user_id );
-		if ( $phone ) {
-			snks_send_whatsapp_template_message(
-				$phone,
-				$tpl,
-				array(
-					'name' => $name,
-					'link' => $link,
-				)
+	if ( ! $wa_enabled || ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
+		return;
+	}
+	$phone = snks_get_user_whatsapp( $recipient_user_id );
+	if ( ! $phone ) {
+		return;
+	}
+
+	// New templates: chat_th (therapist, static body), chat_pt1 (patient, {{chat_link}}). Fallback: legacy single template with name + link.
+	$legacy_tpl = (string) get_option( 'snks_whatsapp_template_direct_conversation', '' );
+	$tpl        = '';
+	$params     = array();
+
+	if ( snks_direct_conversations_is_doctor_user( $recipient_user_id ) ) {
+		$new = snks_dc_wa_tpl_therapist();
+		if ( '' !== $new ) {
+			$tpl    = $new;
+			$params = array();
+		} elseif ( '' !== $legacy_tpl ) {
+			$tpl    = $legacy_tpl;
+			$params = array(
+				'name' => $name,
+				'link' => $link,
 			);
 		}
+	} else {
+		$new = snks_dc_wa_tpl_patient_first();
+		if ( '' !== $new ) {
+			$tpl    = $new;
+			$params = array(
+				'chat_link' => $link,
+			);
+		} elseif ( '' !== $legacy_tpl ) {
+			$tpl    = $legacy_tpl;
+			$params = array(
+				'name' => $name,
+				'link' => $link,
+			);
+		}
+	}
+
+	if ( '' !== $tpl ) {
+		snks_send_whatsapp_template_message( $phone, $tpl, $params );
 	}
 }
 
@@ -771,24 +828,52 @@ function snks_direct_conversations_run_daily_digest() {
 		if ( $old_unread <= 0 ) {
 			continue;
 		}
-		$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
-		$tpl        = (string) get_option( 'snks_whatsapp_template_direct_conversation_digest', '' );
-		if ( ! $wa_enabled || '' === $tpl || ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
+		$wa_enabled   = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
+		$legacy_dig   = (string) get_option( 'snks_whatsapp_template_direct_conversation_digest', '' );
+		$tpl_th       = snks_dc_wa_tpl_therapist();
+		$tpl_pt2      = snks_dc_wa_tpl_patient_digest();
+		if ( ! $wa_enabled || ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
 			continue;
 		}
 		$phone = snks_get_user_whatsapp( $uid );
 		if ( ! $phone ) {
 			continue;
 		}
-		snks_send_whatsapp_template_message(
-			$phone,
-			$tpl,
-			array(
-				'count' => (string) $old_unread,
-				'days'  => (string) $days,
-				'link'  => $link,
-			)
-		);
+
+		// New templates: therapist digest = chat_th (static); patient digest = chat_pt2 ({{chat_link}}). Fallback: legacy template with count, days, link.
+		$tpl    = '';
+		$params = array();
+		if ( snks_direct_conversations_is_doctor_user( $uid ) ) {
+			if ( '' !== $tpl_th ) {
+				$tpl    = $tpl_th;
+				$params = array();
+			} elseif ( '' !== $legacy_dig ) {
+				$tpl    = $legacy_dig;
+				$params = array(
+					'count' => (string) $old_unread,
+					'days'  => (string) $days,
+					'link'  => $link,
+				);
+			}
+		} else {
+			if ( '' !== $tpl_pt2 ) {
+				$tpl    = $tpl_pt2;
+				$params = array(
+					'chat_link' => $link,
+				);
+			} elseif ( '' !== $legacy_dig ) {
+				$tpl    = $legacy_dig;
+				$params = array(
+					'count' => (string) $old_unread,
+					'days'  => (string) $days,
+					'link'  => $link,
+				);
+			}
+		}
+
+		if ( '' !== $tpl ) {
+			snks_send_whatsapp_template_message( $phone, $tpl, $params );
+		}
 	}
 }
 
