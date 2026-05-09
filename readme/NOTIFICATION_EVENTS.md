@@ -141,19 +141,13 @@ These events use `snks_ai_notifications` (and optional WhatsApp via `snks_send_w
 
 Requires `snks_ai_notifications_enabled`, a configured WhatsApp Cloud API, and a number on the user via `snks_get_user_whatsapp`.
 
-**Role-specific templates (recommended; Jalsah AI → Direct conversations)**
+**Templates (Jalsah AI → Direct conversations):** each option must be set to your approved Meta template name. If an option is **empty**, WhatsApp is **not** sent for that event (in-app notifications still apply).
 
 | Option | Template name (example) | When | Body parameters from plugin |
 |--------|-------------------------|------|-------------------------------|
 | `snks_whatsapp_template_dc_therapist` | `chat_th` | Patient sends the **first** message in a thread (therapist notified), and therapist **daily digest** WhatsApp when old-unread threshold is met | None (static approved body in Meta) |
 | `snks_whatsapp_template_dc_patient_first` | `chat_pt1` | Therapist sends the **first** message (patient notified) | `chat_link` (deep link to the conversation in the SPA) |
 | `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when old-unread threshold is met | `chat_link` |
-
-**Legacy fallback (optional)**
-
-If the new therapist field is empty, **conversation-started** WhatsApp for the therapist still accepts `snks_whatsapp_template_direct_conversation` with body `name`, `link`. If the new patient-first field is empty, the patient side uses that same legacy option with `name`, `link`.
-
-If the new digest fields are empty, **digest** WhatsApp accepts `snks_whatsapp_template_direct_conversation_digest` with body `count`, `days`, `link`.
 
 ### Cron
 
@@ -162,7 +156,7 @@ If the new digest fields are empty, **digest** WhatsApp accepts `snks_whatsapp_t
 
 ### Admin settings
 
-- **Jalsah AI → Direct conversations:** window days, digest hour, max upload bytes, allowed MIME list, optional Jalsah frontend base URL (`snks_jalsah_ai_frontend_url`), WhatsApp templates for therapist (`chat_th`), patient first message (`chat_pt1`), patient digest (`chat_pt2`), plus optional legacy fallback fields.
+- **Jalsah AI → Direct conversations:** window days, digest hour, max upload bytes, allowed MIME list, optional Jalsah frontend base URL (`snks_jalsah_ai_frontend_url`), WhatsApp template names for therapist (`chat_th`), patient first message (`chat_pt1`), and patient digest (`chat_pt2`) — no alternate fallback options.
 
 ### Live thread updates (low server load)
 

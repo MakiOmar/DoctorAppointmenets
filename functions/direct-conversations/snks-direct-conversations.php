@@ -254,36 +254,15 @@ function snks_direct_conversations_notify_conversation_started( $recipient_user_
 		return;
 	}
 
-	// New templates: chat_th (therapist, static body), chat_pt1 (patient, {{chat_link}}). Fallback: legacy single template with name + link.
-	$legacy_tpl = (string) get_option( 'snks_whatsapp_template_direct_conversation', '' );
-	$tpl        = '';
-	$params     = array();
-
+	// chat_th (therapist, static body) or chat_pt1 (patient, {{chat_link}}). No fallback — empty option skips WhatsApp.
+	$tpl    = '';
+	$params = array();
 	if ( snks_direct_conversations_is_doctor_user( $recipient_user_id ) ) {
-		$new = snks_dc_wa_tpl_therapist();
-		if ( '' !== $new ) {
-			$tpl    = $new;
-			$params = array();
-		} elseif ( '' !== $legacy_tpl ) {
-			$tpl    = $legacy_tpl;
-			$params = array(
-				'name' => $name,
-				'link' => $link,
-			);
-		}
+		$tpl = snks_dc_wa_tpl_therapist();
 	} else {
-		$new = snks_dc_wa_tpl_patient_first();
-		if ( '' !== $new ) {
-			$tpl    = $new;
-			$params = array(
-				'chat_link' => $link,
-			);
-		} elseif ( '' !== $legacy_tpl ) {
-			$tpl    = $legacy_tpl;
-			$params = array(
-				'name' => $name,
-				'link' => $link,
-			);
+		$tpl = snks_dc_wa_tpl_patient_first();
+		if ( '' !== $tpl ) {
+			$params = array( 'chat_link' => $link );
 		}
 	}
 
@@ -828,10 +807,7 @@ function snks_direct_conversations_run_daily_digest() {
 		if ( $old_unread <= 0 ) {
 			continue;
 		}
-		$wa_enabled   = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
-		$legacy_dig   = (string) get_option( 'snks_whatsapp_template_direct_conversation_digest', '' );
-		$tpl_th       = snks_dc_wa_tpl_therapist();
-		$tpl_pt2      = snks_dc_wa_tpl_patient_digest();
+		$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
 		if ( ! $wa_enabled || ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
 			continue;
 		}
@@ -840,34 +816,15 @@ function snks_direct_conversations_run_daily_digest() {
 			continue;
 		}
 
-		// New templates: therapist digest = chat_th (static); patient digest = chat_pt2 ({{chat_link}}). Fallback: legacy template with count, days, link.
+		// Therapist digest uses chat_th (static). Patient digest uses chat_pt2 ({{chat_link}}). No fallback.
 		$tpl    = '';
 		$params = array();
 		if ( snks_direct_conversations_is_doctor_user( $uid ) ) {
-			if ( '' !== $tpl_th ) {
-				$tpl    = $tpl_th;
-				$params = array();
-			} elseif ( '' !== $legacy_dig ) {
-				$tpl    = $legacy_dig;
-				$params = array(
-					'count' => (string) $old_unread,
-					'days'  => (string) $days,
-					'link'  => $link,
-				);
-			}
+			$tpl = snks_dc_wa_tpl_therapist();
 		} else {
-			if ( '' !== $tpl_pt2 ) {
-				$tpl    = $tpl_pt2;
-				$params = array(
-					'chat_link' => $link,
-				);
-			} elseif ( '' !== $legacy_dig ) {
-				$tpl    = $legacy_dig;
-				$params = array(
-					'count' => (string) $old_unread,
-					'days'  => (string) $days,
-					'link'  => $link,
-				);
+			$tpl = snks_dc_wa_tpl_patient_digest();
+			if ( '' !== $tpl ) {
+				$params = array( 'chat_link' => $link );
 			}
 		}
 

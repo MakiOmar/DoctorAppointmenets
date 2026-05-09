@@ -56,8 +56,6 @@ function snks_direct_conversations_settings_page() {
 		update_option( 'snks_whatsapp_template_dc_therapist', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_therapist'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_patient_first', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_patient_first'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_patient_digest', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_patient_digest'] ?? '' ) ) );
-		update_option( 'snks_whatsapp_template_direct_conversation', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_direct_conversation'] ?? '' ) ) );
-		update_option( 'snks_whatsapp_template_direct_conversation_digest', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_direct_conversation_digest'] ?? '' ) ) );
 		snks_direct_conversations_reschedule_digest_cron();
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'anony-shrinks' ) . '</p></div>';
 	}
@@ -70,8 +68,6 @@ function snks_direct_conversations_settings_page() {
 	$wa_th  = (string) get_option( 'snks_whatsapp_template_dc_therapist', '' );
 	$wa_pf  = (string) get_option( 'snks_whatsapp_template_dc_patient_first', '' );
 	$wa_pd  = (string) get_option( 'snks_whatsapp_template_dc_patient_digest', '' );
-	$watpl  = (string) get_option( 'snks_whatsapp_template_direct_conversation', '' );
-	$wadig  = (string) get_option( 'snks_whatsapp_template_direct_conversation_digest', '' );
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Direct conversations', 'anony-shrinks' ); ?></h1>
@@ -106,35 +102,21 @@ function snks_direct_conversations_settings_page() {
 					<th scope="row"><label for="snks_whatsapp_template_dc_therapist"><?php esc_html_e( 'WhatsApp: therapist template (chat_th)', 'anony-shrinks' ); ?></label></th>
 					<td>
 						<input name="snks_whatsapp_template_dc_therapist" id="snks_whatsapp_template_dc_therapist" type="text" value="<?php echo esc_attr( $wa_th ); ?>" class="regular-text" placeholder="chat_th" />
-						<p class="description"><?php esc_html_e( 'Sent when the client sends the first message in a thread and for the therapist daily unread digest when old unread exceeds the threshold. Fixed body copy in Meta; send no named body variables from this plugin.', 'anony-shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Sent when the client sends the first message in a thread and for the therapist daily unread digest when old unread exceeds the threshold. Fixed body copy in Meta; send no named body variables from this plugin. If empty, no WhatsApp for those therapist events.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="snks_whatsapp_template_dc_patient_first"><?php esc_html_e( 'WhatsApp: patient first message from therapist (chat_pt1)', 'anony-shrinks' ); ?></label></th>
 					<td>
 						<input name="snks_whatsapp_template_dc_patient_first" id="snks_whatsapp_template_dc_patient_first" type="text" value="<?php echo esc_attr( $wa_pf ); ?>" class="regular-text" placeholder="chat_pt1" />
-						<p class="description"><?php esc_html_e( 'Sent on the first message in a thread when the therapist is the sender. WhatsApp Cloud API body named parameter must be: chat_link (conversation deep link).', 'anony-shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Sent on the first message in a thread when the therapist is the sender. WhatsApp Cloud API body named parameter must be: chat_link (conversation deep link). If empty, no WhatsApp for that patient event.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="snks_whatsapp_template_dc_patient_digest"><?php esc_html_e( 'WhatsApp: patient daily unread digest (chat_pt2)', 'anony-shrinks' ); ?></label></th>
 					<td>
 						<input name="snks_whatsapp_template_dc_patient_digest" id="snks_whatsapp_template_dc_patient_digest" type="text" value="<?php echo esc_attr( $wa_pd ); ?>" class="regular-text" placeholder="chat_pt2" />
-						<p class="description"><?php esc_html_e( 'Daily digest WhatsApp when the patient has unread messages past the digest threshold. Named body parameter: chat_link (typically app notifications or conversation entry URL).', 'anony-shrinks' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="snks_whatsapp_template_direct_conversation"><?php esc_html_e( 'Legacy WhatsApp template (conversation started, both roles)', 'anony-shrinks' ); ?></label></th>
-					<td>
-						<input name="snks_whatsapp_template_direct_conversation" id="snks_whatsapp_template_direct_conversation" type="text" value="<?php echo esc_attr( $watpl ); ?>" class="regular-text" />
-						<p class="description"><?php esc_html_e( 'Optional fallback if the therapist and patient-first fields above are empty. Body parameters: name, link.', 'anony-shrinks' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="snks_whatsapp_template_direct_conversation_digest"><?php esc_html_e( 'Legacy WhatsApp template (daily digest, both roles)', 'anony-shrinks' ); ?></label></th>
-					<td>
-						<input name="snks_whatsapp_template_direct_conversation_digest" id="snks_whatsapp_template_direct_conversation_digest" type="text" value="<?php echo esc_attr( $wadig ); ?>" class="regular-text" />
-						<p class="description"><?php esc_html_e( 'Fallback if therapist template (chat_th) or patient digest (chat_pt2) is empty. Body parameters: count, days, link.', 'anony-shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Daily digest WhatsApp when the patient has unread messages past the digest threshold. Named body parameter: chat_link (typically app notifications or conversation entry URL). If empty, no digest WhatsApp is sent to patients.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 			</table>
