@@ -9,6 +9,193 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * AJAX: send a test WhatsApp using the same templates/params as production (no global notification disable check).
+ *
+ * @return void
+ */
+function snks_dc_test_whatsapp_ajax() {
+	if ( ! check_ajax_referer( 'snks_dc_wa_test', 'nonce', false ) ) {
+		wp_send_json_error( array( 'message' => __( 'Security check failed.', 'anony-shrinks' ) ) );
+	}
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'anony-shrinks' ) ) );
+	}
+	if ( ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
+		wp_send_json_error( array( 'message' => __( 'WhatsApp sender is not available.', 'anony-shrinks' ) ) );
+	}
+
+	if ( ! function_exists( 'snks_dc_wa_tpl_therapist' ) && defined( 'SNKS_DIR' ) ) {
+		require_once SNKS_DIR . 'functions/direct-conversations/snks-direct-conversations.php';
+	}
+	if ( ! function_exists( 'snks_dc_wa_tpl_therapist' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Direct conversation helpers are not loaded.', 'anony-shrinks' ) ) );
+	}
+
+	$event    = sanitize_key( wp_unslash( $_POST['dc_event'] ?? '' ) );
+	$phone_in = sanitize_text_field( wp_unslash( $_POST['test_phone'] ?? '' ) );
+	if ( '' === $phone_in ) {
+		wp_send_json_error( array( 'message' => __( 'Phone number is required.', 'anony-shrinks' ) ) );
+	}
+
+	$digits = preg_replace( '/[^\d+]/', '', $phone_in );
+	$phone  = ltrim( $digits, '+' );
+	if ( '' === $phone ) {
+		wp_send_json_error( array( 'message' => __( 'Invalid phone number.', 'anony-shrinks' ) ) );
+	}
+
+	$tpl        = '';
+	$params     = array();
+	$event_name = '';
+
+	switch ( $event ) {
+		case 'therapist':
+			// chat_th — static body, same as therapist first-message + digest WhatsApp branches.
+			$event_name = 'chat_th';
+			$tpl        = snks_dc_wa_tpl_therapist();
+			$params     = array();
+			break;
+		case 'patient_first':
+			// chat_pt1 — patient first therapist message (chat_link).
+			$event_name = 'chat_pt1';
+			$tpl        = snks_dc_wa_tpl_patient_first();
+			$link       = isset( $_POST['chat_link'] ) ? esc_url_raw( wp_unslash( $_POST['chat_link'] ) ) : '';
+			if ( '' === $link && function_exists( 'snks_direct_conversations_patient_app_link' ) ) {
+				$link = snks_direct_conversations_patient_app_link( 0 );
+			}
+			if ( '' === $link ) {
+				$link = trailingslashit( home_url( '/' ) ) . 'notifications';
+			}
+			$params = array( 'chat_link' => $link );
+			break;
+		case 'patient_digest':
+			// chat_pt2 — patient digest WhatsApp (chat_link).
+			$event_name = 'chat_pt2';
+			$tpl        = snks_dc_wa_tpl_patient_digest();
+			$link       = isset( $_POST['chat_link'] ) ? esc_url_raw( wp_unslash( $_POST['chat_link'] ) ) : '';
+			if ( '' === $link && function_exists( 'snks_direct_conversations_patient_app_link' ) ) {
+				$link = snks_direct_conversations_patient_app_link( 0 );
+			}
+			if ( '' === $link ) {
+				$link = trailingslashit( home_url( '/' ) ) . 'notifications';
+			}
+			$params = array( 'chat_link' => $link );
+			break;
+		default:
+			wp_send_json_error( array( 'message' => __( 'Invalid test type.', 'anony-shrinks' ) ) );
+	}
+
+	if ( '' === $tpl ) {
+		wp_send_json_error(
+			array(
+				'message' => sprintf(
+					/* translators: %s: example template key chat_th chat_pt1 or chat_pt2 */
+					__( 'The template option for %s is empty. Save settings above first.', 'anony-shrinks' ),
+					$event_name
+				),
+			)
+		);
+	}
+
+	$result = snks_send_whatsapp_template_message( $phone, $tpl, $params );
+
+	if ( is_wp_error( $result ) ) {
+		$error_data     = $result->get_error_data();
+		$detailed_error = __( 'WhatsApp API error: ', 'anony-shrinks' ) . $result->get_error_message();
+		if ( isset( $error_data['response_body'] ) && is_string( $error_data['response_body'] ) ) {
+			$detailed_error .= ' ' . $error_data['response_body'];
+		}
+		wp_send_json_error(
+			array(
+				'message'     => $detailed_error,
+				'template'    => $tpl,
+				'event'       => $event_name,
+				'params_sent' => $params,
+				'phone'       => $phone_in,
+			)
+		);
+	}
+
+	$message_id = isset( $result['messages'][0]['id'] ) ? $result['messages'][0]['id'] : null;
+
+	wp_send_json_success(
+		array(
+			'message'      => __( 'Test message sent.', 'anony-shrinks' ),
+			'message_id'   => $message_id,
+			'template'     => $tpl,
+			'event'        => $event_name,
+			'params_sent'  => $params,
+			'phone'        => $phone_in,
+		)
+	);
+}
+add_action( 'wp_ajax_snks_dc_test_whatsapp', 'snks_dc_test_whatsapp_ajax' );
+
+/**
+ * Scripts for WhatsApp test UI (direct conversations settings screen only).
+ *
+ * @param string $hook Current admin hook suffix.
+ * @return void
+ */
+function snks_dc_settings_admin_enqueue( $hook ) {
+	if ( false === strpos( $hook, 'jalsah-ai-direct-conversations' ) ) {
+		return;
+	}
+	wp_enqueue_script( 'jquery' );
+	wp_localize_script(
+		'jquery',
+		'snksDcWaTest',
+		array(
+			'ajaxUrl'      => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
+			'nonce'        => wp_create_nonce( 'snks_dc_wa_test' ),
+			// translators: Fallback when AJAX response is malformed.
+			'errorAjax'    => __( 'Network error. Could not reach the server.', 'anony-shrinks' ),
+			// translators: When wp_send_json_error body is unexpected.
+			'errorUnknown' => __( 'Request failed.', 'anony-shrinks' ),
+		)
+	);
+	wp_add_inline_script(
+		'jquery',
+		'
+jQuery(function($) {
+	$(".snks-dc-wa-test-btn").on("click", function(e) {
+		e.preventDefault();
+		var $btn = $(this);
+		var $out = $("#snks_dc_wa_test_result");
+		$btn.prop("disabled", true);
+		$out.show().removeClass("notice-success notice-error").addClass("notice").html("<p>' . esc_js( __( 'Sending…', 'anony-shrinks' ) ) . '</p>");
+		$.post( snksDcWaTest.ajaxUrl, {
+			action: "snks_dc_test_whatsapp",
+			nonce: snksDcWaTest.nonce,
+			dc_event: $btn.data("event"),
+			test_phone: $("#snks_dc_wa_test_phone").val(),
+			chat_link: $("#snks_dc_wa_test_chat_link").val()
+		}).done(function(resp) {
+			$btn.prop("disabled", false);
+			if (resp.success && resp.data) {
+				var d = resp.data;
+				var extra = "";
+				if (d.message_id) { extra += " ID: " + d.message_id; }
+				if (d.params_sent && Object.keys(d.params_sent).length) {
+					extra += " Parameters: " + JSON.stringify(d.params_sent);
+				}
+				$out.removeClass("notice-error").addClass("notice-success").html("<p>" + d.message + extra + "</p>");
+			} else {
+				var msg = (resp.data && resp.data.message) ? resp.data.message : snksDcWaTest.errorUnknown;
+				$out.removeClass("notice-success").addClass("notice-error").html("<p>" + msg + "</p>");
+			}
+		}).fail(function() {
+			$btn.prop("disabled", false);
+			$out.removeClass("notice-success").addClass("notice-error").html("<p>" + snksDcWaTest.errorAjax + "</p>");
+		});
+	});
+});
+',
+		'after'
+	);
+}
+add_action( 'admin_enqueue_scripts', 'snks_dc_settings_admin_enqueue' );
+
 add_action(
 	'admin_menu',
 	function () {
@@ -47,6 +234,11 @@ function snks_direct_conversations_settings_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
+
+	if ( ! function_exists( 'snks_direct_conversations_patient_app_link' ) && defined( 'SNKS_DIR' ) ) {
+		require_once SNKS_DIR . 'functions/direct-conversations/snks-direct-conversations.php';
+	}
+
 	if ( isset( $_POST['snks_dc_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['snks_dc_settings_nonce'] ) ), 'snks_dc_settings' ) ) {
 		update_option( 'snks_conversation_unread_summary_days', max( 1, min( 365, absint( $_POST['snks_conversation_unread_summary_days'] ?? 3 ) ) ) );
 		update_option( 'snks_direct_conv_max_upload_bytes', max( 1024, absint( $_POST['snks_direct_conv_max_upload_bytes'] ?? 5242880 ) ) );
@@ -68,6 +260,9 @@ function snks_direct_conversations_settings_page() {
 	$wa_th  = (string) get_option( 'snks_whatsapp_template_dc_therapist', '' );
 	$wa_pf  = (string) get_option( 'snks_whatsapp_template_dc_patient_first', '' );
 	$wa_pd  = (string) get_option( 'snks_whatsapp_template_dc_patient_digest', '' );
+	$sample_chat_link = function_exists( 'snks_direct_conversations_patient_app_link' )
+		? snks_direct_conversations_patient_app_link( 0 )
+		: trailingslashit( home_url( '/' ) ) . 'notifications';
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Direct conversations', 'anony-shrinks' ); ?></h1>
@@ -122,6 +317,37 @@ function snks_direct_conversations_settings_page() {
 			</table>
 			<?php submit_button(); ?>
 		</form>
+
+		<hr />
+
+		<h2><?php esc_html_e( 'Test WhatsApp templates', 'anony-shrinks' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Sends one template message per click using the same template names and body parameters as production. Does not require the global AI notifications toggle to be on. Configure WhatsApp Cloud API credentials under Registration Settings.', 'anony-shrinks' ); ?>
+		</p>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><label for="snks_dc_wa_test_phone"><?php esc_html_e( 'Test phone number', 'anony-shrinks' ); ?></label></th>
+				<td>
+					<!-- Test recipient: full international number, with or without + -->
+					<input type="text" id="snks_dc_wa_test_phone" class="regular-text" placeholder="2010xxxxxxxx" autocomplete="off" />
+					<p class="description"><?php esc_html_e( 'E.164 style (e.g. 2010…). Same format as other WhatsApp tests on this site.', 'anony-shrinks' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="snks_dc_wa_test_chat_link"><?php esc_html_e( 'Sample chat_link (patient templates only)', 'anony-shrinks' ); ?></label></th>
+				<td>
+					<input type="url" id="snks_dc_wa_test_chat_link" class="large-text" value="<?php echo esc_attr( $sample_chat_link ); ?>" />
+					<p class="description"><?php esc_html_e( 'Used for chat_pt1 and chat_pt2 tests (named parameter chat_link). Ignored for chat_th.', 'anony-shrinks' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<p>
+			<button type="button" class="button snks-dc-wa-test-btn" data-event="therapist"><?php esc_html_e( 'Send test: chat_th (therapist)', 'anony-shrinks' ); ?></button>
+			<button type="button" class="button snks-dc-wa-test-btn" data-event="patient_first"><?php esc_html_e( 'Send test: chat_pt1 (patient first message)', 'anony-shrinks' ); ?></button>
+			<button type="button" class="button snks-dc-wa-test-btn" data-event="patient_digest"><?php esc_html_e( 'Send test: chat_pt2 (patient digest)', 'anony-shrinks' ); ?></button>
+		</p>
+		<!-- Test result feedback (shown after Send test) -->
+		<div id="snks_dc_wa_test_result" class="notice" style="display: none; max-width: 720px; padding: 8px 12px;"></div>
 	</div>
 	<?php
 }
