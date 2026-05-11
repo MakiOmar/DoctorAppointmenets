@@ -550,6 +550,106 @@ function snks_direct_conversations_inbox_feed_latest_per_conversation( $user_id,
 }
 
 /**
+ * Turn stored profile image value (attachment ID or absolute URL) into a public URL.
+ *
+ * @param mixed $raw Meta or column value.
+ * @return string
+ */
+function snks_direct_conversations_resolve_profile_media_url( $raw ) {
+	if ( null === $raw || '' === $raw ) {
+		return '';
+	}
+	if ( is_numeric( $raw ) ) {
+		$aid = (int) $raw;
+		if ( $aid <= 0 ) {
+			return '';
+		}
+		$url = wp_get_attachment_url( $aid );
+		return $url ? $url : '';
+	}
+	if ( is_string( $raw ) && preg_match( '#^https?://#i', $raw ) ) {
+		return esc_url_raw( $raw );
+	}
+	return '';
+}
+
+/**
+ * Avatar URL for a user (therapist application photo, AI profile image meta, then Gravatar).
+ *
+ * @param int $user_id User ID.
+ * @return string
+ */
+function snks_direct_conversations_user_avatar_url( $user_id ) {
+	static $cache = array();
+	$user_id = (int) $user_id;
+	if ( $user_id <= 0 ) {
+		return '';
+	}
+	if ( array_key_exists( $user_id, $cache ) ) {
+		return $cache[ $user_id ];
+	}
+	global $wpdb;
+	$table       = $wpdb->prefix . 'therapist_applications';
+	$profile_raw = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT profile_image FROM {$table} WHERE user_id = %d AND status = %s LIMIT 1",
+			$user_id,
+			'approved'
+		)
+	);
+	$url = snks_direct_conversations_resolve_profile_media_url( $profile_raw );
+	if ( '' !== $url ) {
+		return $cache[ $user_id ] = $url;
+	}
+	$ai_img = get_user_meta( $user_id, 'ai_profile_image', true );
+	$url    = snks_direct_conversations_resolve_profile_media_url( $ai_img );
+	if ( '' !== $url ) {
+		return $cache[ $user_id ] = $url;
+	}
+	$fallback = get_avatar_url( $user_id, array( 'size' => 128 ) );
+	return $cache[ $user_id ] = $fallback ? $fallback : '';
+}
+
+/**
+ * Other participant in a conversation (for thread header in apps).
+ *
+ * @param object $conv           Row from snks_direct_conversations.
+ * @param int    $viewer_user_id Current user.
+ * @return array{user_id:int,name:string,avatar_url:string}
+ */
+function snks_direct_conversations_counterparty_for_viewer( $conv, $viewer_user_id ) {
+	$viewer_user_id = (int) $viewer_user_id;
+	$tid            = (int) $conv->therapist_user_id;
+	$pid            = (int) $conv->patient_user_id;
+	$other          = ( $tid === $viewer_user_id ) ? $pid : $tid;
+	if ( $other <= 0 ) {
+		return array(
+			'user_id'    => 0,
+			'name'       => '',
+			'avatar_url' => '',
+		);
+	}
+	$name = '';
+	if ( function_exists( 'snks_get_therapist_name' ) && snks_direct_conversations_is_doctor_user( $other ) ) {
+		$name = snks_get_therapist_name( $other );
+	}
+	if ( '' === $name ) {
+		$u = get_userdata( $other );
+		if ( $u ) {
+			$fn   = (string) get_user_meta( $other, 'first_name', true );
+			$ln   = (string) get_user_meta( $other, 'last_name', true );
+			$full = trim( $fn . ' ' . $ln );
+			$name = '' !== $full ? $full : ( $u->display_name ? $u->display_name : $u->user_login );
+		}
+	}
+	return array(
+		'user_id'    => $other,
+		'name'       => $name,
+		'avatar_url' => snks_direct_conversations_user_avatar_url( $other ),
+	);
+}
+
+/**
  * Format message row for JSON (attachments expanded).
  *
  * @param object $message DB row.
@@ -579,6 +679,11 @@ function snks_direct_conversations_format_message_row( $message ) {
 		$message->message = $message->body;
 	}
 	$message->conversation_id = (int) $message->conversation_id;
+	if ( isset( $message->sender_user_id ) ) {
+		$message->sender_avatar_url = snks_direct_conversations_user_avatar_url( (int) $message->sender_user_id );
+	} else {
+		$message->sender_avatar_url = '';
+	}
 	return $message;
 }
 
@@ -670,7 +775,7 @@ function snks_direct_conversations_list_for_therapist( $therapist_user_id, $limi
 	global $wpdb;
 	$t = snks_direct_conversations_tables();
 
-	return $wpdb->get_results(
+	$list = $wpdb->get_results(
 		$wpdb->prepare(
 			"SELECT c.*, m.body AS last_body, m.created_at AS last_at, m.sender_type AS last_sender_type,
 				u.display_name AS patient_name
@@ -687,6 +792,14 @@ function snks_direct_conversations_list_for_therapist( $therapist_user_id, $limi
 			(int) $limit
 		)
 	);
+	foreach ( $list as $row ) {
+		if ( isset( $row->patient_user_id ) ) {
+			$row->patient_avatar_url = snks_direct_conversations_user_avatar_url( (int) $row->patient_user_id );
+		} else {
+			$row->patient_avatar_url = '';
+		}
+	}
+	return $list;
 }
 
 /**
@@ -729,7 +842,15 @@ function snks_direct_conversations_recent_booked_patients_for_therapist( $therap
 		$limit
 	);
 
-	return $wpdb->get_results( $sql );
+	$rows = $wpdb->get_results( $sql );
+	foreach ( $rows as $row ) {
+		if ( isset( $row->patient_user_id ) ) {
+			$row->patient_avatar_url = snks_direct_conversations_user_avatar_url( (int) $row->patient_user_id );
+		} else {
+			$row->patient_avatar_url = '';
+		}
+	}
+	return $rows;
 }
 
 /**

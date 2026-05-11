@@ -78,8 +78,20 @@ function snks_ajax_snks_direct_conv_thread() {
 	if ( ! $cid ) {
 		wp_send_json_error( array( 'message' => 'Missing conversation_id' ), 400 );
 	}
-	$list = snks_direct_conversations_thread_messages( $cid, get_current_user_id(), 200, 0 );
-	wp_send_json_success( array( 'messages' => $list ) );
+	$uid  = get_current_user_id();
+	$list = snks_direct_conversations_thread_messages( $cid, $uid, 200, 0 );
+	global $wpdb;
+	$t    = snks_direct_conversations_tables();
+	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $cid ) );
+	$cp   = ( $conv && function_exists( 'snks_direct_conversations_counterparty_for_viewer' ) )
+		? snks_direct_conversations_counterparty_for_viewer( $conv, $uid )
+		: array( 'user_id' => 0, 'name' => '', 'avatar_url' => '' );
+	wp_send_json_success(
+		array(
+			'messages'     => $list,
+			'counterparty' => $cp,
+		)
+	);
 }
 
 add_action( 'wp_ajax_snks_direct_conv_thread_since', 'snks_ajax_snks_direct_conv_thread_since' );
@@ -95,8 +107,20 @@ function snks_ajax_snks_direct_conv_thread_since() {
 	if ( ! $cid ) {
 		wp_send_json_error( array( 'message' => 'Missing conversation_id' ), 400 );
 	}
-	$list = snks_direct_conversations_thread_messages_since( $cid, get_current_user_id(), $since_id, 50 );
-	wp_send_json_success( array( 'messages' => $list ) );
+	$uid  = get_current_user_id();
+	$list = snks_direct_conversations_thread_messages_since( $cid, $uid, $since_id, 50 );
+	global $wpdb;
+	$t    = snks_direct_conversations_tables();
+	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $cid ) );
+	$cp   = ( $conv && function_exists( 'snks_direct_conversations_counterparty_for_viewer' ) )
+		? snks_direct_conversations_counterparty_for_viewer( $conv, $uid )
+		: array( 'user_id' => 0, 'name' => '', 'avatar_url' => '' );
+	wp_send_json_success(
+		array(
+			'messages'     => $list,
+			'counterparty' => $cp,
+		)
+	);
 }
 
 add_action( 'wp_ajax_snks_direct_conv_send', 'snks_ajax_snks_direct_conv_send' );

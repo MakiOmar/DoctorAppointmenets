@@ -71,6 +71,20 @@
               ></div>
             </div>
             
+            <div
+              class="flex-shrink-0 w-9 h-9 rounded-full bg-primary-100 text-primary-800 text-[10px] font-bold flex items-center justify-center overflow-hidden ring-1 ring-primary-200"
+              :class="locale === 'ar' ? 'ml-2' : 'mr-2'"
+            >
+              <img
+                v-if="message.sender_avatar_url && !feedAvatarErrors[message.id]"
+                :src="message.sender_avatar_url"
+                alt=""
+                class="w-full h-full object-cover"
+                @error="markFeedAvatarError(message.id)"
+              />
+              <span v-else>{{ initials(message.sender_name) }}</span>
+            </div>
+
             <!-- Message Content -->
             <div class="flex-1 min-w-0">
               <p class="text-sm text-gray-900">
@@ -238,6 +252,7 @@ export default {
     const showNotifications = ref(false)
     const loading = ref(false)
     const messages = ref([])
+    const feedAvatarErrors = ref({})
     const unreadCount = ref(0)
     const hasMore = ref(false)
     const selectedMessage = ref(null)
@@ -245,6 +260,21 @@ export default {
     const notificationPosition = ref({})
     const notificationIconExists = ref(true)
     
+    const initials = (name) => {
+      const s = (name || '').trim()
+      if (!s) return '?'
+      const parts = s.split(/\s+/).filter(Boolean)
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2)
+      }
+      return s.slice(0, 2).toUpperCase()
+    }
+
+    const markFeedAvatarError = (id) => {
+      if (id == null) return
+      feedAvatarErrors.value = { ...feedAvatarErrors.value, [id]: true }
+    }
+
     const calculatePosition = () => {
       const button = document.querySelector('.relative button')
       if (button) {
@@ -527,8 +557,23 @@ export default {
       }
     }
     
+    const parseServerDate = (value) => {
+      if (!value) return null
+      const raw = String(value).trim()
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) {
+        return new Date(raw.replace(' ', 'T') + 'Z')
+      }
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(raw)) {
+        return new Date(raw + 'Z')
+      }
+      return new Date(raw)
+    }
+
     const formatDate = (dateString) => {
-      const date = new Date(dateString)
+      const date = parseServerDate(dateString)
+      if (!date || Number.isNaN(date.getTime())) {
+        return ''
+      }
       const now = new Date()
       const diffInHours = (now - date) / (1000 * 60 * 60)
       
@@ -606,6 +651,7 @@ export default {
       showNotifications,
       loading,
       messages,
+      feedAvatarErrors,
       unreadCount,
       hasMore,
       selectedMessage,
@@ -619,7 +665,9 @@ export default {
       markAsRead,
       markConversationAsRead,
       formatDate,
-      notificationIconExists
+      notificationIconExists,
+      initials,
+      markFeedAvatarError,
     }
   }
 }

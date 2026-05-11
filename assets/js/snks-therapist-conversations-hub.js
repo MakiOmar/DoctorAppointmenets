@@ -100,9 +100,12 @@
 		);
 		var selectedFiles = [];
 		var $panelHead = $('<div class="snks-dc-hub-panel-head"></div>');
+		var $panelHeadMain = $('<div class="snks-dc-panel-head-main"></div>');
+		var $panelAvatar = $('<div class="snks-dc-panel-avatar" aria-hidden="true"></div>');
 		var $panelTitle = $('<h4 class="snks-dc-thread-title" style="margin:0;"></h4>');
 		var $panelClose = $('<button type="button" class="snks-dc-panel-close">×</button>');
-		$panelHead.append($panelTitle).append($panelClose);
+		$panelHeadMain.append($panelAvatar).append($panelTitle);
+		$panelHead.append($panelHeadMain).append($panelClose);
 		$panel.append($panelHead);
 		$panel.append($msgs);
 		$panel.append($compose);
@@ -125,6 +128,39 @@
 
 		function escapeHtml(value) {
 			return $('<div/>').text(value || '').html();
+		}
+
+		function initialsFromName(name) {
+			var s = (name || '').trim();
+			if (!s) {
+				return '?';
+			}
+			var parts = s.split(/\s+/).filter(Boolean);
+			if (parts.length >= 2) {
+				return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase().slice(0, 2);
+			}
+			return s.substring(0, 2).toUpperCase();
+		}
+
+		function setPanelHeader(title, counterparty, fallbackAvatarUrl) {
+			var name = (counterparty && counterparty.name) ? counterparty.name : '';
+			var display = title || name || (i18n.title || 'الرسائل');
+			$panelTitle.text(display);
+			var url = (counterparty && counterparty.avatar_url) ? counterparty.avatar_url : (fallbackAvatarUrl || '');
+			$panelAvatar.empty();
+			if (url) {
+				$panelAvatar.append(
+					$('<img/>')
+						.attr('src', url)
+						.attr('alt', '')
+						.on('error', function () {
+							$(this).remove();
+							$panelAvatar.text(initialsFromName(display));
+						})
+				);
+			} else {
+				$panelAvatar.text(initialsFromName(display));
+			}
 		}
 
 		function isImageAttachment(att) {
@@ -205,11 +241,28 @@
 				return;
 			}
 			messages.forEach(function (m) {
-				var $it = $('<div class="snks-dc-hub-item"></div>');
-				$it.text((m.sender_name || (i18n.patientFallback || 'مريض')) + ' - ' + (m.message || '').substring(0, 80));
+				var $it = $('<div class="snks-dc-hub-item snks-dc-hub-item-rich"></div>');
+				var $av = $('<div class="snks-dc-hub-item-avatar"></div>');
+				if (m.sender_avatar_url) {
+					$av.append(
+						$('<img/>')
+							.attr('src', m.sender_avatar_url)
+							.attr('alt', '')
+							.on('error', function () {
+								$(this).remove();
+								$av.text(initialsFromName(m.sender_name || ''));
+							})
+					);
+				} else {
+					$av.text(initialsFromName(m.sender_name || ''));
+				}
+				var line = (m.sender_name || (i18n.patientFallback || 'مريض')) + ' - ' + (m.message || '').substring(0, 80);
+				var $txt = $('<div class="snks-dc-hub-item-text"></div>').text(line);
+				$it.append($av).append($txt);
 				$it.data('cid', m.conversation_id);
 				$it.data('mid', m.id);
 				$it.data('title', m.sender_name || (i18n.patientFallback || 'مريض'));
+				$it.data('pavatar', m.sender_avatar_url || '');
 				$it.attr('data-item-type', 'unread');
 				$tabUnreadList.append($it);
 			});
@@ -223,11 +276,27 @@
 			}
 			rows.forEach(function (p) {
 				var name = p.patient_name || (i18n.patientFallback || 'مريض');
-				var $it = $('<div class="snks-dc-hub-item"></div>');
-				$it.text(name);
+				var $it = $('<div class="snks-dc-hub-item snks-dc-hub-item-rich"></div>');
+				var $av = $('<div class="snks-dc-hub-item-avatar"></div>');
+				if (p.patient_avatar_url) {
+					$av.append(
+						$('<img/>')
+							.attr('src', p.patient_avatar_url)
+							.attr('alt', '')
+							.on('error', function () {
+								$(this).remove();
+								$av.text(initialsFromName(name));
+							})
+					);
+				} else {
+					$av.text(initialsFromName(name));
+				}
+				var $txt = $('<div class="snks-dc-hub-item-text"></div>').text(name);
+				$it.append($av).append($txt);
 				$it.data('pid', p.patient_user_id);
 				$it.data('cid', p.conversation_id || 0);
 				$it.data('title', name + ' - ' + (i18n.newConversation || 'محادثة جديدة'));
+				$it.data('pavatar', p.patient_avatar_url || '');
 				$it.attr('data-item-type', 'booked');
 				$tabBookedList.append($it);
 			});
@@ -278,15 +347,36 @@
 			var stickToBottom = isNearBottom($msgs);
 			rows.forEach(function (m) {
 				var mid = parseInt(m.id, 10) || 0;
-				if (mid && $msgs.find('.snks-dc-hub-msg[data-msg-id="' + mid + '"]').length) {
+				if (mid && $msgs.find('.snks-dc-hub-msg-row[data-msg-id="' + mid + '"]').length) {
 					return;
 				}
 				var mine = parseInt(m.sender_user_id, 10) === parseInt(window.snksDcCurrentUserId || 0, 10);
-				var $m = $('<div class="snks-dc-hub-msg"></div>');
-				$m.attr('data-msg-id', mid || '');
-				$m.addClass(mine ? 'snks-out' : 'snks-in');
-				$m.html(renderMessageMarkup(m.message || m.body || '', m.attachments || []));
-				$msgs.append($m);
+				var $row = $('<div class="snks-dc-hub-msg-row"></div>');
+				$row.attr('data-msg-id', mid || '');
+				$row.addClass(mine ? 'snks-mine' : 'snks-theirs');
+				var $av = $('<div class="snks-dc-msg-avatar"></div>');
+				if (m.sender_avatar_url) {
+					$av.append(
+						$('<img/>')
+							.attr('src', m.sender_avatar_url)
+							.attr('alt', '')
+							.on('error', function () {
+								$(this).remove();
+								$av.text(initialsFromName(m.sender_name || ''));
+							})
+					);
+				} else {
+					$av.text(initialsFromName(m.sender_name || ''));
+				}
+				var $bubble = $('<div class="snks-dc-hub-msg"></div>');
+				$bubble.addClass(mine ? 'snks-out' : 'snks-in');
+				$bubble.html(renderMessageMarkup(m.message || m.body || '', m.attachments || []));
+				if (mine) {
+					$row.append($bubble).append($av);
+				} else {
+					$row.append($av).append($bubble);
+				}
+				$msgs.append($row);
 				if (mid > state.lastMessageId) {
 					state.lastMessageId = mid;
 				}
@@ -319,7 +409,7 @@
 				});
 		}
 
-		function loadThread(cid, title, pid) {
+		function loadThread(cid, title, pid, prefetchAvatarUrl) {
 			if (SNKS_DC_DEBUG) {
 				console.log('[SNKS-DC] Load thread', { cid: cid, pid: pid, title: title });
 			}
@@ -327,7 +417,7 @@
 			state.conversationId = parseInt(cid, 10) || 0;
 			state.patientId = parseInt(pid, 10) || 0;
 			state.lastMessageId = 0;
-			$panel.find('.snks-dc-thread-title').text(title || (i18n.newConversation || 'محادثة جديدة'));
+			setPanelHeader(title || (i18n.newConversation || 'محادثة جديدة'), null, prefetchAvatarUrl || '');
 			$panel.show();
 			$msgs.empty();
 			selectedFiles = [];
@@ -340,6 +430,8 @@
 			}
 			post('snks_direct_conv_thread', { conversation_id: state.conversationId }).done(function (res) {
 				if (res && res.success && res.data && res.data.messages) {
+					var cp = res.data.counterparty || null;
+					setPanelHeader(title || (i18n.newConversation || 'محادثة جديدة'), cp, prefetchAvatarUrl || '');
 					appendThreadRows(res.data.messages);
 					if (!res.data.messages.length) {
 						$msgs.html('<div class="snks-dc-empty-history">لا توجد رسائل سابقة. اكتب أول رسالة الآن.</div>');
@@ -395,7 +487,7 @@
 			}
 			if (cid) {
 				$dd.removeClass('snks-open');
-				loadThread(cid, $(this).data('title') || '');
+				loadThread(cid, $(this).data('title') || '', 0, $(this).data('pavatar') || '');
 			}
 		});
 
@@ -409,7 +501,7 @@
 			var cid = parseInt($(this).data('cid'), 10) || 0;
 			var pid = parseInt($(this).data('pid'), 10) || 0;
 			$dd.removeClass('snks-open');
-			loadThread(cid, $(this).data('title') || '', pid);
+			loadThread(cid, $(this).data('title') || '', pid, $(this).data('pavatar') || '');
 		});
 
 		$dd.on('click', '.snks-dc-hub-viewall', function (e) {
@@ -419,10 +511,27 @@
 				$modalList.empty();
 				if (res && res.success && res.data && res.data.conversations) {
 					res.data.conversations.forEach(function (c) {
-						var $row = $('<div class="snks-dc-hub-item"></div>');
-						$row.text((c.patient_name || (i18n.patientFallback || 'مريض')) + ' - ' + (c.last_body || '').substring(0, 60));
+						var pname = c.patient_name || (i18n.patientFallback || 'مريض');
+						var $row = $('<div class="snks-dc-hub-item snks-dc-hub-item-rich"></div>');
+						var $av = $('<div class="snks-dc-hub-item-avatar"></div>');
+						if (c.patient_avatar_url) {
+							$av.append(
+								$('<img/>')
+									.attr('src', c.patient_avatar_url)
+									.attr('alt', '')
+									.on('error', function () {
+										$(this).remove();
+										$av.text(initialsFromName(pname));
+									})
+							);
+						} else {
+							$av.text(initialsFromName(pname));
+						}
+						var line = pname + ' - ' + (c.last_body || '').substring(0, 60);
+						$row.append($av).append($('<div class="snks-dc-hub-item-text"></div>').text(line));
 						$row.data('cid', c.id);
-						$row.data('title', c.patient_name || (i18n.patientFallback || 'مريض'));
+						$row.data('title', pname);
+						$row.data('pavatar', c.patient_avatar_url || '');
 						$modalList.append($row);
 					});
 				}
@@ -443,7 +552,7 @@
 			var cid = parseInt($(this).data('cid'), 10) || 0;
 			if (cid) {
 				$modal.removeClass('snks-open');
-				loadThread(cid, $(this).data('title') || '');
+				loadThread(cid, $(this).data('title') || '', 0, $(this).data('pavatar') || '');
 			}
 		});
 
@@ -569,7 +678,7 @@
 								});
 							}
 							if (state.conversationId) {
-								loadThread(state.conversationId, $panel.find('.snks-dc-thread-title').text(), state.patientId);
+								loadThread(state.conversationId, $panel.find('.snks-dc-thread-title').text(), state.patientId, '');
 							}
 							finishSendSuccess();
 						});
@@ -659,7 +768,7 @@
 		var params = new URLSearchParams(window.location.search);
 		var dc = params.get('snks_dc');
 		if (dc) {
-			loadThread(parseInt(dc, 10), '');
+			loadThread(parseInt(dc, 10), '', 0, '');
 		}
 	}
 

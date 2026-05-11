@@ -34,10 +34,17 @@
                 
                 <!-- Sender Info -->
                 <div class="flex items-center space-x-2">
-                  <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
+                  <div
+                    class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-[10px] font-bold text-primary-800 overflow-hidden shrink-0 ring-1 ring-primary-200"
+                  >
+                    <img
+                      v-if="message.sender_avatar_url && !feedAvatarErrors[message.id]"
+                      :src="message.sender_avatar_url"
+                      alt=""
+                      class="w-full h-full object-cover"
+                      @error="markFeedAvatarError(message.id)"
+                    />
+                    <span v-else>{{ initials(message.sender_name) }}</span>
                   </div>
                   <div>
                     <h3 class="text-sm text-gray-900">
@@ -237,6 +244,7 @@ export default {
     const loading = ref(true)
     const loadingMore = ref(false)
     const messages = ref([])
+    const feedAvatarErrors = ref({})
     const selectedMessage = ref(null)
     const hasMore = ref(true)
     const offset = ref(0)
@@ -288,6 +296,21 @@ export default {
 
     const loadMore = () => {
       loadMessages(true)
+    }
+
+    const initials = (name) => {
+      const s = (name || '').trim()
+      if (!s) return '?'
+      const parts = s.split(/\s+/).filter(Boolean)
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2)
+      }
+      return s.slice(0, 2).toUpperCase()
+    }
+
+    const markFeedAvatarError = (id) => {
+      if (id == null) return
+      feedAvatarErrors.value = { ...feedAvatarErrors.value, [id]: true }
     }
 
     const markConversationAsRead = async (conversationId) => {
@@ -350,8 +373,23 @@ export default {
     }
 
 
+    const parseServerDate = (value) => {
+      if (!value) return null
+      const raw = String(value).trim()
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)) {
+        return new Date(raw.replace(' ', 'T') + 'Z')
+      }
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(raw)) {
+        return new Date(raw + 'Z')
+      }
+      return new Date(raw)
+    }
+
     const formatDate = (dateString) => {
-      const date = new Date(dateString)
+      const date = parseServerDate(dateString)
+      if (!date || Number.isNaN(date.getTime())) {
+        return ''
+      }
       const now = new Date()
       const diffInHours = (now - date) / (1000 * 60 * 60)
 
@@ -400,6 +438,7 @@ export default {
       loading,
       loadingMore,
       messages,
+      feedAvatarErrors,
       selectedMessage,
       hasMore,
       loadMessages,
@@ -409,7 +448,9 @@ export default {
       markAsRead,
       markConversationAsRead,
       formatDate,
-      downloadAttachment
+      downloadAttachment,
+      initials,
+      markFeedAvatarError,
     }
   }
 }

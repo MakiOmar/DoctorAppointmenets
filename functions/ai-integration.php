@@ -7153,7 +7153,15 @@ Best regards,
 				} else {
 					$list = snks_direct_conversations_thread_messages( $cid, (int) $user_id, 200, 0 );
 				}
-				$this->send_success( array( 'messages' => $list ) );
+				$counterparty = function_exists( 'snks_direct_conversations_counterparty_for_viewer' )
+					? snks_direct_conversations_counterparty_for_viewer( $conv, (int) $user_id )
+					: array( 'user_id' => 0, 'name' => '', 'avatar_url' => '' );
+				$this->send_success(
+					array(
+						'messages'     => $list,
+						'counterparty' => $counterparty,
+					)
+				);
 				return;
 			}
 			if ( 'POST' === $method ) {
