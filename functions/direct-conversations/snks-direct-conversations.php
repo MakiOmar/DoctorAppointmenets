@@ -574,7 +574,12 @@ function snks_direct_conversations_resolve_profile_media_url( $raw ) {
 }
 
 /**
- * Avatar URL for a user (therapist application photo, AI profile image meta, then Gravatar).
+ * Avatar URL for a user.
+ *
+ * Therapists (doctor/admin): same application profile_image as AI therapist card
+ * (get_ai_therapist / format_ai_therapist_from_application): approved + show_on_ai_site = 1,
+ * then any approved row; no ai_profile_image so chat never diverges from listing.
+ * Customers: therapist_applications if present, then ai_profile_image meta, then Gravatar.
  *
  * @param int $user_id User ID.
  * @return string
@@ -589,10 +594,42 @@ function snks_direct_conversations_user_avatar_url( $user_id ) {
 		return $cache[ $user_id ];
 	}
 	global $wpdb;
-	$table       = $wpdb->prefix . 'therapist_applications';
+	$table = $wpdb->prefix . 'therapist_applications';
+
+	$is_doctor = snks_direct_conversations_is_doctor_user( $user_id );
+
+	if ( $is_doctor ) {
+		// Same row shape as TherapistCard data from get_ai_therapist / search APIs.
+		$profile_raw = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT profile_image FROM {$table} WHERE user_id = %d AND status = %s AND show_on_ai_site = 1 ORDER BY id DESC LIMIT 1",
+				$user_id,
+				'approved'
+			)
+		);
+		$url = snks_direct_conversations_resolve_profile_media_url( $profile_raw );
+		if ( '' !== $url ) {
+			return $cache[ $user_id ] = $url;
+		}
+		// Approved application photo but not flagged for AI listing (internal / legacy).
+		$profile_raw = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT profile_image FROM {$table} WHERE user_id = %d AND status = %s ORDER BY id DESC LIMIT 1",
+				$user_id,
+				'approved'
+			)
+		);
+		$url = snks_direct_conversations_resolve_profile_media_url( $profile_raw );
+		if ( '' !== $url ) {
+			return $cache[ $user_id ] = $url;
+		}
+		$fallback = get_avatar_url( $user_id, array( 'size' => 128 ) );
+		return $cache[ $user_id ] = $fallback ? $fallback : '';
+	}
+
 	$profile_raw = $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT profile_image FROM {$table} WHERE user_id = %d AND status = %s LIMIT 1",
+			"SELECT profile_image FROM {$table} WHERE user_id = %d AND status = %s ORDER BY id DESC LIMIT 1",
 			$user_id,
 			'approved'
 		)
