@@ -1277,6 +1277,8 @@ export default {
   // Session Messages
   messages: {
     title: 'Session Messages',
+    /** Direct 1:1 thread page header when the partner name is still unknown */
+    directChat: 'Direct conversation',
     subtitle: 'View all messages from your therapists',
     noMessages: 'No messages yet',
     noMessagesDescription: 'You will see messages from your therapists here when they send them.',

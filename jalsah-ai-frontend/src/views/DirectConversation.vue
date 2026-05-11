@@ -15,13 +15,12 @@
           class="h-full w-full object-cover"
           @error="onAvatarError"
         />
-        <span v-else>{{ initials(counterparty.name) }}</span>
+        <span v-else>{{ initials(displayCounterpartyName) }}</span>
       </div>
       <div class="min-w-0 flex-1">
         <h1 class="text-base font-semibold text-primary-900 truncate">
-          {{ counterparty.name || $t('messages.title') }}
+          {{ displayCounterpartyName }}
         </h1>
-        <p class="text-xs text-primary-600/80">{{ $t('messages.title') }}</p>
       </div>
     </header>
 
@@ -170,7 +169,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
@@ -209,6 +208,19 @@ export default {
       const uid = authStore.user?.id || authStore.user?.ID
       return uid && parseInt(m.sender_user_id, 10) === parseInt(uid, 10)
     }
+
+    /** Chat partner display name — never the session-messages hub label. */
+    const displayCounterpartyName = computed(() => {
+      const fromApi = (counterparty.value.name || '').trim()
+      if (fromApi) return fromApi
+      for (const m of thread.value) {
+        if (!isMine(m)) {
+          const sn = (m.sender_name || '').trim()
+          if (sn) return sn
+        }
+      }
+      return t('messages.directChat')
+    })
 
     const initials = (name) => {
       const s = (name || '').trim()
@@ -525,6 +537,7 @@ export default {
       scrollBox,
       fileRef,
       counterparty,
+      displayCounterpartyName,
       isMine,
       send,
       onFile,

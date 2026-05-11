@@ -1285,6 +1285,8 @@ export default {
   // Session Messages
   messages: {
     title: 'رسائل الجلسات',
+    /** عنوان صفحة المحادثة المباشرة عندما لا يتوفر اسم الطرف بعد */
+    directChat: 'محادثة مباشرة',
     subtitle: 'عرض جميع الرسائل من المعالجين',
     noMessages: 'لا توجد رسائل بعد',
     noMessagesDescription: 'ستظهر هنا الرسائل التي يرسلها لك المعالجون',
