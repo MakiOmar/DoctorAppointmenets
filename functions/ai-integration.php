@@ -1216,24 +1216,6 @@ class SNKS_AI_Integration {
 	 * AI Login
 	 */
 	private function ai_login() {
-		// #region agent log
-		$debug_log = function ( $message, $data = array(), $hypothesis_id = 'H1' ) {
-			$payload = array_merge(
-				array(
-					'sessionId'     => '9aa8ea',
-					'timestamp'      => round( microtime( true ) * 1000 ),
-					'location'       => 'ai_login',
-					'message'        => $message,
-					'hypothesisId'   => $hypothesis_id,
-					'runId'          => 'login',
-				),
-				$data
-			);
-			$path = dirname( __DIR__ ) . '/debug-9aa8ea.log';
-			@file_put_contents( $path, wp_json_encode( $payload ) . "\n", FILE_APPEND | LOCK_EX );
-		};
-		// #endregion
-
 		// Verify nonce for security
 		if ( ! $this->verify_api_nonce( 'nonce', 'ai_login_nonce' ) ) {
 
@@ -1250,15 +1232,6 @@ class SNKS_AI_Integration {
 		// Get therapist registration settings to check email requirement
 		$registration_settings = snks_get_therapist_registration_settings();
 
-		// #region agent log
-		$debug_log( 'Login request', array(
-			'request_keys'        => is_array( $data ) ? array_keys( $data ) : array(),
-			'require_email'       => ! empty( $registration_settings['require_email'] ),
-			'has_email_key'       => is_array( $data ) && isset( $data['email'] ),
-			'has_whatsapp_key'    => is_array( $data ) && isset( $data['whatsapp'] ),
-		), 'H1' );
-		// #endregion
-
 		$user         = null;
 		$login_method = '';
 
@@ -1270,15 +1243,6 @@ class SNKS_AI_Integration {
 			}
 			$user         = get_user_by( 'email', sanitize_email( $data['email'] ) );
 			$login_method = 'email';
-			// #region agent log
-			if ( ! $user && ! empty( $data['email'] ) ) {
-				$by_login = get_user_by( 'login', sanitize_text_field( $data['email'] ) );
-				$debug_log( 'Email lookup failed; tried username fallback', array(
-					'user_found_by_login' => (bool) $by_login,
-					'login_method'         => $login_method,
-				), 'H1' );
-			}
-			// #endregion
 		} else {
 			// WhatsApp login is used
 			if ( ! isset( $data['whatsapp'] ) ) {
@@ -1314,48 +1278,21 @@ class SNKS_AI_Integration {
 			$login_method = 'whatsapp';
 		}
 
-		// #region agent log
-		$debug_log( 'After user lookup', array(
-			'user_found'   => (bool) $user,
-			'user_id'      => $user ? $user->ID : null,
-			'login_method' => $login_method,
-		), 'H1' );
-		// #endregion
-
 		if ( ! $user ) {
-			// #region agent log
-			$debug_log( 'Error branch', array( 'error_branch' => 'user_not_found' ), 'H1' );
-			// #endregion
 			$this->send_error( 'Invalid credentials', 401 );
 		}
 
 		$password_ok = wp_check_password( $data['password'], $user->user_pass );
-		// #region agent log
-		$debug_log( 'Password check', array( 'password_ok' => $password_ok ), 'H2' );
-		// #endregion
 
 		if ( ! $password_ok ) {
 
-			// #region agent log
-			$debug_log( 'Error branch', array( 'error_branch' => 'password_fail' ), 'H2' );
-			// #endregion
 			$this->send_error( 'Invalid credentials', 401 );
 		}
-
-		// #region agent log
-		$debug_log( 'Before role check', array(
-			'user_roles'   => $user->roles,
-			'roles_type'   => gettype( $user->roles ),
-		), 'H3' );
-		// #endregion
 
 		// Check if user has one of the allowed roles for the AI frontend
 		// Allow: patients, doctors, clinic managers, administrators, and secretaries
 		$allowed_roles = array( 'customer', 'doctor', 'clinic_manager', 'administrator', 'secretary' );
 		if ( ! array_intersect( $allowed_roles, $user->roles ) ) {
-			// #region agent log
-			$debug_log( 'Error branch', array( 'error_branch' => 'role_denied' ), 'H3' );
-			// #endregion
 			$this->send_error( 'Access denied. Only authorized users can access this platform.', 403 );
 		}
 
