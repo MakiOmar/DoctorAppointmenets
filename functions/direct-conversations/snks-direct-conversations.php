@@ -852,6 +852,7 @@ function snks_direct_conversations_thread_messages_since( $conversation_id, $use
 
 /**
  * List conversations for therapist with last message preview.
+ * Patient label prefers first_name/last_name and billing name meta so phone logins do not dominate the modal.
  *
  * @param int $therapist_user_id Therapist ID.
  * @param int $limit             Max rows.
@@ -864,13 +865,22 @@ function snks_direct_conversations_list_for_therapist( $therapist_user_id, $limi
 	$list = $wpdb->get_results(
 		$wpdb->prepare(
 			"SELECT c.*, m.body AS last_body, m.created_at AS last_at, m.sender_type AS last_sender_type,
-				u.display_name AS patient_name
+				CASE
+					WHEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, '')) != ' ' THEN TRIM(CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, '')))
+					WHEN CONCAT(COALESCE(bfn.meta_value, ''), ' ', COALESCE(bln.meta_value, '')) != ' ' THEN TRIM(CONCAT(COALESCE(bfn.meta_value, ''), ' ', COALESCE(bln.meta_value, '')))
+					WHEN u.display_name != '' THEN u.display_name
+					ELSE u.user_login
+				END AS patient_name
 			FROM {$t['conv']} c
 			LEFT JOIN (
 				SELECT conversation_id, MAX(id) AS mid FROM {$t['msg']} GROUP BY conversation_id
 			) latest ON latest.conversation_id = c.id
 			LEFT JOIN {$t['msg']} m ON m.id = latest.mid
 			LEFT JOIN {$wpdb->users} u ON u.ID = c.patient_user_id
+			LEFT JOIN {$wpdb->usermeta} fn ON fn.user_id = c.patient_user_id AND fn.meta_key = 'first_name'
+			LEFT JOIN {$wpdb->usermeta} ln ON ln.user_id = c.patient_user_id AND ln.meta_key = 'last_name'
+			LEFT JOIN {$wpdb->usermeta} bfn ON bfn.user_id = c.patient_user_id AND bfn.meta_key = 'billing_first_name'
+			LEFT JOIN {$wpdb->usermeta} bln ON bln.user_id = c.patient_user_id AND bln.meta_key = 'billing_last_name'
 			WHERE c.therapist_user_id = %d
 			ORDER BY COALESCE(m.created_at, c.updated_at) DESC
 			LIMIT %d",
