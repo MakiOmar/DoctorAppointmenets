@@ -1295,7 +1295,9 @@ export default {
     typeHere: 'Type your message…',
     send: 'Send',
     attach: 'Attach File',
-    dropzoneHint: 'Click to select a file'
+    dropzoneHint: 'Click to select a file',
+    uploading: 'Uploading…',
+    sendingMessage: 'Sending…'
   },
 
   // Appointment Change Terms

@@ -653,9 +653,37 @@
 			}
 
 			var $sendBtn = $compose.find('.snks-dc-open-compose');
-			$sendBtn.prop('disabled', true).addClass('is-sending').html('<span class="snks-dc-btn-spinner"></span><span>جاري الإرسال...</span>');
+			$sendBtn.prop('disabled', true).addClass('is-sending').html(
+				'<span class="snks-dc-btn-spinner"></span><span class="snks-dc-send-status">' + (i18n.send || 'إرسال') + '</span>'
+			);
+
+			var $progWrap = null;
+
+			function hideUploadProgress() {
+				if (!$progWrap || !$progWrap.length) {
+					return;
+				}
+				$progWrap.hide();
+				$progWrap.find('.snks-dc-upload-progress-fill').css('width', '0%');
+				$progWrap.find('.snks-dc-upload-progress-label').text('');
+			}
+
+			function setUploadProgress(percent) {
+				if (!$progWrap || !$progWrap.length) {
+					return;
+				}
+				var p = Math.max(0, Math.min(100, Math.round(percent)));
+				var base = i18n.uploading || 'جاري الرفع';
+				$progWrap.show();
+				$progWrap.find('.snks-dc-upload-progress-label').text(base + ' ' + p + '%');
+				$progWrap.find('.snks-dc-upload-progress-fill').css('width', p + '%');
+				if ($sendBtn.find('.snks-dc-send-status').length) {
+					$sendBtn.find('.snks-dc-send-status').text(p + '%');
+				}
+			}
 
 			function finishSendSuccess() {
+				hideUploadProgress();
 				$compose.find('.snks-dc-inline-message').val('');
 				$compose.find('.snks-dc-inline-file').val('');
 				selectedFiles = [];
@@ -673,6 +701,7 @@
 			}
 
 			function sendMessageWithAttachments(attachmentIds) {
+				$sendBtn.html('<span class="snks-dc-btn-spinner"></span><span class="snks-dc-send-status">' + (i18n.sendingMessage || 'جاري الإرسال…') + '</span>');
 				post('snks_direct_conv_send', {
 					conversation_id: state.conversationId,
 					patient_user_id: state.patientId,
@@ -707,6 +736,7 @@
 						finishSendSuccess();
 					}
 				}).fail(function () {
+					hideUploadProgress();
 					$sendBtn.prop('disabled', false).removeClass('is-sending').text(i18n.send || 'إرسال');
 					if (window.Swal) {
 						window.Swal.fire({
@@ -724,12 +754,22 @@
 				return;
 			}
 
+			$progWrap = $compose.find('.snks-dc-upload-progress-wrap');
+			if (!$progWrap.length) {
+				$progWrap = $('<div class="snks-dc-upload-progress-wrap" style="display:none;"></div>');
+				$progWrap.append('<div class="snks-dc-upload-progress-label"></div>');
+				$progWrap.append('<div class="snks-dc-upload-progress-bar"><div class="snks-dc-upload-progress-fill"></div></div>');
+				$compose.find('.snks-dc-open-compose').before($progWrap);
+			}
 			var attachmentIds = [];
+			var nFiles = selectedFiles.length || 1;
 			function uploadNext(index) {
 				if (index >= selectedFiles.length) {
+					hideUploadProgress();
 					sendMessageWithAttachments(attachmentIds);
 					return;
 				}
+				setUploadProgress((index / nFiles) * 100);
 				var up = new FormData();
 				up.append('action', 'snks_direct_conv_upload');
 				up.append('nonce', snksDirectConvHub.nonce);
@@ -741,12 +781,26 @@
 					processData: false,
 					contentType: false,
 					dataType: 'json',
+					xhr: function () {
+						var xhr = new window.XMLHttpRequest();
+						xhr.upload.addEventListener('progress', function (ev) {
+							if (!ev.lengthComputable || !ev.total) {
+								return;
+							}
+							var fileFrac = ev.loaded / ev.total;
+							var overall = ((index + fileFrac) / nFiles) * 100;
+							setUploadProgress(overall);
+						});
+						return xhr;
+					},
 				}).done(function (r) {
 					if (r && r.success && r.data && r.data.id) {
 						attachmentIds.push(r.data.id);
 					}
+					setUploadProgress(((index + 1) / nFiles) * 100);
 					uploadNext(index + 1);
 				}).fail(function () {
+					hideUploadProgress();
 					$sendBtn.prop('disabled', false).removeClass('is-sending').text(i18n.send || 'إرسال');
 					if (window.Swal) {
 						window.Swal.fire({

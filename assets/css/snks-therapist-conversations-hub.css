@@ -83,7 +83,7 @@
 	background: #fff;
 	border-bottom: 1px solid #e5e7eb;
 }
-.snks-dc-tab {
+button.snks-dc-tab {
 	flex: 1;
 	padding: 10px 8px;
 	border: 1px solid #e5e7eb;
@@ -95,7 +95,7 @@
 	font-weight: 700;
 	font-size: 13px;
 }
-.snks-dc-tab.is-active {
+button.snks-dc-tab.is-active {
 	background: #112145;
 	color: #fff;
 	border-color: #112145;
@@ -442,6 +442,29 @@
 }
 @keyframes snks-dc-spin {
 	to { transform: rotate(360deg); }
+}
+.snks-dc-upload-progress-wrap {
+	margin-bottom: 10px;
+}
+.snks-dc-upload-progress-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #112145;
+	margin-bottom: 6px;
+	text-align: right;
+}
+.snks-dc-upload-progress-bar {
+	height: 8px;
+	border-radius: 4px;
+	background: #e5e7eb;
+	overflow: hidden;
+}
+.snks-dc-upload-progress-fill {
+	height: 100%;
+	width: 0%;
+	background: #112145;
+	border-radius: 4px;
+	transition: width 0.12s ease-out;
 }
 .snks-dc-hub-compose textarea {
 	width: 100%;

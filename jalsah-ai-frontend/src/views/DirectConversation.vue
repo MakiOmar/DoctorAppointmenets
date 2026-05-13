@@ -130,6 +130,19 @@
             ×
           </button>
         </div>
+        <!-- Upload progress (large files) -->
+        <div v-if="uploadPercent !== null" class="mb-2 rounded-lg border border-primary-200 bg-white px-3 py-2">
+          <div class="flex justify-between text-xs text-primary-800 mb-1">
+            <span>{{ $t('messages.uploading') }}</span>
+            <span class="tabular-nums font-semibold">{{ uploadPercent }}%</span>
+          </div>
+          <div class="h-2 rounded-full bg-primary-100 overflow-hidden" role="progressbar" :aria-valuenow="uploadPercent" aria-valuemin="0" aria-valuemax="100">
+            <div
+              class="h-full rounded-full bg-primary-600 transition-[width] duration-150 ease-out"
+              :style="{ width: uploadPercent + '%' }"
+            />
+          </div>
+        </div>
         <div class="flex items-end gap-2 rounded-2xl border border-primary-200 bg-white px-2 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-primary-300 focus-within:border-primary-300">
           <button
             type="button"
@@ -149,11 +162,13 @@
           />
           <button
             type="button"
-            class="shrink-0 h-9 px-3 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 disabled:opacity-50"
+            class="shrink-0 h-9 px-3 rounded-full bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 disabled:opacity-50 min-w-[4.5rem]"
             :disabled="sending"
             @click="send"
           >
-            {{ $t('messages.send') }}
+            <template v-if="sending && uploadPercent !== null">{{ uploadPercent }}%</template>
+            <template v-else-if="sending">{{ $t('messages.sendingMessage') }}</template>
+            <template v-else>{{ $t('messages.send') }}</template>
           </button>
         </div>
       </div>
@@ -200,6 +215,8 @@ export default {
     const counterparty = ref({ user_id: 0, name: '', avatar_url: '' })
     const headerAvatarFailed = ref(false)
     const brokenMsgAvatars = ref({})
+    /** null = idle; 0–100 while multipart upload is in progress */
+    const uploadPercent = ref(null)
     let pollTimer = null
 
     const conversationId = () => parseInt(route.params.id, 10)
@@ -475,14 +492,27 @@ export default {
       const id = conversationId()
       if (!id) return
       sending.value = true
+      uploadPercent.value = null
       try {
         let attachmentIds = []
         if (pendingFile.value) {
+          uploadPercent.value = 0
           const fd = new FormData()
           fd.append('file', pendingFile.value)
           const up = await api.post('/api/ai/direct-conversations/upload', fd, {
             headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 0,
+            onUploadProgress: (ev) => {
+              const total = ev.total
+              if (total && total > 0) {
+                uploadPercent.value = Math.min(100, Math.round((ev.loaded * 100) / total))
+              } else if (ev.loaded > 0) {
+                const cur = uploadPercent.value ?? 0
+                uploadPercent.value = Math.min(95, cur < 5 ? 5 : cur + 3)
+              }
+            },
           })
+          uploadPercent.value = null
           if (up.data.success && up.data.data?.id) {
             attachmentIds = [up.data.data.id]
           }
@@ -508,6 +538,7 @@ export default {
       } catch (e) {
         console.error(e)
       } finally {
+        uploadPercent.value = null
         sending.value = false
       }
     }
@@ -533,6 +564,7 @@ export default {
       thread,
       loading,
       sending,
+      uploadPercent,
       draft,
       scrollBox,
       fileRef,

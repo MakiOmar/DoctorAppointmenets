@@ -57,6 +57,8 @@ function snks_therapist_conversations_hub_maybe_enqueue_assets() {
 				'unreadTab'          => __( 'غير المقروءة', 'anony-shrinks' ),
 				'newConversation'    => __( 'محادثة جديدة', 'anony-shrinks' ),
 				'patientFallback'    => __( 'مريض', 'anony-shrinks' ),
+				'uploading'          => __( 'جاري الرفع', 'anony-shrinks' ),
+				'sendingMessage'     => __( 'جاري الإرسال…', 'anony-shrinks' ),
 			),
 		)
 	);

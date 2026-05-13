@@ -1303,7 +1303,9 @@ export default {
     typeHere: 'اكتب رسالتك…',
     send: 'إرسال',
     attach: 'إرفاق ملف',
-    dropzoneHint: 'اضغط لاختيار ملف'
+    dropzoneHint: 'اضغط لاختيار ملف',
+    uploading: 'جاري الرفع…',
+    sendingMessage: 'جاري الإرسال…'
   },
 
   // Appointment Change Terms
