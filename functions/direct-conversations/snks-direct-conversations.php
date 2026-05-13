@@ -93,13 +93,12 @@ function snks_direct_conversations_get_summary_days() {
 }
 
 /**
- * Max upload bytes.
+ * Max upload bytes. 0 = no size limit (WordPress / server limits still apply).
  *
  * @return int
  */
 function snks_direct_conversations_get_max_upload_bytes() {
-	$n = (int) get_option( 'snks_direct_conv_max_upload_bytes', 5242880 );
-	return max( 1024, $n );
+	return max( 0, (int) get_option( 'snks_direct_conv_max_upload_bytes', 0 ) );
 }
 
 /**
@@ -139,9 +138,11 @@ function snks_direct_conversations_validate_attachments( $attachment_ids ) {
 		if ( $allowed && ! in_array( $mime, $allowed, true ) ) {
 			return new WP_Error( 'mime_not_allowed', 'File type not allowed' );
 		}
-		$path = get_attached_file( $aid );
-		if ( $path && file_exists( $path ) && filesize( $path ) > $max ) {
-			return new WP_Error( 'file_too_large', 'File exceeds maximum size' );
+		if ( $max > 0 ) {
+			$path = get_attached_file( $aid );
+			if ( $path && file_exists( $path ) && filesize( $path ) > $max ) {
+				return new WP_Error( 'file_too_large', 'File exceeds maximum size' );
+			}
 		}
 	}
 	return true;

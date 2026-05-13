@@ -241,7 +241,7 @@ function snks_direct_conversations_settings_page() {
 
 	if ( isset( $_POST['snks_dc_settings_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['snks_dc_settings_nonce'] ) ), 'snks_dc_settings' ) ) {
 		update_option( 'snks_conversation_unread_summary_days', max( 1, min( 365, absint( $_POST['snks_conversation_unread_summary_days'] ?? 3 ) ) ) );
-		update_option( 'snks_direct_conv_max_upload_bytes', max( 1024, absint( $_POST['snks_direct_conv_max_upload_bytes'] ?? 5242880 ) ) );
+		update_option( 'snks_direct_conv_max_upload_bytes', max( 0, absint( $_POST['snks_direct_conv_max_upload_bytes'] ?? 0 ) ) );
 		update_option( 'snks_direct_conv_allowed_mimes', sanitize_text_field( wp_unslash( $_POST['snks_direct_conv_allowed_mimes'] ?? '' ) ) );
 		update_option( 'snks_direct_conv_digest_hour', max( 0, min( 23, absint( $_POST['snks_direct_conv_digest_hour'] ?? 20 ) ) ) );
 		update_option( 'snks_jalsah_ai_frontend_url', esc_url_raw( wp_unslash( $_POST['snks_jalsah_ai_frontend_url'] ?? '' ) ) );
@@ -253,7 +253,7 @@ function snks_direct_conversations_settings_page() {
 	}
 
 	$days   = (int) get_option( 'snks_conversation_unread_summary_days', 3 );
-	$maxb   = (int) get_option( 'snks_direct_conv_max_upload_bytes', 5242880 );
+	$maxb   = (int) get_option( 'snks_direct_conv_max_upload_bytes', 0 );
 	$mimes  = (string) get_option( 'snks_direct_conv_allowed_mimes', 'image/jpeg,image/png,image/gif,application/pdf' );
 	$hour   = (int) get_option( 'snks_direct_conv_digest_hour', 20 );
 	$appurl = (string) get_option( 'snks_jalsah_ai_frontend_url', '' );
@@ -280,7 +280,10 @@ function snks_direct_conversations_settings_page() {
 				</tr>
 				<tr>
 					<th scope="row"><label for="snks_direct_conv_max_upload_bytes"><?php esc_html_e( 'Max attachment size (bytes)', 'anony-shrinks' ); ?></label></th>
-					<td><input name="snks_direct_conv_max_upload_bytes" id="snks_direct_conv_max_upload_bytes" type="number" min="1024" value="<?php echo esc_attr( (string) $maxb ); ?>" class="regular-text" /></td>
+					<td>
+						<input name="snks_direct_conv_max_upload_bytes" id="snks_direct_conv_max_upload_bytes" type="number" min="0" step="1" value="<?php echo esc_attr( (string) $maxb ); ?>" class="regular-text" />
+						<p class="description"><?php esc_html_e( 'Use 0 for no plugin-side size limit (host and PHP upload_max_filesize still apply).', 'anony-shrinks' ); ?></p>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="snks_direct_conv_allowed_mimes"><?php esc_html_e( 'Allowed MIME types (comma-separated)', 'anony-shrinks' ); ?></label></th>

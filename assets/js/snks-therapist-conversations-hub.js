@@ -64,13 +64,12 @@
 		};
 
 		var $bar = $('<div class="snks-dc-hub-bar"></div>');
-		var $bell = $(
-			'<button type="button" class="snks-dc-hub-bell snks-dc-read" aria-label="' +
-				(i18n.title || 'الرسائل') +
-				'" title="' +
-				(i18n.title || 'الرسائل') +
-				'">&#128276;</button>'
-		);
+		var $bell = $('<button type="button" class="snks-dc-hub-bell snks-dc-read"></button>');
+		var $bellIcon = $('<span class="snks-dc-hub-bell-icon" aria-hidden="true">&#128276;</span>');
+		var $bellCount = $('<span class="snks-dc-hub-bell-count" hidden></span>');
+		$bell.append($bellIcon).append($bellCount);
+		$bell.attr('aria-label', i18n.title || 'الرسائل');
+		$bell.attr('title', i18n.title || 'الرسائل');
 		var $dd = $('<div class="snks-dc-hub-dropdown"></div>');
 		var $tabs = $('<div class="snks-dc-tabs"></div>');
 		var $tabBooked = $('<button type="button" class="snks-dc-tab is-active" data-tab="booked"></button>').text(i18n.bookedPatientsTab || 'قائمة المرضى');
@@ -191,11 +190,19 @@
 		}
 
 		function setBadge(unread) {
+			var n = parseInt(unread, 10) || 0;
+			var base = i18n.title || 'الرسائل';
 			$bell.removeClass('snks-dc-unread snks-dc-read');
-			if (unread > 0) {
+			if (n > 0) {
 				$bell.addClass('snks-dc-unread');
+				$bellCount.text(n > 99 ? '99+' : String(n)).removeAttr('hidden');
+				$bell.attr('aria-label', base + ' (' + n + ')');
+				$bell.attr('title', base + ' (' + n + ')');
 			} else {
 				$bell.addClass('snks-dc-read');
+				$bellCount.attr('hidden', 'hidden').text('');
+				$bell.attr('aria-label', base);
+				$bell.attr('title', base);
 			}
 		}
 
@@ -445,6 +452,14 @@
 						});
 					}
 				}
+				if (state.conversationId) {
+					post('snks_direct_conv_mark_conversation_read', { conversation_id: state.conversationId }).always(function () {
+						refreshBadge();
+						if ($dd.hasClass('snks-open')) {
+							loadDropdown();
+						}
+					});
+				}
 				startThreadPoller();
 			}).fail(function (err) {
 				console.error('[SNKS-DC] Thread load failed', err);
@@ -481,10 +496,6 @@
 				});
 			}
 			var cid = parseInt($(this).data('cid'), 10) || 0;
-			var mid = parseInt($(this).data('mid'), 10) || 0;
-			if (mid) {
-				post('snks_direct_conv_mark_read', { message_id: mid }).done(refreshBadge);
-			}
 			if (cid) {
 				$dd.removeClass('snks-open');
 				loadThread(cid, $(this).data('title') || '', 0, $(this).data('pavatar') || '');

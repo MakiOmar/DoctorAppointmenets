@@ -168,6 +168,29 @@ function snks_ajax_snks_direct_conv_mark_read() {
 	wp_send_json_success( array( 'ok' => true ) );
 }
 
+add_action( 'wp_ajax_snks_direct_conv_mark_conversation_read', 'snks_ajax_snks_direct_conv_mark_conversation_read' );
+/**
+ * Mark all messages in a conversation as read for the current therapist (shortcode hub).
+ *
+ * @return void
+ */
+function snks_ajax_snks_direct_conv_mark_conversation_read() {
+	snks_direct_conv_ajax_guard();
+	$cid = isset( $_POST['conversation_id'] ) ? absint( $_POST['conversation_id'] ) : 0;
+	if ( ! $cid ) {
+		wp_send_json_error( array( 'message' => 'Missing conversation_id' ), 400 );
+	}
+	$uid = get_current_user_id();
+	global $wpdb;
+	$t    = snks_direct_conversations_tables();
+	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $cid ) );
+	if ( ! $conv || (int) $conv->therapist_user_id !== (int) $uid ) {
+		wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+	}
+	$marked = snks_direct_conversations_mark_conversation_read( $cid, (int) $uid );
+	wp_send_json_success( array( 'marked_count' => (int) $marked ) );
+}
+
 add_action( 'wp_ajax_snks_direct_conv_upload', 'snks_ajax_snks_direct_conv_upload' );
 function snks_ajax_snks_direct_conv_upload() {
 	snks_direct_conv_ajax_guard();
@@ -179,7 +202,7 @@ function snks_ajax_snks_direct_conv_upload() {
 		wp_send_json_error( array( 'message' => 'Upload error' ), 400 );
 	}
 	$max = snks_direct_conversations_get_max_upload_bytes();
-	if ( ! empty( $file['size'] ) && (int) $file['size'] > $max ) {
+	if ( $max > 0 && ! empty( $file['size'] ) && (int) $file['size'] > $max ) {
 		wp_send_json_error( array( 'message' => 'File too large' ), 400 );
 	}
 	$allowed = snks_direct_conversations_get_allowed_mimes();

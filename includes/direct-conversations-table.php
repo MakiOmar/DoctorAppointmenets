@@ -85,7 +85,7 @@ function snks_direct_conversations_register_defaults() {
 		add_option( 'snks_conversation_unread_summary_days', 3 );
 	}
 	if ( false === get_option( 'snks_direct_conv_max_upload_bytes', false ) ) {
-		add_option( 'snks_direct_conv_max_upload_bytes', 5242880 );
+		add_option( 'snks_direct_conv_max_upload_bytes', 0 );
 	}
 	if ( false === get_option( 'snks_direct_conv_allowed_mimes', false ) ) {
 		add_option( 'snks_direct_conv_allowed_mimes', 'image/jpeg,image/png,image/gif,application/pdf' );

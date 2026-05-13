@@ -20,19 +20,42 @@
 	border-radius: 50%;
 	border: 1px solid #ccc;
 	border-style: solid!important;
-	background: transparent!important;
+	background: #fff!important;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 20px;
 }
+.snks-dc-hub-bell-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+.snks-dc-hub-bell-count {
+	position: absolute;
+	inset-inline-start: -2px;
+	inset-block-start: -5px;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 4px;
+	border-radius: 9px;
+	background: #112145;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 18px;
+	text-align: center;
+	box-sizing: border-box;
+	pointer-events: none;
+}
 .snks-dc-hub-bell.snks-dc-unread {
-	border-color: #2e7d32;
-	box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.25);
+	border-color: #112145;
+	box-shadow: 0 0 0 2px rgba(17, 33, 69, 0.2);
 }
 .snks-dc-hub-bell.snks-dc-read {
-	border-color: #c62828;
+	border-color: #c6ccd4;
 }
 .snks-dc-hub-dropdown {
 	display: none;
@@ -55,21 +78,27 @@
 }
 .snks-dc-tabs {
 	display: flex;
-	border-bottom: 1px solid #eee;
+	gap: 6px;
+	padding: 8px 8px 0;
+	background: #fff;
+	border-bottom: 1px solid #e5e7eb;
 }
 .snks-dc-tab {
 	flex: 1;
 	padding: 10px 8px;
-	border: none;
-	background: #f7f7f7;
+	border: 1px solid #e5e7eb;
+	border-bottom: none;
+	border-radius: 8px 8px 0 0;
+	background: #fff;
+	color: #112145;
 	cursor: pointer;
 	font-weight: 700;
 	font-size: 13px;
 }
 .snks-dc-tab.is-active {
-	background: #fff;
-	color: #112145;
-	border-bottom: 2px solid #112145;
+	background: #112145;
+	color: #fff;
+	border-color: #112145;
 }
 .snks-dc-tab-content {
 	max-height: 250px;

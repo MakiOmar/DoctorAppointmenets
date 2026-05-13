@@ -6946,7 +6946,7 @@ Best regards,
 			}
 			$file = $_FILES['file'];
 			$max  = snks_direct_conversations_get_max_upload_bytes();
-			if ( ! empty( $file['size'] ) && (int) $file['size'] > $max ) {
+			if ( $max > 0 && ! empty( $file['size'] ) && (int) $file['size'] > $max ) {
 				$this->send_error( 'File too large', 400 );
 				return;
 			}
