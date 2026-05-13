@@ -252,6 +252,26 @@ function snks_direct_conversations_settings_page() {
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'anony-shrinks' ) . '</p></div>';
 	}
 
+	if ( isset( $_POST['snks_dc_clear_messaging_test'] ) && isset( $_POST['snks_dc_clear_messaging_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['snks_dc_clear_messaging_nonce'] ) ), 'snks_dc_clear_messaging_test' ) ) {
+		if ( ! function_exists( 'snks_direct_conversations_admin_clear_messaging_test_flags' ) && defined( 'SNKS_DIR' ) ) {
+			require_once SNKS_DIR . 'functions/direct-conversations/snks-direct-conversations.php';
+		}
+		if ( function_exists( 'snks_direct_conversations_admin_clear_messaging_test_flags' ) ) {
+			$r = snks_direct_conversations_admin_clear_messaging_test_flags();
+			echo '<div class="notice notice-warning is-dismissible"><p>';
+			echo esc_html(
+				sprintf(
+					/* translators: 1: deleted in-app rows, 2: direct DM rows marked read, 3: session message rows marked read */
+					__( 'Messaging test flags cleared. Removed %1$d direct-chat in-app notification row(s); marked %2$d direct message(s) and %3$d session message(s) as read.', 'anony-shrinks' ),
+					(int) $r['deleted_ai_notifications'],
+					(int) $r['direct_messages_marked_read'],
+					(int) $r['session_messages_marked_read']
+				)
+			);
+			echo '</p></div>';
+		}
+	}
+
 	$days   = (int) get_option( 'snks_conversation_unread_summary_days', 3 );
 	$maxb   = (int) get_option( 'snks_direct_conv_max_upload_bytes', 0 );
 	$mimes  = (string) get_option( 'snks_direct_conv_allowed_mimes', 'image/jpeg,image/png,image/gif,application/pdf' );
@@ -351,6 +371,20 @@ function snks_direct_conversations_settings_page() {
 		</p>
 		<!-- Test result feedback (shown after Send test) -->
 		<div id="snks_dc_wa_test_result" class="notice" style="display: none; max-width: 720px; padding: 8px 12px;"></div>
+
+		<hr />
+
+		<h2><?php esc_html_e( 'Testing: clear messaging notification flags', 'anony-shrinks' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Removes in-app notifications for direct chat (new conversation + daily digest), marks every direct-conversation message as read, and marks every therapist–patient session inbox message as read. Use only on staging or when you intentionally want a clean slate; this affects all users.', 'anony-shrinks' ); ?>
+		</p>
+		<form method="post" onsubmit="return window.confirm(<?php echo wp_json_encode( __( 'Clear all messaging notification flags and unread state for every user? This cannot be undone.', 'anony-shrinks' ) ); ?>);">
+			<?php wp_nonce_field( 'snks_dc_clear_messaging_test', 'snks_dc_clear_messaging_nonce' ); ?>
+			<input type="hidden" name="snks_dc_clear_messaging_test" value="1" />
+			<p>
+				<button type="submit" class="button button-secondary"><?php esc_html_e( 'Clear messaging test flags', 'anony-shrinks' ); ?></button>
+			</p>
+		</form>
 	</div>
 	<?php
 }

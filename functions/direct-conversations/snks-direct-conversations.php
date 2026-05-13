@@ -1083,3 +1083,61 @@ function snks_direct_conversations_schedule_digest_cron() {
 
 add_action( 'snks_direct_conversations_daily_digest', 'snks_direct_conversations_run_daily_digest' );
 add_action( 'init', 'snks_direct_conversations_schedule_digest_cron', 30 );
+
+/**
+ * Clear messaging-related test state (admin only): in-app notifications for direct chat,
+ * unread flags on direct messages, and unread flags on therapist–patient session messages.
+ *
+ * @return array{deleted_ai_notifications:int,direct_messages_marked_read:int,session_messages_marked_read:int}
+ */
+function snks_direct_conversations_admin_clear_messaging_test_flags() {
+	global $wpdb;
+
+	$out = array(
+		'deleted_ai_notifications'       => 0,
+		'direct_messages_marked_read'   => 0,
+		'session_messages_marked_read'   => 0,
+	);
+
+	$notif = $wpdb->prefix . 'snks_ai_notifications';
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $notif ) ) === $notif ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from prefix.
+		$out['deleted_ai_notifications'] = (int) $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$notif} WHERE type IN (%s, %s)",
+				SNKS_DIRECT_CONV_NOTIF_STARTED,
+				SNKS_DIRECT_CONV_NOTIF_DIGEST
+			)
+		);
+	}
+
+	$t      = snks_direct_conversations_tables();
+	$dc_msg = $t['msg'];
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $dc_msg ) ) === $dc_msg ) {
+		$now = current_time( 'mysql' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from prefix.
+		$out['direct_messages_marked_read'] = (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$dc_msg} SET is_read = 1, read_at = %s WHERE is_read = 0",
+				$now
+			)
+		);
+	}
+
+	$sess = $wpdb->prefix . 'snks_session_messages';
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $sess ) ) === $sess ) {
+		$now = current_time( 'mysql' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from prefix.
+		$out['session_messages_marked_read'] = (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$sess} SET is_read = 1, read_at = %s WHERE is_read = 0",
+				$now
+			)
+		);
+	}
+
+	return $out;
+}
