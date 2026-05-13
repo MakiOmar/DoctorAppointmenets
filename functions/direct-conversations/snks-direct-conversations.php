@@ -551,6 +551,54 @@ function snks_direct_conversations_inbox_feed_latest_per_conversation( $user_id,
 }
 
 /**
+ * Latest unread message per conversation for the recipient (therapist hub unread tab).
+ * One row per patient/thread so the list does not repeat the same sender.
+ *
+ * @param int $user_id Recipient (therapist) user ID.
+ * @param int $limit   Max conversations to return.
+ * @param int $offset  Offset.
+ * @return array<int,object>
+ */
+function snks_direct_conversations_inbox_unread_latest_per_conversation( $user_id, $limit = 10, $offset = 0 ) {
+	global $wpdb;
+	$t      = snks_direct_conversations_tables();
+	$locale = function_exists( 'snks_get_current_language' ) ? snks_get_current_language() : 'ar';
+
+	$sql = $wpdb->prepare(
+		"SELECT m.id, m.conversation_id, m.body AS message, m.attachment_ids, m.is_read, m.created_at, m.sender_user_id, m.sender_type,
+			CASE
+				WHEN m.sender_type = 'therapist' AND ta.id IS NOT NULL THEN
+					CASE WHEN %s = 'ar' AND ta.name IS NOT NULL AND ta.name != '' THEN ta.name
+						WHEN %s = 'en' AND ta.name_en IS NOT NULL AND ta.name_en != '' THEN ta.name_en
+						ELSE ta.name END
+				WHEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, '')) != ' ' THEN CONCAT(COALESCE(fn.meta_value, ''), ' ', COALESCE(ln.meta_value, ''))
+				WHEN u.display_name != '' THEN u.display_name
+				ELSE u.user_login
+			END AS sender_name
+		FROM {$t['msg']} m
+		INNER JOIN (
+			SELECT m1.conversation_id, MAX(m1.id) AS latest_id
+			FROM {$t['msg']} m1
+			WHERE m1.recipient_user_id = %d AND m1.is_read = 0
+			GROUP BY m1.conversation_id
+		) latest ON latest.latest_id = m.id
+		LEFT JOIN {$wpdb->users} u ON u.ID = m.sender_user_id
+		LEFT JOIN {$wpdb->prefix}therapist_applications ta ON ta.user_id = m.sender_user_id AND ta.status = 'approved'
+		LEFT JOIN {$wpdb->usermeta} fn ON fn.user_id = m.sender_user_id AND fn.meta_key = 'first_name'
+		LEFT JOIN {$wpdb->usermeta} ln ON ln.user_id = m.sender_user_id AND ln.meta_key = 'last_name'
+		ORDER BY m.created_at DESC
+		LIMIT %d OFFSET %d",
+		$locale,
+		$locale,
+		(int) $user_id,
+		(int) $limit,
+		(int) $offset
+	);
+
+	return $wpdb->get_results( $sql );
+}
+
+/**
  * Turn stored profile image value (attachment ID or absolute URL) into a public URL.
  *
  * @param mixed $raw Meta or column value.

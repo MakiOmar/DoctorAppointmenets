@@ -42,7 +42,7 @@ function snks_ajax_snks_direct_conv_recent() {
 	snks_direct_conv_ajax_guard();
 	$uid   = get_current_user_id();
 	$limit = isset( $_POST['limit'] ) ? min( 20, max( 1, absint( $_POST['limit'] ) ) ) : 10;
-	$rows  = snks_direct_conversations_inbox_feed( $uid, $limit, 0 );
+	$rows  = snks_direct_conversations_inbox_unread_latest_per_conversation( $uid, $limit, 0 );
 	foreach ( $rows as $m ) {
 		snks_direct_conversations_format_message_row( $m );
 	}
