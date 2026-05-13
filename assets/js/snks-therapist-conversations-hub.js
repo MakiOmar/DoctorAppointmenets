@@ -453,12 +453,11 @@
 					}
 				}
 				if (state.conversationId) {
-					post('snks_direct_conv_mark_conversation_read', { conversation_id: state.conversationId }).always(function () {
-						refreshBadge();
-						if ($dd.hasClass('snks-open')) {
-							loadDropdown();
-						}
-					});
+					// Mark-as-read runs on the server in snks_direct_conv_thread; refresh badge so the bell count matches the DB.
+					refreshBadge();
+					if ($dd.hasClass('snks-open')) {
+						loadDropdown();
+					}
 				}
 				startThreadPoller();
 			}).fail(function (err) {

@@ -78,11 +78,16 @@ function snks_ajax_snks_direct_conv_thread() {
 	if ( ! $cid ) {
 		wp_send_json_error( array( 'message' => 'Missing conversation_id' ), 400 );
 	}
-	$uid  = get_current_user_id();
-	$list = snks_direct_conversations_thread_messages( $cid, $uid, 200, 0 );
+	$uid = get_current_user_id();
 	global $wpdb;
 	$t    = snks_direct_conversations_tables();
 	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $cid ) );
+	$is_participant = $conv && ( (int) $conv->therapist_user_id === (int) $uid || (int) $conv->patient_user_id === (int) $uid );
+	// Opening the thread implies the inbox was read; keep DB in sync even if a follow-up mark AJAX fails.
+	if ( $is_participant ) {
+		snks_direct_conversations_mark_conversation_read( $cid, (int) $uid );
+	}
+	$list = snks_direct_conversations_thread_messages( $cid, $uid, 200, 0 );
 	$cp   = ( $conv && function_exists( 'snks_direct_conversations_counterparty_for_viewer' ) )
 		? snks_direct_conversations_counterparty_for_viewer( $conv, $uid )
 		: array( 'user_id' => 0, 'name' => '', 'avatar_url' => '' );
@@ -170,7 +175,8 @@ function snks_ajax_snks_direct_conv_mark_read() {
 
 add_action( 'wp_ajax_snks_direct_conv_mark_conversation_read', 'snks_ajax_snks_direct_conv_mark_conversation_read' );
 /**
- * Mark all messages in a conversation as read for the current therapist (shortcode hub).
+ * Mark all messages in a conversation as read for the current user (shortcode hub).
+ * Must match thread access: any participant; only rows with recipient_user_id = viewer are updated.
  *
  * @return void
  */
@@ -184,7 +190,7 @@ function snks_ajax_snks_direct_conv_mark_conversation_read() {
 	global $wpdb;
 	$t    = snks_direct_conversations_tables();
 	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $cid ) );
-	if ( ! $conv || (int) $conv->therapist_user_id !== (int) $uid ) {
+	if ( ! $conv || ( (int) $conv->therapist_user_id !== (int) $uid && (int) $conv->patient_user_id !== (int) $uid ) ) {
 		wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
 	}
 	$marked = snks_direct_conversations_mark_conversation_read( $cid, (int) $uid );
