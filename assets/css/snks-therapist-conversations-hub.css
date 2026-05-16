@@ -70,8 +70,11 @@
 	border: 1px solid #ddd;
 	border-radius: 8px;
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-	max-height: 320px;
+	min-height: auto;
 	overflow-y: auto;
+}
+button.snks-dc-close{
+	font-family: initial!important;
 }
 .snks-dc-hub-dropdown.snks-open {
 	display: block;
