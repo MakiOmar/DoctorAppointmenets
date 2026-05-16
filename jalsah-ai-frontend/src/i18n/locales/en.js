@@ -1301,6 +1301,18 @@ export default {
     sendingMessage: 'Sending…'
   },
 
+  dcAccess: {
+    title: 'Open your conversation',
+    subtitle: 'Enter the access code from your WhatsApp message to continue.',
+    passwordLabel: 'Access code',
+    passwordPlaceholder: '6-digit code',
+    openChat: 'Open conversation',
+    opening: 'Opening…',
+    invalidCode: 'Invalid or expired access code.',
+    success: 'Welcome back. Opening your conversation…',
+    hint: 'The code was sent with your therapist message notification. Conversations are only available after you sign in.'
+  },
+
   // Appointment Change Terms
   appointmentChangeTerms: 'Appointment Change Terms'
 } 

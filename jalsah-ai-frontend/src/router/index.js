@@ -105,6 +105,12 @@ const routes = [
     meta: { requiresAuth: true, roles: ['customer'] }
   },
   {
+    path: '/dc-access/:token',
+    name: 'DirectConversationAccess',
+    component: () => import('@/views/DirectConversationAccess.vue'),
+    meta: { guest: true, skipGuestRedirect: true }
+  },
+  {
     path: '/direct-conversations/:id',
     name: 'DirectConversation',
     component: () => import('@/views/DirectConversation.vue'),
@@ -221,7 +227,7 @@ router.beforeEach((to, from, next) => {
   }
   
   // Check if user is already authenticated and trying to access guest pages
-  if (to.meta.guest && authStore.isAuthenticated) {
+  if (to.meta.guest && !to.meta.skipGuestRedirect && authStore.isAuthenticated) {
     // Redirect based on user role
     const userRole = authStore.user?.role || 'customer' // Default to customer if role is undefined
     if (userRole === 'doctor' || userRole === 'clinic_manager') {

@@ -135,6 +135,7 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/session-messages/(\d+)/read/?$', 'index.php?ai_endpoint=session-messages/$matches[1]/read', 'top' );
 		add_rewrite_rule( '^api/ai/session-messages/?$', 'index.php?ai_endpoint=session-messages', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/message/(\d+)/read/?$', 'index.php?ai_endpoint=direct-conversations/message/$matches[1]/read', 'top' );
+		add_rewrite_rule( '^api/ai/direct-conversations/guest-enter/?$', 'index.php?ai_endpoint=direct-conversations/guest-enter', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/(\d+)/read/?$', 'index.php?ai_endpoint=direct-conversations/$matches[1]/read', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/upload/?$', 'index.php?ai_endpoint=direct-conversations/upload', 'top' );
 		add_rewrite_rule( '^api/ai/direct-conversations/feed/?$', 'index.php?ai_endpoint=direct-conversations/feed', 'top' );
@@ -6917,19 +6918,25 @@ Best regards,
 	 * @return void
 	 */
 	private function handle_direct_conversations_endpoint( $method, $path ) {
-		$user_id = $this->verify_jwt_token();
 		if ( ! function_exists( 'snks_direct_conversations_is_doctor_user' ) ) {
 			$this->send_error( 'Service unavailable', 503 );
 			return;
 		}
-		$is_doc = snks_direct_conversations_is_doctor_user( (int) $user_id );
-		$is_pat = snks_direct_conversations_is_customer_user( (int) $user_id );
+
+		$sub = isset( $path[1] ) ? $path[1] : '';
+
+		if ( 'guest-enter' === $sub && 'POST' === $method ) {
+			$this->handle_direct_conversations_guest_enter();
+			return;
+		}
+
+		$user_id = $this->verify_jwt_token();
+		$is_doc  = snks_direct_conversations_is_doctor_user( (int) $user_id );
+		$is_pat  = snks_direct_conversations_is_customer_user( (int) $user_id );
 		if ( ! $is_doc && ! $is_pat ) {
 			$this->send_error( 'Forbidden', 403 );
 			return;
 		}
-
-		$sub = isset( $path[1] ) ? $path[1] : '';
 
 		if ( 'upload' === $sub && 'POST' === $method ) {
 			if ( empty( $_FILES['file'] ) ) {
@@ -7117,6 +7124,75 @@ Best regards,
 		}
 
 		$this->send_error( 'Invalid direct-conversations endpoint', 404 );
+	}
+
+	/**
+	 * Guest entry: verify conversation access password, issue JWT for patient, return conversation id.
+	 * No prior login required.
+	 *
+	 * @return void
+	 */
+	private function handle_direct_conversations_guest_enter() {
+		$data = json_decode( (string) file_get_contents( 'php://input' ), true );
+		if ( ! is_array( $data ) ) {
+			$this->send_error( 'Invalid JSON', 400 );
+			return;
+		}
+
+		$token    = isset( $data['token'] ) ? sanitize_text_field( wp_unslash( $data['token'] ) ) : '';
+		$password = isset( $data['password'] ) ? (string) $data['password'] : '';
+		if ( '' === $token || '' === $password ) {
+			$this->send_error( 'Token and password required', 400 );
+			return;
+		}
+
+		if ( ! function_exists( 'snks_direct_conversations_verify_guest_password' ) ) {
+			$this->send_error( 'Service unavailable', 503 );
+			return;
+		}
+
+		$conv = snks_direct_conversations_verify_guest_password( $token, $password );
+		if ( ! $conv ) {
+			$this->send_error( 'Invalid access code', 403 );
+			return;
+		}
+
+		$patient_id = (int) $conv->patient_user_id;
+		$user       = get_userdata( $patient_id );
+		if ( ! $user || ! snks_direct_conversations_is_customer_user( $patient_id ) ) {
+			$this->send_error( 'Forbidden', 403 );
+			return;
+		}
+
+		if ( self::is_ai_patient( $patient_id ) ) {
+			$is_verified = get_user_meta( $patient_id, 'ai_email_verified', true );
+			if ( '1' !== (string) $is_verified ) {
+				$this->send_error( 'Account not verified', 403 );
+				return;
+			}
+		}
+
+		$auth_token = $this->generate_jwt_token( $patient_id );
+		$user_data  = array(
+			'id'         => $patient_id,
+			'email'      => $user->user_email,
+			'first_name' => get_user_meta( $patient_id, 'billing_first_name', true ),
+			'last_name'  => get_user_meta( $patient_id, 'billing_last_name', true ),
+			'role'       => $user->roles[0] ?? 'customer',
+			'roles'      => $user->roles,
+		);
+		$whatsapp   = get_user_meta( $patient_id, 'billing_whatsapp', true );
+		if ( $whatsapp ) {
+			$user_data['whatsapp'] = $whatsapp;
+		}
+
+		$this->send_success(
+			array(
+				'token'           => $auth_token,
+				'user'            => $user_data,
+				'conversation_id' => (int) $conv->id,
+			)
+		);
 	}
 
 	/**

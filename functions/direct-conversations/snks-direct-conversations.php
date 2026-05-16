@@ -32,7 +32,7 @@ function snks_dc_wa_tpl_patient_first() {
 }
 
 /**
- * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}}.
+ * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}} + {{enter}}.
  *
  * @return string
  */
@@ -195,18 +195,165 @@ function snks_direct_conversations_get_or_create( $therapist_user_id, $patient_u
  * @param int $conversation_id Conversation ID.
  * @return string
  */
-function snks_direct_conversations_patient_app_link( $conversation_id ) {
+function snks_direct_conversations_patient_app_base_url() {
 	$base = (string) get_option( 'snks_jalsah_ai_frontend_url', '' );
 	if ( '' === $base ) {
 		$base = trailingslashit( home_url( '/' ) );
 	} else {
 		$base = trailingslashit( $base );
 	}
-	$cid = (int) $conversation_id;
+	return $base;
+}
+
+/**
+ * Build deep link for Jalsah AI SPA (patient).
+ *
+ * @param int $conversation_id Conversation ID.
+ * @return string
+ */
+function snks_direct_conversations_patient_app_link( $conversation_id ) {
+	$base = snks_direct_conversations_patient_app_base_url();
+	$cid  = (int) $conversation_id;
 	if ( $cid > 0 ) {
 		return $base . 'direct-conversations/' . $cid;
 	}
 	return $base . 'notifications';
+}
+
+/**
+ * Password-protected guest entry URL (public_token only; no conversation id in path).
+ *
+ * @param string $public_token Conversation public token.
+ * @return string
+ */
+function snks_direct_conversations_guest_entry_link( $public_token ) {
+	$token = sanitize_text_field( (string) $public_token );
+	if ( '' === $token ) {
+		return snks_direct_conversations_patient_app_link( 0 );
+	}
+	return snks_direct_conversations_patient_app_base_url() . 'dc-access/' . rawurlencode( $token );
+}
+
+/**
+ * Load conversation by public token.
+ *
+ * @param string $public_token Token from guest URL.
+ * @return object|null
+ */
+function snks_direct_conversations_get_by_public_token( $public_token ) {
+	global $wpdb;
+	$t     = snks_direct_conversations_tables();
+	$token = sanitize_text_field( (string) $public_token );
+	if ( '' === $token ) {
+		return null;
+	}
+	return $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$t['conv']} WHERE public_token = %s LIMIT 1",
+			$token
+		)
+	);
+}
+
+/**
+ * Generate a new numeric guest access password and store its hash on the conversation.
+ *
+ * @param int $conversation_id Conversation ID.
+ * @return string Plain password for WhatsApp {{enter}} (empty on failure).
+ */
+function snks_direct_conversations_rotate_guest_password( $conversation_id ) {
+	global $wpdb;
+	$t = snks_direct_conversations_tables();
+	$conversation_id = (int) $conversation_id;
+	if ( $conversation_id <= 0 ) {
+		return '';
+	}
+
+	$plain = (string) wp_rand( 100000, 999999 );
+	$hash  = wp_hash_password( $plain );
+
+	$updated = $wpdb->update(
+		$t['conv'],
+		array( 'guest_password_hash' => $hash ),
+		array( 'id' => $conversation_id ),
+		array( '%s' ),
+		array( '%d' )
+	);
+
+	return $updated !== false ? $plain : '';
+}
+
+/**
+ * Verify guest password for a conversation public token.
+ *
+ * @param string $public_token Public token from URL.
+ * @param string $password     Password from user / WhatsApp.
+ * @return object|null Conversation row when valid; null otherwise.
+ */
+function snks_direct_conversations_verify_guest_password( $public_token, $password ) {
+	$conv = snks_direct_conversations_get_by_public_token( $public_token );
+	if ( ! $conv || empty( $conv->guest_password_hash ) ) {
+		return null;
+	}
+	$password = (string) $password;
+	if ( '' === $password ) {
+		return null;
+	}
+	if ( ! wp_check_password( $password, $conv->guest_password_hash ) ) {
+		return null;
+	}
+	return $conv;
+}
+
+/**
+ * Conversation used for patient digest WhatsApp (oldest unread past digest threshold).
+ *
+ * @param int $patient_user_id Patient user ID.
+ * @return object|null
+ */
+function snks_direct_conversations_digest_wa_conversation_for_patient( $patient_user_id ) {
+	global $wpdb;
+	$t    = snks_direct_conversations_tables();
+	$days = snks_direct_conversations_get_summary_days();
+
+	return $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT c.* FROM {$t['conv']} c
+			INNER JOIN {$t['msg']} m ON m.conversation_id = c.id
+			WHERE c.patient_user_id = %d
+				AND m.recipient_user_id = %d
+				AND m.is_read = 0
+				AND m.created_at <= ( NOW() - INTERVAL %d DAY )
+			ORDER BY m.created_at ASC
+			LIMIT 1",
+			(int) $patient_user_id,
+			(int) $patient_user_id,
+			$days
+		)
+	);
+}
+
+/**
+ * Build chat_pt2 WhatsApp body parameters: hashed entry link + access password.
+ *
+ * @param int $patient_user_id Patient user ID.
+ * @return array{chat_link:string,enter:string}|null Null when no qualifying conversation.
+ */
+function snks_direct_conversations_patient_digest_whatsapp_params( $patient_user_id ) {
+	$conv = snks_direct_conversations_digest_wa_conversation_for_patient( $patient_user_id );
+	if ( ! $conv || empty( $conv->public_token ) ) {
+		return null;
+	}
+
+	$enter = snks_direct_conversations_rotate_guest_password( (int) $conv->id );
+	if ( '' === $enter ) {
+		return null;
+	}
+
+	return array(
+		'chat_link' => snks_direct_conversations_guest_entry_link( $conv->public_token ),
+		'enter'     => $enter,
+	);
 }
 
 /**
@@ -1041,11 +1188,14 @@ function snks_direct_conversations_run_daily_digest() {
 		} else {
 			$tpl = snks_dc_wa_tpl_patient_digest();
 			if ( '' !== $tpl ) {
-				$params = array( 'chat_link' => $link );
+				$params = snks_direct_conversations_patient_digest_whatsapp_params( $uid );
+				if ( ! $params ) {
+					$tpl = '';
+				}
 			}
 		}
 
-		if ( '' !== $tpl ) {
+		if ( '' !== $tpl && ! empty( $params ) ) {
 			snks_send_whatsapp_template_message( $phone, $tpl, $params );
 		}
 	}

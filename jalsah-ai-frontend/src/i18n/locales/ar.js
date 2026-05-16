@@ -1309,6 +1309,18 @@ export default {
     sendingMessage: 'جاري الإرسال…'
   },
 
+  dcAccess: {
+    title: 'فتح المحادثة',
+    subtitle: 'أدخل رمز الدخول المرسل في رسالة الواتساب للمتابعة.',
+    passwordLabel: 'رمز الدخول',
+    passwordPlaceholder: 'رمز من 6 أرقام',
+    openChat: 'فتح المحادثة',
+    opening: 'جاري الفتح…',
+    invalidCode: 'رمز الدخول غير صحيح أو منتهي.',
+    success: 'تم تسجيل الدخول. جاري فتح المحادثة…',
+    hint: 'يُرسل الرمز مع إشعار رسالة المعالج. المحادثات متاحة فقط بعد تسجيل الدخول.'
+  },
+
   // Appointment Change Terms
   appointmentChangeTerms: 'شروط تغيير الموعد'
 } 
