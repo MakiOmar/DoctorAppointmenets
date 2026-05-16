@@ -241,6 +241,16 @@
 			$tabContent.find('.snks-dc-tab-panel[data-panel="' + state.activeTab + '"]').addClass('is-active');
 		}
 
+		function patientDisplayLabel(row, nameKey) {
+			var name = nameKey && row[nameKey] ? String(row[nameKey]).trim() : '';
+			var digits = name.replace(/\D/g, '');
+			if (name && !(digits.length >= 8 && digits.length >= name.length * 0.7)) {
+				return name;
+			}
+			var pid = parseInt(row.patient_user_id || row.sender_user_id, 10) || 0;
+			return pid ? 'patient-' + pid : (i18n.patientFallback || 'مريض');
+		}
+
 		function renderUnreadList(messages) {
 			$tabUnreadList.empty();
 			if (!messages.length) {
@@ -248,6 +258,7 @@
 				return;
 			}
 			messages.forEach(function (m) {
+				var senderName = patientDisplayLabel(m, 'sender_name');
 				var $it = $('<div class="snks-dc-hub-item snks-dc-hub-item-rich"></div>');
 				var $av = $('<div class="snks-dc-hub-item-avatar"></div>');
 				if (m.sender_avatar_url) {
@@ -257,18 +268,18 @@
 							.attr('alt', '')
 							.on('error', function () {
 								$(this).remove();
-								$av.text(initialsFromName(m.sender_name || ''));
+								$av.text(initialsFromName(senderName));
 							})
 					);
 				} else {
-					$av.text(initialsFromName(m.sender_name || ''));
+					$av.text(initialsFromName(senderName));
 				}
-				var line = (m.sender_name || (i18n.patientFallback || 'مريض')) + ' - ' + (m.message || '').substring(0, 80);
+				var line = senderName + ' - ' + (m.message || '').substring(0, 80);
 				var $txt = $('<div class="snks-dc-hub-item-text"></div>').text(line);
 				$it.append($av).append($txt);
 				$it.data('cid', m.conversation_id);
 				$it.data('mid', m.id);
-				$it.data('title', m.sender_name || (i18n.patientFallback || 'مريض'));
+				$it.data('title', senderName);
 				$it.data('pavatar', m.sender_avatar_url || '');
 				$it.attr('data-item-type', 'unread');
 				$tabUnreadList.append($it);
@@ -282,7 +293,7 @@
 				return;
 			}
 			rows.forEach(function (p) {
-				var name = p.patient_name || (i18n.patientFallback || 'مريض');
+				var name = patientDisplayLabel(p, 'patient_name');
 				var $it = $('<div class="snks-dc-hub-item snks-dc-hub-item-rich"></div>');
 				var $av = $('<div class="snks-dc-hub-item-avatar"></div>');
 				if (p.patient_avatar_url) {
@@ -521,7 +532,7 @@
 				$modalList.empty();
 				if (res && res.success && res.data && res.data.conversations) {
 					res.data.conversations.forEach(function (c) {
-						var pname = c.patient_name || (i18n.patientFallback || 'مريض');
+						var pname = patientDisplayLabel(c, 'patient_name');
 						var $row = $('<div class="snks-dc-hub-item snks-dc-hub-item-rich"></div>');
 						var $av = $('<div class="snks-dc-hub-item-avatar"></div>');
 						if (c.patient_avatar_url) {

@@ -69,6 +69,59 @@ function snks_direct_conversations_is_doctor_user( $user_id ) {
 }
 
 /**
+ * Whether a string is mostly digits (phone / WhatsApp login).
+ *
+ * @param string $value Raw label.
+ * @return bool
+ */
+function snks_direct_conversations_string_looks_like_phone( $value ) {
+	$value = trim( (string) $value );
+	if ( '' === $value ) {
+		return false;
+	}
+	$digits = preg_replace( '/\D+/', '', $value );
+	return strlen( $digits ) >= 8 && strlen( $digits ) >= ( strlen( $value ) * 0.7 );
+}
+
+/**
+ * Display name for a patient in therapist hub / lists (never raw phone as label).
+ *
+ * @param int $user_id Patient user ID.
+ * @return string Name, or patient-{id} when no real name is stored.
+ */
+function snks_direct_conversations_patient_display_name( $user_id ) {
+	$user_id = (int) $user_id;
+	if ( $user_id <= 0 ) {
+		return 'patient-0';
+	}
+
+	$candidates = array(
+		trim( (string) get_user_meta( $user_id, 'first_name', true ) . ' ' . (string) get_user_meta( $user_id, 'last_name', true ) ),
+		trim( (string) get_user_meta( $user_id, 'billing_first_name', true ) . ' ' . (string) get_user_meta( $user_id, 'billing_last_name', true ) ),
+	);
+
+	foreach ( $candidates as $full ) {
+		if ( '' !== $full && ! snks_direct_conversations_string_looks_like_phone( $full ) ) {
+			return $full;
+		}
+	}
+
+	$user = get_userdata( $user_id );
+	if ( $user ) {
+		$display = trim( (string) $user->display_name );
+		if ( '' !== $display && ! snks_direct_conversations_string_looks_like_phone( $display ) ) {
+			return $display;
+		}
+		$login = trim( (string) $user->user_login );
+		if ( '' !== $login && ! snks_direct_conversations_string_looks_like_phone( $login ) ) {
+			return $login;
+		}
+	}
+
+	return 'patient-' . $user_id;
+}
+
+/**
  * User has customer role (patient in WooCommerce sense).
  *
  * @param int $user_id User ID.
@@ -899,12 +952,16 @@ function snks_direct_conversations_counterparty_for_viewer( $conv, $viewer_user_
 		$name = snks_get_therapist_name( $other );
 	}
 	if ( '' === $name ) {
-		$u = get_userdata( $other );
-		if ( $u ) {
-			$fn   = (string) get_user_meta( $other, 'first_name', true );
-			$ln   = (string) get_user_meta( $other, 'last_name', true );
-			$full = trim( $fn . ' ' . $ln );
-			$name = '' !== $full ? $full : ( $u->display_name ? $u->display_name : $u->user_login );
+		if ( snks_direct_conversations_is_customer_user( $other ) ) {
+			$name = snks_direct_conversations_patient_display_name( $other );
+		} else {
+			$u = get_userdata( $other );
+			if ( $u ) {
+				$fn   = (string) get_user_meta( $other, 'first_name', true );
+				$ln   = (string) get_user_meta( $other, 'last_name', true );
+				$full = trim( $fn . ' ' . $ln );
+				$name = '' !== $full ? $full : ( $u->display_name ? $u->display_name : $u->user_login );
+			}
 		}
 	}
 	return array(
@@ -945,7 +1002,14 @@ function snks_direct_conversations_format_message_row( $message ) {
 	}
 	$message->conversation_id = (int) $message->conversation_id;
 	if ( isset( $message->sender_user_id ) ) {
-		$message->sender_avatar_url = snks_direct_conversations_user_avatar_url( (int) $message->sender_user_id );
+		$sid = (int) $message->sender_user_id;
+		$message->sender_avatar_url = snks_direct_conversations_user_avatar_url( $sid );
+		$stype = isset( $message->sender_type ) ? (string) $message->sender_type : '';
+		if ( 'patient' === $stype || ( $sid > 0 && snks_direct_conversations_is_customer_user( $sid ) ) ) {
+			$message->sender_name = snks_direct_conversations_patient_display_name( $sid );
+		} elseif ( isset( $message->sender_name ) && snks_direct_conversations_string_looks_like_phone( $message->sender_name ) && $sid > 0 ) {
+			$message->sender_name = snks_direct_conversations_patient_display_name( $sid );
+		}
 	} else {
 		$message->sender_avatar_url = '';
 	}
@@ -1069,7 +1133,9 @@ function snks_direct_conversations_list_for_therapist( $therapist_user_id, $limi
 	);
 	foreach ( $list as $row ) {
 		if ( isset( $row->patient_user_id ) ) {
-			$row->patient_avatar_url = snks_direct_conversations_user_avatar_url( (int) $row->patient_user_id );
+			$pid = (int) $row->patient_user_id;
+			$row->patient_name       = snks_direct_conversations_patient_display_name( $pid );
+			$row->patient_avatar_url = snks_direct_conversations_user_avatar_url( $pid );
 		} else {
 			$row->patient_avatar_url = '';
 		}
@@ -1120,7 +1186,9 @@ function snks_direct_conversations_recent_booked_patients_for_therapist( $therap
 	$rows = $wpdb->get_results( $sql );
 	foreach ( $rows as $row ) {
 		if ( isset( $row->patient_user_id ) ) {
-			$row->patient_avatar_url = snks_direct_conversations_user_avatar_url( (int) $row->patient_user_id );
+			$pid = (int) $row->patient_user_id;
+			$row->patient_name       = snks_direct_conversations_patient_display_name( $pid );
+			$row->patient_avatar_url = snks_direct_conversations_user_avatar_url( $pid );
 		} else {
 			$row->patient_avatar_url = '';
 		}
