@@ -6,6 +6,12 @@ const MAX_RETRIES = 3
 const RETRY_DELAY = 1000 // 1 second base delay
 const RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504] // Status codes to retry
 
+// POST mutations that must not retry (avoid duplicate registrations / side effects)
+const NO_RETRY_URL_PATTERNS = [
+  '/api/ai/auth/register',
+  '/api/ai/auth',
+]
+
 // Helper function for exponential backoff delay
 const getRetryDelay = (retryCount) => {
   return RETRY_DELAY * Math.pow(2, retryCount) // 1s, 2s, 4s
@@ -13,6 +19,18 @@ const getRetryDelay = (retryCount) => {
 
 // Sleep helper
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const shouldSkipRetry = (config) => {
+  if (config?.skipRetry) {
+    return true
+  }
+  const method = (config?.method || 'get').toLowerCase()
+  if (method !== 'post') {
+    return false
+  }
+  const url = config?.url || ''
+  return NO_RETRY_URL_PATTERNS.some((pattern) => url.includes(pattern))
+}
 
 // Determine the base URL based on environment
 const getBaseURL = () => {
@@ -79,8 +97,9 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
-    const config = error.config
+    const config = error.config || {}
     const toast = useToast()
+    const skipToast = Boolean(config.skipGlobalErrorToast)
     
     // Initialize retry count if not exists
     if (!config.__retryCount) {
@@ -89,6 +108,7 @@ api.interceptors.response.use(
     
     // Determine if we should retry this request
     const shouldRetry = 
+      !shouldSkipRetry(config) &&
       config.__retryCount < MAX_RETRIES &&
       (
         // Retry on network errors (no response)
@@ -130,85 +150,84 @@ api.interceptors.response.use(
       errorCode: error.code
     })
     
-    // Handle 401 Unauthorized errors
-    if (error.response?.status === 401) {
-      // Check if this is a verification error (not a session expired error)
-      const errorMessage = error.response?.data?.error || ''
-      const isVerificationError = errorMessage.includes('verify') || 
-                                 errorMessage.includes('verification') ||
-                                 errorMessage.includes('تحقق') ||
-                                 errorMessage.includes('التحقق')
-      
-      if (!isVerificationError) {
-        console.log('401 Unauthorized - User session expired or invalid')
-        // Clear all user data
-        localStorage.removeItem('jalsah_token')
-        localStorage.removeItem('jalsah_user')
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-        localStorage.removeItem('lastDiagnosisId')
-        sessionStorage.clear()
+    if (!skipToast) {
+      // Handle 401 Unauthorized errors
+      if (error.response?.status === 401) {
+        // Check if this is a verification error (not a session expired error)
+        const errorMessage = error.response?.data?.error || ''
+        const isVerificationError = errorMessage.includes('verify') || 
+                                   errorMessage.includes('verification') ||
+                                   errorMessage.includes('تحقق') ||
+                                   errorMessage.includes('التحقق')
         
-        // Remove authorization header
-        delete api.defaults.headers.common['Authorization']
-        
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login'
+        if (!isVerificationError) {
+          console.log('401 Unauthorized - User session expired or invalid')
+          // Clear all user data
+          localStorage.removeItem('jalsah_token')
+          localStorage.removeItem('jalsah_user')
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+          localStorage.removeItem('lastDiagnosisId')
+          sessionStorage.clear()
+          
+          // Remove authorization header
+          delete api.defaults.headers.common['Authorization']
+          
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login'
+          }
+          toast.error('Your session has expired. Please log in again.')
         }
-        toast.error('Your session has expired. Please log in again.')
+        // For verification errors, don't show toast - let the auth store handle it
       }
-      // For verification errors, don't show toast - let the auth store handle it
-    }
-    // Handle 404 errors on user-related endpoints (user deleted)
-    else if (error.response?.status === 404) {
-      const url = config?.url || ''
-      console.log('404 error on URL:', url)
-      // Check if it's a user-related endpoint
-      if (url.includes('/api/ai/profile') || 
-          url.includes('/api/ai/user') || 
-          url.includes('/api/ai/auth')) {
-        console.log('404 User Not Found - User may have been deleted')
-        // Clear all user data
-        localStorage.removeItem('jalsah_token')
-        localStorage.removeItem('jalsah_user')
-        localStorage.removeItem('user')
-        localStorage.removeItem('token')
-        localStorage.removeItem('lastDiagnosisId')
-        sessionStorage.clear()
-        
-        // Remove authorization header
-        delete api.defaults.headers.common['Authorization']
-        
-        // Redirect to login page
-        window.location.href = '/login'
-        
-        // Show user-friendly message
-        toast.error('Your account is no longer available. Please contact support.')
-        return Promise.reject(error)
+      // Handle 404 errors on user-related endpoints (user deleted)
+      else if (error.response?.status === 404) {
+        const url = config?.url || ''
+        console.log('404 error on URL:', url)
+        // Check if it's a user-related endpoint
+        if (url.includes('/api/ai/profile') || 
+            url.includes('/api/ai/user') || 
+            url.includes('/api/ai/auth')) {
+          console.log('404 User Not Found - User may have been deleted')
+          // Clear all user data
+          localStorage.removeItem('jalsah_token')
+          localStorage.removeItem('jalsah_user')
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+          localStorage.removeItem('lastDiagnosisId')
+          sessionStorage.clear()
+          
+          // Remove authorization header
+          delete api.defaults.headers.common['Authorization']
+          
+          // Redirect to login page
+          window.location.href = '/login'
+          
+          // Show user-friendly message
+          toast.error('Your account is no longer available. Please contact support.')
+          return Promise.reject(error)
+        }
       }
-    }
-    // Handle other errors (only show toast if we've exhausted retries)
-    else if (error.response?.status === 403) {
-      toast.error('Access denied')
-    } else if (error.response?.status >= 500) {
-      // Only show error if we tried multiple times
-      if (config.__retryCount >= MAX_RETRIES) {
-        toast.error('Server error. Please try again later.')
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      toast.error('Request timed out. Please check your connection.')
-    } else if (!error.response) {
-      // Network error
-      if (config.__retryCount >= MAX_RETRIES) {
-        toast.error('Network error. Please check your internet connection.')
-      }
-    } else if (error.response?.data?.error) {
-      // Callers can set skipGlobalErrorToast (e.g. manual booking) to show SweetAlert2 instead.
-      if (!config?.skipGlobalErrorToast) {
+      // Handle other errors (only show toast if we've exhausted retries)
+      else if (error.response?.status === 403) {
+        toast.error('Access denied')
+      } else if (error.response?.status >= 500) {
+        // Only show error if we tried multiple times
+        if (config.__retryCount >= MAX_RETRIES) {
+          toast.error('Server error. Please try again later.')
+        }
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error('The request took too long. Please try again.')
+      } else if (!error.response) {
+        // No HTTP response: CORS block, connection reset, unreachable server, etc.
+        if (config.__retryCount >= MAX_RETRIES || shouldSkipRetry(config)) {
+          toast.error('Could not reach the server. Please try again in a moment.')
+        }
+      } else if (error.response?.data?.error) {
         toast.error(error.response.data.error)
+      } else {
+        toast.error('An error occurred. Please try again.')
       }
-    } else {
-      toast.error('An error occurred. Please try again.')
     }
     
     return Promise.reject(error)

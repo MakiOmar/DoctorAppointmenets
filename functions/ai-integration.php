@@ -429,6 +429,31 @@ class SNKS_AI_Integration {
 	}
 
 	/**
+	 * Pending registration OTP payload (delivered on shutdown after HTTP response).
+	 *
+	 * @var array|null
+	 */
+	private $pending_registration_otp = null;
+
+	/**
+	 * Send CORS headers for AI API / admin-ajax requests.
+	 * Never combine Access-Control-Allow-Origin: * with Allow-Credentials (browser blocks).
+	 */
+	private function send_ai_cors_headers() {
+		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) : '';
+
+		if ( ! empty( $origin ) ) {
+			header( 'Access-Control-Allow-Origin: ' . $origin );
+			header( 'Access-Control-Allow-Credentials: true' );
+		} else {
+			header( 'Access-Control-Allow-Origin: *' );
+		}
+
+		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+	}
+
+	/**
 	 * Get the first valid frontend URL for redirects
 	 */
 	private function get_primary_frontend_url() {
@@ -444,20 +469,7 @@ class SNKS_AI_Integration {
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ||
 			strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
 
-			// Get the request origin
-			$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-			// Set CORS headers based on origin validation
-			if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
-				header( 'Access-Control-Allow-Origin: ' . $origin );
-			} else {
-				// Fallback to wildcard for development or if no origin
-				header( 'Access-Control-Allow-Origin: *' );
-			}
-
-			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
-			header( 'Access-Control-Allow-Credentials: true' );
+			$this->send_ai_cors_headers();
 
 			// Handle preflight OPTIONS request
 			if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
@@ -478,20 +490,7 @@ class SNKS_AI_Integration {
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ||
 			strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
 
-			// Get the request origin
-			$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-			// Set CORS headers based on origin validation
-			if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
-				header( 'Access-Control-Allow-Origin: ' . $origin );
-			} else {
-				// Fallback to wildcard for development or if no origin
-				header( 'Access-Control-Allow-Origin: *' );
-			}
-
-			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
-			header( 'Access-Control-Allow-Credentials: true' );
+			$this->send_ai_cors_headers();
 
 			// Handle preflight OPTIONS request
 			if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
@@ -509,20 +508,7 @@ class SNKS_AI_Integration {
 		if ( strpos( $_SERVER['REQUEST_URI'], '/api/ai/' ) !== false ||
 			strpos( $_SERVER['REQUEST_URI'], '/wp-admin/admin-ajax.php' ) !== false ) {
 
-			// Get the request origin
-			$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-			// Set CORS headers based on origin validation
-			if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
-				header( 'Access-Control-Allow-Origin: ' . $origin );
-			} else {
-				// Fallback to wildcard for development or if no origin
-				header( 'Access-Control-Allow-Origin: *' );
-			}
-
-			header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-			header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
-			header( 'Access-Control-Allow-Credentials: true' );
+			$this->send_ai_cors_headers();
 
 			// Handle preflight OPTIONS request
 			if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
@@ -539,20 +525,7 @@ class SNKS_AI_Integration {
 	 * Handle CORS for admin-ajax requests
 	 */
 	public function handle_admin_ajax_cors() {
-		// Get the request origin
-		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-		// Set CORS headers based on origin validation
-		if ( ! empty( $origin ) && $this->is_origin_allowed( $origin ) ) {
-			header( 'Access-Control-Allow-Origin: ' . $origin );
-		} else {
-			// Fallback to wildcard for development or if no origin
-			header( 'Access-Control-Allow-Origin: *' );
-		}
-
-		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
-		header( 'Access-Control-Allow-Credentials: true' );
+		$this->send_ai_cors_headers();
 
 		// Handle preflight OPTIONS request
 		if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
@@ -725,29 +698,7 @@ class SNKS_AI_Integration {
 		define( 'DOING_AJAX', true );
 
 		// Set CORS headers early to prevent redirects
-		$origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-		// Set CORS headers based on origin validation
-		// IMPORTANT: When using Access-Control-Allow-Credentials, we cannot use wildcard (*)
-		// We must use a specific origin, even if not in the allowed list (for dev/localhost)
-		if ( ! empty( $origin ) ) {
-			// Use the request origin if it's in the allowed list, or use it anyway for development
-			if ( $this->is_origin_allowed( $origin ) ) {
-				header( 'Access-Control-Allow-Origin: ' . $origin );
-			} else {
-				// For development/localhost, allow the origin even if not in the list
-				// This is needed for cookies to work with credentials
-				header( 'Access-Control-Allow-Origin: ' . $origin );
-			}
-			header( 'Access-Control-Allow-Credentials: true' );
-		} else {
-			// No origin header - use wildcard but disable credentials (cookies won't work)
-			header( 'Access-Control-Allow-Origin: *' );
-			// Don't set credentials when using wildcard
-		}
-
-		header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
-		header( 'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With' );
+		$this->send_ai_cors_headers();
 
 		// Handle preflight OPTIONS request
 		if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
@@ -1473,16 +1424,105 @@ class SNKS_AI_Integration {
 	/**
 	 * AI Register with Enhanced Validation (matching custom_process_user_registration)
 	 */
-	private function ai_register() {
+	/**
+	 * Resolve OTP channel for registration (without calling external APIs).
+	 *
+	 * @return array{0:string,1:string,2:string} contact_method, actual_otp_method, channel key.
+	 */
+	private function get_registration_otp_routing( $registration_settings, $whatsapp_number, $email ) {
+		if ( $registration_settings['otp_method'] === 'sms' && ! empty( $whatsapp_number ) ) {
+			return array( $whatsapp_number, 'sms', 'sms' );
+		}
+		if ( $registration_settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp_number ) ) {
+			return array( $whatsapp_number, 'whatsapp', 'whatsapp' );
+		}
+		if ( $registration_settings['otp_method'] === 'email' && ! empty( $email ) ) {
+			return array( $email, 'email', 'email' );
+		}
+		if ( ! empty( $email ) ) {
+			return array( $email, 'email', 'email' );
+		}
+		return array( $whatsapp_number, 'whatsapp', 'whatsapp' );
+	}
 
-		// Verify nonce for security
-		if ( ! $this->verify_api_nonce( 'nonce', 'ai_register_nonce' ) ) {
+	/**
+	 * Queue OTP delivery after the JSON response is sent (avoids gateway timeouts).
+	 */
+	private function queue_registration_otp_delivery( $user_id, $verification_code, $whatsapp_number, $email, $registration_settings ) {
+		$this->pending_registration_otp = array(
+			'user_id'                 => (int) $user_id,
+			'verification_code'       => $verification_code,
+			'whatsapp_number'         => $whatsapp_number,
+			'email'                   => $email,
+			'registration_settings'   => $registration_settings,
+		);
+
+		if ( ! has_action( 'shutdown', array( $this, 'process_pending_registration_otp' ) ) ) {
+			add_action( 'shutdown', array( $this, 'process_pending_registration_otp' ), 0 );
+		}
+	}
+
+	/**
+	 * Shutdown handler: send registration OTP without blocking the HTTP response.
+	 */
+	public function process_pending_registration_otp() {
+		if ( empty( $this->pending_registration_otp ) || ! is_array( $this->pending_registration_otp ) ) {
+			return;
+		}
+
+		if ( function_exists( 'fastcgi_finish_request' ) ) {
+			fastcgi_finish_request();
+		}
+
+		$payload = $this->pending_registration_otp;
+		$this->pending_registration_otp = null;
+
+		$this->deliver_registration_otp(
+			$payload['user_id'],
+			$payload['verification_code'],
+			$payload['whatsapp_number'],
+			$payload['email'],
+			$payload['registration_settings']
+		);
+	}
+
+	/**
+	 * Send registration verification OTP via configured channel.
+	 *
+	 * @return bool Whether delivery succeeded.
+	 */
+	private function deliver_registration_otp( $user_id, $verification_code, $whatsapp_number, $email, $registration_settings ) {
+		list( , , $channel ) = $this->get_registration_otp_routing( $registration_settings, $whatsapp_number, $email );
+
+		if ( 'sms' === $channel && ! empty( $whatsapp_number ) ) {
+			$message    = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
+			$sms_result = send_sms_via_whysms( $whatsapp_number, $message );
+			return ! is_wp_error( $sms_result );
+		}
+
+		if ( 'whatsapp' === $channel && ! empty( $whatsapp_number ) ) {
+			$message           = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
+			$whatsapp_result   = snks_send_whatsapp_message( $whatsapp_number, $message, $registration_settings );
+			return $whatsapp_result && ! is_wp_error( $whatsapp_result );
+		}
+
+		if ( ! empty( $email ) ) {
+			return (bool) $this->send_verification_email( $user_id, $verification_code );
+		}
+
+		return false;
+	}
+
+	private function ai_register() {
+		$raw_body = file_get_contents( 'php://input' );
+		$data     = json_decode( $raw_body, true );
+
+		// Verify nonce for security (single php://input read).
+		if ( ! $this->verify_api_nonce( 'nonce', 'ai_register_nonce', $data ) ) {
 			$this->send_error( 'فشل التحقق الأمني', 401 );
 		}
 
-		$data = json_decode( file_get_contents( 'php://input' ), true );
-
-		if ( json_last_error() !== JSON_ERROR_NONE ) {
+		if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $data ) ) {
 			$this->send_error( 'بيانات JSON غير صالحة', 400 );
 		}
 
@@ -1674,64 +1714,16 @@ class SNKS_AI_Integration {
 		update_user_meta( $user->ID, 'ai_verification_expires', time() + ( 15 * 60 ) ); // 15 minutes
 		update_user_meta( $user->ID, 'ai_email_verified', '0' );
 
-		// Send verification code based on OTP method settings
-		$otp_success       = false;
-		$contact_method    = '';
-		$actual_otp_method = '';
+		list( $contact_method, $actual_otp_method ) = $this->get_registration_otp_routing( $registration_settings, $whatsapp_number, $email );
 
-		if ( $registration_settings['otp_method'] === 'sms' && ! empty( $whatsapp_number ) ) {
-			$contact_method    = $whatsapp_number;
-			$actual_otp_method = 'sms';
-			$message           = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
-
-			// Use existing WhySMS SMS service
-			$sms_result = send_sms_via_whysms( $whatsapp_number, $message );
-
-			if ( ! is_wp_error( $sms_result ) ) {
-				$otp_success = true;
-			}
-		} elseif ( $registration_settings['otp_method'] === 'whatsapp' && ! empty( $whatsapp_number ) ) {
-			$contact_method    = $whatsapp_number;
-			$actual_otp_method = 'whatsapp';
-			$message           = snks_get_multilingual_otp_message( $verification_code, $registration_settings['whatsapp_message_language'] ?? 'ar' );
-
-			// Use WhatsApp Business API
-			$whatsapp_result = snks_send_whatsapp_message( $whatsapp_number, $message, $registration_settings );
-
-			if ( $whatsapp_result && ! is_wp_error( $whatsapp_result ) ) {
-				$otp_success = true;
-			}
-		} elseif ( $registration_settings['otp_method'] === 'email' && ! empty( $email ) ) {
-			$contact_method    = $email;
-			$actual_otp_method = 'email';
-
-			// Send verification email using existing method
-			$otp_success = $this->send_verification_email( $user->ID, $verification_code );
-		} else {
-			// Fallback to email if no method matches or email is available
-			if ( ! empty( $email ) ) {
-				$contact_method    = $email;
-				$actual_otp_method = 'email';
-				$otp_success       = $this->send_verification_email( $user->ID, $verification_code );
-			} else {
-				// If no email available, use WhatsApp as contact method
-				$contact_method    = $whatsapp_number;
-				$actual_otp_method = 'whatsapp';
-			}
-		}
-
-		if ( ! $otp_success ) {
-			$error_message = '';
-			if ( $registration_settings['otp_method'] === 'sms' ) {
-				$error_message = 'فشل إرسال رمز التحقق عبر الرسائل القصيرة. الرجاء المحاولة مرة أخرى.';
-			} elseif ( $registration_settings['otp_method'] === 'whatsapp' ) {
-				$error_message = 'فشل إرسال رمز التحقق عبر واتساب. الرجاء المحاولة مرة أخرى.';
-			} else {
-				$error_message = 'فشل إرسال البريد الإلكتروني للتحقق. الرجاء المحاولة مرة أخرى.';
-			}
-
-			$this->send_error( $error_message, 500 );
-		}
+		// Deliver OTP after response is flushed (prevents proxy/client timeouts during WhatsApp/SMS/email).
+		$this->queue_registration_otp_delivery(
+			$user->ID,
+			$verification_code,
+			$whatsapp_number,
+			$email,
+			$registration_settings
+		);
 
 		// Dynamic success message based on actual OTP method used
 		$success_message = '';

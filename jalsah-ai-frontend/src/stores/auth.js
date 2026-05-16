@@ -196,7 +196,10 @@ export const useAuthStore = defineStore('auth', () => {
         nonce: nonce
       }
       
-      const response = await api.post('/api/ai/auth/register', requestData)
+      const response = await api.post('/api/ai/auth/register', requestData, {
+        skipGlobalErrorToast: true,
+        skipRetry: true,
+      })
       
       // Check if verification is required
       if (response.data.data.requires_verification) {
@@ -240,6 +243,15 @@ export const useAuthStore = defineStore('auth', () => {
       toast.success(t('toast.auth.registerSuccess'))
       return { requiresVerification: false }
     } catch (error) {
+      if (!error.response) {
+        if (error.code === 'ECONNABORTED') {
+          toast.error(t('toast.general.requestTimeout'))
+        } else {
+          toast.error(t('toast.general.networkError'))
+        }
+        return false
+      }
+
       const message = error.response?.data?.error || t('toast.auth.registerFailed')
       // Check for specific error messages and translate them
       if (message.includes('User already exists and is verified')) {

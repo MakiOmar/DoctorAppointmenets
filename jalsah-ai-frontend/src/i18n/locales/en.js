@@ -358,7 +358,8 @@ export default {
       error: 'An error occurred',
       success: 'Success',
       loading: 'Loading...',
-      networkError: 'Network error. Please try again.',
+      networkError: 'Could not reach the server. Please try again in a moment.',
+      requestTimeout: 'The request took too long. Please try again.',
       serverError: 'Server error. Please try again.'
     }
   },
