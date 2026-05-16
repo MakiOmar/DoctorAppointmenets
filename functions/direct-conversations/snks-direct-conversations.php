@@ -196,13 +196,18 @@ function snks_direct_conversations_get_or_create( $therapist_user_id, $patient_u
  * @return string
  */
 function snks_direct_conversations_patient_app_base_url() {
-	$base = (string) get_option( 'snks_jalsah_ai_frontend_url', '' );
-	if ( '' === $base ) {
-		$base = trailingslashit( home_url( '/' ) );
-	} else {
-		$base = trailingslashit( $base );
+	if ( function_exists( 'snks_ai_get_primary_frontend_url' ) ) {
+		$base = snks_ai_get_primary_frontend_url();
+		if ( ! empty( $base ) ) {
+			return trailingslashit( $base );
+		}
 	}
-	return $base;
+	// Legacy override (direct conversations screen) if general Frontend URLs is unset.
+	$legacy = (string) get_option( 'snks_jalsah_ai_frontend_url', '' );
+	if ( '' !== $legacy ) {
+		return trailingslashit( $legacy );
+	}
+	return trailingslashit( home_url( '/' ) );
 }
 
 /**

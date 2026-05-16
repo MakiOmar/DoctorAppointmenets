@@ -260,7 +260,6 @@ function snks_direct_conversations_settings_page() {
 		update_option( 'snks_direct_conv_max_upload_bytes', max( 0, absint( $_POST['snks_direct_conv_max_upload_bytes'] ?? 0 ) ) );
 		update_option( 'snks_direct_conv_allowed_mimes', sanitize_text_field( wp_unslash( $_POST['snks_direct_conv_allowed_mimes'] ?? '' ) ) );
 		update_option( 'snks_direct_conv_digest_hour', max( 0, min( 23, absint( $_POST['snks_direct_conv_digest_hour'] ?? 20 ) ) ) );
-		update_option( 'snks_jalsah_ai_frontend_url', esc_url_raw( wp_unslash( $_POST['snks_jalsah_ai_frontend_url'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_therapist', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_therapist'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_patient_first', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_patient_first'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_patient_digest', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_patient_digest'] ?? '' ) ) );
@@ -292,7 +291,9 @@ function snks_direct_conversations_settings_page() {
 	$maxb   = (int) get_option( 'snks_direct_conv_max_upload_bytes', 0 );
 	$mimes  = (string) get_option( 'snks_direct_conv_allowed_mimes', 'image/jpeg,image/png,image/gif,application/pdf' );
 	$hour   = (int) get_option( 'snks_direct_conv_digest_hour', 20 );
-	$appurl = (string) get_option( 'snks_jalsah_ai_frontend_url', '' );
+	$appurl = function_exists( 'snks_direct_conversations_patient_app_base_url' )
+		? untrailingslashit( snks_direct_conversations_patient_app_base_url() )
+		: ( function_exists( 'snks_ai_get_primary_frontend_url' ) ? snks_ai_get_primary_frontend_url() : '' );
 	$wa_th  = (string) get_option( 'snks_whatsapp_template_dc_therapist', '' );
 	$wa_pf  = (string) get_option( 'snks_whatsapp_template_dc_patient_first', '' );
 	$wa_pd  = (string) get_option( 'snks_whatsapp_template_dc_patient_digest', '' );
@@ -326,10 +327,18 @@ function snks_direct_conversations_settings_page() {
 					<td><input name="snks_direct_conv_allowed_mimes" id="snks_direct_conv_allowed_mimes" type="text" value="<?php echo esc_attr( $mimes ); ?>" class="large-text" /></td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="snks_jalsah_ai_frontend_url"><?php esc_html_e( 'Jalsah AI frontend base URL', 'anony-shrinks' ); ?></label></th>
+					<th scope="row"><?php esc_html_e( 'Patient link base URL', 'anony-shrinks' ); ?></th>
 					<td>
-						<input name="snks_jalsah_ai_frontend_url" id="snks_jalsah_ai_frontend_url" type="url" value="<?php echo esc_attr( $appurl ); ?>" class="large-text" placeholder="<?php echo esc_attr( home_url( '/' ) ); ?>" />
-						<p class="description"><?php esc_html_e( 'Leave empty to use the main site URL for patient deep links.', 'anony-shrinks' ); ?></p>
+						<code class="large-text"><?php echo esc_html( $appurl ? trailingslashit( $appurl ) : '—' ); ?></code>
+						<p class="description">
+							<?php
+							printf(
+								/* translators: %s: admin settings page link */
+								esc_html__( 'WhatsApp and in-app patient links use the first URL in %s (Frontend URLs).', 'anony-shrinks' ),
+								'<a href="' . esc_url( admin_url( 'admin.php?page=jalsah-ai-settings' ) ) . '">' . esc_html__( 'Jalsah AI → General settings', 'anony-shrinks' ) . '</a>'
+							);
+							?>
+						</p>
 					</td>
 				</tr>
 				<tr>
