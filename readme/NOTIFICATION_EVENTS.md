@@ -146,8 +146,8 @@ Requires `snks_ai_notifications_enabled`, a configured WhatsApp Cloud API, and a
 | Option | Template name (example) | When | Body parameters from plugin |
 |--------|-------------------------|------|-------------------------------|
 | `snks_whatsapp_template_dc_therapist` | `chat_th` | Patient sends the **first** message in a thread (therapist notified), and therapist **daily digest** WhatsApp when old-unread threshold is met | None (static approved body in Meta) |
-| `snks_whatsapp_template_dc_patient_first` | `chat_pt1` | Therapist sends the **first** message (patient notified) | `chat_link` (deep link to the conversation in the SPA) |
-| `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when old-unread threshold is met | `chat_link` |
+| `snks_whatsapp_template_dc_patient_first` | `chat_pt1` | Therapist sends the **first** message (patient notified) | `chat_link` (dc-access URL), `enter` (numeric access password) |
+| `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when old-unread threshold is met | `chat_link` (SPA deep link to the unread conversation) |
 
 ### Cron
 

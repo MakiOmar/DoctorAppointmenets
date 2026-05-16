@@ -23,7 +23,7 @@ function snks_dc_wa_tpl_therapist() {
 }
 
 /**
- * WhatsApp template: patient receives first therapist message (e.g. chat_pt1); body {{chat_link}}.
+ * WhatsApp template: patient receives first therapist message (e.g. chat_pt1); body {{chat_link}} + {{enter}}.
  *
  * @return string
  */
@@ -32,7 +32,7 @@ function snks_dc_wa_tpl_patient_first() {
 }
 
 /**
- * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}} + {{enter}}.
+ * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}} only.
  *
  * @return string
  */
@@ -339,18 +339,25 @@ function snks_direct_conversations_digest_wa_conversation_for_patient( $patient_
 }
 
 /**
- * Build chat_pt2 WhatsApp body parameters: hashed entry link + access password.
+ * Build chat_pt1 WhatsApp body parameters: dc-access link + access password.
  *
- * @param int $patient_user_id Patient user ID.
- * @return array{chat_link:string,enter:string}|null Null when no qualifying conversation.
+ * @param int $conversation_id Conversation ID.
+ * @return array{chat_link:string,enter:string}|null Null when conversation or token is missing.
  */
-function snks_direct_conversations_patient_digest_whatsapp_params( $patient_user_id ) {
-	$conv = snks_direct_conversations_digest_wa_conversation_for_patient( $patient_user_id );
+function snks_direct_conversations_patient_first_whatsapp_params( $conversation_id ) {
+	global $wpdb;
+	$t                 = snks_direct_conversations_tables();
+	$conversation_id   = (int) $conversation_id;
+	if ( $conversation_id <= 0 ) {
+		return null;
+	}
+
+	$conv = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$t['conv']} WHERE id = %d", $conversation_id ) );
 	if ( ! $conv || empty( $conv->public_token ) ) {
 		return null;
 	}
 
-	$enter = snks_direct_conversations_rotate_guest_password( (int) $conv->id );
+	$enter = snks_direct_conversations_rotate_guest_password( $conversation_id );
 	if ( '' === $enter ) {
 		return null;
 	}
@@ -358,6 +365,23 @@ function snks_direct_conversations_patient_digest_whatsapp_params( $patient_user
 	return array(
 		'chat_link' => snks_direct_conversations_guest_entry_link( $conv->public_token ),
 		'enter'     => $enter,
+	);
+}
+
+/**
+ * Build chat_pt2 WhatsApp body parameters: SPA deep link to the digest conversation.
+ *
+ * @param int $patient_user_id Patient user ID.
+ * @return array{chat_link:string}|null Null when no qualifying conversation.
+ */
+function snks_direct_conversations_patient_digest_whatsapp_params( $patient_user_id ) {
+	$conv = snks_direct_conversations_digest_wa_conversation_for_patient( $patient_user_id );
+	if ( ! $conv ) {
+		return null;
+	}
+
+	return array(
+		'chat_link' => snks_direct_conversations_patient_app_link( (int) $conv->id ),
 	);
 }
 
@@ -407,7 +431,7 @@ function snks_direct_conversations_notify_conversation_started( $recipient_user_
 		return;
 	}
 
-	// chat_th (therapist, static body) or chat_pt1 (patient, {{chat_link}}). No fallback — empty option skips WhatsApp.
+	// chat_th (therapist, static body) or chat_pt1 (patient, {{chat_link}} + {{enter}}). No fallback — empty option skips WhatsApp.
 	$tpl    = '';
 	$params = array();
 	if ( snks_direct_conversations_is_doctor_user( $recipient_user_id ) ) {
@@ -415,7 +439,10 @@ function snks_direct_conversations_notify_conversation_started( $recipient_user_
 	} else {
 		$tpl = snks_dc_wa_tpl_patient_first();
 		if ( '' !== $tpl ) {
-			$params = array( 'chat_link' => $link );
+			$params = snks_direct_conversations_patient_first_whatsapp_params( $conversation_id );
+			if ( ! $params ) {
+				$tpl = '';
+			}
 		}
 	}
 
@@ -1185,7 +1212,7 @@ function snks_direct_conversations_run_daily_digest() {
 			continue;
 		}
 
-		// Therapist digest uses chat_th (static). Patient digest uses chat_pt2 ({{chat_link}}). No fallback.
+		// Therapist digest uses chat_th (static). Patient digest uses chat_pt2 ({{chat_link}} only). No fallback.
 		$tpl    = '';
 		$params = array();
 		if ( snks_direct_conversations_is_doctor_user( $uid ) ) {
