@@ -73,24 +73,29 @@ function snks_dc_test_whatsapp_ajax() {
 			}
 			break;
 		case 'patient_digest':
-			// chat_pt2 — patient digest: SPA deep link (chat_link only).
+			// chat_pt2 — patient digest: dc-access/inbox link + fixed enter (same shape as chat_pt1).
 			$event_name = 'chat_pt2';
 			$tpl        = snks_dc_wa_tpl_patient_digest();
-			$test_cid   = isset( $_POST['test_conversation_id'] ) ? absint( $_POST['test_conversation_id'] ) : 0;
-			$params     = array();
-			if ( $test_cid > 0 && function_exists( 'snks_direct_conversations_patient_app_link' ) ) {
-				$params = array(
-					'chat_link' => snks_direct_conversations_patient_app_link( $test_cid ),
+			$test_uid   = isset( $_POST['test_patient_user_id'] ) ? absint( $_POST['test_patient_user_id'] ) : 0;
+			if ( $test_uid <= 0 && isset( $_POST['test_conversation_id'] ) ) {
+				$test_cid = absint( $_POST['test_conversation_id'] );
+				if ( $test_cid > 0 ) {
+					global $wpdb;
+					$t_conv = $wpdb->prefix . 'snks_direct_conversations';
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$test_uid = (int) $wpdb->get_var( $wpdb->prepare( "SELECT patient_user_id FROM {$t_conv} WHERE id = %d", $test_cid ) );
+				}
+			}
+			$params = array();
+			if ( $test_uid > 0 && function_exists( 'snks_direct_conversations_patient_digest_whatsapp_params' ) ) {
+				$params = snks_direct_conversations_patient_digest_whatsapp_params( $test_uid );
+			}
+			if ( empty( $params ) ) {
+				wp_send_json_error(
+					array(
+						'message' => __( 'For chat_pt2 test, enter a valid patient user ID (or conversation ID to resolve the patient). Patient must have unread in the digest window.', 'anony-shrinks' ),
+					)
 				);
-			} else {
-				$link = isset( $_POST['chat_link'] ) ? esc_url_raw( wp_unslash( $_POST['chat_link'] ) ) : '';
-				if ( '' === $link && function_exists( 'snks_direct_conversations_patient_app_link' ) ) {
-					$link = snks_direct_conversations_patient_app_link( 0 );
-				}
-				if ( '' === $link ) {
-					$link = trailingslashit( home_url( '/' ) ) . 'notifications';
-				}
-				$params = array( 'chat_link' => $link );
 			}
 			break;
 		default:
@@ -182,7 +187,8 @@ jQuery(function($) {
 			dc_event: $btn.data("event"),
 			test_phone: $("#snks_dc_wa_test_phone").val(),
 			chat_link: $("#snks_dc_wa_test_chat_link").val(),
-			test_conversation_id: $("#snks_dc_wa_test_conversation_id").val()
+			test_conversation_id: $("#snks_dc_wa_test_conversation_id").val(),
+			test_patient_user_id: $("#snks_dc_wa_test_patient_user_id").val()
 		}).done(function(resp) {
 			$btn.prop("disabled", false);
 			if (resp.success && resp.data) {
@@ -384,7 +390,7 @@ function snks_direct_conversations_settings_page() {
 					<th scope="row"><label for="snks_whatsapp_template_dc_patient_digest"><?php esc_html_e( 'WhatsApp: patient daily unread digest (chat_pt2)', 'anony-shrinks' ); ?></label></th>
 					<td>
 						<input name="snks_whatsapp_template_dc_patient_digest" id="snks_whatsapp_template_dc_patient_digest" type="text" value="<?php echo esc_attr( $wa_pd ); ?>" class="regular-text" placeholder="chat_pt2" />
-						<p class="description"><?php esc_html_e( 'Daily digest WhatsApp when the patient has unread messages within the summary window (last N days). Named body parameter: chat_link (SPA deep link to the unread conversation). If empty, no digest WhatsApp is sent to patients.', 'anony-shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Daily digest when unread within the summary window. Same variables as chat_pt1: chat_link (dc-access/inbox URL) and enter (fixed per-patient password). Opens the conversations list after guest login. If empty, no digest WhatsApp is sent to patients.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -518,17 +524,17 @@ function snks_direct_conversations_settings_page() {
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><label for="snks_dc_wa_test_chat_link"><?php esc_html_e( 'Sample chat_link (chat_pt2 only)', 'anony-shrinks' ); ?></label></th>
+				<th scope="row"><label for="snks_dc_wa_test_patient_user_id"><?php esc_html_e( 'Patient user ID (chat_pt2 test)', 'anony-shrinks' ); ?></label></th>
 				<td>
-					<input type="url" id="snks_dc_wa_test_chat_link" class="large-text" value="<?php echo esc_attr( $sample_chat_link ); ?>" />
-					<p class="description"><?php esc_html_e( 'Used for chat_pt2 test when no conversation ID is set (SPA deep link). Ignored for chat_th and chat_pt1.', 'anony-shrinks' ); ?></p>
+					<input type="number" id="snks_dc_wa_test_patient_user_id" class="small-text" min="1" step="1" placeholder="2297" />
+					<p class="description"><?php esc_html_e( 'Required for chat_pt2: builds dc-access/inbox link + fixed enter for that patient (must have unread in digest window).', 'anony-shrinks' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="snks_dc_wa_test_conversation_id"><?php esc_html_e( 'Conversation ID (chat_pt1 test)', 'anony-shrinks' ); ?></label></th>
 				<td>
 					<input type="number" id="snks_dc_wa_test_conversation_id" class="small-text" min="1" step="1" placeholder="1" />
-					<p class="description"><?php esc_html_e( 'Required for chat_pt1: generates dc-access link + enter password for that thread (same as production first-message WhatsApp). Optional for chat_pt2: overrides the sample chat_link with that conversation SPA URL.', 'anony-shrinks' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Required for chat_pt1: dc-access link + rotated enter for that thread. Optional for chat_pt2: resolves patient user ID from conversation.', 'anony-shrinks' ); ?></p>
 				</td>
 			</tr>
 		</table>

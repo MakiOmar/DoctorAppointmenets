@@ -7151,14 +7151,27 @@ Best regards,
 			return;
 		}
 
+		$list_mode       = false;
+		$conversation_id = 0;
+		$patient_id      = 0;
+
 		$conv = snks_direct_conversations_verify_guest_password( $token, $password );
-		if ( ! $conv ) {
+		if ( $conv ) {
+			$patient_id      = (int) $conv->patient_user_id;
+			$conversation_id = (int) $conv->id;
+		} elseif ( function_exists( 'snks_direct_conversations_verify_patient_inbox_guest_password' ) ) {
+			$patient_id = snks_direct_conversations_verify_patient_inbox_guest_password( $token, $password );
+			if ( $patient_id > 0 ) {
+				$list_mode = true;
+			}
+		}
+
+		if ( $patient_id <= 0 ) {
 			$this->send_error( 'Invalid access code', 403 );
 			return;
 		}
 
-		$patient_id = (int) $conv->patient_user_id;
-		$user       = get_userdata( $patient_id );
+		$user = get_userdata( $patient_id );
 		if ( ! $user || ! snks_direct_conversations_is_customer_user( $patient_id ) ) {
 			$this->send_error( 'Forbidden', 403 );
 			return;
@@ -7186,13 +7199,19 @@ Best regards,
 			$user_data['whatsapp'] = $whatsapp;
 		}
 
-		$this->send_success(
-			array(
-				'token'           => $auth_token,
-				'user'            => $user_data,
-				'conversation_id' => (int) $conv->id,
-			)
+		$payload = array(
+			'token' => $auth_token,
+			'user'  => $user_data,
 		);
+		if ( $list_mode ) {
+			$payload['list_mode']      = true;
+			$payload['redirect_path']  = '/notifications';
+			$payload['conversation_id'] = 0;
+		} else {
+			$payload['conversation_id'] = $conversation_id;
+		}
+
+		$this->send_success( $payload );
 	}
 
 	/**

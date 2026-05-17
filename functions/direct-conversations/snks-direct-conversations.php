@@ -32,7 +32,7 @@ function snks_dc_wa_tpl_patient_first() {
 }
 
 /**
- * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}} only.
+ * WhatsApp template: patient digest (e.g. chat_pt2); body {{chat_link}} + {{enter}} (inbox list).
  *
  * @return string
  */
@@ -255,7 +255,7 @@ function snks_direct_conversations_digest_diagnose_user( $user_id ) {
 	} elseif ( '' === snks_dc_wa_tpl_patient_digest() ) {
 		$out['blockers'][] = 'whatsapp_template_dc_patient_digest_empty';
 	} elseif ( ! snks_direct_conversations_patient_digest_whatsapp_params( $user_id ) ) {
-		$out['blockers'][] = 'no_qualifying_conversation_for_chat_link';
+		$out['blockers'][] = 'no_unread_in_window_for_digest_whatsapp';
 	} else {
 		$out['would_send_whatsapp'] = true;
 	}
@@ -482,31 +482,122 @@ function snks_direct_conversations_verify_guest_password( $public_token, $passwo
 }
 
 /**
- * Conversation used for patient digest WhatsApp (newest unread within summary window).
+ * Stable 6-digit guest password for patient inbox links (same value on every digest).
  *
  * @param int $patient_user_id Patient user ID.
- * @return object|null
+ * @return string
  */
-function snks_direct_conversations_digest_wa_conversation_for_patient( $patient_user_id ) {
-	global $wpdb;
-	$t    = snks_direct_conversations_tables();
-	$days = snks_direct_conversations_get_summary_days();
+function snks_direct_conversations_patient_inbox_guest_password_plain( $patient_user_id ) {
+	$patient_user_id = (int) $patient_user_id;
+	$n               = abs( (int) crc32( 'snks_dc_inbox_' . $patient_user_id . wp_salt( 'auth' ) ) ) % 900000 + 100000;
+	return (string) $n;
+}
 
-	return $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT c.* FROM {$t['conv']} c
-			INNER JOIN {$t['msg']} m ON m.conversation_id = c.id
-			WHERE c.patient_user_id = %d
-				AND m.recipient_user_id = %d
-				AND m.is_read = 0
-				AND m.created_at >= ( NOW() - INTERVAL %d DAY )
-			ORDER BY m.created_at DESC
-			LIMIT 1",
-			(int) $patient_user_id,
-			(int) $patient_user_id,
-			$days
+/**
+ * Ensure user meta password hash matches the fixed inbox password.
+ *
+ * @param int $patient_user_id Patient user ID.
+ * @return void
+ */
+function snks_direct_conversations_sync_patient_inbox_password_hash( $patient_user_id ) {
+	$patient_user_id = (int) $patient_user_id;
+	if ( $patient_user_id <= 0 ) {
+		return;
+	}
+	$plain = snks_direct_conversations_patient_inbox_guest_password_plain( $patient_user_id );
+	update_user_meta( $patient_user_id, 'snks_dc_inbox_password_hash', wp_hash_password( $plain ) );
+}
+
+/**
+ * Get or create per-patient inbox access token (for digest WhatsApp / dc-access/inbox URL).
+ *
+ * @param int $patient_user_id Patient user ID.
+ * @return string Empty on failure.
+ */
+function snks_direct_conversations_get_or_create_patient_inbox_token( $patient_user_id ) {
+	$patient_user_id = (int) $patient_user_id;
+	if ( $patient_user_id <= 0 ) {
+		return '';
+	}
+
+	$token = (string) get_user_meta( $patient_user_id, 'snks_dc_inbox_access_token', true );
+	if ( '' !== $token && strlen( $token ) >= 16 ) {
+		return $token;
+	}
+
+	$token = strtolower( wp_generate_password( 32, false, false ) );
+	update_user_meta( $patient_user_id, 'snks_dc_inbox_access_token', $token );
+	snks_direct_conversations_sync_patient_inbox_password_hash( $patient_user_id );
+
+	return $token;
+}
+
+/**
+ * Password-protected inbox entry URL (conversations list after guest login).
+ *
+ * @param string $inbox_token Patient inbox access token.
+ * @return string
+ */
+function snks_direct_conversations_patient_inbox_guest_entry_link( $inbox_token ) {
+	$token = sanitize_text_field( (string) $inbox_token );
+	if ( '' === $token ) {
+		return snks_direct_conversations_patient_app_link( 0 );
+	}
+	return snks_direct_conversations_patient_app_base_url() . 'dc-access/inbox/' . rawurlencode( $token );
+}
+
+/**
+ * Resolve patient user ID from inbox access token.
+ *
+ * @param string $inbox_token Token from dc-access/inbox URL.
+ * @return int 0 when not found.
+ */
+function snks_direct_conversations_patient_id_by_inbox_token( $inbox_token ) {
+	$inbox_token = sanitize_text_field( (string) $inbox_token );
+	if ( '' === $inbox_token ) {
+		return 0;
+	}
+
+	$users = get_users(
+		array(
+			'meta_key'   => 'snks_dc_inbox_access_token',
+			'meta_value' => $inbox_token,
+			'number'     => 1,
+			'fields'     => 'ID',
 		)
 	);
+
+	return ! empty( $users ) ? (int) $users[0] : 0;
+}
+
+/**
+ * Verify inbox guest password; returns patient user ID on success.
+ *
+ * @param string $inbox_token Inbox token from URL.
+ * @param string $password    Password from user / WhatsApp {{enter}}.
+ * @return int Patient user ID or 0.
+ */
+function snks_direct_conversations_verify_patient_inbox_guest_password( $inbox_token, $password ) {
+	$patient_id = snks_direct_conversations_patient_id_by_inbox_token( $inbox_token );
+	if ( $patient_id <= 0 ) {
+		return 0;
+	}
+
+	$hash = (string) get_user_meta( $patient_id, 'snks_dc_inbox_password_hash', true );
+	if ( '' === $hash ) {
+		snks_direct_conversations_sync_patient_inbox_password_hash( $patient_id );
+		$hash = (string) get_user_meta( $patient_id, 'snks_dc_inbox_password_hash', true );
+	}
+	if ( '' === $hash ) {
+		return 0;
+	}
+
+	$password = (string) $password;
+	if ( '' === $password || ! wp_check_password( $password, $hash ) ) {
+		return 0;
+	}
+
+	return $patient_id;
 }
 
 /**
@@ -540,19 +631,30 @@ function snks_direct_conversations_patient_first_whatsapp_params( $conversation_
 }
 
 /**
- * Build chat_pt2 WhatsApp body parameters: SPA deep link to the digest conversation.
+ * Build chat_pt2 WhatsApp body parameters: inbox dc-access link + fixed enter password.
  *
  * @param int $patient_user_id Patient user ID.
- * @return array{chat_link:string}|null Null when no qualifying conversation.
+ * @return array{chat_link:string,enter:string}|null Null when no unread in digest window.
  */
 function snks_direct_conversations_patient_digest_whatsapp_params( $patient_user_id ) {
-	$conv = snks_direct_conversations_digest_wa_conversation_for_patient( $patient_user_id );
-	if ( ! $conv ) {
+	$patient_user_id = (int) $patient_user_id;
+	if ( $patient_user_id <= 0 ) {
+		return null;
+	}
+	if ( snks_direct_conversations_unread_in_digest_window( $patient_user_id ) <= 0 ) {
 		return null;
 	}
 
+	$token = snks_direct_conversations_get_or_create_patient_inbox_token( $patient_user_id );
+	if ( '' === $token ) {
+		return null;
+	}
+
+	snks_direct_conversations_sync_patient_inbox_password_hash( $patient_user_id );
+
 	return array(
-		'chat_link' => snks_direct_conversations_patient_app_link( (int) $conv->id ),
+		'chat_link' => snks_direct_conversations_patient_inbox_guest_entry_link( $token ),
+		'enter'     => snks_direct_conversations_patient_inbox_guest_password_plain( $patient_user_id ),
 	);
 }
 
@@ -1418,7 +1520,10 @@ function snks_direct_conversations_run_daily_digest( $force_debug_log = false ) 
 		if ( snks_direct_conversations_is_doctor_user( $uid ) ) {
 			$link = add_query_arg( array( 'snks_dc_digest' => '1' ), home_url( '/' ) );
 		} else {
-			$link = snks_direct_conversations_patient_app_link( 0 );
+			$inbox_token = snks_direct_conversations_get_or_create_patient_inbox_token( $uid );
+			$link        = $inbox_token
+				? snks_direct_conversations_patient_inbox_guest_entry_link( $inbox_token )
+				: snks_direct_conversations_patient_app_link( 0 );
 		}
 
 		$before_max_id = (int) $wpdb->get_var(
@@ -1493,12 +1598,13 @@ function snks_direct_conversations_run_daily_digest( $force_debug_log = false ) 
 			$entry['whatsapp']['status'] = 'skipped';
 			$entry['whatsapp']['reason'] = snks_direct_conversations_is_doctor_user( $uid )
 				? 'whatsapp_template_dc_therapist_empty'
-				: ( snks_dc_wa_tpl_patient_digest() === '' ? 'whatsapp_template_dc_patient_digest_empty' : 'no_qualifying_conversation_for_chat_link' );
+				: ( snks_dc_wa_tpl_patient_digest() === '' ? 'whatsapp_template_dc_patient_digest_empty' : 'no_unread_in_window_for_digest_whatsapp' );
 			$report['users'][]           = $entry;
 			continue;
 		}
 
-		if ( ! snks_direct_conversations_is_doctor_user( $uid ) && empty( $params ) ) {
+		if ( ! snks_direct_conversations_is_doctor_user( $uid )
+			&& ( empty( $params ) || empty( $params['chat_link'] ) || empty( $params['enter'] ) ) ) {
 			$entry['whatsapp']['status'] = 'skipped';
 			$entry['whatsapp']['reason'] = 'empty_template_params';
 			$report['users'][]           = $entry;

@@ -149,7 +149,7 @@ Requires `snks_ai_notifications_enabled`, a configured WhatsApp Cloud API, and a
 |--------|-------------------------|------|-------------------------------|
 | `snks_whatsapp_template_dc_therapist` | `chat_th` | Therapist **daily digest** WhatsApp when unread within summary window | None (static approved body in Meta) |
 | `snks_whatsapp_template_dc_patient_first` | `chat_pt1` | Therapist sends the **first** message in a thread (patient notified) | `chat_link` (dc-access URL), `enter` (numeric access password) |
-| `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when unread within summary window | `chat_link` (SPA deep link to newest qualifying unread conversation) |
+| `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when unread within summary window | `chat_link` (dc-access/inbox URL), `enter` (fixed per-patient password → conversations list) |
 
 ### Cron
 

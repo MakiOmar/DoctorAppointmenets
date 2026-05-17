@@ -23,7 +23,7 @@ A shorter cross-reference also exists in [NOTIFICATION_EVENTS.md](./NOTIFICATION
 |-------|---------|--------|--------------------------|-----------|
 | **Conversation started** | First message in thread **and** sender is **therapist** | `direct_conversation_started` | Patient: `snks_whatsapp_template_dc_patient_first` (`chat_pt1`) | **Patient only** |
 | **Daily unread digest** | WP-Cron once per day at configured hour | `direct_conversation_daily_digest` (max once per calendar day per user) | Therapist: `snks_whatsapp_template_dc_therapist` (`chat_th`) — static body | Therapist or patient |
-| | | | Patient: `snks_whatsapp_template_dc_patient_digest` (`chat_pt2`) — `{{chat_link}}` | |
+| | | | Patient: `snks_whatsapp_template_dc_patient_digest` (`chat_pt2`) — `{{chat_link}}` + `{{enter}}` (inbox list) | |
 
 There is **no** immediate WhatsApp (or in-app “started”) when the **patient** sends the first message. Later messages in the same thread also do **not** trigger immediate notifications.
 
@@ -70,7 +70,7 @@ WP-Cron: snks_direct_conversations_daily_digest  (daily @ snks_direct_conv_diges
   → snks_create_ai_notification( type: direct_conversation_daily_digest )
   → WhatsApp when same user has unread in window (created_at >= NOW - N days)
   → therapist: chat_th, no body parameters
-  → patient:   chat_pt2, { chat_link } → SPA link to newest qualifying unread thread in window
+  → patient:   chat_pt2, { chat_link, enter } → dc-access/inbox URL + fixed per-patient password → /notifications
 ```
 
 **Important:** In-app and WhatsApp digest both use the **same rule**: unread messages **sent within the last N days** (`snks_conversation_unread_summary_days`). Messages older than N days are **not** included.
@@ -106,7 +106,7 @@ Patient deep links use **Jalsah AI → General settings → Frontend URLs** (fir
 |----------|------|-------------------------|
 | `chat_th` | Therapist **daily digest** WhatsApp only (current code) | *(none — static approved copy in Meta)* |
 | `chat_pt1` | Patient notified on **therapist’s first** message in thread | `chat_link` (dc-access URL), `enter` (access password) |
-| `chat_pt2` | Patient daily digest WhatsApp | `chat_link` (SPA `/direct-conversations/{id}` for oldest unread past threshold) |
+| `chat_pt2` | Patient daily digest WhatsApp | `chat_link` (`dc-access/inbox/{token}`), `enter` (fixed 6-digit password per patient) |
 
 Parameters are passed to Meta as **named** body variables in `snks_send_whatsapp_template_message()`.
 

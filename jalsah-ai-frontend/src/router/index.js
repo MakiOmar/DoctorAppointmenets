@@ -111,6 +111,12 @@ const routes = [
     meta: { guest: true, skipGuestRedirect: true }
   },
   {
+    path: '/dc-access/inbox/:token',
+    name: 'DirectConversationInboxAccess',
+    component: () => import('@/views/DirectConversationAccess.vue'),
+    meta: { guest: true, skipGuestRedirect: true, dcInboxAccess: true }
+  },
+  {
     path: '/direct-conversations/:id',
     name: 'DirectConversation',
     component: () => import('@/views/DirectConversation.vue'),

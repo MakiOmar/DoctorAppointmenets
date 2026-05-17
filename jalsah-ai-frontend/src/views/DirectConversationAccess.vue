@@ -79,14 +79,22 @@ async function submit() {
       return
     }
 
-    const { token: authToken, user: userData, conversation_id: conversationId } = response.data.data
-    if (!authToken || !userData || !conversationId) {
+    const { token: authToken, user: userData, conversation_id: conversationId, redirect_path: redirectPath, list_mode: listMode } = response.data.data
+    if (!authToken || !userData) {
       error.value = t('dcAccess.invalidCode')
       return
     }
 
     authStore.setSession(authToken, userData)
     toast.success(t('dcAccess.success'))
+    if (listMode || redirectPath) {
+      await router.replace(redirectPath || '/notifications')
+      return
+    }
+    if (!conversationId) {
+      error.value = t('dcAccess.invalidCode')
+      return
+    }
     await router.replace(`/direct-conversations/${conversationId}`)
   } catch (err) {
     const msg =
