@@ -146,6 +146,125 @@ function snks_direct_conversations_get_summary_days() {
 }
 
 /**
+ * Whether daily digest debug logging is enabled (admin option).
+ *
+ * @return bool
+ */
+function snks_dc_digest_debug_enabled() {
+	return (string) get_option( 'snks_dc_digest_debug_enabled', '0' ) === '1';
+}
+
+/**
+ * Append one digest run report to the debug log option (newest first).
+ *
+ * @param array<string,mixed> $report Run report from snks_direct_conversations_run_daily_digest().
+ * @return void
+ */
+function snks_dc_digest_debug_store_run( array $report ) {
+	$log = get_option( 'snks_dc_digest_debug_log', array() );
+	if ( ! is_array( $log ) ) {
+		$log = array();
+	}
+	array_unshift( $log, $report );
+	$log = array_slice( $log, 0, 15 );
+	update_option( 'snks_dc_digest_debug_log', $log, false );
+}
+
+/**
+ * Write digest debug line to PHP error_log when WP_DEBUG_LOG is on.
+ *
+ * @param string              $message Short message.
+ * @param array<string,mixed> $context Optional context.
+ * @return void
+ */
+function snks_dc_digest_debug_error_log( $message, array $context = array() ) {
+	if ( ! ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) ) {
+		return;
+	}
+	$line = '[SNKS DC digest] ' . $message;
+	if ( ! empty( $context ) ) {
+		$line .= ' ' . wp_json_encode( $context );
+	}
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( $line );
+}
+
+/**
+ * Build digest decision data for one user (no side effects).
+ *
+ * @param int $user_id User ID.
+ * @return array<string,mixed>
+ */
+function snks_direct_conversations_digest_diagnose_user( $user_id ) {
+	global $wpdb;
+
+	$user_id = (int) $user_id;
+	$days    = snks_direct_conversations_get_summary_days();
+	$out     = array(
+		'user_id'              => $user_id,
+		'is_therapist'         => snks_direct_conversations_is_doctor_user( $user_id ),
+		'unread_total'         => snks_direct_conversations_unread_count( $user_id ),
+		'unread_in_window'     => snks_direct_conversations_unread_in_digest_window( $user_id ),
+		'unread_older_than_n'  => snks_direct_conversations_unread_older_than_threshold( $user_id ),
+		'summary_days'         => $days,
+		'digest_sent_today'    => false,
+		'digest_notification_id' => null,
+		'would_send_in_app'    => false,
+		'would_send_whatsapp'  => false,
+		'blockers'             => array(),
+	);
+
+	if ( $user_id <= 0 ) {
+		$out['blockers'][] = 'invalid_user_id';
+		return $out;
+	}
+
+	$notifications_table = $wpdb->prefix . 'snks_ai_notifications';
+	$day_start           = current_time( 'Y-m-d' ) . ' 00:00:00';
+	$exists              = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT id FROM {$notifications_table} WHERE user_id = %d AND type = %s AND created_at >= %s LIMIT 1",
+			$user_id,
+			SNKS_DIRECT_CONV_NOTIF_DIGEST,
+			$day_start
+		)
+	);
+	if ( $exists ) {
+		$out['digest_sent_today']         = true;
+		$out['digest_notification_id']    = (int) $exists;
+		$out['blockers'][]                = 'digest_already_sent_today';
+	} elseif ( $out['unread_in_window'] <= 0 ) {
+		$out['blockers'][] = 'no_unread_in_summary_window';
+	} else {
+		$out['would_send_in_app'] = true;
+	}
+
+	if ( $out['unread_older_than_n'] <= 0 ) {
+		$out['blockers'][] = 'no_unread_older_than_threshold_for_whatsapp';
+	} elseif ( (string) get_option( 'snks_ai_notifications_enabled', '1' ) !== '1' ) {
+		$out['blockers'][] = 'ai_notifications_disabled';
+	} elseif ( ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
+		$out['blockers'][] = 'whatsapp_helpers_missing';
+	} elseif ( ! snks_get_user_whatsapp( $user_id ) ) {
+		$out['blockers'][] = 'no_whatsapp_phone';
+	} elseif ( snks_direct_conversations_is_doctor_user( $user_id ) ) {
+		if ( '' === snks_dc_wa_tpl_therapist() ) {
+			$out['blockers'][] = 'whatsapp_template_dc_therapist_empty';
+		} else {
+			$out['would_send_whatsapp'] = true;
+		}
+	} elseif ( '' === snks_dc_wa_tpl_patient_digest() ) {
+		$out['blockers'][] = 'whatsapp_template_dc_patient_digest_empty';
+	} elseif ( ! snks_direct_conversations_patient_digest_whatsapp_params( $user_id ) ) {
+		$out['blockers'][] = 'no_qualifying_conversation_for_chat_link';
+	} else {
+		$out['would_send_whatsapp'] = true;
+	}
+
+	return $out;
+}
+
+/**
  * Max upload bytes. 0 = no size limit (WordPress / server limits still apply).
  *
  * @return int
@@ -1199,17 +1318,46 @@ function snks_direct_conversations_recent_booked_patients_for_therapist( $therap
 /**
  * Daily digest: one in-app notification per user per day if unread in window.
  *
- * @return void
+ * @param bool $force_debug_log Store a full report even when the debug option is off (admin manual run).
+ * @return array<string,mixed>|null Run report when debug logging is on or $force_debug_log is true; otherwise null.
  */
-function snks_direct_conversations_run_daily_digest() {
+function snks_direct_conversations_run_daily_digest( $force_debug_log = false ) {
 	global $wpdb;
+
+	$days     = snks_direct_conversations_get_summary_days();
+	$log_run  = $force_debug_log || snks_dc_digest_debug_enabled();
+	$next_ts  = wp_next_scheduled( 'snks_direct_conversations_daily_digest' );
+	$report   = array(
+		'run_at'           => current_time( 'mysql' ),
+		'run_at_gmt'       => current_time( 'mysql', true ),
+		'timezone'         => wp_timezone_string(),
+		'summary_days'     => $days,
+		'digest_hour'      => (int) get_option( 'snks_direct_conv_digest_hour', 20 ),
+		'next_cron_utc'    => $next_ts ? gmdate( 'Y-m-d H:i:s', $next_ts ) : null,
+		'trigger'          => $force_debug_log ? 'admin_manual' : 'cron',
+		'candidates'       => 0,
+		'in_app_sent'      => 0,
+		'whatsapp_sent'    => 0,
+		'users'            => array(),
+		'abort'            => null,
+	);
+
+	$finish = static function ( array $rep ) use ( $log_run, $force_debug_log ) {
+		if ( $log_run || $force_debug_log ) {
+			snks_dc_digest_debug_store_run( $rep );
+			snks_dc_digest_debug_error_log( 'run complete', array( 'abort' => $rep['abort'], 'candidates' => $rep['candidates'] ) );
+			return $rep;
+		}
+		return null;
+	};
+
 	if ( ! function_exists( 'snks_create_ai_notification' ) ) {
-		return;
+		$report['abort'] = 'missing_snks_create_ai_notification';
+		return $finish( $report );
 	}
 
 	$notifications_table = $wpdb->prefix . 'snks_ai_notifications';
 	$t_msg               = snks_direct_conversations_tables()['msg'];
-	$days                = snks_direct_conversations_get_summary_days();
 
 	// Users with at least one unread message in window.
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name controlled.
@@ -1219,17 +1367,43 @@ function snks_direct_conversations_run_daily_digest() {
 			$days
 		)
 	);
+	$report['candidates'] = is_array( $user_ids ) ? count( $user_ids ) : 0;
+
 	if ( empty( $user_ids ) ) {
-		return;
+		$report['abort'] = 'no_users_with_unread_in_window';
+		return $finish( $report );
 	}
 
 	foreach ( $user_ids as $uid ) {
-		$uid = (int) $uid;
+		$uid    = (int) $uid;
+		$entry  = array(
+			'user_id'             => $uid,
+			'is_therapist'        => snks_direct_conversations_is_doctor_user( $uid ),
+			'unread_in_window'    => 0,
+			'unread_older_than_n' => 0,
+			'in_app'              => array( 'status' => 'pending' ),
+			'whatsapp'            => array( 'status' => 'pending' ),
+		);
+
 		if ( $uid <= 0 ) {
+			$entry['in_app']['status']  = 'skipped';
+			$entry['in_app']['reason']  = 'invalid_user_id';
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'invalid_user_id';
+			$report['users'][]           = $entry;
 			continue;
 		}
-		$n_window = snks_direct_conversations_unread_in_digest_window( $uid );
+
+		$n_window                      = snks_direct_conversations_unread_in_digest_window( $uid );
+		$entry['unread_in_window']     = $n_window;
+		$entry['unread_older_than_n']  = snks_direct_conversations_unread_older_than_threshold( $uid );
+
 		if ( $n_window <= 0 ) {
+			$entry['in_app']['status']   = 'skipped';
+			$entry['in_app']['reason']   = 'zero_unread_in_window';
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'zero_unread_in_window';
+			$report['users'][]           = $entry;
 			continue;
 		}
 
@@ -1243,6 +1417,12 @@ function snks_direct_conversations_run_daily_digest() {
 			)
 		);
 		if ( $exists ) {
+			$entry['in_app']['status']  = 'skipped';
+			$entry['in_app']['reason']  = 'digest_already_sent_today';
+			$entry['in_app']['existing_notification_id'] = (int) $exists;
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'digest_already_sent_today';
+			$report['users'][]           = $entry;
 			continue;
 		}
 
@@ -1264,23 +1444,67 @@ function snks_direct_conversations_run_daily_digest() {
 			$link = snks_direct_conversations_patient_app_link( 0 );
 		}
 
+		$before_max_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COALESCE(MAX(id), 0) FROM {$notifications_table} WHERE user_id = %d",
+				$uid
+			)
+		);
+
 		snks_create_ai_notification( $uid, SNKS_DIRECT_CONV_NOTIF_DIGEST, $title, $message, $link );
 
+		$new_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$notifications_table} WHERE user_id = %d AND type = %s AND id > %d ORDER BY id DESC LIMIT 1",
+				$uid,
+				SNKS_DIRECT_CONV_NOTIF_DIGEST,
+				$before_max_id
+			)
+		);
+
+		if ( $new_id > 0 ) {
+			$entry['in_app']['status']          = 'sent';
+			$entry['in_app']['notification_id'] = $new_id;
+			++$report['in_app_sent'];
+		} else {
+			$entry['in_app']['status']  = 'failed';
+			$entry['in_app']['reason']  = 'insert_not_verified';
+			$entry['in_app']['db_error'] = $wpdb->last_error ? $wpdb->last_error : '';
+		}
+
 		// Optional WhatsApp daily digest for unread messages older than threshold.
-		$old_unread = snks_direct_conversations_unread_older_than_threshold( $uid );
+		$old_unread = (int) $entry['unread_older_than_n'];
 		if ( $old_unread <= 0 ) {
-			continue;
-		}
-		$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
-		if ( ! $wa_enabled || ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
-			continue;
-		}
-		$phone = snks_get_user_whatsapp( $uid );
-		if ( ! $phone ) {
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'no_unread_older_than_threshold';
+			$entry['whatsapp']['note']   = 'WhatsApp requires unread messages older than summary_days (' . $days . '). In-app may still send.';
+			$report['users'][] = $entry;
 			continue;
 		}
 
-		// Therapist digest uses chat_th (static). Patient digest uses chat_pt2 ({{chat_link}} only). No fallback.
+		$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
+		if ( ! $wa_enabled ) {
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'ai_notifications_disabled';
+			$report['users'][]           = $entry;
+			continue;
+		}
+		if ( ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'whatsapp_helpers_missing';
+			$report['users'][]           = $entry;
+			continue;
+		}
+
+		$phone = snks_get_user_whatsapp( $uid );
+		if ( ! $phone ) {
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'no_whatsapp_phone';
+			$report['users'][]           = $entry;
+			continue;
+		}
+		$entry['whatsapp']['phone_masked'] = substr( $phone, 0, 4 ) . '***';
+
 		$tpl    = '';
 		$params = array();
 		if ( snks_direct_conversations_is_doctor_user( $uid ) ) {
@@ -1295,10 +1519,41 @@ function snks_direct_conversations_run_daily_digest() {
 			}
 		}
 
-		if ( '' !== $tpl && ! empty( $params ) ) {
-			snks_send_whatsapp_template_message( $phone, $tpl, $params );
+		$entry['whatsapp']['template'] = $tpl;
+
+		if ( '' === $tpl ) {
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = snks_direct_conversations_is_doctor_user( $uid )
+				? 'whatsapp_template_dc_therapist_empty'
+				: ( snks_dc_wa_tpl_patient_digest() === '' ? 'whatsapp_template_dc_patient_digest_empty' : 'no_qualifying_conversation_for_chat_link' );
+			$report['users'][]           = $entry;
+			continue;
 		}
+
+		if ( ! snks_direct_conversations_is_doctor_user( $uid ) && empty( $params ) ) {
+			$entry['whatsapp']['status'] = 'skipped';
+			$entry['whatsapp']['reason'] = 'empty_template_params';
+			$report['users'][]           = $entry;
+			continue;
+		}
+
+		$entry['whatsapp']['params'] = $params;
+		$wa_result                   = snks_send_whatsapp_template_message( $phone, $tpl, $params );
+
+		if ( is_wp_error( $wa_result ) ) {
+			$entry['whatsapp']['status'] = 'failed';
+			$entry['whatsapp']['reason'] = $wa_result->get_error_code();
+			$entry['whatsapp']['error']  = $wa_result->get_error_message();
+		} else {
+			$entry['whatsapp']['status']     = 'sent';
+			$entry['whatsapp']['message_id'] = isset( $wa_result['messages'][0]['id'] ) ? $wa_result['messages'][0]['id'] : null;
+			++$report['whatsapp_sent'];
+		}
+
+		$report['users'][] = $entry;
 	}
+
+	return $finish( $report );
 }
 
 /**

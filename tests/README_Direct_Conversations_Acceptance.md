@@ -9,7 +9,8 @@ Run after deployment and **flush permalinks** (Settings → Permalinks → Save)
 
 ## Notification rules
 
-1. [ ] Therapist T and patient P have no row yet. Patient sends first message (via API or test). Therapist receives **one** `direct_conversation_started` in-app notification (and WhatsApp only if template option is set and phone exists).
+1. [ ] Therapist T and patient P have no row yet. **Therapist** sends first message. Patient receives **one** `direct_conversation_started` in-app notification (WhatsApp `chat_pt1` only if `snks_whatsapp_template_dc_patient_first` is set and phone exists).
+1b. [ ] Patient sends first message in a new thread. **No** `direct_conversation_started` for therapist (by design).
 2. [ ] Patient sends a **second** message in the same thread. **No** new immediate `direct_conversation_started` for therapist.
 3. [ ] Leave messages unread with `created_at` within N days. Run `do_action( 'snks_direct_conversations_daily_digest' );` (e.g. WP-CLI `wp eval "do_action('snks_direct_conversations_daily_digest');"`). User receives **at most one** `direct_conversation_daily_digest` per calendar day.
 4. [ ] Unread messages only older than N days: digest run produces **no** digest for those (adjust `snks_conversation_unread_summary_days` in **Jalsah AI → Direct conversations**).

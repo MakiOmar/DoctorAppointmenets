@@ -128,13 +128,15 @@ This document lists all WhatsApp notification events in the DoctorAppointments p
 
 ## Direct therapist–patient conversations (in-app + optional WhatsApp)
 
+**Detailed guide:** [README_Direct_Conversations_WhatsApp_Notifications.md](./README_Direct_Conversations_WhatsApp_Notifications.md) (flows, cron, template params, test buttons).
+
 These events use `snks_ai_notifications` (and optional WhatsApp via `snks_send_whatsapp_template_message`). Logic lives in `functions/direct-conversations/snks-direct-conversations.php`.
 
 ### In-app types (`snks_ai_notifications.type`)
 
 | Type | When | Notes |
 |------|------|--------|
-| `direct_conversation_started` | Exactly when the **first** message in a thread is stored (conversation + first row in `wp_snks_direct_conversation_messages`) | Recipient is the **other** participant. **No** further immediate rows for later messages in the same `conversation_id`. |
+| `direct_conversation_started` | When the **first** message in a thread is stored **and** the sender is the **therapist** | Recipient is the **patient** only. Patient-first threads do **not** fire this type. **No** further immediate rows for later messages in the same `conversation_id`. |
 | `direct_conversation_daily_digest` | Once per calendar day per user, at the scheduled digest hour, **only if** the user has **unread** messages whose `created_at` falls within the configured lookback window (default 3 days, option `snks_conversation_unread_summary_days`) | Older unread messages outside the window are **not** counted and do not trigger the digest. |
 
 ### WhatsApp (optional)
@@ -145,9 +147,9 @@ Requires `snks_ai_notifications_enabled`, a configured WhatsApp Cloud API, and a
 
 | Option | Template name (example) | When | Body parameters from plugin |
 |--------|-------------------------|------|-------------------------------|
-| `snks_whatsapp_template_dc_therapist` | `chat_th` | Patient sends the **first** message in a thread (therapist notified), and therapist **daily digest** WhatsApp when old-unread threshold is met | None (static approved body in Meta) |
-| `snks_whatsapp_template_dc_patient_first` | `chat_pt1` | Therapist sends the **first** message (patient notified) | `chat_link` (dc-access URL), `enter` (numeric access password) |
-| `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when old-unread threshold is met | `chat_link` (SPA deep link to the unread conversation) |
+| `snks_whatsapp_template_dc_therapist` | `chat_th` | Therapist **daily digest** WhatsApp when old-unread threshold is met | None (static approved body in Meta) |
+| `snks_whatsapp_template_dc_patient_first` | `chat_pt1` | Therapist sends the **first** message in a thread (patient notified) | `chat_link` (dc-access URL), `enter` (numeric access password) |
+| `snks_whatsapp_template_dc_patient_digest` | `chat_pt2` | Patient **daily digest** WhatsApp when old-unread threshold is met | `chat_link` (SPA deep link to oldest qualifying unread conversation) |
 
 ### Cron
 

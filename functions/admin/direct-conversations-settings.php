@@ -260,6 +260,7 @@ function snks_direct_conversations_settings_page() {
 		update_option( 'snks_whatsapp_template_dc_therapist', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_therapist'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_patient_first', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_patient_first'] ?? '' ) ) );
 		update_option( 'snks_whatsapp_template_dc_patient_digest', sanitize_text_field( wp_unslash( $_POST['snks_whatsapp_template_dc_patient_digest'] ?? '' ) ) );
+		update_option( 'snks_dc_digest_debug_enabled', isset( $_POST['snks_dc_digest_debug_enabled'] ) ? '1' : '0' );
 		snks_direct_conversations_reschedule_digest_cron();
 		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Settings saved.', 'anony-shrinks' ) . '</p></div>';
 	}
@@ -284,6 +285,27 @@ function snks_direct_conversations_settings_page() {
 		}
 	}
 
+	$digest_manual_report = null;
+	$digest_diagnose      = null;
+
+	if ( isset( $_POST['snks_dc_digest_run_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['snks_dc_digest_run_nonce'] ) ), 'snks_dc_digest_run' ) ) {
+		if ( function_exists( 'snks_direct_conversations_run_daily_digest' ) ) {
+			$digest_manual_report = snks_direct_conversations_run_daily_digest( true );
+		}
+	}
+
+	if ( isset( $_POST['snks_dc_digest_clear_log_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['snks_dc_digest_clear_log_nonce'] ) ), 'snks_dc_digest_clear_log' ) ) {
+		delete_option( 'snks_dc_digest_debug_log' );
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Digest debug log cleared.', 'anony-shrinks' ) . '</p></div>';
+	}
+
+	if ( isset( $_POST['snks_dc_digest_diagnose_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['snks_dc_digest_diagnose_nonce'] ) ), 'snks_dc_digest_diagnose' ) ) {
+		$diag_uid = absint( $_POST['snks_dc_digest_diagnose_user_id'] ?? 0 );
+		if ( $diag_uid > 0 && function_exists( 'snks_direct_conversations_digest_diagnose_user' ) ) {
+			$digest_diagnose = snks_direct_conversations_digest_diagnose_user( $diag_uid );
+		}
+	}
+
 	$days   = (int) get_option( 'snks_conversation_unread_summary_days', 3 );
 	$maxb   = (int) get_option( 'snks_direct_conv_max_upload_bytes', 0 );
 	$mimes  = (string) get_option( 'snks_direct_conv_allowed_mimes', 'image/jpeg,image/png,image/gif,application/pdf' );
@@ -297,6 +319,12 @@ function snks_direct_conversations_settings_page() {
 	$sample_chat_link = function_exists( 'snks_direct_conversations_patient_app_link' )
 		? snks_direct_conversations_patient_app_link( 0 )
 		: trailingslashit( home_url( '/' ) ) . 'notifications';
+	$digest_debug_on  = function_exists( 'snks_dc_digest_debug_enabled' ) && snks_dc_digest_debug_enabled();
+	$digest_log       = get_option( 'snks_dc_digest_debug_log', array() );
+	if ( ! is_array( $digest_log ) ) {
+		$digest_log = array();
+	}
+	$digest_next_cron = wp_next_scheduled( 'snks_direct_conversations_daily_digest' );
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Direct conversations', 'anony-shrinks' ); ?></h1>
@@ -359,9 +387,120 @@ function snks_direct_conversations_settings_page() {
 						<p class="description"><?php esc_html_e( 'Daily digest WhatsApp when the patient has unread messages past the digest threshold. Named body parameter: chat_link (SPA deep link to the unread conversation). If empty, no digest WhatsApp is sent to patients.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Digest debug logging', 'anony-shrinks' ); ?></th>
+					<td>
+						<label>
+							<input name="snks_dc_digest_debug_enabled" type="checkbox" value="1" <?php checked( $digest_debug_on ); ?> />
+							<?php esc_html_e( 'Log every cron digest run (last 15 runs stored)', 'anony-shrinks' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Also writes to PHP error_log when WP_DEBUG_LOG is enabled. Use the section below to run manually and diagnose users.', 'anony-shrinks' ); ?></p>
+					</td>
+				</tr>
 			</table>
 			<?php submit_button(); ?>
 		</form>
+
+		<hr />
+
+		<h2><?php esc_html_e( 'Daily digest debug', 'anony-shrinks' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'In-app digest: any unread in the summary window, once per user per day. WhatsApp digest: additionally requires unread messages older than the same N-day window. Common blockers: digest_already_sent_today, no_unread_older_than_threshold, cron not running.', 'anony-shrinks' ); ?>
+		</p>
+		<table class="widefat striped" style="max-width: 960px; margin-bottom: 1em;">
+			<tbody>
+				<tr>
+					<th scope="row" style="width: 220px;"><?php esc_html_e( 'WP-Cron hook', 'anony-shrinks' ); ?></th>
+					<td><code>snks_direct_conversations_daily_digest</code></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Next scheduled run (UTC)', 'anony-shrinks' ); ?></th>
+					<td>
+						<?php
+						if ( $digest_next_cron ) {
+							echo esc_html( gmdate( 'Y-m-d H:i:s', $digest_next_cron ) );
+							echo ' <span class="description">(' . esc_html( wp_timezone_string() ) . ' site TZ, hour ' . esc_html( (string) $hour ) . ')</span>';
+						} else {
+							echo '<span style="color:#b32d2e;">' . esc_html__( 'Not scheduled — save settings or visit the site front end to register cron on init.', 'anony-shrinks' ) . '</span>';
+						}
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Debug logging', 'anony-shrinks' ); ?></th>
+					<td><?php echo $digest_debug_on ? esc_html__( 'On', 'anony-shrinks' ) : esc_html__( 'Off (manual run still logs one report)', 'anony-shrinks' ); ?></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<form method="post" style="margin-bottom: 1em;">
+			<?php wp_nonce_field( 'snks_dc_digest_run', 'snks_dc_digest_run_nonce' ); ?>
+			<button type="submit" class="button button-primary"><?php esc_html_e( 'Run digest now (with debug report)', 'anony-shrinks' ); ?></button>
+		</form>
+
+		<form method="post" style="display: inline-block; margin-right: 8px;">
+			<?php wp_nonce_field( 'snks_dc_digest_clear_log', 'snks_dc_digest_clear_log_nonce' ); ?>
+			<button type="submit" class="button button-secondary"><?php esc_html_e( 'Clear debug log', 'anony-shrinks' ); ?></button>
+		</form>
+
+		<form method="post" style="display: inline-block; margin-top: 1em;">
+			<?php wp_nonce_field( 'snks_dc_digest_diagnose', 'snks_dc_digest_diagnose_nonce' ); ?>
+			<label for="snks_dc_digest_diagnose_user_id"><?php esc_html_e( 'Diagnose user ID', 'anony-shrinks' ); ?></label>
+			<input type="number" name="snks_dc_digest_diagnose_user_id" id="snks_dc_digest_diagnose_user_id" class="small-text" min="1" step="1" value="<?php echo isset( $_POST['snks_dc_digest_diagnose_user_id'] ) ? esc_attr( (string) absint( $_POST['snks_dc_digest_diagnose_user_id'] ) ) : ''; ?>" />
+			<button type="submit" class="button"><?php esc_html_e( 'Preview (no send)', 'anony-shrinks' ); ?></button>
+		</form>
+
+		<?php if ( is_array( $digest_diagnose ) ) : ?>
+			<h3><?php esc_html_e( 'User diagnosis', 'anony-shrinks' ); ?></h3>
+			<pre style="max-width: 960px; overflow: auto; background: #f6f7f7; padding: 12px; border: 1px solid #c3c4c7;"><?php echo esc_html( wp_json_encode( $digest_diagnose, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ); ?></pre>
+		<?php endif; ?>
+
+		<?php if ( is_array( $digest_manual_report ) ) : ?>
+			<h3><?php esc_html_e( 'Last manual run', 'anony-shrinks' ); ?></h3>
+			<p>
+				<?php
+				printf(
+					/* translators: 1: candidates count, 2: in-app sent, 3: whatsapp sent */
+					esc_html__( 'Candidates: %1$d — in-app sent: %2$d — WhatsApp sent: %3$d', 'anony-shrinks' ),
+					(int) ( $digest_manual_report['candidates'] ?? 0 ),
+					(int) ( $digest_manual_report['in_app_sent'] ?? 0 ),
+					(int) ( $digest_manual_report['whatsapp_sent'] ?? 0 )
+				);
+				if ( ! empty( $digest_manual_report['abort'] ) ) {
+					echo ' — <strong>' . esc_html__( 'Aborted:', 'anony-shrinks' ) . '</strong> <code>' . esc_html( (string) $digest_manual_report['abort'] ) . '</code>';
+				}
+				?>
+			</p>
+			<pre style="max-width: 960px; max-height: 480px; overflow: auto; background: #f6f7f7; padding: 12px; border: 1px solid #c3c4c7;"><?php echo esc_html( wp_json_encode( $digest_manual_report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ); ?></pre>
+		<?php endif; ?>
+
+		<?php if ( ! empty( $digest_log ) ) : ?>
+			<h3><?php esc_html_e( 'Stored debug log (newest first)', 'anony-shrinks' ); ?></h3>
+			<?php foreach ( array_slice( $digest_log, 0, 5 ) as $idx => $run ) : ?>
+				<details style="max-width: 960px; margin-bottom: 8px; border: 1px solid #c3c4c7; padding: 8px 12px; background: #fff;">
+					<summary>
+						<?php
+						printf(
+							/* translators: 1: run time, 2: trigger, 3: candidates */
+							esc_html__( 'Run %1$d: %2$s (%3$s) — %4$d candidate(s), in-app %5$d, WhatsApp %6$d', 'anony-shrinks' ),
+							(int) $idx + 1,
+							esc_html( (string) ( $run['run_at'] ?? '?' ) ),
+							esc_html( (string) ( $run['trigger'] ?? 'cron' ) ),
+							(int) ( $run['candidates'] ?? 0 ),
+							(int) ( $run['in_app_sent'] ?? 0 ),
+							(int) ( $run['whatsapp_sent'] ?? 0 )
+						);
+						if ( ! empty( $run['abort'] ) ) {
+							echo ' — <code>' . esc_html( (string) $run['abort'] ) . '</code>';
+						}
+						?>
+					</summary>
+					<pre style="overflow: auto; max-height: 360px; margin-top: 8px;"><?php echo esc_html( wp_json_encode( $run, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) ); ?></pre>
+				</details>
+			<?php endforeach; ?>
+		<?php else : ?>
+			<p class="description"><?php esc_html_e( 'No digest debug runs stored yet. Enable logging above or click “Run digest now”.', 'anony-shrinks' ); ?></p>
+		<?php endif; ?>
 
 		<hr />
 
