@@ -68,13 +68,12 @@ WP-Cron: snks_direct_conversations_daily_digest  (daily @ snks_direct_conv_diges
   → users with ANY unread in last N days (snks_conversation_unread_summary_days)
   → skip if digest in-app row already exists today for that user
   → snks_create_ai_notification( type: direct_conversation_daily_digest )
-  → WhatsApp ONLY IF snks_direct_conversations_unread_older_than_threshold( user ) > 0
-       (unread messages with created_at <= NOW - N days)
+  → WhatsApp when same user has unread in window (created_at >= NOW - N days)
   → therapist: chat_th, no body parameters
-  → patient:   chat_pt2, { chat_link } → SPA link to oldest qualifying unread thread
+  → patient:   chat_pt2, { chat_link } → SPA link to newest qualifying unread thread in window
 ```
 
-**Important:** In-app digest counts **all** unread in the N-day window. WhatsApp digest is sent only when there is at least one unread message **older than N days** (same option value used as the threshold).
+**Important:** In-app and WhatsApp digest both use the **same rule**: unread messages **sent within the last N days** (`snks_conversation_unread_summary_days`). Messages older than N days are **not** included.
 
 ---
 
@@ -91,7 +90,7 @@ WP-Cron: snks_direct_conversations_daily_digest  (daily @ snks_direct_conv_diges
 
 | Option | Default | Role |
 |--------|---------|------|
-| `snks_conversation_unread_summary_days` | `3` | Digest window **and** “old unread” threshold for WhatsApp digest |
+| `snks_conversation_unread_summary_days` | `3` | Include only unread messages **sent within** this many days (in-app + WhatsApp) |
 | `snks_direct_conv_digest_hour` | `20` | Hour (0–23, site timezone) for daily cron |
 | `snks_whatsapp_template_dc_therapist` | (empty) | Meta template e.g. `chat_th` |
 | `snks_whatsapp_template_dc_patient_first` | (empty) | Meta template e.g. `chat_pt1` |
@@ -140,7 +139,7 @@ Each user entry in a run report includes `in_app.status` / `reason` and `whatsap
 |--------|---------|
 | `digest_already_sent_today` | In-app digest row already exists for this calendar day |
 | `no_unread_in_summary_window` | No unread in last N days (diagnose only) |
-| `no_unread_older_than_threshold` | Unread exist but none **older than N days** — WhatsApp skipped; in-app may still send |
+| `no_unread_in_summary_window` | No unread in the last N days |
 | `ai_notifications_disabled` | Global `snks_ai_notifications_enabled` is off |
 | `no_whatsapp_phone` | `snks_get_user_whatsapp()` returned empty |
 | `whatsapp_template_dc_*_empty` | Template option not set in admin |
@@ -170,7 +169,7 @@ After changing digest hour, save **Direct conversations** settings (reschedules 
 
 - Patient sends first message (no immediate notification).
 - Second and later messages in an existing thread.
-- Daily digest when user has unread **only** inside the N-day window (no messages older than N days) — in-app digest may still be created.
+- Daily digest when user has **no** unread within the N-day window (older unread is ignored).
 - Missing template option, missing phone, or global notifications disabled.
 - Therapist when patient starts the thread (no `direct_conversation_started` path today).
 

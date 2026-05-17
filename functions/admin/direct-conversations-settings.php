@@ -370,7 +370,7 @@ function snks_direct_conversations_settings_page() {
 					<th scope="row"><label for="snks_whatsapp_template_dc_therapist"><?php esc_html_e( 'WhatsApp: therapist template (chat_th)', 'anony-shrinks' ); ?></label></th>
 					<td>
 						<input name="snks_whatsapp_template_dc_therapist" id="snks_whatsapp_template_dc_therapist" type="text" value="<?php echo esc_attr( $wa_th ); ?>" class="regular-text" placeholder="chat_th" />
-						<p class="description"><?php esc_html_e( 'Sent when the client sends the first message in a thread and for the therapist daily unread digest when old unread exceeds the threshold. Fixed body copy in Meta; send no named body variables from this plugin. If empty, no WhatsApp for those therapist events.', 'anony-shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Sent for the therapist daily unread digest when there is unread within the summary window. Fixed body copy in Meta; send no named body variables from this plugin. If empty, no WhatsApp for that therapist digest event.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -384,7 +384,7 @@ function snks_direct_conversations_settings_page() {
 					<th scope="row"><label for="snks_whatsapp_template_dc_patient_digest"><?php esc_html_e( 'WhatsApp: patient daily unread digest (chat_pt2)', 'anony-shrinks' ); ?></label></th>
 					<td>
 						<input name="snks_whatsapp_template_dc_patient_digest" id="snks_whatsapp_template_dc_patient_digest" type="text" value="<?php echo esc_attr( $wa_pd ); ?>" class="regular-text" placeholder="chat_pt2" />
-						<p class="description"><?php esc_html_e( 'Daily digest WhatsApp when the patient has unread messages past the digest threshold. Named body parameter: chat_link (SPA deep link to the unread conversation). If empty, no digest WhatsApp is sent to patients.', 'anony-shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Daily digest WhatsApp when the patient has unread messages within the summary window (last N days). Named body parameter: chat_link (SPA deep link to the unread conversation). If empty, no digest WhatsApp is sent to patients.', 'anony-shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -405,7 +405,7 @@ function snks_direct_conversations_settings_page() {
 
 		<h2><?php esc_html_e( 'Daily digest debug', 'anony-shrinks' ); ?></h2>
 		<p class="description">
-			<?php esc_html_e( 'In-app digest: any unread in the summary window, once per user per day. WhatsApp digest: additionally requires unread messages older than the same N-day window. Common blockers: digest_already_sent_today, no_unread_older_than_threshold, cron not running.', 'anony-shrinks' ); ?>
+			<?php esc_html_e( 'In-app and WhatsApp digest: unread messages sent within the last N days only, once per user per day. Common blockers: digest_already_sent_today, no_unread_in_summary_window, cron not running, missing phone or template.', 'anony-shrinks' ); ?>
 		</p>
 		<table class="widefat striped" style="max-width: 960px; margin-bottom: 1em;">
 			<tbody>

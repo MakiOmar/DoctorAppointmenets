@@ -13,7 +13,7 @@ Run after deployment and **flush permalinks** (Settings → Permalinks → Save)
 1b. [ ] Patient sends first message in a new thread. **No** `direct_conversation_started` for therapist (by design).
 2. [ ] Patient sends a **second** message in the same thread. **No** new immediate `direct_conversation_started` for therapist.
 3. [ ] Leave messages unread with `created_at` within N days. Run `do_action( 'snks_direct_conversations_daily_digest' );` (e.g. WP-CLI `wp eval "do_action('snks_direct_conversations_daily_digest');"`). User receives **at most one** `direct_conversation_daily_digest` per calendar day.
-4. [ ] Unread messages only older than N days: digest run produces **no** digest for those (adjust `snks_conversation_unread_summary_days` in **Jalsah AI → Direct conversations**).
+4. [ ] Unread messages **older** than N days only (outside window): digest run produces **no** digest (adjust `snks_conversation_unread_summary_days` in **Jalsah AI → Direct conversations**).
 
 ## Therapist hub (Elementor)
 

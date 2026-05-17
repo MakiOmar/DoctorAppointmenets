@@ -205,7 +205,6 @@ function snks_direct_conversations_digest_diagnose_user( $user_id ) {
 		'is_therapist'         => snks_direct_conversations_is_doctor_user( $user_id ),
 		'unread_total'         => snks_direct_conversations_unread_count( $user_id ),
 		'unread_in_window'     => snks_direct_conversations_unread_in_digest_window( $user_id ),
-		'unread_older_than_n'  => snks_direct_conversations_unread_older_than_threshold( $user_id ),
 		'summary_days'         => $days,
 		'digest_sent_today'    => false,
 		'digest_notification_id' => null,
@@ -239,8 +238,8 @@ function snks_direct_conversations_digest_diagnose_user( $user_id ) {
 		$out['would_send_in_app'] = true;
 	}
 
-	if ( $out['unread_older_than_n'] <= 0 ) {
-		$out['blockers'][] = 'no_unread_older_than_threshold_for_whatsapp';
+	if ( $out['unread_in_window'] <= 0 ) {
+		$out['blockers'][] = 'no_unread_in_summary_window_for_whatsapp';
 	} elseif ( (string) get_option( 'snks_ai_notifications_enabled', '1' ) !== '1' ) {
 		$out['blockers'][] = 'ai_notifications_disabled';
 	} elseif ( ! function_exists( 'snks_get_user_whatsapp' ) || ! function_exists( 'snks_send_whatsapp_template_message' ) ) {
@@ -483,7 +482,7 @@ function snks_direct_conversations_verify_guest_password( $public_token, $passwo
 }
 
 /**
- * Conversation used for patient digest WhatsApp (oldest unread past digest threshold).
+ * Conversation used for patient digest WhatsApp (newest unread within summary window).
  *
  * @param int $patient_user_id Patient user ID.
  * @return object|null
@@ -500,8 +499,8 @@ function snks_direct_conversations_digest_wa_conversation_for_patient( $patient_
 			WHERE c.patient_user_id = %d
 				AND m.recipient_user_id = %d
 				AND m.is_read = 0
-				AND m.created_at <= ( NOW() - INTERVAL %d DAY )
-			ORDER BY m.created_at ASC
+				AND m.created_at >= ( NOW() - INTERVAL %d DAY )
+			ORDER BY m.created_at DESC
 			LIMIT 1",
 			(int) $patient_user_id,
 			(int) $patient_user_id,
@@ -778,26 +777,6 @@ function snks_direct_conversations_unread_in_digest_window( $user_id ) {
 	return (int) $wpdb->get_var(
 		$wpdb->prepare(
 			"SELECT COUNT(*) FROM {$t['msg']} WHERE recipient_user_id = %d AND is_read = 0 AND created_at >= ( NOW() - INTERVAL %d DAY )",
-			(int) $user_id,
-			$days
-		)
-	);
-}
-
-/**
- * Unread messages older than configured threshold (days).
- *
- * @param int $user_id User ID.
- * @return int Count of unread old messages.
- */
-function snks_direct_conversations_unread_older_than_threshold( $user_id ) {
-	global $wpdb;
-	$t    = snks_direct_conversations_tables();
-	$days = snks_direct_conversations_get_summary_days();
-
-	return (int) $wpdb->get_var(
-		$wpdb->prepare(
-			"SELECT COUNT(*) FROM {$t['msg']} WHERE recipient_user_id = %d AND is_read = 0 AND created_at <= ( NOW() - INTERVAL %d DAY )",
 			(int) $user_id,
 			$days
 		)
@@ -1377,12 +1356,11 @@ function snks_direct_conversations_run_daily_digest( $force_debug_log = false ) 
 	foreach ( $user_ids as $uid ) {
 		$uid    = (int) $uid;
 		$entry  = array(
-			'user_id'             => $uid,
-			'is_therapist'        => snks_direct_conversations_is_doctor_user( $uid ),
-			'unread_in_window'    => 0,
-			'unread_older_than_n' => 0,
-			'in_app'              => array( 'status' => 'pending' ),
-			'whatsapp'            => array( 'status' => 'pending' ),
+			'user_id'          => $uid,
+			'is_therapist'     => snks_direct_conversations_is_doctor_user( $uid ),
+			'unread_in_window' => 0,
+			'in_app'           => array( 'status' => 'pending' ),
+			'whatsapp'         => array( 'status' => 'pending' ),
 		);
 
 		if ( $uid <= 0 ) {
@@ -1394,9 +1372,8 @@ function snks_direct_conversations_run_daily_digest( $force_debug_log = false ) 
 			continue;
 		}
 
-		$n_window                      = snks_direct_conversations_unread_in_digest_window( $uid );
-		$entry['unread_in_window']     = $n_window;
-		$entry['unread_older_than_n']  = snks_direct_conversations_unread_older_than_threshold( $uid );
+		$n_window                  = snks_direct_conversations_unread_in_digest_window( $uid );
+		$entry['unread_in_window'] = $n_window;
 
 		if ( $n_window <= 0 ) {
 			$entry['in_app']['status']   = 'skipped';
@@ -1472,16 +1449,7 @@ function snks_direct_conversations_run_daily_digest( $force_debug_log = false ) 
 			$entry['in_app']['db_error'] = $wpdb->last_error ? $wpdb->last_error : '';
 		}
 
-		// Optional WhatsApp daily digest for unread messages older than threshold.
-		$old_unread = (int) $entry['unread_older_than_n'];
-		if ( $old_unread <= 0 ) {
-			$entry['whatsapp']['status'] = 'skipped';
-			$entry['whatsapp']['reason'] = 'no_unread_older_than_threshold';
-			$entry['whatsapp']['note']   = 'WhatsApp requires unread messages older than summary_days (' . $days . '). In-app may still send.';
-			$report['users'][] = $entry;
-			continue;
-		}
-
+		// Optional WhatsApp daily digest: same window as in-app (unread within last N days).
 		$wa_enabled = (string) get_option( 'snks_ai_notifications_enabled', '1' ) === '1';
 		if ( ! $wa_enabled ) {
 			$entry['whatsapp']['status'] = 'skipped';
