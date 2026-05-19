@@ -35,7 +35,7 @@
           </router-link>
 
           <!-- Notification Icon with Badge -->
-          <SessionMessagesNotification v-if="isAuthenticated" />
+          <SessionMessagesNotification v-if="showDirectConversationNotifications" />
 
           <!-- Hamburger Menu -->
           <button
@@ -327,6 +327,7 @@ import { useCartStore } from '@/stores/cart'
 import { useSettingsStore } from '@/stores/settings'
 import { useI18n } from 'vue-i18n'
 import SessionMessagesNotification from './SessionMessagesNotification.vue'
+import { useDirectConversationsAccess } from '@/composables/useDirectConversationsAccess'
 import api from '@/services/api'
 
 export default {
@@ -351,6 +352,10 @@ export default {
     const isSecretary = computed(() => {
       return userRole.value === 'secretary' || userRoles.value.includes('secretary')
     })
+    const { canAccessDirectConversations } = useDirectConversationsAccess()
+    const showDirectConversationNotifications = computed(
+      () => isAuthenticated.value && canAccessDirectConversations.value
+    )
     const cartItemCount = computed(() => cartStore.itemCount)
     
     const hasPreviousDiagnosis = computed(() => {
@@ -446,6 +451,7 @@ export default {
       locale,
       mobileMenuOpen,
       isAuthenticated,
+      showDirectConversationNotifications,
       isSecretary,
       cartItemCount,
       logout,

@@ -304,8 +304,6 @@ export const useAuthStore = defineStore('auth', () => {
                                       localStorage.getItem('user_country_code') || 
                                       '').toUpperCase()
         
-        console.log(`[VPN Detection] Current detected: ${currentCountryCode}, Stored in cookies/localStorage: ${currentStoredCountry}, Login country: ${storedLoginCountry}`)
-        
         // If current detected country matches what's stored in cookies/localStorage,
         // this means the country is stable (VPN was already enabled at login or no VPN)
         // In this case, update login_country_code to match, but don't trigger VPN detection
@@ -313,7 +311,6 @@ export const useAuthStore = defineStore('auth', () => {
           // Country is stable - matches what's stored in cookies/localStorage
           // This means VPN was already enabled when user logged in, or no VPN is being used
           if (currentStoredCountry !== storedLoginCountry) {
-            console.log(`[VPN Detection] Updating login_country_code from ${storedLoginCountry} to ${currentStoredCountry} (country is stable - VPN was already enabled at login)`)
             localStorage.setItem('login_country_code', currentStoredCountry)
           }
           
@@ -334,8 +331,6 @@ export const useAuthStore = defineStore('auth', () => {
         if (currentCountryCode !== storedLoginCountry && 
             currentCountryCode !== currentStoredCountry &&
             currentStoredCountry) { // Only if we have a stored country to compare
-          console.warn(`[VPN Detection] Country changed from ${storedLoginCountry} to ${currentCountryCode}. Logging out user.`)
-          
           // Stop checking immediately
           if (vpnCheckInterval) {
             clearInterval(vpnCheckInterval)
@@ -432,7 +427,6 @@ export const useAuthStore = defineStore('auth', () => {
         if (currentCountryCode === currentStoredCountry && 
             currentStoredCountry && 
             currentStoredCountry !== storedLoginCountry) {
-          console.log(`[VPN Detection] Updating login_country_code from ${storedLoginCountry} to ${currentStoredCountry} (country is stable)`)
           localStorage.setItem('login_country_code', currentStoredCountry)
         }
       }

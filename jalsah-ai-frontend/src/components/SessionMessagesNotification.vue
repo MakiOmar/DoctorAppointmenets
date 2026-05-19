@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div v-if="canAccessDirectConversations" class="relative">
     <!-- Notification Bell Icon -->
     <button
       @click="toggleNotifications"
@@ -241,6 +241,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useDirectConversationsAccess } from '@/composables/useDirectConversationsAccess'
 
 export default {
   name: 'SessionMessagesNotification',
@@ -248,6 +249,7 @@ export default {
     const { t, locale } = useI18n()
     const router = useRouter()
     const authStore = useAuthStore()
+    const { canAccessDirectConversations } = useDirectConversationsAccess()
     
     const showNotifications = ref(false)
     const loading = ref(false)
@@ -363,15 +365,14 @@ export default {
       if (showNotifications.value) {
         calculatePosition()
         // One full feed when opening the panel (not on a timer); summary poll stays lightweight.
-        if (authStore.isAuthenticated) {
+        if (canAccessDirectConversations.value && authStore.isAuthenticated) {
           await loadMessages(5, true)
         }
       }
     }
     
     const loadMessages = async (limit = 5, silent = false) => {
-      // Only call API if user is authenticated
-      if (!authStore.isAuthenticated) {
+      if (!canAccessDirectConversations.value || !authStore.isAuthenticated) {
         return
       }
       
@@ -427,8 +428,7 @@ export default {
       const delay = document.hidden ? FEED_SUMMARY_MS_HIDDEN : FEED_SUMMARY_MS_VISIBLE
       feedPollTimer = setTimeout(async () => {
         feedPollTimer = null
-        if (!authStore.isAuthenticated) {
-          scheduleFeedPoll()
+        if (!canAccessDirectConversations.value || !authStore.isAuthenticated) {
           return
         }
         try {
@@ -465,7 +465,7 @@ export default {
 
     const onFeedVisibility = () => {
       clearFeedPoll()
-      if (authStore.isAuthenticated) {
+      if (canAccessDirectConversations.value && authStore.isAuthenticated) {
         scheduleFeedPoll()
       }
     }
@@ -624,7 +624,7 @@ export default {
       // Check if notification icon exists
       notificationIconExists.value = await checkNotificationIconExists('/home/Layer-27.png')
       
-      if (authStore.isAuthenticated) {
+      if (canAccessDirectConversations.value && authStore.isAuthenticated) {
         await loadMessages()
         scheduleFeedPoll()
       }
@@ -647,6 +647,7 @@ export default {
     })
     
     return {
+      canAccessDirectConversations,
       locale,
       showNotifications,
       loading,
