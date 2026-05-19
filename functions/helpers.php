@@ -659,30 +659,275 @@ function get_user_by_nickname( $nickname ) {
 	return ! empty( $users ) ? $users[0] : false;
 }
 /**
+ * Extract date_time string from supported session argument types.
+ *
+ * @param mixed $session Timetable row, array, or date_time string.
+ * @return string
+ */
+function snks_get_session_date_time_string( $session ) {
+	if ( is_object( $session ) ) {
+		return isset( $session->date_time ) ? (string) $session->date_time : '';
+	}
+
+	if ( is_array( $session ) ) {
+		return isset( $session['date_time'] ) ? (string) $session['date_time'] : '';
+	}
+
+	return (string) $session;
+}
+
+/**
+ * Whether a parsed DateTime matches the source string for a given format.
+ *
+ * @param DateTime $datetime Parsed datetime.
+ * @param string   $input    Original input.
+ * @param string   $format   Format used for parsing.
+ * @return bool
+ */
+function snks_datetime_matches_format( DateTime $datetime, $input, $format ) {
+	$errors = DateTime::getLastErrors();
+
+	if ( is_array( $errors ) && ( $errors['warning_count'] > 0 || $errors['error_count'] > 0 ) ) {
+		return false;
+	}
+
+	// 12-hour formats may differ in leading zeros; timestamp validation is sufficient.
+	if ( false !== strpos( $format, 'a' ) || false !== strpos( $format, 'A' ) ) {
+		return true;
+	}
+
+	return $datetime->format( $format ) === trim( $input );
+}
+
+/**
+ * Parse session date_time in the WordPress timezone.
+ *
+ * @param string $date_time Raw date_time from DB.
+ * @return DateTime|null
+ */
+function snks_parse_session_datetime( $date_time ) {
+	$date_time = trim( (string) $date_time );
+
+	if ( '' === $date_time ) {
+		return null;
+	}
+
+	$timezone = wp_timezone();
+	$formats  = array( 'Y-m-d H:i:s', 'Y-m-d h:i a', 'Y-m-d g:i a' );
+
+	foreach ( $formats as $format ) {
+		$booking_dt_obj = DateTime::createFromFormat( $format, $date_time, $timezone );
+		if ( $booking_dt_obj instanceof DateTime && snks_datetime_matches_format( $booking_dt_obj, $date_time, $format ) ) {
+			return $booking_dt_obj;
+		}
+	}
+
+	try {
+		return new DateTime( $date_time, $timezone );
+	} catch ( Exception $e ) {
+		return null;
+	}
+}
+
+/**
+ * Get the Unix timestamp for a session start time in the WordPress timezone.
+ *
+ * @param object|array|string $session Session row, array with date_time, or date_time string.
+ * @return int Unix timestamp, or 0 when unavailable.
+ */
+function snks_get_session_start_timestamp( $session ) {
+	$date_time = snks_get_session_date_time_string( $session );
+
+	if ( '' === $date_time ) {
+		return 0;
+	}
+
+	$booking_dt_obj = snks_parse_session_datetime( $date_time );
+
+	return $booking_dt_obj instanceof DateTime ? $booking_dt_obj->getTimestamp() : 0;
+}
+
+/**
+ * Get the Unix timestamp for session end (start + period minutes) in the WordPress timezone.
+ *
+ * @param object|string $session Session object or date_time string.
+ * @param int|null      $period_minutes Optional period override in minutes.
+ * @return int Unix timestamp, or 0 when unavailable.
+ */
+function snks_get_session_end_timestamp( $session, $period_minutes = null ) {
+	$start = snks_get_session_start_timestamp( $session );
+
+	if ( $start <= 0 ) {
+		return 0;
+	}
+
+	if ( null === $period_minutes ) {
+		if ( is_object( $session ) && isset( $session->period ) ) {
+			$period_minutes = (int) $session->period;
+		} elseif ( is_array( $session ) && isset( $session['period'] ) ) {
+			$period_minutes = (int) $session['period'];
+		} else {
+			$period_minutes = 45;
+		}
+	}
+
+	return $start + ( max( 0, (int) $period_minutes ) * MINUTE_IN_SECONDS );
+}
+
+/**
+ * Current Unix timestamp aligned with WordPress timezone (site "now").
+ *
+ * @return int
+ */
+function snks_get_current_timestamp() {
+	return current_datetime()->getTimestamp();
+}
+
+/**
+ * Full timing state for a session (single source of truth for PHP + data attributes).
+ *
+ * @param object|string $session Session row or date_time string.
+ * @return array{
+ *     start: int,
+ *     end: int,
+ *     now: int,
+ *     diff_seconds: int,
+ *     is_too_early: bool,
+ *     is_active: bool,
+ *     is_ended: bool
+ * }
+ */
+function snks_get_session_timing( $session ) {
+	$start = snks_get_session_start_timestamp( $session );
+	$end   = snks_get_session_end_timestamp( $session );
+	$now   = snks_get_current_timestamp();
+
+	if ( $start <= 0 ) {
+		return array(
+			'start'        => 0,
+			'end'          => 0,
+			'now'          => $now,
+			'diff_seconds' => 0,
+			'is_too_early' => false,
+			'is_active'    => false,
+			'is_ended'     => false,
+		);
+	}
+
+	if ( $end <= 0 ) {
+		$end = $start;
+	}
+
+	$diff               = $start - $now;
+	$seconds_since_start = max( 0, $now - $start );
+
+	return array(
+		'start'               => $start,
+		'end'                 => $end,
+		'now'                 => $now,
+		'diff_seconds'        => $diff,
+		'seconds_since_start' => $seconds_since_start,
+		'is_too_early'        => $diff > 0,
+		'is_active'           => $now >= $start && $now < $end,
+		'is_ended'            => $now >= $end,
+	);
+}
+
+/**
+ * Whether the session start time is still in the future.
+ *
+ * @param object|string $session Session row or date_time string.
+ * @return bool
+ */
+function snks_is_session_too_early( $session ) {
+	return snks_get_session_timing( $session )['is_too_early'];
+}
+
+/**
+ * Whether the session start time has passed (includes currently active and ended).
+ *
+ * @param object|string $session Session row or date_time string.
+ * @return bool
+ */
+function snks_is_session_started( $session ) {
+	$timing = snks_get_session_timing( $session );
+
+	return $timing['start'] > 0 && $timing['diff_seconds'] <= 0;
+}
+
+/**
+ * Whether the session is in progress (started, not yet ended).
+ *
+ * @param object|string $session Session row or date_time string.
+ * @return bool
+ */
+function snks_is_session_active( $session ) {
+	return snks_get_session_timing( $session )['is_active'];
+}
+
+/**
+ * Whether the session end time has passed.
+ *
+ * @param object|string $session Session row or date_time string.
+ * @return bool
+ */
+function snks_is_session_ended( $session ) {
+	return snks_get_session_timing( $session )['is_ended'];
+}
+
+/**
+ * HTML data attributes for booking cards (timers / JS use server timestamps).
+ *
+ * @param object|array $session Timetable row or array with date_time and period.
+ * @return string
+ */
+function snks_session_timing_data_attrs( $session ) {
+	$timing    = snks_get_session_timing( $session );
+	$date_time = snks_get_session_date_time_string( $session );
+
+	if ( is_object( $session ) && isset( $session->period ) ) {
+		$period = (int) $session->period;
+	} elseif ( is_array( $session ) && isset( $session['period'] ) ) {
+		$period = (int) $session['period'];
+	} else {
+		$period = 45;
+	}
+
+	return sprintf(
+		'data-datetime="%s" data-start-ts="%d" data-end-ts="%d" data-period="%d"',
+		esc_attr( $date_time ),
+		(int) $timing['start'],
+		(int) $timing['end'],
+		$period
+	);
+}
+
+/**
+ * Format session date (Y-m-d) using WordPress timezone.
+ *
+ * @param mixed  $session Session row, array, or date_time string.
+ * @param string $format PHP date format.
+ * @return string
+ */
+function snks_format_session_datetime( $session, $format = 'Y-m-d H:i:s' ) {
+	$date_time = snks_get_session_date_time_string( $session );
+	$parsed    = snks_parse_session_datetime( $date_time );
+
+	if ( ! $parsed instanceof DateTime ) {
+		return '';
+	}
+
+	return $parsed->format( $format );
+}
+
+/**
  * Calculate the time difference in seconds between the current time and a session's time.
  *
- * @param object $session Session object containing a `date_time` property.
+ * @param object|array|string $session Session row, array with date_time, or date_time string.
  * @return int Time difference in seconds. Positive for future sessions, negative for past sessions.
  */
 function snks_diff_seconds( $session ) {
-	// Ensure the session object has a valid date_time property.
-	if ( ! isset( $session->date_time ) || empty( $session->date_time ) ) {
-		return 0; // Return 0 if date_time is missing or empty.
-	}
-
-	// Fetch the WordPress timezone.
-	$timezone = wp_timezone();
-
-	try {
-		// Create a DateTime object for the session time in the WordPress timezone.
-		$booking_dt_obj = new DateTime( $session->date_time, $timezone );
-		// Get the current date and time in the WordPress timezone.
-		$now = current_datetime();
-		// Calculate the difference in seconds.
-		return $booking_dt_obj->getTimestamp() - $now->getTimestamp();
-	} catch ( Exception $e ) {
-		return 0; // Return 0 in case of an error.
-	}
+	return snks_get_session_timing( $session )['diff_seconds'];
 }
 
 /**
@@ -1083,12 +1328,8 @@ function snks_can_modify_appointment( $appointment ) {
 	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
 		return false;
 	}
-	
-	$appointment_time = strtotime( $appointment->date_time );
-	$current_time = current_time( 'timestamp' );
-	
-	// Can modify up to 24 hours before (86400 seconds = 24 hours)
-	return ( $appointment_time - $current_time ) > 86400;
+
+	return snks_diff_seconds( $appointment ) > DAY_IN_SECONDS;
 }
 
 /**
@@ -1101,11 +1342,8 @@ function snks_get_appointment_time_remaining( $appointment ) {
 	if ( ! $appointment || ! isset( $appointment->date_time ) ) {
 		return 0;
 	}
-	
-	$appointment_time = strtotime( $appointment->date_time );
-	$current_time = current_time( 'timestamp' );
-	
-	return $appointment_time - $current_time;
+
+	return snks_diff_seconds( $appointment );
 }
 
 /**
@@ -1119,16 +1357,12 @@ function snks_can_edit_ai_appointment( $appointment ) {
 		return false;
 	}
 	
-	// Check if this is an AI booking
-	if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
-		return true; // Not an AI booking, use regular validation
+	// Check if this is an AI booking.
+	if ( ! isset( $appointment->settings ) || strpos( $appointment->settings, 'ai_booking' ) === false ) {
+		return true;
 	}
-	
-	$appointment_time = strtotime( $appointment->date_time );
-	$current_time = current_time( 'timestamp' );
-	
-	// AI appointments can be edited up to 24 hours before (86400 seconds = 24 hours)
-	return ( $appointment_time - $current_time ) > 86400;
+
+	return snks_diff_seconds( $appointment ) > DAY_IN_SECONDS;
 }
 
 /**
@@ -1142,16 +1376,11 @@ function snks_get_ai_appointment_edit_time_remaining( $appointment ) {
 		return 0;
 	}
 	
-	// Check if this is an AI booking
-	if ( strpos( $appointment->settings, 'ai_booking' ) === false ) {
-		return 0; // Not an AI booking, use regular validation
+	if ( ! isset( $appointment->settings ) || strpos( $appointment->settings, 'ai_booking' ) === false ) {
+		return 0;
 	}
-	
-	$appointment_time = strtotime( $appointment->date_time );
-	$current_time = current_time( 'timestamp' );
-	
-	// Return time remaining until 24 hours before appointment
-	return ( $appointment_time - $current_time ) - 86400;
+
+	return snks_diff_seconds( $appointment ) - DAY_IN_SECONDS;
 }
 
 /**
@@ -1219,10 +1448,15 @@ function snks_validate_absence_15_minute_rule($session_date_time, $attendance = 
 		);
 	}
 	
-	// Check if 15 minutes have passed since the session start time
-	$session_start_time = strtotime($session_date_time);
-	$current_time = current_time('timestamp');
-	$minutes_passed = ($current_time - $session_start_time) / 60;
+	$session_start_time = snks_get_session_start_timestamp( $session_date_time );
+	if ( $session_start_time <= 0 ) {
+		return array(
+			'success' => true,
+			'message' => '',
+		);
+	}
+
+	$minutes_passed = ( snks_get_current_timestamp() - $session_start_time ) / 60;
 	
 	if ($minutes_passed < 15) {
 		$remaining_minutes = ceil(15 - $minutes_passed);

@@ -65,7 +65,7 @@ function snks_send_session_notifications() {
 	//phpcs:enable
 	// Process each result.
 	foreach ( $results as $session ) {
-		$time_diff     = strtotime( $session->date_time ) - strtotime( $current_time );
+		$time_diff     = snks_diff_seconds( $session );
 		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
 		$user          = get_user_by( 'id', $session->client_id );
 		if ( empty( $billing_phone ) && $user ) {
@@ -94,7 +94,7 @@ function snks_send_session_notifications() {
 			// Check if session is 23-24 hours away
 			// Only send after 9 AM to avoid confusion (if sent between midnight and 5 AM, "tomorrow" might be misinterpreted)
 			$current_hour = (int) current_time( 'H' );
-			if ( $time_diff >= 82800 && $time_diff <= 86400 && ! $session->notification_24hr_sent && $current_hour >= 9 ) { // 82800 = 23 hrs, 86400 = 24 hrs, hour >= 9 AM
+			if ( $time_diff >= ( 23 * HOUR_IN_SECONDS ) && $time_diff <= DAY_IN_SECONDS && ! $session->notification_24hr_sent && $current_hour >= 9 ) {
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
@@ -105,8 +105,8 @@ function snks_send_session_notifications() {
 						
 						// Format date and time
 						$day_name = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
-						$date = gmdate( 'Y-m-d', strtotime( $session->date_time ) );
-						$time = gmdate( 'h:i a', strtotime( $session->date_time ) );
+						$date = snks_format_session_datetime( $session, 'Y-m-d' );
+						$time = snks_format_session_datetime( $session, 'h:i a' );
 						
 						// Send via WhatsApp template
 						snks_send_whatsapp_template_message(
@@ -121,14 +121,14 @@ function snks_send_session_notifications() {
 						$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link';
 						$message = sprintf(
 							'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
-							snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
+							snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) ),
 							$meeting_link
 						);
 						send_sms_via_whysms( $billing_phone, $message );
 					} else {
 						$message = sprintf(
 							'نذكرك بموعد جلستك غدا الساعه %1$s',
-							snks_localize_time( gmdate( 'h:i a', strtotime( $session->date_time ) ) ),
+							snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) ),
 						);
 						send_sms_via_whysms( $billing_phone, $message );
 					}
@@ -145,7 +145,7 @@ function snks_send_session_notifications() {
 				//phpcs:enable
 			}
 			// 1-hour reminder.
-			if ( 'online' === $session->attendance_type && $time_diff <= 3600 && ! $session->notification_1hr_sent ) {
+			if ( 'online' === $session->attendance_type && $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS && ! $session->notification_1hr_sent ) {
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );

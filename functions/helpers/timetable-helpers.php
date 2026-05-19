@@ -1763,24 +1763,26 @@ function snks_get_patient_sessions( $tense ) {
  * @return string
  */
 function snks_get_time_difference( $datetime, $time_zone ) {
+	unset( $time_zone );
 
-	$date = DateTime::createFromFormat( 'Y-m-d H:i:s', $datetime, $time_zone );
+	$diff_seconds = snks_diff_seconds( $datetime );
 
-	$current_date = current_datetime();
-
-	$diff = $date->diff( $current_date );
-
-	$diff_seconds = $diff->s + $diff->i * 60 + $diff->h * 3600 + $diff->days * 86400;
-
-	// Check if the difference is less than or equal to 5 minutes.
-	if ( $diff_seconds <= 5 * 60 ) {
-		// Calculate the difference in seconds.
-		return $diff_seconds;
-	} else {
-		// Format the difference in the original format.
-		$formatted_diff = $diff->format( 'باقي %a يوم و %H ساعة و %i دقيقة و %s ثانية' );
-		return $formatted_diff;
+	if ( $diff_seconds <= 0 ) {
+		return 0;
 	}
+
+	if ( $diff_seconds <= 5 * MINUTE_IN_SECONDS ) {
+		return $diff_seconds;
+	}
+
+	$start = snks_parse_session_datetime( snks_get_session_date_time_string( $datetime ) );
+	$now   = current_datetime();
+
+	if ( ! $start instanceof DateTime ) {
+		return $diff_seconds;
+	}
+
+	return $start->diff( $now )->format( 'باقي %a يوم و %H ساعة و %i دقيقة و %s ثانية' );
 }
 
 /**
@@ -1790,12 +1792,5 @@ function snks_get_time_difference( $datetime, $time_zone ) {
  * @return bool
  */
 function snks_is_past_date( $datetime ) {
-
-	$date    = new DateTime( $datetime, wp_timezone() );
-	$current = current_datetime();
-	if ( $date > $current ) {
-		return false; // date hasn't been passed.
-	}
-
-	return true; // date has been passed.
+	return snks_is_session_started( $datetime );
 }
