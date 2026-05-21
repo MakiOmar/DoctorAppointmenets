@@ -84,6 +84,7 @@ add_action(
 			'_total_price'       => $total_price,
 			'_jalsah_commistion' => $pricing_data['service_fees'],
 			'_paymob'            => $pricing_data['paymob'],
+			'_country'           => $country,
 		);
 
 		set_transient( snks_form_data_transient_key(), $form_data, 3600 );

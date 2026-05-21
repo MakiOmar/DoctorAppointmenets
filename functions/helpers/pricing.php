@@ -212,6 +212,7 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 	 * $d = Receiving fees of a + b + c
 	 */
 
+	$country      = snsk_ip_api_country(); // EG, SA, etc.
 	$a = ( $session_price * 0.025 + 2 ) * 1.14;
 	$b = ( $session_price * 0.001 ) * 1.14;
 	// For editing.
@@ -219,27 +220,36 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 		$c = 0;
 		// For Booking.
 	} elseif ( 'online' === $attendance_type ) {
-		if ( $session_price < 5 ) {
-			$c = 0;
-		} elseif ( $session_price > 5 && $session_price < 50 ) {
-			$c = 3.99 + 1.92;
-		} elseif ( $session_price >= 50 && $session_price < 100 ) {
-			$c = 6.56 + 1.92;
-		} elseif ( $session_price >= 100 && $session_price < 200 ) {
-			$c = 13.68 + 1.92;
-		} elseif ( $session_price >= 200 && $session_price < 300 ) {
-			$c = 15.39 + 1.92;
-		} elseif ( $session_price >= 300 && $session_price < 400 ) {
-			$c = 17.1 + 1.92;
-		} elseif ( $session_price >= 400 && $session_price < 500 ) {
-			$c = 17.67 + 1.92;
-		} elseif ( $session_price >= 500 && $session_price < 600 ) {
-			$c = 18.25 + 1.92;
+		if ( 'EG' === $country ) {
+			if ( $session_price < 5 ) {
+				$c = 0;
+			} elseif ( $session_price > 5 && $session_price < 50 ) {
+				$c = 3.99 + 1.92;
+			} elseif ( $session_price >= 50 && $session_price < 100 ) {
+				$c = 6.56 + 1.92;
+			} elseif ( $session_price >= 100 && $session_price < 200 ) {
+				$c = 13.68 + 1.92;
+			} elseif ( $session_price >= 200 && $session_price < 300 ) {
+				$c = 15.39 + 1.92;
+			} elseif ( $session_price >= 300 && $session_price < 400 ) {
+				$c = 17.1 + 1.92;
+			} elseif ( $session_price >= 400 && $session_price < 500 ) {
+				$c = 17.67 + 1.92;
+			} elseif ( $session_price >= 500 && $session_price < 600 ) {
+				$c = 18.25 + 1.92;
+			} else {
+				$c = 19.38 + 1.92;
+			}
 		} else {
-			$c = 19.38 + 1.92;
+			$c = $session_price * 0.10;
 		}
+
 	} else {
-		$c = 5.13 + 0.96;
+		if ( 'EG' === $country ) {
+			$c = 5.13 + 0.96;
+		} else {
+			$c = $session_price * 0.10;	
+		}
 	}
 	$d = ( $a + $b + $c ) * 0.025 * 1.03 * 1.14;
 
