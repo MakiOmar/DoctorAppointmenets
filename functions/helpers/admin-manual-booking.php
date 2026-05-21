@@ -67,7 +67,7 @@ function snks_manual_booking_time_to_minutes( $time ) {
 /**
  * Ensure a slot exists for therapist at date+time. Finds existing or creates new.
  * Used when admin selects "create new slot" with custom date and base hour.
- * Does not create a slot if it would overlap an existing open (booked) slot on the same day.
+ * Does not create a slot if it would overlap an existing open or completed slot on the same day.
  * Manual booking ignores therapist off_days and block_if_before settings.
  *
  * @param int    $therapist_id Therapist user ID.
@@ -167,7 +167,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		return (int) $existing->ID;
 	}
 
-	// Overlap only with open (active booked) slots; waiting/closed/completed/etc. do not block manual new slots.
+	// Overlap with open or completed sessions only; waiting/closed/cancelled/etc. do not block manual new slots.
 	// New slot would be [newStart, newStart+45) in minutes; overlap if newStart < existingEnd && existingStart < newEnd.
 	$new_start_min = snks_manual_booking_time_to_minutes( $time );
 	if ( $new_start_min < 0 ) {
@@ -188,7 +188,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	if ( is_array( $all_slots ) ) {
 		foreach ( $all_slots as $row ) {
 			$row_status = isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '';
-			if ( 'open' !== $row_status ) {
+			if ( ! in_array( $row_status, array( 'open', 'completed' ), true ) ) {
 				continue;
 			}
 			$existing_start_min = snks_manual_booking_time_to_minutes( $row->starts );
