@@ -67,7 +67,8 @@ function snks_manual_booking_time_to_minutes( $time ) {
 /**
  * Ensure a slot exists for therapist at date+time. Finds existing or creates new.
  * Used when admin selects "create new slot" with custom date and base hour.
- * Does not create a slot if it would overlap an existing slot (any period).
+ * Does not create a slot if it would overlap an existing open (booked) slot on the same day.
+ * Manual booking ignores therapist off_days and block_if_before settings.
  *
  * @param int    $therapist_id Therapist user ID.
  * @param string $date         Date Y-m-d.
@@ -110,13 +111,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		return false;
 	}
 
-	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', (string) $doctor_settings['off_days'] ) : array();
-	$off_days = array_map( 'trim', $off_days );
-	$off_days = array_filter( $off_days );
-	if ( in_array( $date, $off_days, true ) ) {
-		$snks_manual_booking_ensure_slot_last_error = 'off_day';
-		return false;
-	}
+	// Manual booking: do not apply therapist off_days (secretary may book on those dates).
 
 	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
 	if ( in_array( $date, $global_excluded, true ) ) {
@@ -172,7 +167,7 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		return (int) $existing->ID;
 	}
 
-	// Check overlap with any existing slot (any status) for this therapist and date.
+	// Overlap only with open (active booked) slots; waiting/closed/completed/etc. do not block manual new slots.
 	// New slot would be [newStart, newStart+45) in minutes; overlap if newStart < existingEnd && existingStart < newEnd.
 	$new_start_min = snks_manual_booking_time_to_minutes( $time );
 	if ( $new_start_min < 0 ) {
@@ -192,6 +187,10 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 	$overlap_rows = array();
 	if ( is_array( $all_slots ) ) {
 		foreach ( $all_slots as $row ) {
+			$row_status = isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '';
+			if ( 'open' !== $row_status ) {
+				continue;
+			}
 			$existing_start_min = snks_manual_booking_time_to_minutes( $row->starts );
 			if ( $existing_start_min < 0 ) {
 				continue;

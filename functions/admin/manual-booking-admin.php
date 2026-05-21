@@ -1029,11 +1029,8 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 	global $wpdb;
 	$table = $wpdb->prefix . 'snks_provider_timetable';
 
-	// Respect therapist visibility settings (same logic as AI therapist availability).
+	// Manual booking: ignore therapist off_days so dates with available slots still appear.
 	$doctor_settings = snks_doctor_settings( $therapist_id );
-	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', (string) $doctor_settings['off_days'] ) : array();
-	$off_days = array_map( 'trim', $off_days );
-	$off_days = array_filter( $off_days );
 
 	$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
 	if ( $days_count > 90 ) {
@@ -1048,14 +1045,9 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 		$seconds_before_block = $number * $base * 3600;
 	}
 
-	$off_days_placeholder = '';
-	if ( ! empty( $off_days ) ) {
-		$off_days_placeholder = implode( ',', array_fill( 0, count( $off_days ), '%s' ) );
-	}
-
 	$attendance_condition = "AND attendance_type = 'online'";
 	$period_condition     = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
-	$off_days_condition   = ( ! empty( $off_days ) ) ? "AND DATE(date_time) NOT IN ({$off_days_placeholder}) " : '';
+	$off_days_condition   = '';
 
 	// Adjust current time for block_if_before behavior.
 	$adjusted_current_datetime = date_i18n(
@@ -1081,9 +1073,6 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 		ORDER BY DATE(date_time) ASC";
 
 	$query_params = array( $therapist_id, $adjusted_current_datetime );
-	if ( ! empty( $off_days ) ) {
-		$query_params = array_merge( $query_params, $off_days );
-	}
 
 	$available_dates = $wpdb->get_results( $wpdb->prepare( $query, $query_params ) );
 	$dates = array();
@@ -1139,15 +1128,7 @@ function snks_manual_booking_data_slots( $therapist_id, $date ) {
 		return array();
 	}
 
-	$doctor_settings = snks_doctor_settings( $therapist_id );
-	$off_days = isset( $doctor_settings['off_days'] ) ? explode( ',', (string) $doctor_settings['off_days'] ) : array();
-	$off_days = array_map( 'trim', $off_days );
-	$off_days = array_filter( $off_days );
-
-	// Off days: hide for customers.
-	if ( in_array( $date, $off_days, true ) ) {
-		return array();
-	}
+	// Manual booking: ignore therapist off_days for slot listing on a given date.
 
 	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
 	if ( in_array( $date, $global_excluded, true ) ) {
