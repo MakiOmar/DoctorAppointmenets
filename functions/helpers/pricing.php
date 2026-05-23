@@ -196,6 +196,113 @@ function snks_pricing_discount_enabled( $user_id = false ) {
 }
 
 /**
+ * Whether country-specific Jalsah commission tiers apply (from 1 June onward).
+ *
+ * Before the cutoff, commission uses the legacy formula (EG tiers for all online bookings).
+ * Filter `snks_session_pricing_country_rules_start_date` to change the start date (Y-m-d).
+ *
+ * @return bool
+ */
+function snks_session_pricing_use_country_commission_rules() {
+	$cutoff = apply_filters( 'snks_session_pricing_country_rules_start_date', '2026-06-01' );
+	if ( ! is_string( $cutoff ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $cutoff ) ) {
+		$cutoff = '2026-06-01';
+	}
+	return current_time( 'Y-m-d' ) >= $cutoff;
+}
+
+/**
+ * Legacy Jalsah commission ($c) before country-based rules (June 2026+).
+ *
+ * @param float  $session_price   Session original price.
+ * @param string $attendance_type online|offline.
+ * @param string $context         book|any.
+ * @return float
+ */
+function snks_session_pricing_legacy_commission( $session_price, $attendance_type, $context ) {
+	if ( 'book' !== $context ) {
+		return 0;
+	}
+	if ( 'online' === $attendance_type ) {
+		if ( $session_price < 5 ) {
+			return 0;
+		}
+		if ( $session_price > 5 && $session_price < 50 ) {
+			return 3.99 + 1.92;
+		}
+		if ( $session_price >= 50 && $session_price < 100 ) {
+			return 6.56 + 1.92;
+		}
+		if ( $session_price >= 100 && $session_price < 200 ) {
+			return 13.68 + 1.92;
+		}
+		if ( $session_price >= 200 && $session_price < 300 ) {
+			return 15.39 + 1.92;
+		}
+		if ( $session_price >= 300 && $session_price < 400 ) {
+			return 17.1 + 1.92;
+		}
+		if ( $session_price >= 400 && $session_price < 500 ) {
+			return 17.67 + 1.92;
+		}
+		if ( $session_price >= 500 && $session_price < 600 ) {
+			return 18.25 + 1.92;
+		}
+		return 19.38 + 1.92;
+	}
+	return 5.13 + 0.96;
+}
+
+/**
+ * Country-aware Jalsah commission ($c) from June 2026 onward.
+ *
+ * @param float  $session_price   Session original price.
+ * @param string $attendance_type online|offline.
+ * @param string $context         book|any.
+ * @param string $country         Country code (e.g. EG, SA).
+ * @return float
+ */
+function snks_session_pricing_country_commission( $session_price, $attendance_type, $context, $country ) {
+	if ( 'book' !== $context ) {
+		return 0;
+	}
+	if ( 'online' === $attendance_type ) {
+		if ( 'EG' === $country ) {
+			if ( $session_price < 5 ) {
+				return 0;
+			}
+			if ( $session_price > 5 && $session_price < 50 ) {
+				return 3.99 + 1.92;
+			}
+			if ( $session_price >= 50 && $session_price < 100 ) {
+				return 6.56 + 1.92;
+			}
+			if ( $session_price >= 100 && $session_price < 200 ) {
+				return 13.68 + 1.92;
+			}
+			if ( $session_price >= 200 && $session_price < 300 ) {
+				return 15.39 + 1.92;
+			}
+			if ( $session_price >= 300 && $session_price < 400 ) {
+				return 17.1 + 1.92;
+			}
+			if ( $session_price >= 400 && $session_price < 500 ) {
+				return 17.67 + 1.92;
+			}
+			if ( $session_price >= 500 && $session_price < 600 ) {
+				return 18.25 + 1.92;
+			}
+			return 19.38 + 1.92;
+		}
+		return $session_price * 0.10;
+	}
+	if ( 'EG' === $country ) {
+		return 5.13 + 0.96;
+	}
+	return $session_price * 0.10;
+}
+
+/**
  * Session price formula
  *
  * @param mixed  $session_price  Session original price.
@@ -212,44 +319,14 @@ function snks_session_total_price( $session_price, $attendance_type, $context = 
 	 * $d = Receiving fees of a + b + c
 	 */
 
-	$country      = snsk_ip_api_country(); // EG, SA, etc.
 	$a = ( $session_price * 0.025 + 2 ) * 1.14;
 	$b = ( $session_price * 0.001 ) * 1.14;
-	// For editing.
-	if ( 'book' !== $context ) {
-		$c = 0;
-		// For Booking.
-	} elseif ( 'online' === $attendance_type ) {
-		if ( 'EG' === $country ) {
-			if ( $session_price < 5 ) {
-				$c = 0;
-			} elseif ( $session_price > 5 && $session_price < 50 ) {
-				$c = 3.99 + 1.92;
-			} elseif ( $session_price >= 50 && $session_price < 100 ) {
-				$c = 6.56 + 1.92;
-			} elseif ( $session_price >= 100 && $session_price < 200 ) {
-				$c = 13.68 + 1.92;
-			} elseif ( $session_price >= 200 && $session_price < 300 ) {
-				$c = 15.39 + 1.92;
-			} elseif ( $session_price >= 300 && $session_price < 400 ) {
-				$c = 17.1 + 1.92;
-			} elseif ( $session_price >= 400 && $session_price < 500 ) {
-				$c = 17.67 + 1.92;
-			} elseif ( $session_price >= 500 && $session_price < 600 ) {
-				$c = 18.25 + 1.92;
-			} else {
-				$c = 19.38 + 1.92;
-			}
-		} else {
-			$c = $session_price * 0.10;
-		}
 
+	if ( snks_session_pricing_use_country_commission_rules() ) {
+		$country = snsk_ip_api_country(); // EG, SA, etc.
+		$c       = snks_session_pricing_country_commission( $session_price, $attendance_type, $context, $country );
 	} else {
-		if ( 'EG' === $country ) {
-			$c = 5.13 + 0.96;
-		} else {
-			$c = $session_price * 0.10;	
-		}
+		$c = snks_session_pricing_legacy_commission( $session_price, $attendance_type, $context );
 	}
 	$d = ( $a + $b + $c ) * 0.025 * 1.03 * 1.14;
 
