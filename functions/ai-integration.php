@@ -7484,7 +7484,7 @@ Best regards,
 							) );
 							if ( $existing_slot ) {
 								$therapist_id = (int) $existing_slot->user_id;
-								$new_slot_id  = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );
+								$new_slot_id  = snks_manual_booking_ensure_slot( $therapist_id, $date, $time, array( $existing_id ) );
 								if ( ! $new_slot_id && function_exists( 'snks_manual_booking_ensure_slot_last_error' ) && snks_manual_booking_ensure_slot_last_error() === 'overlap' ) {
 									$overlap_payload = function_exists( 'snks_manual_booking_ensure_slot_overlapping_slots' ) ? snks_manual_booking_ensure_slot_overlapping_slots() : array();
 									$this->send_error(
@@ -7569,7 +7569,15 @@ Best regards,
 				if ( ! empty( $result['success'] ) ) {
 					$this->send_success( $result );
 				} else {
-					$this->send_error( isset( $result['message'] ) ? $result['message'] : 'Unknown booking error', 400 );
+					$error_data = array();
+					if ( ! empty( $result['overlap'] ) && ! empty( $result['overlapping_slots'] ) ) {
+						$error_data['overlapping_slots'] = $result['overlapping_slots'];
+					}
+					$this->send_error(
+						isset( $result['message'] ) ? $result['message'] : 'Unknown booking error',
+						400,
+						$error_data
+					);
 				}
 				return;
 

@@ -65,17 +65,312 @@ function snks_manual_booking_time_to_minutes( $time ) {
 }
 
 /**
- * Ensure a slot exists for therapist at date+time. Finds existing or creates new.
- * Used when admin selects "create new slot" with custom date and base hour.
- * Does not create a slot if it would overlap an existing open or completed slot on the same day.
- * Manual booking ignores therapist off_days and block_if_before settings.
+ * Normalize a time string to HH:MM:SS.
+ *
+ * @param string $time Time input.
+ * @return string Empty string if invalid.
+ */
+function snks_manual_booking_normalize_time_hms( $time ) {
+	$time = trim( (string) $time );
+	if ( preg_match( '/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $time, $m ) ) {
+		return sprintf( '%02d:%02d:%02d', (int) $m[1], (int) $m[2], isset( $m[3] ) ? (int) $m[3] : 0 );
+	}
+	return '';
+}
+
+/**
+ * Whether a timetable row is an empty online 45-minute waiting slot usable for manual booking.
+ *
+ * @param object $row Timetable row.
+ * @return bool
+ */
+function snks_manual_booking_slot_is_reusable_waiting( $row ) {
+	if ( ! $row || ! isset( $row->session_status ) || 'waiting' !== $row->session_status ) {
+		return false;
+	}
+	if ( (int) $row->order_id > 0 || (int) $row->client_id > 0 ) {
+		return false;
+	}
+	$settings = isset( $row->settings ) ? (string) $row->settings : '';
+	if ( strpos( $settings, 'ai_booking:booked' ) !== false ) {
+		return false;
+	}
+	if ( strpos( $settings, 'ai_booking:in_cart' ) !== false ) {
+		return false;
+	}
+	if ( strpos( $settings, 'ai_booking:rescheduled_old_slot' ) !== false ) {
+		return false;
+	}
+	if ( isset( $row->attendance_type ) && 'online' !== (string) $row->attendance_type ) {
+		return false;
+	}
+	if ( isset( $row->period ) && 45 !== (int) $row->period ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Find a reusable waiting slot at the same start time (minute-accurate, not string equality).
  *
  * @param int    $therapist_id Therapist user ID.
  * @param string $date         Date Y-m-d.
- * @param string $time         Start time (HH:MM or HH:MM:SS).
+ * @param string $time_hms     Start time HH:MM:SS.
+ * @return object|null
+ */
+function snks_manual_booking_find_reusable_waiting_slot( $therapist_id, $date, $time_hms ) {
+	global $wpdb;
+
+	$target_min = snks_manual_booking_time_to_minutes( $time_hms );
+	if ( $target_min < 0 ) {
+		return null;
+	}
+
+	$table = $wpdb->prefix . 'snks_provider_timetable';
+	$rows  = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$table}
+			 WHERE user_id = %d AND DATE(date_time) = %s AND session_status = 'waiting' AND order_id = 0
+			 AND (client_id = 0 OR client_id IS NULL) AND period = 45 AND attendance_type = 'online'
+			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
+			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
+			 ORDER BY ID ASC",
+			$therapist_id,
+			$date,
+			'%ai_booking:booked%',
+			'%ai_booking:in_cart%',
+			'%ai_booking:rescheduled_old_slot%'
+		)
+	);
+
+	foreach ( (array) $rows as $row ) {
+		if ( ! snks_manual_booking_slot_is_reusable_waiting( $row ) ) {
+			continue;
+		}
+		if ( snks_manual_booking_time_to_minutes( $row->starts ) === $target_min ) {
+			return $row;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Find timetable rows that overlap a time range on a given day (any status).
+ *
+ * @param int        $therapist_id     Therapist user ID.
+ * @param string     $date             Date Y-m-d.
+ * @param int        $start_min          Range start (minutes since midnight).
+ * @param int        $end_min            Range end (exclusive).
+ * @param int[]      $exclude_slot_ids Slot IDs to ignore (e.g. appointment being rescheduled).
+ * @return object[] Conflicting rows keyed by slot ID.
+ */
+function snks_manual_booking_find_datetime_conflicts( $therapist_id, $date, $start_min, $end_min, $exclude_slot_ids = array() ) {
+	global $wpdb;
+
+	$therapist_id = absint( $therapist_id );
+	$exclude_slot_ids = array_filter( array_map( 'absint', (array) $exclude_slot_ids ) );
+	if ( ! $therapist_id || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) || $start_min < 0 || $end_min <= $start_min ) {
+		return array();
+	}
+
+	$table = $wpdb->prefix . 'snks_provider_timetable';
+	$rows  = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT ID, starts, ends, period, date_time, order_id, client_id, session_status FROM {$table}
+			 WHERE user_id = %d AND DATE(date_time) = %s
+			 ORDER BY starts ASC",
+			$therapist_id,
+			$date
+		)
+	);
+
+	$conflicts = array();
+	foreach ( (array) $rows as $row ) {
+		$slot_id = isset( $row->ID ) ? absint( $row->ID ) : 0;
+		if ( $slot_id < 1 || in_array( $slot_id, $exclude_slot_ids, true ) ) {
+			continue;
+		}
+		$existing_start = snks_manual_booking_time_to_minutes( $row->starts );
+		if ( $existing_start < 0 ) {
+			continue;
+		}
+		$period      = isset( $row->period ) && (int) $row->period > 0 ? (int) $row->period : 45;
+		$existing_end = $existing_start + $period;
+		if ( $start_min < $existing_end && $existing_start < $end_min ) {
+			$conflicts[ $slot_id ] = $row;
+		}
+	}
+
+	return array_values( $conflicts );
+}
+
+/**
+ * Whether an overlapping row blocks manual booking (active session).
+ *
+ * @param object $row Timetable row.
+ * @return bool
+ */
+function snks_manual_booking_conflict_is_blocking( $row ) {
+	$status = isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '';
+	return in_array( $status, array( 'open', 'completed' ), true );
+}
+
+/**
+ * Whether an overlapping unbooked row can be removed to make room (change-appointment flow).
+ *
+ * @param object $row Timetable row.
+ * @return bool
+ */
+function snks_manual_booking_conflict_is_replaceable( $row ) {
+	if ( snks_manual_booking_conflict_is_blocking( $row ) ) {
+		return false;
+	}
+	if ( (int) ( $row->order_id ?? 0 ) > 0 || (int) ( $row->client_id ?? 0 ) > 0 ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Delete unbooked overlapping timetable rows (waiting, closed, etc.).
+ *
+ * @param object[] $rows Rows to remove.
+ */
+function snks_manual_booking_delete_replaceable_conflict_slots( $rows ) {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'snks_provider_timetable';
+	foreach ( (array) $rows as $row ) {
+		if ( ! snks_manual_booking_conflict_is_replaceable( $row ) ) {
+			continue;
+		}
+		$slot_id = isset( $row->ID ) ? absint( $row->ID ) : 0;
+		if ( $slot_id < 1 ) {
+			continue;
+		}
+		$wpdb->delete( $table, array( 'ID' => $slot_id ), array( '%d' ) );
+	}
+}
+
+/**
+ * Manual booking overlap policy: block open/completed (or any booked row); remove other overlaps.
+ *
+ * @param object[] $conflicts     Overlapping rows.
+ * @param string   $date_fallback Date Y-m-d for error payload.
+ * @return bool True when creation/booking may proceed.
+ */
+function snks_manual_booking_apply_change_appointment_conflict_policy( $conflicts, $date_fallback ) {
+	$blocking    = array();
+	$replaceable = array();
+
+	foreach ( (array) $conflicts as $row ) {
+		if ( snks_manual_booking_conflict_is_blocking( $row ) || (int) ( $row->order_id ?? 0 ) > 0 || (int) ( $row->client_id ?? 0 ) > 0 ) {
+			$blocking[] = $row;
+		} elseif ( snks_manual_booking_conflict_is_replaceable( $row ) ) {
+			$replaceable[] = $row;
+		}
+	}
+
+	if ( ! empty( $blocking ) ) {
+		snks_manual_booking_register_overlap_failure( $blocking, $date_fallback );
+		return false;
+	}
+
+	if ( ! empty( $replaceable ) ) {
+		snks_manual_booking_delete_replaceable_conflict_slots( $replaceable );
+	}
+
+	return true;
+}
+
+/**
+ * Build overlap payload for API/UI from a timetable row.
+ *
+ * @param object $row           Timetable row.
+ * @param string $date_fallback Date if row date_time is missing.
+ * @return array{slot_id:int,date:string,starts:string,ends:string,order_id:int,session_status:string}
+ */
+function snks_manual_booking_format_overlap_slot( $row, $date_fallback ) {
+	$slot_id = isset( $row->ID ) ? absint( $row->ID ) : 0;
+	$date_part = $date_fallback;
+	if ( ! empty( $row->date_time ) && preg_match( '/^(\d{4}-\d{2}-\d{2})/', (string) $row->date_time, $dm ) ) {
+		$date_part = $dm[1];
+	}
+	$existing_start_min = snks_manual_booking_time_to_minutes( $row->starts );
+	$period             = isset( $row->period ) && (int) $row->period > 0 ? (int) $row->period : 45;
+	$starts_raw         = isset( $row->starts ) ? trim( (string) $row->starts ) : '';
+	$ends_raw           = isset( $row->ends ) ? trim( (string) $row->ends ) : '';
+	if ( strlen( $starts_raw ) >= 5 ) {
+		$starts_disp = substr( $starts_raw, 0, 5 );
+	} else {
+		$starts_disp = $starts_raw;
+	}
+	if ( strlen( $ends_raw ) >= 5 ) {
+		$ends_disp = substr( $ends_raw, 0, 5 );
+	} else {
+		$end_min_calc = $existing_start_min >= 0 ? $existing_start_min + $period : 0;
+		$ends_disp    = sprintf( '%02d:%02d', (int) floor( $end_min_calc / 60 ) % 24, $end_min_calc % 60 );
+	}
+
+	return array(
+		'slot_id'        => $slot_id,
+		'date'           => sanitize_text_field( $date_part ),
+		'starts'         => sanitize_text_field( $starts_disp ),
+		'ends'           => sanitize_text_field( $ends_disp ),
+		'order_id'       => isset( $row->order_id ) ? absint( $row->order_id ) : 0,
+		'session_status' => isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '',
+	);
+}
+
+/**
+ * Store overlap error globals for ensure_slot / booking handlers.
+ *
+ * @param object[] $conflicts     Conflicting timetable rows.
+ * @param string   $date_fallback Date Y-m-d.
+ */
+function snks_manual_booking_register_overlap_failure( $conflicts, $date_fallback ) {
+	global $snks_manual_booking_ensure_slot_last_error, $snks_manual_booking_ensure_slot_overlapping_slots;
+
+	$snks_manual_booking_ensure_slot_last_error = 'overlap';
+	$payload                                  = array();
+	foreach ( (array) $conflicts as $row ) {
+		$formatted = snks_manual_booking_format_overlap_slot( $row, $date_fallback );
+		if ( $formatted['slot_id'] > 0 ) {
+			$payload[ $formatted['slot_id'] ] = $formatted;
+		}
+	}
+	$snks_manual_booking_ensure_slot_overlapping_slots = array_values( $payload );
+}
+
+/**
+ * Standard failure array when a datetime conflict is detected.
+ *
+ * @return array{success:bool,message:string,overlap:bool,overlapping_slots:array}
+ */
+function snks_manual_booking_overlap_failure_result() {
+	return array(
+		'success'           => false,
+		'message'           => __( 'هذا الموعد يتداخل مع موعد موجود. اختر وقتاً آخر.', 'shrinks' ),
+		'overlap'           => true,
+		'overlapping_slots' => snks_manual_booking_ensure_slot_overlapping_slots(),
+	);
+}
+
+/**
+ * Ensure a slot exists for therapist at date+time. Finds existing or creates new.
+ * Used when admin selects "create new slot" with custom date and base hour.
+ * Removes unbooked overlapping slots (waiting/closed) and only blocks open/completed (or booked rows).
+ * Manual booking ignores therapist off_days and block_if_before settings.
+ *
+ * @param int        $therapist_id     Therapist user ID.
+ * @param string     $date             Date Y-m-d.
+ * @param string     $time             Start time (HH:MM or HH:MM:SS).
+ * @param int[]|int  $exclude_slot_ids Slot ID(s) to exclude from overlap checks (e.g. current booking when rescheduling).
  * @return int|false Slot ID on success, false on failure.
  */
-function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
+function snks_manual_booking_ensure_slot( $therapist_id, $date, $time, $exclude_slot_ids = array() ) {
 	global $wpdb, $snks_manual_booking_ensure_slot_last_error, $snks_manual_booking_ensure_slot_overlapping_slots;
 
 	$snks_manual_booking_ensure_slot_last_error        = null;
@@ -88,13 +383,13 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 		$snks_manual_booking_ensure_slot_last_error = 'invalid_params';
 		return false;
 	}
-	// Normalize time to HH:MM:SS.
-	if ( preg_match( '/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $time, $m ) ) {
-		$time = sprintf( '%02d:%02d:%02d', (int) $m[1], (int) $m[2], isset( $m[3] ) ? (int) $m[3] : 0 );
-	} else {
+	$time = snks_manual_booking_normalize_time_hms( $time );
+	if ( '' === $time ) {
 		$snks_manual_booking_ensure_slot_last_error = 'invalid_time';
 		return false;
 	}
+
+	$exclude_slot_ids = array_filter( array_map( 'absint', (array) $exclude_slot_ids ) );
 
 	// Respect therapist visibility settings.
 	$doctor_settings = snks_doctor_settings( $therapist_id );
@@ -143,102 +438,21 @@ function snks_manual_booking_ensure_slot( $therapist_id, $date, $time ) {
 
 	$table = $wpdb->prefix . 'snks_provider_timetable';
 
-	// Find existing available slot at exact same start time.
-	$existing = $wpdb->get_row(
-		$wpdb->prepare(
-			"SELECT ID FROM {$table}
-			 WHERE user_id = %d AND DATE(date_time) = %s AND starts = %s
-			 AND session_status = 'waiting' AND order_id = 0
-			 AND period = 45 AND attendance_type = 'online'
-			 AND (client_id = 0 OR client_id IS NULL)
-			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
-			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
-			 AND (settings NOT LIKE %s OR settings = '' OR settings IS NULL)
-			 LIMIT 1",
-			$therapist_id,
-			$date,
-			$time,
-			'%ai_booking:booked%',
-			'%ai_booking:in_cart%',
-			'%ai_booking:rescheduled_old_slot%'
-		)
-	);
-	if ( $existing ) {
-		return (int) $existing->ID;
-	}
-
-	// Overlap with open or completed sessions only; waiting/closed/cancelled/etc. do not block manual new slots.
-	// New slot would be [newStart, newStart+45) in minutes; overlap if newStart < existingEnd && existingStart < newEnd.
 	$new_start_min = snks_manual_booking_time_to_minutes( $time );
 	if ( $new_start_min < 0 ) {
+		$snks_manual_booking_ensure_slot_last_error = 'invalid_time';
 		return false;
 	}
 	$new_end_min = $new_start_min + 45;
 
-	$all_slots = $wpdb->get_results(
-		$wpdb->prepare(
-			"SELECT ID, starts, ends, period, date_time, order_id, session_status FROM {$table}
-			 WHERE user_id = %d AND DATE(date_time) = %s
-			 ORDER BY starts ASC",
-			$therapist_id,
-			$date
-		)
-	);
-	$overlap_rows = array();
-	if ( is_array( $all_slots ) ) {
-		foreach ( $all_slots as $row ) {
-			$row_status = isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '';
-			if ( ! in_array( $row_status, array( 'open', 'completed' ), true ) ) {
-				continue;
-			}
-			$existing_start_min = snks_manual_booking_time_to_minutes( $row->starts );
-			if ( $existing_start_min < 0 ) {
-				continue;
-			}
-			$period = isset( $row->period ) && (int) $row->period > 0 ? (int) $row->period : 45;
-			$existing_end_min = $existing_start_min + $period;
-			if ( $new_start_min < $existing_end_min && $existing_start_min < $new_end_min ) {
-				$slot_id = 0;
-				if ( isset( $row->ID ) ) {
-					$slot_id = absint( $row->ID );
-				} elseif ( isset( $row->id ) ) {
-					$slot_id = absint( $row->id );
-				}
-				if ( $slot_id < 1 ) {
-					continue;
-				}
-				$date_part = $date;
-				if ( ! empty( $row->date_time ) && preg_match( '/^(\d{4}-\d{2}-\d{2})/', (string) $row->date_time, $dm ) ) {
-					$date_part = $dm[1];
-				}
-				$starts_raw = isset( $row->starts ) ? trim( (string) $row->starts ) : '';
-				$ends_raw   = isset( $row->ends ) ? trim( (string) $row->ends ) : '';
-				if ( strlen( $starts_raw ) >= 5 ) {
-					$starts_disp = substr( $starts_raw, 0, 5 );
-				} else {
-					$starts_disp = $starts_raw;
-				}
-				if ( strlen( $ends_raw ) >= 5 ) {
-					$ends_disp = substr( $ends_raw, 0, 5 );
-				} else {
-					$end_min_calc = $existing_start_min + $period;
-					$ends_disp    = sprintf( '%02d:%02d', (int) floor( $end_min_calc / 60 ) % 24, $end_min_calc % 60 );
-				}
-				$overlap_rows[ $slot_id ] = array(
-					'slot_id'          => $slot_id,
-					'date'             => sanitize_text_field( $date_part ),
-					'starts'           => sanitize_text_field( $starts_disp ),
-					'ends'             => sanitize_text_field( $ends_disp ),
-					'order_id'         => isset( $row->order_id ) ? absint( $row->order_id ) : 0,
-					'session_status'   => isset( $row->session_status ) ? sanitize_key( (string) $row->session_status ) : '',
-				);
-			}
-		}
-	}
-	if ( ! empty( $overlap_rows ) ) {
-		$snks_manual_booking_ensure_slot_last_error        = 'overlap';
-		$snks_manual_booking_ensure_slot_overlapping_slots = array_values( $overlap_rows );
+	$conflicts = snks_manual_booking_find_datetime_conflicts( $therapist_id, $date, $new_start_min, $new_end_min, $exclude_slot_ids );
+	if ( ! snks_manual_booking_apply_change_appointment_conflict_policy( $conflicts, $date ) ) {
 		return false;
+	}
+
+	$reusable = snks_manual_booking_find_reusable_waiting_slot( $therapist_id, $date, $time );
+	if ( $reusable && isset( $reusable->ID ) ) {
+		return (int) $reusable->ID;
 	}
 
 	// Create new slot. 45-minute session.
@@ -380,7 +594,24 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 		return array( 'success' => false, 'message' => __( 'الموعد غير متاح أو تم حجزه.', 'shrinks' ) );
 	}
 
-	$period = isset( $slot->period ) && $slot->period > 0 ? (int) $slot->period : 45;
+	$slot_date = '';
+	if ( ! empty( $slot->date_time ) && preg_match( '/^(\d{4}-\d{2}-\d{2})/', (string) $slot->date_time, $dm ) ) {
+		$slot_date = $dm[1];
+	}
+	$slot_start_min = snks_manual_booking_time_to_minutes( $slot->starts );
+	$period         = isset( $slot->period ) && $slot->period > 0 ? (int) $slot->period : 45;
+	if ( $slot_start_min >= 0 && $slot_date ) {
+		$book_conflicts = snks_manual_booking_find_datetime_conflicts(
+			$therapist_id,
+			$slot_date,
+			$slot_start_min,
+			$slot_start_min + $period,
+			array( $slot_id )
+		);
+		if ( ! snks_manual_booking_apply_change_appointment_conflict_policy( $book_conflicts, $slot_date ) ) {
+			return snks_manual_booking_overlap_failure_result();
+		}
+	}
 
 	if ( $amount_override !== null && $amount_override > 0 ) {
 		$session_amount = floatval( $amount_override );
@@ -441,6 +672,10 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 		return array( 'success' => false, 'message' => sprintf( __( 'بيانات ناقصة: %s.', 'shrinks' ), implode( '، ', $missing ) ) );
 	}
 
+	if ( $existing_booking_id === $new_slot_id ) {
+		return array( 'success' => false, 'message' => __( 'الموعد الجديد مطابق للموعد الحالي.', 'shrinks' ) );
+	}
+
 	$old_slot = $wpdb->get_row( $wpdb->prepare(
 		"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d AND session_status = 'open' AND client_id > 0 AND order_id > 0",
 		$existing_booking_id
@@ -464,6 +699,25 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 
 	if ( ! $new_slot ) {
 		return array( 'success' => false, 'message' => __( 'الموعد الجديد غير متاح.', 'shrinks' ) );
+	}
+
+	$new_slot_date = '';
+	if ( ! empty( $new_slot->date_time ) && preg_match( '/^(\d{4}-\d{2}-\d{2})/', (string) $new_slot->date_time, $ndm ) ) {
+		$new_slot_date = $ndm[1];
+	}
+	$new_start_min = snks_manual_booking_time_to_minutes( $new_slot->starts );
+	$new_period    = isset( $new_slot->period ) && (int) $new_slot->period > 0 ? (int) $new_slot->period : 45;
+	if ( $new_start_min >= 0 && $new_slot_date ) {
+		$change_conflicts = snks_manual_booking_find_datetime_conflicts(
+			$therapist_id,
+			$new_slot_date,
+			$new_start_min,
+			$new_start_min + $new_period,
+			array( $existing_booking_id, $new_slot_id )
+		);
+		if ( ! snks_manual_booking_apply_change_appointment_conflict_policy( $change_conflicts, $new_slot_date ) ) {
+			return snks_manual_booking_overlap_failure_result();
+		}
 	}
 
 	$order = wc_get_order( $order_id );
