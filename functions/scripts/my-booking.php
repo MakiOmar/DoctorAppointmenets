@@ -47,9 +47,7 @@ add_shortcode(
 				$is_too_early = false;
 				
 				if ( $is_ai_session && $session ) {
-					$scheduled_timestamp = strtotime( $session->date_time );
-					$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
-					$is_too_early = $current_timestamp < $scheduled_timestamp;
+					$is_too_early = snks_is_session_too_early( $session );
 				}
 				
 				if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
@@ -312,9 +310,7 @@ add_shortcode(
 		$is_too_early = false;
 		
 		if ( $is_ai_session && $session ) {
-			$scheduled_timestamp = strtotime( $session->date_time );
-			$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
-			$is_too_early = $current_timestamp < $scheduled_timestamp;
+			$is_too_early = snks_is_session_too_early( $session );
 		}
 		
 		if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
@@ -330,113 +326,133 @@ add_action(
 	function () {
 		?>
 		<script>
-		// Timer script for Jet popup events
-		function initializeSnksTimer() {
-			jQuery(document).ready(function($){
-				$(document).on(
-					'click',
-					'.snks-disabled .snks-start-meeting',
-					function(event) {
+		(function($) {
+			var snksTimerClickBound = false;
+			var meetingRoomBase = '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>';
+			window.snksServerClock = {
+				serverNow: <?php echo (int) snks_get_current_timestamp(); ?>,
+				clientNow: Date.now() / 1000
+			};
+
+			window.snksNowMs = function() {
+				var clientNow = Date.now() / 1000;
+				var drift = clientNow - window.snksServerClock.clientNow;
+				return (window.snksServerClock.serverNow + drift) * 1000;
+			};
+
+			window.snksNowUnix = function() {
+				return Math.floor(window.snksNowMs() / 1000);
+			};
+
+			function snksResolveSessionTimes(parent) {
+				var startTs = parseInt(parent.attr('data-start-ts'), 10);
+				var endTs = parseInt(parent.attr('data-end-ts'), 10);
+				var period = parseInt(parent.attr('data-period'), 10) || 45;
+
+				if (isNaN(startTs) || startTs <= 0) {
+					var dateTime = parent.data('datetime');
+					var normalizedDateTime = String(dateTime).replace(' ', 'T');
+					startTs = Math.floor(new Date(normalizedDateTime).getTime() / 1000);
+				}
+
+				if (isNaN(endTs) || endTs <= 0) {
+					endTs = startTs + (period * 60);
+				}
+
+				return {
+					countDownDate: startTs * 1000,
+					sessionEndDate: endTs * 1000
+				};
+			}
+
+			function initializeSnksTimer() {
+				if (!snksTimerClickBound) {
+					$(document).on('click', '.snks-disabled .snks-start-meeting', function(event) {
 						event.preventDefault();
+					});
+					snksTimerClickBound = true;
+				}
+
+				$('.snks-count-down').each(function() {
+					var parent = $(this).closest('.snks-booking-item');
+					if (!parent.length || parent.closest('.past').length > 0 || parent.data('snksTimerRunning')) {
+						return;
 					}
-				);
-				$('.snks-count-down').each(
-					function(){
-						var parent = $(this).closest('.snks-booking-item');
-						if ( parent.closest('.past').length > 0 ) {
-							return;
-						}
-						var parentID = parent.attr('id');
-						var itemID = parentID.match(/\d+/)[0];
-						var dateTime = parent.data('datetime');
-						var period = parent.data('period') || 45; // Default 45 minutes if not specified
-						
-						// Calculate countdown to session start time
-						var startDate = new Date(dateTime);
-						var countDownDate = startDate.getTime();
-						// Calculate session end time for checking if session has passed
-						var sessionEndDate = new Date(startDate.getTime() + (period * 60 * 1000)).getTime();
-						// Update the count down every 1 second.
-						var x = setInterval(
-							function() {
-								// Get today's date and time.
-								var now = new Date().getTime();
-								if ( countDownDate > now ) {
-									// Find the distance between now and the count down date.
-									var distance = countDownDate - now;
 
-									// Time calculations for days, hours, minutes and seconds.
-									var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-									var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-									var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-									var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+					var parentID = parent.attr('id');
+					if (!parentID) {
+						return;
+					}
 
-									// Update the HTML content.
-									$(".snks-apointment-timer", parent).html("<span>"+ days + " يوم </span>"
-										+ "<span>"+ hours + " ساعة </span>"
-										+ "<span>"+ minutes + " دقيقة </span>"
-										+ "<span>"+ seconds + " ثانية </span>");
+					var itemIDMatch = parentID.match(/\d+/);
+					if (!itemIDMatch) {
+						return;
+					}
 
-									// Check if days is 0 and add a class to its container span.
-									if (days <= 0) {
-										$(".snks-apointment-timer span:contains('0 يوم')", parent).hide();
-									}
+					var itemID = itemIDMatch[0];
+					var times = snksResolveSessionTimes(parent);
+					var countDownDate = times.countDownDate;
+					var sessionEndDate = times.sessionEndDate;
 
-									// Check if hours is 0 and add a class to its container span.
-									if ( hours <= 0 && days <= 0 ) {
-										$(".snks-apointment-timer span:contains('0 ساعة')", parent).hide();
-									}
+					parent.data('snksTimerRunning', true);
 
-									// Check if hours is 0 and add a class to its container span.
-									if (minutes <= 0 && hours <= 0 && days <= 0 ) {
-										$(".snks-apointment-timer span:contains('0 دقيقة')", parent).hide();
-									}
+					var x = setInterval(function() {
+						var now = window.snksNowMs();
+						if (countDownDate > now) {
+							var distance = countDownDate - now;
+							var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+							var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+							var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+							var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-									// If the count down is finished, write some text.
-									if (distance < 0) {
-										clearInterval(x);
-										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
-										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
-									}
-								} else {
-									// Session has started - check if it's still within session duration
-									// Check if this is an AI session
-									var isAiSession = parent.find('.ai-session-flag').length > 0;
-									
-									if ( now > sessionEndDate ) {
-										// Session has ended
-										$(".snks-apointment-timer", parent).html('<span>تجاوزت موعد الجلسة</span>');
-										// Only add snks-disabled for non-AI sessions
-										if ( ! isAiSession ) {
-											parent.addClass('snks-disabled');
-										}
-										clearInterval(x);
-									} else {
-										// Session is active (started but not ended yet)
-										// Remove snks-disabled for all sessions (AI and non-AI) when session starts
-										parent.removeClass('snks-disabled');
-										$(".snks-apointment-timer", parent).html('<span>حان موعد الجلسة</span>');
-										$(".snks-start-meeting", parent).attr('href', '<?php echo esc_url( site_url( 'meeting-room/?room_id=' ) ); ?>' + itemID );
-										$(".snks-start-meeting", parent).text('إبدأ الجلسة');
-									}
+							$('.snks-apointment-timer', parent).html(
+								'<span>' + days + ' يوم </span>'
+								+ '<span>' + hours + ' ساعة </span>'
+								+ '<span>' + minutes + ' دقيقة </span>'
+								+ '<span>' + seconds + ' ثانية </span>'
+							);
+
+							if (days <= 0) {
+								$('.snks-apointment-timer span:contains(\'0 يوم\')', parent).hide();
+							}
+							if (hours <= 0 && days <= 0) {
+								$('.snks-apointment-timer span:contains(\'0 ساعة\')', parent).hide();
+							}
+							if (minutes <= 0 && hours <= 0 && days <= 0) {
+								$('.snks-apointment-timer span:contains(\'0 دقيقة\')', parent).hide();
+							}
+						} else {
+							var isAiSession = parent.hasClass('ai-session') || parent.find('.ai-session-flag').length > 0;
+
+							if (now > sessionEndDate) {
+								$('.snks-apointment-timer', parent).html('<span>تجاوزت موعد الجلسة</span>');
+								if (!isAiSession) {
+									parent.addClass('snks-disabled');
 								}
-							},
-							1000
-						);
-					}
-				);
+								clearInterval(x);
+								parent.removeData('snksTimerRunning');
+							} else {
+								parent.removeClass('snks-disabled');
+								$('.snks-apointment-timer', parent).html('<span>حان موعد الجلسة</span>');
+								$('.snks-start-meeting', parent).attr('href', meetingRoomBase + itemID);
+								$('.snks-start-meeting', parent).text('إبدأ الجلسة');
+							}
+						}
+					}, 1000);
+				});
+			}
+
+			$(function() {
+				if ($('#my-bookings-container').length) {
+					initializeSnksTimer();
+				}
 			});
-		}
-		
-		// Call timer function on Jet popup events
-		jQuery(window).on('jet-popup/show-event/after-show', function(){
-			initializeSnksTimer();
-		});
-		
-		jQuery(window).on('jet-popup/render-content/render-custom-content', function(){
-			initializeSnksTimer();
-		});
-	</script>
+
+			$(window).on('jet-popup/show-event/after-show jet-popup/render-content/render-custom-content', function() {
+				initializeSnksTimer();
+			});
+		})(jQuery);
+		</script>
 	<?php
 	}
 );

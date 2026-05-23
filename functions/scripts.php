@@ -419,6 +419,24 @@ add_action(
 					console.log(message);
 				}
 			}
+
+			function snksEnsureServerClock() {
+				if (typeof window.snksNowUnix === 'function') {
+					return;
+				}
+				window.snksServerClock = {
+					serverNow: <?php echo function_exists( 'snks_get_current_timestamp' ) ? (int) snks_get_current_timestamp() : (int) time(); ?>,
+					clientNow: Date.now() / 1000
+				};
+				window.snksNowMs = function() {
+					var clientNow = Date.now() / 1000;
+					var drift = clientNow - window.snksServerClock.clientNow;
+					return (window.snksServerClock.serverNow + drift) * 1000;
+				};
+				window.snksNowUnix = function() {
+					return Math.floor(window.snksNowMs() / 1000);
+				};
+			}
 			
 			// Add CSS to ensure disabled buttons are not clickable and show loading effect
 			function applyDisabledButtonStyles() {
@@ -465,6 +483,7 @@ add_action(
 			
 			// Initialize session completion button activation
 			function initSessionCompletionCheck() {
+				snksEnsureServerClock();
 				$('.doctor-actions').each(function() {
 					var $doctorActions = $(this);
 					var rawSessionEnd = $doctorActions.attr('data-session-end');
@@ -479,7 +498,9 @@ add_action(
 					
 					// Function to check if session has ended
 					function checkSessionEnd() {
-						var currentTime = Math.floor(Date.now() / 1000);
+						var currentTime = (typeof window.snksNowUnix === 'function')
+							? window.snksNowUnix()
+							: Math.floor(Date.now() / 1000);
 						
 						if (currentTime >= sessionEndTime) {
 							// Session has ended - enable button
@@ -523,7 +544,9 @@ add_action(
 					}
 					
 					// Initial check - ensure buttons are in correct state on load
-					var initialCurrentTime = Math.floor(Date.now() / 1000);
+					var initialCurrentTime = (typeof window.snksNowUnix === 'function')
+						? window.snksNowUnix()
+						: Math.floor(Date.now() / 1000);
 					var shouldContinue = checkSessionEnd();
 					
 					// If session hasn't ended, check every 10 seconds
@@ -539,6 +562,7 @@ add_action(
 			 
 			// Initialize checks on page load and immediately
 			function initializeSessionButtons() {
+				snksEnsureServerClock();
 				debugLog('🚀 Initializing session completion checks...');
 				applyDisabledButtonStyles();
 				initSessionCompletionCheck();

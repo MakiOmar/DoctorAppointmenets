@@ -869,7 +869,7 @@ function snks_booking_item_template( $record ) {
 	$is_ai_session = snks_is_ai_session_booking( $record );
 	//phpcs:disable
 	?>
-	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" data-datetime="<?php echo esc_attr( $record->date_time ) ?>" data-period="<?php echo esc_attr( $record->period ) ?>" class="snks-booking-item {status_class} <?php echo $is_ai_session ? ' ai-session' : ''; ?>">
+	<div id="snks-booking-item-<?php echo esc_attr( $record->ID ) ?>" <?php echo snks_session_timing_data_attrs( $record ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> class="snks-booking-item {status_class} <?php echo $is_ai_session ? ' ai-session' : ''; ?>">
 		<div class="anony-grid-row">
 			<div class="anony-grid-col anony-grid-col-2 snks-bg" style="max-width:60px;<?php echo $is_ai_session ? ' background-color: #1b612e!important;border-color: #1b612e!important;' : ''; ?>">
 				<?php if ( ! $is_ai_session ) : ?>
@@ -1016,10 +1016,8 @@ function template_str_replace( $record ) {
 	
 	// Check if this is an AI session and if it's too early to join
 	$is_ai_session = snks_is_ai_session( $record->ID );
-	$scheduled_timestamp = strtotime( $record->date_time );
-	$current_timestamp = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
-	$time_difference = $current_timestamp - $scheduled_timestamp;
-	$is_too_early = $time_difference < 0; // Current time is before scheduled time
+	$session_timing  = snks_get_session_timing( $record );
+	$is_too_early    = $session_timing['is_too_early'];
 	
 	// Set button URL and status class for AI sessions that are too early
 	$button_url = site_url( 'meeting-room/?room_id=' . $record->ID );
@@ -1150,17 +1148,15 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 		$client_id = $record->client_id;
 	}
 	$user_details        = snks_user_details( $record->user_id );
-	$button_text         = 'ابدأ الجلسة';
-	$scheduled_timestamp = strtotime( $record->date_time );
-	$current_timestamp   = strtotime( date_i18n( 'Y-m-d H:i:s', current_time( 'mysql' ) ) );
-	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
+	$button_text = 'ابدأ الجلسة';
+	$room        = site_url( 'meeting-room/?room_id=' . $record->ID );
 	
 	// Check if this is an AI session
 	$is_ai_session = snks_is_ai_session( $record->ID );
 	
 	// For AI sessions, add additional time validation to prevent early joining
-	$time_difference = $current_timestamp - $scheduled_timestamp;
-	$is_too_early = $time_difference < 0; // Current time is before scheduled time
+	$session_timing = snks_get_session_timing( $record );
+	$is_too_early   = $session_timing['is_too_early'];
 	
 	// For AI sessions, only disable if too early (before session time)
 	// Don't disable after session starts or ends
@@ -1173,10 +1169,9 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 		}
 		// Don't add snks-disabled for AI sessions after they start, even if they've ended
 	} else {
-		// For non-AI sessions, apply the original logic
+		// Non-AI patients: disable before start, after 15 minutes from start, or when cancelled.
 		if (
-			( isset( $client_id ) && $current_timestamp > $scheduled_timestamp && ( $current_timestamp - $scheduled_timestamp ) > 60 * 15 )
-			|| ( isset( $client_id ) && $current_timestamp < $scheduled_timestamp )
+			( isset( $client_id ) && ( $session_timing['is_too_early'] || $session_timing['seconds_since_start'] > 15 * MINUTE_IN_SECONDS ) )
 			|| ( 'cancelled' === $record->session_status )
 		) {
 			$_class = 'snks-disabled';
@@ -1724,20 +1719,9 @@ function snks_doctor_actions( $session ) {
 	if ( ! empty( $attendees ) ) {
 		global $wpdb;
 		
-		// Calculate session end time (start datetime + period in minutes)
-		// Use WordPress timezone to ensure consistency
-		$timezone_string = get_option( 'timezone_string' );
-		if ( ! $timezone_string ) {
-			$timezone_string = 'UTC';
-		}
-		$session_datetime = new DateTime( $session->date_time, new DateTimeZone( $timezone_string ) );
-		$period_minutes   = isset( $session->period ) ? intval( $session->period ) : 45;
-		$session_datetime->add( new DateInterval( 'PT' . $period_minutes . 'M' ) );
-		$session_end_timestamp = $session_datetime->getTimestamp();
-		$current_timestamp     = current_time( 'timestamp' );
-		
-		// Check if session has ended
-		$is_session_ended = $current_timestamp >= $session_end_timestamp;
+		$session_timing        = snks_get_session_timing( $session );
+		$session_end_timestamp = $session_timing['end'];
+		$is_session_ended      = $session_timing['is_ended'];
 		
 		$output .= '<div class="doctor-actions doctor-actions-wrapper" data-session-end="' . esc_attr( $session_end_timestamp ) . '" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" data-is-ai-session="' . ( $is_ai_session ? '1' : '0' ) . '">';
 		
@@ -1832,7 +1816,7 @@ function snks_render_sessions_listing( $tense ) {
 				$class = 'remaining';
 			}
 			$session_details = array(
-				'booking_day'  => gmdate( 'Y-m-d', strtotime( $session->date_time ) ),
+				'booking_day'  => snks_format_session_datetime( $session, 'Y-m-d' ),
 				'booking_hour' => snks_localize_time(
 					sprintf(
 						/* translators: 1: start time, 2: end time */
@@ -1849,7 +1833,7 @@ function snks_render_sessions_listing( $tense ) {
 					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . $room . '" data-url="' . $room . '">ابدأ الجلسة</a>
 				</td></tr>';
 			}
-			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" data-datetime="' . esc_attr( $session->date_time ) . '" data-period="' . esc_attr( $session->period ) . '" class="snks-booking-item snks-patient-booking-item ' . $class . '"> ';
+			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" ' . snks_session_timing_data_attrs( $session ) . ' class="snks-booking-item snks-patient-booking-item ' . esc_attr( $class ) . '"> ';
 			$output .= str_replace(
 				array( '<!--edit_button-->', '<!--start_button-->' ),
 				array( $edit, $start ),
