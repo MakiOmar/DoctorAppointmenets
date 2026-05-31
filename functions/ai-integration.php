@@ -7451,12 +7451,16 @@ Best regards,
 					$slot_id        = isset( $input['slot_id'] ) ? absint( $input['slot_id'] ) : 0;
 					$date           = isset( $input['date'] ) ? sanitize_text_field( $input['date'] ) : '';
 					$time           = isset( $input['time'] ) ? sanitize_text_field( $input['time'] ) : '';
-					$country_code   = isset( $input['country_code'] ) ? sanitize_text_field( $input['country_code'] ) : 'EG';
+					$country_code   = isset( $input['country_code'] ) ? sanitize_text_field( $input['country_code'] ) : '';
 					$amount         = isset( $input['amount'] ) ? $input['amount'] : null;
 					$amount_override = ( $amount !== '' && $amount !== null && is_numeric( $amount ) && floatval( $amount ) > 0 ) ? floatval( $amount ) : null;
 					$first_name     = isset( $input['patient_first_name'] ) ? sanitize_text_field( $input['patient_first_name'] ) : '';
 					$last_name      = isset( $input['patient_last_name'] ) ? sanitize_text_field( $input['patient_last_name'] ) : '';
 					$payment_method = isset( $input['payment_method'] ) ? sanitize_text_field( $input['payment_method'] ) : '';
+					if ( empty( $country_code ) ) {
+						$this->send_error( __( 'يرجى إختيار السعر.', 'shrinks' ), 400 );
+						return;
+					}
 					// New slot mode: create or find slot from date+time when slot_id not provided.
 					if ( ! $slot_id && $date && $time && function_exists( 'snks_manual_booking_ensure_slot' ) ) {
 						$slot_id = snks_manual_booking_ensure_slot( $therapist_id, $date, $time );

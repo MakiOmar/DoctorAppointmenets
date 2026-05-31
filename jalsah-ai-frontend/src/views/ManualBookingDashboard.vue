@@ -272,8 +272,8 @@
       <!-- Country (pricing) -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.country') }}</label>
-        <select v-model="selectedCountryCode" class="w-full rounded border px-3 py-2" :class="errors?.country ? 'border-red-500' : 'border-gray-300'">
-          <option value="">— {{ $t('manualBooking.selectCountry') }} —</option>
+        <select v-model="selectedCountryCode" required class="w-full rounded border px-3 py-2" :class="errors?.country ? 'border-red-500' : 'border-gray-300'">
+          <option value="">{{ $t('manualBooking.selectCountry') }}</option>
           <option v-for="c in therapistCountries" :key="c.code" :value="c.code">
             {{ c.name }} — {{ c.price }} {{ c.currency_symbol }}
           </option>
@@ -1507,7 +1507,7 @@ function onTherapistChange() {
   ]).then(([dates, countries]) => {
     availableDates.value = Array.isArray(dates) ? dates : []
     therapistCountries.value = Array.isArray(countries) ? countries : []
-    if (therapistCountries.value.length) selectedCountryCode.value = therapistCountries.value[0].code
+    selectedCountryCode.value = ''
   }).catch(() => {
     toast.error(t('manualBooking.messages.loadDatesFailed'))
   }).finally(() => {

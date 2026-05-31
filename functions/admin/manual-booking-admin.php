@@ -70,14 +70,21 @@ function snks_jalsah_ai_manual_booking_page() {
 				$patient_id      = isset( $_POST['patient_id'] ) ? absint( $_POST['patient_id'] ) : 0;
 				$therapist_id    = isset( $_POST['therapist_id'] ) ? absint( $_POST['therapist_id'] ) : 0;
 				$slot_id         = isset( $_POST['slot_id'] ) ? absint( $_POST['slot_id'] ) : 0;
-				$country_code    = isset( $_POST['country_code'] ) ? sanitize_text_field( $_POST['country_code'] ) : 'EG';
+				$country_code    = isset( $_POST['country_code'] ) ? sanitize_text_field( $_POST['country_code'] ) : '';
 				$amount          = isset( $_POST['amount'] ) ? sanitize_text_field( $_POST['amount'] ) : null;
 				$amount_override = ( $amount !== '' && is_numeric( $amount ) && floatval( $amount ) > 0 ) ? floatval( $amount ) : null;
 				$first_name      = isset( $_POST['patient_first_name'] ) ? sanitize_text_field( $_POST['patient_first_name'] ) : '';
 				$last_name       = isset( $_POST['patient_last_name'] ) ? sanitize_text_field( $_POST['patient_last_name'] ) : '';
 				$payment_method  = isset( $_POST['payment_method'] ) ? sanitize_text_field( $_POST['payment_method'] ) : '';
 
-				$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
+				if ( empty( $country_code ) ) {
+					$result = array(
+						'success' => false,
+						'message' => __( 'يرجى إختيار السعر.', 'shrinks' ),
+					);
+				} else {
+					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
+				}
 
 				// Save payment method on order meta if booking succeeded.
 				if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {
@@ -235,9 +242,9 @@ function snks_jalsah_ai_manual_booking_page() {
 						</td>
 					</tr>
 					<tr>
-						<th><label for="country_code"><?php esc_html_e( 'Country', 'shrinks' ); ?></label></th>
+						<th><label for="country_code"><?php esc_html_e( 'Country (price)', 'shrinks' ); ?> <span class="required">*</span></label></th>
 						<td>
-							<select name="country_code" id="country_code">
+							<select name="country_code" id="country_code" required>
 								<?php foreach ( $countries_placeholder as $code => $name ) : ?>
 									<option value="<?php echo esc_attr( $code ); ?>"><?php echo esc_html( $name ); ?></option>
 								<?php endforeach; ?>
@@ -520,7 +527,7 @@ function snks_jalsah_ai_manual_booking_page() {
 				therapist_id: tid
 			}, function(res) {
 				if (res.success && res.data && res.data.length) {
-					var html = '<option value=""><?php echo esc_js( __( '— Select —', 'shrinks' ) ); ?></option>';
+					var html = '<option value=""><?php echo esc_js( __( 'Select price', 'shrinks' ) ); ?></option>';
 					res.data.forEach(function(c) {
 						var label = (c.name || c.code || '');
 						if (c.price != null && c.price !== '') {
@@ -710,6 +717,12 @@ function snks_jalsah_ai_manual_booking_page() {
 			var patientId = $('#patient_id').val();
 			var phoneRaw  = $('#patient_search').val().trim();
 			var countryCode = phoneCountrySelect.val() || 'EG';
+			var pricingCountry = countrySelect.val();
+			if (!pricingCountry) {
+				e.preventDefault();
+				alert('<?php echo esc_js( __( 'يرجى إختيار السعر.', 'shrinks' ) ); ?>');
+				return false;
+			}
 			// If existing patient is selected, skip phone validation here.
 			if (!patientId) {
 				if (!phoneRaw) {

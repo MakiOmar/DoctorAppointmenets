@@ -956,7 +956,7 @@ export default {
     slot: 'Time slot',
     selectSlot: 'Select slot',
     country: 'Country (price)',
-    selectCountry: 'Select country',
+    selectCountry: 'Select price',
     amount: 'Custom session price (optional)',
     customPricePlaceholder: 'Leave empty to use therapist price for selected country',
     customPriceHint: 'If set, this amount becomes the order total; therapist profit is calculated from it on session completion (same first/subsequent rules as standard AI bookings).',
@@ -1022,7 +1022,7 @@ export default {
       therapistRequired: 'Please select a therapist',
       dateRequired: 'Please select a date',
       slotRequired: 'Please select a time slot',
-      countryRequired: 'Please select a country',
+      countryRequired: 'Please select a price',
       phoneMinLength: 'Phone number must be at least 5 digits',
       amountInvalid: 'Amount must be a valid number'
     },

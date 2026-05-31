@@ -946,7 +946,7 @@ export default {
     slot: 'الوقت',
     selectSlot: 'اختر الوقت',
     country: 'الدولة (السعر)',
-    selectCountry: 'اختر الدولة',
+    selectCountry: 'إختر السعر',
     amount: 'سعر الجلسة المخصص (اختياري)',
     customPricePlaceholder: 'اتركه فارغاً لسعر المعالج حسب الدولة',
     customPriceHint: 'إن أدخلت سعراً هنا يُستخدم كمبلغ الطلب؛ عند اكتمال الجلسة يُحسب ربح المعالج من هذا المبلغ كالمعتاد (نسب الجلسة الأولى / التالية).',
@@ -1012,7 +1012,7 @@ export default {
       therapistRequired: 'يرجى اختيار المعالج',
       dateRequired: 'يرجى اختيار التاريخ',
       slotRequired: 'يرجى اختيار الوقت',
-      countryRequired: 'يرجى اختيار الدولة',
+      countryRequired: 'يرجى إختيار السعر',
       phoneMinLength: 'رقم الهاتف يجب أن يكون 5 أرقام على الأقل',
       amountInvalid: 'المبلغ يجب أن يكون رقماً صحيحاً'
     },
