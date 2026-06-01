@@ -320,49 +320,82 @@ function snks_create_custom_timetable() {
 
 		wp_send_json_error( array( 'message' => 'عفواً لايمكن إدخال الموعد! لديك تداخل هنا: ' . implode( ', ', $conflicts_list ) ) );
 	}
-	$inserted = false;
-	// No conflicts, save the timetable.
-	$data = array();
+	$user_id        = snks_get_settings_doctor_id();
+	$day_key        = sanitize_text_field( $_req['day'] );
+	$inserted_ids   = array();
+	$already_exists = 0;
+	$data           = array();
+
+	if ( ! isset( $data[ $day_key ] ) ) {
+		$data[ $day_key ] = array();
+	}
+
 	foreach ( $expected_hours as $expected_hour ) {
 		$date_time = DateTime::createFromFormat( 'Y-m-d h:i a', $_req['date'] . ' ' . gmdate( 'h:i a', strtotime( $expected_hour['from'] ) ) );
 		if ( $date_time ) {
 			$date_time = $date_time->format( 'Y-m-d h:i a' );
 		}
+
 		$base = array(
-			'user_id'         => snks_get_settings_doctor_id(),
+			'user_id'         => $user_id,
 			'session_status'  => 'waiting',
-			'day'             => sanitize_text_field( $_req['day'] ),
+			'day'             => $day_key,
 			'base_hour'       => sanitize_text_field( $_req['app_hour'] ),
-			'period'          => sanitize_text_field( $expected_hour['min'] ),
+			'period'          => absint( $expected_hour['min'] ),
 			'date_time'       => $date_time,
-			'date'            => $_req['date'],
+			'date'            => sanitize_text_field( $_req['date'] ),
 			'starts'          => gmdate( 'H:i:s', strtotime( $expected_hour['from'] ) ),
 			'ends'            => gmdate( 'H:i:s', strtotime( $expected_hour['to'] ) ),
 			'clinic'          => sanitize_text_field( $_req['app_clinic'] ),
 			'attendance_type' => sanitize_text_field( $_req['app_attendance_type'] ),
 		);
-		if ( 'both' !== $_req['app_attendance_type'] ) {
-			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
-		} else {
-			$base['attendance_type']                       = 'online';
-			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
 
-			$base['attendance_type']                       = 'offline';
-			$data[ sanitize_text_field( $_req['day'] ) ][] = $base;
+		$slots_for_preview = array();
+		if ( 'both' !== $_req['app_attendance_type'] ) {
+			$slots_for_preview[] = $base;
+		} else {
+			$online_slot              = $base;
+			$online_slot['attendance_type'] = 'online';
+			$slots_for_preview[]      = $online_slot;
+
+			$offline_slot               = $base;
+			$offline_slot['attendance_type'] = 'offline';
+			$slots_for_preview[]        = $offline_slot;
 		}
-		$inserting = $base;
-		unset( $inserting['date'] );
-		$inserted = snks_insert_timetable( $inserting );
+
+		foreach ( $slots_for_preview as $slot_row ) {
+			$data[ $day_key ][] = $slot_row;
+
+			$inserting = $slot_row;
+			unset( $inserting['date'] );
+
+			$insert_id = snks_insert_timetable( $inserting, $user_id );
+			if ( $insert_id ) {
+				$inserted_ids[] = $insert_id;
+			} else {
+				++$already_exists;
+			}
+		}
 	}
-	if ( ! $inserted ) {
+
+	if ( empty( $inserted_ids ) && empty( $data[ $day_key ] ) ) {
 		wp_send_json_error( array( 'message' => 'هناك خطأ ما أثناء حفظ الجدول!' ) );
 	}
-	// Update the timetable data.
-	$preview_timetables                 = snks_get_preview_timetable();
-	$preview_timetables[ $_req['day'] ] = array_merge( $preview_timetables[ $_req['day'] ], $data[ $_req['day'] ] );
-	snks_set_preview_timetable( $preview_timetables );
 
-	wp_send_json_success( array( 'message' => 'Timetable successfully created.', 'inserted' => $inserted ) );
+	if ( empty( $inserted_ids ) && $already_exists > 0 ) {
+		wp_send_json_error( array( 'message' => 'هذا الموعد موجود بالفعل.' ) );
+	}
+
+	snks_append_unique_preview_timetable_slots( $day_key, $data[ $day_key ], $user_id );
+
+	wp_send_json_success(
+		array(
+			'message'        => 'Timetable successfully created.',
+			'inserted'       => count( $inserted_ids ),
+			'inserted_ids'   => $inserted_ids,
+			'already_exists' => $already_exists,
+		)
+	);
 }
 add_action( 'wp_ajax_create_custom_timetable', 'snks_create_custom_timetable' );
 add_action( 'wp_ajax_nopriv_create_custom_timetable', 'snks_create_custom_timetable' );

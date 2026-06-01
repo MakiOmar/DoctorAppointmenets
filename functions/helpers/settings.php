@@ -757,15 +757,31 @@ function has_two_occurrences( $arr, $element ) {
  */
 function snks_expected_hours( $mins, $start_hour ) {
 	$expected_hours = array();
+	$seen_slots     = array();
+
 	foreach ( $mins as $min ) {
+		$min = absint( $min );
+		if ( $min <= 0 ) {
+			continue;
+		}
 
 		// Convert start time to minutes.
 		$start_minutes = strtotime( $start_hour ) / 60;
 		// Add the duration to the start time.
 		$end_hour = $start_minutes + $min;
 
-		$end_hour         = gmdate( 'h:i a', $end_hour * 60 );
-		$expected_hours[] = array(
+		$end_hour = gmdate( 'h:i a', $end_hour * 60 );
+
+		$slot_signature = strtolower( trim( (string) $start_hour ) ) . '|' . strtolower( trim( (string) $end_hour ) ) . '|' . $min;
+		if ( isset( $seen_slots[ $slot_signature ] ) ) {
+			if ( 30 === $min && has_two_occurrences( $mins, 30 ) ) {
+				$start_hour = $end_hour;
+			}
+			continue;
+		}
+
+		$seen_slots[ $slot_signature ] = true;
+		$expected_hours[]              = array(
 			'from' => $start_hour,
 			'to'   => $end_hour,
 			'min'  => $min,
@@ -775,6 +791,7 @@ function snks_expected_hours( $mins, $start_hour ) {
 			$start_hour = $end_hour;
 		}
 	}
+
 	return $expected_hours;
 }
 

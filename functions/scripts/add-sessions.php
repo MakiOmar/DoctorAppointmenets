@@ -269,6 +269,11 @@ add_action(
 			$(document).on('click', '.custom-timetable-submit', function(e) {
 				e.preventDefault(); // Prevent form default submission
 
+				var $submitBtn = $(this);
+				if ( $submitBtn.data('submitting') ) {
+					return;
+				}
+
 				// Collect form data
 				var appHour = $('#app_hour').val();
 				var appChosenPeriod = $('#app_choosen_period').val();
@@ -308,6 +313,8 @@ add_action(
 				formData.append('app_clinic', appClinic); // Clinic
 				formData.append('app_attendance_type', appAttendanceType); // Attendance type
 				formData.append('day', day); // Day field
+
+				$submitBtn.data('submitting', true).prop('disabled', true);
 
 				// Send the AJAX request
 				$.ajax({
@@ -359,6 +366,7 @@ add_action(
 						});
 					},
 					complete: function() {
+						$submitBtn.data('submitting', false).prop('disabled', false);
 						// Reset form values on completion of AJAX
 						$('#app_hour').val('');
 						$('#app_choosen_period').val('');
@@ -468,6 +476,11 @@ add_action(
 							if (!result.isConfirmed) {
 								return;
 							}
+							var $publishBtn = $('#insert-timetable');
+							if ( $publishBtn.data('publishing') ) {
+								return;
+							}
+							$publishBtn.data('publishing', true).prop('disabled', true);
 							// Perform nonce check.
 							var nonce     = '<?php echo esc_html( wp_create_nonce( 'insert_timetable_nonce' ) ); ?>';
 							$.ajax({
@@ -580,6 +593,9 @@ add_action(
 										icon: 'error',
 										confirmButtonText: 'موافق'
 									});
+								},
+								complete: function() {
+									$publishBtn.data('publishing', false).prop('disabled', false);
 								}
 							});
 							return;

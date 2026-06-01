@@ -443,10 +443,11 @@ function snks_waiting_others( $booked_timetable ) {
  * @param string $day Day Abbreviation.
  * @param mixed  $starts Stat time.
  * @param mixed  $ends end time.
- * @param string $attendance_type attendance type.
+ * @param string   $attendance_type attendance type.
+ * @param int|null $period Session period in minutes.
  * @return mixed
  */
-function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $attendance_type = '' ) {
+function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $attendance_type = '', $period = null ) {
 	global $wpdb;
 	//phpcs:disable
 	// Base query.
@@ -458,13 +459,20 @@ function snks_timetable_exists( $user_id, $date_time, $day, $starts, $ends, $att
               AND starts = %s
               AND ends = %s";
 
+	$params = array( $user_id, $date_time, $day, $starts, $ends );
+
+	if ( null !== $period && '' !== $period ) {
+		$_query   .= ' AND period = %d';
+		$params[] = absint( $period );
+	}
+
 	// Add attendance_type condition if not empty.
 	if ( ! empty( $attendance_type ) ) {
-		$_query         .= ' AND attendance_type = %s';
-		$prepared_query = $wpdb->prepare( $_query, $user_id, $date_time, $day, $starts, $ends, $attendance_type );
-	} else {
-		$prepared_query = $wpdb->prepare( $_query, $user_id, $date_time, $day, $starts, $ends );
+		$_query   .= ' AND attendance_type = %s';
+		$params[] = $attendance_type;
 	}
+
+	$prepared_query = $wpdb->prepare( $_query, $params );
 	// Execute the query.
 	$results = $wpdb->get_results( $prepared_query );
 	//phpcs:enable
@@ -577,7 +585,8 @@ function snks_insert_timetable( $data, $user_id = false ) {
         $data['date_time'] = date( 'Y-m-d H:i:s', strtotime( $data['date_time'] ) );
     }
 
-    $exists = snks_timetable_exists( $user_id, $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'] );
+    $period = isset( $data['period'] ) ? absint( $data['period'] ) : null;
+    $exists = snks_timetable_exists( $user_id, $data['date_time'], $data['day'], $data['starts'], $data['ends'], $data['attendance_type'], $period );
     if ( ! empty( $exists ) ) {
         return false;
     }
@@ -804,6 +813,8 @@ function snks_get_timetable_slot_sync_key( $row, $include_attendance = true ) {
 		$parts[] = isset( $row['attendance_type'] ) ? sanitize_text_field( $row['attendance_type'] ) : '';
 	}
 
+	$parts[] = isset( $row['period'] ) ? absint( $row['period'] ) : 0;
+
 	return implode( '|', $parts );
 }
 
@@ -1026,6 +1037,193 @@ function snks_get_user_timetables_for_sync_window( $user_id, $from = false, $to 
 }
 
 /**
+ * Remove duplicate syncable waiting timetable rows (same slot key), keeping the lowest ID.
+ *
+ * @param int        $user_id User ID.
+ * @param array|null $rows Optional rows to scan; defaults to all syncable waiting rows for the user.
+ * @return array Deleted row details for sync logging.
+ */
+function snks_purge_duplicate_waiting_timetable_rows( $user_id, $rows = null ) {
+	$user_id = absint( $user_id );
+	$deleted = array();
+
+	if ( ! $user_id ) {
+		return $deleted;
+	}
+
+	if ( null === $rows ) {
+		$rows = snks_get_syncable_waiting_timetables_by_user_id( $user_id );
+	}
+
+	$grouped = array();
+
+	foreach ( $rows as $row ) {
+		if ( ! snks_is_syncable_waiting_timetable_row( $row ) ) {
+			continue;
+		}
+
+		$key = snks_get_timetable_slot_sync_key( $row );
+		if ( ! isset( $grouped[ $key ] ) ) {
+			$grouped[ $key ] = array();
+		}
+
+		$grouped[ $key ][] = $row;
+	}
+
+	foreach ( $grouped as $group ) {
+		if ( count( $group ) < 2 ) {
+			continue;
+		}
+
+		usort(
+			$group,
+			function ( $a, $b ) {
+				return absint( $a->ID ) <=> absint( $b->ID );
+			}
+		);
+
+		$keep_id = absint( $group[0]->ID );
+
+		for ( $i = 1, $count = count( $group ); $i < $count; $i++ ) {
+			$duplicate_id = absint( $group[ $i ]->ID );
+			if ( $duplicate_id === $keep_id ) {
+				continue;
+			}
+
+			if ( snks_delete_timetable( $duplicate_id ) ) {
+				$deleted[] = array(
+					'id'     => $duplicate_id,
+					'reason' => 'duplicate_waiting_row',
+					'kept'   => $keep_id,
+					'slot'   => snks_get_timetable_sync_snapshot( $group[ $i ] ),
+				);
+			}
+		}
+	}
+
+	return $deleted;
+}
+
+/**
+ * Deduplicate preview timetable user meta by slot sync key.
+ *
+ * @param int $user_id User ID.
+ * @return int Number of duplicate preview rows removed.
+ */
+function snks_dedupe_user_preview_timetable( $user_id ) {
+	$user_id   = absint( $user_id );
+	$timetable = get_user_meta( $user_id, 'preview_timetable', true );
+
+	if ( ! is_array( $timetable ) || empty( $timetable ) ) {
+		return 0;
+	}
+
+	$removed = 0;
+
+	foreach ( $timetable as $day => $sessions ) {
+		if ( ! is_array( $sessions ) ) {
+			continue;
+		}
+
+		$unique = array();
+		$keys   = array();
+
+		foreach ( $sessions as $session ) {
+			if ( ! is_array( $session ) ) {
+				$unique[] = $session;
+				continue;
+			}
+
+			$normalized = snks_normalize_preview_timetable_row( $session, $user_id );
+			if ( is_wp_error( $normalized ) ) {
+				$unique[] = $session;
+				continue;
+			}
+
+			$key = snks_get_timetable_slot_sync_key( $normalized );
+			if ( isset( $keys[ $key ] ) ) {
+				++$removed;
+				continue;
+			}
+
+			$keys[ $key ] = true;
+			$unique[]     = $session;
+		}
+
+		$timetable[ $day ] = $unique;
+	}
+
+	if ( $removed > 0 ) {
+		update_user_meta( $user_id, 'preview_timetable', $timetable );
+	}
+
+	return $removed;
+}
+
+/**
+ * Append preview slots for one day without duplicating existing keys.
+ *
+ * @param string $day Day abbreviation.
+ * @param array  $new_slots Slots to append.
+ * @param int    $user_id User ID.
+ * @return void
+ */
+function snks_append_unique_preview_timetable_slots( $day, $new_slots, $user_id = 0 ) {
+	$day     = sanitize_text_field( $day );
+	$user_id = $user_id ? absint( $user_id ) : absint( snks_get_settings_doctor_id() );
+
+	if ( ! $user_id || ! is_array( $new_slots ) || empty( $new_slots ) ) {
+		return;
+	}
+
+	$preview_timetables = snks_get_preview_timetable( $user_id, true );
+	if ( ! is_array( $preview_timetables ) ) {
+		$preview_timetables = array();
+	}
+
+	if ( ! isset( $preview_timetables[ $day ] ) || ! is_array( $preview_timetables[ $day ] ) ) {
+		$preview_timetables[ $day ] = array();
+	}
+
+	$existing_keys = array();
+
+	foreach ( $preview_timetables[ $day ] as $session ) {
+		if ( ! is_array( $session ) ) {
+			continue;
+		}
+
+		$normalized = snks_normalize_preview_timetable_row( $session, $user_id );
+		if ( is_wp_error( $normalized ) ) {
+			continue;
+		}
+
+		$existing_keys[ snks_get_timetable_slot_sync_key( $normalized ) ] = true;
+	}
+
+	foreach ( $new_slots as $session ) {
+		if ( ! is_array( $session ) ) {
+			continue;
+		}
+
+		$normalized = snks_normalize_preview_timetable_row( $session, $user_id );
+		if ( is_wp_error( $normalized ) ) {
+			$preview_timetables[ $day ][] = $session;
+			continue;
+		}
+
+		$key = snks_get_timetable_slot_sync_key( $normalized );
+		if ( isset( $existing_keys[ $key ] ) ) {
+			continue;
+		}
+
+		$existing_keys[ $key ]            = true;
+		$preview_timetables[ $day ][] = $session;
+	}
+
+	snks_set_preview_timetable( $preview_timetables, $user_id );
+}
+
+/**
  * Sync preview timetable rows into the database safely.
  *
  * @param int|false        $user_id User ID.
@@ -1127,11 +1325,21 @@ function snks_sync_preview_timetables_to_db( $user_id = false, $preview_timetabl
 		return $result;
 	}
 
+	snks_dedupe_user_preview_timetable( $user_id );
+
+	$duplicate_purge_deleted = snks_purge_duplicate_waiting_timetable_rows( $user_id );
+	if ( ! empty( $duplicate_purge_deleted ) ) {
+		$result['deleted'] = array_merge( $result['deleted'], $duplicate_purge_deleted );
+	}
+
 	$existing_syncable_waiting_rows = snks_get_syncable_waiting_timetables_by_user_id( $user_id );
 	$existing_syncable_by_key       = array();
 
 	foreach ( $existing_syncable_waiting_rows as $existing_row ) {
-		$existing_syncable_by_key[ snks_get_timetable_slot_sync_key( $existing_row ) ] = $existing_row;
+		$full_key = snks_get_timetable_slot_sync_key( $existing_row );
+		if ( ! isset( $existing_syncable_by_key[ $full_key ] ) || absint( $existing_row->ID ) < absint( $existing_syncable_by_key[ $full_key ]->ID ) ) {
+			$existing_syncable_by_key[ $full_key ] = $existing_row;
+		}
 	}
 
 	$existing_window_rows   = array();
@@ -1282,6 +1490,25 @@ function snks_sync_preview_timetables_to_db( $user_id = false, $preview_timetabl
 			);
 		}
 	}
+
+	if ( empty( $result['errors'] ) && ! empty( $date_times ) ) {
+		sort( $date_times );
+		$window_rows = snks_get_user_timetables_for_sync_window( $user_id, reset( $date_times ), end( $date_times ) );
+		$window_syncable = array();
+
+		foreach ( $window_rows as $window_row ) {
+			if ( snks_is_syncable_waiting_timetable_row( $window_row ) ) {
+				$window_syncable[] = $window_row;
+			}
+		}
+
+		$post_sync_purged = snks_purge_duplicate_waiting_timetable_rows( $user_id, $window_syncable );
+		if ( ! empty( $post_sync_purged ) ) {
+			$result['deleted'] = array_merge( $result['deleted'], $post_sync_purged );
+		}
+	}
+
+	snks_dedupe_user_preview_timetable( $user_id );
 
 	$result['success'] = empty( $result['errors'] );
 	$result['summary'] = array(
