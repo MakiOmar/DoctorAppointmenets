@@ -7457,8 +7457,8 @@ Best regards,
 					$first_name     = isset( $input['patient_first_name'] ) ? sanitize_text_field( $input['patient_first_name'] ) : '';
 					$last_name      = isset( $input['patient_last_name'] ) ? sanitize_text_field( $input['patient_last_name'] ) : '';
 					$payment_method = isset( $input['payment_method'] ) ? sanitize_text_field( $input['payment_method'] ) : '';
-					if ( empty( $country_code ) ) {
-						$this->send_error( __( 'يرجى إختيار السعر.', 'shrinks' ), 400 );
+					if ( empty( $country_code ) && null === $amount_override ) {
+						$this->send_error( __( 'يرجى إختيار السعر أو إدخال سعر مخصص.', 'shrinks' ), 400 );
 						return;
 					}
 					// New slot mode: create or find slot from date+time when slot_id not provided.

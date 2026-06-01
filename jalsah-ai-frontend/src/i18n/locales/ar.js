@@ -1012,7 +1012,7 @@ export default {
       therapistRequired: 'يرجى اختيار المعالج',
       dateRequired: 'يرجى اختيار التاريخ',
       slotRequired: 'يرجى اختيار الوقت',
-      countryRequired: 'يرجى إختيار السعر',
+      countryRequired: 'يرجى إختيار السعر أو إدخال سعر مخصص',
       phoneMinLength: 'رقم الهاتف يجب أن يكون 5 أرقام على الأقل',
       amountInvalid: 'المبلغ يجب أن يكون رقماً صحيحاً'
     },

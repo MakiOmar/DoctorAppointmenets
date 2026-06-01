@@ -272,7 +272,7 @@
       <!-- Country (pricing) -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.country') }}</label>
-        <select v-model="selectedCountryCode" required class="w-full rounded border px-3 py-2" :class="errors?.country ? 'border-red-500' : 'border-gray-300'">
+        <select v-model="selectedCountryCode" :required="!hasValidCustomPrice" class="w-full rounded border px-3 py-2" :class="errors?.country ? 'border-red-500' : 'border-gray-300'">
           <option value="">{{ $t('manualBooking.selectCountry') }}</option>
           <option v-for="c in therapistCountries" :key="c.code" :value="c.code">
             {{ c.name }} — {{ c.price }} {{ c.currency_symbol }}
@@ -1227,9 +1227,20 @@ function clearErrors() {
   }
 }
 
+function parseCustomAmount() {
+  if (!amountOverride.value || amountOverride.value.trim() === '') {
+    return null
+  }
+  const num = parseFloat(amountOverride.value.replace(',', '.'))
+  return (!isNaN(num) && num > 0) ? num : null
+}
+
+const hasValidCustomPrice = computed(() => parseCustomAmount() !== null)
+
 function validateNewBooking() {
   clearErrors()
   let valid = true
+  const customAmount = parseCustomAmount()
   if (!patientId.value) {
     errors.value.phone = t('manualBooking.validation.patientRequired')
     valid = false
@@ -1261,16 +1272,13 @@ function validateNewBooking() {
       valid = false
     }
   }
-  if (!selectedCountryCode.value) {
+  if (!selectedCountryCode.value && customAmount === null) {
     errors.value.country = t('manualBooking.validation.countryRequired')
     valid = false
   }
-  if (amountOverride.value && amountOverride.value.trim() !== '') {
-    const num = parseFloat(amountOverride.value.replace(',', '.'))
-    if (isNaN(num) || num <= 0) {
-      errors.value.amount = t('manualBooking.validation.amountInvalid')
-      valid = false
-    }
+  if (amountOverride.value && amountOverride.value.trim() !== '' && customAmount === null) {
+    errors.value.amount = t('manualBooking.validation.amountInvalid')
+    valid = false
   }
   return valid
 }

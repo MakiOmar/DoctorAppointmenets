@@ -77,10 +77,10 @@ function snks_jalsah_ai_manual_booking_page() {
 				$last_name       = isset( $_POST['patient_last_name'] ) ? sanitize_text_field( $_POST['patient_last_name'] ) : '';
 				$payment_method  = isset( $_POST['payment_method'] ) ? sanitize_text_field( $_POST['payment_method'] ) : '';
 
-				if ( empty( $country_code ) ) {
+				if ( empty( $country_code ) && null === $amount_override ) {
 					$result = array(
 						'success' => false,
-						'message' => __( 'يرجى إختيار السعر.', 'shrinks' ),
+						'message' => __( 'يرجى إختيار السعر أو إدخال سعر مخصص.', 'shrinks' ),
 					);
 				} else {
 					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
@@ -242,9 +242,9 @@ function snks_jalsah_ai_manual_booking_page() {
 						</td>
 					</tr>
 					<tr>
-						<th><label for="country_code"><?php esc_html_e( 'Country (price)', 'shrinks' ); ?> <span class="required">*</span></label></th>
+						<th><label for="country_code"><?php esc_html_e( 'Country (price)', 'shrinks' ); ?></label></th>
 						<td>
-							<select name="country_code" id="country_code" required>
+							<select name="country_code" id="country_code">
 								<?php foreach ( $countries_placeholder as $code => $name ) : ?>
 									<option value="<?php echo esc_attr( $code ); ?>"><?php echo esc_html( $name ); ?></option>
 								<?php endforeach; ?>
@@ -718,9 +718,12 @@ function snks_jalsah_ai_manual_booking_page() {
 			var phoneRaw  = $('#patient_search').val().trim();
 			var countryCode = phoneCountrySelect.val() || 'EG';
 			var pricingCountry = countrySelect.val();
-			if (!pricingCountry) {
+			var amountRaw = $('#amount').val().trim();
+			var customAmount = amountRaw !== '' ? parseFloat(amountRaw) : NaN;
+			var hasCustomPrice = !isNaN(customAmount) && customAmount > 0;
+			if (!pricingCountry && !hasCustomPrice) {
 				e.preventDefault();
-				alert('<?php echo esc_js( __( 'يرجى إختيار السعر.', 'shrinks' ) ); ?>');
+				alert('<?php echo esc_js( __( 'يرجى إختيار السعر أو إدخال سعر مخصص.', 'shrinks' ) ); ?>');
 				return false;
 			}
 			// If existing patient is selected, skip phone validation here.

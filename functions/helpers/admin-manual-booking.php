@@ -615,7 +615,13 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 
 	if ( $amount_override !== null && $amount_override > 0 ) {
 		$session_amount = floatval( $amount_override );
+		if ( empty( $country_code ) ) {
+			$country_code = 'EG';
+		}
 	} else {
+		if ( empty( $country_code ) ) {
+			return array( 'success' => false, 'message' => __( 'يرجى إختيار السعر أو إدخال سعر مخصص.', 'shrinks' ) );
+		}
 		$pricing = snks_get_ai_therapist_price( $therapist_id, $country_code, $period );
 		$session_amount = isset( $pricing['original_price'] ) ? floatval( $pricing['original_price'] ) : 0;
 		if ( $session_amount <= 0 ) {

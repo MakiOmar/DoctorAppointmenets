@@ -1022,7 +1022,7 @@ export default {
       therapistRequired: 'Please select a therapist',
       dateRequired: 'Please select a date',
       slotRequired: 'Please select a time slot',
-      countryRequired: 'Please select a price',
+      countryRequired: 'Please select a price or enter a custom price',
       phoneMinLength: 'Phone number must be at least 5 digits',
       amountInvalid: 'Amount must be a valid number'
     },
