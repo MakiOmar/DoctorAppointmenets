@@ -63,6 +63,8 @@ function snks_send_session_notifications() {
 	
 	$results = $wpdb->get_results( $query );
 	//phpcs:enable
+	$use_meeting_timers = function_exists( 'snks_should_use_jitsi_meeting_timers' ) && snks_should_use_jitsi_meeting_timers();
+
 	// Process each result.
 	foreach ( $results as $session ) {
 		$time_diff     = snks_diff_seconds( $session );
@@ -94,8 +96,9 @@ function snks_send_session_notifications() {
 			// Check if session is 23-24 hours away
 			// Only send after 9 AM to avoid confusion (if sent between midnight and 5 AM, "tomorrow" might be misinterpreted)
 			$current_hour = (int) current_time( 'H' );
-			if ( $time_diff >= ( 23 * HOUR_IN_SECONDS ) && $time_diff <= DAY_IN_SECONDS && ! $session->notification_24hr_sent && $current_hour >= 9 ) {
-				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
+			$skip_timed_online = ! $use_meeting_timers && 'online' === $session->attendance_type;
+			if ( $time_diff >= ( 23 * HOUR_IN_SECONDS ) && $time_diff <= DAY_IN_SECONDS && ! $session->notification_24hr_sent && $current_hour >= 9 && ! $skip_timed_online ) {
+				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) && $use_meeting_timers ) {
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
 					
@@ -145,7 +148,7 @@ function snks_send_session_notifications() {
 				//phpcs:enable
 			}
 			// 1-hour reminder.
-			if ( 'online' === $session->attendance_type && $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS && ! $session->notification_1hr_sent ) {
+			if ( 'online' === $session->attendance_type && $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS && ! $session->notification_1hr_sent && $use_meeting_timers ) {
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
 					// Send WhatsApp template notification for AI sessions
 					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );

@@ -1314,5 +1314,11 @@ export default {
   },
 
   // Appointment Change Terms
-  appointmentChangeTerms: 'Appointment Change Terms'
+  appointmentChangeTerms: 'Appointment Change Terms',
+
+  meeting: {
+    openedInNewTab: 'Your session opened in a new tab.',
+    openMeetLink: 'Open Google Meet',
+    popupBlocked: 'Please allow pop-ups for this site, then try again.'
+  }
 } 

@@ -212,6 +212,7 @@ import { useAuthStore } from '../stores/auth'
 import { useToast } from 'vue-toastification'
 import Swal from 'sweetalert2'
 import api from '../services/api'
+import { openGoogleMeetUrl } from '@/composables/useLiveMeeting'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -502,6 +503,16 @@ const joinSession = async () => {
     await api.post(`/wp-json/jalsah-ai/v1/session/${sessionData.value.ID}/patient-join`)
 
     // Open Jitsi on dedicated page (no modal).
+    const meetUrl = sessionData.value?.google_meet_join_url
+    if (meetUrl) {
+      if (!openGoogleMeetUrl(meetUrl)) {
+        toast.warning(t('meeting.popupBlocked') || 'يرجى السماح بالنوافذ المنبثقة.')
+      }
+      toast.success(t('session.joined'))
+      joiningSession.value = false
+      return
+    }
+
     const meetingLink = sessionData.value?.session_link
     const meetingMatch = meetingLink ? String(meetingLink).match(/\/meeting\/([a-zA-Z0-9_-]+)/) : null
     if (meetingMatch?.[1]) {
@@ -537,6 +548,16 @@ const startMeeting = async () => {
     await notifyTherapistJoined(sessionData.value.ID)
 
     // Open Jitsi on dedicated page (no modal).
+    const meetUrl = sessionData.value?.google_meet_join_url
+    if (meetUrl) {
+      if (!openGoogleMeetUrl(meetUrl)) {
+        toast.warning(t('meeting.popupBlocked') || 'يرجى السماح بالنوافذ المنبثقة.')
+      }
+      toast.success(t('session.meetingStarted'))
+      startingMeeting.value = false
+      return
+    }
+
     const meetingLink = sessionData.value?.session_link
     const meetingMatch = meetingLink ? String(meetingLink).match(/\/meeting\/([a-zA-Z0-9_-]+)/) : null
     if (meetingMatch?.[1]) {

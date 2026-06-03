@@ -20,9 +20,34 @@
       </div>
     </div>
 
+    <!-- Google Meet: opened in new tab -->
+    <div
+      v-if="status === 'meet_opened'"
+      class="flex-1 flex items-center justify-center text-white px-4"
+    >
+      <div class="text-center max-w-md">
+        <p class="mb-4">{{ $t('meeting.openedInNewTab') || 'تم فتح الجلسة في نافذة جديدة.' }}</p>
+        <a
+          v-if="meetJoinUrl"
+          :href="meetJoinUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-block px-4 py-2 bg-primary-500 text-white rounded hover:bg-primary-600"
+        >
+          {{ $t('meeting.openMeetLink') || 'فتح Google Meet' }}
+        </a>
+        <router-link
+          :to="safeReturnUrl"
+          class="block mt-4 text-primary-300 hover:text-primary-200"
+        >
+          {{ $t('common.back') || 'رجوع' }}
+        </router-link>
+      </div>
+    </div>
+
     <!-- Jitsi meeting container: full viewport so iframe sizes correctly -->
     <div
-      v-show="status !== 'error'"
+      v-show="status !== 'error' && status !== 'meet_opened'"
       id="meeting-guest"
       class="absolute inset-0 w-full h-full min-h-0"
     ></div>
@@ -35,14 +60,16 @@ import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/auth'
+import { openGoogleMeetUrl } from '@/composables/useLiveMeeting'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
 
-const status = ref('ready') // 'ready' | 'error'
+const status = ref('ready') // 'ready' | 'error' | 'meet_opened'
 const errorMessage = ref('')
+const meetJoinUrl = ref('')
 const meetAPI = ref(null)
 let logoHideInterval = null
 let hasRedirected = false
@@ -282,9 +309,23 @@ onMounted(async () => {
     const { data } = await api.get('/wp-json/jalsah-ai/v1/meeting-by-token', {
       params: { token }
     })
-    const roomName = data?.room_name
+    const provider = data?.provider || data?.live_stream_provider
+    const joinUrl = data?.join_url || data?.google_meet_join_url
     const displayName = data?.display_name
     const timetableId = data?.timetable_id
+
+    if (provider === 'google_meet' && joinUrl) {
+      meetJoinUrl.value = joinUrl
+      const opened = openGoogleMeetUrl(joinUrl)
+      status.value = 'meet_opened'
+      if (!opened) {
+        toast.warning(t('meeting.popupBlocked') || 'يرجى السماح بالنوافذ المنبثقة أو استخدم الرابط أدناه.')
+      }
+      void markUserJoined(timetableId)
+      return
+    }
+
+    const roomName = data?.room_name
     if (!roomName) {
       status.value = 'error'
       errorMessage.value = data?.message || 'رابط الجلسة غير صالح أو منتهي الصلاحية.'

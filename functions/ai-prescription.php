@@ -493,6 +493,19 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 			continue;
 		}
 		
+		$meet_url  = '';
+		$provider  = 'jitsi';
+		if ( 'confirmed' === $request->status && function_exists( 'snks_get_session_meeting_for_rochtah' ) ) {
+			$meeting = snks_get_session_meeting_for_rochtah( (int) $request->id );
+			if ( ! empty( $meeting['google_meet_join_url'] ) ) {
+				$meet_url = $meeting['google_meet_join_url'];
+				$provider = 'google_meet';
+			} elseif ( ! empty( $meeting['join_url'] ) ) {
+				$meet_url = $meeting['join_url'];
+				$provider = isset( $meeting['live_stream_provider'] ) ? $meeting['live_stream_provider'] : 'google_meet';
+			}
+		}
+
 		$formatted_requests[] = array(
 			'id' => $request->id,
 			'patient_id' => $request->patient_id,
@@ -522,6 +535,8 @@ function snks_get_patient_prescription_requests( $patient_id = null ) {
 			'starts' => $request->starts,
 			'ends' => $request->ends,
 			'doctor_joined' => isset( $request->doctor_joined ) ? (bool) $request->doctor_joined : false,
+			'google_meet_join_url' => $meet_url,
+			'live_stream_provider' => $provider,
 			'booking_id' => $request->id,
 			'expiry_date' => date( 'Y-m-d', $expiry_date ),
 			'days_until_expiry' => ceil( ( $expiry_date - $now ) / DAY_IN_SECONDS )
@@ -859,36 +874,46 @@ function snks_get_rochtah_meeting_details( $booking_id ) {
 	if ( ! $booking ) {
 		return false;
 	}
-	
-	// Generate meeting link if not already generated
-	$meeting_link = get_post_meta( $booking_id, '_rochtah_meeting_link', true );
-	if ( ! $meeting_link ) {
-		$meeting_details = snks_generate_rochtah_meeting_link( $booking_id );
-		$meeting_link = $meeting_details['meeting_url'];
-		update_post_meta( $booking_id, '_rochtah_meeting_link', $meeting_link );
-		update_post_meta( $booking_id, '_rochtah_room_name', $meeting_details['room_name'] );
+
+	if ( 'confirmed' === $booking->status && function_exists( 'snks_get_session_meeting_for_rochtah' ) ) {
+		$meeting = snks_get_session_meeting_for_rochtah( $booking_id );
+		return array(
+			'booking_id'           => $booking_id,
+			'room_name'            => isset( $meeting['room_name'] ) ? $meeting['room_name'] : '',
+			'meeting_url'          => isset( $meeting['meeting_url'] ) ? $meeting['meeting_url'] : '',
+			'join_url'             => isset( $meeting['join_url'] ) ? $meeting['join_url'] : '',
+			'google_meet_join_url' => isset( $meeting['google_meet_join_url'] ) ? $meeting['google_meet_join_url'] : '',
+			'provider'             => isset( $meeting['provider'] ) ? $meeting['provider'] : 'jitsi',
+			'live_stream_provider' => isset( $meeting['live_stream_provider'] ) ? $meeting['live_stream_provider'] : 'jitsi',
+			'use_meeting_timers'   => isset( $meeting['use_meeting_timers'] ) ? (bool) $meeting['use_meeting_timers'] : true,
+			'booking_date'         => $booking->booking_date,
+			'booking_time'         => $booking->booking_time,
+			'status'               => $booking->status,
+			'patient_id'           => $booking->patient_id,
+			'therapist_id'         => $booking->therapist_id,
+			'doctor_joined'        => isset( $booking->doctor_joined ) ? (bool) $booking->doctor_joined : false,
+		);
 	}
-	
-	$room_name = get_post_meta( $booking_id, '_rochtah_room_name', true );
-	
-	// If room_name is empty, extract it from the meeting URL
-	if ( empty( $room_name ) && ! empty( $meeting_link ) ) {
-		// Extract room name from URL like: https://jitsiserver.jalsah.app/rochtah_8_1761465857
-		if ( preg_match( '/rochtah_\d+_\d+/', $meeting_link, $matches ) ) {
-			$room_name = $matches[0];
-		}
-	}
-	
+
+	$meeting_details = snks_generate_rochtah_meeting_link( $booking_id );
+	$meeting_link    = $meeting_details['meeting_url'];
+	$room_name       = $meeting_details['room_name'];
+
 	return array(
-		'booking_id' => $booking_id,
-		'room_name' => $room_name,
-		'meeting_url' => $meeting_link,
-		'booking_date' => $booking->booking_date,
-		'booking_time' => $booking->booking_time,
-		'status' => $booking->status,
-		'patient_id' => $booking->patient_id,
-		'therapist_id' => $booking->therapist_id,
-		'doctor_joined' => isset( $booking->doctor_joined ) ? (bool) $booking->doctor_joined : false
+		'booking_id'           => $booking_id,
+		'room_name'            => $room_name,
+		'meeting_url'          => $meeting_link,
+		'join_url'             => $meeting_link,
+		'google_meet_join_url' => '',
+		'provider'             => 'jitsi',
+		'live_stream_provider' => 'jitsi',
+		'use_meeting_timers'   => true,
+		'booking_date'         => $booking->booking_date,
+		'booking_time'         => $booking->booking_time,
+		'status'               => $booking->status,
+		'patient_id'           => $booking->patient_id,
+		'therapist_id'         => $booking->therapist_id,
+		'doctor_joined'        => isset( $booking->doctor_joined ) ? (bool) $booking->doctor_joined : false,
 	);
 }
 

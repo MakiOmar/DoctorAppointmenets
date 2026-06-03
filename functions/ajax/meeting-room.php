@@ -21,10 +21,10 @@ function doctor_presence_callback() {
 		wp_send_json_error( 'Invalid nonce.' );
 	}
 	$transient = get_transient( "doctor_has_joined_{$_request['roomID']}_{$_request['doctorID']}" );
-	if ( ! $transient ) {
+	if ( ! $transient && function_exists( 'snks_should_use_jitsi_meeting_timers' ) && snks_should_use_jitsi_meeting_timers() ) {
 		$transient     = set_transient( "doctor_has_joined_{$_request['roomID']}_{$_request['doctorID']}", '1' );
 		$session       = snks_get_timetable_by( 'ID', absint( $_request['roomID'] ) );
-		
+
 		// Check if this is an AI session
 		if ( function_exists( 'snks_is_ai_session' ) && snks_is_ai_session( $session ) ) {
 			// Send WhatsApp notification for AI sessions
@@ -45,6 +45,8 @@ function doctor_presence_callback() {
 			}
 			send_sms_via_whysms( $billing_phone, $message );
 		}
+	} elseif ( ! $transient ) {
+		set_transient( "doctor_has_joined_{$_request['roomID']}_{$_request['doctorID']}", '1' );
 	}
 	wp_send_json(
 		array(

@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action(
 	'wp_enqueue_scripts',
 	function () {
+		if ( function_exists( 'snks_should_use_jitsi_meeting_timers' ) && ! snks_should_use_jitsi_meeting_timers() ) {
+			return;
+		}
 		wp_enqueue_script( 'meeting-script', 'https://jitsiserver.jalsah.app/external_api.js', array(), time(), false );
 	}
 );
@@ -38,6 +41,15 @@ add_shortcode(
 		if ( ! snks_is_timetable_eligible( $room_id ) ) {
 			return;
 		}
+
+		if ( function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
+			$meeting = snks_get_session_meeting_for_timetable( $room_id );
+			if ( ! empty( $meeting['join_url'] ) && function_exists( 'snks_render_guest_google_meet_room' ) ) {
+				snks_render_guest_google_meet_room( $meeting['join_url'] );
+				return '';
+			}
+		}
+
 		add_action(
 			'wp_footer',
 			function () use ( $room_id, $doctor_id, $name ) {
@@ -50,7 +62,8 @@ add_shortcode(
 					$is_too_early = snks_is_session_too_early( $session );
 				}
 				
-				if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
+				$use_meeting_timers = ! function_exists( 'snks_should_use_jitsi_meeting_timers' ) || snks_should_use_jitsi_meeting_timers();
+				if ( $use_meeting_timers && snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
 					?>
 					<script>
 					jQuery(document).ready(function($){
@@ -313,7 +326,8 @@ add_shortcode(
 			$is_too_early = snks_is_session_too_early( $session );
 		}
 		
-		if ( snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
+		$use_meeting_timers_html = ! function_exists( 'snks_should_use_jitsi_meeting_timers' ) || snks_should_use_jitsi_meeting_timers();
+		if ( $use_meeting_timers_html && snks_is_patient() && ( ! snks_doctor_has_joined( $room_id, $doctor_id ) || $is_too_early ) ) {
 			$message = $is_too_early ? 'الجلسة لم تبدأ بعد - يرجى الانتظار حتى وقت الجلسة المحدد' : 'يرجى انتظار المعالج شكراً لك';
 			$html .= '<div class="room-loader-wrapper anony-flex flex-v-center anony-flex-column anony-flex-align-center"><div class="room-loader"></div><h5 style="color:#fff">' . $message . '</h5></div>';
 		}
@@ -443,9 +457,11 @@ add_action(
 			}
 
 			$(function() {
+				<?php if ( function_exists( 'snks_should_use_jitsi_meeting_timers' ) && snks_should_use_jitsi_meeting_timers() ) : ?>
 				if ($('#my-bookings-container').length) {
 					initializeSnksTimer();
 				}
+				<?php endif; ?>
 			});
 
 			$(window).on('jet-popup/show-event/after-show jet-popup/render-content/render-custom-content', function() {

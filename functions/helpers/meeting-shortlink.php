@@ -59,6 +59,15 @@ function snks_handle_meeting_shortlink_redirect() {
 		wp_die( esc_html__( 'هذه الجلسة غير مؤهلة للدخول.', 'shrinks' ), esc_html__( 'خطأ', 'shrinks' ), array( 'response' => 403 ) );
 	}
 
+	if ( snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
+		snks_ensure_session_meeting_assigned( 'timetable', $timetable_id );
+		$meeting = snks_get_session_meeting_for_timetable( $timetable_id );
+		if ( ! empty( $meeting['join_url'] ) ) {
+			snks_render_guest_google_meet_room( $meeting['join_url'] );
+			exit;
+		}
+	}
+
 	// Redirect to frontend AI meeting route so the Jitsi room opens inside the app.
 	wp_safe_redirect( home_url( '/meeting/' . sanitize_text_field( $token ) ) );
 	exit;
@@ -120,13 +129,29 @@ function snks_rest_meeting_by_token( $request ) {
 		$display_name = trim( $first . ' ' . $last ) ?: $display_name;
 	}
 
-	$room_name = (int) $timetable_id . ' جلسة';
+	$meeting = function_exists( 'snks_get_session_meeting_for_timetable' )
+		? snks_get_session_meeting_for_timetable( $timetable_id )
+		: array();
 
-	return rest_ensure_response( array(
-		'timetable_id'  => (int) $timetable_id,
-		'room_name'     => $room_name,
-		'display_name' => $display_name,
-	) );
+	$payload = array_merge(
+		array(
+			'timetable_id'  => (int) $timetable_id,
+			'display_name'  => $display_name,
+			'provider'      => snks_is_google_meet_active() ? 'google_meet' : 'jitsi',
+			'room_name'     => (int) $timetable_id . ' جلسة',
+			'join_url'      => '',
+			'google_meet_join_url' => '',
+			'use_meeting_timers'   => snks_should_use_jitsi_meeting_timers(),
+			'live_stream_provider' => snks_get_live_stream_provider(),
+		),
+		$meeting
+	);
+
+	if ( empty( $payload['display_name'] ) ) {
+		$payload['display_name'] = $display_name;
+	}
+
+	return rest_ensure_response( $payload );
 }
 
 /**
@@ -171,6 +196,13 @@ function snks_get_meeting_shortlink( $timetable_id ) {
 		return '';
 	}
 
+	if ( snks_is_google_meet_active() && function_exists( 'snks_get_timetable_by' ) ) {
+		$timetable = snks_get_timetable_by( 'ID', $timetable_id );
+		if ( snks_is_online_meeting_eligible( $timetable ) ) {
+			snks_ensure_session_meeting_assigned( 'timetable', $timetable_id );
+		}
+	}
+
 	$tokens = get_option( 'snks_meeting_tokens', array() );
 	if ( ! is_array( $tokens ) ) {
 		$tokens = array();
@@ -201,12 +233,58 @@ function snks_generate_meeting_token() {
 }
 
 /**
+ * Render guest page that opens Google Meet in a new tab.
+ *
+ * @param string $join_url Meet URL.
+ * @return void
+ */
+function snks_render_guest_google_meet_room( $join_url ) {
+	$join_url = esc_url( $join_url );
+	?>
+	<!DOCTYPE html>
+	<html <?php language_attributes(); ?> dir="rtl">
+	<head>
+		<meta charset="<?php bloginfo( 'charset' ); ?>">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title><?php esc_html_e( 'جلسة - Google Meet', 'shrinks' ); ?></title>
+		<style>
+			body { font-family: sans-serif; margin: 0; padding: 2rem; background: #f5f5f5; text-align: center; }
+			.box { max-width: 480px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+			.btn { display: inline-block; margin-top: 1rem; padding: 12px 24px; background: #024059; color: #fff; text-decoration: none; border-radius: 6px; }
+		</style>
+	</head>
+	<body>
+		<div class="box">
+			<h1><?php esc_html_e( 'فتح جلسة Google Meet', 'shrinks' ); ?></h1>
+			<p><?php esc_html_e( 'سيتم فتح الجلسة في نافذة جديدة. إذا لم تفتح تلقائياً، اضغط الزر أدناه.', 'shrinks' ); ?></p>
+			<a class="btn" href="<?php echo esc_url( $join_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'فتح الجلسة', 'shrinks' ); ?></a>
+		</div>
+		<script>
+		(function() {
+			var url = <?php echo wp_json_encode( $join_url ); ?>;
+			if (url) { window.open(url, '_blank', 'noopener,noreferrer'); }
+		})();
+		</script>
+	</body>
+	</html>
+	<?php
+}
+
+/**
  * Render guest meeting room page (no login required).
  *
- * @param int   $timetable_id Timetable ID.
+ * @param int    $timetable_id Timetable ID.
  * @param object $timetable   Timetable object.
  */
 function snks_render_guest_meeting_room( $timetable_id, $timetable ) {
+	if ( snks_is_google_meet_active() ) {
+		$meeting = snks_get_session_meeting_for_timetable( $timetable_id );
+		if ( ! empty( $meeting['join_url'] ) ) {
+			snks_render_guest_google_meet_room( $meeting['join_url'] );
+			return;
+		}
+	}
+
 	$doctor_id = $timetable->user_id;
 	$client_id = $timetable->client_id;
 

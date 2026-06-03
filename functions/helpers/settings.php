@@ -988,7 +988,16 @@ function snks_preview_actions( $day, $index, $target = 'meta' ) {
 		$html .= '<a href="#" class="button postpon-booking" data-index="' . $index . '" data-day="' . $day . '">تأجيل</a>';
 		// This will allow send a message to the patient that his booking has been delayed for x minutes.
 		$html .= '<a href="#" class="button delay-booking" data-index="' . $index . '" data-day="' . $day . '">تأخير</a>';
-		$html .= '<a href="' . add_query_arg( 'room_id', $index, site_url( '/meeting-room' ) ) . '" class="button start-meeting">ابدأ الجلسة</a>';
+		$meeting_href = add_query_arg( 'room_id', $index, site_url( '/meeting-room' ) );
+		$meet_attrs   = '';
+		if ( function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
+			$meeting = snks_get_session_meeting_for_timetable( (int) $index );
+			if ( ! empty( $meeting['join_url'] ) ) {
+				$meeting_href = esc_url( $meeting['join_url'] );
+				$meet_attrs   = ' target="_blank" rel="noopener noreferrer"';
+			}
+		}
+		$html .= '<a href="' . esc_url( $meeting_href ) . '" class="button start-meeting"' . $meet_attrs . '>ابدأ الجلسة</a>';
 	}
 	return $html;
 }

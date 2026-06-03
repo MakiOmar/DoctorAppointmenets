@@ -734,6 +734,10 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 	$wpdb->query( 'START TRANSACTION' );
 
 	try {
+		if ( function_exists( 'snks_release_google_meet_url' ) ) {
+			snks_release_google_meet_url( 'timetable', $existing_booking_id );
+		}
+
 		// Release old slot and reset all notification/state columns to initial state.
 		$wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',

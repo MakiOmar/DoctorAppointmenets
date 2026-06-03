@@ -3827,21 +3827,27 @@ Best regards,
 
 					$photo_url = $appointment->profile_image ? wp_get_attachment_image_url( $appointment->profile_image, 'thumbnail' ) : null;
 
+					$meeting_api = function_exists( 'snks_get_session_meeting_for_timetable' )
+						? snks_get_session_meeting_for_timetable( $appointment->ID )
+						: array();
 					$ai_appointments[] = array(
-						'id'               => $appointment->ID,
-						'date'             => $appointment->date_time,
-						'time'             => $appointment->starts,
-						'status'           => $frontend_status,
-						'session_type'     => $appointment->period ?: 60,
-						'therapist_id'     => $appointment->user_id,
-						'settings'         => $appointment->settings,
-						'therapist'        => array(
+						'id'                   => $appointment->ID,
+						'date'                 => $appointment->date_time,
+						'time'                 => $appointment->starts,
+						'status'               => $frontend_status,
+						'session_type'         => $appointment->period ?: 60,
+						'therapist_id'         => $appointment->user_id,
+						'settings'             => $appointment->settings,
+						'therapist'            => array(
 							'name'  => $appointment->therapist_name ?: 'Unknown Therapist',
 							'photo' => $photo_url,
 						),
-						'notes'            => '',
-						'session_link'     => function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $appointment->ID ) : null,
-						'therapist_joined' => $therapist_joined,
+						'notes'                => '',
+						'session_link'         => isset( $meeting_api['session_link'] ) ? $meeting_api['session_link'] : null,
+						'google_meet_join_url' => isset( $meeting_api['google_meet_join_url'] ) ? $meeting_api['google_meet_join_url'] : '',
+						'live_stream_provider' => isset( $meeting_api['live_stream_provider'] ) ? $meeting_api['live_stream_provider'] : 'jitsi',
+						'use_meeting_timers'   => isset( $meeting_api['use_meeting_timers'] ) ? $meeting_api['use_meeting_timers'] : true,
+						'therapist_joined'     => snks_should_use_jitsi_meeting_timers() ? $therapist_joined : true,
 					);
 				}
 			}
@@ -5511,6 +5517,10 @@ Best regards,
 			$this->send_error( 'Failed to cancel appointment', 500 );
 		}
 
+		if ( function_exists( 'snks_release_google_meet_url' ) ) {
+			snks_release_google_meet_url( 'timetable', $appointment_id );
+		}
+
 		$this->send_success(
 			array(
 				'message'        => 'Appointment cancelled successfully',
@@ -6351,22 +6361,29 @@ Best regards,
 		// Check if therapist has joined
 		$therapist_joined = snks_doctor_has_joined( $session_id, $session->user_id );
 
+		$meeting_api = function_exists( 'snks_get_session_meeting_for_timetable' )
+			? snks_get_session_meeting_for_timetable( $session->ID )
+			: array();
+
 		$session_data = array(
-			'ID'                  => $session->ID,
-			'therapist_id'        => $session->user_id,
-			'therapist_name'      => $therapist_name,
-			'therapist_image_url' => $therapist_image_url,
-			'client_id'           => $session->client_id,
-			'date_time'           => $session->date_time,
-			'starts'              => $session->starts,
-			'ends'                => $session->ends,
-			'period'              => $session->period,
-			'session_status'      => $session->session_status,
-			'attendance_type'     => $session->attendance_type,
-			'therapist_joined'    => $therapist_joined,
-			'order_id'            => $session->order_id,
-			'settings'            => $session->settings,
-			'session_link'       => function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : null,
+			'ID'                   => $session->ID,
+			'therapist_id'         => $session->user_id,
+			'therapist_name'       => $therapist_name,
+			'therapist_image_url'  => $therapist_image_url,
+			'client_id'            => $session->client_id,
+			'date_time'            => $session->date_time,
+			'starts'               => $session->starts,
+			'ends'                 => $session->ends,
+			'period'               => $session->period,
+			'session_status'       => $session->session_status,
+			'attendance_type'      => $session->attendance_type,
+			'therapist_joined'     => snks_should_use_jitsi_meeting_timers() ? $therapist_joined : true,
+			'order_id'             => $session->order_id,
+			'settings'             => $session->settings,
+			'session_link'         => isset( $meeting_api['session_link'] ) ? $meeting_api['session_link'] : null,
+			'google_meet_join_url' => isset( $meeting_api['google_meet_join_url'] ) ? $meeting_api['google_meet_join_url'] : '',
+			'live_stream_provider' => isset( $meeting_api['live_stream_provider'] ) ? $meeting_api['live_stream_provider'] : 'jitsi',
+			'use_meeting_timers'   => isset( $meeting_api['use_meeting_timers'] ) ? $meeting_api['use_meeting_timers'] : true,
 		);
 
 		return new WP_REST_Response(
@@ -6414,8 +6431,8 @@ Best regards,
 		$result        = set_transient( $transient_key, '1', 3600 ); // Expires in 1 hour
 
 		if ( $result ) {
-			// Send WhatsApp notification to patient that doctor has joined (AI sessions only)
-			if ( function_exists( 'snks_is_ai_session' ) && snks_is_ai_session( $session_id ) ) {
+			// Send WhatsApp notification to patient that doctor has joined (AI sessions only, Jitsi mode).
+			if ( snks_should_use_jitsi_meeting_timers() && function_exists( 'snks_is_ai_session' ) && snks_is_ai_session( $session_id ) ) {
 				if ( function_exists( 'snks_send_doctor_joined_notification' ) ) {
 					snks_send_doctor_joined_notification( $session_id );
 				}
@@ -8779,6 +8796,23 @@ function snks_book_rochtah_appointment_rest( $request ) {
 	);
 
 	if ( $result !== false ) {
+		if ( function_exists( 'snks_meeting_on_rochtah_confirmed' ) ) {
+			$meet_assign = snks_meeting_on_rochtah_confirmed( $request_id );
+			if ( is_wp_error( $meet_assign ) ) {
+				$wpdb->update(
+					$rochtah_bookings_table,
+					array( 'status' => 'pending' ),
+					array( 'id' => $request_id ),
+					array( '%s' ),
+					array( '%d' )
+				);
+				return new WP_Error(
+					'meet_pool_empty',
+					$meet_assign->get_error_message(),
+					array( 'status' => 503 )
+				);
+			}
+		}
 		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
 		foreach ( $rochtah_doctors as $doctor ) {
 			snks_create_ai_notification(

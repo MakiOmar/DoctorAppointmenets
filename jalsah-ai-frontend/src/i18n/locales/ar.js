@@ -1322,5 +1322,11 @@ export default {
   },
 
   // Appointment Change Terms
-  appointmentChangeTerms: 'شروط تغيير الموعد'
+  appointmentChangeTerms: 'شروط تغيير الموعد',
+
+  meeting: {
+    openedInNewTab: 'تم فتح الجلسة في نافذة جديدة.',
+    openMeetLink: 'فتح Google Meet',
+    popupBlocked: 'يرجى السماح بالنوافذ المنبثقة لهذا الموقع ثم المحاولة مرة أخرى.'
+  }
 } 

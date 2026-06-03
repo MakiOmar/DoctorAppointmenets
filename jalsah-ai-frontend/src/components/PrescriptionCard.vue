@@ -208,21 +208,19 @@ export default {
     
     // Check if rochtah session can be joined (at scheduled time AND doctor has joined)
     const canJoinRochtahSession = (request) => {
+      if (request.status !== 'confirmed' || !request.booking_id) {
+        return false
+      }
+      if (request.google_meet_join_url || request.live_stream_provider === 'google_meet') {
+        return true
+      }
       if (!request.booking_date || !request.booking_time || request.booking_date === '0000-00-00') {
         return false
       }
-      
-      // Parse booking date and time
       const bookingDateTime = new Date(`${request.booking_date}T${request.booking_time}`)
       const now = new Date()
-      
-      // Check if session time has arrived
       const timeHasArrived = now >= bookingDateTime
-      
-      // Check if doctor has joined (if doctor_joined field exists)
       const doctorJoined = request.doctor_joined !== undefined ? request.doctor_joined : false
-      
-      // Allow joining only when both conditions are met
       return timeHasArrived && doctorJoined
     }
     

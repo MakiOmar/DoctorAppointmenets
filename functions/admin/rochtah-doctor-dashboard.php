@@ -1002,6 +1002,19 @@ function snks_rochtah_doctor_dashboard() {
 	}
 
 	function displayMeetingDetails(details) {
+		if (details.google_meet_join_url || details.live_stream_provider === 'google_meet') {
+			const meetUrl = details.google_meet_join_url || details.join_url;
+			if (meetUrl) {
+				const opened = window.open(meetUrl, '_blank', 'noopener,noreferrer');
+				if (!opened) {
+					alert('Please allow pop-ups, then use the link in the session info.');
+				}
+				document.getElementById('sessionInfo').innerHTML = '<p><a href="' + meetUrl + '" target="_blank" rel="noopener noreferrer">Open Google Meet</a></p>';
+				document.getElementById('rochtahMeetingModal').style.display = 'none';
+				return;
+			}
+		}
+
 		const sessionInfo = document.getElementById('sessionInfo');
 		sessionInfo.innerHTML = `
 			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">

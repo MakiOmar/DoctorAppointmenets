@@ -622,8 +622,12 @@ function snks_handle_ai_appointment_notifications( $slot_id, $appointment_data )
  * @return bool
  */
 function snks_send_doctor_joined_notification( $session_id ) {
+	if ( function_exists( 'snks_should_use_jitsi_meeting_timers' ) && ! snks_should_use_jitsi_meeting_timers() ) {
+		return false;
+	}
+
 	global $wpdb;
-	
+
 	$session = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT * FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",

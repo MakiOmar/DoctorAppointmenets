@@ -377,7 +377,10 @@ add_action(
 require_once SNKS_DIR . 'functions/ai-integration.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin.php';
 require_once SNKS_DIR . 'functions/admin/ai-admin-enhanced.php';
+require_once SNKS_DIR . 'functions/admin/google-meet-urls-manager.php';
 require_once SNKS_DIR . 'functions/admin/ai-applications.php';
+require_once SNKS_DIR . 'includes/google-meet-urls-table.php';
+require_once SNKS_DIR . 'functions/helpers/meeting-service.php';
 require_once SNKS_DIR . 'functions/helpers/meeting-shortlink.php';
 require_once SNKS_DIR . 'functions/helpers/admin-manual-booking.php';
 require_once SNKS_DIR . 'functions/admin/manual-booking-admin.php';
@@ -589,6 +592,9 @@ function plugin_activation_hook() {
 	}
 	
 	snks_create_timetable_table();
+	if ( function_exists( 'snks_create_google_meet_urls_table' ) ) {
+		snks_create_google_meet_urls_table();
+	}
 	snks_create_snks_sessions_actions_table();
 	snks_create_transactions_table();
 	snks_create_custom_coupons_table();

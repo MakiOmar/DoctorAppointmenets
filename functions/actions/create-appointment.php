@@ -92,6 +92,22 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 				);
 
 				if ( $updated ) {
+					$booked_timetable = snks_get_timetable_by( 'ID', $timetable->ID );
+					if ( snks_is_google_meet_active() && snks_is_online_meeting_eligible( $booked_timetable ) ) {
+						$meet_assign = snks_ensure_session_meeting_assigned( 'timetable', $timetable->ID );
+						if ( is_wp_error( $meet_assign ) ) {
+							snks_update_timetable(
+								$timetable->ID,
+								array(
+									'client_id'      => 0,
+									'session_status' => 'waiting',
+									'order_id'       => 0,
+								)
+							);
+							$order->update_status( 'failed', __( 'No Google Meet URLs available.', 'shrinks' ) );
+							return;
+						}
+					}
 					// Existing logic for processing...
 					$current_hour   = current_time( 'H' );
 					$doctor_earning = $order->get_meta( '_main_price', true );

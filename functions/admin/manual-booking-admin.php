@@ -1486,7 +1486,8 @@ function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 		if ( '' === $therapist_phone && (int) $r->therapist_id ) {
 			$therapist_phone = get_user_meta( $r->therapist_id, 'billing_phone', true ) ?: '';
 		}
-		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+		$meeting_api  = function_exists( 'snks_get_session_meeting_for_timetable' ) ? snks_get_session_meeting_for_timetable( (int) $r->booking_id ) : array();
+		$meeting_link = isset( $meeting_api['session_link'] ) ? $meeting_api['session_link'] : '';
 		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
 		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
 		$patient_whatsapp = '';
@@ -1577,7 +1578,8 @@ function snks_manual_booking_data_open_slots( $date, $page = 1, $per_page = 100 
 		if ( '' === $therapist_phone && (int) $r->therapist_id ) {
 			$therapist_phone = get_user_meta( $r->therapist_id, 'billing_phone', true ) ?: '';
 		}
-		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+		$meeting_api  = function_exists( 'snks_get_session_meeting_for_timetable' ) ? snks_get_session_meeting_for_timetable( (int) $r->booking_id ) : array();
+		$meeting_link = isset( $meeting_api['session_link'] ) ? $meeting_api['session_link'] : '';
 		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
 		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
 		$patient_whatsapp = '';
@@ -1762,7 +1764,8 @@ function snks_manual_booking_data_bookings_by_phone( $phone, $page = 1, $per_pag
 		if ( '' === $therapist_phone && (int) $r->therapist_id ) {
 			$therapist_phone = get_user_meta( $r->therapist_id, 'billing_phone', true ) ?: '';
 		}
-		$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( (int) $r->booking_id ) : '';
+		$meeting_api  = function_exists( 'snks_get_session_meeting_for_timetable' ) ? snks_get_session_meeting_for_timetable( (int) $r->booking_id ) : array();
+		$meeting_link = isset( $meeting_api['session_link'] ) ? $meeting_api['session_link'] : '';
 		$patient_first = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_first_name', true ) : '';
 		$patient_last  = (int) $r->patient_id ? get_user_meta( $r->patient_id, 'billing_last_name', true ) : '';
 		$patient_whatsapp = '';

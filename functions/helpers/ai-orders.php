@@ -348,6 +348,31 @@ class SNKS_AI_Orders {
 			array( '%d' )
 		);
 
+		if ( $result && snks_is_google_meet_active() && snks_is_online_meeting_eligible(
+			(object) array(
+				'attendance_type' => $slot->attendance_type,
+				'session_status'  => 'open',
+				'client_id'       => $patient_id,
+			)
+		) ) {
+			$assign = snks_ensure_session_meeting_assigned( 'timetable', $slot_id );
+			if ( is_wp_error( $assign ) ) {
+				$wpdb->update(
+					$wpdb->prefix . 'snks_provider_timetable',
+					array(
+						'session_status' => 'waiting',
+						'client_id'      => 0,
+						'order_id'       => 0,
+						'settings'       => preg_replace( '/\s*ai_booking:completed\s*/', ' ', (string) $slot->settings ),
+					),
+					array( 'ID' => $slot_id ),
+					array( '%s', '%d', '%d', '%s' ),
+					array( '%d' )
+				);
+				return false;
+			}
+		}
+
 		if ( $result ) {
 			$appointment_data = array(
 				'is_ai_session' => true,
@@ -713,6 +738,19 @@ IP: %s
 			array( '%s', '%s', '%s', '%d', '%s' ),
 			array( '%d' )
 		);
+		if ( function_exists( 'snks_meeting_on_rochtah_confirmed' ) ) {
+			$meet_assign = snks_meeting_on_rochtah_confirmed( $booking_id );
+			if ( is_wp_error( $meet_assign ) ) {
+				$wpdb->update(
+					$rochtah_bookings_table,
+					array( 'status' => 'pending' ),
+					array( 'id' => $booking_id ),
+					array( '%s' ),
+					array( '%d' )
+				);
+				return false;
+			}
+		}
 		$current_user = get_userdata( $order->get_customer_id() );
 		$rochtah_doctors = get_users( array( 'role' => 'rochtah_doctor' ) );
 		foreach ( $rochtah_doctors as $doctor ) {

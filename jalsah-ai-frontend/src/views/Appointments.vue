@@ -187,15 +187,15 @@
               <button 
                 v-if="canJoinSession(appointment)"
                 @click="joinSession(appointment)"
-                :disabled="appointment.status !== 'completed' && !appointment.therapist_joined"
+                :disabled="appointment.status !== 'completed' && useMeetingTimers && !appointment.therapist_joined"
                 :class="[
                   'text-sm px-4 py-2 rounded-lg transition-colors',
-                  (appointment.status === 'completed' || appointment.therapist_joined)
+                  (appointment.status === 'completed' || !useMeetingTimers || appointment.therapist_joined)
                     ? 'btn-primary' 
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed border border-gray-300'
                 ]"
               >
-                <span v-if="appointment.status === 'completed' || appointment.therapist_joined">
+                <span v-if="appointment.status === 'completed' || !useMeetingTimers || appointment.therapist_joined">
                   {{ $t('appointmentsPage.joinSession') }}
                 </span>
                 <span v-else class="flex items-center justify-center">
@@ -695,6 +695,7 @@ import api from '@/services/api'
 import PrescriptionCard from '@/components/PrescriptionCard.vue'
 import Swal from 'sweetalert2'
 import { formatGregorianDate } from '@/utils/dateFormatter'
+import { loadLiveStreamSettings, openGoogleMeetUrl, useMeetingTimers } from '@/composables/useLiveMeeting'
 export default {
   name: 'Appointments',
   components: {
@@ -959,14 +960,20 @@ export default {
     }
 
     const joinSession = async (appointment) => {
+      const meetUrl = appointment?.google_meet_join_url
+      if (meetUrl) {
+        if (!openGoogleMeetUrl(meetUrl)) {
+          toast.warning($t('meeting.popupBlocked') || 'يرجى السماح بالنوافذ المنبثقة أو فتح الرابط من البريد.')
+        }
+        return
+      }
+
       const meetingLink = appointment?.session_link
       if (!meetingLink) {
         toast.error('Meeting link not available')
         return
       }
 
-      // `snks_get_meeting_shortlink()` returns a full URL like: {base}/meeting/{token}
-      // We extract `{token}` and open the dedicated meeting route (no modal).
       const meetingMatch = String(meetingLink).match(/\/meeting\/([a-zA-Z0-9_-]+)/)
       if (meetingMatch?.[1]) {
         router.push({
@@ -977,7 +984,6 @@ export default {
         return
       }
 
-      // Fallback: open the link as-is (full page navigation).
       window.location.href = meetingLink
     }
 
@@ -1602,7 +1608,7 @@ export default {
 
     // Therapist join status polling functions
     const startPolling = () => {
-      if (isPolling.value) return
+      if (isPolling.value || !useMeetingTimers.value) return
       
       // Double-check if we still need polling before starting
       if (!hasUpcomingAppointments.value) return
@@ -1838,7 +1844,13 @@ export default {
         return
       }
 
-      // Open as a dedicated page (no modal, no custom loading overlay).
+      if (request.google_meet_join_url) {
+        if (!openGoogleMeetUrl(request.google_meet_join_url)) {
+          toast.warning(t('meeting.popupBlocked') || 'يرجى السماح بالنوافذ المنبثقة.')
+        }
+        return
+      }
+
       router.push({
         path: `/rochtah-meeting/${request.booking_id}`,
         query: { returnUrl: '/appointments' }
@@ -2063,13 +2075,15 @@ export default {
       }
     }
     
-    onMounted(() => {
+    onMounted(async () => {
+      await loadLiveStreamSettings()
       loadAppointments()
       loadPrescriptionRequests()
       loadCompletedPrescriptions()
       
-      // Start polling prescription requests to check doctor joined status
-      startPrescriptionPolling()
+      if (useMeetingTimers.value) {
+        startPrescriptionPolling()
+      }
     })
     
     onUnmounted(() => {
@@ -2113,6 +2127,7 @@ export default {
       canReschedule,
       canCancel,
       joinSession,
+      useMeetingTimers,
       rescheduleAppointment,
       cancelAppointment,
       confirmCancel,

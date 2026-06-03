@@ -157,6 +157,9 @@ add_action(
 				$order->save();
 			}
 		}
+		if ( $updated && function_exists( 'snks_release_google_meet_url' ) ) {
+			snks_release_google_meet_url( 'timetable', absint( $_request['bookingID'] ) );
+		}
 		wp_send_json(
 			array(
 				'resp' => $updated,
@@ -1164,6 +1167,20 @@ function snks_book_session_rochtah_appointment() {
 
 	if ( $update_request === false ) {
 		wp_send_json_error( 'Failed to update request status.' );
+	}
+
+	if ( function_exists( 'snks_meeting_on_rochtah_confirmed' ) ) {
+		$meet_assign = snks_meeting_on_rochtah_confirmed( $request_id );
+		if ( is_wp_error( $meet_assign ) ) {
+			$wpdb->update(
+				$rochtah_bookings_table,
+				array( 'status' => 'pending' ),
+				array( 'id' => $request_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+			wp_send_json_error( $meet_assign->get_error_message() );
+		}
 	}
 
 	if ( function_exists( 'snks_send_rosheta_appointment_notification' ) ) {
