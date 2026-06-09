@@ -100,6 +100,64 @@ function snks_google_meet_urls_handle_post() {
 		return;
 	}
 
+	if ( 'unassign' === $action && ! empty( $_POST['url_id'] ) ) {
+		$result = snks_unassign_google_meet_url( absint( $_POST['url_id'] ) );
+		if ( is_wp_error( $result ) ) {
+			add_settings_error( 'snks_google_meet', 'unassign', $result->get_error_message(), 'error' );
+		} else {
+			add_settings_error( 'snks_google_meet', 'unassigned', __( 'URL unassigned and returned to the pool.', 'shrinks' ), 'success' );
+		}
+		return;
+	}
+
+	if ( 'manual_assign' === $action ) {
+		$url_id     = isset( $_POST['url_id'] ) ? absint( $_POST['url_id'] ) : 0;
+		$assign_type = isset( $_POST['assign_target_type'] ) ? sanitize_text_field( wp_unslash( $_POST['assign_target_type'] ) ) : '';
+		$session_id = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
+
+		$result = snks_assign_google_meet_url_manual( $url_id, $assign_type, $session_id );
+		if ( is_wp_error( $result ) ) {
+			add_settings_error( 'snks_google_meet', 'manual_assign', $result->get_error_message(), 'error' );
+		} else {
+			add_settings_error(
+				'snks_google_meet',
+				'manual_assigned',
+				sprintf(
+					/* translators: 1: URL id 2: type 3: session id */
+					__( 'URL #%1$d assigned to %2$s #%3$d.', 'shrinks' ),
+					$url_id,
+					$assign_type,
+					$session_id
+				),
+				'success'
+			);
+		}
+		return;
+	}
+
+	if ( 'assign_session' === $action ) {
+		$assign_type = isset( $_POST['assign_target_type'] ) ? sanitize_text_field( wp_unslash( $_POST['assign_target_type'] ) ) : '';
+		$session_id  = isset( $_POST['session_id'] ) ? absint( $_POST['session_id'] ) : 0;
+
+		$result = snks_assign_google_meet_url( $assign_type, $session_id );
+		if ( is_wp_error( $result ) ) {
+			add_settings_error( 'snks_google_meet', 'assign_session', $result->get_error_message(), 'error' );
+		} else {
+			add_settings_error(
+				'snks_google_meet',
+				'assigned_session',
+				sprintf(
+					/* translators: 1: type 2: session id */
+					__( 'First available URL assigned to %1$s #%2$d.', 'shrinks' ),
+					$assign_type,
+					$session_id
+				),
+				'success'
+			);
+		}
+		return;
+	}
+
 	if ( 'delete' === $action && ! empty( $_POST['url_id'] ) ) {
 		global $wpdb;
 		$table = snks_google_meet_urls_table_name();
@@ -234,6 +292,64 @@ function snks_google_meet_urls_admin_page() {
 
 		<hr />
 
+		<h2><?php esc_html_e( 'Manual assignment', 'shrinks' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'Link a pool URL to a booked online timetable session or a confirmed Rochtah booking. If the session already has a URL, it will be replaced.', 'shrinks' ); ?></p>
+		<form method="post" class="snks-google-meet-manual-assign" style="margin-bottom:1.5em;padding:1em;background:#fff;border:1px solid #c3c4c7;max-width:720px;">
+			<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+			<input type="hidden" name="snks_google_meet_action" value="manual_assign" />
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="snks_manual_url_id"><?php esc_html_e( 'Pool URL ID', 'shrinks' ); ?></label></th>
+					<td>
+						<input type="number" min="1" name="url_id" id="snks_manual_url_id" class="small-text" required />
+						<p class="description"><?php esc_html_e( 'ID from the pool table below (must be available).', 'shrinks' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="snks_manual_assign_type"><?php esc_html_e( 'Assign to', 'shrinks' ); ?></label></th>
+					<td>
+						<select name="assign_target_type" id="snks_manual_assign_type" required>
+							<option value="timetable"><?php esc_html_e( 'Timetable session', 'shrinks' ); ?></option>
+							<option value="rochtah"><?php esc_html_e( 'Rochtah booking', 'shrinks' ); ?></option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="snks_manual_session_id"><?php esc_html_e( 'Session / booking ID', 'shrinks' ); ?></label></th>
+					<td>
+						<input type="number" min="1" name="session_id" id="snks_manual_session_id" class="small-text" required />
+						<p class="description"><?php esc_html_e( 'Timetable row ID or Rochtah booking ID.', 'shrinks' ); ?></p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( __( 'Assign URL', 'shrinks' ), 'primary', 'submit', false ); ?>
+		</form>
+
+		<form method="post" class="snks-google-meet-auto-assign" style="margin-bottom:1.5em;padding:1em;background:#fff;border:1px solid #c3c4c7;max-width:720px;">
+			<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+			<input type="hidden" name="snks_google_meet_action" value="assign_session" />
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="snks_auto_assign_type"><?php esc_html_e( 'Assign to', 'shrinks' ); ?></label></th>
+					<td>
+						<select name="assign_target_type" id="snks_auto_assign_type" required>
+							<option value="timetable"><?php esc_html_e( 'Timetable session', 'shrinks' ); ?></option>
+							<option value="rochtah"><?php esc_html_e( 'Rochtah booking', 'shrinks' ); ?></option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="snks_auto_session_id"><?php esc_html_e( 'Session / booking ID', 'shrinks' ); ?></label></th>
+					<td>
+						<input type="number" min="1" name="session_id" id="snks_auto_session_id" class="small-text" required />
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( __( 'Assign first available URL', 'shrinks' ), 'secondary', 'submit', false ); ?>
+		</form>
+
+		<hr />
+
 		<h2><?php esc_html_e( 'URL pool', 'shrinks' ); ?></h2>
 		<p>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' ) ); ?>"><?php esc_html_e( 'All', 'shrinks' ); ?></a> |
@@ -276,6 +392,17 @@ function snks_google_meet_urls_admin_page() {
 							</td>
 							<td>
 								<?php if ( 'available' === $row->status ) : ?>
+									<form method="post" style="display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:4px;">
+										<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+										<input type="hidden" name="snks_google_meet_action" value="manual_assign" />
+										<input type="hidden" name="url_id" value="<?php echo (int) $row->id; ?>" />
+										<select name="assign_target_type" aria-label="<?php esc_attr_e( 'Assign to', 'shrinks' ); ?>">
+											<option value="timetable"><?php esc_html_e( 'Timetable', 'shrinks' ); ?></option>
+											<option value="rochtah"><?php esc_html_e( 'Rochtah', 'shrinks' ); ?></option>
+										</select>
+										<input type="number" min="1" name="session_id" class="small-text" placeholder="<?php esc_attr_e( 'ID', 'shrinks' ); ?>" required style="width:72px;" />
+										<button type="submit" class="button button-small button-primary"><?php esc_html_e( 'Assign', 'shrinks' ); ?></button>
+									</form>
 									<form method="post" style="display:inline;">
 										<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
 										<input type="hidden" name="snks_google_meet_action" value="disable" />
@@ -287,6 +414,13 @@ function snks_google_meet_urls_admin_page() {
 										<input type="hidden" name="snks_google_meet_action" value="delete" />
 										<input type="hidden" name="url_id" value="<?php echo (int) $row->id; ?>" />
 										<button type="submit" class="button button-small"><?php esc_html_e( 'Delete', 'shrinks' ); ?></button>
+									</form>
+								<?php elseif ( 'assigned' === $row->status ) : ?>
+									<form method="post" style="display:inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Unassign this URL? The session will no longer have this Meet link until a new one is assigned.', 'shrinks' ) ); ?>');">
+										<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+										<input type="hidden" name="snks_google_meet_action" value="unassign" />
+										<input type="hidden" name="url_id" value="<?php echo (int) $row->id; ?>" />
+										<button type="submit" class="button button-small"><?php esc_html_e( 'Unassign', 'shrinks' ); ?></button>
 									</form>
 								<?php elseif ( 'disabled' === $row->status ) : ?>
 									<form method="post" style="display:inline;">

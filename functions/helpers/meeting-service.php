@@ -293,6 +293,159 @@ function snks_bulk_insert_google_meet_urls( $text ) {
 }
 
 /**
+ * Validate timetable or Rochtah target for manual Meet assignment.
+ *
+ * @param string $type timetable|rochtah.
+ * @param int    $id   Timetable ID or Rochtah booking ID.
+ * @return true|WP_Error
+ */
+function snks_validate_google_meet_assign_target( $type, $id ) {
+	global $wpdb;
+
+	$id   = absint( $id );
+	$type = (string) $type;
+	if ( ! $id || ! in_array( $type, array( 'timetable', 'rochtah' ), true ) ) {
+		return new WP_Error( 'invalid_target', __( 'Invalid assignment target.', 'shrinks' ) );
+	}
+
+	if ( 'timetable' === $type ) {
+		if ( ! function_exists( 'snks_get_timetable_by' ) ) {
+			return new WP_Error( 'missing_helper', __( 'Timetable helper is unavailable.', 'shrinks' ) );
+		}
+		$timetable = snks_get_timetable_by( 'ID', $id );
+		if ( ! $timetable ) {
+			return new WP_Error( 'timetable_not_found', __( 'Timetable session not found.', 'shrinks' ) );
+		}
+		if ( ! snks_is_online_meeting_eligible( $timetable ) ) {
+			return new WP_Error(
+				'timetable_not_eligible',
+				__( 'This timetable session is not eligible for an online meeting (must be online, booked, and not cancelled).', 'shrinks' )
+			);
+		}
+		return true;
+	}
+
+	$table   = $wpdb->prefix . 'snks_rochtah_bookings';
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT id, status FROM {$table} WHERE id = %d LIMIT 1",
+			$id
+		)
+	);
+	if ( ! $booking ) {
+		return new WP_Error( 'rochtah_not_found', __( 'Rochtah booking not found.', 'shrinks' ) );
+	}
+	if ( 'confirmed' !== $booking->status ) {
+		return new WP_Error(
+			'rochtah_not_confirmed',
+			__( 'Rochtah booking must be confirmed before assigning a Meet URL.', 'shrinks' )
+		);
+	}
+
+	return true;
+}
+
+/**
+ * Assign a specific pool URL to a timetable or Rochtah booking (manual admin / code).
+ *
+ * @param int    $url_id     Pool row ID.
+ * @param string $type       timetable|rochtah.
+ * @param int    $session_id Timetable ID or Rochtah booking ID.
+ * @return true|WP_Error
+ */
+function snks_assign_google_meet_url_manual( $url_id, $type, $session_id ) {
+	global $wpdb;
+
+	$url_id     = absint( $url_id );
+	$session_id = absint( $session_id );
+	$type       = (string) $type;
+
+	$valid = snks_validate_google_meet_assign_target( $type, $session_id );
+	if ( is_wp_error( $valid ) ) {
+		return $valid;
+	}
+
+	if ( ! $url_id ) {
+		return new WP_Error( 'invalid_url', __( 'Invalid Google Meet URL ID.', 'shrinks' ) );
+	}
+
+	$existing = snks_get_assigned_google_meet_row( $type, $session_id );
+	if ( $existing && (int) $existing->id === $url_id ) {
+		return true;
+	}
+
+	if ( $existing ) {
+		$released = snks_unassign_google_meet_url( (int) $existing->id );
+		if ( is_wp_error( $released ) ) {
+			return $released;
+		}
+	}
+
+	$table       = snks_google_meet_urls_table_name();
+	$assigned_at = current_time( 'mysql' );
+
+	$wpdb->query( 'START TRANSACTION' );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE id = %d AND status = 'available' LIMIT 1 FOR UPDATE",
+			$url_id
+		)
+	);
+
+	if ( ! $row ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error(
+			'url_not_available',
+			__( 'This Google Meet URL is not available (already assigned or disabled).', 'shrinks' )
+		);
+	}
+
+	if ( 'timetable' === $type ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ok = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = 'assigned', assigned_at = %s, assigned_timetable_id = %d, assigned_rochtah_booking_id = NULL WHERE id = %d AND status = 'available'",
+				$assigned_at,
+				$session_id,
+				$url_id
+			)
+		);
+	} else {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ok = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = 'assigned', assigned_at = %s, assigned_rochtah_booking_id = %d, assigned_timetable_id = NULL WHERE id = %d AND status = 'available'",
+				$assigned_at,
+				$session_id,
+				$url_id
+			)
+		);
+	}
+
+	if ( ! $ok ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'assign_failed', __( 'Failed to assign Google Meet URL.', 'shrinks' ) );
+	}
+
+	$wpdb->query( 'COMMIT' );
+	snks_google_meet_maybe_alert_low_pool();
+
+	/**
+	 * Fires after a Google Meet URL is manually assigned to a session.
+	 *
+	 * @param int    $url_id     Pool row ID.
+	 * @param string $type       timetable|rochtah.
+	 * @param int    $session_id Timetable or Rochtah booking ID.
+	 * @param object $row        Assigned pool row.
+	 */
+	do_action( 'snks_google_meet_assigned', $url_id, $type, $session_id, $row );
+
+	return true;
+}
+
+/**
  * Assign first available Meet URL to a session.
  *
  * @param string $type timetable|rochtah.
@@ -304,8 +457,14 @@ function snks_assign_google_meet_url( $type, $id ) {
 
 	$id   = absint( $id );
 	$type = (string) $type;
-	if ( ! $id || ! in_array( $type, array( 'timetable', 'rochtah' ), true ) ) {
-		return new WP_Error( 'invalid_assign', __( 'Invalid meeting assignment.', 'shrinks' ) );
+
+	$valid = snks_validate_google_meet_assign_target( $type, $id );
+	if ( is_wp_error( $valid ) ) {
+		return $valid;
+	}
+
+	if ( snks_get_assigned_google_meet_row( $type, $id ) ) {
+		return true;
 	}
 
 	$table = snks_google_meet_urls_table_name();
@@ -356,6 +515,72 @@ function snks_assign_google_meet_url( $type, $id ) {
 
 	$wpdb->query( 'COMMIT' );
 	snks_google_meet_maybe_alert_low_pool();
+
+	/**
+	 * Fires after a Google Meet URL is assigned to a session.
+	 *
+	 * @param int    $row_id Pool row ID.
+	 * @param string $type   timetable|rochtah.
+	 * @param int    $id     Timetable or Rochtah booking ID.
+	 * @param object $row    Assigned pool row.
+	 */
+	do_action( 'snks_google_meet_assigned', $row_id, $type, $id, $row );
+
+	return true;
+}
+
+/**
+ * Unassign a Google Meet URL by pool row ID and return it to the available pool.
+ *
+ * @param int $url_id Pool row ID in snks_google_meet_urls.
+ * @return true|WP_Error
+ */
+function snks_unassign_google_meet_url( $url_id ) {
+	global $wpdb;
+
+	$url_id = absint( $url_id );
+	$table  = snks_google_meet_urls_table_name();
+	if ( ! $url_id ) {
+		return new WP_Error( 'invalid_id', __( 'Invalid Google Meet URL ID.', 'shrinks' ) );
+	}
+
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE id = %d LIMIT 1",
+			$url_id
+		)
+	);
+
+	if ( ! $row ) {
+		return new WP_Error( 'not_found', __( 'Google Meet URL not found.', 'shrinks' ) );
+	}
+
+	if ( 'assigned' !== $row->status ) {
+		return new WP_Error( 'not_assigned', __( 'This URL is not currently assigned.', 'shrinks' ) );
+	}
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$updated = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$table} SET status = 'available', assigned_timetable_id = NULL, assigned_rochtah_booking_id = NULL, assigned_at = NULL WHERE id = %d AND status = 'assigned'",
+			$url_id
+		)
+	);
+
+	if ( ! $updated ) {
+		return new WP_Error( 'unassign_failed', __( 'Failed to unassign Google Meet URL.', 'shrinks' ) );
+	}
+
+	snks_google_meet_maybe_alert_low_pool();
+
+	/**
+	 * Fires after a Google Meet URL is manually or programmatically unassigned.
+	 *
+	 * @param int    $url_id Pool row ID.
+	 * @param object $row    Row snapshot before unassign.
+	 */
+	do_action( 'snks_google_meet_unassigned', $url_id, $row );
+
 	return true;
 }
 
@@ -367,33 +592,10 @@ function snks_assign_google_meet_url( $type, $id ) {
  * @return void
  */
 function snks_release_google_meet_url( $type, $id ) {
-	global $wpdb;
-
-	$id    = absint( $id );
-	$table = snks_google_meet_urls_table_name();
-	if ( ! $id ) {
-		return;
+	$row = snks_get_assigned_google_meet_row( $type, $id );
+	if ( $row ) {
+		snks_unassign_google_meet_url( (int) $row->id );
 	}
-
-	if ( 'timetable' === $type ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'available', assigned_timetable_id = NULL, assigned_rochtah_booking_id = NULL, assigned_at = NULL WHERE assigned_timetable_id = %d AND status = 'assigned'",
-				$id
-			)
-		);
-	} else {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$table} SET status = 'available', assigned_timetable_id = NULL, assigned_rochtah_booking_id = NULL, assigned_at = NULL WHERE assigned_rochtah_booking_id = %d AND status = 'assigned'",
-				$id
-			)
-		);
-	}
-
-	snks_google_meet_maybe_alert_low_pool();
 }
 
 /**

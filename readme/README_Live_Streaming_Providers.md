@@ -25,8 +25,15 @@ Table `{prefix}snks_google_meet_urls` (see `includes/google-meet-urls-table.php`
 |----------|---------|
 | `snks_is_google_meet_active()` | Provider is `google_meet` |
 | `snks_should_use_jitsi_meeting_timers()` | `false` when Meet is active |
-| `snks_assign_google_meet_url( $type, $id )` | Assign URL (`timetable` or `rochtah`) |
-| `snks_release_google_meet_url( $type, $id )` | Release on cancel/reschedule |
+| `snks_assign_google_meet_url( $type, $id )` | Assign first available URL (`timetable` or `rochtah`) |
+| `snks_assign_google_meet_url_manual( $url_id, $type, $session_id )` | Assign a specific pool row to a session (admin); replaces existing URL on that session |
+| `snks_validate_google_meet_assign_target( $type, $id )` | Validate timetable (online, booked) or Rochtah (`confirmed`) |
+| `snks_release_google_meet_url( $type, $id )` | Release on cancel/reschedule (by timetable/Rochtah ID) |
+| `snks_unassign_google_meet_url( $url_id )` | Return a pool row to `available` (admin or code); fires `snks_google_meet_unassigned` |
+
+Hooks: `snks_google_meet_assigned`, `snks_google_meet_unassigned`.
+
+Admin **Manual assignment** section: assign by URL ID + target, or **Assign first available URL** to a timetable/Rochtah ID. Per-row **Assign** on available URLs.
 | `snks_get_session_meeting_for_timetable( $id )` | Join payload for sessions |
 | `snks_get_session_meeting_for_rochtah( $id )` | Join payload for Rochtah |
 | `snks_meeting_on_rochtah_confirmed( $booking_id )` | Assign on Rochtah confirm |
