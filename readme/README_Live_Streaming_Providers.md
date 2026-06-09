@@ -34,6 +34,8 @@ Table `{prefix}snks_google_meet_urls` (see `includes/google-meet-urls-table.php`
 Hooks: `snks_google_meet_assigned`, `snks_google_meet_unassigned`.
 
 Admin **Manual assignment** section: assign by URL ID + target, or **Assign first available URL** to a timetable/Rochtah ID. Per-row **Assign** on available URLs.
+
+**Bulk actions** (pool table): select rows → **Unassign** (assigned only, returns to pool) or **Delete** (removes from pool; assigned sessions lose their Meet link).
 | `snks_get_session_meeting_for_timetable( $id )` | Join payload for sessions |
 | `snks_get_session_meeting_for_rochtah( $id )` | Join payload for Rochtah |
 | `snks_meeting_on_rochtah_confirmed( $booking_id )` | Assign on Rochtah confirm |
@@ -55,7 +57,8 @@ Meet URLs are assigned when an **online** session is booked and released on canc
 
 ## Shortlinks & guest pages
 
-- `snks_get_meeting_shortlink( $timetable_id )` — still issues `/meeting/{token}`; ensures Meet assign when active
+- `snks_get_meeting_shortlink( $timetable_id )` — issues `/meeting/{token}` only (no pool assignment; read-only)
+- Meet URLs are assigned **only** at booking confirmation, Rochtah confirm, admin manual assign, and `snks_appointment_created` — never when building links, listing sessions, or sending reminders
 - `/j/{token}` — Meet mode renders `snks_render_guest_google_meet_room()`; otherwise redirects to frontend
 - REST `meeting-by-token` returns `google_meet_join_url`, `live_stream_provider`, `use_meeting_timers`
 

@@ -92,7 +92,11 @@ function snks_is_online_meeting_eligible( $timetable ) {
 	if ( ! $timetable || empty( $timetable->attendance_type ) || 'online' !== $timetable->attendance_type ) {
 		return false;
 	}
-	if ( isset( $timetable->session_status ) && 'cancelled' === $timetable->session_status ) {
+	$status = isset( $timetable->session_status ) ? (string) $timetable->session_status : '';
+	if ( in_array( $status, array( 'cancelled', 'waiting', 'pending', 'postponed' ), true ) ) {
+		return false;
+	}
+	if ( ! in_array( $status, array( 'open', 'confirmed' ), true ) ) {
 		return false;
 	}
 	$client_id = isset( $timetable->client_id ) ? absint( $timetable->client_id ) : 0;
@@ -582,6 +586,129 @@ function snks_unassign_google_meet_url( $url_id ) {
 	do_action( 'snks_google_meet_unassigned', $url_id, $row );
 
 	return true;
+}
+
+/**
+ * Delete a Google Meet URL from the pool.
+ *
+ * @param int  $url_id          Pool row ID.
+ * @param bool $allow_assigned    When false, only available/disabled rows can be deleted.
+ * @return true|WP_Error
+ */
+function snks_delete_google_meet_url( $url_id, $allow_assigned = false ) {
+	global $wpdb;
+
+	$url_id = absint( $url_id );
+	$table  = snks_google_meet_urls_table_name();
+	if ( ! $url_id ) {
+		return new WP_Error( 'invalid_id', __( 'Invalid Google Meet URL ID.', 'shrinks' ) );
+	}
+
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE id = %d LIMIT 1",
+			$url_id
+		)
+	);
+
+	if ( ! $row ) {
+		return new WP_Error( 'not_found', __( 'Google Meet URL not found.', 'shrinks' ) );
+	}
+
+	if ( 'assigned' === $row->status && ! $allow_assigned ) {
+		return new WP_Error(
+			'assigned_delete_blocked',
+			__( 'Assigned URLs must be unassigned before deletion, or use bulk delete.', 'shrinks' )
+		);
+	}
+
+	$deleted = $wpdb->delete( $table, array( 'id' => $url_id ), array( '%d' ) );
+	if ( ! $deleted ) {
+		return new WP_Error( 'delete_failed', __( 'Failed to delete Google Meet URL.', 'shrinks' ) );
+	}
+
+	snks_google_meet_maybe_alert_low_pool();
+
+	/**
+	 * Fires after a Google Meet URL row is removed from the pool.
+	 *
+	 * @param int    $url_id Pool row ID.
+	 * @param object $row    Row snapshot before delete.
+	 */
+	do_action( 'snks_google_meet_deleted', $url_id, $row );
+
+	return true;
+}
+
+/**
+ * Bulk unassign Google Meet URLs.
+ *
+ * @param array $url_ids Pool row IDs.
+ * @return array{success:int,skipped:int,errors:array}
+ */
+function snks_bulk_unassign_google_meet_urls( $url_ids ) {
+	$url_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $url_ids ) ) ) );
+	$result  = array(
+		'success' => 0,
+		'skipped' => 0,
+		'errors'  => array(),
+	);
+
+	foreach ( $url_ids as $url_id ) {
+		$outcome = snks_unassign_google_meet_url( $url_id );
+		if ( is_wp_error( $outcome ) ) {
+			if ( 'not_assigned' === $outcome->get_error_code() ) {
+				++$result['skipped'];
+			} else {
+				$result['errors'][] = sprintf(
+					/* translators: 1: URL id 2: error message */
+					__( 'URL #%1$d: %2$s', 'shrinks' ),
+					$url_id,
+					$outcome->get_error_message()
+				);
+			}
+			continue;
+		}
+		++$result['success'];
+	}
+
+	return $result;
+}
+
+/**
+ * Bulk delete Google Meet URLs from the pool.
+ *
+ * @param array $url_ids         Pool row IDs.
+ * @param bool  $allow_assigned    Allow deleting assigned rows (sessions lose their Meet link).
+ * @return array{success:int,skipped:int,errors:array}
+ */
+function snks_bulk_delete_google_meet_urls( $url_ids, $allow_assigned = true ) {
+	$url_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $url_ids ) ) ) );
+	$result  = array(
+		'success' => 0,
+		'skipped' => 0,
+		'errors'  => array(),
+	);
+
+	foreach ( $url_ids as $url_id ) {
+		$outcome = snks_delete_google_meet_url( $url_id, $allow_assigned );
+		if ( is_wp_error( $outcome ) ) {
+			if ( 'assigned_delete_blocked' === $outcome->get_error_code() ) {
+				++$result['skipped'];
+			} else {
+				$result['errors'][] = sprintf(
+					/* translators: 1: URL id 2: error message */
+					__( 'URL #%1$d: %2$s', 'shrinks' ),
+					$url_id,
+					$outcome->get_error_message()
+				);
+			}
+			continue;
+		}
+		++$result['success'];
+	}
+
+	return $result;
 }
 
 /**

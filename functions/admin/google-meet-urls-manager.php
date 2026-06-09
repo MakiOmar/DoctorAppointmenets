@@ -159,18 +159,61 @@ function snks_google_meet_urls_handle_post() {
 	}
 
 	if ( 'delete' === $action && ! empty( $_POST['url_id'] ) ) {
-		global $wpdb;
-		$table = snks_google_meet_urls_table_name();
-		$wpdb->delete(
-			$table,
-			array(
-				'id'     => absint( $_POST['url_id'] ),
-				'status' => 'available',
-			),
-			array( '%d', '%s' )
-		);
-		snks_google_meet_maybe_alert_low_pool();
-		add_settings_error( 'snks_google_meet', 'deleted', __( 'URL deleted.', 'shrinks' ), 'success' );
+		$result = snks_delete_google_meet_url( absint( $_POST['url_id'] ), false );
+		if ( is_wp_error( $result ) ) {
+			add_settings_error( 'snks_google_meet', 'delete', $result->get_error_message(), 'error' );
+		} else {
+			add_settings_error( 'snks_google_meet', 'deleted', __( 'URL deleted.', 'shrinks' ), 'success' );
+		}
+		return;
+	}
+
+	if ( 'bulk' === $action ) {
+		$bulk_action = isset( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : '';
+		$url_ids     = isset( $_POST['url_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['url_ids'] ) ) : array();
+		$url_ids     = array_values( array_filter( $url_ids ) );
+
+		if ( empty( $bulk_action ) || '-1' === $bulk_action ) {
+			add_settings_error( 'snks_google_meet', 'bulk', __( 'Select a bulk action.', 'shrinks' ), 'error' );
+			return;
+		}
+		if ( empty( $url_ids ) ) {
+			add_settings_error( 'snks_google_meet', 'bulk', __( 'Select at least one URL.', 'shrinks' ), 'error' );
+			return;
+		}
+
+		if ( 'unassign' === $bulk_action ) {
+			$result = snks_bulk_unassign_google_meet_urls( $url_ids );
+			$message = sprintf(
+				/* translators: 1: unassigned count 2: skipped count */
+				__( 'Unassigned %1$d URL(s). Skipped %2$d (not assigned).', 'shrinks' ),
+				(int) $result['success'],
+				(int) $result['skipped']
+			);
+			if ( ! empty( $result['errors'] ) ) {
+				$message .= ' ' . implode( ' ', $result['errors'] );
+				add_settings_error( 'snks_google_meet', 'bulk_unassign', $message, 'warning' );
+			} else {
+				add_settings_error( 'snks_google_meet', 'bulk_unassign', $message, 'success' );
+			}
+			return;
+		}
+
+		if ( 'delete' === $bulk_action ) {
+			$result = snks_bulk_delete_google_meet_urls( $url_ids, true );
+			$message = sprintf(
+				/* translators: 1: deleted count 2: skipped count */
+				__( 'Deleted %1$d URL(s). Skipped %2$d.', 'shrinks' ),
+				(int) $result['success'],
+				(int) $result['skipped']
+			);
+			if ( ! empty( $result['errors'] ) ) {
+				$message .= ' ' . implode( ' ', $result['errors'] );
+				add_settings_error( 'snks_google_meet', 'bulk_delete', $message, 'warning' );
+			} else {
+				add_settings_error( 'snks_google_meet', 'bulk_delete', $message, 'success' );
+			}
+		}
 	}
 }
 add_action( 'admin_init', 'snks_google_meet_urls_handle_post' );
@@ -357,9 +400,27 @@ function snks_google_meet_urls_admin_page() {
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jalsah-ai-google-meet-urls&status=assigned' ) ); ?>"><?php esc_html_e( 'Assigned', 'shrinks' ); ?></a> |
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jalsah-ai-google-meet-urls&status=disabled' ) ); ?>"><?php esc_html_e( 'Disabled', 'shrinks' ); ?></a>
 		</p>
+		<form method="post" id="snks-google-meet-pool-form" onsubmit="return snksGoogleMeetBulkConfirm(this);">
+			<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+			<input type="hidden" name="snks_google_meet_action" value="bulk" />
+			<div class="tablenav top">
+				<div class="alignleft actions bulkactions">
+					<label for="bulk-action-selector-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'shrinks' ); ?></label>
+					<select name="bulk_action" id="bulk-action-selector-top">
+						<option value="-1"><?php esc_html_e( 'Bulk actions', 'shrinks' ); ?></option>
+						<option value="unassign"><?php esc_html_e( 'Unassign', 'shrinks' ); ?></option>
+						<option value="delete"><?php esc_html_e( 'Delete', 'shrinks' ); ?></option>
+					</select>
+					<input type="submit" class="button action" value="<?php esc_attr_e( 'Apply', 'shrinks' ); ?>" />
+				</div>
+			</div>
+		</form>
 		<table class="widefat striped">
 			<thead>
 				<tr>
+					<td class="manage-column column-cb check-column">
+						<input type="checkbox" id="snks-meet-select-all" form="snks-google-meet-pool-form" aria-label="<?php esc_attr_e( 'Select all', 'shrinks' ); ?>" />
+					</td>
 					<th><?php esc_html_e( 'ID', 'shrinks' ); ?></th>
 					<th><?php esc_html_e( 'URL', 'shrinks' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'shrinks' ); ?></th>
@@ -369,10 +430,13 @@ function snks_google_meet_urls_admin_page() {
 			</thead>
 			<tbody>
 				<?php if ( empty( $rows ) ) : ?>
-					<tr><td colspan="5"><?php esc_html_e( 'No URLs found.', 'shrinks' ); ?></td></tr>
+					<tr><td colspan="6"><?php esc_html_e( 'No URLs found.', 'shrinks' ); ?></td></tr>
 				<?php else : ?>
 					<?php foreach ( $rows as $row ) : ?>
 						<tr>
+							<th scope="row" class="check-column">
+								<input type="checkbox" name="url_ids[]" form="snks-google-meet-pool-form" value="<?php echo (int) $row->id; ?>" class="snks-meet-url-cb" />
+							</th>
 							<td><?php echo (int) $row->id; ?></td>
 							<td><a href="<?php echo esc_url( $row->meet_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $row->meet_url ); ?></a></td>
 							<td><?php echo esc_html( $row->status ); ?></td>
@@ -438,6 +502,63 @@ function snks_google_meet_urls_admin_page() {
 				<?php endif; ?>
 			</tbody>
 		</table>
+		<div class="tablenav bottom">
+			<div class="alignleft actions bulkactions">
+				<label for="bulk-action-selector-bottom" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'shrinks' ); ?></label>
+				<select id="bulk-action-selector-bottom">
+					<option value="-1"><?php esc_html_e( 'Bulk actions', 'shrinks' ); ?></option>
+					<option value="unassign"><?php esc_html_e( 'Unassign', 'shrinks' ); ?></option>
+					<option value="delete"><?php esc_html_e( 'Delete', 'shrinks' ); ?></option>
+				</select>
+				<button type="button" class="button action" id="snks-meet-bulk-apply-bottom"><?php esc_html_e( 'Apply', 'shrinks' ); ?></button>
+			</div>
+		</div>
+		<script>
+		(function() {
+			var poolForm = document.getElementById('snks-google-meet-pool-form');
+			var selectAll = document.getElementById('snks-meet-select-all');
+			if (selectAll) {
+				selectAll.addEventListener('change', function() {
+					document.querySelectorAll('.snks-meet-url-cb').forEach(function(cb) {
+						cb.checked = selectAll.checked;
+					});
+				});
+			}
+			window.snksGoogleMeetBulkConfirm = function(form) {
+				var actionEl = form.querySelector('[name="bulk_action"]');
+				var action = actionEl ? actionEl.value : '-1';
+				if (action === '-1') {
+					alert(<?php echo wp_json_encode( __( 'Select a bulk action.', 'shrinks' ) ); ?>);
+					return false;
+				}
+				var checked = document.querySelectorAll('.snks-meet-url-cb:checked');
+				if (!checked.length) {
+					alert(<?php echo wp_json_encode( __( 'Select at least one URL.', 'shrinks' ) ); ?>);
+					return false;
+				}
+				if (action === 'delete') {
+					return confirm(<?php echo wp_json_encode( __( 'Delete selected URL(s) from the pool? Assigned sessions will lose their Meet link.', 'shrinks' ) ); ?>);
+				}
+				if (action === 'unassign') {
+					return confirm(<?php echo wp_json_encode( __( 'Unassign selected URL(s) and return them to the available pool?', 'shrinks' ) ); ?>);
+				}
+				return true;
+			};
+			var bottomApply = document.getElementById('snks-meet-bulk-apply-bottom');
+			var bottomSelect = document.getElementById('bulk-action-selector-bottom');
+			if (bottomApply && bottomSelect && poolForm) {
+				bottomApply.addEventListener('click', function() {
+					var topSelect = poolForm.querySelector('[name="bulk_action"]');
+					if (topSelect) {
+						topSelect.value = bottomSelect.value;
+					}
+					if (snksGoogleMeetBulkConfirm(poolForm)) {
+						poolForm.submit();
+					}
+				});
+			}
+		})();
+		</script>
 	</div>
 	<?php
 }

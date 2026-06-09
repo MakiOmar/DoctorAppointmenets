@@ -60,12 +60,16 @@ function snks_handle_meeting_shortlink_redirect() {
 	}
 
 	if ( snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
-		snks_ensure_session_meeting_assigned( 'timetable', $timetable_id );
 		$meeting = snks_get_session_meeting_for_timetable( $timetable_id );
 		if ( ! empty( $meeting['join_url'] ) ) {
 			snks_render_guest_google_meet_room( $meeting['join_url'] );
 			exit;
 		}
+		wp_die(
+			esc_html__( 'لم يتم تعيين رابط Google Meet لهذه الجلسة بعد. يرجى التواصل مع الإدارة.', 'shrinks' ),
+			esc_html__( 'خطأ', 'shrinks' ),
+			array( 'response' => 503 )
+		);
 	}
 
 	// Redirect to frontend AI meeting route so the Jitsi room opens inside the app.
@@ -194,13 +198,6 @@ function snks_get_meeting_shortlink( $timetable_id ) {
 	$timetable_id = absint( $timetable_id );
 	if ( ! $timetable_id ) {
 		return '';
-	}
-
-	if ( snks_is_google_meet_active() && function_exists( 'snks_get_timetable_by' ) ) {
-		$timetable = snks_get_timetable_by( 'ID', $timetable_id );
-		if ( snks_is_online_meeting_eligible( $timetable ) ) {
-			snks_ensure_session_meeting_assigned( 'timetable', $timetable_id );
-		}
 	}
 
 	$tokens = get_option( 'snks_meeting_tokens', array() );

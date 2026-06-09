@@ -254,6 +254,9 @@ add_action(
 				)
 			);
 			if ( $updated ) {
+				if ( function_exists( 'snks_release_google_meet_url' ) ) {
+					snks_release_google_meet_url( 'timetable', absint( $booking_id ) );
+				}
 				if ( 'waiting' === $status ) {
 					if ( $booking ) {
 						snks_waiting_others( $booking );
