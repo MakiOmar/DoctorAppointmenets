@@ -547,8 +547,12 @@ class SNKS_AI_Orders {
 			if ( ! $slot_id ) {
 				$slot_id = absint( $item->get_meta( 'appointment_id', true ) );
 			}
-			if ( $slot_id && function_exists( 'snks_get_meeting_shortlink' ) ) {
-				$meeting_links[] = snks_get_meeting_shortlink( $slot_id );
+			if ( $slot_id ) {
+				if ( function_exists( 'snks_get_notification_meeting_link' ) ) {
+					$meeting_links[] = snks_get_notification_meeting_link( $slot_id );
+				} elseif ( function_exists( 'snks_get_meeting_shortlink' ) ) {
+					$meeting_links[] = snks_get_meeting_shortlink( $slot_id );
+				}
 			}
 		}
 		$meeting_link_text = ! empty( $meeting_links ) ? implode( "\n", $meeting_links ) : '';

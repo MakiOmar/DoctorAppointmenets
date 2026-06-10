@@ -778,6 +778,63 @@ function snks_ensure_session_meeting_assigned( $type, $id ) {
 }
 
 /**
+ * Meeting link for outbound notifications (SMS, WhatsApp, email).
+ * Returns direct Google Meet URL when Meet is active, otherwise the app shortlink.
+ *
+ * @param int $timetable_id Timetable ID.
+ * @return string
+ */
+function snks_get_notification_meeting_link( $timetable_id ) {
+	$timetable_id = absint( $timetable_id );
+	if ( ! $timetable_id ) {
+		return '';
+	}
+
+	if ( function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
+		$meeting = snks_get_session_meeting_for_timetable( $timetable_id );
+		if ( ! empty( $meeting['google_meet_join_url'] ) ) {
+			return $meeting['google_meet_join_url'];
+		}
+		if ( ! empty( $meeting['join_url'] ) && snks_is_google_meet_active() ) {
+			return $meeting['join_url'];
+		}
+		if ( ! empty( $meeting['session_link'] ) ) {
+			return $meeting['session_link'];
+		}
+	}
+
+	return function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable_id ) : '';
+}
+
+/**
+ * Meeting link for Rochtah notifications.
+ *
+ * @param int $booking_id Rochtah booking ID.
+ * @return string
+ */
+function snks_get_notification_meeting_link_for_rochtah( $booking_id ) {
+	$booking_id = absint( $booking_id );
+	if ( ! $booking_id ) {
+		return '';
+	}
+
+	if ( function_exists( 'snks_get_session_meeting_for_rochtah' ) ) {
+		$meeting = snks_get_session_meeting_for_rochtah( $booking_id );
+		if ( ! empty( $meeting['google_meet_join_url'] ) ) {
+			return $meeting['google_meet_join_url'];
+		}
+		if ( ! empty( $meeting['join_url'] ) ) {
+			return $meeting['join_url'];
+		}
+		if ( ! empty( $meeting['meeting_url'] ) ) {
+			return $meeting['meeting_url'];
+		}
+	}
+
+	return '';
+}
+
+/**
  * Build meeting payload for a timetable session.
  *
  * @param int $timetable_id Timetable ID.

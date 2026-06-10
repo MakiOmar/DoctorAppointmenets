@@ -121,7 +121,9 @@ function snks_send_session_notifications() {
 				} elseif ( ! $is_ai_session ) {
 					// Legacy SMS for non-AI sessions only
 					if ( 'online' === $session->attendance_type ) {
-						$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link';
+						$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
+							? snks_get_notification_meeting_link( $session->ID )
+							: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link' );
 						$message = sprintf(
 							'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
 							snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) ),
@@ -163,7 +165,9 @@ function snks_send_session_notifications() {
 					}
 				} else {
 					// Legacy SMS notification for non-AI sessions
-					$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link';
+					$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
+						? snks_get_notification_meeting_link( $session->ID )
+						: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link' );
 					$message = sprintf(
 						'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
 						$meeting_link

@@ -128,7 +128,9 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 					$order->update_meta_data( 'doctor_pricings', snks_doctor_pricings( $timetable->user_id, $timetable->attendance_type ) );
 					$order->save();
 					// Patient.
-					$meeting_link = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable->ID ) : 'www.jalsah.link';
+					$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
+						? snks_get_notification_meeting_link( $timetable->ID )
+						: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable->ID ) : 'www.jalsah.link' );
 					if ( 'online' === $timetable->attendance_type ) {
 						$message = sprintf(
 							'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',

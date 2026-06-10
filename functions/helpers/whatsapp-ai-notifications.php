@@ -327,7 +327,9 @@ function snks_send_new_session_notification( $session_id ) {
 	$time        = gmdate( 'h:i a', strtotime( $session->date_time ) );
 
 	if ( $is_manual_booking ) {
-		$jitsi = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '';
+		$jitsi = function_exists( 'snks_get_notification_meeting_link' )
+			? snks_get_notification_meeting_link( $session_id )
+			: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '' );
 		$result = snks_send_whatsapp_template_message(
 			$patient_phone,
 			$settings['template_manual_new_session'],
