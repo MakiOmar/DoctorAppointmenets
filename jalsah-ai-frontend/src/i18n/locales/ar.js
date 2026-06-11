@@ -1327,6 +1327,7 @@ export default {
   meeting: {
     openedInNewTab: 'تم فتح الجلسة في نافذة جديدة.',
     openMeetLink: 'فتح Google Meet',
-    popupBlocked: 'يرجى السماح بالنوافذ المنبثقة لهذا الموقع ثم المحاولة مرة أخرى.'
+    popupBlocked: 'يرجى السماح بالنوافذ المنبثقة لهذا الموقع ثم المحاولة مرة أخرى.',
+    notAssignedYet: 'لم يتم تعيين رابط Google Meet لهذه الجلسة بعد. يرجى التواصل مع الإدارة.'
   }
 } 

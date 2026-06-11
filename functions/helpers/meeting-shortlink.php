@@ -142,7 +142,7 @@ function snks_rest_meeting_by_token( $request ) {
 			'timetable_id'  => (int) $timetable_id,
 			'display_name'  => $display_name,
 			'provider'      => snks_is_google_meet_active() ? 'google_meet' : 'jitsi',
-			'room_name'     => (int) $timetable_id . ' جلسة',
+			'room_name'     => snks_is_google_meet_active() ? '' : ( (int) $timetable_id . ' جلسة' ),
 			'join_url'      => '',
 			'google_meet_join_url' => '',
 			'use_meeting_timers'   => snks_should_use_jitsi_meeting_timers(),
@@ -153,6 +153,15 @@ function snks_rest_meeting_by_token( $request ) {
 
 	if ( empty( $payload['display_name'] ) ) {
 		$payload['display_name'] = $display_name;
+	}
+
+	if ( snks_is_google_meet_active() && empty( $payload['join_url'] ) && empty( $payload['google_meet_join_url'] ) ) {
+		snks_google_meet_notify_missing_assignment( 'timetable', $timetable_id );
+		return new WP_Error(
+			'meet_not_assigned',
+			__( 'لم يتم تعيين رابط Google Meet لهذه الجلسة بعد. يرجى التواصل مع الإدارة.', 'shrinks' ),
+			array( 'status' => 503 )
+		);
 	}
 
 	return rest_ensure_response( $payload );

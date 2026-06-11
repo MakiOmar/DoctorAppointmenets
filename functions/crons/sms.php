@@ -123,12 +123,19 @@ function snks_send_session_notifications() {
 					if ( 'online' === $session->attendance_type ) {
 						$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
 							? snks_get_notification_meeting_link( $session->ID )
-							: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link' );
-						$message = sprintf(
-							'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
-							snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) ),
-							$meeting_link
-						);
+							: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : '' );
+						if ( $meeting_link ) {
+							$message = sprintf(
+								'نذكرك بموعد جلستك غدا الساعه %1$s للدخول للجلسة:  %2$s',
+								snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) ),
+								$meeting_link
+							);
+						} else {
+							$message = sprintf(
+								'نذكرك بموعد جلستك غدا الساعه %1$s. سيتم إرسال رابط Google Meet بعد تعيينه.',
+								snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) )
+							);
+						}
 						send_sms_via_whysms( $billing_phone, $message );
 					} else {
 						$message = sprintf(
@@ -167,11 +174,15 @@ function snks_send_session_notifications() {
 					// Legacy SMS notification for non-AI sessions
 					$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
 						? snks_get_notification_meeting_link( $session->ID )
-						: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : 'www.jalsah.link' );
-					$message = sprintf(
-						'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
-						$meeting_link
-					);
+						: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : '' );
+					if ( $meeting_link ) {
+						$message = sprintf(
+							'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
+							$meeting_link
+						);
+					} else {
+						$message = 'باقي أقل من ساعة على موعد الجلسة. سيتم إرسال رابط Google Meet بعد تعيينه.';
+					}
 					send_sms_via_whysms( $billing_phone, $message );
 				}
 				

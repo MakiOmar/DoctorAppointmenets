@@ -1319,6 +1319,7 @@ export default {
   meeting: {
     openedInNewTab: 'Your session opened in a new tab.',
     openMeetLink: 'Open Google Meet',
-    popupBlocked: 'Please allow pop-ups for this site, then try again.'
+    popupBlocked: 'Please allow pop-ups for this site, then try again.',
+    notAssignedYet: 'A Google Meet link has not been assigned to this session yet. Please contact support.'
   }
 } 

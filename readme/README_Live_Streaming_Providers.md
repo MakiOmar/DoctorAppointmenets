@@ -59,8 +59,9 @@ Meet URLs are assigned when an **online** session is booked and released on canc
 
 - `snks_get_meeting_shortlink( $timetable_id )` — issues `/meeting/{token}` only (no pool assignment; read-only)
 - Meet URLs are assigned **only** at booking confirmation, Rochtah confirm, admin manual assign, and `snks_appointment_created` — never when building links, listing sessions, or sending reminders
-- `snks_get_notification_meeting_link( $timetable_id )` — SMS/WhatsApp/email use this (Meet direct URL when active, else `/meeting/{token}`)
+- `snks_get_notification_meeting_link( $timetable_id )` — SMS/WhatsApp/email: Meet direct URL when assigned; **no Jitsi fallback** in Meet mode
 - `snks_get_notification_meeting_link_for_rochtah( $booking_id )` — same for Rochtah
+- `snks_google_meet_notify_missing_assignment( $type, $id )` — admin dashboard notice + email (24h dedupe per session) when a booked session has no Meet URL
 - `/j/{token}` — Meet mode renders `snks_render_guest_google_meet_room()`; otherwise redirects to frontend
 - REST `meeting-by-token` returns `google_meet_join_url`, `live_stream_provider`, `use_meeting_timers`
 

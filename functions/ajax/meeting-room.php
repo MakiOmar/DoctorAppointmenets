@@ -38,10 +38,9 @@ function doctor_presence_callback() {
 			$meeting_link  = function_exists( 'snks_get_notification_meeting_link' )
 				? snks_get_notification_meeting_link( $room_id )
 				: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $room_id ) : 'www.jalsah.link' );
-			$message       = sprintf(
-				'المعالج جاهز لبدء الجلسة،  اضغط هنا للدخول:%s',
-				$meeting_link
-			);
+			$message = $meeting_link
+				? sprintf( 'المعالج جاهز لبدء الجلسة،  اضغط هنا للدخول:%s', $meeting_link )
+				: 'المعالج جاهز لبدء الجلسة. سيتم إرسال رابط Google Meet بعد تعيينه من الإدارة.';
 			if ( empty( $billing_phone ) ) {
 				$user          = get_user_by( 'id', $session->client_id );
 				$billing_phone = $user->user_login;

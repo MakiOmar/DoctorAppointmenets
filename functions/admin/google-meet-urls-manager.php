@@ -279,6 +279,32 @@ function snks_google_meet_urls_admin_page() {
 			?>
 		</p>
 
+		<?php
+		$missing_assignments = get_option( 'snks_google_meet_missing_assignments', array() );
+		if ( is_array( $missing_assignments ) && ! empty( $missing_assignments ) ) :
+			?>
+			<div class="notice notice-error inline" style="margin:1em 0;">
+				<p><strong><?php esc_html_e( 'Sessions waiting for a Google Meet URL', 'shrinks' ); ?></strong></p>
+				<ul style="list-style:disc;margin-left:1.5em;">
+					<?php foreach ( $missing_assignments as $row ) : ?>
+						<li>
+							<?php
+							echo esc_html(
+								sprintf(
+									'%s — %s — %s',
+									isset( $row['label'] ) ? $row['label'] : '',
+									! empty( $row['patient_name'] ) ? $row['patient_name'] : __( 'Patient', 'shrinks' ),
+									! empty( $row['datetime'] ) ? $row['datetime'] : ''
+								)
+							);
+							?>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+				<p class="description"><?php esc_html_e( 'Use Manual assignment below to assign a pool URL to each session.', 'shrinks' ); ?></p>
+			</div>
+		<?php endif; ?>
+
 		<h2><?php esc_html_e( 'Live stream settings', 'shrinks' ); ?></h2>
 		<form method="post">
 			<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>

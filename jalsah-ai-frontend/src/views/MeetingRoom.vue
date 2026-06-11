@@ -314,7 +314,12 @@ onMounted(async () => {
     const displayName = data?.display_name
     const timetableId = data?.timetable_id
 
-    if (provider === 'google_meet' && joinUrl) {
+    if (provider === 'google_meet' || data?.live_stream_provider === 'google_meet') {
+      if (!joinUrl) {
+        status.value = 'error'
+        errorMessage.value = t('meeting.notAssignedYet') || 'لم يتم تعيين رابط Google Meet لهذه الجلسة بعد. يرجى التواصل مع الإدارة.'
+        return
+      }
       meetJoinUrl.value = joinUrl
       const opened = openGoogleMeetUrl(joinUrl)
       status.value = 'meet_opened'

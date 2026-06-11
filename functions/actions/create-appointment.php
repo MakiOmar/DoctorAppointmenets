@@ -132,14 +132,23 @@ function snks_woocommerce_payment_complete_action( $order_id ) {
 						? snks_get_notification_meeting_link( $timetable->ID )
 						: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable->ID ) : 'www.jalsah.link' );
 					if ( 'online' === $timetable->attendance_type ) {
-						$message = sprintf(
-							'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
-							'offline' === $timetable->attendance_type ? 'أوفلاين' : 'أونلاين',
-							localize_date_to_arabic( $timetable->day ),
-							gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
-							snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) ),
-							$meeting_link
-						);
+						if ( $meeting_link ) {
+							$message = sprintf(
+								'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك الدخول للجلسة في موعدها بالضغط هنا :%5$s',
+								'أونلاين',
+								localize_date_to_arabic( $timetable->day ),
+								gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
+								snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) ),
+								$meeting_link
+							);
+						} else {
+							$message = sprintf(
+								'تم حجز جلسة أونلاين يوم %1$s الموافق %2$s الساعه %3$s. سيتم إرسال رابط Google Meet بعد تعيينه من الإدارة.',
+								localize_date_to_arabic( $timetable->day ),
+								gmdate( 'Y-m-d', strtotime( $timetable->date_time ) ),
+								snks_localize_time( gmdate( 'h:i a', strtotime( $timetable->date_time ) ) )
+							);
+						}
 					} else {
 						$message = sprintf(
 							'تم حجز جلسة %1$s يوم %2$s الموافق %3$s الساعه %4$s ويمكنك معرفة تفاصيل الحجز أو تعديل الموعد بالضغط هنا :%5$s',

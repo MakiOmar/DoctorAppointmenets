@@ -217,6 +217,164 @@ function snks_google_meet_maybe_alert_low_pool() {
 }
 
 /**
+ * Build human-readable context for a session missing a Meet URL.
+ *
+ * @param string $type timetable|rochtah.
+ * @param int    $id   Session or booking ID.
+ * @return array|null
+ */
+function snks_google_meet_missing_assignment_context( $type, $id ) {
+	global $wpdb;
+
+	$id   = absint( $id );
+	$type = (string) $type;
+	if ( ! $id || ! in_array( $type, array( 'timetable', 'rochtah' ), true ) ) {
+		return null;
+	}
+
+	if ( 'timetable' === $type ) {
+		if ( ! function_exists( 'snks_get_timetable_by' ) ) {
+			return null;
+		}
+		$timetable = snks_get_timetable_by( 'ID', $id );
+		if ( ! $timetable || ! snks_is_online_meeting_eligible( $timetable ) ) {
+			return null;
+		}
+		$patient_name  = '';
+		$therapist_name = '';
+		if ( ! empty( $timetable->client_id ) && function_exists( 'snks_get_therapist_name' ) ) {
+			$first = get_user_meta( $timetable->client_id, 'billing_first_name', true );
+			$last  = get_user_meta( $timetable->client_id, 'billing_last_name', true );
+			$patient_name = trim( $first . ' ' . $last );
+		}
+		if ( ! empty( $timetable->user_id ) && function_exists( 'snks_get_therapist_name' ) ) {
+			$therapist_name = snks_get_therapist_name( $timetable->user_id );
+		}
+		return array(
+			'type'           => 'timetable',
+			'id'             => $id,
+			'label'          => sprintf( __( 'Timetable #%d', 'shrinks' ), $id ),
+			'patient_name'   => $patient_name,
+			'therapist_name' => $therapist_name,
+			'datetime'       => isset( $timetable->date_time ) ? $timetable->date_time : '',
+			'order_id'       => isset( $timetable->order_id ) ? (int) $timetable->order_id : 0,
+		);
+	}
+
+	$table   = $wpdb->prefix . 'snks_rochtah_bookings';
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT rb.*, t.display_name AS therapist_name
+			FROM {$table} rb
+			LEFT JOIN {$wpdb->users} t ON rb.therapist_id = t.ID
+			WHERE rb.id = %d LIMIT 1",
+			$id
+		)
+	);
+	if ( ! $booking || 'confirmed' !== $booking->status ) {
+		return null;
+	}
+	$patient_name = '';
+	if ( ! empty( $booking->patient_id ) ) {
+		$first = get_user_meta( $booking->patient_id, 'billing_first_name', true );
+		$last  = get_user_meta( $booking->patient_id, 'billing_last_name', true );
+		$patient_name = trim( $first . ' ' . $last );
+	}
+	$datetime = trim( (string) $booking->booking_date . ' ' . (string) $booking->booking_time );
+	return array(
+		'type'           => 'rochtah',
+		'id'             => $id,
+		'label'          => sprintf( __( 'Rochtah #%d', 'shrinks' ), $id ),
+		'patient_name'   => $patient_name,
+		'therapist_name' => isset( $booking->therapist_name ) ? (string) $booking->therapist_name : '',
+		'datetime'       => $datetime,
+		'order_id'       => 0,
+	);
+}
+
+/**
+ * Record and email admins: booked session has no Google Meet URL assigned.
+ *
+ * @param string $type timetable|rochtah.
+ * @param int    $id   Session or booking ID.
+ * @return void
+ */
+function snks_google_meet_notify_missing_assignment( $type, $id ) {
+	if ( ! snks_is_google_meet_active() ) {
+		return;
+	}
+	if ( snks_get_assigned_google_meet_row( $type, $id ) ) {
+		snks_google_meet_clear_missing_assignment_notice( $type, $id );
+		return;
+	}
+
+	$context = snks_google_meet_missing_assignment_context( $type, $id );
+	if ( ! $context ) {
+		return;
+	}
+
+	$key     = $type . '_' . $id;
+	$notices = get_option( 'snks_google_meet_missing_assignments', array() );
+	if ( ! is_array( $notices ) ) {
+		$notices = array();
+	}
+	$notices[ $key ] = array_merge(
+		$context,
+		array(
+			'updated_at' => time(),
+		)
+	);
+	update_option( 'snks_google_meet_missing_assignments', $notices, false );
+
+	$dedupe_key = 'snks_google_meet_missing_email_' . $key;
+	if ( get_transient( $dedupe_key ) ) {
+		return;
+	}
+
+	$admin_url = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
+	$subject   = sprintf(
+		'[Jalsah] Google Meet URL required — %s',
+		$context['label']
+	);
+	$body      = sprintf(
+		"A booked online session needs a Google Meet URL assigned.\n\nType: %s\nID: %d\nPatient: %s\nTherapist: %s\nDate/time: %s\nOrder ID: %s\n\nAssign a URL: %s\nTime: %s",
+		$context['type'],
+		$context['id'],
+		$context['patient_name'] ? $context['patient_name'] : '-',
+		$context['therapist_name'] ? $context['therapist_name'] : '-',
+		$context['datetime'] ? $context['datetime'] : '-',
+		$context['order_id'] ? (string) $context['order_id'] : '-',
+		$admin_url,
+		wp_date( 'Y-m-d H:i:s' )
+	);
+
+	$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+	foreach ( snks_google_meet_low_pool_email_recipients() as $email ) {
+		wp_mail( $email, $subject, $body, $headers );
+	}
+
+	set_transient( $dedupe_key, 1, DAY_IN_SECONDS );
+}
+
+/**
+ * Remove a missing-assignment admin notice after a URL is assigned.
+ *
+ * @param string $type timetable|rochtah.
+ * @param int    $id   Session or booking ID.
+ * @return void
+ */
+function snks_google_meet_clear_missing_assignment_notice( $type, $id ) {
+	$key     = (string) $type . '_' . absint( $id );
+	$notices = get_option( 'snks_google_meet_missing_assignments', array() );
+	if ( ! is_array( $notices ) || ! isset( $notices[ $key ] ) ) {
+		return;
+	}
+	unset( $notices[ $key ] );
+	update_option( 'snks_google_meet_missing_assignments', $notices, false );
+	delete_transient( 'snks_google_meet_missing_email_' . $key );
+}
+
+/**
  * Admin notice for low Google Meet pool.
  *
  * @return void
@@ -225,16 +383,53 @@ function snks_google_meet_admin_notices() {
 	if ( ! current_user_can( 'manage_options' ) || ! snks_is_google_meet_active() ) {
 		return;
 	}
+
 	$data = get_transient( 'snks_google_meet_low_pool_admin_notice' );
-	if ( ! is_array( $data ) || empty( $data['message'] ) ) {
+	if ( is_array( $data ) && ! empty( $data['message'] ) ) {
+		$url = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
+		printf(
+			'<div class="notice notice-warning"><p><strong>%s</strong> <a href="%s">%s</a></p></div>',
+			esc_html( $data['message'] ),
+			esc_url( $url ),
+			esc_html__( 'Manage Google Meet URLs', 'shrinks' )
+		);
+	}
+
+	$missing = get_option( 'snks_google_meet_missing_assignments', array() );
+	if ( ! is_array( $missing ) || empty( $missing ) ) {
 		return;
 	}
+
 	$url = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
 	printf(
-		'<div class="notice notice-warning"><p><strong>%s</strong> <a href="%s">%s</a></p></div>',
-		esc_html( $data['message'] ),
+		'<div class="notice notice-error"><p><strong>%s</strong></p><ul style="list-style:disc;margin-left:1.5em;">',
+		esc_html__( 'Booked sessions are waiting for a Google Meet URL:', 'shrinks' )
+	);
+	foreach ( array_slice( $missing, 0, 10, true ) as $row ) {
+		$line = sprintf(
+			'%s — %s — %s',
+			isset( $row['label'] ) ? $row['label'] : '',
+			isset( $row['patient_name'] ) && $row['patient_name'] ? $row['patient_name'] : __( 'Patient', 'shrinks' ),
+			isset( $row['datetime'] ) && $row['datetime'] ? $row['datetime'] : ''
+		);
+		printf( '<li>%s</li>', esc_html( $line ) );
+	}
+	if ( count( $missing ) > 10 ) {
+		printf(
+			'<li>%s</li>',
+			esc_html(
+				sprintf(
+					/* translators: %d: additional count */
+					__( '…and %d more.', 'shrinks' ),
+					count( $missing ) - 10
+				)
+			)
+		);
+	}
+	printf(
+		'</ul><p><a href="%s">%s</a></p></div>',
 		esc_url( $url ),
-		esc_html__( 'Manage Google Meet URLs', 'shrinks' )
+		esc_html__( 'Assign Google Meet URLs', 'shrinks' )
 	);
 }
 add_action( 'admin_notices', 'snks_google_meet_admin_notices' );
@@ -435,6 +630,7 @@ function snks_assign_google_meet_url_manual( $url_id, $type, $session_id ) {
 
 	$wpdb->query( 'COMMIT' );
 	snks_google_meet_maybe_alert_low_pool();
+	snks_google_meet_clear_missing_assignment_notice( $type, $session_id );
 
 	/**
 	 * Fires after a Google Meet URL is manually assigned to a session.
@@ -519,6 +715,7 @@ function snks_assign_google_meet_url( $type, $id ) {
 
 	$wpdb->query( 'COMMIT' );
 	snks_google_meet_maybe_alert_low_pool();
+	snks_google_meet_clear_missing_assignment_notice( $type, $id );
 
 	/**
 	 * Fires after a Google Meet URL is assigned to a session.
@@ -584,6 +781,12 @@ function snks_unassign_google_meet_url( $url_id ) {
 	 * @param object $row    Row snapshot before unassign.
 	 */
 	do_action( 'snks_google_meet_unassigned', $url_id, $row );
+
+	if ( ! empty( $row->assigned_timetable_id ) ) {
+		snks_google_meet_notify_missing_assignment( 'timetable', (int) $row->assigned_timetable_id );
+	} elseif ( ! empty( $row->assigned_rochtah_booking_id ) ) {
+		snks_google_meet_notify_missing_assignment( 'rochtah', (int) $row->assigned_rochtah_booking_id );
+	}
 
 	return true;
 }
@@ -790,20 +993,17 @@ function snks_get_notification_meeting_link( $timetable_id ) {
 		return '';
 	}
 
-	if ( function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
-		$meeting = snks_get_session_meeting_for_timetable( $timetable_id );
-		if ( ! empty( $meeting['google_meet_join_url'] ) ) {
-			return $meeting['google_meet_join_url'];
-		}
-		if ( ! empty( $meeting['join_url'] ) && snks_is_google_meet_active() ) {
-			return $meeting['join_url'];
-		}
-		if ( ! empty( $meeting['session_link'] ) ) {
-			return $meeting['session_link'];
-		}
+	if ( ! snks_is_google_meet_active() ) {
+		return function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable_id ) : '';
 	}
 
-	return function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable_id ) : '';
+	$row = snks_get_assigned_google_meet_row( 'timetable', $timetable_id );
+	if ( $row && ! empty( $row->meet_url ) ) {
+		return $row->meet_url;
+	}
+
+	snks_google_meet_notify_missing_assignment( 'timetable', $timetable_id );
+	return '';
 }
 
 /**
@@ -818,19 +1018,25 @@ function snks_get_notification_meeting_link_for_rochtah( $booking_id ) {
 		return '';
 	}
 
-	if ( function_exists( 'snks_get_session_meeting_for_rochtah' ) ) {
-		$meeting = snks_get_session_meeting_for_rochtah( $booking_id );
-		if ( ! empty( $meeting['google_meet_join_url'] ) ) {
-			return $meeting['google_meet_join_url'];
+	if ( ! snks_is_google_meet_active() ) {
+		if ( function_exists( 'snks_get_session_meeting_for_rochtah' ) ) {
+			$meeting = snks_get_session_meeting_for_rochtah( $booking_id );
+			if ( ! empty( $meeting['meeting_url'] ) ) {
+				return $meeting['meeting_url'];
+			}
+			if ( ! empty( $meeting['join_url'] ) ) {
+				return $meeting['join_url'];
+			}
 		}
-		if ( ! empty( $meeting['join_url'] ) ) {
-			return $meeting['join_url'];
-		}
-		if ( ! empty( $meeting['meeting_url'] ) ) {
-			return $meeting['meeting_url'];
-		}
+		return '';
 	}
 
+	$row = snks_get_assigned_google_meet_row( 'rochtah', $booking_id );
+	if ( $row && ! empty( $row->meet_url ) ) {
+		return $row->meet_url;
+	}
+
+	snks_google_meet_notify_missing_assignment( 'rochtah', $booking_id );
 	return '';
 }
 
@@ -842,17 +1048,19 @@ function snks_get_notification_meeting_link_for_rochtah( $booking_id ) {
  */
 function snks_get_session_meeting_for_timetable( $timetable_id ) {
 	$timetable_id = absint( $timetable_id );
-	$shortlink    = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable_id ) : '';
 
 	if ( snks_is_google_meet_active() ) {
 		$row = snks_get_assigned_google_meet_row( 'timetable', $timetable_id );
 		$join_url = $row ? $row->meet_url : '';
+		if ( ! $join_url && $timetable_id ) {
+			snks_google_meet_notify_missing_assignment( 'timetable', $timetable_id );
+		}
 		return array(
 			'provider'             => 'google_meet',
 			'join_url'             => $join_url,
 			'google_meet_join_url' => $join_url,
-			'shortlink'            => $shortlink,
-			'session_link'         => $shortlink,
+			'shortlink'            => '',
+			'session_link'         => $join_url,
 			'room_name'            => '',
 			'timetable_id'         => $timetable_id,
 			'live_stream_provider' => 'google_meet',
@@ -860,6 +1068,7 @@ function snks_get_session_meeting_for_timetable( $timetable_id ) {
 		);
 	}
 
+	$shortlink = function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $timetable_id ) : '';
 	$room_name = $timetable_id ? ( (string) $timetable_id . ' جلسة' ) : '';
 	return array(
 		'provider'             => 'jitsi',
@@ -886,6 +1095,9 @@ function snks_get_session_meeting_for_rochtah( $booking_id ) {
 	if ( snks_is_google_meet_active() ) {
 		$row      = snks_get_assigned_google_meet_row( 'rochtah', $booking_id );
 		$join_url = $row ? $row->meet_url : '';
+		if ( ! $join_url && $booking_id ) {
+			snks_google_meet_notify_missing_assignment( 'rochtah', $booking_id );
+		}
 		return array(
 			'provider'             => 'google_meet',
 			'join_url'             => $join_url,
@@ -937,6 +1149,11 @@ function snks_meeting_service_on_appointment_created( $slot_id, $data ) {
 	$result = snks_ensure_session_meeting_assigned( 'timetable', $slot_id );
 	if ( is_wp_error( $result ) ) {
 		error_log( 'Google Meet assign failed for timetable ' . $slot_id . ': ' . $result->get_error_message() );
+		snks_google_meet_notify_missing_assignment( 'timetable', $slot_id );
+		return;
+	}
+	if ( ! snks_get_assigned_google_meet_row( 'timetable', $slot_id ) ) {
+		snks_google_meet_notify_missing_assignment( 'timetable', $slot_id );
 	}
 }
 add_action( 'snks_appointment_created', 'snks_meeting_service_on_appointment_created', 5, 2 );
@@ -951,7 +1168,12 @@ function snks_meeting_on_rochtah_confirmed( $booking_id ) {
 	if ( ! snks_is_google_meet_active() ) {
 		return true;
 	}
-	return snks_ensure_session_meeting_assigned( 'rochtah', absint( $booking_id ) );
+	$booking_id = absint( $booking_id );
+	$result     = snks_ensure_session_meeting_assigned( 'rochtah', $booking_id );
+	if ( is_wp_error( $result ) || ! snks_get_assigned_google_meet_row( 'rochtah', $booking_id ) ) {
+		snks_google_meet_notify_missing_assignment( 'rochtah', $booking_id );
+	}
+	return $result;
 }
 
 /**

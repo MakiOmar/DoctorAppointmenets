@@ -573,7 +573,7 @@ class SNKS_AI_Orders {
 			$customer_name,
 			$order_id,
 			$order_total_plain,
-			$meeting_link_text ? $meeting_link_text : __( 'سيتم إرسال رابط الجلسة قبل موعدها.', 'shrinks' )
+			$meeting_link_text ? $meeting_link_text : __( 'سيتم إرسال رابط Google Meet بعد تعيينه من الإدارة.', 'shrinks' )
 		);
 		
 		wp_mail( $customer_email, $subject, self::wrap_rtl_email_html( $message ), $mail_headers );
