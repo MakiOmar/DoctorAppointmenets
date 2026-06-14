@@ -316,9 +316,10 @@ class SNKS_AI_Orders {
 	 * @param int $order_id  WooCommerce order ID.
 	 * @param int $patient_id Patient user ID.
 	 * @param string $settings_append Optional string to append to settings (e.g. 'admin_manual_booking:1').
+	 * @param array  $options         Optional flags: skip_meet_assign (bool) for reschedule/change flows.
 	 * @return int|false Rows affected or false.
 	 */
-	public static function book_slot_for_order( $slot_id, $order_id, $patient_id, $settings_append = '' ) {
+	public static function book_slot_for_order( $slot_id, $order_id, $patient_id, $settings_append = '', $options = array() ) {
 		global $wpdb;
 
 		$slot = $wpdb->get_row( $wpdb->prepare(
@@ -348,7 +349,7 @@ class SNKS_AI_Orders {
 			array( '%d' )
 		);
 
-		if ( $result && snks_is_google_meet_active() && snks_is_online_meeting_eligible(
+		if ( $result && empty( $options['skip_meet_assign'] ) && snks_is_google_meet_active() && snks_is_online_meeting_eligible(
 			(object) array(
 				'attendance_type' => $slot->attendance_type,
 				'session_status'  => 'open',
@@ -375,14 +376,15 @@ class SNKS_AI_Orders {
 
 		if ( $result ) {
 			$appointment_data = array(
-				'is_ai_session' => true,
-				'order_id'      => $order_id,
-				'therapist_id'  => $slot->user_id,
-				'patient_id'    => $patient_id,
-				'slot_id'       => $slot_id,
-				'session_date'  => $slot->date_time,
-				'session_status' => 'open',
-				'settings'      => $settings,
+				'is_ai_session'    => true,
+				'order_id'         => $order_id,
+				'therapist_id'     => $slot->user_id,
+				'patient_id'       => $patient_id,
+				'slot_id'          => $slot_id,
+				'session_date'     => $slot->date_time,
+				'session_status'   => 'open',
+				'settings'         => $settings,
+				'skip_meet_assign' => ! empty( $options['skip_meet_assign'] ),
 			);
 			do_action( 'snks_appointment_created', $slot_id, $appointment_data );
 		}

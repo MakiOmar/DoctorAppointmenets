@@ -5654,6 +5654,13 @@ Best regards,
 
 			$wpdb->query( 'COMMIT' );
 
+			if ( function_exists( 'snks_transfer_google_meet_url_timetable' ) ) {
+				$meet_transfer = snks_transfer_google_meet_url_timetable( $appointment_id, $new_appointment_id );
+				if ( is_wp_error( $meet_transfer ) ) {
+					error_log( 'Google Meet transfer failed: ' . $meet_transfer->get_error_message() );
+				}
+			}
+
 			// Send appointment change notification (use new appointment id to ensure client_id populated; pass patient_id fallback)
 			if ( function_exists( 'snks_send_appointment_change_notification' ) ) {
 				// Extract old appointment details

@@ -28,10 +28,11 @@ Table `{prefix}snks_google_meet_urls` (see `includes/google-meet-urls-table.php`
 | `snks_assign_google_meet_url( $type, $id )` | Assign first available URL (`timetable` or `rochtah`) |
 | `snks_assign_google_meet_url_manual( $url_id, $type, $session_id )` | Assign a specific pool row to a session (admin); replaces existing URL on that session |
 | `snks_validate_google_meet_assign_target( $type, $id )` | Validate timetable (online, booked) or Rochtah (`confirmed`) |
-| `snks_release_google_meet_url( $type, $id )` | Release on cancel/reschedule (by timetable/Rochtah ID) |
-| `snks_unassign_google_meet_url( $url_id )` | Return a pool row to `available` (admin or code); fires `snks_google_meet_unassigned` |
+| `snks_release_google_meet_url( $type, $id )` | Release on cancel (returns URL to pool) |
+| `snks_transfer_google_meet_url_timetable( $from_id, $to_id )` | Move assigned Meet URL to new timetable on appointment change (no new pool assign) |
+| `snks_unassign_google_meet_url( $url_id, $args = array() )` | Return a pool row to `available` (admin or code); fires `snks_google_meet_unassigned` |
 
-Hooks: `snks_google_meet_assigned`, `snks_google_meet_unassigned`.
+Hooks: `snks_google_meet_assigned`, `snks_google_meet_unassigned`, `snks_google_meet_transferred`.
 
 Admin **Manual assignment** section: assign by URL ID + target, or **Assign first available URL** to a timetable/Rochtah ID. Per-row **Assign** on available URLs.
 
@@ -44,11 +45,12 @@ REST: `GET /wp-json/jalsah-ai/v1/live-stream-settings` — frontend reads provid
 
 ## Booking hooks
 
-Meet URLs are assigned when an **online** session is booked and released on cancel/reschedule:
+Meet URLs are assigned when an **online** session is booked and released on **cancel** only:
 
 - WooCommerce: `functions/actions/create-appointment.php`
 - AI orders: `functions/helpers/ai-orders.php` (`book_slot_for_order`, Rochtah payment)
-- Manual booking/reschedule: `functions/helpers/admin-manual-booking.php`
+- Manual booking: `functions/helpers/admin-manual-booking.php`
+- **Appointment change/reschedule:** `snks_transfer_google_meet_url_timetable()` — moves the existing Meet URL to the new timetable (admin change, classic edit, AI API reschedule); does **not** assign a new pool URL
 - Cancel: `functions/ai-integration.php`, `functions/ajax/timetable-ajax.php`
 - Rochtah confirm: `functions/ai-integration.php`, `functions/ajax/timetable-ajax.php`, `functions/helpers/ai-orders.php`
 - Generic: `snks_appointment_created` → `snks_meeting_service_on_appointment_created`

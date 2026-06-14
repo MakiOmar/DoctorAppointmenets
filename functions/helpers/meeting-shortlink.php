@@ -182,6 +182,39 @@ function snks_resolve_meeting_token( $token ) {
 }
 
 /**
+ * Point existing meeting shortlink tokens from one timetable to another (appointment reschedule).
+ *
+ * @param int $from_timetable_id Old timetable ID.
+ * @param int $to_timetable_id   New timetable ID.
+ * @return void
+ */
+function snks_migrate_meeting_token_timetable( $from_timetable_id, $to_timetable_id ) {
+	$from_timetable_id = absint( $from_timetable_id );
+	$to_timetable_id   = absint( $to_timetable_id );
+
+	if ( ! $from_timetable_id || ! $to_timetable_id || $from_timetable_id === $to_timetable_id ) {
+		return;
+	}
+
+	$tokens = get_option( 'snks_meeting_tokens', array() );
+	if ( ! is_array( $tokens ) || empty( $tokens ) ) {
+		return;
+	}
+
+	$changed = false;
+	foreach ( $tokens as $token => $timetable_id ) {
+		if ( (int) $timetable_id === $from_timetable_id ) {
+			$tokens[ $token ] = $to_timetable_id;
+			$changed            = true;
+		}
+	}
+
+	if ( $changed ) {
+		update_option( 'snks_meeting_tokens', $tokens );
+	}
+}
+
+/**
  * Get base URL for meeting links (WhatsApp, SMS, etc.). Uses first Frontend URL from settings when available.
  *
  * @return string Base URL without trailing slash.

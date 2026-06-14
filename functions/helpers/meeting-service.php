@@ -733,13 +733,15 @@ function snks_assign_google_meet_url( $type, $id ) {
 /**
  * Unassign a Google Meet URL by pool row ID and return it to the available pool.
  *
- * @param int $url_id Pool row ID in snks_google_meet_urls.
+ * @param int   $url_id Pool row ID in snks_google_meet_urls.
+ * @param array $args   Optional: silent (bool) skip missing-assignment admin alert.
  * @return true|WP_Error
  */
-function snks_unassign_google_meet_url( $url_id ) {
+function snks_unassign_google_meet_url( $url_id, $args = array() ) {
 	global $wpdb;
 
 	$url_id = absint( $url_id );
+	$silent = ! empty( $args['silent'] );
 	$table  = snks_google_meet_urls_table_name();
 	if ( ! $url_id ) {
 		return new WP_Error( 'invalid_id', __( 'Invalid Google Meet URL ID.', 'shrinks' ) );
@@ -782,10 +784,12 @@ function snks_unassign_google_meet_url( $url_id ) {
 	 */
 	do_action( 'snks_google_meet_unassigned', $url_id, $row );
 
-	if ( ! empty( $row->assigned_timetable_id ) ) {
-		snks_google_meet_notify_missing_assignment( 'timetable', (int) $row->assigned_timetable_id );
-	} elseif ( ! empty( $row->assigned_rochtah_booking_id ) ) {
-		snks_google_meet_notify_missing_assignment( 'rochtah', (int) $row->assigned_rochtah_booking_id );
+	if ( ! $silent ) {
+		if ( ! empty( $row->assigned_timetable_id ) ) {
+			snks_google_meet_notify_missing_assignment( 'timetable', (int) $row->assigned_timetable_id );
+		} elseif ( ! empty( $row->assigned_rochtah_booking_id ) ) {
+			snks_google_meet_notify_missing_assignment( 'rochtah', (int) $row->assigned_rochtah_booking_id );
+		}
 	}
 
 	return true;
@@ -926,6 +930,86 @@ function snks_release_google_meet_url( $type, $id ) {
 	if ( $row ) {
 		snks_unassign_google_meet_url( (int) $row->id );
 	}
+}
+
+/**
+ * Move an assigned Google Meet URL from one timetable to another (appointment change/reschedule).
+ * Does not pull a new URL from the pool. Clears any Meet assignment on the old timetable.
+ *
+ * @param int $from_timetable_id Previous timetable ID.
+ * @param int $to_timetable_id   New timetable ID.
+ * @return true|WP_Error
+ */
+function snks_transfer_google_meet_url_timetable( $from_timetable_id, $to_timetable_id ) {
+	if ( ! snks_is_google_meet_active() ) {
+		return true;
+	}
+
+	global $wpdb;
+
+	$from_timetable_id = absint( $from_timetable_id );
+	$to_timetable_id   = absint( $to_timetable_id );
+	$table             = snks_google_meet_urls_table_name();
+
+	if ( ! $from_timetable_id || ! $to_timetable_id ) {
+		return new WP_Error( 'invalid_id', __( 'Invalid timetable ID for Google Meet transfer.', 'shrinks' ) );
+	}
+
+	if ( $from_timetable_id === $to_timetable_id ) {
+		return true;
+	}
+
+	$row = snks_get_assigned_google_meet_row( 'timetable', $from_timetable_id );
+	if ( ! $row ) {
+		// Reschedule without a prior Meet URL: remove any auto-assigned URL on the new slot; do not assign fresh.
+		snks_release_google_meet_url( 'timetable', $to_timetable_id );
+		return true;
+	}
+
+	$existing_on_new = snks_get_assigned_google_meet_row( 'timetable', $to_timetable_id );
+	if ( $existing_on_new && (int) $existing_on_new->id !== (int) $row->id ) {
+		$unassign = snks_unassign_google_meet_url( (int) $existing_on_new->id, array( 'silent' => true ) );
+		if ( is_wp_error( $unassign ) ) {
+			return $unassign;
+		}
+	}
+
+	$wpdb->query( 'START TRANSACTION' );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$updated = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$table} SET assigned_timetable_id = %d, assigned_at = %s WHERE id = %d AND status = 'assigned' AND assigned_timetable_id = %d",
+			$to_timetable_id,
+			current_time( 'mysql' ),
+			(int) $row->id,
+			$from_timetable_id
+		)
+	);
+
+	if ( ! $updated ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'transfer_failed', __( 'Failed to transfer Google Meet URL to the new appointment.', 'shrinks' ) );
+	}
+
+	$wpdb->query( 'COMMIT' );
+
+	if ( function_exists( 'snks_migrate_meeting_token_timetable' ) ) {
+		snks_migrate_meeting_token_timetable( $from_timetable_id, $to_timetable_id );
+	}
+
+	snks_google_meet_clear_missing_assignment_notice( 'timetable', $to_timetable_id );
+
+	/**
+	 * Fires after a Google Meet URL is moved from one timetable to another.
+	 *
+	 * @param int $row_id            Pool row ID.
+	 * @param int $from_timetable_id Old timetable ID.
+	 * @param int $to_timetable_id   New timetable ID.
+	 */
+	do_action( 'snks_google_meet_transferred', (int) $row->id, $from_timetable_id, $to_timetable_id );
+
+	return true;
 }
 
 /**
@@ -1139,7 +1223,7 @@ function snks_get_session_meeting_for_rochtah( $booking_id ) {
  */
 function snks_meeting_service_on_appointment_created( $slot_id, $data ) {
 	$slot_id = absint( $slot_id );
-	if ( ! $slot_id || ! snks_is_google_meet_active() ) {
+	if ( ! $slot_id || ! snks_is_google_meet_active() || ! empty( $data['skip_meet_assign'] ) ) {
 		return;
 	}
 	$timetable = function_exists( 'snks_get_timetable_by' ) ? snks_get_timetable_by( 'ID', $slot_id ) : null;

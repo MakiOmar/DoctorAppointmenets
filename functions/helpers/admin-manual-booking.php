@@ -734,10 +734,6 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 	$wpdb->query( 'START TRANSACTION' );
 
 	try {
-		if ( function_exists( 'snks_release_google_meet_url' ) ) {
-			snks_release_google_meet_url( 'timetable', $existing_booking_id );
-		}
-
 		// Release old slot and reset all notification/state columns to initial state.
 		$wpdb->update(
 			$wpdb->prefix . 'snks_provider_timetable',
@@ -764,9 +760,22 @@ function snks_process_admin_change_appointment( $existing_booking_id, $new_slot_
 
 		// Book new slot with same order.
 		$settings = 'ai_booking:completed admin_manual_booking:1';
-		$booked = SNKS_AI_Orders::book_slot_for_order( $new_slot_id, $order_id, $patient_id, 'admin_manual_booking:1' );
+		$booked = SNKS_AI_Orders::book_slot_for_order(
+			$new_slot_id,
+			$order_id,
+			$patient_id,
+			'admin_manual_booking:1',
+			array( 'skip_meet_assign' => true )
+		);
 		if ( ! $booked ) {
 			throw new Exception( __( 'فشل حجز الموعد الجديد.', 'shrinks' ) );
+		}
+
+		if ( function_exists( 'snks_transfer_google_meet_url_timetable' ) ) {
+			$meet_transfer = snks_transfer_google_meet_url_timetable( $existing_booking_id, $new_slot_id );
+			if ( is_wp_error( $meet_transfer ) ) {
+				throw new Exception( $meet_transfer->get_error_message() );
+			}
 		}
 
 		// Update order item slot_id (find the item for this appointment).

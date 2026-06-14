@@ -89,6 +89,20 @@ function snks_apply_booking_edit( $booking, $main_order, $new_booking_id, $free 
 				foreach ( $line_items as $item_id => $item ) {
 					wc_update_order_item_meta( $item_id, 'booking_id', $new_timetable->ID );
 				}
+
+				if ( function_exists( 'snks_transfer_google_meet_url_timetable' ) && snks_is_google_meet_active() ) {
+					$meet_eligible = snks_is_online_meeting_eligible(
+						(object) array(
+							'attendance_type' => $new_timetable->attendance_type,
+							'session_status'  => 'open',
+							'client_id'       => $booking->client_id,
+						)
+					);
+					if ( $meet_eligible ) {
+						snks_transfer_google_meet_url_timetable( $booking->ID, $new_timetable->ID );
+					}
+				}
+
 				// Doctor.
 				if ( snks_is_patient() && class_exists( 'FbCloudMessaging\AnonyengineFirebase' ) ) {
 					// Use the correct namespace to initialize the class.
