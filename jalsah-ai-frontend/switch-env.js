@@ -15,9 +15,14 @@ const environments = {
     VITE_MAIN_SITE_URL: 'https://jalsah.app'
   },
   staging: {
-    VITE_API_TARGET: 'https://jalsah.app',
+    VITE_API_TARGET: 'https://beforelive.jalsah.app',
     VITE_API_BASE_URL: '/api',
-    VITE_MAIN_SITE_URL: 'https://jalsah.app'
+    VITE_MAIN_SITE_URL: 'https://beforelive.jalsah.app'
+  },
+  beforelive: {
+    VITE_API_TARGET: 'https://beforelive.jalsah.app',
+    VITE_API_BASE_URL: '/api',
+    VITE_MAIN_SITE_URL: 'https://beforelive.jalsah.app'
   }
 };
 
@@ -75,7 +80,8 @@ Usage:
 
 Commands:
   local     Switch to local development environment
-  staging   Switch to staging server environment
+  staging   Switch to beforelive/staging server environment
+  beforelive  Alias for staging (beforelive.jalsah.app)
   current   Show current environment
   help      Show this help message
 
@@ -110,15 +116,16 @@ function main() {
       break;
       
     case 'staging':
-      console.log('🔄 Switching to STAGING SERVER environment...');
-      if (createEnvFile('staging')) {
+    case 'beforelive':
+      console.log('🔄 Switching to BEFORELIVE / STAGING environment...');
+      if (createEnvFile('beforelive')) {
         console.log('\n📋 Next steps:');
         console.log('1. Stop the development server (Ctrl+C)');
         console.log('2. Restart with: npm run dev');
         console.log('3. Clear browser cache');
         console.log('4. Test login to verify environment');
         console.log('\n🎯 Expected console output:');
-        console.log('Proxy target: https://jalsah.app');
+        console.log('Proxy target: https://beforelive.jalsah.app');
       }
       break;
       

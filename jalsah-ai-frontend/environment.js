@@ -11,10 +11,13 @@
 //     - API_BASE_URL  => /api   (frontend talks to /api, Vite proxies to API_TARGET)
 //     - MAIN_SITE_URL => https://jalsah.app
 //
-// - When building for production (`npm run build`, `npm run preview`):
+// - When building for production (`npm run build`):
 //     - API_TARGET    => https://jalsah.app
-//     - API_BASE_URL  => https://jalsah.app (API requests go to jalsah.app; use when SPA is on jalsah.online)
-//     - MAIN_SITE_URL => https://jalsah.app
+//     - API_BASE_URL  => https://jalsah.app
+//
+// - When building for beforelive (`npm run build:beforelive`):
+//     - API_TARGET    => https://beforelive.jalsah.app
+//     - API_BASE_URL  => https://beforelive.jalsah.app
 //
 // The Vite config reads these values to:
 // - Configure the dev server proxy target (API_TARGET)
@@ -22,12 +25,21 @@
 // ========================================
 
 const npmCommand = process.env.npm_lifecycle_event || '';
-const isDevCommand = npmCommand === 'dev' || process.env.NODE_ENV === 'development';
+const isDevCommand = npmCommand.startsWith( 'dev' ) || process.env.NODE_ENV === 'development';
+const isBeforelive =
+	npmCommand.includes( 'beforelive' ) ||
+	process.env.API_ENV === 'beforelive' ||
+	process.env.VITE_API_ENV === 'beforelive';
 
-const API_TARGET = isDevCommand ? 'https://jalsah.app' : 'https://jalsah.app';
-// Production: full origin so SPA (e.g. on jalsah.online) hits jalsah.app for API. Dev: /api for proxy.
-const API_BASE_URL = isDevCommand ? '/api' : 'https://jalsah.app';
-const MAIN_SITE_URL = isDevCommand ? 'https://jalsah.app' : 'https://jalsah.app';
+const PRODUCTION_API = 'https://jalsah.app';
+const BEFORELIVE_API = 'https://beforelive.jalsah.app';
+
+const apiHost = isBeforelive ? BEFORELIVE_API : PRODUCTION_API;
+
+const API_TARGET = isDevCommand ? apiHost : apiHost;
+// Production/beforelive: full origin so SPA on another domain hits the WP API. Dev: /api for proxy.
+const API_BASE_URL = isDevCommand ? '/api' : apiHost;
+const MAIN_SITE_URL = apiHost;
 
 export const ENVIRONMENT_CONFIG = {
   API_TARGET,
