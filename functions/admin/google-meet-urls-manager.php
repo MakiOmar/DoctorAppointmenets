@@ -19,6 +19,25 @@ function snks_register_google_meet_urls_admin_menu() {
 		'jalsah-ai-google-meet-urls',
 		'snks_google_meet_urls_admin_page'
 	);
+
+	$missing_count = function_exists( 'snks_count_sessions_missing_meeting_url' ) ? snks_count_sessions_missing_meeting_url() : 0;
+	$menu_label    = __( 'Unassigned sessions', 'shrinks' );
+	if ( $missing_count > 0 ) {
+		$menu_label .= sprintf(
+			' <span class="awaiting-mod count-%1$d"><span class="pending-count">%2$s</span></span>',
+			$missing_count,
+			number_format_i18n( $missing_count )
+		);
+	}
+
+	add_submenu_page(
+		'jalsah-ai-management',
+		__( 'Sessions without meeting URL', 'shrinks' ),
+		$menu_label,
+		'manage_options',
+		'jalsah-ai-meeting-urls-unassigned',
+		'snks_meeting_urls_unassigned_admin_page'
+	);
 }
 add_action( 'admin_menu', 'snks_register_google_meet_urls_admin_menu', 25 );
 
@@ -111,6 +130,42 @@ function snks_google_meet_urls_handle_post() {
 			add_settings_error( 'snks_google_meet', 'unassign', $result->get_error_message(), 'error' );
 		} else {
 			add_settings_error( 'snks_google_meet', 'unassigned', __( 'URL unassigned and returned to the pool.', 'shrinks' ), 'success' );
+		}
+		return;
+	}
+
+	if ( 'bulk_assign_missing' === $action ) {
+		$keys    = isset( $_POST['missing_keys'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['missing_keys'] ) ) : array();
+		$success = 0;
+		$failed  = 0;
+		$errors  = array();
+
+		foreach ( $keys as $key ) {
+			if ( ! preg_match( '/^(timetable|rochtah)_(\d+)$/', $key, $matches ) ) {
+				continue;
+			}
+			$result = snks_assign_google_meet_url( $matches[1], (int) $matches[2] );
+			if ( is_wp_error( $result ) ) {
+				++$failed;
+				$errors[] = $result->get_error_message();
+			} else {
+				++$success;
+			}
+		}
+
+		if ( ! $success && ! $failed ) {
+			add_settings_error( 'snks_google_meet', 'bulk_assign_missing', __( 'Select at least one session.', 'shrinks' ), 'error' );
+		} else {
+			$message = sprintf(
+				/* translators: 1: success count 2: failed count */
+				__( 'Assigned %1$d session(s). Failed: %2$d.', 'shrinks' ),
+				$success,
+				$failed
+			);
+			if ( ! empty( $errors ) ) {
+				$message .= ' ' . implode( ' ', array_unique( $errors ) );
+			}
+			add_settings_error( 'snks_google_meet', 'bulk_assign_missing', $message, $failed ? 'warning' : 'success' );
 		}
 		return;
 	}
@@ -285,31 +340,23 @@ function snks_google_meet_urls_admin_page() {
 		</p>
 
 		<?php
-		$missing_assignments = snks_google_meet_missing_assignment_notify_enabled()
-			? get_option( 'snks_google_meet_missing_assignments', array() )
-			: array();
-		if ( is_array( $missing_assignments ) && ! empty( $missing_assignments ) ) :
+		$unassigned_count = function_exists( 'snks_count_sessions_missing_meeting_url' ) ? snks_count_sessions_missing_meeting_url() : 0;
+		if ( $unassigned_count > 0 && snks_is_google_meet_active() ) :
+			$unassigned_url = admin_url( 'admin.php?page=jalsah-ai-meeting-urls-unassigned' );
 			?>
-			<div class="notice notice-error inline" style="margin:1em 0;">
-				<p><strong><?php esc_html_e( 'Sessions waiting for a meeting URL', 'shrinks' ); ?></strong></p>
-				<ul style="list-style:disc;margin-left:1.5em;">
-					<?php foreach ( $missing_assignments as $row ) : ?>
-						<li>
-							<?php
-							echo esc_html(
-								sprintf(
-									'%s — %s — %s',
-									isset( $row['label'] ) ? $row['label'] : '',
-									! empty( $row['patient_name'] ) ? $row['patient_name'] : __( 'Patient', 'shrinks' ),
-									! empty( $row['datetime'] ) ? $row['datetime'] : ''
-								)
-							);
-							?>
-						</li>
-					<?php endforeach; ?>
-				</ul>
-				<p class="description"><?php esc_html_e( 'Use Manual assignment below to assign a pool URL to each session.', 'shrinks' ); ?></p>
-			</div>
+			<p>
+				<a class="button button-secondary" href="<?php echo esc_url( $unassigned_url ); ?>">
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: %d: count */
+							_n( 'Assign meeting URL (%d session)', 'Assign meeting URLs (%d sessions)', $unassigned_count, 'shrinks' ),
+							$unassigned_count
+						)
+					);
+					?>
+				</a>
+			</p>
 		<?php endif; ?>
 
 		<h2><?php esc_html_e( 'Live stream settings', 'shrinks' ); ?></h2>
@@ -348,9 +395,9 @@ function snks_google_meet_urls_admin_page() {
 					<td>
 						<label>
 							<input type="checkbox" name="snks_google_meet_missing_assignment_notify_enabled" value="1" <?php checked( get_option( 'snks_google_meet_missing_assignment_notify_enabled', '1' ), '1' ); ?> />
-							<?php esc_html_e( 'Notify admins when a booked online session has no meeting URL (dashboard notice + email, once per session per 24h)', 'shrinks' ); ?>
+							<?php esc_html_e( 'Send email when a booked session has no meeting URL (once per session per 24h)', 'shrinks' ); ?>
 						</label>
-						<p class="description"><?php esc_html_e( 'Disable this while backfilling URLs for existing bookings to avoid alert floods. Unchecking clears the current waiting list.', 'shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Dashboard list is always on Jalsah AI → Unassigned sessions. Disable email while backfilling URLs. Unchecking clears the email waiting list cache.', 'shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -603,6 +650,225 @@ function snks_google_meet_urls_admin_page() {
 			}
 		})();
 		</script>
+	</div>
+	<?php
+}
+
+/**
+ * Build display name for a patient user ID.
+ *
+ * @param int $user_id Patient user ID.
+ * @return string
+ */
+function snks_meeting_urls_admin_patient_name( $user_id ) {
+	$user_id = absint( $user_id );
+	if ( ! $user_id ) {
+		return '';
+	}
+	$first = get_user_meta( $user_id, 'billing_first_name', true );
+	$last  = get_user_meta( $user_id, 'billing_last_name', true );
+	$name  = trim( $first . ' ' . $last );
+	return $name ? $name : sprintf( __( 'User #%d', 'shrinks' ), $user_id );
+}
+
+/**
+ * Render admin page listing sessions without a meeting URL and assign actions.
+ *
+ * @return void
+ */
+function snks_meeting_urls_unassigned_admin_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	global $wpdb;
+
+	$page_url       = admin_url( 'admin.php?page=jalsah-ai-meeting-urls-unassigned' );
+	$pool_url       = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
+	$per_page       = 50;
+	$current_page   = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1;
+	$offset         = ( $current_page - 1 ) * $per_page;
+	$total_count    = snks_count_sessions_missing_meeting_url();
+	$available_pool = snks_google_meet_count_available();
+	$table          = snks_google_meet_urls_table_name();
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$available_urls = $wpdb->get_results(
+		"SELECT id, meet_url FROM {$table} WHERE status = 'available' ORDER BY id ASC LIMIT 500"
+	);
+
+	$items = array();
+
+	foreach ( snks_get_sessions_missing_meeting_url( $per_page, $offset ) as $row ) {
+		$type       = isset( $row->item_type ) ? (string) $row->item_type : 'timetable';
+		$item_id    = isset( $row->item_id ) ? (int) $row->item_id : 0;
+		$therapist  = '';
+		if ( 'rochtah' === $type ) {
+			$therapist = isset( $row->therapist_name ) ? (string) $row->therapist_name : '';
+		} elseif ( ! empty( $row->therapist_id ) && function_exists( 'snks_get_therapist_name' ) ) {
+			$therapist = snks_get_therapist_name( (int) $row->therapist_id );
+		}
+
+		$items[] = array(
+			'key'        => $type . '_' . $item_id,
+			'type'       => $type,
+			'type_label' => 'rochtah' === $type ? __( 'Rochtah', 'shrinks' ) : __( 'Timetable', 'shrinks' ),
+			'id'         => $item_id,
+			'patient'    => snks_meeting_urls_admin_patient_name( isset( $row->patient_id ) ? (int) $row->patient_id : 0 ),
+			'therapist'  => $therapist,
+			'datetime'   => isset( $row->sort_datetime ) ? (string) $row->sort_datetime : '',
+			'extra'      => ! empty( $row->order_id ) ? sprintf( __( 'Order #%d', 'shrinks' ), (int) $row->order_id ) : '',
+		);
+	}
+
+	settings_errors( 'snks_google_meet' );
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'Sessions without meeting URL', 'shrinks' ); ?></h1>
+
+		<p>
+			<a href="<?php echo esc_url( $pool_url ); ?>">&larr; <?php esc_html_e( 'Meeting URL pool', 'shrinks' ); ?></a>
+		</p>
+
+		<?php if ( ! snks_is_google_meet_active() ) : ?>
+			<div class="notice notice-info inline">
+				<p><?php esc_html_e( 'External meeting URLs are disabled. Enable them under Meeting URLs → Live stream settings.', 'shrinks' ); ?></p>
+			</div>
+		<?php else : ?>
+			<p>
+				<?php
+				printf(
+					/* translators: 1: unassigned count 2: available pool count */
+					esc_html__( 'Unassigned: %1$d | Available in pool: %2$d', 'shrinks' ),
+					(int) $total_count,
+					(int) $available_pool
+				);
+				?>
+			</p>
+		<?php endif; ?>
+
+		<?php if ( empty( $items ) ) : ?>
+			<p><?php esc_html_e( 'All booked online sessions have a meeting URL assigned.', 'shrinks' ); ?></p>
+		<?php else : ?>
+			<form method="post" action="<?php echo esc_url( $page_url ); ?>" id="snks-missing-sessions-form" onsubmit="return snksMissingSessionsBulkConfirm(this);">
+				<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+				<input type="hidden" name="snks_google_meet_action" value="bulk_assign_missing" />
+
+				<div class="tablenav top">
+					<div class="alignleft actions bulkactions">
+						<button type="submit" class="button action"><?php esc_html_e( 'Assign first available to selected', 'shrinks' ); ?></button>
+					</div>
+				</div>
+
+				<table class="wp-list-table widefat fixed striped">
+					<thead>
+						<tr>
+							<td class="manage-column column-cb check-column">
+								<input type="checkbox" id="snks-missing-select-all" />
+							</td>
+							<th><?php esc_html_e( 'Type', 'shrinks' ); ?></th>
+							<th><?php esc_html_e( 'ID', 'shrinks' ); ?></th>
+							<th><?php esc_html_e( 'Patient', 'shrinks' ); ?></th>
+							<th><?php esc_html_e( 'Therapist', 'shrinks' ); ?></th>
+							<th><?php esc_html_e( 'Date / time', 'shrinks' ); ?></th>
+							<th><?php esc_html_e( 'Assign', 'shrinks' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $items as $item ) : ?>
+							<tr>
+								<th scope="row" class="check-column">
+									<input type="checkbox" class="snks-missing-session-cb" name="missing_keys[]" value="<?php echo esc_attr( $item['key'] ); ?>" form="snks-missing-sessions-form" />
+								</th>
+								<td><?php echo esc_html( $item['type_label'] ); ?></td>
+								<td><?php echo (int) $item['id']; ?></td>
+								<td>
+									<?php echo esc_html( $item['patient'] ? $item['patient'] : '—' ); ?>
+									<?php if ( ! empty( $item['extra'] ) ) : ?>
+										<br><small><?php echo esc_html( $item['extra'] ); ?></small>
+									<?php endif; ?>
+								</td>
+								<td><?php echo esc_html( $item['therapist'] ? $item['therapist'] : '—' ); ?></td>
+								<td><?php echo esc_html( $item['datetime'] ? $item['datetime'] : '—' ); ?></td>
+								<td>
+									<form method="post" action="<?php echo esc_url( $page_url ); ?>" style="display:inline;margin-right:6px;">
+										<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+										<input type="hidden" name="snks_google_meet_action" value="assign_session" />
+										<input type="hidden" name="assign_target_type" value="<?php echo esc_attr( $item['type'] ); ?>" />
+										<input type="hidden" name="session_id" value="<?php echo (int) $item['id']; ?>" />
+										<button type="submit" class="button button-small button-primary" <?php disabled( $available_pool < 1 ); ?>>
+											<?php esc_html_e( 'First available', 'shrinks' ); ?>
+										</button>
+									</form>
+									<?php if ( ! empty( $available_urls ) ) : ?>
+										<form method="post" action="<?php echo esc_url( $page_url ); ?>" style="display:inline-flex;flex-wrap:wrap;gap:4px;align-items:center;">
+											<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
+											<input type="hidden" name="snks_google_meet_action" value="manual_assign" />
+											<input type="hidden" name="assign_target_type" value="<?php echo esc_attr( $item['type'] ); ?>" />
+											<input type="hidden" name="session_id" value="<?php echo (int) $item['id']; ?>" />
+											<select name="url_id" aria-label="<?php esc_attr_e( 'Pool URL', 'shrinks' ); ?>" required>
+												<option value=""><?php esc_html_e( 'Choose URL…', 'shrinks' ); ?></option>
+												<?php foreach ( $available_urls as $url_row ) : ?>
+													<option value="<?php echo (int) $url_row->id; ?>">
+														<?php echo esc_html( '#' . (int) $url_row->id . ' — ' . $url_row->meet_url ); ?>
+													</option>
+												<?php endforeach; ?>
+											</select>
+											<button type="submit" class="button button-small"><?php esc_html_e( 'Assign', 'shrinks' ); ?></button>
+										</form>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</form>
+
+			<?php
+			$total_pages = max( 1, (int) ceil( $total_count / $per_page ) );
+			if ( $total_pages > 1 ) :
+				?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<?php
+						echo wp_kses_post(
+							paginate_links(
+								array(
+									'base'      => add_query_arg( 'paged', '%#%', $page_url ),
+									'format'    => '',
+									'prev_text' => '&laquo;',
+									'next_text' => '&raquo;',
+									'total'     => $total_pages,
+									'current'   => $current_page,
+								)
+							)
+						);
+						?>
+					</div>
+				</div>
+			<?php endif; ?>
+
+			<script>
+			(function() {
+				var selectAll = document.getElementById('snks-missing-select-all');
+				if (selectAll) {
+					selectAll.addEventListener('change', function() {
+						document.querySelectorAll('.snks-missing-session-cb').forEach(function(cb) {
+							cb.checked = selectAll.checked;
+						});
+					});
+				}
+				window.snksMissingSessionsBulkConfirm = function(form) {
+					var checked = document.querySelectorAll('.snks-missing-session-cb:checked');
+					if (!checked.length) {
+						alert(<?php echo wp_json_encode( __( 'Select at least one session.', 'shrinks' ) ); ?>);
+						return false;
+					}
+					return confirm(<?php echo wp_json_encode( __( 'Assign the first available pool URL to each selected session?', 'shrinks' ) ); ?>);
+				};
+			})();
+			</script>
+		<?php endif; ?>
 	</div>
 	<?php
 }

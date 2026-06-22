@@ -415,6 +415,177 @@ function snks_google_meet_clear_missing_assignment_notice( $type, $id ) {
 }
 
 /**
+ * Count booked online timetable sessions with no pool URL assigned.
+ *
+ * @return int
+ */
+function snks_count_timetable_sessions_missing_meeting_url() {
+	global $wpdb;
+
+	$pool_table = snks_google_meet_urls_table_name();
+	$timetable  = $wpdb->prefix . 'snks_provider_timetable';
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return (int) $wpdb->get_var(
+		"SELECT COUNT(*)
+		FROM {$timetable} t
+		LEFT JOIN {$pool_table} g ON g.assigned_timetable_id = t.ID AND g.status = 'assigned'
+		WHERE t.attendance_type = 'online'
+		AND t.session_status IN ('open', 'confirmed')
+		AND t.client_id > 0
+		AND g.id IS NULL"
+	);
+}
+
+/**
+ * Count confirmed Rochtah bookings with no pool URL assigned.
+ *
+ * @return int
+ */
+function snks_count_rochtah_bookings_missing_meeting_url() {
+	global $wpdb;
+
+	$pool_table = snks_google_meet_urls_table_name();
+	$rochtah    = $wpdb->prefix . 'snks_rochtah_bookings';
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return (int) $wpdb->get_var(
+		"SELECT COUNT(*)
+		FROM {$rochtah} rb
+		LEFT JOIN {$pool_table} g ON g.assigned_rochtah_booking_id = rb.id AND g.status = 'assigned'
+		WHERE rb.status = 'confirmed'
+		AND g.id IS NULL"
+	);
+}
+
+/**
+ * Total sessions/bookings missing a meeting pool URL.
+ *
+ * @return int
+ */
+function snks_count_sessions_missing_meeting_url() {
+	return snks_count_timetable_sessions_missing_meeting_url() + snks_count_rochtah_bookings_missing_meeting_url();
+}
+
+/**
+ * Timetable rows missing a meeting pool URL.
+ *
+ * @param int $limit  Max rows.
+ * @param int $offset Offset.
+ * @return object[]
+ */
+function snks_get_timetable_sessions_missing_meeting_url( $limit = 50, $offset = 0 ) {
+	global $wpdb;
+
+	$pool_table = snks_google_meet_urls_table_name();
+	$timetable  = $wpdb->prefix . 'snks_provider_timetable';
+	$limit      = max( 1, min( 200, absint( $limit ) ) );
+	$offset     = max( 0, absint( $offset ) );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT t.*
+			FROM {$timetable} t
+			LEFT JOIN {$pool_table} g ON g.assigned_timetable_id = t.ID AND g.status = 'assigned'
+			WHERE t.attendance_type = 'online'
+			AND t.session_status IN ('open', 'confirmed')
+			AND t.client_id > 0
+			AND g.id IS NULL
+			ORDER BY t.date_time ASC
+			LIMIT %d OFFSET %d",
+			$limit,
+			$offset
+		)
+	);
+}
+
+/**
+ * Confirmed Rochtah bookings missing a meeting pool URL.
+ *
+ * @param int $limit  Max rows.
+ * @param int $offset Offset.
+ * @return object[]
+ */
+function snks_get_rochtah_bookings_missing_meeting_url( $limit = 50, $offset = 0 ) {
+	global $wpdb;
+
+	$pool_table = snks_google_meet_urls_table_name();
+	$rochtah    = $wpdb->prefix . 'snks_rochtah_bookings';
+	$limit      = max( 1, min( 200, absint( $limit ) ) );
+	$offset     = max( 0, absint( $offset ) );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	return $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT rb.*, t.display_name AS therapist_name
+			FROM {$rochtah} rb
+			LEFT JOIN {$wpdb->users} t ON rb.therapist_id = t.ID
+			LEFT JOIN {$pool_table} g ON g.assigned_rochtah_booking_id = rb.id AND g.status = 'assigned'
+			WHERE rb.status = 'confirmed'
+			AND g.id IS NULL
+			ORDER BY rb.booking_date ASC, rb.booking_time ASC
+			LIMIT %d OFFSET %d",
+			$limit,
+			$offset
+		)
+	);
+}
+
+/**
+ * Paginated list of timetable + Rochtah rows missing a meeting pool URL.
+ *
+ * @param int $limit  Max rows.
+ * @param int $offset Offset.
+ * @return object[] Rows with item_type, item_id, patient_id, therapist_id, sort_datetime, order_id, therapist_name.
+ */
+function snks_get_sessions_missing_meeting_url( $limit = 50, $offset = 0 ) {
+	global $wpdb;
+
+	$pool_table = snks_google_meet_urls_table_name();
+	$timetable  = $wpdb->prefix . 'snks_provider_timetable';
+	$rochtah    = $wpdb->prefix . 'snks_rochtah_bookings';
+	$limit      = max( 1, min( 200, absint( $limit ) ) );
+	$offset     = max( 0, absint( $offset ) );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$sql = "SELECT * FROM (
+		SELECT
+			'timetable' AS item_type,
+			t.ID AS item_id,
+			t.client_id AS patient_id,
+			t.user_id AS therapist_id,
+			t.date_time AS sort_datetime,
+			t.order_id AS order_id,
+			'' AS therapist_name
+		FROM {$timetable} t
+		LEFT JOIN {$pool_table} g ON g.assigned_timetable_id = t.ID AND g.status = 'assigned'
+		WHERE t.attendance_type = 'online'
+		AND t.session_status IN ('open', 'confirmed')
+		AND t.client_id > 0
+		AND g.id IS NULL
+		UNION ALL
+		SELECT
+			'rochtah' AS item_type,
+			rb.id AS item_id,
+			rb.patient_id AS patient_id,
+			rb.therapist_id AS therapist_id,
+			CONCAT(rb.booking_date, ' ', rb.booking_time) AS sort_datetime,
+			0 AS order_id,
+			COALESCE(u.display_name, '') AS therapist_name
+		FROM {$rochtah} rb
+		LEFT JOIN {$wpdb->users} u ON rb.therapist_id = u.ID
+		LEFT JOIN {$pool_table} g ON g.assigned_rochtah_booking_id = rb.id AND g.status = 'assigned'
+		WHERE rb.status = 'confirmed'
+		AND g.id IS NULL
+	) AS missing_sessions
+	ORDER BY sort_datetime ASC
+	LIMIT %d OFFSET %d";
+
+	return $wpdb->get_results( $wpdb->prepare( $sql, $limit, $offset ) );
+}
+
+/**
  * Admin notice for low Google Meet pool.
  *
  * @return void
@@ -434,47 +605,6 @@ function snks_google_meet_admin_notices() {
 			esc_html__( 'Manage Google Meet URLs', 'shrinks' )
 		);
 	}
-
-	if ( ! snks_google_meet_missing_assignment_notify_enabled() ) {
-		return;
-	}
-
-	$missing = get_option( 'snks_google_meet_missing_assignments', array() );
-	if ( ! is_array( $missing ) || empty( $missing ) ) {
-		return;
-	}
-
-	$url = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
-	printf(
-		'<div class="notice notice-error"><p><strong>%s</strong></p><ul style="list-style:disc;margin-left:1.5em;">',
-		esc_html__( 'Booked sessions are waiting for a meeting URL:', 'shrinks' )
-	);
-	foreach ( array_slice( $missing, 0, 10, true ) as $row ) {
-		$line = sprintf(
-			'%s — %s — %s',
-			isset( $row['label'] ) ? $row['label'] : '',
-			isset( $row['patient_name'] ) && $row['patient_name'] ? $row['patient_name'] : __( 'Patient', 'shrinks' ),
-			isset( $row['datetime'] ) && $row['datetime'] ? $row['datetime'] : ''
-		);
-		printf( '<li>%s</li>', esc_html( $line ) );
-	}
-	if ( count( $missing ) > 10 ) {
-		printf(
-			'<li>%s</li>',
-			esc_html(
-				sprintf(
-					/* translators: %d: additional count */
-					__( '…and %d more.', 'shrinks' ),
-					count( $missing ) - 10
-				)
-			)
-		);
-	}
-	printf(
-		'</ul><p><a href="%s">%s</a></p></div>',
-		esc_url( $url ),
-		esc_html__( 'Assign Google Meet URLs', 'shrinks' )
-	);
 }
 add_action( 'admin_notices', 'snks_google_meet_admin_notices' );
 

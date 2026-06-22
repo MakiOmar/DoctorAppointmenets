@@ -9,7 +9,7 @@ The plugin supports a **global live-stream provider** stored in WordPress option
 | `jitsi` (default) | Existing Jitsi embeds, shortlinks, timers, and wait-for-therapist flows |
 | `google_meet` | **External meeting URLs** fully replace Jitsi — one pooled HTTPS link (Meet, Zoom, Teams, etc.) per online session; no embeds, no `meet.jit.si` fallback |
 
-Admin UI: **Jalsah AI → Meeting URLs** (`functions/admin/google-meet-urls-manager.php`).
+Admin UI: **Jalsah AI → Meeting URLs** and **Unassigned sessions** (`functions/admin/google-meet-urls-manager.php`).
 
 ## Database
 
@@ -25,6 +25,8 @@ URL validation: `snks_normalize_meeting_pool_url()` accepts any valid `https://`
 
 | Function | Purpose |
 |----------|---------|
+| `snks_count_sessions_missing_meeting_url()` | Count booked sessions without a pool URL |
+| `snks_get_sessions_missing_meeting_url( $limit, $offset )` | Paginated timetable + Rochtah rows missing a URL |
 | `snks_normalize_meeting_pool_url( $url )` | Normalize any HTTPS meeting link for pool storage |
 | `snks_validate_meeting_pool_url( $url )` | Validate pool URL |
 | `snks_is_google_meet_active()` | Provider is `google_meet` (external URL pool mode) |
