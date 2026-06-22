@@ -1,4 +1,4 @@
-# Live Streaming Providers (Jitsi + Google Meet)
+# Live Streaming Providers (Jitsi + external meeting URLs)
 
 ## Overview
 
@@ -7,23 +7,27 @@ The plugin supports a **global live-stream provider** stored in WordPress option
 | Value | Behavior |
 |-------|----------|
 | `jitsi` (default) | Existing Jitsi embeds, shortlinks, timers, and wait-for-therapist flows |
-| `google_meet` | Google Meet **fully replaces** Jitsi — no embeds, no `meet.jit.si` fallback |
+| `google_meet` | **External meeting URLs** fully replace Jitsi — one pooled HTTPS link (Meet, Zoom, Teams, etc.) per online session; no embeds, no `meet.jit.si` fallback |
 
-Admin UI: **Jalsah AI → Google Meet URLs** (`functions/admin/google-meet-urls-manager.php`).
+Admin UI: **Jalsah AI → Meeting URLs** (`functions/admin/google-meet-urls-manager.php`).
 
 ## Database
 
 Table `{prefix}snks_google_meet_urls` (see `includes/google-meet-urls-table.php`):
 
-- `meet_url` — unique pool entry
+- `meet_url` — unique pool entry (any valid HTTPS meeting link)
 - `status` — `available` | `assigned`
 - `assigned_timetable_id` or `assigned_rochtah_booking_id` (exclusive)
+
+URL validation: `snks_normalize_meeting_pool_url()` accepts any valid `https://` meeting link (Google Meet, Zoom, Microsoft Teams, etc.).
 
 ## Core API (`functions/helpers/meeting-service.php`)
 
 | Function | Purpose |
 |----------|---------|
-| `snks_is_google_meet_active()` | Provider is `google_meet` |
+| `snks_normalize_meeting_pool_url( $url )` | Normalize any HTTPS meeting link for pool storage |
+| `snks_validate_meeting_pool_url( $url )` | Validate pool URL |
+| `snks_is_google_meet_active()` | Provider is `google_meet` (external URL pool mode) |
 | `snks_should_use_jitsi_meeting_timers()` | `false` when Meet is active |
 | `snks_assign_google_meet_url( $type, $id )` | Assign first available URL (`timetable` or `rochtah`) |
 | `snks_assign_google_meet_url_manual( $url_id, $type, $session_id )` | Assign a specific pool row to a session (admin); replaces existing URL on that session |

@@ -46,40 +46,71 @@ function snks_should_use_jitsi_meeting_timers() {
 }
 
 /**
- * Normalize a Google Meet URL for storage.
+ * Normalize a meeting pool URL for storage (Google Meet, Zoom, Teams, etc.).
  *
  * @param string $url Raw URL.
- * @return string
+ * @return string Normalized https URL or empty string if invalid.
  */
-function snks_normalize_google_meet_url( $url ) {
+function snks_normalize_meeting_pool_url( $url ) {
 	$url = trim( (string) $url );
 	if ( '' === $url ) {
 		return '';
 	}
+
+	if ( ! preg_match( '#^https?://#i', $url ) ) {
+		$url = 'https://' . ltrim( $url, '/' );
+	}
+
 	$parsed = wp_parse_url( $url );
 	if ( empty( $parsed['host'] ) ) {
 		return '';
 	}
-	$host = strtolower( $parsed['host'] );
-	if ( 'meet.google.com' !== $host && 'www.meet.google.com' !== $host ) {
+
+	$scheme = isset( $parsed['scheme'] ) ? strtolower( (string) $parsed['scheme'] ) : 'https';
+	if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
 		return '';
 	}
-	$path = isset( $parsed['path'] ) ? $parsed['path'] : '';
-	$path = untrailingslashit( $path );
-	if ( '' === $path || '/' === $path ) {
-		return '';
-	}
-	return 'https://meet.google.com' . $path;
+
+	$host = strtolower( (string) $parsed['host'] );
+	$path = isset( $parsed['path'] ) ? (string) $parsed['path'] : '';
+	$port = isset( $parsed['port'] ) ? ':' . (int) $parsed['port'] : '';
+	$query    = isset( $parsed['query'] ) ? '?' . $parsed['query'] : '';
+	$fragment = isset( $parsed['fragment'] ) ? '#' . $parsed['fragment'] : '';
+
+	$normalized = esc_url_raw( 'https://' . $host . $port . $path . $query . $fragment );
+	return is_string( $normalized ) && '' !== $normalized ? $normalized : '';
+}
+
+/**
+ * Normalize a Google Meet URL for storage.
+ *
+ * @deprecated  Use snks_normalize_meeting_pool_url().
+ * @param string $url Raw URL.
+ * @return string
+ */
+function snks_normalize_google_meet_url( $url ) {
+	return snks_normalize_meeting_pool_url( $url );
+}
+
+/**
+ * Validate a meeting pool URL.
+ *
+ * @param string $url URL.
+ * @return bool
+ */
+function snks_validate_meeting_pool_url( $url ) {
+	return '' !== snks_normalize_meeting_pool_url( $url );
 }
 
 /**
  * Validate Google Meet URL.
  *
+ * @deprecated  Use snks_validate_meeting_pool_url().
  * @param string $url URL.
  * @return bool
  */
 function snks_validate_google_meet_url( $url ) {
-	return '' !== snks_normalize_google_meet_url( $url );
+	return snks_validate_meeting_pool_url( $url );
 }
 
 /**
@@ -342,11 +373,11 @@ function snks_google_meet_notify_missing_assignment( $type, $id ) {
 
 	$admin_url = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
 	$subject   = sprintf(
-		'[Jalsah] Google Meet URL required — %s',
+		'[Jalsah] Meeting URL required — %s',
 		$context['label']
 	);
 	$body      = sprintf(
-		"A booked online session needs a Google Meet URL assigned.\n\nType: %s\nID: %d\nPatient: %s\nTherapist: %s\nDate/time: %s\nOrder ID: %s\n\nAssign a URL: %s\nTime: %s",
+		"A booked online session needs a meeting URL assigned.\n\nType: %s\nID: %d\nPatient: %s\nTherapist: %s\nDate/time: %s\nOrder ID: %s\n\nAssign a URL: %s\nTime: %s",
 		$context['type'],
 		$context['id'],
 		$context['patient_name'] ? $context['patient_name'] : '-',
@@ -416,7 +447,7 @@ function snks_google_meet_admin_notices() {
 	$url = admin_url( 'admin.php?page=jalsah-ai-google-meet-urls' );
 	printf(
 		'<div class="notice notice-error"><p><strong>%s</strong></p><ul style="list-style:disc;margin-left:1.5em;">',
-		esc_html__( 'Booked sessions are waiting for a Google Meet URL:', 'shrinks' )
+		esc_html__( 'Booked sessions are waiting for a meeting URL:', 'shrinks' )
 	);
 	foreach ( array_slice( $missing, 0, 10, true ) as $row ) {
 		$line = sprintf(
@@ -465,7 +496,7 @@ function snks_bulk_insert_google_meet_urls( $text ) {
 	);
 
 	foreach ( $lines as $line ) {
-		$normalized = snks_normalize_google_meet_url( $line );
+		$normalized = snks_normalize_meeting_pool_url( $line );
 		if ( '' === $normalized ) {
 			++$result['skipped_invalid'];
 			continue;
@@ -692,7 +723,7 @@ function snks_assign_google_meet_url( $type, $id ) {
 		snks_google_meet_maybe_alert_low_pool();
 		return new WP_Error(
 			'meet_pool_empty',
-			__( 'No Google Meet URLs available. Please contact the administrator.', 'shrinks' ),
+			__( 'No meeting URLs available. Please contact the administrator.', 'shrinks' ),
 			array( 'status' => 503 )
 		);
 	}

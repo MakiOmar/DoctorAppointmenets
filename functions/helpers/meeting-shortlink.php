@@ -66,7 +66,7 @@ function snks_handle_meeting_shortlink_redirect() {
 			exit;
 		}
 		wp_die(
-			esc_html__( 'لم يتم تعيين رابط Google Meet لهذه الجلسة بعد. يرجى التواصل مع الإدارة.', 'shrinks' ),
+			esc_html__( 'لم يتم تعيين رابط الجلسة بعد. يرجى التواصل مع الإدارة.', 'shrinks' ),
 			esc_html__( 'خطأ', 'shrinks' ),
 			array( 'response' => 503 )
 		);
@@ -159,7 +159,7 @@ function snks_rest_meeting_by_token( $request ) {
 		snks_google_meet_notify_missing_assignment( 'timetable', $timetable_id );
 		return new WP_Error(
 			'meet_not_assigned',
-			__( 'لم يتم تعيين رابط Google Meet لهذه الجلسة بعد. يرجى التواصل مع الإدارة.', 'shrinks' ),
+			__( 'لم يتم تعيين رابط الجلسة بعد. يرجى التواصل مع الإدارة.', 'shrinks' ),
 			array( 'status' => 503 )
 		);
 	}
@@ -272,9 +272,9 @@ function snks_generate_meeting_token() {
 }
 
 /**
- * Render guest page that opens Google Meet in a new tab.
+ * Render guest page that opens an external meeting URL in a new tab.
  *
- * @param string $join_url Meet URL.
+ * @param string $join_url Meeting URL.
  * @return void
  */
 function snks_render_guest_google_meet_room( $join_url ) {
@@ -285,7 +285,7 @@ function snks_render_guest_google_meet_room( $join_url ) {
 	<head>
 		<meta charset="<?php bloginfo( 'charset' ); ?>">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title><?php esc_html_e( 'جلسة - Google Meet', 'shrinks' ); ?></title>
+		<title><?php esc_html_e( 'جلسة - رابط الاجتماع', 'shrinks' ); ?></title>
 		<style>
 			body { font-family: sans-serif; margin: 0; padding: 2rem; background: #f5f5f5; text-align: center; }
 			.box { max-width: 480px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
@@ -294,8 +294,8 @@ function snks_render_guest_google_meet_room( $join_url ) {
 	</head>
 	<body>
 		<div class="box">
-			<h1><?php esc_html_e( 'فتح جلسة Google Meet', 'shrinks' ); ?></h1>
-			<p><?php esc_html_e( 'سيتم فتح الجلسة في نافذة جديدة. إذا لم تفتح تلقائياً، اضغط الزر أدناه.', 'shrinks' ); ?></p>
+			<h1><?php esc_html_e( 'فتح جلسة الاجتماع', 'shrinks' ); ?></h1>
+			<p><?php esc_html_e( 'سيتم فتح رابط الجلسة في نافذة جديدة. إذا لم يفتح تلقائياً، اضغط الزر أدناه.', 'shrinks' ); ?></p>
 			<a class="btn" href="<?php echo esc_url( $join_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'فتح الجلسة', 'shrinks' ); ?></a>
 		</div>
 		<script>

@@ -13,8 +13,8 @@ defined( 'ABSPATH' ) || die();
 function snks_register_google_meet_urls_admin_menu() {
 	add_submenu_page(
 		'jalsah-ai-management',
-		__( 'Google Meet URLs', 'shrinks' ),
-		__( 'Google Meet URLs', 'shrinks' ),
+		__( 'Meeting URLs', 'shrinks' ),
+		__( 'Meeting URLs', 'shrinks' ),
 		'manage_options',
 		'jalsah-ai-google-meet-urls',
 		'snks_google_meet_urls_admin_page'
@@ -254,7 +254,7 @@ function snks_google_meet_urls_admin_page() {
 	settings_errors( 'snks_google_meet' );
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Google Meet URLs', 'shrinks' ); ?></h1>
+		<h1><?php esc_html_e( 'Meeting URLs', 'shrinks' ); ?></h1>
 
 		<?php if ( snks_is_google_meet_active() && $available < $threshold ) : ?>
 			<div class="notice notice-warning inline">
@@ -291,7 +291,7 @@ function snks_google_meet_urls_admin_page() {
 		if ( is_array( $missing_assignments ) && ! empty( $missing_assignments ) ) :
 			?>
 			<div class="notice notice-error inline" style="margin:1em 0;">
-				<p><strong><?php esc_html_e( 'Sessions waiting for a Google Meet URL', 'shrinks' ); ?></strong></p>
+				<p><strong><?php esc_html_e( 'Sessions waiting for a meeting URL', 'shrinks' ); ?></strong></p>
 				<ul style="list-style:disc;margin-left:1.5em;">
 					<?php foreach ( $missing_assignments as $row ) : ?>
 						<li>
@@ -322,9 +322,9 @@ function snks_google_meet_urls_admin_page() {
 					<td>
 						<select name="snks_live_stream_provider" id="snks_live_stream_provider">
 							<option value="jitsi" <?php selected( $provider, 'jitsi' ); ?>><?php esc_html_e( 'Jitsi (default)', 'shrinks' ); ?></option>
-							<option value="google_meet" <?php selected( $provider, 'google_meet' ); ?>><?php esc_html_e( 'Google Meet (replaces Jitsi)', 'shrinks' ); ?></option>
+							<option value="google_meet" <?php selected( $provider, 'google_meet' ); ?>><?php esc_html_e( 'External meeting URLs (replaces Jitsi)', 'shrinks' ); ?></option>
 						</select>
-						<p class="description"><?php esc_html_e( 'When Google Meet is enabled, Jitsi embeds and timer-based join flows are disabled site-wide for online sessions.', 'shrinks' ); ?></p>
+						<p class="description"><?php esc_html_e( 'When external URLs are enabled, one pooled link (Google Meet, Zoom, Teams, etc.) is assigned per online session. Jitsi embeds and timer-based join flows are disabled site-wide.', 'shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -348,7 +348,7 @@ function snks_google_meet_urls_admin_page() {
 					<td>
 						<label>
 							<input type="checkbox" name="snks_google_meet_missing_assignment_notify_enabled" value="1" <?php checked( get_option( 'snks_google_meet_missing_assignment_notify_enabled', '1' ), '1' ); ?> />
-							<?php esc_html_e( 'Notify admins when a booked online session has no Google Meet URL (dashboard notice + email, once per session per 24h)', 'shrinks' ); ?>
+							<?php esc_html_e( 'Notify admins when a booked online session has no meeting URL (dashboard notice + email, once per session per 24h)', 'shrinks' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Disable this while backfilling URLs for existing bookings to avoid alert floods. Unchecking clears the current waiting list.', 'shrinks' ); ?></p>
 					</td>
@@ -371,7 +371,8 @@ function snks_google_meet_urls_admin_page() {
 			<?php wp_nonce_field( 'snks_google_meet_urls' ); ?>
 			<input type="hidden" name="snks_google_meet_action" value="bulk_add" />
 			<p>
-				<textarea name="snks_bulk_meet_urls" rows="10" class="large-text code" placeholder="https://meet.google.com/abc-defg-hij"></textarea>
+				<textarea name="snks_bulk_meet_urls" rows="10" class="large-text code" placeholder="https://meet.google.com/abc-defg-hij&#10;https://zoom.us/j/1234567890"></textarea>
+				<p class="description"><?php esc_html_e( 'One HTTPS meeting link per line (Google Meet, Zoom, Microsoft Teams, or any other platform).', 'shrinks' ); ?></p>
 			</p>
 			<?php submit_button( __( 'Add URLs', 'shrinks' ), 'secondary' ); ?>
 		</form>
