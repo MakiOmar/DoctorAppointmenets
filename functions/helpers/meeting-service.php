@@ -140,6 +140,15 @@ function snks_google_meet_low_pool_email_recipients() {
 }
 
 /**
+ * Whether missing Google Meet URL admin notices and emails are enabled.
+ *
+ * @return bool
+ */
+function snks_google_meet_missing_assignment_notify_enabled() {
+	return '1' === get_option( 'snks_google_meet_missing_assignment_notify_enabled', '1' );
+}
+
+/**
  * Maybe send low-pool admin notice + email.
  *
  * @return void
@@ -300,7 +309,7 @@ function snks_google_meet_missing_assignment_context( $type, $id ) {
  * @return void
  */
 function snks_google_meet_notify_missing_assignment( $type, $id ) {
-	if ( ! snks_is_google_meet_active() ) {
+	if ( ! snks_is_google_meet_active() || ! snks_google_meet_missing_assignment_notify_enabled() ) {
 		return;
 	}
 	if ( snks_get_assigned_google_meet_row( $type, $id ) ) {
@@ -393,6 +402,10 @@ function snks_google_meet_admin_notices() {
 			esc_url( $url ),
 			esc_html__( 'Manage Google Meet URLs', 'shrinks' )
 		);
+	}
+
+	if ( ! snks_google_meet_missing_assignment_notify_enabled() ) {
+		return;
 	}
 
 	$missing = get_option( 'snks_google_meet_missing_assignments', array() );

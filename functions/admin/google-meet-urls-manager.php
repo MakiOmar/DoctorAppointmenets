@@ -47,6 +47,11 @@ function snks_google_meet_urls_handle_post() {
 		update_option( 'snks_google_meet_low_pool_threshold', max( 1, absint( $_POST['snks_google_meet_low_pool_threshold'] ?? 10 ) ) );
 		update_option( 'snks_google_meet_low_pool_notify_enabled', ! empty( $_POST['snks_google_meet_low_pool_notify_enabled'] ) ? '1' : '0' );
 		update_option( 'snks_google_meet_low_pool_notify_emails', sanitize_textarea_field( wp_unslash( $_POST['snks_google_meet_low_pool_notify_emails'] ?? '' ) ) );
+		$missing_notify = ! empty( $_POST['snks_google_meet_missing_assignment_notify_enabled'] ) ? '1' : '0';
+		update_option( 'snks_google_meet_missing_assignment_notify_enabled', $missing_notify );
+		if ( '0' === $missing_notify ) {
+			delete_option( 'snks_google_meet_missing_assignments' );
+		}
 		add_settings_error( 'snks_google_meet', 'saved', __( 'Settings saved.', 'shrinks' ), 'success' );
 		snks_google_meet_maybe_alert_low_pool();
 		return;
@@ -280,7 +285,9 @@ function snks_google_meet_urls_admin_page() {
 		</p>
 
 		<?php
-		$missing_assignments = get_option( 'snks_google_meet_missing_assignments', array() );
+		$missing_assignments = snks_google_meet_missing_assignment_notify_enabled()
+			? get_option( 'snks_google_meet_missing_assignments', array() )
+			: array();
 		if ( is_array( $missing_assignments ) && ! empty( $missing_assignments ) ) :
 			?>
 			<div class="notice notice-error inline" style="margin:1em 0;">
@@ -334,6 +341,16 @@ function snks_google_meet_urls_admin_page() {
 							<input type="checkbox" name="snks_google_meet_low_pool_notify_enabled" value="1" <?php checked( get_option( 'snks_google_meet_low_pool_notify_enabled', '1' ), '1' ); ?> />
 							<?php esc_html_e( 'Send email when pool is low', 'shrinks' ); ?>
 						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Missing URL alerts', 'shrinks' ); ?></th>
+					<td>
+						<label>
+							<input type="checkbox" name="snks_google_meet_missing_assignment_notify_enabled" value="1" <?php checked( get_option( 'snks_google_meet_missing_assignment_notify_enabled', '1' ), '1' ); ?> />
+							<?php esc_html_e( 'Notify admins when a booked online session has no Google Meet URL (dashboard notice + email, once per session per 24h)', 'shrinks' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Disable this while backfilling URLs for existing bookings to avoid alert floods. Unchecking clears the current waiting list.', 'shrinks' ); ?></p>
 					</td>
 				</tr>
 				<tr>
