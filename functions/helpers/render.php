@@ -944,7 +944,7 @@ function snks_booking_item_template( $record ) {
 			</div>
 			<?php if ( 'online' === $record->attendance_type && false === strpos( $_SERVER['HTTP_REFERER'], 'room_id' ) ) { ?>
 			<div class="snks-appointment-button anony-grid-col anony-grid-col-2 snks-bg">
-				<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="{button_url}" data-url="{room_url}"{meet_target_attrs} style="color:#fff">{button_text}</a>
+				{meet_button_html}
 			</div>
 			<?php } ?>
 		</div>
@@ -1024,20 +1024,27 @@ function template_str_replace( $record ) {
 	$room = $button_url; // Set room URL same as button URL
 	$status_class = '';
 	$meet_target  = '';
+	$meet_button_html = '';
 
-	if ( 'online' === $record->attendance_type && function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
-		$meeting = snks_get_session_meeting_for_timetable( $record->ID );
-		if ( ! empty( $meeting['join_url'] ) ) {
-			$button_url    = esc_url( $meeting['join_url'] );
-			$room          = $button_url;
-			$meet_target   = ' target="_blank" rel="noopener noreferrer"';
-			$is_too_early  = false;
-			$status_class  = '';
-		}
+	$meet_btn = function_exists( 'snks_get_booking_meeting_button_config' )
+		? snks_get_booking_meeting_button_config( $record->ID, $record )
+		: array(
+			'text'         => 'ابدأ الجلسة',
+			'url'          => $button_url,
+			'target_attrs' => '',
+			'copy_mode'    => false,
+		);
+	$button_url  = $meet_btn['url'];
+	$room        = $button_url;
+	$meet_target = $meet_btn['target_attrs'];
+	if ( $meet_btn['copy_mode'] ) {
+		$button_text  = $meet_btn['text'];
+		$is_too_early = false;
+		$status_class = '';
 	}
-	
-	// For AI sessions that are too early, disable the button
-	if ( $is_ai_session && $is_too_early ) {
+
+	// For AI sessions that are too early, disable the button (Jitsi timer flow only).
+	if ( $is_ai_session && $is_too_early && empty( $meet_btn['copy_mode'] ) ) {
 		$button_text = '<svg style="display: inline-block; width: 20px; height: 20px; margin-left: 8px; animation: spin 1s linear infinite; vertical-align: middle;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity: 0.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> الجلسة لم تبدأ بعد';
 		$button_url = '#';
 		$room = '#'; // Also disable room URL for disabled sessions
@@ -1110,6 +1117,14 @@ function template_str_replace( $record ) {
 	}
 	$template = preg_replace( '/<!--patientaction-->.*?<!--\/patientaction-->/s', '', $template );
 
+	if ( 'online' === $record->attendance_type ) {
+		if ( $is_ai_session && $is_too_early && empty( $meet_btn['copy_mode'] ) ) {
+			$meet_button_html = '<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="#" data-url="#" style="color:#fff">' . $button_text . '</a>';
+		} elseif ( function_exists( 'snks_render_booking_meeting_button' ) ) {
+			$meet_button_html = snks_render_booking_meeting_button( $record->ID, $record, 'rotate-90' );
+		}
+	}
+
 	return str_replace(
 		array(
 			'{session_id}',
@@ -1123,6 +1138,7 @@ function template_str_replace( $record ) {
 			'{button_url}',
 			'{room_url}',
 			'{meet_target_attrs}',
+			'{meet_button_html}',
 			'{button_text}',
 			'{snks_timer}',
 			'{status_class}',
@@ -1140,6 +1156,7 @@ function template_str_replace( $record ) {
 			$button_url,
 			$room,
 			$meet_target,
+			$meet_button_html,
 			$button_text,
 			// Show timer for AI sessions that are too early
 			( $is_ai_session && $is_too_early ) ? '<span class="snks-apointment-timer"></span>' : '',
@@ -1164,16 +1181,22 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 		$client_id = $record->client_id;
 	}
 	$user_details        = snks_user_details( $record->user_id );
-	$button_text = 'ابدأ الجلسة';
-	$room        = site_url( 'meeting-room/?room_id=' . $record->ID );
-	$meet_target = '';
-
-	if ( 'online' === $record->attendance_type && function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
-		$meeting = snks_get_session_meeting_for_timetable( $record->ID );
-		if ( ! empty( $meeting['join_url'] ) ) {
-			$room        = esc_url( $meeting['join_url'] );
-			$meet_target = ' target="_blank" rel="noopener noreferrer"';
-		}
+	$button_text         = 'ابدأ الجلسة';
+	$room                = site_url( 'meeting-room/?room_id=' . $record->ID );
+	$meet_target         = '';
+	$meet_button_html    = '';
+	$meet_btn            = function_exists( 'snks_get_booking_meeting_button_config' )
+		? snks_get_booking_meeting_button_config( $record->ID, $record )
+		: array(
+			'text'         => 'ابدأ الجلسة',
+			'url'          => $room,
+			'target_attrs' => '',
+			'copy_mode'    => false,
+		);
+	$room        = $meet_btn['url'];
+	$meet_target = $meet_btn['target_attrs'];
+	if ( $meet_btn['copy_mode'] ) {
+		$button_text = $meet_btn['text'];
 	}
 	
 	// Check if this is an AI session
@@ -1190,7 +1213,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 	// For AI sessions, only disable if too early (before session time)
 	// Don't disable after session starts or ends
 	if ( $is_ai_session ) {
-		if ( $is_too_early ) {
+		if ( $is_too_early && empty( $meet_btn['copy_mode'] ) ) {
 			// Only disable if session hasn't started yet
 			$_class = 'snks-disabled';
 			$room   = '#';
@@ -1253,6 +1276,14 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 		// Hide diagnosis row for non-AI sessions
 		$template = preg_replace( '/<!--diagnosis-->.*?<!--\/diagnosis-->/s', '', $template );
 	}
+
+	if ( 'online' === $record->attendance_type ) {
+		if ( 'snks-disabled' === $_class || '#' === $room ) {
+			$meet_button_html = '<a class="snks-count-down rotate-90 anony-flex atrn-button snks-start-meeting" href="#" data-url="#" style="color:#fff">' . esc_html( $button_text ) . '</a>';
+		} elseif ( function_exists( 'snks_render_booking_meeting_button' ) ) {
+			$meet_button_html = snks_render_booking_meeting_button( $record->ID, $record, 'rotate-90' );
+		}
+	}
 	
 	return str_replace(
 		array(
@@ -1267,6 +1298,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			'{button_url}',
 			'{room_url}',
 			'{meet_target_attrs}',
+			'{meet_button_html}',
 			'{button_text}',
 			'{snks_timer}',
 			'{status_class}',
@@ -1285,6 +1317,7 @@ function patient_template_str_replace( $record, $edit, $_class, $room ) {
 			esc_url( $room ),
 			esc_url( $room ),
 			$meet_target,
+			$meet_button_html,
 			$button_text,
 			'<span class="snks-apointment-timer"></span>',
 			$_class,
@@ -1860,17 +1893,10 @@ function snks_render_sessions_listing( $tense ) {
 				'_period'      => $session->period,
 			);
 			if ( 'online' === $session->attendance_type && 'postponed' !== $session->session_status ) {
-				$meet_attrs = '';
-				if ( function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
-					$meeting = snks_get_session_meeting_for_timetable( $session->ID );
-					if ( ! empty( $meeting['join_url'] ) ) {
-						$room       = esc_url( $meeting['join_url'] );
-						$meet_attrs = ' target="_blank" rel="noopener noreferrer"';
-					}
-				}
-				$start = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;border-top-color:#fff;" colspan="2">
-					<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . esc_url( $room ) . '" data-url="' . esc_url( $room ) . '"' . $meet_attrs . '>ابدأ الجلسة</a>
-				</td></tr>';
+				$meet_btn_html = function_exists( 'snks_render_booking_meeting_button' )
+					? snks_render_booking_meeting_button( $session->ID, $session, 'flex-h-center anony-padding-5' )
+					: '<a class="snks-count-down anony-flex atrn-button snks-start-meeting flex-h-center anony-padding-5" href="' . esc_url( $room ) . '" data-url="' . esc_url( $room ) . '">ابدأ الجلسة</a>';
+				$start = '<tr><td style="background-color: #024059 !important;border: 1px solid #024059;border-top-color:#fff;" colspan="2">' . $meet_btn_html . '</td></tr>';
 			}
 			$output .= ' <div id="snks-booking-item-' . esc_attr( $session->ID ) . '" ' . snks_session_timing_data_attrs( $session ) . ' class="snks-booking-item snks-patient-booking-item ' . esc_attr( $class ) . '"> ';
 			$output .= str_replace(

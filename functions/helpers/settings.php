@@ -990,14 +990,16 @@ function snks_preview_actions( $day, $index, $target = 'meta' ) {
 		$html .= '<a href="#" class="button delay-booking" data-index="' . $index . '" data-day="' . $day . '">تأخير</a>';
 		$meeting_href = add_query_arg( 'room_id', $index, site_url( '/meeting-room' ) );
 		$meet_attrs   = '';
-		if ( function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
-			$meeting = snks_get_session_meeting_for_timetable( (int) $index );
-			if ( ! empty( $meeting['join_url'] ) ) {
-				$meeting_href = esc_url( $meeting['join_url'] );
-				$meet_attrs   = ' target="_blank" rel="noopener noreferrer"';
-			}
+		$meet_label   = 'ابدأ الجلسة';
+		$meet_btn     = array( 'copy_mode' => false );
+		if ( function_exists( 'snks_get_booking_meeting_button_config' ) ) {
+			$meet_btn     = snks_get_booking_meeting_button_config( (int) $index );
+			$meeting_href = $meet_btn['url'];
+			$meet_attrs   = $meet_btn['target_attrs'];
+			$meet_label   = $meet_btn['text'];
 		}
-		$html .= '<a href="' . esc_url( $meeting_href ) . '" class="button start-meeting"' . $meet_attrs . '>ابدأ الجلسة</a>';
+		$copy_class = ! empty( $meet_btn['copy_mode'] ) ? ' snks-copy-meeting-link' : '';
+		$html      .= '<a href="' . esc_url( $meeting_href ) . '" class="button start-meeting' . esc_attr( $copy_class ) . '" data-url="' . esc_url( $meeting_href ) . '" data-copy-mode="' . ( ! empty( $meet_btn['copy_mode'] ) ? '1' : '0' ) . '"' . $meet_attrs . '>' . esc_html( $meet_label ) . '</a>';
 	}
 	return $html;
 }

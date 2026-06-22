@@ -1220,6 +1220,63 @@ function snks_get_assigned_google_meet_row( $type, $id ) {
 }
 
 /**
+ * Booking list button config for online session join (Jitsi room vs copy external URL).
+ *
+ * @param int         $timetable_id Timetable ID.
+ * @param object|null $record       Optional timetable row.
+ * @return array{text:string,url:string,target_attrs:string,copy_mode:bool}
+ */
+function snks_get_booking_meeting_button_config( $timetable_id, $record = null ) {
+	$timetable_id = absint( $timetable_id );
+	$config       = array(
+		'text'         => 'ابدأ الجلسة',
+		'url'          => site_url( 'meeting-room/?room_id=' . $timetable_id ),
+		'target_attrs' => '',
+		'copy_mode'    => false,
+	);
+
+	if ( $record && ! empty( $record->attendance_type ) && 'online' !== $record->attendance_type ) {
+		return $config;
+	}
+
+	if ( snks_is_google_meet_active() && function_exists( 'snks_get_session_meeting_for_timetable' ) ) {
+		$meeting = snks_get_session_meeting_for_timetable( $timetable_id );
+		if ( ! empty( $meeting['join_url'] ) ) {
+			$config['text']         = 'إنسخ رابط الجلسة';
+			$config['url']          = esc_url( $meeting['join_url'] );
+			$config['copy_mode']    = true;
+			$config['target_attrs'] = '';
+		}
+	}
+
+	return $config;
+}
+
+/**
+ * Render booking list meeting button anchor.
+ *
+ * @param int         $timetable_id  Timetable ID.
+ * @param object|null $record        Optional timetable row.
+ * @param string      $extra_classes Additional CSS classes.
+ * @return string
+ */
+function snks_render_booking_meeting_button( $timetable_id, $record = null, $extra_classes = '' ) {
+	$config     = snks_get_booking_meeting_button_config( $timetable_id, $record );
+	$copy_class = $config['copy_mode'] ? ' snks-copy-meeting-link' : '';
+	$classes    = trim( 'snks-count-down anony-flex atrn-button snks-start-meeting ' . $extra_classes . $copy_class );
+
+	return sprintf(
+		'<a class="%1$s" href="%2$s" data-url="%3$s" data-copy-mode="%4$s"%5$s style="color:#fff">%6$s</a>',
+		esc_attr( $classes ),
+		esc_url( $config['url'] ),
+		esc_url( $config['url'] ),
+		$config['copy_mode'] ? '1' : '0',
+		$config['target_attrs'],
+		esc_html( $config['text'] )
+	);
+}
+
+/**
  * Ensure Google Meet URL is assigned when provider is Meet (idempotent).
  *
  * @param string $type timetable|rochtah.

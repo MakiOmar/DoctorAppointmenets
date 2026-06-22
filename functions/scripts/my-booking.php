@@ -448,8 +448,11 @@ add_action(
 							} else {
 								parent.removeClass('snks-disabled');
 								$('.snks-apointment-timer', parent).html('<span>حان موعد الجلسة</span>');
-								$('.snks-start-meeting', parent).attr('href', meetingRoomBase + itemID);
-								$('.snks-start-meeting', parent).text('إبدأ الجلسة');
+								var startBtn = $('.snks-start-meeting', parent);
+								if (!startBtn.hasClass('snks-copy-meeting-link') && startBtn.data('copy-mode') !== 1 && startBtn.data('copy-mode') !== '1') {
+									startBtn.attr('href', meetingRoomBase + itemID);
+									startBtn.text('إبدأ الجلسة');
+								}
 							}
 						}
 					}, 1000);
@@ -464,9 +467,61 @@ add_action(
 				<?php endif; ?>
 			});
 
+			<?php if ( function_exists( 'snks_should_use_jitsi_meeting_timers' ) && snks_should_use_jitsi_meeting_timers() ) : ?>
 			$(window).on('jet-popup/show-event/after-show jet-popup/render-content/render-custom-content', function() {
 				initializeSnksTimer();
 			});
+			<?php endif; ?>
+
+			<?php if ( function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active() ) : ?>
+			function snksShowMeetingLinkCopiedAlert() {
+				if (typeof Swal !== 'undefined') {
+					Swal.fire({
+						icon: 'success',
+						text: 'تم نسخ الرابط، يرجى فتحه باستخدام أحد المتصفحات المتاحة لديك',
+						confirmButtonText: 'حسناً'
+					});
+					return;
+				}
+				window.alert('تم نسخ الرابط، يرجى فتحه باستخدام أحد المتصفحات المتاحة لديك');
+			}
+
+			function snksCopyMeetingUrl(url, done) {
+				if (!url || url === '#') {
+					return;
+				}
+				if (navigator.clipboard && window.isSecureContext) {
+					navigator.clipboard.writeText(url).then(done).catch(function() {
+						snksCopyMeetingUrlFallback(url, done);
+					});
+					return;
+				}
+				snksCopyMeetingUrlFallback(url, done);
+			}
+
+			function snksCopyMeetingUrlFallback(url, done) {
+				var $temp = $('<textarea>');
+				$('body').append($temp);
+				$temp.val(url).select();
+				try {
+					document.execCommand('copy');
+					done();
+				} catch (e) {
+					window.alert(url);
+				}
+				$temp.remove();
+			}
+
+			$(document).on('click', 'a.snks-copy-meeting-link', function(event) {
+				if ($(this).closest('.snks-disabled').length) {
+					event.preventDefault();
+					return;
+				}
+				event.preventDefault();
+				var url = $(this).data('url') || $(this).attr('href');
+				snksCopyMeetingUrl(url, snksShowMeetingLinkCopiedAlert);
+			});
+			<?php endif; ?>
 		})(jQuery);
 		</script>
 	<?php
