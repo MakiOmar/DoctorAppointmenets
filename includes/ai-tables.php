@@ -139,6 +139,30 @@ function snks_create_ai_tables() {
 		KEY transaction_id (transaction_id),
 		KEY status (status)
 	) " . $wpdb->get_charset_collate();
+
+	// Rochetah Google Meet bookings (standalone manual bookings).
+	$rochtah_meet_bookings_table = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
+	$rochtah_meet_bookings_sql   = "CREATE TABLE IF NOT EXISTS $rochtah_meet_bookings_table (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		patient_id BIGINT(20) UNSIGNED NOT NULL,
+		rochtah_doctor_id BIGINT(20) UNSIGNED NOT NULL,
+		meet_url VARCHAR(512) NOT NULL,
+		appointment_datetime DATETIME NOT NULL,
+		diagnosis_id INT(11) DEFAULT NULL,
+		diagnosis_name VARCHAR(255) NOT NULL DEFAULT '',
+		diagnosis_reasoning TEXT,
+		created_by BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+		status ENUM('scheduled','completed','cancelled') NOT NULL DEFAULT 'scheduled',
+		wa_doctor_sent TINYINT(1) NOT NULL DEFAULT 0,
+		wa_patient_sent TINYINT(1) NOT NULL DEFAULT 0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY patient_id (patient_id),
+		KEY rochtah_doctor_id (rochtah_doctor_id),
+		KEY appointment_datetime (appointment_datetime),
+		KEY status (status)
+	) " . $wpdb->get_charset_collate();
 	
 	// Execute SQL
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -149,6 +173,7 @@ function snks_create_ai_tables() {
 	dbDelta( $ai_cart_sql );
 	dbDelta( $ai_orders_sql );
 	dbDelta( $ai_payments_sql );
+	dbDelta( $rochtah_meet_bookings_sql );
 	
 	// Add missing columns to existing tables if they don't exist
 	snks_add_missing_ai_columns();

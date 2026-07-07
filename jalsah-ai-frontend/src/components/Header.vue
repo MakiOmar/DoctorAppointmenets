@@ -138,6 +138,20 @@
                 </svg>
                 <span>{{ $t('nav.manualBooking') }}</span>
               </router-link>
+
+              <!-- Rochtah Google Meet booking -->
+              <router-link
+                v-if="canAccessRochtahMeetBooking"
+                to="/rochtah-meet-booking"
+                class="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-gray-700 hover:bg-gray-50 hover:text-primary-500 rounded-md transition-colors"
+                :class="[{ 'bg-gray-50 text-primary-500': $route.path === '/rochtah-meet-booking' }, locale === 'ar' ? 'flex-row-reverse' : '']"
+                @click="mobileMenuOpen = false"
+              >
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>{{ $t('nav.rochtahMeetBooking') }}</span>
+              </router-link>
               
               <!-- Therapists -->
               <router-link
@@ -352,6 +366,18 @@ export default {
     const isSecretary = computed(() => {
       return userRole.value === 'secretary' || userRoles.value.includes('secretary')
     })
+    const canAccessRochtahMeetBooking = computed(() => {
+      const roles = userRoles.value
+      const role = userRole.value
+      return (
+        role === 'administrator' ||
+        roles.includes('administrator') ||
+        role === 'secretary' ||
+        roles.includes('secretary') ||
+        role === 'rochtah_doctor' ||
+        roles.includes('rochtah_doctor')
+      )
+    })
     const { canAccessDirectConversations } = useDirectConversationsAccess()
     const showDirectConversationNotifications = computed(
       () => isAuthenticated.value && canAccessDirectConversations.value
@@ -453,6 +479,7 @@ export default {
       isAuthenticated,
       showDirectConversationNotifications,
       isSecretary,
+      canAccessRochtahMeetBooking,
       cartItemCount,
       logout,
       lastDiagnosisId,

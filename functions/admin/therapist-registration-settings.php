@@ -189,6 +189,8 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_template_rosheta_doctor', sanitize_text_field( $_POST['template_rosheta_doctor'] ?? 'rosheta_doctor' ) );
 		update_option( 'snks_template_prescription1', sanitize_text_field( $_POST['template_prescription1'] ?? 'prescription1' ) );
 		update_option( 'snks_template_prescription2', sanitize_text_field( $_POST['template_prescription2'] ?? 'prescription2' ) );
+		update_option( 'snks_template_rochtah_meet_doctor', sanitize_text_field( $_POST['template_rochtah_meet_doctor'] ?? 'rochtah_meet_doctor' ) );
+		update_option( 'snks_template_rochtah_meet_patient', sanitize_text_field( $_POST['template_rochtah_meet_patient'] ?? 'rochtah_meet_patient' ) );
 		update_option( 'snks_template_patient_rem_24h', sanitize_text_field( $_POST['template_patient_rem_24h'] ?? 'patient_rem_24h' ) );
 		update_option( 'snks_template_patient_rem_1h', sanitize_text_field( $_POST['template_patient_rem_1h'] ?? 'patient_rem_1h' ) );
 		update_option( 'snks_template_patient_rem_now', sanitize_text_field( $_POST['template_patient_rem_now'] ?? 'patient_rem_now' ) );
@@ -404,6 +406,26 @@ function snks_therapist_registration_settings_page() {
 							<input type="text" name="template_rosheta_doctor" id="template_rosheta_doctor" value="<?php echo esc_attr( get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ) ); ?>" class="regular-text" placeholder="rosheta_doctor">
 							<button type="button" class="button test-whatsapp-notification" data-template="rosheta_doctor" data-params='{"patient": "محمد علي", "day": "الاثنين", "date": "2025-11-10", "time": "10:00 ص"}' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Notify rochtah doctor on booking | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_rochtah_meet_doctor">Rochtah Meet Booking → Doctor</label>
+						</th>
+						<td>
+							<input type="text" name="template_rochtah_meet_doctor" id="template_rochtah_meet_doctor" value="<?php echo esc_attr( get_option( 'snks_template_rochtah_meet_doctor', 'rochtah_meet_doctor' ) ); ?>" class="regular-text" placeholder="rochtah_meet_doctor">
+							<button type="button" class="button test-whatsapp-notification" data-template="rochtah_meet_doctor" data-params='{"patient": "محمد علي", "day": "الاثنين", "date": "2026-07-07", "time": "03:00 pm", "meet_url": "https://meet.google.com/abc-defg-hij", "diagnosis_name": "الاكتئاب", "reasoning": "أعراض مستمرة منذ شهرين"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Notify rochtah doctor on Google Meet booking | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{meet_url}}</code>, <code>{{diagnosis_name}}</code>, <code>{{reasoning}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_rochtah_meet_patient">Rochtah Meet Booking → Patient</label>
+						</th>
+						<td>
+							<input type="text" name="template_rochtah_meet_patient" id="template_rochtah_meet_patient" value="<?php echo esc_attr( get_option( 'snks_template_rochtah_meet_patient', 'rochtah_meet_patient' ) ); ?>" class="regular-text" placeholder="rochtah_meet_patient">
+							<button type="button" class="button test-whatsapp-notification" data-template="rochtah_meet_patient" data-params='{"doctor": "د. أحمد", "day": "الاثنين", "date": "2026-07-07", "time": "03:00 pm", "meet_url": "https://meet.google.com/abc-defg-hij"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Notify patient on Google Meet rochtah booking | <code>{{doctor}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{meet_url}}</code></p>
 						</td>
 					</tr>
 					<tr>

@@ -158,6 +158,8 @@ class SNKS_AI_Integration {
 		add_rewrite_rule( '^api/ai/users/search/?$', 'index.php?ai_endpoint=users/search', 'top' );
 		add_rewrite_rule( '^api/ai/manual-booking/([^/]+)/?$', 'index.php?ai_endpoint=manual-booking/$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/manual-booking/?$', 'index.php?ai_endpoint=manual-booking', 'top' );
+		add_rewrite_rule( '^api/ai/rochtah-meet/([^/]+)/?$', 'index.php?ai_endpoint=rochtah-meet/$matches[1]', 'top' );
+		add_rewrite_rule( '^api/ai/rochtah-meet/?$', 'index.php?ai_endpoint=rochtah-meet', 'top' );
 		add_rewrite_rule( '^api/ai/([^/]+)/?$', 'index.php?ai_endpoint=$matches[1]', 'top' );
 		add_rewrite_rule( '^api/ai/?$', 'index.php?ai_endpoint=ping', 'top' );
 		// Add rewrite rule for v2 endpoints
@@ -828,6 +830,9 @@ class SNKS_AI_Integration {
 				break;
 			case 'manual-booking':
 				$this->handle_manual_booking_endpoint( $method, $path );
+				break;
+			case 'rochtah-meet':
+				$this->handle_rochtah_meet_endpoint( $method, $path );
 				break;
 			default:
 				$this->send_error( 'Endpoint not found', 404 );
@@ -7541,6 +7546,86 @@ Best regards,
 						$error_data
 					);
 				}
+				return;
+
+			default:
+				$this->send_error( 'Endpoint not found', 404 );
+		}
+	}
+
+	/**
+	 * Handle rochtah-meet API (admin/secretary/rochtah_doctor). JWT required.
+	 * Sub-actions: doctors, search-patient, patient-diagnosis, submit.
+	 *
+	 * @param string $method HTTP method.
+	 * @param array  $path   Path segments.
+	 * @return void
+	 */
+	private function handle_rochtah_meet_endpoint( $method, $path ) {
+		$user_id = $this->verify_jwt_token();
+		if ( ! function_exists( 'snks_rochtah_meet_user_can_access' ) || ! snks_rochtah_meet_user_can_access( $user_id ) ) {
+			$this->send_error( 'Forbidden', 403 );
+			return;
+		}
+		wp_set_current_user( $user_id );
+
+		$sub   = isset( $path[1] ) ? $path[1] : '';
+		$input = array();
+		if ( $method === 'POST' ) {
+			$raw   = file_get_contents( 'php://input' );
+			$input = json_decode( $raw, true );
+			if ( ! is_array( $input ) ) {
+				$input = array();
+			}
+		}
+
+		switch ( $sub ) {
+			case 'doctors':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$this->send_success( snks_rochtah_meet_data_doctors() );
+				return;
+
+			case 'search-patient':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$q = isset( $input['q'] ) ? $input['q'] : '';
+				$this->send_success( snks_rochtah_meet_data_search_patient( $q ) );
+				return;
+
+			case 'patient-diagnosis':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$patient_id = isset( $_GET['patient_id'] ) ? absint( $_GET['patient_id'] ) : 0;
+				$this->send_success(
+					array(
+						'diagnosis' => snks_rochtah_meet_data_patient_diagnosis( $patient_id ),
+					)
+				);
+				return;
+
+			case 'submit':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$result = snks_rochtah_meet_submit_booking( $input, $user_id );
+				if ( is_wp_error( $result ) ) {
+					$this->send_error( $result->get_error_message(), 400 );
+					return;
+				}
+				$this->send_success(
+					array(
+						'message' => 'Booking created successfully',
+						'booking' => $result,
+					)
+				);
 				return;
 
 			default:

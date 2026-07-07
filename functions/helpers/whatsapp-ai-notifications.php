@@ -32,6 +32,8 @@ function snks_get_whatsapp_notification_settings() {
         'template_prescription1' => get_option( 'snks_template_prescription1', 'prescription1' ),
         'template_prescription2' => get_option( 'snks_template_prescription2', 'prescription2' ),
         'template_password' => get_option( 'snks_template_password', 'password' ),
+        'template_rochtah_meet_doctor' => get_option( 'snks_template_rochtah_meet_doctor', 'rochtah_meet_doctor' ),
+        'template_rochtah_meet_patient' => get_option( 'snks_template_rochtah_meet_patient', 'rochtah_meet_patient' ),
 	);
 }
 
@@ -597,6 +599,135 @@ function snks_send_rosheta_appointment_notification( $booking_id ) {
 	}
 	
 	return false;
+}
+
+/**
+ * Get rochtah doctor WhatsApp number.
+ *
+ * @param int $doctor_id Doctor user ID.
+ * @return string|false
+ */
+function snks_get_rochtah_doctor_whatsapp( $doctor_id ) {
+	$whatsapp = get_user_meta( $doctor_id, 'rochtah_whatsapp', true );
+	if ( ! empty( $whatsapp ) ) {
+		if ( strpos( $whatsapp, '+' ) === false && strpos( $whatsapp, '20' ) !== 0 ) {
+			$whatsapp = '+20' . ltrim( $whatsapp, '0' );
+		}
+		return $whatsapp;
+	}
+	return snks_get_user_whatsapp( $doctor_id );
+}
+
+/**
+ * Send rochtah meet booking notification to the rochtah doctor.
+ *
+ * @param int $booking_id Booking ID.
+ * @return bool
+ */
+function snks_send_rochtah_meet_doctor_notification( $booking_id ) {
+	global $wpdb;
+
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}jalsah_rochtah_meet_bookings WHERE id = %d",
+			$booking_id
+		)
+	);
+
+	if ( ! $booking ) {
+		return false;
+	}
+
+	$settings = snks_get_whatsapp_notification_settings();
+	if ( $settings['enabled'] != '1' || empty( $settings['template_rochtah_meet_doctor'] ) ) {
+		return false;
+	}
+
+	$doctor_phone = snks_get_rochtah_doctor_whatsapp( (int) $booking->rochtah_doctor_id );
+	if ( ! $doctor_phone ) {
+		return false;
+	}
+
+	$patient_name = function_exists( 'snks_rochtah_meet_get_patient_name' )
+		? snks_rochtah_meet_get_patient_name( (int) $booking->patient_id )
+		: 'المريض';
+
+	$date_str = wp_date( 'Y-m-d', strtotime( $booking->appointment_datetime ) );
+	$time_str = wp_date( 'h:i a', strtotime( $booking->appointment_datetime ) );
+	$day_name = function_exists( 'snks_get_arabic_day_name' )
+		? snks_get_arabic_day_name( $date_str )
+		: wp_date( 'l', strtotime( $booking->appointment_datetime ) );
+
+	$result = snks_send_whatsapp_template_message(
+		$doctor_phone,
+		$settings['template_rochtah_meet_doctor'],
+		array(
+			'patient'         => $patient_name,
+			'day'             => $day_name,
+			'date'            => $date_str,
+			'time'            => $time_str,
+			'meet_url'        => $booking->meet_url,
+			'diagnosis_name'  => (string) $booking->diagnosis_name,
+			'reasoning'       => (string) $booking->diagnosis_reasoning,
+		)
+	);
+
+	return ! is_wp_error( $result );
+}
+
+/**
+ * Send rochtah meet booking notification to the patient.
+ *
+ * @param int $booking_id Booking ID.
+ * @return bool
+ */
+function snks_send_rochtah_meet_patient_notification( $booking_id ) {
+	global $wpdb;
+
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}jalsah_rochtah_meet_bookings WHERE id = %d",
+			$booking_id
+		)
+	);
+
+	if ( ! $booking ) {
+		return false;
+	}
+
+	$settings = snks_get_whatsapp_notification_settings();
+	if ( $settings['enabled'] != '1' || empty( $settings['template_rochtah_meet_patient'] ) ) {
+		return false;
+	}
+
+	$patient_phone = snks_get_user_whatsapp( (int) $booking->patient_id );
+	if ( ! $patient_phone ) {
+		return false;
+	}
+
+	$doctor_name = function_exists( 'snks_rochtah_meet_get_doctor_name' )
+		? snks_rochtah_meet_get_doctor_name( (int) $booking->rochtah_doctor_id )
+		: 'الطبيب';
+
+	$date_str = wp_date( 'Y-m-d', strtotime( $booking->appointment_datetime ) );
+	$time_str = wp_date( 'h:i a', strtotime( $booking->appointment_datetime ) );
+	$day_name = function_exists( 'snks_get_arabic_day_name' )
+		? snks_get_arabic_day_name( $date_str )
+		: wp_date( 'l', strtotime( $booking->appointment_datetime ) );
+
+	$result = snks_send_whatsapp_template_message(
+		$patient_phone,
+		$settings['template_rochtah_meet_patient'],
+		array(
+			'doctor'   => $doctor_name,
+			'day'      => $day_name,
+			'date'     => $date_str,
+			'time'     => $time_str,
+			'meet_url' => $booking->meet_url,
+		)
+	);
+
+	return ! is_wp_error( $result );
 }
 
 /**

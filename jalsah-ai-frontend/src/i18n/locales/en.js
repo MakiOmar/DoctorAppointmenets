@@ -63,7 +63,8 @@ export default {
     viewDiagnosisResults: 'View Diagnosis Results',
     customerService: 'Customer Service',
     termsAndConditions: 'Terms and Conditions, Usage and Return Policy',
-    manualBooking: 'Manual booking / bookings management'
+    manualBooking: 'Manual booking / bookings management',
+    rochtahMeetBooking: 'Rochtah Google Meet booking'
   },
 
   // Logo
@@ -1047,6 +1048,49 @@ export default {
       intro: 'The following sessions overlap your selected time. Please choose another time.',
       ok: 'OK',
       statusLabel: 'Session status'
+    }
+  },
+
+  // Rochetah Google Meet booking
+  rochtahMeet: {
+    title: 'Rochtah Google Meet Booking',
+    enterPhone: 'Enter patient phone number',
+    phoneDigits: 'Digits only',
+    searchPatient: 'Search patient',
+    searchCountries: 'Search countries...',
+    patientName: 'Patient name',
+    selectPatientHint: 'Search and select a registered patient',
+    noPatientFound: 'No registered patient found for this number',
+    diagnosisPreview: 'AI diagnosis (snapshot at booking)',
+    loadingDiagnosis: 'Loading diagnosis...',
+    diagnosisName: 'Diagnosis',
+    reasoning: 'Reasoning',
+    noDiagnosis: 'No AI diagnosis on file — booking will proceed without diagnosis details',
+    rochtahDoctor: 'Rochtah doctor',
+    selectDoctor: 'Select rochtah doctor',
+    appointmentDateTime: 'Appointment date & time',
+    selectDateTime: 'Select date and time',
+    meetUrl: 'Google Meet URL',
+    meetUrlPlaceholder: 'https://meet.google.com/xxx-xxxx-xxx',
+    submit: 'Create booking',
+    submitting: 'Creating...',
+    confirmTitle: 'Confirm booking',
+    confirmText: 'WhatsApp notifications will be sent to the doctor and patient.',
+    validation: {
+      phoneRequired: 'Phone number is required',
+      phoneInvalid: 'Invalid phone number',
+      patientRequired: 'Please search and select a registered patient',
+      doctorRequired: 'Please select a rochtah doctor',
+      datetimeRequired: 'Please select date and time',
+      meetUrlRequired: 'Google Meet URL is required',
+      meetUrlInvalid: 'Please enter a valid URL'
+    },
+    messages: {
+      searchFailed: 'Patient search failed',
+      loadDoctorsFailed: 'Failed to load rochtah doctors',
+      success: 'Booking created successfully',
+      submitFailed: 'Failed to create booking',
+      bookingId: 'Booking ID'
     }
   },
 

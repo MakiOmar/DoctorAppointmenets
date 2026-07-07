@@ -63,7 +63,8 @@ export default {
     viewDiagnosisResults: 'تصفح المعالجين الأنسب لحالتك عن طريق الذكاء الاصطناعي',
     customerService: 'خدمة العملاء',
     termsAndConditions: 'الشروط والأحكام وسياسة الإستخدام والإسترجاع',
-    manualBooking: 'إدارة الحجوزات اليدوية'
+    manualBooking: 'إدارة الحجوزات اليدوية',
+    rochtahMeetBooking: 'حجز روشتة Google Meet'
   },
 
   // Logo
@@ -1037,6 +1038,49 @@ export default {
       intro: 'الحجوزات / الجلسات التالية تتداخل مع الوقت الذي اخترته. اختر وقتاً آخر.',
       ok: 'حسناً',
       statusLabel: 'حالة الجلسة'
+    }
+  },
+
+  // Rochetah Google Meet booking
+  rochtahMeet: {
+    title: 'حجز روشتة Google Meet',
+    enterPhone: 'أدخل رقم هاتف المريض',
+    phoneDigits: 'أرقام فقط',
+    searchPatient: 'بحث عن مريض',
+    searchCountries: 'البحث عن دولة...',
+    patientName: 'اسم المريض',
+    selectPatientHint: 'ابحث واختر مريضاً مسجلاً',
+    noPatientFound: 'لم يُعثر على مريض مسجل بهذا الرقم',
+    diagnosisPreview: 'تشخيص الذكاء الاصطناعي (لقطة عند الحجز)',
+    loadingDiagnosis: 'جاري تحميل التشخيص...',
+    diagnosisName: 'التشخيص',
+    reasoning: 'الأسباب',
+    noDiagnosis: 'لا يوجد تشخيص AI — سيُكمل الحجز بدون تفاصيل التشخيص',
+    rochtahDoctor: 'طبيب الروشتة',
+    selectDoctor: 'اختر طبيب الروشتة',
+    appointmentDateTime: 'تاريخ ووقت الموعد',
+    selectDateTime: 'اختر التاريخ والوقت',
+    meetUrl: 'رابط Google Meet',
+    meetUrlPlaceholder: 'https://meet.google.com/xxx-xxxx-xxx',
+    submit: 'إنشاء الحجز',
+    submitting: 'جاري الإنشاء...',
+    confirmTitle: 'تأكيد الحجز',
+    confirmText: 'سيتم إرسال إشعارات واتساب للطبيب والمريض.',
+    validation: {
+      phoneRequired: 'رقم الهاتف مطلوب',
+      phoneInvalid: 'رقم هاتف غير صالح',
+      patientRequired: 'يرجى البحث واختيار مريض مسجل',
+      doctorRequired: 'يرجى اختيار طبيب الروشتة',
+      datetimeRequired: 'يرجى اختيار التاريخ والوقت',
+      meetUrlRequired: 'رابط Google Meet مطلوب',
+      meetUrlInvalid: 'يرجى إدخال رابط صالح'
+    },
+    messages: {
+      searchFailed: 'فشل البحث عن المريض',
+      loadDoctorsFailed: 'فشل تحميل أطباء الروشتة',
+      success: 'تم إنشاء الحجز بنجاح',
+      submitFailed: 'فشل إنشاء الحجز',
+      bookingId: 'رقم الحجز'
     }
   },
 
