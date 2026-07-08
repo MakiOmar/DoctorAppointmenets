@@ -64,7 +64,8 @@ export default {
     customerService: 'خدمة العملاء',
     termsAndConditions: 'الشروط والأحكام وسياسة الإستخدام والإسترجاع',
     manualBooking: 'إدارة الحجوزات اليدوية',
-    rochtahMeetBooking: 'حجز روشتة Google Meet'
+    rochtahMeetBooking: 'حجز روشتة Google Meet',
+    rochtahMeetBookings: 'حجوزات روشتة Meet'
   },
 
   // Logo
@@ -1085,6 +1086,40 @@ export default {
       submitFailed: 'فشل إنشاء الحجز',
       bookingId: 'رقم الحجز'
     }
+  },
+
+  rochtahMeetManage: {
+    title: 'حجوزات روشتة Meet',
+    newBooking: 'حجز جديد',
+    viewAllBookings: 'عرض جميع حجوزات روشتة Meet',
+    searchPlaceholder: 'بحث برقم هاتف المريض',
+    search: 'بحث',
+    allStatuses: 'كل الحالات',
+    statusScheduled: 'مجدول',
+    statusCompleted: 'مكتمل',
+    statusCancelled: 'ملغي',
+    patient: 'المريض',
+    doctor: 'الطبيب',
+    datetime: 'التاريخ والوقت',
+    diagnosis: 'التشخيص',
+    meetUrl: 'رابط Meet',
+    status: 'الحالة',
+    actions: 'إجراءات',
+    copyMeetUrl: 'نسخ رابط Meet',
+    markCompleted: 'إكمال',
+    cancel: 'إلغاء',
+    noBookings: 'لا توجد حجوزات',
+    showing: 'عرض',
+    of: 'من',
+    copied: 'تم النسخ',
+    copyFailed: 'فشل النسخ',
+    loadFailed: 'فشل تحميل الحجوزات',
+    statusUpdated: 'تم تحديث الحالة',
+    updateFailed: 'فشل تحديث الحالة',
+    confirmCancelTitle: 'إلغاء الحجز؟',
+    confirmCancelText: 'سيعود رابط Google Meet إلى قائمة المتاح.',
+    confirmCompleteTitle: 'تعليم كمكتمل؟',
+    confirmCompleteText: 'سيتم تعليم هذا الحجز كمكتمل.'
   },
 
   // Therapist Register

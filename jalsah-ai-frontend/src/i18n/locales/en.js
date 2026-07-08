@@ -64,7 +64,8 @@ export default {
     customerService: 'Customer Service',
     termsAndConditions: 'Terms and Conditions, Usage and Return Policy',
     manualBooking: 'Manual booking / bookings management',
-    rochtahMeetBooking: 'Rochtah Google Meet booking'
+    rochtahMeetBooking: 'Rochtah Google Meet booking',
+    rochtahMeetBookings: 'Rochtah Meet bookings'
   },
 
   // Logo
@@ -1095,6 +1096,40 @@ export default {
       submitFailed: 'Failed to create booking',
       bookingId: 'Booking ID'
     }
+  },
+
+  rochtahMeetManage: {
+    title: 'Rochtah Meet Bookings',
+    newBooking: 'New booking',
+    viewAllBookings: 'View all rochtah meet bookings',
+    searchPlaceholder: 'Search by patient phone',
+    search: 'Search',
+    allStatuses: 'All statuses',
+    statusScheduled: 'Scheduled',
+    statusCompleted: 'Completed',
+    statusCancelled: 'Cancelled',
+    patient: 'Patient',
+    doctor: 'Doctor',
+    datetime: 'Date & time',
+    diagnosis: 'Diagnosis',
+    meetUrl: 'Meet URL',
+    status: 'Status',
+    actions: 'Actions',
+    copyMeetUrl: 'Copy Meet URL',
+    markCompleted: 'Complete',
+    cancel: 'Cancel',
+    noBookings: 'No bookings found',
+    showing: 'Showing',
+    of: 'of',
+    copied: 'Copied',
+    copyFailed: 'Copy failed',
+    loadFailed: 'Failed to load bookings',
+    statusUpdated: 'Status updated',
+    updateFailed: 'Failed to update status',
+    confirmCancelTitle: 'Cancel booking?',
+    confirmCancelText: 'The Google Meet URL will be returned to the available pool.',
+    confirmCompleteTitle: 'Mark as completed?',
+    confirmCompleteText: 'This booking will be marked as completed.'
   },
 
   // Profile

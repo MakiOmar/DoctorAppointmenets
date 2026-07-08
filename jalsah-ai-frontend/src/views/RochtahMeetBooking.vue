@@ -4,6 +4,11 @@
     <h1 class="text-2xl font-semibold text-primary-500 mb-6">
       {{ $t('rochtahMeet.title') }}
     </h1>
+    <p class="mb-4">
+      <router-link to="/rochtah-meet-bookings" class="text-primary-600 hover:underline text-sm">
+        {{ $t('rochtahMeetManage.viewAllBookings') }}
+      </router-link>
+    </p>
 
     <form class="space-y-4" @submit.prevent="submitBooking">
       <!-- Patient phone search -->

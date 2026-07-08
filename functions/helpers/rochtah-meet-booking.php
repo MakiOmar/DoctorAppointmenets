@@ -655,3 +655,193 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 		'wa_patient_sent'      => (bool) $wa_flags['wa_patient_sent'],
 	);
 }
+
+/**
+ * Whether the user is a rochtah doctor only (not admin/secretary).
+ *
+ * @param int $user_id User ID.
+ * @return bool
+ */
+function snks_rochtah_meet_user_is_doctor_only( $user_id ) {
+	$user_id = absint( $user_id );
+	if ( ! $user_id || user_can( $user_id, 'manage_options' ) ) {
+		return false;
+	}
+	$user = get_userdata( $user_id );
+	if ( ! $user ) {
+		return false;
+	}
+	if ( in_array( 'secretary', (array) $user->roles, true ) ) {
+		return false;
+	}
+	return user_can( $user_id, 'manage_rochtah' ) || in_array( 'rochtah_doctor', (array) $user->roles, true );
+}
+
+/**
+ * List rochtah meet bookings for the management page.
+ *
+ * @param array $args Query args: page, per_page, status, q, viewer_id.
+ * @return array{rows: array<int, array<string, mixed>>, total: int}
+ */
+function snks_rochtah_meet_data_list_bookings( $args = array() ) {
+	global $wpdb;
+
+	$page     = max( 1, absint( $args['page'] ?? 1 ) );
+	$per_page = max( 1, min( 100, absint( $args['per_page'] ?? 20 ) ) );
+	$offset   = ( $page - 1 ) * $per_page;
+	$status   = isset( $args['status'] ) ? sanitize_text_field( $args['status'] ) : '';
+	$viewer_id = absint( $args['viewer_id'] ?? 0 );
+	$q        = isset( $args['q'] ) ? sanitize_text_field( $args['q'] ) : '';
+
+	$table  = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
+	$where  = array( '1=1' );
+	$params = array();
+
+	if ( $viewer_id && snks_rochtah_meet_user_is_doctor_only( $viewer_id ) ) {
+		$where[]  = 'b.rochtah_doctor_id = %d';
+		$params[] = $viewer_id;
+	}
+
+	if ( $status && in_array( $status, array( 'scheduled', 'completed', 'cancelled' ), true ) ) {
+		$where[]  = 'b.status = %s';
+		$params[] = $status;
+	}
+
+	if ( $q !== '' ) {
+		$patients = snks_rochtah_meet_data_search_patient( $q );
+		$ids      = array_map(
+			static function ( $p ) {
+				return (int) $p['id'];
+			},
+			$patients
+		);
+		if ( empty( $ids ) ) {
+			return array(
+				'rows'  => array(),
+				'total' => 0,
+			);
+		}
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$where[]      = "b.patient_id IN ({$placeholders})";
+		$params       = array_merge( $params, $ids );
+	}
+
+	$where_sql = implode( ' AND ', $where );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$count_sql = "SELECT COUNT(*) FROM {$table} b WHERE {$where_sql}";
+	$total     = empty( $params )
+		? (int) $wpdb->get_var( $count_sql )
+		: (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $params ) );
+
+	$list_params   = $params;
+	$list_params[] = $per_page;
+	$list_params[] = $offset;
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$list_sql = "SELECT b.* FROM {$table} b WHERE {$where_sql} ORDER BY b.appointment_datetime DESC LIMIT %d OFFSET %d";
+	$rows     = empty( $params )
+		? $wpdb->get_results( $wpdb->prepare( $list_sql, $per_page, $offset ) )
+		: $wpdb->get_results( $wpdb->prepare( $list_sql, $list_params ) );
+
+	if ( ! is_array( $rows ) ) {
+		return array(
+			'rows'  => array(),
+			'total' => 0,
+		);
+	}
+
+	$result = array();
+	foreach ( $rows as $row ) {
+		$patient_id = (int) $row->patient_id;
+		$doctor_id  = (int) $row->rochtah_doctor_id;
+		$phone      = $patient_id ? get_user_meta( $patient_id, 'billing_whatsapp', true ) : '';
+		if ( $phone === '' && $patient_id ) {
+			$phone = get_user_meta( $patient_id, 'whatsapp', true );
+		}
+		if ( $phone === '' && $patient_id ) {
+			$phone = get_user_meta( $patient_id, 'billing_phone', true );
+		}
+
+		$result[] = array(
+			'id'                   => (int) $row->id,
+			'patient_id'           => $patient_id,
+			'patient_name'         => snks_rochtah_meet_get_patient_name( $patient_id ),
+			'patient_phone'        => $phone,
+			'rochtah_doctor_id'     => $doctor_id,
+			'rochtah_doctor_name'  => snks_rochtah_meet_get_doctor_name( $doctor_id ),
+			'meet_url_id'          => (int) $row->meet_url_id,
+			'meet_url'             => (string) $row->meet_url,
+			'appointment_datetime' => (string) $row->appointment_datetime,
+			'diagnosis_name'       => (string) $row->diagnosis_name,
+			'diagnosis_reasoning'  => (string) $row->diagnosis_reasoning,
+			'status'               => (string) $row->status,
+			'wa_doctor_sent'       => (bool) $row->wa_doctor_sent,
+			'wa_patient_sent'      => (bool) $row->wa_patient_sent,
+			'created_at'           => (string) $row->created_at,
+		);
+	}
+
+	return array(
+		'rows'  => $result,
+		'total' => $total,
+	);
+}
+
+/**
+ * Update booking status (cancel or complete).
+ *
+ * @param int    $booking_id Booking ID.
+ * @param string $status     New status.
+ * @param int    $viewer_id  User performing the action.
+ * @return true|WP_Error
+ */
+function snks_rochtah_meet_update_booking_status( $booking_id, $status, $viewer_id ) {
+	global $wpdb;
+
+	$booking_id = absint( $booking_id );
+	$viewer_id  = absint( $viewer_id );
+	$status     = sanitize_text_field( $status );
+
+	if ( ! in_array( $status, array( 'scheduled', 'completed', 'cancelled' ), true ) ) {
+		return new WP_Error( 'invalid_status', 'Invalid status' );
+	}
+
+	$table   = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE id = %d LIMIT 1",
+			$booking_id
+		)
+	);
+
+	if ( ! $booking ) {
+		return new WP_Error( 'not_found', 'Booking not found' );
+	}
+
+	if ( snks_rochtah_meet_user_is_doctor_only( $viewer_id ) && (int) $booking->rochtah_doctor_id !== $viewer_id ) {
+		return new WP_Error( 'forbidden', 'You cannot manage this booking' );
+	}
+
+	if ( $booking->status === $status ) {
+		return true;
+	}
+
+	if ( 'cancelled' === $status && ! empty( $booking->meet_url_id ) ) {
+		snks_rochtah_meet_unassign_url( (int) $booking->meet_url_id );
+	}
+
+	$updated = $wpdb->update(
+		$table,
+		array( 'status' => $status ),
+		array( 'id' => $booking_id ),
+		array( '%s' ),
+		array( '%d' )
+	);
+
+	if ( false === $updated ) {
+		return new WP_Error( 'update_failed', 'Failed to update booking status' );
+	}
+
+	return true;
+}

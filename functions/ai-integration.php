@@ -7623,6 +7623,43 @@ Best regards,
 				);
 				return;
 
+			case 'list-bookings':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$page     = isset( $_GET['page'] ) ? max( 1, absint( $_GET['page'] ) ) : 1;
+				$per_page = isset( $_GET['per_page'] ) ? max( 1, min( 100, absint( $_GET['per_page'] ) ) ) : 20;
+				$status   = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+				$q        = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
+				$this->send_success(
+					snks_rochtah_meet_data_list_bookings(
+						array(
+							'page'      => $page,
+							'per_page'  => $per_page,
+							'status'    => $status,
+							'q'         => $q,
+							'viewer_id' => $user_id,
+						)
+					)
+				);
+				return;
+
+			case 'update-status':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$booking_id = isset( $input['booking_id'] ) ? absint( $input['booking_id'] ) : 0;
+				$status     = isset( $input['status'] ) ? sanitize_text_field( $input['status'] ) : '';
+				$result     = snks_rochtah_meet_update_booking_status( $booking_id, $status, $user_id );
+				if ( is_wp_error( $result ) ) {
+					$this->send_error( $result->get_error_message(), 400 );
+					return;
+				}
+				$this->send_success( array( 'message' => 'Status updated' ) );
+				return;
+
 			case 'submit':
 				if ( $method !== 'POST' ) {
 					$this->send_error( 'Method not allowed', 405 );

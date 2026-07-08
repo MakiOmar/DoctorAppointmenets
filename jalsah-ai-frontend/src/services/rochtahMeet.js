@@ -24,5 +24,13 @@ export default {
     return api
       .post(BASE + '/submit', payload, { skipGlobalErrorToast: true })
       .then(r => r.data?.data ?? r.data)
+  },
+  listBookings(params = {}) {
+    return api.get(BASE + '/list-bookings', { params }).then(r => r.data?.data ?? r.data)
+  },
+  updateStatus(bookingId, status) {
+    return api
+      .post(BASE + '/update-status', { booking_id: bookingId, status }, { skipGlobalErrorToast: true })
+      .then(r => r.data?.data ?? r.data)
   }
 }
