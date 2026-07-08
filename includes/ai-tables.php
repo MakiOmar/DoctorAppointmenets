@@ -146,6 +146,7 @@ function snks_create_ai_tables() {
 		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 		patient_id BIGINT(20) UNSIGNED NOT NULL,
 		rochtah_doctor_id BIGINT(20) UNSIGNED NOT NULL,
+		meet_url_id BIGINT(20) UNSIGNED DEFAULT NULL,
 		meet_url VARCHAR(512) NOT NULL,
 		appointment_datetime DATETIME NOT NULL,
 		diagnosis_id INT(11) DEFAULT NULL,

@@ -137,16 +137,23 @@
         <p v-if="errors.datetime" class="mt-1 text-sm text-red-600">{{ errors.datetime }}</p>
       </div>
 
-      <!-- Google Meet URL -->
+      <!-- Google Meet URL from pool -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('rochtahMeet.meetUrl') }} *</label>
-        <input
-          v-model="meetUrl"
-          type="url"
+        <select
+          v-model="meetUrlId"
           class="w-full rounded border px-3 py-2 border-gray-300"
           :class="{ 'border-red-500': errors.meetUrl }"
-          :placeholder="$t('rochtahMeet.meetUrlPlaceholder')"
-        />
+          :disabled="meetUrlsLoading"
+        >
+          <option value="">{{ $t('rochtahMeet.selectMeetUrl') }}</option>
+          <option v-for="u in meetUrls" :key="u.id" :value="String(u.id)">
+            #{{ u.id }} — {{ u.meet_url }}
+          </option>
+        </select>
+        <p v-if="!meetUrlsLoading && meetUrls.length === 0" class="mt-1 text-sm text-amber-600">
+          {{ $t('rochtahMeet.noMeetUrls') }}
+        </p>
         <p v-if="errors.meetUrl" class="mt-1 text-sm text-red-600">{{ errors.meetUrl }}</p>
       </div>
 
@@ -191,7 +198,9 @@ const doctorsLoading = ref(false)
 const rochtahDoctorId = ref('')
 
 const appointmentDatetime = ref('')
-const meetUrl = ref('')
+const meetUrlId = ref('')
+const meetUrls = ref([])
+const meetUrlsLoading = ref(false)
 const submitLoading = ref(false)
 const errors = ref({})
 
@@ -302,17 +311,8 @@ function validateForm() {
   if (!appointmentDatetime.value) {
     next.datetime = t('rochtahMeet.validation.datetimeRequired')
   }
-  if (!meetUrl.value.trim()) {
+  if (!meetUrlId.value) {
     next.meetUrl = t('rochtahMeet.validation.meetUrlRequired')
-  } else {
-    try {
-      const u = new URL(meetUrl.value.trim())
-      if (!u.protocol.startsWith('http')) {
-        next.meetUrl = t('rochtahMeet.validation.meetUrlInvalid')
-      }
-    } catch (_) {
-      next.meetUrl = t('rochtahMeet.validation.meetUrlInvalid')
-    }
   }
   errors.value = next
   return Object.keys(next).length === 0
@@ -325,7 +325,7 @@ function resetForm() {
   patientDiagnosis.value = null
   rochtahDoctorId.value = ''
   appointmentDatetime.value = ''
-  meetUrl.value = ''
+  meetUrlId.value = ''
   errors.value = {}
   patientSearched.value = false
 }
@@ -349,7 +349,7 @@ async function submitBooking() {
       patient_id: patientId.value,
       rochtah_doctor_id: Number(rochtahDoctorId.value),
       appointment_datetime: appointmentDatetime.value,
-      meet_url: meetUrl.value.trim()
+      meet_url_id: Number(meetUrlId.value)
     })
     await Swal.fire({
       icon: 'success',
@@ -358,6 +358,7 @@ async function submitBooking() {
     })
     toast.success(t('rochtahMeet.messages.success'))
     resetForm()
+    await loadMeetUrls()
   } catch (err) {
     const msg = err.response?.data?.error || t('rochtahMeet.messages.submitFailed')
     toast.error(msg)
@@ -367,8 +368,22 @@ async function submitBooking() {
   }
 }
 
+async function loadMeetUrls() {
+  meetUrlsLoading.value = true
+  try {
+    const data = await rochtahMeetApi.getMeetUrls()
+    meetUrls.value = Array.isArray(data?.urls) ? data.urls : []
+  } catch (_) {
+    meetUrls.value = []
+    toast.error(t('rochtahMeet.messages.loadMeetUrlsFailed'))
+  } finally {
+    meetUrlsLoading.value = false
+  }
+}
+
 onMounted(async () => {
   doctorsLoading.value = true
+  meetUrlsLoading.value = true
   try {
     const data = await rochtahMeetApi.getDoctors()
     doctors.value = Array.isArray(data) ? data : []
@@ -377,6 +392,8 @@ onMounted(async () => {
   } finally {
     doctorsLoading.value = false
   }
+
+  await loadMeetUrls()
 
   try {
     const res = await fetch('/countries-codes-and-flags.json')

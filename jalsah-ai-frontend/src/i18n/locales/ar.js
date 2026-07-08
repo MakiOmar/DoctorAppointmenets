@@ -1061,7 +1061,9 @@ export default {
     appointmentDateTime: 'تاريخ ووقت الموعد',
     selectDateTime: 'اختر التاريخ والوقت',
     meetUrl: 'رابط Google Meet',
+    selectMeetUrl: 'اختر رابط Google Meet من القائمة',
     meetUrlPlaceholder: 'https://meet.google.com/xxx-xxxx-xxx',
+    noMeetUrls: 'لا توجد روابط Google Meet متاحة. اطلب من المسؤول إضافة روابط من Jalsah AI → Rochtah Meet URLs.',
     submit: 'إنشاء الحجز',
     submitting: 'جاري الإنشاء...',
     confirmTitle: 'تأكيد الحجز',
@@ -1072,12 +1074,13 @@ export default {
       patientRequired: 'يرجى البحث واختيار مريض مسجل',
       doctorRequired: 'يرجى اختيار طبيب الروشتة',
       datetimeRequired: 'يرجى اختيار التاريخ والوقت',
-      meetUrlRequired: 'رابط Google Meet مطلوب',
+      meetUrlRequired: 'يرجى اختيار رابط Google Meet من القائمة',
       meetUrlInvalid: 'يرجى إدخال رابط صالح'
     },
     messages: {
       searchFailed: 'فشل البحث عن المريض',
       loadDoctorsFailed: 'فشل تحميل أطباء الروشتة',
+      loadMeetUrlsFailed: 'فشل تحميل روابط Google Meet',
       success: 'تم إنشاء الحجز بنجاح',
       submitFailed: 'فشل إنشاء الحجز',
       bookingId: 'رقم الحجز'

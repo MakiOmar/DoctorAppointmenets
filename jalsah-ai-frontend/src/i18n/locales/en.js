@@ -1071,7 +1071,9 @@ export default {
     appointmentDateTime: 'Appointment date & time',
     selectDateTime: 'Select date and time',
     meetUrl: 'Google Meet URL',
+    selectMeetUrl: 'Select a Google Meet URL from the pool',
     meetUrlPlaceholder: 'https://meet.google.com/xxx-xxxx-xxx',
+    noMeetUrls: 'No available Google Meet URLs. Ask admin to add URLs under Jalsah AI → Rochtah Meet URLs.',
     submit: 'Create booking',
     submitting: 'Creating...',
     confirmTitle: 'Confirm booking',
@@ -1082,12 +1084,13 @@ export default {
       patientRequired: 'Please search and select a registered patient',
       doctorRequired: 'Please select a rochtah doctor',
       datetimeRequired: 'Please select date and time',
-      meetUrlRequired: 'Google Meet URL is required',
+      meetUrlRequired: 'Please select a Google Meet URL from the pool',
       meetUrlInvalid: 'Please enter a valid URL'
     },
     messages: {
       searchFailed: 'Patient search failed',
       loadDoctorsFailed: 'Failed to load rochtah doctors',
+      loadMeetUrlsFailed: 'Failed to load Google Meet URLs',
       success: 'Booking created successfully',
       submitFailed: 'Failed to create booking',
       bookingId: 'Booking ID'

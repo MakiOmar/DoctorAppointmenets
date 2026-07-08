@@ -24,6 +24,7 @@ function snks_create_rochtah_meet_bookings_table() {
 		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 		patient_id BIGINT(20) UNSIGNED NOT NULL,
 		rochtah_doctor_id BIGINT(20) UNSIGNED NOT NULL,
+		meet_url_id BIGINT(20) UNSIGNED DEFAULT NULL,
 		meet_url VARCHAR(512) NOT NULL,
 		appointment_datetime DATETIME NOT NULL,
 		diagnosis_id INT(11) DEFAULT NULL,
@@ -45,7 +46,27 @@ function snks_create_rochtah_meet_bookings_table() {
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );
 
-	update_option( 'snks_rochtah_meet_bookings_version', '1.0.0' );
+	update_option( 'snks_rochtah_meet_bookings_version', '1.1.0' );
+}
+
+/**
+ * Add meet_url_id column to bookings table if missing.
+ *
+ * @return void
+ */
+function snks_upgrade_rochtah_meet_bookings_schema() {
+	global $wpdb;
+
+	$table = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
+	$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+	if ( ! $exists ) {
+		return;
+	}
+
+	$column = $wpdb->get_row( "SHOW COLUMNS FROM {$table} LIKE 'meet_url_id'" );
+	if ( ! $column ) {
+		$wpdb->query( "ALTER TABLE {$table} ADD COLUMN meet_url_id BIGINT(20) UNSIGNED DEFAULT NULL AFTER rochtah_doctor_id" );
+	}
 }
 
 add_action(
@@ -54,6 +75,10 @@ add_action(
 		$current = get_option( 'snks_rochtah_meet_bookings_version', '0.0.0' );
 		if ( version_compare( $current, '1.0.0', '<' ) && function_exists( 'snks_create_rochtah_meet_bookings_table' ) ) {
 			snks_create_rochtah_meet_bookings_table();
+		}
+		if ( version_compare( $current, '1.1.0', '<' ) ) {
+			snks_upgrade_rochtah_meet_bookings_schema();
+			update_option( 'snks_rochtah_meet_bookings_version', '1.1.0' );
 		}
 	},
 	5
@@ -282,6 +307,239 @@ function snks_rochtah_meet_get_doctor_name( $doctor_id ) {
 }
 
 /**
+ * Pool table name for rochtah meet URLs.
+ *
+ * @return string
+ */
+function snks_rochtah_meet_urls_table_name() {
+	global $wpdb;
+	return $wpdb->prefix . 'snks_rochtah_meet_urls';
+}
+
+/**
+ * Count available rochtah meet URLs in the pool.
+ *
+ * @return int
+ */
+function snks_rochtah_meet_urls_count_available() {
+	global $wpdb;
+	$table = snks_rochtah_meet_urls_table_name();
+	return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'available'" );
+}
+
+/**
+ * List available pool URLs for the booking form.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function snks_rochtah_meet_data_available_urls() {
+	global $wpdb;
+	$table = snks_rochtah_meet_urls_table_name();
+	$rows  = $wpdb->get_results(
+		"SELECT id, meet_url FROM {$table} WHERE status = 'available' ORDER BY id ASC LIMIT 500"
+	);
+	$result = array();
+	foreach ( $rows as $row ) {
+		$result[] = array(
+			'id'       => (int) $row->id,
+			'meet_url' => (string) $row->meet_url,
+		);
+	}
+	return $result;
+}
+
+/**
+ * Bulk insert rochtah meet URLs.
+ *
+ * @param string $text Newline-separated URLs.
+ * @return array{inserted:int,skipped_duplicate:int,skipped_invalid:int}
+ */
+function snks_rochtah_meet_urls_bulk_insert( $text ) {
+	global $wpdb;
+	$table  = snks_rochtah_meet_urls_table_name();
+	$lines  = preg_split( '/\r\n|\r|\n/', (string) $text );
+	$seen   = array();
+	$result = array(
+		'inserted'          => 0,
+		'skipped_duplicate' => 0,
+		'skipped_invalid'   => 0,
+	);
+
+	foreach ( $lines as $line ) {
+		$normalized = function_exists( 'snks_normalize_meeting_pool_url' )
+			? snks_normalize_meeting_pool_url( $line )
+			: esc_url_raw( trim( $line ) );
+		if ( '' === $normalized ) {
+			++$result['skipped_invalid'];
+			continue;
+		}
+		if ( isset( $seen[ $normalized ] ) ) {
+			++$result['skipped_duplicate'];
+			continue;
+		}
+		$seen[ $normalized ] = true;
+
+		$exists = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT id FROM {$table} WHERE meet_url = %s LIMIT 1",
+				$normalized
+			)
+		);
+		if ( $exists > 0 ) {
+			++$result['skipped_duplicate'];
+			continue;
+		}
+
+		$inserted = $wpdb->insert(
+			$table,
+			array(
+				'meet_url' => $normalized,
+				'status'   => 'available',
+			),
+			array( '%s', '%s' )
+		);
+		if ( $inserted ) {
+			++$result['inserted'];
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * Assign a pool URL to a rochtah meet booking.
+ *
+ * @param int $url_id     Pool row ID.
+ * @param int $booking_id Booking ID.
+ * @return true|WP_Error
+ */
+function snks_rochtah_meet_assign_url( $url_id, $booking_id ) {
+	global $wpdb;
+
+	$url_id     = absint( $url_id );
+	$booking_id = absint( $booking_id );
+	if ( ! $url_id || ! $booking_id ) {
+		return new WP_Error( 'invalid_assign', 'Invalid URL or booking ID' );
+	}
+
+	$table       = snks_rochtah_meet_urls_table_name();
+	$assigned_at = current_time( 'mysql' );
+
+	$wpdb->query( 'START TRANSACTION' );
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$row = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE id = %d AND status = 'available' LIMIT 1 FOR UPDATE",
+			$url_id
+		)
+	);
+
+	if ( ! $row ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'url_not_available', 'This Google Meet URL is not available' );
+	}
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$ok = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$table} SET status = 'assigned', assigned_at = %s, assigned_booking_id = %d WHERE id = %d AND status = 'available'",
+			$assigned_at,
+			$booking_id,
+			$url_id
+		)
+	);
+
+	if ( ! $ok ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'assign_failed', 'Failed to assign Google Meet URL' );
+	}
+
+	$wpdb->query( 'COMMIT' );
+	return true;
+}
+
+/**
+ * Unassign a pool URL and return it to available status.
+ *
+ * @param int $url_id Pool row ID.
+ * @return true|WP_Error
+ */
+function snks_rochtah_meet_unassign_url( $url_id ) {
+	global $wpdb;
+
+	$url_id = absint( $url_id );
+	if ( ! $url_id ) {
+		return new WP_Error( 'invalid_url', 'Invalid URL ID' );
+	}
+
+	$table = snks_rochtah_meet_urls_table_name();
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$ok = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$table} SET status = 'available', assigned_booking_id = NULL, assigned_at = NULL WHERE id = %d AND status = 'assigned'",
+			$url_id
+		)
+	);
+
+	if ( ! $ok ) {
+		return new WP_Error( 'unassign_failed', 'URL is not assigned or could not be unassigned' );
+	}
+
+	return true;
+}
+
+/**
+ * Delete a pool URL (available or disabled only).
+ *
+ * @param int $url_id Pool row ID.
+ * @return true|WP_Error
+ */
+function snks_rochtah_meet_delete_url( $url_id ) {
+	global $wpdb;
+
+	$url_id = absint( $url_id );
+	$table  = snks_rochtah_meet_urls_table_name();
+	$row    = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT id, status FROM {$table} WHERE id = %d LIMIT 1",
+			$url_id
+		)
+	);
+
+	if ( ! $row ) {
+		return new WP_Error( 'not_found', 'URL not found' );
+	}
+	if ( 'assigned' === $row->status ) {
+		return new WP_Error( 'assigned', 'Cannot delete an assigned URL. Unassign it first.' );
+	}
+
+	$wpdb->delete( $table, array( 'id' => $url_id ), array( '%d' ) );
+	return true;
+}
+
+/**
+ * Get pool row by ID.
+ *
+ * @param int $url_id Pool row ID.
+ * @return object|null
+ */
+function snks_rochtah_meet_get_url_row( $url_id ) {
+	global $wpdb;
+	$url_id = absint( $url_id );
+	if ( ! $url_id ) {
+		return null;
+	}
+	$table = snks_rochtah_meet_urls_table_name();
+	return $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$table} WHERE id = %d LIMIT 1",
+			$url_id
+		)
+	);
+}
+
+/**
  * Create a rochtah meet booking and send WhatsApp notifications.
  *
  * @param array $input     Request payload.
@@ -293,7 +551,7 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 
 	$patient_id        = isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0;
 	$rochtah_doctor_id = isset( $input['rochtah_doctor_id'] ) ? absint( $input['rochtah_doctor_id'] ) : 0;
-	$meet_url          = isset( $input['meet_url'] ) ? esc_url_raw( trim( $input['meet_url'] ) ) : '';
+	$meet_url_id       = isset( $input['meet_url_id'] ) ? absint( $input['meet_url_id'] ) : 0;
 	$appointment_raw   = isset( $input['appointment_datetime'] ) ? sanitize_text_field( $input['appointment_datetime'] ) : '';
 
 	if ( ! $patient_id || ! snks_rochtah_meet_is_registered_patient( $patient_id ) ) {
@@ -302,9 +560,15 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 	if ( ! $rochtah_doctor_id || ! snks_rochtah_meet_is_rochtah_doctor( $rochtah_doctor_id ) ) {
 		return new WP_Error( 'invalid_doctor', 'Invalid rochtah doctor' );
 	}
-	if ( $meet_url === '' || ! filter_var( $meet_url, FILTER_VALIDATE_URL ) ) {
-		return new WP_Error( 'invalid_meet_url', 'Valid Google Meet URL is required' );
+	if ( ! $meet_url_id ) {
+		return new WP_Error( 'invalid_meet_url', 'Please select a Google Meet URL from the pool' );
 	}
+
+	$url_row = snks_rochtah_meet_get_url_row( $meet_url_id );
+	if ( ! $url_row || 'available' !== $url_row->status ) {
+		return new WP_Error( 'invalid_meet_url', 'Selected Google Meet URL is not available' );
+	}
+	$meet_url = (string) $url_row->meet_url;
 	if ( $appointment_raw === '' ) {
 		return new WP_Error( 'invalid_datetime', 'Appointment date and time are required' );
 	}
@@ -331,6 +595,7 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 		array(
 			'patient_id'           => $patient_id,
 			'rochtah_doctor_id'    => $rochtah_doctor_id,
+			'meet_url_id'          => $meet_url_id,
 			'meet_url'             => $meet_url,
 			'appointment_datetime' => $appointment_datetime,
 			'diagnosis_id'         => $diagnosis_id,
@@ -339,7 +604,7 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 			'created_by'           => absint( $created_by ),
 			'status'               => 'scheduled',
 		),
-		array( '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%d', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%d', '%s' )
 	);
 
 	if ( ! $inserted ) {
@@ -347,6 +612,12 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 	}
 
 	$booking_id = (int) $wpdb->insert_id;
+
+	$assigned = snks_rochtah_meet_assign_url( $meet_url_id, $booking_id );
+	if ( is_wp_error( $assigned ) ) {
+		$wpdb->delete( $table, array( 'id' => $booking_id ), array( '%d' ) );
+		return $assigned;
+	}
 
 	$wa_flags = array(
 		'wa_doctor_sent'  => 0,
@@ -376,6 +647,7 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 		'booking_id'           => $booking_id,
 		'patient_id'           => $patient_id,
 		'rochtah_doctor_id'    => $rochtah_doctor_id,
+		'meet_url_id'          => $meet_url_id,
 		'meet_url'             => $meet_url,
 		'appointment_datetime' => $appointment_datetime,
 		'diagnosis_name'       => $diagnosis_name,

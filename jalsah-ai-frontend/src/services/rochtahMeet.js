@@ -17,6 +17,9 @@ export default {
       .get(BASE + '/patient-diagnosis', { params: { patient_id: patientId } })
       .then(r => r.data?.data ?? r.data)
   },
+  getMeetUrls() {
+    return api.get(BASE + '/meet-urls').then(r => r.data?.data ?? r.data)
+  },
   submit(payload) {
     return api
       .post(BASE + '/submit', payload, { skipGlobalErrorToast: true })

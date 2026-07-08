@@ -7610,6 +7610,19 @@ Best regards,
 				);
 				return;
 
+			case 'meet-urls':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$this->send_success(
+					array(
+						'urls'      => snks_rochtah_meet_data_available_urls(),
+						'available' => snks_rochtah_meet_urls_count_available(),
+					)
+				);
+				return;
+
 			case 'submit':
 				if ( $method !== 'POST' ) {
 					$this->send_error( 'Method not allowed', 405 );
