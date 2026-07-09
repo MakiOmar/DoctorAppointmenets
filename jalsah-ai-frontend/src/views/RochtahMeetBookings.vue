@@ -89,26 +89,15 @@
               </span>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
-              <div class="flex flex-wrap gap-1">
-                <button
-                  v-if="row.status === 'scheduled'"
-                  type="button"
-                  class="px-2 py-1 rounded border border-green-600 text-green-700 text-xs hover:bg-green-50 disabled:opacity-50"
-                  :disabled="actionLoadingId === row.id"
-                  @click="updateStatus(row, 'completed')"
-                >
-                  {{ $t('rochtahMeetManage.markCompleted') }}
-                </button>
-                <button
-                  v-if="row.status === 'scheduled'"
-                  type="button"
-                  class="px-2 py-1 rounded border border-red-500 text-red-600 text-xs hover:bg-red-50 disabled:opacity-50"
-                  :disabled="actionLoadingId === row.id"
-                  @click="updateStatus(row, 'cancelled')"
-                >
-                  {{ $t('rochtahMeetManage.cancel') }}
-                </button>
-              </div>
+              <button
+                v-if="row.status === 'scheduled'"
+                type="button"
+                class="px-2 py-1 rounded border border-red-500 text-red-600 text-xs hover:bg-red-50 disabled:opacity-50"
+                :disabled="actionLoadingId === row.id"
+                @click="cancelBooking(row)"
+              >
+                {{ $t('rochtahMeetManage.cancel') }}
+              </button>
             </td>
           </tr>
         </tbody>
@@ -222,12 +211,11 @@ async function loadBookings(nextPage = 1) {
   }
 }
 
-async function updateStatus(row, status) {
-  const isCancel = status === 'cancelled'
+async function cancelBooking(row) {
   const confirm = await Swal.fire({
-    icon: isCancel ? 'warning' : 'question',
-    title: isCancel ? t('rochtahMeetManage.confirmCancelTitle') : t('rochtahMeetManage.confirmCompleteTitle'),
-    text: isCancel ? t('rochtahMeetManage.confirmCancelText') : t('rochtahMeetManage.confirmCompleteText'),
+    icon: 'warning',
+    title: t('rochtahMeetManage.confirmCancelTitle'),
+    text: t('rochtahMeetManage.confirmCancelText'),
     showCancelButton: true,
     confirmButtonText: t('common.confirm'),
     cancelButtonText: t('common.cancel')
@@ -236,7 +224,7 @@ async function updateStatus(row, status) {
 
   actionLoadingId.value = row.id
   try {
-    await rochtahMeetApi.updateStatus(row.id, status)
+    await rochtahMeetApi.updateStatus(row.id, 'cancelled')
     toast.success(t('rochtahMeetManage.statusUpdated'))
     await loadBookings(page.value)
   } catch (err) {

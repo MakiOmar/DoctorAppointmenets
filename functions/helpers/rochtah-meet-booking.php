@@ -739,7 +739,7 @@ function snks_rochtah_meet_data_list_bookings( $args = array() ) {
 	$list_params[] = $offset;
 
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$list_sql = "SELECT b.* FROM {$table} b WHERE {$where_sql} ORDER BY b.appointment_datetime DESC LIMIT %d OFFSET %d";
+	$list_sql = "SELECT b.* FROM {$table} b WHERE {$where_sql} ORDER BY b.appointment_datetime ASC LIMIT %d OFFSET %d";
 	$rows     = empty( $params )
 		? $wpdb->get_results( $wpdb->prepare( $list_sql, $per_page, $offset ) )
 		: $wpdb->get_results( $wpdb->prepare( $list_sql, $list_params ) );
