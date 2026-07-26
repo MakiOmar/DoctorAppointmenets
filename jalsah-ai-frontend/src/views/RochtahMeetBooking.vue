@@ -103,12 +103,13 @@
         <p v-if="errors.patient" class="mt-1 text-sm text-red-600">{{ errors.patient }}</p>
       </div>
 
-      <!-- Diagnosis preview -->
+      <!-- Referral diagnosis preview (from إرسال لروشتا) -->
       <div v-if="patientId" class="rounded border border-gray-200 bg-gray-50 p-3 text-sm">
         <p class="font-medium text-gray-700 mb-1">{{ $t('rochtahMeet.diagnosisPreview') }}</p>
         <p v-if="diagnosisLoading" class="text-gray-500">{{ $t('rochtahMeet.loadingDiagnosis') }}</p>
         <template v-else-if="patientDiagnosis">
           <p><strong>{{ $t('rochtahMeet.diagnosisName') }}:</strong> {{ patientDiagnosis.diagnosis_name || '—' }}</p>
+          <p class="mt-1 whitespace-pre-wrap"><strong>{{ $t('rochtahMeet.symptoms') }}:</strong> {{ patientDiagnosis.symptoms || '—' }}</p>
           <p class="mt-1 whitespace-pre-wrap"><strong>{{ $t('rochtahMeet.reasoning') }}:</strong> {{ patientDiagnosis.reasoning || '—' }}</p>
         </template>
         <p v-else class="text-gray-500">{{ $t('rochtahMeet.noDiagnosis') }}</p>

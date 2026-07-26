@@ -30,6 +30,7 @@ function snks_create_rochtah_meet_bookings_table() {
 		diagnosis_id INT(11) DEFAULT NULL,
 		diagnosis_name VARCHAR(255) NOT NULL DEFAULT '',
 		diagnosis_reasoning TEXT,
+		diagnosis_symptoms TEXT,
 		created_by BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
 		status ENUM('scheduled','completed','cancelled') NOT NULL DEFAULT 'scheduled',
 		wa_doctor_sent TINYINT(1) NOT NULL DEFAULT 0,
@@ -46,7 +47,7 @@ function snks_create_rochtah_meet_bookings_table() {
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 	dbDelta( $sql );
 
-	update_option( 'snks_rochtah_meet_bookings_version', '1.1.0' );
+	update_option( 'snks_rochtah_meet_bookings_version', '1.2.0' );
 }
 
 /**
@@ -69,6 +70,26 @@ function snks_upgrade_rochtah_meet_bookings_schema() {
 	}
 }
 
+/**
+ * Add diagnosis_symptoms column to bookings table if missing.
+ *
+ * @return void
+ */
+function snks_upgrade_rochtah_meet_bookings_symptoms_schema() {
+	global $wpdb;
+
+	$table  = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
+	$exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+	if ( ! $exists ) {
+		return;
+	}
+
+	$column = $wpdb->get_row( "SHOW COLUMNS FROM {$table} LIKE 'diagnosis_symptoms'" );
+	if ( ! $column ) {
+		$wpdb->query( "ALTER TABLE {$table} ADD COLUMN diagnosis_symptoms TEXT NULL AFTER diagnosis_reasoning" );
+	}
+}
+
 add_action(
 	'init',
 	static function () {
@@ -79,6 +100,10 @@ add_action(
 		if ( version_compare( $current, '1.1.0', '<' ) ) {
 			snks_upgrade_rochtah_meet_bookings_schema();
 			update_option( 'snks_rochtah_meet_bookings_version', '1.1.0' );
+		}
+		if ( version_compare( get_option( 'snks_rochtah_meet_bookings_version', '0.0.0' ), '1.2.0', '<' ) ) {
+			snks_upgrade_rochtah_meet_bookings_symptoms_schema();
+			update_option( 'snks_rochtah_meet_bookings_version', '1.2.0' );
 		}
 	},
 	5
@@ -202,31 +227,44 @@ function snks_rochtah_meet_data_search_patient( $q ) {
 }
 
 /**
- * Get patient AI diagnosis snapshot for preview.
+ * Get patient referral diagnosis snapshot from latest إرسال لروشتا form.
+ *
+ * Uses the latest snks_rochtah_bookings row for the patient (any status).
  *
  * @param int $patient_id Patient user ID.
  * @return array|null
  */
 function snks_rochtah_meet_data_patient_diagnosis( $patient_id ) {
+	global $wpdb;
+
 	$patient_id = absint( $patient_id );
 	if ( ! $patient_id || ! snks_rochtah_meet_is_registered_patient( $patient_id ) ) {
 		return null;
 	}
 
-	$diagnosis = get_user_meta( $patient_id, 'ai_diagnosis_result', true );
-	if ( empty( $diagnosis ) || ! is_array( $diagnosis ) ) {
+	$table = $wpdb->prefix . 'snks_rochtah_bookings';
+	$row   = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT id, initial_diagnosis, symptoms, reason_for_referral, created_at
+			 FROM {$table}
+			 WHERE patient_id = %d
+			 ORDER BY id DESC
+			 LIMIT 1",
+			$patient_id
+		)
+	);
+
+	if ( ! $row ) {
 		return null;
 	}
 
 	return array(
-		'diagnosis_id'      => isset( $diagnosis['diagnosis_id'] ) ? (int) $diagnosis['diagnosis_id'] : null,
-		'diagnosis_name'    => isset( $diagnosis['diagnosis_name'] ) ? (string) $diagnosis['diagnosis_name'] : '',
-		'ai_diagnosis'      => isset( $diagnosis['ai_diagnosis'] ) ? (string) $diagnosis['ai_diagnosis'] : '',
-		'reasoning'         => isset( $diagnosis['reasoning'] ) ? (string) $diagnosis['reasoning'] : '',
-		'confidence'        => isset( $diagnosis['confidence'] ) ? (string) $diagnosis['confidence'] : '',
-		'patient_summary'   => isset( $diagnosis['patient_summary'] ) ? (string) $diagnosis['patient_summary'] : '',
-		'therapist_summary' => isset( $diagnosis['therapist_summary'] ) ? (string) $diagnosis['therapist_summary'] : '',
-		'completed_at'      => isset( $diagnosis['completed_at'] ) ? (string) $diagnosis['completed_at'] : '',
+		'referral_id'    => (int) $row->id,
+		'diagnosis_id'   => null,
+		'diagnosis_name' => (string) $row->initial_diagnosis,
+		'symptoms'       => (string) $row->symptoms,
+		'reasoning'      => (string) $row->reason_for_referral,
+		'created_at'     => (string) $row->created_at,
 	);
 }
 
@@ -579,14 +617,14 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 	}
 	$appointment_datetime = wp_date( 'Y-m-d H:i:s', $timestamp );
 
-	$diagnosis_snapshot = snks_rochtah_meet_data_patient_diagnosis( $patient_id );
-	$diagnosis_id       = null;
-	$diagnosis_name     = '';
-	$diagnosis_reason   = '';
+	$diagnosis_snapshot  = snks_rochtah_meet_data_patient_diagnosis( $patient_id );
+	$diagnosis_name      = '';
+	$diagnosis_reason    = '';
+	$diagnosis_symptoms  = '';
 	if ( is_array( $diagnosis_snapshot ) ) {
-		$diagnosis_id     = $diagnosis_snapshot['diagnosis_id'];
-		$diagnosis_name   = $diagnosis_snapshot['diagnosis_name'];
-		$diagnosis_reason = $diagnosis_snapshot['reasoning'];
+		$diagnosis_name     = $diagnosis_snapshot['diagnosis_name'];
+		$diagnosis_reason   = $diagnosis_snapshot['reasoning'];
+		$diagnosis_symptoms = $diagnosis_snapshot['symptoms'];
 	}
 
 	$table = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
@@ -598,13 +636,14 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 			'meet_url_id'          => $meet_url_id,
 			'meet_url'             => $meet_url,
 			'appointment_datetime' => $appointment_datetime,
-			'diagnosis_id'         => $diagnosis_id,
+			'diagnosis_id'         => null,
 			'diagnosis_name'       => $diagnosis_name,
 			'diagnosis_reasoning'  => $diagnosis_reason,
+			'diagnosis_symptoms'   => $diagnosis_symptoms,
 			'created_by'           => absint( $created_by ),
 			'status'               => 'scheduled',
 		),
-		array( '%d', '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%d', '%s' )
+		array( '%d', '%d', '%d', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s' )
 	);
 
 	if ( ! $inserted ) {
@@ -651,6 +690,8 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 		'meet_url'             => $meet_url,
 		'appointment_datetime' => $appointment_datetime,
 		'diagnosis_name'       => $diagnosis_name,
+		'diagnosis_symptoms'   => $diagnosis_symptoms,
+		'diagnosis_reasoning'  => $diagnosis_reason,
 		'wa_doctor_sent'       => (bool) $wa_flags['wa_doctor_sent'],
 		'wa_patient_sent'      => (bool) $wa_flags['wa_patient_sent'],
 	);
@@ -774,6 +815,7 @@ function snks_rochtah_meet_data_list_bookings( $args = array() ) {
 			'meet_url'             => (string) $row->meet_url,
 			'appointment_datetime' => (string) $row->appointment_datetime,
 			'diagnosis_name'       => (string) $row->diagnosis_name,
+			'diagnosis_symptoms'   => isset( $row->diagnosis_symptoms ) ? (string) $row->diagnosis_symptoms : '',
 			'diagnosis_reasoning'  => (string) $row->diagnosis_reasoning,
 			'status'               => (string) $row->status,
 			'wa_doctor_sent'       => (bool) $row->wa_doctor_sent,

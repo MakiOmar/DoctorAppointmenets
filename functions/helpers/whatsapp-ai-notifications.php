@@ -668,6 +668,7 @@ function snks_send_rochtah_meet_doctor_notification( $booking_id ) {
 			'time'            => $time_str,
 			'meet_url'        => $booking->meet_url,
 			'diagnosis_name'  => (string) $booking->diagnosis_name,
+			'symptoms'        => isset( $booking->diagnosis_symptoms ) ? (string) $booking->diagnosis_symptoms : '',
 			'reasoning'       => (string) $booking->diagnosis_reasoning,
 		)
 	);

@@ -414,8 +414,8 @@ function snks_therapist_registration_settings_page() {
 						</th>
 						<td>
 							<input type="text" name="template_rochtah_meet_doctor" id="template_rochtah_meet_doctor" value="<?php echo esc_attr( get_option( 'snks_template_rochtah_meet_doctor', 'rochtah_meet_doctor' ) ); ?>" class="regular-text" placeholder="rochtah_meet_doctor">
-							<button type="button" class="button test-whatsapp-notification" data-template="rochtah_meet_doctor" data-params='{"patient": "محمد علي", "day": "الاثنين", "date": "2026-07-07", "time": "03:00 pm", "meet_url": "https://meet.google.com/abc-defg-hij", "diagnosis_name": "الاكتئاب", "reasoning": "أعراض مستمرة منذ شهرين"}' style="margin-right: 10px;">اختبار</button>
-							<p class="description">Notify rochtah doctor on Google Meet booking | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{meet_url}}</code>, <code>{{diagnosis_name}}</code>, <code>{{reasoning}}</code></p>
+							<button type="button" class="button test-whatsapp-notification" data-template="rochtah_meet_doctor" data-params='{"patient": "محمد علي", "day": "الاثنين", "date": "2026-07-07", "time": "03:00 pm", "meet_url": "https://meet.google.com/abc-defg-hij", "diagnosis_name": "الاكتئاب", "symptoms": "حزن مستمر وفقدان الاهتمام", "reasoning": "يحتاج تقييم دوائي"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Notify rochtah doctor on Google Meet booking | <code>{{patient}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{meet_url}}</code>, <code>{{diagnosis_name}}</code>, <code>{{symptoms}}</code>, <code>{{reasoning}}</code></p>
 						</td>
 					</tr>
 					<tr>

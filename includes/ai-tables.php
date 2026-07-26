@@ -152,6 +152,7 @@ function snks_create_ai_tables() {
 		diagnosis_id INT(11) DEFAULT NULL,
 		diagnosis_name VARCHAR(255) NOT NULL DEFAULT '',
 		diagnosis_reasoning TEXT,
+		diagnosis_symptoms TEXT,
 		created_by BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
 		status ENUM('scheduled','completed','cancelled') NOT NULL DEFAULT 'scheduled',
 		wa_doctor_sent TINYINT(1) NOT NULL DEFAULT 0,
