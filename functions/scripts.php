@@ -1351,6 +1351,7 @@ add_action(
 								time_24hr: false,
 								minDate: 'today',
 								allowInput: false,
+								minuteIncrement: 15,
 								// Keep Flatpickr popup above SweetAlert (site uses z-index:999999).
 								onReady: function( selectedDates, dateStr, instance ) {
 									if ( instance.calendarContainer ) {

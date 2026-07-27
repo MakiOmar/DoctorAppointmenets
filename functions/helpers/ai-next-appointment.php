@@ -100,14 +100,29 @@ function snks_ai_next_appointment_payment_number() {
 function snks_ai_next_appointment_normalize_datetime( $raw ) {
 	$raw = trim( (string) $raw );
 	if ( preg_match( '/^(\d{4}-\d{2}-\d{2})[\sT](\d{1,2}):(\d{2})(?::(\d{2}))?$/', $raw, $m ) ) {
-		$hour   = str_pad( (string) absint( $m[2] ), 2, '0', STR_PAD_LEFT );
-		$minute = str_pad( (string) absint( $m[3] ), 2, '0', STR_PAD_LEFT );
-		$second = isset( $m[4] ) ? str_pad( (string) absint( $m[4] ), 2, '0', STR_PAD_LEFT ) : '00';
-		if ( (int) $hour > 23 || (int) $minute > 59 || (int) $second > 59 ) {
+		$hour   = (int) $m[2];
+		$minute = (int) $m[3];
+		$second = isset( $m[4] ) ? (int) $m[4] : 0;
+		if ( $hour > 23 || $minute > 59 || $second > 59 ) {
 			return null;
 		}
-		$normalized = sprintf( '%s %s:%s:%s', $m[1], $hour, $minute, $second );
-		$dt         = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $normalized );
+		// Only :00, :15, :30, :45 are allowed (snap to nearest quarter-hour).
+		$allowed = array( 0, 15, 30, 45 );
+		if ( ! in_array( $minute, $allowed, true ) ) {
+			$minute = (int) ( round( $minute / 15 ) * 15 );
+			if ( 60 === $minute ) {
+				$minute = 0;
+				$hour   = ( $hour + 1 ) % 24;
+			}
+		}
+		$normalized = sprintf(
+			'%s %02d:%02d:%02d',
+			$m[1],
+			$hour,
+			$minute,
+			0
+		);
+		$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $normalized );
 		if ( ! $dt || $dt->format( 'Y-m-d H:i:s' ) !== $normalized ) {
 			return null;
 		}
