@@ -23,6 +23,8 @@
     "@heroicons/vue": "^2.0.18",
     "autoprefixer": "^10.4.15",
     "axios": "^1.5.0",
+    "baseline-browser-mapping": "^2.11.4",
+    "caniuse-lite": "^1.0.30001806",
     "flatpickr": "^4.6.13",
     "pinia": "^2.1.6",
     "postcss": "^8.4.29",

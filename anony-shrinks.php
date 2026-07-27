@@ -3,7 +3,7 @@
  * Plugin Name: A Shrinks
  * Plugin URI: https://makiomar.com/
  * Description: Shrinks Clinics
- * Version: 1.0.366
+ * Version: 1.0.367
  * Author: Makiomar
  * Author URI: https://makiomar.com/
  * License: GPLv2 or later
