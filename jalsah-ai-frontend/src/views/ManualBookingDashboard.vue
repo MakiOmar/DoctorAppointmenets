@@ -18,6 +18,18 @@
         <button
           type="button"
           class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'followup' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'followup'; loadFollowups()"
+        >
+          {{ $t('manualBooking.followupTab') }}
+          <span
+            v-if="followupPendingCount > 0"
+            class="ms-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-xs font-semibold"
+          >{{ followupPendingCount }}</span>
+        </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
           :class="activeTab === 'change' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
           @click="activeTab = 'change'"
         >
@@ -320,6 +332,60 @@
         </button>
       </div>
     </form>
+
+    <!-- Follow-up (متابعة) — pending next appointments from doctors -->
+    <div v-else-if="activeTab === 'followup'" class="space-y-4 max-w-2xl mx-auto" dir="rtl">
+      <div v-if="followupsLoading" class="p-8 text-center text-gray-500">
+        <span class="animate-spin inline-block h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+        <p class="mt-2">{{ $t('common.loading') }}</p>
+      </div>
+      <p v-else-if="followups.length === 0" class="text-center text-gray-500 py-8">
+        {{ $t('manualBooking.followupEmpty') }}
+      </p>
+      <div v-else class="space-y-4">
+        <article
+          v-for="item in followups"
+          :key="item.id"
+          class="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm"
+        >
+          <div class="mb-3">
+            <p class="text-xs text-gray-500">{{ $t('manualBooking.followupTherapist') }}</p>
+            <p class="text-base font-semibold text-gray-900">{{ item.therapist_name || '—' }}</p>
+          </div>
+          <div class="mb-3">
+            <p class="text-xs text-gray-500">{{ $t('manualBooking.followupPatient') }}</p>
+            <p class="text-base font-semibold text-gray-900">
+              {{ item.patient_name || '—' }}
+              <span v-if="item.patient_whatsapp"> - {{ item.patient_whatsapp }}</span>
+            </p>
+          </div>
+          <div class="mb-4">
+            <p class="text-xs text-gray-500">{{ $t('manualBooking.followupAppointment') }}</p>
+            <p class="text-base font-semibold text-gray-900">{{ item.display || item.appointment_datetime }}</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 justify-between">
+            <button
+              type="button"
+              class="px-3 py-2 rounded-md border border-gray-300 bg-gray-100 text-gray-800 text-sm hover:bg-gray-200 disabled:opacity-50"
+              :disabled="followupActionId === item.id"
+              @click="markFollowupDone(item)"
+            >
+              {{ $t('manualBooking.followupDone') }}
+            </button>
+            <a
+              v-if="item.whatsapp_url"
+              :href="item.whatsapp_url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+            >
+              {{ $t('manualBooking.followupWhatsapp') }}
+            </a>
+            <span v-else class="text-xs text-gray-400">{{ $t('manualBooking.followupNoWhatsapp') }}</span>
+          </div>
+        </article>
+      </div>
+    </div>
 
     <!-- Manage manual bookings -->
     <div v-else-if="activeTab === 'manage'" class="space-y-4">
@@ -1201,6 +1267,52 @@ import api from '@/services/api'
 const toast = useToast()
 const { t, locale } = useI18n()
 const activeTab = ref('new')
+
+const followups = ref([])
+const followupsLoading = ref(false)
+const followupPendingCount = ref(0)
+const followupActionId = ref(null)
+
+async function loadFollowups() {
+  followupsLoading.value = true
+  try {
+    const data = await manualBookingApi.getFollowups()
+    followups.value = Array.isArray(data?.rows) ? data.rows : []
+    followupPendingCount.value = Number(data?.pending_count) || followups.value.length
+  } catch (e) {
+    followups.value = []
+    toast.error(t('manualBooking.followupLoadFailed'))
+  } finally {
+    followupsLoading.value = false
+  }
+}
+
+async function markFollowupDone(item) {
+  const confirm = await Swal.fire({
+    icon: 'question',
+    title: t('manualBooking.followupConfirmDoneTitle'),
+    text: t('manualBooking.followupConfirmDoneText'),
+    showCancelButton: true,
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel')
+  })
+  if (!confirm.isConfirmed) return
+
+  followupActionId.value = item.id
+  try {
+    const data = await manualBookingApi.markFollowupContacted(item.id)
+    followups.value = followups.value.filter((row) => row.id !== item.id)
+    followupPendingCount.value = Number(data?.pending_count)
+    if (Number.isNaN(followupPendingCount.value)) {
+      followupPendingCount.value = followups.value.length
+    }
+    toast.success(t('manualBooking.followupMarkedDone'))
+  } catch (e) {
+    toast.error(e.response?.data?.error || t('manualBooking.followupMarkFailed'))
+  } finally {
+    followupActionId.value = null
+  }
+}
 
 // Validation errors (translated)
 const errors = ref({
@@ -2195,6 +2307,8 @@ function handleClickOutsideTherapist(e) {
 
 onMounted(async () => {
   document.addEventListener('click', handleClickOutsideTherapist)
+  // Prefetch pending follow-up count for tab badge
+  loadFollowups().catch(() => {})
   therapistsLoading.value = true
   try {
     const data = await manualBookingApi.getTherapists()

@@ -36,6 +36,12 @@ export default {
   getBookingsByPhone(phone, page = 1, perPage = 100) {
     return api.post(BASE + '/bookings-by-phone', { phone, page, per_page: perPage }).then(r => r.data?.data ?? r.data)
   },
+  getFollowups() {
+    return api.get(BASE + '/followups').then(r => r.data?.data ?? r.data)
+  },
+  markFollowupContacted(id) {
+    return api.post(BASE + '/mark-followup-contacted', { id }).then(r => r.data?.data ?? r.data)
+  },
   submit(payload) {
     return api
       .post(BASE + '/submit', payload, { skipGlobalErrorToast: true })

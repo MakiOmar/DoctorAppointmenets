@@ -1322,6 +1322,83 @@ add_action(
 						console.error('Error sending rochtah request:', error);
 					});
 				});
+
+				// الموعد القادم — Flatpickr datetime then AJAX submit for AI sessions
+				$(document).on('click', '.snks-next-appointment-btn', function(e) {
+					e.preventDefault();
+					var $button = $(this);
+					var sessionId = $button.data('session-id');
+					var nextApptNonce = '<?php echo esc_js( wp_create_nonce( 'snks_next_appointment_nonce' ) ); ?>';
+
+					Swal.fire({
+						title: 'الموعد القادم',
+						html: '<div style="text-align:right;direction:rtl;"><label for="snks-next-appt-datetime" style="display:block;margin-bottom:8px;font-weight:bold;">اختر التاريخ والوقت</label><input type="text" id="snks-next-appt-datetime" class="swal2-input" style="width:100%;margin:0;" placeholder="التاريخ والوقت" readonly></div>',
+						showCancelButton: true,
+						confirmButtonText: 'إرسال',
+						cancelButtonText: 'إلغاء',
+						confirmButtonColor: '#0d6efd',
+						focusConfirm: false,
+						didOpen: function() {
+							var input = document.getElementById('snks-next-appt-datetime');
+							if (!input || typeof flatpickr === 'undefined') {
+								return;
+							}
+							var fpOpts = {
+								enableTime: true,
+								dateFormat: 'Y-m-d H:i',
+								time_24hr: false,
+								allowInput: false,
+								minDate: 'today',
+								defaultDate: new Date()
+							};
+							if (typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.ar) {
+								fpOpts.locale = flatpickr.l10ns.ar;
+							}
+							flatpickr(input, fpOpts);
+						},
+						preConfirm: function() {
+							var val = $('#snks-next-appt-datetime').val();
+							if (!val) {
+								Swal.showValidationMessage('يرجى اختيار التاريخ والوقت');
+								return false;
+							}
+							Swal.showLoading();
+							return $.ajax({
+								type: 'POST',
+								url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
+								data: {
+									action: 'snks_submit_next_appointment',
+									nonce: nextApptNonce,
+									session_id: sessionId,
+									appointment_datetime: val
+								}
+							}).then(function(response) {
+								if (!response || !response.success) {
+									var msg = (response && response.data && response.data.message) ? response.data.message : 'فشل حفظ الموعد';
+									throw new Error(msg);
+								}
+								return response;
+							}).catch(function(err) {
+								var msg = (err && err.message) ? err.message : 'حدث خطأ أثناء الحفظ';
+								if (err && err.responseJSON && err.responseJSON.data && err.responseJSON.data.message) {
+									msg = err.responseJSON.data.message;
+								}
+								Swal.showValidationMessage(msg);
+								return false;
+							});
+						}
+					}).then(function(result) {
+						if (result.isConfirmed && result.value && result.value.success) {
+							$button.remove();
+							Swal.fire({
+								icon: 'success',
+								title: 'تم بنجاح',
+								text: (result.value.data && result.value.data.message) ? result.value.data.message : 'تم تسجيل الموعد القادم بنجاح.',
+								confirmButtonText: 'حسناً'
+							});
+						}
+					});
+				});
 				
 				// Handle Roshta booking button clicks
 				$(document).on('click', '.book-rochtah-btn', function(e) {

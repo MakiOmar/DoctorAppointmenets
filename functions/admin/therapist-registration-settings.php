@@ -200,6 +200,7 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_template_edit', sanitize_text_field( $_POST['template_edit'] ?? 'edit' ) );
 		update_option( 'snks_template_manual_new_session', sanitize_text_field( $_POST['template_manual_new_session'] ?? 'manual_new_session' ) );
 		update_option( 'snks_template_password', sanitize_text_field( $_POST['template_password'] ?? 'password' ) );
+		update_option( 'snks_followup_payment_number', sanitize_text_field( $_POST['followup_payment_number'] ?? '' ) );
 		// Note: Button URL removed - OTP messages should not have buttons
 		
 		echo '<div class="notice notice-success"><p>Settings saved successfully!</p></div>';
@@ -322,6 +323,15 @@ function snks_therapist_registration_settings_page() {
 						<td>
 							<input type="text" name="whatsapp_template_name" id="whatsapp_template_name" value="<?php echo esc_attr( $whatsapp_template_name ); ?>" class="regular-text" placeholder="hello_world">
 							<p class="description">Template name for OTP verification messages. Default: "hello_world" (for testing only).</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="followup_payment_number">رقم الدفع للمتابعة / Follow-up Payment Number</label>
+						</th>
+						<td>
+							<input type="text" name="followup_payment_number" id="followup_payment_number" value="<?php echo esc_attr( get_option( 'snks_followup_payment_number', '' ) ); ?>" class="regular-text" placeholder="01xxxxxxxxx" dir="ltr">
+							<p class="description">Site-wide InstaPay / Vodafone Cash / wallet number used in secretary follow-up WhatsApp messages ({{PAYMENT_NUMBER}}).</p>
 						</td>
 					</tr>
 				</table>

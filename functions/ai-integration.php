@@ -7426,6 +7426,36 @@ Best regards,
 				$this->send_success( snks_manual_booking_data_bookings_by_phone( $phone, $page, $per_page ) );
 				return;
 
+			case 'followups':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_ai_next_appointment_list_pending' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$this->send_success( snks_ai_next_appointment_list_pending() );
+				return;
+
+			case 'mark-followup-contacted':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_ai_next_appointment_mark_contacted' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$followup_id = isset( $input['id'] ) ? absint( $input['id'] ) : 0;
+				$result      = snks_ai_next_appointment_mark_contacted( $followup_id, $user_id );
+				if ( is_wp_error( $result ) ) {
+					$this->send_error( $result->get_error_message(), 400 );
+					return;
+				}
+				$this->send_success( $result );
+				return;
+
 			case 'submit':
 				if ( $method !== 'POST' ) {
 					$this->send_error( 'Method not allowed', 405 );

@@ -1823,6 +1823,12 @@ function snks_doctor_actions( $session ) {
 				$output .= '<button class="snks-button snks-roshtah-request-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #28a745; border-color: #28a745;">إرسال لروشتا</button>';
 			}
 		}
+
+		// Next appointment button — AI sessions only, until a next-appointment is submitted.
+		if ( $is_ai_session && function_exists( 'snks_ai_next_appointment_exists_for_session' )
+			&& ! snks_ai_next_appointment_exists_for_session( $session->ID ) ) {
+			$output .= '<button type="button" class="snks-button snks-next-appointment-btn" data-session-id="' . esc_attr( $session->ID ) . '" data-client-id="' . esc_attr( $session->client_id ) . '" style="margin-top: 10px; background-color: #0d6efd; border-color: #0d6efd;">الموعد القادم</button>';
+		}
 		
 		$output .= '</div>';
 	}
