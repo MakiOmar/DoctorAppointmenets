@@ -1323,7 +1323,7 @@ add_action(
 					});
 				});
 
-				// الموعد القادم — Flatpickr datetime then AJAX submit for AI sessions
+				// الموعد القادم — same Flatpickr UX as RochtahMeetBooking (native mobile calendar)
 				$(document).on('click', '.snks-next-appointment-btn', function(e) {
 					e.preventDefault();
 					var $button = $(this);
@@ -1333,8 +1333,7 @@ add_action(
 
 					Swal.fire({
 						title: 'الموعد القادم',
-						html: '<div class="snks-next-appt-picker-wrap" style="text-align:right;direction:rtl;"><label for="snks-next-appt-datetime" style="display:block;margin-bottom:8px;font-weight:bold;">اختر التاريخ والوقت</label><input type="text" id="snks-next-appt-datetime" class="swal2-input" style="width:100%;margin:0;" placeholder="التاريخ والوقت" readonly><div id="snks-next-appt-calendar" style="margin-top:10px;"></div></div>',
-						width: '340px',
+						html: '<div class="snks-next-appt-picker-wrap" style="text-align:right;direction:rtl;"><label for="snks-next-appt-datetime" style="display:block;margin-bottom:8px;font-weight:bold;">اختر التاريخ والوقت</label><input type="text" id="snks-next-appt-datetime" class="swal2-input" style="width:100%;margin:0;" placeholder="التاريخ والوقت"></div>',
 						showCancelButton: true,
 						confirmButtonText: 'إرسال',
 						cancelButtonText: 'إلغاء',
@@ -1342,25 +1341,35 @@ add_action(
 						focusConfirm: false,
 						didOpen: function() {
 							var input = document.getElementById('snks-next-appt-datetime');
-							var calHost = document.getElementById('snks-next-appt-calendar');
 							if (!input || typeof flatpickr === 'undefined') {
 								return;
 							}
+							// Match jalsah-ai-frontend RochtahMeetBooking flatpickrConfig (mobile native UI).
 							var fpOpts = {
 								enableTime: true,
 								dateFormat: 'Y-m-d H:i',
 								time_24hr: false,
-								allowInput: false,
 								minDate: 'today',
-								defaultDate: new Date(),
-								// Keep calendar inside Swal so it is not trapped under z-index:999999 backdrop.
-								inline: true,
-								appendTo: calHost || undefined
+								allowInput: false,
+								// Keep Flatpickr popup above SweetAlert (site uses z-index:999999).
+								onReady: function( selectedDates, dateStr, instance ) {
+									if ( instance.calendarContainer ) {
+										instance.calendarContainer.style.zIndex = '10000000';
+									}
+								},
+								onOpen: function( selectedDates, dateStr, instance ) {
+									if ( instance.calendarContainer ) {
+										instance.calendarContainer.style.zIndex = '10000000';
+									}
+								}
 							};
-							if (typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.ar) {
-								fpOpts.locale = flatpickr.l10ns.ar;
-							}
 							nextApptFp = flatpickr(input, fpOpts);
+							// Open immediately so mobile shows the same calendar as Rochtah Meet.
+							setTimeout(function() {
+								if (nextApptFp) {
+									nextApptFp.open();
+								}
+							}, 50);
 						},
 						willClose: function() {
 							if (nextApptFp) {
