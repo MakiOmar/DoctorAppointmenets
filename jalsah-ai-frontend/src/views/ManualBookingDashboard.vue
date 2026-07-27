@@ -334,7 +334,7 @@
     </form>
 
     <!-- Follow-up (متابعة) — pending next appointments from doctors -->
-    <div v-else-if="activeTab === 'followup'" class="space-y-4 max-w-2xl mx-auto" dir="rtl">
+    <div v-else-if="activeTab === 'followup'" class="space-y-4 max-w-6xl mx-auto" dir="rtl">
       <div v-if="followupsLoading" class="p-8 text-center text-gray-500">
         <span class="animate-spin inline-block h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full" />
         <p class="mt-2">{{ $t('common.loading') }}</p>
@@ -342,7 +342,7 @@
       <p v-else-if="followups.length === 0" class="text-center text-gray-500 py-8">
         {{ $t('manualBooking.followupEmpty') }}
       </p>
-      <div v-else class="space-y-4">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <article
           v-for="item in followups"
           :key="item.id"

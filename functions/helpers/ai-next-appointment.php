@@ -92,34 +92,72 @@ function snks_ai_next_appointment_payment_number() {
 }
 
 /**
+ * Normalize a Flatpickr/doctor-submitted datetime to MySQL wall-clock (no TZ shift).
+ *
+ * @param string $raw Raw datetime (Y-m-d H:i or Y-m-d H:i:s).
+ * @return string|null MySQL datetime or null if invalid.
+ */
+function snks_ai_next_appointment_normalize_datetime( $raw ) {
+	$raw = trim( (string) $raw );
+	if ( preg_match( '/^(\d{4}-\d{2}-\d{2})[\sT](\d{1,2}):(\d{2})(?::(\d{2}))?$/', $raw, $m ) ) {
+		$hour   = str_pad( (string) absint( $m[2] ), 2, '0', STR_PAD_LEFT );
+		$minute = str_pad( (string) absint( $m[3] ), 2, '0', STR_PAD_LEFT );
+		$second = isset( $m[4] ) ? str_pad( (string) absint( $m[4] ), 2, '0', STR_PAD_LEFT ) : '00';
+		if ( (int) $hour > 23 || (int) $minute > 59 || (int) $second > 59 ) {
+			return null;
+		}
+		$normalized = sprintf( '%s %s:%s:%s', $m[1], $hour, $minute, $second );
+		$dt         = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $normalized );
+		if ( ! $dt || $dt->format( 'Y-m-d H:i:s' ) !== $normalized ) {
+			return null;
+		}
+		return $normalized;
+	}
+	return null;
+}
+
+/**
  * Format Arabic date parts from a datetime string.
+ * Treats stored value as site wall-clock (no wp_date timezone conversion).
  *
  * @param string $datetime MySQL datetime.
  * @return array{day:string,date:string,time:string,display:string}
  */
 function snks_ai_next_appointment_format_parts( $datetime ) {
-	$timestamp = strtotime( $datetime );
-	if ( ! $timestamp ) {
+	$datetime = (string) $datetime;
+	$dt       = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $datetime );
+	if ( ! $dt ) {
+		$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i', $datetime );
+	}
+	if ( ! $dt ) {
 		return array(
 			'day'     => '',
 			'date'    => '',
 			'time'    => '',
-			'display' => (string) $datetime,
+			'display' => $datetime,
 		);
 	}
 
-	$day = function_exists( 'snks_get_arabic_day_name' )
-		? snks_get_arabic_day_name( wp_date( 'Y-m-d', $timestamp ) )
-		: wp_date( 'l', $timestamp );
+	$day_map = array(
+		'Sunday'    => 'الأحد',
+		'Monday'    => 'الاثنين',
+		'Tuesday'   => 'الثلاثاء',
+		'Wednesday' => 'الأربعاء',
+		'Thursday'  => 'الخميس',
+		'Friday'    => 'الجمعة',
+		'Saturday'  => 'السبت',
+	);
+	$english_day = $dt->format( 'l' );
+	$day         = isset( $day_map[ $english_day ] ) ? $day_map[ $english_day ] : $english_day;
 
-	$date_en = wp_date( 'j F Y', $timestamp );
+	$date_en = $dt->format( 'j F Y' );
 	$date    = function_exists( 'localize_date_to_arabic' )
 		? localize_date_to_arabic( $date_en )
 		: $date_en;
 
-	$hour   = (int) wp_date( 'g', $timestamp );
-	$minute = wp_date( 'i', $timestamp );
-	$ampm   = ( (int) wp_date( 'G', $timestamp ) ) >= 12 ? 'م' : 'ص';
+	$hour   = (int) $dt->format( 'g' );
+	$minute = $dt->format( 'i' );
+	$ampm   = ( (int) $dt->format( 'G' ) ) >= 12 ? 'م' : 'ص';
 	$time   = $hour . ':' . $minute . ' ' . $ampm;
 
 	$display = sprintf(
@@ -229,11 +267,11 @@ function snks_ai_next_appointment_submit( $session_id, $appointment_datetime, $c
 		return new WP_Error( 'invalid_params', 'بيانات غير صالحة.' );
 	}
 
-	$timestamp = strtotime( $raw );
-	if ( ! $timestamp ) {
+	// Store the wall-clock time the doctor picked — do not convert via strtotime+wp_date (TZ shift).
+	$appointment_datetime = snks_ai_next_appointment_normalize_datetime( $raw );
+	if ( ! $appointment_datetime ) {
 		return new WP_Error( 'invalid_datetime', 'تاريخ أو وقت غير صالح.' );
 	}
-	$appointment_datetime = wp_date( 'Y-m-d H:i:s', $timestamp );
 
 	if ( snks_ai_next_appointment_exists_for_session( $session_id ) ) {
 		return new WP_Error( 'already_exists', 'تم تسجيل الموعد القادم لهذه الجلسة مسبقاً.' );
