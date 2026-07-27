@@ -1329,10 +1329,12 @@ add_action(
 					var $button = $(this);
 					var sessionId = $button.data('session-id');
 					var nextApptNonce = '<?php echo esc_js( wp_create_nonce( 'snks_next_appointment_nonce' ) ); ?>';
+					var nextApptFp = null;
 
 					Swal.fire({
 						title: 'الموعد القادم',
-						html: '<div style="text-align:right;direction:rtl;"><label for="snks-next-appt-datetime" style="display:block;margin-bottom:8px;font-weight:bold;">اختر التاريخ والوقت</label><input type="text" id="snks-next-appt-datetime" class="swal2-input" style="width:100%;margin:0;" placeholder="التاريخ والوقت" readonly></div>',
+						html: '<div class="snks-next-appt-picker-wrap" style="text-align:right;direction:rtl;"><label for="snks-next-appt-datetime" style="display:block;margin-bottom:8px;font-weight:bold;">اختر التاريخ والوقت</label><input type="text" id="snks-next-appt-datetime" class="swal2-input" style="width:100%;margin:0;" placeholder="التاريخ والوقت" readonly><div id="snks-next-appt-calendar" style="margin-top:10px;"></div></div>',
+						width: '340px',
 						showCancelButton: true,
 						confirmButtonText: 'إرسال',
 						cancelButtonText: 'إلغاء',
@@ -1340,6 +1342,7 @@ add_action(
 						focusConfirm: false,
 						didOpen: function() {
 							var input = document.getElementById('snks-next-appt-datetime');
+							var calHost = document.getElementById('snks-next-appt-calendar');
 							if (!input || typeof flatpickr === 'undefined') {
 								return;
 							}
@@ -1349,15 +1352,28 @@ add_action(
 								time_24hr: false,
 								allowInput: false,
 								minDate: 'today',
-								defaultDate: new Date()
+								defaultDate: new Date(),
+								// Keep calendar inside Swal so it is not trapped under z-index:999999 backdrop.
+								inline: true,
+								appendTo: calHost || undefined
 							};
 							if (typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.ar) {
 								fpOpts.locale = flatpickr.l10ns.ar;
 							}
-							flatpickr(input, fpOpts);
+							nextApptFp = flatpickr(input, fpOpts);
+						},
+						willClose: function() {
+							if (nextApptFp) {
+								nextApptFp.destroy();
+								nextApptFp = null;
+							}
 						},
 						preConfirm: function() {
 							var val = $('#snks-next-appt-datetime').val();
+							if (!val && nextApptFp && nextApptFp.selectedDates && nextApptFp.selectedDates[0]) {
+								val = nextApptFp.formatDate(nextApptFp.selectedDates[0], 'Y-m-d H:i');
+								$('#snks-next-appt-datetime').val(val);
+							}
 							if (!val) {
 								Swal.showValidationMessage('يرجى اختيار التاريخ والوقت');
 								return false;
