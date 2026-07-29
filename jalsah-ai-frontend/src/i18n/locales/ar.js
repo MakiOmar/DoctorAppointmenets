@@ -1120,6 +1120,8 @@ export default {
     status: 'الحالة',
     actions: 'إجراءات',
     copyMeetUrl: 'نسخ رابط Meet',
+    copyPhone: 'نسخ الهاتف',
+    patientPhone: 'هاتف المريض',
     markCompleted: 'إكمال',
     cancel: 'إلغاء',
     noBookings: 'لا توجد حجوزات',

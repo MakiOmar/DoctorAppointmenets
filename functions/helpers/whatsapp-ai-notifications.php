@@ -652,17 +652,27 @@ function snks_send_rochtah_meet_doctor_notification( $booking_id ) {
 		? snks_rochtah_meet_get_patient_name( (int) $booking->patient_id )
 		: 'المريض';
 
-	$date_str = wp_date( 'Y-m-d', strtotime( $booking->appointment_datetime ) );
-	$time_str = wp_date( 'h:i a', strtotime( $booking->appointment_datetime ) );
-	$day_name = function_exists( 'snks_get_arabic_day_name' )
+	$therapist_name = function_exists( 'snks_rochtah_meet_get_doctor_name' )
+		? snks_rochtah_meet_get_doctor_name( (int) $booking->rochtah_doctor_id )
+		: 'الطبيب';
+
+	// Parse wall-clock datetime without timezone conversion.
+	$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', (string) $booking->appointment_datetime );
+	if ( ! $dt ) {
+		$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i', (string) $booking->appointment_datetime );
+	}
+	$date_str = $dt ? $dt->format( 'Y-m-d' ) : '';
+	$time_str = $dt ? $dt->format( 'h:i a' ) : '';
+	$day_name = ( $date_str && function_exists( 'snks_get_arabic_day_name' ) )
 		? snks_get_arabic_day_name( $date_str )
-		: wp_date( 'l', strtotime( $booking->appointment_datetime ) );
+		: ( $dt ? $dt->format( 'l' ) : '' );
 
 	$result = snks_send_whatsapp_template_message(
 		$doctor_phone,
 		$settings['template_rochtah_meet_doctor'],
 		array(
 			'patient'         => $patient_name,
+			'therapist'       => $therapist_name,
 			'day'             => $day_name,
 			'date'            => $date_str,
 			'time'            => $time_str,
@@ -710,11 +720,15 @@ function snks_send_rochtah_meet_patient_notification( $booking_id ) {
 		? snks_rochtah_meet_get_doctor_name( (int) $booking->rochtah_doctor_id )
 		: 'الطبيب';
 
-	$date_str = wp_date( 'Y-m-d', strtotime( $booking->appointment_datetime ) );
-	$time_str = wp_date( 'h:i a', strtotime( $booking->appointment_datetime ) );
-	$day_name = function_exists( 'snks_get_arabic_day_name' )
+	$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', (string) $booking->appointment_datetime );
+	if ( ! $dt ) {
+		$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i', (string) $booking->appointment_datetime );
+	}
+	$date_str = $dt ? $dt->format( 'Y-m-d' ) : '';
+	$time_str = $dt ? $dt->format( 'h:i a' ) : '';
+	$day_name = ( $date_str && function_exists( 'snks_get_arabic_day_name' ) )
 		? snks_get_arabic_day_name( $date_str )
-		: wp_date( 'l', strtotime( $booking->appointment_datetime ) );
+		: ( $dt ? $dt->format( 'l' ) : '' );
 
 	$result = snks_send_whatsapp_template_message(
 		$patient_phone,

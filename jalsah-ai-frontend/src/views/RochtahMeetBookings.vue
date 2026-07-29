@@ -24,12 +24,6 @@
           @keydown.enter.prevent="loadBookings(1)"
         />
       </div>
-      <select v-model="statusFilter" class="rounded border border-gray-300 px-3 py-2 text-sm">
-        <option value="">{{ $t('rochtahMeetManage.allStatuses') }}</option>
-        <option value="scheduled">{{ $t('rochtahMeetManage.statusScheduled') }}</option>
-        <option value="completed">{{ $t('rochtahMeetManage.statusCompleted') }}</option>
-        <option value="cancelled">{{ $t('rochtahMeetManage.statusCancelled') }}</option>
-      </select>
       <button
         type="button"
         class="px-4 py-2 rounded-md bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
@@ -55,8 +49,7 @@
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.datetime') }}</th>
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.diagnosis') }}</th>
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.meetUrl') }}</th>
-            <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.status') }}</th>
-            <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.actions') }}</th>
+            <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.patientPhone') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -64,7 +57,6 @@
             <td class="px-3 py-2 whitespace-nowrap">{{ row.id }}</td>
             <td class="px-3 py-2">
               <div>{{ row.patient_name }}</div>
-              <div v-if="row.patient_phone" class="text-xs text-gray-500">{{ row.patient_phone }}</div>
             </td>
             <td class="px-3 py-2 whitespace-nowrap">{{ row.rochtah_doctor_name }}</td>
             <td class="px-3 py-2 whitespace-nowrap">{{ formatDateTime(row.appointment_datetime) }}</td>
@@ -83,21 +75,16 @@
               </button>
               <span v-else>—</span>
             </td>
-            <td class="px-3 py-2">
-              <span :class="statusClass(row.status)" class="px-2 py-0.5 rounded text-xs font-medium">
-                {{ statusLabel(row.status) }}
-              </span>
-            </td>
             <td class="px-3 py-2 whitespace-nowrap">
               <button
-                v-if="row.status === 'scheduled'"
+                v-if="row.patient_phone"
                 type="button"
-                class="px-2 py-1 rounded border border-red-500 text-red-600 text-xs hover:bg-red-50 disabled:opacity-50"
-                :disabled="actionLoadingId === row.id"
-                @click="cancelBooking(row)"
+                class="px-2 py-1 rounded border border-gray-300 text-xs hover:bg-gray-100"
+                @click="copyText(row.patient_phone)"
               >
-                {{ $t('rochtahMeetManage.cancel') }}
+                {{ $t('rochtahMeetManage.copyPhone') }}
               </button>
+              <span v-else class="text-gray-400">—</span>
             </td>
           </tr>
         </tbody>
@@ -137,9 +124,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Swal from 'sweetalert2'
 import { useToast } from 'vue-toastification'
 import rochtahMeetApi from '@/services/rochtahMeet'
 
@@ -148,36 +134,30 @@ const toast = useToast()
 
 const bookings = ref([])
 const loading = ref(false)
-const actionLoadingId = ref(null)
 const page = ref(1)
 const perPage = ref(20)
 const total = ref(0)
 const searchQuery = ref('')
-const statusFilter = ref('')
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / perPage.value)))
 
+/**
+ * Format stored wall-clock MySQL datetime without browser timezone shift.
+ * Expects "YYYY-MM-DD HH:mm:ss" (or without seconds).
+ */
 function formatDateTime(value) {
   if (!value) return '—'
-  const d = new Date(value.replace(' ', 'T'))
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleString()
-}
-
-function statusLabel(status) {
-  const map = {
-    scheduled: t('rochtahMeetManage.statusScheduled'),
-    completed: t('rochtahMeetManage.statusCompleted'),
-    cancelled: t('rochtahMeetManage.statusCancelled')
-  }
-  return map[status] || status
-}
-
-function statusClass(status) {
-  if (status === 'scheduled') return 'bg-blue-100 text-blue-800'
-  if (status === 'completed') return 'bg-green-100 text-green-800'
-  if (status === 'cancelled') return 'bg-gray-100 text-gray-600'
-  return 'bg-gray-100 text-gray-700'
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/)
+  if (!m) return value
+  const year = m[1]
+  const month = parseInt(m[2], 10)
+  const day = parseInt(m[3], 10)
+  const hour24 = parseInt(m[4], 10)
+  const minute = m[5]
+  const ampm = hour24 >= 12 ? 'PM' : 'AM'
+  let hour12 = hour24 % 12
+  if (hour12 === 0) hour12 = 12
+  return `${hour12}:${minute} ${ampm}, ${month}/${day}/${year}`
 }
 
 async function copyText(text) {
@@ -197,7 +177,6 @@ async function loadBookings(nextPage = 1) {
       page: page.value,
       per_page: perPage.value
     }
-    if (statusFilter.value) params.status = statusFilter.value
     if (searchQuery.value.trim()) params.q = searchQuery.value.trim()
     const data = await rochtahMeetApi.listBookings(params)
     bookings.value = Array.isArray(data?.rows) ? data.rows : []
@@ -210,33 +189,6 @@ async function loadBookings(nextPage = 1) {
     loading.value = false
   }
 }
-
-async function cancelBooking(row) {
-  const confirm = await Swal.fire({
-    icon: 'warning',
-    title: t('rochtahMeetManage.confirmCancelTitle'),
-    text: t('rochtahMeetManage.confirmCancelText'),
-    showCancelButton: true,
-    confirmButtonText: t('common.confirm'),
-    cancelButtonText: t('common.cancel')
-  })
-  if (!confirm.isConfirmed) return
-
-  actionLoadingId.value = row.id
-  try {
-    await rochtahMeetApi.updateStatus(row.id, 'cancelled')
-    toast.success(t('rochtahMeetManage.statusUpdated'))
-    await loadBookings(page.value)
-  } catch (err) {
-    toast.error(err.response?.data?.error || t('rochtahMeetManage.updateFailed'))
-  } finally {
-    actionLoadingId.value = null
-  }
-}
-
-watch(statusFilter, () => {
-  loadBookings(1)
-})
 
 onMounted(() => {
   loadBookings(1)

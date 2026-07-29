@@ -387,6 +387,47 @@ function snks_rochtah_meet_data_available_urls() {
 }
 
 /**
+ * Pick the next available Meet URL from the pool (lowest id).
+ *
+ * @return object|null Row with id, meet_url, status or null.
+ */
+function snks_rochtah_meet_pick_next_available_url() {
+	global $wpdb;
+
+	$table = snks_rochtah_meet_urls_table_name();
+	$row   = $wpdb->get_row(
+		"SELECT * FROM {$table} WHERE status = 'available' ORDER BY id ASC LIMIT 1"
+	);
+
+	return $row ? $row : null;
+}
+
+/**
+ * Normalize Flatpickr datetime to MySQL wall-clock (no timezone shift).
+ *
+ * @param string $raw Raw datetime (Y-m-d H:i or Y-m-d H:i:s).
+ * @return string|null
+ */
+function snks_rochtah_meet_normalize_datetime( $raw ) {
+	$raw = trim( (string) $raw );
+	if ( preg_match( '/^(\d{4}-\d{2}-\d{2})[\sT](\d{1,2}):(\d{2})(?::(\d{2}))?$/', $raw, $m ) ) {
+		$hour   = (int) $m[2];
+		$minute = (int) $m[3];
+		$second = isset( $m[4] ) ? (int) $m[4] : 0;
+		if ( $hour > 23 || $minute > 59 || $second > 59 ) {
+			return null;
+		}
+		$normalized = sprintf( '%s %02d:%02d:%02d', $m[1], $hour, $minute, $second );
+		$dt         = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $normalized );
+		if ( ! $dt || $dt->format( 'Y-m-d H:i:s' ) !== $normalized ) {
+			return null;
+		}
+		return $normalized;
+	}
+	return null;
+}
+
+/**
  * Bulk insert rochtah meet URLs.
  *
  * @param string $text Newline-separated URLs.
@@ -589,7 +630,6 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 
 	$patient_id        = isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0;
 	$rochtah_doctor_id = isset( $input['rochtah_doctor_id'] ) ? absint( $input['rochtah_doctor_id'] ) : 0;
-	$meet_url_id       = isset( $input['meet_url_id'] ) ? absint( $input['meet_url_id'] ) : 0;
 	$appointment_raw   = isset( $input['appointment_datetime'] ) ? sanitize_text_field( $input['appointment_datetime'] ) : '';
 
 	if ( ! $patient_id || ! snks_rochtah_meet_is_registered_patient( $patient_id ) ) {
@@ -598,24 +638,24 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 	if ( ! $rochtah_doctor_id || ! snks_rochtah_meet_is_rochtah_doctor( $rochtah_doctor_id ) ) {
 		return new WP_Error( 'invalid_doctor', 'Invalid rochtah doctor' );
 	}
-	if ( ! $meet_url_id ) {
-		return new WP_Error( 'invalid_meet_url', 'Please select a Google Meet URL from the pool' );
-	}
 
-	$url_row = snks_rochtah_meet_get_url_row( $meet_url_id );
-	if ( ! $url_row || 'available' !== $url_row->status ) {
-		return new WP_Error( 'invalid_meet_url', 'Selected Google Meet URL is not available' );
+	// Auto-assign next available Meet URL from the pool.
+	$url_row = snks_rochtah_meet_pick_next_available_url();
+	if ( ! $url_row ) {
+		return new WP_Error( 'invalid_meet_url', 'No available Google Meet URLs in the pool' );
 	}
-	$meet_url = (string) $url_row->meet_url;
+	$meet_url_id = (int) $url_row->id;
+	$meet_url    = (string) $url_row->meet_url;
+
 	if ( $appointment_raw === '' ) {
 		return new WP_Error( 'invalid_datetime', 'Appointment date and time are required' );
 	}
 
-	$timestamp = strtotime( $appointment_raw );
-	if ( ! $timestamp ) {
+	// Store wall-clock time from Flatpickr — do not convert via strtotime+wp_date (TZ shift).
+	$appointment_datetime = snks_rochtah_meet_normalize_datetime( $appointment_raw );
+	if ( ! $appointment_datetime ) {
 		return new WP_Error( 'invalid_datetime', 'Invalid appointment date and time' );
 	}
-	$appointment_datetime = wp_date( 'Y-m-d H:i:s', $timestamp );
 
 	$diagnosis_snapshot  = snks_rochtah_meet_data_patient_diagnosis( $patient_id );
 	$diagnosis_name      = '';

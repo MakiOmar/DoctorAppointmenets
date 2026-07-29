@@ -103,18 +103,6 @@
         <p v-if="errors.patient" class="mt-1 text-sm text-red-600">{{ errors.patient }}</p>
       </div>
 
-      <!-- Referral diagnosis preview (from إرسال لروشتا) -->
-      <div v-if="patientId" class="rounded border border-gray-200 bg-gray-50 p-3 text-sm">
-        <p class="font-medium text-gray-700 mb-1">{{ $t('rochtahMeet.diagnosisPreview') }}</p>
-        <p v-if="diagnosisLoading" class="text-gray-500">{{ $t('rochtahMeet.loadingDiagnosis') }}</p>
-        <template v-else-if="patientDiagnosis">
-          <p><strong>{{ $t('rochtahMeet.diagnosisName') }}:</strong> {{ patientDiagnosis.diagnosis_name || '—' }}</p>
-          <p class="mt-1 whitespace-pre-wrap"><strong>{{ $t('rochtahMeet.symptoms') }}:</strong> {{ patientDiagnosis.symptoms || '—' }}</p>
-          <p class="mt-1 whitespace-pre-wrap"><strong>{{ $t('rochtahMeet.reasoning') }}:</strong> {{ patientDiagnosis.reasoning || '—' }}</p>
-        </template>
-        <p v-else class="text-gray-500">{{ $t('rochtahMeet.noDiagnosis') }}</p>
-      </div>
-
       <!-- Rochtah doctor -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('rochtahMeet.rochtahDoctor') }} *</label>
@@ -141,26 +129,6 @@
           :placeholder="$t('rochtahMeet.selectDateTime')"
         />
         <p v-if="errors.datetime" class="mt-1 text-sm text-red-600">{{ errors.datetime }}</p>
-      </div>
-
-      <!-- Google Meet URL from pool -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('rochtahMeet.meetUrl') }} *</label>
-        <select
-          v-model="meetUrlId"
-          class="w-full rounded border px-3 py-2 border-gray-300"
-          :class="{ 'border-red-500': errors.meetUrl }"
-          :disabled="meetUrlsLoading"
-        >
-          <option value="">{{ $t('rochtahMeet.selectMeetUrl') }}</option>
-          <option v-for="u in meetUrls" :key="u.id" :value="String(u.id)">
-            #{{ u.id }} — {{ u.meet_url }}
-          </option>
-        </select>
-        <p v-if="!meetUrlsLoading && meetUrls.length === 0" class="mt-1 text-sm text-amber-600">
-          {{ $t('rochtahMeet.noMeetUrls') }}
-        </p>
-        <p v-if="errors.meetUrl" class="mt-1 text-sm text-red-600">{{ errors.meetUrl }}</p>
       </div>
 
       <button
@@ -196,17 +164,12 @@ const patientSearchLoading = ref(false)
 const patientSearched = ref(false)
 const patientId = ref(null)
 const patientName = ref('')
-const patientDiagnosis = ref(null)
-const diagnosisLoading = ref(false)
 
 const doctors = ref([])
 const doctorsLoading = ref(false)
 const rochtahDoctorId = ref('')
 
 const appointmentDatetime = ref('')
-const meetUrlId = ref('')
-const meetUrls = ref([])
-const meetUrlsLoading = ref(false)
 const submitLoading = ref(false)
 const errors = ref({})
 
@@ -283,19 +246,6 @@ async function runPatientSearch() {
   }
 }
 
-async function loadPatientDiagnosis(id) {
-  diagnosisLoading.value = true
-  patientDiagnosis.value = null
-  try {
-    const data = await rochtahMeetApi.getPatientDiagnosis(id)
-    patientDiagnosis.value = data?.diagnosis || null
-  } catch (_) {
-    patientDiagnosis.value = null
-  } finally {
-    diagnosisLoading.value = false
-  }
-}
-
 function selectPatient(p) {
   patientId.value = p.id
   const combined = `${p.first_name || ''} ${p.last_name || ''}`.trim()
@@ -303,7 +253,6 @@ function selectPatient(p) {
   patientSearchResults.value = []
   patientSearched.value = false
   if (errors.value.patient) errors.value.patient = ''
-  loadPatientDiagnosis(p.id)
 }
 
 function validateForm() {
@@ -317,9 +266,6 @@ function validateForm() {
   if (!appointmentDatetime.value) {
     next.datetime = t('rochtahMeet.validation.datetimeRequired')
   }
-  if (!meetUrlId.value) {
-    next.meetUrl = t('rochtahMeet.validation.meetUrlRequired')
-  }
   errors.value = next
   return Object.keys(next).length === 0
 }
@@ -328,10 +274,8 @@ function resetForm() {
   patientPhoneDigits.value = ''
   patientId.value = null
   patientName.value = ''
-  patientDiagnosis.value = null
   rochtahDoctorId.value = ''
   appointmentDatetime.value = ''
-  meetUrlId.value = ''
   errors.value = {}
   patientSearched.value = false
 }
@@ -354,8 +298,7 @@ async function submitBooking() {
     const result = await rochtahMeetApi.submit({
       patient_id: patientId.value,
       rochtah_doctor_id: Number(rochtahDoctorId.value),
-      appointment_datetime: appointmentDatetime.value,
-      meet_url_id: Number(meetUrlId.value)
+      appointment_datetime: appointmentDatetime.value
     })
     await Swal.fire({
       icon: 'success',
@@ -364,7 +307,6 @@ async function submitBooking() {
     })
     toast.success(t('rochtahMeet.messages.success'))
     resetForm()
-    await loadMeetUrls()
   } catch (err) {
     const msg = err.response?.data?.error || t('rochtahMeet.messages.submitFailed')
     toast.error(msg)
@@ -374,22 +316,8 @@ async function submitBooking() {
   }
 }
 
-async function loadMeetUrls() {
-  meetUrlsLoading.value = true
-  try {
-    const data = await rochtahMeetApi.getMeetUrls()
-    meetUrls.value = Array.isArray(data?.urls) ? data.urls : []
-  } catch (_) {
-    meetUrls.value = []
-    toast.error(t('rochtahMeet.messages.loadMeetUrlsFailed'))
-  } finally {
-    meetUrlsLoading.value = false
-  }
-}
-
 onMounted(async () => {
   doctorsLoading.value = true
-  meetUrlsLoading.value = true
   try {
     const data = await rochtahMeetApi.getDoctors()
     doctors.value = Array.isArray(data) ? data : []
@@ -398,8 +326,6 @@ onMounted(async () => {
   } finally {
     doctorsLoading.value = false
   }
-
-  await loadMeetUrls()
 
   try {
     const res = await fetch('/countries-codes-and-flags.json')

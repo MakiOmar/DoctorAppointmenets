@@ -1130,6 +1130,8 @@ export default {
     status: 'Status',
     actions: 'Actions',
     copyMeetUrl: 'Copy Meet URL',
+    copyPhone: 'Copy phone',
+    patientPhone: 'Patient phone',
     markCompleted: 'Complete',
     cancel: 'Cancel',
     noBookings: 'No bookings found',
