@@ -1108,7 +1108,14 @@ export default {
       loadMeetUrlsFailed: 'Failed to load Google Meet URLs',
       success: 'Booking created successfully',
       submitFailed: 'Failed to create booking',
-      bookingId: 'Booking ID'
+      bookingId: 'Booking ID',
+      waBothSent: 'WhatsApp sent to doctor and patient',
+      waBothFailed: 'WhatsApp was not sent to doctor or patient — check templates, phone numbers, and error log',
+      waDoctorSent: 'Doctor WhatsApp: sent',
+      waDoctorFailed: 'Doctor WhatsApp: failed',
+      waPatientSent: 'Patient WhatsApp: sent',
+      waPatientFailed: 'Patient WhatsApp: failed',
+      waPartialOrFailed: 'Booking saved but WhatsApp notification incomplete'
     }
   },
 

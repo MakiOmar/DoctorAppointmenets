@@ -47,7 +47,6 @@
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.patient') }}</th>
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.doctor') }}</th>
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.datetime') }}</th>
-            <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.diagnosis') }}</th>
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.meetUrl') }}</th>
             <th class="px-3 py-2 text-start font-medium text-gray-700">{{ $t('rochtahMeetManage.patientPhone') }}</th>
           </tr>
@@ -60,10 +59,6 @@
             </td>
             <td class="px-3 py-2 whitespace-nowrap">{{ row.rochtah_doctor_name }}</td>
             <td class="px-3 py-2 whitespace-nowrap">{{ formatDateTime(row.appointment_datetime) }}</td>
-            <td class="px-3 py-2 max-w-[180px]">
-              <span v-if="row.diagnosis_name">{{ row.diagnosis_name }}</span>
-              <span v-else class="text-gray-400">—</span>
-            </td>
             <td class="px-3 py-2">
               <button
                 v-if="row.meet_url"

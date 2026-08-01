@@ -1098,7 +1098,14 @@ export default {
       loadMeetUrlsFailed: 'فشل تحميل روابط Google Meet',
       success: 'تم إنشاء الحجز بنجاح',
       submitFailed: 'فشل إنشاء الحجز',
-      bookingId: 'رقم الحجز'
+      bookingId: 'رقم الحجز',
+      waBothSent: 'تم إرسال واتساب للطبيب والمريض',
+      waBothFailed: 'لم يُرسل واتساب للطبيب ولا للمريض — تحقق من القوالب وأرقام واتساب وسجل الأخطاء',
+      waDoctorSent: 'واتساب الطبيب: تم الإرسال',
+      waDoctorFailed: 'واتساب الطبيب: فشل الإرسال',
+      waPatientSent: 'واتساب المريض: تم الإرسال',
+      waPatientFailed: 'واتساب المريض: فشل الإرسال',
+      waPartialOrFailed: 'الحجز تم لكن إشعار واتساب لم يكتمل'
     }
   },
 

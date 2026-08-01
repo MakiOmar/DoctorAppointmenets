@@ -81,9 +81,9 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
 		$template_parameters = array();
 		foreach ( $parameters as $param_name => $param_value ) {
 			$template_parameters[] = array(
-				'type' => 'text',
+				'type'           => 'text',
 				'parameter_name' => $param_name, // Use named parameters (doctor_name, date, time, etc.)
-				'text' => $param_value
+				'text'           => snks_whatsapp_sanitize_template_text( $param_value ),
 			);
 		}
 		
@@ -175,6 +175,26 @@ function snks_send_whatsapp_template_message( $phone_number, $template_name, $pa
     // Debug logging removed
 	
 	return $response_data;
+}
+
+/**
+ * Sanitize a WhatsApp template body parameter.
+ * Meta rejects empty values and newlines in named text parameters.
+ *
+ * @param mixed $text Raw value.
+ * @return string
+ */
+function snks_whatsapp_sanitize_template_text( $text ) {
+	$text = is_scalar( $text ) ? (string) $text : '';
+	$text = preg_replace( '/[\r\n\t]+/', ' ', $text );
+	$text = trim( preg_replace( '/\s{2,}/', ' ', $text ) );
+	if ( $text === '' ) {
+		$text = '-';
+	}
+	if ( function_exists( 'mb_substr' ) ) {
+		return mb_substr( $text, 0, 1024 );
+	}
+	return substr( $text, 0, 1024 );
 }
 
 /**
@@ -635,16 +655,19 @@ function snks_send_rochtah_meet_doctor_notification( $booking_id ) {
 	);
 
 	if ( ! $booking ) {
+		error_log( '[Rochtah Meet WA] Doctor notify failed: booking not found #' . (int) $booking_id );
 		return false;
 	}
 
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' || empty( $settings['template_rochtah_meet_doctor'] ) ) {
+		error_log( '[Rochtah Meet WA] Doctor notify skipped: notifications disabled or template empty' );
 		return false;
 	}
 
 	$doctor_phone = snks_get_rochtah_doctor_whatsapp( (int) $booking->rochtah_doctor_id );
 	if ( ! $doctor_phone ) {
+		error_log( '[Rochtah Meet WA] Doctor notify failed: no WhatsApp for doctor #' . (int) $booking->rochtah_doctor_id );
 		return false;
 	}
 
@@ -671,19 +694,27 @@ function snks_send_rochtah_meet_doctor_notification( $booking_id ) {
 		$doctor_phone,
 		$settings['template_rochtah_meet_doctor'],
 		array(
-			'patient'         => $patient_name,
-			'therapist'       => $therapist_name,
-			'day'             => $day_name,
-			'date'            => $date_str,
-			'time'            => $time_str,
-			'meet_url'        => $booking->meet_url,
-			'diagnosis_name'  => (string) $booking->diagnosis_name,
-			'symptoms'        => isset( $booking->diagnosis_symptoms ) ? (string) $booking->diagnosis_symptoms : '',
-			'reasoning'       => (string) $booking->diagnosis_reasoning,
+			'patient'        => $patient_name,
+			'therapist'      => $therapist_name,
+			'day'            => $day_name,
+			'date'           => $date_str,
+			'time'           => $time_str,
+			'meet_url'       => $booking->meet_url,
+			'diagnosis_name' => (string) $booking->diagnosis_name,
+			'symptoms'       => isset( $booking->diagnosis_symptoms ) ? (string) $booking->diagnosis_symptoms : '',
+			'reasoning'      => (string) $booking->diagnosis_reasoning,
 		)
 	);
 
-	return ! is_wp_error( $result );
+	if ( is_wp_error( $result ) ) {
+		error_log(
+			'[Rochtah Meet WA] Doctor notify API error booking #' . (int) $booking_id . ': ' .
+			$result->get_error_message() . ' | ' . wp_json_encode( $result->get_error_data() )
+		);
+		return false;
+	}
+
+	return true;
 }
 
 /**
@@ -703,16 +734,19 @@ function snks_send_rochtah_meet_patient_notification( $booking_id ) {
 	);
 
 	if ( ! $booking ) {
+		error_log( '[Rochtah Meet WA] Patient notify failed: booking not found #' . (int) $booking_id );
 		return false;
 	}
 
 	$settings = snks_get_whatsapp_notification_settings();
 	if ( $settings['enabled'] != '1' || empty( $settings['template_rochtah_meet_patient'] ) ) {
+		error_log( '[Rochtah Meet WA] Patient notify skipped: notifications disabled or template empty' );
 		return false;
 	}
 
 	$patient_phone = snks_get_user_whatsapp( (int) $booking->patient_id );
 	if ( ! $patient_phone ) {
+		error_log( '[Rochtah Meet WA] Patient notify failed: no WhatsApp for patient #' . (int) $booking->patient_id );
 		return false;
 	}
 
@@ -742,7 +776,15 @@ function snks_send_rochtah_meet_patient_notification( $booking_id ) {
 		)
 	);
 
-	return ! is_wp_error( $result );
+	if ( is_wp_error( $result ) ) {
+		error_log(
+			'[Rochtah Meet WA] Patient notify API error booking #' . (int) $booking_id . ': ' .
+			$result->get_error_message() . ' | ' . wp_json_encode( $result->get_error_data() )
+		);
+		return false;
+	}
+
+	return true;
 }
 
 /**

@@ -300,12 +300,29 @@ async function submitBooking() {
       rochtah_doctor_id: Number(rochtahDoctorId.value),
       appointment_datetime: appointmentDatetime.value
     })
+    const booking = result?.booking || result || {}
+    const waDoctor = !!booking.wa_doctor_sent
+    const waPatient = !!booking.wa_patient_sent
+    let waHtml = ''
+    if (waDoctor && waPatient) {
+      waHtml = `<p style="color:#166534">${t('rochtahMeet.messages.waBothSent')}</p>`
+    } else if (!waDoctor && !waPatient) {
+      waHtml = `<p style="color:#b45309">${t('rochtahMeet.messages.waBothFailed')}</p>`
+    } else {
+      waHtml =
+        `<p style="color:#b45309">${waDoctor ? t('rochtahMeet.messages.waDoctorSent') : t('rochtahMeet.messages.waDoctorFailed')}</p>` +
+        `<p style="color:#b45309">${waPatient ? t('rochtahMeet.messages.waPatientSent') : t('rochtahMeet.messages.waPatientFailed')}</p>`
+    }
     await Swal.fire({
-      icon: 'success',
+      icon: waDoctor && waPatient ? 'success' : 'warning',
       title: t('rochtahMeet.messages.success'),
-      html: `<p>${t('rochtahMeet.messages.bookingId')}: #${result?.booking?.booking_id || '—'}</p>`
+      html: `<p>${t('rochtahMeet.messages.bookingId')}: #${booking.booking_id || '—'}</p>${waHtml}`
     })
-    toast.success(t('rochtahMeet.messages.success'))
+    if (waDoctor && waPatient) {
+      toast.success(t('rochtahMeet.messages.success'))
+    } else {
+      toast.error(t('rochtahMeet.messages.waPartialOrFailed'))
+    }
     resetForm()
   } catch (err) {
     const msg = err.response?.data?.error || t('rochtahMeet.messages.submitFailed')
