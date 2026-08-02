@@ -675,9 +675,10 @@ function snks_send_rochtah_meet_doctor_notification( $booking_id ) {
 		? snks_rochtah_meet_get_patient_name( (int) $booking->patient_id )
 		: 'المريض';
 
-	$therapist_name = function_exists( 'snks_rochtah_meet_get_doctor_name' )
-		? snks_rochtah_meet_get_doctor_name( (int) $booking->rochtah_doctor_id )
-		: 'الطبيب';
+	// Referring AI therapist who submitted إرسال لروشتا (not the rochtah Meet doctor).
+	$therapist_name = function_exists( 'snks_rochtah_meet_get_referring_therapist_name' )
+		? snks_rochtah_meet_get_referring_therapist_name( (int) $booking->patient_id )
+		: 'المعالج';
 
 	// Parse wall-clock datetime without timezone conversion.
 	$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', (string) $booking->appointment_datetime );

@@ -245,7 +245,7 @@ function snks_rochtah_meet_data_patient_diagnosis( $patient_id ) {
 	$table = $wpdb->prefix . 'snks_rochtah_bookings';
 	$row   = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT id, initial_diagnosis, symptoms, reason_for_referral, created_at
+			"SELECT id, therapist_id, session_id, initial_diagnosis, symptoms, reason_for_referral, created_at
 			 FROM {$table}
 			 WHERE patient_id = %d
 			 ORDER BY id DESC
@@ -258,14 +258,51 @@ function snks_rochtah_meet_data_patient_diagnosis( $patient_id ) {
 		return null;
 	}
 
+	$therapist_id = absint( $row->therapist_id );
+	// Fallback: resolve therapist from the main session timetable row.
+	if ( ! $therapist_id && ! empty( $row->session_id ) ) {
+		$session_therapist = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT user_id FROM {$wpdb->prefix}snks_provider_timetable WHERE ID = %d",
+				absint( $row->session_id )
+			)
+		);
+		$therapist_id = absint( $session_therapist );
+	}
+
+	$therapist_name = '';
+	if ( $therapist_id ) {
+		if ( function_exists( 'snks_get_therapist_name' ) ) {
+			$therapist_name = (string) snks_get_therapist_name( $therapist_id );
+		} else {
+			$therapist_name = snks_rochtah_meet_get_doctor_name( $therapist_id );
+		}
+	}
+
 	return array(
-		'referral_id'    => (int) $row->id,
-		'diagnosis_id'   => null,
-		'diagnosis_name' => (string) $row->initial_diagnosis,
-		'symptoms'       => (string) $row->symptoms,
-		'reasoning'      => (string) $row->reason_for_referral,
-		'created_at'     => (string) $row->created_at,
+		'referral_id'     => (int) $row->id,
+		'therapist_id'    => $therapist_id,
+		'therapist_name'  => $therapist_name,
+		'diagnosis_id'    => null,
+		'diagnosis_name'  => (string) $row->initial_diagnosis,
+		'symptoms'        => (string) $row->symptoms,
+		'reasoning'       => (string) $row->reason_for_referral,
+		'created_at'      => (string) $row->created_at,
 	);
+}
+
+/**
+ * Get referring therapist display name from the patient's latest إرسال لروشتا referral.
+ *
+ * @param int $patient_id Patient user ID.
+ * @return string
+ */
+function snks_rochtah_meet_get_referring_therapist_name( $patient_id ) {
+	$snapshot = snks_rochtah_meet_data_patient_diagnosis( absint( $patient_id ) );
+	if ( is_array( $snapshot ) && ! empty( $snapshot['therapist_name'] ) ) {
+		return (string) $snapshot['therapist_name'];
+	}
+	return 'المعالج';
 }
 
 /**
