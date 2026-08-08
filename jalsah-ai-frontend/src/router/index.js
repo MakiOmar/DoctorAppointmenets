@@ -149,13 +149,13 @@ const routes = [
     path: '/rochtah-meet-booking',
     name: 'RochtahMeetBooking',
     component: () => import('@/views/RochtahMeetBooking.vue'),
-    meta: { requiresAuth: true, roles: ['administrator', 'secretary', 'rochtah_doctor'] }
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
   },
   {
     path: '/rochtah-meet-bookings',
     name: 'RochtahMeetBookings',
     component: () => import('@/views/RochtahMeetBookings.vue'),
-    meta: { requiresAuth: true, roles: ['administrator', 'secretary', 'rochtah_doctor'] }
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
   },
   {
     path: '/verify',

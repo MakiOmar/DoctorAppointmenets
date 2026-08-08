@@ -1,5 +1,5 @@
 /**
- * Rochetah Google Meet booking API (admin/secretary/rochtah_doctor). JWT required.
+ * Rochetah Google Meet booking API (admin/secretary, same as manual booking). JWT required.
  */
 import api from './api'
 

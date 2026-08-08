@@ -7584,7 +7584,7 @@ Best regards,
 	}
 
 	/**
-	 * Handle rochtah-meet API (admin/secretary/rochtah_doctor). JWT required.
+	 * Handle rochtah-meet API (admin/secretary only, same as manual booking). JWT required.
 	 * Sub-actions: doctors, search-patient, patient-diagnosis, submit.
 	 *
 	 * @param string $method HTTP method.

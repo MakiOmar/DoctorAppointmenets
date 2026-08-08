@@ -120,14 +120,13 @@ function snks_rochtah_meet_user_can_access( $user_id ) {
 	if ( ! $user_id ) {
 		return false;
 	}
-	if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'manage_rochtah' ) ) {
-		return true;
-	}
 	$user = get_userdata( $user_id );
 	if ( ! $user ) {
 		return false;
 	}
-	return in_array( 'secretary', (array) $user->roles, true );
+	$roles = (array) $user->roles;
+	// Same as manual booking: administrator + secretary only (not rochtah_doctor).
+	return in_array( 'administrator', $roles, true ) || in_array( 'secretary', $roles, true );
 }
 
 /**
