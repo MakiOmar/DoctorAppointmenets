@@ -66,14 +66,17 @@ function snks_add_ai_prescription_button( $session_id, $session_data ) {
 		return '';
 	}
 	
-	// Check if this is an AI session
+	// Check if this is an AI session (accept truthy from_jalsah_ai / is_ai_session).
 	$order = wc_get_order( $session_data->order_id );
-	if ( ! $order || $order->get_meta( 'from_jalsah_ai' ) !== 'true' ) {
+	$is_ai = function_exists( 'snks_is_ai_order_flagged' )
+		? snks_is_ai_order_flagged( $order )
+		: ( $order && in_array( (string) $order->get_meta( 'from_jalsah_ai' ), array( '1', 'true', 'yes' ), true ) );
+	if ( ! $is_ai ) {
 		return '';
 	}
 	
-	// Check if prescription already requested - multiple validation points
-	$prescription_requested = get_post_meta( $session_data->order_id, '_ai_prescription_requested', true );
+	// Check if prescription already requested - multiple validation points (HPOS-safe).
+	$prescription_requested = snks_wc_get_order_meta( $session_data->order_id, '_ai_prescription_requested', true );
 	
 	// Also check if there's already a Rochtah booking for this specific session
 	global $wpdb;
@@ -338,9 +341,12 @@ Jalsah Team', 'shrinks' ),
  * Add prescription button to AI session display
  */
 function snks_modify_ai_session_display( $output, $session ) {
-	// Only modify AI sessions
+	// Only modify AI sessions (accept truthy from_jalsah_ai / is_ai_session).
 	$order = wc_get_order( $session->order_id );
-	if ( ! $order || $order->get_meta( 'from_jalsah_ai' ) !== 'true' ) {
+	$is_ai = function_exists( 'snks_is_ai_order_flagged' )
+		? snks_is_ai_order_flagged( $order )
+		: ( $order && in_array( (string) $order->get_meta( 'from_jalsah_ai' ), array( '1', 'true', 'yes' ), true ) );
+	if ( ! $is_ai ) {
 		return $output;
 	}
 	

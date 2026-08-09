@@ -850,8 +850,12 @@ function snks_handle_session_rochtah_request() {
 	
 	$rochtah_booking_id = $wpdb->insert_id;
 	
-	// Mark order as having Roshta requested
-	update_post_meta( $order_id, '_ai_prescription_requested', 'true' );
+	// Mark order as having Roshta requested (HPOS-safe).
+	$order = wc_get_order( $order_id );
+	if ( $order ) {
+		$order->update_meta_data( '_ai_prescription_requested', 'true' );
+		$order->save();
+	}
 	
 	// Send WhatsApp notification to patient
 	if ( function_exists( 'snks_send_rosheta_activation_notification' ) ) {

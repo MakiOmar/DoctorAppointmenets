@@ -581,7 +581,8 @@ function snks_enhanced_ai_admin_page() {
 	) ) );
 	
 	$total_diagnoses = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}snks_diagnoses" );
-	$total_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1" );
+	// HPOS-safe: from_jalsah_ai is order meta, not a column on wc_orders.
+	$total_ai_orders = function_exists( 'snks_wc_count_ai_orders' ) ? snks_wc_count_ai_orders() : 0;
 	$total_ai_users = count( get_users( array( 
 		'meta_query' => array(
 			array( 'key' => 'registration_source', 'value' => 'jalsah_ai', 'compare' => '=' )
@@ -631,26 +632,35 @@ function snks_enhanced_ai_admin_page() {
 		<div class="card">
 			<h2>Recent AI Activity</h2>
 			<?php
-			$recent_orders = $wpdb->get_results( "
-				SELECT o.*, u.display_name as patient_name 
-				FROM {$wpdb->prefix}wc_orders o 
-				LEFT JOIN {$wpdb->users} u ON o.customer_id = u.ID 
-				WHERE o.from_jalsah_ai = 1 
-				ORDER BY o.date_created_gmt DESC 
-				LIMIT 10
-			" );
-			
-			if ( $recent_orders ) {
+			// HPOS-safe recent AI orders via CRUD.
+			$recent_wc_orders = function_exists( 'snks_wc_get_ai_orders' )
+				? snks_wc_get_ai_orders(
+					array(
+						'limit' => 10,
+					)
+				)
+				: array();
+
+			if ( ! empty( $recent_wc_orders ) ) {
 				echo '<table class="wp-list-table widefat fixed striped">';
 				echo '<thead><tr><th>Order</th><th>Patient</th><th>Status</th><th>Date</th><th>Total</th></tr></thead>';
 				echo '<tbody>';
-				foreach ( $recent_orders as $order ) {
+				foreach ( $recent_wc_orders as $wc_order ) {
+					if ( ! $wc_order || ! is_a( $wc_order, 'WC_Order' ) ) {
+						continue;
+					}
+					$customer_id   = $wc_order->get_customer_id();
+					$patient_user  = $customer_id ? get_user_by( 'ID', $customer_id ) : false;
+					$patient_name  = $patient_user ? $patient_user->display_name : ( $wc_order->get_formatted_billing_full_name() ?: '—' );
+					$created       = $wc_order->get_date_created();
+					$created_label = $created ? $created->date( 'Y-m-d H:i:s' ) : '';
+
 					echo '<tr>';
-					echo '<td>#' . $order->id . '</td>';
-					echo '<td>' . esc_html( $order->patient_name ) . '</td>';
-					echo '<td>' . esc_html( $order->status ) . '</td>';
-					echo '<td>' . esc_html( $order->date_created_gmt ) . '</td>';
-					echo '<td>$' . esc_html( $order->total_amount ) . '</td>';
+					echo '<td>#' . esc_html( $wc_order->get_id() ) . '</td>';
+					echo '<td>' . esc_html( $patient_name ) . '</td>';
+					echo '<td>' . esc_html( $wc_order->get_status() ) . '</td>';
+					echo '<td>' . esc_html( $created_label ) . '</td>';
+					echo '<td>' . wp_kses_post( $wc_order->get_formatted_order_total() ) . '</td>';
 					echo '</tr>';
 				}
 				echo '</tbody></table>';
@@ -1769,113 +1779,99 @@ function snks_enhanced_ai_sessions_page() {
 	
 	// Filters will be applied after fetching AI sessions
 	
-	// First, let's get AI sessions from WordPress posts (WooCommerce orders)
-	$ai_orders_query = "
-		SELECT p.ID as order_id, p.post_status as order_status, p.post_date as date_created,
-		       pm.meta_value as ai_flag_value, pm.meta_key as ai_flag_key
-		FROM {$wpdb->posts} p
-		INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-		WHERE p.post_type = 'shop_order'
-		AND ((pm.meta_key = 'from_jalsah_ai' AND (pm.meta_value = '1' OR pm.meta_value = 'true' OR pm.meta_value = 'yes'))
-		   OR (pm.meta_key = 'is_ai_session' AND (pm.meta_value = '1' OR pm.meta_value = 'true' OR pm.meta_value = 'yes')))
-		ORDER BY p.post_date DESC
-		LIMIT 100
-	";
-	
-	$ai_orders = $wpdb->get_results( $ai_orders_query );
-	
+	// HPOS-safe: load recent AI orders via CRUD instead of raw shop_order/postmeta SQL.
+	$ai_wc_orders = function_exists( 'snks_wc_get_ai_orders' )
+		? snks_wc_get_ai_orders(
+			array(
+				'limit' => 100,
+			)
+		)
+		: array();
+
 	// Process AI sessions from orders
 	$ai_sessions = array();
-	foreach ( $ai_orders as $order ) {
-		// Try to get session data from different possible meta keys
-		$sessions_json = $wpdb->get_var( $wpdb->prepare(
-			"SELECT meta_value FROM {$wpdb->postmeta} 
-			 WHERE post_id = %d AND meta_key = 'ai_sessions'",
-			$order->order_id
-		) );
-		
-		// If no ai_sessions, try to get individual session data
+	foreach ( $ai_wc_orders as $wc_order ) {
+		if ( ! $wc_order || ! is_a( $wc_order, 'WC_Order' ) ) {
+			continue;
+		}
+
+		$order_id     = $wc_order->get_id();
+		$order_status = $wc_order->get_status();
+		$date_created = $wc_order->get_date_created() ? $wc_order->get_date_created()->date( 'Y-m-d H:i:s' ) : '';
+
+		// Try to get session data from order meta (HPOS-safe).
+		$sessions_json = $wc_order->get_meta( 'ai_sessions' );
+
 		if ( ! $sessions_json ) {
 			$session_data = array();
-			
-			// Get AI order details
-			$ai_user_id = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'ai_user_id'",
-				$order->order_id
-			) );
-			
-			$ai_appointments_count = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'ai_appointments_count'",
-				$order->order_id
-			) );
-			
-			$ai_total_amount = $wpdb->get_var( $wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->postmeta} 
-				 WHERE post_id = %d AND meta_key = 'ai_total_amount'",
-				$order->order_id
-			) );
-			
+
+			$ai_user_id            = $wc_order->get_meta( 'ai_user_id' );
+			$ai_appointments_count = $wc_order->get_meta( 'ai_appointments_count' );
+			$ai_total_amount       = $wc_order->get_meta( 'ai_total_amount' );
+
+			if ( ! $ai_user_id ) {
+				$ai_user_id = $wc_order->get_customer_id();
+			}
+
 			// Try to get session data from user's AI cart
 			if ( $ai_user_id ) {
 				$cart_data = get_user_meta( $ai_user_id, 'ai_cart', true );
 				if ( $cart_data && is_array( $cart_data ) ) {
 					foreach ( $cart_data as $cart_item ) {
 						$session_data = array(
-							'therapist_id' => $cart_item['therapist_id'] ?? 'Unknown',
-							'session_date' => $cart_item['date'] ?? 'Unknown',
-							'session_time' => $cart_item['time'] ?? 'Unknown',
+							'therapist_id'     => $cart_item['therapist_id'] ?? 'Unknown',
+							'session_date'     => $cart_item['date'] ?? 'Unknown',
+							'session_time'     => $cart_item['time'] ?? 'Unknown',
 							'session_duration' => $cart_item['duration'] ?? '45',
-							'slot_id' => $cart_item['slot_id'] ?? 'Unknown',
-							'date_time' => ($cart_item['date'] ?? '') . ' ' . ($cart_item['time'] ?? ''),
-							'patient_id' => $ai_user_id,
-							'order_id' => $order->order_id
+							'slot_id'          => $cart_item['slot_id'] ?? 'Unknown',
+							'date_time'        => ( $cart_item['date'] ?? '' ) . ' ' . ( $cart_item['time'] ?? '' ),
+							'patient_id'       => $ai_user_id,
+							'order_id'         => $order_id,
 						);
 					}
 				}
 			}
-			
+
 			// If still no session data, create a basic session from order info
 			if ( empty( $session_data ) ) {
 				$session_data = array(
-					'therapist_id' => 'Unknown',
-					'session_date' => $order->date_created,
-					'session_time' => 'Unknown',
-					'session_duration' => '45',
-					'slot_id' => 'Unknown',
-					'date_time' => $order->date_created,
-					'patient_id' => $ai_user_id,
-					'order_id' => $order->order_id,
+					'therapist_id'       => 'Unknown',
+					'session_date'       => $date_created,
+					'session_time'       => 'Unknown',
+					'session_duration'   => '45',
+					'slot_id'            => 'Unknown',
+					'date_time'          => $date_created,
+					'patient_id'         => $ai_user_id,
+					'order_id'           => $order_id,
 					'appointments_count' => $ai_appointments_count,
-					'total_amount' => $ai_total_amount
+					'total_amount'       => $ai_total_amount,
 				);
 			}
 		} else {
-			$session_data = json_decode( $sessions_json, true );
+			$session_data = is_string( $sessions_json ) ? json_decode( $sessions_json, true ) : $sessions_json;
 		}
-		
+
 		if ( $session_data ) {
 			if ( is_array( $session_data ) ) {
 				// If it's already an array of sessions
 				if ( isset( $session_data[0] ) && is_array( $session_data[0] ) ) {
 					foreach ( $session_data as $session ) {
 						$ai_sessions[] = array(
-							'order_id' => $order->order_id,
-							'order_status' => $order->order_status,
-							'date_created' => $order->date_created,
+							'order_id'     => $order_id,
+							'order_status' => $order_status,
+							'date_created' => $date_created,
 							'session_data' => $session,
-							'from_jalsah_ai' => true
+							'from_jalsah_ai' => true,
 						);
 					}
 				} else {
 					// Single session
 					$ai_sessions[] = array(
-						'order_id' => $order->order_id,
-						'order_status' => $order->order_status,
-						'date_created' => $order->date_created,
+						'order_id'     => $order_id,
+						'order_status' => $order_status,
+						'date_created' => $date_created,
 						'session_data' => $session_data,
-						'from_jalsah_ai' => true
+						'from_jalsah_ai' => true,
 					);
 				}
 			}
@@ -2551,39 +2547,72 @@ function snks_enhanced_ai_analytics_page() {
 		)
 	) ) );
 	
-	$total_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1" );
+	$total_ai_orders = function_exists( 'snks_wc_count_ai_orders' ) ? snks_wc_count_ai_orders() : 0;
 	// Include both 'completed' and 'processing' statuses for AI orders
-	$completed_ai_orders = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders WHERE from_jalsah_ai = 1 AND status IN ('completed', 'processing')" );
+	$completed_ai_orders = function_exists( 'snks_wc_count_ai_orders' )
+		? snks_wc_count_ai_orders( array( 'completed', 'processing' ) )
+		: 0;
 
 	$manual_booking_totals = function_exists( 'snks_get_manual_booking_report_totals' ) ? snks_get_manual_booking_report_totals() : array(
 		'count'     => 0,
 		'net_total' => 0.0,
 	);
 	
-	// Get retention data
-	$retention_data = $wpdb->get_results( "
-		SELECT t.user_id, u.display_name as therapist_name, COUNT(DISTINCT o.customer_id) as repeat_patients
-		FROM {$wpdb->prefix}snks_provider_timetable t
-		JOIN {$wpdb->prefix}wc_orders o ON t.order_id = o.id
-		JOIN {$wpdb->users} u ON t.user_id = u.ID
-		WHERE o.from_jalsah_ai = 1 AND o.status IN ('completed', 'processing')
-		GROUP BY t.user_id
-		HAVING repeat_patients > 1
-		ORDER BY repeat_patients DESC
-		LIMIT 10
-	" );
-	
-	// Get diagnosis booking data
-	$diagnosis_bookings = $wpdb->get_results( "
-		SELECT d.name, COUNT(*) as booking_count
-		FROM {$wpdb->prefix}snks_diagnoses d
-		JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON d.id = td.diagnosis_id
-		JOIN {$wpdb->prefix}snks_provider_timetable t ON td.therapist_id = t.user_id
-		JOIN {$wpdb->prefix}wc_orders o ON t.order_id = o.id
-		WHERE o.from_jalsah_ai = 1
-		GROUP BY d.id
-		ORDER BY booking_count DESC
-	" );
+	// Retention: AI order IDs via CRUD, then aggregate timetable (HPOS-safe).
+	$retention_data     = array();
+	$diagnosis_bookings = array();
+	$ai_paid_order_ids  = function_exists( 'snks_wc_get_ai_order_ids' )
+		? snks_wc_get_ai_order_ids(
+			array(
+				'status' => array( 'completed', 'processing' ),
+				'limit'  => -1,
+			)
+		)
+		: array();
+
+	if ( ! empty( $ai_paid_order_ids ) ) {
+		$placeholders = implode( ',', array_fill( 0, count( $ai_paid_order_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$retention_data = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT t.user_id, u.display_name as therapist_name, COUNT(DISTINCT t.client_id) as repeat_patients
+				FROM {$wpdb->prefix}snks_provider_timetable t
+				JOIN {$wpdb->users} u ON t.user_id = u.ID
+				WHERE t.order_id IN ({$placeholders})
+				AND t.client_id > 0
+				GROUP BY t.user_id
+				HAVING repeat_patients > 1
+				ORDER BY repeat_patients DESC
+				LIMIT 10",
+				...$ai_paid_order_ids
+			)
+		);
+	}
+
+	$ai_all_order_ids = function_exists( 'snks_wc_get_ai_order_ids' )
+		? snks_wc_get_ai_order_ids(
+			array(
+				'limit' => -1,
+			)
+		)
+		: array();
+
+	if ( ! empty( $ai_all_order_ids ) ) {
+		$placeholders = implode( ',', array_fill( 0, count( $ai_all_order_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$diagnosis_bookings = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT d.name, COUNT(*) as booking_count
+				FROM {$wpdb->prefix}snks_diagnoses d
+				JOIN {$wpdb->prefix}snks_therapist_diagnoses td ON d.id = td.diagnosis_id
+				JOIN {$wpdb->prefix}snks_provider_timetable t ON td.therapist_id = t.user_id
+				WHERE t.order_id IN ({$placeholders})
+				GROUP BY d.id
+				ORDER BY booking_count DESC",
+				...$ai_all_order_ids
+			)
+		);
+	}
 	
 	?>
 	<div class="wrap">
@@ -4259,7 +4288,7 @@ function snks_enhanced_ai_tools_page() {
 			<div class="quick-actions">
 				<a href="<?php echo admin_url( 'users.php?meta_key=registration_source&meta_value=jalsah_ai' ); ?>" class="button">View AI Users</a>
 				<a href="<?php echo admin_url( 'users.php?role=doctor&meta_key=show_on_ai_site&meta_value=1' ); ?>" class="button">View AI Therapists</a>
-				<a href="<?php echo admin_url( 'edit.php?post_type=shop_order&meta_key=from_jalsah_ai&meta_value=1' ); ?>" class="button">View AI Orders</a>
+				<a href="<?php echo esc_url( function_exists( 'snks_wc_ai_orders_admin_url' ) ? snks_wc_ai_orders_admin_url() : admin_url( 'admin.php?page=wc-orders' ) ); ?>" class="button">View AI Orders</a>
 			</div>
 		</div>
 	</div>

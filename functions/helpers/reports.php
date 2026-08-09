@@ -25,31 +25,33 @@ define( 'ANONY_ADMIN_FEES_FACTOR', 0.9 );
  * @return array The list of orders.
  */
 function anony_get_vendor_sales_orders( $status, $current_user_id = false ) {
-	global $wpdb;
-
 	if ( ! $current_user_id ) {
 		$current_user_id = get_current_user_id();
 	}
 
-	$query = "
-		SELECT posts.ID
-		FROM {$wpdb->posts} AS posts
-		INNER JOIN {$wpdb->postmeta} AS meta
-			ON posts.ID = meta.post_id
-		WHERE posts.post_type = 'shop_order'
-			AND posts.post_status = %s
-			AND meta.meta_key = 'product_author_ids'
-			AND meta.meta_value LIKE %s
-	";
-
-	$order_ids = $wpdb->get_col( $wpdb->prepare( $query, $status, '%"' . $current_user_id . '"%' ) );
-
-	$orders = array();
-	foreach ( $order_ids as $order_id ) {
-		$orders[] = wc_get_order( $order_id );
+	if ( ! function_exists( 'wc_get_orders' ) ) {
+		return array();
 	}
 
-	return $orders;
+	$status  = function_exists( 'snks_wc_normalize_order_status' ) ? snks_wc_normalize_order_status( $status ) : $status;
+	$user_id = (string) absint( $current_user_id );
+
+	// product_author_ids is stored as a PHP array; match quoted ID in serialized value.
+	$orders = wc_get_orders(
+		array(
+			'status'     => $status,
+			'limit'      => -1,
+			'meta_query' => array(
+				array(
+					'key'     => 'product_author_ids',
+					'value'   => '"' . $user_id . '"',
+					'compare' => 'LIKE',
+				),
+			),
+		)
+	);
+
+	return is_array( $orders ) ? $orders : array();
 }
 
 /**
@@ -656,7 +658,7 @@ function save_order_product_author_ids( $order_id ) {
 
 	// Update the order meta with the product author IDs.
 	if ( ! empty( $product_author_ids ) ) {
-		$order->update_meta_data(' product_author_ids', $product_author_ids );
+		$order->update_meta_data( 'product_author_ids', $product_author_ids );
 		$order->save();
 	}
 }

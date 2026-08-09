@@ -225,7 +225,8 @@ function snks_create_edit_fees_order( $main_order, $will_pay, $booking, $new_boo
 	foreach ( $extra as $k => $v ) {
 		$fees_order->update_meta_data( $k, $v );
 	}
-	$fees_order->update_status( 'wc-pending-payment' );
+	// Use core WooCommerce pending status (slug "pending", stored as wc-pending).
+	$fees_order->update_status( 'pending' );
 
 	// Set the billing details for the fees order.
 	$fees_order->set_billing_first_name( $main_order->get_billing_first_name() );

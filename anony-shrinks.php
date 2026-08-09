@@ -43,6 +43,19 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 define( 'SNKS_DIR', wp_normalize_path( plugin_dir_path( __FILE__ ) ) );
 define( 'SNKS_PLUGIN_SLUG', plugin_basename( __FILE__ ) );
 
+/**
+ * Declare WooCommerce High-Performance Order Storage (HPOS) compatibility.
+ * Must run on before_woocommerce_init with the main plugin file path.
+ */
+add_action(
+	'before_woocommerce_init',
+	function () {
+		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+		}
+	}
+);
+
 require SNKS_DIR . '/plugin-update-checker/plugin-update-checker.php';
 
 // Use JSON metadata mode instead of GitHub repository mode.
