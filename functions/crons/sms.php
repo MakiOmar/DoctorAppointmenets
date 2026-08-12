@@ -20,22 +20,134 @@ if ( ! wp_next_scheduled( 'snks_check_session_notifications' ) ) {
 add_action( 'snks_check_session_notifications', 'snks_send_session_notifications' );
 
 /**
+ * Whether session-notification debug history is enabled.
+ *
+ * @return bool
+ */
+function snks_session_notif_debug_enabled() {
+	return (string) get_option( 'snks_session_notif_debug_enabled', '1' ) === '1';
+}
+
+/**
+ * Store one session-notification cron run report (newest first).
+ *
+ * @param array<string,mixed> $report Run report.
+ * @return void
+ */
+function snks_session_notif_debug_store_run( array $report ) {
+	update_option( 'snks_session_notif_last_run', $report, false );
+
+	if ( ! snks_session_notif_debug_enabled() ) {
+		return;
+	}
+
+	$log = get_option( 'snks_session_notif_debug_log', array() );
+	if ( ! is_array( $log ) ) {
+		$log = array();
+	}
+	array_unshift( $log, $report );
+	$log = array_slice( $log, 0, 20 );
+	update_option( 'snks_session_notif_debug_log', $log, false );
+}
+
+/**
+ * Write a session-notification debug line to PHP error_log when WP_DEBUG_LOG is on.
+ *
+ * @param string              $message Short message.
+ * @param array<string,mixed> $context Optional context.
+ * @return void
+ */
+function snks_session_notif_debug_error_log( $message, array $context = array() ) {
+	if ( ! ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) ) {
+		return;
+	}
+	$line = '[SNKS session notif] ' . $message;
+	if ( ! empty( $context ) ) {
+		$line .= ' ' . wp_json_encode( $context );
+	}
+	// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+	error_log( $line );
+}
+
+/**
+ * Normalize a send result for the debug report.
+ *
+ * @param mixed $result Send result (array, WP_Error, etc.).
+ * @return array<string,mixed>
+ */
+function snks_session_notif_debug_normalize_result( $result ) {
+	if ( is_wp_error( $result ) ) {
+		return array(
+			'ok'      => false,
+			'code'    => $result->get_error_code(),
+			'message' => $result->get_error_message(),
+			'data'    => $result->get_error_data(),
+		);
+	}
+	if ( is_array( $result ) ) {
+		return array(
+			'ok'   => true,
+			'data' => $result,
+		);
+	}
+	return array(
+		'ok'   => null !== $result && false !== $result,
+		'data' => $result,
+	);
+}
+
+/**
  * Sends session notifications based on proximity to session time.
  *
  * This function checks for sessions in the next 24 hours or 1 hour,
  * and sends notifications accordingly. It ensures that notifications
  * are only sent once per time frame (24-hour and 1-hour).
+ *
+ * @param bool $force_debug Force storing a full debug report for this run.
+ * @return array<string,mixed> Debug report for the run.
  */
-function snks_send_session_notifications() {
+function snks_send_session_notifications( $force_debug = false ) {
 	global $wpdb;
 	// Use WordPress local time to match how date_time is stored in database
-	$current_time      = current_time('mysql');
-	$current_timestamp = current_time('timestamp');
+	$current_time      = current_time( 'mysql' );
+	$current_timestamp = current_time( 'timestamp' );
+	$current_hour      = (int) current_time( 'H' );
 
 	// Use local time bounds (not UTC) for upcoming window checks.
-	$time_24_hours = date('Y-m-d H:i:s', strtotime('+24 hours', $current_timestamp));
-	$time_23_hours = date('Y-m-d H:i:s', strtotime('+23 hours', $current_timestamp));
-	$time_1_hour   = date('Y-m-d H:i:s', strtotime('+1 hour', $current_timestamp));
+	$time_24_hours = date( 'Y-m-d H:i:s', strtotime( '+24 hours', $current_timestamp ) );
+	$time_23_hours = date( 'Y-m-d H:i:s', strtotime( '+23 hours', $current_timestamp ) );
+	$time_1_hour   = date( 'Y-m-d H:i:s', strtotime( '+1 hour', $current_timestamp ) );
+
+	$use_meeting_timers = function_exists( 'snks_should_use_jitsi_meeting_timers' ) && snks_should_use_jitsi_meeting_timers();
+	$google_meet_active = function_exists( 'snks_is_google_meet_active' ) && snks_is_google_meet_active();
+	$wa_settings        = function_exists( 'snks_get_whatsapp_notification_settings' )
+		? snks_get_whatsapp_notification_settings()
+		: array( 'enabled' => '0' );
+	$wa_enabled         = isset( $wa_settings['enabled'] ) && (string) $wa_settings['enabled'] === '1';
+
+	$report = array(
+		'ran_at'             => current_time( 'mysql' ),
+		'current_time'       => $current_time,
+		'current_hour'       => $current_hour,
+		'windows'            => array(
+			'24h' => array( $time_23_hours, $time_24_hours ),
+			'1h'  => array( $current_time, $time_1_hour ),
+		),
+		'gates'              => array(
+			'use_meeting_timers' => $use_meeting_timers,
+			'google_meet_active' => $google_meet_active,
+			'whatsapp_enabled'   => $wa_enabled,
+			'hour_ok_for_24h'    => $current_hour >= 9,
+			'note'               => 'Online 24h/1h reminders require use_meeting_timers=true (i.e. Google Meet inactive). 24h also requires local hour >= 9.',
+		),
+		'query_candidates'   => 0,
+		'sessions'           => array(),
+		'sent_24h'           => 0,
+		'sent_1h'            => 0,
+		'skipped'            => 0,
+		'flagged_without_send' => 0,
+	);
+
 	//phpcs:disable
 	// Query to get sessions happening between 23-24 hours from now OR 0-1 hour from now
 	// For 24hr reminder: Find sessions where current time is 23-24 hours before the session
@@ -60,64 +172,143 @@ function snks_send_session_notifications() {
 		$time_1_hour,      // up to +1h
 		0                  // notification_1hr_sent = 0
 	);
-	
+
 	$results = $wpdb->get_results( $query );
 	//phpcs:enable
-	$use_meeting_timers = function_exists( 'snks_should_use_jitsi_meeting_timers' ) && snks_should_use_jitsi_meeting_timers();
+
+	$report['query_candidates'] = is_array( $results ) ? count( $results ) : 0;
+	$report['last_query_error'] = $wpdb->last_error ? $wpdb->last_error : null;
+
+	if ( empty( $results ) ) {
+		$report['summary'] = 'No open sessions in 23-24h or 0-1h windows with unsent flags (LIMIT 20).';
+		snks_session_notif_debug_store_run( $report );
+		snks_session_notif_debug_error_log( 'no candidates', array( 'windows' => $report['windows'], 'gates' => $report['gates'] ) );
+		if ( $force_debug && ! snks_session_notif_debug_enabled() ) {
+			// Still ensure last_run is stored (already done above).
+		}
+		return $report;
+	}
 
 	// Process each result.
 	foreach ( $results as $session ) {
+		$row = array(
+			'ID'                      => (int) $session->ID,
+			'date_time'               => $session->date_time,
+			'client_id'               => (int) $session->client_id,
+			'user_id'                 => isset( $session->user_id ) ? (int) $session->user_id : 0,
+			'attendance_type'         => isset( $session->attendance_type ) ? $session->attendance_type : '',
+			'notification_24hr_sent'  => (int) $session->notification_24hr_sent,
+			'notification_1hr_sent'   => (int) $session->notification_1hr_sent,
+			'actions'                 => array(),
+			'skips'                   => array(),
+		);
+
 		$time_diff     = snks_diff_seconds( $session );
 		$billing_phone = get_user_meta( $session->client_id, 'billing_phone', true );
 		$user          = get_user_by( 'id', $session->client_id );
+		$row['time_diff_seconds'] = (int) $time_diff;
+		$row['time_diff_hours']   = round( $time_diff / HOUR_IN_SECONDS, 2 );
+
 		if ( empty( $billing_phone ) && $user ) {
 			$billing_phone = $user->user_login;
+			$row['phone_source'] = 'user_login';
+		} else {
+			$row['phone_source'] = empty( $billing_phone ) ? 'none' : 'billing_phone';
 		}
-		if ( ! empty( $billing_phone ) ) {
-			if ( in_array( 'doctor', $user->roles, true ) && strpos( $billing_phone, '+2' ) === false ) {
-				$billing_phone = '+20' . $billing_phone;
-			}
-			
-			// Check if this is an AI session
-			// Method 1: Check settings field for ai_booking
-			$is_ai_session = isset( $session->settings ) && strpos( $session->settings, 'ai_booking' ) !== false;
-			
-			// Method 2: If not detected by settings, check order meta
-			if ( ! $is_ai_session && isset( $session->order_id ) && $session->order_id > 0 ) {
-				$order = wc_get_order( $session->order_id );
-				if ( $order ) {
-					$from_jalsah_ai = $order->get_meta( 'from_jalsah_ai' );
-					$is_ai_session_meta = $order->get_meta( 'is_ai_session' );
-					$is_ai_session = $from_jalsah_ai || $is_ai_session_meta;
+
+		if ( empty( $billing_phone ) ) {
+			$row['skips'][] = 'empty_billing_phone';
+			$report['skipped']++;
+			$report['sessions'][] = $row;
+			continue;
+		}
+
+		if ( ! $user ) {
+			$row['skips'][] = 'client_user_missing';
+			$report['skipped']++;
+			$report['sessions'][] = $row;
+			continue;
+		}
+
+		if ( in_array( 'doctor', (array) $user->roles, true ) && strpos( $billing_phone, '+2' ) === false ) {
+			$billing_phone = '+20' . $billing_phone;
+			$row['phone_normalized'] = true;
+		}
+		$row['phone_masked'] = substr( preg_replace( '/\D/', '', $billing_phone ), -4 );
+
+		// Check if this is an AI session
+		// Method 1: Check settings field for ai_booking
+		$is_ai_session = isset( $session->settings ) && strpos( $session->settings, 'ai_booking' ) !== false;
+		$ai_detect     = $is_ai_session ? 'settings_ai_booking' : '';
+
+		// Method 2: If not detected by settings, check order meta
+		if ( ! $is_ai_session && isset( $session->order_id ) && $session->order_id > 0 ) {
+			$order = wc_get_order( $session->order_id );
+			if ( $order ) {
+				$from_jalsah_ai    = $order->get_meta( 'from_jalsah_ai' );
+				$is_ai_session_meta = $order->get_meta( 'is_ai_session' );
+				$is_ai_session      = $from_jalsah_ai || $is_ai_session_meta;
+				if ( $is_ai_session ) {
+					$ai_detect = 'order_meta';
 				}
 			}
-			
-			// 24-hour reminder.
-			// Check if session is 23-24 hours away
-			// Only send after 9 AM to avoid confusion (if sent between midnight and 5 AM, "tomorrow" might be misinterpreted)
-			$current_hour = (int) current_time( 'H' );
-			$skip_timed_online = ! $use_meeting_timers && 'online' === $session->attendance_type;
-			if ( $time_diff >= ( 23 * HOUR_IN_SECONDS ) && $time_diff <= DAY_IN_SECONDS && ! $session->notification_24hr_sent && $current_hour >= 9 && ! $skip_timed_online ) {
+		}
+		$row['is_ai_session'] = (bool) $is_ai_session;
+		$row['ai_detect']     = $ai_detect ? $ai_detect : 'none';
+
+		$skip_timed_online = ! $use_meeting_timers && 'online' === $session->attendance_type;
+
+		// 24-hour reminder.
+		// Check if session is 23-24 hours away
+		// Only send after 9 AM to avoid confusion (if sent between midnight and 5 AM, "tomorrow" might be misinterpreted)
+		$in_24h_window = ( $time_diff >= ( 23 * HOUR_IN_SECONDS ) && $time_diff <= DAY_IN_SECONDS );
+		if ( $in_24h_window && ! $session->notification_24hr_sent ) {
+			$can_send_24h = true;
+			if ( $current_hour < 9 ) {
+				$row['skips'][] = '24h_before_9am_local';
+				$can_send_24h   = false;
+			}
+			if ( $skip_timed_online ) {
+				$row['skips'][] = '24h_skip_online_while_google_meet_active';
+				$can_send_24h   = false;
+			}
+
+			if ( $can_send_24h ) {
+				$sent_24h     = false;
+				$flagged_24h  = false;
+				$send_channel = '';
+
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) && $use_meeting_timers ) {
-					// Send WhatsApp template notification for AI sessions
-					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
-					
-					if ( $settings['enabled'] == '1' ) {
-						// Get doctor name using standardized function
+					if ( $wa_enabled ) {
 						$doctor_name = function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( $session->user_id ) : 'المعالج';
-						
-						// Format date and time
-						$day_name = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
-						$date = snks_format_session_datetime( $session, 'Y-m-d' );
-						$time = snks_format_session_datetime( $session, 'h:i a' );
-						
-						// Send via WhatsApp template
-						snks_send_whatsapp_template_message(
+						$day_name    = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
+						$date        = snks_format_session_datetime( $session, 'Y-m-d' );
+						$time        = snks_format_session_datetime( $session, 'h:i a' );
+						$template    = isset( $wa_settings['template_patient_rem_24h'] ) ? $wa_settings['template_patient_rem_24h'] : 'patient_rem_24h';
+
+						$wa_result = snks_send_whatsapp_template_message(
 							$billing_phone,
-							$settings['template_patient_rem_24h'],
-						array( 'day' => $day_name, 'date' => $date, 'doctor' => $doctor_name, 'time' => $time )
+							$template,
+							array(
+								'day'    => $day_name,
+								'date'   => $date,
+								'doctor' => $doctor_name,
+								'time'   => $time,
+							)
 						);
+						$send_channel = 'whatsapp_24h';
+						$norm         = snks_session_notif_debug_normalize_result( $wa_result );
+						$row['actions'][] = array(
+							'type'     => 'send_24h_whatsapp',
+							'template' => $template,
+							'result'   => $norm,
+						);
+						$sent_24h = ! empty( $norm['ok'] );
+					} else {
+						$row['skips'][] = '24h_ai_whatsapp_disabled';
 					}
+				} elseif ( $is_ai_session && ! $use_meeting_timers ) {
+					$row['skips'][] = '24h_ai_requires_meeting_timers';
 				} elseif ( ! $is_ai_session ) {
 					// Legacy SMS for non-AI sessions only
 					if ( 'online' === $session->attendance_type ) {
@@ -136,14 +327,30 @@ function snks_send_session_notifications() {
 								snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) )
 							);
 						}
-						send_sms_via_whysms( $billing_phone, $message );
+						$sms_result   = send_sms_via_whysms( $billing_phone, $message );
+						$send_channel = 'sms_24h_online';
+						$norm         = snks_session_notif_debug_normalize_result( $sms_result );
+						$row['actions'][] = array(
+							'type'   => 'send_24h_sms',
+							'result' => $norm,
+						);
+						$sent_24h = ! empty( $norm['ok'] );
 					} else {
 						$message = sprintf(
 							'نذكرك بموعد جلستك غدا الساعه %1$s',
-							snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) ),
+							snks_localize_time( snks_format_session_datetime( $session, 'h:i a' ) )
 						);
-						send_sms_via_whysms( $billing_phone, $message );
+						$sms_result   = send_sms_via_whysms( $billing_phone, $message );
+						$send_channel = 'sms_24h_offline';
+						$norm         = snks_session_notif_debug_normalize_result( $sms_result );
+						$row['actions'][] = array(
+							'type'   => 'send_24h_sms',
+							'result' => $norm,
+						);
+						$sent_24h = ! empty( $norm['ok'] );
 					}
+				} else {
+					$row['skips'][] = '24h_no_channel_matched';
 				}
 
 				//phpcs:disable
@@ -155,20 +362,52 @@ function snks_send_session_notifications() {
 					array( '%d' )
 				);
 				//phpcs:enable
+				$flagged_24h = true;
+				$row['actions'][] = array(
+					'type'    => 'flag_24hr_sent',
+					'channel' => $send_channel,
+					'sent'    => $sent_24h,
+				);
+
+				if ( $sent_24h ) {
+					$report['sent_24h']++;
+				} elseif ( $flagged_24h ) {
+					$report['flagged_without_send']++;
+					$row['skips'][] = '24h_flagged_without_successful_send';
+				}
 			}
-			// 1-hour reminder.
-			if ( 'online' === $session->attendance_type && $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS && ! $session->notification_1hr_sent && $use_meeting_timers ) {
+		} elseif ( $in_24h_window && $session->notification_24hr_sent ) {
+			$row['skips'][] = '24h_already_flagged';
+		}
+
+		// 1-hour reminder.
+		$in_1h_window = ( 'online' === $session->attendance_type && $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS );
+		if ( $in_1h_window && ! $session->notification_1hr_sent ) {
+			if ( ! $use_meeting_timers ) {
+				$row['skips'][] = '1h_requires_meeting_timers_google_meet_blocks';
+				$report['skipped']++;
+			} else {
+				$sent_1h      = false;
+				$send_channel = '';
+
 				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
-					// Send WhatsApp template notification for AI sessions
-					$settings = function_exists( 'snks_get_whatsapp_notification_settings' ) ? snks_get_whatsapp_notification_settings() : array( 'enabled' => '0' );
-					
-					if ( $settings['enabled'] == '1' ) {
-						// Send via WhatsApp template (no parameters for this template)
-						snks_send_whatsapp_template_message(
+					if ( $wa_enabled ) {
+						$template  = isset( $wa_settings['template_patient_rem_1h'] ) ? $wa_settings['template_patient_rem_1h'] : 'patient_rem_1h';
+						$wa_result = snks_send_whatsapp_template_message(
 							$billing_phone,
-							$settings['template_patient_rem_1h'],
+							$template,
 							array()
 						);
+						$send_channel = 'whatsapp_1h';
+						$norm         = snks_session_notif_debug_normalize_result( $wa_result );
+						$row['actions'][] = array(
+							'type'     => 'send_1h_whatsapp',
+							'template' => $template,
+							'result'   => $norm,
+						);
+						$sent_1h = ! empty( $norm['ok'] );
+					} else {
+						$row['skips'][] = '1h_ai_whatsapp_disabled';
 					}
 				} else {
 					// Legacy SMS notification for non-AI sessions
@@ -183,9 +422,16 @@ function snks_send_session_notifications() {
 					} else {
 						$message = 'باقي أقل من ساعة على موعد الجلسة. سيتم إرسال رابط Google Meet بعد تعيينه.';
 					}
-					send_sms_via_whysms( $billing_phone, $message );
+					$sms_result   = send_sms_via_whysms( $billing_phone, $message );
+					$send_channel = 'sms_1h';
+					$norm         = snks_session_notif_debug_normalize_result( $sms_result );
+					$row['actions'][] = array(
+						'type'   => 'send_1h_sms',
+						'result' => $norm,
+					);
+					$sent_1h = ! empty( $norm['ok'] );
 				}
-				
+
 				$wpdb->update(
 					$wpdb->prefix . 'snks_provider_timetable',
 					array( 'notification_1hr_sent' => 1 ),
@@ -194,9 +440,50 @@ function snks_send_session_notifications() {
 					array( '%d' )
 				);
 				//phpcs:enable
+				$row['actions'][] = array(
+					'type'    => 'flag_1hr_sent',
+					'channel' => $send_channel,
+					'sent'    => $sent_1h,
+				);
+
+				if ( $sent_1h ) {
+					$report['sent_1h']++;
+				} else {
+					$report['flagged_without_send']++;
+					$row['skips'][] = '1h_flagged_without_successful_send';
+				}
 			}
+		} elseif ( $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS && 'online' !== $session->attendance_type ) {
+			$row['skips'][] = '1h_offline_not_eligible';
+		} elseif ( $in_1h_window && $session->notification_1hr_sent ) {
+			$row['skips'][] = '1h_already_flagged';
 		}
+
+		if ( empty( $row['actions'] ) && empty( $row['skips'] ) ) {
+			$row['skips'][] = 'matched_sql_but_outside_php_time_windows';
+			$report['skipped']++;
+		} elseif ( empty( $row['actions'] ) ) {
+			$report['skipped']++;
+		}
+
+		$report['sessions'][] = $row;
 	}
+
+	$report['summary'] = sprintf(
+		'candidates=%d sent_24h=%d sent_1h=%d skipped=%d flagged_without_send=%d meeting_timers=%s hour=%d',
+		$report['query_candidates'],
+		$report['sent_24h'],
+		$report['sent_1h'],
+		$report['skipped'],
+		$report['flagged_without_send'],
+		$use_meeting_timers ? 'yes' : 'no',
+		$current_hour
+	);
+
+	snks_session_notif_debug_store_run( $report );
+	snks_session_notif_debug_error_log( $report['summary'], array( 'gates' => $report['gates'] ) );
+
+	return $report;
 }
 
 /**
