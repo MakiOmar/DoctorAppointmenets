@@ -56,7 +56,15 @@ function withdraw_transactions_admin_page_content() {
 	);
 	
 	// Ensure it's not null
-	$total_off_transactions = $total_off_transactions ? number_format($total_off_transactions, 2) : '0.00';
+	$total_off_transactions = $total_off_transactions ? number_format( $total_off_transactions, 2 ) : '0.00';
+
+	$ai_pending = function_exists( 'snks_get_ai_pending_profit_total' )
+		? snks_get_ai_pending_profit_total()
+		: array(
+			'total'   => 0,
+			'count'   => 0,
+			'skipped' => 0,
+		);
 
 	?>
 		<style>
@@ -141,8 +149,26 @@ function withdraw_transactions_admin_page_content() {
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Withdraw Transactions', 'your-textdomain' ); ?></h1>
 		<div class="notice notice-info">
-			<p><strong><?php esc_html_e( 'Total Unprocessed "Off" Transactions:', 'your-textdomain' ); ?></strong> 
+			<p><strong><?php esc_html_e( 'Total Unprocessed "Off" Transactions:', 'your-textdomain' ); ?></strong>
 				<?php echo esc_html( $total_off_transactions ); ?>
+			</p>
+			<p>
+				<strong><?php esc_html_e( 'Pending AI earnings (paid, session not completed):', 'shrinks' ); ?></strong>
+				<?php
+				if ( function_exists( 'wc_price' ) ) {
+					echo wp_kses_post( wc_price( $ai_pending['total'] ) );
+				} else {
+					echo esc_html( number_format( (float) $ai_pending['total'], 2 ) );
+				}
+				printf(
+					' <span class="description">(%1$s %2$s)</span>',
+					esc_html( number_format_i18n( (int) $ai_pending['count'] ) ),
+					esc_html( _n( 'session', 'sessions', (int) $ai_pending['count'], 'shrinks' ) )
+				);
+				?>
+			</p>
+			<p class="description">
+				<?php esc_html_e( 'Estimated therapist profit for AI bookings with a paid order but no add transaction yet. Profit is calculated per session line (coupon discount allocated proportionally).', 'shrinks' ); ?>
 			</p>
 		</div>
 

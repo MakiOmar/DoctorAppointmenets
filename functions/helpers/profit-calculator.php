@@ -993,3 +993,169 @@ function snks_get_recent_ai_transactions( $limit = 20 ) {
 	
 	return $transactions;
 }
+
+/**
+ * Primary patient user ID from timetable client_id (may be comma-separated).
+ *
+ * @param mixed $client_id_field Timetable client_id value.
+ * @return int
+ */
+function snks_get_timetable_primary_client_id( $client_id_field ) {
+	$client_id_field = trim( (string) $client_id_field );
+	if ( '' === $client_id_field ) {
+		return 0;
+	}
+	if ( false !== strpos( $client_id_field, ',' ) ) {
+		$parts = explode( ',', $client_id_field );
+		return absint( trim( $parts[0] ) );
+	}
+	return absint( $client_id_field );
+}
+
+/**
+ * Paid amount for one AI session line on a WooCommerce order (coupon-aware, per slot).
+ *
+ * @param WC_Order|null $order   Order object.
+ * @param int           $slot_id Timetable slot ID.
+ * @return float
+ */
+function snks_get_ai_order_line_amount_for_slot( $order, $slot_id ) {
+	if ( ! $order || ! $slot_id ) {
+		return 0.0;
+	}
+
+	$slot_id      = absint( $slot_id );
+	$line_total   = 0.0;
+	$items_total  = 0.0;
+	$matched      = false;
+	$product_rows = 0;
+
+	foreach ( $order->get_items() as $item ) {
+		if ( ! is_a( $item, 'WC_Order_Item_Product' ) ) {
+			continue;
+		}
+		++$product_rows;
+		$item_slot = absint( $item->get_meta( 'slot_id', true ) );
+		if ( ! $item_slot ) {
+			$item_slot = absint( $item->get_meta( 'appointment_id', true ) );
+		}
+		$item_amount  = (float) $item->get_total();
+		$items_total += $item_amount;
+		if ( $item_slot === $slot_id ) {
+			$line_total = $item_amount;
+			$matched    = true;
+		}
+	}
+
+	if ( ! $matched ) {
+		if ( 1 === $product_rows ) {
+			return (float) $order->get_total();
+		}
+		return 0.0;
+	}
+
+	$order_paid = (float) $order->get_total();
+	if ( $items_total > 0 && abs( $items_total - $order_paid ) > 0.001 ) {
+		return round( $line_total * ( $order_paid / $items_total ), 2 );
+	}
+
+	return round( $line_total, 2 );
+}
+
+/**
+ * Total therapist profit for AI sessions that are paid but not yet completed (no add row).
+ *
+ * @param array $args {
+ *     @type bool $include_details Include per-session breakdown.
+ * }
+ * @return array{total:float,count:int,skipped:int,sessions:array}
+ */
+function snks_get_ai_pending_profit_total( $args = array() ) {
+	global $wpdb;
+
+	$args = wp_parse_args(
+		$args,
+		array(
+			'include_details' => false,
+		)
+	);
+
+	$table = $wpdb->prefix . 'snks_provider_timetable';
+	$trns  = $wpdb->prefix . TRNS_TABLE_NAME;
+
+	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$sessions = $wpdb->get_results(
+		"SELECT t.*
+		FROM {$table} t
+		LEFT JOIN {$trns} tr
+			ON tr.ai_session_id = t.ID
+			AND tr.transaction_type = 'add'
+		WHERE t.order_id > 0
+			AND t.settings LIKE '%ai_booking%'
+			AND t.session_status NOT IN ('completed', 'cancelled')
+			AND tr.id IS NULL"
+	);
+
+	$total   = 0.0;
+	$count   = 0;
+	$skipped = 0;
+	$details = array();
+
+	if ( empty( $sessions ) ) {
+		return array(
+			'total'    => 0.0,
+			'count'    => 0,
+			'skipped'  => 0,
+			'sessions' => array(),
+		);
+	}
+
+	foreach ( $sessions as $session ) {
+		if ( ! function_exists( 'wc_get_order' ) ) {
+			break;
+		}
+
+		$order = wc_get_order( (int) $session->order_id );
+		if ( ! $order || ! $order->has_status( array( 'processing', 'completed' ) ) ) {
+			++$skipped;
+			continue;
+		}
+
+		$therapist_id = (int) $session->user_id;
+		$patient_id   = snks_get_timetable_primary_client_id( $session->client_id );
+		if ( ! $therapist_id || ! $patient_id ) {
+			++$skipped;
+			continue;
+		}
+
+		$session_amount = snks_get_ai_order_line_amount_for_slot( $order, (int) $session->ID );
+		if ( $session_amount <= 0 ) {
+			++$skipped;
+			continue;
+		}
+
+		$profit = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
+		$total += (float) $profit;
+		++$count;
+
+		if ( $args['include_details'] ) {
+			$details[] = array(
+				'session_id'     => (int) $session->ID,
+				'order_id'       => (int) $session->order_id,
+				'therapist_id'   => $therapist_id,
+				'patient_id'     => $patient_id,
+				'session_status' => (string) $session->session_status,
+				'session_amount' => $session_amount,
+				'pending_profit' => round( (float) $profit, 2 ),
+				'date_time'      => isset( $session->date_time ) ? (string) $session->date_time : '',
+			);
+		}
+	}
+
+	return array(
+		'total'    => round( $total, 2 ),
+		'count'    => $count,
+		'skipped'  => $skipped,
+		'sessions' => $details,
+	);
+}
