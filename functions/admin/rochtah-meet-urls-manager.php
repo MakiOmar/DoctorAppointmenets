@@ -101,6 +101,78 @@ function snks_rochtah_meet_urls_handle_post() {
 		} else {
 			add_settings_error( 'snks_rochtah_meet_urls', 'deleted', __( 'URL deleted.', 'shrinks' ), 'success' );
 		}
+		return;
+	}
+
+	// Table bulk actions (enable / disable / unassign / delete).
+	if ( 'bulk' === $action ) {
+		$bulk_action = isset( $_POST['bulk_action'] ) ? sanitize_text_field( wp_unslash( $_POST['bulk_action'] ) ) : '';
+		$url_ids     = isset( $_POST['url_ids'] ) ? array_map( 'absint', (array) wp_unslash( $_POST['url_ids'] ) ) : array();
+		$url_ids     = array_values( array_filter( $url_ids ) );
+
+		if ( empty( $bulk_action ) || '-1' === $bulk_action ) {
+			add_settings_error( 'snks_rochtah_meet_urls', 'bulk', __( 'Select a bulk action.', 'shrinks' ), 'error' );
+			return;
+		}
+		if ( empty( $url_ids ) ) {
+			add_settings_error( 'snks_rochtah_meet_urls', 'bulk', __( 'Select at least one URL.', 'shrinks' ), 'error' );
+			return;
+		}
+
+		$allowed = array( 'enable', 'disable', 'unassign', 'delete' );
+		if ( ! in_array( $bulk_action, $allowed, true ) ) {
+			add_settings_error( 'snks_rochtah_meet_urls', 'bulk', __( 'Invalid bulk action.', 'shrinks' ), 'error' );
+			return;
+		}
+
+		$result  = array(
+			'success' => 0,
+			'skipped' => 0,
+			'errors'  => array(),
+		);
+		$message = '';
+		$code    = 'bulk_' . $bulk_action;
+
+		if ( 'enable' === $bulk_action ) {
+			$result  = snks_rochtah_meet_urls_bulk_enable( $url_ids );
+			$message = sprintf(
+				/* translators: 1: enabled count 2: skipped count */
+				__( 'Enabled %1$d URL(s). Skipped %2$d (not disabled).', 'shrinks' ),
+				(int) $result['success'],
+				(int) $result['skipped']
+			);
+		} elseif ( 'disable' === $bulk_action ) {
+			$result  = snks_rochtah_meet_urls_bulk_disable( $url_ids );
+			$message = sprintf(
+				/* translators: 1: disabled count 2: skipped count */
+				__( 'Disabled %1$d URL(s). Skipped %2$d (not available).', 'shrinks' ),
+				(int) $result['success'],
+				(int) $result['skipped']
+			);
+		} elseif ( 'unassign' === $bulk_action ) {
+			$result  = snks_rochtah_meet_urls_bulk_unassign( $url_ids );
+			$message = sprintf(
+				/* translators: 1: unassigned count 2: skipped count */
+				__( 'Unassigned %1$d URL(s). Skipped %2$d (not assigned).', 'shrinks' ),
+				(int) $result['success'],
+				(int) $result['skipped']
+			);
+		} elseif ( 'delete' === $bulk_action ) {
+			$result  = snks_rochtah_meet_urls_bulk_delete( $url_ids );
+			$message = sprintf(
+				/* translators: 1: deleted count 2: skipped count */
+				__( 'Deleted %1$d URL(s). Skipped %2$d (assigned or missing).', 'shrinks' ),
+				(int) $result['success'],
+				(int) $result['skipped']
+			);
+		}
+
+		if ( ! empty( $result['errors'] ) ) {
+			$message .= ' ' . implode( ' ', $result['errors'] );
+			add_settings_error( 'snks_rochtah_meet_urls', $code, $message, 'warning' );
+		} else {
+			add_settings_error( 'snks_rochtah_meet_urls', $code, $message, 'success' );
+		}
 	}
 }
 add_action( 'admin_init', 'snks_rochtah_meet_urls_handle_post' );
@@ -168,9 +240,30 @@ function snks_rochtah_meet_urls_admin_page() {
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jalsah-ai-rochtah-meet-urls&status=disabled' ) ); ?>"><?php esc_html_e( 'Disabled', 'shrinks' ); ?></a>
 		</p>
 
+		<form method="post" id="snks-rochtah-meet-pool-form" onsubmit="return snksRochtahMeetBulkConfirm(this);">
+			<?php wp_nonce_field( 'snks_rochtah_meet_urls' ); ?>
+			<input type="hidden" name="snks_rochtah_meet_urls_action" value="bulk" />
+			<div class="tablenav top">
+				<div class="alignleft actions bulkactions">
+					<label for="snks-rochtah-bulk-action-top" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'shrinks' ); ?></label>
+					<select name="bulk_action" id="snks-rochtah-bulk-action-top">
+						<option value="-1"><?php esc_html_e( 'Bulk actions', 'shrinks' ); ?></option>
+						<option value="enable"><?php esc_html_e( 'Enable', 'shrinks' ); ?></option>
+						<option value="disable"><?php esc_html_e( 'Disable', 'shrinks' ); ?></option>
+						<option value="unassign"><?php esc_html_e( 'Unassign', 'shrinks' ); ?></option>
+						<option value="delete"><?php esc_html_e( 'Delete', 'shrinks' ); ?></option>
+					</select>
+					<input type="submit" class="button action" value="<?php esc_attr_e( 'Apply', 'shrinks' ); ?>" />
+				</div>
+			</div>
+		</form>
+
 		<table class="widefat striped">
 			<thead>
 				<tr>
+					<td class="manage-column column-cb check-column">
+						<input type="checkbox" id="snks-rochtah-meet-select-all" form="snks-rochtah-meet-pool-form" aria-label="<?php esc_attr_e( 'Select all', 'shrinks' ); ?>" />
+					</td>
 					<th><?php esc_html_e( 'ID', 'shrinks' ); ?></th>
 					<th><?php esc_html_e( 'URL', 'shrinks' ); ?></th>
 					<th><?php esc_html_e( 'Status', 'shrinks' ); ?></th>
@@ -180,10 +273,13 @@ function snks_rochtah_meet_urls_admin_page() {
 			</thead>
 			<tbody>
 				<?php if ( empty( $rows ) ) : ?>
-					<tr><td colspan="5"><?php esc_html_e( 'No URLs found.', 'shrinks' ); ?></td></tr>
+					<tr><td colspan="6"><?php esc_html_e( 'No URLs found.', 'shrinks' ); ?></td></tr>
 				<?php else : ?>
 					<?php foreach ( $rows as $row ) : ?>
 						<tr>
+							<th scope="row" class="check-column">
+								<input type="checkbox" name="url_ids[]" form="snks-rochtah-meet-pool-form" value="<?php echo (int) $row->id; ?>" class="snks-rochtah-meet-url-cb" />
+							</th>
 							<td><?php echo (int) $row->id; ?></td>
 							<td><a href="<?php echo esc_url( $row->meet_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $row->meet_url ); ?></a></td>
 							<td><?php echo esc_html( $row->status ); ?></td>
@@ -236,6 +332,73 @@ function snks_rochtah_meet_urls_admin_page() {
 				<?php endif; ?>
 			</tbody>
 		</table>
+
+		<div class="tablenav bottom">
+			<div class="alignleft actions bulkactions">
+				<label for="snks-rochtah-bulk-action-bottom" class="screen-reader-text"><?php esc_html_e( 'Select bulk action', 'shrinks' ); ?></label>
+				<select id="snks-rochtah-bulk-action-bottom">
+					<option value="-1"><?php esc_html_e( 'Bulk actions', 'shrinks' ); ?></option>
+					<option value="enable"><?php esc_html_e( 'Enable', 'shrinks' ); ?></option>
+					<option value="disable"><?php esc_html_e( 'Disable', 'shrinks' ); ?></option>
+					<option value="unassign"><?php esc_html_e( 'Unassign', 'shrinks' ); ?></option>
+					<option value="delete"><?php esc_html_e( 'Delete', 'shrinks' ); ?></option>
+				</select>
+				<button type="button" class="button action" id="snks-rochtah-bulk-apply-bottom"><?php esc_html_e( 'Apply', 'shrinks' ); ?></button>
+			</div>
+		</div>
+
+		<script>
+		(function() {
+			var poolForm = document.getElementById('snks-rochtah-meet-pool-form');
+			var selectAll = document.getElementById('snks-rochtah-meet-select-all');
+			if (selectAll) {
+				selectAll.addEventListener('change', function() {
+					document.querySelectorAll('.snks-rochtah-meet-url-cb').forEach(function(cb) {
+						cb.checked = selectAll.checked;
+					});
+				});
+			}
+			window.snksRochtahMeetBulkConfirm = function(form) {
+				var actionEl = form.querySelector('[name="bulk_action"]');
+				var action = actionEl ? actionEl.value : '-1';
+				if (action === '-1') {
+					alert(<?php echo wp_json_encode( __( 'Select a bulk action.', 'shrinks' ) ); ?>);
+					return false;
+				}
+				var checked = document.querySelectorAll('.snks-rochtah-meet-url-cb:checked');
+				if (!checked.length) {
+					alert(<?php echo wp_json_encode( __( 'Select at least one URL.', 'shrinks' ) ); ?>);
+					return false;
+				}
+				if (action === 'delete') {
+					return confirm(<?php echo wp_json_encode( __( 'Delete selected URL(s)? Assigned URLs will be skipped.', 'shrinks' ) ); ?>);
+				}
+				if (action === 'unassign') {
+					return confirm(<?php echo wp_json_encode( __( 'Unassign selected URL(s) and return them to the available pool?', 'shrinks' ) ); ?>);
+				}
+				if (action === 'disable') {
+					return confirm(<?php echo wp_json_encode( __( 'Disable selected available URL(s)?', 'shrinks' ) ); ?>);
+				}
+				if (action === 'enable') {
+					return confirm(<?php echo wp_json_encode( __( 'Enable selected disabled URL(s)?', 'shrinks' ) ); ?>);
+				}
+				return true;
+			};
+			var bottomApply = document.getElementById('snks-rochtah-bulk-apply-bottom');
+			var bottomSelect = document.getElementById('snks-rochtah-bulk-action-bottom');
+			if (bottomApply && bottomSelect && poolForm) {
+				bottomApply.addEventListener('click', function() {
+					var topSelect = poolForm.querySelector('[name="bulk_action"]');
+					if (topSelect) {
+						topSelect.value = bottomSelect.value;
+					}
+					if (snksRochtahMeetBulkConfirm(poolForm)) {
+						poolForm.submit();
+					}
+				});
+			}
+		})();
+		</script>
 	</div>
 	<?php
 }

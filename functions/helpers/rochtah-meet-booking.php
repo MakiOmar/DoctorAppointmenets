@@ -634,6 +634,146 @@ function snks_rochtah_meet_delete_url( $url_id ) {
 }
 
 /**
+ * Bulk enable Rochtah Meet URLs (disabled → available).
+ *
+ * @param array $url_ids Pool row IDs.
+ * @return array{success:int,skipped:int,errors:array}
+ */
+function snks_rochtah_meet_urls_bulk_enable( $url_ids ) {
+	global $wpdb;
+
+	$url_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $url_ids ) ) ) );
+	$result  = array(
+		'success' => 0,
+		'skipped' => 0,
+		'errors'  => array(),
+	);
+	$table   = snks_rochtah_meet_urls_table_name();
+
+	foreach ( $url_ids as $url_id ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ok = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = 'available' WHERE id = %d AND status = 'disabled'",
+				$url_id
+			)
+		);
+		if ( $ok ) {
+			++$result['success'];
+		} else {
+			++$result['skipped'];
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * Bulk disable Rochtah Meet URLs (available → disabled).
+ *
+ * @param array $url_ids Pool row IDs.
+ * @return array{success:int,skipped:int,errors:array}
+ */
+function snks_rochtah_meet_urls_bulk_disable( $url_ids ) {
+	global $wpdb;
+
+	$url_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $url_ids ) ) ) );
+	$result  = array(
+		'success' => 0,
+		'skipped' => 0,
+		'errors'  => array(),
+	);
+	$table   = snks_rochtah_meet_urls_table_name();
+
+	foreach ( $url_ids as $url_id ) {
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ok = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET status = 'disabled' WHERE id = %d AND status = 'available'",
+				$url_id
+			)
+		);
+		if ( $ok ) {
+			++$result['success'];
+		} else {
+			++$result['skipped'];
+		}
+	}
+
+	return $result;
+}
+
+/**
+ * Bulk unassign Rochtah Meet URLs (assigned → available).
+ *
+ * @param array $url_ids Pool row IDs.
+ * @return array{success:int,skipped:int,errors:array}
+ */
+function snks_rochtah_meet_urls_bulk_unassign( $url_ids ) {
+	$url_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $url_ids ) ) ) );
+	$result  = array(
+		'success' => 0,
+		'skipped' => 0,
+		'errors'  => array(),
+	);
+
+	foreach ( $url_ids as $url_id ) {
+		$outcome = snks_rochtah_meet_unassign_url( $url_id );
+		if ( is_wp_error( $outcome ) ) {
+			if ( 'unassign_failed' === $outcome->get_error_code() ) {
+				++$result['skipped'];
+			} else {
+				$result['errors'][] = sprintf(
+					/* translators: 1: URL id 2: error message */
+					__( 'URL #%1$d: %2$s', 'shrinks' ),
+					$url_id,
+					$outcome->get_error_message()
+				);
+			}
+			continue;
+		}
+		++$result['success'];
+	}
+
+	return $result;
+}
+
+/**
+ * Bulk delete Rochtah Meet URLs (available/disabled only; assigned are skipped).
+ *
+ * @param array $url_ids Pool row IDs.
+ * @return array{success:int,skipped:int,errors:array}
+ */
+function snks_rochtah_meet_urls_bulk_delete( $url_ids ) {
+	$url_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $url_ids ) ) ) );
+	$result  = array(
+		'success' => 0,
+		'skipped' => 0,
+		'errors'  => array(),
+	);
+
+	foreach ( $url_ids as $url_id ) {
+		$outcome = snks_rochtah_meet_delete_url( $url_id );
+		if ( is_wp_error( $outcome ) ) {
+			if ( in_array( $outcome->get_error_code(), array( 'assigned', 'not_found' ), true ) ) {
+				++$result['skipped'];
+			} else {
+				$result['errors'][] = sprintf(
+					/* translators: 1: URL id 2: error message */
+					__( 'URL #%1$d: %2$s', 'shrinks' ),
+					$url_id,
+					$outcome->get_error_message()
+				);
+			}
+			continue;
+		}
+		++$result['success'];
+	}
+
+	return $result;
+}
+
+/**
  * Get pool row by ID.
  *
  * @param int $url_id Pool row ID.
