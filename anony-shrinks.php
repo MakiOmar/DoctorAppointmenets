@@ -1348,19 +1348,56 @@ add_action(
 	}
 );
 
+/**
+ * Kashier icons: new plugin uses keys like credit-card.svg / meeza-wallet.svg
+ * and separate gateways. Keep custom cards/wallets images; leave other methods alone.
+ */
 add_filter(
 	'wc_kashier_payment_icons',
 	function ( $list_icons ) {
-		$temp = array();
+		if ( empty( $list_icons ) || ! is_array( $list_icons ) ) {
+			return $list_icons;
+		}
+
+		$normalize_icon_key = static function ( $index ) {
+			return preg_replace( '/\.svg$/i', '', (string) $index );
+		};
+
+		$targets_custom = false;
+		foreach ( array_keys( $list_icons ) as $index ) {
+			$key = $normalize_icon_key( $index );
+			if ( in_array( $key, array( 'credit-card', 'meeza-wallet' ), true ) ) {
+				$targets_custom = true;
+				break;
+			}
+		}
+
+		// Other gateways (valu, aman, etc.) keep default plugin icons.
+		if ( ! $targets_custom ) {
+			return $list_icons;
+		}
+
+		$temp         = array();
+		$card_shown   = false;
+		$wallet_shown = false;
+
 		foreach ( $list_icons as $index => $icon ) {
-			if ( 'credit-card' === $index ) {
-				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="visa" src="/wp-content/uploads/2025/02/cards.png"></div>';
-			} elseif ( 'meeza-wallet' === $index ) {
-				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="visa" src="/wp-content/uploads/2025/02/wallets.png"></div>';
+			$key = $normalize_icon_key( $index );
+
+			if ( 'credit-card' === $key && ! $card_shown ) {
+				// Custom combined cards image for card gateway.
+				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="Cards" src="/wp-content/uploads/2025/02/cards.png"></div>';
+				$card_shown     = true;
+			} elseif ( 'meeza-wallet' === $key && ! $wallet_shown ) {
+				// Custom wallets image for wallet gateway.
+				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="Wallets" src="/wp-content/uploads/2025/02/wallets.png"></div>';
+				$wallet_shown   = true;
 			} else {
+				// Hide sibling brand SVGs on the same gateway (visa, mastercard, meeza, etc.).
 				$temp[ $index ] = '';
 			}
 		}
+
 		return $temp;
 	}
 );
