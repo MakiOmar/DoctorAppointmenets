@@ -1386,7 +1386,7 @@ add_filter(
 
 			if ( 'credit-card' === $key && ! $card_shown ) {
 				// Custom combined cards image for card gateway.
-				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="Cards" src="https://jalsah.app/wp-content/uploads/2026/08/cards.png"></div>';
+				$temp[ $index ] = '<div class="kasheir-method"><img class="kashier-visa-icon kashier-icon" alt="Cards" src="/wp-content/uploads/2026/08/cards.png"></div>';
 				$card_shown     = true;
 			} elseif ( 'meeza-wallet' === $key && ! $wallet_shown ) {
 				// Custom wallets image for wallet gateway.
