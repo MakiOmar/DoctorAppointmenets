@@ -76,7 +76,6 @@ Meet URLs are assigned when an **online** session is booked and released on **ca
 
 ## Disabled in Meet mode
 
-- Cron/SMS timed online reminders (`functions/crons/sms.php`)
 - Doctor-presence SMS on join (`functions/ajax/meeting-room.php`)
 - WhatsApp doctor-joined (`functions/helpers/whatsapp-ai-notifications.php`)
 - Frontend therapist polling and countdown gates (`useLiveMeeting` composable)

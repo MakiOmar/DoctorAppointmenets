@@ -86,8 +86,8 @@ function snks_session_notif_debug_admin_page() {
 			<table class="widefat striped">
 				<tbody>
 					<tr><th><?php esc_html_e( 'Site local time', 'anony-shrinks' ); ?></th><td><code><?php echo esc_html( current_time( 'mysql' ) ); ?></code> (hour <?php echo esc_html( (string) $hour ); ?>)</td></tr>
-					<tr><th><?php esc_html_e( 'Google Meet active', 'anony-shrinks' ); ?></th><td><?php echo $gm_active ? '<strong style="color:#b32d2e;">yes</strong> (blocks online timed reminders)' : 'no'; ?></td></tr>
-					<tr><th><?php esc_html_e( 'use_meeting_timers', 'anony-shrinks' ); ?></th><td><?php echo $use_timers ? 'yes' : '<strong style="color:#b32d2e;">no</strong>'; ?></td></tr>
+					<tr><th><?php esc_html_e( 'Google Meet active', 'anony-shrinks' ); ?></th><td><?php echo $gm_active ? 'yes (reminders still send)' : 'no'; ?></td></tr>
+					<tr><th><?php esc_html_e( 'use_meeting_timers', 'anony-shrinks' ); ?></th><td><?php echo $use_timers ? 'yes' : 'no (Jitsi timers off; reminders still send)'; ?></td></tr>
 					<tr><th><?php esc_html_e( 'WhatsApp notifications enabled', 'anony-shrinks' ); ?></th><td><?php echo $wa_on ? 'yes' : '<strong style="color:#b32d2e;">no</strong>'; ?></td></tr>
 					<tr><th><?php esc_html_e( '24h hour gate (>= 9)', 'anony-shrinks' ); ?></th><td><?php echo $hour >= 9 ? 'pass' : '<strong style="color:#b32d2e;">fail (hour &lt; 9)</strong>'; ?></td></tr>
 					<tr><th><?php esc_html_e( 'Next WP-Cron', 'anony-shrinks' ); ?></th><td><?php echo $next_cron ? esc_html( wp_date( 'Y-m-d H:i:s', $next_cron ) ) : esc_html__( 'not scheduled', 'anony-shrinks' ); ?></td></tr>

@@ -138,7 +138,7 @@ function snks_send_session_notifications( $force_debug = false ) {
 			'google_meet_active' => $google_meet_active,
 			'whatsapp_enabled'   => $wa_enabled,
 			'hour_ok_for_24h'    => $current_hour >= 9,
-			'note'               => 'Online 24h/1h reminders require use_meeting_timers=true (i.e. Google Meet inactive). 24h also requires local hour >= 9.',
+			'note'               => '24h/1h reminders send for Jitsi and Google Meet. 24h also requires local hour >= 9. Online 1h is attendance_type=online only.',
 		),
 		'query_candidates'   => 0,
 		'sessions'           => array(),
@@ -256,8 +256,6 @@ function snks_send_session_notifications( $force_debug = false ) {
 		$row['is_ai_session'] = (bool) $is_ai_session;
 		$row['ai_detect']     = $ai_detect ? $ai_detect : 'none';
 
-		$skip_timed_online = ! $use_meeting_timers && 'online' === $session->attendance_type;
-
 		// 24-hour reminder.
 		// Check if session is 23-24 hours away
 		// Only send after 9 AM to avoid confusion (if sent between midnight and 5 AM, "tomorrow" might be misinterpreted)
@@ -268,17 +266,13 @@ function snks_send_session_notifications( $force_debug = false ) {
 				$row['skips'][] = '24h_before_9am_local';
 				$can_send_24h   = false;
 			}
-			if ( $skip_timed_online ) {
-				$row['skips'][] = '24h_skip_online_while_google_meet_active';
-				$can_send_24h   = false;
-			}
 
 			if ( $can_send_24h ) {
 				$sent_24h     = false;
 				$flagged_24h  = false;
 				$send_channel = '';
 
-				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) && $use_meeting_timers ) {
+				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
 					if ( $wa_enabled ) {
 						$doctor_name = function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( $session->user_id ) : 'المعالج';
 						$day_name    = function_exists( 'snks_get_arabic_day_name' ) ? snks_get_arabic_day_name( $session->date_time ) : '';
@@ -307,8 +301,6 @@ function snks_send_session_notifications( $force_debug = false ) {
 					} else {
 						$row['skips'][] = '24h_ai_whatsapp_disabled';
 					}
-				} elseif ( $is_ai_session && ! $use_meeting_timers ) {
-					$row['skips'][] = '24h_ai_requires_meeting_timers';
 				} elseif ( ! $is_ai_session ) {
 					// Legacy SMS for non-AI sessions only
 					if ( 'online' === $session->attendance_type ) {
@@ -380,78 +372,73 @@ function snks_send_session_notifications( $force_debug = false ) {
 			$row['skips'][] = '24h_already_flagged';
 		}
 
-		// 1-hour reminder.
+		// 1-hour reminder (online sessions only; Jitsi and Google Meet).
 		$in_1h_window = ( 'online' === $session->attendance_type && $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS );
 		if ( $in_1h_window && ! $session->notification_1hr_sent ) {
-			if ( ! $use_meeting_timers ) {
-				$row['skips'][] = '1h_requires_meeting_timers_google_meet_blocks';
-				$report['skipped']++;
-			} else {
-				$sent_1h      = false;
-				$send_channel = '';
+			$sent_1h      = false;
+			$send_channel = '';
 
-				if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
-					if ( $wa_enabled ) {
-						$template  = isset( $wa_settings['template_patient_rem_1h'] ) ? $wa_settings['template_patient_rem_1h'] : 'patient_rem_1h';
-						$wa_result = snks_send_whatsapp_template_message(
-							$billing_phone,
-							$template,
-							array()
-						);
-						$send_channel = 'whatsapp_1h';
-						$norm         = snks_session_notif_debug_normalize_result( $wa_result );
-						$row['actions'][] = array(
-							'type'     => 'send_1h_whatsapp',
-							'template' => $template,
-							'result'   => $norm,
-						);
-						$sent_1h = ! empty( $norm['ok'] );
-					} else {
-						$row['skips'][] = '1h_ai_whatsapp_disabled';
-					}
-				} else {
-					// Legacy SMS notification for non-AI sessions
-					$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
-						? snks_get_notification_meeting_link( $session->ID )
-						: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : '' );
-					if ( $meeting_link ) {
-						$message = sprintf(
-							'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
-							$meeting_link
-						);
-					} else {
-						$message = 'باقي أقل من ساعة على موعد الجلسة. سيتم إرسال رابط Google Meet بعد تعيينه.';
-					}
-					$sms_result   = send_sms_via_whysms( $billing_phone, $message );
-					$send_channel = 'sms_1h';
-					$norm         = snks_session_notif_debug_normalize_result( $sms_result );
+			if ( $is_ai_session && function_exists( 'snks_send_whatsapp_template_message' ) ) {
+				if ( $wa_enabled ) {
+					$template  = isset( $wa_settings['template_patient_rem_1h'] ) ? $wa_settings['template_patient_rem_1h'] : 'patient_rem_1h';
+					$wa_result = snks_send_whatsapp_template_message(
+						$billing_phone,
+						$template,
+						array()
+					);
+					$send_channel = 'whatsapp_1h';
+					$norm         = snks_session_notif_debug_normalize_result( $wa_result );
 					$row['actions'][] = array(
-						'type'   => 'send_1h_sms',
-						'result' => $norm,
+						'type'     => 'send_1h_whatsapp',
+						'template' => $template,
+						'result'   => $norm,
 					);
 					$sent_1h = ! empty( $norm['ok'] );
-				}
-
-				$wpdb->update(
-					$wpdb->prefix . 'snks_provider_timetable',
-					array( 'notification_1hr_sent' => 1 ),
-					array( 'ID' => $session->ID ),
-					array( '%d' ),
-					array( '%d' )
-				);
-				//phpcs:enable
-				$row['actions'][] = array(
-					'type'    => 'flag_1hr_sent',
-					'channel' => $send_channel,
-					'sent'    => $sent_1h,
-				);
-
-				if ( $sent_1h ) {
-					$report['sent_1h']++;
 				} else {
-					$report['flagged_without_send']++;
-					$row['skips'][] = '1h_flagged_without_successful_send';
+					$row['skips'][] = '1h_ai_whatsapp_disabled';
 				}
+			} else {
+				// Legacy SMS notification for non-AI sessions
+				$meeting_link = function_exists( 'snks_get_notification_meeting_link' )
+					? snks_get_notification_meeting_link( $session->ID )
+					: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session->ID ) : '' );
+				if ( $meeting_link ) {
+					$message = sprintf(
+						'باقي أقل من ساعة على موعد الجلسة، رابط الدخول للجلسة:%s',
+						$meeting_link
+					);
+				} else {
+					$message = 'باقي أقل من ساعة على موعد الجلسة. سيتم إرسال رابط Google Meet بعد تعيينه.';
+				}
+				$sms_result   = send_sms_via_whysms( $billing_phone, $message );
+				$send_channel = 'sms_1h';
+				$norm         = snks_session_notif_debug_normalize_result( $sms_result );
+				$row['actions'][] = array(
+					'type'   => 'send_1h_sms',
+					'result' => $norm,
+				);
+				$sent_1h = ! empty( $norm['ok'] );
+			}
+
+			$wpdb->update(
+				$wpdb->prefix . 'snks_provider_timetable',
+				array( 'notification_1hr_sent' => 1 ),
+				array( 'ID' => $session->ID ),
+				array( '%d' ),
+				array( '%d' )
+			);
+			//phpcs:enable
+			$row['actions'][] = array(
+				'type'    => 'flag_1hr_sent',
+				'channel' => $send_channel,
+				'sent'    => $sent_1h,
+			);
+
+			if ( $sent_1h ) {
+				$report['sent_1h']++;
+			} else {
+				$report['flagged_without_send']++;
+				$row['skips'][] = '1h_flagged_without_successful_send';
 			}
 		} elseif ( $time_diff > 0 && $time_diff <= HOUR_IN_SECONDS && 'online' !== $session->attendance_type ) {
 			$row['skips'][] = '1h_offline_not_eligible';
