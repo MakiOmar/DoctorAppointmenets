@@ -1268,17 +1268,49 @@ function snks_rochtah_meet_build_referral_debug( $patient_id, $booking ) {
 		$issues[] = 'stored_booking_reasoning_empty';
 	}
 
+	$meet_created     = isset( $booking->created_at ) ? (string) $booking->created_at : '';
+	$referral_created = ( is_array( $snapshot ) && ! empty( $snapshot['created_at'] ) ) ? (string) $snapshot['created_at'] : '';
+	$order            = 'unknown';
+	if ( $meet_created && $referral_created ) {
+		$meet_ts     = strtotime( $meet_created );
+		$referral_ts = strtotime( $referral_created );
+		if ( $meet_ts && $referral_ts ) {
+			if ( $meet_ts < $referral_ts ) {
+				$order    = 'meet_booking_created_before_referral';
+				$issues[] = 'meet_booking_created_before_referral';
+			} elseif ( $meet_ts > $referral_ts ) {
+				$order = 'meet_booking_created_after_referral';
+			} else {
+				$order = 'same_timestamp';
+			}
+		}
+	} elseif ( $meet_created && ! $referral_created ) {
+		$order    = 'no_referral_to_compare';
+		$issues[] = 'no_referral_to_compare';
+	}
+
 	return array(
-		'lookup'          => 'latest snks_rochtah_bookings row for patient_id (ORDER BY id DESC LIMIT 1)',
-		'note'            => 'Therapist name is resolved at WhatsApp send time from the live referral. Diagnosis fields are copied onto the meet booking at create time.',
-		'live_snapshot'   => $snapshot,
+		'lookup'            => 'latest snks_rochtah_bookings row for patient_id (ORDER BY id DESC LIMIT 1)',
+		'note'              => 'Therapist name is resolved at WhatsApp send time from the live referral. Diagnosis fields are copied onto the meet booking at create time.',
+		'timeline'          => array(
+			'meet_booking_table'        => 'jalsah_rochtah_meet_bookings',
+			'meet_booking_id'           => isset( $booking->id ) ? (int) $booking->id : 0,
+			'meet_booking_created_at'   => $meet_created,
+			'meet_appointment_datetime' => isset( $booking->appointment_datetime ) ? (string) $booking->appointment_datetime : '',
+			'meet_appointment_note'     => 'appointment_datetime is the session time, not when the row was created',
+			'referral_table'            => 'snks_rochtah_bookings',
+			'referral_id'               => ( is_array( $snapshot ) && isset( $snapshot['referral_id'] ) ) ? (int) $snapshot['referral_id'] : null,
+			'referral_created_at'       => $referral_created,
+			'compare'                   => $order,
+		),
+		'live_snapshot'     => $snapshot,
 		'stored_on_booking' => array(
 			'diagnosis_id'        => isset( $booking->diagnosis_id ) ? $booking->diagnosis_id : null,
 			'diagnosis_name'      => (string) $booking->diagnosis_name,
 			'diagnosis_symptoms'  => isset( $booking->diagnosis_symptoms ) ? (string) $booking->diagnosis_symptoms : '',
 			'diagnosis_reasoning' => (string) $booking->diagnosis_reasoning,
 		),
-		'issues'          => $issues,
+		'issues'            => $issues,
 	);
 }
 

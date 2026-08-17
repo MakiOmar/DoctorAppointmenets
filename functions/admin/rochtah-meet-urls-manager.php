@@ -458,14 +458,42 @@ function snks_rochtah_meet_urls_admin_page() {
 				return html;
 			}
 
+			function kvTable(rows) {
+				var html = '<table class="widefat striped"><tbody>';
+				rows.forEach(function(row) {
+					html += '<tr><th style="width:280px;">' + escapeHtml(row[0]) + '</th><td>' + row[1] + '</td></tr>';
+				});
+				html += '</tbody></table>';
+				return html;
+			}
+
 			function renderDetails(data) {
 				var wa = data.whatsapp || {};
 				var doctor = wa.doctor || {};
 				var patient = wa.patient || {};
 				var debug = data.debug || {};
 				var booking = data.booking || {};
+				var url = data.url || {};
+				var timeline = debug.timeline || {};
 				var html = '';
-				html += '<p><strong>Booking #' + escapeHtml(booking.id || '') + '</strong> — ' + escapeHtml(booking.appointment_datetime || '') + ' — ' + escapeHtml(booking.status || '') + '</p>';
+				html += '<h3>Meet booking (jalsah_rochtah_meet_bookings)</h3>';
+				html += kvTable([
+					['Meet booking ID', escapeHtml(booking.id || '')],
+					['Status', escapeHtml(booking.status || '')],
+					['Created at (row insert)', '<code>' + escapeHtml(booking.created_at || '') + '</code>'],
+					['Appointment datetime (session time)', '<code>' + escapeHtml(booking.appointment_datetime || '') + '</code>'],
+					['Patient ID', escapeHtml(booking.patient_id || '')],
+					['Rochtah doctor ID', escapeHtml(booking.rochtah_doctor_id || '')],
+					['Created by user ID', escapeHtml(booking.created_by || '')],
+					['Pool URL assigned at', '<code>' + escapeHtml(url.assigned_at || '') + '</code>']
+				]);
+				html += '<h3>Referral (snks_rochtah_bookings) vs Meet booking</h3>';
+				html += kvTable([
+					['Referral ID', escapeHtml(timeline.referral_id || '(none)')],
+					['Referral created at', '<code>' + escapeHtml(timeline.referral_created_at || '') + '</code>'],
+					['Meet booking created at', '<code>' + escapeHtml(timeline.meet_booking_created_at || booking.created_at || '') + '</code>'],
+					['Compare', '<strong>' + escapeHtml(timeline.compare || 'unknown') + '</strong>']
+				]);
 				html += '<h3>WhatsApp → doctor (rochtah_meet_doctor)</h3>';
 				html += '<p>Template: <code>' + escapeHtml(doctor.template || '') + '</code> | To: ' + (doctor.to_found ? escapeHtml(doctor.to_masked) : '<strong style="color:#b32d2e;">missing</strong>') +
 					' | Can send: ' + (doctor.can_send ? 'yes' : 'no') +
@@ -483,7 +511,7 @@ function snks_rochtah_meet_urls_admin_page() {
 					html += '<p>No referral/diagnosis issues detected.</p>';
 				}
 				html += '<pre style="max-height:320px;overflow:auto;background:#1d2327;color:#f0f0f1;padding:12px;direction:ltr;text-align:left;">' +
-					escapeHtml(JSON.stringify(debug, null, 2)) + '</pre>';
+					escapeHtml(JSON.stringify({ booking: booking, url: url, debug: debug }, null, 2)) + '</pre>';
 				body.innerHTML = html;
 			}
 
