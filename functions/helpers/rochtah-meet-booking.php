@@ -1103,3 +1103,239 @@ function snks_rochtah_meet_update_booking_status( $booking_id, $status, $viewer_
 
 	return true;
 }
+
+/**
+ * Parse a stored rochtah appointment datetime without timezone conversion.
+ *
+ * @param string $datetime Stored datetime.
+ * @return DateTimeImmutable|null
+ */
+function snks_rochtah_meet_parse_appointment_datetime( $datetime ) {
+	$datetime = (string) $datetime;
+	$dt       = DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $datetime );
+	if ( ! $dt ) {
+		$dt = DateTimeImmutable::createFromFormat( 'Y-m-d H:i', $datetime );
+	}
+	return $dt ? $dt : null;
+}
+
+/**
+ * Mask a phone number for admin debug (last 4 digits).
+ *
+ * @param string|false $phone Phone number.
+ * @return string
+ */
+function snks_rochtah_meet_mask_phone( $phone ) {
+	$digits = preg_replace( '/\D/', '', (string) $phone );
+	if ( '' === $digits ) {
+		return '';
+	}
+	return '***' . substr( $digits, -4 );
+}
+
+/**
+ * Raw and sanitized WhatsApp template parameter.
+ *
+ * @param mixed $value Raw value.
+ * @return array{raw:string,sent:string,empty:bool}
+ */
+function snks_rochtah_meet_wa_param( $value ) {
+	$raw = is_scalar( $value ) ? (string) $value : '';
+	$sent = function_exists( 'snks_whatsapp_sanitize_template_text' )
+		? snks_whatsapp_sanitize_template_text( $raw )
+		: ( '' === trim( $raw ) ? '-' : $raw );
+	return array(
+		'raw'   => $raw,
+		'sent'  => $sent,
+		'empty' => '' === trim( $raw ),
+	);
+}
+
+/**
+ * Build WhatsApp preview payloads for a rochtah meet booking (no send).
+ *
+ * @param object $booking Booking row.
+ * @return array<string,mixed>
+ */
+function snks_rochtah_meet_build_whatsapp_preview( $booking ) {
+	$settings = function_exists( 'snks_get_whatsapp_notification_settings' )
+		? snks_get_whatsapp_notification_settings()
+		: array();
+	$dt       = snks_rochtah_meet_parse_appointment_datetime( $booking->appointment_datetime );
+	$date_str = $dt ? $dt->format( 'Y-m-d' ) : '';
+	$time_str = $dt ? $dt->format( 'h:i a' ) : '';
+	$day_name = ( $date_str && function_exists( 'snks_get_arabic_day_name' ) )
+		? snks_get_arabic_day_name( $date_str )
+		: ( $dt ? $dt->format( 'l' ) : '' );
+
+	$patient_name = function_exists( 'snks_rochtah_meet_get_patient_name' )
+		? snks_rochtah_meet_get_patient_name( (int) $booking->patient_id )
+		: 'المريض';
+	$therapist_name = function_exists( 'snks_rochtah_meet_get_referring_therapist_name' )
+		? snks_rochtah_meet_get_referring_therapist_name( (int) $booking->patient_id )
+		: 'المعالج';
+	$doctor_name = function_exists( 'snks_rochtah_meet_get_doctor_name' )
+		? snks_rochtah_meet_get_doctor_name( (int) $booking->rochtah_doctor_id )
+		: 'الطبيب';
+
+	$doctor_phone  = function_exists( 'snks_get_rochtah_doctor_whatsapp' )
+		? snks_get_rochtah_doctor_whatsapp( (int) $booking->rochtah_doctor_id )
+		: false;
+	$patient_phone = function_exists( 'snks_get_user_whatsapp' )
+		? snks_get_user_whatsapp( (int) $booking->patient_id )
+		: false;
+
+	$wa_enabled = isset( $settings['enabled'] ) && (string) $settings['enabled'] === '1';
+
+	return array(
+		'doctor'  => array(
+			'to_masked'     => snks_rochtah_meet_mask_phone( $doctor_phone ),
+			'to_found'      => ! empty( $doctor_phone ),
+			'template'      => isset( $settings['template_rochtah_meet_doctor'] ) ? $settings['template_rochtah_meet_doctor'] : '',
+			'can_send'      => $wa_enabled && ! empty( $settings['template_rochtah_meet_doctor'] ) && ! empty( $doctor_phone ),
+			'already_sent'  => ! empty( $booking->wa_doctor_sent ),
+			'params'        => array(
+				'patient'        => snks_rochtah_meet_wa_param( $patient_name ),
+				'therapist'      => snks_rochtah_meet_wa_param( $therapist_name ),
+				'day'            => snks_rochtah_meet_wa_param( $day_name ),
+				'date'           => snks_rochtah_meet_wa_param( $date_str ),
+				'time'           => snks_rochtah_meet_wa_param( $time_str ),
+				'meet_url'       => snks_rochtah_meet_wa_param( $booking->meet_url ),
+				'diagnosis_name' => snks_rochtah_meet_wa_param( $booking->diagnosis_name ),
+				'symptoms'       => snks_rochtah_meet_wa_param( isset( $booking->diagnosis_symptoms ) ? $booking->diagnosis_symptoms : '' ),
+				'reasoning'      => snks_rochtah_meet_wa_param( $booking->diagnosis_reasoning ),
+			),
+		),
+		'patient' => array(
+			'to_masked'    => snks_rochtah_meet_mask_phone( $patient_phone ),
+			'to_found'     => ! empty( $patient_phone ),
+			'template'     => isset( $settings['template_rochtah_meet_patient'] ) ? $settings['template_rochtah_meet_patient'] : '',
+			'can_send'     => $wa_enabled && ! empty( $settings['template_rochtah_meet_patient'] ) && ! empty( $patient_phone ),
+			'already_sent' => ! empty( $booking->wa_patient_sent ),
+			'params'       => array(
+				'doctor'   => snks_rochtah_meet_wa_param( $doctor_name ),
+				'day'      => snks_rochtah_meet_wa_param( $day_name ),
+				'date'     => snks_rochtah_meet_wa_param( $date_str ),
+				'time'     => snks_rochtah_meet_wa_param( $time_str ),
+				'meet_url' => snks_rochtah_meet_wa_param( $booking->meet_url ),
+			),
+		),
+		'settings' => array(
+			'whatsapp_enabled' => $wa_enabled,
+		),
+	);
+}
+
+/**
+ * Referral lookup debug for the WhatsApp therapist/diagnosis fields.
+ *
+ * @param int    $patient_id Patient user ID.
+ * @param object $booking    Booking row.
+ * @return array<string,mixed>
+ */
+function snks_rochtah_meet_build_referral_debug( $patient_id, $booking ) {
+	$snapshot = function_exists( 'snks_rochtah_meet_data_patient_diagnosis' )
+		? snks_rochtah_meet_data_patient_diagnosis( (int) $patient_id )
+		: null;
+
+	$issues = array();
+	if ( ! is_array( $snapshot ) ) {
+		$issues[] = 'no_snks_rochtah_bookings_row_for_patient';
+	} else {
+		if ( empty( $snapshot['therapist_id'] ) ) {
+			$issues[] = 'referral_therapist_id_empty';
+		}
+		if ( empty( $snapshot['therapist_name'] ) || 'المعالج' === $snapshot['therapist_name'] ) {
+			$issues[] = 'therapist_name_fallback_المعالج';
+		}
+		if ( '' === trim( (string) $snapshot['diagnosis_name'] ) ) {
+			$issues[] = 'live_referral_diagnosis_name_empty';
+		}
+		if ( '' === trim( (string) $snapshot['symptoms'] ) ) {
+			$issues[] = 'live_referral_symptoms_empty';
+		}
+		if ( '' === trim( (string) $snapshot['reasoning'] ) ) {
+			$issues[] = 'live_referral_reasoning_empty';
+		}
+	}
+	if ( '' === trim( (string) $booking->diagnosis_name ) ) {
+		$issues[] = 'stored_booking_diagnosis_name_empty';
+	}
+	if ( '' === trim( (string) ( isset( $booking->diagnosis_symptoms ) ? $booking->diagnosis_symptoms : '' ) ) ) {
+		$issues[] = 'stored_booking_symptoms_empty';
+	}
+	if ( '' === trim( (string) $booking->diagnosis_reasoning ) ) {
+		$issues[] = 'stored_booking_reasoning_empty';
+	}
+
+	return array(
+		'lookup'          => 'latest snks_rochtah_bookings row for patient_id (ORDER BY id DESC LIMIT 1)',
+		'note'            => 'Therapist name is resolved at WhatsApp send time from the live referral. Diagnosis fields are copied onto the meet booking at create time.',
+		'live_snapshot'   => $snapshot,
+		'stored_on_booking' => array(
+			'diagnosis_id'        => isset( $booking->diagnosis_id ) ? $booking->diagnosis_id : null,
+			'diagnosis_name'      => (string) $booking->diagnosis_name,
+			'diagnosis_symptoms'  => isset( $booking->diagnosis_symptoms ) ? (string) $booking->diagnosis_symptoms : '',
+			'diagnosis_reasoning' => (string) $booking->diagnosis_reasoning,
+		),
+		'issues'          => $issues,
+	);
+}
+
+/**
+ * Meeting details for an assigned pool URL (WhatsApp preview + debug).
+ *
+ * @param int $url_id Pool URL ID.
+ * @return array<string,mixed>|WP_Error
+ */
+function snks_rochtah_meet_get_meeting_details( $url_id ) {
+	global $wpdb;
+
+	$url_id = absint( $url_id );
+	if ( ! $url_id ) {
+		return new WP_Error( 'invalid_url', 'Invalid URL ID' );
+	}
+
+	$url_row = snks_rochtah_meet_get_url_row( $url_id );
+	if ( ! $url_row ) {
+		return new WP_Error( 'url_not_found', 'Meet URL not found' );
+	}
+
+	$booking_id = isset( $url_row->assigned_booking_id ) ? absint( $url_row->assigned_booking_id ) : 0;
+	if ( ! $booking_id ) {
+		return new WP_Error( 'not_assigned', 'This URL is not assigned to a meeting' );
+	}
+
+	$booking = $wpdb->get_row(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}jalsah_rochtah_meet_bookings WHERE id = %d LIMIT 1",
+			$booking_id
+		)
+	);
+	if ( ! $booking ) {
+		return new WP_Error( 'booking_not_found', 'Assigned booking #' . $booking_id . ' was not found' );
+	}
+
+	return array(
+		'url'      => array(
+			'id'                  => (int) $url_row->id,
+			'meet_url'            => (string) $url_row->meet_url,
+			'status'              => (string) $url_row->status,
+			'assigned_booking_id' => $booking_id,
+			'assigned_at'         => isset( $url_row->assigned_at ) ? (string) $url_row->assigned_at : '',
+		),
+		'booking'  => array(
+			'id'                   => (int) $booking->id,
+			'patient_id'           => (int) $booking->patient_id,
+			'rochtah_doctor_id'    => (int) $booking->rochtah_doctor_id,
+			'appointment_datetime' => (string) $booking->appointment_datetime,
+			'status'               => (string) $booking->status,
+			'created_by'           => isset( $booking->created_by ) ? (int) $booking->created_by : 0,
+			'created_at'           => isset( $booking->created_at ) ? (string) $booking->created_at : '',
+			'wa_doctor_sent'       => ! empty( $booking->wa_doctor_sent ),
+			'wa_patient_sent'      => ! empty( $booking->wa_patient_sent ),
+		),
+		'whatsapp' => snks_rochtah_meet_build_whatsapp_preview( $booking ),
+		'debug'    => snks_rochtah_meet_build_referral_debug( (int) $booking->patient_id, $booking ),
+	);
+}

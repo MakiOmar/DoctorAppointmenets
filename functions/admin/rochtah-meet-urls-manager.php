@@ -310,6 +310,10 @@ function snks_rochtah_meet_urls_admin_page() {
 										<button type="submit" class="button button-small"><?php esc_html_e( 'Delete', 'shrinks' ); ?></button>
 									</form>
 								<?php elseif ( 'assigned' === $row->status ) : ?>
+									<?php if ( ! empty( $row->assigned_booking_id ) ) : ?>
+										<!-- Fetch meeting/WhatsApp details on click, not on page load -->
+										<button type="button" class="button button-small snks-rochtah-meet-details" data-url-id="<?php echo (int) $row->id; ?>"><?php esc_html_e( 'Meeting details', 'shrinks' ); ?></button>
+									<?php endif; ?>
 									<form method="post" style="display:inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Unassign this URL?', 'shrinks' ) ); ?>');">
 										<?php wp_nonce_field( 'snks_rochtah_meet_urls' ); ?>
 										<input type="hidden" name="snks_rochtah_meet_urls_action" value="unassign" />
@@ -344,6 +348,19 @@ function snks_rochtah_meet_urls_admin_page() {
 					<option value="delete"><?php esc_html_e( 'Delete', 'shrinks' ); ?></option>
 				</select>
 				<button type="button" class="button action" id="snks-rochtah-bulk-apply-bottom"><?php esc_html_e( 'Apply', 'shrinks' ); ?></button>
+			</div>
+		</div>
+
+		<!-- Meeting details modal: content loaded via AJAX on button click -->
+		<div id="snks-rochtah-meet-details-modal" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);">
+			<div style="background:#fff;max-width:860px;margin:5vh auto;max-height:90vh;overflow:auto;padding:20px;border-radius:4px;box-shadow:0 8px 24px rgba(0,0,0,.2);">
+				<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+					<h2 style="margin:0;"><?php esc_html_e( 'Meeting details', 'shrinks' ); ?></h2>
+					<button type="button" class="button" id="snks-rochtah-meet-details-close"><?php esc_html_e( 'Close', 'shrinks' ); ?></button>
+				</div>
+				<div id="snks-rochtah-meet-details-body" style="margin-top:16px;">
+					<p><?php esc_html_e( 'Loading…', 'shrinks' ); ?></p>
+				</div>
 			</div>
 		</div>
 
@@ -397,8 +414,136 @@ function snks_rochtah_meet_urls_admin_page() {
 					}
 				});
 			}
+
+			var modal = document.getElementById('snks-rochtah-meet-details-modal');
+			var body = document.getElementById('snks-rochtah-meet-details-body');
+			var closeBtn = document.getElementById('snks-rochtah-meet-details-close');
+			var detailsNonce = <?php echo wp_json_encode( wp_create_nonce( 'snks_rochtah_meet_booking_details' ) ); ?>;
+			var ajaxUrl = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+
+			function closeDetails() {
+				if (modal) {
+					modal.style.display = 'none';
+				}
+			}
+			if (closeBtn) {
+				closeBtn.addEventListener('click', closeDetails);
+			}
+			if (modal) {
+				modal.addEventListener('click', function(e) {
+					if (e.target === modal) {
+						closeDetails();
+					}
+				});
+			}
+
+			function escapeHtml(str) {
+				return String(str == null ? '' : str)
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;');
+			}
+
+			function paramTable(params) {
+				var html = '<table class="widefat striped"><thead><tr><th>Key</th><th>Raw</th><th>Sent</th></tr></thead><tbody>';
+				Object.keys(params || {}).forEach(function(key) {
+					var p = params[key] || {};
+					var empty = p.empty ? ' style="color:#b32d2e;"' : '';
+					html += '<tr' + empty + '><td><code>' + escapeHtml(key) + '</code></td><td>' +
+						(p.raw === '' ? '<em>(empty)</em>' : escapeHtml(p.raw)) +
+						'</td><td><code>' + escapeHtml(p.sent || '') + '</code></td></tr>';
+				});
+				html += '</tbody></table>';
+				return html;
+			}
+
+			function renderDetails(data) {
+				var wa = data.whatsapp || {};
+				var doctor = wa.doctor || {};
+				var patient = wa.patient || {};
+				var debug = data.debug || {};
+				var booking = data.booking || {};
+				var html = '';
+				html += '<p><strong>Booking #' + escapeHtml(booking.id || '') + '</strong> — ' + escapeHtml(booking.appointment_datetime || '') + ' — ' + escapeHtml(booking.status || '') + '</p>';
+				html += '<h3>WhatsApp → doctor (rochtah_meet_doctor)</h3>';
+				html += '<p>Template: <code>' + escapeHtml(doctor.template || '') + '</code> | To: ' + (doctor.to_found ? escapeHtml(doctor.to_masked) : '<strong style="color:#b32d2e;">missing</strong>') +
+					' | Can send: ' + (doctor.can_send ? 'yes' : 'no') +
+					' | Already sent: ' + (doctor.already_sent ? 'yes' : 'no') + '</p>';
+				html += paramTable(doctor.params);
+				html += '<h3>WhatsApp → patient (rochtah_meet_patient)</h3>';
+				html += '<p>Template: <code>' + escapeHtml(patient.template || '') + '</code> | To: ' + (patient.to_found ? escapeHtml(patient.to_masked) : '<strong style="color:#b32d2e;">missing</strong>') +
+					' | Can send: ' + (patient.can_send ? 'yes' : 'no') +
+					' | Already sent: ' + (patient.already_sent ? 'yes' : 'no') + '</p>';
+				html += paramTable(patient.params);
+				html += '<h3>Debug</h3>';
+				if (debug.issues && debug.issues.length) {
+					html += '<p><strong>Issues:</strong> ' + escapeHtml(debug.issues.join(', ')) + '</p>';
+				} else {
+					html += '<p>No referral/diagnosis issues detected.</p>';
+				}
+				html += '<pre style="max-height:320px;overflow:auto;background:#1d2327;color:#f0f0f1;padding:12px;direction:ltr;text-align:left;">' +
+					escapeHtml(JSON.stringify(debug, null, 2)) + '</pre>';
+				body.innerHTML = html;
+			}
+
+			document.querySelectorAll('.snks-rochtah-meet-details').forEach(function(btn) {
+				btn.addEventListener('click', function() {
+					var urlId = btn.getAttribute('data-url-id');
+					if (!modal || !body) {
+						return;
+					}
+					modal.style.display = 'block';
+					body.innerHTML = '<p>Loading…</p>';
+					var form = new FormData();
+					form.append('action', 'snks_rochtah_meet_booking_details');
+					form.append('nonce', detailsNonce);
+					form.append('url_id', urlId);
+					fetch(ajaxUrl, { method: 'POST', body: form, credentials: 'same-origin' })
+						.then(function(res) { return res.json(); })
+						.then(function(json) {
+							if (!json || !json.success) {
+								var msg = (json && json.data && json.data.message) ? json.data.message : 'Failed to load meeting details.';
+								body.innerHTML = '<p style="color:#b32d2e;">' + escapeHtml(msg) + '</p>';
+								return;
+							}
+							renderDetails(json.data);
+						})
+						.catch(function() {
+							body.innerHTML = '<p style="color:#b32d2e;">Failed to load meeting details.</p>';
+						});
+				});
+			});
 		})();
 		</script>
 	</div>
 	<?php
 }
+
+/**
+ * AJAX: meeting details + WhatsApp preview for an assigned pool URL.
+ *
+ * @return void
+ */
+function snks_ajax_rochtah_meet_booking_details() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
+	}
+	$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+	if ( ! wp_verify_nonce( $nonce, 'snks_rochtah_meet_booking_details' ) ) {
+		wp_send_json_error( array( 'message' => 'Invalid nonce' ), 403 );
+	}
+
+	$url_id = isset( $_POST['url_id'] ) ? absint( $_POST['url_id'] ) : 0;
+	if ( ! function_exists( 'snks_rochtah_meet_get_meeting_details' ) ) {
+		wp_send_json_error( array( 'message' => 'Helper not available' ), 500 );
+	}
+
+	$result = snks_rochtah_meet_get_meeting_details( $url_id );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+	}
+
+	wp_send_json_success( $result );
+}
+add_action( 'wp_ajax_snks_rochtah_meet_booking_details', 'snks_ajax_rochtah_meet_booking_details' );
