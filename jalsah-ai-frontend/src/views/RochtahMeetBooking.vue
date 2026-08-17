@@ -103,6 +103,32 @@
         <p v-if="errors.patient" class="mt-1 text-sm text-red-600">{{ errors.patient }}</p>
       </div>
 
+      <!-- Referral status from إرسال لروشتا (loaded when a patient is selected) -->
+      <div v-if="patientId" class="rounded-md border p-3 text-sm" :class="referralBoxClass">
+        <p v-if="diagnosisLoading" class="text-gray-600">{{ $t('rochtahMeet.loadingDiagnosis') }}</p>
+        <template v-else-if="hasReferral">
+          <p class="font-medium text-green-800 mb-2">{{ $t('rochtahMeet.hasReferral') }}</p>
+          <p v-if="diagnosis.therapist_name" class="text-gray-800">
+            <span class="font-medium">{{ $t('rochtahMeet.referringTherapist') }}:</span>
+            {{ diagnosis.therapist_name }}
+          </p>
+          <p v-if="diagnosis.diagnosis_name" class="text-gray-800">
+            <span class="font-medium">{{ $t('rochtahMeet.diagnosisName') }}:</span>
+            {{ diagnosis.diagnosis_name }}
+          </p>
+          <p v-if="diagnosis.symptoms" class="text-gray-800 whitespace-pre-wrap">
+            <span class="font-medium">{{ $t('rochtahMeet.symptoms') }}:</span>
+            {{ diagnosis.symptoms }}
+          </p>
+          <p v-if="diagnosis.reasoning" class="text-gray-800">
+            <span class="font-medium">{{ $t('rochtahMeet.reasoning') }}:</span>
+            {{ diagnosis.reasoning }}
+          </p>
+        </template>
+        <p v-else class="text-red-800 font-medium">{{ $t('rochtahMeet.noDiagnosis') }}</p>
+        <p v-if="errors.referral" class="mt-2 text-sm text-red-700">{{ errors.referral }}</p>
+      </div>
+
       <!-- Rochtah doctor -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('rochtahMeet.rochtahDoctor') }} *</label>
@@ -133,11 +159,14 @@
 
       <button
         type="submit"
-        class="w-full sm:w-auto px-6 py-2.5 rounded-md bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50"
-        :disabled="submitLoading"
+        class="w-full sm:w-auto px-6 py-2.5 rounded-md bg-primary-500 text-white font-medium hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="!canSubmit"
       >
         {{ submitLoading ? $t('rochtahMeet.submitting') : $t('rochtahMeet.submit') }}
       </button>
+      <p v-if="patientId && !diagnosisLoading && !hasReferral" class="text-sm text-red-600">
+        {{ $t('rochtahMeet.cannotSubmitNoReferral') }}
+      </p>
     </form>
   </div>
 </template>
@@ -164,6 +193,8 @@ const patientSearchLoading = ref(false)
 const patientSearched = ref(false)
 const patientId = ref(null)
 const patientName = ref('')
+const diagnosis = ref(null)
+const diagnosisLoading = ref(false)
 
 const doctors = ref([])
 const doctorsLoading = ref(false)
@@ -193,6 +224,20 @@ const filteredPatientCountries = computed(() => {
     const nameAr = (c.name_ar || '').toLowerCase()
     return name.includes(q) || nameAr.includes(q) || (c.dial_code || '').includes(q)
   })
+})
+
+const hasReferral = computed(() => {
+  return !!(diagnosis.value && diagnosis.value.referral_id)
+})
+
+const canSubmit = computed(() => {
+  return !!patientId.value && hasReferral.value && !diagnosisLoading.value && !submitLoading.value
+})
+
+const referralBoxClass = computed(() => {
+  if (diagnosisLoading.value) return 'border-gray-200 bg-gray-50'
+  if (hasReferral.value) return 'border-green-200 bg-green-50'
+  return 'border-red-200 bg-red-50'
 })
 
 function validatePhoneNumber(phoneNumber, countryCode) {
@@ -253,6 +298,22 @@ function selectPatient(p) {
   patientSearchResults.value = []
   patientSearched.value = false
   if (errors.value.patient) errors.value.patient = ''
+  if (errors.value.referral) errors.value.referral = ''
+  loadPatientDiagnosis(p.id)
+}
+
+async function loadPatientDiagnosis(id) {
+  diagnosis.value = null
+  diagnosisLoading.value = true
+  try {
+    const data = await rochtahMeetApi.getPatientDiagnosis(id)
+    diagnosis.value = data?.diagnosis || null
+  } catch (_) {
+    diagnosis.value = null
+    toast.error(t('rochtahMeet.messages.loadDiagnosisFailed'))
+  } finally {
+    diagnosisLoading.value = false
+  }
 }
 
 function validateForm() {
@@ -266,6 +327,9 @@ function validateForm() {
   if (!appointmentDatetime.value) {
     next.datetime = t('rochtahMeet.validation.datetimeRequired')
   }
+  if (!hasReferral.value) {
+    next.referral = t('rochtahMeet.validation.referralRequired')
+  }
   errors.value = next
   return Object.keys(next).length === 0
 }
@@ -274,6 +338,8 @@ function resetForm() {
   patientPhoneDigits.value = ''
   patientId.value = null
   patientName.value = ''
+  diagnosis.value = null
+  diagnosisLoading.value = false
   rochtahDoctorId.value = ''
   appointmentDatetime.value = ''
   errors.value = {}
@@ -281,7 +347,7 @@ function resetForm() {
 }
 
 async function submitBooking() {
-  if (!validateForm()) return
+  if (!validateForm() || !canSubmit.value) return
 
   const confirm = await Swal.fire({
     icon: 'question',

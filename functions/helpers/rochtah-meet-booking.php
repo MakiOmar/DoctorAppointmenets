@@ -833,15 +833,14 @@ function snks_rochtah_meet_submit_booking( $input, $created_by ) {
 		return new WP_Error( 'invalid_datetime', 'Invalid appointment date and time' );
 	}
 
-	$diagnosis_snapshot  = snks_rochtah_meet_data_patient_diagnosis( $patient_id );
-	$diagnosis_name      = '';
-	$diagnosis_reason    = '';
-	$diagnosis_symptoms  = '';
-	if ( is_array( $diagnosis_snapshot ) ) {
-		$diagnosis_name     = $diagnosis_snapshot['diagnosis_name'];
-		$diagnosis_reason   = $diagnosis_snapshot['reasoning'];
-		$diagnosis_symptoms = $diagnosis_snapshot['symptoms'];
+	$diagnosis_snapshot = snks_rochtah_meet_data_patient_diagnosis( $patient_id );
+	if ( ! is_array( $diagnosis_snapshot ) || empty( $diagnosis_snapshot['referral_id'] ) ) {
+		return new WP_Error( 'missing_referral', 'Patient has no Rochtah referral. Booking cannot be created.' );
 	}
+
+	$diagnosis_name     = (string) $diagnosis_snapshot['diagnosis_name'];
+	$diagnosis_reason   = (string) $diagnosis_snapshot['reasoning'];
+	$diagnosis_symptoms = (string) $diagnosis_snapshot['symptoms'];
 
 	$table = $wpdb->prefix . 'jalsah_rochtah_meet_bookings';
 	$inserted = $wpdb->insert(
