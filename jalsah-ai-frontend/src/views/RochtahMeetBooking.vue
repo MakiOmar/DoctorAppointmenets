@@ -106,25 +106,7 @@
       <!-- Referral status from إرسال لروشتا (loaded when a patient is selected) -->
       <div v-if="patientId" class="rounded-md border p-3 text-sm" :class="referralBoxClass">
         <p v-if="diagnosisLoading" class="text-gray-600">{{ $t('rochtahMeet.loadingDiagnosis') }}</p>
-        <template v-else-if="hasReferral">
-          <p class="font-medium text-green-800 mb-2">{{ $t('rochtahMeet.hasReferral') }}</p>
-          <p v-if="diagnosis.therapist_name" class="text-gray-800">
-            <span class="font-medium">{{ $t('rochtahMeet.referringTherapist') }}:</span>
-            {{ diagnosis.therapist_name }}
-          </p>
-          <p v-if="diagnosis.diagnosis_name" class="text-gray-800">
-            <span class="font-medium">{{ $t('rochtahMeet.diagnosisName') }}:</span>
-            {{ diagnosis.diagnosis_name }}
-          </p>
-          <p v-if="diagnosis.symptoms" class="text-gray-800 whitespace-pre-wrap">
-            <span class="font-medium">{{ $t('rochtahMeet.symptoms') }}:</span>
-            {{ diagnosis.symptoms }}
-          </p>
-          <p v-if="diagnosis.reasoning" class="text-gray-800">
-            <span class="font-medium">{{ $t('rochtahMeet.reasoning') }}:</span>
-            {{ diagnosis.reasoning }}
-          </p>
-        </template>
+        <p v-else-if="hasReferral" class="font-medium text-green-800">{{ $t('rochtahMeet.hasReferral') }}</p>
         <p v-else class="text-red-800 font-medium">{{ $t('rochtahMeet.noDiagnosis') }}</p>
         <p v-if="errors.referral" class="mt-2 text-sm text-red-700">{{ errors.referral }}</p>
       </div>
