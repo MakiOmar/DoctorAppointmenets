@@ -199,6 +199,7 @@ function snks_therapist_registration_settings_page() {
 		update_option( 'snks_template_edit3', sanitize_text_field( $_POST['template_edit3'] ?? 'edit3' ) );
 		update_option( 'snks_template_edit', sanitize_text_field( $_POST['template_edit'] ?? 'edit' ) );
 		update_option( 'snks_template_manual_new_session', sanitize_text_field( $_POST['template_manual_new_session'] ?? 'manual_new_session' ) );
+		update_option( 'snks_template_manual_package_session', sanitize_text_field( $_POST['template_manual_package_session'] ?? 'manual_package_session' ) );
 		update_option( 'snks_template_password', sanitize_text_field( $_POST['template_password'] ?? 'password' ) );
 		update_option( 'snks_followup_payment_number', sanitize_text_field( $_POST['followup_payment_number'] ?? '' ) );
 		// Note: Button URL removed - OTP messages should not have buttons
@@ -376,6 +377,16 @@ function snks_therapist_registration_settings_page() {
 							<input type="text" name="template_manual_new_session" id="template_manual_new_session" value="<?php echo esc_attr( get_option( 'snks_template_manual_new_session', 'manual_new_session' ) ); ?>" class="regular-text" placeholder="manual_new_session">
 							<button type="button" class="button test-whatsapp-notification" data-template="manual_new_session" data-params='{"doctor": "د. أحمد محمد", "day": "الاثنين", "date": "2025-10-21", "time": "10:00 ص", "jitsi": "https://example.com/meeting"}' style="margin-right: 10px;">اختبار</button>
 							<p class="description">Admin manual booking only | <code>{{doctor}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{jitsi}}</code></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="template_manual_package_session">Manual booking — package session (patient)</label>
+						</th>
+						<td>
+							<input type="text" name="template_manual_package_session" id="template_manual_package_session" value="<?php echo esc_attr( get_option( 'snks_template_manual_package_session', 'manual_package_session' ) ); ?>" class="regular-text" placeholder="manual_package_session">
+							<button type="button" class="button test-whatsapp-notification" data-template="manual_package_session" data-params='{"doctor": "د. أحمد محمد", "day": "الاثنين", "date": "2025-10-21", "time": "10:00 ص", "jitsi": "https://example.com/meeting", "n": "2", "x": "8"}' style="margin-right: 10px;">اختبار</button>
+							<p class="description">Package session booking | <code>{{doctor}}</code>, <code>{{day}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{jitsi}}</code>, <code>{{n}}</code> (session number), <code>{{x}}</code> (package total)</p>
 						</td>
 					</tr>
 					<tr>

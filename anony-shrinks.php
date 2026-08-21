@@ -398,6 +398,7 @@ require_once SNKS_DIR . 'includes/rochtah-meet-urls-table.php';
 require_once SNKS_DIR . 'functions/helpers/meeting-service.php';
 require_once SNKS_DIR . 'functions/helpers/meeting-shortlink.php';
 require_once SNKS_DIR . 'functions/helpers/admin-manual-booking.php';
+require_once SNKS_DIR . 'functions/helpers/package-subscriptions.php';
 require_once SNKS_DIR . 'functions/admin/manual-booking-admin.php';
 require_once SNKS_DIR . 'functions/admin/manual-booking-secretary-report.php';
 require_once SNKS_DIR . 'functions/admin/woocommerce-analytics-manual-booking.php';
@@ -446,6 +447,22 @@ require_once SNKS_DIR . 'includes/coupons-tables.php';
 require_once SNKS_DIR . 'includes/ai-tables.php';
 require_once SNKS_DIR . 'includes/session-messages-table.php';
 require_once SNKS_DIR . 'includes/direct-conversations-table.php';
+require_once SNKS_DIR . 'includes/package-subscriptions-table.php';
+
+// Ensure package subscriptions table exists (admin/API usage without reactivation).
+add_action(
+	'init',
+	function () {
+		if ( get_option( 'snks_package_subscriptions_table_v1' ) ) {
+			return;
+		}
+		if ( function_exists( 'snks_create_package_subscriptions_table' ) ) {
+			snks_create_package_subscriptions_table();
+			update_option( 'snks_package_subscriptions_table_v1', 1, false );
+		}
+	},
+	5
+);
 
 // AI table creation hooks will be registered on init to ensure all functions are loaded
 
@@ -614,6 +631,9 @@ function plugin_activation_hook() {
 	snks_create_transactions_table();
 	snks_create_custom_coupons_table();
 	snks_create_coupon_usages_table();
+	if ( function_exists( 'snks_create_package_subscriptions_table' ) ) {
+		snks_create_package_subscriptions_table();
+	}
 	
 	// Add WhatsApp notification columns for AI sessions
 	if ( function_exists( 'snks_add_whatsapp_notification_columns' ) ) {

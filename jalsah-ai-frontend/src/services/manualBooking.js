@@ -46,5 +46,28 @@ export default {
     return api
       .post(BASE + '/submit', payload, { skipGlobalErrorToast: true })
       .then(r => r.data?.data ?? r.data)
+  },
+  getPackageForPair(patientId, therapistId) {
+    return api
+      .get(BASE + '/package-for-pair', { params: { patient_id: patientId, therapist_id: therapistId } })
+      .then(r => r.data?.data ?? r.data)
+  },
+  createPackageSubscription(payload) {
+    return api.post(BASE + '/package-subscribe', payload).then(r => r.data?.data ?? r.data)
+  },
+  listPackageSubscriptions(params = {}) {
+    return api.get(BASE + '/package-subscriptions', { params }).then(r => r.data?.data ?? r.data)
+  },
+  cancelPackageSubscription(id) {
+    return api.post(BASE + '/package-cancel', { id }).then(r => r.data?.data ?? r.data)
+  },
+  listPackageSessions(params = {}) {
+    return api.get(BASE + '/package-sessions', { params }).then(r => r.data?.data ?? r.data)
+  },
+  getPackageOweReport() {
+    return api.get(BASE + '/package-owe-report').then(r => r.data?.data ?? r.data)
+  },
+  listExtraFeesSessions(params = {}) {
+    return api.get(BASE + '/extra-fees-sessions', { params }).then(r => r.data?.data ?? r.data)
   }
 }

@@ -67,6 +67,14 @@
         >
           {{ $t('manualBooking.availabilityCopy') }}
         </button>
+        <button
+          type="button"
+          class="px-3 py-3 sm:px-4 font-medium text-sm sm:text-base whitespace-nowrap shrink-0 border-b-2 transition-colors"
+          :class="activeTab === 'connectPackage' ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+          @click="activeTab = 'connectPackage'"
+        >
+          {{ $t('manualBooking.connectPackageTab') }}
+        </button>
       </div>
     </div>
 
@@ -305,15 +313,53 @@
           class="w-full rounded border px-3 py-2"
           :class="errors?.amount ? 'border-red-500' : 'border-gray-300'"
           :placeholder="$t('manualBooking.customPricePlaceholder')"
+          :readonly="bookingFromPackage"
+          :disabled="bookingFromPackage"
         />
         <p class="mt-1 text-xs text-gray-500">{{ $t('manualBooking.customPriceHint') }}</p>
         <p v-if="errors?.amount" class="mt-1 text-sm text-red-600">{{ errors?.amount }}</p>
       </div>
 
+      <!-- Package vs normal when patient has active package with therapist -->
+      <div v-if="activePackageSubscription" class="rounded border border-teal-200 bg-teal-50 p-3 space-y-2">
+        <p class="text-sm font-medium text-teal-800">{{ $t('manualBooking.packageDetected') }}</p>
+        <div class="flex flex-wrap gap-4">
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input v-model="bookingSource" type="radio" value="package" />
+            <span>{{ $t('manualBooking.bookingFromPackage') }}</span>
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input v-model="bookingSource" type="radio" value="normal" />
+            <span>{{ $t('manualBooking.bookingNormal') }}</span>
+          </label>
+        </div>
+        <p v-if="bookingFromPackage" class="text-sm text-teal-900">
+          {{ $t('manualBooking.packageSessionNote', { n: activePackageSubscription.next_session_number, x: activePackageSubscription.package_type }) }}
+        </p>
+      </div>
+
+      <!-- Extra fees -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.extraFees') }}</label>
+        <input
+          v-model="extraFees"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          class="w-full rounded border border-gray-300 px-3 py-2"
+          :placeholder="$t('manualBooking.extraFeesPlaceholder')"
+        />
+        <p class="mt-1 text-xs text-gray-500">{{ $t('manualBooking.extraFeesHint') }}</p>
+      </div>
+
       <!-- Payment method -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.paymentMethod') }}</label>
-        <select v-model="paymentMethod" class="w-full rounded border border-gray-300 px-3 py-2">
+        <select
+          v-model="paymentMethod"
+          class="w-full rounded border border-gray-300 px-3 py-2"
+          :disabled="bookingFromPackage"
+        >
           <option value="">—</option>
           <option value="InstaPay">{{ $t('manualBooking.paymentInstaPay') }}</option>
           <option value="Wallet">{{ $t('manualBooking.paymentWallet') }}</option>
@@ -405,6 +451,7 @@
                 <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientName') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePatientWhatsapp') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tableSessionPrice') }}</th>
+              <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePackageCounter') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600 w-[260px] max-w-[260px]">{{ $t('manualBooking.tableMeetingLink') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.tablePaymentMethod') }}</th>
               <th class="px-3 py-2 text-left text-xs font-medium text-gray-600">{{ $t('manualBooking.actions') }}</th>
@@ -493,6 +540,10 @@
                     <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   </button>
                 </span>
+              </td>
+              <td class="px-3 py-2 text-sm">
+                <span v-if="row.package_counter" class="inline-flex items-center rounded-full bg-teal-100 text-teal-800 px-2 py-0.5 text-xs font-semibold">{{ row.package_counter }}</span>
+                <span v-else class="text-gray-400">—</span>
               </td>
               <td class="px-3 py-2 text-sm overflow-hidden" style="max-width: 260px;">
                 <button
@@ -1253,6 +1304,63 @@
         </div>
       </template>
     </div>
+
+    <!-- Connect patient to package -->
+    <form v-else-if="activeTab === 'connectPackage'" class="space-y-4 max-w-2xl mx-auto" @submit.prevent="submitConnectPackage">
+      <p class="text-sm text-gray-600">{{ $t('manualBooking.connectPackageHint') }}</p>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.enterPhone') }}</label>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input
+            v-model="pkgPatientPhone"
+            type="text"
+            inputmode="numeric"
+            class="flex-1 rounded border border-gray-300 px-3 py-2"
+            :placeholder="$t('manualBooking.phoneDigits')"
+          />
+          <button type="button" class="px-4 py-2 bg-gray-100 border rounded hover:bg-gray-200" :disabled="pkgPatientSearchLoading" @click="searchPkgPatient">
+            {{ $t('manualBooking.searchPatient') }}
+          </button>
+        </div>
+        <p v-if="pkgPatientId" class="mt-2 text-sm text-green-700">{{ pkgPatientName }} (ID: {{ pkgPatientId }})</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.therapist') }}</label>
+        <select v-model="pkgTherapistId" class="w-full rounded border border-gray-300 px-3 py-2" required>
+          <option value="">{{ $t('manualBooking.selectTherapist') }}</option>
+          <option v-for="th in therapists" :key="th.user_id" :value="th.user_id">
+            {{ th.name || th.name_en }} {{ th.phone ? '— ' + th.phone : '' }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.packageType') }}</label>
+        <select v-model="pkgType" class="w-full rounded border border-gray-300 px-3 py-2" required>
+          <option :value="4">4 {{ $t('manualBooking.sessions') }}</option>
+          <option :value="6">6 {{ $t('manualBooking.sessions') }}</option>
+          <option :value="8">8 {{ $t('manualBooking.sessions') }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.packagePrice') }}</label>
+        <input v-model="pkgPackagePrice" type="text" inputmode="decimal" class="w-full rounded border border-gray-300 px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.packageSessionPrice') }}</label>
+        <input v-model="pkgSessionPrice" type="text" inputmode="decimal" class="w-full rounded border border-gray-300 px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.paymentMethod') }}</label>
+        <select v-model="pkgPaymentMethod" class="w-full rounded border border-gray-300 px-3 py-2" required>
+          <option value="InstaPay">{{ $t('manualBooking.paymentInstaPay') }}</option>
+          <option value="Wallet">{{ $t('manualBooking.paymentWallet') }}</option>
+          <option value="Bank transfer">{{ $t('manualBooking.paymentBank') }}</option>
+        </select>
+      </div>
+      <button type="submit" class="px-4 py-2 bg-primary-500 text-white rounded hover:opacity-90 disabled:opacity-50" :disabled="pkgSubmitLoading">
+        {{ $t('manualBooking.connectPackageSubmit') }}
+      </button>
+    </form>
   </div>
 </template>
 
@@ -1457,10 +1565,26 @@ const countriesLoading = ref(false)
 const selectedCountryCode = ref('')
 const amountOverride = ref('')
 const paymentMethod = ref('')
+const extraFees = ref('')
+const activePackageSubscription = ref(null)
+const bookingSource = ref('normal')
 const submitLoading = ref(false)
 const bookingSlotMode = ref('existing')
 const newSlotDate = ref('')
 const newSlotTime = ref('')
+
+const bookingFromPackage = computed(() => bookingSource.value === 'package' && !!activePackageSubscription.value)
+
+const pkgPatientPhone = ref('')
+const pkgPatientId = ref(null)
+const pkgPatientName = ref('')
+const pkgPatientSearchLoading = ref(false)
+const pkgTherapistId = ref('')
+const pkgType = ref(4)
+const pkgPackagePrice = ref('')
+const pkgSessionPrice = ref('')
+const pkgPaymentMethod = ref('InstaPay')
+const pkgSubmitLoading = ref(false)
 
 watch(bookingSlotMode, () => {
   errors.value.date = ''
@@ -1618,6 +1742,7 @@ function onTherapistChange() {
   availableDates.value = []
   slots.value = []
   therapistCountries.value = []
+  loadActivePackageForPair()
   if (!selectedTherapistId.value) return
   datesLoading.value = true
   countriesLoading.value = true
@@ -1634,6 +1759,107 @@ function onTherapistChange() {
     datesLoading.value = false
     countriesLoading.value = false
   })
+}
+
+async function loadActivePackageForPair() {
+  activePackageSubscription.value = null
+  bookingSource.value = 'normal'
+  if (!patientId.value || !selectedTherapistId.value) return
+  try {
+    const data = await manualBookingApi.getPackageForPair(patientId.value, selectedTherapistId.value)
+    activePackageSubscription.value = data?.subscription || null
+    if (activePackageSubscription.value) {
+      bookingSource.value = 'package'
+      applyPackageToForm()
+    }
+  } catch (_) {
+    activePackageSubscription.value = null
+  }
+}
+
+function applyPackageToForm() {
+  const sub = activePackageSubscription.value
+  if (!sub || bookingSource.value !== 'package') return
+  amountOverride.value = String(sub.session_price ?? '')
+  paymentMethod.value = sub.payment_method || ''
+  if (!selectedCountryCode.value) {
+    selectedCountryCode.value = 'EG'
+  }
+}
+
+watch(bookingSource, (val) => {
+  if (val === 'package') {
+    applyPackageToForm()
+  }
+})
+
+watch(patientId, () => {
+  loadActivePackageForPair()
+})
+
+async function searchPkgPatient() {
+  const q = (pkgPatientPhone.value || '').trim()
+  if (q.length < 5) {
+    toast.error(t('manualBooking.validation.phoneMinLength'))
+    return
+  }
+  pkgPatientSearchLoading.value = true
+  pkgPatientId.value = null
+  pkgPatientName.value = ''
+  try {
+    const res = await manualBookingApi.searchPatient(q)
+    const patients = Array.isArray(res) ? res : []
+    if (!patients.length) {
+      toast.error(t('manualBooking.messages.noPatientsFound'))
+      return
+    }
+    const p = patients[0]
+    pkgPatientId.value = p.id
+    pkgPatientName.value = p.name || [p.first_name, p.last_name].filter(Boolean).join(' ') || String(p.id)
+  } catch (e) {
+    toast.error(e?.response?.data?.error || t('manualBooking.messages.searchFailed'))
+  } finally {
+    pkgPatientSearchLoading.value = false
+  }
+}
+
+async function submitConnectPackage() {
+  if (!pkgPatientId.value || !pkgTherapistId.value) {
+    toast.error(t('manualBooking.connectPackageNeedPatientTherapist'))
+    return
+  }
+  const packagePrice = parseFloat(String(pkgPackagePrice.value).replace(',', '.'))
+  const sessionPrice = parseFloat(String(pkgSessionPrice.value).replace(',', '.'))
+  if (isNaN(packagePrice) || packagePrice < 0 || isNaN(sessionPrice) || sessionPrice <= 0) {
+    toast.error(t('manualBooking.validation.amountInvalid'))
+    return
+  }
+  pkgSubmitLoading.value = true
+  try {
+    const result = await manualBookingApi.createPackageSubscription({
+      patient_id: pkgPatientId.value,
+      therapist_id: pkgTherapistId.value,
+      package_type: Number(pkgType.value),
+      package_price: packagePrice,
+      session_price: sessionPrice,
+      payment_method: pkgPaymentMethod.value
+    })
+    await Swal.fire({
+      icon: 'success',
+      title: t('manualBooking.connectPackageSuccess'),
+      text: result?.message || ''
+    })
+    pkgPatientId.value = null
+    pkgPatientName.value = ''
+    pkgPatientPhone.value = ''
+    pkgTherapistId.value = ''
+    pkgPackagePrice.value = ''
+    pkgSessionPrice.value = ''
+  } catch (e) {
+    toast.error(e?.response?.data?.error || t('manualBooking.connectPackageFailed'))
+  } finally {
+    pkgSubmitLoading.value = false
+  }
 }
 function onDateChange() {
   selectedSlotId.value = ''
@@ -1738,7 +1964,13 @@ async function submitNewBooking() {
     country_code: selectedCountryCode.value,
     patient_first_name: firstNameForPayload,
     patient_last_name: lastNameForPayload,
-    payment_method: paymentMethod.value || ''
+    payment_method: paymentMethod.value || '',
+    use_package: bookingFromPackage.value,
+    extra_fees: 0
+  }
+  if (extraFees.value && String(extraFees.value).trim() !== '') {
+    const ef = parseFloat(String(extraFees.value).replace(',', '.'))
+    if (!isNaN(ef) && ef > 0) payload.extra_fees = ef
   }
   if (bookingSlotMode.value === 'new') {
     payload.date = newSlotDate.value
@@ -1776,6 +2008,9 @@ async function submitNewBooking() {
     selectedCountryCode.value = ''
     amountOverride.value = ''
     paymentMethod.value = ''
+    extraFees.value = ''
+    activePackageSubscription.value = null
+    bookingSource.value = 'normal'
     availableDates.value = []
     slots.value = []
     therapistCountries.value = []

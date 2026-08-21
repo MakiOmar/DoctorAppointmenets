@@ -267,6 +267,19 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 	// Profit calculations must be based on the actual amount paid, not the subtotal before discounts
 	$session_amount = $order->get_total();
 
+	// Extra fees (manual bookings) go fully to the therapist and are excluded from Jalsah commission base.
+	$extra_fees = (float) $order->get_meta( 'admin_manual_extra_fees' );
+	if ( $extra_fees < 0 ) {
+		$extra_fees = 0;
+	}
+	$main_price = (float) $order->get_meta( '_main_price' );
+	if ( $extra_fees > 0 ) {
+		if ( $main_price > 0 ) {
+			$session_amount = $main_price;
+		} else {
+			$session_amount = max( 0, (float) $session_amount - $extra_fees );
+		}
+	}
 	
 	// Get therapist and patient IDs
 	$therapist_id = $order->get_meta( 'ai_therapist_id' ) ?: $order->get_meta( 'therapist_id' );
@@ -284,7 +297,9 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 	// Calculate profit
 
 	$profit_amount = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
-
+	if ( $extra_fees > 0 ) {
+		$profit_amount = round( (float) $profit_amount + $extra_fees, 2 );
+	}
 	
 	// Determine session type
 
@@ -1049,12 +1064,24 @@ function snks_get_ai_order_line_amount_for_slot( $order, $slot_id ) {
 
 	if ( ! $matched ) {
 		if ( 1 === $product_rows ) {
+			$extra = (float) $order->get_meta( 'admin_manual_extra_fees' );
+			$main  = (float) $order->get_meta( '_main_price' );
+			if ( $extra > 0 && $main > 0 ) {
+				return $main;
+			}
+			if ( $extra > 0 ) {
+				return max( 0, (float) $order->get_total() - $extra );
+			}
 			return (float) $order->get_total();
 		}
 		return 0.0;
 	}
 
 	$order_paid = (float) $order->get_total();
+	$extra_fees = (float) $order->get_meta( 'admin_manual_extra_fees' );
+	if ( $extra_fees > 0 ) {
+		$order_paid = max( 0, $order_paid - $extra_fees );
+	}
 	if ( $items_total > 0 && abs( $items_total - $order_paid ) > 0.001 ) {
 		return round( $line_total * ( $order_paid / $items_total ), 2 );
 	}
@@ -1135,6 +1162,10 @@ function snks_get_ai_pending_profit_total( $args = array() ) {
 		}
 
 		$profit = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
+		$extra  = (float) $order->get_meta( 'admin_manual_extra_fees' );
+		if ( $extra > 0 ) {
+			$profit = round( (float) $profit + $extra, 2 );
+		}
 		$total += (float) $profit;
 		++$count;
 

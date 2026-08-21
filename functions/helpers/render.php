@@ -881,8 +881,23 @@ function snks_booking_item_template( $record ) {
 					<img style="max-width:35px;margin:0" src="{attandance_type_image}"/>
 				</div>
 				<?php if ( $is_ai_session ) : ?>
-				<div class="ai-session-flag" style="position:absolute;top:-20px;right:0;display: flex;align-items: center;background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-					محولة
+				<div class="ai-session-flag" style="position:absolute;top:-20px;right:0;display: flex;align-items: center;gap:6px;">
+					<span style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+						محولة
+					</span>
+					<?php
+					$package_counter_badge = '';
+					if ( isset( $record->settings ) && false !== strpos( (string) $record->settings, 'package_booking:1' ) ) {
+						$package_counter_badge = function_exists( 'snks_get_package_session_counter' )
+							? snks_get_package_session_counter( null, $record )
+							: '';
+					}
+					if ( $package_counter_badge ) :
+						?>
+					<span style="background: #0f766e;padding: 5px 10px;border-radius: 15px;color: white;font-weight: bold;font-size: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.2);" title="<?php echo esc_attr__( 'جلسة من الباقة', 'shrinks' ); ?>">
+						<?php echo esc_html( $package_counter_badge ); ?>
+					</span>
+					<?php endif; ?>
 				</div>
 				<?php endif; ?>
 			</div>

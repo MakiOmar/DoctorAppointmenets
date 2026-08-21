@@ -178,9 +178,10 @@ class SNKS_AI_Orders {
 	 * @param float       $session_amount      Session price (original_price in EGP).
 	 * @param string      $country_code        Country code for order meta.
 	 * @param int|null    $secretary_user_id   Secretary user ID; null uses get_current_user_id(); 0 means unknown.
+	 * @param float       $extra_fees          Extra fees added to order total; excluded from Jalsah commission base.
 	 * @return WC_Order|false Order object or false on failure.
 	 */
-	public static function create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code = 'EG', $secretary_user_id = null ) {
+	public static function create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code = 'EG', $secretary_user_id = null, $extra_fees = 0 ) {
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return false;
 		}
@@ -204,6 +205,10 @@ class SNKS_AI_Orders {
 			return false;
 		}
 
+		$session_amount = floatval( $session_amount );
+		$extra_fees     = max( 0, floatval( $extra_fees ) );
+		$order_total    = $session_amount + $extra_fees;
+
 		$order = wc_create_order();
 		$therapist_id = (int) $slot->user_id;
 		$doctor_name  = $therapist_id && function_exists( 'snks_get_therapist_name' ) ? snks_get_therapist_name( $therapist_id ) : get_the_title( $therapist_id );
@@ -226,6 +231,13 @@ class SNKS_AI_Orders {
 		$item->add_meta_data( '_line_subtotal', $session_amount );
 		$order->add_item( $item );
 
+		if ( $extra_fees > 0 ) {
+			$fee = new WC_Order_Item_Fee();
+			$fee->set_name( __( 'رسوم إضافية', 'shrinks' ) );
+			$fee->set_total( $extra_fees );
+			$order->add_item( $fee );
+		}
+
 		$order->set_billing_email( $user->user_email );
 		$order->set_billing_first_name( get_user_meta( $patient_id, 'billing_first_name', true ) ?: $user->display_name );
 		$order->set_billing_last_name( get_user_meta( $patient_id, 'billing_last_name', true ) );
@@ -235,10 +247,11 @@ class SNKS_AI_Orders {
 		$order->update_meta_data( 'from_jalsah_ai', true );
 		$order->update_meta_data( 'ai_user_id', $patient_id );
 		$order->update_meta_data( 'ai_appointments_count', 1 );
-		$order->update_meta_data( 'ai_total_amount', $session_amount );
+		$order->update_meta_data( 'ai_total_amount', $order_total );
 		$order->update_meta_data( 'admin_manual_booking', 1 );
 		$order->update_meta_data( 'ai_access_country_code', $country_code );
 		$order->update_meta_data( '_main_price', $session_amount );
+		$order->update_meta_data( 'admin_manual_extra_fees', $extra_fees );
 
 		if ( null === $secretary_user_id ) {
 			$secretary_user_id = get_current_user_id();
@@ -523,7 +536,16 @@ class SNKS_AI_Orders {
 
 			$patient_appointment_number_with_doctor = self::count_patient_appointments_with_doctor( $patient_id, $therapist_id );
 
-			$appointments_lines[] = sprintf(
+			$package_counter = '';
+			if ( $order->get_meta( 'is_package_session' ) ) {
+				$pn = (int) $order->get_meta( 'package_session_number' );
+				$px = (int) $order->get_meta( 'package_total_sessions' );
+				if ( $pn > 0 && $px > 0 ) {
+					$package_counter = $pn . '/' . $px;
+				}
+			}
+
+			$line = sprintf(
 				'- Appointment #%1$s | Doctor: %2$s (@%3$s) | Date: %4$s %5$s | Price: %6$s | Patient # with doctor: %7$s',
 				$appointment_id ? $appointment_id : '-',
 				$doctor_name ? $doctor_name : '-',
@@ -533,6 +555,10 @@ class SNKS_AI_Orders {
 				self::format_price_plain( $session_price ),
 				$patient_appointment_number_with_doctor ? $patient_appointment_number_with_doctor : 0
 			);
+			if ( $package_counter ) {
+				$line .= ' | Package: ' . $package_counter;
+			}
+			$appointments_lines[] = $line;
 		}
 		
 		$subject           = 'تأكيد حجز الجلسة - منصة جلسة AI';

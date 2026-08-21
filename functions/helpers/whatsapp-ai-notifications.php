@@ -27,6 +27,7 @@ function snks_get_whatsapp_notification_settings() {
 		'template_edit3' => get_option( 'snks_template_edit3', 'edit3' ),
 		'template_edit' => get_option( 'snks_template_edit', 'edit' ),
 		'template_manual_new_session' => get_option( 'snks_template_manual_new_session', 'manual_new_session' ),
+		'template_manual_package_session' => get_option( 'snks_template_manual_package_session', 'manual_package_session' ),
         // New: Rosheta/Prescription related
         'template_rosheta_doctor' => get_option( 'snks_template_rosheta_doctor', 'rosheta_doctor' ),
         'template_prescription1' => get_option( 'snks_template_prescription1', 'prescription1' ),
@@ -352,17 +353,43 @@ function snks_send_new_session_notification( $session_id ) {
 		$jitsi = function_exists( 'snks_get_notification_meeting_link' )
 			? snks_get_notification_meeting_link( $session_id )
 			: ( function_exists( 'snks_get_meeting_shortlink' ) ? snks_get_meeting_shortlink( $session_id ) : '' );
-		$result = snks_send_whatsapp_template_message(
-			$patient_phone,
-			$settings['template_manual_new_session'],
-			array(
-				'doctor' => $doctor_name,
-				'day'    => $day_name,
-				'date'   => $date,
-				'time'   => $time,
-				'jitsi'  => $jitsi,
-			)
-		);
+		$is_package = isset( $session->settings ) && strpos( (string) $session->settings, 'package_booking:1' ) !== false;
+		$package_n  = '';
+		$package_x  = '';
+		if ( $is_package && ! empty( $session->order_id ) ) {
+			$pkg_order = wc_get_order( (int) $session->order_id );
+			if ( $pkg_order ) {
+				$package_n = (string) (int) $pkg_order->get_meta( 'package_session_number' );
+				$package_x = (string) (int) $pkg_order->get_meta( 'package_total_sessions' );
+			}
+		}
+		if ( $is_package && $package_n && $package_x ) {
+			$result = snks_send_whatsapp_template_message(
+				$patient_phone,
+				$settings['template_manual_package_session'],
+				array(
+					'doctor' => $doctor_name,
+					'day'    => $day_name,
+					'date'   => $date,
+					'time'   => $time,
+					'jitsi'  => $jitsi,
+					'n'      => $package_n,
+					'x'      => $package_x,
+				)
+			);
+		} else {
+			$result = snks_send_whatsapp_template_message(
+				$patient_phone,
+				$settings['template_manual_new_session'],
+				array(
+					'doctor' => $doctor_name,
+					'day'    => $day_name,
+					'date'   => $date,
+					'time'   => $time,
+					'jitsi'  => $jitsi,
+				)
+			);
+		}
 	} else {
 		$result = snks_send_whatsapp_template_message(
 			$patient_phone,

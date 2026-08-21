@@ -530,21 +530,27 @@ function snks_manual_booking_ensure_slot_failure_message() {
 /**
  * Process admin manual booking (new appointment).
  *
- * @param int    $patient_id     Patient user ID.
- * @param int    $therapist_id   Therapist user ID.
- * @param int    $slot_id        Available timetable slot ID.
- * @param string $country_code   Country code for pricing.
- * @param float|null $amount_override Optional session price (EGP); when set, used as order total and for profit on completion instead of therapist country price.
- * @param string $first_name     Patient first name (billing).
- * @param string $last_name      Patient last name (billing).
- * @return array{success:bool, message:string, order_id?:int}
+ * @param int        $patient_id       Patient user ID.
+ * @param int        $therapist_id     Therapist user ID.
+ * @param int        $slot_id          Available timetable slot ID.
+ * @param string     $country_code     Country code for pricing.
+ * @param float|null $amount_override  Optional session price (EGP); when set, used as session base.
+ * @param string     $first_name       Patient first name (billing).
+ * @param string     $last_name        Patient last name (billing).
+ * @param bool       $use_package      Whether to consume from active package subscription.
+ * @param float      $extra_fees       Extra fees added to order (excluded from Jalsah commission).
+ * @param string     $payment_method   Payment method (validated against package when use_package).
+ * @return array{success:bool, message:string, order_id?:int, package_counter?:string}
  */
-function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code = 'EG', $amount_override = null, $first_name = '', $last_name = '' ) {
+function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code = 'EG', $amount_override = null, $first_name = '', $last_name = '', $use_package = false, $extra_fees = 0, $payment_method = '' ) {
 	global $wpdb;
 
 	$patient_id   = absint( $patient_id );
 	$therapist_id = absint( $therapist_id );
 	$slot_id      = absint( $slot_id );
+	$extra_fees   = max( 0, floatval( $extra_fees ) );
+	$use_package  = (bool) $use_package;
+	$payment_method = sanitize_text_field( (string) $payment_method );
 
 	if ( ! $patient_id || ! $therapist_id || ! $slot_id ) {
 		$missing = array();
@@ -613,7 +619,32 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 		}
 	}
 
-	if ( $amount_override !== null && $amount_override > 0 ) {
+	$package_sub            = null;
+	$package_session_number = 0;
+	$package_total          = 0;
+
+	if ( $use_package ) {
+		if ( ! function_exists( 'snks_get_active_package_subscription' ) ) {
+			return array( 'success' => false, 'message' => __( 'نظام الباقات غير متاح.', 'shrinks' ) );
+		}
+		$package_sub = snks_get_active_package_subscription( $patient_id, $therapist_id );
+		if ( ! $package_sub ) {
+			return array( 'success' => false, 'message' => __( 'لا يوجد اشتراك باقة نشط لهذا المريض مع المعالج المختار.', 'shrinks' ) );
+		}
+		$session_amount = floatval( $package_sub->session_price );
+		$forced_method  = (string) $package_sub->payment_method;
+		// Backend validation: price and payment method must match package.
+		if ( null !== $amount_override && abs( floatval( $amount_override ) - $session_amount ) > 0.01 ) {
+			return array( 'success' => false, 'message' => __( 'سعر الجلسة لا يطابق سعر جلسة الباقة.', 'shrinks' ) );
+		}
+		if ( $payment_method && $payment_method !== $forced_method ) {
+			return array( 'success' => false, 'message' => __( 'طريقة الدفع لا تطابق طريقة دفع الباقة.', 'shrinks' ) );
+		}
+		$payment_method = $forced_method;
+		if ( empty( $country_code ) ) {
+			$country_code = 'EG';
+		}
+	} elseif ( $amount_override !== null && $amount_override > 0 ) {
 		$session_amount = floatval( $amount_override );
 		if ( empty( $country_code ) ) {
 			$country_code = 'EG';
@@ -629,15 +660,58 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 		}
 	}
 
-	$order = SNKS_AI_Orders::create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code );
+	// Consume package session before creating order (atomic remaining check).
+	if ( $use_package && $package_sub ) {
+		$consume = snks_consume_package_session( (int) $package_sub->id );
+		if ( empty( $consume['success'] ) ) {
+			return array(
+				'success' => false,
+				'message' => isset( $consume['message'] ) ? $consume['message'] : __( 'فشل خصم جلسة من الباقة.', 'shrinks' ),
+			);
+		}
+		$package_session_number = (int) $consume['session_number'];
+		$package_total          = (int) $consume['total_sessions'];
+	}
+
+	$order = SNKS_AI_Orders::create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code, null, $extra_fees );
 	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+		// Best-effort: restore package remaining if order failed after consume.
+		if ( $use_package && $package_sub && function_exists( 'snks_package_subscriptions_table' ) ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE ' . snks_package_subscriptions_table() . ' SET remaining_sessions = remaining_sessions + 1, status = %s WHERE id = %d',
+					'active',
+					(int) $package_sub->id
+				)
+			);
+		}
 		return array( 'success' => false, 'message' => __( 'فشل إنشاء الطلب.', 'shrinks' ) );
 	}
 
-	$result = SNKS_AI_Orders::book_slot_for_order( $slot_id, $order->get_id(), $patient_id, 'admin_manual_booking:1' );
+	$settings_append = 'admin_manual_booking:1';
+	if ( $use_package ) {
+		$settings_append .= ' package_booking:1';
+		snks_stamp_package_order_metas( $order, (int) $package_sub->id, $package_session_number, $package_total );
+	}
+
+	if ( $payment_method ) {
+		$order->update_meta_data( 'admin_manual_payment_method', $payment_method );
+		$order->save();
+	}
+
+	$result = SNKS_AI_Orders::book_slot_for_order( $slot_id, $order->get_id(), $patient_id, $settings_append );
 	if ( ! $result ) {
 		$order->set_status( 'cancelled' );
 		$order->save();
+		if ( $use_package && $package_sub ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE ' . snks_package_subscriptions_table() . ' SET remaining_sessions = remaining_sessions + 1, status = %s WHERE id = %d',
+					'active',
+					(int) $package_sub->id
+				)
+			);
+		}
 		return array( 'success' => false, 'message' => __( 'فشل ربط الموعد بالطلب.', 'shrinks' ) );
 	}
 
@@ -647,11 +721,15 @@ function snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id
 	// Send notifications.
 	SNKS_AI_Orders::send_ai_order_notifications( $order->get_id() );
 
-	return array(
+	$out = array(
 		'success'  => true,
 		'message'  => __( 'تم الحجز بنجاح.', 'shrinks' ),
 		'order_id' => $order->get_id(),
 	);
+	if ( $use_package && $package_session_number && $package_total ) {
+		$out['package_counter'] = $package_session_number . '/' . $package_total;
+	}
+	return $out;
 }
 
 /**

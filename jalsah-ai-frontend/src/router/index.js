@@ -146,6 +146,30 @@ const routes = [
     meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
   },
   {
+    path: '/package-subscriptions',
+    name: 'PackageSubscriptions',
+    component: () => import('@/views/PackageSubscriptions.vue'),
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
+  },
+  {
+    path: '/package-sessions',
+    name: 'PackageSessions',
+    component: () => import('@/views/PackageSessions.vue'),
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
+  },
+  {
+    path: '/package-owe-report',
+    name: 'PackageOweReport',
+    component: () => import('@/views/PackageOweReport.vue'),
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
+  },
+  {
+    path: '/extra-fees-sessions',
+    name: 'ExtraFeesSessions',
+    component: () => import('@/views/ExtraFeesSessions.vue'),
+    meta: { requiresAuth: true, roles: ['administrator', 'secretary'] }
+  },
+  {
     path: '/rochtah-meet-booking',
     name: 'RochtahMeetBooking',
     component: () => import('@/views/RochtahMeetBooking.vue'),

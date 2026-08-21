@@ -7516,7 +7516,9 @@ Best regards,
 					$first_name     = isset( $input['patient_first_name'] ) ? sanitize_text_field( $input['patient_first_name'] ) : '';
 					$last_name      = isset( $input['patient_last_name'] ) ? sanitize_text_field( $input['patient_last_name'] ) : '';
 					$payment_method = isset( $input['payment_method'] ) ? sanitize_text_field( $input['payment_method'] ) : '';
-					if ( empty( $country_code ) && null === $amount_override ) {
+					$use_package    = ! empty( $input['use_package'] );
+					$extra_fees     = isset( $input['extra_fees'] ) && is_numeric( $input['extra_fees'] ) ? max( 0, floatval( $input['extra_fees'] ) ) : 0;
+					if ( empty( $country_code ) && null === $amount_override && ! $use_package ) {
 						$this->send_error( __( 'يرجى إختيار السعر أو إدخال سعر مخصص.', 'shrinks' ), 400 );
 						return;
 					}
@@ -7553,10 +7555,22 @@ Best regards,
 						$this->send_error( __( 'يرجى اختيار خانة وقت من القائمة، أو إدخال تاريخ ووقت لإنشاء موعد جديد.', 'shrinks' ), 400 );
 						return;
 					}
-					$result = snks_process_admin_manual_booking( $patient_id, $therapist_id, $slot_id, $country_code, $amount_override, $first_name, $last_name );
-					if ( $result['success'] && isset( $result['order_id'] ) && $payment_method ) {
+					$result = snks_process_admin_manual_booking(
+						$patient_id,
+						$therapist_id,
+						$slot_id,
+						$country_code,
+						$amount_override,
+						$first_name,
+						$last_name,
+						$use_package,
+						$extra_fees,
+						$payment_method
+					);
+					// Payment method is stamped inside process when package or when provided; keep legacy save for non-package.
+					if ( $result['success'] && isset( $result['order_id'] ) && $payment_method && ! $use_package ) {
 						$order = wc_get_order( $result['order_id'] );
-						if ( $order ) {
+						if ( $order && ! $order->get_meta( 'admin_manual_payment_method' ) ) {
 							$order->update_meta_data( 'admin_manual_payment_method', $payment_method );
 							$order->save();
 						}
@@ -7576,6 +7590,147 @@ Best regards,
 						$error_data
 					);
 				}
+				return;
+
+			case 'package-for-pair':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				$patient_id   = isset( $_GET['patient_id'] ) ? absint( $_GET['patient_id'] ) : 0;
+				$therapist_id = isset( $_GET['therapist_id'] ) ? absint( $_GET['therapist_id'] ) : 0;
+				$sub = function_exists( 'snks_get_active_package_subscription' )
+					? snks_get_active_package_subscription( $patient_id, $therapist_id )
+					: null;
+				$this->send_success(
+					array(
+						'subscription' => $sub && function_exists( 'snks_package_subscription_to_array' )
+							? snks_package_subscription_to_array( $sub )
+							: null,
+					)
+				);
+				return;
+
+			case 'package-subscribe':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_create_package_subscription' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$result = snks_create_package_subscription(
+					array(
+						'patient_id'     => isset( $input['patient_id'] ) ? absint( $input['patient_id'] ) : 0,
+						'therapist_id'   => isset( $input['therapist_id'] ) ? absint( $input['therapist_id'] ) : 0,
+						'package_type'   => isset( $input['package_type'] ) ? absint( $input['package_type'] ) : 0,
+						'package_price'  => isset( $input['package_price'] ) ? floatval( $input['package_price'] ) : 0,
+						'session_price'  => isset( $input['session_price'] ) ? floatval( $input['session_price'] ) : 0,
+						'payment_method' => isset( $input['payment_method'] ) ? sanitize_text_field( $input['payment_method'] ) : '',
+						'created_by'     => $user_id,
+					)
+				);
+				if ( empty( $result['success'] ) ) {
+					$this->send_error( isset( $result['message'] ) ? $result['message'] : 'Failed', 400 );
+					return;
+				}
+				$this->send_success( $result );
+				return;
+
+			case 'package-subscriptions':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_list_package_subscriptions' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$this->send_success(
+					snks_list_package_subscriptions(
+						array(
+							'page'     => isset( $_GET['page'] ) ? absint( $_GET['page'] ) : 1,
+							'per_page' => isset( $_GET['per_page'] ) ? absint( $_GET['per_page'] ) : 100,
+							'status'   => isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '',
+						)
+					)
+				);
+				return;
+
+			case 'package-cancel':
+				if ( $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_cancel_package_subscription' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$sub_id = isset( $input['id'] ) ? absint( $input['id'] ) : 0;
+				$result = snks_cancel_package_subscription( $sub_id );
+				if ( empty( $result['success'] ) ) {
+					$this->send_error( isset( $result['message'] ) ? $result['message'] : 'Failed', 400 );
+					return;
+				}
+				$this->send_success( $result );
+				return;
+
+			case 'package-sessions':
+				if ( $method !== 'GET' && $method !== 'POST' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_list_package_sessions' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$src = ( 'POST' === $method ) ? $input : $_GET;
+				$this->send_success(
+					snks_list_package_sessions(
+						array(
+							'phone'          => isset( $src['phone'] ) ? sanitize_text_field( $src['phone'] ) : '',
+							'date_from'      => isset( $src['date_from'] ) ? sanitize_text_field( $src['date_from'] ) : '',
+							'date_to'        => isset( $src['date_to'] ) ? sanitize_text_field( $src['date_to'] ) : '',
+							'connect_active' => ! empty( $src['connect_active'] ),
+							'page'           => isset( $src['page'] ) ? absint( $src['page'] ) : 1,
+							'per_page'       => isset( $src['per_page'] ) ? absint( $src['per_page'] ) : 100,
+						)
+					)
+				);
+				return;
+
+			case 'package-owe-report':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_package_owe_report' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$this->send_success( snks_package_owe_report() );
+				return;
+
+			case 'extra-fees-sessions':
+				if ( $method !== 'GET' ) {
+					$this->send_error( 'Method not allowed', 405 );
+					return;
+				}
+				if ( ! function_exists( 'snks_list_extra_fees_sessions' ) ) {
+					$this->send_error( 'Service unavailable', 500 );
+					return;
+				}
+				$this->send_success(
+					snks_list_extra_fees_sessions(
+						array(
+							'date_from' => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
+							'date_to'   => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
+							'page'      => isset( $_GET['page'] ) ? absint( $_GET['page'] ) : 1,
+							'per_page'  => isset( $_GET['per_page'] ) ? absint( $_GET['per_page'] ) : 100,
+						)
+					)
+				);
 				return;
 
 			default:

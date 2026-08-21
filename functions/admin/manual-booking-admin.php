@@ -1474,6 +1474,10 @@ function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 		$order = $order_id ? wc_get_order( $order_id ) : null;
 		$session_price = $order ? (float) $order->get_total() : 0;
 		$payment_method = $order ? (string) $order->get_meta( 'admin_manual_payment_method' ) : '';
+		$package_counter = ( $order && function_exists( 'snks_get_package_session_counter' ) )
+			? snks_get_package_session_counter( $order )
+			: '';
+		$extra_fees = $order ? (float) $order->get_meta( 'admin_manual_extra_fees' ) : 0;
 		$therapist_row = $wpdb->get_row( $wpdb->prepare(
 			"SELECT name, phone, whatsapp FROM {$applications_table} WHERE user_id = %d LIMIT 1",
 			(int) $r->therapist_id
@@ -1517,6 +1521,8 @@ function snks_manual_booking_data_list_bookings( $page = 1, $per_page = 100 ) {
 			'patient_whatsapp' => $patient_whatsapp,
 			'therapist_id'    => (int) $r->therapist_id,
 			'date_time'       => $r->date_time,
+			'package_counter' => $package_counter,
+			'extra_fees'      => $extra_fees,
 		);
 	}
 	return array( 'rows' => $result, 'total' => $total );
