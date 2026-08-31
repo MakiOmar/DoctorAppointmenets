@@ -175,8 +175,8 @@ function snks_add_enhanced_ai_admin_menu() {
 
 	add_submenu_page(
 		'jalsah-ai-management',
-		__( 'Manual bookings report', 'shrinks' ),
-		__( 'Manual bookings report', 'shrinks' ),
+		__( 'Bookings report', 'shrinks' ),
+		__( 'Bookings report', 'shrinks' ),
 		'manage_options',
 		'jalsah-ai-manual-booking-secretary-report',
 		'snks_manual_booking_secretary_report_page'

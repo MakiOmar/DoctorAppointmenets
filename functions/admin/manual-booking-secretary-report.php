@@ -1,6 +1,6 @@
 <?php
 /**
- * Jalsah AI: report of manual-booking orders with secretary attribution + WC orders list column.
+ * Jalsah AI: report of secretary manual-booking orders and patient AI bookings + WC orders list column.
  *
  * @package Shrinks
  */
@@ -50,14 +50,197 @@ function snks_order_is_admin_manual_booking( $order ) {
 }
 
 /**
- * Order count and sum of order totals for the report filters (date range + meta_query).
- * Paginates to avoid loading every order at once; applies the same manual-booking guard and statuses as the table.
+ * GET value that filters the report to AI bookings placed by patients.
  *
- * @param string $date_created `wc_get_orders` date_created range (timestamps joined by ...).
- * @param array  $meta_query   Meta query for the report.
+ * @return string
+ */
+function snks_secretary_report_ai_patient_filter_value() {
+	return 'ai_patient';
+}
+
+/**
+ * Sanitize the source filter: All (0), AI patients, or a secretary user ID.
+ *
+ * @param mixed $raw Raw GET value.
+ * @return string|int
+ */
+function snks_secretary_report_sanitize_source_filter( $raw ) {
+	$raw = is_scalar( $raw ) ? (string) $raw : '0';
+	if ( snks_secretary_report_ai_patient_filter_value() === $raw ) {
+		return $raw;
+	}
+	return absint( $raw );
+}
+
+/**
+ * Stored truthy values for AI / manual-booking order meta queries.
+ *
+ * @return string[]
+ */
+function snks_secretary_report_truthy_meta_values() {
+	if ( function_exists( 'snks_ai_orders_truthy_values' ) ) {
+		return snks_ai_orders_truthy_values();
+	}
+	return array( '1', 'true', 'yes' );
+}
+
+/**
+ * Meta clause matching secretary/admin manual bookings.
+ *
+ * @return array
+ */
+function snks_secretary_report_manual_booking_meta_clause() {
+	return array(
+		'key'     => 'admin_manual_booking',
+		'value'   => snks_secretary_report_truthy_meta_values(),
+		'compare' => 'IN',
+	);
+}
+
+/**
+ * Meta clause matching Jalsah AI orders (patient checkout or secretary manual).
+ *
+ * @return array
+ */
+function snks_secretary_report_ai_booking_meta_clause() {
+	if ( function_exists( 'snks_wc_ai_orders_meta_query' ) ) {
+		return snks_wc_ai_orders_meta_query();
+	}
+	$truthy = snks_secretary_report_truthy_meta_values();
+	return array(
+		'relation' => 'OR',
+		array(
+			'key'     => 'from_jalsah_ai',
+			'value'   => $truthy,
+			'compare' => 'IN',
+		),
+		array(
+			'key'     => 'is_ai_session',
+			'value'   => $truthy,
+			'compare' => 'IN',
+		),
+	);
+}
+
+/**
+ * Whether the order is a Jalsah AI order (patient checkout or secretary manual).
+ *
+ * @param WC_Order $order Order.
+ * @return bool
+ */
+function snks_order_is_jalsah_ai_booking( $order ) {
+	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
+		return false;
+	}
+	$truthy = array( true, 'true', '1', 1, 'yes' );
+	return in_array( $order->get_meta( 'from_jalsah_ai' ), $truthy, true )
+		|| in_array( $order->get_meta( 'is_ai_session' ), $truthy, true );
+}
+
+/**
+ * Whether the order is an AI booking placed by the patient (not secretary/admin).
+ *
+ * @param WC_Order $order Order.
+ * @return bool
+ */
+function snks_order_is_patient_ai_booking( $order ) {
+	return snks_order_is_jalsah_ai_booking( $order ) && ! snks_order_is_admin_manual_booking( $order );
+}
+
+/**
+ * Whether the order belongs in the report for the given source filter.
+ *
+ * @param WC_Order   $order      Order.
+ * @param string|int $sec_filter 0 = All, ai_patient, or secretary user ID.
+ * @return bool
+ */
+function snks_order_matches_secretary_report_filter( $order, $sec_filter ) {
+	if ( snks_secretary_report_ai_patient_filter_value() === $sec_filter ) {
+		return snks_order_is_patient_ai_booking( $order );
+	}
+	$sid = absint( $sec_filter );
+	if ( $sid > 0 ) {
+		if ( ! snks_order_is_admin_manual_booking( $order ) ) {
+			return false;
+		}
+		return absint( $order->get_meta( snks_manual_secretary_meta_user_id_key() ) ) === $sid;
+	}
+	return snks_order_is_admin_manual_booking( $order ) || snks_order_is_patient_ai_booking( $order );
+}
+
+/**
+ * Meta query for All, AI patients, or a specific secretary.
+ *
+ * @param string|int $sec_filter Filter value.
+ * @return array
+ */
+function snks_manual_booking_secretary_report_meta_query( $sec_filter ) {
+	$manual = snks_secretary_report_manual_booking_meta_clause();
+	$ai     = snks_secretary_report_ai_booking_meta_clause();
+
+	if ( snks_secretary_report_ai_patient_filter_value() === $sec_filter ) {
+		$truthy = snks_secretary_report_truthy_meta_values();
+		return array(
+			'relation' => 'AND',
+			$ai,
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => 'admin_manual_booking',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'admin_manual_booking',
+					'value'   => $truthy,
+					'compare' => 'NOT IN',
+				),
+			),
+		);
+	}
+
+	if ( absint( $sec_filter ) > 0 ) {
+		return array(
+			'relation' => 'AND',
+			$manual,
+			array(
+				'key'     => snks_manual_secretary_meta_user_id_key(),
+				'value'   => absint( $sec_filter ),
+				'compare' => '=',
+				'type'    => 'NUMERIC',
+			),
+		);
+	}
+
+	return array(
+		'relation' => 'OR',
+		$manual,
+		$ai,
+	);
+}
+
+/**
+ * Secretary name, or AI (patient) for patient-placed AI bookings.
+ *
+ * @param WC_Order $order Order.
+ * @return string
+ */
+function snks_secretary_report_row_source_label( $order ) {
+	if ( snks_order_is_patient_ai_booking( $order ) ) {
+		return __( 'AI (patient)', 'shrinks' );
+	}
+	return (string) $order->get_meta( snks_manual_secretary_meta_name_key() );
+}
+
+/**
+ * Order count and sum of order totals for the report filters (date range + meta_query).
+ * Paginates to avoid loading every order at once; applies the same source-filter guard and statuses as the table.
+ *
+ * @param string     $date_created `wc_get_orders` date_created range (timestamps joined by ...).
+ * @param array      $meta_query   Meta query for the report.
+ * @param string|int $sec_filter   Source filter (All, ai_patient, or secretary ID).
  * @return array{ count: int, total: float }
  */
-function snks_manual_booking_secretary_report_aggregate_period( $date_created, $meta_query ) {
+function snks_manual_booking_secretary_report_aggregate_period( $date_created, $meta_query, $sec_filter = 0 ) {
 	$count     = 0;
 	$total     = 0.0;
 	$page      = 1;
@@ -84,7 +267,7 @@ function snks_manual_booking_secretary_report_aggregate_period( $date_created, $
 		}
 
 		foreach ( $orders as $order ) {
-			if ( ! snks_order_is_admin_manual_booking( $order ) ) {
+			if ( ! snks_order_matches_secretary_report_filter( $order, $sec_filter ) ) {
 				continue;
 			}
 			++$count;
@@ -163,7 +346,7 @@ function snks_manual_booking_distinct_secretary_ids() {
 }
 
 /**
- * Admin report page: manual orders by secretary.
+ * Admin report page: secretary manual bookings and patient AI bookings.
  */
 function snks_manual_booking_secretary_report_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -186,7 +369,7 @@ function snks_manual_booking_secretary_report_page() {
 
 	$date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : $default_from; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$date_to   = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : $default_to; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$sec_filter = isset( $_GET['secretary'] ) ? absint( $_GET['secretary'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$sec_filter = snks_secretary_report_sanitize_source_filter( isset( $_GET['secretary'] ) ? wp_unslash( $_GET['secretary'] ) : '0' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$paged      = isset( $_GET['paged'] ) ? max( 1, absint( $_GET['paged'] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$per_page   = 50;
 
@@ -204,22 +387,7 @@ function snks_manual_booking_secretary_report_page() {
 		$d2 = new DateTimeImmutable( $default_to . ' 23:59:59', $timezone );
 	}
 
-	$meta_query = array(
-		'relation' => 'AND',
-		array(
-			'key'     => 'admin_manual_booking',
-			'value'   => array( '1', 'true', 'yes' ),
-			'compare' => 'IN',
-		),
-	);
-	if ( $sec_filter > 0 ) {
-		$meta_query[] = array(
-			'key'     => snks_manual_secretary_meta_user_id_key(),
-			'value'   => $sec_filter,
-			'compare' => '=',
-			'type'    => 'NUMERIC',
-		);
-	}
+	$meta_query = snks_manual_booking_secretary_report_meta_query( $sec_filter );
 
 	$args = array(
 		'limit'      => $per_page,
@@ -236,7 +404,7 @@ function snks_manual_booking_secretary_report_page() {
 
 	$result = wc_get_orders( $args );
 
-	$period_stats = snks_manual_booking_secretary_report_aggregate_period( $args['date_created'], $meta_query );
+	$period_stats = snks_manual_booking_secretary_report_aggregate_period( $args['date_created'], $meta_query, $sec_filter );
 
 	$secretary_ids = snks_manual_booking_distinct_secretary_ids();
 	sort( $secretary_ids );
@@ -251,7 +419,7 @@ function snks_manual_booking_secretary_report_page() {
 				'page'          => 'jalsah-ai-manual-booking-secretary-report',
 				'date_from'     => $date_from,
 				'date_to'       => $date_to,
-				'secretary'     => $sec_filter,
+				'secretary'     => (string) $sec_filter,
 				'snks_export'   => 'csv',
 			),
 			admin_url( 'admin.php' )
@@ -261,11 +429,12 @@ function snks_manual_booking_secretary_report_page() {
 
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Manual bookings by secretary', 'shrinks' ); ?></h1>
-		<p class="description"><?php esc_html_e( 'WooCommerce orders created via Manual Booking with status Processing or Completed, filtered by date and optional secretary.', 'shrinks' ); ?></p>
+		<h1><?php esc_html_e( 'Bookings by secretary and AI patients', 'shrinks' ); ?></h1>
+		<p class="description"><?php esc_html_e( 'WooCommerce orders with status Processing or Completed. All includes secretary manual bookings and AI bookings made by patients. Filter by date, a secretary, or patient AI bookings.', 'shrinks' ); ?></p>
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="snks-secretary-report-filters" style="margin: 1em 0;">
 			<input type="hidden" name="page" value="jalsah-ai-manual-booking-secretary-report" />
+			<!-- Date range -->
 			<label>
 				<?php esc_html_e( 'From', 'shrinks' ); ?>
 				<input type="date" name="date_from" value="<?php echo esc_attr( $date_from ); ?>" />
@@ -274,13 +443,17 @@ function snks_manual_booking_secretary_report_page() {
 				<?php esc_html_e( 'To', 'shrinks' ); ?>
 				<input type="date" name="date_to" value="<?php echo esc_attr( $date_to ); ?>" />
 			</label>
+			<!-- Source: All (secretary + AI patients), AI patients only, or a secretary -->
 			<label style="margin-left:1em;">
-				<?php esc_html_e( 'Secretary', 'shrinks' ); ?>
+				<?php esc_html_e( 'Source', 'shrinks' ); ?>
 				<select name="secretary">
 					<option value="0"><?php esc_html_e( 'All', 'shrinks' ); ?></option>
+					<option value="<?php echo esc_attr( snks_secretary_report_ai_patient_filter_value() ); ?>" <?php selected( $sec_filter, snks_secretary_report_ai_patient_filter_value() ); ?>>
+						<?php esc_html_e( 'AI (patients)', 'shrinks' ); ?>
+					</option>
 					<?php foreach ( $secretary_ids as $uid ) : ?>
 						<?php $u = get_userdata( $uid ); ?>
-						<option value="<?php echo esc_attr( (string) $uid ); ?>" <?php selected( $sec_filter, $uid ); ?>>
+						<option value="<?php echo esc_attr( (string) $uid ); ?>" <?php selected( (string) $sec_filter, (string) $uid ); ?>>
 							<?php echo esc_html( $u ? $u->display_name . ' (#' . $uid . ')' : '#' . $uid ); ?>
 						</option>
 					<?php endforeach; ?>
@@ -320,11 +493,12 @@ function snks_manual_booking_secretary_report_page() {
 			<p><?php esc_html_e( 'No orders match these filters.', 'shrinks' ); ?></p>
 		<?php else : ?>
 			<table class="wp-list-table widefat fixed striped">
+				<!-- Rows: secretary manual bookings and/or patient AI bookings depending on Source -->
 				<thead>
 					<tr>
 						<th scope="col"><?php esc_html_e( 'Order', 'shrinks' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Date created', 'shrinks' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Secretary', 'shrinks' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Source / secretary', 'shrinks' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Secretary ID', 'shrinks' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Patient / customer', 'shrinks' ); ?></th>
 						<th scope="col"><?php esc_html_e( 'Total', 'shrinks' ); ?></th>
@@ -334,11 +508,12 @@ function snks_manual_booking_secretary_report_page() {
 				<tbody>
 					<?php foreach ( $result->orders as $order ) : ?>
 						<?php
-						if ( ! snks_order_is_admin_manual_booking( $order ) ) {
+						if ( ! snks_order_matches_secretary_report_filter( $order, $sec_filter ) ) {
 							continue;
 						}
-						$sid = (int) $order->get_meta( snks_manual_secretary_meta_user_id_key() );
-						$sname = (string) $order->get_meta( snks_manual_secretary_meta_name_key() );
+						$is_patient_ai = snks_order_is_patient_ai_booking( $order );
+						$sid   = $is_patient_ai ? 0 : (int) $order->get_meta( snks_manual_secretary_meta_user_id_key() );
+						$sname = snks_secretary_report_row_source_label( $order );
 						$edit  = $order->get_edit_order_url();
 						$cid   = $order->get_customer_id();
 						$cname = $order->get_formatted_billing_full_name();
@@ -371,7 +546,7 @@ function snks_manual_booking_secretary_report_page() {
 								'page'      => 'jalsah-ai-manual-booking-secretary-report',
 								'date_from' => $date_from,
 								'date_to'   => $date_to,
-								'secretary' => $sec_filter ? (string) $sec_filter : '0',
+								'secretary' => (string) $sec_filter,
 								'paged'     => '%#%',
 							),
 							admin_url( 'admin.php' )
@@ -408,7 +583,7 @@ function snks_manual_booking_secretary_report_send_csv() {
 	$timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
 	$date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$date_to   = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$sec_filter = isset( $_GET['secretary'] ) ? absint( $_GET['secretary'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$sec_filter = snks_secretary_report_sanitize_source_filter( isset( $_GET['secretary'] ) ? wp_unslash( $_GET['secretary'] ) : '0' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 	if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
 		wp_die( esc_html__( 'Invalid date range.', 'shrinks' ) );
@@ -420,22 +595,7 @@ function snks_manual_booking_secretary_report_send_csv() {
 		wp_die( esc_html__( 'Invalid date range.', 'shrinks' ) );
 	}
 
-	$meta_query = array(
-		'relation' => 'AND',
-		array(
-			'key'     => 'admin_manual_booking',
-			'value'   => array( '1', 'true', 'yes' ),
-			'compare' => 'IN',
-		),
-	);
-	if ( $sec_filter > 0 ) {
-		$meta_query[] = array(
-			'key'     => snks_manual_secretary_meta_user_id_key(),
-			'value'   => $sec_filter,
-			'compare' => '=',
-			'type'    => 'NUMERIC',
-		);
-	}
+	$meta_query = snks_manual_booking_secretary_report_meta_query( $sec_filter );
 
 	$orders = wc_get_orders(
 		array(
@@ -458,14 +618,15 @@ function snks_manual_booking_secretary_report_send_csv() {
 		exit;
 	}
 
-	fputcsv( $out, array( 'order_id', 'order_number', 'date_created', 'secretary_id', 'secretary_name', 'customer_id', 'customer_name', 'total', 'status' ) );
+	fputcsv( $out, array( 'order_id', 'order_number', 'date_created', 'source', 'secretary_id', 'secretary_name', 'customer_id', 'customer_name', 'total', 'status' ) );
 
 	foreach ( $orders as $order ) {
-		if ( ! snks_order_is_admin_manual_booking( $order ) ) {
+		if ( ! snks_order_matches_secretary_report_filter( $order, $sec_filter ) ) {
 			continue;
 		}
-		$sid   = (int) $order->get_meta( snks_manual_secretary_meta_user_id_key() );
-		$sname = (string) $order->get_meta( snks_manual_secretary_meta_name_key() );
+		$is_patient_ai = snks_order_is_patient_ai_booking( $order );
+		$sid   = $is_patient_ai ? 0 : (int) $order->get_meta( snks_manual_secretary_meta_user_id_key() );
+		$sname = snks_secretary_report_row_source_label( $order );
 		$cid   = $order->get_customer_id();
 		$cname = $order->get_formatted_billing_full_name();
 		fputcsv(
@@ -474,6 +635,7 @@ function snks_manual_booking_secretary_report_send_csv() {
 				$order->get_id(),
 				$order->get_order_number(),
 				$order->get_date_created() ? $order->get_date_created()->date( 'c' ) : '',
+				$is_patient_ai ? 'ai_patient' : 'secretary',
 				$sid,
 				$sname,
 				$cid,
