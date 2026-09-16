@@ -935,6 +935,7 @@ function snks_rochtah_meet_user_is_doctor_only( $user_id ) {
 
 /**
  * List rochtah meet bookings for the management page.
+ * Rows are ordered by appointment datetime descending (newest first).
  *
  * @param array $args Query args: page, per_page, status, q, viewer_id.
  * @return array{rows: array<int, array<string, mixed>>, total: int}
@@ -995,7 +996,7 @@ function snks_rochtah_meet_data_list_bookings( $args = array() ) {
 	$list_params[] = $offset;
 
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	$list_sql = "SELECT b.* FROM {$table} b WHERE {$where_sql} ORDER BY b.id DESC LIMIT %d OFFSET %d";
+	$list_sql = "SELECT b.* FROM {$table} b WHERE {$where_sql} ORDER BY b.appointment_datetime DESC, b.id DESC LIMIT %d OFFSET %d";
 	$rows     = empty( $params )
 		? $wpdb->get_results( $wpdb->prepare( $list_sql, $per_page, $offset ) )
 		: $wpdb->get_results( $wpdb->prepare( $list_sql, $list_params ) );
