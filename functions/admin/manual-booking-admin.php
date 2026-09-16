@@ -1031,7 +1031,54 @@ function snks_ajax_manual_booking_search_patient() {
 add_action( 'wp_ajax_snks_manual_booking_search_patient', 'snks_ajax_manual_booking_search_patient' );
 
 /**
+ * Dates the public therapist card hides (therapist off_days + global holidays).
+ *
+ * @param int $therapist_id Therapist user ID.
+ * @return string[] Y-m-d dates.
+ */
+function snks_manual_booking_public_blocked_dates( $therapist_id ) {
+	if ( function_exists( 'snks_get_doctor_booking_blocked_dates' ) ) {
+		return snks_get_doctor_booking_blocked_dates( $therapist_id );
+	}
+	$doctor_settings = snks_doctor_settings( absint( $therapist_id ) );
+	$off_days        = isset( $doctor_settings['off_days'] ) ? explode( ',', (string) $doctor_settings['off_days'] ) : array();
+	$off_days        = array_map( 'trim', $off_days );
+	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
+	return array_values( array_unique( array_filter( array_merge( $off_days, $global_excluded ) ) ) );
+}
+
+/**
+ * Seconds from now before a slot is bookable (block_if_before), matching the public therapist card.
+ *
+ * @param array $doctor_settings Doctor settings.
+ * @return int
+ */
+function snks_manual_booking_block_if_before_seconds( $doctor_settings ) {
+	if ( empty( $doctor_settings['block_if_before_number'] ) || empty( $doctor_settings['block_if_before_unit'] ) ) {
+		return 0;
+	}
+	$number = $doctor_settings['block_if_before_number'];
+	$unit   = $doctor_settings['block_if_before_unit'];
+	$base   = ( 'day' === $unit ) ? 24 : 1;
+	return (int) $number * $base * 3600;
+}
+
+/**
+ * Datetime cutoff used by the public listing (now + block_if_before).
+ *
+ * @param array $doctor_settings Doctor settings.
+ * @return string MySQL datetime.
+ */
+function snks_manual_booking_public_slot_cutoff_datetime( $doctor_settings ) {
+	return date_i18n(
+		'Y-m-d H:i:s',
+		( current_time( 'timestamp' ) + snks_manual_booking_block_if_before_seconds( $doctor_settings ) )
+	);
+}
+
+/**
  * Return available future dates for a therapist (used by AJAX and REST).
+ * Same visibility as the public therapist card: off_days, holidays, block_if_before, online 45-min slots.
  *
  * @param int $therapist_id Therapist user ID.
  * @return array List of { date, label }.
@@ -1043,9 +1090,7 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 	}
 
 	global $wpdb;
-	$table = $wpdb->prefix . 'snks_provider_timetable';
-
-	// Manual booking: ignore therapist off_days so dates with available slots still appear.
+	$table           = $wpdb->prefix . 'snks_provider_timetable';
 	$doctor_settings = snks_doctor_settings( $therapist_id );
 
 	$days_count = ! empty( $doctor_settings['form_days_count'] ) ? absint( $doctor_settings['form_days_count'] ) : 30;
@@ -1053,25 +1098,15 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 		$days_count = 90;
 	}
 
-	$seconds_before_block = 0;
-	if ( ! empty( $doctor_settings['block_if_before_number'] ) && ! empty( $doctor_settings['block_if_before_unit'] ) ) {
-		$number = $doctor_settings['block_if_before_number'];
-		$unit   = $doctor_settings['block_if_before_unit'];
-		$base   = ( 'day' === $unit ) ? 24 : 1;
-		$seconds_before_block = $number * $base * 3600;
+	$blocked_dates      = snks_manual_booking_public_blocked_dates( $therapist_id );
+	$off_days_condition = '';
+	if ( ! empty( $blocked_dates ) ) {
+		$off_days_placeholder = implode( ',', array_fill( 0, count( $blocked_dates ), '%s' ) );
+		$off_days_condition   = "AND DATE(date_time) NOT IN ({$off_days_placeholder}) ";
 	}
 
-	$attendance_condition = "AND attendance_type = 'online'";
-	$period_condition     = "AND (period NOT IN (30, 60) OR period IS NULL OR period = 0)";
-	$off_days_condition   = '';
+	$adjusted_current_datetime = snks_manual_booking_public_slot_cutoff_datetime( $doctor_settings );
 
-	// Adjust current time for block_if_before behavior.
-	$adjusted_current_datetime = date_i18n(
-		'Y-m-d H:i:s',
-		( current_time( 'timestamp' ) + $seconds_before_block )
-	);
-
-	// Query dates that have at least one visible available 45-min slot.
 	$query = "SELECT DISTINCT DATE(date_time) AS d
 		FROM {$table}
 		WHERE user_id = %d
@@ -1079,33 +1114,32 @@ function snks_manual_booking_data_available_dates( $therapist_id ) {
 			AND DATE(date_time) <= DATE_ADD(CURDATE(), INTERVAL {$days_count} DAY)
 			AND session_status = 'waiting'
 			AND order_id = 0
-			{$attendance_condition}
+			AND attendance_type = 'online'
 			AND (client_id = 0 OR client_id IS NULL)
 			AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
 			AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
 			AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-			{$period_condition}
+			AND period = 45
 			{$off_days_condition}
 		ORDER BY DATE(date_time) ASC";
 
 	$query_params = array( $therapist_id, $adjusted_current_datetime );
+	if ( ! empty( $blocked_dates ) ) {
+		$query_params = array_merge( $query_params, $blocked_dates );
+	}
 
 	$available_dates = $wpdb->get_results( $wpdb->prepare( $query, $query_params ) );
-	$dates = array();
+	$dates           = array();
 	foreach ( (array) $available_dates as $date_row ) {
 		if ( isset( $date_row->d ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $date_row->d ) ) {
 			$dates[] = (string) $date_row->d;
 		}
 	}
 
-	// Exclude global excluded booking dates (e.g. holidays).
-	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
-	$dates = array_values( array_diff( $dates, $global_excluded ) );
-
-	$today = current_time( 'Y-m-d' );
+	$today  = current_time( 'Y-m-d' );
 	$result = array();
 	foreach ( $dates as $d ) {
-		$label = ( $d === $today )
+		$label    = ( $d === $today )
 			? sprintf( __( 'Today — %s', 'shrinks' ), wp_date( 'j M Y', strtotime( $d ) ) )
 			: wp_date( 'D j M Y', strtotime( $d ) );
 		$result[] = array( 'date' => $d, 'label' => $label );
@@ -1139,54 +1173,56 @@ add_action( 'wp_ajax_snks_manual_booking_get_available_dates', 'snks_ajax_manual
  */
 function snks_manual_booking_data_slots( $therapist_id, $date ) {
 	$therapist_id = absint( $therapist_id );
-	$date = sanitize_text_field( $date );
+	$date         = sanitize_text_field( $date );
 	if ( ! $therapist_id || ! $date || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
 		return array();
 	}
 
-	// Manual booking: ignore therapist off_days for slot listing on a given date.
-
-	$global_excluded = function_exists( 'snks_get_global_excluded_booking_dates' ) ? snks_get_global_excluded_booking_dates() : array();
-	if ( in_array( $date, $global_excluded, true ) ) {
+	// Same as public therapist card: hide off_days / holidays.
+	$blocked_dates = snks_manual_booking_public_blocked_dates( $therapist_id );
+	if ( in_array( $date, $blocked_dates, true ) ) {
 		return array();
 	}
+
+	$doctor_settings           = snks_doctor_settings( $therapist_id );
+	$adjusted_current_datetime = snks_manual_booking_public_slot_cutoff_datetime( $doctor_settings );
 
 	global $wpdb;
 
 	// Only return visible online 45-min slots.
-	$slots = $wpdb->get_results( $wpdb->prepare(
-		"SELECT ID as slot_id, starts, ends, period, attendance_type
-		 FROM {$wpdb->prefix}snks_provider_timetable
-		 WHERE user_id = %d
-		   AND DATE(date_time) = %s
-		   AND session_status = 'waiting'
-		   AND order_id = 0
-		   AND (client_id = 0 OR client_id IS NULL)
-		   AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
-		   AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
-		   AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
-		   AND attendance_type = 'online'
-		   AND period = 45
-		 ORDER BY starts ASC",
-		$therapist_id,
-		$date
-	) );
+	$slots = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT ID as slot_id, date_time, starts, ends, period, attendance_type
+			 FROM {$wpdb->prefix}snks_provider_timetable
+			 WHERE user_id = %d
+			   AND DATE(date_time) = %s
+			   AND session_status = 'waiting'
+			   AND order_id = 0
+			   AND (client_id = 0 OR client_id IS NULL)
+			   AND (settings NOT LIKE '%ai_booking:booked%' OR settings = '' OR settings IS NULL)
+			   AND (settings NOT LIKE '%ai_booking:in_cart%' OR settings = '' OR settings IS NULL)
+			   AND (settings NOT LIKE '%ai_booking:rescheduled_old_slot%' OR settings = '' OR settings IS NULL)
+			   AND attendance_type = 'online'
+			   AND period = 45
+			 ORDER BY starts ASC",
+			$therapist_id,
+			$date
+		)
+	);
 
-	$current_time = current_time( 'H:i:s' );
-	$is_today = ( $date === current_time( 'Y-m-d' ) );
 	$result = array();
 	foreach ( $slots as $s ) {
-		// Skip past slots for today.
-		if ( $is_today && $s->starts <= $current_time ) {
+		$slot_datetime = ! empty( $s->date_time ) ? (string) $s->date_time : ( $date . ' ' . $s->starts );
+		if ( $slot_datetime <= $adjusted_current_datetime ) {
 			continue;
 		}
 
-		$parts = explode( ':', (string) $s->starts );
-		$h = (int) $parts[0];
-		$m = isset( $parts[1] ) ? (int) $parts[1] : 0;
+		$parts        = explode( ':', (string) $s->starts );
+		$h            = (int) $parts[0];
+		$m            = isset( $parts[1] ) ? (int) $parts[1] : 0;
 		$period_label = $h >= 12 ? 'م' : 'ص';
-		$display_h = $h > 12 ? $h - 12 : ( $h === 0 ? 12 : $h );
-		$formatted = sprintf( '%d:%02d %s', $display_h, $m, $period_label );
+		$display_h    = $h > 12 ? $h - 12 : ( 0 === $h ? 12 : $h );
+		$formatted    = sprintf( '%d:%02d %s', $display_h, $m, $period_label );
 
 		$result[] = array(
 			'slot_id'        => (int) $s->slot_id,

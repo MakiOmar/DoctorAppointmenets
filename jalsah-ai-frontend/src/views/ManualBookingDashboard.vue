@@ -243,7 +243,7 @@
         </label>
       </div>
 
-      <!-- Date (existing slot) -->
+      <!-- Date (existing slot): only public-bookable dates (off_days, holidays, block_if_before) -->
       <div v-if="bookingSlotMode === 'existing'">
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.date') }}</label>
         <select v-model="selectedDate" class="w-full rounded border px-3 py-2" :class="errors?.date ? 'border-red-500' : 'border-gray-300'" @change="onDateChange">
