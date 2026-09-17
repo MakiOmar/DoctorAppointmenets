@@ -155,7 +155,9 @@ function snks_add_ai_session_transaction( $therapist_id, $session_data, $profit_
 	);
 
 	$session_amount = $session_data['session_amount'] ?? 0;
-	$admin_profit   = round( $session_amount - $profit_amount, 2 );
+	$extra_fees     = isset( $session_data['extra_fees'] ) ? max( 0, floatval( $session_data['extra_fees'] ) ) : 0;
+	// Jalsah share = commission remainder on session price + any manual extra fees.
+	$admin_profit   = round( (float) $session_amount - (float) $profit_amount + $extra_fees, 2 );
 
 	$metadata = array(
 		'user_id'           => $therapist_id,
@@ -267,7 +269,7 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 	// Profit calculations must be based on the actual amount paid, not the subtotal before discounts
 	$session_amount = $order->get_total();
 
-	// Extra fees (manual bookings) go fully to the therapist and are excluded from Jalsah commission base.
+	// Extra fees (manual bookings) go fully to Jalsah and are excluded from therapist commission base.
 	$extra_fees = (float) $order->get_meta( 'admin_manual_extra_fees' );
 	if ( $extra_fees < 0 ) {
 		$extra_fees = 0;
@@ -294,12 +296,8 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 		);
 	}
 	
-	// Calculate profit
-
+	// Calculate therapist profit on session amount only (extra fees stay with Jalsah).
 	$profit_amount = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
-	if ( $extra_fees > 0 ) {
-		$profit_amount = round( (float) $profit_amount + $extra_fees, 2 );
-	}
 	
 	// Determine session type
 
@@ -308,11 +306,12 @@ function snks_execute_ai_profit_transfer( $session_id, $session_data = null ) {
 	
 	// Prepare session data
 	$session_data_for_transaction = array(
-		'session_id' => $session_id,
-		'session_type' => $session_type,
-		'patient_id' => $patient_id,
-		'order_id' => $order_id,
-		'session_amount' => $session_amount
+		'session_id'     => $session_id,
+		'session_type'   => $session_type,
+		'patient_id'     => $patient_id,
+		'order_id'       => $order_id,
+		'session_amount' => $session_amount,
+		'extra_fees'     => $extra_fees,
 	);
 
 	// Add transaction
@@ -1161,11 +1160,8 @@ function snks_get_ai_pending_profit_total( $args = array() ) {
 			continue;
 		}
 
+		// Pending therapist profit excludes manual extra fees (those go to Jalsah).
 		$profit = snks_calculate_session_profit( $session_amount, $therapist_id, $patient_id );
-		$extra  = (float) $order->get_meta( 'admin_manual_extra_fees' );
-		if ( $extra > 0 ) {
-			$profit = round( (float) $profit + $extra, 2 );
-		}
 		$total += (float) $profit;
 		++$count;
 

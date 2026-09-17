@@ -538,7 +538,7 @@ function snks_manual_booking_ensure_slot_failure_message() {
  * @param string     $first_name       Patient first name (billing).
  * @param string     $last_name        Patient last name (billing).
  * @param bool       $use_package      Whether to consume from active package subscription.
- * @param float      $extra_fees       Extra fees added to order (excluded from Jalsah commission).
+ * @param float      $extra_fees       Extra fees added to order (Jalsah revenue; excluded from therapist commission).
  * @param string     $payment_method   Payment method (validated against package when use_package).
  * @return array{success:bool, message:string, order_id?:int, package_counter?:string}
  */

@@ -1,6 +1,7 @@
 <template>
   <div :dir="$i18n.locale === 'ar' ? 'rtl' : 'ltr'" class="font-jalsah1 mx-auto px-4 py-8">
-    <h1 class="text-2xl font-semibold text-primary-500 mb-6">{{ $t('packages.extraFeesTitle') }}</h1>
+    <h1 class="text-2xl font-semibold text-primary-500 mb-2">{{ $t('packages.extraFeesTitle') }}</h1>
+    <p class="text-sm text-gray-600 mb-6">{{ $t('packages.extraFeesHint') }}</p>
 
     <div class="mb-4 flex flex-wrap gap-3 items-end">
       <div class="min-w-[260px]">

@@ -178,7 +178,7 @@ class SNKS_AI_Orders {
 	 * @param float       $session_amount      Session price (original_price in EGP).
 	 * @param string      $country_code        Country code for order meta.
 	 * @param int|null    $secretary_user_id   Secretary user ID; null uses get_current_user_id(); 0 means unknown.
-	 * @param float       $extra_fees          Extra fees added to order total; excluded from Jalsah commission base.
+	 * @param float       $extra_fees          Extra fees added to order total; paid to Jalsah (excluded from therapist commission base).
 	 * @return WC_Order|false Order object or false on failure.
 	 */
 	public static function create_admin_manual_order( $patient_id, $slot_id, $session_amount, $country_code = 'EG', $secretary_user_id = null, $extra_fees = 0 ) {

@@ -516,7 +516,8 @@ function snks_package_owe_report() {
 }
 
 /**
- * List sessions that have extra fees > 0.
+ * List sessions that have extra fees > 0 (HPOS-safe: reads order meta via WC_Order).
+ * Extra fees are Jalsah revenue, not therapist earnings.
  *
  * @param array $args date_from, date_to, page, per_page.
  * @return array{rows:array,total:int,total_extra_fees:float}
@@ -544,20 +545,16 @@ function snks_list_extra_fees_sessions( $args = array() ) {
 	}
 
 	$timetable = $wpdb->prefix . 'snks_provider_timetable';
-	$postmeta  = $wpdb->postmeta;
 
-	// Manual bookings with extra fees meta > 0 in date range.
+	// Manual-booking sessions in range; filter extra fees via WC_Order meta (HPOS-safe).
 	$sql = "
-		SELECT t.ID AS session_id, t.order_id, t.date_time, t.user_id AS therapist_id,
-			pm_extra.meta_value AS extra_fees, pm_main.meta_value AS main_price
+		SELECT t.ID AS session_id, t.order_id, t.date_time, t.user_id AS therapist_id
 		FROM {$timetable} t
-		INNER JOIN {$postmeta} pm_extra ON pm_extra.post_id = t.order_id AND pm_extra.meta_key = 'admin_manual_extra_fees'
-		LEFT JOIN {$postmeta} pm_main ON pm_main.post_id = t.order_id AND pm_main.meta_key = '_main_price'
 		WHERE t.session_status IN ('open','completed')
 			AND t.client_id > 0
+			AND t.order_id > 0
 			AND t.settings LIKE '%admin_manual_booking%'
 			AND t.date_time BETWEEN %s AND %s
-			AND CAST(pm_extra.meta_value AS DECIMAL(12,2)) > 0
 		ORDER BY t.date_time DESC
 	";
 
@@ -569,18 +566,26 @@ function snks_list_extra_fees_sessions( $args = array() ) {
 	$total_extra = 0.0;
 	$rows_out    = array();
 	foreach ( $all as $r ) {
-		$extra = (float) $r->extra_fees;
-		$main  = (float) $r->main_price;
-		if ( $main <= 0 && $r->order_id ) {
-			$order = wc_get_order( (int) $r->order_id );
-			if ( $order ) {
-				$main = max( 0, (float) $order->get_total() - $extra );
-			}
+		$order_id = (int) $r->order_id;
+		if ( ! $order_id || ! function_exists( 'wc_get_order' ) ) {
+			continue;
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			continue;
+		}
+		$extra = (float) $order->get_meta( 'admin_manual_extra_fees' );
+		if ( $extra <= 0 ) {
+			continue;
+		}
+		$main = (float) $order->get_meta( '_main_price' );
+		if ( $main <= 0 ) {
+			$main = max( 0, (float) $order->get_total() - $extra );
 		}
 		$total_extra += $extra;
 		$rows_out[]   = array(
 			'session_id'      => (int) $r->session_id,
-			'order_id'        => (int) $r->order_id,
+			'order_id'        => $order_id,
 			'date_time'       => (string) $r->date_time,
 			'therapist_price' => $main,
 			'extra_fees'      => $extra,
