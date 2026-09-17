@@ -1324,14 +1324,61 @@
         </div>
         <p v-if="pkgPatientId" class="mt-2 text-sm text-green-700">{{ pkgPatientName }} (ID: {{ pkgPatientId }})</p>
       </div>
-      <div>
+      <!-- Therapist: searchable select (same as new-booking form) -->
+      <div ref="pkgTherapistDropdownRef">
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.therapist') }}</label>
-        <select v-model="pkgTherapistId" class="w-full rounded border border-gray-300 px-3 py-2" required>
-          <option value="">{{ $t('manualBooking.selectTherapist') }}</option>
-          <option v-for="th in therapists" :key="th.user_id" :value="th.user_id">
-            {{ th.name || th.name_en }} {{ th.phone ? '— ' + th.phone : '' }}
-          </option>
-        </select>
+        <div class="flex gap-2 items-stretch">
+          <div class="relative flex-1">
+            <button
+              type="button"
+              class="w-full rounded border border-gray-300 px-3 py-2 text-left flex items-center justify-between min-h-[42px]"
+              @click="showPkgTherapistDropdown = !showPkgTherapistDropdown"
+            >
+              <span v-if="pkgSelectedTherapistDisplay" class="truncate">{{ pkgSelectedTherapistDisplay }}</span>
+              <span v-else class="text-gray-500">{{ $t('manualBooking.searchTherapist') }}</span>
+              <span class="flex items-center gap-2 shrink-0 ml-2">
+                <span v-if="therapistsLoading" class="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </button>
+            <div
+              v-if="showPkgTherapistDropdown"
+              class="absolute z-20 mt-1 left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg overflow-hidden"
+            >
+              <div class="p-2 border-b border-gray-200">
+                <input
+                  v-model="pkgTherapistSearch"
+                  type="text"
+                  class="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                  :placeholder="$t('manualBooking.searchTherapist')"
+                  @click.stop
+                />
+              </div>
+              <div class="max-h-52 overflow-y-auto">
+                <button
+                  v-for="t in filteredTherapistsForPackage"
+                  :key="t.user_id"
+                  type="button"
+                  class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 border-b border-gray-100 last:border-0"
+                  @click="selectPkgTherapist(t)"
+                >
+                  {{ t.name || t.name_en || t.user_id }}<span v-if="t.phone"> — {{ t.phone }}</span>
+                </button>
+                <p v-if="filteredTherapistsForPackage.length === 0" class="px-3 py-2 text-sm text-gray-500">{{ $t('manualBooking.noMatch') }}</p>
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="pkgTherapistId"
+            type="button"
+            class="rounded border border-gray-300 px-3 py-2 text-sm text-primary-600 hover:bg-gray-50 shrink-0"
+            @click="clearPkgTherapist"
+          >
+            {{ $t('manualBooking.clear') }}
+          </button>
+        </div>
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('manualBooking.packageType') }}</label>
@@ -1580,11 +1627,46 @@ const pkgPatientId = ref(null)
 const pkgPatientName = ref('')
 const pkgPatientSearchLoading = ref(false)
 const pkgTherapistId = ref('')
+const pkgTherapistSearch = ref('')
+const showPkgTherapistDropdown = ref(false)
+const pkgTherapistDropdownRef = ref(null)
 const pkgType = ref(4)
 const pkgPackagePrice = ref('')
 const pkgSessionPrice = ref('')
 const pkgPaymentMethod = ref('InstaPay')
 const pkgSubmitLoading = ref(false)
+
+const filteredTherapistsForPackage = computed(() => {
+  const q = pkgTherapistSearch.value.trim().toLowerCase()
+  if (!q) {
+    return therapists.value
+  }
+  return therapists.value.filter(t => {
+    const name = (t.name || t.name_en || '').toLowerCase()
+    const phone = (t.phone || t.whatsapp || '').toString().toLowerCase()
+    return name.includes(q) || phone.includes(q)
+  })
+})
+
+const pkgSelectedTherapistDisplay = computed(() => {
+  if (!pkgTherapistId.value) return ''
+  const th = therapists.value.find(t => String(t.user_id) === String(pkgTherapistId.value))
+  if (!th) return ''
+  const name = th.name || th.name_en || String(th.user_id)
+  return th.phone ? `${name} — ${th.phone}` : name
+})
+
+function selectPkgTherapist(t) {
+  pkgTherapistId.value = t.user_id
+  showPkgTherapistDropdown.value = false
+  pkgTherapistSearch.value = ''
+}
+
+function clearPkgTherapist() {
+  pkgTherapistId.value = ''
+  showPkgTherapistDropdown.value = false
+  pkgTherapistSearch.value = ''
+}
 
 watch(bookingSlotMode, () => {
   errors.value.date = ''
@@ -1853,6 +1935,8 @@ async function submitConnectPackage() {
     pkgPatientName.value = ''
     pkgPatientPhone.value = ''
     pkgTherapistId.value = ''
+    pkgTherapistSearch.value = ''
+    showPkgTherapistDropdown.value = false
     pkgPackagePrice.value = ''
     pkgSessionPrice.value = ''
   } catch (e) {
@@ -2537,6 +2621,9 @@ function handleClickOutsideTherapist(e) {
   }
   if (showAvailabilityTherapistDropdown.value && availabilityTherapistDropdownRef.value && !availabilityTherapistDropdownRef.value.contains(e.target)) {
     showAvailabilityTherapistDropdown.value = false
+  }
+  if (showPkgTherapistDropdown.value && pkgTherapistDropdownRef.value && !pkgTherapistDropdownRef.value.contains(e.target)) {
+    showPkgTherapistDropdown.value = false
   }
 }
 
